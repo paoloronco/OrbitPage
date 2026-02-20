@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:20-bookworm-slim AS builder
 
-LABEL org.opencontainers.image.version="3.5.1"
+LABEL org.opencontainers.image.version="3.5.2"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
@@ -31,7 +31,7 @@ COPY LYNX/server/*.js ./
 # ---------- STAGE 2: runtime ----------
 FROM node:20-bookworm-slim
 
-LABEL org.opencontainers.image.version="3.5.1"
+LABEL org.opencontainers.image.version="3.5.2"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
