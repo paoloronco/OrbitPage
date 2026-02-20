@@ -1,18 +1,13 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
-FROM node:20-bookworm-slim AS builder
+FROM node:20-alpine AS builder
 
-LABEL org.opencontainers.image.version="3.5.2"
+LABEL org.opencontainers.image.version="3.5.3"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
 
-# Tool necessari per dipendenze native (es. sqlite3) + cert
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    python3 make g++ \
-    ca-certificates \
- && apt-get upgrade -y --no-install-recommends \
- && rm -rf /var/lib/apt/lists/*
+# Tool necessari per dipendenze native (es. sqlite3)
+RUN apk add --no-cache python3 make g++
 
 # --- Frontend (cartella: /LYNX) ---
 WORKDIR /app/LYNX
@@ -29,20 +24,15 @@ RUN npm ci --omit=dev --omit=optional
 COPY LYNX/server/*.js ./
 
 # ---------- STAGE 2: runtime ----------
-FROM node:20-bookworm-slim
+FROM node:20-alpine
 
-LABEL org.opencontainers.image.version="3.5.2"
+LABEL org.opencontainers.image.version="3.5.3"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
 
-# sqlite runtime + cert
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-    sqlite3 \
-    ca-certificates \
- && apt-get upgrade -y --no-install-recommends \
- && rm -rf /var/lib/apt/lists/*
+# sqlite runtime
+RUN apk add --no-cache sqlite
 
 WORKDIR /app
 

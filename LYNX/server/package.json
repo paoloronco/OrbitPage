@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "lynx-backend",
-  "version": "3.5.2",
+  "version": "3.5.3",
   "description": "Standalone backend for Lynx links app",
   "main": "server.js",
   "type": "module",
