@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-3.5.0-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-3.5.1-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link manager that helps you gather all your digital touchpoints in a single page, with secure authentication and a fully customizable design.
 
@@ -198,6 +198,27 @@ You can deploy **Lynx** on [Railway](https://railway.com) in a few steps:
 ---
 
 ## 📝 Changelog
+
+### v3.5.1
+
+#### 🔒 Security Updates
+* **All security vulnerabilities resolved**
+  - Fixed all runtime vulnerabilities (multer, express, react-router-dom)
+  - Fixed all build-time vulnerabilities (tar, minimatch, glob, cross-spawn)
+  - Updated system packages in Docker images
+  - Security audit: 0 vulnerabilities detected in frontend & backend
+  - Resolves GitHub Dependabot alerts #18-36 and all DockerHub CVEs
+
+#### 🚀 Performance
+* **Docker build optimization**
+  - Build time reduced from 18+ minutes to ~2 seconds
+  - Removed `--build-from-source` flag for faster npm installations
+  - Uses precompiled binaries for better reliability
+
+#### 🔧 Improvements
+* Added `.claude/` to `.gitignore` and `.dockerignore`
+* Set `PORT=8080` environment variable in Docker for consistency
+* Updated `SECURITY.md` with comprehensive security information
 
 ### v3.5.0
 

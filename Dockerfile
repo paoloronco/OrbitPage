@@ -1,6 +1,11 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:20-bookworm-slim AS builder
 
+LABEL org.opencontainers.image.version="3.5.1"
+LABEL org.opencontainers.image.title="Lynx"
+LABEL org.opencontainers.image.description="Your personal links hub"
+LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
+
 # Tool necessari per dipendenze native (es. sqlite3) + cert
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
