@@ -24,12 +24,17 @@ RUN npm run build
 # --- Server (cartella: /LYNX/server) ---
 WORKDIR /app/LYNX/server
 COPY LYNX/server/package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --omit=optional
 # Copy server source files only (not node_modules or .db files)
 COPY LYNX/server/*.js ./
 
 # ---------- STAGE 2: runtime ----------
 FROM node:20-bookworm-slim
+
+LABEL org.opencontainers.image.version="3.5.1"
+LABEL org.opencontainers.image.title="Lynx"
+LABEL org.opencontainers.image.description="Your personal links hub"
+LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
 
 # sqlite runtime + cert
 RUN apt-get update \
