@@ -6,6 +6,9 @@ LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
 
+# Upgrade npm to latest to get patched bundled deps (tar, minimatch, glob)
+RUN npm install -g npm@latest
+
 # Tool necessari per dipendenze native (es. sqlite3)
 RUN apk add --no-cache python3 make g++
 
@@ -33,6 +36,10 @@ LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
 
 # sqlite runtime
 RUN apk add --no-cache sqlite
+
+# npm is not needed at runtime; remove it to eliminate its bundled
+# vulnerable packages (tar, minimatch, glob) from the final image
+RUN npm uninstall -g npm
 
 WORKDIR /app
 
