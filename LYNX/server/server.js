@@ -98,6 +98,26 @@ app.use('/uploads', express.static(uploadsPath, {
 }));
 app.use(cookieParser(COOKIE_SECRET));
 
+// CSRF protection: reject state-changing requests whose Origin doesn't match
+// the configured frontend. Same-origin requests (no Origin header) are allowed.
+// Protected API routes are additionally guarded by authenticateToken which
+// requires an Authorization: Bearer header — a browser can't set that cross-site.
+const csrfProtection = (req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    const origin = req.headers['origin'];
+    if (origin) {
+      const host = req.get('host');
+      const serverOrigin = `${req.protocol}://${host}`;
+      const allowed = [FRONTEND_URL, serverOrigin].filter(Boolean);
+      if (!allowed.includes(origin)) {
+        return res.status(403).json({ error: 'CSRF validation failed' });
+      }
+    }
+  }
+  next();
+};
+app.use('/api', csrfProtection);
+
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -1108,11 +1128,19 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
     console.log('File uploaded successfully:', fileInfo);
     console.log('Upload directory contents:', fs.readdirSync(uploadsPath));
 
+    // Validate that the resolved file path stays within the uploads directory
+    // (defense-in-depth: multer already controls the path, but we verify explicitly)
+    const resolvedFilePath = path.resolve(req.file.path);
+    const resolvedUploadsDir = path.resolve(uploadsPath);
+    if (!resolvedFilePath.startsWith(resolvedUploadsDir + path.sep)) {
+      return res.status(500).json({ error: 'File path validation failed' });
+    }
+
     // Verify file exists
-    if (!fs.existsSync(req.file.path)) {
-      console.error('File was not saved to disk. Expected at:', req.file.path);
+    if (!fs.existsSync(resolvedFilePath)) {
+      console.error('File was not saved to disk. Expected at:', resolvedFilePath);
       console.error('Current working directory:', process.cwd());
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'Failed to save file',
         details: 'The file was not saved to the expected location.'
       });
@@ -1120,7 +1148,7 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
 
     // Set file permissions (Windows compatible)
     try {
-      fs.chmodSync(req.file.path, 0o666); // Read/write for all
+      fs.chmodSync(resolvedFilePath, 0o666); // Read/write for all
       console.log('File permissions set successfully');
     } catch (err) {
       console.warn('Could not set file permissions:', err.message);
