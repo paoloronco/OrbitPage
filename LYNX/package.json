@@ -86,7 +86,9 @@
   },
   "overrides": {
     "lodash": "^4.17.23",
-    "minimatch": "^10.2.1",
-    "ajv": "^8.18.0"
+    "minimatch": "^10.2.4",
+    "ajv": "^8.18.0",
+    "rollup": "^4.60.0",
+    "flatted": "^3.4.2"
   }
 }
