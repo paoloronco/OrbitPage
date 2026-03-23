@@ -18,7 +18,6 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { timingSafeEqual } from 'crypto';
-import cookieParser from 'cookie-parser';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
@@ -44,8 +43,6 @@ const PORT = process.env.PORT || 3001;
 const ENABLE_HTTPS = String(process.env.ENABLE_HTTPS || '').toLowerCase() === 'true' || process.env.ENABLE_HTTPS === '1';
 const SSL_PORT = Number.parseInt(process.env.SSL_PORT || '', 10) || 8443;
 const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
-const COOKIE_SECRET = process.env.COOKIE_SECRET || 'dev-cookie-secret';
-
 // Ensure correct client IP detection when behind a proxy/load balancer
 // This is important so express-rate-limit keys by the real client IP
 app.set('trust proxy', 1);
@@ -96,28 +93,6 @@ app.use('/uploads', express.static(uploadsPath, {
     res.set('Cache-Control', 'public, max-age=31536000');
   }
 }));
-app.use(cookieParser(COOKIE_SECRET));
-
-// CSRF protection: reject state-changing requests whose Origin doesn't match
-// the configured frontend. Same-origin requests (no Origin header) are allowed.
-// Protected API routes are additionally guarded by authenticateToken which
-// requires an Authorization: Bearer header — a browser can't set that cross-site.
-const csrfProtection = (req, res, next) => {
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-    const origin = req.headers['origin'];
-    if (origin) {
-      const host = req.get('host');
-      const serverOrigin = `${req.protocol}://${host}`;
-      const allowed = [FRONTEND_URL, serverOrigin].filter(Boolean);
-      if (!allowed.includes(origin)) {
-        return res.status(403).json({ error: 'CSRF validation failed' });
-      }
-    }
-  }
-  next();
-};
-app.use('/api', csrfProtection);
-
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -219,22 +194,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     console.log('Login successful, generating token...');
     const token = generateToken('admin');
     console.log('Token generated. Length:', token?.length);
-    
-    // Set secure cookie
-    console.log('Setting signed auth cookie...');
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-      signed: true,
-      maxAge: 12 * 60 * 60 * 1000,
-    });
-    console.log('Cookie set. Sending JSON response...');
-    const body = JSON.stringify({ success: true, token });
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Length', Buffer.byteLength(body));
-    res.status(200).send(body);
+    res.json({ success: true, token });
     return;
   } catch (error) {
     console.error('Login error:', error);
