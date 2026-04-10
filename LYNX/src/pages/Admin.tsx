@@ -19,6 +19,12 @@ interface ProfileData {
     instagram?: string;
     facebook?: string;
     twitter?: string;
+    youtube?: string;
+    tiktok?: string;
+    discord?: string;
+    telegram?: string;
+    whatsapp?: string;
+    mastodon?: string;
   };
   nameFontSize?: string;
   bioFontSize?: string;
@@ -94,7 +100,7 @@ const Admin = () => {
             title: link.title,
             description: link.description || '',
             url: link.url,
-            type: link.type as 'link' | 'text',
+            type: link.type as 'link' | 'text' | 'separator',
             icon: link.icon,
             iconType: link.iconType,
             backgroundColor: link.backgroundColor,
@@ -106,6 +112,9 @@ const Admin = () => {
             content: link.content,
             textItems: link.textItems,
             isActive: link.isActive !== false,
+            clickCount: link.clickCount || 0,
+            startDate: link.startDate || undefined,
+            endDate: link.endDate || undefined,
           }));
           // Ensure typography fields are preserved in normalized links
           const fullyNormalized = formattedLinks.map(link => ({
@@ -114,7 +123,10 @@ const Admin = () => {
             descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
             alignment: (link as any).alignment || undefined,
             titleFontSize: (link as any).titleFontSize || undefined,
-            descriptionFontSize: (link as any).descriptionFontSize || undefined
+            descriptionFontSize: (link as any).descriptionFontSize || undefined,
+            clickCount: (link as any).clickCount || 0,
+            startDate: (link as any).startDate || undefined,
+            endDate: (link as any).endDate || undefined,
           }));
           setLinks(fullyNormalized);
         }
@@ -188,7 +200,9 @@ const Admin = () => {
         type: (link as any).type || 'link',
         // Explicitly include per-link font sizes so backend stores them
         titleFontSize: (link as any).titleFontSize || undefined,
-        descriptionFontSize: (link as any).descriptionFontSize || undefined
+        descriptionFontSize: (link as any).descriptionFontSize || undefined,
+        startDate: (link as any).startDate || undefined,
+        endDate: (link as any).endDate || undefined,
       }));
       // Persist first; only update local state if backend succeeds
       await linksApi.update(formattedLinks);
@@ -199,7 +213,7 @@ const Admin = () => {
         title: link.title,
         description: link.description || '',
         url: link.url,
-        type: link.type as 'link' | 'text',
+        type: link.type as 'link' | 'text' | 'separator',
         icon: link.icon,
         iconType: link.iconType,
         backgroundColor: link.backgroundColor,
@@ -214,6 +228,9 @@ const Admin = () => {
         descriptionFontSize: (link as any).descriptionFontSize || undefined,
         textItems: link.textItems,
         isActive: link.isActive !== false,
+        clickCount: link.clickCount || 0,
+        startDate: link.startDate || undefined,
+        endDate: link.endDate || undefined,
       }));
       setLinks(normalized);
     } catch (error: any) {

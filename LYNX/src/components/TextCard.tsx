@@ -303,7 +303,29 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               placeholder="https://example.com (optional - makes the entire card clickable)"
               className="glass-card border-primary/20"
             />
-            
+
+            {/* Link Scheduler */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Show from (optional)</Label>
+                <Input
+                  type="date"
+                  value={editLink.startDate || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, startDate: e.target.value || undefined }))}
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hide after (optional)</Label>
+                <Input
+                  type="date"
+                  value={editLink.endDate || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, endDate: e.target.value || undefined }))}
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+            </div>
+
             {/* Icon Upload */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Icon</Label>

@@ -3,9 +3,10 @@ import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { LivePreview } from "./LivePreview";
 import { LinkData } from "./LinkCard";
+import { ClickAnalyticsChart } from "./ClickAnalyticsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Link, Palette, User, Key, ExternalLink, Eye } from "lucide-react";
+import { LogOut, Link, Palette, User, Key, ExternalLink, Eye, BarChart2 } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
@@ -21,6 +22,12 @@ interface ProfileData {
     instagram?: string;
     facebook?: string;
     twitter?: string;
+    youtube?: string;
+    tiktok?: string;
+    discord?: string;
+    telegram?: string;
+    whatsapp?: string;
+    mastodon?: string;
   };
   nameFontSize?: string;
   bioFontSize?: string;
@@ -81,7 +88,7 @@ export const AdminView = ({
         </div>
         
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl mx-auto">
+          <TabsList className="grid grid-cols-6 w-full max-w-2xl mx-auto">
             <TabsTrigger value="profile" className="flex items-center gap-1">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -101,6 +108,10 @@ export const AdminView = ({
             <TabsTrigger value="preview" className="flex items-center gap-1">
               <Eye className="w-4 h-4" />
               <span className="hidden sm:inline">Preview</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-1">
+              <BarChart2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
             </TabsTrigger>
           </TabsList>
 
@@ -142,6 +153,20 @@ export const AdminView = ({
                 Showing saved state — click Save in each tab to see your latest changes.
               </p>
               <LivePreview profile={profile} links={links} theme={theme} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="max-w-xl mx-auto space-y-4">
+              <div className="glass-card p-4 text-center">
+                <p className="text-sm text-muted-foreground">Total clicks</p>
+                <p className="text-3xl font-bold text-primary">
+                  {links.reduce((sum, l) => sum + (l.clickCount ?? 0), 0)}
+                </p>
+              </div>
+              <div className="glass-card p-4">
+                <ClickAnalyticsChart links={links} />
+              </div>
             </div>
           </TabsContent>
         </Tabs>

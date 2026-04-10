@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Link, List, Type, Upload, Download } from "lucide-react";
+import { Plus, Link, List, Type, Upload, Download, Minus } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
+import { SeparatorCard } from "./SeparatorCard";
 import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
 
@@ -68,6 +69,20 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
       textItems: [],
     };
     const updated = [...workingLinks, newListCard];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+  };
+
+  const addNewSeparator = () => {
+    const newSeparator: LinkData = {
+      id: Date.now().toString(),
+      title: 'Section',
+      description: '',
+      url: '',
+      type: 'separator',
+      isActive: true,
+    };
+    const updated = [...workingLinks, newSeparator];
     setWorkingLinks(updated);
     setIsDirty(true);
   };
@@ -210,7 +225,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
       const updatedLinks = await linksApi.get();
       setWorkingLinks(updatedLinks.map(link => ({
         ...link,
-        type: link.type as 'link' | 'text'
+        type: link.type as 'link' | 'text' | 'separator'
       })));
       setIsDirty(false);
       
@@ -280,13 +295,21 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
             <List className="w-4 h-4" />
             Add bulleted list
           </Button>
-          <Button 
+          <Button
             onClick={addNewTextCard}
             variant="outline"
             className="gap-2"
           >
             <Type className="w-4 h-4" />
             Add Text Card
+          </Button>
+          <Button
+            onClick={addNewSeparator}
+            variant="outline"
+            className="gap-2"
+          >
+            <Minus className="w-4 h-4" />
+            Add Separator
           </Button>
         </div>
   <div className="flex gap-2 justify-center flex-wrap">
@@ -345,7 +368,16 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
               onTouchEnd={handleTouchEnd}
               className={dragOverId === link.id ? 'ring-2 ring-primary/40 rounded-lg' : ''}
             >
-              {link.type === 'text' ? (
+              {link.type === 'separator' ? (
+                <SeparatorCard
+                  link={link}
+                  onUpdate={updateLink}
+                  onDelete={deleteLink}
+                  isDragging={draggedItem === link.id}
+                  onMoveUp={() => moveByOffset(link.id, -1)}
+                  onMoveDown={() => moveByOffset(link.id, 1)}
+                />
+              ) : link.type === 'text' ? (
                 <TextCard
                   link={link}
                   onUpdate={updateLink}

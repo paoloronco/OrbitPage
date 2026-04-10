@@ -208,6 +208,9 @@ interface LinkItem {
   content?: string;
   textItems?: Array<{ text: string; url?: string }>;
   isActive?: boolean;
+  clickCount?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 // API request helper with auth
@@ -383,6 +386,12 @@ export const linksApi = {
       console.error('Import error:', error);
       throw error;
     }
+  },
+
+  trackClick: async (id: string): Promise<void> => {
+    try {
+      await fetch(`${API_BASE}/links/${encodeURIComponent(id)}/click`, { method: 'POST' });
+    } catch { /* fire-and-forget, don't break the UI */ }
   },
 };
 

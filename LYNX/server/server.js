@@ -343,11 +343,19 @@ app.get('/api/links', async (req, res) => {
     const rawToken = authHeader?.split(' ')[1];
     const isAdmin = rawToken ? !!verifyToken(rawToken) : false;
 
-    const query = isAdmin
-      ? 'SELECT * FROM links ORDER BY sort_order'
-      : 'SELECT * FROM links WHERE is_active = 1 ORDER BY sort_order';
-
-    const links = await dbAll(query);
+    let links;
+    if (isAdmin) {
+      links = await dbAll('SELECT * FROM links ORDER BY sort_order');
+    } else {
+      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+      links = await dbAll(
+        `SELECT * FROM links WHERE is_active = 1
+         AND (start_date IS NULL OR start_date <= ?)
+         AND (end_date IS NULL OR end_date >= ?)
+         ORDER BY sort_order`,
+        [today, today]
+      );
+    }
     
     // Format links for response
     const formattedLinks = links.map(link => {
@@ -377,6 +385,9 @@ app.get('/api/links', async (req, res) => {
         order: link.link_order || 0,
         size: link.size || 'medium',
         isActive: link.is_active !== 0,
+        clickCount: link.click_count || 0,
+        startDate: link.start_date || null,
+        endDate: link.end_date || null,
         createdAt: link.created_at,
         updatedAt: link.updated_at
       };
@@ -385,6 +396,20 @@ app.get('/api/links', async (req, res) => {
     res.json(formattedLinks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to load links' });
+  }
+});
+
+// Click tracking (public, no auth required)
+app.post('/api/links/:id/click', apiLimiter, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || typeof id !== 'string' || id.length > 100) {
+      return res.status(400).json({ error: 'Invalid id' });
+    }
+    await dbRun('UPDATE links SET click_count = click_count + 1 WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to record click' });
   }
 });
 
@@ -418,6 +443,9 @@ app.get('/api/links/export', authenticateToken, async (req, res) => {
       })() : null,
       sortOrder: link.sort_order,
       isActive: link.is_active,
+      clickCount: link.click_count || 0,
+      startDate: link.start_date || null,
+      endDate: link.end_date || null,
     }));
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename="links-export.json"');
@@ -502,13 +530,9 @@ const LinkSchema = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(2000).optional().default(''),
   url: z.string().max(5000).optional().default(''),
-  icon: z.union([
-    z.string().startsWith('data:image/').max(2000000).nullable(),
-    z.string().url().max(5000).nullable(),
-    z.object({
-      url: z.string().max(5000)
-    }).transform(obj => obj.url)
-  ]).nullable().optional().default(null),
+  // Accept any string: data:image/ base64, http(s)/blob URLs, or short emoji/text strings.
+  // Previously the union rejected emojis and text icons because they matched none of the branches.
+  icon: z.string().max(2000000).nullable().optional().default(null),
   type: z.string().min(1).max(50).optional().default('link'),
   iconType: z.union([
     z.string().max(50),
@@ -538,7 +562,9 @@ const LinkSchema = z.object({
   alignment: z.enum(['left','center','right']).nullable().optional(),
   size: z.string().max(50).nullable().optional(),
   content: z.string().max(10000).nullable().optional(),
-  isActive: z.boolean().optional().default(true)
+  isActive: z.boolean().optional().default(true),
+  startDate: z.string().max(10).nullable().optional(),
+  endDate: z.string().max(10).nullable().optional(),
 }).strip();
 
 const LinksPayloadSchema = z.array(LinkSchema).max(200);
@@ -631,7 +657,7 @@ app.put('/api/links', authenticateToken, async (req, res) => {
           : null;
           
         await dbRun(
-          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             typeof link.id === 'string' ? link.id : String(link.id),
             link.title,
@@ -651,7 +677,9 @@ app.put('/api/links', authenticateToken, async (req, res) => {
             link.descriptionFontFamily || null,
             link.alignment || null,
             link.titleFontSize || null,
-            link.descriptionFontSize || null
+            link.descriptionFontSize || null,
+            link.startDate || null,
+            link.endDate || null
           ]
         );
       }
@@ -823,6 +851,47 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
   } catch (error) {
     console.error('Change password error:', error);
     return res.status(500).json({ success: false, error: 'Failed to change password' });
+  }
+});
+
+// Password reset via RESET_TOKEN env var
+app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
+  try {
+    const { token, newPassword } = req.body || {};
+    const resetToken = process.env.RESET_TOKEN;
+
+    if (!resetToken) {
+      return res.status(400).json({ success: false, error: 'RESET_TOKEN is not configured on this server. Set the RESET_TOKEN environment variable to enable token-based password reset.' });
+    }
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ success: false, error: 'Reset token is required' });
+    }
+
+    // Constant-time comparison to prevent timing attacks
+    const tokenBuf = Buffer.from(token);
+    const secretBuf = Buffer.from(resetToken);
+    const valid = tokenBuf.length === secretBuf.length && timingSafeEqual(tokenBuf, secretBuf);
+
+    if (!valid) {
+      return res.status(401).json({ success: false, error: 'Invalid reset token' });
+    }
+
+    if (!newPassword || !isPasswordStrong(newPassword)) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 8 characters with uppercase, lowercase, number, and special character' });
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+    await dbRun(
+      'UPDATE admin_users SET password_hash = ?, salt = ? WHERE username = ?',
+      [passwordHash, salt, 'admin']
+    );
+
+    res.json({ success: true, message: 'Password reset successfully. You can now log in with your new password.' });
+  } catch (error) {
+    console.error('Reset-via-token error:', error);
+    res.status(500).json({ success: false, error: 'Password reset failed' });
   }
 });
 
@@ -1155,6 +1224,17 @@ app.use((err, req, res, next) => {
     return res.status(500).json({ error: err.message || 'File upload failed' });
   }
   next();
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    version: '3.7.0',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime()),
+    node: process.version,
+  });
 });
 
 // Catch-all route for SPA

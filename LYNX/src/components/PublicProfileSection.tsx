@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Linkedin, Github, Instagram, Facebook, Twitter } from "lucide-react";
+import { Linkedin, Github, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
 interface ProfileData {
@@ -15,6 +16,12 @@ interface ProfileData {
     instagram?: string;
     facebook?: string;
     twitter?: string;
+    youtube?: string;
+    tiktok?: string;
+    discord?: string;
+    telegram?: string;
+    whatsapp?: string;
+    mastodon?: string;
   };
   nameFontSize?: string;
   bioFontSize?: string;
@@ -93,6 +100,66 @@ export const PublicProfileSection = ({ profile }: PublicProfileSectionProps) => 
                 onClick={() => window.open(profile.socialLinks?.twitter, '_blank')}
               >
                 <Twitter className="w-4 h-4 text-foreground" />
+              </Button>
+            )}
+            {profile.socialLinks.youtube && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 text-red-600 hover:bg-red-600/20"
+                onClick={() => window.open(profile.socialLinks?.youtube, '_blank')}
+              >
+                <Youtube className="w-4 h-4" />
+              </Button>
+            )}
+            {profile.socialLinks.tiktok && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 text-foreground hover:bg-foreground/20"
+                onClick={() => window.open(profile.socialLinks?.tiktok, '_blank')}
+              >
+                <TikTokIcon className="w-4 h-4" />
+              </Button>
+            )}
+            {profile.socialLinks.discord && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 text-indigo-500 hover:bg-indigo-500/20"
+                onClick={() => window.open(profile.socialLinks?.discord, '_blank')}
+              >
+                <DiscordIcon className="w-4 h-4" />
+              </Button>
+            )}
+            {profile.socialLinks.telegram && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 text-blue-500 hover:bg-blue-500/20"
+                onClick={() => window.open(profile.socialLinks?.telegram, '_blank')}
+              >
+                <TelegramIcon className="w-4 h-4" />
+              </Button>
+            )}
+            {profile.socialLinks.whatsapp && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 text-green-500 hover:bg-green-500/20"
+                onClick={() => window.open(profile.socialLinks?.whatsapp, '_blank')}
+              >
+                <WhatsAppIcon className="w-4 h-4" />
+              </Button>
+            )}
+            {profile.socialLinks.mastodon && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 text-violet-500 hover:bg-violet-500/20"
+                onClick={() => window.open(profile.socialLinks?.mastodon, '_blank')}
+              >
+                <MastodonIcon className="w-4 h-4" />
               </Button>
             )}
           </div>

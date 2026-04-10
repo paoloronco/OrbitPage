@@ -1,6 +1,7 @@
 import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicTextCard } from "./PublicTextCard";
+import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { LinkData } from "./LinkCard";
 import { ThemeConfig } from "@/lib/theme";
 
@@ -30,6 +31,7 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
   // Show only active links (same logic as PublicView)
   const visibleLinks = links.filter(link => {
     if (link.isActive === false) return false;
+    if (link.type === 'separator') return true;
     if (link.backgroundColor || link.textColor || link.icon) return true;
     if (link.type === 'text') {
       return (
@@ -65,7 +67,9 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
             {visibleLinks.length > 0 && (
               <div className="flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
                 {visibleLinks.map(link =>
-                  link.type === 'text'
+                  link.type === 'separator'
+                    ? <PublicSeparatorCard key={link.id} link={link} />
+                    : link.type === 'text'
                     ? <PublicTextCard key={link.id} link={link} />
                     : <PublicLinkCard key={link.id} link={link} />
                 )}

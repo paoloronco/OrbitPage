@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Copy, Check } from "lucide-react";
 import { LinkData } from "./LinkCard";
 
 interface PublicLinkCardProps {
@@ -31,7 +31,8 @@ const getIconUrl = (iconPath?: string | null) => {
 
 export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const [iconUrl, setIconUrl] = useState<string | null>(null);
-  
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     const loadIcon = async () => {
       try {
@@ -60,7 +61,18 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   
   const handleClick = () => {
     if (link.url) {
+      fetch('/api/links/' + link.id + '/click', { method: 'POST' }).catch(() => {});
       window.open(link.url, '_blank');
+    }
+  };
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (link.url) {
+      navigator.clipboard.writeText(link.url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }).catch(() => {});
     }
   };
 
@@ -141,6 +153,13 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
                   {link.title || "Untitled Link"}
                 </h3>
               <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />
+              <button
+                onClick={handleCopy}
+                className="opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
+                title="Copy link"
+              >
+                {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+              </button>
             </div>
             {link.description && (
                 <p

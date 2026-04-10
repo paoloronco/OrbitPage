@@ -24,9 +24,12 @@ export interface LinkData {
   // Alignment for content inside the card: left | center | right
   alignment?: 'left' | 'center' | 'right';
   size?: 'small' | 'medium' | 'large';
-  type?: 'link' | 'text';
+  type?: 'link' | 'text' | 'separator';
   isActive?: boolean; // Visibility toggle (undefined treated as true)
   content?: string; // For text-only cards
+  clickCount?: number;
+  startDate?: string;
+  endDate?: string;
   textItems?: Array<{
     text: string;
     url?: string;
@@ -224,7 +227,29 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               placeholder="https://example.com"
               className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
             />
-            
+
+            {/* Link Scheduler */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Show from (optional)</Label>
+                <Input
+                  type="date"
+                  value={editLink.startDate || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, startDate: e.target.value || undefined }))}
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hide after (optional)</Label>
+                <Input
+                  type="date"
+                  value={editLink.endDate || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, endDate: e.target.value || undefined }))}
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+            </div>
+
             {/* Icon Upload */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Icon</Label>
@@ -337,6 +362,9 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 >
                   {link.url}
                 </p>
+              )}
+              {(link.startDate || link.endDate) && (
+                <span className="text-xs text-muted-foreground">⏰ {link.startDate || '…'} → {link.endDate || '…'}</span>
               )}
             </div>
             

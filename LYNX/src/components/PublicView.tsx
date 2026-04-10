@@ -1,6 +1,7 @@
 import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicTextCard } from "./PublicTextCard";
+import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { LinkData } from "./LinkCard";
 
 interface ProfileData {
@@ -18,6 +19,9 @@ export const PublicView = ({ profile, links }: PublicViewProps) => {
   const visibleLinks = links.filter(link => {
     // Respect visibility toggle
     if (link.isActive === false) return false;
+
+    // Always show active separators
+    if (link.type === 'separator') return true;
 
     // Always include links with personalizations, even if they're missing some fields
     if (link.backgroundColor || link.textColor || link.icon) {
@@ -40,7 +44,9 @@ export const PublicView = ({ profile, links }: PublicViewProps) => {
         {visibleLinks.length > 0 && (
           <div className="flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
             {visibleLinks.map((link) => (
-              link.type === 'text' ? (
+              link.type === 'separator' ? (
+                <PublicSeparatorCard key={link.id} link={link} />
+              ) : link.type === 'text' ? (
                 <PublicTextCard key={link.id} link={link} />
               ) : (
                 <PublicLinkCard key={link.id} link={link} />

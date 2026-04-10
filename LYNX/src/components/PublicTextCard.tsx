@@ -9,6 +9,7 @@ interface PublicTextCardProps {
 export const PublicTextCard = ({ link }: PublicTextCardProps) => {
   const handleClick = () => {
     if (link.url) {
+      fetch('/api/links/' + link.id + '/click', { method: 'POST' }).catch(() => {});
       window.open(link.url, '_blank');
     }
   };

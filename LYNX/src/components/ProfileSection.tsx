@@ -5,7 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { Edit, Camera, Linkedin, Github, Instagram, Facebook, Twitter } from "lucide-react";
+import { Edit, Camera, Linkedin, Github, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import { Switch } from "@/components/ui/switch";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
@@ -20,6 +21,12 @@ interface ProfileData {
     instagram?: string;
     facebook?: string;
     twitter?: string;
+    youtube?: string;
+    tiktok?: string;
+    discord?: string;
+    telegram?: string;
+    whatsapp?: string;
+    mastodon?: string;
   };
   // Per-profile typography
   nameFontSize?: string;
@@ -340,11 +347,83 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
                 <Twitter className="w-4 h-4 text-foreground" />
                 <Input
                   value={editProfile.socialLinks?.twitter || ''}
-                  onChange={(e) => setEditProfile(prev => ({ 
-                    ...prev, 
+                  onChange={(e) => setEditProfile(prev => ({
+                    ...prev,
                     socialLinks: { ...prev.socialLinks, twitter: e.target.value }
                   }))}
                   placeholder="https://x.com/username or https://twitter.com/username"
+                  className="glass-card border-primary/20 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Youtube className="w-4 h-4 text-red-600" />
+                <Input
+                  value={editProfile.socialLinks?.youtube || ''}
+                  onChange={(e) => setEditProfile(prev => ({
+                    ...prev,
+                    socialLinks: { ...prev.socialLinks, youtube: e.target.value }
+                  }))}
+                  placeholder="https://youtube.com/@channel"
+                  className="glass-card border-primary/20 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <TikTokIcon className="w-4 h-4 text-foreground" />
+                <Input
+                  value={editProfile.socialLinks?.tiktok || ''}
+                  onChange={(e) => setEditProfile(prev => ({
+                    ...prev,
+                    socialLinks: { ...prev.socialLinks, tiktok: e.target.value }
+                  }))}
+                  placeholder="https://tiktok.com/@username"
+                  className="glass-card border-primary/20 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <DiscordIcon className="w-4 h-4 text-indigo-500" />
+                <Input
+                  value={editProfile.socialLinks?.discord || ''}
+                  onChange={(e) => setEditProfile(prev => ({
+                    ...prev,
+                    socialLinks: { ...prev.socialLinks, discord: e.target.value }
+                  }))}
+                  placeholder="https://discord.gg/invite"
+                  className="glass-card border-primary/20 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <TelegramIcon className="w-4 h-4 text-blue-500" />
+                <Input
+                  value={editProfile.socialLinks?.telegram || ''}
+                  onChange={(e) => setEditProfile(prev => ({
+                    ...prev,
+                    socialLinks: { ...prev.socialLinks, telegram: e.target.value }
+                  }))}
+                  placeholder="https://t.me/username"
+                  className="glass-card border-primary/20 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <WhatsAppIcon className="w-4 h-4 text-green-500" />
+                <Input
+                  value={editProfile.socialLinks?.whatsapp || ''}
+                  onChange={(e) => setEditProfile(prev => ({
+                    ...prev,
+                    socialLinks: { ...prev.socialLinks, whatsapp: e.target.value }
+                  }))}
+                  placeholder="https://wa.me/number"
+                  className="glass-card border-primary/20 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <MastodonIcon className="w-4 h-4 text-violet-500" />
+                <Input
+                  value={editProfile.socialLinks?.mastodon || ''}
+                  onChange={(e) => setEditProfile(prev => ({
+                    ...prev,
+                    socialLinks: { ...prev.socialLinks, mastodon: e.target.value }
+                  }))}
+                  placeholder="https://mastodon.social/@username"
                   className="glass-card border-primary/20 text-sm"
                 />
               </div>
@@ -418,6 +497,66 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
                     onClick={() => window.open(current.socialLinks?.twitter, '_blank')}
                   >
                     <Twitter className="w-4 h-4 text-foreground" />
+                  </Button>
+                )}
+                {current.socialLinks.youtube && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 text-red-600 hover:bg-red-600/20"
+                    onClick={() => window.open(current.socialLinks?.youtube, '_blank')}
+                  >
+                    <Youtube className="w-4 h-4" />
+                  </Button>
+                )}
+                {current.socialLinks.tiktok && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 text-foreground hover:bg-foreground/20"
+                    onClick={() => window.open(current.socialLinks?.tiktok, '_blank')}
+                  >
+                    <TikTokIcon className="w-4 h-4" />
+                  </Button>
+                )}
+                {current.socialLinks.discord && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 text-indigo-500 hover:bg-indigo-500/20"
+                    onClick={() => window.open(current.socialLinks?.discord, '_blank')}
+                  >
+                    <DiscordIcon className="w-4 h-4" />
+                  </Button>
+                )}
+                {current.socialLinks.telegram && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 text-blue-500 hover:bg-blue-500/20"
+                    onClick={() => window.open(current.socialLinks?.telegram, '_blank')}
+                  >
+                    <TelegramIcon className="w-4 h-4" />
+                  </Button>
+                )}
+                {current.socialLinks.whatsapp && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 text-green-500 hover:bg-green-500/20"
+                    onClick={() => window.open(current.socialLinks?.whatsapp, '_blank')}
+                  >
+                    <WhatsAppIcon className="w-4 h-4" />
+                  </Button>
+                )}
+                {current.socialLinks.mastodon && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-8 h-8 text-violet-500 hover:bg-violet-500/20"
+                    onClick={() => window.open(current.socialLinks?.mastodon, '_blank')}
+                  >
+                    <MastodonIcon className="w-4 h-4" />
                   </Button>
                 )}
               </div>

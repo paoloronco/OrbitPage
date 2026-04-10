@@ -33,6 +33,13 @@ export const PasswordManager = () => {
   const username = 'admin'; // Fixed admin username
   const demoMode = false; // Demo mode disabled: enable modifications
 
+  // Token-based password reset state
+  const [showTokenReset, setShowTokenReset] = useState(false);
+  const [resetToken, setResetToken] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [tokenResetMessage, setTokenResetMessage] = useState<Message | null>(null);
+  const [tokenResetLoading, setTokenResetLoading] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -86,6 +93,31 @@ export const PasswordManager = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTokenReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTokenResetLoading(true);
+    setTokenResetMessage(null);
+    try {
+      const response = await fetch('/api/auth/reset-via-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken, newPassword: resetNewPassword }),
+      });
+      const result: ApiResponse = await response.json();
+      if (result.success) {
+        setTokenResetMessage({ type: 'success', text: result.message || 'Password reset successfully.' });
+        setResetToken('');
+        setResetNewPassword('');
+      } else {
+        setTokenResetMessage({ type: 'error', text: result.error || 'Reset failed.' });
+      }
+    } catch (err: any) {
+      setTokenResetMessage({ type: 'error', text: err?.message || 'An error occurred.' });
+    } finally {
+      setTokenResetLoading(false);
     }
   };
 
@@ -364,6 +396,67 @@ export const PasswordManager = () => {
             </Button>
           </div>
         </div>
+      </Card>
+      {/* Forgot password — token-based reset */}
+      <Card className="glass-card p-6 space-y-4">
+        <button
+          type="button"
+          className="w-full text-left flex items-center justify-between"
+          onClick={() => setShowTokenReset(v => !v)}
+        >
+          <span className="text-sm font-medium text-muted-foreground">Forgot your password?</span>
+          <span className="text-xs text-primary">{showTokenReset ? 'Hide' : 'Show'}</span>
+        </button>
+        {showTokenReset && (
+          <form onSubmit={handleTokenReset} className="space-y-4 pt-2 border-t border-primary/10">
+            <p className="text-xs text-muted-foreground">
+              If you have set a <code className="bg-primary/10 px-1 rounded">RESET_TOKEN</code> environment variable on the server, enter it below along with your new password.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="reset-token">Reset Token</Label>
+              <Input
+                id="reset-token"
+                type="password"
+                value={resetToken}
+                onChange={(e) => setResetToken(e.target.value)}
+                placeholder="Enter RESET_TOKEN value"
+                className="glass-card border-primary/20"
+                required
+                disabled={tokenResetLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reset-new-password">New Password</Label>
+              <Input
+                id="reset-new-password"
+                type="password"
+                value={resetNewPassword}
+                onChange={(e) => setResetNewPassword(e.target.value)}
+                placeholder="Enter new password"
+                className="glass-card border-primary/20"
+                required
+                disabled={tokenResetLoading}
+              />
+            </div>
+            {tokenResetMessage && (
+              <div className={`text-sm p-3 rounded-lg flex items-center gap-2 ${
+                tokenResetMessage.type === 'success'
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                  : 'bg-destructive/10 text-destructive border border-destructive/20'
+              }`}>
+                {tokenResetMessage.type === 'success' ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4" />
+                )}
+                {tokenResetMessage.text}
+              </div>
+            )}
+            <Button type="submit" variant="gradient" className="w-full" disabled={tokenResetLoading}>
+              {tokenResetLoading ? 'Resetting...' : 'Reset Password'}
+            </Button>
+          </form>
+        )}
       </Card>
     </div>
   );
