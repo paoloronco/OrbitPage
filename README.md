@@ -63,9 +63,9 @@
 ### 🔒 Security Features
 
 * 🔑 Password Security → bcryptjs hashing (12 salt rounds).
-* 🛡 Token-Based Auth → JWT with signed tokens (7-day expiry).
+* 🛡 Token-Based Auth → JWT with signed tokens (12-hour expiry).
 * 💾 Database Protection → parameterized queries for SQLite, preventing SQL injection.
-* 🍪 Safe Sessions → HttpOnly + SameSite cookies to mitigate XSS/CSRF risks.
+* 🔐 Safe Sessions → token stored encrypted (AES-GCM) in localStorage; no cookies used, eliminating CSRF attack surface.
 * 🔍 Code Transparency → fully open-source for audits and improvements.
 
 ---

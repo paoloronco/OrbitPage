@@ -4,8 +4,8 @@ import { LoginForm } from "@/components/LoginForm";
 import { InitialSetup } from "@/components/InitialSetup";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme } from "@/lib/theme";
-import { isAuthenticated, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, themeApi } from "@/lib/api-client";
+import { isFirstTimeSetup } from "@/lib/auth";
+import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
 interface ProfileData {
@@ -44,12 +44,21 @@ const Admin = () => {
 
   const [theme, setTheme] = useState<ThemeConfig>(defaultTheme);
 
-  // Check authentication status and setup status on mount
+  // Check authentication status and setup status on mount.
+  // Use async token verify so a page refresh doesn't clear the session:
+  // the synchronous isAuthenticated() only checks the in-memory cache
+  // (which is wiped on refresh), while authApi.verify() decrypts the token
+  // from localStorage and confirms it with the server.
   useEffect(() => {
     const checkAuth = async () => {
       const firstTime = await isFirstTimeSetup();
       setShowSetup(firstTime);
-      setIsLoggedIn(isAuthenticated());
+      try {
+        const result = await authApi.verify();
+        setIsLoggedIn(result.valid);
+      } catch {
+        setIsLoggedIn(false);
+      }
       setIsLoading(false);
     };
     checkAuth();

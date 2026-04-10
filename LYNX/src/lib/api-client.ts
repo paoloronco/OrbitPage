@@ -113,15 +113,18 @@ const getAuthTokenAsync = async (): Promise<string | null> => {
   return val;
 };
 
-// Set auth token (encrypt before storage) and cache plaintext in memory
-const setAuthToken = (token: string): void => {
-  encryptToken(token).then(({ ivB64, ctB64 }) => {
+// Set auth token (encrypt before storage) and cache plaintext in memory.
+// Returns a Promise so callers can await storage completion before making
+// authenticated requests (avoids the race between encryption and first API call).
+const setAuthToken = (token: string): Promise<void> => {
+  return encryptToken(token).then(({ ivB64, ctB64 }) => {
     localStorage.setItem(TOKEN_STORAGE_KEY, ctB64);
     localStorage.setItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY, ivB64);
     (window as any).__lynxTokenCache = { iv: ivB64, ct: ctB64, val: token };
   }).catch(() => {
-    // Fallback: store plaintext if encryption fails, but avoid crashing
+    // Fallback: store plaintext if encryption fails
     localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    // No IV stored in fallback → getAuthTokenAsync will re-derive via decryptToken path
   });
 };
 
@@ -259,27 +262,25 @@ export const authApi = {
   },
 
   setup: async (password: string): Promise<SetupResponse> => {
-    return apiRequest<SetupResponse>('/auth/setup', {
+    const response = await apiRequest<SetupResponse>('/auth/setup', {
       method: 'POST',
       body: JSON.stringify({ password }),
-    }).then((response) => {
-      if (response.token) {
-        setAuthToken(response.token);
-      }
-      return response;
     });
+    if (response.token) {
+      await setAuthToken(response.token);
+    }
+    return response;
   },
 
   login: async (password: string): Promise<LoginResponse> => {
-    return apiRequest<LoginResponse>('/auth/login', {
+    const response = await apiRequest<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ password }),
-    }).then((response) => {
-      if (response.token) {
-        setAuthToken(response.token);
-      }
-      return response;
     });
+    if (response.token) {
+      await setAuthToken(response.token);
+    }
+    return response;
   },
 
   verify: async (): Promise<VerifyResponse> => {
@@ -299,15 +300,14 @@ export const authApi = {
   },
 
   changePassword: async (currentPassword: string, newPassword: string): Promise<ChangePasswordResponse> => {
-    return apiRequest<ChangePasswordResponse>('/auth/change-password', {
+    const response = await apiRequest<ChangePasswordResponse>('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ currentPassword, newPassword }),
-    }).then((response) => {
-      if (response.token) {
-        setAuthToken(response.token);
-      }
-      return response;
     });
+    if (response.token) {
+      await setAuthToken(response.token);
+    }
+    return response;
   },
 };
 
