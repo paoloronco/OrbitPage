@@ -1,13 +1,10 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22-alpine AS builder
 
-LABEL org.opencontainers.image.version="3.5.4"
+LABEL org.opencontainers.image.version="3.6.0"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
-
-# Upgrade npm to latest to get patched bundled deps (tar, minimatch, glob)
-RUN npm install -g npm@latest
 
 # Tool necessari per dipendenze native (es. sqlite3)
 RUN apk add --no-cache python3 make g++
@@ -29,7 +26,7 @@ COPY LYNX/server/*.js ./
 # ---------- STAGE 2: runtime ----------
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.version="3.5.4"
+LABEL org.opencontainers.image.version="3.6.0"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
