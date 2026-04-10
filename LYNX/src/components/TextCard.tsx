@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X } from "lucide-react";
+import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff } from "lucide-react";
 import { LinkData } from "./LinkCard";
 
 interface TextCardProps {
@@ -119,10 +119,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
     return formatted;
   };
 
+  const isVisible = link.isActive !== false;
+
   return (
-    <Card 
+    <Card
       className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group relative ${
-        isDragging ? 'opacity-50 rotate-2' : ''
+        isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
       } ${link.url ? 'cursor-pointer' : ''} ${isEditing ? 'admin-edit' : ''}`}
       onClick={handleClick}
       style={getCustomStyles()}
@@ -453,6 +455,15 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   ▼
                 </Button>
               )}
+              <Button
+                onClick={() => onUpdate({ ...link, isActive: !isVisible })}
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8"
+                title={isVisible ? 'Hide card' : 'Show card'}
+              >
+                {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
+              </Button>
               <Button
                 onClick={() => setIsEditing(true)}
                 variant="ghost"

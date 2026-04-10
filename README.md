@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-3.5.4-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-3.6.0-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link manager that helps you gather all your digital touchpoints in a single page, with secure authentication and a fully customizable design.
 
@@ -50,6 +50,9 @@
 * 📇 Flexible Link Management → create classic links, bulleted lists, or text cards (full-card clickable).
 * 🖼 Rich Media Support → add icons, emojis, or images to your links.
 * 🛠 Admin Dashboard → manage profile, links, and themes in a clean UI.
+* 👁 Live Preview → real-time preview of your public page directly inside the admin panel.
+* 🙈 Link Visibility Toggle → hide/show links without deleting them; hidden links are invisible to visitors.
+* 📱 Mobile Drag & Drop → reorder links via touch on any mobile device.
 * 📦 Import/Export → backup and restore links & themes in JSON with one click.
 * 🌍 Deploy Anywhere → easy setup on Railway, Render, Docker, GCP, DigitalOcean, Fly.io, and more.
 * 📱 Mobile-First → responsive design that looks great on any device.
@@ -199,6 +202,28 @@ You can deploy **Lynx** on [Railway](https://railway.com) in a few steps:
 
 ## 📝 Changelog
 
+### v3.6.0
+
+#### ✨ New Features
+* **Live Preview tab** → new Preview tab in the admin panel renders a real-time scaled preview of your public page (profile, links, and theme) without leaving the dashboard.
+* **View Public Page button** → quick-access button in the admin header opens the public page in a new tab instantly.
+* **Link visibility toggle** → hide/show any link or card without deleting it. Hidden links are dimmed in the admin list and invisible to public visitors. Uses the existing `is_active` database column.
+* **Mobile drag & drop** → reordering links now works on touch screens via native touch events (`touchstart`/`touchmove`/`touchend`), no external libraries required.
+
+#### 🔒 Security & Code Quality
+* **Removed sensitive production logs** → `authenticateUser` no longer logs password hashes, salts, or bcrypt internals to stdout in any environment.
+* **Removed dead Supabase/Firebase code** → deleted `src/integrations/supabase/` and `src/lib/supabase-data.ts`; reduces bundle size and eliminates confusion.
+* **Fixed duplicate database migration** → `ALTER TABLE` for `title_font_size` and `description_font_size` was silently executed twice; deduplicated.
+* **Removed debug console.log from `PublicLinkCard`** → no longer prints link data on every render.
+
+#### 🔧 Improvements
+* Admin `GET /api/links` returns **all links** (including hidden) when called with a valid JWT; public requests still receive only active links.
+* `is_active` flag is now correctly persisted on save (previously always forced to `1`).
+* Tab labels collapse to icon-only on mobile to accommodate the new Preview tab.
+* Typo fixed: "Add bulled list" → "Add bulleted list".
+
+---
+
 ### v3.5.1
 
 #### 🔒 Security Updates
@@ -262,8 +287,11 @@ You can deploy **Lynx** on [Railway](https://railway.com) in a few steps:
 ## 📌 To-Do / Next Steps
 
 ### 🔧 Admin
-- **Code**
-  - Code cleaning & refactoring: removing unnecessary parts, obsolete code, and unused dependencies (e.g., leftover Supabase or Firebase integrations).
+- Analytics: click counters per link with a chart in the admin panel (recharts already included).
+- More social icons: YouTube, TikTok, Discord, Telegram, WhatsApp.
+- Link scheduler: auto show/hide links based on a date range.
+- Section separators: visual dividers to group links with a heading.
+- "Copy link" button on public cards.
 
 ---
 

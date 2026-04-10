@@ -10,6 +10,7 @@ import {
   setupInitialCredentials,
   authenticateUser,
   generateToken,
+  verifyToken,
   authenticateToken,
   isPasswordStrong,
   generateSecurePassword
@@ -337,9 +338,16 @@ app.get('/api/links', async (req, res) => {
     res.set('Vary', '*');
     res.set('Last-Modified', new Date().toUTCString());
     
-    console.log('[/api/links] Fetching links from database...');
-    const links = await dbAll('SELECT * FROM links WHERE is_active = 1 ORDER BY sort_order');
-    console.log(`[/api/links] Found ${links.length} links in database`);
+    // Authenticated admin requests receive all links (including hidden ones)
+    const authHeader = req.headers['authorization'];
+    const rawToken = authHeader?.split(' ')[1];
+    const isAdmin = rawToken ? !!verifyToken(rawToken) : false;
+
+    const query = isAdmin
+      ? 'SELECT * FROM links ORDER BY sort_order'
+      : 'SELECT * FROM links WHERE is_active = 1 ORDER BY sort_order';
+
+    const links = await dbAll(query);
     
     // Format links for response
     const formattedLinks = links.map(link => {
@@ -529,7 +537,8 @@ const LinkSchema = z.object({
   descriptionFontFamily: z.string().max(200).nullable().optional(),
   alignment: z.enum(['left','center','right']).nullable().optional(),
   size: z.string().max(50).nullable().optional(),
-  content: z.string().max(10000).nullable().optional()
+  content: z.string().max(10000).nullable().optional(),
+  isActive: z.boolean().optional().default(true)
 }).strip();
 
 const LinksPayloadSchema = z.array(LinkSchema).max(200);
@@ -632,7 +641,7 @@ app.put('/api/links', authenticateToken, async (req, res) => {
             link.type || 'link',
             textItemsValue,
             i,
-            1,
+            link.isActive !== false ? 1 : 0,
             link.backgroundColor || null,
             link.textColor || null,
             link.size || null,

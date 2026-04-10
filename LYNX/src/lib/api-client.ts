@@ -204,6 +204,7 @@ interface LinkItem {
   size?: 'small' | 'medium' | 'large';
   content?: string;
   textItems?: Array<{ text: string; url?: string }>;
+  isActive?: boolean;
 }
 
 // API request helper with auth

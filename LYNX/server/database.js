@@ -91,8 +91,6 @@ export const initializeDatabase = () => {
   db.run(`ALTER TABLE links ADD COLUMN text_alignment TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN title_font_size TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN description_font_size TEXT`, (err) => { /* ignore if exists */ });
-  db.run(`ALTER TABLE links ADD COLUMN title_font_size TEXT`, (err) => { /* ignore if exists */ });
-  db.run(`ALTER TABLE links ADD COLUMN description_font_size TEXT`, (err) => { /* ignore if exists */ });
       // Theme configuration table
       db.run(`
         CREATE TABLE IF NOT EXISTS theme_config (

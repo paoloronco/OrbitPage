@@ -1,10 +1,11 @@
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
+import { LivePreview } from "./LivePreview";
 import { LinkData } from "./LinkCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Link, Palette, User, Key } from "lucide-react";
+import { LogOut, Link, Palette, User, Key, ExternalLink, Eye } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
@@ -13,6 +14,18 @@ interface ProfileData {
   name: string;
   bio: string;
   avatar: string;
+  showAvatar?: boolean;
+  socialLinks?: {
+    linkedin?: string;
+    github?: string;
+    instagram?: string;
+    facebook?: string;
+    twitter?: string;
+  };
+  nameFontSize?: string;
+  bioFontSize?: string;
+  tabTitle?: string;
+  metaDescription?: string;
 }
 
 interface AdminViewProps {
@@ -51,30 +64,43 @@ export const AdminView = ({
                 Lynx - Your personal links hub
               </h1>
             </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <a href="/" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">View Public Page</span>
+                  <span className="sm:hidden">Preview</span>
+                </Button>
+              </a>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
         
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto">
+          <TabsList className="grid grid-cols-5 w-full max-w-2xl mx-auto">
             <TabsTrigger value="profile" className="flex items-center gap-1">
               <User className="w-4 h-4" />
-              Profile
+              <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
             <TabsTrigger value="links" className="flex items-center gap-1">
               <Link className="w-4 h-4" />
-              Links
+              <span className="hidden sm:inline">Links</span>
             </TabsTrigger>
             <TabsTrigger value="theme" className="flex items-center gap-1">
               <Palette className="w-4 h-4" />
-              Theme
+              <span className="hidden sm:inline">Theme</span>
             </TabsTrigger>
             <TabsTrigger value="security" className="flex items-center gap-1">
               <Key className="w-4 h-4" />
-              Security
+              <span className="hidden sm:inline">Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="preview" className="flex items-center gap-1">
+              <Eye className="w-4 h-4" />
+              <span className="hidden sm:inline">Preview</span>
             </TabsTrigger>
           </TabsList>
 
@@ -107,6 +133,15 @@ export const AdminView = ({
           <TabsContent value="security" className="space-y-6">
             <div className="max-w-md mx-auto">
               <PasswordManager />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preview" className="space-y-4">
+            <div className="max-w-md mx-auto">
+              <p className="text-xs text-muted-foreground text-center mb-3">
+                Showing saved state — click Save in each tab to see your latest changes.
+              </p>
+              <LivePreview profile={profile} links={links} theme={theme} />
             </div>
           </TabsContent>
         </Tabs>

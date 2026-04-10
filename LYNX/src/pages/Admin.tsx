@@ -95,7 +95,8 @@ const Admin = () => {
             textColor: link.textColor,
             size: link.size,
             content: link.content,
-            textItems: link.textItems
+            textItems: link.textItems,
+            isActive: link.isActive !== false,
           }));
           // Ensure typography fields are preserved in normalized links
           const fullyNormalized = formattedLinks.map(link => ({
@@ -202,7 +203,8 @@ const Admin = () => {
         alignment: (link as any).alignment || undefined,
         titleFontSize: (link as any).titleFontSize || undefined,
         descriptionFontSize: (link as any).descriptionFontSize || undefined,
-        textItems: link.textItems
+        textItems: link.textItems,
+        isActive: link.isActive !== false,
       }));
       setLinks(normalized);
     } catch (error: any) {

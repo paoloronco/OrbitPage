@@ -51,35 +51,16 @@ export const setupInitialCredentials = async (password) => {
 // Authenticate user against database
 export const authenticateUser = async (password) => {
   try {
-    console.log('Authenticating admin user...');
-    
     const user = await dbGet(
       'SELECT username, password_hash, salt FROM admin_users WHERE username = ?',
-      ['admin'] // Only look for 'admin' user
+      ['admin']
     );
-    
+
     if (!user) {
-      console.log('Admin user not found in database');
       return false;
     }
-    
-    console.log('Found admin user in database');
-    console.log('Stored hash:', user.password_hash);
-    
-    // Log the first few characters of the stored hash and salt for debugging
-    console.log(`Stored hash (first 10 chars): ${user.password_hash?.substring(0, 10)}...`);
-    console.log(`Stored salt: ${user.salt}`);
-    
-    // Use bcrypt.compare to verify the password
-    console.log('Verifying password...');
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    
-    if (!isMatch) {
-      console.log('Authentication failed');
-    } else {
-      console.log('Authentication successful');
-    }
-    
     return isMatch;
   } catch (error) {
     console.error('Error in authenticateUser:', error);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Link, List, Type, Upload, Download } from "lucide-react";
@@ -17,6 +17,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const touchDragRef = useRef<{ id: string; lastTarget: string | null } | null>(null);
   const { toast } = useToast();
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
@@ -118,6 +119,37 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
   };
 
   const handleDragEnd = () => {
+    setDraggedItem(null);
+    setDragOverId(null);
+  };
+
+  // --- Touch drag & drop (mobile) ---
+  const handleTouchStart = (e: React.TouchEvent, id: string) => {
+    touchDragRef.current = { id, lastTarget: null };
+    setDraggedItem(id);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchDragRef.current) return;
+    e.preventDefault(); // prevent page scroll while dragging
+    const touch = e.touches[0];
+    const cardElements = document.querySelectorAll<HTMLElement>('[data-link-id]');
+    for (const el of Array.from(cardElements)) {
+      const rect = el.getBoundingClientRect();
+      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        const targetId = el.dataset.linkId!;
+        if (targetId !== touchDragRef.current.id && targetId !== touchDragRef.current.lastTarget) {
+          touchDragRef.current.lastTarget = targetId;
+          setDragOverId(targetId);
+          performReorder(touchDragRef.current.id, targetId);
+        }
+        break;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchDragRef.current = null;
     setDraggedItem(null);
     setDragOverId(null);
   };
@@ -246,7 +278,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
             className="gap-2"
           >
             <List className="w-4 h-4" />
-            Add bulled list
+            Add bulleted list
           </Button>
           <Button 
             onClick={addNewTextCard}
@@ -287,7 +319,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
                 </Button>
                 <Button onClick={addNewBulletedList} variant="outline">
                   <List className="w-4 h-4 mr-2" />
-                  Add bulled list
+                  Add bulleted list
                 </Button>
                 <Button onClick={addNewTextCard} variant="outline">
                   <Type className="w-4 h-4 mr-2" />
@@ -301,12 +333,16 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
           {workingLinks.map((link) => (
             <div
               key={link.id}
+              data-link-id={link.id}
               draggable
               onDragStart={(e) => handleDragStart(e, link.id)}
               onDragOver={handleDragOver}
               onDragEnter={() => handleDragEnter(link.id)}
               onDrop={(e) => handleDrop(e, link.id)}
               onDragEnd={handleDragEnd}
+              onTouchStart={(e) => handleTouchStart(e, link.id)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               className={dragOverId === link.id ? 'ring-2 ring-primary/40 rounded-lg' : ''}
             >
               {link.type === 'text' ? (

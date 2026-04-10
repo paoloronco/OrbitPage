@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, ExternalLink, GripVertical, Upload, Palette } from "lucide-react";
+import { Edit, Trash2, ExternalLink, GripVertical, Upload, Eye, EyeOff } from "lucide-react";
 
 export interface LinkData {
   id: string;
@@ -25,6 +25,7 @@ export interface LinkData {
   alignment?: 'left' | 'center' | 'right';
   size?: 'small' | 'medium' | 'large';
   type?: 'link' | 'text';
+  isActive?: boolean; // Visibility toggle (undefined treated as true)
   content?: string; // For text-only cards
   textItems?: Array<{
     text: string;
@@ -109,10 +110,12 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
     }
   };
 
+  const isVisible = link.isActive !== false;
+
   return (
-    <Card 
+    <Card
       className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group cursor-pointer relative ${
-        isDragging ? 'opacity-50 rotate-2' : ''
+        isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
       } ${isEditing ? 'admin-edit' : ''}`}
       onClick={handleClick}
       style={getCustomStyles()}
@@ -360,6 +363,15 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   ▼
                 </Button>
               )}
+              <Button
+                onClick={() => onUpdate({ ...link, isActive: !isVisible })}
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8"
+                title={isVisible ? 'Hide link' : 'Show link'}
+              >
+                {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
+              </Button>
               <Button
                 onClick={() => setIsEditing(true)}
                 variant="ghost"

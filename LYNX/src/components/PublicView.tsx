@@ -16,14 +16,17 @@ interface PublicViewProps {
 
 export const PublicView = ({ profile, links }: PublicViewProps) => {
   const visibleLinks = links.filter(link => {
+    // Respect visibility toggle
+    if (link.isActive === false) return false;
+
     // Always include links with personalizations, even if they're missing some fields
     if (link.backgroundColor || link.textColor || link.icon) {
       return true;
     }
-    
+
     if (link.type === 'text') {
-      return link.title.trim() !== '' && 
-        ((link.content?.trim() !== '') || 
+      return link.title.trim() !== '' &&
+        ((link.content?.trim() !== '') ||
          (link.textItems && link.textItems.length > 0 && link.textItems.some(item => item.text.trim() !== '')));
     }
     return link.title.trim() !== '' && link.url.trim() !== '';

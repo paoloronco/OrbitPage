@@ -58,15 +58,6 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     loadIcon();
   }, [link.icon]);
   
-  // Debug log to help diagnose icon issues
-  console.log('Rendering PublicLinkCard with link:', {
-    id: link.id,
-    title: link.title,
-    icon: link.icon,
-    iconUrl,
-    iconType: link.iconType,
-    hasIcon: !!link.icon
-  });
   const handleClick = () => {
     if (link.url) {
       window.open(link.url, '_blank');
