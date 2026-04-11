@@ -26,6 +26,8 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const { version: APP_VERSION } = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
+
 function safeJsonParse(jsonString, defaultValue = {}) {
   try {
     if (typeof jsonString !== 'string') {
@@ -1177,7 +1179,7 @@ app.use((err, req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    version: '3.7.0',
+    version: APP_VERSION,
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     node: process.version,
