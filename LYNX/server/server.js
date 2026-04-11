@@ -127,7 +127,11 @@ if (!fs.existsSync(uploadsPath)) {
 }
 
 // Serve static files from the dist directory
-app.use(express.static(distPath));
+app.use(express.static(distPath, {
+  setHeaders: (res, path) => {
+    console.log(`Serving static file: ${path}`);
+  }
+}));
 
 // Serve uploaded files from the uploads directory
 app.use('/uploads', express.static(uploadsPath, {
@@ -1254,6 +1258,7 @@ app.get('/health', (req, res) => {
 
 // Catch-all route for SPA
 app.get('*', spaLimiter, (req, res) => {
+  console.log(`SPA catch-all serving index.html for: ${req.path}`);
   res.sendFile(join(__dirname, '../dist/index.html'));
 });
 

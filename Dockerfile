@@ -14,6 +14,8 @@ WORKDIR /app/LYNX
 COPY LYNX/package*.json ./
 RUN npm ci
 COPY LYNX/ ./
+# Ensure clean build by removing any existing dist
+RUN rm -rf dist
 RUN npm run build
 
 # --- Server (cartella: /LYNX/server) ---
