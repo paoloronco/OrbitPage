@@ -52,6 +52,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const ENABLE_HTTPS = String(process.env.ENABLE_HTTPS || '').toLowerCase() === 'true' || process.env.ENABLE_HTTPS === '1';
 const SSL_PORT = Number.parseInt(process.env.SSL_PORT || '', 10) || 8443;
+// In production (Docker), frontend and backend are same-origin, so use 'self'
+// In development, use explicit localhost URL for CORS/CSP
+const IS_PRODUCTION = !process.env.FRONTEND_URL;
 const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
 // Ensure correct client IP detection when behind a proxy/load balancer
 // This is important so express-rate-limit keys by the real client IP
@@ -59,7 +62,7 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: IS_PRODUCTION ? true : FRONTEND_URL, // true allows any origin in production (same-origin)
   credentials: true
 }));
 app.use(helmet({
@@ -69,7 +72,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'", FRONTEND_URL],
+      connectSrc: IS_PRODUCTION ? ["'self'"] : ["'self'", FRONTEND_URL],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -1227,8 +1230,13 @@ app.get('*', spaLimiter, (req, res) => {
 
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`HTTP server running on port ${PORT}`);
-  console.log(`Frontend: http://localhost:${PORT}`);
-  console.log(`API: http://localhost:${PORT}/api`);
+  if (IS_PRODUCTION) {
+    console.log(`Production mode: Frontend and API served from same origin`);
+    console.log(`Access your Lynx instance at: http://your-domain:${PORT}`);
+  } else {
+    console.log(`Frontend: ${FRONTEND_URL}`);
+    console.log(`API: ${FRONTEND_URL}/api`);
+  }
   console.log('Rate limiting active:');
   console.log('- Global API: 300 requests/15min per IP');
   console.log('- Auth endpoints: 20 requests/15min per IP');
