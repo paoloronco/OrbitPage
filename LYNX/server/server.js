@@ -382,7 +382,7 @@ app.get('/api/links', async (req, res) => {
   titleFontSize: link.title_font_size || undefined,
   descriptionFontSize: link.description_font_size || undefined,
         textColor: link.text_color || undefined,
-        order: link.link_order || 0,
+        order: link.sort_order || 0,
         size: link.size || 'medium',
         isActive: link.is_active !== 0,
         clickCount: link.click_count || 0,
@@ -465,30 +465,29 @@ app.post('/api/links/import', authenticateToken, async (req, res) => {
     // Validate the incoming data against our schema
     const validationResult = LinksPayloadSchema.safeParse(req.body);
     if (!validationResult.success) {
-      return res.status(400).json({ 
-        error: 'Invalid link data', 
-        details: validationResult.error 
+      return res.status(400).json({
+        error: 'Invalid link data',
+        details: validationResult.error
       });
     }
 
     const links = validationResult.data;
-    
-    // Start transaction for atomic import
-    await dbRun('BEGIN TRANSACTION');
 
-    try {
+    await withTransaction(async () => {
       // Clear existing links
       await dbRun('DELETE FROM links');
-      
-      // Insert new links
+
+      // Insert new links, preserving all fields including analytics and scheduling
       for (const [index, link] of links.entries()) {
         await dbRun(
           `INSERT INTO links (
             id, title, description, url, type, icon, icon_type,
             background_color, text_color, size, content,
             title_font_family, description_font_family,
-            text_alignment, text_items, sort_order, is_active
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            text_alignment, title_font_size, description_font_size,
+            text_items, sort_order, is_active,
+            click_count, start_date, end_date
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
@@ -504,19 +503,20 @@ app.post('/api/links/import', authenticateToken, async (req, res) => {
             link.titleFontFamily,
             link.descriptionFontFamily,
             link.alignment,
+            link.titleFontSize || null,
+            link.descriptionFontSize || null,
             link.textItems ? JSON.stringify(link.textItems) : null,
             index,
-            1
+            link.isActive !== false ? 1 : 0,
+            link.clickCount || 0,
+            link.startDate || null,
+            link.endDate || null
           ]
         );
       }
-      
-      await dbRun('COMMIT');
-      res.json({ success: true, count: links.length });
-    } catch (error) {
-      await dbRun('ROLLBACK');
-      throw error;
-    }
+    });
+
+    res.json({ success: true, count: links.length });
   } catch (error) {
     console.error('Import error:', error);
     res.status(500).json({ error: 'Failed to import links' });
@@ -565,6 +565,8 @@ const LinkSchema = z.object({
   isActive: z.boolean().optional().default(true),
   startDate: z.string().max(10).nullable().optional(),
   endDate: z.string().max(10).nullable().optional(),
+  // clickCount is preserved on import so analytics survive a round-trip export/import
+  clickCount: z.number().int().nonnegative().nullable().optional(),
 }).strip();
 
 const LinksPayloadSchema = z.array(LinkSchema).max(200);
@@ -1238,7 +1240,7 @@ app.listen(PORT, '0.0.0.0', async () => {
       const selfsigned = mod.default || mod;
       const attrs = [{ name: 'commonName', value: 'localhost' }];
       const pems = selfsigned.generate(attrs, {
-        days: 7,
+        days: 365,
         keySize: 2048,
         algorithm: 'sha256'
       });
