@@ -88,7 +88,7 @@ Credentials:
   *(prerequisite: Node.js 18+)*
   ```bash
     git clone https://github.com/paoloronco/Lynx.git
-    cd Lynx
+    cd Lynx/LYNX
     npm install
     npm run build
     cd server
@@ -123,7 +123,7 @@ You can run **Lynx** directly using the pre-built image from [Docker Hub](https:
       -e PORT=8080 \
       -e JWT_SECRET="your-very-secret-key" \
       -e ENABLE_HTTPS=true \
-      -v lynx_data:/app/server \
+      -v lynx_data:/app/data \
       paueron/lynx:latest
     ```
     > ⚠️ Since version v3.5.0, the container requires a JWT_SECRET to start.
@@ -153,11 +153,11 @@ You can deploy **Lynx** on [Railway](https://railway.com) in a few steps:
 3. Set the following commands:
    - **Build Command**
      ```bash
-     npm install && npm run build && cd server && npm install
+     cd LYNX && npm install && npm run build && cd server && npm install
      ```
    - **Start Command**
      ```bash
-     npm run start
+     cd LYNX && npm run start
      ```
 4. Add environment variables:
      ```bash

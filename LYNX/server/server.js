@@ -757,9 +757,9 @@ app.put('/api/theme', authenticateToken, async (req, res) => {
     const themeConfig = parseResult.data;
 
     // Extract basic colors for backward compatibility
-    const primary = (themeConfig.primary as string) || '#007bff';
-    const background = (themeConfig.background as string) || '#ffffff';
-    const foreground = (themeConfig.foreground as string) || '#000000';
+    const primary = String(themeConfig.primary || '#007bff');
+    const background = String(themeConfig.background || '#ffffff');
+    const foreground = String(themeConfig.foreground || '#000000');
 
     // Check if theme exists
     const existing = await dbGet('SELECT id FROM theme_config LIMIT 1');
