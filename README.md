@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-3.6.0-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-3.7.0-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link manager that helps you gather all your digital touchpoints in a single page, with secure authentication and a fully customizable design.
 
@@ -201,6 +201,26 @@ You can deploy **Lynx** on [Railway](https://railway.com) in a few steps:
 ---
 
 ## 📝 Changelog
+
+### v3.7.0
+
+#### 🔧 Critical Fixes
+* **Fixed production blank page issue** → resolved CORS/CSP headers blocking API calls in production containers, causing white screen instead of rendered UI.
+* **Fixed asset serving in Docker** → CSS/JS files were returning HTML instead of actual assets due to stale build artifacts; added clean build process to ensure fresh assets.
+* **Fixed legacy database migration** → resolved issues with database schema updates and validation during startup.
+* **Fixed missing fs import** → added missing `fs` module import in `database.js` preventing Docker container startup.
+
+#### 🔒 Security & Production Stability
+* **Enhanced CORS handling** → improved production CORS configuration to allow request origins while maintaining security.
+* **Updated CSP headers** → refined Content Security Policy for production environments with proper localhost debugging support.
+* **Added asset serving logging** → implemented debug logging for static file serving to help diagnose production issues.
+
+#### 🔧 Improvements
+* **Docker build optimization** → added `rm -rf dist` before frontend build to prevent stale assets in containers.
+* **Better error handling** → improved database migration error handling and validation.
+* **Enhanced logging** → added comprehensive logging for troubleshooting production deployments.
+
+---
 
 ### v3.6.0
 
