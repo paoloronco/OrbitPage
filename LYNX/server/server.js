@@ -285,23 +285,51 @@ app.get('/api/profile', async (req, res) => {
   }
 });
 
+const SocialLinksSchema = z.record(z.string().max(2048)).optional().default({});
+
+const ProfileSchema = z.object({
+  // Accept both camelCase and snake_case field names sent by different frontend versions
+  name: z.string().max(200).optional().default(''),
+  bio: z.string().max(2000).optional().default(''),
+  // Avatar: data URL, http(s) URL, relative path, or empty string
+  avatar: z.string().max(5_000_000).optional().default(''),
+  socialLinks: SocialLinksSchema,
+  social_links: SocialLinksSchema,
+  showAvatar: z.union([z.boolean(), z.number()]).optional(),
+  show_avatar: z.union([z.boolean(), z.number()]).optional(),
+  nameFontSize: z.string().max(50).nullable().optional(),
+  name_font_size: z.string().max(50).nullable().optional(),
+  bioFontSize: z.string().max(50).nullable().optional(),
+  bio_font_size: z.string().max(50).nullable().optional(),
+  tabTitle: z.string().max(200).nullable().optional(),
+  tab_title: z.string().max(200).nullable().optional(),
+  metaDescription: z.string().max(500).nullable().optional(),
+  meta_description: z.string().max(500).nullable().optional(),
+}).strip();
+
 app.put('/api/profile', authenticateToken, async (req, res) => {
   try {
+    const parseResult = ProfileSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: 'Invalid profile data', details: parseResult.error.issues });
+    }
+
+    const body = parseResult.data;
     // Accept both camelCase and snake_case payloads from different frontend versions
-    const name = req.body.name;
-    const bio = req.body.bio;
-    const avatar = req.body.avatar;
-    const socialLinks = req.body.socialLinks ?? req.body.social_links ?? {};
-  const nameFontSize = req.body.nameFontSize ?? req.body.name_font_size ?? null;
-  const bioFontSize = req.body.bioFontSize ?? req.body.bio_font_size ?? null;
-    const tabTitle = req.body.tabTitle ?? req.body.tab_title ?? null;
-    const metaDescription = req.body.metaDescription ?? req.body.meta_description ?? null;
-    const showAvatarRaw = req.body.showAvatar ?? req.body.show_avatar;
+    const name = body.name ?? '';
+    const bio = body.bio ?? '';
+    const avatar = body.avatar ?? '';
+    const socialLinks = body.socialLinks ?? body.social_links ?? {};
+    const nameFontSize = body.nameFontSize ?? body.name_font_size ?? null;
+    const bioFontSize = body.bioFontSize ?? body.bio_font_size ?? null;
+    const tabTitle = body.tabTitle ?? body.tab_title ?? null;
+    const metaDescription = body.metaDescription ?? body.meta_description ?? null;
+    const showAvatarRaw = body.showAvatar ?? body.show_avatar;
     const showAvatar = typeof showAvatarRaw === 'number' ? showAvatarRaw !== 0 : !!showAvatarRaw;
 
     // Check if profile exists
     const existing = await dbGet('SELECT id FROM profile_data LIMIT 1');
-    
+
     if (existing) {
       await dbRun(
         'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -313,7 +341,7 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
         [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription]
       );
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to save profile' });
@@ -688,18 +716,34 @@ app.get('/api/theme', async (req, res) => {
   }
 });
 
+const ThemeSchema = z.object({
+  primary: z.string().max(100).optional(),
+  background: z.string().max(100).optional(),
+  foreground: z.string().max(100).optional(),
+  fontFamily: z.string().max(300).optional(),
+  buttonStyle: z.string().max(50).optional(),
+  linkStyle: z.string().max(50).optional(),
+  customCSS: z.string().max(50_000).optional(),
+  // Allow any additional string/number/boolean theme keys (color values, sizes, etc.)
+}).catchall(z.union([z.string().max(50_000), z.number(), z.boolean(), z.null()]));
+
 app.put('/api/theme', authenticateToken, async (req, res) => {
   try {
-    const themeConfig = req.body;
-    
+    const parseResult = ThemeSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: 'Invalid theme data', details: parseResult.error.issues });
+    }
+
+    const themeConfig = parseResult.data;
+
     // Extract basic colors for backward compatibility
-    const primary = themeConfig.primary || '#007bff';
-    const background = themeConfig.background || '#ffffff';
-    const foreground = themeConfig.foreground || '#000000';
-    
+    const primary = (themeConfig.primary as string) || '#007bff';
+    const background = (themeConfig.background as string) || '#ffffff';
+    const foreground = (themeConfig.foreground as string) || '#000000';
+
     // Check if theme exists
     const existing = await dbGet('SELECT id FROM theme_config LIMIT 1');
-    
+
     if (existing) {
       await dbRun(
         'UPDATE theme_config SET primary_color = ?, background_color = ?, text_color = ?, full_config = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -711,7 +755,7 @@ app.put('/api/theme', authenticateToken, async (req, res) => {
         [primary, background, foreground, JSON.stringify(themeConfig)]
       );
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to save theme' });
