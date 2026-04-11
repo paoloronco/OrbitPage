@@ -9,6 +9,19 @@ const __dirname = dirname(__filename);
 // When running locally without the env var, data lives next to server.js.
 const dataDir = process.env.DATA_DIR || __dirname;
 const dbPath = join(dataDir, 'lynx.db');
+const legacyDbPath = join(__dirname, 'lynx.db');
+
+// If the app is configured to use a separate persistent data directory,
+// preserve any existing legacy database stored next to the server source.
+if (dataDir !== __dirname && fs.existsSync(legacyDbPath) && !fs.existsSync(dbPath)) {
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.copyFileSync(legacyDbPath, dbPath);
+    console.log('Copied legacy database from', legacyDbPath, 'to', dbPath);
+  } catch (copyErr) {
+    console.error('Failed to migrate legacy database to DATA_DIR:', copyErr);
+  }
+}
 
 // Create database connection with proper configuration for persistence
 const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE | sqlite3.OPEN_FULLMUTEX, (err) => {
