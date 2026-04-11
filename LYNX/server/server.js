@@ -813,9 +813,8 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
       return res.status(404).json({ success: false, error: 'Admin user not found' });
     }
 
-    // Verify current password
-    const computedHash = await bcrypt.hash(currentPassword, user.salt);
-    const isCurrentValid = computedHash === user.password_hash;
+    // Verify current password using constant-time comparison
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.password_hash);
     if (!isCurrentValid) {
       return res.status(401).json({ success: false, error: 'Current password is incorrect' });
     }
@@ -892,29 +891,6 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
   } catch (error) {
     console.error('Reset-via-token error:', error);
     res.status(500).json({ success: false, error: 'Password reset failed' });
-  }
-});
-
-// Temporary debug endpoint - remove after use
-app.get('/api/debug/admin', async (req, res) => {
-  try {
-    const admin = await dbGet('SELECT * FROM admin_users WHERE username = ?', ['admin']);
-    if (!admin) {
-      return res.json({ exists: false, message: 'No admin user found' });
-    }
-    
-    // Don't send the actual password hash and salt in production
-    res.json({
-      exists: true,
-      username: admin.username,
-      hasPassword: !!admin.password_hash,
-      passwordHashLength: admin.password_hash?.length,
-      saltLength: admin.salt?.length,
-      createdAt: admin.created_at
-    });
-  } catch (error) {
-    console.error('Debug error:', error);
-    res.status(500).json({ error: 'Debug error', details: error.message });
   }
 });
 
@@ -1135,9 +1111,12 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Accept images only
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
-      return cb(new Error('Only image files are allowed!'), false);
+    // Accept raster images only — SVG is excluded because it can carry embedded scripts (XSS)
+    const allowedExtensions = /\.(jpg|jpeg|png|gif|webp)$/i;
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (!allowedExtensions.test(file.originalname) || !allowedMimeTypes.includes(file.mimetype)) {
+      return cb(new Error('Only raster image files (jpg, png, gif, webp) are allowed'), false);
     }
     cb(null, true);
   }

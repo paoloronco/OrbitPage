@@ -121,10 +121,10 @@ const setAuthToken = (token: string): Promise<void> => {
     localStorage.setItem(TOKEN_STORAGE_KEY, ctB64);
     localStorage.setItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY, ivB64);
     (window as any).__lynxTokenCache = { iv: ivB64, ct: ctB64, val: token };
-  }).catch(() => {
-    // Fallback: store plaintext if encryption fails
-    localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    // No IV stored in fallback → getAuthTokenAsync will re-derive via decryptToken path
+  }).catch((err) => {
+    // Do NOT store the token in plaintext if encryption fails — treat as a hard error
+    console.error('Token encryption failed; session will not be persisted:', err);
+    throw err;
   });
 };
 
