@@ -32,46 +32,46 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
     return styles;
   };
 
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const isSafeUrl = (url: string) => /^https?:/i.test(url);
+
   const formatContent = (content?: string) => {
     if (!content) return null;
-    
+
+    // Escape raw content first to prevent HTML injection
+    const safe = escapeHtml(content);
+
     // Convert simple markdown-like syntax to HTML
-    let formatted = content
-      // Convert bullet points with link detection
-      .replace(/^\* (.+)$/gm, (match, text) => {
-        return `<li>${processLinkText(text)}</li>`;
-      })
-      .replace(/^- (.+)$/gm, (match, text) => {
-        return `<li>${processLinkText(text)}</li>`;
-      })
-      // Convert numbered lists with link detection
-      .replace(/^\d+\. (.+)$/gm, (match, text) => {
-        return `<li>${processLinkText(text)}</li>`;
-      })
-      // Convert line breaks
-      .replace(/\n/g, '<br/>' );
-    
+    let formatted = safe
+      .replace(/^\* (.+)$/gm, (_match, text) => `<li>${processLinkText(text)}</li>`)
+      .replace(/^- (.+)$/gm, (_match, text) => `<li>${processLinkText(text)}</li>`)
+      .replace(/^\d+\. (.+)$/gm, (_match, text) => `<li>${processLinkText(text)}</li>`)
+      .replace(/\n/g, '<br/>');
+
     // Wrap consecutive list items in ul tags
     formatted = formatted.replace(/(<li>.*?<\/li>(\s*<br\/>*)*)+/g, (match) => {
       const listItems = match.replace(/<br\/>/g, '');
       return `<ul class="list-disc list-inside space-y-1 ml-2">${listItems}</ul>`;
     });
-    
+
     return formatted;
   };
 
   const processLinkText = (text: string) => {
-    // Match pattern: label(url) or label (url)
+    // text is already HTML-escaped; match pattern: label(url) or label (url)
     const linkPattern = /^(.+?)\s*\(([^)]+)\)\s*$/;
     const match = text.match(linkPattern);
-    
+
     if (match) {
       const label = match[1].trim();
-      const url = match[2].trim();
-      const fullUrl = url.startsWith('http') ? url : `https://${url}`;
-      return `<a href="${fullUrl}" target="_blank" class="hover:underline hover:text-primary transition-colors">${label} (${url})</a>`;
+      const rawUrl = match[2].trim();
+      const fullUrl = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+      if (!isSafeUrl(fullUrl)) return text;
+      return `<a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-primary transition-colors">${label} (${rawUrl})</a>`;
     }
-    
+
     return text;
   };
 
