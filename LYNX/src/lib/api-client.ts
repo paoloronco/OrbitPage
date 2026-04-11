@@ -190,6 +190,8 @@ interface ProfileResponse extends ApiResponse {
   bio_font_size?: string;
   tab_title?: string;
   meta_description?: string;
+  footer_text?: string;
+  favicon?: string;
 }
 
 interface LinkItem {
@@ -325,7 +327,7 @@ export const profileApi = {
     });
   },
 
-  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string }): Promise<ApiResponse> => {
+  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string; footerText?: string; favicon?: string }): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>('/profile', {
       method: 'PUT',
       body: JSON.stringify({
@@ -338,7 +340,9 @@ export const profileApi = {
         name_font_size: profile.nameFontSize || undefined,
         bio_font_size: profile.bioFontSize || undefined,
         tab_title: profile.tabTitle || undefined,
-        meta_description: profile.metaDescription || undefined
+        meta_description: profile.metaDescription || undefined,
+        footer_text: profile.footerText ?? undefined,
+        favicon: profile.favicon ?? undefined,
       }),
     });
   },

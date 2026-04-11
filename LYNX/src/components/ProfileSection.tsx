@@ -34,6 +34,9 @@ interface ProfileData {
   // Site metadata
   tabTitle?: string;
   metaDescription?: string;
+  // Footer and browser bar customization
+  footerText?: string;
+  favicon?: string;
 }
 
 interface ProfileSectionProps {
@@ -290,7 +293,44 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
               rows={2}
             />
           </div>
-          
+
+          {/* Browser bar & Footer customization */}
+          <div className="space-y-3 pt-4 border-t border-primary/10">
+            <Label className="text-sm font-medium">Browser bar &amp; Footer</Label>
+            <div className="space-y-1">
+              <Label className="text-xs">Favicon (emoji or image URL)</Label>
+              <div className="flex items-center gap-2">
+                {editProfile.favicon && (
+                  <span className="text-2xl leading-none select-none" title="Preview">
+                    {editProfile.favicon.match(/^https?:\/\//) ? '🌐' : editProfile.favicon}
+                  </span>
+                )}
+                <Input
+                  value={editProfile.favicon || ''}
+                  onChange={(e) => setEditProfile(prev => ({ ...prev, favicon: e.target.value }))}
+                  placeholder="e.g. 🔗 or https://example.com/icon.png"
+                  className="glass-card border-primary/20 text-sm"
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground opacity-70">
+                Use a single emoji or paste an image URL. Leave empty for the default icon.
+              </p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Footer text</Label>
+              <Textarea
+                value={editProfile.footerText || ''}
+                onChange={(e) => setEditProfile(prev => ({ ...prev, footerText: e.target.value }))}
+                placeholder="e.g. © 2025 Your Name · All rights reserved"
+                className="glass-card border-primary/20 text-sm"
+                rows={2}
+              />
+              <p className="text-[10px] text-muted-foreground opacity-70">
+                Shown above the "Powered by Lynx" attribution (always visible).
+              </p>
+            </div>
+          </div>
+
           {/* Social Links */}
           <div className="space-y-3 pt-4 border-t border-primary/10">
             <Label className="text-sm font-medium">Social Links</Label>

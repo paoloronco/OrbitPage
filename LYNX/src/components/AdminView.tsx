@@ -36,7 +36,7 @@ interface ProfileData {
 }
 
 interface AdminViewProps {
-  profile: ProfileData;
+  profile: ProfileData & { footerText?: string };
   links: LinkData[];
   theme: ThemeConfig;
   onProfileUpdate: (profile: ProfileData) => void;
@@ -45,14 +45,14 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
-export const AdminView = ({ 
-  profile, 
-  links, 
-  theme, 
-  onProfileUpdate, 
-  onLinksUpdate, 
+export const AdminView = ({
+  profile,
+  links,
+  theme,
+  onProfileUpdate,
+  onLinksUpdate,
   onThemeChange,
-  onLogout 
+  onLogout
 }: AdminViewProps) => {
   const handleLogout = () => {
     logout();
@@ -171,9 +171,15 @@ export const AdminView = ({
           </TabsContent>
         </Tabs>
         
-        {/* Footer */}
+        {/* Footer — "Powered by Lynx" is always shown and cannot be removed */}
         <div className="text-center pt-8 pb-2 space-y-1">
+          {profile.footerText && (
+            <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
+              {profile.footerText}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground opacity-60">
+            Powered by{" "}
             <a
               href="https://github.com/paoloronco/Lynx"
               target="_blank"

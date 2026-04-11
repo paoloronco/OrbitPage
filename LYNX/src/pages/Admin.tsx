@@ -31,6 +31,8 @@ interface ProfileData {
   bioFontSize?: string;
   tabTitle?: string;
   metaDescription?: string;
+  footerText?: string;
+  favicon?: string;
 }
 
 const Admin = () => {
@@ -90,6 +92,8 @@ const Admin = () => {
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
             tabTitle: (profileData as any).tab_title || (profileData as any).tabTitle || undefined,
             metaDescription: (profileData as any).meta_description || (profileData as any).metaDescription || undefined,
+            footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
+            favicon: (profileData as any).favicon || undefined,
           });
         }
 
@@ -180,6 +184,8 @@ const Admin = () => {
         bioFontSize: newProfile.bioFontSize,
         tabTitle: newProfile.tabTitle,
         metaDescription: newProfile.metaDescription,
+        footerText: newProfile.footerText,
+        favicon: newProfile.favicon,
       });
       setProfile(newProfile);
     } catch (error: any) {

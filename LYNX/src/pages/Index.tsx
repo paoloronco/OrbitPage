@@ -18,6 +18,8 @@ interface ProfileData {
   };
   nameFontSize?: string;
   bioFontSize?: string;
+  footerText?: string;
+  favicon?: string;
 }
 
 const Index = () => {
@@ -38,20 +40,25 @@ const Index = () => {
         // Load profile data from database
         const profileData = await profileApi.get();
         if (profileData) {
+          const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
+          const favicon = (profileData as any).favicon || undefined;
           setProfile({
             name: profileData.name,
             bio: profileData.bio,
             avatar: profileData.avatar,
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
-            socialLinks: profileData.social_links || {}
+            socialLinks: profileData.social_links || {},
+            footerText,
+            favicon,
           });
-          // Apply document meta
+          // Apply document title
           const tabTitle = (profileData as any).tab_title || (profileData as any).tabTitle;
-          const metaDesc = (profileData as any).meta_description || (profileData as any).metaDescription;
           if (tabTitle && typeof tabTitle === 'string') {
             document.title = tabTitle;
           }
+          // Apply meta description
+          const metaDesc = (profileData as any).meta_description || (profileData as any).metaDescription;
           if (metaDesc && typeof metaDesc === 'string') {
             let tag = document.querySelector('meta[name="description"]');
             if (!tag) {
@@ -60,6 +67,25 @@ const Index = () => {
               document.head.appendChild(tag);
             }
             tag.setAttribute('content', metaDesc);
+          }
+          // Apply favicon (emoji or URL)
+          if (favicon && typeof favicon === 'string') {
+            let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+            if (!link) {
+              link = document.createElement('link');
+              link.rel = 'icon';
+              document.head.appendChild(link);
+            }
+            if (favicon.match(/^https?:\/\//)) {
+              // External URL
+              link.type = 'image/x-icon';
+              link.href = favicon;
+            } else {
+              // Treat as emoji — render to SVG so it shows in the tab
+              const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${favicon}</text></svg>`;
+              link.type = 'image/svg+xml';
+              link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+            }
           }
         }
 
@@ -126,6 +152,7 @@ const Index = () => {
     <PublicView
       profile={profile}
       links={links}
+      footerText={profile.footerText}
     />
   );
 };

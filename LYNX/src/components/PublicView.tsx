@@ -13,9 +13,10 @@ interface ProfileData {
 interface PublicViewProps {
   profile: ProfileData;
   links: LinkData[];
+  footerText?: string;
 }
 
-export const PublicView = ({ profile, links }: PublicViewProps) => {
+export const PublicView = ({ profile, links, footerText }: PublicViewProps) => {
   const visibleLinks = links.filter(link => {
     // Respect visibility toggle
     if (link.isActive === false) return false;
@@ -55,8 +56,13 @@ export const PublicView = ({ profile, links }: PublicViewProps) => {
           </div>
         )}
         
-        {/* Footer */}
+        {/* Footer — "Powered by Lynx" is always shown and cannot be removed */}
         <div className="text-center pt-8 pb-2 space-y-1">
+          {footerText && (
+            <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
+              {footerText}
+            </p>
+          )}
           <p className="text-xs text-muted-foreground opacity-60">
             Powered by{" "}
             <a
@@ -69,9 +75,6 @@ export const PublicView = ({ profile, links }: PublicViewProps) => {
             </a>
             {" "}
             <span className="opacity-70">v{__APP_VERSION__}</span>
-          </p>
-          <p className="text-[10px] text-muted-foreground opacity-50">
-            Developed by Paolo Ronco
           </p>
         </div>
       </div>
