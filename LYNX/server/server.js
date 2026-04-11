@@ -95,15 +95,14 @@ app.use('/uploads', express.static(uploadsPath, {
   }
 }));
 // Rate limiting
+// With `trust proxy: 1` set above, req.ip already contains the correct client IP
+// (extracted from X-Forwarded-For by Express). Avoid reading the header manually here
+// as that would bypass the trust model and allow IP spoofing.
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    // Extract IP from X-Forwarded-For if behind proxy, otherwise use remoteAddress
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  }
 });
 
 const authLimiter = rateLimit({
@@ -111,9 +110,6 @@ const authLimiter = rateLimit({
   max: 20,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  }
 });
 
 const loginLimiter = rateLimit({
@@ -122,9 +118,6 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Only count failed attempts
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-  },
   message: {
     success: false,
     error: 'Too many failed login attempts. Please try again later.'
@@ -573,91 +566,41 @@ const LinksPayloadSchema = z.array(LinkSchema).max(200);
 
 app.put('/api/links', authenticateToken, async (req, res) => {
   try {
-    console.log('[/api/links] Received request to update links');
-    console.log('[/api/links] Raw body preview:', JSON.stringify(req.body).slice(0, 2000));
     if (!Array.isArray(req.body)) {
-      console.error('[/api/links] Error: Request body is not an array');
       return res.status(400).json({ error: 'Request body must be an array of links.' });
     }
-    console.log(`[/api/links] Received ${req.body.length} links to update`);
-    // Debug: log the keys and a small sample of expected typography fields for the first item
-    try {
-      const first = req.body[0] || {};
-      const keys = Object.keys(first).slice(0, 200);
-      const safe = (v) => {
-        if (v === null || typeof v === 'undefined') return v;
-        if (typeof v === 'string') return v.length > 200 ? v.slice(0, 200) + '...<truncated>' : v;
-        return v;
-      };
-      console.log('[/api/links] Incoming first item keys:', keys);
-      console.log('[/api/links] Incoming sample typography fields:', {
-        titleFontFamily: safe(first.titleFontFamily || first.titleFont || first.title_font_family),
-        descriptionFontFamily: safe(first.descriptionFontFamily || first.description_font_family),
-        titleFontSize: safe(first.titleFontSize || first.title_font_size),
-        descriptionFontSize: safe(first.descriptionFontSize || first.description_font_size),
-        alignment: safe(first.alignment || first.text_alignment)
-      });
-    } catch (e) {
-      console.warn('[/api/links] Error preparing debug log for incoming links:', e && e.message);
-    }
-    
-    // Parse with detailed error logging
+
     const parseResult = LinksPayloadSchema.safeParse(req.body);
     if (!parseResult.success) {
-      console.error('[/api/links] Validation errors:', JSON.stringify(parseResult.error.issues, null, 2));
-      
-      // Log the first few problematic values
-      const firstError = parseResult.error.issues[0];
-      if (firstError) {
-        const path = firstError.path.join('.');
-        console.error(`[/api/links] Problem with field '${path}':`, firstError.message);
-        if (firstError.path.length > 0) {
-          const field = firstError.path[firstError.path.length - 1];
-          const exampleItem = req.body[0];
-          if (exampleItem && exampleItem[field] !== undefined) {
-            console.error(`[/api/links] Example value (first 100 chars):`, 
-              String(exampleItem[field]).substring(0, 100));
-          }
-        }
-      }
-      
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid links payload',
-        details: parseResult.error.issues 
+        details: parseResult.error.issues
       });
     }
-    
+
     const links = parseResult.data;
-    
-    // Use transaction helper for better transaction management
+
     const result = await withTransaction(async () => {
-      console.log('[/api/links] Starting transaction');
-      
-      // Delete existing links
-      console.log('[/api/links] Deleting existing links');
       await dbRun('DELETE FROM links');
-      
-      // Insert new links
-      console.log(`[/api/links] Inserting ${links.length} new links`);
+
       for (let i = 0; i < links.length; i++) {
         const link = links[i];
-        const idValue = typeof link.id === 'string' ? link.id : String(link.id);
-        console.log(`[/api/links] Inserting link ${i + 1}/${links.length}: ${link.title}`);
-        
-        // Handle base64 image data
-        const iconValue = (link.icon && typeof link.icon === 'string' && 
+
+        const iconValue = (link.icon && typeof link.icon === 'string' &&
           (link.icon.startsWith('data:image/') || link.icon.startsWith('blob:')))
           ? link.icon
           : (link.icon || null);
-          
+
         const textItemsValue = Array.isArray(link.textItems)
           ? JSON.stringify(
               link.textItems.map((item) =>
-                typeof item === 'string' ? { text: item } : { text: item.text, url: item.url || '', textColor: item.textColor || null, fontSize: item.fontSize || null, fontFamily: item.fontFamily || null }
+                typeof item === 'string'
+                  ? { text: item }
+                  : { text: item.text, url: item.url || '', textColor: item.textColor || null, fontSize: item.fontSize || null, fontFamily: item.fontFamily || null }
               )
             )
           : null;
-          
+
         await dbRun(
           'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
@@ -685,35 +628,25 @@ app.put('/api/links', authenticateToken, async (req, res) => {
           ]
         );
       }
-      
-      // Verify the links were inserted
-      const countRow = await dbGet('SELECT COUNT(*) as cnt FROM links');
-      const count = countRow?.cnt ?? 0;
-      console.log(`[/api/links] Successfully inserted ${count} links`);
-      
-      if (count !== links.length) {
-        throw new Error(`Expected to insert ${links.length} links but only inserted ${count}`);
-      }
-      
-      return { count };
+
+      return { count: links.length };
     });
-    
-    // If we get here, the transaction was successful
+
     res.json({ success: true, count: result.count });
-    
+
   } catch (error) {
-    console.error('[/api/links] Error updating links:', error);
-    
+    console.error('Error updating links:', error);
+
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ 
-        error: 'Invalid links payload', 
-        details: error.errors 
+      return res.status(400).json({
+        error: 'Invalid links payload',
+        details: error.errors
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Failed to save links',
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -992,17 +925,7 @@ const resetApplicationData = async () => {
 app.post('/api/auth/reset', authenticateToken, resetLimiter, async (req, res) => {
   try {
     console.log('Authenticated reset endpoint called by user:', req.user?.username || 'unknown');
-    
-    // Add CORS headers
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
-    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    
-    // Handle preflight
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
-    
+
     const result = await resetApplicationData();
     
     // Clear the auth token from the response
@@ -1026,17 +949,7 @@ app.post('/api/auth/reset', authenticateToken, resetLimiter, async (req, res) =>
 app.post('/api/auth/force-reset', resetLimiter, async (req, res) => {
   try {
     console.log('Force reset endpoint called');
-    
-    // Add CORS headers
-    res.header('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
-    res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, X-Reset-Token');
-    
-    // Handle preflight
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
-    
+
     // Verify reset token from environment variable or header
     const resetToken = process.env.RESET_TOKEN;
     const providedToken = req.headers['x-reset-token'];
@@ -1144,8 +1057,7 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
       encoding: req.file.encoding
     };
     
-    console.log('File uploaded successfully:', fileInfo);
-    console.log('Upload directory contents:', fs.readdirSync(uploadsPath));
+    console.log('File uploaded successfully:', fileInfo.filename, fileInfo.size, 'bytes');
 
     // Validate that the resolved file path stays within the uploads directory
     // (defense-in-depth: multer already controls the path, but we verify explicitly)
