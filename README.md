@@ -78,6 +78,20 @@
 
 ## 🚀 Quick Start
 
+### Prerequisites
+- **Node.js 18+** (for local development)
+- **Docker** (for container deployment)
+- **Git** (for cloning the repository)
+
+### Environment Variables
+The following environment variables are required for production deployment:
+
+- `JWT_SECRET` - Secret key for JWT token signing (required, minimum 32 characters)
+- `NODE_ENV` - Set to `production` for production deployments
+- `PORT` - Server port (default: 8080 for Docker, 3001 for local)
+- `ENABLE_HTTPS` - Set to `true` to enable HTTPS with self-signed certificates
+- `DATA_DIR` - Directory for persistent data storage (Docker only, default: `/app/data`)
+
 Credentials:
   User: `admin`
   Password: `ChangeMe123!`
