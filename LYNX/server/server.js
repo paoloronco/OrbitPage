@@ -62,7 +62,34 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(cors({
-  origin: IS_PRODUCTION ? true : FRONTEND_URL, // true allows any origin in production (same-origin)
+  origin: (origin, callback) => {
+    // Log the origin for debugging
+    console.log(`CORS request from origin: ${origin || 'no-origin'}, IS_PRODUCTION: ${IS_PRODUCTION}`);
+    
+    // Allow requests with no origin (like mobile apps, Postman, or direct server requests)
+    if (!origin) return callback(null, true);
+    
+    // In production (Docker), allow same-origin and common development origins
+    if (IS_PRODUCTION) {
+      // Allow localhost origins for development/debugging
+      if (origin.startsWith('http://localhost:') || origin.startsWith('https://localhost:')) {
+        console.log(`CORS: Allowing localhost origin in production: ${origin}`);
+        return callback(null, true);
+      }
+      // Allow the request origin (handles reverse proxy scenarios)
+      console.log(`CORS: Allowing request origin in production: ${origin}`);
+      return callback(null, origin);
+    }
+    
+    // In development, only allow the configured FRONTEND_URL
+    if (origin === FRONTEND_URL) {
+      console.log(`CORS: Allowing configured FRONTEND_URL in development: ${origin}`);
+      return callback(null, true);
+    }
+    
+    console.log(`CORS: Rejecting origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(helmet({
@@ -72,7 +99,9 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: IS_PRODUCTION ? ["'self'"] : ["'self'", FRONTEND_URL],
+      connectSrc: IS_PRODUCTION 
+        ? ["'self'", "http://localhost:*", "https://localhost:*"] // Allow localhost for debugging
+        : ["'self'", FRONTEND_URL],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
