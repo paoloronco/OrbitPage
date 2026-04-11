@@ -189,11 +189,3 @@ export const authenticateToken = async (req, res, next) => {
   }
 };
 
-// Generate auth token
-export const generateAuthToken = (payload) => {
-  return jwt.sign(
-    { ...payload, timestamp: Date.now() },
-    JWT_SECRET,
-    { expiresIn: '12h' }
-  );
-};

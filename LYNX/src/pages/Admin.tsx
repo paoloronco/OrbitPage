@@ -6,6 +6,7 @@ import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme } from "@/lib/theme";
 import { isFirstTimeSetup } from "@/lib/auth";
 import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
+import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
 interface ProfileData {
@@ -33,6 +34,7 @@ interface ProfileData {
 }
 
 const Admin = () => {
+  const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSetup, setShowSetup] = useState(false);
@@ -182,11 +184,15 @@ const Admin = () => {
       setProfile(newProfile);
     } catch (error: any) {
       if (error?.message === 'AUTH_EXPIRED') {
-        // Session expired: force re-authentication
         setIsLoggedIn(false);
         return;
       }
       console.error('Error saving profile:', error);
+      toast({
+        title: 'Error saving profile',
+        description: error?.message || 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -239,6 +245,11 @@ const Admin = () => {
         return;
       }
       console.error('Error saving links:', error);
+      toast({
+        title: 'Error saving links',
+        description: error?.message || 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -252,10 +263,15 @@ const Admin = () => {
     } catch (error: any) {
       if (error?.message === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);
-        throw error; // Let component-level handlers know it failed due to auth
+        throw error;
       }
       console.error('Error saving theme:', error);
-      throw error; // Re-throw to let the component handle the error
+      toast({
+        title: 'Error saving theme',
+        description: error?.message || 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+      throw error;
     }
   };
 

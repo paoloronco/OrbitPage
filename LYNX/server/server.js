@@ -892,11 +892,11 @@ const resetApplicationData = async () => {
       })
     ]);
     
-    // Insert default empty profile
+    // Insert empty profile so the public page shows nothing until the admin fills it in
     console.log('Setting up default profile...');
     await dbRun(`
       INSERT OR REPLACE INTO profile_data (id, name, bio, avatar, social_links, show_avatar)
-      VALUES (1, 'Your Name', 'A short bio about yourself', '', '{}', 1)
+      VALUES (1, '', '', '', '{}', 1)
     `);
     
     // Commit the transaction
