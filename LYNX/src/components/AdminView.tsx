@@ -10,6 +10,8 @@ import { LogOut, Link, Palette, User, Key, ExternalLink, Eye, BarChart2 } from "
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
+import { utilityApi } from "@/lib/api-client";
+import { useState, useEffect } from "react";
 
 interface ProfileData {
   name: string;
@@ -54,6 +56,22 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || '3.7.0');
+
+  // Load app version from server
+  useEffect(() => {
+    const loadVersion = async () => {
+      try {
+        const health = await utilityApi.getHealth();
+        setAppVersion(health.version);
+      } catch (error) {
+        console.warn('Failed to load app version from server, using build version:', error);
+        // Keep the build version as fallback
+      }
+    };
+    loadVersion();
+  }, []);
+
   const handleLogout = () => {
     logout();
     onLogout();
@@ -189,7 +207,7 @@ export const AdminView = ({
               Lynx
             </a>
             {" "}
-            <span className="opacity-70">v{__APP_VERSION__}</span>
+            <span className="opacity-70">v{appVersion}</span>
             {" · "}Your personal links hub
           </p>
         </div>

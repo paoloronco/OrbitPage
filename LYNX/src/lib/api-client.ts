@@ -425,4 +425,8 @@ export const utilityApi = {
       body: JSON.stringify({ password }),
     });
   },
+
+  getHealth: async (): Promise<{ status: string; version: string; timestamp: string; uptime: number; node: string }> => {
+    return apiRequest<{ status: string; version: string; timestamp: string; uptime: number; node: string }>('/health');
+  },
 };
