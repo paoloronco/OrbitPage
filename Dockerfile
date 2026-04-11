@@ -20,8 +20,10 @@ RUN npm run build
 WORKDIR /app/LYNX/server
 COPY LYNX/server/package*.json ./
 RUN npm ci --omit=dev --omit=optional
-# Copy server source files only (not node_modules or .db files)
-COPY LYNX/server/*.js ./
+# Copy only production server source files (exclude test/debug scripts)
+COPY LYNX/server/server.js ./
+COPY LYNX/server/auth.js ./
+COPY LYNX/server/database.js ./
 
 # ---------- STAGE 2: runtime ----------
 FROM node:22-alpine
