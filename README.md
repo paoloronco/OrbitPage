@@ -299,7 +299,6 @@ You can deploy **Lynx** on [Railway](https://railway.com) in a few steps:
 
 * ChatGPT
 * Claude
-* Lovable
 
 ---
 
