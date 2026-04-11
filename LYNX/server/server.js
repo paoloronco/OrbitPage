@@ -3,6 +3,7 @@ import https from 'https';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import { initializeDatabase, dbGet, dbAll, dbRun, withTransaction } from './database.js';
 import {
@@ -20,8 +21,6 @@ import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { timingSafeEqual } from 'crypto';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
