@@ -34,11 +34,11 @@
 
 ## 🧪 Demo
 
-- 🌐 [Try Lynx Demo on CloudRun] [https://lynx-demo.paoloronco.it](https://lynx-demo.paoloronco.it/)]
+- 🌐 **Try Lynx Demo** [https://lynx-demo.paoloronco.it](https://lynx-demo.paoloronco.it/)
 - **Admin Panel**: [[https://lynx-demo.paoloronco.it/admin](https://lynx-demo.paoloronco.it/admin)]
 - **Login**:  
   - User: `admin`  
-  - Password: `ChangeMe123!` (the password can't be changed)
+  - Password: `ChangeMe123!` (the password in demo can't be changed)
 
 ⚠️ The database resets automatically every 15 minutes.
 
@@ -156,7 +156,7 @@ You can run **Lynx** directly using the pre-built image from [Docker Hub](https:
     - PORT – the internal server port (default: 8080).
 
     - NODE_ENV – Node.js environment (default: production).
-</details>
+    </details>
 
 <details>
   <summary><h3>2. 🚀 Deploy on Railway</h3></summary>
