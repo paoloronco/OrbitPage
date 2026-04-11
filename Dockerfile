@@ -53,6 +53,11 @@ RUN chmod +x /app/server/docker-entrypoint.sh
 # Set default PORT environment variable
 ENV PORT=8080
 
+# Persistent data directory — mount a volume here to survive container updates:
+#   docker run -v /host/path/lynx-data:/app/data ...
+ENV DATA_DIR=/app/data
+RUN mkdir -p /app/data
+
 # Porta/e usate dal tuo stack (lasciamo entrambe)
 EXPOSE 8080 8443
 

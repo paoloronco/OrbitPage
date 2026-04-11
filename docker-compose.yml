@@ -1,0 +1,15 @@
+services:
+  lynx:
+    image: paoloronco/lynx:latest   # or build: .
+    ports:
+      - "8080:8080"
+    environment:
+      # REQUIRED: set a long, random secret (e.g. openssl rand -hex 32)
+      JWT_SECRET: "change-me-to-a-long-random-string"
+      PORT: "8080"
+      # DATA_DIR is already set to /app/data in the image; override only if needed
+      # DATA_DIR: "/app/data"
+    volumes:
+      # Mount a host directory so the database and uploads survive container updates
+      - ./lynx-data:/app/data
+    restart: unless-stopped

@@ -5,7 +5,10 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const dbPath = join(__dirname, 'lynx.db');
+// DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
+// When running locally without the env var, data lives next to server.js.
+const dataDir = process.env.DATA_DIR || __dirname;
+const dbPath = join(dataDir, 'lynx.db');
 
 // Create database connection with proper configuration for persistence
 const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE | sqlite3.OPEN_FULLMUTEX, (err) => {

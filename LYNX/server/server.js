@@ -26,7 +26,15 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const { version: APP_VERSION } = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
+let APP_VERSION = '3.7.0';
+try {
+  const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
+  APP_VERSION = pkg.version || APP_VERSION;
+} catch { /* package.json not available; use the fallback */ }
+
+// DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
+// When running locally without the env var, data lives next to server.js.
+const DATA_DIR = process.env.DATA_DIR || __dirname;
 
 function safeJsonParse(jsonString, defaultValue = {}) {
   try {
@@ -76,7 +84,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Serve static files with proper path resolution
 const distPath = join(__dirname, '../dist');
-const uploadsPath = join(__dirname, 'uploads');
+const uploadsPath = join(DATA_DIR, 'uploads');
 
 console.log('Serving static files from:', distPath);
 console.log('Serving uploads from:', uploadsPath);
