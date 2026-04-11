@@ -71,12 +71,8 @@ export const isAuthenticated = (): boolean => {
   return authApi.isAuthenticated();
 };
 
-// This function is kept for backward compatibility but is now a no-op
-// The API client handles setting the authentication token directly
-export const setAuthenticated = (_username: string): void => {
-  // No-op - token management is handled by the API client
-  console.log('setAuthenticated is deprecated - use authApi.login() instead');
-};
+// Kept for backward compatibility — token management is handled by the API client
+export const setAuthenticated = (_username: string): void => { /* no-op */ };
 
 // Logout user
 export const logout = (): void => {
@@ -144,112 +140,3 @@ export const getCurrentCredentials = async (): Promise<{ username: string } | nu
   }
 };
 
-// Security utilities
-export const clearAllAuthData = (): void => {
-  // Clear all auth-related data from localStorage
-  const preserveKeys = ['lynx-theme', 'lynx-settings']; // Preserve these keys
-  const allKeys = Object.keys(localStorage);
-  
-  allKeys.forEach(key => {
-    if (!preserveKeys.includes(key)) {
-      localStorage.removeItem(key);
-    }
-  });
-  
-  // Clear session storage as well
-  sessionStorage.clear();
-  
-  // Clear any cookies that might be used for auth
-  document.cookie.split(';').forEach(cookie => {
-    const [name] = cookie.split('=');
-    document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-  });
-};
-
-/**
- * Reset the entire application to its initial state
- * This will clear all user data and redirect to the setup page
- */
-export const resetApplication = async (force: boolean = false): Promise<{ success: boolean; message: string }> => {
-  try {
-    console.log('Starting application reset...');
-    // Clear local data first
-    clearAllAuthData();
-    
-    let result;
-    
-    try {
-      // First try the authenticated reset
-      if (!force) {
-        console.log('Trying authenticated reset...');
-        result = await authApi.reset();
-      }
-    } catch (error) {
-      console.log('Authenticated reset failed, trying force reset...', error);
-      // If authenticated reset fails, try the force reset
-      try {
-        console.log('Attempting force reset...');
-        const response = await fetch('http://localhost:3001/api/auth/force-reset', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Reset-Token': 'default-reset-token' // This should match your server's expected token
-          },
-          // Alternative: Send token in body
-          // body: JSON.stringify({ token: 'default-reset-token' })
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-        }
-        
-        result = await response.json();
-        console.log('Force reset response:', result);
-      } catch (fetchError) {
-        console.error('Force reset failed:', fetchError);
-        throw new Error(`Force reset failed: ${fetchError.message}`);
-      }
-    }
-    
-    if (result?.success) {
-      console.log('Reset successful, redirecting to setup page...');
-      // Redirect to setup page after a short delay
-      setTimeout(() => {
-        window.location.href = '/admin';
-      }, 1500);
-      
-      return result;
-    }
-    
-    throw new Error(result?.error || 'Failed to reset application');
-    
-  } catch (error) {
-    console.error('Error resetting application:', error);
-    // Even if the API call fails, clear local data and redirect
-    clearAllAuthData();
-    
-    // Redirect to setup page after a short delay
-    setTimeout(() => {
-      window.location.href = '/admin';
-    }, 1000);
-    
-    return { 
-      success: false, 
-      message: error.message || 'Application reset may be incomplete. Please refresh the page.' 
-    };
-  }
-};
-
-// Get security information
-export const getSecurityInfo = async () => {
-  const isAuth = isAuthenticated();
-  
-  return {
-    hasCredentials: isAuth, // If authenticated, we have credentials
-    isAuthenticated: isAuth,
-    username: isAuth ? 'admin' : undefined,
-    sessionExpiry: null // JWT handles expiry internally
-  };
-};

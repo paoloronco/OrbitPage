@@ -31,7 +31,6 @@ export const PasswordManager = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
   const username = 'admin'; // Fixed admin username
-  const demoMode = false; // Demo mode disabled: enable modifications
 
   // Token-based password reset state
   const [showTokenReset, setShowTokenReset] = useState(false);
@@ -136,80 +135,26 @@ export const PasswordManager = () => {
     }, 2000);
   };
 
-  const clearAllAuthData = () => {
-    // Clear all auth-related data from storage (plaintext and encrypted)
-    localStorage.removeItem('lynx-auth-token');
-    localStorage.removeItem('lynx-auth-iv-lynx-auth-token');
-    localStorage.removeItem('lynx-device-secret');
-    sessionStorage.removeItem('lynx-auth-token');
-  };
-  
-  const attemptForceReset = async (): Promise<void> => {
-    try {
-      const response = await fetch('http://localhost:3001/api/auth/force-reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Reset-Token': 'default-reset-token' // This should match your server's expected token
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to reset application');
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        handleResetSuccess();
-      } else {
-        throw new Error(result.error || 'Failed to reset application');
-      }
-    } catch (error) {
-      console.error('Force reset failed:', error.message);
-      // Even if reset fails, we should still clear local data and redirect
-      clearAllAuthData();
-      
-      // Force redirect to setup page after a delay
-      setTimeout(() => {
-        window.location.href = '/admin';
-      }, 1000);
-      
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleResetApp = async (): Promise<void> => {
     if (!window.confirm('Are you sure you want to reset the application? This will delete all data and cannot be undone.')) {
       return;
     }
-    
+
     setIsLoading(true);
     setMessage(null);
-    
+
     try {
-      // First try the authenticated reset
-      try {
-        const result = await authApi.reset();
-        
-        if (result.success) {
-          handleResetSuccess();
-          return;
-        }
-        
+      const result = await authApi.reset();
+      if (result.success) {
+        handleResetSuccess();
+      } else {
         throw new Error(result.error || 'Reset failed');
-      } catch (error) {
-        console.log('Authenticated reset failed, trying force reset...', error.message);
-        await attemptForceReset();
       }
     } catch (error: any) {
       console.error('Reset failed:', error.message);
-      setMessage({ 
-        type: 'error', 
-        text: error.message || 'Failed to reset application. Please try again.' 
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to reset application. Please try again.'
       });
     } finally {
       setIsLoading(false);
@@ -237,8 +182,8 @@ export const PasswordManager = () => {
             <span className="text-sm font-medium">Enhanced Security Active</span>
           </div>
           <div className="space-y-1 text-xs text-muted-foreground">
-            <p>✅ Passwords are hashed with PBKDF2 (10,000 iterations)</p>
-            <p>✅ Data encrypted with AES-256</p>
+            <p>✅ Passwords hashed with bcrypt (12 rounds)</p>
+            <p>✅ Session token encrypted with AES-GCM</p>
             <p>✅ Device-specific encryption keys</p>
             <p>✅ 12-hour session timeout</p>
             <p>✅ Strong password requirements</p>
