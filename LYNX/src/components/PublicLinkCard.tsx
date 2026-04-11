@@ -141,7 +141,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center overflow-hidden rounded">
+          <div className="flex-shrink-0">
             {renderIcon()}
           </div>
           <div className="flex-1 min-w-0">
