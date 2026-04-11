@@ -172,11 +172,20 @@ export const AdminView = ({
         </Tabs>
         
         {/* Footer */}
-        <div className="text-center pt-8">
+        <div className="text-center pt-8 pb-2 space-y-1">
           <p className="text-xs text-muted-foreground opacity-60">
-            Powered by <a href="https://github.com/paoloronco/Lynx" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Lynx</a>
+            <a
+              href="https://github.com/paoloronco/Lynx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-primary"
+            >
+              Lynx
+            </a>
+            {" "}
+            <span className="opacity-70">v{__APP_VERSION__}</span>
+            {" · "}Your personal links hub
           </p>
-          <div className="text-xs text-muted-foreground opacity-60">Lynx - Your personal links hub</div>
         </div>
       </div>
     </div>

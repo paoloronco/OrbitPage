@@ -56,20 +56,23 @@ export const PublicView = ({ profile, links }: PublicViewProps) => {
         )}
         
         {/* Footer */}
-        <div className="text-center pt-8">
-        <p className="text-xs text-muted-foreground opacity-60">
-          Powered by <a 
-          href="https://github.com/paoloronco/Lynx" 
-          target="_blank" 
-          rel="noopener noreferrer" 
-          className="underline hover:text-primary"
-        >
-          Lynx
-          </a>
-        </p>
-        <p className="text-[10px] text-muted-foreground opacity-50 mt-1">
-    Developed by Paolo Ronco
-  </p>
+        <div className="text-center pt-8 pb-2 space-y-1">
+          <p className="text-xs text-muted-foreground opacity-60">
+            Powered by{" "}
+            <a
+              href="https://github.com/paoloronco/Lynx"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-primary"
+            >
+              Lynx
+            </a>
+            {" "}
+            <span className="opacity-70">v{__APP_VERSION__}</span>
+          </p>
+          <p className="text-[10px] text-muted-foreground opacity-50">
+            Developed by Paolo Ronco
+          </p>
         </div>
       </div>
     </div>
