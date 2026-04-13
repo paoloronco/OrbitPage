@@ -71,7 +71,7 @@ export const AdminView = ({
     const loadVersion = async () => {
       try {
         const health = await utilityApi.getHealth();
-        setAppVersion(health.version);
+        if (health.version) setAppVersion(health.version);
       } catch (error) {
         console.warn('Failed to load app version from server, using build version:', error);
         // Keep the build version as fallback

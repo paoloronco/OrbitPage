@@ -1322,8 +1322,9 @@ app.use((err, req, res, next) => {
   next();
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+// Health check endpoint — available at both /health (external scripts)
+// and /api/health (frontend api-client which prepends /api to every call)
+const healthHandler = (req, res) => {
   res.json({
     status: 'ok',
     version: APP_VERSION,
@@ -1332,7 +1333,9 @@ app.get('/health', (req, res) => {
     uptime: Math.floor(process.uptime()),
     node: process.version,
   });
-});
+};
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // Catch-all route for SPA
 app.get('*', spaLimiter, (req, res) => {
