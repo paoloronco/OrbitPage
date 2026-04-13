@@ -277,49 +277,33 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2">
-  <div className="flex gap-2 justify-center flex-wrap">
-          <Button 
-            onClick={addNewLink}
-            variant="gradient"
-            className="gap-2"
-          >
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={addNewLink} variant="gradient" className="gap-2 w-full">
             <Link className="w-4 h-4" />
             Add Link
           </Button>
-          <Button 
-            onClick={addNewBulletedList}
-            variant="outline"
-            className="gap-2"
-          >
+          <Button onClick={addNewBulletedList} variant="outline" className="gap-2 w-full">
             <List className="w-4 h-4" />
-            Add bulleted list
+            Bulleted list
           </Button>
-          <Button
-            onClick={addNewTextCard}
-            variant="outline"
-            className="gap-2"
-          >
+          <Button onClick={addNewTextCard} variant="outline" className="gap-2 w-full">
             <Type className="w-4 h-4" />
-            Add Text Card
+            Text Card
           </Button>
-          <Button
-            onClick={addNewSeparator}
-            variant="outline"
-            className="gap-2"
-          >
+          <Button onClick={addNewSeparator} variant="outline" className="gap-2 w-full">
             <Minus className="w-4 h-4" />
-            Add Separator
+            Separator
           </Button>
         </div>
-  <div className="flex gap-2 justify-center flex-wrap">
-          <Button onClick={handleSave} variant="default" className="gap-2" disabled={!isDirty || busy}>
+        <div className="grid grid-cols-3 gap-2">
+          <Button onClick={handleSave} variant="default" className="w-full" disabled={!isDirty || busy}>
             Save
           </Button>
-          <Button onClick={exportLinks} variant="outline" className="gap-2" disabled={busy}>
+          <Button onClick={exportLinks} variant="outline" className="gap-1.5 w-full" disabled={busy}>
             <Download className="w-4 h-4" /> Export
           </Button>
-          <Button onClick={handleImportFile} variant="outline" className="gap-2" disabled={busy}>
+          <Button onClick={handleImportFile} variant="outline" className="gap-1.5 w-full" disabled={busy}>
             <Upload className="w-4 h-4" /> Import
           </Button>
         </div>
