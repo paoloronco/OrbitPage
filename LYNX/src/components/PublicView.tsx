@@ -73,8 +73,6 @@ export const PublicView = ({ profile, links, footerText }: PublicViewProps) => {
             >
               Lynx
             </a>
-            {" "}
-            <span className="opacity-70">v{__APP_VERSION__}</span>
           </p>
         </div>
       </div>
