@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Key, CheckCircle, AlertTriangle, Shield } from "lucide-react";
 import { isPasswordStrong } from "@/lib/auth";
+import { DEMO_MODE } from "@/lib/config";
 import { authApi } from "@/lib/api-client";
 
 type MessageType = 'success' | 'error' | 'info' | 'warning';
@@ -38,6 +39,7 @@ export const PasswordManager = () => {
   const [resetNewPassword, setResetNewPassword] = useState("");
   const [tokenResetMessage, setTokenResetMessage] = useState<Message | null>(null);
   const [tokenResetLoading, setTokenResetLoading] = useState(false);
+  const demoMode = DEMO_MODE;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -207,119 +209,126 @@ export const PasswordManager = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current-password">Current Password</Label>
-            <div className="relative">
-              <Input
-                id="current-password"
-                type={showCurrentPassword ? "text" : "password"}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="glass-card border-primary/20 pr-10"
-                placeholder="Enter current password"
-                required
-                disabled={isLoading}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                disabled={isLoading}
-              >
-                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
+        {demoMode ? (
+          <div className="rounded-2xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
+            <p className="font-semibold">Demo mode is active</p>
+            <p className="mt-1">Password change and password reset are disabled in demo mode.</p>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="new-password">New Password</Label>
-            <div className="relative">
-              <Input
-                id="new-password"
-                type={showNewPassword ? "text" : "password"}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="glass-card border-primary/20 pr-10"
-                placeholder="Enter new password"
-                required
-                disabled={isLoading}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                disabled={isLoading}
-              >
-                {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current Password</Label>
+              <div className="relative">
+                <Input
+                  id="current-password"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="glass-card border-primary/20 pr-10"
+                  placeholder="Enter current password"
+                  required
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  disabled={isLoading}
+                >
+                  {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p>Requirements:</p>
-              <ul className="list-disc list-inside ml-2 space-y-0.5">
-                <li className={newPassword.length >= 8 ? 'text-green-400' : ''}>At least 8 characters</li>
-                <li className={/[A-Z]/.test(newPassword) ? 'text-green-400' : ''}>Uppercase letter</li>
-                <li className={/[a-z]/.test(newPassword) ? 'text-green-400' : ''}>Lowercase letter</li>
-                <li className={/\d/.test(newPassword) ? 'text-green-400' : ''}>Number</li>
-                <li className={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 'text-green-400' : ''}>Special character</li>
-              </ul>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm New Password</Label>
-            <div className="relative">
-              <Input
-                id="confirm-password"
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="glass-card border-primary/20 pr-10"
-                placeholder="Confirm new password"
-                required
-                disabled={isLoading}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                disabled={isLoading}
-              >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="glass-card border-primary/20 pr-10"
+                  placeholder="Enter new password"
+                  required
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  disabled={isLoading}
+                >
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>Requirements:</p>
+                <ul className="list-disc list-inside ml-2 space-y-0.5">
+                  <li className={newPassword.length >= 8 ? 'text-green-400' : ''}>At least 8 characters</li>
+                  <li className={/[A-Z]/.test(newPassword) ? 'text-green-400' : ''}>Uppercase letter</li>
+                  <li className={/[a-z]/.test(newPassword) ? 'text-green-400' : ''}>Lowercase letter</li>
+                  <li className={/\d/.test(newPassword) ? 'text-green-400' : ''}>Number</li>
+                  <li className={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 'text-green-400' : ''}>Special character</li>
+                </ul>
+              </div>
             </div>
-          </div>
 
-          {message && (
-            <div className={`text-sm p-3 rounded-lg flex items-center gap-2 ${
-              message.type === 'success' 
-                ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                : 'bg-destructive/10 text-destructive border border-destructive/20'
-            }`}>
-              {message.type === 'success' ? (
-                <CheckCircle className="w-4 h-4" />
-              ) : (
-                <AlertTriangle className="w-4 h-4" />
-              )}
-              {message.text}
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="glass-card border-primary/20 pr-10"
+                  placeholder="Confirm new password"
+                  required
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
-          )}
 
-          <Button
-            type="submit"
-            variant="gradient"
-            className="w-full"
-            disabled={isLoading}
-          >
-            {isLoading ? "Changing Password..." : "Change Password"}
-          </Button>
-        </form>
+            {message && (
+              <div className={`text-sm p-3 rounded-lg flex items-center gap-2 ${
+                message.type === 'success' 
+                  ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+                  : 'bg-destructive/10 text-destructive border border-destructive/20'
+              }`}>
+                {message.type === 'success' ? (
+                  <CheckCircle className="w-4 h-4" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4" />
+                )}
+                {message.text}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              variant="gradient"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? "Changing Password..." : "Change Password"}
+            </Button>
+          </form>
+        )}
 
         <div className="pt-4 border-t border-primary/20">
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-3">
@@ -343,12 +352,13 @@ export const PasswordManager = () => {
         </div>
       </Card>
       {/* Forgot password — token-based reset */}
-      <Card className="glass-card p-6 space-y-4">
-        <button
-          type="button"
-          className="w-full text-left flex items-center justify-between"
-          onClick={() => setShowTokenReset(v => !v)}
-        >
+      {!demoMode && (
+        <Card className="glass-card p-6 space-y-4">
+          <button
+            type="button"
+            className="w-full text-left flex items-center justify-between"
+            onClick={() => setShowTokenReset(v => !v)}
+          >
           <span className="text-sm font-medium text-muted-foreground">Forgot your password?</span>
           <span className="text-xs text-primary">{showTokenReset ? 'Hide' : 'Show'}</span>
         </button>
@@ -403,6 +413,7 @@ export const PasswordManager = () => {
           </form>
         )}
       </Card>
+      )}
     </div>
   );
 };

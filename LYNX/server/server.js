@@ -31,6 +31,9 @@ try {
   APP_VERSION = pkg.version || APP_VERSION;
 } catch { /* package.json not available; use the fallback */ }
 
+const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
+console.log('Demo mode:', DEMO_MODE);
+
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
 const DATA_DIR = process.env.DATA_DIR || __dirname;
@@ -857,6 +860,10 @@ app.post('/api/validate-password', (req, res) => {
 });
 
 app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Change password is disabled in demo mode.' });
+  }
+
   try {
     const { currentPassword, newPassword } = req.body || {};
 
@@ -916,6 +923,10 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
 
 // Password reset via RESET_TOKEN env var
 app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Password reset is disabled in demo mode.' });
+  }
+
   try {
     const { token, newPassword } = req.body || {};
     const resetToken = process.env.RESET_TOKEN;
@@ -1250,6 +1261,7 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     version: APP_VERSION,
+    demoMode: DEMO_MODE,
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     node: process.version,
