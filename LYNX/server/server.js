@@ -282,10 +282,6 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const isValid = await authenticateUser(password);
     
     if (!isValid) {
-      console.log('Login failed: Invalid password');
-      // Get the stored user to check what's in the database
-      const user = await dbGet('SELECT * FROM admin_users WHERE username = ?', ['admin']);
-      console.log('Stored user data:', user);
       return res.status(401).json({ error: 'Invalid password' });
     }
     

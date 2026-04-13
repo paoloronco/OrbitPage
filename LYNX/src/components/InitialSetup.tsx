@@ -40,7 +40,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
     setIsLoading(true);
     setError("");
 
-    if (!isPasswordStrong(password)) {
+    if (!(await isPasswordStrong(password))) {
       setError("Please meet all password requirements before continuing.");
       setIsLoading(false);
       return;

@@ -278,7 +278,17 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
       cache: 'no-store',
     });
 
-    const data = await response.json();
+    // Safely parse JSON — proxies (Cloudflare, nginx) and rate limiters may return
+    // plain text (e.g. "Too many requests"), which would throw on response.json().
+    let data: any;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      // Try to parse anyway in case the content-type header is wrong
+      try { data = JSON.parse(text); } catch { data = { error: text || 'Unknown error' }; }
+    }
 
     if (!response.ok) {
       // If token is invalid or expired, clear it and signal to UI
@@ -286,7 +296,10 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
         removeAuthToken();
         throw new Error('AUTH_EXPIRED');
       }
-      throw new Error(data.error || data.message || 'Request failed');
+      if (response.status === 429) {
+        throw new Error(data?.error || 'Too many requests. Please wait a moment and try again.');
+      }
+      throw new Error(data?.error || data?.message || 'Request failed');
     }
 
     return data as T;
