@@ -173,7 +173,7 @@ docker compose up -d
 
 The included `docker-compose.yml` uses:
 
-- image: `paoloronco/lynx:latest`
+- image: `paueron/lynx:latest`
 - port: `8080`
 - volume: `./lynx-data:/app/data`
 
@@ -225,7 +225,7 @@ docker compose up -d
 
 The included `docker-compose.yml` uses:
 
-- image: `paoloronco/lynx:latest`
+- image: `paueron/lynx:latest`
 - port: `8080`
 - volume: `./lynx-data:/app/data`
 
@@ -237,7 +237,7 @@ Before exposing the app, replace the sample `JWT_SECRET` in `docker-compose.yml`
 <summary><strong>Docker CLI</strong></summary>
 
 ```bash
-docker pull paoloronco/lynx:latest
+docker pull paueron/lynx:latest
 
 docker run -d --name lynx \
   -p 8080:8080 \
@@ -245,7 +245,7 @@ docker run -d --name lynx \
   -e PORT=8080 \
   -e JWT_SECRET="replace-with-a-long-random-secret" \
   -v lynx_data:/app/data \
-  paoloronco/lynx:latest
+  paueron/lynx:latest
 ```
 
 Open:
@@ -267,7 +267,7 @@ docker run -d --name lynx \
   -e JWT_SECRET="replace-with-a-long-random-secret" \
   -e ENABLE_HTTPS=true \
   -v lynx_data:/app/data \
-  paoloronco/lynx:latest
+  paueron/lynx:latest
 ```
 
 Then open `https://localhost:8443`. The browser will warn because the certificate is self-signed.
