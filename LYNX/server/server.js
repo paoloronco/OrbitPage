@@ -99,12 +99,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://www.google-analytics.com", "https://*.google-analytics.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://static.cloudflareinsights.com"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
       connectSrc: IS_PRODUCTION
-        ? ["'self'", "http://localhost:*", "https://localhost:*", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net"]
-        : ["'self'", FRONTEND_URL, "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net"],
+        ? ["'self'", "http://localhost:*", "https://localhost:*", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net", "https://cloudflareinsights.com"]
+        : ["'self'", FRONTEND_URL, "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net", "https://cloudflareinsights.com"],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -1351,7 +1351,7 @@ app.listen(PORT, '0.0.0.0', async () => {
   }
   console.log('Rate limiting active:');
   console.log('- Global API: 300 requests/15min per IP');
-  console.log('- Auth endpoints: 20 requests/15min per IP');
+  console.log('- Auth endpoints: 30 requests/15min per IP');
   console.log('- Login attempts: 5 failed/10min per IP');
   console.log('- Force reset: 2 requests/hour per IP');
   console.log('Trust proxy:', app.get('trust proxy') ? 'Enabled' : 'Disabled');
