@@ -8,7 +8,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "serve": "node server.js"
+    "serve": "node server.js",
+    "test": "vitest"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -31,5 +32,9 @@
     "picomatch": "^4.0.4",
     "brace-expansion": "^5.0.5",
     "path-to-regexp": "0.1.13"
+  },
+  "devDependencies": {
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.4"
   }
 }
