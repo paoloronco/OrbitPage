@@ -198,7 +198,7 @@ export const PasswordManager = () => {
       </Card>
 
       {/* Password Change Form */}
-      <Card className="glass-card p-6 space-y-6">
+      <Card className={`glass-card p-6 space-y-6 ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <Key className="w-8 h-8 text-primary" />
@@ -207,15 +207,15 @@ export const PasswordManager = () => {
           <p className="text-muted-foreground text-sm">
             Update your admin password
           </p>
+          {demoMode && (
+            <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
+              <p className="font-semibold">Demo mode is active</p>
+              <p className="mt-1">Password change is disabled in demo mode.</p>
+            </div>
+          )}
         </div>
 
-        {demoMode ? (
-          <div className="rounded-2xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
-            <p className="font-semibold">Demo mode is active</p>
-            <p className="mt-1">Password change and password reset are disabled in demo mode.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="current-password">Current Password</Label>
               <div className="relative">
@@ -323,15 +323,14 @@ export const PasswordManager = () => {
               type="submit"
               variant="gradient"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || demoMode}
             >
               {isLoading ? "Changing Password..." : "Change Password"}
             </Button>
           </form>
-        )}
 
         <div className="pt-4 border-t border-primary/20">
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-3">
+          <div className={`bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-3 ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-4 h-4" />
               <span className="text-sm font-medium">Reset Authentication</span>
@@ -339,12 +338,17 @@ export const PasswordManager = () => {
             <p className="text-xs text-muted-foreground">
               This will completely reset the instance, clearing all users, links, profile data, and themes. You'll need to set up the admin account again.
             </p>
+            {demoMode && (
+              <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-2 text-sm text-yellow-900">
+                <p>Application reset is disabled in demo mode.</p>
+              </div>
+            )}
             <Button
               onClick={handleResetApp}
               variant="destructive"
               size="sm"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || demoMode}
             >
               Clear Auth Data & Reset
             </Button>
@@ -352,13 +356,13 @@ export const PasswordManager = () => {
         </div>
       </Card>
       {/* Forgot password — token-based reset */}
-      {!demoMode && (
-        <Card className="glass-card p-6 space-y-4">
-          <button
-            type="button"
-            className="w-full text-left flex items-center justify-between"
-            onClick={() => setShowTokenReset(v => !v)}
-          >
+      <Card className={`glass-card p-6 space-y-4 ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
+        <button
+          type="button"
+          className="w-full text-left flex items-center justify-between"
+          onClick={() => setShowTokenReset(v => !v)}
+          disabled={demoMode}
+        >
           <span className="text-sm font-medium text-muted-foreground">Forgot your password?</span>
           <span className="text-xs text-primary">{showTokenReset ? 'Hide' : 'Show'}</span>
         </button>
@@ -367,6 +371,11 @@ export const PasswordManager = () => {
             <p className="text-xs text-muted-foreground">
               If you have set a <code className="bg-primary/10 px-1 rounded">RESET_TOKEN</code> environment variable on the server, enter it below along with your new password.
             </p>
+            {demoMode && (
+              <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-2 text-sm text-yellow-900">
+                <p>Password reset is disabled in demo mode.</p>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="reset-token">Reset Token</Label>
               <Input
@@ -377,7 +386,7 @@ export const PasswordManager = () => {
                 placeholder="Enter RESET_TOKEN value"
                 className="glass-card border-primary/20"
                 required
-                disabled={tokenResetLoading}
+                disabled={tokenResetLoading || demoMode}
               />
             </div>
             <div className="space-y-2">
@@ -390,7 +399,7 @@ export const PasswordManager = () => {
                 placeholder="Enter new password"
                 className="glass-card border-primary/20"
                 required
-                disabled={tokenResetLoading}
+                disabled={tokenResetLoading || demoMode}
               />
             </div>
             {tokenResetMessage && (
@@ -407,13 +416,12 @@ export const PasswordManager = () => {
                 {tokenResetMessage.text}
               </div>
             )}
-            <Button type="submit" variant="gradient" className="w-full" disabled={tokenResetLoading}>
+            <Button type="submit" variant="gradient" className="w-full" disabled={tokenResetLoading || demoMode}>
               {tokenResetLoading ? 'Resetting...' : 'Reset Password'}
             </Button>
           </form>
         )}
       </Card>
-      )}
     </div>
   );
 };

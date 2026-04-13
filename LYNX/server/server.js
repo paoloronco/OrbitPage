@@ -32,7 +32,7 @@ try {
 } catch { /* package.json not available; use the fallback */ }
 
 const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
-console.log('Demo mode:', DEMO_MODE);
+console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -194,6 +194,10 @@ app.get('/api/auth/setup-status', authLimiter, async (req, res) => {
 });
 
 app.post('/api/auth/setup', authLimiter, async (req, res) => {
+  if (DEMO_MODE && !(await isFirstTimeSetup())) {
+    return res.status(403).json({ success: false, error: 'Setup is disabled in demo mode after initial setup.' });
+  }
+
   try {
     const { password } = req.body;
     
@@ -1060,6 +1064,10 @@ const resetApplicationData = async () => {
 
 // Reset authentication - clear ALL data and reset to initial state (requires authentication)
 app.post('/api/auth/reset', authenticateToken, resetLimiter, async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Application reset is disabled in demo mode.' });
+  }
+
   try {
     console.log('Authenticated reset endpoint called by user:', req.user?.username || 'unknown');
 
@@ -1084,6 +1092,10 @@ app.post('/api/auth/reset', authenticateToken, resetLimiter, async (req, res) =>
 
 // Special unauthenticated reset endpoint (for when you're locked out)
 app.post('/api/auth/force-reset', resetLimiter, async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Force reset is disabled in demo mode.' });
+  }
+
   try {
     console.log('Force reset endpoint called');
 
