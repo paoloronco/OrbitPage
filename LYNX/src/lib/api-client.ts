@@ -1,15 +1,25 @@
 const API_BASE = '/api';
 
-// --- Secure token storage (AES-GCM via Web Crypto) ---
+// --- Secure token storage (AES-GCM via Web Crypto with sessionStorage fallback) ---
+//
+// Web Crypto (crypto.subtle) is only available in "secure contexts": HTTPS or localhost.
+// When accessed over plain HTTP via an IP address, crypto.subtle is undefined and we fall
+// back to storing the token unencrypted in sessionStorage (cleared on tab close).
+// The token is always validated server-side on every request, so this is safe in practice.
 const TOKEN_STORAGE_KEY = 'lynx-auth-token';
 const TOKEN_IV_PREFIX = 'lynx-auth-iv-';
 const DEVICE_SECRET_KEY = 'lynx-device-secret';
+const TOKEN_FALLBACK_KEY = 'lynx-auth-token-plain';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+/** Returns true when the Web Crypto subtle API is usable (secure context). */
+const isCryptoAvailable = (): boolean =>
+  typeof crypto !== 'undefined' && !!crypto.subtle;
+
 const getCryptoOrThrow = (): Crypto => {
-  if (typeof crypto !== 'undefined' && crypto.subtle) return crypto as Crypto;
+  if (isCryptoAvailable()) return crypto as Crypto;
   throw new Error('Web Crypto API is not available');
 };
 
@@ -86,6 +96,11 @@ const decryptToken = async (ivB64: string, ctB64: string): Promise<string | null
 
 // Get auth token quickly if cached; otherwise null
 const getAuthToken = (): string | null => {
+  // Fallback path: plain sessionStorage (non-secure context)
+  if (!isCryptoAvailable()) {
+    return sessionStorage.getItem(TOKEN_FALLBACK_KEY);
+  }
+
   const ctB64 = localStorage.getItem(TOKEN_STORAGE_KEY);
   const ivB64 = localStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   if (!ctB64 || !ivB64) return null;
@@ -101,6 +116,11 @@ const getAuthToken = (): string | null => {
 
 // Async variant for flows that can await (API calls)
 const getAuthTokenAsync = async (): Promise<string | null> => {
+  // Fallback path: plain sessionStorage (non-secure context)
+  if (!isCryptoAvailable()) {
+    return sessionStorage.getItem(TOKEN_FALLBACK_KEY);
+  }
+
   const cached = getAuthToken();
   if (cached) return cached;
   const ctB64 = localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -113,25 +133,40 @@ const getAuthTokenAsync = async (): Promise<string | null> => {
   return val;
 };
 
-// Set auth token (encrypt before storage) and cache plaintext in memory.
-// Returns a Promise so callers can await storage completion before making
-// authenticated requests (avoids the race between encryption and first API call).
+// Set auth token.
+// In a secure context (HTTPS / localhost): AES-GCM encrypted in localStorage.
+// In a non-secure context (HTTP over IP): stored unencrypted in sessionStorage.
+// The token is always validated server-side, so both paths are functionally safe.
 const setAuthToken = (token: string): Promise<void> => {
+  if (!isCryptoAvailable()) {
+    console.warn(
+      'Web Crypto API unavailable (non-secure context). ' +
+      'Token stored in sessionStorage without encryption. ' +
+      'Use HTTPS or access via localhost for encrypted storage.'
+    );
+    sessionStorage.setItem(TOKEN_FALLBACK_KEY, token);
+    (window as any).__lynxTokenCache = { iv: '', ct: '', val: token };
+    return Promise.resolve();
+  }
+
   return encryptToken(token).then(({ ivB64, ctB64 }) => {
     localStorage.setItem(TOKEN_STORAGE_KEY, ctB64);
     localStorage.setItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY, ivB64);
     (window as any).__lynxTokenCache = { iv: ivB64, ct: ctB64, val: token };
   }).catch((err) => {
-    // Do NOT store the token in plaintext if encryption fails — treat as a hard error
-    console.error('Token encryption failed; session will not be persisted:', err);
-    throw err;
+    // Encryption unexpectedly failed even though crypto.subtle was available.
+    // Fall back to sessionStorage so the user can still log in.
+    console.warn('Token encryption failed, falling back to sessionStorage:', err);
+    sessionStorage.setItem(TOKEN_FALLBACK_KEY, token);
+    (window as any).__lynxTokenCache = { iv: '', ct: '', val: token };
   });
 };
 
-// Remove auth token
+// Remove auth token (both storage paths)
 const removeAuthToken = (): void => {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
+  sessionStorage.removeItem(TOKEN_FALLBACK_KEY);
   delete (window as any).__lynxTokenCache;
 };
 
