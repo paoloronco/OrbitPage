@@ -142,15 +142,15 @@ const getGoogleAnalyticsId = async () => {
 const injectGoogleAnalyticsTag = (html, measurementId) => {
   const tag = `
     <!-- Google tag (gtag.js) -->
-    <script id="lynx-ga-script" async src="https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}"></script>
-    <script id="lynx-ga-config">
+    <script async src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"></script>
+    <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', '${measurementId}');
     </script>`;
 
-  return html.includes('</head>') ? html.replace('</head>', `${tag}\n  </head>`) : `${tag}\n${html}`;
+  return html.includes('<head>') ? html.replace('<head>', `<head>${tag}`) : `${tag}\n${html}`;
 };
 
 const serveSpaIndex = async (req, res, { includeGoogleAnalytics = false } = {}) => {

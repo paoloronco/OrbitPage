@@ -64,14 +64,27 @@ const Index = () => {
 
           // Inject Google Analytics 4 script if a Measurement ID is configured
           if (googleAnalyticsId && typeof googleAnalyticsId === 'string' && googleAnalyticsId.match(/^G-[A-Z0-9]+$/i)) {
-            const existingScript = document.getElementById('lynx-ga-script');
+            const encodedGoogleAnalyticsId = encodeURIComponent(googleAnalyticsId);
+            const scripts = Array.from(document.scripts);
+            const existingScript = scripts.some((script) =>
+              script.id === 'lynx-ga-script' ||
+              (script.src.includes('googletagmanager.com/gtag/js') && script.src.includes(`id=${encodedGoogleAnalyticsId}`))
+            );
+            const existingConfig = scripts.some((script) =>
+              script.id === 'lynx-ga-config' ||
+              !!script.textContent?.includes(`gtag('config', '${googleAnalyticsId}')`) ||
+              !!script.textContent?.includes(`gtag('config', "${googleAnalyticsId}")`)
+            );
+
             if (!existingScript) {
               const script = document.createElement('script');
               script.id = 'lynx-ga-script';
               script.async = true;
-              script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsId)}`;
+              script.src = `https://www.googletagmanager.com/gtag/js?id=${encodedGoogleAnalyticsId}`;
               document.head.appendChild(script);
+            }
 
+            if (!existingConfig) {
               const configScript = document.createElement('script');
               configScript.id = 'lynx-ga-config';
               configScript.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${googleAnalyticsId}');`;
