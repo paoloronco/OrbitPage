@@ -99,12 +99,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://www.google-analytics.com", "https://*.google-analytics.com"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
       connectSrc: IS_PRODUCTION
-        ? ["'self'", "http://localhost:*", "https://localhost:*", "https://www.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com"]
-        : ["'self'", FRONTEND_URL, "https://www.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com"],
+        ? ["'self'", "http://localhost:*", "https://localhost:*", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net"]
+        : ["'self'", FRONTEND_URL, "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net"],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -118,6 +118,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Serve static files with proper path resolution
 const distPath = join(__dirname, '../dist');
+const indexHtmlPath = join(distPath, 'index.html');
 const uploadsPath = join(DATA_DIR, 'uploads');
 
 console.log('Serving static files from:', distPath);
@@ -129,8 +130,53 @@ if (!fs.existsSync(uploadsPath)) {
   console.log('Created uploads directory at:', uploadsPath);
 }
 
+const isValidGoogleAnalyticsId = (value) =>
+  typeof value === 'string' && /^G-[A-Z0-9]+$/i.test(value.trim());
+
+const getGoogleAnalyticsId = async () => {
+  const profile = await dbGet('SELECT google_analytics_id FROM profile_data ORDER BY id DESC LIMIT 1');
+  const measurementId = profile?.google_analytics_id?.trim();
+  return isValidGoogleAnalyticsId(measurementId) ? measurementId : null;
+};
+
+const injectGoogleAnalyticsTag = (html, measurementId) => {
+  const tag = `
+    <!-- Google tag (gtag.js) -->
+    <script id="lynx-ga-script" async src="https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}"></script>
+    <script id="lynx-ga-config">
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', ${JSON.stringify(measurementId)});
+    </script>`;
+
+  return html.includes('</head>') ? html.replace('</head>', `${tag}\n  </head>`) : `${tag}\n${html}`;
+};
+
+const serveSpaIndex = async (req, res, { includeGoogleAnalytics = false } = {}) => {
+  try {
+    let html = await fs.promises.readFile(indexHtmlPath, 'utf8');
+    if (includeGoogleAnalytics) {
+      const measurementId = await getGoogleAnalyticsId();
+      if (measurementId) {
+        html = injectGoogleAnalyticsTag(html, measurementId);
+      }
+    }
+    res.type('html').send(html);
+  } catch (error) {
+    console.error('Failed to serve SPA index:', error);
+    res.sendFile(indexHtmlPath);
+  }
+};
+
+// Serve the public page with the GA tag already present in the initial HTML.
+app.get('/', (req, res) => {
+  serveSpaIndex(req, res, { includeGoogleAnalytics: true });
+});
+
 // Serve static files from the dist directory
 app.use(express.static(distPath, {
+  index: false,
   setHeaders: (res, path) => {
     console.log(`Serving static file: ${path}`);
   }
@@ -1292,7 +1338,7 @@ app.get('/health', (req, res) => {
 // Catch-all route for SPA
 app.get('*', spaLimiter, (req, res) => {
   console.log(`SPA catch-all serving index.html for: ${req.path}`);
-  res.sendFile(join(__dirname, '../dist/index.html'));
+  serveSpaIndex(req, res);
 });
 
 app.listen(PORT, '0.0.0.0', async () => {
