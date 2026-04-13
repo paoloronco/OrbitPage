@@ -25,7 +25,7 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '3.7.0';
+let APP_VERSION = '3.8.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -99,12 +99,12 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: IS_PRODUCTION 
-        ? ["'self'", "http://localhost:*", "https://localhost:*"] // Allow localhost for debugging
-        : ["'self'", FRONTEND_URL],
+      connectSrc: IS_PRODUCTION
+        ? ["'self'", "http://localhost:*", "https://localhost:*", "https://www.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com"]
+        : ["'self'", FRONTEND_URL, "https://www.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com"],
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -320,9 +320,10 @@ app.get('/api/profile', async (req, res) => {
         meta_description: undefined,
         footer_text: undefined,
         favicon: undefined,
+        google_analytics_id: undefined,
       });
     }
-    
+
     res.json({
       name: profile.name,
       bio: profile.bio,
@@ -335,6 +336,7 @@ app.get('/api/profile', async (req, res) => {
       meta_description: profile.meta_description || undefined,
       footer_text: profile.footer_text || undefined,
       favicon: profile.favicon || undefined,
+      google_analytics_id: profile.google_analytics_id || undefined,
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to load profile' });
@@ -365,6 +367,9 @@ const ProfileSchema = z.object({
   footerText: z.string().max(300).nullable().optional(),
   footer_text: z.string().max(300).nullable().optional(),
   favicon: z.string().max(500).nullable().optional(),
+  // Analytics integrations
+  googleAnalyticsId: z.string().max(50).nullable().optional(),
+  google_analytics_id: z.string().max(50).nullable().optional(),
 }).strip();
 
 app.put('/api/profile', authenticateToken, async (req, res) => {
@@ -386,6 +391,7 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
     const metaDescription = body.metaDescription ?? body.meta_description ?? null;
     const footerText = body.footerText ?? body.footer_text ?? null;
     const favicon = body.favicon ?? null;
+    const googleAnalyticsId = body.googleAnalyticsId ?? body.google_analytics_id ?? null;
     const showAvatarRaw = body.showAvatar ?? body.show_avatar;
     const showAvatar = typeof showAvatarRaw === 'number' ? showAvatarRaw !== 0 : !!showAvatarRaw;
 
@@ -394,13 +400,13 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
 
     if (existing) {
       await dbRun(
-        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, existing.id]
+        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, existing.id]
       );
     } else {
       await dbRun(
-        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon]
+        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId]
       );
     }
 

@@ -192,6 +192,7 @@ interface ProfileResponse extends ApiResponse {
   meta_description?: string;
   footer_text?: string;
   favicon?: string;
+  google_analytics_id?: string;
 }
 
 interface LinkItem {
@@ -327,7 +328,7 @@ export const profileApi = {
     });
   },
 
-  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string; footerText?: string; favicon?: string }): Promise<ApiResponse> => {
+  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string; footerText?: string; favicon?: string; googleAnalyticsId?: string }): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>('/profile', {
       method: 'PUT',
       body: JSON.stringify({
@@ -343,6 +344,7 @@ export const profileApi = {
         meta_description: profile.metaDescription || undefined,
         footer_text: profile.footerText ?? undefined,
         favicon: profile.favicon ?? undefined,
+        google_analytics_id: profile.googleAnalyticsId ?? undefined,
       }),
     });
   },

@@ -33,6 +33,7 @@ interface ProfileData {
   metaDescription?: string;
   footerText?: string;
   favicon?: string;
+  googleAnalyticsId?: string;
 }
 
 const Admin = () => {
@@ -94,6 +95,7 @@ const Admin = () => {
             metaDescription: (profileData as any).meta_description || (profileData as any).metaDescription || undefined,
             footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
             favicon: (profileData as any).favicon || undefined,
+            googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
           });
         }
 
@@ -186,6 +188,7 @@ const Admin = () => {
         metaDescription: newProfile.metaDescription,
         footerText: newProfile.footerText,
         favicon: newProfile.favicon,
+        googleAnalyticsId: newProfile.googleAnalyticsId,
       });
       setProfile(newProfile);
     } catch (error: any) {

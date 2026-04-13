@@ -26,6 +26,7 @@ interface ProfileData {
   bioFontSize?: string;
   footerText?: string;
   favicon?: string;
+  googleAnalyticsId?: string;
 }
 
 const Index = () => {
@@ -48,6 +49,7 @@ const Index = () => {
         if (profileData) {
           const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
           const favicon = (profileData as any).favicon || undefined;
+          const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
           setProfile({
             name: profileData.name,
             bio: profileData.bio,
@@ -57,7 +59,25 @@ const Index = () => {
             socialLinks: profileData.social_links || {},
             footerText,
             favicon,
+            googleAnalyticsId,
           });
+
+          // Inject Google Analytics 4 script if a Measurement ID is configured
+          if (googleAnalyticsId && typeof googleAnalyticsId === 'string' && googleAnalyticsId.match(/^G-[A-Z0-9]+$/i)) {
+            const existingScript = document.getElementById('lynx-ga-script');
+            if (!existingScript) {
+              const script = document.createElement('script');
+              script.id = 'lynx-ga-script';
+              script.async = true;
+              script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsId)}`;
+              document.head.appendChild(script);
+
+              const configScript = document.createElement('script');
+              configScript.id = 'lynx-ga-config';
+              configScript.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${googleAnalyticsId}');`;
+              document.head.appendChild(configScript);
+            }
+          }
           // Apply document title
           const tabTitle = (profileData as any).tab_title || (profileData as any).tabTitle;
           if (tabTitle && typeof tabTitle === 'string') {

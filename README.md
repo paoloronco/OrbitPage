@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-3.7.0-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -308,6 +308,18 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v3.8.0</strong></summary>
+
+### Integrations
+
+- Added Google Analytics 4 integration in the Admin panel (new **Integrations** tab).
+- The GA4 Measurement ID (`G-XXXXXXXXXX`) is stored in the database and injected as a `gtag.js` script on the public page only — the admin panel is never tracked.
+- Content Security Policy updated to allow `googletagmanager.com` and `google-analytics.com` script and connect sources.
+- Measurement ID is validated client-side before saving (format `G-XXXXXXXXXX`).
+
+</details>
 
 <details>
 <summary><strong>v3.7.0</strong></summary>

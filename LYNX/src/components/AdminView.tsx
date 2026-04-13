@@ -6,7 +6,10 @@ import { LinkData } from "./LinkCard";
 import { ClickAnalyticsChart } from "./ClickAnalyticsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, Link, Palette, User, Key, ExternalLink, Eye, BarChart2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { LogOut, Link, Palette, User, Key, ExternalLink, Eye, BarChart2, Plug } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
@@ -35,10 +38,13 @@ interface ProfileData {
   bioFontSize?: string;
   tabTitle?: string;
   metaDescription?: string;
+  footerText?: string;
+  favicon?: string;
+  googleAnalyticsId?: string;
 }
 
 interface AdminViewProps {
-  profile: ProfileData & { footerText?: string };
+  profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
   onProfileUpdate: (profile: ProfileData) => void;
@@ -56,7 +62,9 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
-  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || '3.7.0');
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || '3.8.0');
+  const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || '');
+  const [gaSaved, setGaSaved] = useState(false);
 
   // Load app version from server
   useEffect(() => {
@@ -72,9 +80,20 @@ export const AdminView = ({
     loadVersion();
   }, []);
 
+  // Sync gaId when profile is loaded from server
+  useEffect(() => {
+    setGaId(profile.googleAnalyticsId || '');
+  }, [profile.googleAnalyticsId]);
+
   const handleLogout = () => {
     logout();
     onLogout();
+  };
+
+  const handleSaveIntegrations = () => {
+    onProfileUpdate({ ...profile, googleAnalyticsId: gaId.trim() || undefined });
+    setGaSaved(true);
+    setTimeout(() => setGaSaved(false), 2500);
   };
 
   return (
@@ -106,7 +125,7 @@ export const AdminView = ({
         </div>
         
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid grid-cols-6 w-full max-w-2xl mx-auto">
+          <TabsList className="grid grid-cols-7 w-full max-w-3xl mx-auto">
             <TabsTrigger value="profile" className="flex items-center gap-1">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Profile</span>
@@ -130,6 +149,10 @@ export const AdminView = ({
             <TabsTrigger value="analytics" className="flex items-center gap-1">
               <BarChart2 className="w-4 h-4" />
               <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-1">
+              <Plug className="w-4 h-4" />
+              <span className="hidden sm:inline">Integrations</span>
             </TabsTrigger>
           </TabsList>
 
@@ -185,6 +208,65 @@ export const AdminView = ({
               <div className="glass-card p-4">
                 <ClickAnalyticsChart links={links} />
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="integrations" className="space-y-4">
+            <div className="max-w-md mx-auto space-y-4">
+              <Card className="glass-card p-6 space-y-4">
+                <div className="space-y-1">
+                  <h2 className="text-base font-semibold flex items-center gap-2">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" aria-hidden="true">
+                      <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm5.26 17.065l-1.85-1.15a7.4 7.4 0 0 1-6.82 0l-1.85 1.15A9.95 9.95 0 0 1 2.05 12c0-2.76 1.12-5.26 2.93-7.065l1.85 1.15A7.4 7.4 0 0 1 12 4.6a7.4 7.4 0 0 1 5.17 1.485l1.85-1.15A9.95 9.95 0 0 1 21.95 12a9.95 9.95 0 0 1-4.69 5.065z"/>
+                    </svg>
+                    Google Analytics 4
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Connect your GA4 property to track page views and visitor behaviour on your public page. The tracking script is injected only on the public-facing page, not in the admin panel.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ga-id" className="text-sm">
+                    Measurement ID
+                  </Label>
+                  <Input
+                    id="ga-id"
+                    value={gaId}
+                    onChange={(e) => setGaId(e.target.value)}
+                    placeholder="G-XXXXXXXXXX"
+                    className="glass-card border-primary/20 font-mono text-sm"
+                    spellCheck={false}
+                  />
+                  <p className="text-[10px] text-muted-foreground opacity-70">
+                    Find your Measurement ID in Google Analytics → Admin → Data Streams → your stream → Measurement ID (starts with <span className="font-mono">G-</span>).
+                  </p>
+                </div>
+
+                {gaId && !gaId.match(/^G-[A-Z0-9]+$/i) && (
+                  <p className="text-xs text-destructive">
+                    The ID format looks incorrect. It should start with <span className="font-mono">G-</span> followed by alphanumeric characters.
+                  </p>
+                )}
+
+                <Button
+                  onClick={handleSaveIntegrations}
+                  variant="gradient"
+                  size="sm"
+                  disabled={!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i)}
+                >
+                  {gaSaved ? 'Saved!' : 'Save'}
+                </Button>
+
+                {profile.googleAnalyticsId && (
+                  <div className="pt-2 border-t border-primary/10">
+                    <p className="text-xs text-muted-foreground">
+                      Active tracking ID:{" "}
+                      <span className="font-mono text-primary">{profile.googleAnalyticsId}</span>
+                    </p>
+                  </div>
+                )}
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

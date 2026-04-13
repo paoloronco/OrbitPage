@@ -82,6 +82,8 @@ export const initializeDatabase = () => {
       // Footer and browser bar customization
       db.run(`ALTER TABLE profile_data ADD COLUMN footer_text TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE profile_data ADD COLUMN favicon TEXT`, (err) => { /* ignore if exists */ });
+      // Analytics integrations
+      db.run(`ALTER TABLE profile_data ADD COLUMN google_analytics_id TEXT`, (err) => { /* ignore if exists */ });
 
       // Links table
       db.run(`
