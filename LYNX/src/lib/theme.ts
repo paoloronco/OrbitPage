@@ -45,24 +45,24 @@ export interface ThemeConfig {
 }
 
 export const defaultTheme: ThemeConfig = {
-  primary: '#8b5cf6',
-  primaryGlow: '#a78bfa',
-  background: '#0f0f23',
-  backgroundSecondary: '#1a1a2e',
-  card: '#16213e',
-  foreground: '#f8fafc',
-  muted: '#64748b',
-  accent: '#7c3aed',
-  border: '#334155',
-  
+  primary: '#2f81f7',
+  primaryGlow: '#58a6ff',
+  background: '#0d1117',
+  backgroundSecondary: '#161b22',
+  card: '#1c2433',
+  foreground: '#e6edf3',
+  muted: '#8b949e',
+  accent: '#1f6feb',
+  border: '#21262d',
+
   backgroundGradient: {
-    from: '#0f0f23',
-    to: '#1a1a2e',
+    from: '#0d1117',
+    to: '#111827',
     direction: '135deg'
   },
   cardGradient: {
-    from: '#16213e',
-    to: '#1e293b',
+    from: '#1c2433',
+    to: '#21303f',
     direction: '135deg'
   },
   
@@ -180,20 +180,20 @@ export const applyTheme = (theme: ThemeConfig) => {
 export const applyAdminTheme = () => {
   const root = document.documentElement;
   
-  // Use a consistent admin theme that doesn't change
+  // Consistent admin theme — dark slate + electric blue
   const adminTheme = {
-    primary: '#8b5cf6',
-    primaryGlow: '#a78bfa',
-    background: '#0f0f23',
-    backgroundSecondary: '#1a1a2e',
-    card: '#16213e',
-    foreground: '#f8fafc',
-    muted: '#64748b',
-    accent: '#7c3aed',
-    border: '#334155',
+    primary: '#2f81f7',
+    primaryGlow: '#58a6ff',
+    background: '#0d1117',
+    backgroundSecondary: '#161b22',
+    card: '#1c2433',
+    foreground: '#e6edf3',
+    muted: '#8b949e',
+    accent: '#1f6feb',
+    border: '#21262d',
     backgroundGradient: {
-      from: '#0f0f23',
-      to: '#1a1a2e',
+      from: '#0d1117',
+      to: '#111827',
       direction: '135deg'
     }
   };

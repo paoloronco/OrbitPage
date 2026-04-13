@@ -6,52 +6,52 @@
 
 @layer base {
   :root {
-    /* Modern gradient backgrounds */
-    --background: 240 15% 6%;
-    --foreground: 240 15% 98%;
+    /* Dark slate + electric blue */
+    --background: 215 28% 7%;
+    --foreground: 213 27% 91%;
 
-    /* Glass morphism cards */
-    --card: 240 15% 12%;
-    --card-foreground: 240 15% 95%;
+    /* Cards */
+    --card: 213 23% 17%;
+    --card-foreground: 213 27% 91%;
 
-    --popover: 240 15% 12%;
-    --popover-foreground: 240 15% 95%;
+    --popover: 213 23% 17%;
+    --popover-foreground: 213 27% 91%;
 
-    /* Purple-blue theme */
-    --primary: 260 75% 65%;
-    --primary-foreground: 240 15% 98%;
-    --primary-glow: 270 100% 80%;
+    /* Electric blue accent */
+    --primary: 212 93% 57%;
+    --primary-foreground: 213 27% 95%;
+    --primary-glow: 212 100% 67%;
 
-    --secondary: 240 20% 20%;
-    --secondary-foreground: 240 15% 90%;
+    --secondary: 215 19% 14%;
+    --secondary-foreground: 213 20% 82%;
 
-    --muted: 240 15% 15%;
-    --muted-foreground: 240 10% 60%;
+    --muted: 215 19% 14%;
+    --muted-foreground: 213 9% 60%;
 
-    --accent: 280 60% 55%;
-    --accent-foreground: 240 15% 98%;
+    --accent: 214 86% 52%;
+    --accent-foreground: 213 27% 95%;
 
     --destructive: 0 75% 60%;
-    --destructive-foreground: 240 15% 98%;
+    --destructive-foreground: 213 27% 95%;
 
-    --border: 240 15% 20%;
-    --input: 240 15% 18%;
-    --ring: 260 75% 65%;
+    --border: 215 14% 16%;
+    --input: 215 19% 14%;
+    --ring: 212 93% 57%;
 
     --radius: 0.75rem;
 
-    /* Custom gradients and effects */
+    /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-background: linear-gradient(135deg, hsl(240 15% 6%), hsl(260 20% 10%));
-    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(240 15% 15%) 100%);
-    
+    --gradient-background: linear-gradient(135deg, hsl(215 28% 7%), hsl(220 24% 10%));
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(213 20% 20%) 100%);
+
     /* Glass morphism */
-    --glass-border: 1px solid hsl(240 15% 25% / 0.5);
-    --glass-bg: hsl(240 15% 12% / 0.8);
-    
+    --glass-border: 1px solid hsl(215 14% 22% / 0.6);
+    --glass-bg: hsl(213 23% 17% / 0.82);
+
     /* Shadows and glows */
-    --shadow-glow: 0 8px 32px hsl(var(--primary) / 0.3);
-    --shadow-card: 0 8px 32px hsl(240 15% 0% / 0.4);
+    --shadow-glow: 0 8px 32px hsl(var(--primary) / 0.25);
+    --shadow-card: 0 8px 32px hsl(215 28% 3% / 0.5);
     
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
