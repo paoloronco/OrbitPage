@@ -280,9 +280,9 @@ export const AdminView = ({
             >
               Lynx
             </a>
-            {appVersion && <span className="opacity-70"> v{appVersion}</span>}
+            {appVersion && <span> v{appVersion}</span>}
           </p>
-          <p className="text-xs text-muted-foreground opacity-40">
+          <p className="text-xs text-muted-foreground opacity-60">
             Your personal links hub
           </p>
         </div>
