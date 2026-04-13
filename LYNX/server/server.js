@@ -147,7 +147,7 @@ const injectGoogleAnalyticsTag = (html, measurementId) => {
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', ${JSON.stringify(measurementId)});
+      gtag('config', '${measurementId}');
     </script>`;
 
   return html.includes('</head>') ? html.replace('</head>', `${tag}\n  </head>`) : `${tag}\n${html}`;
@@ -162,6 +162,9 @@ const serveSpaIndex = async (req, res, { includeGoogleAnalytics = false } = {}) 
         html = injectGoogleAnalyticsTag(html, measurementId);
       }
     }
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.type('html').send(html);
   } catch (error) {
     console.error('Failed to serve SPA index:', error);
