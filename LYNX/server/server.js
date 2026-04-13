@@ -172,8 +172,18 @@ const serveSpaIndex = async (req, res, { includeGoogleAnalytics = false } = {}) 
   }
 };
 
+// Rate limit for serving SPA index.html (to mitigate file system abuse / DoS)
+const spaLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip,
+  message: { success: false, error: "Too many requests, please try again later." },
+});
+
 // Serve the public page with the GA tag already present in the initial HTML.
-app.get('/', (req, res) => {
+app.get('/', spaLimiter, (req, res) => {
   serveSpaIndex(req, res, { includeGoogleAnalytics: true });
 });
 
@@ -1196,15 +1206,6 @@ app.post('/api/auth/force-reset', resetLimiter, async (req, res) => {
 });
 
 // Serve React app for all other routes
-// Rate limit for serving SPA index.html (to mitigate file system abuse)
-const spaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per window per SPA access
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req) => req.ip,
-  message: { success: false, error: "Too many requests, please try again later." },
-});
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
