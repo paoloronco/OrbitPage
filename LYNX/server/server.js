@@ -151,30 +151,33 @@ const apiLimiter = rateLimit({
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { success: false, error: 'Too many requests. Please try again later.' },
 });
 
+// Applied only to sensitive write operations (setup, change-password, reset).
+// Read-only auth checks (setup-status, verify) use apiLimiter instead to avoid
+// locking out users who reload the admin page while Cloudflare/proxies retry.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { success: false, error: 'Too many authentication attempts. Please try again in 15 minutes.' },
 });
 
 const loginLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 5, // Limit each IP to 5 failed login attempts per 10 minutes
+  windowMs: 10 * 60 * 1000,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true, // Only count failed attempts
-  message: {
-    success: false,
-    error: 'Too many failed login attempts. Please try again later.'
-  }
+  skipSuccessfulRequests: true,
+  message: { success: false, error: 'Too many failed login attempts. Please try again in 10 minutes.' },
 });
 
 const resetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 2,
+  message: { success: false, error: 'Too many reset attempts. Please try again in 1 hour.' },
 });
 
 // Apply rate limiting
@@ -184,7 +187,7 @@ app.use('/api', apiLimiter);
 await initializeDatabase();
 
 // Auth Routes
-app.get('/api/auth/setup-status', authLimiter, async (req, res) => {
+app.get('/api/auth/setup-status', async (req, res) => {
   try {
     const firstTime = await isFirstTimeSetup();
     res.json({ isFirstTimeSetup: firstTime });
@@ -248,7 +251,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   }
 });
 
-app.post('/api/auth/verify', authLimiter, authenticateToken, async (req, res) => {
+app.post('/api/auth/verify', authenticateToken, async (req, res) => {
   try {
     // Get the full user data from database
     const user = await dbGet(
