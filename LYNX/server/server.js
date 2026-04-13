@@ -100,12 +100,12 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://static.cloudflareinsights.com"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://tagassistant.google.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
       connectSrc: IS_PRODUCTION
         ? ["'self'", "http://localhost:*", "https://localhost:*", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net", "https://cloudflareinsights.com"]
         : ["'self'", FRONTEND_URL, "https://www.google-analytics.com", "https://*.google-analytics.com", "https://analytics.google.com", "https://www.googletagmanager.com", "https://*.googletagmanager.com", "https://stats.g.doubleclick.net", "https://cloudflareinsights.com"],
-      fontSrc: ["'self'", "data:"],
+      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'self'"]
