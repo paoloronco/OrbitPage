@@ -29,8 +29,6 @@
 - 👤 Username: `admin`
 - 🔑 Password: `ChangeMe123!`
 
-⚠️ The demo database resets every 15 minutes. The demo password cannot be changed.
-
 ## ✨ Features
 
 - 🎛 **Admin panel**: edit profile, links, theme, password, and reset options from one dashboard.
