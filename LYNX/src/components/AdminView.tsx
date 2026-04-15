@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
@@ -9,12 +10,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { LogOut, Link, Palette, User, Key, ExternalLink, Eye, BarChart2 } from "lucide-react";
+import {
+  BarChart2,
+  CheckCircle2,
+  ExternalLink,
+  Eye,
+  Globe2,
+  Key,
+  Layers3,
+  Link,
+  LogOut,
+  MousePointerClick,
+  Palette,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
 import { utilityApi } from "@/lib/api-client";
-import { useState, useEffect } from "react";
 
 interface ProfileData {
   name: string;
@@ -53,6 +67,17 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
+type AdminTab = "profile" | "links" | "theme" | "security" | "preview" | "analytics";
+
+const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
+  { value: "profile", label: "Profile", icon: User },
+  { value: "links", label: "Links", icon: Link },
+  { value: "theme", label: "Theme", icon: Palette },
+  { value: "security", label: "Security", icon: Key },
+  { value: "preview", label: "Preview", icon: Eye },
+  { value: "analytics", label: "Analytics", icon: BarChart2 },
+];
+
 export const AdminView = ({
   profile,
   links,
@@ -62,28 +87,43 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
-  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || '3.8.0');
-  const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || '');
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.0.0");
+  const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState<AdminTab>("profile");
 
-  // Load app version from server
   useEffect(() => {
     const loadVersion = async () => {
       try {
         const health = await utilityApi.getHealth();
         if (health.version) setAppVersion(health.version);
       } catch (error) {
-        console.warn('Failed to load app version from server, using build version:', error);
-        // Keep the build version as fallback
+        console.warn("Failed to load app version from server, using build version:", error);
       }
     };
     loadVersion();
   }, []);
 
-  // Sync gaId when profile is loaded from server
   useEffect(() => {
-    setGaId(profile.googleAnalyticsId || '');
+    setGaId(profile.googleAnalyticsId || "");
   }, [profile.googleAnalyticsId]);
+
+  const metrics = useMemo(() => {
+    const contentLinks = links.filter(link => link.type !== "separator");
+    const visibleLinks = contentLinks.filter(link => link.isActive !== false);
+    const scheduledLinks = contentLinks.filter(link => link.startDate || link.endDate);
+    const totalClicks = links.reduce((sum, link) => sum + (link.clickCount ?? 0), 0);
+    const socialCount = Object.values(profile.socialLinks || {}).filter(Boolean).length;
+
+    return {
+      visibleLinks: visibleLinks.length,
+      totalLinks: contentLinks.length,
+      scheduledLinks: scheduledLinks.length,
+      totalClicks,
+      socialCount,
+      profileReady: Boolean(profile.name?.trim() && profile.bio?.trim()),
+    };
+  }, [links, profile]);
 
   const handleLogout = () => {
     logout();
@@ -97,196 +137,281 @@ export const AdminView = ({
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Admin Header */}
-        <div className="glass-card p-4 border border-primary/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <h1 className="text-lg font-semibold text-primary">
-                Lynx - Your personal links hub
-              </h1>
+    <div className="lynx-admin min-h-screen">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
+        <header className="admin-topbar">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className="admin-status-dot" />
+              <span className="admin-kicker">Self-hosted dashboard</span>
+              {appVersion && <span className="admin-version">v{appVersion}</span>}
             </div>
-            <div className="flex items-center gap-2">
-              <a href="/" target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">View Public Page</span>
-                  <span className="sm:hidden">Preview</span>
-                </Button>
-              </a>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
+            <h1 className="admin-title">Lynx Admin</h1>
+            <p className="admin-subtitle">
+              Manage profile, content, theme, security, and analytics from one workspace.
+            </p>
           </div>
-        </div>
-        
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid grid-cols-6 w-full max-w-2xl mx-auto">
-            <TabsTrigger value="profile" className="flex items-center gap-1">
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">Profile</span>
-            </TabsTrigger>
-            <TabsTrigger value="links" className="flex items-center gap-1">
-              <Link className="w-4 h-4" />
-              <span className="hidden sm:inline">Links</span>
-            </TabsTrigger>
-            <TabsTrigger value="theme" className="flex items-center gap-1">
-              <Palette className="w-4 h-4" />
-              <span className="hidden sm:inline">Theme</span>
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-1">
-              <Key className="w-4 h-4" />
-              <span className="hidden sm:inline">Security</span>
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-1">
-              <Eye className="w-4 h-4" />
-              <span className="hidden sm:inline">Preview</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-1">
-              <BarChart2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Analytics</span>
-            </TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="profile" className="space-y-6">
-            <div className="max-w-md mx-auto">
-              <ProfileSection 
-                profile={profile}
-                onProfileUpdate={onProfileUpdate}
-              />
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <a href="/" target="_blank" rel="noopener noreferrer">
+              <Button className="admin-action admin-action-primary w-full sm:w-auto" size="sm">
+                <ExternalLink className="h-4 w-4" />
+                Public page
+              </Button>
+            </a>
+            <Button className="admin-action w-full sm:w-auto" variant="outline" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
+        </header>
+
+        <section className="admin-metrics" aria-label="Workspace status">
+          <MetricCard
+            icon={Globe2}
+            label="Visible links"
+            value={`${metrics.visibleLinks}/${metrics.totalLinks}`}
+            detail={metrics.scheduledLinks > 0 ? `${metrics.scheduledLinks} scheduled` : "Ready to publish"}
+          />
+          <MetricCard
+            icon={MousePointerClick}
+            label="Total clicks"
+            value={String(metrics.totalClicks)}
+            detail="Built-in tracking"
+          />
+          <MetricCard
+            icon={CheckCircle2}
+            label="Profile"
+            value={metrics.profileReady ? "Ready" : "Draft"}
+            detail={`${metrics.socialCount} social links`}
+          />
+          <MetricCard
+            icon={ShieldCheck}
+            label="Admin access"
+            value="Protected"
+            detail="Encrypted session token"
+          />
+        </section>
+
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AdminTab)} className="mt-5 flex-1">
+          <div className="admin-nav-shell">
+            <TabsList className="admin-tabs">
+              {tabs.map(({ value, label, icon: Icon }) => (
+                <TabsTrigger key={value} value={value} className="admin-tab">
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          <TabsContent value="profile" className="admin-tab-content">
+            <div className="admin-content-grid">
+              <div className="admin-main-column">
+                <ProfileSection
+                  profile={profile}
+                  onProfileUpdate={onProfileUpdate}
+                />
+              </div>
+              <aside className="admin-side-panel admin-checklist-panel">
+                <PanelHeader icon={User} title="Profile checklist" />
+                <ChecklistItem checked={Boolean(profile.name?.trim())} label="Name is set" />
+                <ChecklistItem checked={Boolean(profile.bio?.trim())} label="Bio is set" />
+                <ChecklistItem checked={metrics.socialCount > 0} label="At least one social link" />
+                <ChecklistItem checked={Boolean(profile.tabTitle?.trim())} label="Browser title customized" />
+              </aside>
             </div>
           </TabsContent>
 
-          <TabsContent value="links" className="space-y-6">
-            <div className="max-w-md mx-auto">
-              <LinkManager
-                links={links}
-                onLinksUpdate={onLinksUpdate}
-              />
+          <TabsContent value="links" className="admin-tab-content">
+            <div className="admin-content-grid admin-content-grid-wide">
+              <div className="admin-main-column">
+                <LinkManager
+                  links={links}
+                  onLinksUpdate={onLinksUpdate}
+                />
+              </div>
+              <aside className="admin-side-panel">
+                <PanelHeader icon={Layers3} title="Content status" />
+                <div className="space-y-3">
+                  <StatusRow label="Visible" value={String(metrics.visibleLinks)} />
+                  <StatusRow label="Hidden" value={String(Math.max(metrics.totalLinks - metrics.visibleLinks, 0))} />
+                  <StatusRow label="Scheduled" value={String(metrics.scheduledLinks)} />
+                </div>
+              </aside>
             </div>
           </TabsContent>
 
-          <TabsContent value="theme" className="space-y-6">
+          <TabsContent value="theme" className="admin-tab-content">
             <ThemeCustomizer
               theme={theme}
               onThemeChange={onThemeChange}
-              onThemePreview={(t) => applyTheme(t)}
+              onThemePreview={(nextTheme) => applyTheme(nextTheme)}
             />
           </TabsContent>
 
-          <TabsContent value="security" className="space-y-6">
-            <div className="max-w-md mx-auto">
+          <TabsContent value="security" className="admin-tab-content">
+            <div className="admin-single-column">
               <PasswordManager />
             </div>
           </TabsContent>
 
-          <TabsContent value="preview" className="space-y-4">
-            <div className="max-w-md mx-auto">
-              <p className="text-xs text-muted-foreground text-center mb-3">
-                Showing saved state — click Save in each tab to see your latest changes.
-              </p>
+          <TabsContent value="preview" className="admin-tab-content">
+            <div className="admin-preview-grid">
+              <section className="admin-preview-copy">
+                <PanelHeader icon={Eye} title="Saved public page" />
+                <p className="text-sm leading-6 text-slate-600">
+                  Save changes in each editor before checking this preview. Open the public page for the full-size version.
+                </p>
+                <a href="/" target="_blank" rel="noopener noreferrer">
+                  <Button className="admin-action admin-action-primary mt-4" size="sm">
+                    <ExternalLink className="h-4 w-4" />
+                    Open public page
+                  </Button>
+                </a>
+              </section>
               <LivePreview profile={profile} links={links} theme={theme} />
             </div>
           </TabsContent>
 
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="max-w-xl mx-auto space-y-4">
-
-              {/* --- Built-in click analytics --- */}
-              <div className="glass-card p-4 text-center">
-                <p className="text-sm text-muted-foreground">Total clicks</p>
-                <p className="text-3xl font-bold text-primary">
-                  {links.reduce((sum, l) => sum + (l.clickCount ?? 0), 0)}
-                </p>
-              </div>
-              <div className="glass-card p-4">
-                <ClickAnalyticsChart links={links} />
-              </div>
-
-              {/* --- Google Analytics 4 --- */}
-              <Card className="glass-card p-5 space-y-4">
-                <div className="flex items-start gap-3">
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current text-primary shrink-0 mt-0.5" aria-hidden="true">
-                    <path d="M22.84 11.04C21.73 5.3 16.8 1 11 1 5.48 1 1 5.48 1 11c0 5.52 4.48 10 10 10 5.3 0 9.73-4.11 10.84-9.96zM11 19c-4.42 0-8-3.58-8-8s3.58-8 8-8c4.07 0 7.44 2.99 7.93 6.93l-3.44-2.13a4.5 4.5 0 0 0-4.49 0L8.57 9.93A4.48 4.48 0 0 0 6.5 13.5c0 2.49 2.01 4.5 4.5 4.5s4.5-2.01 4.5-4.5c0-.84-.23-1.63-.63-2.31l3.44 2.13C17.5 16.67 14.47 19 11 19z"/>
-                  </svg>
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Google Analytics 4</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      The tracking script is injected on the public page only — the admin panel is never tracked.
-                    </p>
-                  </div>
+          <TabsContent value="analytics" className="admin-tab-content">
+            <div className="admin-analytics-grid">
+              <section className="admin-panel">
+                <PanelHeader icon={BarChart2} title="Click analytics" />
+                <div className="mb-5 grid grid-cols-2 gap-3">
+                  <StatusTile label="Total clicks" value={String(metrics.totalClicks)} />
+                  <StatusTile label="Tracked items" value={String(metrics.totalLinks)} />
                 </div>
+                <ClickAnalyticsChart links={links} />
+              </section>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="ga-id" className="text-xs font-medium">Measurement ID</Label>
+              <Card className="admin-panel space-y-5">
+                <PanelHeader icon={Globe2} title="Google Analytics 4" />
+                <p className="text-sm leading-6 text-slate-600">
+                  Tracking runs on the public page only. Admin activity stays out of analytics.
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ga-id" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Measurement ID
+                  </Label>
                   <Input
                     id="ga-id"
                     value={gaId}
                     onChange={(e) => setGaId(e.target.value)}
                     placeholder="G-XXXXXXXXXX"
-                    className="glass-card border-primary/20 font-mono text-sm"
+                    className="admin-input font-mono text-sm"
                     spellCheck={false}
                   />
-                  <p className="text-[10px] text-muted-foreground opacity-70">
-                    Google Analytics → Admin → Data Streams → your stream → Measurement ID (starts with <span className="font-mono">G-</span>).
+                  <p className="text-xs leading-5 text-slate-500">
+                    Find it in Google Analytics, Admin, Data streams, Measurement ID.
                   </p>
                 </div>
 
                 {gaId && !gaId.match(/^G-[A-Z0-9]+$/i) && (
-                  <p className="text-xs text-destructive">
-                    Format incorrect — must start with <span className="font-mono">G-</span> followed by alphanumeric characters.
+                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    The ID must start with G- and use only letters and numbers.
                   </p>
                 )}
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Button
                     onClick={handleSaveIntegrations}
-                    variant="gradient"
+                    className="admin-action admin-action-primary"
                     size="sm"
                     disabled={!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i)}
                   >
-                    {gaSaved ? 'Saved!' : 'Save'}
+                    {gaSaved ? "Saved" : "Save"}
                   </Button>
                   {profile.googleAnalyticsId && (
-                    <p className="text-xs text-muted-foreground">
-                      Active: <span className="font-mono text-primary">{profile.googleAnalyticsId}</span>
+                    <p className="text-xs text-slate-500">
+                      Active: <span className="font-mono text-blue-700">{profile.googleAnalyticsId}</span>
                     </p>
                   )}
                 </div>
               </Card>
-
             </div>
           </TabsContent>
         </Tabs>
-        
-        {/* Footer — "Powered by Lynx" is always shown and cannot be removed */}
-        <div className="text-center pt-8 pb-2 space-y-1">
+
+        <footer className="admin-footer">
           {profile.footerText && (
-            <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
+            <p className="whitespace-pre-line text-xs text-slate-500">
               {profile.footerText}
             </p>
           )}
-          <p className="text-xs text-muted-foreground opacity-60">
+          <p>
             Powered by{" "}
-            <a
-              href="https://github.com/paoloronco/Lynx"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-primary"
-            >
+            <a href="https://github.com/paoloronco/Lynx" target="_blank" rel="noopener noreferrer">
               Lynx
             </a>
             {appVersion && <span> v{appVersion}</span>}
           </p>
-          <p className="text-xs text-muted-foreground opacity-60">
-            Your personal links hub
-          </p>
-        </div>
+        </footer>
       </div>
     </div>
   );
 };
+
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  detail,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="admin-metric-card">
+      <div className="admin-metric-icon">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <p className="admin-metric-label">{label}</p>
+        <p className="admin-metric-value">{value}</p>
+        <p className="admin-metric-detail">{detail}</p>
+      </div>
+    </div>
+  );
+}
+
+function PanelHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <span className="admin-panel-icon">
+        <Icon className="h-4 w-4" />
+      </span>
+      <h2 className="text-base font-semibold text-slate-950">{title}</h2>
+    </div>
+  );
+}
+
+function ChecklistItem({ checked, label }: { checked: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+      <span className={checked ? "admin-check admin-check-active" : "admin-check"} />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function StatusRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-slate-200 pb-3 last:border-b-0 last:pb-0">
+      <span className="text-sm text-slate-600">{label}</span>
+      <span className="text-sm font-semibold text-slate-950">{value}</span>
+    </div>
+  );
+}
+
+function StatusTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
+    </div>
+  );
+}

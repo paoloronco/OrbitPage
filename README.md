@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -308,6 +308,23 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.0.0</strong></summary>
+
+### Admin experience
+
+- Redesigned the Admin panel with a clearer dashboard layout, status metrics, sticky centered navigation, and a lighter operational workspace.
+- Improved the Links editor with a clearer toolbar, content creation cards, save state visibility, and a more helpful empty state.
+- Added animated profile checklist guidance and save confirmation feedback for theme changes.
+- Kept the public page preview isolated from the Admin styling so it continues to reflect the saved public theme.
+
+### Loading and compatibility
+
+- Added a single public-page payload endpoint to load profile, links, and theme together and avoid flashes of default content.
+- Preserved compatibility with existing SQLite databases through additive migrations only.
+
+</details>
 
 <details>
 <summary><strong>v3.8.0</strong></summary>

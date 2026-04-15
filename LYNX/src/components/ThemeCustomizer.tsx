@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Palette, Type, Layout, FileDown, Upload, RotateCcw } from "lucide-react";
+import { CheckCircle, Palette, Type, Layout, FileDown, Upload, RotateCcw, AlertTriangle } from "lucide-react";
 import { ThemeConfig, defaultTheme, applyTheme } from "@/lib/theme";
 
 interface ThemeCustomizerProps {
@@ -21,6 +21,7 @@ interface ThemeCustomizerProps {
 export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeCustomizerProps) => {
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   const [pendingTheme, setPendingTheme] = useState<ThemeConfig>(theme);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // Sync pendingTheme with theme prop when it changes
   useEffect(() => {
@@ -30,16 +31,21 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
   const updatePendingTheme = (updates: Partial<ThemeConfig>) => {
     const newTheme = { ...pendingTheme, ...updates } as ThemeConfig;
     setPendingTheme(newTheme);
+    setSaveState("idle");
     // Live preview in admin without persisting
     onThemePreview?.(newTheme);
   };
 
   const saveTheme = async () => {
+    setSaveState("saving");
     try {
       await onThemeChange(pendingTheme);
       // Don't apply theme to admin interface here; preview already applied live
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 3000);
     } catch (error) {
       console.error('Failed to save theme:', error);
+      setSaveState("error");
     }
   };
 
@@ -123,8 +129,8 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
           <h2 className="text-lg font-semibold">Theme Customizer</h2>
         </div>
         <div className="flex gap-2">
-          <Button onClick={saveTheme} size="sm">
-            Save Changes
+          <Button onClick={saveTheme} size="sm" disabled={saveState === "saving"}>
+            {saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : "Save Changes"}
           </Button>
           <Button variant="outline" size="sm" onClick={exportTheme}>
             <FileDown className="w-4 h-4 mr-2" />
@@ -148,6 +154,20 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
           </Button>
         </div>
       </div>
+
+      {saveState === "saved" && (
+        <div className="admin-save-confirmation admin-save-confirmation-success" role="status" aria-live="polite">
+          <CheckCircle className="h-4 w-4" />
+          <span>Theme saved successfully.</span>
+        </div>
+      )}
+
+      {saveState === "error" && (
+        <div className="admin-save-confirmation admin-save-confirmation-error" role="alert">
+          <AlertTriangle className="h-4 w-4" />
+          <span>Theme could not be saved. Try again.</span>
+        </div>
+      )}
 
       <Tabs defaultValue="colors" className="w-full">
         <TabsList className="grid grid-cols-3 w-full">

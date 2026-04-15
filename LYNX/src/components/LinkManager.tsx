@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Link, List, Type, Upload, Download, Minus } from "lucide-react";
+import { Download, Link, List, Minus, Plus, Save, Type, Upload } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { SeparatorCard } from "./SeparatorCard";
@@ -276,67 +276,99 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-2">
-          <Button onClick={addNewLink} variant="gradient" className="gap-2 w-full">
-            <Link className="w-4 h-4" />
-            Add Link
-          </Button>
-          <Button onClick={addNewBulletedList} variant="outline" className="gap-2 w-full">
-            <List className="w-4 h-4" />
-            Bulleted list
-          </Button>
-          <Button onClick={addNewTextCard} variant="outline" className="gap-2 w-full">
-            <Type className="w-4 h-4" />
-            Text Card
-          </Button>
-          <Button onClick={addNewSeparator} variant="outline" className="gap-2 w-full">
-            <Minus className="w-4 h-4" />
-            Separator
-          </Button>
+    <div className="admin-link-manager">
+      <div className="admin-link-toolbar">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold text-slate-950">Content cards</h2>
+            {isDirty && <span className="admin-dirty-badge">Unsaved changes</span>}
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            {workingLinks.length === 0 ? "Start with a link, text block, list, or separator." : `${workingLinks.length} items in your public page order.`}
+          </p>
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Button onClick={handleSave} variant="default" className="w-full" disabled={!isDirty || busy}>
+
+        <div className="admin-link-actions">
+          <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy}>
+            <Save className="h-4 w-4" />
             Save
           </Button>
-          <Button onClick={exportLinks} variant="outline" className="gap-1.5 w-full" disabled={busy}>
-            <Download className="w-4 h-4" /> Export
+          <Button onClick={exportLinks} variant="outline" className="admin-action" disabled={busy}>
+            <Download className="h-4 w-4" />
+            Export
           </Button>
-          <Button onClick={handleImportFile} variant="outline" className="gap-1.5 w-full" disabled={busy}>
-            <Upload className="w-4 h-4" /> Import
+          <Button onClick={handleImportFile} variant="outline" className="admin-action" disabled={busy}>
+            <Upload className="h-4 w-4" />
+            Import
           </Button>
         </div>
       </div>
 
+      <div className="admin-add-grid">
+        <Button onClick={addNewLink} className="admin-add-card">
+          <span className="admin-add-icon">
+            <Link className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block font-semibold">Link</span>
+            <span className="block text-xs opacity-70">URL card</span>
+          </span>
+        </Button>
+        <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">
+          <span className="admin-add-icon">
+            <List className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block font-semibold">List</span>
+            <span className="block text-xs opacity-70">Grouped items</span>
+          </span>
+        </Button>
+        <Button onClick={addNewTextCard} variant="outline" className="admin-add-card">
+          <span className="admin-add-icon">
+            <Type className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block font-semibold">Text</span>
+            <span className="block text-xs opacity-70">Freeform copy</span>
+          </span>
+        </Button>
+        <Button onClick={addNewSeparator} variant="outline" className="admin-add-card">
+          <span className="admin-add-icon">
+            <Minus className="h-4 w-4" />
+          </span>
+          <span>
+            <span className="block font-semibold">Separator</span>
+            <span className="block text-xs opacity-70">Section label</span>
+          </span>
+        </Button>
+      </div>
+
       {workingLinks.length === 0 ? (
-        <Card className="glass-card p-8 text-center">
+        <Card className="admin-empty-state">
             <div className="space-y-4">
-              <div className="text-4xl opacity-50">📝</div>
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                <Plus className="h-5 w-5" />
+              </div>
               <div>
-                <h3 className="font-semibold text-foreground mb-2">No content yet</h3>
-                <p className="text-muted-foreground text-sm">
-                  Add links or text cards to get started with your personal hub.
+                <h3 className="mb-2 font-semibold text-slate-950">No content yet</h3>
+                <p className="text-sm leading-6 text-slate-600">
+                  Add a first card, then drag items into the order you want.
                 </p>
               </div>
-              <div className="flex gap-2 justify-center">
-                <Button onClick={addNewLink} variant="gradient">
-                  <Link className="w-4 h-4 mr-2" />
-                  Add Link
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button onClick={addNewLink} className="admin-action admin-action-primary">
+                  <Link className="h-4 w-4" />
+                  Add link
                 </Button>
-                <Button onClick={addNewBulletedList} variant="outline">
-                  <List className="w-4 h-4 mr-2" />
-                  Add bulleted list
-                </Button>
-                <Button onClick={addNewTextCard} variant="outline">
-                  <Type className="w-4 h-4 mr-2" />
-                  Add Text Card
+                <Button onClick={addNewBulletedList} variant="outline" className="admin-action">
+                  <List className="h-4 w-4" />
+                  Add list
                 </Button>
               </div>
             </div>
         </Card>
       ) : (
-        <div className="flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
+        <div className="admin-link-list">
           {workingLinks.map((link) => (
             <div
               key={link.id}
@@ -350,7 +382,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
               onTouchStart={(e) => handleTouchStart(e, link.id)}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className={dragOverId === link.id ? 'ring-2 ring-primary/40 rounded-lg' : ''}
+              className={dragOverId === link.id ? 'rounded-lg ring-2 ring-blue-400/50' : ''}
             >
               {link.type === 'separator' ? (
                 <SeparatorCard

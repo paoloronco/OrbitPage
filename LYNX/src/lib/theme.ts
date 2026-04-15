@@ -155,59 +155,57 @@ const hexToHsl = (hex: string) => {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string> => {
+  const cardHsl = hexToHsl(theme.card);
+  const borderHsl = hexToHsl(theme.border);
+  const primaryGlowHsl = hexToHsl(theme.primaryGlow);
+  const tint = (theme as any).cardBlurTint || theme.card;
+
+  return {
+    '--primary': hexToHsl(theme.primary),
+    '--primary-glow': primaryGlowHsl,
+    '--primary-foreground': hexToHsl(theme.foreground),
+    '--background': hexToHsl(theme.background),
+    '--card': cardHsl,
+    '--card-foreground': hexToHsl(theme.foreground),
+    '--foreground': hexToHsl(theme.foreground),
+    '--muted': hexToHsl(theme.backgroundSecondary),
+    '--muted-foreground': hexToHsl(theme.muted),
+    '--accent': hexToHsl(theme.primary),
+    '--accent-foreground': hexToHsl(theme.foreground),
+    '--border': borderHsl,
+    '--input': hexToHsl(theme.backgroundSecondary),
+    '--ring': hexToHsl(theme.primary),
+    '--popover': cardHsl,
+    '--popover-foreground': hexToHsl(theme.foreground),
+    '--secondary': hexToHsl(theme.backgroundSecondary),
+    '--secondary-foreground': hexToHsl(theme.foreground),
+    '--gradient-background': `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`,
+    '--gradient-card': `linear-gradient(${theme.cardGradient.direction}, ${theme.cardGradient.from}, ${theme.cardGradient.to})`,
+    '--gradient-primary': `linear-gradient(135deg, ${theme.primary}, ${theme.primaryGlow})`,
+    '--font-family': theme.fontFamily,
+    '--line-height-normal': '1.45',
+    '--line-height-tight': '1.25',
+    '--radius': `${theme.cardRadius}px`,
+    '--blur-intensity': `${theme.blurIntensity}px`,
+    '--card-spacing': `${theme.cardSpacing}px`,
+    '--glass-bg': `hsl(${cardHsl} / 0.78)`,
+    '--glass-border': `1px solid hsl(${borderHsl} / 0.5)`,
+    '--card-glow': `0 8px ${theme.blurIntensity}px hsl(${primaryGlowHsl} / ${Math.min(0.9, theme.glowIntensity)})`,
+    '--glass-tint': tint,
+  };
+};
+
 // Apply theme for public view (affects the entire page)
 export const applyTheme = (theme: ThemeConfig) => {
   const root = document.documentElement;
+  const variables = getThemeCssVariables(theme);
   
-  // Apply all color variables for site-wide theming
-  root.style.setProperty('--primary', hexToHsl(theme.primary));
-  root.style.setProperty('--primary-glow', hexToHsl(theme.primaryGlow));
-  root.style.setProperty('--primary-foreground', hexToHsl(theme.foreground));
-  root.style.setProperty('--background', hexToHsl(theme.background));
-  root.style.setProperty('--card', hexToHsl(theme.card));
-  root.style.setProperty('--card-foreground', hexToHsl(theme.foreground));
-  root.style.setProperty('--foreground', hexToHsl(theme.foreground));
-  root.style.setProperty('--muted', hexToHsl(theme.backgroundSecondary));
-  root.style.setProperty('--muted-foreground', hexToHsl(theme.muted));
-  // Accent is no longer independently configurable; mirror primary to keep compatibility
-  root.style.setProperty('--accent', hexToHsl(theme.primary));
-  root.style.setProperty('--accent-foreground', hexToHsl(theme.foreground));
-  root.style.setProperty('--border', hexToHsl(theme.border));
-  root.style.setProperty('--input', hexToHsl(theme.backgroundSecondary));
-  root.style.setProperty('--ring', hexToHsl(theme.primary));
-  root.style.setProperty('--popover', hexToHsl(theme.card));
-  root.style.setProperty('--popover-foreground', hexToHsl(theme.foreground));
-  root.style.setProperty('--secondary', hexToHsl(theme.backgroundSecondary));
-  root.style.setProperty('--secondary-foreground', hexToHsl(theme.foreground));
-  
-  // Apply gradients
-  root.style.setProperty('--gradient-background', 
-    `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`);
-  root.style.setProperty('--gradient-card', 
-    `linear-gradient(${theme.cardGradient.direction}, ${theme.cardGradient.from}, ${theme.cardGradient.to})`);
-  root.style.setProperty('--gradient-primary', 
-    `linear-gradient(135deg, ${theme.primary}, ${theme.primaryGlow})`);
-  
-  // Apply typography
-  root.style.setProperty('--font-family', theme.fontFamily);
+  Object.entries(variables).forEach(([property, value]) => {
+    root.style.setProperty(property, value);
+  });
+
   document.body.style.fontFamily = theme.fontFamily;
-  // Reasonable default line heights
-  root.style.setProperty('--line-height-normal', '1.45');
-  root.style.setProperty('--line-height-tight', '1.25');
-  
-  // Apply layout
-  root.style.setProperty('--radius', `${theme.cardRadius}px`);
-  root.style.setProperty('--blur-intensity', `${theme.blurIntensity}px`);
-  root.style.setProperty('--card-spacing', `${theme.cardSpacing}px`);
-  
-  // Update glass card background with blur intensity
-  root.style.setProperty('--glass-bg', `hsl(${hexToHsl(theme.card)} / 0.78)`);
-  root.style.setProperty('--glass-border', `1px solid hsl(${hexToHsl(theme.border)} / 0.5)`);
-  // Card glow uses primary glow color with an intensity multiplier
-  root.style.setProperty('--card-glow', `0 8px ${theme.blurIntensity}px hsl(${hexToHsl(theme.primaryGlow)} / ${Math.min(0.9, theme.glowIntensity)})`);
-  // Glass tint (allow override from admin theme payload via `cardBlurTint` if present)
-  const tint = (theme as any).cardBlurTint || theme.card;
-  root.style.setProperty('--glass-tint', tint);
   
   // Force body background update
   document.body.style.background = `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;

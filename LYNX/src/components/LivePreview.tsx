@@ -3,7 +3,7 @@ import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicTextCard } from "./PublicTextCard";
 import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { LinkData } from "./LinkCard";
-import { ThemeConfig } from "@/lib/theme";
+import { getThemeCssVariables, ThemeConfig } from "@/lib/theme";
 
 interface ProfileData {
   name: string;
@@ -46,18 +46,22 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
 
   // Background derived directly from the theme (document.body is global, so we set it inline)
   const previewBackground = `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
+  const previewThemeVars = getThemeCssVariables(theme) as React.CSSProperties;
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-primary/20" style={{ height: '560px' }}>
+    <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" style={{ height: '560px' }}>
       {/* Scrollable layer */}
       <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
         {/* Scaled content — transformOrigin top-left so it aligns flush left */}
         <div
           style={{
+            ...previewThemeVars,
             transform: 'scale(0.68)',
             transformOrigin: 'top left',
             width: `${(100 / 0.68).toFixed(2)}%`,
             background: previewBackground,
+            color: theme.foreground,
+            fontFamily: theme.fontFamily,
             padding: '32px 16px 48px',
           }}
         >
@@ -86,13 +90,13 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
       </div>
 
       {/* Footer bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-card/90 backdrop-blur-sm border-t border-primary/20 px-3 py-2 flex items-center justify-between pointer-events-none">
-        <span className="text-xs text-muted-foreground">Live Preview</span>
+      <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 px-3 py-2 flex items-center justify-between pointer-events-none">
+        <span className="text-xs text-slate-500">Live Preview</span>
         <a
           href="/"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-primary underline hover:no-underline pointer-events-auto"
+          className="text-xs text-blue-700 underline hover:no-underline pointer-events-auto"
         >
           Open public page →
         </a>
