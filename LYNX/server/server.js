@@ -153,6 +153,139 @@ const injectGoogleAnalyticsTag = (html, measurementId) => {
   return html.includes('<head>') ? html.replace('<head>', `<head>${tag}`) : `${tag}\n${html}`;
 };
 
+const setNoStoreHeaders = (res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.set('Surrogate-Control', 'no-store');
+};
+
+const normalizeAvatar = (avatar) => {
+  if (!avatar || typeof avatar !== 'string') return '/assets/profile-avatar.jpg';
+  if (avatar.startsWith('data:') || avatar.startsWith('http://') || avatar.startsWith('https://')) return avatar;
+  if (avatar.includes('/src/assets/profile-avatar')) return '/assets/profile-avatar.jpg';
+
+  try {
+    avatar = String(avatar).replace(/\\/g, '/');
+    avatar = avatar.replace(/^\/+/, '/');
+    avatar = avatar.replace(/(\/uploads)+\//i, '/uploads/');
+  } catch {
+    // Continue with the original value if normalization fails.
+  }
+
+  if (avatar.startsWith('/public/')) return avatar.replace('/public/', '/');
+  if (!avatar.startsWith('/')) return `/${avatar}`;
+  return avatar;
+};
+
+const getPublicProfilePayload = async () => {
+  const profile = await dbGet('SELECT * FROM profile_data ORDER BY id DESC LIMIT 1');
+
+  if (!profile) {
+    return {
+      name: '',
+      bio: '',
+      avatar: '/assets/profile-avatar.jpg',
+      social_links: {},
+      show_avatar: 0,
+      name_font_size: '2rem',
+      bio_font_size: '14px',
+      tab_title: undefined,
+      meta_description: undefined,
+      footer_text: undefined,
+      favicon: undefined,
+      google_analytics_id: undefined,
+    };
+  }
+
+  return {
+    name: profile.name || '',
+    bio: profile.bio || '',
+    avatar: normalizeAvatar(profile.avatar) || '/assets/profile-avatar.jpg',
+    social_links: safeJsonParse(profile.social_links, {}),
+    show_avatar: profile.show_avatar === 0 ? 0 : 1,
+    name_font_size: profile.name_font_size || '2rem',
+    bio_font_size: profile.bio_font_size || '14px',
+    tab_title: profile.tab_title || undefined,
+    meta_description: profile.meta_description || undefined,
+    footer_text: profile.footer_text || undefined,
+    favicon: profile.favicon || undefined,
+    google_analytics_id: profile.google_analytics_id || undefined,
+  };
+};
+
+const formatLinkPayload = (link) => {
+  const icon = link.icon && (link.icon.startsWith('data:image/') || link.icon.startsWith('blob:'))
+    ? link.icon
+    : link.icon || null;
+
+  return {
+    id: link.id,
+    title: link.title,
+    description: link.description || '',
+    url: link.url || '',
+    icon,
+    iconType: link.icon_type || (icon ? 'image' : undefined),
+    content: link.content || null,
+    textItems: link.text_items ? (() => { try { return JSON.parse(link.text_items); } catch { return null; } })() : null,
+    type: link.type || 'link',
+    backgroundColor: link.background_color || undefined,
+    titleFontFamily: link.title_font_family || undefined,
+    descriptionFontFamily: link.description_font_family || undefined,
+    alignment: link.text_alignment || undefined,
+    titleFontSize: link.title_font_size || undefined,
+    descriptionFontSize: link.description_font_size || undefined,
+    textColor: link.text_color || undefined,
+    order: link.sort_order || 0,
+    size: link.size || 'medium',
+    isActive: link.is_active !== 0,
+    clickCount: link.click_count || 0,
+    startDate: link.start_date || null,
+    endDate: link.end_date || null,
+    createdAt: link.created_at,
+    updatedAt: link.updated_at,
+  };
+};
+
+const getPublicLinksPayload = async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const links = await dbAll(
+    `SELECT * FROM links WHERE is_active = 1
+     AND (start_date IS NULL OR start_date <= ?)
+     AND (end_date IS NULL OR end_date >= ?)
+     ORDER BY sort_order`,
+    [today, today]
+  );
+
+  return links.map(formatLinkPayload);
+};
+
+const getPublicThemePayload = async () => {
+  const theme = await dbGet('SELECT * FROM theme_config ORDER BY id DESC LIMIT 1');
+
+  if (!theme) {
+    return {
+      primary: '#007bff',
+      background: '#ffffff',
+      foreground: '#000000',
+    };
+  }
+
+  if (theme.full_config) {
+    try {
+      return JSON.parse(theme.full_config);
+    } catch {
+      // Fall back to the compact theme fields below.
+    }
+  }
+
+  return {
+    primary: theme.primary_color,
+    background: theme.background_color,
+    foreground: theme.text_color,
+  };
+};
+
 const serveSpaIndex = async (req, res, { includeGoogleAnalytics = false } = {}) => {
   try {
     let html = await fs.promises.readFile(indexHtmlPath, 'utf8');
@@ -327,6 +460,24 @@ app.post('/api/auth/verify', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error verifying user:', error);
     res.status(500).json({ valid: false, error: 'Verification failed' });
+  }
+});
+
+// Aggregated public payload used by the home page to avoid visible default states.
+app.get('/api/public-page', async (req, res) => {
+  try {
+    setNoStoreHeaders(res);
+
+    const [profile, links, theme] = await Promise.all([
+      getPublicProfilePayload(),
+      getPublicLinksPayload(),
+      getPublicThemePayload(),
+    ]);
+
+    res.json({ profile, links, theme });
+  } catch (error) {
+    console.error('Error loading public page payload:', error);
+    res.status(500).json({ error: 'Failed to load public page' });
   }
 });
 

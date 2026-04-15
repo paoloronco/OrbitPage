@@ -8,6 +8,10 @@ interface ProfileData {
   name: string;
   bio: string;
   avatar: string;
+  showAvatar?: boolean;
+  socialLinks?: Record<string, string | undefined>;
+  nameFontSize?: string;
+  bioFontSize?: string;
 }
 
 interface PublicViewProps {
@@ -17,6 +21,18 @@ interface PublicViewProps {
 }
 
 export const PublicView = ({ profile, links, footerText }: PublicViewProps) => {
+  const hasCustomAvatar = Boolean(
+    profile.showAvatar !== false &&
+    profile.avatar &&
+    !profile.avatar.includes('profile-avatar')
+  );
+  const hasProfileContent = Boolean(
+    profile.name?.trim() ||
+    profile.bio?.trim() ||
+    (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||
+    hasCustomAvatar
+  );
+
   const visibleLinks = links.filter(link => {
     // Respect visibility toggle
     if (link.isActive === false) return false;
@@ -40,7 +56,7 @@ export const PublicView = ({ profile, links, footerText }: PublicViewProps) => {
   return (
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-md mx-auto space-y-6">
-        <PublicProfileSection profile={profile} />
+        {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
         
         {visibleLinks.length > 0 && (
           <div className="flex flex-col" style={{ gap: 'var(--card-spacing)' }}>

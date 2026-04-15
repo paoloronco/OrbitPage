@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { PublicView } from "@/components/PublicView";
 import { LinkData } from "@/components/LinkCard";
-import { applyTheme, defaultTheme, ThemeConfig } from "@/lib/theme";
-import { profileApi, linksApi, themeApi } from "@/lib/api-client";
+import { applyTheme, normalizeTheme } from "@/lib/theme";
+import { publicPageApi } from "@/lib/api-client";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
 interface ProfileData {
@@ -22,6 +22,7 @@ interface ProfileData {
     whatsapp?: string;
     mastodon?: string;
   };
+  showAvatar?: boolean;
   nameFontSize?: string;
   bioFontSize?: string;
   footerText?: string;
@@ -31,27 +32,39 @@ interface ProfileData {
 
 const Index = () => {
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [profile, setProfile] = useState<ProfileData>({
     name: "",
     bio: "",
     avatar: profileAvatar,
+    showAvatar: false,
   });
   const [links, setLinks] = useState<LinkData[]>([]);
 
-  // Load data and theme from database on mount
+  // Load all public page data in one request so the default UI never flashes.
   useEffect(() => {
+    let cancelled = false;
+
     const loadData = async () => {
       try {
-        // Load profile data from database
-        const profileData = await profileApi.get();
+        const pageData = await publicPageApi.get();
+        if (cancelled) return;
+
+        const loadedTheme = normalizeTheme(pageData.theme);
+        applyTheme(loadedTheme);
+
+        const profileData = pageData.profile;
         if (profileData) {
           const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
           const favicon = (profileData as any).favicon || undefined;
           const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
           setProfile({
-            name: profileData.name,
-            bio: profileData.bio,
-            avatar: profileData.avatar,
+            name: profileData.name || "",
+            bio: profileData.bio || "",
+            avatar: profileData.avatar || (profileAvatar as string),
+            showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
+              ? (profileData as any).show_avatar !== 0
+              : ((profileData as any).showAvatar ?? true),
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
             socialLinks: profileData.social_links || {},
@@ -126,68 +139,50 @@ const Index = () => {
           }
         }
 
-        // Load links data from database
-        const linksData = await linksApi.get();
-        if (linksData && linksData.length > 0) {
-          const formattedLinks = linksData.map(link => {
-            // Use iconType if available, otherwise fall back to icon_type from the API
-            const iconType = link.iconType || (link as any).icon_type;
-            return {
-              id: link.id,
-              title: link.title,
-              description: link.description || '',
-              url: link.url,
-              type: (link.type as 'link' | 'text') || 'link',
-              icon: link.icon || undefined,
-              iconType: iconType || undefined,
-              backgroundColor: link.backgroundColor,
-              textColor: link.textColor,
-              size: link.size,
-              content: link.content,
-                textItems: link.textItems,
-                // Preserve per-link typography and alignment
-                titleFontFamily: (link as any).titleFontFamily || (link as any).titleFont || undefined,
-                descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
-                titleFontSize: (link as any).titleFontSize || undefined,
-                descriptionFontSize: (link as any).descriptionFontSize || undefined,
-                alignment: (link as any).alignment || undefined
-            };
-          });
-          setLinks(formattedLinks);
-        }
+        const formattedLinks = (pageData.links || []).map(link => {
+          const iconType = link.iconType || (link as any).icon_type;
+          return {
+            id: String(link.id),
+            title: link.title,
+            description: link.description || '',
+            url: link.url,
+            type: (link.type as 'link' | 'text' | 'separator') || 'link',
+            icon: link.icon || undefined,
+            iconType: iconType || undefined,
+            backgroundColor: link.backgroundColor,
+            textColor: link.textColor,
+            size: link.size,
+            content: link.content,
+            textItems: link.textItems,
+            // Preserve per-link typography and alignment
+            titleFontFamily: (link as any).titleFontFamily || (link as any).titleFont || undefined,
+            descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
+            titleFontSize: (link as any).titleFontSize || undefined,
+            descriptionFontSize: (link as any).descriptionFontSize || undefined,
+            alignment: (link as any).alignment || undefined
+          };
+        });
 
-        // Load theme data from database and apply it
-        const themeData = await themeApi.get();
-        if (themeData) {
-          // If we have a full theme configuration, use it; otherwise merge with defaults
-          const loadedTheme: ThemeConfig = themeData.primary && themeData.background && themeData.foreground && !themeData.fontFamily
-            ? {
-                ...defaultTheme,
-                primary: themeData.primary,
-                background: themeData.background,
-                foreground: themeData.foreground
-              }
-            : {
-                ...defaultTheme,
-                ...themeData
-              };
-          applyTheme(loadedTheme);
-        } else {
-          applyTheme(defaultTheme);
-        }
+        setLinks(formattedLinks);
+        document.body.classList.remove('lynx-booting');
+        setLoading(false);
       } catch (error) {
         console.error('Error loading data:', error);
-        // Fallback to default theme if database loading fails
-        applyTheme(defaultTheme);
-      } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoadFailed(true);
+          setLoading(false);
+        }
       }
     };
 
     loadData();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  if (loading) return null;
+  if (loading || loadFailed) return null;
 
   return (
     <PublicView

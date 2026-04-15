@@ -3,7 +3,7 @@ import { AdminView } from "@/components/AdminView";
 import { LoginForm } from "@/components/LoginForm";
 import { InitialSetup } from "@/components/InitialSetup";
 import { LinkData } from "@/components/LinkCard";
-import { ThemeConfig, defaultTheme, applyTheme } from "@/lib/theme";
+import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { isFirstTimeSetup } from "@/lib/auth";
 import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
@@ -143,18 +143,7 @@ const Admin = () => {
         const themeData = await themeApi.get();
         
         if (themeData) {
-          // If we have a full theme configuration, use it; otherwise merge with defaults
-          const loadedTheme = themeData.primary && themeData.background && themeData.foreground && !themeData.fontFamily
-            ? {
-                ...defaultTheme,
-                primary: themeData.primary,
-                background: themeData.background,
-                foreground: themeData.foreground
-              }
-            : {
-                ...defaultTheme,
-                ...themeData
-              };
+          const loadedTheme = normalizeTheme(themeData);
           setTheme(loadedTheme);
           applyTheme(loadedTheme);
         } else {

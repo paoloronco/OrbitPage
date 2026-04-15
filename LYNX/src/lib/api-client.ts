@@ -251,6 +251,12 @@ interface LinkItem {
   endDate?: string;
 }
 
+interface PublicPageResponse {
+  profile: ProfileResponse;
+  links: LinkItem[];
+  theme: Record<string, any>;
+}
+
 // API request helper with auth
 const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   const token = await getAuthTokenAsync();
@@ -307,6 +313,13 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
     console.error(`API Request Error (${endpoint}):`, error);
     throw new Error(error.message || 'Failed to connect to the server');
   }
+};
+
+// Public page API
+export const publicPageApi = {
+  get: async (): Promise<PublicPageResponse> => {
+    return apiRequest<PublicPageResponse>('/public-page');
+  },
 };
 
 // Auth API

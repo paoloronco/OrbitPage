@@ -29,10 +29,18 @@ interface ProfileData {
 
 interface PublicProfileSectionProps {
   profile: ProfileData;
+  fallbackName?: string | null;
 }
 
-export const PublicProfileSection = ({ profile }: PublicProfileSectionProps) => {
+export const PublicProfileSection = ({ profile, fallbackName = "Your Name" }: PublicProfileSectionProps) => {
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
+  const displayName = profile.name?.trim() || fallbackName || "";
+  const hasSocialLinks = Boolean(
+    profile.socialLinks && Object.values(profile.socialLinks).some(link => link)
+  );
+  const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || profile.showAvatar !== false);
+
+  if (!hasVisibleProfile) return null;
 
   return (
     <Card className="glass-card p-8 text-center transition-smooth hover:glow-effect">
@@ -45,12 +53,14 @@ export const PublicProfileSection = ({ profile }: PublicProfileSectionProps) => 
         </div>
       )}
       <div className="space-y-4">
-        <h1 className="font-bold text-foreground mb-2" style={{ ...(profile.nameFontSize ? { fontSize: profile.nameFontSize } : { fontSize: '2rem' }) }}>
-          {profile.name || "Your Name"}
-        </h1>
+        {displayName && (
+          <h1 className="font-bold text-foreground mb-2" style={{ ...(profile.nameFontSize ? { fontSize: profile.nameFontSize } : { fontSize: '2rem' }) }}>
+            {displayName}
+          </h1>
+        )}
         
         {/* Social Icons */}
-        {profile.socialLinks && Object.values(profile.socialLinks).some(link => link) && (
+        {hasSocialLinks && (
           <div className="flex justify-center gap-3 mb-4">
             {profile.socialLinks.linkedin && (
               <Button

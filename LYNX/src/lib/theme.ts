@@ -91,6 +91,43 @@ export const defaultTheme: ThemeConfig = {
   }
 };
 
+export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeConfig => {
+  if (!themeData) return defaultTheme;
+
+  const legacyColors: Partial<ThemeConfig> = {};
+  const primary = themeData.primary ?? themeData.primaryColor;
+  const background = themeData.background ?? themeData.backgroundColor;
+  const foreground = themeData.foreground ?? themeData.textColor;
+
+  if (primary) legacyColors.primary = primary;
+  if (background) legacyColors.background = background;
+  if (foreground) legacyColors.foreground = foreground;
+
+  return {
+    ...defaultTheme,
+    ...themeData,
+    ...legacyColors,
+    backgroundGradient: themeData.backgroundGradient
+      ? {
+          ...defaultTheme.backgroundGradient,
+          ...themeData.backgroundGradient,
+        }
+      : {
+          ...defaultTheme.backgroundGradient,
+          from: background || defaultTheme.backgroundGradient.from,
+          to: background || defaultTheme.backgroundGradient.to,
+        },
+    cardGradient: {
+      ...defaultTheme.cardGradient,
+      ...(themeData.cardGradient || {}),
+    },
+    content: {
+      ...defaultTheme.content,
+      ...(themeData.content || {}),
+    },
+  };
+};
+
 // Convert hex to HSL for CSS variables
 const hexToHsl = (hex: string) => {
   const r = parseInt(hex.slice(1, 3), 16) / 255;

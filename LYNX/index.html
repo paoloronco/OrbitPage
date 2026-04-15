@@ -10,9 +10,18 @@
     <meta property="og:title" content="Lynx" />
     <meta property="og:description" content="Lynx — Your personal links hub" />
     <meta property="og:type" content="website" />
+    <style>
+      body.lynx-booting {
+        background: #ffffff !important;
+      }
+
+      body.lynx-booting #root {
+        visibility: hidden;
+      }
+    </style>
   </head>
 
-  <body>
+  <body class="lynx-booting">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

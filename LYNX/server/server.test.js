@@ -28,6 +28,7 @@ vi.mock('./auth.js', () => ({
 // Now import app
 import { app } from './server.js';
 import { isFirstTimeSetup } from './auth.js';
+import { dbAll, dbGet } from './database.js';
 
 describe('API Endpoints', () => {
   it('GET /health should return 200 and status ok', async () => {
@@ -41,5 +42,43 @@ describe('API Endpoints', () => {
     const response = await request(app).get('/api/auth/setup-status');
     expect(response.status).toBe(200);
     expect(response.body.isFirstTimeSetup).toBe(true);
+  });
+
+  it('GET /api/public-page should return profile, links, and theme in one response', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({
+        name: 'Paolo',
+        bio: 'Test bio',
+        avatar: '/uploads/avatar.png',
+        social_links: '{"github":"https://github.com/example"}',
+        show_avatar: 1,
+        name_font_size: '2rem',
+        bio_font_size: '14px',
+        tab_title: 'Custom title',
+      })
+      .mockResolvedValueOnce({
+        primary_color: '#111111',
+        background_color: '#ffffff',
+        text_color: '#222222',
+        full_config: JSON.stringify({ primary: '#111111', background: '#ffffff', foreground: '#222222' }),
+      });
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      {
+        id: '1',
+        title: 'Example',
+        description: '',
+        url: 'https://example.com',
+        type: 'link',
+        is_active: 1,
+        sort_order: 0,
+      },
+    ]);
+
+    const response = await request(app).get('/api/public-page');
+
+    expect(response.status).toBe(200);
+    expect(response.body.profile.name).toBe('Paolo');
+    expect(response.body.links).toHaveLength(1);
+    expect(response.body.theme.primary).toBe('#111111');
   });
 });
