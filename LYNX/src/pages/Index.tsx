@@ -30,14 +30,12 @@ interface ProfileData {
 }
 
 const Index = () => {
-  // Start with empty/neutral profile while we load the real data from the API
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<ProfileData>({
     name: "",
     bio: "",
     avatar: profileAvatar,
   });
-
-  // Start with an empty links array to avoid showing mock links on initial render
   const [links, setLinks] = useState<LinkData[]>([]);
 
   // Load data and theme from database on mount
@@ -181,11 +179,15 @@ const Index = () => {
         console.error('Error loading data:', error);
         // Fallback to default theme if database loading fails
         applyTheme(defaultTheme);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadData();
   }, []);
+
+  if (loading) return null;
 
   return (
     <PublicView
