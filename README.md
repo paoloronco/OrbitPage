@@ -20,7 +20,9 @@
 
 ## 🎬 Demo
 
-[![Watch the demo](./docs/demo2.gif)](https://app.arcade.software/share/PhdZgUB3JnSnyIFZaQEq)
+[![Watch the demo](./docs/demo-public.gif)](https://app.arcade.software/share/avEiscyqITMJJFngqacr)
+
+[![Watch the demo](./docs/demo-admin.gif)](https://app.arcade.software/share/PhdZgUB3JnSnyIFZaQEq)
 
 - 🌐 Public page: [https://lynx-demo.paoloronco.it](https://lynx-demo.paoloronco.it/)
 - 🛠 Admin panel: [https://lynx-demo.paoloronco.it/admin](https://lynx-demo.paoloronco.it/admin)
