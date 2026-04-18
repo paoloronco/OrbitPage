@@ -23,6 +23,8 @@ interface PublicViewProps {
 }
 
 export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cookiePolicyUrl }: PublicViewProps) => {
+  const privacyHref = privacyPolicyUrl?.trim() || undefined;
+  const cookieHref = cookiePolicyUrl?.trim() || undefined;
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&
@@ -36,13 +38,10 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
   );
 
   const visibleLinks = links.filter(link => {
-    // Respect visibility toggle
     if (link.isActive === false) return false;
 
-    // Always show active separators
     if (link.type === 'separator') return true;
 
-    // Always include links with personalizations, even if they're missing some fields
     if (link.backgroundColor || link.textColor || link.icon) {
       return true;
     }
@@ -59,7 +58,7 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
     <div className="min-h-screen py-8 px-4">
       <div className="max-w-md mx-auto space-y-6">
         {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
-        
+
         {visibleLinks.length > 0 && (
           <div className="flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
             {visibleLinks.map((link) => (
@@ -73,35 +72,34 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
             ))}
           </div>
         )}
-        
-        {/* Footer — "Powered by Lynx" is always shown and cannot be removed */}
+
         <div className="text-center pt-8 pb-2 space-y-1">
           {footerText && (
             <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
               {footerText}
             </p>
           )}
-          {(privacyPolicyUrl || cookiePolicyUrl) && (
-            <p className="text-xs text-muted-foreground opacity-60">
-              {privacyPolicyUrl && (
+          {(privacyHref || cookieHref) && (
+            <p className="text-xs text-muted-foreground opacity-60 break-words">
+              {privacyHref && (
                 <a
-                  href={privacyPolicyUrl}
+                  href={privacyHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-primary"
                 >
-                  Privacy policy
+                  Privacy Policy
                 </a>
               )}
-              {privacyPolicyUrl && cookiePolicyUrl && <span> · </span>}
-              {cookiePolicyUrl && (
+              {privacyHref && cookieHref && <span> | </span>}
+              {cookieHref && (
                 <a
-                  href={cookiePolicyUrl}
+                  href={cookieHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline hover:text-primary"
                 >
-                  Cookie policy
+                  Cookie Policy
                 </a>
               )}
             </p>

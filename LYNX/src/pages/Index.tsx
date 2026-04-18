@@ -231,8 +231,8 @@ const Index = () => {
         hardcoded: {
           ...consentConfig.hardcoded,
           urls: {
-            privacyPolicy: profile.privacyPolicyUrl || consentConfig.hardcoded.urls?.privacyPolicy || '',
-            cookiePolicy:  profile.cookiePolicyUrl  || consentConfig.hardcoded.urls?.cookiePolicy  || '',
+            privacyPolicy: profile.privacyPolicyUrl || '',
+            cookiePolicy: profile.cookiePolicyUrl || '',
           },
         },
       }

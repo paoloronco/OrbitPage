@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 
 // Mock database.js before importing server.js
@@ -28,9 +28,13 @@ vi.mock('./auth.js', () => ({
 // Now import app
 import { app } from './server.js';
 import { isFirstTimeSetup } from './auth.js';
-import { dbAll, dbGet } from './database.js';
+import { dbAll, dbGet, dbRun } from './database.js';
 
 describe('API Endpoints', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('GET /health should return 200 and status ok', async () => {
     const response = await request(app).get('/health');
     expect(response.status).toBe(200);
@@ -55,6 +59,8 @@ describe('API Endpoints', () => {
         name_font_size: '2rem',
         bio_font_size: '14px',
         tab_title: 'Custom title',
+        privacy_policy_url: 'https://example.com/privacy',
+        cookie_policy_url: 'https://example.com/cookies',
       })
       .mockResolvedValueOnce({
         primary_color: '#111111',
@@ -78,7 +84,58 @@ describe('API Endpoints', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.profile.name).toBe('Paolo');
+    expect(response.body.profile.privacy_policy_url).toBe('https://example.com/privacy');
+    expect(response.body.profile.cookie_policy_url).toBe('https://example.com/cookies');
     expect(response.body.links).toHaveLength(1);
     expect(response.body.theme.primary).toBe('#111111');
+  });
+
+  it('PUT /api/profile persists legal policy URLs in profile_data', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({ id: 1 });
+    vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
+
+    const response = await request(app)
+      .put('/api/profile')
+      .send({
+        name: 'Paolo',
+        bio: '',
+        avatar: '',
+        social_links: {},
+        privacy_policy_url: ' https://example.com/privacy ',
+        cookie_policy_url: 'https://example.com/cookies',
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(vi.mocked(dbRun).mock.calls[0][0]).toContain('privacy_policy_url');
+    expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('https://example.com/privacy');
+    expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('https://example.com/cookies');
+  });
+
+  it('GET /api/consent-config/public derives policy URLs from Profile', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({
+        mode: 'hardcoded',
+        enabled: 1,
+        full_config: JSON.stringify({
+          hardcoded: {
+            urls: {
+              privacyPolicy: 'https://legacy.example/privacy',
+              cookiePolicy: 'https://legacy.example/cookies',
+            },
+          },
+          builder: { providerConfig: {} },
+        }),
+      })
+      .mockResolvedValueOnce({
+        privacy_policy_url: 'https://example.com/privacy',
+        cookie_policy_url: 'https://example.com/cookies',
+      });
+
+    const response = await request(app).get('/api/consent-config/public');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.hardcoded.urls.privacyPolicy).toBe('https://example.com/privacy');
+    expect(response.body.data.hardcoded.urls.cookiePolicy).toBe('https://example.com/cookies');
   });
 });

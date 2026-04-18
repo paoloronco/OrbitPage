@@ -25,7 +25,7 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.0.0';
+let APP_VERSION = '4.1.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -171,6 +171,78 @@ const getGoogleAnalyticsId = async () => {
   const measurementId = profile?.google_analytics_id?.trim();
   return isValidGoogleAnalyticsId(measurementId) ? measurementId : null;
 };
+
+const normalizePolicyUrl = (value, fieldName) => {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error(`${fieldName} must be a valid URL.`);
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(`${fieldName} must start with http:// or https://.`);
+  }
+
+  return parsed.toString();
+};
+
+const getProfileLegalUrls = async () => {
+  const profile = await dbGet(
+    'SELECT privacy_policy_url, cookie_policy_url FROM profile_data ORDER BY id DESC LIMIT 1'
+  );
+
+  return {
+    privacyPolicyUrl: profile?.privacy_policy_url?.trim() || '',
+    cookiePolicyUrl: profile?.cookie_policy_url?.trim() || '',
+  };
+};
+
+const applyProfileLegalUrlsToConsentConfig = (config, legalUrls) => {
+  if (!config || typeof config !== 'object') return config;
+
+  const hardcoded = config.hardcoded
+    ? {
+        ...config.hardcoded,
+        urls: {
+          privacyPolicy: legalUrls.privacyPolicyUrl || '',
+          cookiePolicy: legalUrls.cookiePolicyUrl || '',
+        },
+      }
+    : config.hardcoded;
+
+  const builder = config.builder
+    ? {
+        ...config.builder,
+        providerConfig: {
+          ...(config.builder.providerConfig || {}),
+          privacyPolicyUrl: '',
+          cookiePolicyUrl: '',
+        },
+      }
+    : config.builder;
+
+  return { ...config, hardcoded, builder };
+};
+
+const stripDuplicateLegalUrlsFromConsentConfig = ({ hardcoded, builder }) => ({
+  hardcoded: {
+    ...hardcoded,
+    urls: { privacyPolicy: '', cookiePolicy: '' },
+  },
+  builder: {
+    ...builder,
+    providerConfig: {
+      ...(builder?.providerConfig || {}),
+      privacyPolicyUrl: '',
+      cookiePolicyUrl: '',
+    },
+  },
+});
 
 const injectGoogleAnalyticsTag = (html, measurementId) => {
   // Inject ONLY the gtag stub + GCM v2 defaults (all denied).
@@ -665,8 +737,20 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
     const footerText = body.footerText ?? body.footer_text ?? null;
     const favicon = body.favicon ?? null;
     const googleAnalyticsId = body.googleAnalyticsId ?? body.google_analytics_id ?? null;
-    const privacyPolicyUrl = body.privacyPolicyUrl ?? body.privacy_policy_url ?? null;
-    const cookiePolicyUrl = body.cookiePolicyUrl ?? body.cookie_policy_url ?? null;
+    let privacyPolicyUrl;
+    let cookiePolicyUrl;
+    try {
+      privacyPolicyUrl = normalizePolicyUrl(
+        body.privacyPolicyUrl ?? body.privacy_policy_url ?? null,
+        'Privacy Policy URL'
+      );
+      cookiePolicyUrl = normalizePolicyUrl(
+        body.cookiePolicyUrl ?? body.cookie_policy_url ?? null,
+        'Cookie Policy URL'
+      );
+    } catch (validationError) {
+      return res.status(400).json({ error: validationError.message });
+    }
     const showAvatarRaw = body.showAvatar ?? body.show_avatar;
     const showAvatar = typeof showAvatarRaw === 'number' ? showAvatarRaw !== 0 : !!showAvatarRaw;
 
@@ -1687,13 +1771,13 @@ const ConsentConfigBodySchema = z.object({
  * Validate consent config payload and return domain-level errors
  * (e.g. "enabled but no policy URL") that Zod's type-level schema can't catch.
  */
-const validateConsentConfigDomain = (config) => {
+const validateConsentConfigDomain = (config, legalUrls = {}) => {
   const errors = [];
 
   if (config.mode === 'hardcoded' && config.enabled) {
-    const { urls = {}, categories = {} } = config.hardcoded || {};
-    if (!urls.privacyPolicy && !urls.cookiePolicy) {
-      errors.push('At least one policy URL (privacy policy or cookie policy) is required when the native banner is enabled.');
+    const { categories = {} } = config.hardcoded || {};
+    if (!legalUrls.privacyPolicyUrl && !legalUrls.cookiePolicyUrl) {
+      errors.push('At least one policy URL must be configured in Admin > Profile > Legal links when the native banner is enabled.');
     }
     for (const [key, cat] of Object.entries(categories)) {
       if (cat.enabled && !cat.description?.trim()) {
@@ -1731,9 +1815,14 @@ app.get('/api/consent-config/public', apiLimiter, async (req, res) => {
       return res.json({ success: true, data: { mode: 'disabled', enabled: false } });
     }
     const config = safeJsonParse(row.full_config, {});
+    const legalUrls = await getProfileLegalUrls();
     return res.json({
       success: true,
-      data: { mode: row.mode, enabled: true, ...config },
+      data: {
+        mode: row.mode,
+        enabled: true,
+        ...applyProfileLegalUrlsToConsentConfig(config, legalUrls),
+      },
     });
   } catch (err) {
     console.error('Error fetching public consent config:', err);
@@ -1748,25 +1837,27 @@ app.get('/api/consent-config', authenticateToken, apiLimiter, async (req, res) =
       'SELECT * FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
     );
     if (!row) {
+      const legalUrls = await getProfileLegalUrls();
       return res.json({
         success: true,
         data: {
           mode: 'disabled',
           enabled: false,
-          ...DEFAULT_CONSENT_CONFIG,
+          ...applyProfileLegalUrlsToConsentConfig(DEFAULT_CONSENT_CONFIG, legalUrls),
           createdAt: null,
           updatedAt: null,
         },
       });
     }
     const config = safeJsonParse(row.full_config, {});
+    const legalUrls = await getProfileLegalUrls();
     return res.json({
       success: true,
       data: {
         id: row.id,
         mode: row.mode,
         enabled: Boolean(row.enabled),
-        ...config,
+        ...applyProfileLegalUrlsToConsentConfig(config, legalUrls),
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       },
@@ -1789,15 +1880,16 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, async (req, res) =
     return res.status(400).json({ success: false, error: `Validation error — ${msgs}` });
   }
 
-  const domainErrors = validateConsentConfigDomain(parsed.data);
-  if (domainErrors.length > 0) {
-    return res.status(400).json({ success: false, error: domainErrors.join(' ') });
-  }
-
   const { mode, enabled, hardcoded, builder } = parsed.data;
-  const fullConfig = JSON.stringify({ hardcoded, builder });
 
   try {
+    const legalUrls = await getProfileLegalUrls();
+    const domainErrors = validateConsentConfigDomain(parsed.data, legalUrls);
+    if (domainErrors.length > 0) {
+      return res.status(400).json({ success: false, error: domainErrors.join(' ') });
+    }
+
+    const fullConfig = JSON.stringify(stripDuplicateLegalUrlsFromConsentConfig({ hardcoded, builder }));
     const existing = await dbGet(
       'SELECT id FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
     );

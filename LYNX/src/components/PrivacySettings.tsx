@@ -13,7 +13,6 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -185,6 +184,70 @@ function WarnBox({ children }: { children: React.ReactNode }) {
   );
 }
 
+function LegalLinksReadOnly({
+  privacyPolicyUrl,
+  cookiePolicyUrl,
+  onEditLegalLinks,
+}: {
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
+  onEditLegalLinks?: () => void;
+}) {
+  const rows = [
+    { label: 'Privacy Policy URL', value: privacyPolicyUrl?.trim() || '' },
+    { label: 'Cookie Policy URL', value: cookiePolicyUrl?.trim() || '' },
+  ];
+
+  return (
+    <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-sm font-medium text-blue-800">
+            <Globe2 className="h-4 w-4 shrink-0" />
+            Legal links are managed in Profile
+          </div>
+          <p className="text-xs leading-5 text-blue-700">
+            These URLs are read-only here. Edit them in Admin &gt; Profile &gt; Legal links.
+          </p>
+        </div>
+        {onEditLegalLinks && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 border-blue-200 bg-white text-xs text-blue-700 hover:bg-blue-100"
+            onClick={onEditLegalLinks}
+          >
+            Edit in Profile
+          </Button>
+        )}
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {rows.map(({ label, value }) => (
+          <div key={label} className="rounded-md border border-blue-100 bg-white/70 p-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-500">
+              {label}
+            </p>
+            {value ? (
+              <a
+                href={value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 block break-all font-mono text-xs text-blue-800 underline"
+              >
+                {value}
+              </a>
+            ) : (
+              <p className="mt-1 text-xs text-amber-700">Not configured</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CategorySection({
   cat,
   label,
@@ -239,14 +302,18 @@ function CategorySection({
 function HardcodedForm({
   cfg,
   onChange,
+  privacyPolicyUrl,
+  cookiePolicyUrl,
+  onEditLegalLinks,
 }: {
   cfg: NonNullable<ConsentConfigData['hardcoded']>;
   onChange: (updates: Partial<NonNullable<ConsentConfigData['hardcoded']>>) => void;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
+  onEditLegalLinks?: () => void;
 }) {
   const updateTexts = (updates: Partial<typeof cfg.texts>) =>
     onChange({ texts: { ...cfg.texts, ...updates } });
-  const updateUrls = (updates: Partial<typeof cfg.urls>) =>
-    onChange({ urls: { ...cfg.urls, ...updates } });
   const updateCat = (
     cat: keyof typeof cfg.categories,
     updates: Partial<(typeof cfg.categories)[typeof cat]>,
@@ -515,9 +582,15 @@ function HardcodedForm({
 function BuilderForm({
   cfg,
   onChange,
+  privacyPolicyUrl,
+  cookiePolicyUrl,
+  onEditLegalLinks,
 }: {
   cfg: NonNullable<ConsentConfigData['builder']>;
   onChange: (updates: Partial<NonNullable<ConsentConfigData['builder']>>) => void;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
+  onEditLegalLinks?: () => void;
 }) {
   const provider = cfg.provider;
   const info = PROVIDER_INFO[provider];
@@ -620,20 +693,11 @@ function BuilderForm({
         </div>
       )}
 
-      {/* Policy URLs (optional for all providers) */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FieldRow label="Privacy policy URL" description="Optional — shown in admin for reference.">
-          <Input className="admin-input" type="url" value={cfg.providerConfig.privacyPolicyUrl ?? ''}
-            onChange={(e) => updateCfg({ privacyPolicyUrl: e.target.value })}
-            placeholder="https://example.com/privacy" maxLength={500} />
-        </FieldRow>
-        <FieldRow label="Cookie policy URL" description="Optional — shown in admin for reference.">
-          <Input className="admin-input" type="url" value={cfg.providerConfig.cookiePolicyUrl ?? ''}
-            onChange={(e) => updateCfg({ cookiePolicyUrl: e.target.value })}
-            placeholder="https://example.com/cookies" maxLength={500} />
-        </FieldRow>
-      </div>
-
+      <LegalLinksReadOnly
+        privacyPolicyUrl={privacyPolicyUrl}
+        cookiePolicyUrl={cookiePolicyUrl}
+        onEditLegalLinks={onEditLegalLinks}
+      />
       <FieldRow
         label="Reopen selector (optional)"
         description='CSS selector or JS expression your CMP exposes to re-open the consent UI. E.g. ".iubenda-cs-preferences-link" or "window._iub?.cs?.api?.openPreferences()". Used by external integrations.'
@@ -710,9 +774,11 @@ function ModeCard({
 export function PrivacySettings({
   privacyPolicyUrl,
   cookiePolicyUrl,
+  onEditLegalLinks,
 }: {
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
+  onEditLegalLinks?: () => void;
 } = {}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -841,6 +907,19 @@ export function PrivacySettings({
         </div>
       </section>
 
+      <section className="admin-panel space-y-3">
+        <SectionHeader
+          icon={Globe2}
+          title="Legal policy links"
+          description="Read-only in Privacy. Profile is the only editable source."
+        />
+        <LegalLinksReadOnly
+          privacyPolicyUrl={privacyPolicyUrl}
+          cookiePolicyUrl={cookiePolicyUrl}
+          onEditLegalLinks={onEditLegalLinks}
+        />
+      </section>
+
       {/* Hardcoded config */}
       {mode === 'hardcoded' && (
         <section className="admin-panel">
@@ -870,6 +949,9 @@ export function PrivacySettings({
           <HardcodedForm
             cfg={hardcoded}
             onChange={(u) => setHardcoded((prev) => ({ ...prev, ...u }))}
+            privacyPolicyUrl={privacyPolicyUrl}
+            cookiePolicyUrl={cookiePolicyUrl}
+            onEditLegalLinks={onEditLegalLinks}
           />
         </section>
       )}
@@ -903,6 +985,9 @@ export function PrivacySettings({
           <BuilderForm
             cfg={builder}
             onChange={(u) => setBuilder((prev) => ({ ...prev, ...u }))}
+            privacyPolicyUrl={privacyPolicyUrl}
+            cookiePolicyUrl={cookiePolicyUrl}
+            onEditLegalLinks={onEditLegalLinks}
           />
         </section>
       )}
@@ -916,10 +1001,9 @@ export function PrivacySettings({
         />
         {[
           {
-            // Profile-level URLs (set in Admin > Profile > Legal links) take precedence.
-            // Fallback: consent-config hardcoded.urls (legacy, kept for backward compat).
+            // Profile-level URLs (set in Admin > Profile > Legal links) are the source of truth.
             ok: mode === 'hardcoded'
-              ? !!(privacyPolicyUrl || cookiePolicyUrl || hardcoded.urls.privacyPolicy || hardcoded.urls.cookiePolicy)
+              ? !!(privacyPolicyUrl || cookiePolicyUrl)
               : mode === 'builder',
             text: 'At least one policy URL is configured (Admin → Profile → Legal links)',
           },
