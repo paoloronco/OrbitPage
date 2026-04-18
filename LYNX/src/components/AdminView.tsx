@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import {
   BarChart2,
   CheckCircle2,
+  Cookie,
   ExternalLink,
   Eye,
   Globe2,
@@ -28,6 +29,7 @@ import {
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
+import { PrivacySettings } from "./PrivacySettings";
 import { utilityApi } from "@/lib/api-client";
 
 interface ProfileData {
@@ -67,7 +69,7 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
-type AdminTab = "profile" | "links" | "theme" | "security" | "preview" | "analytics";
+type AdminTab = "profile" | "links" | "theme" | "security" | "preview" | "analytics" | "privacy";
 
 const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
   { value: "profile", label: "Profile", icon: User },
@@ -76,6 +78,7 @@ const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> =
   { value: "security", label: "Security", icon: Key },
   { value: "preview", label: "Preview", icon: Eye },
   { value: "analytics", label: "Analytics", icon: BarChart2 },
+  { value: "privacy", label: "Privacy", icon: Cookie },
 ];
 
 export const AdminView = ({
@@ -331,6 +334,10 @@ export const AdminView = ({
                 </div>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="privacy" className="admin-tab-content">
+            <PrivacySettings />
           </TabsContent>
         </Tabs>
 

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { PublicView } from "@/components/PublicView";
+import { CookieBanner } from "@/components/CookieBanner";
 import { LinkData } from "@/components/LinkCard";
 import { applyTheme, normalizeTheme } from "@/lib/theme";
-import { publicPageApi } from "@/lib/api-client";
+import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
+import { consentManager } from "@/lib/consent-manager";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
 interface ProfileData {
@@ -40,6 +42,8 @@ const Index = () => {
     showAvatar: false,
   });
   const [links, setLinks] = useState<LinkData[]>([]);
+  // Consent config drives whether CookieBanner is rendered
+  const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
 
   // Load all public page data in one request so the default UI never flashes.
   useEffect(() => {
@@ -47,8 +51,23 @@ const Index = () => {
 
     const loadData = async () => {
       try {
-        const pageData = await publicPageApi.get();
+        // Fetch public page data and consent config in parallel
+        const [pageData, consentRes] = await Promise.all([
+          publicPageApi.get(),
+          consentConfigPublicApi.get().catch(() => ({ data: { mode: 'disabled' as const, enabled: false } })),
+        ]);
         if (cancelled) return;
+
+        // Initialise consent manager with backend config.
+        // Must happen early so registerConsentDependentScript() below works correctly.
+        const cfg = consentRes?.data ?? { mode: 'disabled' as const, enabled: false };
+        consentManager.init(cfg as ConsentConfigData);
+        setConsentConfig(cfg as ConsentConfigData);
+
+        // In builder mode, inject the external CMP script immediately
+        if (cfg.mode === 'builder' && cfg.enabled) {
+          consentManager.injectBuilderScript();
+        }
 
         const loadedTheme = normalizeTheme(pageData.theme);
         applyTheme(loadedTheme);
@@ -73,34 +92,50 @@ const Index = () => {
             googleAnalyticsId,
           });
 
-          // Inject Google Analytics 4 script if a Measurement ID is configured
+          // ── Google Analytics 4 — Consent Mode v2 ────────────────────────────
+          // Production: the server already injected GCM v2 defaults + gtag.js into <head>
+          //             (see server.js injectGoogleAnalyticsTag). We skip re-injection.
+          // Development: the Vite dev server serves a plain index.html with no injection,
+          //             so we set up GCM v2 defaults and load gtag.js ourselves.
+          // In BOTH cases we do NOT call gtag('config', ID) here.
+          // Instead we register a consent-dependent script that fires only after the
+          // visitor grants analytics consent via the banner or preferences modal.
           if (googleAnalyticsId && typeof googleAnalyticsId === 'string' && googleAnalyticsId.match(/^G-[A-Z0-9]+$/i)) {
-            const encodedGoogleAnalyticsId = encodeURIComponent(googleAnalyticsId);
-            const scripts = Array.from(document.scripts);
-            const existingScript = scripts.some((script) =>
-              script.id === 'lynx-ga-script' ||
-              (script.src.includes('googletagmanager.com/gtag/js') && script.src.includes(`id=${encodedGoogleAnalyticsId}`))
-            );
-            const existingConfig = scripts.some((script) =>
-              script.id === 'lynx-ga-config' ||
-              !!script.textContent?.includes(`gtag('config', '${googleAnalyticsId}')`) ||
-              !!script.textContent?.includes(`gtag('config', "${googleAnalyticsId}")`)
-            );
+            const win = window as any;
 
-            if (!existingScript) {
-              const script = document.createElement('script');
-              script.id = 'lynx-ga-script';
-              script.async = true;
-              script.src = `https://www.googletagmanager.com/gtag/js?id=${encodedGoogleAnalyticsId}`;
-              document.head.appendChild(script);
+            // If gtag hasn't been set up yet (dev mode / no server injection), do it now
+            if (typeof win.gtag !== 'function') {
+              win.dataLayer = win.dataLayer || [];
+              win.gtag = function () { win.dataLayer.push(arguments); };
+              // Set GCM v2 defaults — all denied until consent is explicitly granted
+              win.gtag('consent', 'default', {
+                analytics_storage:      'denied',
+                ad_storage:             'denied',
+                ad_user_data:           'denied',
+                ad_personalization:     'denied',
+                functionality_storage:  'denied',
+                personalization_storage: 'denied',
+                wait_for_update:        2000,
+              });
+              win.gtag('js', new Date());
+
+              // Only inject the script tag if it isn't already in the DOM
+              if (!document.getElementById('lynx-ga-script')) {
+                const script = document.createElement('script');
+                script.id = 'lynx-ga-script';
+                script.async = true;
+                script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsId)}`;
+                document.head.appendChild(script);
+              }
             }
 
-            if (!existingConfig) {
-              const configScript = document.createElement('script');
-              configScript.id = 'lynx-ga-config';
-              configScript.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${googleAnalyticsId}');`;
-              document.head.appendChild(configScript);
-            }
+            // Register gtag('config') as a consent-dependent action.
+            // The ConsentManager calls this immediately if analytics consent is already
+            // stored, or queues it until the visitor accepts via the banner.
+            const gaId = googleAnalyticsId;
+            consentManager.registerConsentDependentScript('analytics', () => {
+              win.gtag?.('config', gaId);
+            });
           }
           // Apply document title
           const tabTitle = (profileData as any).tab_title || (profileData as any).tabTitle;
@@ -185,11 +220,19 @@ const Index = () => {
   if (loading || loadFailed) return null;
 
   return (
-    <PublicView
-      profile={profile}
-      links={links}
-      footerText={profile.footerText}
-    />
+    <>
+      <PublicView
+        profile={profile}
+        links={links}
+        footerText={profile.footerText}
+      />
+      {/* Render the native banner only when mode === 'hardcoded'.
+          Builder mode: external CMP injects its own UI via injectBuilderScript().
+          Disabled mode: no banner rendered. */}
+      {consentConfig?.mode === 'hardcoded' && consentConfig.enabled && (
+        <CookieBanner config={consentConfig} />
+      )}
+    </>
   );
 };
 

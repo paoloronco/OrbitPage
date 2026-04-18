@@ -476,6 +476,77 @@ export const themeApi = {
   },
 };
 
+// ---- Consent Config API ----
+
+/** Shape of the full consent configuration persisted in the DB. */
+export interface ConsentConfigData {
+  mode: 'disabled' | 'hardcoded' | 'builder';
+  enabled: boolean;
+  hardcoded?: {
+    policyVersion: string;
+    texts: {
+      title: string;
+      description: string;
+      acceptAll: string;
+      rejectAll: string;
+      managePreferences: string;
+      savePreferences: string;
+      reopenLabel: string;
+      privacyPolicyLinkText: string;
+      cookiePolicyLinkText: string;
+    };
+    urls: { privacyPolicy: string; cookiePolicy: string };
+    categories: {
+      preferences: { enabled: boolean; title: string; description: string };
+      analytics:   { enabled: boolean; title: string; description: string };
+      marketing:   { enabled: boolean; title: string; description: string };
+    };
+    layout: 'bottom-bar' | 'centered-modal' | 'corner-popup';
+    theme: 'light' | 'dark' | 'auto';
+    buttonPriority: 'equal' | 'reject-first';
+    geoMode: 'global' | 'eu-only' | 'always';
+    consentExpiryDays: number;
+    reshowOnVersionChange: boolean;
+    legalFooterText: string;
+  };
+  builder?: {
+    provider: 'iubenda' | 'cookiebot' | 'cookieyes' | 'onetrust' | 'custom';
+    providerConfig: {
+      siteId?: string;
+      cookiePolicyId?: string;
+      scriptId?: string;
+      headSnippet?: string;
+      bodySnippet?: string;
+      privacyPolicyUrl?: string;
+      cookiePolicyUrl?: string;
+    };
+    reopenSelector: string;
+  };
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+/** Public (unauthenticated) consent config API — called from the public page */
+export const consentConfigPublicApi = {
+  get: async (): Promise<{ success: boolean; data?: ConsentConfigData }> => {
+    return apiRequest<{ success: boolean; data?: ConsentConfigData }>('/consent-config/public');
+  },
+};
+
+/** Admin (authenticated) consent config API */
+export const consentConfigApi = {
+  get: async (): Promise<{ success: boolean; data?: ConsentConfigData }> => {
+    return apiRequest<{ success: boolean; data?: ConsentConfigData }>('/consent-config');
+  },
+
+  update: async (config: Omit<ConsentConfigData, 'createdAt' | 'updatedAt'>): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>('/consent-config', {
+      method: 'PUT',
+      body: JSON.stringify(config),
+    });
+  },
+};
+
 // Utility API
 export const utilityApi = {
   generatePassword: async (): Promise<{ password: string }> => {

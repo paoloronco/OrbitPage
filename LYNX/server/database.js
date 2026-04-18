@@ -118,6 +118,24 @@ export const initializeDatabase = () => {
   // Link scheduler
   db.run(`ALTER TABLE links ADD COLUMN start_date TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN end_date TEXT`, (err) => { /* ignore if exists */ });
+
+      // Cookie consent configuration table
+      // mode: 'disabled' | 'hardcoded' | 'builder'
+      // enabled: whether the active mode is live (1=yes, 0=no)
+      // full_config: JSON blob with { hardcoded: {...}, builder: {...} }
+      db.run(`
+        CREATE TABLE IF NOT EXISTS cookie_consent_config (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          mode TEXT NOT NULL DEFAULT 'disabled',
+          enabled INTEGER NOT NULL DEFAULT 0,
+          full_config TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) console.error('Error creating cookie_consent_config table:', err);
+      });
+
       // Theme configuration table
       db.run(`
         CREATE TABLE IF NOT EXISTS theme_config (

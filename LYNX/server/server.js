@@ -140,15 +140,27 @@ const getGoogleAnalyticsId = async () => {
 };
 
 const injectGoogleAnalyticsTag = (html, measurementId) => {
+  // Google Consent Mode v2 defaults are set to 'denied' before the tag loads.
+  // The Lynx Consent Manager calls gtag('consent','update',{...}) and
+  // gtag('config', ID) only after the user grants analytics consent.
+  // Do NOT call gtag('config', ID) here — that would fire before consent.
   const tag = `
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"></script>
+    <!-- Google tag (gtag.js) — Consent Mode v2 via Lynx Consent Manager -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'functionality_storage': 'denied',
+        'personalization_storage': 'denied',
+        'wait_for_update': 2000
+      });
       gtag('js', new Date());
-      gtag('config', '${measurementId}');
-    </script>`;
+    </script>
+    <script id="lynx-ga-script" async src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"></script>`;
 
   return html.includes('<head>') ? html.replace('<head>', `<head>${tag}`) : `${tag}\n${html}`;
 };
@@ -1486,6 +1498,272 @@ const healthHandler = (req, res) => {
 };
 app.get('/health', healthHandler);
 app.get('/api/health', healthHandler);
+
+// ============================================================
+// CONSENT CONFIG ROUTES
+// ============================================================
+
+/**
+ * Default consent configuration returned when no row exists in the DB.
+ * Hardcoded mode is disabled by default — the admin must explicitly enable it.
+ */
+const DEFAULT_CONSENT_CONFIG = {
+  hardcoded: {
+    policyVersion: '1.0',
+    texts: {
+      title: 'We value your privacy',
+      description:
+        'We use cookies to improve your experience, analyse traffic, and provide personalised content. You can choose which categories to allow or reject all optional cookies.',
+      acceptAll: 'Accept all',
+      rejectAll: 'Reject all',
+      managePreferences: 'Manage preferences',
+      savePreferences: 'Save preferences',
+      reopenLabel: 'Cookie preferences',
+      privacyPolicyLinkText: 'Privacy policy',
+      cookiePolicyLinkText: 'Cookie policy',
+    },
+    urls: { privacyPolicy: '', cookiePolicy: '' },
+    categories: {
+      preferences: {
+        enabled: false,
+        title: 'Preferences',
+        description:
+          'These cookies remember your choices and personalise your experience, such as language or region preferences.',
+      },
+      analytics: {
+        enabled: true,
+        title: 'Analytics',
+        description:
+          'These cookies help us understand how visitors interact with the site by collecting and reporting information anonymously (e.g. Google Analytics).',
+      },
+      marketing: {
+        enabled: false,
+        title: 'Marketing',
+        description:
+          'These cookies track your online activity to help advertisers deliver more relevant advertising or to limit how many times you see an ad.',
+      },
+    },
+    layout: 'bottom-bar',
+    theme: 'auto',
+    buttonPriority: 'equal',
+    geoMode: 'eu-only',
+    consentExpiryDays: 365,
+    reshowOnVersionChange: true,
+    legalFooterText: '',
+  },
+  builder: {
+    provider: 'iubenda',
+    providerConfig: {
+      siteId: '',
+      cookiePolicyId: '',
+      scriptId: '',
+      headSnippet: '',
+      bodySnippet: '',
+      privacyPolicyUrl: '',
+      cookiePolicyUrl: '',
+    },
+    reopenSelector: '',
+  },
+};
+
+// Zod validation schemas for consent config
+const CategoryConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  title: z.string().max(100).default(''),
+  description: z.string().max(1000).default(''),
+});
+
+const HardcodedTextsSchema = z.object({
+  title: z.string().max(200).default('We value your privacy'),
+  description: z.string().max(2000).default(''),
+  acceptAll: z.string().max(100).default('Accept all'),
+  rejectAll: z.string().max(100).default('Reject all'),
+  managePreferences: z.string().max(100).default('Manage preferences'),
+  savePreferences: z.string().max(100).default('Save preferences'),
+  reopenLabel: z.string().max(100).default('Cookie preferences'),
+  privacyPolicyLinkText: z.string().max(100).default('Privacy policy'),
+  cookiePolicyLinkText: z.string().max(100).default('Cookie policy'),
+});
+
+const HardcodedConfigSchema = z.object({
+  policyVersion: z.string().max(50).default('1.0'),
+  texts: HardcodedTextsSchema.default({}),
+  urls: z.object({
+    privacyPolicy: z.string().max(500).default(''),
+    cookiePolicy: z.string().max(500).default(''),
+  }).default({}),
+  categories: z.object({
+    preferences: CategoryConfigSchema.default({}),
+    analytics: CategoryConfigSchema.default({}),
+    marketing: CategoryConfigSchema.default({}),
+  }).default({}),
+  layout: z.enum(['bottom-bar', 'centered-modal', 'corner-popup']).default('bottom-bar'),
+  theme: z.enum(['light', 'dark', 'auto']).default('auto'),
+  buttonPriority: z.enum(['equal', 'reject-first']).default('equal'),
+  geoMode: z.enum(['global', 'eu-only', 'always']).default('eu-only'),
+  consentExpiryDays: z.number().int().min(1).max(3650).default(365),
+  reshowOnVersionChange: z.boolean().default(true),
+  legalFooterText: z.string().max(500).default(''),
+});
+
+const BuilderProviderConfigSchema = z.object({
+  siteId: z.string().max(200).default(''),
+  cookiePolicyId: z.string().max(200).default(''),
+  scriptId: z.string().max(200).default(''),
+  headSnippet: z.string().max(10000).default(''),
+  bodySnippet: z.string().max(10000).default(''),
+  privacyPolicyUrl: z.string().max(500).default(''),
+  cookiePolicyUrl: z.string().max(500).default(''),
+});
+
+const BuilderConfigSchema = z.object({
+  provider: z.enum(['iubenda', 'cookiebot', 'cookieyes', 'onetrust', 'custom']).default('custom'),
+  providerConfig: BuilderProviderConfigSchema.default({}),
+  reopenSelector: z.string().max(200).default(''),
+});
+
+const ConsentConfigBodySchema = z.object({
+  mode: z.enum(['disabled', 'hardcoded', 'builder']),
+  enabled: z.boolean(),
+  hardcoded: HardcodedConfigSchema.optional().default({}),
+  builder: BuilderConfigSchema.optional().default({}),
+});
+
+/**
+ * Validate consent config payload and return domain-level errors
+ * (e.g. "enabled but no policy URL") that Zod's type-level schema can't catch.
+ */
+const validateConsentConfigDomain = (config) => {
+  const errors = [];
+
+  if (config.mode === 'hardcoded' && config.enabled) {
+    const { urls = {}, categories = {} } = config.hardcoded || {};
+    if (!urls.privacyPolicy && !urls.cookiePolicy) {
+      errors.push('At least one policy URL (privacy policy or cookie policy) is required when the native banner is enabled.');
+    }
+    for (const [key, cat] of Object.entries(categories)) {
+      if (cat.enabled && !cat.description?.trim()) {
+        errors.push(`The "${key}" category must have a description when it is enabled.`);
+      }
+    }
+  }
+
+  if (config.mode === 'builder' && config.enabled) {
+    const { provider, providerConfig = {} } = config.builder || {};
+    if (provider === 'iubenda' && (!providerConfig.siteId || !providerConfig.cookiePolicyId)) {
+      errors.push('Iubenda requires a Site ID and a Cookie Policy ID.');
+    }
+    if ((provider === 'cookiebot' || provider === 'cookieyes') && !providerConfig.scriptId) {
+      errors.push(`${provider === 'cookiebot' ? 'Cookiebot' : 'CookieYes'} requires a Script ID.`);
+    }
+    if (provider === 'onetrust' && !providerConfig.siteId) {
+      errors.push('OneTrust requires a Data Domain Script ID.');
+    }
+    if (provider === 'custom' && !providerConfig.headSnippet) {
+      errors.push('Custom provider requires a head snippet.');
+    }
+  }
+
+  return errors;
+};
+
+// GET /api/consent-config/public — unauthenticated, used by the public page at runtime
+app.get('/api/consent-config/public', apiLimiter, async (req, res) => {
+  try {
+    const row = await dbGet(
+      'SELECT mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
+    );
+    if (!row || !row.enabled) {
+      return res.json({ success: true, data: { mode: 'disabled', enabled: false } });
+    }
+    const config = safeJsonParse(row.full_config, {});
+    return res.json({
+      success: true,
+      data: { mode: row.mode, enabled: true, ...config },
+    });
+  } catch (err) {
+    console.error('Error fetching public consent config:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// GET /api/consent-config — admin, returns full config including timestamps
+app.get('/api/consent-config', authenticateToken, apiLimiter, async (req, res) => {
+  try {
+    const row = await dbGet(
+      'SELECT * FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
+    );
+    if (!row) {
+      return res.json({
+        success: true,
+        data: {
+          mode: 'disabled',
+          enabled: false,
+          ...DEFAULT_CONSENT_CONFIG,
+          createdAt: null,
+          updatedAt: null,
+        },
+      });
+    }
+    const config = safeJsonParse(row.full_config, {});
+    return res.json({
+      success: true,
+      data: {
+        id: row.id,
+        mode: row.mode,
+        enabled: Boolean(row.enabled),
+        ...config,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      },
+    });
+  } catch (err) {
+    console.error('Error fetching consent config:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// PUT /api/consent-config — admin, save full consent config
+app.put('/api/consent-config', authenticateToken, apiLimiter, async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Config changes are disabled in demo mode.' });
+  }
+
+  const parsed = ConsentConfigBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    const msgs = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+    return res.status(400).json({ success: false, error: `Validation error — ${msgs}` });
+  }
+
+  const domainErrors = validateConsentConfigDomain(parsed.data);
+  if (domainErrors.length > 0) {
+    return res.status(400).json({ success: false, error: domainErrors.join(' ') });
+  }
+
+  const { mode, enabled, hardcoded, builder } = parsed.data;
+  const fullConfig = JSON.stringify({ hardcoded, builder });
+
+  try {
+    const existing = await dbGet(
+      'SELECT id FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
+    );
+    if (existing) {
+      await dbRun(
+        'UPDATE cookie_consent_config SET mode = ?, enabled = ?, full_config = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [mode, enabled ? 1 : 0, fullConfig, existing.id]
+      );
+    } else {
+      await dbRun(
+        'INSERT INTO cookie_consent_config (mode, enabled, full_config) VALUES (?, ?, ?)',
+        [mode, enabled ? 1 : 0, fullConfig]
+      );
+    }
+    return res.json({ success: true, message: 'Consent configuration saved successfully.' });
+  } catch (err) {
+    console.error('Error saving consent config:', err);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
 
 // Catch-all route for SPA
 app.get('*', spaLimiter, (req, res) => {
