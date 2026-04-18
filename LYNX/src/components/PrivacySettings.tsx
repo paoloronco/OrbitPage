@@ -362,42 +362,32 @@ function HardcodedForm({
 
       {/* ── Policy URLs ── */}
       <TabsContent value="urls" className="space-y-4">
-        <WarnBox>
-          At least one policy URL is required before you can enable the banner. Without a policy
-          link, visitors cannot make an informed consent decision (GDPR Art. 13 requirement).
-        </WarnBox>
-        <FieldRow
-          label="Privacy policy URL"
-          description="Full URL including https://. Leave empty if not applicable."
-        >
-          <Input
-            className={`admin-input ${cfg.urls.privacyPolicy && !isValidUrl(cfg.urls.privacyPolicy) ? 'border-red-400' : ''}`}
-            value={cfg.urls.privacyPolicy}
-            onChange={(e) => updateUrls({ privacyPolicy: e.target.value })}
-            placeholder="https://example.com/privacy"
-            type="url"
-            maxLength={500}
-          />
-          {cfg.urls.privacyPolicy && !isValidUrl(cfg.urls.privacyPolicy) && (
-            <p className="text-xs text-red-600">Enter a valid URL (must start with https://).</p>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2">
+          <div className="flex items-center gap-2 text-blue-800 font-medium text-sm">
+            <Globe2 className="h-4 w-4 shrink-0" />
+            Policy URLs are managed in Admin → Profile → Legal links
+          </div>
+          <p className="text-xs text-blue-700 leading-5">
+            Privacy Policy and Cookie Policy URLs are now configured under the{' '}
+            <strong>Profile</strong> tab, in the <strong>Legal links</strong> section. URLs set
+            there appear in the public page footer <em>and</em> are automatically used in this
+            banner — keeping a single source of truth across the entire site.
+          </p>
+          {(privacyPolicyUrl || cookiePolicyUrl) ? (
+            <div className="mt-2 space-y-1 text-xs text-blue-800">
+              {privacyPolicyUrl && (
+                <p>Privacy policy: <span className="font-mono">{privacyPolicyUrl}</span></p>
+              )}
+              {cookiePolicyUrl && (
+                <p>Cookie policy: <span className="font-mono">{cookiePolicyUrl}</span></p>
+              )}
+            </div>
+          ) : (
+            <p className="mt-1 text-xs font-medium text-amber-700">
+              No URLs configured yet. Go to Admin → Profile → Legal links to add them.
+            </p>
           )}
-        </FieldRow>
-        <FieldRow
-          label="Cookie policy URL"
-          description="Full URL to your cookie policy page. Can be the same as privacy policy."
-        >
-          <Input
-            className={`admin-input ${cfg.urls.cookiePolicy && !isValidUrl(cfg.urls.cookiePolicy) ? 'border-red-400' : ''}`}
-            value={cfg.urls.cookiePolicy}
-            onChange={(e) => updateUrls({ cookiePolicy: e.target.value })}
-            placeholder="https://example.com/cookies"
-            type="url"
-            maxLength={500}
-          />
-          {cfg.urls.cookiePolicy && !isValidUrl(cfg.urls.cookiePolicy) && (
-            <p className="text-xs text-red-600">Enter a valid URL (must start with https://).</p>
-          )}
-        </FieldRow>
+        </div>
       </TabsContent>
 
       {/* ── Appearance ── */}
@@ -717,7 +707,13 @@ function ModeCard({
 
 // ── Root Component ────────────────────────────────────────────────────────────
 
-export function PrivacySettings() {
+export function PrivacySettings({
+  privacyPolicyUrl,
+  cookiePolicyUrl,
+}: {
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
+} = {}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -920,8 +916,12 @@ export function PrivacySettings() {
         />
         {[
           {
-            ok: mode === 'hardcoded' ? !!hardcoded.urls.privacyPolicy || !!hardcoded.urls.cookiePolicy : mode === 'builder',
-            text: 'At least one policy URL is configured',
+            // Profile-level URLs (set in Admin > Profile > Legal links) take precedence.
+            // Fallback: consent-config hardcoded.urls (legacy, kept for backward compat).
+            ok: mode === 'hardcoded'
+              ? !!(privacyPolicyUrl || cookiePolicyUrl || hardcoded.urls.privacyPolicy || hardcoded.urls.cookiePolicy)
+              : mode === 'builder',
+            text: 'At least one policy URL is configured (Admin → Profile → Legal links)',
           },
           {
             ok: mode === 'hardcoded'

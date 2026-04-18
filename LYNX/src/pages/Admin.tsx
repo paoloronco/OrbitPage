@@ -34,6 +34,8 @@ interface ProfileData {
   footerText?: string;
   favicon?: string;
   googleAnalyticsId?: string;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
 }
 
 const Admin = () => {
@@ -96,6 +98,8 @@ const Admin = () => {
             footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
             favicon: (profileData as any).favicon || undefined,
             googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
+            privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
+            cookiePolicyUrl: (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined,
           });
         }
 
@@ -178,6 +182,8 @@ const Admin = () => {
         footerText: newProfile.footerText,
         favicon: newProfile.favicon,
         googleAnalyticsId: newProfile.googleAnalyticsId,
+        privacyPolicyUrl: newProfile.privacyPolicyUrl,
+        cookiePolicyUrl: newProfile.cookiePolicyUrl,
       });
       setProfile(newProfile);
     } catch (error: any) {

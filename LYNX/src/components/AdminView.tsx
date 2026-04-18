@@ -57,6 +57,8 @@ interface ProfileData {
   footerText?: string;
   favicon?: string;
   googleAnalyticsId?: string;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
 }
 
 interface AdminViewProps {
@@ -337,7 +339,10 @@ export const AdminView = ({
           </TabsContent>
 
           <TabsContent value="privacy" className="admin-tab-content">
-            <PrivacySettings />
+            <PrivacySettings
+              privacyPolicyUrl={profile.privacyPolicyUrl}
+              cookiePolicyUrl={profile.cookiePolicyUrl}
+            />
           </TabsContent>
         </Tabs>
 

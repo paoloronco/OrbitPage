@@ -18,9 +18,11 @@ interface PublicViewProps {
   profile: ProfileData;
   links: LinkData[];
   footerText?: string;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
 }
 
-export const PublicView = ({ profile, links, footerText }: PublicViewProps) => {
+export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cookiePolicyUrl }: PublicViewProps) => {
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&
@@ -77,6 +79,31 @@ export const PublicView = ({ profile, links, footerText }: PublicViewProps) => {
           {footerText && (
             <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
               {footerText}
+            </p>
+          )}
+          {(privacyPolicyUrl || cookiePolicyUrl) && (
+            <p className="text-xs text-muted-foreground opacity-60">
+              {privacyPolicyUrl && (
+                <a
+                  href={privacyPolicyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-primary"
+                >
+                  Privacy policy
+                </a>
+              )}
+              {privacyPolicyUrl && cookiePolicyUrl && <span> · </span>}
+              {cookiePolicyUrl && (
+                <a
+                  href={cookiePolicyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-primary"
+                >
+                  Cookie policy
+                </a>
+              )}
             </p>
           )}
           <p className="text-xs text-muted-foreground opacity-60">

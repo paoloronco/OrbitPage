@@ -243,6 +243,8 @@ const getPublicProfilePayload = async () => {
       footer_text: undefined,
       favicon: undefined,
       google_analytics_id: undefined,
+      privacy_policy_url: undefined,
+      cookie_policy_url: undefined,
     };
   }
 
@@ -259,6 +261,8 @@ const getPublicProfilePayload = async () => {
     footer_text: profile.footer_text || undefined,
     favicon: profile.favicon || undefined,
     google_analytics_id: profile.google_analytics_id || undefined,
+    privacy_policy_url: profile.privacy_policy_url || undefined,
+    cookie_policy_url: profile.cookie_policy_url || undefined,
   };
 };
 
@@ -578,6 +582,8 @@ app.get('/api/profile', async (req, res) => {
         footer_text: undefined,
         favicon: undefined,
         google_analytics_id: undefined,
+        privacy_policy_url: undefined,
+        cookie_policy_url: undefined,
       });
     }
 
@@ -594,6 +600,8 @@ app.get('/api/profile', async (req, res) => {
       footer_text: profile.footer_text || undefined,
       favicon: profile.favicon || undefined,
       google_analytics_id: profile.google_analytics_id || undefined,
+      privacy_policy_url: profile.privacy_policy_url || undefined,
+      cookie_policy_url: profile.cookie_policy_url || undefined,
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to load profile' });
@@ -627,6 +635,11 @@ const ProfileSchema = z.object({
   // Analytics integrations
   googleAnalyticsId: z.string().max(50).nullable().optional(),
   google_analytics_id: z.string().max(50).nullable().optional(),
+  // Legal policy links — configurable by every deployment (no hardcoded URLs)
+  privacyPolicyUrl: z.string().max(500).nullable().optional(),
+  privacy_policy_url: z.string().max(500).nullable().optional(),
+  cookiePolicyUrl: z.string().max(500).nullable().optional(),
+  cookie_policy_url: z.string().max(500).nullable().optional(),
 }).strip();
 
 app.put('/api/profile', authenticateToken, async (req, res) => {
@@ -652,6 +665,8 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
     const footerText = body.footerText ?? body.footer_text ?? null;
     const favicon = body.favicon ?? null;
     const googleAnalyticsId = body.googleAnalyticsId ?? body.google_analytics_id ?? null;
+    const privacyPolicyUrl = body.privacyPolicyUrl ?? body.privacy_policy_url ?? null;
+    const cookiePolicyUrl = body.cookiePolicyUrl ?? body.cookie_policy_url ?? null;
     const showAvatarRaw = body.showAvatar ?? body.show_avatar;
     const showAvatar = typeof showAvatarRaw === 'number' ? showAvatarRaw !== 0 : !!showAvatarRaw;
 
@@ -660,13 +675,13 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
 
     if (existing) {
       await dbRun(
-        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, existing.id]
+        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, existing.id]
       );
     } else {
       await dbRun(
-        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId]
+        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl]
       );
     }
 

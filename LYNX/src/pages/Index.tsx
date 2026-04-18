@@ -30,6 +30,8 @@ interface ProfileData {
   footerText?: string;
   favicon?: string;
   googleAnalyticsId?: string;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
 }
 
 const Index = () => {
@@ -77,6 +79,8 @@ const Index = () => {
           const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
           const favicon = (profileData as any).favicon || undefined;
           const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
+          const privacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
+          const cookiePolicyUrl = (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined;
           setProfile({
             name: profileData.name || "",
             bio: profileData.bio || "",
@@ -90,6 +94,8 @@ const Index = () => {
             footerText,
             favicon,
             googleAnalyticsId,
+            privacyPolicyUrl,
+            cookiePolicyUrl,
           });
 
           // ── Google Analytics 4 — Consent Mode v2 ────────────────────────────
@@ -217,18 +223,35 @@ const Index = () => {
 
   if (loading || loadFailed) return null;
 
+  // Merge profile-level policy URLs into the consent config so the banner and footer
+  // always use the same canonical URLs — no provider-specific IDs hardcoded anywhere.
+  const bannerConfig = consentConfig?.hardcoded
+    ? {
+        ...consentConfig,
+        hardcoded: {
+          ...consentConfig.hardcoded,
+          urls: {
+            privacyPolicy: profile.privacyPolicyUrl || consentConfig.hardcoded.urls?.privacyPolicy || '',
+            cookiePolicy:  profile.cookiePolicyUrl  || consentConfig.hardcoded.urls?.cookiePolicy  || '',
+          },
+        },
+      }
+    : consentConfig;
+
   return (
     <>
       <PublicView
         profile={profile}
         links={links}
         footerText={profile.footerText}
+        privacyPolicyUrl={profile.privacyPolicyUrl}
+        cookiePolicyUrl={profile.cookiePolicyUrl}
       />
       {/* Render the native banner only when mode === 'hardcoded'.
           Builder mode: external CMP injects its own UI via injectBuilderScript().
           Disabled mode: no banner rendered. */}
-      {consentConfig?.mode === 'hardcoded' && consentConfig.enabled && (
-        <CookieBanner config={consentConfig} />
+      {consentConfig?.mode === 'hardcoded' && consentConfig.enabled && bannerConfig && (
+        <CookieBanner config={bannerConfig} />
       )}
     </>
   );
