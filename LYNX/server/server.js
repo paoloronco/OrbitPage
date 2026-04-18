@@ -104,8 +104,10 @@ app.use(helmet({
         "https://www.googletagmanager.com", "https://*.googletagmanager.com",
         "https://www.google-analytics.com", "https://*.google-analytics.com",
         "https://static.cloudflareinsights.com",
-        // Cookiebot: main consent script (uc.js)
+        // Cookiebot: uc.js entry-point (consent.cookiebot.com)
+        // and CDN assets e.g. configuration.js (consentcdn.cookiebot.com)
         "https://consent.cookiebot.com",
+        "https://consentcdn.cookiebot.com",
       ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://tagassistant.google.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
@@ -116,8 +118,10 @@ app.use(helmet({
             "https://analytics.google.com", "https://*.analytics.google.com",
             "https://www.googletagmanager.com", "https://*.googletagmanager.com",
             "https://stats.g.doubleclick.net", "https://cloudflareinsights.com",
-            // Cookiebot: consent record API calls
+            // Cookiebot: consent record API (consent.cookiebot.com)
+            // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
+            "https://consentcdn.cookiebot.com",
           ]
         : [
             "'self'", FRONTEND_URL,
@@ -125,8 +129,10 @@ app.use(helmet({
             "https://analytics.google.com", "https://*.analytics.google.com",
             "https://www.googletagmanager.com", "https://*.googletagmanager.com",
             "https://stats.g.doubleclick.net", "https://cloudflareinsights.com",
-            // Cookiebot: consent record API calls
+            // Cookiebot: consent record API (consent.cookiebot.com)
+            // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
+            "https://consentcdn.cookiebot.com",
           ],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
