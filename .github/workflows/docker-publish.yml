@@ -3,9 +3,13 @@ name: Build & Publish Docker image
 on:
   push:
     branches: [ "main" ]
-    tags: [ "v*" ]  
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: paoloronco/lynx
 
 jobs:
   docker:
@@ -13,7 +17,6 @@ jobs:
 
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout
@@ -26,19 +29,19 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/lynx
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=short,prefix=sha-
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Login to Docker Hub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
@@ -53,5 +56,5 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             NODE_ENV=production
-          cache-from: type=registry,ref=paueron/lynx:buildcache
-          cache-to: type=inline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
