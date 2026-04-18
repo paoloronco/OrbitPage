@@ -173,12 +173,16 @@ const getGoogleAnalyticsId = async () => {
 };
 
 const injectGoogleAnalyticsTag = (html, measurementId) => {
-  // Google Consent Mode v2 defaults are set to 'denied' before the tag loads.
-  // The Lynx Consent Manager calls gtag('consent','update',{...}) and
-  // gtag('config', ID) only after the user grants analytics consent.
-  // Do NOT call gtag('config', ID) here — that would fire before consent.
+  // Inject ONLY the gtag stub + GCM v2 defaults (all denied).
+  // The actual gtag.js script is intentionally NOT loaded here.
+  // Loading gtag.js with ?id=G-XXX at page-load causes GA to fire cookieless pings
+  // (collect?v=2) even when analytics_storage is 'denied' — a GCM v2 basic-mode edge case.
+  // Instead, Index.tsx loads gtag.js dynamically inside registerConsentDependentScript,
+  // guaranteeing zero GA network requests until the visitor explicitly grants consent.
+  // Unused parameter kept in signature for future reference.
+  void measurementId;
   const tag = `
-    <!-- Google tag (gtag.js) — Consent Mode v2 via Lynx Consent Manager -->
+    <!-- Google Consent Mode v2 defaults — gtag.js loads only after consent (Lynx) -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
@@ -192,8 +196,7 @@ const injectGoogleAnalyticsTag = (html, measurementId) => {
         'wait_for_update': 2000
       });
       gtag('js', new Date());
-    </script>
-    <script id="lynx-ga-script" async src="https://www.googletagmanager.com/gtag/js?id=${measurementId}"></script>`;
+    </script>`;
 
   return html.includes('<head>') ? html.replace('<head>', `<head>${tag}`) : `${tag}\n${html}`;
 };
@@ -638,7 +641,10 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
     const name = body.name ?? '';
     const bio = body.bio ?? '';
     const avatar = body.avatar ?? '';
-    const socialLinks = body.socialLinks ?? body.social_links ?? {};
+    // Merge both key variants: client sends social_links (snake_case); Zod default({}) on
+    // socialLinks means ?? would short-circuit with {} before reaching social_links.
+    // Spread ensures whichever field carries actual data wins.
+    const socialLinks = { ...(body.social_links ?? {}), ...(body.socialLinks ?? {}) };
     const nameFontSize = body.nameFontSize ?? body.name_font_size ?? null;
     const bioFontSize = body.bioFontSize ?? body.bio_font_size ?? null;
     const tabTitle = body.tabTitle ?? body.tab_title ?? null;

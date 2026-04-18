@@ -93,47 +93,45 @@ const Index = () => {
           });
 
           // ── Google Analytics 4 — Consent Mode v2 ────────────────────────────
-          // Production: the server already injected GCM v2 defaults + gtag.js into <head>
-          //             (see server.js injectGoogleAnalyticsTag). We skip re-injection.
-          // Development: the Vite dev server serves a plain index.html with no injection,
-          //             so we set up GCM v2 defaults and load gtag.js ourselves.
-          // In BOTH cases we do NOT call gtag('config', ID) here.
-          // Instead we register a consent-dependent script that fires only after the
-          // visitor grants analytics consent via the banner or preferences modal.
+          // gtag.js is intentionally NOT loaded at page-load (neither server-side nor
+          // client-side). Loading it early — even with GCM v2 defaults denied — causes
+          // cookieless pings to fire before consent in basic mode.
+          //
+          // Instead we:
+          //   1. Set up the gtag stub + GCM v2 defaults (inline, zero network cost)
+          //   2. Register the gtag.js load + gtag('config') call as a consent-dependent
+          //      action — it only runs once the visitor grants analytics consent.
           if (googleAnalyticsId && typeof googleAnalyticsId === 'string' && googleAnalyticsId.match(/^G-[A-Z0-9]+$/i)) {
             const win = window as any;
 
-            // If gtag hasn't been set up yet (dev mode / no server injection), do it now
+            // Ensure gtag stub + GCM v2 defaults exist (server already injects this in
+            // production via injectGoogleAnalyticsTag; we set it up here for dev mode).
             if (typeof win.gtag !== 'function') {
               win.dataLayer = win.dataLayer || [];
               win.gtag = function () { win.dataLayer.push(arguments); };
-              // Set GCM v2 defaults — all denied until consent is explicitly granted
               win.gtag('consent', 'default', {
-                analytics_storage:      'denied',
-                ad_storage:             'denied',
-                ad_user_data:           'denied',
-                ad_personalization:     'denied',
-                functionality_storage:  'denied',
+                analytics_storage:       'denied',
+                ad_storage:              'denied',
+                ad_user_data:            'denied',
+                ad_personalization:      'denied',
+                functionality_storage:   'denied',
                 personalization_storage: 'denied',
-                wait_for_update:        2000,
+                wait_for_update:         2000,
               });
               win.gtag('js', new Date());
+            }
 
-              // Only inject the script tag if it isn't already in the DOM
+            // Load gtag.js and call config ONLY after analytics consent is granted.
+            // No GA network request of any kind is made before this callback fires.
+            const gaId = googleAnalyticsId;
+            consentManager.registerConsentDependentScript('analytics', () => {
               if (!document.getElementById('lynx-ga-script')) {
                 const script = document.createElement('script');
                 script.id = 'lynx-ga-script';
                 script.async = true;
-                script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(googleAnalyticsId)}`;
+                script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
                 document.head.appendChild(script);
               }
-            }
-
-            // Register gtag('config') as a consent-dependent action.
-            // The ConsentManager calls this immediately if analytics consent is already
-            // stored, or queues it until the visitor accepts via the banner.
-            const gaId = googleAnalyticsId;
-            consentManager.registerConsentDependentScript('analytics', () => {
               win.gtag?.('config', gaId);
             });
           }
