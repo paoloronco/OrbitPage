@@ -6,6 +6,7 @@ import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { isFirstTimeSetup } from "@/lib/auth";
 import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
+import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
@@ -98,7 +99,7 @@ const Admin = () => {
             footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
             favicon: (profileData as any).favicon || undefined,
             googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
-            privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
+            privacyPolicyUrl: getEffectivePrivacyPolicyUrl((profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined),
             cookiePolicyUrl: (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined,
           });
         }

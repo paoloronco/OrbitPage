@@ -345,7 +345,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
               <Input
                 value={editProfile.privacyPolicyUrl || ''}
                 onChange={(e) => setEditProfile(prev => ({ ...prev, privacyPolicyUrl: e.target.value }))}
-                placeholder="https://example.com/privacy"
+                placeholder="/privacy or https://example.com/privacy"
                 type="url"
                 className="glass-card border-primary/20 text-sm"
               />

@@ -201,6 +201,10 @@ Open:
 | `SSL_PORT` | `8443` | HTTPS port. |
 | `FRONTEND_URL` | same-origin mode | Optional dev CORS/CSP origin, e.g. `http://localhost:8080`. |
 | `RESET_TOKEN` | unset | Enables token-protected reset endpoints. Use at least 32 characters. |
+| `VITE_ENABLE_USERCENTRICS_PRIVACY_PAGE` | `true` | Build-time flag for the optional public `/privacy` Usercentrics embed. Set to `false` to disable. |
+| `VITE_USERCENTRICS_PRIVACY_POLICY_ID` | `fd1ffcdf-b560-4ea0-ba72-da943d39d953` | Build-time Usercentrics privacy policy ID used by `/privacy`. |
+| `VITE_USERCENTRICS_PRIVACY_POLICY_LANGUAGE` | `en` | Build-time language passed to the Usercentrics privacy policy script. |
+| `VITE_DEFAULT_PRIVACY_POLICY_URL` | `/privacy` | Build-time public Privacy Policy URL. Set to an empty string to rely only on Admin > Profile > Legal links. |
 
 </details>
 

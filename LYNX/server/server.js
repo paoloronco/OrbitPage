@@ -108,6 +108,7 @@ app.use(helmet({
         // and CDN assets e.g. configuration.js (consentcdn.cookiebot.com)
         "https://consent.cookiebot.com",
         "https://consentcdn.cookiebot.com",
+        "https://policygenerator.usercentrics.eu",
       ],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://tagassistant.google.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
@@ -122,6 +123,7 @@ app.use(helmet({
             // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
             "https://consentcdn.cookiebot.com",
+            "https://policygenerator.usercentrics.eu",
           ]
         : [
             "'self'", FRONTEND_URL,
@@ -133,6 +135,7 @@ app.use(helmet({
             // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
             "https://consentcdn.cookiebot.com",
+            "https://policygenerator.usercentrics.eu",
           ],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
@@ -176,6 +179,10 @@ const normalizePolicyUrl = (value, fieldName) => {
   if (value == null) return null;
   const trimmed = String(value).trim();
   if (!trimmed) return null;
+
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed;
+  }
 
   let parsed;
   try {

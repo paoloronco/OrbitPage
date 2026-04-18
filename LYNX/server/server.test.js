@@ -112,6 +112,26 @@ describe('API Endpoints', () => {
     expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('https://example.com/cookies');
   });
 
+  it('PUT /api/profile accepts the built-in /privacy route as a legal URL', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({ id: 1 });
+    vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
+
+    const response = await request(app)
+      .put('/api/profile')
+      .send({
+        name: 'Paolo',
+        bio: '',
+        avatar: '',
+        social_links: {},
+        privacy_policy_url: '/privacy',
+        cookie_policy_url: '',
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('/privacy');
+  });
+
   it('GET /api/consent-config/public derives policy URLs from Profile', async () => {
     vi.mocked(dbGet)
       .mockResolvedValueOnce({

@@ -5,6 +5,7 @@ import { LinkData } from "@/components/LinkCard";
 import { applyTheme, normalizeTheme } from "@/lib/theme";
 import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
 import { consentManager } from "@/lib/consent-manager";
+import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 
 interface ProfileData {
@@ -79,7 +80,8 @@ const Index = () => {
           const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
           const favicon = (profileData as any).favicon || undefined;
           const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
-          const privacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
+          const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
+          const privacyPolicyUrl = getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl);
           const cookiePolicyUrl = (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined;
           setProfile({
             name: profileData.name || "",
