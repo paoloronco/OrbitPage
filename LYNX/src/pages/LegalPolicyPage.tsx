@@ -20,6 +20,17 @@ const getPolicy = (data: ConsentConfigData | undefined, kind: PolicyKind): Polic
   return kind === "privacy" ? policies.privacyPolicy : policies.cookiePolicy;
 };
 
+const activateEmbeddedScripts = (container: HTMLElement) => {
+  container.querySelectorAll("script").forEach((script) => {
+    const activeScript = document.createElement("script");
+    for (const attr of Array.from(script.attributes)) {
+      activeScript.setAttribute(attr.name, attr.value);
+    }
+    activeScript.text = script.text;
+    script.replaceWith(activeScript);
+  });
+};
+
 export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
   const [policy, setPolicy] = useState<PolicyState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -69,6 +80,7 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
     range.selectNode(container);
     const fragment = range.createContextualFragment(policy.embeddedCode);
     container.appendChild(fragment);
+    activateEmbeddedScripts(container);
 
     return () => {
       container.replaceChildren();
@@ -118,4 +130,3 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
     </main>
   );
 }
-

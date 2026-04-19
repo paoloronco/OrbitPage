@@ -1036,7 +1036,7 @@ export function PrivacySettings({
     } catch (err: any) {
       setSaveError(
         err?.message === 'AUTH_EXPIRED'
-          ? 'Your session expired. Sign in again in another tab, then click Save changes here. Your edits are still on this page.'
+          ? 'Your session expired. Open Admin in another tab, sign in again, then return here and click Save changes. Your edits are still on this page.'
           : err?.message || 'An unexpected error occurred.'
       );
     } finally {

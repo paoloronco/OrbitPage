@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.1.4-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.1.5-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -312,6 +312,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.1.5</strong></summary>
+
+### Privacy hotfix
+
+- Stops demo-mode write protection from being shown as an expired admin session.
+- Ensures embedded legal policy scripts execute on `/privacy` and `/cookies`.
+- Infers hosted legal pages from existing `/privacy` and `/cookies` profile URLs for upgraded installs.
+
+</details>
 
 <details>
 <summary><strong>v4.1.4</strong></summary>

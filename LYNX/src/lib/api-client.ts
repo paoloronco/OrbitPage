@@ -299,15 +299,21 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
     }
 
     if (!response.ok) {
-      // If token is invalid or expired, clear it and signal to UI
-      if (response.status === 401 || response.status === 403) {
+      const errorMessage = data?.error || data?.message || 'Request failed';
+      const isAuthExpired =
+        response.status === 401 ||
+        (response.status === 403 && /invalid or expired token|user not found|access token required/i.test(errorMessage));
+
+      // Only auth failures should clear the token. Other 403 responses are real
+      // permission/product errors, for example demo-mode write protection.
+      if (isAuthExpired) {
         removeAuthToken();
         throw new Error('AUTH_EXPIRED');
       }
       if (response.status === 429) {
         throw new Error(data?.error || 'Too many requests. Please wait a moment and try again.');
       }
-      throw new Error(data?.error || data?.message || 'Request failed');
+      throw new Error(errorMessage);
     }
 
     return data as T;

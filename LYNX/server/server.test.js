@@ -195,6 +195,27 @@ describe('API Endpoints', () => {
     expect(response.body.data.legalPolicies.cookiePolicy.embeddedCode).toBe('<div>Cookie policy</div>');
   });
 
+  it('GET /api/consent-config/public infers hosted legal policy mode from legacy local URLs', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({
+        mode: 'hardcoded',
+        enabled: 1,
+        full_config: JSON.stringify({ hardcoded: { urls: {} }, builder: { providerConfig: {} } }),
+      })
+      .mockResolvedValueOnce({
+        privacy_policy_url: '/privacy',
+        cookie_policy_url: '/cookies',
+      });
+
+    const response = await request(app).get('/api/consent-config/public');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.legalPolicies.privacyPolicy.mode).toBe('hosted');
+    expect(response.body.data.legalPolicies.cookiePolicy.mode).toBe('hosted');
+    expect(response.body.data.legalPolicies.privacyPolicy.externalUrl).toBe('/privacy');
+    expect(response.body.data.legalPolicies.cookiePolicy.externalUrl).toBe('/cookies');
+  });
+
   it('GET / injects Google Consent Mode defaults before the app when analytics and consent are enabled', async () => {
     vi.mocked(dbGet)
       .mockResolvedValueOnce({ google_analytics_id: 'G-TEST123' })

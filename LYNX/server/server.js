@@ -213,17 +213,21 @@ const applyProfileLegalUrlsToConsentConfig = (config, legalUrls) => {
   if (!config || typeof config !== 'object') return config;
 
   const hasProfileLegalUrls = Boolean(legalUrls.privacyPolicyUrl || legalUrls.cookiePolicyUrl);
+  const privacyMode = config.legalPolicies?.privacyPolicy?.mode ||
+    (legalUrls.privacyPolicyUrl === '/privacy' ? 'hosted' : 'external');
+  const cookieMode = config.legalPolicies?.cookiePolicy?.mode ||
+    (legalUrls.cookiePolicyUrl === '/cookies' ? 'hosted' : 'external');
   const legalPolicies = {
     showFooterLinks: Boolean(config.legalPolicies?.showFooterLinks ?? hasProfileLegalUrls),
     privacyPolicy: {
-      mode: config.legalPolicies?.privacyPolicy?.mode || 'external',
+      mode: privacyMode,
       hostedText: config.legalPolicies?.privacyPolicy?.hostedText || '',
       hostedFileName: config.legalPolicies?.privacyPolicy?.hostedFileName || '',
       embeddedCode: config.legalPolicies?.privacyPolicy?.embeddedCode || '',
       externalUrl: legalUrls.privacyPolicyUrl || '',
     },
     cookiePolicy: {
-      mode: config.legalPolicies?.cookiePolicy?.mode || 'external',
+      mode: cookieMode,
       hostedText: config.legalPolicies?.cookiePolicy?.hostedText || '',
       hostedFileName: config.legalPolicies?.cookiePolicy?.hostedFileName || '',
       embeddedCode: config.legalPolicies?.cookiePolicy?.embeddedCode || '',
