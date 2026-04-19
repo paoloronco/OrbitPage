@@ -212,6 +212,25 @@ const getProfileLegalUrls = async () => {
 const applyProfileLegalUrlsToConsentConfig = (config, legalUrls) => {
   if (!config || typeof config !== 'object') return config;
 
+  const hasProfileLegalUrls = Boolean(legalUrls.privacyPolicyUrl || legalUrls.cookiePolicyUrl);
+  const legalPolicies = {
+    showFooterLinks: Boolean(config.legalPolicies?.showFooterLinks ?? hasProfileLegalUrls),
+    privacyPolicy: {
+      mode: config.legalPolicies?.privacyPolicy?.mode || 'external',
+      hostedText: config.legalPolicies?.privacyPolicy?.hostedText || '',
+      hostedFileName: config.legalPolicies?.privacyPolicy?.hostedFileName || '',
+      embeddedCode: config.legalPolicies?.privacyPolicy?.embeddedCode || '',
+      externalUrl: legalUrls.privacyPolicyUrl || '',
+    },
+    cookiePolicy: {
+      mode: config.legalPolicies?.cookiePolicy?.mode || 'external',
+      hostedText: config.legalPolicies?.cookiePolicy?.hostedText || '',
+      hostedFileName: config.legalPolicies?.cookiePolicy?.hostedFileName || '',
+      embeddedCode: config.legalPolicies?.cookiePolicy?.embeddedCode || '',
+      externalUrl: legalUrls.cookiePolicyUrl || '',
+    },
+  };
+
   const hardcoded = config.hardcoded
     ? {
         ...config.hardcoded,
@@ -233,10 +252,21 @@ const applyProfileLegalUrlsToConsentConfig = (config, legalUrls) => {
       }
     : config.builder;
 
-  return { ...config, hardcoded, builder };
+  return { ...config, legalPolicies, hardcoded, builder };
 };
 
-const stripDuplicateLegalUrlsFromConsentConfig = ({ hardcoded, builder }) => ({
+const stripDuplicateLegalUrlsFromConsentConfig = ({ legalPolicies, hardcoded, builder }) => ({
+  legalPolicies: legalPolicies ? {
+    ...legalPolicies,
+    privacyPolicy: {
+      ...(legalPolicies.privacyPolicy || {}),
+      externalUrl: '',
+    },
+    cookiePolicy: {
+      ...(legalPolicies.cookiePolicy || {}),
+      externalUrl: '',
+    },
+  } : undefined,
   hardcoded: {
     ...hardcoded,
     urls: { privacyPolicy: '', cookiePolicy: '' },
@@ -1672,6 +1702,23 @@ app.get('/api/health', healthHandler);
  * Hardcoded mode is disabled by default — the admin must explicitly enable it.
  */
 const DEFAULT_CONSENT_CONFIG = {
+  legalPolicies: {
+    showFooterLinks: false,
+    privacyPolicy: {
+      mode: 'external',
+      externalUrl: '',
+      hostedText: '',
+      hostedFileName: '',
+      embeddedCode: '',
+    },
+    cookiePolicy: {
+      mode: 'external',
+      externalUrl: '',
+      hostedText: '',
+      hostedFileName: '',
+      embeddedCode: '',
+    },
+  },
   hardcoded: {
     policyVersion: '1.0',
     texts: {
@@ -1716,7 +1763,7 @@ const DEFAULT_CONSENT_CONFIG = {
     legalFooterText: '',
   },
   builder: {
-    provider: 'iubenda',
+    provider: 'custom',
     providerConfig: {
       siteId: '',
       cookiePolicyId: '',
@@ -1770,6 +1817,20 @@ const HardcodedConfigSchema = z.object({
   legalFooterText: z.string().max(500).default(''),
 });
 
+const LegalPolicySchema = z.object({
+  mode: z.enum(['external', 'hosted', 'embedded']).default('external'),
+  externalUrl: z.string().max(500).default(''),
+  hostedText: z.string().max(50000).default(''),
+  hostedFileName: z.string().max(500).default(''),
+  embeddedCode: z.string().max(20000).default(''),
+});
+
+const LegalPoliciesSchema = z.object({
+  showFooterLinks: z.boolean().default(false),
+  privacyPolicy: LegalPolicySchema.default({}),
+  cookiePolicy: LegalPolicySchema.default({}),
+}).default({});
+
 const BuilderProviderConfigSchema = z.object({
   siteId: z.string().max(200).default(''),
   cookiePolicyId: z.string().max(200).default(''),
@@ -1789,6 +1850,7 @@ const BuilderConfigSchema = z.object({
 const ConsentConfigBodySchema = z.object({
   mode: z.enum(['disabled', 'hardcoded', 'builder']),
   enabled: z.boolean(),
+  legalPolicies: LegalPoliciesSchema.optional().default({}),
   hardcoded: HardcodedConfigSchema.optional().default({}),
   builder: BuilderConfigSchema.optional().default({}),
 });
@@ -1813,18 +1875,9 @@ const validateConsentConfigDomain = (config, legalUrls = {}) => {
   }
 
   if (config.mode === 'builder' && config.enabled) {
-    const { provider, providerConfig = {} } = config.builder || {};
-    if (provider === 'iubenda' && (!providerConfig.siteId || !providerConfig.cookiePolicyId)) {
-      errors.push('Iubenda requires a Site ID and a Cookie Policy ID.');
-    }
-    if ((provider === 'cookiebot' || provider === 'cookieyes') && !providerConfig.scriptId) {
-      errors.push(`${provider === 'cookiebot' ? 'Cookiebot' : 'CookieYes'} requires a Script ID.`);
-    }
-    if (provider === 'onetrust' && !providerConfig.siteId) {
-      errors.push('OneTrust requires a Data Domain Script ID.');
-    }
-    if (provider === 'custom' && !providerConfig.headSnippet) {
-      errors.push('Custom provider requires a head snippet.');
+    const { providerConfig = {} } = config.builder || {};
+    if (!providerConfig.headSnippet?.trim()) {
+      errors.push('Paste your external CMP script before enabling external consent management.');
     }
   }
 
@@ -1834,14 +1887,23 @@ const validateConsentConfigDomain = (config, legalUrls = {}) => {
 // GET /api/consent-config/public — unauthenticated, used by the public page at runtime
 app.get('/api/consent-config/public', apiLimiter, async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const row = await dbGet(
       'SELECT mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
     );
+    const legalUrls = await getProfileLegalUrls();
     if (!row || !row.enabled) {
-      return res.json({ success: true, data: { mode: 'disabled', enabled: false } });
+      const config = row ? safeJsonParse(row.full_config, {}) : DEFAULT_CONSENT_CONFIG;
+      return res.json({
+        success: true,
+        data: {
+          mode: 'disabled',
+          enabled: false,
+          ...applyProfileLegalUrlsToConsentConfig(config, legalUrls),
+        },
+      });
     }
     const config = safeJsonParse(row.full_config, {});
-    const legalUrls = await getProfileLegalUrls();
     return res.json({
       success: true,
       data: {
@@ -1906,7 +1968,7 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, async (req, res) =
     return res.status(400).json({ success: false, error: `Validation error — ${msgs}` });
   }
 
-  const { mode, enabled, hardcoded, builder } = parsed.data;
+  const { mode, enabled, legalPolicies, hardcoded, builder } = parsed.data;
 
   try {
     const legalUrls = await getProfileLegalUrls();
@@ -1915,7 +1977,7 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, async (req, res) =
       return res.status(400).json({ success: false, error: domainErrors.join(' ') });
     }
 
-    const fullConfig = JSON.stringify(stripDuplicateLegalUrlsFromConsentConfig({ hardcoded, builder }));
+    const fullConfig = JSON.stringify(stripDuplicateLegalUrlsFromConsentConfig({ legalPolicies, hardcoded, builder }));
     const existing = await dbGet(
       'SELECT id FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
     );

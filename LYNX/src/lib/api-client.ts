@@ -486,6 +486,23 @@ export const themeApi = {
 export interface ConsentConfigData {
   mode: 'disabled' | 'hardcoded' | 'builder';
   enabled: boolean;
+  legalPolicies?: {
+    showFooterLinks: boolean;
+    privacyPolicy: {
+      mode: 'external' | 'hosted' | 'embedded';
+      externalUrl?: string;
+      hostedText?: string;
+      hostedFileName?: string;
+      embeddedCode?: string;
+    };
+    cookiePolicy: {
+      mode: 'external' | 'hosted' | 'embedded';
+      externalUrl?: string;
+      hostedText?: string;
+      hostedFileName?: string;
+      embeddedCode?: string;
+    };
+  };
   hardcoded?: {
     policyVersion: string;
     texts: {

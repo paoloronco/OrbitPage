@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.1.3-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.1.4-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -312,6 +312,19 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.1.4</strong></summary>
+
+### Privacy and CMP configuration
+
+- Separates legal pages from consent management in the Privacy tab.
+- Adds provider-agnostic legal policy sources: external link, hosted text, and embedded code.
+- Replaces provider-specific CMP fields with a single external script flow.
+- Ensures `/privacy` and `/cookies` always render the latest selected source without stale provider fallback.
+- Keeps form edits on screen when the admin session expires during save.
+
+</details>
 
 <details>
 <summary><strong>v4.1.3</strong></summary>

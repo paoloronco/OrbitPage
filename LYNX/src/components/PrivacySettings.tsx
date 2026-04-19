@@ -43,8 +43,7 @@ import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ConsentMode = 'disabled' | 'hardcoded' | 'builder';
-type Provider = 'iubenda' | 'cookiebot' | 'cookieyes' | 'onetrust' | 'custom';
-type LegalPolicyMethod = 'external' | 'hosted' | 'provider';
+type LegalPolicyMethod = 'external' | 'hosted' | 'embedded';
 type PolicyKind = 'privacy' | 'cookie';
 
 // ── Default / empty config ────────────────────────────────────────────────────
@@ -94,7 +93,7 @@ const DEFAULT_HARDCODED: NonNullable<ConsentConfigData['hardcoded']> = {
 };
 
 const DEFAULT_BUILDER: NonNullable<ConsentConfigData['builder']> = {
-  provider: 'iubenda',
+  provider: 'custom',
   providerConfig: {
     siteId: '',
     cookiePolicyId: '',
@@ -105,31 +104,6 @@ const DEFAULT_BUILDER: NonNullable<ConsentConfigData['builder']> = {
     cookiePolicyUrl: '',
   },
   reopenSelector: '',
-};
-
-// ── Provider help text ────────────────────────────────────────────────────────
-
-const PROVIDER_INFO: Record<Provider, { label: string; help: string }> = {
-  iubenda: {
-    label: 'Iubenda',
-    help: 'Find your Site ID and Cookie Policy ID in Iubenda → Websites & Apps → select site → Cookie solution.',
-  },
-  cookiebot: {
-    label: 'Cookiebot',
-    help: 'Find your Script ID (cbid) in Cookiebot → Your scripts → copy the data-cbid value.',
-  },
-  cookieyes: {
-    label: 'CookieYes',
-    help: 'Find your Script ID in CookieYes dashboard → Cookie scanner → embed script → copy the ID from the script URL.',
-  },
-  onetrust: {
-    label: 'OneTrust',
-    help: 'Find your Data Domain Script ID in OneTrust → Websites → select domain → Scripts.',
-  },
-  custom: {
-    label: 'Custom snippet',
-    help: 'Paste the HTML/JS snippet provided by your CMP. Head snippet loads before the closing </head> tag. Body snippet loads before </body>.',
-  },
 };
 
 // ── Utility helpers ───────────────────────────────────────────────────────────
@@ -154,9 +128,13 @@ function getPolicyMethod(url: string | undefined, kind: PolicyKind): LegalPolicy
   return url?.trim() === HOSTED_POLICY_PATH[kind] ? 'hosted' : 'external';
 }
 
-function extractFirstUrl(value: string) {
-  return value.match(/https?:\/\/[^\s"'<>]+/i)?.[0] || '';
-}
+const EMPTY_POLICY_CONFIG = {
+  mode: 'external' as LegalPolicyMethod,
+  externalUrl: '',
+  hostedText: '',
+  hostedFileName: '',
+  embeddedCode: '',
+};
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -280,9 +258,12 @@ function PolicyConfigurator({
   const hostedPath = HOSTED_POLICY_PATH[kind];
   const resolvedUrl =
     method === 'hosted' ? hostedPath :
-    method === 'provider' ? extractFirstUrl(providerConfig) :
+    method === 'embedded' ? hostedPath :
     externalUrl.trim();
-  const configured = !!resolvedUrl;
+  const configured =
+    method === 'embedded' ? !!providerConfig.trim() :
+    method === 'hosted' ? !!hostedText.trim() :
+    !!resolvedUrl;
 
   const handleFile = async (file?: File) => {
     if (!file) return;
@@ -323,11 +304,11 @@ function PolicyConfigurator({
             onClick={() => onMethodChange('hosted')}
           />
           <MethodButton
-            active={method === 'provider'}
+            active={method === 'embedded'}
             icon={Sliders}
-            title="External provider"
-            description="Advanced setup for a privacy service."
-            onClick={() => onMethodChange('provider')}
+            title="Embedded"
+            description="Paste HTML or a script from a policy service."
+            onClick={() => onMethodChange('embedded')}
           />
         </div>
       </FieldRow>
@@ -374,13 +355,13 @@ function PolicyConfigurator({
         </div>
       )}
 
-      {method === 'provider' && (
+      {method === 'embedded' && (
         <details className="rounded-lg border border-slate-200 bg-white p-3">
           <summary className="cursor-pointer text-sm font-semibold text-slate-800">
-            Advanced — for Usercentrics, iubenda, etc.
+            Advanced - embedded policy
           </summary>
           <div className="mt-3 space-y-3">
-            <FieldRow label="Provider script or config" description="Paste the provider code here. Lynx will use the first web address it finds for the footer link.">
+            <FieldRow label="Policy embed code" description={`Paste the HTML or script for this document. Lynx will render it at ${hostedPath}.`}>
               <Textarea
                 className="admin-input min-h-[120px] resize-y font-mono text-xs"
                 value={providerConfig}
@@ -388,10 +369,10 @@ function PolicyConfigurator({
                 placeholder="<script src=&quot;https://...&quot;></script>"
               />
             </FieldRow>
-            {resolvedUrl ? (
-              <p className="break-all text-xs text-green-700">Link found: {resolvedUrl}</p>
+            {providerConfig.trim() ? (
+              <p className="text-xs text-green-700">Embedded policy configured. Use Preview to verify the public page.</p>
             ) : (
-              <p className="text-xs text-amber-700">Missing: paste a web address from your provider.</p>
+              <p className="text-xs text-amber-700">Missing: paste the embed code from your policy service.</p>
             )}
           </div>
         </details>
@@ -743,110 +724,43 @@ function BuilderForm({
   cfg: NonNullable<ConsentConfigData['builder']>;
   onChange: (updates: Partial<NonNullable<ConsentConfigData['builder']>>) => void;
 }) {
-  const provider = cfg.provider;
-  const info = PROVIDER_INFO[provider];
   const updateCfg = (updates: Partial<typeof cfg.providerConfig>) =>
     onChange({ providerConfig: { ...cfg.providerConfig, ...updates } });
 
   return (
     <div className="space-y-5">
       <InfoBox>
-        Builder mode delegates all consent UI to an external Consent Management Platform (CMP).
-        The native Lynx banner is disabled when this mode is active. The external CMP script
-        loads only when builder mode is enabled.
+        CMP = cookie consent banner. Use this only when another service should show the banner
+        and manage tracking consent. The native Lynx banner is disabled in External mode.
       </InfoBox>
 
-      <FieldRow label="CMP provider">
-        <Select
-          value={provider}
-          onValueChange={(v: Provider) => onChange({ provider: v })}
-        >
-          <SelectTrigger className="admin-input">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.entries(PROVIDER_INFO) as [Provider, { label: string }][]).map(
-              ([key, { label }]) => (
-                <SelectItem key={key} value={key}>{label}</SelectItem>
-              ),
-            )}
-          </SelectContent>
-        </Select>
-        <p className="mt-1 text-xs leading-5 text-blue-700">{info.help}</p>
-      </FieldRow>
-
-      {/* Provider-specific fields */}
-      {provider === 'iubenda' && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FieldRow label="Site ID" description="Numeric ID from your Iubenda dashboard.">
-            <Input className="admin-input font-mono" value={cfg.providerConfig.siteId ?? ''}
-              onChange={(e) => updateCfg({ siteId: e.target.value })} placeholder="1234567" maxLength={200} />
-          </FieldRow>
-          <FieldRow label="Cookie Policy ID" description="Numeric cookie policy document ID.">
-            <Input className="admin-input font-mono" value={cfg.providerConfig.cookiePolicyId ?? ''}
-              onChange={(e) => updateCfg({ cookiePolicyId: e.target.value })} placeholder="89012345" maxLength={200} />
-          </FieldRow>
-        </div>
-      )}
-
-      {(provider === 'cookiebot' || provider === 'cookieyes') && (
-        <FieldRow
-          label={provider === 'cookiebot' ? 'Script ID (cbid)' : 'Script ID'}
-          description={
-            provider === 'cookiebot'
-              ? 'The data-cbid value from your Cookiebot embed snippet.'
-              : 'The ID segment from your CookieYes CDN script URL.'
-          }
-        >
-          <Input className="admin-input font-mono" value={cfg.providerConfig.scriptId ?? ''}
-            onChange={(e) => updateCfg({ scriptId: e.target.value })} maxLength={200} />
-        </FieldRow>
-      )}
-
-      {provider === 'onetrust' && (
-        <FieldRow label="Data Domain Script ID" description="The data-domain-script value from OneTrust.">
-          <Input className="admin-input font-mono" value={cfg.providerConfig.siteId ?? ''}
-            onChange={(e) => updateCfg({ siteId: e.target.value })} maxLength={200} />
-        </FieldRow>
-      )}
-
-      {provider === 'custom' && (
-        <div className="space-y-4">
-          <WarnBox>
-            Custom snippets are injected verbatim into the page. Only paste code from sources you
-            trust. These snippets are stored server-side and served only to authenticated sessions —
-            they are never exposed to unauthenticated visitors in configuration form.
-          </WarnBox>
-          <FieldRow
-            label="Head snippet"
-            description="Injected into <head> before the page is loaded. Typically the main CMP script tag."
-          >
-            <Textarea
-              className="admin-input min-h-[100px] resize-y font-mono text-xs"
-              value={cfg.providerConfig.headSnippet ?? ''}
-              onChange={(e) => updateCfg({ headSnippet: e.target.value })}
-              placeholder="<!-- Paste your CMP <script> tag here -->"
-              maxLength={10000}
-            />
-          </FieldRow>
-          <FieldRow
-            label="Body snippet"
-            description="Injected at the end of <body>. Optional — only if your CMP requires it."
-          >
-            <Textarea
-              className="admin-input min-h-[80px] resize-y font-mono text-xs"
-              value={cfg.providerConfig.bodySnippet ?? ''}
-              onChange={(e) => updateCfg({ bodySnippet: e.target.value })}
-              placeholder="<!-- Optional body snippet -->"
-              maxLength={10000}
-            />
-          </FieldRow>
-        </div>
-      )}
+      <WarnBox>
+        External scripts are injected into the public page. Only paste code from a service you trust.
+      </WarnBox>
 
       <FieldRow
+        label="CMP script"
+        description="Paste your CMP script, for example Cookiebot, iubenda, CookieYes, OneTrust, or another provider."
+      >
+        <Textarea
+          className="admin-input min-h-[140px] resize-y font-mono text-xs"
+          value={cfg.providerConfig.headSnippet ?? ''}
+          onChange={(e) => updateCfg({
+            headSnippet: e.target.value,
+            bodySnippet: '',
+            siteId: '',
+            cookiePolicyId: '',
+            scriptId: '',
+            privacyPolicyUrl: '',
+            cookiePolicyUrl: '',
+          })}
+          placeholder="<script src=&quot;https://...&quot;></script>"
+          maxLength={10000}
+        />
+      </FieldRow>
+      <FieldRow
         label="Reopen selector (optional)"
-        description='CSS selector or JS expression your CMP exposes to re-open the consent UI. E.g. ".iubenda-cs-preferences-link" or "window._iub?.cs?.api?.openPreferences()". Used by external integrations.'
+        description='Optional CSS selector or JS expression that opens your provider preferences again. Example: ".cky-btn-revisit".'
       >
         <Input className="admin-input font-mono text-xs" value={cfg.reopenSelector}
           onChange={(e) => onChange({ reopenSelector: e.target.value })} maxLength={200}
@@ -930,6 +844,7 @@ export function PrivacySettings({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [legalConfigLoaded, setLegalConfigLoaded] = useState(false);
   const [showLegalLinks, setShowLegalLinks] = useState(Boolean(privacyPolicyUrl || cookiePolicyUrl));
   const [privacyMethod, setPrivacyMethod] = useState<LegalPolicyMethod>(getPolicyMethod(privacyPolicyUrl, 'privacy'));
   const [cookieMethod, setCookieMethod] = useState<LegalPolicyMethod>(getPolicyMethod(cookiePolicyUrl, 'cookie'));
@@ -955,11 +870,27 @@ export function PrivacySettings({
       try {
         const res = await consentConfigApi.get();
         if (res?.data) {
-          const { mode: m, enabled: e, hardcoded: h, builder: b } = res.data;
-          setMode(m ?? 'disabled');
+          const { mode: m, enabled: e, legalPolicies: lp, hardcoded: h, builder: b } = res.data;
+          setMode(m === 'builder' ? 'builder' : 'hardcoded');
           setEnabled(e ?? false);
+          if (lp) {
+            const privacyPolicy = { ...EMPTY_POLICY_CONFIG, ...lp.privacyPolicy };
+            const cookiePolicy = { ...EMPTY_POLICY_CONFIG, ...lp.cookiePolicy };
+            setShowLegalLinks(Boolean(lp.showFooterLinks));
+            setPrivacyMethod(privacyPolicy.mode);
+            setCookieMethod(cookiePolicy.mode);
+            setPrivacyExternalUrl(privacyPolicy.mode === 'external' ? (privacyPolicy.externalUrl || privacyPolicyUrl || '') : '');
+            setCookieExternalUrl(cookiePolicy.mode === 'external' ? (cookiePolicy.externalUrl || cookiePolicyUrl || '') : '');
+            setPrivacyHostedText(privacyPolicy.mode === 'hosted' ? privacyPolicy.hostedText : '');
+            setCookieHostedText(cookiePolicy.mode === 'hosted' ? cookiePolicy.hostedText : '');
+            setPrivacyHostedFileName(privacyPolicy.mode === 'hosted' ? privacyPolicy.hostedFileName : '');
+            setCookieHostedFileName(cookiePolicy.mode === 'hosted' ? cookiePolicy.hostedFileName : '');
+            setPrivacyProviderConfig(privacyPolicy.mode === 'embedded' ? privacyPolicy.embeddedCode : '');
+            setCookieProviderConfig(cookiePolicy.mode === 'embedded' ? cookiePolicy.embeddedCode : '');
+            setLegalConfigLoaded(true);
+          }
           if (h) setHardcoded({ ...DEFAULT_HARDCODED, ...h });
-          if (b) setBuilder({ ...DEFAULT_BUILDER, ...b });
+          if (b) setBuilder({ ...DEFAULT_BUILDER, ...b, providerConfig: { ...DEFAULT_BUILDER.providerConfig, ...b.providerConfig } });
         }
       } catch (err) {
         console.error('Failed to load consent config:', err);
@@ -971,6 +902,7 @@ export function PrivacySettings({
   }, []);
 
   useEffect(() => {
+    if (legalConfigLoaded) return;
     setShowLegalLinks(Boolean(privacyPolicyUrl || cookiePolicyUrl));
     const nextPrivacyMethod = getPolicyMethod(privacyPolicyUrl, 'privacy');
     const nextCookieMethod = getPolicyMethod(cookiePolicyUrl, 'cookie');
@@ -978,19 +910,44 @@ export function PrivacySettings({
     setCookieMethod(nextCookieMethod);
     setPrivacyExternalUrl(nextPrivacyMethod === 'hosted' ? '' : (privacyPolicyUrl || ''));
     setCookieExternalUrl(nextCookieMethod === 'hosted' ? '' : (cookiePolicyUrl || ''));
-  }, [privacyPolicyUrl, cookiePolicyUrl]);
+  }, [cookiePolicyUrl, legalConfigLoaded, privacyPolicyUrl]);
+
+  const changePolicyMethod = (kind: PolicyKind, nextMethod: LegalPolicyMethod) => {
+    if (kind === 'privacy') {
+      if (privacyMethod === nextMethod) return;
+      setPrivacyMethod(nextMethod);
+      setPrivacyExternalUrl('');
+      setPrivacyHostedText('');
+      setPrivacyHostedFileName('');
+      setPrivacyProviderConfig('');
+      return;
+    }
+    if (cookieMethod === nextMethod) return;
+    setCookieMethod(nextMethod);
+    setCookieExternalUrl('');
+    setCookieHostedText('');
+    setCookieHostedFileName('');
+    setCookieProviderConfig('');
+  };
+
+  const changeConsentMode = (nextMode: Exclude<ConsentMode, 'disabled'>) => {
+    setMode(nextMode);
+    if (nextMode === 'hardcoded') {
+      setBuilder(DEFAULT_BUILDER);
+    }
+  };
 
   const resolvedPrivacyPolicyUrl = useMemo(() => {
     if (!showLegalLinks) return undefined;
     if (privacyMethod === 'hosted') return HOSTED_POLICY_PATH.privacy;
-    if (privacyMethod === 'provider') return extractFirstUrl(privacyProviderConfig) || undefined;
+    if (privacyMethod === 'embedded') return HOSTED_POLICY_PATH.privacy;
     return privacyExternalUrl.trim() || undefined;
   }, [privacyExternalUrl, privacyMethod, privacyProviderConfig, showLegalLinks]);
 
   const resolvedCookiePolicyUrl = useMemo(() => {
     if (!showLegalLinks) return undefined;
     if (cookieMethod === 'hosted') return HOSTED_POLICY_PATH.cookie;
-    if (cookieMethod === 'provider') return extractFirstUrl(cookieProviderConfig) || undefined;
+    if (cookieMethod === 'embedded') return HOSTED_POLICY_PATH.cookie;
     return cookieExternalUrl.trim() || undefined;
   }, [cookieExternalUrl, cookieMethod, cookieProviderConfig, showLegalLinks]);
 
@@ -1016,20 +973,72 @@ export function PrivacySettings({
         return;
       }
 
+      if (showLegalLinks && privacyMethod === 'hosted' && !privacyHostedText.trim()) {
+        setSaveError('Add Privacy Policy text or choose another source.');
+        return;
+      }
+      if (showLegalLinks && cookieMethod === 'hosted' && !cookieHostedText.trim()) {
+        setSaveError('Add Cookie Policy text or choose another source.');
+        return;
+      }
+      if (showLegalLinks && privacyMethod === 'embedded' && !privacyProviderConfig.trim()) {
+        setSaveError('Paste the Privacy Policy embed code or choose another source.');
+        return;
+      }
+      if (showLegalLinks && cookieMethod === 'embedded' && !cookieProviderConfig.trim()) {
+        setSaveError('Paste the Cookie Policy embed code or choose another source.');
+        return;
+      }
+      if (mode === 'builder' && enabled && !builder.providerConfig?.headSnippet?.trim()) {
+        setSaveError('Paste your external CMP script before enabling External consent management.');
+        return;
+      }
+
       await onLegalPolicyUpdate?.({
         privacyPolicyUrl: nextPrivacyPolicyUrl,
         cookiePolicyUrl: nextCookiePolicyUrl,
       });
 
-      const res = await consentConfigApi.update({ mode, enabled, hardcoded, builder });
+      const nextBuilder = {
+        ...builder,
+        provider: 'custom' as const,
+        providerConfig: {
+          ...DEFAULT_BUILDER.providerConfig,
+          headSnippet: builder.providerConfig?.headSnippet || '',
+        },
+      };
+      const legalPolicies: NonNullable<ConsentConfigData['legalPolicies']> = {
+        showFooterLinks: showLegalLinks,
+        privacyPolicy: {
+          mode: privacyMethod,
+          externalUrl: privacyMethod === 'external' ? (nextPrivacyPolicyUrl || '') : '',
+          hostedText: privacyMethod === 'hosted' ? privacyHostedText.trim() : '',
+          hostedFileName: privacyMethod === 'hosted' ? privacyHostedFileName : '',
+          embeddedCode: privacyMethod === 'embedded' ? privacyProviderConfig.trim() : '',
+        },
+        cookiePolicy: {
+          mode: cookieMethod,
+          externalUrl: cookieMethod === 'external' ? (nextCookiePolicyUrl || '') : '',
+          hostedText: cookieMethod === 'hosted' ? cookieHostedText.trim() : '',
+          hostedFileName: cookieMethod === 'hosted' ? cookieHostedFileName : '',
+          embeddedCode: cookieMethod === 'embedded' ? cookieProviderConfig.trim() : '',
+        },
+      };
+
+      const res = await consentConfigApi.update({ mode, enabled, legalPolicies, hardcoded, builder: nextBuilder });
       if (!res.success) {
         setSaveError((res as any).error || 'Save failed.');
       } else {
+        setBuilder(nextBuilder);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2500);
       }
     } catch (err: any) {
-      setSaveError(err?.message || 'An unexpected error occurred.');
+      setSaveError(
+        err?.message === 'AUTH_EXPIRED'
+          ? 'Your session expired. Sign in again in another tab, then click Save changes here. Your edits are still on this page.'
+          : err?.message || 'An unexpected error occurred.'
+      );
     } finally {
       setSaving(false);
     }
@@ -1043,7 +1052,7 @@ export function PrivacySettings({
     );
   }
 
-  const activeLabel = mode === 'hardcoded' ? 'Native banner' : mode === 'builder' ? 'External builder' : null;
+  const activeLabel = mode === 'hardcoded' ? 'Native banner' : mode === 'builder' ? 'External CMP' : null;
 
   return (
     <div className="admin-single-column space-y-6">
@@ -1056,98 +1065,31 @@ export function PrivacySettings({
           <div>
             <h2 className="text-base font-semibold text-slate-950">Privacy &amp; Cookies</h2>
             <p className="text-xs leading-5 text-slate-500">
-              Configure your cookie consent solution. Modes are mutually exclusive — only one can be
-              active at a time.
+              Legal pages are your documents. Consent management is the cookie banner.
             </p>
           </div>
         </div>
 
         {/* Status bar */}
         <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
-          mode !== 'disabled' && enabled
+          enabled
             ? 'border-green-200 bg-green-50 text-green-700'
             : 'border-slate-200 bg-slate-50 text-slate-500'
         }`}>
           <span className={`inline-block h-1.5 w-1.5 rounded-full ${
-            mode !== 'disabled' && enabled ? 'bg-green-500' : 'bg-slate-400'
+            enabled ? 'bg-green-500' : 'bg-slate-400'
           }`} />
-          {mode !== 'disabled' && enabled
-            ? `Active — ${activeLabel} is live on the public page`
-            : mode !== 'disabled'
-              ? `${activeLabel} is configured but not yet enabled`
-              : 'Cookie consent is disabled — non-essential scripts load without consent checks'}
+          {enabled
+            ? `Active - ${activeLabel} is live on the public page`
+            : 'Cookie consent is disabled - no banner is shown'}
         </div>
-      </section>
-
-      {/* Mode selector */}
-      <section className="admin-panel space-y-3">
-        <SectionHeader icon={ShieldCheck} title="Consent mode" description="Choose how cookie consent is managed on your public page." />
-        <div className="grid gap-3 sm:grid-cols-3">
-          <ModeCard
-            mode="disabled"
-            active={mode}
-            title="Disabled"
-            description="No banner shown. Scripts load without consent checks."
-            icon={Cookie}
-            onClick={() => setMode('disabled')}
-          />
-          <ModeCard
-            mode="hardcoded"
-            active={mode}
-            title="Native banner"
-            description="Built-in cookie banner with full customisation. No external dependencies."
-            icon={ShieldCheck}
-            badge="Recommended"
-            onClick={() => setMode('hardcoded')}
-          />
-          <ModeCard
-            mode="builder"
-            active={mode}
-            title="External builder"
-            description="Delegate to Iubenda, Cookiebot, CookieYes, OneTrust, or a custom CMP."
-            icon={Globe2}
-            onClick={() => setMode('builder')}
-          />
-        </div>
-
-        {mode === 'hardcoded' && (
-          <div className="mt-5 border-t border-slate-200 pt-5">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <SectionHeader
-                icon={ShieldCheck}
-                title="Native banner configuration"
-                description="Customise the built-in consent banner shown to your visitors."
-              />
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Draft'}</span>
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={setEnabled}
-                  aria-label="Enable native banner"
-                />
-              </div>
-            </div>
-
-            {!enabled && (
-              <WarnBox>
-                The banner is in draft. Enable it above to make it visible on your public page. Save
-                your changes after enabling.
-              </WarnBox>
-            )}
-
-            <HardcodedForm
-              cfg={hardcoded}
-              onChange={(u) => setHardcoded((prev) => ({ ...prev, ...u }))}
-            />
-          </div>
-        )}
       </section>
 
       <section className="admin-panel space-y-3">
         <SectionHeader
           icon={Globe2}
-          title="Legal policies"
-          description="Manage the policy links used across your public page and cookie banner."
+          title="Legal pages"
+          description="Privacy Policy = legal document. Cookie Policy = cookie document."
         />
         <LegalPoliciesForm
           showLegalLinks={showLegalLinks}
@@ -1158,7 +1100,7 @@ export function PrivacySettings({
             hostedText: privacyHostedText,
             hostedFileName: privacyHostedFileName,
             providerConfig: privacyProviderConfig,
-            onMethodChange: setPrivacyMethod,
+            onMethodChange: (method) => changePolicyMethod('privacy', method),
             onExternalUrlChange: setPrivacyExternalUrl,
             onHostedTextChange: setPrivacyHostedText,
             onHostedFileNameChange: setPrivacyHostedFileName,
@@ -1170,7 +1112,7 @@ export function PrivacySettings({
             hostedText: cookieHostedText,
             hostedFileName: cookieHostedFileName,
             providerConfig: cookieProviderConfig,
-            onMethodChange: setCookieMethod,
+            onMethodChange: (method) => changePolicyMethod('cookie', method),
             onExternalUrlChange: setCookieExternalUrl,
             onHostedTextChange: setCookieHostedText,
             onHostedFileNameChange: setCookieHostedFileName,
@@ -1179,39 +1121,66 @@ export function PrivacySettings({
         />
       </section>
 
-      {/* Builder config */}
-      {mode === 'builder' && (
-        <section className="admin-panel">
-          <div className="mb-4 flex items-center justify-between gap-4">
+      <section className="admin-panel space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <SectionHeader
+            icon={ShieldCheck}
+            title="Consent management"
+            description="CMP = cookie consent banner. Choose who shows it."
+          />
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Off'}</span>
+            <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Enable consent management" />
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ModeCard
+            mode="hardcoded"
+            active={mode}
+            title="Native (Lynx built-in)"
+            description="Lynx shows the cookie banner. No external script is loaded."
+            icon={ShieldCheck}
+            badge="Recommended"
+            onClick={() => changeConsentMode('hardcoded')}
+          />
+          <ModeCard
+            mode="builder"
+            active={mode}
+            title="External (custom script)"
+            description="Your provider shows the banner. Lynx banner stays off."
+            icon={Globe2}
+            onClick={() => changeConsentMode('builder')}
+          />
+        </div>
+
+        {mode === 'hardcoded' && enabled && (
+          <div className="mt-5 border-t border-slate-200 pt-5">
+            <SectionHeader
+              icon={ShieldCheck}
+              title="Native banner settings"
+              description="Customise the built-in consent banner shown to visitors."
+            />
+            <HardcodedForm
+              cfg={hardcoded}
+              onChange={(u) => setHardcoded((prev) => ({ ...prev, ...u }))}
+            />
+          </div>
+        )}
+
+        {mode === 'builder' && enabled && (
+          <div className="mt-5 border-t border-slate-200 pt-5">
             <SectionHeader
               icon={Globe2}
-              title="External CMP configuration"
-              description="Connect your chosen Consent Management Platform."
+              title="External CMP script"
+              description="Paste the script from the service that will show your cookie banner."
             />
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Draft'}</span>
-              <Switch
-                checked={enabled}
-                onCheckedChange={setEnabled}
-                aria-label="Enable builder integration"
-              />
-            </div>
+            <BuilderForm
+              cfg={builder}
+              onChange={(u) => setBuilder((prev) => ({ ...prev, ...u, provider: 'custom' }))}
+            />
           </div>
-
-          {!enabled && (
-            <WarnBox>
-              The integration is in draft mode. Enable it above to inject the CMP script on your
-              public page.
-            </WarnBox>
-          )}
-
-          <BuilderForm
-            cfg={builder}
-            onChange={(u) => setBuilder((prev) => ({ ...prev, ...u }))}
-          />
-        </section>
-      )}
-
+        )}
+      </section>
       {/* Compliance checklist */}
       <section className="admin-panel space-y-3">
         <SectionHeader
@@ -1222,10 +1191,8 @@ export function PrivacySettings({
         {[
           {
             // Profile-level URLs are persisted as the source of truth.
-            ok: mode === 'hardcoded'
-              ? !!(resolvedPrivacyPolicyUrl || resolvedCookiePolicyUrl)
-              : mode === 'builder',
-            text: 'At least one policy URL is configured in Legal policies',
+            ok: !!(resolvedPrivacyPolicyUrl || resolvedCookiePolicyUrl),
+            text: 'At least one legal page is configured',
           },
           {
             ok: mode === 'hardcoded'
@@ -1236,11 +1203,11 @@ export function PrivacySettings({
             text: 'All enabled categories have descriptions',
           },
           {
-            ok: mode !== 'disabled',
-            text: 'A consent mode is selected (not "Disabled")',
+            ok: mode === 'hardcoded' || !!builder.providerConfig?.headSnippet?.trim(),
+            text: mode === 'hardcoded' ? 'Native banner is selected' : 'External CMP script is configured',
           },
           {
-            ok: enabled && mode !== 'disabled',
+            ok: enabled,
             text: 'The selected mode is enabled and will run on the public page',
           },
           {

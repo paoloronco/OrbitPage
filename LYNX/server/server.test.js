@@ -138,6 +138,11 @@ describe('API Endpoints', () => {
         mode: 'hardcoded',
         enabled: 1,
         full_config: JSON.stringify({
+          legalPolicies: {
+            showFooterLinks: true,
+            privacyPolicy: { mode: 'external', externalUrl: 'https://legacy.example/privacy' },
+            cookiePolicy: { mode: 'external', externalUrl: 'https://legacy.example/cookies' },
+          },
           hardcoded: {
             urls: {
               privacyPolicy: 'https://legacy.example/privacy',
@@ -157,6 +162,37 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.body.data.hardcoded.urls.privacyPolicy).toBe('https://example.com/privacy');
     expect(response.body.data.hardcoded.urls.cookiePolicy).toBe('https://example.com/cookies');
+    expect(response.body.data.legalPolicies.privacyPolicy.externalUrl).toBe('https://example.com/privacy');
+    expect(response.body.data.legalPolicies.cookiePolicy.externalUrl).toBe('https://example.com/cookies');
+  });
+
+  it('GET /api/consent-config/public returns legal policies even when consent is disabled', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({
+        mode: 'hardcoded',
+        enabled: 0,
+        full_config: JSON.stringify({
+          legalPolicies: {
+            showFooterLinks: true,
+            privacyPolicy: { mode: 'hosted', hostedText: 'Current privacy text' },
+            cookiePolicy: { mode: 'embedded', embeddedCode: '<div>Cookie policy</div>' },
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        privacy_policy_url: '/privacy',
+        cookie_policy_url: '/cookies',
+      });
+
+    const response = await request(app).get('/api/consent-config/public');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.mode).toBe('disabled');
+    expect(response.body.data.enabled).toBe(false);
+    expect(response.body.data.legalPolicies.privacyPolicy.mode).toBe('hosted');
+    expect(response.body.data.legalPolicies.privacyPolicy.hostedText).toBe('Current privacy text');
+    expect(response.body.data.legalPolicies.cookiePolicy.mode).toBe('embedded');
+    expect(response.body.data.legalPolicies.cookiePolicy.embeddedCode).toBe('<div>Cookie policy</div>');
   });
 
   it('GET / injects Google Consent Mode defaults before the app when analytics and consent are enabled', async () => {
