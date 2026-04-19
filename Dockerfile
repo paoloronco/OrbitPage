@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22-alpine AS builder
 
-LABEL org.opencontainers.image.version="4.1.5"
+LABEL org.opencontainers.image.version="4.1.6"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
@@ -38,7 +38,7 @@ COPY LYNX/server/database.js ./
 # ---------- STAGE 2: runtime ----------
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.version="4.1.5"
+LABEL org.opencontainers.image.version="4.1.6"
 LABEL org.opencontainers.image.title="Lynx"
 LABEL org.opencontainers.image.description="Your personal links hub"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"

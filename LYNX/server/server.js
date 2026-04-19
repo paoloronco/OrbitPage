@@ -198,7 +198,40 @@ const normalizePolicyUrl = (value, fieldName) => {
   return parsed.toString();
 };
 
+const IUBENDA_LOADER_SNIPPET = `<script type="text/javascript">
+  (function (w, d) {
+    var loader = function () {
+      var s = d.createElement("script"),
+          tag = d.getElementsByTagName("script")[0];
+      s.src = "https://cdn.iubenda.com/iubenda.js";
+      tag.parentNode.insertBefore(s, tag);
+    };
+    if (w.addEventListener) {
+      w.addEventListener("load", loader, false);
+    } else if (w.attachEvent) {
+      w.attachEvent("onload", loader);
+    } else {
+      w.onload = loader;
+    }
+  })(window, document);
+</script>`;
+
+const DEMO_PRIVACY_POLICY_EMBED = `<a href="https://www.iubenda.com/privacy-policy/30364665" class="iubenda-white iubenda-noiframe iubenda-embed" title="Privacy Policy">Privacy Policy</a>
+${IUBENDA_LOADER_SNIPPET}`;
+
+const DEMO_COOKIE_POLICY_EMBED = `<a href="https://www.iubenda.com/privacy-policy/30364665/cookie-policy" class="iubenda-white iubenda-noiframe iubenda-embed" title="Cookie Policy">Cookie Policy</a>
+${IUBENDA_LOADER_SNIPPET}`;
+
+const DEMO_CMP_SCRIPT = '<script type="text/javascript" src="https://embeds.iubenda.com/widgets/1b44c148-fd77-4997-9204-b5bcfbabfe52.js"></script>';
+
+const DEMO_LEGAL_URLS = {
+  privacyPolicyUrl: '/privacy',
+  cookiePolicyUrl: '/cookies',
+};
+
 const getProfileLegalUrls = async () => {
+  if (DEMO_MODE) return DEMO_LEGAL_URLS;
+
   const profile = await dbGet(
     'SELECT privacy_policy_url, cookie_policy_url FROM profile_data ORDER BY id DESC LIMIT 1'
   );
@@ -357,6 +390,7 @@ const normalizeAvatar = (avatar) => {
 
 const getPublicProfilePayload = async () => {
   const profile = await dbGet('SELECT * FROM profile_data ORDER BY id DESC LIMIT 1');
+  const demoLegalUrls = DEMO_MODE ? DEMO_LEGAL_URLS : {};
 
   if (!profile) {
     return {
@@ -372,8 +406,8 @@ const getPublicProfilePayload = async () => {
       footer_text: undefined,
       favicon: undefined,
       google_analytics_id: undefined,
-      privacy_policy_url: undefined,
-      cookie_policy_url: undefined,
+      privacy_policy_url: demoLegalUrls.privacyPolicyUrl,
+      cookie_policy_url: demoLegalUrls.cookiePolicyUrl,
     };
   }
 
@@ -390,8 +424,8 @@ const getPublicProfilePayload = async () => {
     footer_text: profile.footer_text || undefined,
     favicon: profile.favicon || undefined,
     google_analytics_id: profile.google_analytics_id || undefined,
-    privacy_policy_url: profile.privacy_policy_url || undefined,
-    cookie_policy_url: profile.cookie_policy_url || undefined,
+    privacy_policy_url: demoLegalUrls.privacyPolicyUrl || profile.privacy_policy_url || undefined,
+    cookie_policy_url: demoLegalUrls.cookiePolicyUrl || profile.cookie_policy_url || undefined,
   };
 };
 
@@ -714,8 +748,8 @@ app.get('/api/profile', async (req, res) => {
         footer_text: undefined,
         favicon: undefined,
         google_analytics_id: undefined,
-        privacy_policy_url: undefined,
-        cookie_policy_url: undefined,
+        privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : undefined,
+        cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : undefined,
       });
     }
 
@@ -732,8 +766,8 @@ app.get('/api/profile', async (req, res) => {
       footer_text: profile.footer_text || undefined,
       favicon: profile.favicon || undefined,
       google_analytics_id: profile.google_analytics_id || undefined,
-      privacy_policy_url: profile.privacy_policy_url || undefined,
-      cookie_policy_url: profile.cookie_policy_url || undefined,
+      privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : (profile.privacy_policy_url || undefined),
+      cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : (profile.cookie_policy_url || undefined),
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to load profile' });
@@ -1781,6 +1815,36 @@ const DEFAULT_CONSENT_CONFIG = {
   },
 };
 
+const DEMO_CONSENT_CONFIG = {
+  ...DEFAULT_CONSENT_CONFIG,
+  legalPolicies: {
+    showFooterLinks: true,
+    privacyPolicy: {
+      mode: 'embedded',
+      externalUrl: '',
+      hostedText: '',
+      hostedFileName: '',
+      embeddedCode: DEMO_PRIVACY_POLICY_EMBED,
+    },
+    cookiePolicy: {
+      mode: 'embedded',
+      externalUrl: '',
+      hostedText: '',
+      hostedFileName: '',
+      embeddedCode: DEMO_COOKIE_POLICY_EMBED,
+    },
+  },
+  builder: {
+    ...DEFAULT_CONSENT_CONFIG.builder,
+    provider: 'custom',
+    providerConfig: {
+      ...DEFAULT_CONSENT_CONFIG.builder.providerConfig,
+      headSnippet: DEMO_CMP_SCRIPT,
+    },
+    reopenSelector: '',
+  },
+};
+
 // Zod validation schemas for consent config
 const CategoryConfigSchema = z.object({
   enabled: z.boolean().default(false),
@@ -1892,6 +1956,17 @@ const validateConsentConfigDomain = (config, legalUrls = {}) => {
 app.get('/api/consent-config/public', apiLimiter, async (req, res) => {
   try {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    if (DEMO_MODE) {
+      return res.json({
+        success: true,
+        data: {
+          mode: 'builder',
+          enabled: true,
+          ...applyProfileLegalUrlsToConsentConfig(DEMO_CONSENT_CONFIG, DEMO_LEGAL_URLS),
+        },
+      });
+    }
+
     const row = await dbGet(
       'SELECT mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
     );
@@ -1925,6 +2000,19 @@ app.get('/api/consent-config/public', apiLimiter, async (req, res) => {
 // GET /api/consent-config — admin, returns full config including timestamps
 app.get('/api/consent-config', authenticateToken, apiLimiter, async (req, res) => {
   try {
+    if (DEMO_MODE) {
+      return res.json({
+        success: true,
+        data: {
+          mode: 'builder',
+          enabled: true,
+          ...applyProfileLegalUrlsToConsentConfig(DEMO_CONSENT_CONFIG, DEMO_LEGAL_URLS),
+          createdAt: null,
+          updatedAt: null,
+        },
+      });
+    }
+
     const row = await dbGet(
       'SELECT * FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
     );

@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.1.5-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.1.6-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -312,6 +312,18 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.1.6</strong></summary>
+
+### Demo legal policy preset
+
+- Adds a server-side demo preset for Privacy Policy, Cookie Policy, and external CMP.
+- Serves the demo legal pages from the requested iubenda embeds when `DEMO_MODE=true`.
+- Keeps public footer links on `/privacy` and `/cookies` in demo mode.
+- Ensures iubenda embedded policy scripts load reliably in SPA-rendered legal pages.
+
+</details>
 
 <details>
 <summary><strong>v4.1.5</strong></summary>

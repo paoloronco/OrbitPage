@@ -31,6 +31,18 @@ const activateEmbeddedScripts = (container: HTMLElement) => {
   });
 };
 
+const ensureIubendaEmbedLoader = (code: string) => {
+  if (!/iubenda-embed|cdn\.iubenda\.com\/iubenda\.js/i.test(code)) return;
+  if (document.getElementById("lynx-iubenda-embed-loader")) return;
+
+  const script = document.createElement("script");
+  script.id = "lynx-iubenda-embed-loader";
+  script.type = "text/javascript";
+  script.src = "https://cdn.iubenda.com/iubenda.js";
+  script.async = true;
+  document.body.appendChild(script);
+};
+
 export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
   const [policy, setPolicy] = useState<PolicyState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +93,7 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
     const fragment = range.createContextualFragment(policy.embeddedCode);
     container.appendChild(fragment);
     activateEmbeddedScripts(container);
+    ensureIubendaEmbedLoader(policy.embeddedCode);
 
     return () => {
       container.replaceChildren();
