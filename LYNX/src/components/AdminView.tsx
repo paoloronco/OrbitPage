@@ -65,7 +65,7 @@ interface AdminViewProps {
   profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
-  onProfileUpdate: (profile: ProfileData) => void;
+  onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void;
   onThemeChange: (theme: ThemeConfig) => void;
   onLogout: () => void;
@@ -136,7 +136,7 @@ export const AdminView = ({
   };
 
   const handleSaveIntegrations = () => {
-    onProfileUpdate({ ...profile, googleAnalyticsId: gaId.trim() || undefined });
+    void onProfileUpdate({ ...profile, googleAnalyticsId: gaId.trim() || undefined });
     setGaSaved(true);
     setTimeout(() => setGaSaved(false), 2500);
   };
@@ -215,7 +215,7 @@ export const AdminView = ({
               <div className="admin-main-column">
                 <ProfileSection
                   profile={profile}
-                  onProfileUpdate={onProfileUpdate}
+                  onProfileUpdate={(nextProfile) => { void onProfileUpdate(nextProfile); }}
                 />
               </div>
               <aside className="admin-side-panel admin-checklist-panel">
@@ -342,7 +342,9 @@ export const AdminView = ({
             <PrivacySettings
               privacyPolicyUrl={profile.privacyPolicyUrl}
               cookiePolicyUrl={profile.cookiePolicyUrl}
-              onEditLegalLinks={() => setActiveTab("profile")}
+              onLegalPolicyUpdate={({ privacyPolicyUrl, cookiePolicyUrl }) =>
+                onProfileUpdate({ ...profile, privacyPolicyUrl, cookiePolicyUrl })
+              }
             />
           </TabsContent>
         </Tabs>

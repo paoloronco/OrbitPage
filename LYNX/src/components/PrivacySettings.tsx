@@ -5,11 +5,11 @@
  *   1. Hardcoded (native built-in banner)
  *   2. Builder (external CMP integration)
  *
- * The component owns its own API state (loads on mount, saves on demand).
- * It does NOT require props from the parent Admin component.
+ * The component owns consent API state and receives profile-backed legal policy URLs
+ * from the parent so those fields keep their existing persistence path.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -129,9 +129,15 @@ const PROVIDER_INFO: Record<Provider, { label: string; help: string }> = {
 
 // ── Utility helpers ───────────────────────────────────────────────────────────
 
-function isValidUrl(s: string) {
-  if (!s) return true; // empty is allowed
-  try { new URL(s); return true; } catch { return false; }
+function isValidPolicyUrl(s: string) {
+  if (!s) return true;
+  if (s.startsWith('/') && !s.startsWith('//')) return true;
+  try {
+    const url = new URL(s);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -184,65 +190,44 @@ function WarnBox({ children }: { children: React.ReactNode }) {
   );
 }
 
-function LegalLinksReadOnly({
+function LegalPoliciesForm({
   privacyPolicyUrl,
   cookiePolicyUrl,
-  onEditLegalLinks,
+  privacyInputRef,
+  cookieInputRef,
 }: {
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
-  onEditLegalLinks?: () => void;
+  privacyInputRef: React.RefObject<HTMLInputElement>;
+  cookieInputRef: React.RefObject<HTMLInputElement>;
 }) {
-  const rows = [
-    { label: 'Privacy Policy URL', value: privacyPolicyUrl?.trim() || '' },
-    { label: 'Cookie Policy URL', value: cookiePolicyUrl?.trim() || '' },
-  ];
-
   return (
-    <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-sm font-medium text-blue-800">
-            <Globe2 className="h-4 w-4 shrink-0" />
-            Legal links are managed in Profile
-          </div>
-          <p className="text-xs leading-5 text-blue-700">
-            These URLs are read-only here. Edit them in Admin &gt; Profile &gt; Legal links.
-          </p>
-        </div>
-        {onEditLegalLinks && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 border-blue-200 bg-white text-xs text-blue-700 hover:bg-blue-100"
-            onClick={onEditLegalLinks}
-          >
-            Edit in Profile
-          </Button>
-        )}
-      </div>
+    <div className="space-y-4">
+      <InfoBox>
+        These links are shown in the public footer and used by the consent banner.
+      </InfoBox>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {rows.map(({ label, value }) => (
-          <div key={label} className="rounded-md border border-blue-100 bg-white/70 p-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-500">
-              {label}
-            </p>
-            {value ? (
-              <a
-                href={value}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 block break-all font-mono text-xs text-blue-800 underline"
-              >
-                {value}
-              </a>
-            ) : (
-              <p className="mt-1 text-xs text-amber-700">Not configured</p>
-            )}
-          </div>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FieldRow label="Privacy Policy URL" description="Use a relative path such as /privacy, or a full https:// URL.">
+          <Input
+            ref={privacyInputRef}
+            className="admin-input"
+            defaultValue={privacyPolicyUrl || ''}
+            placeholder="/privacy or https://example.com/privacy"
+            spellCheck={false}
+            maxLength={500}
+          />
+        </FieldRow>
+        <FieldRow label="Cookie Policy URL" description="Can point to a dedicated cookie page or the same legal policy page.">
+          <Input
+            ref={cookieInputRef}
+            className="admin-input"
+            defaultValue={cookiePolicyUrl || ''}
+            placeholder="https://example.com/cookies"
+            spellCheck={false}
+            maxLength={500}
+          />
+        </FieldRow>
       </div>
     </div>
   );
@@ -302,15 +287,9 @@ function CategorySection({
 function HardcodedForm({
   cfg,
   onChange,
-  privacyPolicyUrl,
-  cookiePolicyUrl,
-  onEditLegalLinks,
 }: {
   cfg: NonNullable<ConsentConfigData['hardcoded']>;
   onChange: (updates: Partial<NonNullable<ConsentConfigData['hardcoded']>>) => void;
-  privacyPolicyUrl?: string;
-  cookiePolicyUrl?: string;
-  onEditLegalLinks?: () => void;
 }) {
   const updateTexts = (updates: Partial<typeof cfg.texts>) =>
     onChange({ texts: { ...cfg.texts, ...updates } });
@@ -325,7 +304,6 @@ function HardcodedForm({
         {[
           { value: 'content', label: 'Banner text', icon: Type },
           { value: 'categories', label: 'Categories', icon: ListChecks },
-          { value: 'urls', label: 'Policy URLs', icon: Globe2 },
           { value: 'appearance', label: 'Appearance', icon: LayoutTemplate },
           { value: 'advanced', label: 'Advanced', icon: Sliders },
         ].map(({ value, label, icon: Icon }) => (
@@ -425,36 +403,6 @@ function HardcodedForm({
             onChange={(u) => updateCat(cat, u)}
           />
         ))}
-      </TabsContent>
-
-      {/* ── Policy URLs ── */}
-      <TabsContent value="urls" className="space-y-4">
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-blue-800 font-medium text-sm">
-            <Globe2 className="h-4 w-4 shrink-0" />
-            Policy URLs are managed in Admin → Profile → Legal links
-          </div>
-          <p className="text-xs text-blue-700 leading-5">
-            Privacy Policy and Cookie Policy URLs are now configured under the{' '}
-            <strong>Profile</strong> tab, in the <strong>Legal links</strong> section. URLs set
-            there appear in the public page footer <em>and</em> are automatically used in this
-            banner — keeping a single source of truth across the entire site.
-          </p>
-          {(privacyPolicyUrl || cookiePolicyUrl) ? (
-            <div className="mt-2 space-y-1 text-xs text-blue-800">
-              {privacyPolicyUrl && (
-                <p>Privacy policy: <span className="font-mono">{privacyPolicyUrl}</span></p>
-              )}
-              {cookiePolicyUrl && (
-                <p>Cookie policy: <span className="font-mono">{cookiePolicyUrl}</span></p>
-              )}
-            </div>
-          ) : (
-            <p className="mt-1 text-xs font-medium text-amber-700">
-              No URLs configured yet. Go to Admin → Profile → Legal links to add them.
-            </p>
-          )}
-        </div>
       </TabsContent>
 
       {/* ── Appearance ── */}
@@ -582,15 +530,9 @@ function HardcodedForm({
 function BuilderForm({
   cfg,
   onChange,
-  privacyPolicyUrl,
-  cookiePolicyUrl,
-  onEditLegalLinks,
 }: {
   cfg: NonNullable<ConsentConfigData['builder']>;
   onChange: (updates: Partial<NonNullable<ConsentConfigData['builder']>>) => void;
-  privacyPolicyUrl?: string;
-  cookiePolicyUrl?: string;
-  onEditLegalLinks?: () => void;
 }) {
   const provider = cfg.provider;
   const info = PROVIDER_INFO[provider];
@@ -693,11 +635,6 @@ function BuilderForm({
         </div>
       )}
 
-      <LegalLinksReadOnly
-        privacyPolicyUrl={privacyPolicyUrl}
-        cookiePolicyUrl={cookiePolicyUrl}
-        onEditLegalLinks={onEditLegalLinks}
-      />
       <FieldRow
         label="Reopen selector (optional)"
         description='CSS selector or JS expression your CMP exposes to re-open the consent UI. E.g. ".iubenda-cs-preferences-link" or "window._iub?.cs?.api?.openPreferences()". Used by external integrations.'
@@ -774,16 +711,18 @@ function ModeCard({
 export function PrivacySettings({
   privacyPolicyUrl,
   cookiePolicyUrl,
-  onEditLegalLinks,
+  onLegalPolicyUpdate,
 }: {
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
-  onEditLegalLinks?: () => void;
+  onLegalPolicyUpdate?: (links: { privacyPolicyUrl?: string; cookiePolicyUrl?: string }) => void | Promise<void>;
 } = {}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const privacyInputRef = useRef<HTMLInputElement>(null);
+  const cookieInputRef = useRef<HTMLInputElement>(null);
 
   const [mode, setMode] = useState<ConsentMode>('disabled');
   const [enabled, setEnabled] = useState(false);
@@ -813,10 +752,37 @@ export function PrivacySettings({
     load();
   }, []);
 
+  useEffect(() => {
+    if (privacyInputRef.current) {
+      privacyInputRef.current.value = privacyPolicyUrl || '';
+    }
+    if (cookieInputRef.current) {
+      cookieInputRef.current.value = cookiePolicyUrl || '';
+    }
+  }, [privacyPolicyUrl, cookiePolicyUrl]);
+
   const handleSave = async () => {
     setSaving(true);
     setSaveError('');
+    setSaveSuccess(false);
     try {
+      const nextPrivacyPolicyUrl = privacyInputRef.current?.value.trim() || undefined;
+      const nextCookiePolicyUrl = cookieInputRef.current?.value.trim() || undefined;
+
+      if (!isValidPolicyUrl(nextPrivacyPolicyUrl || '')) {
+        setSaveError('Privacy Policy URL must be a relative path, http:// URL, or https:// URL.');
+        return;
+      }
+      if (!isValidPolicyUrl(nextCookiePolicyUrl || '')) {
+        setSaveError('Cookie Policy URL must be a relative path, http:// URL, or https:// URL.');
+        return;
+      }
+
+      await onLegalPolicyUpdate?.({
+        privacyPolicyUrl: nextPrivacyPolicyUrl,
+        cookiePolicyUrl: nextCookiePolicyUrl,
+      });
+
       const res = await consentConfigApi.update({ mode, enabled, hardcoded, builder });
       if (!res.success) {
         setSaveError((res as any).error || 'Save failed.');
@@ -905,56 +871,53 @@ export function PrivacySettings({
             onClick={() => setMode('builder')}
           />
         </div>
+
+        {mode === 'hardcoded' && (
+          <div className="mt-5 border-t border-slate-200 pt-5">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <SectionHeader
+                icon={ShieldCheck}
+                title="Native banner configuration"
+                description="Customise the built-in consent banner shown to your visitors."
+              />
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Draft'}</span>
+                <Switch
+                  checked={enabled}
+                  onCheckedChange={setEnabled}
+                  aria-label="Enable native banner"
+                />
+              </div>
+            </div>
+
+            {!enabled && (
+              <WarnBox>
+                The banner is in draft. Enable it above to make it visible on your public page. Save
+                your changes after enabling.
+              </WarnBox>
+            )}
+
+            <HardcodedForm
+              cfg={hardcoded}
+              onChange={(u) => setHardcoded((prev) => ({ ...prev, ...u }))}
+            />
+          </div>
+        )}
       </section>
 
       <section className="admin-panel space-y-3">
         <SectionHeader
           icon={Globe2}
-          title="Legal policy links"
-          description="Read-only in Privacy. Profile is the only editable source."
+          title="Legal policies"
+          description="Manage the policy links used across your public page and consent UI."
         />
-        <LegalLinksReadOnly
+        <LegalPoliciesForm
           privacyPolicyUrl={privacyPolicyUrl}
           cookiePolicyUrl={cookiePolicyUrl}
-          onEditLegalLinks={onEditLegalLinks}
+          privacyInputRef={privacyInputRef}
+          cookieInputRef={cookieInputRef}
         />
       </section>
-
-      {/* Hardcoded config */}
-      {mode === 'hardcoded' && (
-        <section className="admin-panel">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <SectionHeader
-              icon={ShieldCheck}
-              title="Native banner configuration"
-              description="Customise the built-in consent banner shown to your visitors."
-            />
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Draft'}</span>
-              <Switch
-                checked={enabled}
-                onCheckedChange={setEnabled}
-                aria-label="Enable native banner"
-              />
-            </div>
-          </div>
-
-          {!enabled && (
-            <WarnBox>
-              The banner is in draft. Enable it above to make it visible on your public page. Save
-              your changes after enabling.
-            </WarnBox>
-          )}
-
-          <HardcodedForm
-            cfg={hardcoded}
-            onChange={(u) => setHardcoded((prev) => ({ ...prev, ...u }))}
-            privacyPolicyUrl={privacyPolicyUrl}
-            cookiePolicyUrl={cookiePolicyUrl}
-            onEditLegalLinks={onEditLegalLinks}
-          />
-        </section>
-      )}
 
       {/* Builder config */}
       {mode === 'builder' && (
@@ -985,9 +948,6 @@ export function PrivacySettings({
           <BuilderForm
             cfg={builder}
             onChange={(u) => setBuilder((prev) => ({ ...prev, ...u }))}
-            privacyPolicyUrl={privacyPolicyUrl}
-            cookiePolicyUrl={cookiePolicyUrl}
-            onEditLegalLinks={onEditLegalLinks}
           />
         </section>
       )}
@@ -1001,11 +961,11 @@ export function PrivacySettings({
         />
         {[
           {
-            // Profile-level URLs (set in Admin > Profile > Legal links) are the source of truth.
+            // Profile-level URLs are persisted as the source of truth.
             ok: mode === 'hardcoded'
               ? !!(privacyPolicyUrl || cookiePolicyUrl)
               : mode === 'builder',
-            text: 'At least one policy URL is configured (Admin → Profile → Legal links)',
+            text: 'At least one policy URL is configured in Legal policies',
           },
           {
             ok: mode === 'hardcoded'

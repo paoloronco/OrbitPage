@@ -1784,7 +1784,7 @@ const validateConsentConfigDomain = (config, legalUrls = {}) => {
   if (config.mode === 'hardcoded' && config.enabled) {
     const { categories = {} } = config.hardcoded || {};
     if (!legalUrls.privacyPolicyUrl && !legalUrls.cookiePolicyUrl) {
-      errors.push('At least one policy URL must be configured in Admin > Profile > Legal links when the native banner is enabled.');
+      errors.push('At least one policy URL must be configured in Admin > Privacy > Legal policies when the native banner is enabled.');
     }
     for (const [key, cat] of Object.entries(categories)) {
       if (cat.enabled && !cat.description?.trim()) {

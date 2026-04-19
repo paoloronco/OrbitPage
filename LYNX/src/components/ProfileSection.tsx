@@ -37,9 +37,6 @@ interface ProfileData {
   // Footer and browser bar customization
   footerText?: string;
   favicon?: string;
-  // Legal policy links (configurable per deployment)
-  privacyPolicyUrl?: string;
-  cookiePolicyUrl?: string;
 }
 
 interface ProfileSectionProps {
@@ -330,37 +327,6 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
               />
               <p className="text-[10px] text-muted-foreground opacity-70">
                 Shown above the "Powered by Lynx" attribution (always visible).
-              </p>
-            </div>
-          </div>
-
-          {/* Legal links */}
-          <div className="space-y-3 pt-4 border-t border-primary/10">
-            <Label className="text-sm font-medium">Legal links</Label>
-            <p className="text-[11px] text-muted-foreground opacity-80">
-              Shown in the public page footer and automatically used in the cookie banner. Leave empty to hide the link.
-            </p>
-            <div className="space-y-1">
-              <Label className="text-xs">Privacy policy URL</Label>
-              <Input
-                value={editProfile.privacyPolicyUrl || ''}
-                onChange={(e) => setEditProfile(prev => ({ ...prev, privacyPolicyUrl: e.target.value }))}
-                placeholder="/privacy or https://example.com/privacy"
-                type="url"
-                className="glass-card border-primary/20 text-sm"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Cookie policy URL</Label>
-              <Input
-                value={editProfile.cookiePolicyUrl || ''}
-                onChange={(e) => setEditProfile(prev => ({ ...prev, cookiePolicyUrl: e.target.value }))}
-                placeholder="https://example.com/cookies"
-                type="url"
-                className="glass-card border-primary/20 text-sm"
-              />
-              <p className="text-[10px] text-muted-foreground opacity-70">
-                Can be the same as the privacy policy URL.
               </p>
             </div>
           </div>
