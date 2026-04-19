@@ -9,7 +9,7 @@
  * from the parent so those fields keep their existing persistence path.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,10 +27,13 @@ import {
   AlertTriangle,
   CheckCircle2,
   Cookie,
+  ExternalLink,
+  FileText,
   Globe2,
   Info,
   LayoutTemplate,
   ListChecks,
+  Link2,
   ShieldCheck,
   Sliders,
   Type,
@@ -41,6 +44,8 @@ import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 
 type ConsentMode = 'disabled' | 'hardcoded' | 'builder';
 type Provider = 'iubenda' | 'cookiebot' | 'cookieyes' | 'onetrust' | 'custom';
+type LegalPolicyMethod = 'external' | 'hosted' | 'provider';
+type PolicyKind = 'privacy' | 'cookie';
 
 // ── Default / empty config ────────────────────────────────────────────────────
 
@@ -140,6 +145,19 @@ function isValidPolicyUrl(s: string) {
   }
 }
 
+const HOSTED_POLICY_PATH: Record<PolicyKind, string> = {
+  privacy: '/privacy',
+  cookie: '/cookies',
+};
+
+function getPolicyMethod(url: string | undefined, kind: PolicyKind): LegalPolicyMethod {
+  return url?.trim() === HOSTED_POLICY_PATH[kind] ? 'hosted' : 'external';
+}
+
+function extractFirstUrl(value: string) {
+  return value.match(/https?:\/\/[^\s"'<>]+/i)?.[0] || '';
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function SectionHeader({ icon: Icon, title, description }: {
@@ -190,45 +208,236 @@ function WarnBox({ children }: { children: React.ReactNode }) {
   );
 }
 
-function LegalPoliciesForm({
-  privacyPolicyUrl,
-  cookiePolicyUrl,
-  privacyInputRef,
-  cookieInputRef,
+function StatusBadge({ configured }: { configured: boolean }) {
+  return (
+    <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+      configured ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+    }`}>
+      {configured ? 'Configured' : 'Missing'}
+    </span>
+  );
+}
+
+function MethodButton({
+  active,
+  icon: Icon,
+  title,
+  description,
+  onClick,
 }: {
-  privacyPolicyUrl?: string;
-  cookiePolicyUrl?: string;
-  privacyInputRef: React.RefObject<HTMLInputElement>;
-  cookieInputRef: React.RefObject<HTMLInputElement>;
+  active: boolean;
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 ${
+        active ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white hover:bg-slate-50'
+      }`}
+    >
+      <div className="flex items-start gap-2.5">
+        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${active ? 'text-blue-600' : 'text-slate-500'}`} />
+        <div>
+          <p className={`text-sm font-semibold ${active ? 'text-blue-800' : 'text-slate-800'}`}>{title}</p>
+          <p className="mt-0.5 text-xs leading-5 text-slate-500">{description}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function PolicyConfigurator({
+  kind,
+  title,
+  method,
+  externalUrl,
+  hostedText,
+  hostedFileName,
+  providerConfig,
+  onMethodChange,
+  onExternalUrlChange,
+  onHostedTextChange,
+  onHostedFileNameChange,
+  onProviderConfigChange,
+}: {
+  kind: PolicyKind;
+  title: string;
+  method: LegalPolicyMethod;
+  externalUrl: string;
+  hostedText: string;
+  hostedFileName: string;
+  providerConfig: string;
+  onMethodChange: (method: LegalPolicyMethod) => void;
+  onExternalUrlChange: (url: string) => void;
+  onHostedTextChange: (text: string) => void;
+  onHostedFileNameChange: (name: string) => void;
+  onProviderConfigChange: (config: string) => void;
+}) {
+  const hostedPath = HOSTED_POLICY_PATH[kind];
+  const resolvedUrl =
+    method === 'hosted' ? hostedPath :
+    method === 'provider' ? extractFirstUrl(providerConfig) :
+    externalUrl.trim();
+  const configured = !!resolvedUrl;
+
+  const handleFile = async (file?: File) => {
+    if (!file) return;
+    onHostedFileNameChange(file.name);
+    if (file.name.toLowerCase().endsWith('.txt')) {
+      onHostedTextChange(await file.text());
+      return;
+    }
+    onHostedTextChange(`Uploaded file: ${file.name}`);
+  };
+
+  return (
+    <div className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-semibold text-slate-950">{title}</h4>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            Choose the simplest option that matches what you already have.
+          </p>
+        </div>
+        <StatusBadge configured={configured} />
+      </div>
+
+      <FieldRow label={`How do you want to provide your ${title.toLowerCase()}?`}>
+        <div className="grid gap-2">
+          <MethodButton
+            active={method === 'external'}
+            icon={Link2}
+            title="External link"
+            description="Use a page you already have."
+            onClick={() => onMethodChange('external')}
+          />
+          <MethodButton
+            active={method === 'hosted'}
+            icon={FileText}
+            title="Host it in Lynx"
+            description={`Use the built-in ${hostedPath} page.`}
+            onClick={() => onMethodChange('hosted')}
+          />
+          <MethodButton
+            active={method === 'provider'}
+            icon={Sliders}
+            title="External provider"
+            description="Advanced setup for a privacy service."
+            onClick={() => onMethodChange('provider')}
+          />
+        </div>
+      </FieldRow>
+
+      {method === 'external' && (
+        <FieldRow label="Page URL" description="Users will be redirected to this page.">
+          <Input
+            className="admin-input"
+            value={externalUrl}
+            onChange={(e) => onExternalUrlChange(e.target.value)}
+            placeholder={kind === 'privacy' ? 'https://example.com/privacy' : 'https://example.com/cookies'}
+            spellCheck={false}
+            maxLength={500}
+          />
+        </FieldRow>
+      )}
+
+      {method === 'hosted' && (
+        <div className="space-y-3">
+          <InfoBox>Lynx will generate a public page at {hostedPath}</InfoBox>
+          <FieldRow label="Policy text">
+            <Textarea
+              className="admin-input min-h-[120px] resize-y text-sm"
+              value={hostedText}
+              onChange={(e) => onHostedTextChange(e.target.value)}
+              placeholder={`Paste your ${title.toLowerCase()} text here.`}
+            />
+          </FieldRow>
+          <FieldRow label="Upload text file" description=".txt files are copied into the text box. .docx files can be selected as a reminder for manual review.">
+            <Input
+              className="admin-input"
+              type="file"
+              accept=".txt,.docx"
+              onChange={(e) => void handleFile(e.target.files?.[0])}
+            />
+            {hostedFileName && (
+              <p className="text-xs leading-5 text-slate-500">Selected: {hostedFileName}</p>
+            )}
+          </FieldRow>
+          <a className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 underline" href={hostedPath} target="_blank" rel="noopener noreferrer">
+            Preview {hostedPath}
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      )}
+
+      {method === 'provider' && (
+        <details className="rounded-lg border border-slate-200 bg-white p-3">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-800">
+            Advanced — for Usercentrics, iubenda, etc.
+          </summary>
+          <div className="mt-3 space-y-3">
+            <FieldRow label="Provider script or config" description="Paste the provider code here. Lynx will use the first web address it finds for the footer link.">
+              <Textarea
+                className="admin-input min-h-[120px] resize-y font-mono text-xs"
+                value={providerConfig}
+                onChange={(e) => onProviderConfigChange(e.target.value)}
+                placeholder="<script src=&quot;https://...&quot;></script>"
+              />
+            </FieldRow>
+            {resolvedUrl ? (
+              <p className="break-all text-xs text-green-700">Link found: {resolvedUrl}</p>
+            ) : (
+              <p className="text-xs text-amber-700">Missing: paste a web address from your provider.</p>
+            )}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function LegalPoliciesForm({
+  showLegalLinks,
+  onShowLegalLinksChange,
+  privacy,
+  cookie,
+}: {
+  showLegalLinks: boolean;
+  onShowLegalLinksChange: (show: boolean) => void;
+  privacy: Omit<React.ComponentProps<typeof PolicyConfigurator>, 'kind' | 'title'>;
+  cookie: Omit<React.ComponentProps<typeof PolicyConfigurator>, 'kind' | 'title'>;
 }) {
   return (
     <div className="space-y-4">
-      <InfoBox>
-        These links are shown in the public footer and used by the consent banner.
-      </InfoBox>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FieldRow label="Privacy Policy URL" description="Use a relative path such as /privacy, or a full https:// URL.">
-          <Input
-            ref={privacyInputRef}
-            className="admin-input"
-            defaultValue={privacyPolicyUrl || ''}
-            placeholder="/privacy or https://example.com/privacy"
-            spellCheck={false}
-            maxLength={500}
-          />
-        </FieldRow>
-        <FieldRow label="Cookie Policy URL" description="Can point to a dedicated cookie page or the same legal policy page.">
-          <Input
-            ref={cookieInputRef}
-            className="admin-input"
-            defaultValue={cookiePolicyUrl || ''}
-            placeholder="https://example.com/cookies"
-            spellCheck={false}
-            maxLength={500}
-          />
-        </FieldRow>
+      <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">Show legal links in footer</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            When enabled, visitors can open these links from the public footer and consent banner.
+          </p>
+        </div>
+        <Switch checked={showLegalLinks} onCheckedChange={onShowLegalLinksChange} />
       </div>
+
+      {showLegalLinks && (
+        <div className="space-y-4">
+          <PolicyConfigurator kind="privacy" title="Privacy Policy" {...privacy} />
+          <PolicyConfigurator kind="cookie" title="Cookie Policy" {...cookie} />
+          <div className="flex flex-wrap gap-3 rounded-lg border border-slate-200 bg-white p-3 text-xs">
+            <span className="font-semibold text-slate-700">Preview built-in pages:</span>
+            <a className="inline-flex items-center gap-1 text-blue-700 underline" href="/privacy" target="_blank" rel="noopener noreferrer">
+              /privacy <ExternalLink className="h-3 w-3" />
+            </a>
+            <a className="inline-flex items-center gap-1 text-blue-700 underline" href="/cookies" target="_blank" rel="noopener noreferrer">
+              /cookies <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -721,8 +930,17 @@ export function PrivacySettings({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const privacyInputRef = useRef<HTMLInputElement>(null);
-  const cookieInputRef = useRef<HTMLInputElement>(null);
+  const [showLegalLinks, setShowLegalLinks] = useState(Boolean(privacyPolicyUrl || cookiePolicyUrl));
+  const [privacyMethod, setPrivacyMethod] = useState<LegalPolicyMethod>(getPolicyMethod(privacyPolicyUrl, 'privacy'));
+  const [cookieMethod, setCookieMethod] = useState<LegalPolicyMethod>(getPolicyMethod(cookiePolicyUrl, 'cookie'));
+  const [privacyExternalUrl, setPrivacyExternalUrl] = useState(privacyPolicyUrl || '');
+  const [cookieExternalUrl, setCookieExternalUrl] = useState(cookiePolicyUrl || '');
+  const [privacyHostedText, setPrivacyHostedText] = useState('');
+  const [cookieHostedText, setCookieHostedText] = useState('');
+  const [privacyHostedFileName, setPrivacyHostedFileName] = useState('');
+  const [cookieHostedFileName, setCookieHostedFileName] = useState('');
+  const [privacyProviderConfig, setPrivacyProviderConfig] = useState('');
+  const [cookieProviderConfig, setCookieProviderConfig] = useState('');
 
   const [mode, setMode] = useState<ConsentMode>('disabled');
   const [enabled, setEnabled] = useState(false);
@@ -753,21 +971,41 @@ export function PrivacySettings({
   }, []);
 
   useEffect(() => {
-    if (privacyInputRef.current) {
-      privacyInputRef.current.value = privacyPolicyUrl || '';
-    }
-    if (cookieInputRef.current) {
-      cookieInputRef.current.value = cookiePolicyUrl || '';
-    }
+    setShowLegalLinks(Boolean(privacyPolicyUrl || cookiePolicyUrl));
+    const nextPrivacyMethod = getPolicyMethod(privacyPolicyUrl, 'privacy');
+    const nextCookieMethod = getPolicyMethod(cookiePolicyUrl, 'cookie');
+    setPrivacyMethod(nextPrivacyMethod);
+    setCookieMethod(nextCookieMethod);
+    setPrivacyExternalUrl(nextPrivacyMethod === 'hosted' ? '' : (privacyPolicyUrl || ''));
+    setCookieExternalUrl(nextCookieMethod === 'hosted' ? '' : (cookiePolicyUrl || ''));
   }, [privacyPolicyUrl, cookiePolicyUrl]);
+
+  const resolvedPrivacyPolicyUrl = useMemo(() => {
+    if (!showLegalLinks) return undefined;
+    if (privacyMethod === 'hosted') return HOSTED_POLICY_PATH.privacy;
+    if (privacyMethod === 'provider') return extractFirstUrl(privacyProviderConfig) || undefined;
+    return privacyExternalUrl.trim() || undefined;
+  }, [privacyExternalUrl, privacyMethod, privacyProviderConfig, showLegalLinks]);
+
+  const resolvedCookiePolicyUrl = useMemo(() => {
+    if (!showLegalLinks) return undefined;
+    if (cookieMethod === 'hosted') return HOSTED_POLICY_PATH.cookie;
+    if (cookieMethod === 'provider') return extractFirstUrl(cookieProviderConfig) || undefined;
+    return cookieExternalUrl.trim() || undefined;
+  }, [cookieExternalUrl, cookieMethod, cookieProviderConfig, showLegalLinks]);
 
   const handleSave = async () => {
     setSaving(true);
     setSaveError('');
     setSaveSuccess(false);
     try {
-      const nextPrivacyPolicyUrl = privacyInputRef.current?.value.trim() || undefined;
-      const nextCookiePolicyUrl = cookieInputRef.current?.value.trim() || undefined;
+      const nextPrivacyPolicyUrl = resolvedPrivacyPolicyUrl;
+      const nextCookiePolicyUrl = resolvedCookiePolicyUrl;
+
+      if (mode === 'hardcoded' && enabled && !nextPrivacyPolicyUrl && !nextCookiePolicyUrl) {
+        setSaveError('Add at least one legal policy link before enabling the native banner.');
+        return;
+      }
 
       if (!isValidPolicyUrl(nextPrivacyPolicyUrl || '')) {
         setSaveError('Privacy Policy URL must be a relative path, http:// URL, or https:// URL.');
@@ -909,13 +1147,35 @@ export function PrivacySettings({
         <SectionHeader
           icon={Globe2}
           title="Legal policies"
-          description="Manage the policy links used across your public page and consent UI."
+          description="Manage the policy links used across your public page and cookie banner."
         />
         <LegalPoliciesForm
-          privacyPolicyUrl={privacyPolicyUrl}
-          cookiePolicyUrl={cookiePolicyUrl}
-          privacyInputRef={privacyInputRef}
-          cookieInputRef={cookieInputRef}
+          showLegalLinks={showLegalLinks}
+          onShowLegalLinksChange={setShowLegalLinks}
+          privacy={{
+            method: privacyMethod,
+            externalUrl: privacyExternalUrl,
+            hostedText: privacyHostedText,
+            hostedFileName: privacyHostedFileName,
+            providerConfig: privacyProviderConfig,
+            onMethodChange: setPrivacyMethod,
+            onExternalUrlChange: setPrivacyExternalUrl,
+            onHostedTextChange: setPrivacyHostedText,
+            onHostedFileNameChange: setPrivacyHostedFileName,
+            onProviderConfigChange: setPrivacyProviderConfig,
+          }}
+          cookie={{
+            method: cookieMethod,
+            externalUrl: cookieExternalUrl,
+            hostedText: cookieHostedText,
+            hostedFileName: cookieHostedFileName,
+            providerConfig: cookieProviderConfig,
+            onMethodChange: setCookieMethod,
+            onExternalUrlChange: setCookieExternalUrl,
+            onHostedTextChange: setCookieHostedText,
+            onHostedFileNameChange: setCookieHostedFileName,
+            onProviderConfigChange: setCookieProviderConfig,
+          }}
         />
       </section>
 
@@ -963,7 +1223,7 @@ export function PrivacySettings({
           {
             // Profile-level URLs are persisted as the source of truth.
             ok: mode === 'hardcoded'
-              ? !!(privacyPolicyUrl || cookiePolicyUrl)
+              ? !!(resolvedPrivacyPolicyUrl || resolvedCookiePolicyUrl)
               : mode === 'builder',
             text: 'At least one policy URL is configured in Legal policies',
           },
