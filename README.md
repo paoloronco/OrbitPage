@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.1.7-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.1.8-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -312,6 +312,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.1.8</strong></summary>
+
+### Legal policy embed fix
+
+- Allows the current Usercentrics embed domains in the production CSP.
+- Keeps embedded legal policy scripts executable and ordered when rendered on `/privacy` and `/cookies`.
+- Adds a regression test for legal policy provider CSP sources.
+
+</details>
 
 <details>
 <summary><strong>v4.1.7</strong></summary>

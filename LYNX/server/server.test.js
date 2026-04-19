@@ -41,6 +41,18 @@ describe('API Endpoints', () => {
     expect(response.body.status).toBe('ok');
   });
 
+  it('sets CSP sources needed by embedded legal policy providers', async () => {
+    const response = await request(app).get('/health');
+    const csp = response.headers['content-security-policy'];
+
+    expect(csp).toContain('script-src');
+    expect(csp).toContain('connect-src');
+    expect(csp).toContain('frame-src');
+    expect(csp).toContain('https://*.usercentrics.eu');
+    expect(csp).toContain('https://*.cmp.usercentrics.eu');
+    expect(csp).toContain('https://*.iubenda.com');
+  });
+
   it('GET /api/auth/setup-status should return setup status', async () => {
     vi.mocked(isFirstTimeSetup).mockResolvedValue(true);
     const response = await request(app).get('/api/auth/setup-status');

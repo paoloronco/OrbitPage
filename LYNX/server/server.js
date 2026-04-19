@@ -63,6 +63,21 @@ const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
 // This is important so express-rate-limit keys by the real client IP
 app.set('trust proxy', 1);
 
+const USERCENTRICS_CSP_SOURCES = [
+  "https://policygenerator.usercentrics.eu",
+  "https://*.usercentrics.eu",
+  "https://*.cmp.usercentrics.eu",
+];
+
+const IUBENDA_CSP_SOURCES = [
+  "https://*.iubenda.com",
+];
+
+const LEGAL_EMBED_CSP_SOURCES = [
+  ...USERCENTRICS_CSP_SOURCES,
+  ...IUBENDA_CSP_SOURCES,
+];
+
 // Middleware
 app.use(cors({
   origin: (origin, callback) => {
@@ -108,9 +123,14 @@ app.use(helmet({
         // and CDN assets e.g. configuration.js (consentcdn.cookiebot.com)
         "https://consent.cookiebot.com",
         "https://consentcdn.cookiebot.com",
-        "https://policygenerator.usercentrics.eu",
+        ...LEGAL_EMBED_CSP_SOURCES,
       ],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://tagassistant.google.com"],
+      styleSrc: [
+        "'self'", "'unsafe-inline'",
+        "https://fonts.googleapis.com",
+        "https://tagassistant.google.com",
+        ...LEGAL_EMBED_CSP_SOURCES,
+      ],
       imgSrc: ["'self'", "data:", "https:", "http:"],
       connectSrc: IS_PRODUCTION
         ? [
@@ -123,7 +143,7 @@ app.use(helmet({
             // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
             "https://consentcdn.cookiebot.com",
-            "https://policygenerator.usercentrics.eu",
+            ...LEGAL_EMBED_CSP_SOURCES,
           ]
         : [
             "'self'", FRONTEND_URL,
@@ -135,7 +155,7 @@ app.use(helmet({
             // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
             "https://consentcdn.cookiebot.com",
-            "https://policygenerator.usercentrics.eu",
+            ...LEGAL_EMBED_CSP_SOURCES,
           ],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
@@ -144,6 +164,7 @@ app.use(helmet({
         "'self'",
         // Cookiebot: iframe that renders the consent dialog UI
         "https://consentcdn.cookiebot.com",
+        ...LEGAL_EMBED_CSP_SOURCES,
       ]
     },
     reportOnly: false

@@ -477,6 +477,9 @@ class ConsentManager {
       for (const attr of Array.from(script.attributes)) {
         executableScript.setAttribute(attr.name, attr.value);
       }
+      if (script.src && !script.hasAttribute('async') && !script.hasAttribute('defer')) {
+        executableScript.async = false;
+      }
       if (markerId && !markerApplied) {
         executableScript.id = markerId;
         markerApplied = true;

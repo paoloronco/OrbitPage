@@ -20,15 +20,23 @@ const getPolicy = (data: ConsentConfigData | undefined, kind: PolicyKind): Polic
   return kind === "privacy" ? policies.privacyPolicy : policies.cookiePolicy;
 };
 
-const activateEmbeddedScripts = (container: HTMLElement) => {
-  container.querySelectorAll("script").forEach((script) => {
+const injectTrustedHtml = (container: HTMLElement, html: string) => {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+
+  for (const script of Array.from(template.content.querySelectorAll("script"))) {
     const activeScript = document.createElement("script");
     for (const attr of Array.from(script.attributes)) {
       activeScript.setAttribute(attr.name, attr.value);
     }
-    activeScript.text = script.text;
+    if (script.src && !script.hasAttribute("async") && !script.hasAttribute("defer")) {
+      activeScript.async = false;
+    }
+    activeScript.text = script.textContent ?? "";
     script.replaceWith(activeScript);
-  });
+  }
+
+  container.replaceChildren(template.content);
 };
 
 const ensureIubendaEmbedLoader = (code: string) => {
@@ -88,11 +96,7 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
 
     if (policy?.mode !== "embedded" || !policy.embeddedCode?.trim()) return;
 
-    const range = document.createRange();
-    range.selectNode(container);
-    const fragment = range.createContextualFragment(policy.embeddedCode);
-    container.appendChild(fragment);
-    activateEmbeddedScripts(container);
+    injectTrustedHtml(container, policy.embeddedCode);
     ensureIubendaEmbedLoader(policy.embeddedCode);
 
     return () => {
