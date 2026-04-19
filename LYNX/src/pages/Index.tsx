@@ -106,26 +106,19 @@ const Index = () => {
           // cookieless pings to fire before consent in basic mode.
           //
           // Instead we:
-          //   1. Set up the gtag stub + GCM v2 defaults (inline, zero network cost)
+          //   1. Ensure GCM v2 defaults exist when a consent mode is enabled
           //   2. Register the gtag.js load + gtag('config') call as a consent-dependent
           //      action — it only runs once the visitor grants analytics consent.
           if (googleAnalyticsId && typeof googleAnalyticsId === 'string' && googleAnalyticsId.match(/^G-[A-Z0-9]+$/i)) {
             const win = window as any;
 
-            // Ensure gtag stub + GCM v2 defaults exist (server already injects this in
-            // production via injectGoogleAnalyticsTag; we set it up here for dev mode).
+            // In dev/catch-all paths the server may not have injected the head block.
+            // This is idempotent and runs only when native or external consent is enabled.
+            consentManager.ensureGoogleConsentDefaults();
+
             if (typeof win.gtag !== 'function') {
               win.dataLayer = win.dataLayer || [];
               win.gtag = function () { win.dataLayer.push(arguments); };
-              win.gtag('consent', 'default', {
-                analytics_storage:       'denied',
-                ad_storage:              'denied',
-                ad_user_data:            'denied',
-                ad_personalization:      'denied',
-                functionality_storage:   'denied',
-                personalization_storage: 'denied',
-                wait_for_update:         2000,
-              });
               win.gtag('js', new Date());
             }
 

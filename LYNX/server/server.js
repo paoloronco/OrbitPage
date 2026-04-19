@@ -251,18 +251,33 @@ const stripDuplicateLegalUrlsFromConsentConfig = ({ hardcoded, builder }) => ({
   },
 });
 
-const injectGoogleAnalyticsTag = (html, measurementId) => {
+const hasGoogleConsentDefault = (value = '') =>
+  typeof value === 'string' &&
+  /gtag\s*\(\s*['"]consent['"]\s*,\s*['"]default['"]/i.test(value);
+
+const shouldInjectGoogleConsentDefaults = async () => {
+  const row = await dbGet(
+    'SELECT mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
+  );
+  if (!row?.enabled || row.mode === 'disabled') return false;
+
+  const config = safeJsonParse(row.full_config, {});
+  const providerConfig = config?.builder?.providerConfig || {};
+  return !hasGoogleConsentDefault(providerConfig.headSnippet) &&
+    !hasGoogleConsentDefault(providerConfig.bodySnippet);
+};
+
+const injectGoogleConsentDefaults = (html) => {
+  if (hasGoogleConsentDefault(html)) return html;
   // Inject ONLY the gtag stub + GCM v2 defaults (all denied).
   // The actual gtag.js script is intentionally NOT loaded here.
   // Loading gtag.js with ?id=G-XXX at page-load causes GA to fire cookieless pings
   // (collect?v=2) even when analytics_storage is 'denied' — a GCM v2 basic-mode edge case.
   // Instead, Index.tsx loads gtag.js dynamically inside registerConsentDependentScript,
   // guaranteeing zero GA network requests until the visitor explicitly grants consent.
-  // Unused parameter kept in signature for future reference.
-  void measurementId;
   const tag = `
     <!-- Google Consent Mode v2 defaults — gtag.js loads only after consent (Lynx) -->
-    <script>
+    <script id="lynx-gcm-default-consent">
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('consent', 'default', {
@@ -275,6 +290,7 @@ const injectGoogleAnalyticsTag = (html, measurementId) => {
         'wait_for_update': 2000
       });
       gtag('js', new Date());
+      window.__lynxGcmDefaultConsentSet = true;
     </script>`;
 
   return html.includes('<head>') ? html.replace('<head>', `<head>${tag}`) : `${tag}\n${html}`;
@@ -421,9 +437,12 @@ const serveSpaIndex = async (req, res, { includeGoogleAnalytics = false } = {}) 
   try {
     let html = await fs.promises.readFile(indexHtmlPath, 'utf8');
     if (includeGoogleAnalytics) {
-      const measurementId = await getGoogleAnalyticsId();
-      if (measurementId) {
-        html = injectGoogleAnalyticsTag(html, measurementId);
+      const [measurementId, injectDefaults] = await Promise.all([
+        getGoogleAnalyticsId(),
+        shouldInjectGoogleConsentDefaults(),
+      ]);
+      if (measurementId && injectDefaults) {
+        html = injectGoogleConsentDefaults(html);
       }
     }
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

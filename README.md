@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.1.2-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.1.3-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -312,6 +312,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.1.3</strong></summary>
+
+### Consent mode
+
+- Ensures Google Consent Mode v2 defaults are set before analytics scripts load.
+- Defaults ad storage, analytics storage, user data, and personalization to denied when consent is enabled.
+- Avoids duplicate default consent blocks when an advanced provider already supplies one.
+
+</details>
 
 <details>
 <summary><strong>v4.1.2</strong></summary>

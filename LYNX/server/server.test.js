@@ -158,4 +158,54 @@ describe('API Endpoints', () => {
     expect(response.body.data.hardcoded.urls.privacyPolicy).toBe('https://example.com/privacy');
     expect(response.body.data.hardcoded.urls.cookiePolicy).toBe('https://example.com/cookies');
   });
+
+  it('GET / injects Google Consent Mode defaults before the app when analytics and consent are enabled', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ google_analytics_id: 'G-TEST123' })
+      .mockResolvedValueOnce({ mode: 'hardcoded', enabled: 1, full_config: JSON.stringify({}) });
+
+    const response = await request(app).get('/');
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('id="lynx-gcm-default-consent"');
+    expect(response.text).toContain("'ad_storage': 'denied'");
+    expect(response.text).toContain("'analytics_storage': 'denied'");
+    expect(response.text).toContain("'ad_user_data': 'denied'");
+    expect(response.text).toContain("'ad_personalization': 'denied'");
+    expect(response.text.indexOf('id="lynx-gcm-default-consent"')).toBeLessThan(
+      response.text.indexOf('<script type="module"')
+    );
+  });
+
+  it('GET / does not inject Google Consent Mode defaults when consent is disabled', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ google_analytics_id: 'G-TEST123' })
+      .mockResolvedValueOnce({ mode: 'disabled', enabled: 0, full_config: JSON.stringify({}) });
+
+    const response = await request(app).get('/');
+
+    expect(response.status).toBe(200);
+    expect(response.text).not.toContain('id="lynx-gcm-default-consent"');
+  });
+
+  it('GET / does not duplicate Google Consent Mode defaults from an advanced provider snippet', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ google_analytics_id: 'G-TEST123' })
+      .mockResolvedValueOnce({
+        mode: 'builder',
+        enabled: 1,
+        full_config: JSON.stringify({
+          builder: {
+            providerConfig: {
+              headSnippet: "gtag('consent', 'default', { ad_storage: 'denied' });",
+            },
+          },
+        }),
+      });
+
+    const response = await request(app).get('/');
+
+    expect(response.status).toBe(200);
+    expect(response.text).not.toContain('id="lynx-gcm-default-consent"');
+  });
 });

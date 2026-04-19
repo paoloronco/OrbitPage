@@ -136,6 +136,7 @@ class ConsentManager {
   init(config: ConsentConfig): void {
     this.config = config;
     this.consent = this._loadFromStorage();
+    this.ensureGoogleConsentDefaults();
     this.initialized = true;
     // Immediately fire any scripts registered before init() was called
     this._dispatchPendingScripts();
@@ -156,6 +157,38 @@ class ConsentManager {
   /** Return the current consent record, or null if no consent has been given */
   getConsent(): ConsentRecord | null {
     return this.consent;
+  }
+
+  /**
+   * Ensure Google Consent Mode v2 defaults exist before any tracking script loads.
+   * Runs only when a native or external consent setup is enabled.
+   */
+  ensureGoogleConsentDefaults(): void {
+    if (!this.config?.enabled || this.config.mode === 'disabled') return;
+    if (this._configuredProviderAlreadySetsGcmDefault()) return;
+
+    const win = window as any;
+    win.dataLayer = win.dataLayer || [];
+    if (this._dataLayerHasGcmDefault(win.dataLayer)) {
+      win.__lynxGcmDefaultConsentSet = true;
+      return;
+    }
+
+    if (typeof win.gtag !== 'function') {
+      win.gtag = function () { win.dataLayer.push(arguments); };
+    }
+
+    win.gtag('consent', 'default', {
+      ad_storage: 'denied',
+      analytics_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      functionality_storage: 'denied',
+      personalization_storage: 'denied',
+      wait_for_update: 2000,
+    });
+    win.gtag('js', new Date());
+    win.__lynxGcmDefaultConsentSet = true;
   }
 
   /**
@@ -385,6 +418,25 @@ class ConsentManager {
         console.error('[LynxConsent] Listener error:', e);
       }
     }
+  }
+
+  private _configuredProviderAlreadySetsGcmDefault(): boolean {
+    if (this.config?.mode !== 'builder') return false;
+    const providerConfig = this.config.builder?.providerConfig;
+    return this._textHasGcmDefault(providerConfig?.headSnippet) ||
+      this._textHasGcmDefault(providerConfig?.bodySnippet);
+  }
+
+  private _textHasGcmDefault(value?: string): boolean {
+    return typeof value === 'string' &&
+      /gtag\s*\(\s*['"]consent['"]\s*,\s*['"]default['"]/i.test(value);
+  }
+
+  private _dataLayerHasGcmDefault(dataLayer: unknown[]): boolean {
+    return dataLayer.some((entry) => {
+      const values = Array.isArray(entry) ? entry : Array.from(entry as ArrayLike<unknown> || []);
+      return values[0] === 'consent' && values[1] === 'default';
+    });
   }
 
   /**
