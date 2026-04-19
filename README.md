@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.1.6-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.1.7-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -312,6 +312,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.1.7</strong></summary>
+
+### CMP and release workflow fix
+
+- Executes custom external CMP scripts reliably, including pasted iubenda widget snippets.
+- Publishes Docker images only from release tags to avoid duplicate Docker builds on `main` and `v*`.
+- Keeps `latest`, semantic version, and short SHA Docker tags on release builds.
+
+</details>
 
 <details>
 <summary><strong>v4.1.6</strong></summary>

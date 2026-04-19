@@ -467,6 +467,28 @@ class ConsentManager {
     }
   }
 
+  private _injectHtmlSnippet(target: HTMLElement, html: string, markerId?: string): boolean {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    let markerApplied = false;
+
+    for (const script of Array.from(template.content.querySelectorAll('script'))) {
+      const executableScript = document.createElement('script');
+      for (const attr of Array.from(script.attributes)) {
+        executableScript.setAttribute(attr.name, attr.value);
+      }
+      if (markerId && !markerApplied) {
+        executableScript.id = markerId;
+        markerApplied = true;
+      }
+      executableScript.text = script.textContent ?? '';
+      script.replaceWith(executableScript);
+    }
+
+    target.appendChild(template.content);
+    return markerApplied;
+  }
+
   // ── Builder Provider Injectors ─────────────────────────────────────────────
 
   private _injectIubenda(cfg: BuilderConfig['providerConfig']): void {
@@ -553,19 +575,12 @@ _iub.csConfiguration = {
      * so the trust boundary here is the admin session, not the public page visitor.
      * Never expose snippet configuration to unauthenticated endpoints.
      */
+    let markerApplied = false;
     if (cfg.headSnippet) {
-      const range = document.createRange();
-      range.selectNode(document.head);
-      const frag = range.createContextualFragment(cfg.headSnippet);
-      const first = frag.querySelector('script');
-      if (first) first.id = 'lynx-cmp-script';
-      document.head.appendChild(frag);
+      markerApplied = this._injectHtmlSnippet(document.head, cfg.headSnippet, 'lynx-cmp-script');
     }
     if (cfg.bodySnippet) {
-      const range = document.createRange();
-      range.selectNode(document.body);
-      const frag = range.createContextualFragment(cfg.bodySnippet);
-      document.body.appendChild(frag);
+      this._injectHtmlSnippet(document.body, cfg.bodySnippet, markerApplied ? undefined : 'lynx-cmp-script');
     }
   }
 }

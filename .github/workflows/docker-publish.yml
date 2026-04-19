@@ -2,7 +2,6 @@ name: Build & Publish Docker image
 
 on:
   push:
-    branches: [ "main" ]
     tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
@@ -31,7 +30,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
             type=sha,format=short,prefix=sha-
             type=ref,event=pr
             type=semver,pattern={{version}}
