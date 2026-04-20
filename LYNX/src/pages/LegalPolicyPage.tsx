@@ -135,7 +135,7 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
         ) : policy?.mode === "embedded" && policy.embeddedCode?.trim() ? (
           <div
             ref={embedRef}
-            className="rounded-lg border border-slate-200 bg-white p-5 text-slate-900 shadow-sm [&_*]:!text-slate-900 [&_a]:!text-blue-700 [&_a]:underline [&_a]:underline-offset-2"
+            className="uc-privacy-policy rounded-lg border border-slate-200 bg-white p-5 text-slate-900 shadow-sm [&_*]:!text-slate-900 [&_a]:!text-blue-700 [&_a]:underline [&_a]:underline-offset-2"
             style={{ colorScheme: "light" }}
           />
         ) : (
