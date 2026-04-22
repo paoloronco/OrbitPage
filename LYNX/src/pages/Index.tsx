@@ -116,16 +116,16 @@ const Index = () => {
             // This is idempotent and runs only when native or external consent is enabled.
             consentManager.ensureGoogleConsentDefaults();
 
-            if (typeof win.gtag !== 'function') {
-              win.dataLayer = win.dataLayer || [];
-              win.gtag = function () { win.dataLayer.push(arguments); };
-              win.gtag('js', new Date());
-            }
-
             // Load gtag.js and call config ONLY after analytics consent is granted.
             // No GA network request of any kind is made before this callback fires.
             const gaId = googleAnalyticsId;
             consentManager.registerConsentDependentScript('analytics', () => {
+              if (!consentManager.isGranted('analytics')) return;
+              consentManager.ensureGoogleConsentDefaults();
+              if (typeof win.gtag !== 'function') {
+                win.dataLayer = win.dataLayer || [];
+                win.gtag = function () { win.dataLayer.push(arguments); };
+              }
               if (!document.getElementById('lynx-ga-script')) {
                 const script = document.createElement('script');
                 script.id = 'lynx-ga-script';
@@ -133,6 +133,7 @@ const Index = () => {
                 script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
                 document.head.appendChild(script);
               }
+              win.gtag?.('js', new Date());
               win.gtag?.('config', gaId);
             });
           }

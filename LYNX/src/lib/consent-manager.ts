@@ -117,6 +117,7 @@ class ConsentManager {
   private consent: ConsentRecord | null = null;
   private initialized = false;
   private listeners: Set<ConsentChangeListener> = new Set();
+  private externalConsent: Partial<Record<ConsentCategory, boolean>> | null = null;
   /**
    * Scripts waiting for a specific category's consent.
    * Keyed by category; values are loader functions to call when consent is granted.
@@ -187,7 +188,6 @@ class ConsentManager {
       personalization_storage: 'denied',
       wait_for_update: 2000,
     });
-    win.gtag('js', new Date());
     win.__lynxGcmDefaultConsentSet = true;
   }
 
@@ -202,6 +202,9 @@ class ConsentManager {
    */
   isGranted(category: ConsentCategory): boolean {
     if (ALWAYS_ACTIVE.includes(category)) return true;
+    if (this.config?.mode === 'builder') {
+      return this._isExternalCategoryGranted(category);
+    }
     if (!this.consent) return false;
     if (!this._isConsentFresh()) return false;
     const cfg = this.config?.hardcoded;
@@ -480,6 +483,26 @@ class ConsentManager {
     }
   }
 
+  private _isExternalCategoryGranted(category: ConsentCategory): boolean {
+    if (!this.config?.enabled || this.config.mode !== 'builder') return false;
+
+    const cookiebotConsent = (window as any).Cookiebot?.consent;
+    if (cookiebotConsent && this.config.builder?.provider === 'cookiebot') {
+      if (category === 'preferences') return cookiebotConsent.preferences === true;
+      if (category === 'analytics') return cookiebotConsent.statistics === true;
+      if (category === 'marketing') return cookiebotConsent.marketing === true;
+    }
+
+    return this.externalConsent?.[category] === true;
+  }
+
+  private _setExternalConsent(categories: Record<ConsentCategory, boolean>): void {
+    this.externalConsent = categories;
+    this._dispatchGcmUpdate(categories);
+    this._dispatchPendingScripts();
+    this._notifyListeners();
+  }
+
   private _injectHtmlSnippet(target: HTMLElement, html: string, markerId?: string): boolean {
     const template = document.createElement('template');
     template.innerHTML = html;
@@ -544,6 +567,7 @@ _iub.csConfiguration = {
       console.warn('[LynxConsent] Cookiebot: missing scriptId (cbid)');
       return;
     }
+    this._wireCookiebotConsentEvents();
     const script = document.createElement('script');
     script.id = 'lynx-cmp-script';
     script.setAttribute('data-cbid', cfg.scriptId);
@@ -551,6 +575,29 @@ _iub.csConfiguration = {
     script.src = 'https://consent.cookiebot.com/uc.js';
     script.async = true;
     document.head.appendChild(script);
+  }
+
+  private _wireCookiebotConsentEvents(): void {
+    const win = window as any;
+    if (win.__lynxCookiebotConsentEventsWired) return;
+    win.__lynxCookiebotConsentEventsWired = true;
+
+    const syncCookiebotConsent = () => {
+      const consent = win.Cookiebot?.consent;
+      if (!consent) return;
+      this._setExternalConsent({
+        necessary: true,
+        preferences: consent.preferences === true,
+        analytics: consent.statistics === true,
+        marketing: consent.marketing === true,
+      });
+    };
+
+    window.addEventListener('CookiebotOnConsentReady', syncCookiebotConsent);
+    window.addEventListener('CookiebotOnAccept', syncCookiebotConsent);
+    window.addEventListener('CookiebotOnDecline', syncCookiebotConsent);
+    window.addEventListener('CookiebotOnLoad', syncCookiebotConsent);
+    syncCookiebotConsent();
   }
 
   private _injectCookieYes(cfg: BuilderConfig['providerConfig']): void {

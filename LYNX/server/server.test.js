@@ -241,6 +241,7 @@ describe('API Endpoints', () => {
     expect(response.text).toContain("'analytics_storage': 'denied'");
     expect(response.text).toContain("'ad_user_data': 'denied'");
     expect(response.text).toContain("'ad_personalization': 'denied'");
+    expect(response.text).not.toContain("gtag('js'");
     expect(response.text.indexOf('id="lynx-gcm-default-consent"')).toBeLessThan(
       response.text.indexOf('<script type="module"')
     );

@@ -377,7 +377,6 @@ const injectGoogleConsentDefaults = (html) => {
         'personalization_storage': 'denied',
         'wait_for_update': 2000
       });
-      gtag('js', new Date());
       window.__lynxGcmDefaultConsentSet = true;
     </script>`;
 
