@@ -1223,8 +1223,8 @@ export function PrivacySettings({
             text: 'Consent is stored with timestamp, policy version, and category flags',
           },
           {
-            ok: true,
-            text: 'Google Analytics is blocked until analytics consent is granted (GCM v2)',
+            ok: enabled && mode !== 'disabled',
+            text: 'Tracking blocked until consent is granted — Google Analytics is gated behind analytics consent (GCM v2)',
           },
           {
             ok: true,

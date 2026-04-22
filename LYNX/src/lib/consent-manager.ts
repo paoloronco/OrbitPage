@@ -194,10 +194,23 @@ class ConsentManager {
   /**
    * Returns true when the user has granted consent for `category`.
    * 'necessary' always returns true.
+   *
+   * Returns false when consent is absent, expired, or requires a re-prompt
+   * due to a policy version change — mirroring the same validity conditions
+   * that needsBanner() uses. This prevents stale consent from silently
+   * granting tracker access while the banner is being re-shown.
    */
   isGranted(category: ConsentCategory): boolean {
     if (ALWAYS_ACTIVE.includes(category)) return true;
-    return this.consent?.categories?.[category] === true;
+    if (!this.consent) return false;
+    if (!this._isConsentFresh()) return false;
+    const cfg = this.config?.hardcoded;
+    if (
+      cfg?.reshowOnVersionChange &&
+      cfg.policyVersion &&
+      this.consent.policyVersion !== cfg.policyVersion
+    ) return false;
+    return this.consent.categories?.[category] === true;
   }
 
   /**
