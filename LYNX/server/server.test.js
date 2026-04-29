@@ -291,6 +291,9 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('id="lynx-structured-data"');
     expect(response.text).toContain('<noscript>');
     expect(response.text).toContain('href="https://github.com/example"');
+    expect(response.text).toContain('src="/assets/');
+    expect(response.text).toContain('href="/assets/');
+    expect(response.text).not.toContain('src="./assets/');
   });
 
   it('GET /lynx serves the SPA with base-path-aware metadata and runtime config', async () => {
@@ -314,6 +317,10 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('window.__LYNX_BASE_PATH__="/lynx"');
     expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/lynx/"');
     expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/lynx/"');
+    expect(response.text).toContain('src="/lynx/assets/');
+    expect(response.text).toContain('href="/lynx/assets/');
+    expect(response.text).not.toContain('src="/assets/');
+    expect(response.text).not.toContain('href="/assets/');
   });
 
   it('GET /robots.txt points crawlers to the dynamic sitemap and blocks private routes', async () => {

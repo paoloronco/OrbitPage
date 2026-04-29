@@ -691,6 +691,14 @@ const stripStaticSeoTags = (html) => html
   .replace(/<link\s+rel=["'](?:canonical|alternate)["'][^>]*>\s*/gi, '')
   .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, '');
 
+const rewriteViteAssetUrls = (html, req) => {
+  const assetBase = withRequestBasePath(req, '/assets/');
+  return html
+    .replace(/\b(src|href)=["'](?:\.\/|\/)?assets\//g, (_match, attr) => `${attr}="${assetBase}`)
+    .replace(/\b(src|href)=["'](?:\.\/|\/)?favicon\.ico["']/g, (_match, attr) => `${attr}="${withRequestBasePath(req, '/favicon.ico')}"`)
+    .replace(/\b(src|href)=["'](?:\.\/|\/)?placeholder\.svg["']/g, (_match, attr) => `${attr}="${withRequestBasePath(req, '/placeholder.svg')}"`);
+};
+
 const buildNoScriptPublicContent = (profile, links, origin) => {
   const visibleLinks = (links || [])
     .filter((link) => link?.type === 'link' && link?.title && toAbsoluteHttpUrl(link.url, origin))
@@ -742,6 +750,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
 const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
   try {
     let html = await fs.promises.readFile(indexHtmlPath, 'utf8');
+    html = rewriteViteAssetUrls(html, req);
     const seo = await buildSeoContext(req, { statusCode });
     html = injectSeoIntoHtml(html, seo);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

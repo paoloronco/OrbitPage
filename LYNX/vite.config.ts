@@ -7,6 +7,9 @@ const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), 
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // Build assets as relocatable URLs. The Express server rewrites the entry
+  // HTML tags to the active mount path (`/` or `BASE_PATH`) at request time.
+  base: "./",
   server: {
     host: "::",
     port: 8080,
