@@ -64,112 +64,134 @@ export const PublicProfileSection = ({ profile, fallbackName = "Your Name" }: Pu
           <div className="flex justify-center gap-3 mb-4">
             {profile.socialLinks.linkedin && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 hover:bg-blue-600/20"
-                onClick={() => window.open(profile.socialLinks?.linkedin, '_blank')}
               >
-                <Linkedin className="w-4 h-4 text-blue-600" />
+                <a href={profile.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
+                  <Linkedin className="w-4 h-4 text-blue-600" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.github && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 hover:bg-foreground/20"
-                onClick={() => window.open(profile.socialLinks?.github, '_blank')}
               >
-                <Github className="w-4 h-4 text-foreground" />
+                <a href={profile.socialLinks.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+                  <Github className="w-4 h-4 text-foreground" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.instagram && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 hover:bg-pink-500/20"
-                onClick={() => window.open(profile.socialLinks?.instagram, '_blank')}
               >
-                <Instagram className="w-4 h-4 text-pink-500" />
+                <a href={profile.socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram profile">
+                  <Instagram className="w-4 h-4 text-pink-500" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.facebook && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 hover:bg-blue-700/20"
-                onClick={() => window.open(profile.socialLinks?.facebook, '_blank')}
               >
-                <Facebook className="w-4 h-4 text-blue-700" />
+                <a href={profile.socialLinks.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook profile">
+                  <Facebook className="w-4 h-4 text-blue-700" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.twitter && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 hover:bg-foreground/20"
-                onClick={() => window.open(profile.socialLinks?.twitter, '_blank')}
               >
-                <Twitter className="w-4 h-4 text-foreground" />
+                <a href={profile.socialLinks.twitter} target="_blank" rel="noopener noreferrer" aria-label="X/Twitter profile">
+                  <Twitter className="w-4 h-4 text-foreground" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.youtube && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-red-600 hover:bg-red-600/20"
-                onClick={() => window.open(profile.socialLinks?.youtube, '_blank')}
               >
-                <Youtube className="w-4 h-4" />
+                <a href={profile.socialLinks.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube channel">
+                  <Youtube className="w-4 h-4" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.tiktok && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-foreground hover:bg-foreground/20"
-                onClick={() => window.open(profile.socialLinks?.tiktok, '_blank')}
               >
-                <TikTokIcon className="w-4 h-4" />
+                <a href={profile.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok profile">
+                  <TikTokIcon className="w-4 h-4" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.discord && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-indigo-500 hover:bg-indigo-500/20"
-                onClick={() => window.open(profile.socialLinks?.discord, '_blank')}
               >
-                <DiscordIcon className="w-4 h-4" />
+                <a href={profile.socialLinks.discord} target="_blank" rel="noopener noreferrer" aria-label="Discord profile">
+                  <DiscordIcon className="w-4 h-4" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.telegram && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-blue-500 hover:bg-blue-500/20"
-                onClick={() => window.open(profile.socialLinks?.telegram, '_blank')}
               >
-                <TelegramIcon className="w-4 h-4" />
+                <a href={profile.socialLinks.telegram} target="_blank" rel="noopener noreferrer" aria-label="Telegram profile">
+                  <TelegramIcon className="w-4 h-4" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.whatsapp && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-green-500 hover:bg-green-500/20"
-                onClick={() => window.open(profile.socialLinks?.whatsapp, '_blank')}
               >
-                <WhatsAppIcon className="w-4 h-4" />
+                <a href={profile.socialLinks.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp profile">
+                  <WhatsAppIcon className="w-4 h-4" />
+                </a>
               </Button>
             )}
             {profile.socialLinks.mastodon && (
               <Button
+                asChild
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8 text-violet-500 hover:bg-violet-500/20"
-                onClick={() => window.open(profile.socialLinks?.mastodon, '_blank')}
               >
-                <MastodonIcon className="w-4 h-4" />
+                <a href={profile.socialLinks.mastodon} target="_blank" rel="noopener noreferrer" aria-label="Mastodon profile">
+                  <MastodonIcon className="w-4 h-4" />
+                </a>
               </Button>
             )}
           </div>

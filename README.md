@@ -200,6 +200,9 @@ Open:
 | `ENABLE_HTTPS` | `false` | Set to `true` or `1` for self-signed HTTPS. |
 | `SSL_PORT` | `8443` | HTTPS port. |
 | `FRONTEND_URL` | same-origin mode | Optional dev CORS/CSP origin, e.g. `http://localhost:8080`. |
+| `PUBLIC_SITE_URL` | request host | Optional canonical public URL, e.g. `https://links.example.com`. Set this behind proxies or platforms where request host headers are not stable. |
+| `PUBLIC_SITE_NAME` | `Lynx` | Site name used in generated Open Graph, Twitter Card, and Schema.org metadata. |
+| `SEO_INDEXING` | `true` | Set to `false`, `0`, `no`, or `off` to emit `noindex` metadata and a blocking `robots.txt` for private/staging deployments. |
 | `RESET_TOKEN` | unset | Enables token-protected reset endpoints. Use at least 32 characters. |
 | `VITE_ENABLE_USERCENTRICS_PRIVACY_PAGE` | `true` | Build-time flag for the optional public `/privacy` Usercentrics embed. Set to `false` to disable. |
 | `VITE_USERCENTRICS_PRIVACY_POLICY_ID` | `fd1ffcdf-b560-4ea0-ba72-da943d39d953` | Build-time Usercentrics privacy policy ID used by `/privacy`. |
@@ -500,6 +503,53 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 
 </details>
 
-## 📄 License
+## SEO and indexing setup
+
+Lynx generates SEO metadata from each deployment's saved profile, so forks and self-hosted instances do not need to edit source files for basic discoverability.
+
+### What Lynx does by default
+
+- Serves profile-specific `<title>`, meta description, canonical URL, robots meta, Open Graph tags, Twitter Cards, and Schema.org JSON-LD from the Express server.
+- Generates `/robots.txt` dynamically and points crawlers to `/sitemap.xml`.
+- Generates `/sitemap.xml` with the canonical home page and local legal pages when `/privacy` or `/cookies` are configured as profile policy URLs.
+- Marks `/admin`, `/api/*`, `/health`, and unknown SPA paths as `noindex` to avoid duplicate or private pages in search results.
+- Adds a no-JavaScript fallback for the public profile links so crawlers can discover the main outbound links before the React app hydrates.
+
+### Recommended production configuration
+
+```bash
+PUBLIC_SITE_URL=https://links.example.com
+PUBLIC_SITE_NAME="Your Name or Brand"
+SEO_INDEXING=true
+```
+
+Use the Admin panel to set the profile name, bio, page title, meta description, avatar, social links, and legal policy URLs. Lynx reuses those values for search snippets, social previews, and structured data.
+
+### Staging, private, and preview deployments
+
+For staging or private forks, disable indexing without changing code:
+
+```bash
+SEO_INDEXING=false
+```
+
+This makes `robots.txt` disallow crawling and makes served SPA pages emit `noindex, nofollow, noarchive`.
+
+### Canonical URLs and forks
+
+If `PUBLIC_SITE_URL` is not set, Lynx derives canonical URLs from the incoming request host and protocol, including common reverse proxy headers. Set `PUBLIC_SITE_URL` when the app is behind a proxy, tunnel, CDN, or platform that may send internal hostnames.
+
+### Contributor SEO checklist
+
+- Public routes must have one canonical URL and should not create duplicate indexable paths.
+- New private or admin routes must send `X-Robots-Tag: noindex, nofollow, noarchive`.
+- New public pages should be added to the sitemap only when they have durable public content.
+- Public links should be real `<a href="...">` elements, not click-only JavaScript handlers.
+- Images that are not above the fold should use lazy loading and useful alt text.
+- Do not block `/assets`, CSS, JavaScript, or uploaded public images in `robots.txt`.
+- Keep metadata configurable through profile data or environment variables, not hardcoded to the upstream demo domain.
+- If the app becomes multilingual, add language-specific routes and reciprocal `hreflang` links before enabling localized indexing.
+
+## License
 
 MIT License. See [LICENSE.txt](./LICENSE.txt).

@@ -106,21 +106,26 @@ const Index = () => {
           // cookieless pings to fire before consent in basic mode.
           //
           // Instead we:
-          //   1. Ensure GCM v2 defaults exist when a consent mode is enabled
+          //   1. Keep the GA property disabled while analytics consent is absent
           //   2. Register the gtag.js load + gtag('config') call as a consent-dependent
           //      action — it only runs once the visitor grants analytics consent.
           if (googleAnalyticsId && typeof googleAnalyticsId === 'string' && googleAnalyticsId.match(/^G-[A-Z0-9]+$/i)) {
             const win = window as any;
 
-            // In dev/catch-all paths the server may not have injected the head block.
-            // This is idempotent and runs only when native or external consent is enabled.
-            consentManager.ensureGoogleConsentDefaults();
-
             // Load gtag.js and call config ONLY after analytics consent is granted.
             // No GA network request of any kind is made before this callback fires.
             const gaId = googleAnalyticsId;
+            const gaDisableKey = `ga-disable-${gaId}`;
+            const syncGaDisabled = () => {
+              win[gaDisableKey] = !consentManager.isGranted('analytics');
+            };
+            syncGaDisabled();
+            win.__lynxGaConsentUnsubscribe?.();
+            win.__lynxGaConsentUnsubscribe = consentManager.onConsentChange(syncGaDisabled);
+
             consentManager.registerConsentDependentScript('analytics', () => {
               if (!consentManager.isGranted('analytics')) return;
+              win[gaDisableKey] = false;
               consentManager.ensureGoogleConsentDefaults();
               if (typeof win.gtag !== 'function') {
                 win.dataLayer = win.dataLayer || [];

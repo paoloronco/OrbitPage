@@ -33,6 +33,9 @@ import { dbAll, dbGet, dbRun } from './database.js';
 describe('API Endpoints', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(dbGet).mockResolvedValue(null);
+    vi.mocked(dbAll).mockResolvedValue([]);
+    vi.mocked(dbRun).mockResolvedValue({ changes: 1 });
   });
 
   it('GET /health should return 200 and status ok', async () => {
@@ -228,7 +231,82 @@ describe('API Endpoints', () => {
     expect(response.body.data.legalPolicies.cookiePolicy.externalUrl).toBe('/cookies');
   });
 
-  it('GET / injects Google Consent Mode defaults before the app when analytics and consent are enabled', async () => {
+  it('GET / serves profile-specific SEO metadata and crawlable fallback links', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({
+      name: 'Paolo',
+      bio: 'Developer and maker',
+      avatar: '/uploads/avatar.png',
+      social_links: '{"github":"https://github.com/example"}',
+      show_avatar: 1,
+      tab_title: 'Paolo Links',
+      meta_description: 'All of Paolo links in one place.',
+    });
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      {
+        id: '1',
+        title: 'GitHub',
+        description: 'Open-source work',
+        url: 'https://github.com/example',
+        type: 'link',
+        is_active: 1,
+        sort_order: 0,
+      },
+    ]);
+
+    const response = await request(app)
+      .get('/')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('<title>Paolo Links</title>');
+    expect(response.text).toContain('content="All of Paolo links in one place."');
+    expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/"');
+    expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/"');
+    expect(response.text).toContain('id="lynx-structured-data"');
+    expect(response.text).toContain('<noscript>');
+    expect(response.text).toContain('href="https://github.com/example"');
+  });
+
+  it('GET /robots.txt points crawlers to the dynamic sitemap and blocks private routes', async () => {
+    const response = await request(app)
+      .get('/robots.txt')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('Allow: /');
+    expect(response.text).toContain('Disallow: /admin');
+    expect(response.text).toContain('Disallow: /api');
+    expect(response.text).toContain('Sitemap: https://links.example.test/sitemap.xml');
+  });
+
+  it('GET /sitemap.xml includes the canonical home page', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({
+      privacy_policy_url: '/privacy',
+      cookie_policy_url: '/cookies',
+    });
+
+    const response = await request(app)
+      .get('/sitemap.xml')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('<loc>https://links.example.test/</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/privacy</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/cookies</loc>');
+  });
+
+  it('unknown SPA routes return 404 and noindex to avoid duplicate indexed pages', async () => {
+    const response = await request(app).get('/not-a-real-page');
+
+    expect(response.status).toBe(404);
+    expect(response.headers['x-robots-tag']).toContain('noindex');
+    expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
+  });
+
+  it('GET / does not inject any Google tracking bootstrap before consent', async () => {
     vi.mocked(dbGet)
       .mockResolvedValueOnce({ google_analytics_id: 'G-TEST123' })
       .mockResolvedValueOnce({ mode: 'hardcoded', enabled: 1, full_config: JSON.stringify({}) });
@@ -236,15 +314,11 @@ describe('API Endpoints', () => {
     const response = await request(app).get('/');
 
     expect(response.status).toBe(200);
-    expect(response.text).toContain('id="lynx-gcm-default-consent"');
-    expect(response.text).toContain("'ad_storage': 'denied'");
-    expect(response.text).toContain("'analytics_storage': 'denied'");
-    expect(response.text).toContain("'ad_user_data': 'denied'");
-    expect(response.text).toContain("'ad_personalization': 'denied'");
+    expect(response.text).not.toContain('id="lynx-gcm-default-consent"');
+    expect(response.text).not.toContain('googletagmanager.com/gtag/js');
+    expect(response.text).not.toContain('window.dataLayer');
+    expect(response.text).not.toContain('function gtag');
     expect(response.text).not.toContain("gtag('js'");
-    expect(response.text.indexOf('id="lynx-gcm-default-consent"')).toBeLessThan(
-      response.text.indexOf('<script type="module"')
-    );
   });
 
   it('GET / does not inject Google Consent Mode defaults when consent is disabled', async () => {

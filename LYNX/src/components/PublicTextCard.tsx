@@ -7,9 +7,15 @@ interface PublicTextCardProps {
 }
 
 export const PublicTextCard = ({ link }: PublicTextCardProps) => {
-  const handleClick = () => {
+  const trackClick = () => {
     if (link.url) {
       fetch('/api/links/' + link.id + '/click', { method: 'POST' }).catch(() => {});
+    }
+  };
+
+  const handleClick = () => {
+    if (link.url) {
+      trackClick();
       window.open(link.url, '_blank');
     }
   };
@@ -95,12 +101,28 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                 )}
               </div>
             )}
-            <h3
-              className="font-semibold truncate"
-              style={link.textColor ? { color: link.textColor } : undefined}
-            >
-              {link.title || "Text Card"}
-            </h3>
+            {link.url ? (
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  trackClick();
+                }}
+                className="font-semibold truncate rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                style={link.textColor ? { color: link.textColor } : undefined}
+              >
+                {link.title || "Text Card"}
+              </a>
+            ) : (
+              <h3
+                className="font-semibold truncate"
+                style={link.textColor ? { color: link.textColor } : undefined}
+              >
+                {link.title || "Text Card"}
+              </h3>
+            )}
             {link.url && <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />}
           </div>
           {link.textItems && link.textItems.length > 0 && (
@@ -113,17 +135,17 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                     <div style={{ color: item.textColor || link.textColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || undefined }}>{item.text}</div>
                     {/* URL on second indented line without wrapping */}
                     {item.url && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(item.url!, '_blank');
-                        }}
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
                         className="ml-6 block whitespace-nowrap overflow-x-auto hover:underline hover:text-primary transition-colors text-left"
                         title={item.url}
                         style={{ color: item.textColor || link.textColor }}
                       >
                         {item.url}
-                      </button>
+                      </a>
                     )}
                   </div>
                 </li>

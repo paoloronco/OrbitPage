@@ -59,10 +59,9 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     loadIcon();
   }, [link.icon]);
   
-  const handleClick = () => {
+  const handleLinkClick = () => {
     if (link.url) {
       fetch('/api/links/' + link.id + '/click', { method: 'POST' }).catch(() => {});
-      window.open(link.url, '_blank');
     }
   };
 
@@ -123,6 +122,8 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
         <img
           src={iconUrl}
           alt={link.title || 'Link icon'}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover rounded-full"
           onError={() => {
             console.error('Error loading image:', iconUrl);
@@ -135,12 +136,18 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
 
   return (
     <Card 
-      className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group cursor-pointer`}
-      onClick={handleClick}
+      className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group`}
       style={getCustomStyles()}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        <a
+          href={link.url || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleLinkClick}
+          className="flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label={link.title ? `Open ${link.title}` : 'Open link'}
+        >
           <div className="flex-shrink-0">
             {renderIcon()}
           </div>
@@ -178,7 +185,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
               </p>
             )}
           </div>
-        </div>
+        </a>
       </div>
     </Card>
   );

@@ -55,7 +55,7 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
   });
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <main className="min-h-screen py-8 px-4">
       <div className="max-w-md mx-auto space-y-6">
         {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
 
@@ -73,7 +73,7 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
           </div>
         )}
 
-        <div className="text-center pt-8 pb-2 space-y-1">
+        <footer className="text-center pt-8 pb-2 space-y-1">
           {footerText && (
             <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
               {footerText}
@@ -115,8 +115,8 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
               Lynx
             </a>
           </p>
-        </div>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 };

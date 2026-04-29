@@ -166,6 +166,7 @@ class ConsentManager {
    */
   ensureGoogleConsentDefaults(): void {
     if (!this.config?.enabled || this.config.mode === 'disabled') return;
+    if (!this.isGranted('analytics')) return;
     if (this._configuredProviderAlreadySetsGcmDefault()) return;
 
     const win = window as any;
@@ -179,15 +180,7 @@ class ConsentManager {
       win.gtag = function () { win.dataLayer.push(arguments); };
     }
 
-    win.gtag('consent', 'default', {
-      ad_storage: 'denied',
-      analytics_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied',
-      functionality_storage: 'denied',
-      personalization_storage: 'denied',
-      wait_for_update: 2000,
-    });
+    win.gtag('consent', 'default', this._buildGcmState());
     win.__lynxGcmDefaultConsentSet = true;
   }
 
@@ -465,22 +458,31 @@ class ConsentManager {
    * by _dispatchPendingScripts() immediately after this method returns.
    */
   private _dispatchGcmUpdate(categories: Record<ConsentCategory, boolean>): void {
+    if (categories.analytics !== true) return;
     const gtag = (window as any).gtag;
     if (typeof gtag !== 'function') return;
-    gtag('consent', 'update', {
-      analytics_storage:     categories.analytics   ? 'granted' : 'denied',
-      ad_storage:            categories.marketing   ? 'granted' : 'denied',
-      ad_user_data:          categories.marketing   ? 'granted' : 'denied',
-      ad_personalization:    categories.marketing   ? 'granted' : 'denied',
-      functionality_storage: categories.preferences ? 'granted' : 'denied',
-      personalization_storage: categories.preferences ? 'granted' : 'denied',
-    });
+    gtag('consent', 'update', this._buildGcmState(categories));
   }
 
   private _safeCall(fn: () => void): void {
     try { fn(); } catch (e) {
       console.error('[LynxConsent] Script loader error:', e);
     }
+  }
+
+  private _buildGcmState(categories?: Partial<Record<ConsentCategory, boolean>>) {
+    const isAllowed = (category: ConsentCategory) =>
+      categories ? categories[category] === true : this.isGranted(category);
+
+    return {
+      analytics_storage: 'granted',
+      ad_storage: isAllowed('marketing') ? 'granted' : 'denied',
+      ad_user_data: isAllowed('marketing') ? 'granted' : 'denied',
+      ad_personalization: isAllowed('marketing') ? 'granted' : 'denied',
+      functionality_storage: isAllowed('preferences') ? 'granted' : 'denied',
+      personalization_storage: isAllowed('preferences') ? 'granted' : 'denied',
+      wait_for_update: 2000,
+    };
   }
 
   private _isExternalCategoryGranted(category: ConsentCategory): boolean {

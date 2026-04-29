@@ -55,6 +55,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const ENABLE_HTTPS = String(process.env.ENABLE_HTTPS || '').toLowerCase() === 'true' || process.env.ENABLE_HTTPS === '1';
 const SSL_PORT = Number.parseInt(process.env.SSL_PORT || '', 10) || 8443;
+const PUBLIC_SITE_URL = String(process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '').trim();
+const PUBLIC_SITE_NAME = String(process.env.PUBLIC_SITE_NAME || 'Lynx').trim() || 'Lynx';
+const SEO_INDEXING = !['0', 'false', 'no', 'off'].includes(
+  String(process.env.SEO_INDEXING ?? 'true').trim().toLowerCase()
+);
 // In production (Docker), frontend and backend are same-origin, so use 'self'
 // In development, use explicit localhost URL for CORS/CSP
 const IS_PRODUCTION = !process.env.FRONTEND_URL;
@@ -171,6 +176,12 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false
 }));
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path === '/health') {
+    res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+  }
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Serve static files with proper path resolution
@@ -186,15 +197,6 @@ if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
   console.log('Created uploads directory at:', uploadsPath);
 }
-
-const isValidGoogleAnalyticsId = (value) =>
-  typeof value === 'string' && /^G-[A-Z0-9]+$/i.test(value.trim());
-
-const getGoogleAnalyticsId = async () => {
-  const profile = await dbGet('SELECT google_analytics_id FROM profile_data ORDER BY id DESC LIMIT 1');
-  const measurementId = profile?.google_analytics_id?.trim();
-  return isValidGoogleAnalyticsId(measurementId) ? measurementId : null;
-};
 
 const normalizePolicyUrl = (value, fieldName) => {
   if (value == null) return null;
@@ -339,50 +341,6 @@ const stripDuplicateLegalUrlsFromConsentConfig = ({ legalPolicies, hardcoded, bu
   },
 });
 
-const hasGoogleConsentDefault = (value = '') =>
-  typeof value === 'string' &&
-  /gtag\s*\(\s*['"]consent['"]\s*,\s*['"]default['"]/i.test(value);
-
-const shouldInjectGoogleConsentDefaults = async () => {
-  const row = await dbGet(
-    'SELECT mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
-  );
-  if (!row?.enabled || row.mode === 'disabled') return false;
-
-  const config = safeJsonParse(row.full_config, {});
-  const providerConfig = config?.builder?.providerConfig || {};
-  return !hasGoogleConsentDefault(providerConfig.headSnippet) &&
-    !hasGoogleConsentDefault(providerConfig.bodySnippet);
-};
-
-const injectGoogleConsentDefaults = (html) => {
-  if (hasGoogleConsentDefault(html)) return html;
-  // Inject ONLY the gtag stub + GCM v2 defaults (all denied).
-  // The actual gtag.js script is intentionally NOT loaded here.
-  // Loading gtag.js with ?id=G-XXX at page-load causes GA to fire cookieless pings
-  // (collect?v=2) even when analytics_storage is 'denied' — a GCM v2 basic-mode edge case.
-  // Instead, Index.tsx loads gtag.js dynamically inside registerConsentDependentScript,
-  // guaranteeing zero GA network requests until the visitor explicitly grants consent.
-  const tag = `
-    <!-- Google Consent Mode v2 defaults — gtag.js loads only after consent (Lynx) -->
-    <script id="lynx-gcm-default-consent">
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('consent', 'default', {
-        'analytics_storage': 'denied',
-        'ad_storage': 'denied',
-        'ad_user_data': 'denied',
-        'ad_personalization': 'denied',
-        'functionality_storage': 'denied',
-        'personalization_storage': 'denied',
-        'wait_for_update': 2000
-      });
-      window.__lynxGcmDefaultConsentSet = true;
-    </script>`;
-
-  return html.includes('<head>') ? html.replace('<head>', `<head>${tag}`) : `${tag}\n${html}`;
-};
-
 const setNoStoreHeaders = (res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
   res.set('Pragma', 'no-cache');
@@ -521,25 +479,253 @@ const getPublicThemePayload = async () => {
   };
 };
 
-const serveSpaIndex = async (req, res, { includeGoogleAnalytics = false } = {}) => {
+const PUBLIC_SPA_ROUTES = new Set(['/', '/privacy', '/cookies', '/admin']);
+
+const escapeHtml = (value = '') => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+const stripHtml = (value = '') => String(value).replace(/<[^>]*>/g, ' ');
+
+const compactText = (value = '', maxLength = 160) => {
+  const compacted = stripHtml(value).replace(/\s+/g, ' ').trim();
+  if (compacted.length <= maxLength) return compacted;
+  return `${compacted.slice(0, maxLength - 1).trim()}...`;
+};
+
+const safeJsonForHtml = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
+
+const normalizeOrigin = (value) => {
+  if (!value) return '';
+  try {
+    const parsed = new URL(value);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return '';
+    parsed.pathname = '';
+    parsed.search = '';
+    parsed.hash = '';
+    return parsed.toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+};
+
+const getRequestOrigin = (req) => {
+  const configuredOrigin = normalizeOrigin(PUBLIC_SITE_URL);
+  if (configuredOrigin) return configuredOrigin;
+
+  const forwardedProto = req.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const forwardedHost = req.get('x-forwarded-host')?.split(',')[0]?.trim();
+  const protocol = forwardedProto || req.protocol || 'http';
+  const host = forwardedHost || req.get('host') || `localhost:${PORT}`;
+  return `${protocol}://${host}`.replace(/\/$/, '');
+};
+
+const toAbsoluteHttpUrl = (value, origin) => {
+  if (!value || typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return null;
+  try {
+    const url = new URL(trimmed, origin);
+    return ['http:', 'https:'].includes(url.protocol) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+};
+
+const canonicalPathForRequest = (req) => {
+  const pathOnly = req.path || '/';
+  if (pathOnly === '/privacy' || pathOnly === '/cookies' || pathOnly === '/admin') return pathOnly;
+  return '/';
+};
+
+const getPageKind = (pathName) => {
+  if (pathName === '/privacy') return 'privacy';
+  if (pathName === '/cookies') return 'cookies';
+  if (pathName === '/admin') return 'admin';
+  return 'home';
+};
+
+const getSocialUrls = (profile, origin) => Object.values(profile?.social_links || {})
+  .map((url) => toAbsoluteHttpUrl(url, origin))
+  .filter(Boolean);
+
+const getSeoTitle = (profile, pageKind) => {
+  if (pageKind === 'privacy') return `Privacy Policy | ${profile?.name || PUBLIC_SITE_NAME}`;
+  if (pageKind === 'cookies') return `Cookie Policy | ${profile?.name || PUBLIC_SITE_NAME}`;
+  if (pageKind === 'admin') return `Admin | ${PUBLIC_SITE_NAME}`;
+  return profile?.tab_title || profile?.name || PUBLIC_SITE_NAME;
+};
+
+const getSeoDescription = (profile, pageKind) => {
+  if (pageKind === 'privacy') return 'Privacy information for this Lynx instance.';
+  if (pageKind === 'cookies') return 'Cookie policy information for this Lynx instance.';
+  if (pageKind === 'admin') return 'Private Lynx administration area.';
+  return compactText(
+    profile?.meta_description ||
+    profile?.bio ||
+    'A personal link page powered by the open-source Lynx link hub.',
+    160
+  );
+};
+
+const buildStructuredData = ({ profile, links, origin, canonicalUrl, pageKind }) => {
+  const pageName = getSeoTitle(profile, pageKind);
+  const description = getSeoDescription(profile, pageKind);
+  const sameAs = getSocialUrls(profile, origin);
+  const image = toAbsoluteHttpUrl(profile?.avatar, origin);
+
+  const graph = [
+    {
+      '@type': 'WebSite',
+      '@id': `${origin}/#website`,
+      url: `${origin}/`,
+      name: profile?.name || PUBLIC_SITE_NAME,
+      description,
+    },
+    {
+      '@type': pageKind === 'home' ? 'ProfilePage' : 'WebPage',
+      '@id': `${canonicalUrl}#webpage`,
+      url: canonicalUrl,
+      name: pageName,
+      description,
+      isPartOf: { '@id': `${origin}/#website` },
+    },
+  ];
+
+  if (pageKind === 'home' && profile?.name) {
+    graph.push({
+      '@type': 'Person',
+      '@id': `${origin}/#person`,
+      name: profile.name,
+      description: compactText(profile.bio || '', 240),
+      image: image || undefined,
+      sameAs: sameAs.length ? sameAs : undefined,
+      mainEntityOfPage: { '@id': `${canonicalUrl}#webpage` },
+    });
+  }
+
+  const linkItems = (links || [])
+    .filter((link) => link?.type === 'link' && link?.title && toAbsoluteHttpUrl(link.url, origin))
+    .slice(0, 50)
+    .map((link) => ({
+      '@type': 'WebPage',
+      name: compactText(link.title, 120),
+      description: compactText(link.description || '', 180) || undefined,
+      url: toAbsoluteHttpUrl(link.url, origin),
+    }));
+
+  if (pageKind === 'home' && linkItems.length) {
+    graph.push({
+      '@type': 'ItemList',
+      '@id': `${origin}/#links`,
+      itemListElement: linkItems.map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item,
+      })),
+    });
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': graph,
+  };
+};
+
+const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, robots, structuredData }) => {
+  const cardType = imageUrl ? 'summary_large_image' : 'summary';
+  return [
+    `<title>${escapeHtml(title)}</title>`,
+    `<meta name="description" content="${escapeHtml(description)}" />`,
+    `<meta name="robots" content="${escapeHtml(robots)}" />`,
+    `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(canonicalUrl)}" />`,
+    `<meta property="og:title" content="${escapeHtml(title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(description)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
+    `<meta property="og:site_name" content="${escapeHtml(PUBLIC_SITE_NAME)}" />`,
+    imageUrl ? `<meta property="og:image" content="${escapeHtml(imageUrl)}" />` : '',
+    `<meta name="twitter:card" content="${cardType}" />`,
+    `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
+    imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}" />` : '',
+    `<script type="application/ld+json" id="lynx-structured-data">${safeJsonForHtml(structuredData)}</script>`,
+  ].filter(Boolean).join('\n    ');
+};
+
+const stripStaticSeoTags = (html) => html
+  .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
+  .replace(/<meta\s+(?:name|property)=["'](?:description|robots|twitter:[^"']+|og:[^"']+)["'][^>]*>\s*/gi, '')
+  .replace(/<link\s+rel=["'](?:canonical|alternate)["'][^>]*>\s*/gi, '')
+  .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, '');
+
+const buildNoScriptPublicContent = (profile, links, origin) => {
+  const visibleLinks = (links || [])
+    .filter((link) => link?.type === 'link' && link?.title && toAbsoluteHttpUrl(link.url, origin))
+    .slice(0, 100);
+
+  const title = profile?.name || PUBLIC_SITE_NAME;
+  const bio = compactText(profile?.bio || '', 500);
+  const items = visibleLinks.map((link) => {
+    const href = toAbsoluteHttpUrl(link.url, origin);
+    const description = compactText(link.description || '', 220);
+    return `<li><a href="${escapeHtml(href)}" rel="noopener noreferrer">${escapeHtml(link.title)}</a>${description ? `<p>${escapeHtml(description)}</p>` : ''}</li>`;
+  }).join('');
+
+  return `<noscript><main><h1>${escapeHtml(title)}</h1>${bio ? `<p>${escapeHtml(bio)}</p>` : ''}${items ? `<ul>${items}</ul>` : ''}</main></noscript>`;
+};
+
+const injectSeoIntoHtml = (html, { seoTags, noScriptContent }) => {
+  let nextHtml = stripStaticSeoTags(html);
+  nextHtml = nextHtml.replace('</head>', `    ${seoTags}\n  </head>`);
+  if (noScriptContent) {
+    nextHtml = nextHtml.replace('<div id="root"></div>', `<div id="root"></div>\n    ${noScriptContent}`);
+  }
+  return nextHtml;
+};
+
+const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
+  const origin = getRequestOrigin(req);
+  const pathName = canonicalPathForRequest(req);
+  const pageKind = getPageKind(pathName);
+  const canonicalUrl = new URL(pathName, origin).toString();
+  const [profile, links] = pageKind === 'admin'
+    ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
+    : await Promise.all([getPublicProfilePayload(), getPublicLinksPayload()]);
+
+  const title = getSeoTitle(profile, pageKind);
+  const description = getSeoDescription(profile, pageKind);
+  const imageUrl = toAbsoluteHttpUrl(profile?.avatar, origin);
+  const shouldIndex = SEO_INDEXING && statusCode < 400 && pageKind !== 'admin';
+  const robots = shouldIndex ? 'index, follow, max-image-preview:large' : 'noindex, nofollow, noarchive';
+  const structuredData = buildStructuredData({ profile, links, origin, canonicalUrl, pageKind });
+
+  return {
+    seoTags: renderSeoTags({ title, description, canonicalUrl, imageUrl, robots, structuredData }),
+    noScriptContent: pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
+    robots,
+  };
+};
+
+const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
   try {
     let html = await fs.promises.readFile(indexHtmlPath, 'utf8');
-    if (includeGoogleAnalytics) {
-      const [measurementId, injectDefaults] = await Promise.all([
-        getGoogleAnalyticsId(),
-        shouldInjectGoogleConsentDefaults(),
-      ]);
-      if (measurementId && injectDefaults) {
-        html = injectGoogleConsentDefaults(html);
-      }
-    }
+    const seo = await buildSeoContext(req, { statusCode });
+    html = injectSeoIntoHtml(html, seo);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
-    res.type('html').send(html);
+    if (seo.robots.startsWith('noindex')) {
+      res.set('X-Robots-Tag', seo.robots);
+    }
+    res.status(statusCode).type('html').send(html);
   } catch (error) {
     console.error('Failed to serve SPA index:', error);
-    res.sendFile(indexHtmlPath);
+    res.status(statusCode).sendFile(indexHtmlPath);
   }
 };
 
@@ -553,9 +739,61 @@ const spaLimiter = rateLimit({
   message: { success: false, error: "Too many requests, please try again later." },
 });
 
-// Serve the public page with the GA tag already present in the initial HTML.
+// Serve the public page. GA is loaded client-side only after analytics consent.
 app.get('/', spaLimiter, (req, res) => {
-  serveSpaIndex(req, res, { includeGoogleAnalytics: true });
+  serveSpaIndex(req, res);
+});
+
+app.get('/robots.txt', (req, res) => {
+  const origin = getRequestOrigin(req);
+  const lines = SEO_INDEXING
+    ? [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /admin',
+        'Disallow: /api',
+        '',
+        `Sitemap: ${origin}/sitemap.xml`,
+      ]
+    : [
+        'User-agent: *',
+        'Disallow: /',
+      ];
+
+  res.type('text/plain').send(`${lines.join('\n')}\n`);
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  const origin = getRequestOrigin(req);
+  const now = new Date().toISOString();
+  const urls = [
+    { loc: `${origin}/`, priority: '1.0', changefreq: 'weekly' },
+  ];
+
+  try {
+    const legalUrls = await getProfileLegalUrls();
+    if (legalUrls.privacyPolicyUrl === '/privacy') {
+      urls.push({ loc: `${origin}/privacy`, priority: '0.3', changefreq: 'monthly' });
+    }
+    if (legalUrls.cookiePolicyUrl === '/cookies') {
+      urls.push({ loc: `${origin}/cookies`, priority: '0.3', changefreq: 'monthly' });
+    }
+  } catch (error) {
+    console.warn('Sitemap generated without legal policy URLs:', error?.message || error);
+  }
+
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((url) => `  <url>
+    <loc>${escapeHtml(url.loc)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`).join('\n')}
+</urlset>
+`;
+
+  res.type('application/xml').send(body);
 });
 
 // Serve static files from the dist directory
@@ -2114,7 +2352,8 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, async (req, res) =
 // Catch-all route for SPA
 app.get('*', spaLimiter, (req, res) => {
   console.log(`SPA catch-all serving index.html for: ${req.path}`);
-  serveSpaIndex(req, res);
+  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) ? 200 : 404;
+  serveSpaIndex(req, res, { statusCode });
 });
 
 export { app };
