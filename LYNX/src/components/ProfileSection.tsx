@@ -9,6 +9,7 @@ import { Edit, Camera, Linkedin, Github, Instagram, Facebook, Twitter, Youtube }
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import { Switch } from "@/components/ui/switch";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { internalAssetPath, withBasePath } from "@/lib/base-path";
 
 interface ProfileData {
   name: string;
@@ -172,9 +173,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
   const getAvatarUrl = (avatar?: string | null) => {
     if (!avatar) return profileAvatar as unknown as string;
     if (avatar.startsWith('data:') || avatar.startsWith('blob:') || avatar.startsWith('http')) return avatar;
-    if (avatar.startsWith('/')) return avatar;
-    // If it's a relative path, assume uploads
-    return `/uploads/${avatar.replace(/^\/+/, '')}`;
+    return internalAssetPath(avatar) || (profileAvatar as unknown as string);
   };
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,7 +199,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
           <AvatarImage
             src={getAvatarUrl(current.avatar)}
             alt={current.name || 'User'}
-            onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.svg'; }}
+            onError={(e) => { (e.target as HTMLImageElement).src = withBasePath('/placeholder.svg'); }}
           />
           <AvatarFallback className="text-2xl font-bold gradient-text">
             {(current.name && current.name.length > 0) ? current.name.charAt(0) : 'U'}

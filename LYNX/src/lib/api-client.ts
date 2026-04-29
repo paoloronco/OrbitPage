@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+import { apiPath } from './base-path';
 
 // --- Secure token storage (AES-GCM via Web Crypto with sessionStorage fallback) ---
 //
@@ -273,7 +273,7 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
 
   // Prevent any caching of API responses and bust caches for GETs
   const method = (options.method || 'GET').toUpperCase();
-  let url = `${API_BASE}${endpoint}`;
+  let url = apiPath(endpoint);
   if (method === 'GET') {
     const sep = url.includes('?') ? '&' : '?';
     url = `${url}${sep}_ts=${Date.now()}`;
@@ -437,7 +437,7 @@ export const linksApi = {
   export: async (): Promise<Blob> => {
     try {
       const token = await getAuthTokenAsync();
-      const resp = await fetch(`${API_BASE}/links/export`, {
+      const resp = await fetch(apiPath('/links/export'), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       
@@ -467,7 +467,7 @@ export const linksApi = {
 
   trackClick: async (id: string): Promise<void> => {
     try {
-      await fetch(`${API_BASE}/links/${encodeURIComponent(id)}/click`, { method: 'POST' });
+      await fetch(apiPath(`/links/${encodeURIComponent(id)}/click`), { method: 'POST' });
     } catch { /* fire-and-forget, don't break the UI */ }
   },
 };

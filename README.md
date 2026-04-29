@@ -200,6 +200,9 @@ Open:
 | `ENABLE_HTTPS` | `false` | Set to `true` or `1` for self-signed HTTPS. |
 | `SSL_PORT` | `8443` | HTTPS port. |
 | `FRONTEND_URL` | same-origin mode | Optional dev CORS/CSP origin, e.g. `http://localhost:8080`. |
+| `BASE_PATH` | unset | Optional additional mount path, e.g. `/lynx`. When set, the same instance works at both `/` and `/lynx`. |
+| `PUBLIC_BASE_PATH` | unset | Backward-compatible alias for `BASE_PATH`. |
+| `VITE_BASE_PATH` | unset | Optional dev-server equivalent of `BASE_PATH` when using `npm run dev`; production uses runtime `BASE_PATH`. |
 | `PUBLIC_SITE_URL` | request host | Optional canonical public URL, e.g. `https://links.example.com`. Set this behind proxies or platforms where request host headers are not stable. |
 | `PUBLIC_SITE_NAME` | `Lynx` | Site name used in generated Open Graph, Twitter Card, and Schema.org metadata. |
 | `SEO_INDEXING` | `true` | Set to `false`, `0`, `no`, or `off` to emit `noindex` metadata and a blocking `robots.txt` for private/staging deployments. |
@@ -506,6 +509,23 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 ## SEO and indexing setup
 
 Lynx generates SEO metadata from each deployment's saved profile, so forks and self-hosted instances do not need to edit source files for basic discoverability.
+
+### Optional base path
+
+Set `BASE_PATH` when the same Lynx instance should also be available below a subpath:
+
+```bash
+BASE_PATH=/lynx
+```
+
+With that setting, Lynx serves the same app from both `/` and `/lynx`:
+
+- Public page: `/` and `/lynx`
+- Admin: `/admin` and `/lynx/admin`
+- API: `/api/...` and `/lynx/api/...`
+- Static assets/uploads: `/assets/...`, `/uploads/...`, `/lynx/assets/...`, and `/lynx/uploads/...`
+
+The server injects the configured base path into the frontend at runtime, so production Docker/Node deployments only need `BASE_PATH`. When running the Vite dev server directly, also set `VITE_BASE_PATH=/lynx` so the dev frontend can choose the same React Router basename.
 
 ### What Lynx does by default
 

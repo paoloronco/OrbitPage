@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
+import { withBasePath } from "@/lib/base-path";
 
 type PolicyKind = "privacy" | "cookie";
 type PolicyState = NonNullable<ConsentConfigData["legalPolicies"]>["privacyPolicy"];
@@ -71,9 +72,9 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
         setPolicy(nextPolicy);
 
         const externalUrl = nextPolicy?.externalUrl?.trim();
-        if (nextPolicy?.mode === "external" && externalUrl && externalUrl !== path) {
+        if (nextPolicy?.mode === "external" && externalUrl && externalUrl !== path && externalUrl !== withBasePath(path)) {
           setRedirecting(true);
-          window.location.replace(externalUrl);
+          window.location.replace(withBasePath(externalUrl));
           return;
         }
       } catch (err: any) {
@@ -109,7 +110,7 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
   return (
     <main className="min-h-screen bg-white px-4 py-10 text-slate-950" style={{ colorScheme: "light" }}>
       <div className="mx-auto w-full max-w-3xl">
-        <a className="text-sm text-slate-600 underline hover:text-blue-700" href="/">
+        <a className="text-sm text-slate-600 underline hover:text-blue-700" href={withBasePath('/')}>
           Back to home
         </a>
 

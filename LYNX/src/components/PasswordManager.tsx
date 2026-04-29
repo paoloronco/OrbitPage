@@ -7,6 +7,7 @@ import { Eye, EyeOff, Key, CheckCircle, AlertTriangle, Shield } from "lucide-rea
 import { isPasswordStrong } from "@/lib/auth";
 import { DEMO_MODE } from "@/lib/config";
 import { authApi } from "@/lib/api-client";
+import { apiPath, withBasePath } from "@/lib/base-path";
 
 type MessageType = 'success' | 'error' | 'info' | 'warning';
 
@@ -76,7 +77,7 @@ export const PasswordManager = () => {
         setTimeout(() => {
           // No need to logout since the password change was successful
           // and we already have a valid token
-          window.location.href = '/admin';
+          window.location.href = withBasePath('/admin');
         }, 2000);
       } else {
         const errorMessage = result.error || 'Failed to change password. Please try again.';
@@ -102,7 +103,7 @@ export const PasswordManager = () => {
     setTokenResetLoading(true);
     setTokenResetMessage(null);
     try {
-      const response = await fetch('/api/auth/reset-via-token', {
+      const response = await fetch(apiPath('/auth/reset-via-token'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: resetToken, newPassword: resetNewPassword }),
@@ -133,7 +134,7 @@ export const PasswordManager = () => {
     
     // Redirect to setup page
     setTimeout(() => {
-      window.location.href = '/admin';
+      window.location.href = withBasePath('/admin');
     }, 2000);
   };
 

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Linkedin, Github, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { internalAssetPath } from "@/lib/base-path";
 
 interface ProfileData {
   name: string;
@@ -210,6 +211,5 @@ export const PublicProfileSection = ({ profile, fallbackName = "Your Name" }: Pu
 function getAvatarUrl(avatar?: string | null) {
   if (!avatar) return profileAvatar as unknown as string;
   if (avatar.startsWith('data:') || avatar.startsWith('blob:') || avatar.startsWith('http')) return avatar;
-  if (avatar.startsWith('/')) return avatar;
-  return `/uploads/${avatar.replace(/^\/+/, '')}`;
+  return internalAssetPath(avatar) || (profileAvatar as unknown as string);
 }

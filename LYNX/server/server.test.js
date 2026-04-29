@@ -1,6 +1,10 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 
+vi.hoisted(() => {
+  process.env.BASE_PATH = '/lynx';
+});
+
 // Mock database.js before importing server.js
 vi.mock('./database.js', () => ({
   initializeDatabase: vi.fn().mockResolvedValue(true),
@@ -102,6 +106,27 @@ describe('API Endpoints', () => {
     expect(response.body.profile.privacy_policy_url).toBe('https://example.com/privacy');
     expect(response.body.profile.cookie_policy_url).toBe('https://example.com/cookies');
     expect(response.body.links).toHaveLength(1);
+    expect(response.body.theme.primary).toBe('#111111');
+  });
+
+  it('GET /lynx/api/public-page should serve the same API through BASE_PATH', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({
+        name: 'Paolo',
+        bio: 'Test bio',
+        avatar: '/uploads/avatar.png',
+        social_links: '{}',
+        show_avatar: 1,
+      })
+      .mockResolvedValueOnce({
+        full_config: JSON.stringify({ primary: '#111111', background: '#ffffff', foreground: '#222222' }),
+      });
+    vi.mocked(dbAll).mockResolvedValueOnce([]);
+
+    const response = await request(app).get('/lynx/api/public-page');
+
+    expect(response.status).toBe(200);
+    expect(response.body.profile.name).toBe('Paolo');
     expect(response.body.theme.primary).toBe('#111111');
   });
 
@@ -268,6 +293,29 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('href="https://github.com/example"');
   });
 
+  it('GET /lynx serves the SPA with base-path-aware metadata and runtime config', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({
+      name: 'Paolo',
+      bio: 'Developer and maker',
+      avatar: '/uploads/avatar.png',
+      social_links: '{}',
+      show_avatar: 1,
+      tab_title: 'Paolo Links',
+      meta_description: 'All of Paolo links in one place.',
+    });
+    vi.mocked(dbAll).mockResolvedValueOnce([]);
+
+    const response = await request(app)
+      .get('/lynx')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('window.__LYNX_BASE_PATH__="/lynx"');
+    expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/lynx/"');
+    expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/lynx/"');
+  });
+
   it('GET /robots.txt points crawlers to the dynamic sitemap and blocks private routes', async () => {
     const response = await request(app)
       .get('/robots.txt')
@@ -278,7 +326,10 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('Allow: /');
     expect(response.text).toContain('Disallow: /admin');
     expect(response.text).toContain('Disallow: /api');
+    expect(response.text).toContain('Disallow: /lynx/admin');
+    expect(response.text).toContain('Disallow: /lynx/api');
     expect(response.text).toContain('Sitemap: https://links.example.test/sitemap.xml');
+    expect(response.text).toContain('Sitemap: https://links.example.test/lynx/sitemap.xml');
   });
 
   it('GET /sitemap.xml includes the canonical home page', async () => {
@@ -296,6 +347,31 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<loc>https://links.example.test/</loc>');
     expect(response.text).toContain('<loc>https://links.example.test/privacy</loc>');
     expect(response.text).toContain('<loc>https://links.example.test/cookies</loc>');
+  });
+
+  it('GET /lynx/sitemap.xml includes BASE_PATH-prefixed canonical URLs', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({
+      privacy_policy_url: '/privacy',
+      cookie_policy_url: '/cookies',
+    });
+
+    const response = await request(app)
+      .get('/lynx/sitemap.xml')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(response.status).toBe(200);
+    expect(response.text).toContain('<loc>https://links.example.test/lynx/</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/lynx/privacy</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/lynx/cookies</loc>');
+  });
+
+  it('GET /lynx/admin serves the admin route with noindex headers', async () => {
+    const response = await request(app).get('/lynx/admin');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-robots-tag']).toContain('noindex');
+    expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
   });
 
   it('unknown SPA routes return 404 and noindex to avoid duplicate indexed pages', async () => {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { ExternalLink, Copy, Check } from "lucide-react";
 import { LinkData } from "./LinkCard";
+import { apiPath, internalAssetPath } from "@/lib/base-path";
 
 interface PublicLinkCardProps {
   link: LinkData;
@@ -20,13 +21,13 @@ const getIconUrl = (iconPath?: string | null) => {
     return iconPath;
   }
   
-  // If it's an absolute path (starts with '/'), return as-is so we don't duplicate /uploads
+  // If it's an absolute internal path, prefix the active app base path.
   if (iconPath.startsWith('/')) {
-    return iconPath;
+    return internalAssetPath(iconPath);
   }
   
   // For relative paths, assume they're in the uploads directory
-  return `/uploads/${iconPath.replace(/^\/+/, '')}`;
+  return internalAssetPath(iconPath);
 };
 
 export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
@@ -61,7 +62,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   
   const handleLinkClick = () => {
     if (link.url) {
-      fetch('/api/links/' + link.id + '/click', { method: 'POST' }).catch(() => {});
+      fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
     }
   };
 

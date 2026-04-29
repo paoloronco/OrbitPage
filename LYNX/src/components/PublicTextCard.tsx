@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Type, ExternalLink } from "lucide-react";
 import { LinkData } from "./LinkCard";
+import { apiPath, internalAssetPath } from "@/lib/base-path";
 
 interface PublicTextCardProps {
   link: LinkData;
@@ -9,7 +10,7 @@ interface PublicTextCardProps {
 export const PublicTextCard = ({ link }: PublicTextCardProps) => {
   const trackClick = () => {
     if (link.url) {
-      fetch('/api/links/' + link.id + '/click', { method: 'POST' }).catch(() => {});
+      fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
     }
   };
 
@@ -95,7 +96,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             {link.icon && (
               <div className="flex-shrink-0">
                 {link.iconType === 'image' || link.iconType === 'svg' ? (
-                  <img src={link.icon} alt="" className="w-5 h-5 object-cover rounded" />
+                  <img src={internalAssetPath(link.icon) || ''} alt="" className="w-5 h-5 object-cover rounded" />
                 ) : (
                   <span className="text-lg">{link.icon}</span>
                 )}

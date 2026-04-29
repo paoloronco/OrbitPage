@@ -4,12 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { getActiveBasePath } from "@/lib/base-path";
 
 const Index = lazy(() => import("./pages/Index"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cookies = lazy(() => import("./pages/Cookies"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const routerBaseName = getActiveBasePath();
 
 const queryClient = new QueryClient();
 
@@ -18,7 +20,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={routerBaseName || undefined}>
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />

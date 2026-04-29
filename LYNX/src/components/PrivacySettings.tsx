@@ -39,6 +39,7 @@ import {
   Type,
 } from 'lucide-react';
 import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
+import { withBasePath } from '@/lib/base-path';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -348,7 +349,7 @@ function PolicyConfigurator({
               <p className="text-xs leading-5 text-slate-500">Selected: {hostedFileName}</p>
             )}
           </FieldRow>
-          <a className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 underline" href={hostedPath} target="_blank" rel="noopener noreferrer">
+          <a className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 underline" href={withBasePath(hostedPath)} target="_blank" rel="noopener noreferrer">
             Preview {hostedPath}
             <ExternalLink className="h-3 w-3" />
           </a>
@@ -410,10 +411,10 @@ function LegalPoliciesForm({
           <PolicyConfigurator kind="cookie" title="Cookie Policy" {...cookie} />
           <div className="flex flex-wrap gap-3 rounded-lg border border-slate-200 bg-white p-3 text-xs">
             <span className="font-semibold text-slate-700">Preview built-in pages:</span>
-            <a className="inline-flex items-center gap-1 text-blue-700 underline" href="/privacy" target="_blank" rel="noopener noreferrer">
+            <a className="inline-flex items-center gap-1 text-blue-700 underline" href={withBasePath('/privacy')} target="_blank" rel="noopener noreferrer">
               /privacy <ExternalLink className="h-3 w-3" />
             </a>
-            <a className="inline-flex items-center gap-1 text-blue-700 underline" href="/cookies" target="_blank" rel="noopener noreferrer">
+            <a className="inline-flex items-center gap-1 text-blue-700 underline" href={withBasePath('/cookies')} target="_blank" rel="noopener noreferrer">
               /cookies <ExternalLink className="h-3 w-3" />
             </a>
           </div>

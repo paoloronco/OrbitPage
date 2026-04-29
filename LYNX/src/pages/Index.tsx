@@ -7,6 +7,7 @@ import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from "@
 import { consentManager } from "@/lib/consent-manager";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { withBasePath } from "@/lib/base-path";
 
 interface ProfileData {
   name: string;
@@ -232,8 +233,8 @@ const Index = () => {
         hardcoded: {
           ...consentConfig.hardcoded,
           urls: {
-            privacyPolicy: profile.privacyPolicyUrl || '',
-            cookiePolicy: profile.cookiePolicyUrl || '',
+            privacyPolicy: profile.privacyPolicyUrl ? withBasePath(profile.privacyPolicyUrl) : '',
+            cookiePolicy: profile.cookiePolicyUrl ? withBasePath(profile.cookiePolicyUrl) : '',
           },
         },
       }

@@ -60,6 +60,13 @@ const PUBLIC_SITE_NAME = String(process.env.PUBLIC_SITE_NAME || 'Lynx').trim() |
 const SEO_INDEXING = !['0', 'false', 'no', 'off'].includes(
   String(process.env.SEO_INDEXING ?? 'true').trim().toLowerCase()
 );
+const normalizeBasePath = (value = '') => {
+  const trimmed = String(value || '').trim();
+  if (!trimmed || trimmed === '/') return '';
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.replace(/\/+$/, '');
+};
+const BASE_PATH = normalizeBasePath(process.env.BASE_PATH || process.env.PUBLIC_BASE_PATH || '');
 // In production (Docker), frontend and backend are same-origin, so use 'self'
 // In development, use explicit localhost URL for CORS/CSP
 const IS_PRODUCTION = !process.env.FRONTEND_URL;
@@ -67,6 +74,19 @@ const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
 // Ensure correct client IP detection when behind a proxy/load balancer
 // This is important so express-rate-limit keys by the real client IP
 app.set('trust proxy', 1);
+
+app.use((req, res, next) => {
+  req.lynxBasePath = '';
+  if (!BASE_PATH) return next();
+
+  if (req.url === BASE_PATH || req.url.startsWith(`${BASE_PATH}/`) || req.url.startsWith(`${BASE_PATH}?`)) {
+    req.lynxBasePath = BASE_PATH;
+    const strippedUrl = req.url.slice(BASE_PATH.length);
+    req.url = !strippedUrl ? '/' : strippedUrl.startsWith('?') ? `/${strippedUrl}` : strippedUrl;
+  }
+
+  next();
+});
 
 const USERCENTRICS_CSP_SOURCES = [
   "https://policygenerator.usercentrics.eu",
@@ -523,6 +543,13 @@ const getRequestOrigin = (req) => {
   return `${protocol}://${host}`.replace(/\/$/, '');
 };
 
+const getActiveBasePath = (req) => req.lynxBasePath || '';
+
+const withRequestBasePath = (req, pathName = '/') => {
+  const normalizedPath = pathName.startsWith('/') ? pathName : `/${pathName}`;
+  return `${getActiveBasePath(req)}${normalizedPath}` || '/';
+};
+
 const toAbsoluteHttpUrl = (value, origin) => {
   if (!value || typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -635,9 +662,10 @@ const buildStructuredData = ({ profile, links, origin, canonicalUrl, pageKind })
   };
 };
 
-const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, robots, structuredData }) => {
+const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, robots, structuredData, basePath }) => {
   const cardType = imageUrl ? 'summary_large_image' : 'summary';
   return [
+    `<script>window.__LYNX_BASE_PATH__=${safeJsonForHtml(basePath || '')};</script>`,
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
     `<meta name="robots" content="${escapeHtml(robots)}" />`,
@@ -692,7 +720,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const origin = getRequestOrigin(req);
   const pathName = canonicalPathForRequest(req);
   const pageKind = getPageKind(pathName);
-  const canonicalUrl = new URL(pathName, origin).toString();
+  const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
   const [profile, links] = pageKind === 'admin'
     ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
     : await Promise.all([getPublicProfilePayload(), getPublicLinksPayload()]);
@@ -705,7 +733,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const structuredData = buildStructuredData({ profile, links, origin, canonicalUrl, pageKind });
 
   return {
-    seoTags: renderSeoTags({ title, description, canonicalUrl, imageUrl, robots, structuredData }),
+    seoTags: renderSeoTags({ title, description, canonicalUrl, imageUrl, robots, structuredData, basePath: BASE_PATH }),
     noScriptContent: pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
     robots,
   };
@@ -746,14 +774,19 @@ app.get('/', spaLimiter, (req, res) => {
 
 app.get('/robots.txt', (req, res) => {
   const origin = getRequestOrigin(req);
+  const sitemapUrls = [
+    `${origin}/sitemap.xml`,
+    BASE_PATH ? `${origin}${BASE_PATH}/sitemap.xml` : null,
+  ].filter(Boolean);
   const lines = SEO_INDEXING
     ? [
         'User-agent: *',
         'Allow: /',
         'Disallow: /admin',
         'Disallow: /api',
+        ...(BASE_PATH ? [`Disallow: ${BASE_PATH}/admin`, `Disallow: ${BASE_PATH}/api`] : []),
         '',
-        `Sitemap: ${origin}/sitemap.xml`,
+        ...sitemapUrls.map((url) => `Sitemap: ${url}`),
       ]
     : [
         'User-agent: *',
@@ -767,16 +800,16 @@ app.get('/sitemap.xml', async (req, res) => {
   const origin = getRequestOrigin(req);
   const now = new Date().toISOString();
   const urls = [
-    { loc: `${origin}/`, priority: '1.0', changefreq: 'weekly' },
+    { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
   ];
 
   try {
     const legalUrls = await getProfileLegalUrls();
     if (legalUrls.privacyPolicyUrl === '/privacy') {
-      urls.push({ loc: `${origin}/privacy`, priority: '0.3', changefreq: 'monthly' });
+      urls.push({ loc: new URL(withRequestBasePath(req, '/privacy'), origin).toString(), priority: '0.3', changefreq: 'monthly' });
     }
     if (legalUrls.cookiePolicyUrl === '/cookies') {
-      urls.push({ loc: `${origin}/cookies`, priority: '0.3', changefreq: 'monthly' });
+      urls.push({ loc: new URL(withRequestBasePath(req, '/cookies'), origin).toString(), priority: '0.3', changefreq: 'monthly' });
     }
   } catch (error) {
     console.warn('Sitemap generated without legal policy URLs:', error?.message || error);

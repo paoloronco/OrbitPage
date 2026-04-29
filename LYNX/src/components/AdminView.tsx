@@ -31,6 +31,7 @@ import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
 import { PrivacySettings } from "./PrivacySettings";
 import { utilityApi } from "@/lib/api-client";
+import { withBasePath } from "@/lib/base-path";
 
 interface ProfileData {
   name: string;
@@ -158,7 +159,7 @@ export const AdminView = ({
           </div>
 
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <a href="/" target="_blank" rel="noopener noreferrer">
+            <a href={withBasePath('/')} target="_blank" rel="noopener noreferrer">
               <Button className="admin-action admin-action-primary w-full sm:w-auto" size="sm">
                 <ExternalLink className="h-4 w-4" />
                 Public page
@@ -268,7 +269,7 @@ export const AdminView = ({
                 <p className="text-sm leading-6 text-slate-600">
                   Save changes in each editor before checking this preview. Open the public page for the full-size version.
                 </p>
-                <a href="/" target="_blank" rel="noopener noreferrer">
+                <a href={withBasePath('/')} target="_blank" rel="noopener noreferrer">
                   <Button className="admin-action admin-action-primary mt-4" size="sm">
                     <ExternalLink className="h-4 w-4" />
                     Open public page

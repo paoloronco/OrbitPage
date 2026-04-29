@@ -3,6 +3,7 @@ import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicTextCard } from "./PublicTextCard";
 import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { LinkData } from "./LinkCard";
+import { withBasePath } from "@/lib/base-path";
 
 interface ProfileData {
   name: string;
@@ -23,8 +24,8 @@ interface PublicViewProps {
 }
 
 export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cookiePolicyUrl }: PublicViewProps) => {
-  const privacyHref = privacyPolicyUrl?.trim() || undefined;
-  const cookieHref = cookiePolicyUrl?.trim() || undefined;
+  const privacyHref = privacyPolicyUrl?.trim() ? withBasePath(privacyPolicyUrl.trim()) : undefined;
+  const cookieHref = cookiePolicyUrl?.trim() ? withBasePath(cookiePolicyUrl.trim()) : undefined;
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&
