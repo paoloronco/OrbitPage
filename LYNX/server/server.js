@@ -685,41 +685,118 @@ const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, robots, str
   ].filter(Boolean).join('\n    ');
 };
 
-const hasStructuredDataType = (openingTag) => /\btype\s*=\s*(["'])application\/ld\+json\1/i.test(openingTag);
+const isTagBoundary = (char) => !char || char === '>' || char === '/' || char <= ' ';
 
-const stripStructuredDataScripts = (html) => {
+const findNextSeoTag = (html, fromIndex = 0) => {
+  const lowerHtml = html.toLowerCase();
+  const tagNames = ['title', 'meta', 'link', 'script'];
+  let next = null;
+
+  for (const tagName of tagNames) {
+    let index = lowerHtml.indexOf(`<${tagName}`, fromIndex);
+    while (index !== -1 && !isTagBoundary(lowerHtml[index + tagName.length + 1])) {
+      index = lowerHtml.indexOf(`<${tagName}`, index + 1);
+    }
+    if (index !== -1 && (!next || index < next.index)) {
+      next = { tagName, index };
+    }
+  }
+
+  return next;
+};
+
+const readTagAttributes = (openingTag) => {
+  const attributes = {};
+  let index = openingTag.indexOf(' ');
+  if (index === -1) return attributes;
+
+  while (index < openingTag.length) {
+    while (index < openingTag.length && openingTag[index] <= ' ') index += 1;
+    if (index >= openingTag.length || openingTag[index] === '>' || openingTag[index] === '/') break;
+
+    const nameStart = index;
+    while (index < openingTag.length && openingTag[index] > ' ' && openingTag[index] !== '=' && openingTag[index] !== '>' && openingTag[index] !== '/') {
+      index += 1;
+    }
+    const name = openingTag.slice(nameStart, index).toLowerCase();
+    while (index < openingTag.length && openingTag[index] <= ' ') index += 1;
+
+    let value = '';
+    if (openingTag[index] === '=') {
+      index += 1;
+      while (index < openingTag.length && openingTag[index] <= ' ') index += 1;
+      const quote = openingTag[index] === '"' || openingTag[index] === "'" ? openingTag[index] : '';
+      if (quote) {
+        index += 1;
+        const valueStart = index;
+        while (index < openingTag.length && openingTag[index] !== quote) index += 1;
+        value = openingTag.slice(valueStart, index);
+        if (openingTag[index] === quote) index += 1;
+      } else {
+        const valueStart = index;
+        while (index < openingTag.length && openingTag[index] > ' ' && openingTag[index] !== '>' && openingTag[index] !== '/') index += 1;
+        value = openingTag.slice(valueStart, index);
+      }
+    }
+
+    if (name) attributes[name] = value;
+  }
+
+  return attributes;
+};
+
+const shouldStripOpeningTag = (tagName, openingTag) => {
+  if (tagName === 'title') return true;
+
+  const attributes = readTagAttributes(openingTag);
+  if (tagName === 'script') {
+    return attributes.type?.toLowerCase() === 'application/ld+json';
+  }
+  if (tagName === 'link') {
+    const rel = attributes.rel?.toLowerCase();
+    return rel === 'canonical' || rel === 'alternate';
+  }
+  if (tagName === 'meta') {
+    const key = (attributes.name || attributes.property || '').toLowerCase();
+    return key === 'description' || key === 'robots' || key.startsWith('twitter:') || key.startsWith('og:');
+  }
+
+  return false;
+};
+
+const stripStaticSeoTags = (html) => {
   let nextHtml = String(html);
-  let lowerHtml = nextHtml.toLowerCase();
-  let scriptStart = lowerHtml.indexOf('<script');
+  let tag = findNextSeoTag(nextHtml);
 
-  while (scriptStart !== -1) {
-    const openingEnd = lowerHtml.indexOf('>', scriptStart);
+  while (tag) {
+    const lowerHtml = nextHtml.toLowerCase();
+    const openingEnd = lowerHtml.indexOf('>', tag.index);
     if (openingEnd === -1) break;
 
-    const openingTag = nextHtml.slice(scriptStart, openingEnd + 1);
-    if (!hasStructuredDataType(openingTag)) {
-      scriptStart = lowerHtml.indexOf('<script', openingEnd + 1);
+    const openingTag = nextHtml.slice(tag.index, openingEnd + 1);
+    if (!shouldStripOpeningTag(tag.tagName, openingTag)) {
+      tag = findNextSeoTag(nextHtml, openingEnd + 1);
       continue;
     }
 
-    const closingStart = lowerHtml.indexOf('</script>', openingEnd + 1);
-    if (closingStart === -1) break;
+    let removeEnd = openingEnd + 1;
+    if (tag.tagName === 'title' || tag.tagName === 'script') {
+      const closing = `</${tag.tagName}>`;
+      const closingStart = lowerHtml.indexOf(closing, openingEnd + 1);
+      if (closingStart === -1) {
+        tag = findNextSeoTag(nextHtml, openingEnd + 1);
+        continue;
+      }
+      removeEnd = closingStart + closing.length;
+    }
 
-    const closingEnd = closingStart + '</script>'.length;
-    nextHtml = `${nextHtml.slice(0, scriptStart)}${nextHtml.slice(closingEnd)}`;
-    lowerHtml = nextHtml.toLowerCase();
-    scriptStart = lowerHtml.indexOf('<script');
+    while (removeEnd < nextHtml.length && nextHtml[removeEnd] <= ' ') removeEnd += 1;
+    nextHtml = `${nextHtml.slice(0, tag.index)}${nextHtml.slice(removeEnd)}`;
+    tag = findNextSeoTag(nextHtml);
   }
 
   return nextHtml;
 };
-
-const stripStaticSeoTags = (html) => stripStructuredDataScripts(
-  String(html)
-    .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
-    .replace(/<meta\s+(?:name|property)=["'](?:description|robots|twitter:[^"']+|og:[^"']+)["'][^>]*>\s*/gi, '')
-    .replace(/<link\s+rel=["'](?:canonical|alternate)["'][^>]*>\s*/gi, '')
-);
 
 const rewriteViteAssetUrls = (html, req) => {
   const assetBase = withRequestBasePath(req, '/assets/');
