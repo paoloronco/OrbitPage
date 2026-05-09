@@ -30,7 +30,7 @@ vi.mock('./auth.js', () => ({
 }));
 
 // Now import app
-import { app } from './server.js';
+import { app, stripStaticSeoTags } from './server.js';
 import { isFirstTimeSetup } from './auth.js';
 import { dbAll, dbGet, dbRun } from './database.js';
 
@@ -321,6 +321,21 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('href="/lynx/assets/');
     expect(response.text).not.toContain('src="/assets/');
     expect(response.text).not.toContain('href="/assets/');
+  });
+
+  it('removes static structured-data scripts even when nested markup reintroduces a script tag', () => {
+    const html = [
+      '<head>',
+      '<scr<script type="application/ld+json">{"stale":true}</script>ipt type="application/ld+json">{"unsafe":true}</script>',
+      '<title>Old title</title>',
+      '</head>',
+    ].join('');
+
+    const stripped = stripStaticSeoTags(html);
+
+    expect(stripped).not.toContain('application/ld+json');
+    expect(stripped).not.toContain('<script');
+    expect(stripped).not.toContain('<title>');
   });
 
   it('GET /robots.txt points crawlers to the dynamic sitemap and blocks private routes', async () => {

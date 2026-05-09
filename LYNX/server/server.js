@@ -685,11 +685,41 @@ const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, robots, str
   ].filter(Boolean).join('\n    ');
 };
 
-const stripStaticSeoTags = (html) => html
-  .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
-  .replace(/<meta\s+(?:name|property)=["'](?:description|robots|twitter:[^"']+|og:[^"']+)["'][^>]*>\s*/gi, '')
-  .replace(/<link\s+rel=["'](?:canonical|alternate)["'][^>]*>\s*/gi, '')
-  .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, '');
+const hasStructuredDataType = (openingTag) => /\btype\s*=\s*(["'])application\/ld\+json\1/i.test(openingTag);
+
+const stripStructuredDataScripts = (html) => {
+  let nextHtml = String(html);
+  let lowerHtml = nextHtml.toLowerCase();
+  let scriptStart = lowerHtml.indexOf('<script');
+
+  while (scriptStart !== -1) {
+    const openingEnd = lowerHtml.indexOf('>', scriptStart);
+    if (openingEnd === -1) break;
+
+    const openingTag = nextHtml.slice(scriptStart, openingEnd + 1);
+    if (!hasStructuredDataType(openingTag)) {
+      scriptStart = lowerHtml.indexOf('<script', openingEnd + 1);
+      continue;
+    }
+
+    const closingStart = lowerHtml.indexOf('</script>', openingEnd + 1);
+    if (closingStart === -1) break;
+
+    const closingEnd = closingStart + '</script>'.length;
+    nextHtml = `${nextHtml.slice(0, scriptStart)}${nextHtml.slice(closingEnd)}`;
+    lowerHtml = nextHtml.toLowerCase();
+    scriptStart = lowerHtml.indexOf('<script');
+  }
+
+  return nextHtml;
+};
+
+const stripStaticSeoTags = (html) => stripStructuredDataScripts(
+  String(html)
+    .replace(/<title>[\s\S]*?<\/title>\s*/i, '')
+    .replace(/<meta\s+(?:name|property)=["'](?:description|robots|twitter:[^"']+|og:[^"']+)["'][^>]*>\s*/gi, '')
+    .replace(/<link\s+rel=["'](?:canonical|alternate)["'][^>]*>\s*/gi, '')
+);
 
 const rewriteViteAssetUrls = (html, req) => {
   const assetBase = withRequestBasePath(req, '/assets/');
@@ -2398,7 +2428,7 @@ app.get('*', spaLimiter, (req, res) => {
   serveSpaIndex(req, res, { statusCode });
 });
 
-export { app };
+export { app, stripStaticSeoTags };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
 app.listen(PORT, '0.0.0.0', async () => {
