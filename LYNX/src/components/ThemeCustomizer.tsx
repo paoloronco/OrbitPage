@@ -207,7 +207,13 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
               id="background"
               label="Background"
               value={pendingTheme.background}
-              onChange={(color) => updatePendingTheme({ background: color })}
+              onChange={(color) => {
+                const update: Partial<ThemeConfig> = { background: color };
+                if (pendingTheme.backgroundMedia?.type === 'gradient') {
+                  update.backgroundGradient = { ...pendingTheme.backgroundGradient, from: color };
+                }
+                updatePendingTheme(update);
+              }}
             />
             <ColorPicker
               id="backgroundSecondary"

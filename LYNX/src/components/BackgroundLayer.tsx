@@ -17,15 +17,18 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Pause/resume video when reduced motion preference changes
+  // React's muted JSX prop doesn't reliably set the DOM property — set it imperatively.
+  // Also re-trigger play whenever the src changes or reduced-motion preference toggles.
   useEffect(() => {
-    if (!videoRef.current) return;
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
     if (prefersReducedMotion) {
-      videoRef.current.pause();
+      v.pause();
     } else {
-      videoRef.current.play().catch(() => {});
+      v.play().catch(() => {});
     }
-  }, [prefersReducedMotion]);
+  }, [config.mediaUrl, prefersReducedMotion]);
 
   if (config.type !== "video" && config.type !== "gif") return null;
   if (!config.mediaUrl) return null;

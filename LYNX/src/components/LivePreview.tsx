@@ -45,7 +45,10 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
   });
 
   // Background derived directly from the theme (document.body is global, so we set it inline)
-  const previewBackground = `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
+  const bgType = theme.backgroundMedia?.type;
+  const previewBackground = (bgType === 'color' || bgType === 'video' || bgType === 'gif')
+    ? theme.background
+    : `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
   const previewThemeVars = getThemeCssVariables(theme) as React.CSSProperties;
 
   return (
