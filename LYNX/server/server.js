@@ -25,7 +25,7 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.1.13';
+let APP_VERSION = '4.1.14';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -137,8 +137,18 @@ app.use(cors({
 }));
 app.use(helmet({
   contentSecurityPolicy: {
+    // useDefaults: false prevents Helmet from merging in its own defaults on top of our
+    // directives. Without this, Helmet always adds `upgrade-insecure-requests` (which
+    // breaks assets on plain-HTTP deployments) and other defaults we don't want merged.
+    useDefaults: false,
     directives: {
       defaultSrc: ["'self'"],
+      // Security directives from Helmet defaults — kept explicit so they stay active
+      // now that useDefaults:false disables auto-merging.
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'self'"],
+      scriptSrcAttr: ["'none'"],
       scriptSrc: [
         "'self'", "'unsafe-inline'", "'unsafe-eval'",
         "https://www.googletagmanager.com", "https://*.googletagmanager.com",
@@ -191,11 +201,36 @@ app.use(helmet({
         "https://consentcdn.cookiebot.com",
         ...LEGAL_EMBED_CSP_SOURCES,
       ]
+      // NOTE: upgrade-insecure-requests is intentionally absent here.
+      // It is added dynamically (see middleware below) only when the connection
+      // is confirmed HTTPS — sending it on HTTP would cause the browser to upgrade
+      // every subresource request to HTTPS on the same port, breaking all assets.
     },
     reportOnly: false
   },
+  // HSTS is managed by the per-request middleware below so it is only sent when
+  // the connection is actually HTTPS (direct TLS or behind an HTTPS reverse proxy).
+  // Sending HSTS on plain HTTP is a no-op at best and confusing at worst.
+  hsts: false,
   crossOriginEmbedderPolicy: false
 }));
+
+// HTTPS-only security headers.
+// req.protocol is already normalised by Express: with `trust proxy: 1` it reads
+// X-Forwarded-Proto from the nearest trusted proxy, so Cloud Run / Nginx setups
+// that terminate TLS upstream are handled correctly.
+app.use((req, res, next) => {
+  if (req.protocol === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // Tell browsers to upgrade HTTP subresource URLs to HTTPS — safe only when the
+    // page itself is served over HTTPS; would break assets on plain-HTTP origins.
+    const csp = res.getHeader('content-security-policy');
+    if (typeof csp === 'string' && !csp.includes('upgrade-insecure-requests')) {
+      res.setHeader('content-security-policy', `${csp}; upgrade-insecure-requests`);
+    }
+  }
+  next();
+});
 app.use((req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path === '/health') {
     res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');

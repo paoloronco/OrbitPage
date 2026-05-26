@@ -7,6 +7,9 @@ interface BackgroundLayerProps {
 
 export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Only used for GIF (display:none when reduced motion). Video always plays
+  // because the site-owner explicitly configured it as a background; blocking
+  // it silently would make the background appear broken with no feedback.
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -17,18 +20,23 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // React's muted JSX prop doesn't reliably set the DOM property — set it imperatively.
-  // Also re-trigger play whenever the src changes or reduced-motion preference toggles.
+  // Set every mute/autoplay property imperatively so browser autoplay policy is
+  // satisfied regardless of how React serializes JSX attributes to the DOM:
+  //  - muted        : the JSX attribute is unreliable as a DOM property in some builds
+  //  - defaultMuted : prevents the browser from treating the video as "user-unmuted"
+  //  - playsInline  : required on iOS Safari to autoplay without entering full-screen
+  // play() is called explicitly to handle browsers that ignore the autoplay attribute.
+  // Any failure is logged so developers can diagnose real problems (codec, network, etc.)
+  // without silencing errors entirely.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     v.muted = true;
-    if (prefersReducedMotion) {
-      v.pause();
-    } else {
-      v.play().catch(() => {});
-    }
-  }, [config.mediaUrl, prefersReducedMotion]);
+    v.defaultMuted = true;
+    v.play().catch((err: Error) => {
+      console.warn("[Lynx] Background video autoplay failed:", err.name, "-", err.message);
+    });
+  }, [config.mediaUrl]);
 
   if (config.type !== "video" && config.type !== "gif") return null;
   if (!config.mediaUrl) return null;
@@ -73,7 +81,7 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
         <video
           ref={videoRef}
           src={config.mediaUrl}
-          autoPlay={!prefersReducedMotion}
+          autoPlay
           muted
           loop
           playsInline

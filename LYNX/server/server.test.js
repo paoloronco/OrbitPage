@@ -60,6 +60,29 @@ describe('API Endpoints', () => {
     expect(csp).toContain('https://*.iubenda.com');
   });
 
+  it('HTTP response: no Strict-Transport-Security header', async () => {
+    // supertest connects via plain HTTP so req.protocol === 'http'.
+    // HSTS must not be sent on non-HTTPS connections — browsers that honour it
+    // would pin the site to HTTPS even when served on plain HTTP, breaking assets.
+    const response = await request(app).get('/health');
+    expect(response.headers['strict-transport-security']).toBeUndefined();
+  });
+
+  it('HTTP response: CSP does not contain upgrade-insecure-requests', async () => {
+    // upgrade-insecure-requests in CSP tells browsers to rewrite every http://
+    // subresource URL to https:// — on a plain-HTTP server this breaks all assets
+    // (JS chunks, CSS, uploads/videos) because the HTTPS port is not listening.
+    const response = await request(app).get('/health');
+    const csp = response.headers['content-security-policy'];
+    expect(csp).not.toContain('upgrade-insecure-requests');
+  });
+
+  it('CSP contains media-src self for local video/image uploads', async () => {
+    const response = await request(app).get('/health');
+    const csp = response.headers['content-security-policy'];
+    expect(csp).toContain("media-src 'self'");
+  });
+
   it('GET /api/auth/setup-status should return setup status', async () => {
     vi.mocked(isFirstTimeSetup).mockResolvedValue(true);
     const response = await request(app).get('/api/auth/setup-status');
