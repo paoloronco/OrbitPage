@@ -486,6 +486,25 @@ export const themeApi = {
   },
 };
 
+// Background media upload API
+export const uploadApi = {
+  uploadBackgroundMedia: async (file: File): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = await getAuthTokenAsync();
+    const response = await fetch(apiPath('/upload/background'), {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error((err as any).error || 'Upload failed');
+    }
+    return response.json();
+  },
+};
+
 // ---- Consent Config API ----
 
 /** Shape of the full consent configuration persisted in the DB. */

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { PublicView } from "@/components/PublicView";
 import { CookieBanner } from "@/components/CookieBanner";
+import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { LinkData } from "@/components/LinkCard";
-import { applyTheme, normalizeTheme } from "@/lib/theme";
+import { applyTheme, normalizeTheme, BackgroundMediaConfig } from "@/lib/theme";
 import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
 import { consentManager } from "@/lib/consent-manager";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
@@ -46,6 +47,7 @@ const Index = () => {
     showAvatar: false,
   });
   const [links, setLinks] = useState<LinkData[]>([]);
+  const [backgroundMedia, setBackgroundMedia] = useState<BackgroundMediaConfig | null>(null);
   // Consent config drives whether CookieBanner is rendered
   const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
 
@@ -75,6 +77,7 @@ const Index = () => {
 
         const loadedTheme = normalizeTheme(pageData.theme);
         applyTheme(loadedTheme);
+        setBackgroundMedia(loadedTheme.backgroundMedia ?? null);
 
         const profileData = pageData.profile;
         if (profileData) {
@@ -242,6 +245,9 @@ const Index = () => {
 
   return (
     <>
+      {backgroundMedia && (
+        <BackgroundLayer config={backgroundMedia} />
+      )}
       <PublicView
         profile={profile}
         links={links}

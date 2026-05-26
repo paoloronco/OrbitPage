@@ -7,10 +7,10 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle, Palette, Type, Layout, FileDown, Upload, RotateCcw, AlertTriangle } from "lucide-react";
+import { CheckCircle, Palette, Type, Layout, FileDown, Upload, RotateCcw, AlertTriangle, ImagePlay } from "lucide-react";
 import { ThemeConfig, defaultTheme, applyTheme } from "@/lib/theme";
+import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
 
 interface ThemeCustomizerProps {
   theme: ThemeConfig;
@@ -170,7 +170,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
       )}
 
       <Tabs defaultValue="colors" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="colors" className="flex items-center gap-1">
             <Palette className="w-4 h-4" />
             Colors
@@ -182,6 +182,10 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
           <TabsTrigger value="layout" className="flex items-center gap-1">
             <Layout className="w-4 h-4" />
             Layout
+          </TabsTrigger>
+          <TabsTrigger value="background" className="flex items-center gap-1">
+            <ImagePlay className="w-4 h-4" />
+            Background
           </TabsTrigger>
         </TabsList>
 
@@ -395,6 +399,13 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
               </SelectContent>
             </Select>
           </div>
+        </TabsContent>
+
+        <TabsContent value="background" className="space-y-4">
+          <BackgroundMediaCustomizer
+            config={pendingTheme.backgroundMedia}
+            onChange={(backgroundMedia) => updatePendingTheme({ backgroundMedia })}
+          />
         </TabsContent>
       </Tabs>
     </Card>

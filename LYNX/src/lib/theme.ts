@@ -1,3 +1,33 @@
+export interface BackgroundMediaConfig {
+  type: 'color' | 'gradient' | 'video' | 'gif';
+  mediaUrl?: string;
+  opacity: number;
+  blur: number;
+  overlayColor: string;
+  overlayOpacity: number;
+  brightness: number;
+  saturation: number;
+  contrast: number;
+  scale: number;
+  objectFit: 'cover' | 'contain' | 'fill';
+  glassmorphism: boolean;
+}
+
+export const defaultBackgroundMedia: BackgroundMediaConfig = {
+  type: 'gradient',
+  mediaUrl: undefined,
+  opacity: 1,
+  blur: 0,
+  overlayColor: '#000000',
+  overlayOpacity: 0,
+  brightness: 1,
+  saturation: 1,
+  contrast: 1,
+  scale: 1,
+  objectFit: 'cover',
+  glassmorphism: false,
+};
+
 export interface ThemeConfig {
   // Colors
   primary: string;
@@ -9,7 +39,7 @@ export interface ThemeConfig {
   muted: string;
   accent: string;
   border: string;
-  
+
   // Gradients
   backgroundGradient: {
     from: string;
@@ -21,20 +51,23 @@ export interface ThemeConfig {
     to: string;
     direction: string;
   };
-  
+
   // Typography
   fontFamily: string;
   // Note: per-item font sizes are handled on profile and link objects; theme no longer stores font sizes
-  
+
   // Layout
   cardRadius: number;
   cardSpacing: number;
   maxWidth: string;
-  
+
   // Effects
   glowIntensity: number;
   blurIntensity: number;
-  
+
+  // Background Media (video / gif / color / gradient)
+  backgroundMedia: BackgroundMediaConfig;
+
   // Content
   content: {
     profileName: string;
@@ -73,15 +106,11 @@ export const defaultTheme: ThemeConfig = {
   cardSpacing: 12,
   maxWidth: '28rem',
   
-  // Slightly stronger glow and softer blur for a more modern glass effect
   glowIntensity: 0.45,
   blurIntensity: 28,
 
-  // Typography niceties
-  // We'll expose line heights so it's easier to tweak spacing across the site
-  // Note: these are not part of ThemeConfig interface above (backwards compatible)
-  // but we'll set CSS variables for them below when applying the theme.
-  
+  backgroundMedia: defaultBackgroundMedia,
+
   content: {
     // Keep content fields empty by default to avoid showing mock data before real values load
     profileName: '',
@@ -120,6 +149,10 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
     cardGradient: {
       ...defaultTheme.cardGradient,
       ...(themeData.cardGradient || {}),
+    },
+    backgroundMedia: {
+      ...defaultBackgroundMedia,
+      ...(themeData.backgroundMedia || {}),
     },
     content: {
       ...defaultTheme.content,
@@ -200,15 +233,25 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
 export const applyTheme = (theme: ThemeConfig) => {
   const root = document.documentElement;
   const variables = getThemeCssVariables(theme);
-  
+
   Object.entries(variables).forEach(([property, value]) => {
     root.style.setProperty(property, value);
   });
 
   document.body.style.fontFamily = theme.fontFamily;
-  
-  // Force body background update
-  document.body.style.background = `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
+
+  const bgType = theme.backgroundMedia?.type;
+  if (bgType === 'video' || bgType === 'gif') {
+    // Media element handles visual background; body is transparent fallback
+    document.body.style.background = theme.background;
+  } else if (bgType === 'color') {
+    document.body.style.background = theme.background;
+  } else {
+    document.body.style.background = `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
+  }
+
+  // Glassmorphism: expose as CSS variable for card overrides
+  root.style.setProperty('--glassmorphism', theme.backgroundMedia?.glassmorphism ? '1' : '0');
 };
 
 // Apply admin theme (maintains consistent admin styling)

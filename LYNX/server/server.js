@@ -1678,6 +1678,20 @@ const ThemeSchema = z.object({
   buttonStyle: z.string().max(50).optional(),
   linkStyle: z.string().max(50).optional(),
   customCSS: z.string().max(50_000).optional(),
+  backgroundMedia: z.object({
+    type: z.enum(['color', 'gradient', 'video', 'gif']).optional(),
+    mediaUrl: z.string().max(500).optional().nullable(),
+    opacity: z.number().min(0).max(1).optional(),
+    blur: z.number().min(0).max(100).optional(),
+    overlayColor: z.string().max(100).optional(),
+    overlayOpacity: z.number().min(0).max(1).optional(),
+    brightness: z.number().min(0).max(3).optional(),
+    saturation: z.number().min(0).max(3).optional(),
+    contrast: z.number().min(0).max(3).optional(),
+    scale: z.number().min(1).max(4).optional(),
+    objectFit: z.enum(['cover', 'contain', 'fill']).optional(),
+    glassmorphism: z.boolean().optional(),
+  }).optional(),
   // Allow any additional string/number/boolean theme keys (color values, sizes, etc.)
 }).catchall(z.union([z.string().max(50_000), z.number(), z.boolean(), z.null()]));
 
@@ -2108,6 +2122,62 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
       error: 'Failed to upload file',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+});
+
+// Background media upload (video/gif) — separate multer instance with higher limit
+const bgStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    if (!fs.existsSync(uploadsPath)) {
+      fs.mkdirSync(uploadsPath, { recursive: true });
+    }
+    cb(null, uploadsPath);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'bg-' + uniqueSuffix + path.extname(file.originalname).toLowerCase());
+  }
+});
+
+const bgUpload = multer({
+  storage: bgStorage,
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB
+  fileFilter: (req, file, cb) => {
+    const allowedExtensions = /\.(mp4|webm|gif)$/i;
+    const allowedMimeTypes = ['video/mp4', 'video/webm', 'image/gif'];
+    if (!allowedExtensions.test(file.originalname) || !allowedMimeTypes.includes(file.mimetype)) {
+      return cb(new Error('Only video (mp4, webm) and GIF files are allowed for background media'), false);
+    }
+    cb(null, true);
+  }
+});
+
+app.post('/api/upload/background', authenticateToken, bgUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const resolvedFilePath = path.resolve(req.file.path);
+    const resolvedUploadsDir = path.resolve(uploadsPath);
+    if (!resolvedFilePath.startsWith(resolvedUploadsDir + path.sep)) {
+      return res.status(500).json({ error: 'File path validation failed' });
+    }
+
+    if (!fs.existsSync(resolvedFilePath)) {
+      return res.status(500).json({ error: 'Failed to save file' });
+    }
+
+    try { fs.chmodSync(resolvedFilePath, 0o666); } catch { /* Windows may not support chmod */ }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    const fullUrl = `${req.protocol}://${req.get('host')}${fileUrl}`;
+    console.log('Background media uploaded:', req.file.filename, req.file.size, 'bytes');
+
+    res.json({ success: true, filePath: fileUrl, fullUrl, fileName: req.file.filename });
+  } catch (error) {
+    console.error('Background upload error:', error);
+    res.status(500).json({ error: 'Failed to upload background media' });
   }
 });
 
