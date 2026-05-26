@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Palette, Type, Layout, FileDown, Upload, RotateCcw, AlertTriangle, ImagePlay } from "lucide-react";
-import { ThemeConfig, defaultTheme, applyTheme } from "@/lib/theme";
+import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
 
 interface ThemeCustomizerProps {
@@ -101,19 +101,25 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
 
   const importTheme = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedTheme = JSON.parse(e.target?.result as string);
-          onThemeChange(importedTheme);
-          applyTheme(importedTheme);
-        } catch (error) {
-          console.error('Failed to import theme:', error);
-        }
-      };
-      reader.readAsText(file);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const raw = JSON.parse(e.target?.result as string);
+        // normalizeTheme fills in missing fields with defaults, ensuring
+        // old backups (pre-backgroundMedia) and future schemas all work
+        const imported = normalizeTheme(raw);
+        setPendingTheme(imported);
+        void onThemeChange(imported);
+        applyTheme(imported);
+      } catch (error) {
+        console.error('Failed to import theme:', error);
+        setSaveState("error");
+      }
+    };
+    reader.readAsText(file);
+    // Reset the input so the same file can be re-imported if needed
+    event.target.value = '';
   };
 
   const resetTheme = () => {
