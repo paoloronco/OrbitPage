@@ -242,12 +242,21 @@ export const applyTheme = (theme: ThemeConfig) => {
 
   const bgType = theme.backgroundMedia?.type;
   if (bgType === 'video' || bgType === 'gif') {
-    // Media element handles visual background; body is transparent fallback
-    document.body.style.background = theme.background;
-  } else if (bgType === 'color') {
-    document.body.style.background = theme.background;
+    // The BackgroundLayer component (z-index:-1) handles the visual.
+    // Body must be transparent so the fixed video shows through.
+    // <html> carries the dark fallback while the media loads.
+    root.style.setProperty('--gradient-background', 'transparent');
+    document.documentElement.style.background = theme.background;
+    document.body.style.background = 'transparent';
+    document.body.style.backgroundColor = 'transparent';
   } else {
-    document.body.style.background = `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
+    document.documentElement.style.background = '';
+    document.body.style.backgroundColor = '';
+    if (bgType === 'color') {
+      document.body.style.background = theme.background;
+    } else {
+      document.body.style.background = `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
+    }
   }
 
   // Glassmorphism: expose as CSS variable for card overrides
