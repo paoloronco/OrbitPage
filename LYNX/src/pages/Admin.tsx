@@ -127,6 +127,8 @@ const Admin = () => {
             clickCount: link.clickCount || 0,
             startDate: link.startDate || undefined,
             endDate: link.endDate || undefined,
+            coverImage: (link as any).coverImage || undefined,
+            coverImageAlt: (link as any).coverImageAlt || undefined,
           }));
           // Ensure typography fields are preserved in normalized links
           const fullyNormalized = formattedLinks.map(link => ({
@@ -240,6 +242,8 @@ const Admin = () => {
         clickCount: link.clickCount || 0,
         startDate: link.startDate || undefined,
         endDate: link.endDate || undefined,
+        coverImage: (link as any).coverImage || undefined,
+        coverImageAlt: (link as any).coverImageAlt || undefined,
       }));
       setLinks(normalized);
     } catch (error: any) {
