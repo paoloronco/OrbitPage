@@ -203,7 +203,9 @@ const Index = () => {
             descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
             titleFontSize: (link as any).titleFontSize || undefined,
             descriptionFontSize: (link as any).descriptionFontSize || undefined,
-            alignment: (link as any).alignment || undefined
+            alignment: (link as any).alignment || undefined,
+            coverImage: (link as any).coverImage || undefined,
+            coverImageAlt: (link as any).coverImageAlt || undefined,
           };
         });
 
