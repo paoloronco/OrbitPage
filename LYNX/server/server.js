@@ -1584,11 +1584,17 @@ app.put('/api/links', authenticateToken, async (req, res) => {
 
     const links = parseResult.data;
 
+    // Snapshot current click counts BEFORE deleting so analytics are never wiped.
+    // Prefer the live DB value over the (potentially stale) frontend value.
+    const existingRows = await dbAll('SELECT id, click_count FROM links').catch(() => []);
+    const savedClicks = new Map(existingRows.map(r => [String(r.id), r.click_count || 0]));
+
     const result = await withTransaction(async () => {
       await dbRun('DELETE FROM links');
 
       for (let i = 0; i < links.length; i++) {
         const link = links[i];
+        const linkId = typeof link.id === 'string' ? link.id : String(link.id);
 
         const iconValue = (link.icon && typeof link.icon === 'string' &&
           (link.icon.startsWith('data:image/') || link.icon.startsWith('blob:')))
@@ -1605,10 +1611,16 @@ app.put('/api/links', authenticateToken, async (req, res) => {
             )
           : null;
 
+        // Use live DB click count if this link existed before the save; fall back
+        // to the frontend value for brand-new links (no existing DB row).
+        const clickCount = savedClicks.has(linkId)
+          ? savedClicks.get(linkId)
+          : (link.clickCount || 0);
+
         await dbRun(
-          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, start_date, end_date, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, start_date, end_date, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
-            typeof link.id === 'string' ? link.id : String(link.id),
+            linkId,
             link.title,
             link.description || '',
             link.url || '',
@@ -1627,6 +1639,7 @@ app.put('/api/links', authenticateToken, async (req, res) => {
             link.alignment || null,
             link.titleFontSize || null,
             link.descriptionFontSize || null,
+            clickCount,
             link.startDate || null,
             link.endDate || null,
             link.coverImage || null,

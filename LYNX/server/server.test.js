@@ -473,4 +473,88 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.text).not.toContain('id="lynx-gcm-default-consent"');
   });
+
+  it('PUT /api/links preserves existing click counts from DB (analytics not wiped on save)', async () => {
+    // Simulate DB having a link with 42 clicks
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      { id: 'link-1', click_count: 42 },
+    ]);
+
+    const payload = [
+      {
+        id: 'link-1',
+        title: 'Test Link',
+        description: '',
+        url: 'https://example.com',
+        type: 'link',
+        isActive: true,
+        clickCount: 0, // frontend sends stale 0 — DB value (42) must win
+      },
+    ];
+
+    const response = await request(app)
+      .put('/lynx/api/links')
+      .set('Authorization', 'Bearer mock-token')
+      .send(payload);
+
+    expect(response.status).toBe(200);
+
+    // Find the INSERT dbRun call (the one that is not DELETE)
+    const insertCall = vi.mocked(dbRun).mock.calls.find(
+      ([sql]) => typeof sql === 'string' && sql.trim().toUpperCase().startsWith('INSERT')
+    );
+    expect(insertCall).toBeDefined();
+    // click_count should be the DB value (42), not the stale frontend value (0)
+    const insertValues = insertCall[1];
+    const clickCountIndex = insertValues.indexOf(42);
+    expect(clickCountIndex).toBeGreaterThanOrEqual(0);
+  });
+
+  it('PUT /api/links uses frontend clickCount for brand-new links (no existing DB row)', async () => {
+    // DB has no existing links
+    vi.mocked(dbAll).mockResolvedValueOnce([]);
+
+    const payload = [
+      {
+        id: 'new-link',
+        title: 'New Link',
+        description: '',
+        url: 'https://example.com',
+        type: 'link',
+        isActive: true,
+        clickCount: 7, // new link imported with clicks
+      },
+    ];
+
+    const response = await request(app)
+      .put('/lynx/api/links')
+      .set('Authorization', 'Bearer mock-token')
+      .send(payload);
+
+    expect(response.status).toBe(200);
+
+    const insertCall = vi.mocked(dbRun).mock.calls.find(
+      ([sql]) => typeof sql === 'string' && sql.trim().toUpperCase().startsWith('INSERT')
+    );
+    expect(insertCall).toBeDefined();
+    // No existing DB row → frontend clickCount (7) is used
+    const insertValues = insertCall[1];
+    expect(insertValues).toContain(7);
+  });
+
+  it('POST /api/links/:id/click increments click count', async () => {
+    vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
+
+    const response = await request(app)
+      .post('/lynx/api/links/link-abc/click');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+
+    const updateCall = vi.mocked(dbRun).mock.calls.find(
+      ([sql]) => typeof sql === 'string' && sql.includes('click_count = click_count + 1')
+    );
+    expect(updateCall).toBeDefined();
+    expect(updateCall[1]).toContain('link-abc');
+  });
 });
