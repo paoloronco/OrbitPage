@@ -1,13 +1,23 @@
+import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Type, ExternalLink } from "lucide-react";
 import { LinkData } from "./LinkCard";
 import { apiPath, internalAssetPath } from "@/lib/base-path";
+
+const resolveCoverImageUrl = (src?: string | null): string | null => {
+  if (!src) return null;
+  if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('http')) return src;
+  return internalAssetPath(src);
+};
 
 interface PublicTextCardProps {
   link: LinkData;
 }
 
 export const PublicTextCard = ({ link }: PublicTextCardProps) => {
+  const [coverImageError, setCoverImageError] = useState(false);
+  useEffect(() => { setCoverImageError(false); }, [link.coverImage]);
+
   const trackClick = () => {
     if (link.url) {
       fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
@@ -82,14 +92,38 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
     return text;
   };
 
+  const coverUrl = resolveCoverImageUrl(link.coverImage);
+  const hasCoverImage = !!(coverUrl && !coverImageError);
+
   return (
-    <Card 
-      className={`glass-card ${getSizeClasses(link.size)} transition-smooth ${
+    <Card
+      className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getSizeClasses(link.size)} transition-smooth ${
         link.url ? 'hover:glow-effect group cursor-pointer' : ''
       }`}
-      onClick={handleClick}
+      onClick={hasCoverImage ? undefined : handleClick}
       style={getCustomStyles()}
     >
+      {hasCoverImage && (
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ aspectRatio: '16/9' }}
+          onClick={link.url ? handleClick : undefined}
+          aria-hidden="true"
+        >
+          <img
+            src={coverUrl!}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover transition-transform duration-300${link.url ? ' group-hover:scale-[1.02]' : ''}`}
+            onError={() => setCoverImageError(true)}
+          />
+        </div>
+      )}
+      <div
+        className={hasCoverImage ? getSizeClasses(link.size) : ''}
+        onClick={hasCoverImage && link.url ? handleClick : undefined}
+      >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
@@ -161,6 +195,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             />
           )}
         </div>
+      </div>
       </div>
     </Card>
   );

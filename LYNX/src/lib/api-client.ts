@@ -251,6 +251,8 @@ interface LinkItem {
   clickCount?: number;
   startDate?: string;
   endDate?: string;
+  coverImage?: string;
+  coverImageAlt?: string;
 }
 
 interface PublicPageResponse {

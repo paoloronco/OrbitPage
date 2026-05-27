@@ -25,7 +25,7 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.1.14';
+let APP_VERSION = '4.2.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -490,6 +490,8 @@ const formatLinkPayload = (link) => {
     clickCount: link.click_count || 0,
     startDate: link.start_date || null,
     endDate: link.end_date || null,
+    coverImage: link.cover_image || undefined,
+    coverImageAlt: link.cover_image_alt || undefined,
     createdAt: link.created_at,
     updatedAt: link.updated_at,
   };
@@ -1372,11 +1374,13 @@ app.get('/api/links', async (req, res) => {
         clickCount: link.click_count || 0,
         startDate: link.start_date || null,
         endDate: link.end_date || null,
+        coverImage: link.cover_image || undefined,
+        coverImageAlt: link.cover_image_alt || undefined,
         createdAt: link.created_at,
         updatedAt: link.updated_at
       };
     });
-    
+
     res.json(formattedLinks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to load links' });
@@ -1439,6 +1443,8 @@ const LinkSchema = z.object({
   endDate: z.string().max(10).nullable().optional(),
   // clickCount is preserved on import so analytics survive a round-trip export/import
   clickCount: z.number().int().nonnegative().nullable().optional(),
+  coverImage: z.string().max(5000000).nullable().optional(),
+  coverImageAlt: z.string().max(500).nullable().optional(),
 }).strip();
 
 const LinksPayloadSchema = z.array(LinkSchema).max(200);
@@ -1476,6 +1482,8 @@ app.get('/api/links/export', authenticateToken, async (req, res) => {
       clickCount: link.click_count || 0,
       startDate: link.start_date || null,
       endDate: link.end_date || null,
+      coverImage: link.cover_image || null,
+      coverImageAlt: link.cover_image_alt || null,
     }));
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename="links-export.json"');
@@ -1516,8 +1524,9 @@ app.post('/api/links/import', authenticateToken, async (req, res) => {
             title_font_family, description_font_family,
             text_alignment, title_font_size, description_font_size,
             text_items, sort_order, is_active,
-            click_count, start_date, end_date
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            click_count, start_date, end_date,
+            cover_image, cover_image_alt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
@@ -1540,7 +1549,9 @@ app.post('/api/links/import', authenticateToken, async (req, res) => {
             link.isActive !== false ? 1 : 0,
             link.clickCount || 0,
             link.startDate || null,
-            link.endDate || null
+            link.endDate || null,
+            link.coverImage || null,
+            link.coverImageAlt || null
           ]
         );
       }
@@ -1592,7 +1603,7 @@ app.put('/api/links', authenticateToken, async (req, res) => {
           : null;
 
         await dbRun(
-          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, start_date, end_date, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             typeof link.id === 'string' ? link.id : String(link.id),
             link.title,
@@ -1614,7 +1625,9 @@ app.put('/api/links', authenticateToken, async (req, res) => {
             link.titleFontSize || null,
             link.descriptionFontSize || null,
             link.startDate || null,
-            link.endDate || null
+            link.endDate || null,
+            link.coverImage || null,
+            link.coverImageAlt || null
           ]
         );
       }

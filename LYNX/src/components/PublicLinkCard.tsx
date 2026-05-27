@@ -4,6 +4,12 @@ import { ExternalLink, Copy, Check } from "lucide-react";
 import { LinkData } from "./LinkCard";
 import { apiPath, internalAssetPath } from "@/lib/base-path";
 
+const resolveCoverImageUrl = (src?: string | null): string | null => {
+  if (!src) return null;
+  if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('http')) return src;
+  return internalAssetPath(src);
+};
+
 interface PublicLinkCardProps {
   link: LinkData;
 }
@@ -104,6 +110,8 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
 
   // Add error state for images
   const [imageError, setImageError] = useState(false);
+  const [coverImageError, setCoverImageError] = useState(false);
+  useEffect(() => { setCoverImageError(false); }, [link.coverImage]);
 
   // Determine what to show in the icon area
   const renderIcon = () => {
@@ -135,58 +143,85 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     );
   };
 
+  const coverUrl = resolveCoverImageUrl(link.coverImage);
+  const hasCoverImage = !!(coverUrl && !coverImageError);
+
   return (
-    <Card 
-      className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group`}
+    <Card
+      className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getSizeClasses(link.size)} transition-smooth hover:glow-effect group`}
       style={getCustomStyles()}
     >
-      <div className="flex items-center justify-between gap-3">
+      {hasCoverImage && (
         <a
           href={link.url || '#'}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleLinkClick}
-          className="flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          aria-label={link.title ? `Open ${link.title}` : 'Open link'}
+          className="block overflow-hidden"
+          tabIndex={-1}
+          aria-hidden="true"
         >
-          <div className="flex-shrink-0">
-            {renderIcon()}
+          <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
+            <img
+              src={coverUrl!}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              onError={() => setCoverImageError(true)}
+            />
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+        </a>
+      )}
+      <div className={hasCoverImage ? getSizeClasses(link.size) : ''}>
+        <div className="flex items-center justify-between gap-3">
+          <a
+            href={link.url || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleLinkClick}
+            className="flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label={link.title ? `Open ${link.title}` : 'Open link'}
+          >
+            <div className="flex-shrink-0">
+              {renderIcon()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
                 <h3
                   className="font-semibold truncate flex-1"
                   style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
                 >
                   {link.title || "Untitled Link"}
                 </h3>
-              <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />
-              <button
-                onClick={handleCopy}
-                className="opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
-                title="Copy link"
-              >
-                {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
-              </button>
-            </div>
-            {link.description && (
+                <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />
+                <button
+                  onClick={handleCopy}
+                  className="opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
+                  title="Copy link"
+                >
+                  {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                </button>
+              </div>
+              {link.description && (
                 <p
                   className="text-sm line-clamp-2 mt-1"
                   style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
                 >
                   {link.description}
                 </p>
-            )}
-            {link.url && (
-              <p
-                className="text-xs mt-1 truncate text-muted-foreground"
-                style={link.textColor ? { color: link.textColor, opacity: 0.8 } : undefined}
-              >
-                {link.url.replace(/^https?:\/\//, '')}
-              </p>
-            )}
-          </div>
-        </a>
+              )}
+              {link.url && (
+                <p
+                  className="text-xs mt-1 truncate text-muted-foreground"
+                  style={link.textColor ? { color: link.textColor, opacity: 0.8 } : undefined}
+                >
+                  {link.url.replace(/^https?:\/\//, '')}
+                </p>
+              )}
+            </div>
+          </a>
+        </div>
       </div>
     </Card>
   );

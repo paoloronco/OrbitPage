@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, ExternalLink, GripVertical, Upload, Eye, EyeOff } from "lucide-react";
+import { Edit, Trash2, ExternalLink, GripVertical, Upload, Eye, EyeOff, Image, X } from "lucide-react";
 
 export interface LinkData {
   id: string;
@@ -38,6 +38,8 @@ export interface LinkData {
     fontSize?: string;
     fontFamily?: string;
   }>; // For clickable list items
+  coverImage?: string;    // Optional header/cover image URL or data URL
+  coverImageAlt?: string; // Alt text for the cover image
 }
 
 interface LinkCardProps {
@@ -64,6 +66,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverImageInputRef = useRef<HTMLInputElement>(null);
 
   const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,14 +74,27 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
-        setEditLink(prev => ({ 
-          ...prev, 
+        setEditLink(prev => ({
+          ...prev,
           icon: result,
           iconType: file.type.startsWith('image/svg') ? 'svg' : 'image'
         }));
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setEditLink(prev => ({ ...prev, coverImage: event.target?.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset input so the same file can be re-selected
+    e.target.value = '';
   };
 
   const getSizeClasses = (size?: string) => {
@@ -278,6 +294,61 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               </div>
             </div>
 
+            {/* Cover Image */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-1">
+                <Image className="w-3.5 h-3.5" />
+                Cover Image
+              </Label>
+              {editLink.coverImage && (
+                <div className="relative w-full rounded-lg overflow-hidden bg-muted/20" style={{ aspectRatio: '16/9' }}>
+                  <img
+                    src={editLink.coverImage}
+                    alt={editLink.coverImageAlt || ''}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditLink(prev => ({ ...prev, coverImage: undefined, coverImageAlt: undefined }))}
+                    className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 transition-colors"
+                    title="Remove cover image"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <Input
+                  value={editLink.coverImage && !editLink.coverImage.startsWith('data:') ? editLink.coverImage : ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, coverImage: e.target.value || undefined }))}
+                  placeholder="https://example.com/image.jpg"
+                  className="glass-card border-primary/20 flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => coverImageInputRef.current?.click()}
+                  title="Upload image"
+                >
+                  <Upload className="w-4 h-4" />
+                </Button>
+                <input
+                  ref={coverImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverImageUpload}
+                  className="hidden"
+                />
+              </div>
+              <Input
+                value={editLink.coverImageAlt || ''}
+                onChange={(e) => setEditLink(prev => ({ ...prev, coverImageAlt: e.target.value || undefined }))}
+                placeholder="Image description (alt text, optional)"
+                className="glass-card border-primary/20 text-sm"
+              />
+            </div>
+
             {/* Size Selection */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Size</Label>
@@ -332,6 +403,17 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
         ) : (
             <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
+              {link.coverImage && (
+                <div className="mb-2 rounded overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                  <img
+                    src={link.coverImage}
+                    alt={link.coverImageAlt || ''}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover opacity-80"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-2 mb-1">
                 {link.icon && (
                   <div className="flex-shrink-0">
