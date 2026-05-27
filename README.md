@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.1.8-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -318,6 +318,19 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.2.0</strong></summary>
+
+### Card cover images
+
+- Adds optional cover/header image to link and text cards.
+- Full-bleed 16:9 image displayed at the top of each card on both the public page and admin panel.
+- Supports URL input or local file upload; alt text field for accessibility.
+- Graceful fallback on broken image (no layout shift).
+- DB migrations for `cover_image` and `cover_image_alt` columns (additive, non-destructive).
+
+</details>
 
 <details>
 <summary><strong>v4.1.8</strong></summary>
