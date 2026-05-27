@@ -29,6 +29,7 @@ import {
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
+import { UserManager } from "./UserManager";
 import { PrivacySettings } from "./PrivacySettings";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
@@ -72,13 +73,13 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
-type AdminTab = "profile" | "links" | "theme" | "security" | "preview" | "analytics" | "privacy";
+type AdminTab = "profile" | "links" | "theme" | "access" | "preview" | "analytics" | "privacy";
 
 const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
   { value: "profile", label: "Profile", icon: User },
   { value: "links", label: "Links", icon: Link },
   { value: "theme", label: "Theme", icon: Palette },
-  { value: "security", label: "Security", icon: Key },
+  { value: "access", label: "Access", icon: Key },
   { value: "preview", label: "Preview", icon: Eye },
   { value: "analytics", label: "Analytics", icon: BarChart2 },
   { value: "privacy", label: "Privacy", icon: Cookie },
@@ -93,7 +94,7 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
-  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.2.0");
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.3.0");
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
@@ -256,8 +257,9 @@ export const AdminView = ({
             />
           </TabsContent>
 
-          <TabsContent value="security" className="admin-tab-content">
-            <div className="admin-single-column">
+          <TabsContent value="access" className="admin-tab-content">
+            <div className="admin-single-column space-y-6">
+              <UserManager />
               <PasswordManager />
             </div>
           </TabsContent>

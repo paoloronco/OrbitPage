@@ -25,7 +25,7 @@ import multer from 'multer';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.2.0';
+let APP_VERSION = '4.3.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -1077,21 +1077,24 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
 
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
   try {
-    const { password } = req.body;
-    
+    const { password, username = 'admin' } = req.body;
+
     if (!password) {
       return res.status(400).json({ error: 'Password is required' });
     }
-    
-    console.log('Login attempt received');
-    const isValid = await authenticateUser(password);
-    
-    if (!isValid) {
-      return res.status(401).json({ error: 'Invalid password' });
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
     }
-    
+
+    console.log('Login attempt received for:', username);
+    const isValid = await authenticateUser(password, username);
+
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
     console.log('Login successful, generating token...');
-    const token = generateToken('admin');
+    const token = generateToken(username);
     console.log('Token generated. Length:', token?.length);
     res.json({ success: true, token });
     return;
@@ -1790,6 +1793,80 @@ app.post('/api/validate-password', (req, res) => {
   res.json({ isStrong });
 });
 
+// User management routes
+app.get('/api/users', authenticateToken, async (req, res) => {
+  try {
+    const users = await dbAll('SELECT username, created_at FROM admin_users ORDER BY username');
+    res.json(users);
+  } catch (error) {
+    console.error('Error listing users:', error);
+    res.status(500).json({ error: 'Failed to list users' });
+  }
+});
+
+app.post('/api/users', authenticateToken, async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    if (!/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
+      return res.status(400).json({ error: 'Username must be 3–32 alphanumeric characters (underscores and hyphens allowed)' });
+    }
+    if (!isPasswordStrong(password)) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' });
+    }
+    const existing = await dbGet('SELECT username FROM admin_users WHERE username = ?', [username]);
+    if (existing) return res.status(409).json({ error: 'Username already exists' });
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
+    await dbRun('INSERT INTO admin_users (username, password_hash, salt) VALUES (?, ?, ?)', [username, passwordHash, salt]);
+    res.status(201).json({ success: true, username });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+app.put('/api/users/:username', authenticateToken, async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  try {
+    const { username } = req.params;
+    const { password } = req.body || {};
+    if (!password) return res.status(400).json({ error: 'New password is required' });
+    if (!isPasswordStrong(password)) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' });
+    }
+    const user = await dbGet('SELECT username FROM admin_users WHERE username = ?', [username]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const salt = await bcrypt.genSalt(12);
+    const passwordHash = await bcrypt.hash(password, salt);
+    await dbRun('UPDATE admin_users SET password_hash = ?, salt = ? WHERE username = ?', [passwordHash, salt, username]);
+    // Issue a fresh token if the user is changing their own password
+    const newToken = req.user.username === username ? generateToken(username) : undefined;
+    res.json({ success: true, ...(newToken ? { token: newToken } : {}) });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+app.delete('/api/users/:username', authenticateToken, async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  try {
+    const { username } = req.params;
+    if (username === 'admin') return res.status(403).json({ error: 'The admin user cannot be deleted' });
+    const user = await dbGet('SELECT username FROM admin_users WHERE username = ?', [username]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    await dbRun('DELETE FROM admin_users WHERE username = ?', [username]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
 app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req, res) => {
   if (DEMO_MODE) {
     return res.status(403).json({ success: false, error: 'Change password is disabled in demo mode.' });
@@ -1802,14 +1879,15 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
       return res.status(400).json({ success: false, error: 'Current and new passwords are required' });
     }
 
-    // Get current admin user
+    // Get current user (the one making the request)
+    const callerUsername = req.user.username;
     const user = await dbGet(
       'SELECT username, password_hash, salt FROM admin_users WHERE username = ?',
-      ['admin']
+      [callerUsername]
     );
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'Admin user not found' });
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
 
     // Verify current password using constant-time comparison
@@ -1820,9 +1898,9 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
 
     // Enforce strong password
     if (!isPasswordStrong(newPassword)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' 
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
       });
     }
 
@@ -1832,18 +1910,12 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
 
     // Update database
     await dbRun(
-      'UPDATE admin_users SET password_hash = ?, salt = ?, created_at = created_at, updated_at = CURRENT_TIMESTAMP WHERE username = ?',
-      [newHash, newSalt, 'admin']
-    ).catch(async () => {
-      // Fallback if updated_at column does not exist
-      await dbRun(
-        'UPDATE admin_users SET password_hash = ?, salt = ? WHERE username = ?',
-        [newHash, newSalt, 'admin']
-      );
-    });
+      'UPDATE admin_users SET password_hash = ?, salt = ? WHERE username = ?',
+      [newHash, newSalt, callerUsername]
+    );
 
     // Issue a fresh token
-    const token = generateToken('admin');
+    const token = generateToken(callerUsername);
 
     return res.json({ success: true, message: 'Password changed successfully', token });
   } catch (error) {

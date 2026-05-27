@@ -9,6 +9,14 @@ import { DEMO_MODE } from "@/lib/config";
 import { authApi } from "@/lib/api-client";
 import { apiPath, withBasePath } from "@/lib/base-path";
 
+const useCurrentUsername = () => {
+  const [username, setUsername] = useState('admin');
+  useEffect(() => {
+    authApi.verify().then((r) => { if (r.valid && r.user?.username) setUsername(r.user.username); }).catch(() => {});
+  }, []);
+  return username;
+};
+
 type MessageType = 'success' | 'error' | 'info' | 'warning';
 
 interface Message {
@@ -32,7 +40,7 @@ export const PasswordManager = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
-  const username = 'admin'; // Fixed admin username
+  const username = useCurrentUsername();
 
   // Token-based password reset state
   const [showTokenReset, setShowTokenReset] = useState(false);

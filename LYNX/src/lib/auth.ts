@@ -55,10 +55,10 @@ export const setupInitialCredentials = async (password: string): Promise<boolean
   }
 };
 
-// Authenticate admin user
-export const authenticateUser = async (password: string): Promise<boolean> => {
+// Authenticate user (username defaults to 'admin' for backward compat)
+export const authenticateUser = async (password: string, username = 'admin'): Promise<boolean> => {
   try {
-    await authApi.login(password);
+    await authApi.login(password, username);
     return true;
   } catch (error) {
     console.error('Error in authenticateUser:', error);

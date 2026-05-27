@@ -11,12 +11,11 @@ interface LoginFormProps {
 }
 
 export const LoginForm = ({ onLogin }: LoginFormProps) => {
-  const username = 'admin'; // Fixed admin username
+  const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +23,13 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     setError("");
 
     try {
-      const isValid = await authenticateUser(password);
-      
+      const isValid = await authenticateUser(password, username);
+
       if (isValid) {
-        setAuthenticated('admin');
+        setAuthenticated(username);
         onLogin();
       } else {
-        setError("Invalid password");
+        setError("Invalid credentials");
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -56,12 +55,17 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Username</Label>
-            <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-background text-sm">
-              <span className="text-muted-foreground">admin</span>
-              <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Fixed</span>
-            </div>
-            <p className="text-xs text-muted-foreground">The admin username is fixed and cannot be changed.</p>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="glass-card border-primary/20"
+              placeholder="Enter username"
+              required
+              autoComplete="username"
+            />
           </div>
 
           <div className="space-y-2">

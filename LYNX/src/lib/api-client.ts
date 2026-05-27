@@ -349,10 +349,10 @@ export const authApi = {
     return response;
   },
 
-  login: async (password: string): Promise<LoginResponse> => {
+  login: async (password: string, username = 'admin'): Promise<LoginResponse> => {
     const response = await apiRequest<LoginResponse>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ username, password }),
     });
     if (response.token) {
       await setAuthToken(response.token);
@@ -419,6 +419,37 @@ export const profileApi = {
         privacy_policy_url: profile.privacyPolicyUrl ?? undefined,
         cookie_policy_url: profile.cookiePolicyUrl ?? undefined,
       }),
+    });
+  },
+};
+
+// Users management API
+export const usersApi = {
+  list: async (): Promise<{ username: string; created_at: string }[]> => {
+    return apiRequest<{ username: string; created_at: string }[]>('/users');
+  },
+
+  create: async (username: string, password: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>('/users', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+  },
+
+  changePassword: async (username: string, password: string): Promise<ApiResponse & { token?: string }> => {
+    const response = await apiRequest<ApiResponse & { token?: string }>(`/users/${encodeURIComponent(username)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ password }),
+    });
+    if (response.token) {
+      await setAuthToken(response.token);
+    }
+    return response;
+  },
+
+  delete: async (username: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/users/${encodeURIComponent(username)}`, {
+      method: 'DELETE',
     });
   },
 };

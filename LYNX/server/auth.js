@@ -49,11 +49,11 @@ export const setupInitialCredentials = async (password) => {
 };
 
 // Authenticate user against database
-export const authenticateUser = async (password) => {
+export const authenticateUser = async (password, username = 'admin') => {
   try {
     const user = await dbGet(
       'SELECT username, password_hash, salt FROM admin_users WHERE username = ?',
-      ['admin']
+      [username]
     );
 
     if (!user) {

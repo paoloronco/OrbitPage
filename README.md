@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.2.0-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.0-blue.svg)](https://github.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
@@ -318,6 +318,20 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.0</strong></summary>
+
+### Multi-user access management
+
+- Renames the **Security** admin tab to **Access**.
+- Adds full multi-user management: list users, create users, change any user's password, and delete users.
+- The `admin` user is created by default and cannot be deleted.
+- Login form now accepts any username; backend validates credentials per-user.
+- `POST /api/auth/change-password` now changes the password of the currently authenticated user (not hardcoded to `admin`).
+- New API endpoints: `GET /api/users`, `POST /api/users`, `PUT /api/users/:username`, `DELETE /api/users/:username`.
+
+</details>
 
 <details>
 <summary><strong>v4.2.0</strong></summary>
