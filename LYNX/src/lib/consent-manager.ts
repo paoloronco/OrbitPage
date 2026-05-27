@@ -195,6 +195,9 @@ class ConsentManager {
    */
   isGranted(category: ConsentCategory): boolean {
     if (ALWAYS_ACTIVE.includes(category)) return true;
+    // When consent management is disabled, all categories are implicitly granted.
+    // The operator has chosen not to gate tracking behind a consent banner.
+    if (!this.config?.enabled || this.config.mode === 'disabled') return true;
     if (this.config?.mode === 'builder') {
       return this._isExternalCategoryGranted(category);
     }
