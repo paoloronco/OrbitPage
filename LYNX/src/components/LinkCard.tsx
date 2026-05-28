@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Edit, Trash2, ExternalLink, GripVertical, Upload, Eye, EyeOff, Image, X } from "lucide-react";
+import { LinkEditMode } from "@/lib/permissions";
 
 export interface LinkData {
   id: string;
@@ -49,11 +50,19 @@ interface LinkCardProps {
   isDragging?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  editMode?: LinkEditMode;
 }
 
-export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown }: LinkCardProps) => {
+export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full' }: LinkCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
+
+  const isFullEdit = editMode === 'full';
+  const canEditStyle = editMode === 'full' || editMode === 'style';
+  const canEditImages = editMode === 'full' || editMode === 'images';
+  const canEdit = editMode !== 'view';
+  const canDelete = editMode === 'full';
+  const canReorder = editMode === 'full';
 
   const handleSave = () => {
     onUpdate(editLink);
@@ -139,19 +148,24 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       onClick={handleClick}
       style={getCustomStyles()}
     >
-      <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
-        <GripVertical className="w-4 h-4 text-muted-foreground" />
-      </div>
+      {canReorder && (
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
+          <GripVertical className="w-4 h-4 text-muted-foreground" />
+        </div>
+      )}
       
-      <div className="ml-6">
+      <div className={canReorder ? "ml-6" : ""}>
         {isEditing ? (
           <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-            <Input
-              value={editLink.title}
-              onChange={(e) => setEditLink(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Link title"
-              className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
-            />
+            {isFullEdit && (
+              <Input
+                value={editLink.title}
+                onChange={(e) => setEditLink(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Link title"
+                className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
+              />
+            )}
+            {canEditStyle && (
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Title Font Size (px)</Label>
@@ -172,6 +186,8 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
             </div>
+            )}
+            {canEditStyle && (
             <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Title Font</Label>
@@ -230,6 +246,9 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </Select>
               </div>
             </div>
+            )}
+            {isFullEdit && (
+              <>
             <Textarea
               value={editLink.description}
               onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
@@ -265,8 +284,11 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
             </div>
+              </>
+            )}
 
             {/* Icon Upload */}
+            {canEditImages && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Icon</Label>
               <div className="flex items-center gap-2">
@@ -293,8 +315,9 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
             </div>
+            )}
 
-            {/* Cover Image */}
+            {canEditImages && (
             <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-1">
                 <Image className="w-3.5 h-3.5" />
@@ -348,13 +371,14 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 className="glass-card border-primary/20 text-sm"
               />
             </div>
+            )}
 
-            {/* Size Selection */}
+            {canEditStyle && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Size</Label>
               <Select
                 value={editLink.size || 'medium'}
-                onValueChange={(value: 'small' | 'medium' | 'large') => 
+                onValueChange={(value: 'small' | 'medium' | 'large') =>
                   setEditLink(prev => ({ ...prev, size: value }))
                 }
               >
@@ -368,8 +392,9 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </SelectContent>
               </Select>
             </div>
+            )}
 
-            {/* Colors */}
+            {canEditStyle && (
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Background</Label>
@@ -390,6 +415,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
             </div>
+            )}
             
             <div className="flex gap-2">
               <Button onClick={handleSave} variant="gradient" size="sm">
@@ -450,8 +476,9 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               )}
             </div>
             
+            {canEdit && (
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-smooth" onClick={(e) => e.stopPropagation()}>
-              {onMoveUp && (
+              {canReorder && onMoveUp && (
                 <Button
                   onClick={onMoveUp}
                   variant="ghost"
@@ -462,7 +489,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   ▲
                 </Button>
               )}
-              {onMoveDown && (
+              {canReorder && onMoveDown && (
                 <Button
                   onClick={onMoveDown}
                   variant="ghost"
@@ -473,15 +500,17 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   ▼
                 </Button>
               )}
-              <Button
-                onClick={() => onUpdate({ ...link, isActive: !isVisible })}
-                variant="ghost"
-                size="icon"
-                className="w-8 h-8"
-                title={isVisible ? 'Hide link' : 'Show link'}
-              >
-                {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
-              </Button>
+              {isFullEdit && (
+                <Button
+                  onClick={() => onUpdate({ ...link, isActive: !isVisible })}
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8"
+                  title={isVisible ? 'Hide link' : 'Show link'}
+                >
+                  {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
+                </Button>
+              )}
               <Button
                 onClick={() => setIsEditing(true)}
                 variant="ghost"
@@ -490,15 +519,18 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               >
                 <Edit className="w-3 h-3" />
               </Button>
-              <Button
-                onClick={() => onDelete(link.id)}
-                variant="ghost"
-                size="icon"
-                className="w-8 h-8 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
+              {canDelete && (
+                <Button
+                  onClick={() => onDelete(link.id)}
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              )}
             </div>
+            )}
           </div>
         )}
       </div>

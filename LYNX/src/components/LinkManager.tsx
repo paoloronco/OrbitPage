@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Link, List, Minus, Plus, Save, Type, Upload } from "lucide-react";
+import { Download, Image, Link, List, Minus, Palette, Plus, Save, Type, Upload } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { SeparatorCard } from "./SeparatorCard";
 import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
+import { LinkEditMode } from "@/lib/permissions";
 
 interface LinkManagerProps {
   links: LinkData[];
+  editMode?: LinkEditMode;
   // Called only when user clicks Save
   onLinksUpdate: (links: LinkData[]) => void;
 }
 
-export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
+export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkManagerProps) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -275,8 +277,23 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
     setIsDirty(false);
   };
 
+  const isFullEdit = editMode === 'full';
+  const isViewOnly = editMode === 'view';
+
   return (
     <div className="admin-link-manager">
+      {!isFullEdit && (
+        <div className={`mb-4 flex items-center gap-2 rounded-lg border px-4 py-3 text-sm ${
+          isViewOnly
+            ? 'border-slate-200 bg-slate-50 text-slate-600'
+            : 'border-blue-200 bg-blue-50 text-blue-700'
+        }`}>
+          {editMode === 'style' && <><Palette className="h-4 w-4 shrink-0" /><span>Style editor — you can edit card colors, fonts, and size.</span></>}
+          {editMode === 'images' && <><Image className="h-4 w-4 shrink-0" /><span>Image editor — you can edit card icons and cover images.</span></>}
+          {editMode === 'view' && <span>View-only — you do not have permission to edit links.</span>}
+        </div>
+      )}
+
       <div className="admin-link-toolbar">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -289,59 +306,65 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
         </div>
 
         <div className="admin-link-actions">
-          <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy}>
-            <Save className="h-4 w-4" />
-            Save
-          </Button>
+          {!isViewOnly && (
+            <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy}>
+              <Save className="h-4 w-4" />
+              Save
+            </Button>
+          )}
           <Button onClick={exportLinks} variant="outline" className="admin-action" disabled={busy}>
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button onClick={handleImportFile} variant="outline" className="admin-action" disabled={busy}>
-            <Upload className="h-4 w-4" />
-            Import
-          </Button>
+          {isFullEdit && (
+            <Button onClick={handleImportFile} variant="outline" className="admin-action" disabled={busy}>
+              <Upload className="h-4 w-4" />
+              Import
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="admin-add-grid">
-        <Button onClick={addNewLink} className="admin-add-card">
-          <span className="admin-add-icon">
-            <Link className="h-4 w-4" />
-          </span>
-          <span>
-            <span className="block font-semibold">Link</span>
-            <span className="block text-xs opacity-70">URL card</span>
-          </span>
-        </Button>
-        <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">
-          <span className="admin-add-icon">
-            <List className="h-4 w-4" />
-          </span>
-          <span>
-            <span className="block font-semibold">List</span>
-            <span className="block text-xs opacity-70">Grouped items</span>
-          </span>
-        </Button>
-        <Button onClick={addNewTextCard} variant="outline" className="admin-add-card">
-          <span className="admin-add-icon">
-            <Type className="h-4 w-4" />
-          </span>
-          <span>
-            <span className="block font-semibold">Text</span>
-            <span className="block text-xs opacity-70">Freeform copy</span>
-          </span>
-        </Button>
-        <Button onClick={addNewSeparator} variant="outline" className="admin-add-card">
-          <span className="admin-add-icon">
-            <Minus className="h-4 w-4" />
-          </span>
-          <span>
-            <span className="block font-semibold">Separator</span>
-            <span className="block text-xs opacity-70">Section label</span>
-          </span>
-        </Button>
-      </div>
+      {isFullEdit && (
+        <div className="admin-add-grid">
+          <Button onClick={addNewLink} className="admin-add-card">
+            <span className="admin-add-icon">
+              <Link className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Link</span>
+              <span className="block text-xs opacity-70">URL card</span>
+            </span>
+          </Button>
+          <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <List className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">List</span>
+              <span className="block text-xs opacity-70">Grouped items</span>
+            </span>
+          </Button>
+          <Button onClick={addNewTextCard} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <Type className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Text</span>
+              <span className="block text-xs opacity-70">Freeform copy</span>
+            </span>
+          </Button>
+          <Button onClick={addNewSeparator} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <Minus className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Separator</span>
+              <span className="block text-xs opacity-70">Section label</span>
+            </span>
+          </Button>
+        </div>
+      )}
 
       {workingLinks.length === 0 ? (
         <Card className="admin-empty-state">
@@ -355,16 +378,18 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
                   Add a first card, then drag items into the order you want.
                 </p>
               </div>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Button onClick={addNewLink} className="admin-action admin-action-primary">
-                  <Link className="h-4 w-4" />
-                  Add link
-                </Button>
-                <Button onClick={addNewBulletedList} variant="outline" className="admin-action">
-                  <List className="h-4 w-4" />
-                  Add list
-                </Button>
-              </div>
+              {isFullEdit && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Button onClick={addNewLink} className="admin-action admin-action-primary">
+                    <Link className="h-4 w-4" />
+                    Add link
+                  </Button>
+                  <Button onClick={addNewBulletedList} variant="outline" className="admin-action">
+                    <List className="h-4 w-4" />
+                    Add list
+                  </Button>
+                </div>
+              )}
             </div>
         </Card>
       ) : (
@@ -373,15 +398,15 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
             <div
               key={link.id}
               data-link-id={link.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, link.id)}
-              onDragOver={handleDragOver}
-              onDragEnter={() => handleDragEnter(link.id)}
-              onDrop={(e) => handleDrop(e, link.id)}
-              onDragEnd={handleDragEnd}
-              onTouchStart={(e) => handleTouchStart(e, link.id)}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+              draggable={isFullEdit}
+              onDragStart={isFullEdit ? (e) => handleDragStart(e, link.id) : undefined}
+              onDragOver={isFullEdit ? handleDragOver : undefined}
+              onDragEnter={isFullEdit ? () => handleDragEnter(link.id) : undefined}
+              onDrop={isFullEdit ? (e) => handleDrop(e, link.id) : undefined}
+              onDragEnd={isFullEdit ? handleDragEnd : undefined}
+              onTouchStart={isFullEdit ? (e) => handleTouchStart(e, link.id) : undefined}
+              onTouchMove={isFullEdit ? handleTouchMove : undefined}
+              onTouchEnd={isFullEdit ? handleTouchEnd : undefined}
               className={dragOverId === link.id ? 'rounded-lg ring-2 ring-blue-400/50' : ''}
             >
               {link.type === 'separator' ? (
@@ -392,6 +417,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
                   isDragging={draggedItem === link.id}
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
+                  editMode={editMode}
                 />
               ) : link.type === 'text' ? (
                 <TextCard
@@ -401,6 +427,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
                   isDragging={draggedItem === link.id}
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
+                  editMode={editMode}
                 />
               ) : (
                 <LinkCard
@@ -410,6 +437,7 @@ export const LinkManager = ({ links, onLinksUpdate }: LinkManagerProps) => {
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   isDragging={draggedItem === link.id}
+                  editMode={editMode}
                 />
               )}
             </div>

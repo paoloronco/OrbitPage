@@ -8,6 +8,7 @@ import { isFirstTimeSetup } from "@/lib/auth";
 import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { Permission } from "@/lib/permissions";
 
 interface ProfileData {
   name: string;
@@ -38,11 +39,18 @@ interface ProfileData {
   cookiePolicyUrl?: string;
 }
 
+export interface CurrentUser {
+  username: string;
+  role: string;
+  permissions: Permission[];
+}
+
 const Admin = () => {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSetup, setShowSetup] = useState(false);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   
   // Use empty/neutral profile while real data is loading
   const [profile, setProfile] = useState<ProfileData>({
@@ -69,6 +77,13 @@ const Admin = () => {
       try {
         const result = await authApi.verify();
         setIsLoggedIn(result.valid);
+        if (result.valid && result.user) {
+          setCurrentUser({
+            username: result.user.username,
+            role: result.user.role || 'admin',
+            permissions: (result.user.permissions || []) as Permission[],
+          });
+        }
       } catch {
         setIsLoggedIn(false);
       }
@@ -203,20 +218,49 @@ const Admin = () => {
 
   const saveLinks = async (newLinks: LinkData[]) => {
     try {
-      // Preserve all link properties (including custom styling fields)
-      const formattedLinks = newLinks.map(link => ({
-        ...link,
-        id: String(link.id),
-        // ensure `type` is present (backend expects a type for each link)
-        type: (link as any).type || 'link',
-        // Explicitly include per-link font sizes so backend stores them
-        titleFontSize: (link as any).titleFontSize || undefined,
-        descriptionFontSize: (link as any).descriptionFontSize || undefined,
-        startDate: (link as any).startDate || undefined,
-        endDate: (link as any).endDate || undefined,
-      }));
-      // Persist first; only update local state if backend succeeds
-      await linksApi.update(formattedLinks);
+      const perms = currentUser?.permissions || [];
+      const canFullWrite = perms.includes('links:write');
+      const canStyle = perms.includes('links:style');
+      const canImages = perms.includes('links:images');
+
+      if (canFullWrite) {
+        // Full bulk replace (existing behaviour)
+        const formattedLinks = newLinks.map(link => ({
+          ...link,
+          id: String(link.id),
+          type: (link as any).type || 'link',
+          titleFontSize: (link as any).titleFontSize || undefined,
+          descriptionFontSize: (link as any).descriptionFontSize || undefined,
+          startDate: (link as any).startDate || undefined,
+          endDate: (link as any).endDate || undefined,
+        }));
+        await linksApi.update(formattedLinks);
+      } else if (canStyle || canImages) {
+        // Per-link PATCH for only the permitted fields
+        await Promise.all(newLinks.map(async (newLink) => {
+          const id = String(newLink.id);
+          if (canStyle) {
+            await linksApi.patchStyle(id, {
+              backgroundColor: newLink.backgroundColor,
+              textColor: newLink.textColor,
+              titleFontFamily: newLink.titleFontFamily,
+              descriptionFontFamily: newLink.descriptionFontFamily,
+              alignment: newLink.alignment,
+              titleFontSize: (newLink as any).titleFontSize,
+              descriptionFontSize: (newLink as any).descriptionFontSize,
+              size: newLink.size,
+            });
+          }
+          if (canImages) {
+            await linksApi.patchIcon(id, {
+              icon: newLink.icon ?? null,
+              iconType: newLink.iconType ?? null,
+              coverImage: (newLink as any).coverImage ?? null,
+              coverImageAlt: (newLink as any).coverImageAlt ?? null,
+            });
+          }
+        }));
+      }
       // Re-fetch from backend to guarantee public and admin are in sync
       const reloaded = await linksApi.get();
       const normalized = (reloaded || []).map(link => ({
@@ -282,12 +326,23 @@ const Admin = () => {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setIsLoggedIn(true);
+    try {
+      const result = await authApi.verify();
+      if (result.valid && result.user) {
+        setCurrentUser({
+          username: result.user.username,
+          role: result.user.role || 'admin',
+          permissions: (result.user.permissions || []) as Permission[],
+        });
+      }
+    } catch { /* ignore — user is still logged in */ }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setCurrentUser(null);
   };
 
   const handleThemeChange = (newTheme: ThemeConfig) => {
@@ -316,6 +371,7 @@ const Admin = () => {
       profile={profile}
       links={links}
       theme={theme}
+      currentUser={currentUser}
       onProfileUpdate={saveProfile}
       onLinksUpdate={saveLinks}
       onThemeChange={saveTheme}

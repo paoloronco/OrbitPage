@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Edit, Trash2, Eye, EyeOff, GripVertical } from "lucide-react";
 import { LinkData } from "./LinkCard";
+import { LinkEditMode } from "@/lib/permissions";
 
 interface SeparatorCardProps {
   link: LinkData;
@@ -11,12 +12,15 @@ interface SeparatorCardProps {
   isDragging?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  editMode?: LinkEditMode;
 }
 
-export const SeparatorCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown }: SeparatorCardProps) => {
+export const SeparatorCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full' }: SeparatorCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(link.title);
   const isVisible = link.isActive !== false;
+  const isFullEdit = editMode === 'full';
+  const canEdit = editMode !== 'view';
 
   const handleSave = () => {
     onUpdate({ ...link, title });
@@ -49,15 +53,19 @@ export const SeparatorCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, 
         )}
         <div className="h-px flex-1 bg-primary/20" />
       </div>
+      {canEdit && (
       <div className="opacity-0 group-hover:opacity-100 transition-smooth flex gap-1">
-        {onMoveUp && <Button onClick={onMoveUp} variant="ghost" size="icon" className="w-7 h-7">▲</Button>}
-        {onMoveDown && <Button onClick={onMoveDown} variant="ghost" size="icon" className="w-7 h-7">▼</Button>}
-        <Button onClick={() => onUpdate({ ...link, isActive: !isVisible })} variant="ghost" size="icon" className="w-7 h-7" title={isVisible ? 'Hide' : 'Show'}>
-          {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
-        </Button>
-        <Button onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="w-7 h-7"><Edit className="w-3 h-3" /></Button>
-        <Button onClick={() => onDelete(link.id)} variant="ghost" size="icon" className="w-7 h-7 text-destructive"><Trash2 className="w-3 h-3" /></Button>
+        {isFullEdit && onMoveUp && <Button onClick={onMoveUp} variant="ghost" size="icon" className="w-7 h-7">▲</Button>}
+        {isFullEdit && onMoveDown && <Button onClick={onMoveDown} variant="ghost" size="icon" className="w-7 h-7">▼</Button>}
+        {isFullEdit && (
+          <Button onClick={() => onUpdate({ ...link, isActive: !isVisible })} variant="ghost" size="icon" className="w-7 h-7" title={isVisible ? 'Hide' : 'Show'}>
+            {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
+          </Button>
+        )}
+        {isFullEdit && <Button onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="w-7 h-7"><Edit className="w-3 h-3" /></Button>}
+        {isFullEdit && <Button onClick={() => onDelete(link.id)} variant="ghost" size="icon" className="w-7 h-7 text-destructive"><Trash2 className="w-3 h-3" /></Button>}
       </div>
+      )}
     </div>
   );
 };

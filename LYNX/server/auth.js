@@ -9,6 +9,44 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 }
 const SALT_ROUNDS = 12;
 
+// --- Role-Based Access Control ---
+
+export const ROLES = [
+  'admin', 'editor', 'links_editor', 'links_style', 'links_images',
+  'theme_editor', 'compliance', 'viewer',
+];
+
+export const ROLE_PERMISSIONS = {
+  admin:        ['links:write', 'links:style', 'links:images', 'theme:write', 'profile:write', 'analytics:read', 'compliance:write', 'users:manage'],
+  editor:       ['links:write', 'profile:write', 'analytics:read'],
+  links_editor: ['links:write', 'analytics:read'],
+  links_style:  ['links:style'],
+  links_images: ['links:images'],
+  theme_editor: ['theme:write'],
+  compliance:   ['compliance:write'],
+  viewer:       ['analytics:read'],
+};
+
+export const getPermissionsForRole = (username, role) => {
+  if (username === 'admin') return ROLE_PERMISSIONS.admin;
+  return ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS.viewer;
+};
+
+export const requirePermission = (permission) => (req, res, next) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  if (!(req.user.permissions || []).includes(permission)) {
+    return res.status(403).json({ error: 'Insufficient permissions' });
+  }
+  next();
+};
+
+export const requireAnyPermission = (...permissions) => (req, res, next) => {
+  if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+  const has = permissions.some(p => (req.user.permissions || []).includes(p));
+  if (!has) return res.status(403).json({ error: 'Insufficient permissions' });
+  next();
+};
+
 // Check if this is the first time setup (no admin exists)
 export const isFirstTimeSetup = async () => {
   try {
@@ -16,7 +54,7 @@ export const isFirstTimeSetup = async () => {
     return result.count === 0;
   } catch (error) {
     console.error('Error checking first time setup:', error);
-    return true; // Default to setup if error
+    return true;
   }
 };
 
@@ -27,20 +65,19 @@ export const setupInitialCredentials = async (password) => {
     if (!firstTime) {
       throw new Error('Admin account already exists');
     }
-    
-    // Validate strong password
+
     if (!isPasswordStrong(password)) {
       throw new Error('Password must be at least 8 characters with uppercase, lowercase, number, and special character');
     }
-    
+
     const salt = await bcrypt.genSalt(SALT_ROUNDS);
     const passwordHash = await bcrypt.hash(password, salt);
-    
+
     await dbRun(
       'INSERT INTO admin_users (username, password_hash, salt) VALUES (?, ?, ?)',
-      ['admin', passwordHash, salt] // Always use 'admin' as username
+      ['admin', passwordHash, salt]
     );
-    
+
     return true;
   } catch (error) {
     console.error('Error in setupInitialCredentials:', error);
@@ -104,7 +141,7 @@ export const isPasswordStrong = (password) => {
   const hasLowercase = /[a-z]/.test(password);
   const hasNumbers = /\d/.test(password);
   const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  
+
   return password.length >= minLength && hasUppercase && hasLowercase && hasNumbers && hasSpecialChar;
 };
 
@@ -133,21 +170,18 @@ export const generateSecurePassword = () => {
   const lowercase = 'abcdefghijklmnopqrstuvwxyz';
   const numbers = '0123456789';
   const special = '!@#$%^&*(),.?":{}|<>';
-  
-  // Ensure at least one character from each category
+
   let password = '';
   password += uppercase[randomInt(uppercase.length)];
   password += lowercase[randomInt(lowercase.length)];
   password += numbers[randomInt(numbers.length)];
   password += special[randomInt(special.length)];
-  
-  // Fill remaining length with random characters
+
   const allChars = uppercase + lowercase + numbers + special;
   for (let i = 4; i < 16; i++) {
     password += allChars[randomInt(allChars.length)];
   }
-  
-  // Secure Fisher-Yates shuffle using crypto randomness
+
   const arr = password.split('');
   for (let i = arr.length - 1; i > 0; i--) {
     const j = randomInt(i + 1);
@@ -156,7 +190,7 @@ export const generateSecurePassword = () => {
   return arr.join('');
 };
 
-// Middleware to verify authentication
+// Middleware to verify authentication and attach role + permissions to req.user
 export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader?.split(' ')[1];
@@ -170,10 +204,9 @@ export const authenticateToken = async (req, res, next) => {
     return res.status(403).json({ error: 'Invalid or expired token' });
   }
 
-  // Verify the user exists in the database
   try {
     const user = await dbGet(
-      'SELECT username FROM admin_users WHERE username = ?',
+      'SELECT username, role FROM admin_users WHERE username = ?',
       [decoded.username]
     );
 
@@ -181,11 +214,14 @@ export const authenticateToken = async (req, res, next) => {
       return res.status(403).json({ error: 'User not found' });
     }
 
-    req.user = decoded;
+    req.user = {
+      ...decoded,
+      role: user.role || 'admin',
+      permissions: getPermissionsForRole(decoded.username, user.role || 'admin'),
+    };
     next();
   } catch (error) {
     console.error('Database error during authentication:', error);
     return res.status(500).json({ error: 'Internal server error during authentication' });
   }
 };
-

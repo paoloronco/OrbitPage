@@ -4,8 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   AlertTriangle,
   CheckCircle,
+  ChevronDown,
   Eye,
   EyeOff,
   Pencil,
@@ -18,10 +26,12 @@ import {
 import { usersApi } from '@/lib/api-client';
 import { isPasswordStrong } from '@/lib/auth';
 import { DEMO_MODE } from '@/lib/config';
+import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, UserRole } from '@/lib/permissions';
 
 interface User {
   username: string;
   created_at: string;
+  role?: string;
 }
 
 type Msg = { type: 'success' | 'error'; text: string };
@@ -66,6 +76,48 @@ const PasswordFields = ({
   );
 };
 
+const RoleSelect = ({
+  value,
+  onChange,
+  disabled,
+  excludeAdmin = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  excludeAdmin?: boolean;
+}) => {
+  const roleList = excludeAdmin ? ROLES.filter(r => r !== 'admin') : ROLES;
+  return (
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className="glass-card border-primary/20 text-sm h-9">
+        <SelectValue placeholder="Select role" />
+      </SelectTrigger>
+      <SelectContent>
+        {roleList.map((role) => (
+          <SelectItem key={role} value={role}>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-medium">{ROLE_LABELS[role]}</span>
+              <span className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</span>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
+
+const roleBadgeClass: Record<string, string> = {
+  admin:        'bg-primary/15 text-primary',
+  editor:       'bg-blue-500/15 text-blue-600',
+  links_editor: 'bg-cyan-500/15 text-cyan-700',
+  links_style:  'bg-violet-500/15 text-violet-700',
+  links_images: 'bg-pink-500/15 text-pink-700',
+  theme_editor: 'bg-amber-500/15 text-amber-700',
+  compliance:   'bg-emerald-500/15 text-emerald-700',
+  viewer:       'bg-slate-400/20 text-slate-600',
+};
+
 export const UserManager = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,13 +128,16 @@ export const UserManager = () => {
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newConfirm, setNewConfirm] = useState('');
+  const [newRole, setNewRole] = useState<string>('viewer');
   const [addLoading, setAddLoading] = useState(false);
   const [addMsg, setAddMsg] = useState<Msg | null>(null);
 
-  // Edit-password state: tracks which username is being edited
+  // Edit state: tracks which username is being edited (password or role)
   const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState<'password' | 'role'>('password');
   const [editPassword, setEditPassword] = useState('');
   const [editConfirm, setEditConfirm] = useState('');
+  const [editRole, setEditRole] = useState<string>('viewer');
   const [editLoading, setEditLoading] = useState(false);
   const [editMsg, setEditMsg] = useState<Msg | null>(null);
 
@@ -116,11 +171,12 @@ export const UserManager = () => {
     }
     setAddLoading(true);
     try {
-      await usersApi.create(newUsername, newPassword);
+      await usersApi.create(newUsername, newPassword, newRole);
       setAddMsg({ type: 'success', text: `User "${newUsername}" created successfully` });
       setNewUsername('');
       setNewPassword('');
       setNewConfirm('');
+      setNewRole('viewer');
       setShowAddForm(false);
       await fetchUsers();
     } catch (err: any) {
@@ -144,13 +200,28 @@ export const UserManager = () => {
     setEditLoading(true);
     try {
       await usersApi.changePassword(username, editPassword);
-      setEditMsg({ type: 'success', text: `Password updated for "${username}"` });
       setEditPassword('');
       setEditConfirm('');
       setEditingUser(null);
       setGlobalMsg({ type: 'success', text: `Password updated for "${username}"` });
     } catch (err: any) {
       setEditMsg({ type: 'error', text: err?.message || 'Failed to update password' });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleSaveRole = async (e: React.FormEvent, username: string) => {
+    e.preventDefault();
+    setEditMsg(null);
+    setEditLoading(true);
+    try {
+      await usersApi.updateRole(username, editRole);
+      setEditingUser(null);
+      setGlobalMsg({ type: 'success', text: `Role updated for "${username}"` });
+      await fetchUsers();
+    } catch (err: any) {
+      setEditMsg({ type: 'error', text: err?.message || 'Failed to update role' });
     } finally {
       setEditLoading(false);
     }
@@ -165,6 +236,15 @@ export const UserManager = () => {
     } catch (err: any) {
       setGlobalMsg({ type: 'error', text: err?.message || 'Failed to delete user' });
     }
+  };
+
+  const openEdit = (username: string, mode: 'password' | 'role', currentRole?: string) => {
+    setEditingUser(username);
+    setEditMode(mode);
+    setEditPassword('');
+    setEditConfirm('');
+    setEditRole(currentRole || 'viewer');
+    setEditMsg(null);
   };
 
   const cancelEdit = () => {
@@ -235,6 +315,10 @@ export const UserManager = () => {
               title="3–32 alphanumeric characters (underscores and hyphens allowed)"
             />
           </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Role</Label>
+            <RoleSelect value={newRole} onChange={setNewRole} disabled={addLoading} excludeAdmin />
+          </div>
           <PasswordFields label="Password" value={newPassword} onChange={setNewPassword} disabled={addLoading} />
           <PasswordFields label="Confirm password" value={newConfirm} onChange={setNewConfirm} disabled={addLoading} />
           {addMsg && (
@@ -267,37 +351,56 @@ export const UserManager = () => {
           {users.map((u) => {
             const isAdmin = u.username === 'admin';
             const isEditing = editingUser === u.username;
+            const roleKey = (u.role || 'admin') as UserRole;
+            const roleLabel = ROLE_LABELS[roleKey] || u.role || 'Admin';
+            const badgeClass = roleBadgeClass[roleKey] || roleBadgeClass.viewer;
             return (
               <li key={u.username} className="border border-primary/10 rounded-lg overflow-hidden">
                 <div className="flex items-center justify-between px-3 py-2.5 bg-primary/5">
-                  <div className="flex items-center gap-2">
-                    <Shield className={`w-4 h-4 ${isAdmin ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <span className="text-sm font-medium">{u.username}</span>
-                    {isAdmin && (
-                      <span className="text-xs bg-primary/15 text-primary px-1.5 py-0.5 rounded-full">
-                        Default
-                      </span>
-                    )}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Shield className={`w-4 h-4 shrink-0 ${isAdmin ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <span className="text-sm font-medium truncate">{u.username}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${badgeClass}`}>
+                      {roleLabel}
+                    </span>
                   </div>
                   {!demoMode && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                      {!isAdmin && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          title="Change role"
+                          onClick={() => {
+                            if (isEditing && editMode === 'role') {
+                              cancelEdit();
+                            } else {
+                              openEdit(u.username, 'role', u.role);
+                            }
+                          }}
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
                         title="Change password"
                         onClick={() => {
-                          if (isEditing) {
+                          if (isEditing && editMode === 'password') {
                             cancelEdit();
                           } else {
-                            setEditingUser(u.username);
-                            setEditPassword('');
-                            setEditConfirm('');
-                            setEditMsg(null);
+                            openEdit(u.username, 'password', u.role);
                           }
                         }}
                       >
-                        {isEditing ? <X className="w-3.5 h-3.5" /> : <Pencil className="w-3.5 h-3.5" />}
+                        {isEditing && editMode === 'password' ? (
+                          <X className="w-3.5 h-3.5" />
+                        ) : (
+                          <Pencil className="w-3.5 h-3.5" />
+                        )}
                       </Button>
                       <Button
                         size="icon"
@@ -313,8 +416,8 @@ export const UserManager = () => {
                   )}
                 </div>
 
-                {/* Inline edit-password form */}
-                {isEditing && (
+                {/* Inline edit panel */}
+                {isEditing && editMode === 'password' && (
                   <form
                     onSubmit={(e) => handleEditPassword(e, u.username)}
                     className="px-3 py-3 space-y-2 border-t border-primary/10 bg-background/40"
@@ -341,6 +444,43 @@ export const UserManager = () => {
                     <div className="flex gap-2">
                       <Button type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
                         {editLoading ? 'Saving…' : 'Save password'}
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={editLoading}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                )}
+
+                {isEditing && editMode === 'role' && (
+                  <form
+                    onSubmit={(e) => handleSaveRole(e, u.username)}
+                    className="px-3 py-3 space-y-2 border-t border-primary/10 bg-background/40"
+                  >
+                    <p className="text-xs text-muted-foreground font-medium">Change role for "{u.username}"</p>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Role</Label>
+                      <RoleSelect value={editRole} onChange={setEditRole} disabled={editLoading} excludeAdmin />
+                    </div>
+                    {editMsg && (
+                      <div
+                        className={`text-xs p-2 rounded flex items-center gap-1.5 ${
+                          editMsg.type === 'success'
+                            ? 'bg-green-500/10 text-green-400'
+                            : 'bg-destructive/10 text-destructive'
+                        }`}
+                      >
+                        {editMsg.type === 'success' ? (
+                          <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        )}
+                        {editMsg.text}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
+                        {editLoading ? 'Saving…' : 'Save role'}
                       </Button>
                       <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={editLoading}>
                         Cancel

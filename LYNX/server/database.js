@@ -88,6 +88,9 @@ export const initializeDatabase = () => {
       db.run(`ALTER TABLE profile_data ADD COLUMN privacy_policy_url TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE profile_data ADD COLUMN cookie_policy_url TEXT`, (err) => { /* ignore if exists */ });
 
+      // Role-based access control — default 'admin' keeps backward compatibility for the main admin user
+      db.run(`ALTER TABLE admin_users ADD COLUMN role TEXT DEFAULT 'admin'`, (err) => { /* ignore if exists */ });
+
       // Links table
       db.run(`
         CREATE TABLE IF NOT EXISTS links (

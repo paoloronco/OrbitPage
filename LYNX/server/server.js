@@ -14,7 +14,12 @@ import {
   verifyToken,
   authenticateToken,
   isPasswordStrong,
-  generateSecurePassword
+  generateSecurePassword,
+  requirePermission,
+  requireAnyPermission,
+  ROLES,
+  ROLE_PERMISSIONS,
+  getPermissionsForRole,
 } from './auth.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -1106,21 +1111,23 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
 app.post('/api/auth/verify', authenticateToken, async (req, res) => {
   try {
-    // Get the full user data from database
     const user = await dbGet(
-      'SELECT username FROM admin_users WHERE username = ?',
+      'SELECT username, role FROM admin_users WHERE username = ?',
       [req.user.username]
     );
-    
+
     if (!user) {
       return res.status(404).json({ valid: false, error: 'User not found' });
     }
-    
-    res.json({ 
-      valid: true, 
-      user: { 
-        username: user.username 
-      } 
+
+    const role = user.role || 'admin';
+    res.json({
+      valid: true,
+      user: {
+        username: user.username,
+        role,
+        permissions: getPermissionsForRole(user.username, role),
+      },
     });
   } catch (error) {
     console.error('Error verifying user:', error);
@@ -1255,7 +1262,7 @@ const ProfileSchema = z.object({
   cookie_policy_url: z.string().max(500).nullable().optional(),
 }).strip();
 
-app.put('/api/profile', authenticateToken, async (req, res) => {
+app.put('/api/profile', authenticateToken, requirePermission('profile:write'), async (req, res) => {
   try {
     const parseResult = ProfileSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -1453,7 +1460,7 @@ const LinkSchema = z.object({
 const LinksPayloadSchema = z.array(LinkSchema).max(200);
 
 // Export links as JSON
-app.get('/api/links/export', authenticateToken, async (req, res) => {
+app.get('/api/links/export', authenticateToken, requireAnyPermission('links:write', 'analytics:read'), async (req, res) => {
   try {
     const links = await dbAll('SELECT * FROM links ORDER BY sort_order');
     const payload = links.map((link) => ({
@@ -1497,7 +1504,7 @@ app.get('/api/links/export', authenticateToken, async (req, res) => {
 });
 
 // Import links from JSON
-app.post('/api/links/import', authenticateToken, async (req, res) => {
+app.post('/api/links/import', authenticateToken, requirePermission('links:write'), async (req, res) => {
   if (!Array.isArray(req.body)) {
     return res.status(400).json({ error: 'Invalid payload: expected an array' });
   }
@@ -1568,7 +1575,7 @@ app.post('/api/links/import', authenticateToken, async (req, res) => {
 });
 
 
-app.put('/api/links', authenticateToken, async (req, res) => {
+app.put('/api/links', authenticateToken, requirePermission('links:write'), async (req, res) => {
   try {
     if (!Array.isArray(req.body)) {
       return res.status(400).json({ error: 'Request body must be an array of links.' });
@@ -1759,7 +1766,7 @@ const ThemeSchema = z.object({
   // Allow any additional string/number/boolean theme keys (color values, sizes, etc.)
 }).catchall(z.union([z.string().max(50_000), z.number(), z.boolean(), z.null()]));
 
-app.put('/api/theme', authenticateToken, async (req, res) => {
+app.put('/api/theme', authenticateToken, requirePermission('theme:write'), async (req, res) => {
   try {
     const parseResult = ThemeSchema.safeParse(req.body);
     if (!parseResult.success) {
@@ -1807,9 +1814,9 @@ app.post('/api/validate-password', (req, res) => {
 });
 
 // User management routes
-app.get('/api/users', authenticateToken, async (req, res) => {
+app.get('/api/users', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   try {
-    const users = await dbAll('SELECT username, created_at FROM admin_users ORDER BY username');
+    const users = await dbAll('SELECT username, role, created_at FROM admin_users ORDER BY username');
     res.json(users);
   } catch (error) {
     console.error('Error listing users:', error);
@@ -1817,10 +1824,10 @@ app.get('/api/users', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/users', authenticateToken, async (req, res) => {
+app.post('/api/users', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
   try {
-    const { username, password } = req.body || {};
+    const { username, password, role } = req.body || {};
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
     }
@@ -1832,10 +1839,11 @@ app.post('/api/users', authenticateToken, async (req, res) => {
     }
     const existing = await dbGet('SELECT username FROM admin_users WHERE username = ?', [username]);
     if (existing) return res.status(409).json({ error: 'Username already exists' });
+    const validRole = ROLES.includes(role) ? role : 'viewer';
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
-    await dbRun('INSERT INTO admin_users (username, password_hash, salt) VALUES (?, ?, ?)', [username, passwordHash, salt]);
-    res.status(201).json({ success: true, username });
+    await dbRun('INSERT INTO admin_users (username, password_hash, salt, role) VALUES (?, ?, ?, ?)', [username, passwordHash, salt, validRole]);
+    res.status(201).json({ success: true, username, role: validRole });
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).json({ error: 'Failed to create user' });
@@ -1847,6 +1855,12 @@ app.put('/api/users/:username', authenticateToken, async (req, res) => {
   try {
     const { username } = req.params;
     const { password } = req.body || {};
+    // Only allow users to change their own password, or users with users:manage permission
+    const isSelf = req.user.username === username;
+    const canManage = (req.user.permissions || []).includes('users:manage');
+    if (!isSelf && !canManage) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
     if (!password) return res.status(400).json({ error: 'New password is required' });
     if (!isPasswordStrong(password)) {
       return res.status(400).json({ error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' });
@@ -1865,7 +1879,7 @@ app.put('/api/users/:username', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/users/:username', authenticateToken, async (req, res) => {
+app.delete('/api/users/:username', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
   try {
     const { username } = req.params;
@@ -1877,6 +1891,90 @@ app.delete('/api/users/:username', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Update a user's role (admin/users:manage only; cannot change the 'admin' user's role)
+app.patch('/api/users/:username/role', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  try {
+    const { username } = req.params;
+    if (username === 'admin') return res.status(403).json({ error: 'Cannot change the role of the admin user' });
+    const { role } = req.body || {};
+    if (!ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role' });
+    const user = await dbGet('SELECT username FROM admin_users WHERE username = ?', [username]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    await dbRun('UPDATE admin_users SET role = ? WHERE username = ?', [role, username]);
+    res.json({ success: true, username, role });
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    res.status(500).json({ error: 'Failed to update role' });
+  }
+});
+
+// PATCH /api/links/:id/style — update visual style fields only (links:style or links:write)
+app.patch('/api/links/:id/style', authenticateToken, requireAnyPermission('links:style', 'links:write'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || typeof id !== 'string' || id.length > 100) return res.status(400).json({ error: 'Invalid id' });
+    const colMap = {
+      backgroundColor:      'background_color',
+      textColor:            'text_color',
+      titleFontFamily:      'title_font_family',
+      descriptionFontFamily:'description_font_family',
+      alignment:            'text_alignment',
+      titleFontSize:        'title_font_size',
+      descriptionFontSize:  'description_font_size',
+      size:                 'size',
+    };
+    const fields = [];
+    const values = [];
+    for (const [key, col] of Object.entries(colMap)) {
+      if (req.body[key] !== undefined) {
+        fields.push(`${col} = ?`);
+        values.push(req.body[key]);
+      }
+    }
+    if (fields.length === 0) return res.status(400).json({ error: 'No valid style fields provided' });
+    const existing = await dbGet('SELECT id FROM links WHERE id = ?', [id]);
+    if (!existing) return res.status(404).json({ error: 'Link not found' });
+    values.push(id);
+    await dbRun(`UPDATE links SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error patching link style:', error);
+    res.status(500).json({ error: 'Failed to update link style' });
+  }
+});
+
+// PATCH /api/links/:id/icon — update icon/cover-image fields only (links:images or links:write)
+app.patch('/api/links/:id/icon', authenticateToken, requireAnyPermission('links:images', 'links:write'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || typeof id !== 'string' || id.length > 100) return res.status(400).json({ error: 'Invalid id' });
+    const colMap = {
+      icon:          'icon',
+      iconType:      'icon_type',
+      coverImage:    'cover_image',
+      coverImageAlt: 'cover_image_alt',
+    };
+    const fields = [];
+    const values = [];
+    for (const [key, col] of Object.entries(colMap)) {
+      if (req.body[key] !== undefined) {
+        fields.push(`${col} = ?`);
+        values.push(req.body[key]);
+      }
+    }
+    if (fields.length === 0) return res.status(400).json({ error: 'No valid icon fields provided' });
+    const existing = await dbGet('SELECT id FROM links WHERE id = ?', [id]);
+    if (!existing) return res.status(404).json({ error: 'Link not found' });
+    values.push(id);
+    await dbRun(`UPDATE links SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, values);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error patching link icon:', error);
+    res.status(500).json({ error: 'Failed to update link icon' });
   }
 });
 
@@ -2189,7 +2287,7 @@ const upload = multer({
 });
 
 // File upload endpoint
-app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
+app.post('/api/upload', authenticateToken, requireAnyPermission('profile:write', 'links:write', 'links:images', 'theme:write'), upload.single('file'), async (req, res) => {
   try {
     console.log('Upload request received. Files:', req.files);
     console.log('Request body:', req.body);
@@ -2285,7 +2383,7 @@ const bgUpload = multer({
   }
 });
 
-app.post('/api/upload/background', authenticateToken, bgUpload.single('file'), async (req, res) => {
+app.post('/api/upload/background', authenticateToken, requirePermission('theme:write'), bgUpload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -2658,8 +2756,8 @@ app.get('/api/consent-config', authenticateToken, apiLimiter, async (req, res) =
   }
 });
 
-// PUT /api/consent-config — admin, save full consent config
-app.put('/api/consent-config', authenticateToken, apiLimiter, async (req, res) => {
+// PUT /api/consent-config — requires compliance:write
+app.put('/api/consent-config', authenticateToken, apiLimiter, requirePermission('compliance:write'), async (req, res) => {
   if (DEMO_MODE) {
     return res.status(403).json({ success: false, error: 'Config changes are disabled in demo mode.' });
   }

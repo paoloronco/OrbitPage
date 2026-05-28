@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { CurrentUser } from "@/pages/Admin";
+import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/lib/permissions";
 import {
   BarChart2,
   CheckCircle2,
@@ -67,6 +69,7 @@ interface AdminViewProps {
   profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
+  currentUser: CurrentUser | null;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void;
   onThemeChange: (theme: ThemeConfig) => void;
@@ -89,6 +92,7 @@ export const AdminView = ({
   profile,
   links,
   theme,
+  currentUser,
   onProfileUpdate,
   onLinksUpdate,
   onThemeChange,
@@ -98,6 +102,16 @@ export const AdminView = ({
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
+
+  const userPerms = (currentUser?.permissions || []) as Permission[];
+  const canManageUsers = hasPermission(userPerms, 'users:manage');
+  const canEditProfile = hasPermission(userPerms, 'profile:write');
+  const canEditLinks = hasAnyPermission(userPerms, 'links:write', 'links:style', 'links:images');
+  const canEditTheme = hasPermission(userPerms, 'theme:write');
+  const canViewAnalytics = hasPermission(userPerms, 'analytics:read');
+  const canEditCompliance = hasPermission(userPerms, 'compliance:write');
+  const canPreview = canEditLinks || canEditTheme || canEditProfile;
+  const linkEditMode = getLinkEditMode(userPerms);
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -110,6 +124,27 @@ export const AdminView = ({
     };
     loadVersion();
   }, []);
+
+  const visibleTabs = tabs.filter(tab => {
+    switch (tab.value) {
+      case 'profile':   return canEditProfile;
+      case 'links':     return canEditLinks;
+      case 'theme':     return canEditTheme;
+      case 'access':    return true;
+      case 'preview':   return canPreview;
+      case 'analytics': return canViewAnalytics;
+      case 'privacy':   return canEditCompliance;
+      default:          return false;
+    }
+  });
+
+  // Keep activeTab in sync when permission set changes (e.g. after login)
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.some(t => t.value === activeTab)) {
+      setActiveTab(visibleTabs[0].value);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
 
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
@@ -203,7 +238,7 @@ export const AdminView = ({
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AdminTab)} className="mt-5 flex-1">
           <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
-              {tabs.map(({ value, label, icon: Icon }) => (
+              {visibleTabs.map(({ value, label, icon: Icon }) => (
                 <TabsTrigger key={value} value={value} className="admin-tab">
                   <Icon className="h-4 w-4" />
                   <span>{label}</span>
@@ -236,6 +271,7 @@ export const AdminView = ({
                 <LinkManager
                   links={links}
                   onLinksUpdate={onLinksUpdate}
+                  editMode={linkEditMode}
                 />
               </div>
               <aside className="admin-side-panel">
@@ -259,7 +295,7 @@ export const AdminView = ({
 
           <TabsContent value="access" className="admin-tab-content">
             <div className="admin-single-column space-y-6">
-              <UserManager />
+              {canManageUsers && <UserManager />}
               <PasswordManager />
             </div>
           </TabsContent>
@@ -327,7 +363,7 @@ export const AdminView = ({
                     onClick={handleSaveIntegrations}
                     className="admin-action admin-action-primary"
                     size="sm"
-                    disabled={!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i)}
+                    disabled={!canEditProfile || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
                   >
                     {gaSaved ? "Saved" : "Save"}
                   </Button>

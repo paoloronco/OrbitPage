@@ -199,6 +199,8 @@ interface VerifyResponse extends ApiResponse {
   valid: boolean;
   user?: {
     username: string;
+    role?: string;
+    permissions?: string[];
   };
 }
 
@@ -425,14 +427,14 @@ export const profileApi = {
 
 // Users management API
 export const usersApi = {
-  list: async (): Promise<{ username: string; created_at: string }[]> => {
-    return apiRequest<{ username: string; created_at: string }[]>('/users');
+  list: async (): Promise<{ username: string; created_at: string; role: string }[]> => {
+    return apiRequest<{ username: string; created_at: string; role: string }[]>('/users');
   },
 
-  create: async (username: string, password: string): Promise<ApiResponse> => {
+  create: async (username: string, password: string, role = 'viewer'): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>('/users', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username, password, role }),
     });
   },
 
@@ -450,6 +452,13 @@ export const usersApi = {
   delete: async (username: string): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>(`/users/${encodeURIComponent(username)}`, {
       method: 'DELETE',
+    });
+  },
+
+  updateRole: async (username: string, role: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/users/${encodeURIComponent(username)}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
     });
   },
 };
@@ -502,6 +511,28 @@ export const linksApi = {
     try {
       await fetch(apiPath(`/links/${encodeURIComponent(id)}/click`), { method: 'POST' });
     } catch { /* fire-and-forget, don't break the UI */ }
+  },
+
+  patchStyle: async (id: string, style: {
+    backgroundColor?: string; textColor?: string;
+    titleFontFamily?: string; descriptionFontFamily?: string;
+    alignment?: string; titleFontSize?: string; descriptionFontSize?: string;
+    size?: string;
+  }): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/links/${encodeURIComponent(id)}/style`, {
+      method: 'PATCH',
+      body: JSON.stringify(style),
+    });
+  },
+
+  patchIcon: async (id: string, icon: {
+    icon?: string | null; iconType?: string | null;
+    coverImage?: string | null; coverImageAlt?: string | null;
+  }): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/links/${encodeURIComponent(id)}/icon`, {
+      method: 'PATCH',
+      body: JSON.stringify(icon),
+    });
   },
 };
 
