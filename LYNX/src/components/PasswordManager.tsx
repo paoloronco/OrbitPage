@@ -49,9 +49,16 @@ export const PasswordManager = () => {
   const [tokenResetMessage, setTokenResetMessage] = useState<Message | null>(null);
   const [tokenResetLoading, setTokenResetLoading] = useState(false);
   const demoMode = DEMO_MODE;
+  const passwordControlsDisabled = isLoading || demoMode;
+  const tokenResetControlsDisabled = tokenResetLoading || demoMode;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (demoMode) {
+      setMessage({ type: 'warning', text: 'Password change is disabled in demo mode.' });
+      return;
+    }
     
     if (newPassword !== confirmPassword) {
       setMessage({ type: 'error', text: 'New passwords do not match' });
@@ -108,6 +115,12 @@ export const PasswordManager = () => {
 
   const handleTokenReset = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (demoMode) {
+      setTokenResetMessage({ type: 'warning', text: 'Password reset is disabled in demo mode.' });
+      return;
+    }
+
     setTokenResetLoading(true);
     setTokenResetMessage(null);
     try {
@@ -147,6 +160,14 @@ export const PasswordManager = () => {
   };
 
   const handleResetApp = async (): Promise<void> => {
+    if (demoMode) {
+      setMessage({
+        type: 'warning',
+        text: 'Application reset is disabled in demo mode.'
+      });
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to reset the application? This will delete all data and cannot be undone.')) {
       return;
     }
@@ -236,7 +257,7 @@ export const PasswordManager = () => {
                   className="glass-card border-primary/20 pr-10"
                   placeholder="Enter current password"
                   required
-                  disabled={isLoading}
+                  disabled={passwordControlsDisabled}
                 />
                 <Button
                   type="button"
@@ -244,7 +265,7 @@ export const PasswordManager = () => {
                   size="icon"
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  disabled={isLoading}
+                  disabled={passwordControlsDisabled}
                 >
                   {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -262,7 +283,7 @@ export const PasswordManager = () => {
                   className="glass-card border-primary/20 pr-10"
                   placeholder="Enter new password"
                   required
-                  disabled={isLoading}
+                  disabled={passwordControlsDisabled}
                 />
                 <Button
                   type="button"
@@ -270,7 +291,7 @@ export const PasswordManager = () => {
                   size="icon"
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  disabled={isLoading}
+                  disabled={passwordControlsDisabled}
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -298,7 +319,7 @@ export const PasswordManager = () => {
                   className="glass-card border-primary/20 pr-10"
                   placeholder="Confirm new password"
                   required
-                  disabled={isLoading}
+                  disabled={passwordControlsDisabled}
                 />
                 <Button
                   type="button"
@@ -306,7 +327,7 @@ export const PasswordManager = () => {
                   size="icon"
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={isLoading}
+                  disabled={passwordControlsDisabled}
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -332,7 +353,7 @@ export const PasswordManager = () => {
               type="submit"
               variant="gradient"
               className="w-full"
-              disabled={isLoading || demoMode}
+              disabled={passwordControlsDisabled}
             >
               {isLoading ? "Changing Password..." : "Change Password"}
             </Button>
@@ -395,7 +416,7 @@ export const PasswordManager = () => {
                 placeholder="Enter RESET_TOKEN value"
                 className="glass-card border-primary/20"
                 required
-                disabled={tokenResetLoading || demoMode}
+                disabled={tokenResetControlsDisabled}
               />
             </div>
             <div className="space-y-2">
@@ -408,7 +429,7 @@ export const PasswordManager = () => {
                 placeholder="Enter new password"
                 className="glass-card border-primary/20"
                 required
-                disabled={tokenResetLoading || demoMode}
+                disabled={tokenResetControlsDisabled}
               />
             </div>
             {tokenResetMessage && (
@@ -425,7 +446,7 @@ export const PasswordManager = () => {
                 {tokenResetMessage.text}
               </div>
             )}
-            <Button type="submit" variant="gradient" className="w-full" disabled={tokenResetLoading || demoMode}>
+            <Button type="submit" variant="gradient" className="w-full" disabled={tokenResetControlsDisabled}>
               {tokenResetLoading ? 'Resetting...' : 'Reset Password'}
             </Button>
           </form>

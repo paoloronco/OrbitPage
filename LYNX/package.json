@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test": "vitest",
     "preview": "vite preview",
     "server": "cd server && npm run serve",
     "server:dev": "cd server && npm run dev",
@@ -82,7 +83,8 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^7.3.2"
+    "vite": "^7.3.2",
+    "vitest": "^4.1.4"
   },
   "overrides": {
     "lodash": "^4.17.23",
