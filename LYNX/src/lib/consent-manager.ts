@@ -166,7 +166,6 @@ class ConsentManager {
    */
   ensureGoogleConsentDefaults(): void {
     if (!this.config?.enabled || this.config.mode === 'disabled') return;
-    if (!this.isGranted('analytics')) return;
     if (this._configuredProviderAlreadySetsGcmDefault()) return;
 
     const win = window as any;
@@ -461,7 +460,7 @@ class ConsentManager {
    * by _dispatchPendingScripts() immediately after this method returns.
    */
   private _dispatchGcmUpdate(categories: Record<ConsentCategory, boolean>): void {
-    if (categories.analytics !== true) return;
+    this.ensureGoogleConsentDefaults();
     const gtag = (window as any).gtag;
     if (typeof gtag !== 'function') return;
     gtag('consent', 'update', this._buildGcmState(categories));
@@ -478,12 +477,13 @@ class ConsentManager {
       categories ? categories[category] === true : this.isGranted(category);
 
     return {
-      analytics_storage: 'granted',
+      analytics_storage: isAllowed('analytics') ? 'granted' : 'denied',
       ad_storage: isAllowed('marketing') ? 'granted' : 'denied',
       ad_user_data: isAllowed('marketing') ? 'granted' : 'denied',
       ad_personalization: isAllowed('marketing') ? 'granted' : 'denied',
       functionality_storage: isAllowed('preferences') ? 'granted' : 'denied',
       personalization_storage: isAllowed('preferences') ? 'granted' : 'denied',
+      security_storage: 'granted',
       wait_for_update: 2000,
     };
   }
