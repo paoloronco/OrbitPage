@@ -1,6 +1,3 @@
-[![Available on GitHub](https://img.shields.io/badge/Available%20on-GitHub-181717?logo=github)](https://github.com/paoloronco/Lynx)
-[![Available on Gitea](https://img.shields.io/badge/Available%20on-Gitea-609926?logo=gitea)](https://gitea.com/paoloronco/Lynx)
-
 # Lynx
 
 ### Your personal links hub
