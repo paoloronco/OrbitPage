@@ -3,6 +3,8 @@
 ### Your personal links hub
 
 [![Version](https://img.shields.io/badge/version-4.3.0-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
+[![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/Lynx)
 
 **Lynx** is an open-source, self-hosted link page manager: public profile page, admin panel, SQLite storage, theme editor, analytics, and secure admin access in one small app.
 
