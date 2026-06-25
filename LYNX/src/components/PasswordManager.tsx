@@ -101,9 +101,9 @@ export const PasswordManager = () => {
           text: errorMessage
         });
       }
-    } catch (error: any) {
-      console.error('Error changing password:', error.message);
-      const errorMessage = error?.message || 'An error occurred while changing the password. Please try again.';
+    } catch (error: unknown) {
+      console.error('Error changing password:', error instanceof Error ? error.message : String(error));
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while changing the password. Please try again.';
       setMessage({ 
         type: 'error', 
         text: errorMessage
@@ -137,8 +137,8 @@ export const PasswordManager = () => {
       } else {
         setTokenResetMessage({ type: 'error', text: result.error || 'Reset failed.' });
       }
-    } catch (err: any) {
-      setTokenResetMessage({ type: 'error', text: err?.message || 'An error occurred.' });
+    } catch (err: unknown) {
+      setTokenResetMessage({ type: 'error', text: err instanceof Error ? err.message : 'An error occurred.' });
     } finally {
       setTokenResetLoading(false);
     }
@@ -182,11 +182,11 @@ export const PasswordManager = () => {
       } else {
         throw new Error(result.error || 'Reset failed');
       }
-    } catch (error: any) {
-      console.error('Reset failed:', error.message);
+    } catch (error: unknown) {
+      console.error('Reset failed:', error instanceof Error ? error.message : String(error));
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to reset application. Please try again.'
+        text: error instanceof Error ? error.message : 'Failed to reset application. Please try again.'
       });
     } finally {
       setIsLoading(false);

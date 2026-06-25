@@ -911,7 +911,8 @@ export function PrivacySettings({
     setCookieMethod(nextCookieMethod);
     setPrivacyExternalUrl(nextPrivacyMethod === 'hosted' ? '' : (privacyPolicyUrl || ''));
     setCookieExternalUrl(nextCookieMethod === 'hosted' ? '' : (cookiePolicyUrl || ''));
-  }, [cookiePolicyUrl, legalConfigLoaded, privacyPolicyUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [legalConfigLoaded]);
 
   const changePolicyMethod = (kind: PolicyKind, nextMethod: LegalPolicyMethod) => {
     if (kind === 'privacy') {
@@ -943,14 +944,14 @@ export function PrivacySettings({
     if (privacyMethod === 'hosted') return HOSTED_POLICY_PATH.privacy;
     if (privacyMethod === 'embedded') return HOSTED_POLICY_PATH.privacy;
     return privacyExternalUrl.trim() || undefined;
-  }, [privacyExternalUrl, privacyMethod, privacyProviderConfig, showLegalLinks]);
+  }, [privacyExternalUrl, privacyMethod, showLegalLinks]);
 
   const resolvedCookiePolicyUrl = useMemo(() => {
     if (!showLegalLinks) return undefined;
     if (cookieMethod === 'hosted') return HOSTED_POLICY_PATH.cookie;
     if (cookieMethod === 'embedded') return HOSTED_POLICY_PATH.cookie;
     return cookieExternalUrl.trim() || undefined;
-  }, [cookieExternalUrl, cookieMethod, cookieProviderConfig, showLegalLinks]);
+  }, [cookieExternalUrl, cookieMethod, showLegalLinks]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -1028,17 +1029,17 @@ export function PrivacySettings({
 
       const res = await consentConfigApi.update({ mode, enabled, legalPolicies, hardcoded, builder: nextBuilder });
       if (!res.success) {
-        setSaveError((res as any).error || 'Save failed.');
+        setSaveError((res as { error?: string }).error || 'Save failed.');
       } else {
         setBuilder(nextBuilder);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2500);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setSaveError(
-        err?.message === 'AUTH_EXPIRED'
+        (err instanceof Error && err.message) === 'AUTH_EXPIRED'
           ? 'Your session expired. Open Admin in another tab, sign in again, then return here and click Save changes. Your edits are still on this page.'
-          : err?.message || 'An unexpected error occurred.'
+          : (err instanceof Error ? err.message : 'An unexpected error occurred.')
       );
     } finally {
       setSaving(false);

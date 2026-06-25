@@ -67,8 +67,8 @@ export const BackgroundMediaCustomizer = ({ config, onChange }: BackgroundMediaC
       const result = await uploadApi.uploadBackgroundMedia(file);
       update({ mediaUrl: result.filePath });
       setUploadState("done");
-    } catch (err: any) {
-      setUploadError(err.message || "Upload failed");
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
       setUploadState("error");
     } finally {
       // Reset input so the same file can be re-selected after an error

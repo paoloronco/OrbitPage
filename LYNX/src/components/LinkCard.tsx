@@ -127,7 +127,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
     }
     // text alignment applies to block-level content inside the card
     if (link.alignment) {
-      styles.textAlign = link.alignment as any;
+      styles.textAlign = link.alignment as 'left' | 'center' | 'right' | 'justify';
     }
     return styles;
   };
