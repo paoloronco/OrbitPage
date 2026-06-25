@@ -25,6 +25,8 @@ vi.mock('./auth.js', () => ({
     req.user = { username: 'admin' };
     next();
   },
+  requirePermission: vi.fn(() => (req, res, next) => next()),
+  requireAnyPermission: vi.fn(() => (req, res, next) => next()),
   isPasswordStrong: vi.fn(() => true),
   generateSecurePassword: vi.fn(() => 'SecurePass123!')
 }));

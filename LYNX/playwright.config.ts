@@ -1,0 +1,58 @@
+import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Definiamo un percorso assoluto per la cartella dei dati dei test E2E
+const e2eDataDir = path.resolve(__dirname, 'e2e-data');
+
+export default defineConfig({
+  testDir: './e2e',
+  /* Esegui i test in parallelo */
+  fullyParallel: true,
+  /* Fallisci la build su CI se hai lasciato accidentalmente test.only nel codice */
+  forbidOnly: !!process.env.CI,
+  /* Ritenta solo su CI */
+  retries: process.env.CI ? 2 : 0,
+  /* Su CI usiamo un solo worker per evitare conflitti sul database SQLite */
+  workers: 1,
+  /* Reporter per visualizzare i risultati */
+  reporter: 'html',
+  /* Impostazioni condivise per tutti i progetti */
+  use: {
+    /* URL di base per i test */
+    baseURL: 'http://localhost:3123',
+    /* Raccogli le tracce in caso di fallimento per il debug */
+    trace: 'retain-on-failure',
+    video: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
+
+  /* Configura i progetti per i diversi browser */
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+    },
+  ],
+
+  /* Avvia automaticamente il server dell'applicazione prima di eseguire i test */
+  webServer: {
+    // Usiamo cross-env per compatibilità Windows/Linux
+    // Impostiamo una porta dedicata (3123) e una cartella dati isolata (e2e-data)
+    command: `npx cross-env PORT=3123 DATA_DIR="${e2eDataDir}" JWT_SECRET=e2e-test-secret-key-9876543210 npm run start`,
+    url: 'http://localhost:3123',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
+});

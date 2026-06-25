@@ -42,6 +42,10 @@ uploads/
 
 # Testing
 coverage/
+LYNX/playwright-report/
+LYNX/test-results/
+LYNX/e2e-data/
+LYNX/lint-report.json
 
 # Temporary files
 *.tmp

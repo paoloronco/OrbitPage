@@ -24,7 +24,7 @@ const getCryptoOrThrow = (): Crypto => {
 };
 
 const getOrCreateDeviceSecret = (): Uint8Array => {
-  let existing = localStorage.getItem(DEVICE_SECRET_KEY);
+  const existing = localStorage.getItem(DEVICE_SECRET_KEY);
   if (existing) {
     return Uint8Array.from(atob(existing), c => c.charCodeAt(0));
   }

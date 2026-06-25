@@ -1,0 +1,22 @@
+#!/bin/sh
+# Pre-push hook: lint, unit tests, and build before allowing git push.
+# Install with: sh scripts/install-git-hooks.sh
+
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT/LYNX"
+
+echo "Pre-push: building frontend..."
+npm run build
+
+echo "Pre-push: linting..."
+npm run lint
+
+echo "Pre-push: frontend unit tests..."
+npm run test -- --run
+
+echo "Pre-push: backend unit tests..."
+cd server && npm test -- --run
+
+echo "Pre-push checks passed."
