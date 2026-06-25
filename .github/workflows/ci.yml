@@ -28,7 +28,9 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
-          cache-dependency-path: 'LYNX/package-lock.json'
+          cache-dependency-path: |
+            LYNX/package-lock.json
+            LYNX/server/package-lock.json
 
       - name: Install frontend dependencies
         run: npm ci
