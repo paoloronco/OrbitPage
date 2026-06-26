@@ -14,6 +14,20 @@ interface PublicLinkCardProps {
   link: LinkData;
 }
 
+function buildValidatedBlobUrl(blobUrl: string): string {
+  try {
+    const url = new URL(blobUrl);
+    
+    if (url.protocol !== 'blob:') {
+      throw new Error('Invalid protocol');
+    }
+    
+    return url.href;
+  } catch {
+    throw new Error('Invalid URL');
+  }
+}
+
 const getIconUrl = (iconPath?: string | null) => {
   if (!iconPath) return null;
   
@@ -47,7 +61,8 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
         
         // If it's a blob URL, convert it to a data URL
         if (url?.startsWith('blob:')) {
-          const response = await fetch(url);
+          const validatedUrl = buildValidatedBlobUrl(url);
+          const response = await fetch(validatedUrl);
           const blob = await response.blob();
           const reader = new FileReader();
           reader.onloadend = () => {
