@@ -25,6 +25,10 @@ RUN cd server && npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY server ./server
 
+# Bundle the update script so the host can extract it via: docker cp
+COPY scripts/lynx-update.sh /app/lynx-update.sh
+RUN chmod +x /app/lynx-update.sh
+
 ENV NODE_ENV=production
 EXPOSE 3001
 
