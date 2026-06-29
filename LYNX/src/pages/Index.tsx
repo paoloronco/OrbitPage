@@ -70,11 +70,6 @@ const Index = () => {
         consentManager.init(cfg as ConsentConfigData);
         setConsentConfig(cfg as ConsentConfigData);
 
-        // In builder mode, inject the external CMP script immediately
-        if (cfg.mode === 'builder' && cfg.enabled) {
-          consentManager.injectBuilderScript();
-        }
-
         const loadedTheme = normalizeTheme(pageData.theme);
         applyTheme(loadedTheme);
         setBackgroundMedia(loadedTheme.backgroundMedia ?? null);
@@ -145,6 +140,14 @@ const Index = () => {
               win.gtag?.('js', new Date());
               win.gtag?.('config', gaId);
             });
+          }
+
+          // In builder mode, inject the external CMP script AFTER registering
+          // consent-dependent scripts so the pending queue is ready when the
+          // CMP fires its consent signal (avoids a race condition where Cookiebot
+          // or iubenda fires before registerConsentDependentScript is called).
+          if (cfg.mode === 'builder' && cfg.enabled) {
+            consentManager.injectBuilderScript();
           }
           // Apply document title
           const tabTitle = (profileData as any).tab_title || (profileData as any).tabTitle;
