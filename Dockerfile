@@ -60,6 +60,12 @@ COPY --from=builder /app/LYNX/server /app/server
 COPY docker-entrypoint.sh /app/server/docker-entrypoint.sh
 RUN chmod +x /app/server/docker-entrypoint.sh
 
+# Bundle the update script so the host can extract it:
+#   docker run --rm --entrypoint cat paueron/lynx:latest /app/lynx-update.sh \
+#     > /usr/local/bin/lynx-update && chmod +x /usr/local/bin/lynx-update
+COPY scripts/lynx-update.sh /app/lynx-update.sh
+RUN chmod +x /app/lynx-update.sh
+
 # Set default PORT environment variable
 ENV PORT=8080
 

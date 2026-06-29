@@ -141,6 +141,9 @@ const Index = () => {
                 const script = document.createElement('script');
                 script.id = 'lynx-ga-script';
                 script.async = true;
+                // data-cookieconsent tells Cookiebot auto-blocking to allow this script
+                // when the visitor has granted statistics consent.
+                script.setAttribute('data-cookieconsent', 'statistics');
                 script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
                 document.head.appendChild(script);
               }
