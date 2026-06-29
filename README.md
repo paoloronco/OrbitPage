@@ -268,6 +268,26 @@ Open:
 </details>
 
 <details>
+<summary><strong>Updating</strong></summary>
+
+Install the `lynx-update` command once on the server:
+
+```bash
+docker run --rm --entrypoint cat paueron/lynx:latest /app/lynx-update.sh \
+  > /usr/local/bin/lynx-update && chmod +x /usr/local/bin/lynx-update
+```
+
+Then update any time with:
+
+```bash
+lynx-update
+```
+
+This pulls the latest image, recreates the containers, and runs health checks. The script self-updates from the new image on every run.
+
+</details>
+
+<details>
 <summary><strong>Optional HTTPS</strong></summary>
 
 ```bash
