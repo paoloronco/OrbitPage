@@ -21,6 +21,8 @@
  *   consentManager.onConsentChange(cb)
  *   consentManager.showBanner()
  *   consentManager.openPreferences()
+ *   consentManager.grantExternalConsent({ analytics: true, marketing: false, preferences: false })
+ *   — call from custom CMP snippets to signal consent to Lynx
  */
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -325,6 +327,22 @@ class ConsentManager {
   }
 
   /**
+   * Signal consent from an external CMP (builder/custom mode).
+   * Call this from custom CMP snippets when the user accepts or rejects cookies.
+   * 
+   * Example (from a custom headSnippet):
+   *   window.LynxConsent.grantExternalConsent({ analytics: true, marketing: false, preferences: false })
+   */
+  grantExternalConsent(categories: Partial<Record<ConsentCategory, boolean>>): void {
+    this._setExternalConsent({
+      necessary: true,
+      preferences: categories.preferences === true,
+      analytics: categories.analytics === true,
+      marketing: categories.marketing === true,
+    });
+  }
+
+  /**
    * Called by CookieBanner to register its imperative show/openPrefs handlers.
    * Internal — do not call from application code.
    */
@@ -350,6 +368,12 @@ class ConsentManager {
       return;
     }
     if (document.getElementById('lynx-cmp-script')) return; // already injected
+
+    // For all builder providers: intercept the dataLayer so we catch any
+    // consent/update signals the external CMP pushes — both past (already in
+    // the array before Lynx loaded) and future (pushed after injection).
+    // Provider-specific wirings below add their own event listeners on top.
+    this._syncFromDataLayer();
 
     const { provider, providerConfig } = this.config.builder;
     switch (provider) {
@@ -540,6 +564,8 @@ class ConsentManager {
       console.warn('[LynxConsent] Iubenda: missing siteId or cookiePolicyId');
       return;
     }
+    this._wireIubendaConsentEvents();
+
     const cfgScript = document.createElement('script');
     cfgScript.id = 'lynx-cmp-config';
     cfgScript.type = 'text/javascript';
@@ -565,6 +591,49 @@ _iub.csConfiguration = {
     csScript.async = true;
     csScript.defer = true;
     document.head.appendChild(csScript);
+  }
+
+  private _wireIubendaConsentEvents(): void {
+    const win = window as any;
+    if (win.__lynxIubendaConsentEventsWired) return;
+    win.__lynxIubendaConsentEventsWired = true;
+
+    const syncIubendaConsent = () => {
+      const purposes = win._iub?.cs?.consent?.purposes;
+      if (!purposes) return;
+      // Iubenda purpose IDs: 4 = statistics/analytics, 5 = marketing
+      this._setExternalConsent({
+        necessary: true,
+        preferences: purposes[2] === true || purposes[3] === true,
+        analytics: purposes[4] === true,
+        marketing: purposes[5] === true,
+      });
+    };
+
+    window.addEventListener('iubenda_consent_given', syncIubendaConsent);
+    window.addEventListener('iubenda_reject_public_digital_content', () => {
+      this._setExternalConsent({
+        necessary: true,
+        preferences: false,
+        analytics: false,
+        marketing: false,
+      });
+    });
+
+    // Try immediately — consent may already be stored from a previous visit
+    syncIubendaConsent();
+
+    // Iubenda loads asynchronously; poll briefly so we catch the case where
+    // iubenda fires its ready event before our listener was attached.
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      const purposes = win._iub?.cs?.consent?.purposes;
+      if (purposes || attempts >= 20) {
+        clearInterval(poll);
+        if (purposes) syncIubendaConsent();
+      }
+    }, 250);
   }
 
   private _injectCookiebot(cfg: BuilderConfig['providerConfig']): void {
@@ -602,7 +671,19 @@ _iub.csConfiguration = {
     window.addEventListener('CookiebotOnAccept', syncCookiebotConsent);
     window.addEventListener('CookiebotOnDecline', syncCookiebotConsent);
     window.addEventListener('CookiebotOnLoad', syncCookiebotConsent);
+
+    // Try immediately — Cookiebot may have already loaded before Lynx registered listeners
     syncCookiebotConsent();
+
+    // Poll briefly to catch the case where Cookiebot fires before our listeners attached
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      if (win.Cookiebot?.consent || attempts >= 20) {
+        clearInterval(poll);
+        syncCookiebotConsent();
+      }
+    }, 250);
   }
 
   private _injectCookieYes(cfg: BuilderConfig['providerConfig']): void {
@@ -610,11 +691,34 @@ _iub.csConfiguration = {
       console.warn('[LynxConsent] CookieYes: missing scriptId');
       return;
     }
+    this._wireCookieYesConsentEvents();
     const script = document.createElement('script');
     script.id = 'lynx-cmp-script';
     script.src = `https://cdn-cookieyes.com/client_data/${cfg.scriptId}/script.js`;
     script.async = true;
     document.head.appendChild(script);
+  }
+
+  private _wireCookieYesConsentEvents(): void {
+    const win = window as any;
+    if (win.__lynxCookieYesConsentEventsWired) return;
+    win.__lynxCookieYesConsentEventsWired = true;
+
+    const syncCookieYesConsent = (detail?: any) => {
+      const accepted: string[] = detail?.accepted ?? win.getCkyConsent?.()?.categories?.accepted ?? [];
+      this._setExternalConsent({
+        necessary: true,
+        preferences: accepted.includes('functional'),
+        analytics: accepted.includes('analytics'),
+        marketing: accepted.includes('advertisement'),
+      });
+    };
+
+    window.addEventListener('cookieyes-consent-update', (e: Event) => {
+      syncCookieYesConsent((e as CustomEvent).detail);
+    });
+    // Try reading current state on page load if consent already given
+    syncCookieYesConsent();
   }
 
   private _injectOneTrust(cfg: BuilderConfig['providerConfig']): void {
@@ -630,10 +734,32 @@ _iub.csConfiguration = {
     script.charset = 'UTF-8';
     document.head.appendChild(script);
 
+    // OneTrust calls OptanonWrapper after consent is loaded/changed.
+    // We wrap it to sync consent state into Lynx.
+    const win = window as any;
+    const prevWrapper = typeof win.OptanonWrapper === 'function' ? win.OptanonWrapper : null;
+    win.OptanonWrapper = () => {
+      prevWrapper?.();
+      this._syncOneTrustConsent();
+    };
+
     const wrapper = document.createElement('script');
     wrapper.type = 'text/javascript';
-    wrapper.text = 'function OptanonWrapper() {}';
+    wrapper.text = 'function OptanonWrapper() { window.OptanonWrapper && window.OptanonWrapper(); }';
     document.head.appendChild(wrapper);
+  }
+
+  private _syncOneTrustConsent(): void {
+    const win = window as any;
+    // OneTrust exposes active groups as a comma-separated string in window.OnetrustActiveGroups
+    const active: string = win.OnetrustActiveGroups ?? '';
+    // Common OneTrust group IDs: C0001=necessary, C0002=performance/analytics, C0003=functional, C0004=targeting
+    this._setExternalConsent({
+      necessary: true,
+      preferences: active.includes('C0003'),
+      analytics: active.includes('C0002'),
+      marketing: active.includes('C0004'),
+    });
   }
 
   private _injectCustom(cfg: BuilderConfig['providerConfig']): void {
@@ -643,12 +769,116 @@ _iub.csConfiguration = {
      * so the trust boundary here is the admin session, not the public page visitor.
      * Never expose snippet configuration to unauthenticated endpoints.
      */
+
+    // Listen for a custom consent event that third-party CMP snippets can dispatch
+    // to communicate their consent decision to Lynx. The event payload must be:
+    //   { detail: { analytics: boolean, marketing: boolean, preferences: boolean } }
+    // Custom snippets can also call window.LynxConsent._setExternalConsent() directly.
+    this._wireCustomConsentEvent();
+
     let markerApplied = false;
     if (cfg.headSnippet) {
       markerApplied = this._injectHtmlSnippet(document.head, cfg.headSnippet, 'lynx-cmp-script');
     }
     if (cfg.bodySnippet) {
       this._injectHtmlSnippet(document.body, cfg.bodySnippet, markerApplied ? undefined : 'lynx-cmp-script');
+    }
+  }
+
+  private _wireCustomConsentEvent(): void {
+    const win = window as any;
+    if (win.__lynxCustomConsentEventWired) return;
+    win.__lynxCustomConsentEventWired = true;
+
+    // Native Lynx consent bridge event — custom snippets can dispatch this
+    // to communicate consent decisions:
+    //   window.dispatchEvent(new CustomEvent('lynx-consent-update', {
+    //     detail: { analytics: true, marketing: false, preferences: false }
+    //   }))
+    window.addEventListener('lynx-consent-update', (e: Event) => {
+      const detail = (e as CustomEvent<Partial<Record<ConsentCategory, boolean>>>).detail;
+      if (!detail || typeof detail !== 'object') return;
+      this._setExternalConsent({
+        necessary: true,
+        preferences: detail.preferences === true,
+        analytics: detail.analytics === true,
+        marketing: detail.marketing === true,
+      });
+    });
+
+    // Auto-detect iubenda — fires when the custom headSnippet contains iubenda
+    this._wireIubendaConsentEvents();
+
+    // Auto-detect Cookiebot
+    this._wireCookiebotConsentEvents();
+
+    // Auto-detect CookieYes
+    this._wireCookieYesConsentEvents();
+
+    // Auto-detect OneTrust — poll OnetrustActiveGroups if available
+    if (win.OnetrustActiveGroups !== undefined) {
+      this._syncOneTrustConsent();
+    }
+    window.addEventListener('consent.onetrust', () => this._syncOneTrustConsent());
+
+    // Generic GCM v2 fallback: if an external CMP has already pushed a
+    // consent/update with analytics_storage=granted into dataLayer before
+    // Lynx loaded, read it back so GA can still fire on this page view.
+    this._syncFromDataLayer();
+  }
+
+  /**
+   * Read the most recent 'consent update' entry from window.dataLayer (if any)
+   * and mirror it into Lynx's external consent state.
+   * This handles the case where an external CMP fires GCM signals before Lynx
+   * has registered its own listeners — e.g. iubenda widgets or GTM-managed CMPs.
+   * Also installs a dataLayer.push interceptor to catch future consent signals.
+   */
+  private _syncFromDataLayer(): void {
+    const win = window as any;
+    win.dataLayer = win.dataLayer || [];
+    const dataLayer: unknown[] = win.dataLayer;
+
+    const processEntry = (entry: unknown) => {
+      const values = Array.isArray(entry)
+        ? entry
+        : (typeof entry === 'object' && entry !== null && 'length' in entry
+            ? Array.from(entry as ArrayLike<unknown>)
+            : []);
+      if (values[0] === 'consent' && (values[1] === 'update' || values[1] === 'default')) {
+        const state = values[2] as Record<string, string> | undefined;
+        if (!state || typeof state !== 'object') return;
+        this._setExternalConsent({
+          necessary: true,
+          preferences: state.functionality_storage === 'granted' || state.personalization_storage === 'granted',
+          analytics: state.analytics_storage === 'granted',
+          marketing: state.ad_storage === 'granted',
+        });
+      }
+    };
+
+    // Read any consent signals already in the dataLayer (CMP loaded before Lynx)
+    for (let i = dataLayer.length - 1; i >= 0; i--) {
+      const entry = dataLayer[i];
+      const values = Array.isArray(entry)
+        ? entry
+        : (typeof entry === 'object' && entry !== null && 'length' in entry
+            ? Array.from(entry as ArrayLike<unknown>)
+            : []);
+      if (values[0] === 'consent' && (values[1] === 'update' || values[1] === 'default')) {
+        processEntry(entry);
+        break; // use only the most recent consent entry
+      }
+    }
+
+    // Intercept future dataLayer.push calls to catch consent signals pushed after Lynx loads
+    if (!win.__lynxDataLayerIntercepted) {
+      win.__lynxDataLayerIntercepted = true;
+      const originalPush = dataLayer.push.bind(dataLayer);
+      dataLayer.push = (...args: unknown[]) => {
+        for (const entry of args) processEntry(entry);
+        return originalPush(...args);
+      };
     }
   }
 }
