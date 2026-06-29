@@ -836,28 +836,12 @@ _iub.csConfiguration = {
    */
   private _syncFromDataLayer(): void {
     const win = window as any;
-    win.dataLayer = win.dataLayer || [];
     const dataLayer: unknown[] = win.dataLayer;
+    if (!Array.isArray(dataLayer)) return;
 
-    const processEntry = (entry: unknown) => {
-      const values = Array.isArray(entry)
-        ? entry
-        : (typeof entry === 'object' && entry !== null && 'length' in entry
-            ? Array.from(entry as ArrayLike<unknown>)
-            : []);
-      if (values[0] === 'consent' && (values[1] === 'update' || values[1] === 'default')) {
-        const state = values[2] as Record<string, string> | undefined;
-        if (!state || typeof state !== 'object') return;
-        this._setExternalConsent({
-          necessary: true,
-          preferences: state.functionality_storage === 'granted' || state.personalization_storage === 'granted',
-          analytics: state.analytics_storage === 'granted',
-          marketing: state.ad_storage === 'granted',
-        });
-      }
-    };
-
-    // Read any consent signals already in the dataLayer (CMP loaded before Lynx)
+    // Walk backwards to find the most recent consent/update or consent/default entry.
+    // This handles CMPs that push GCM signals into the dataLayer before Lynx loads.
+    // We do NOT intercept dataLayer.push — that risks breaking GTM's own wrapping.
     for (let i = dataLayer.length - 1; i >= 0; i--) {
       const entry = dataLayer[i];
       const values = Array.isArray(entry)
@@ -866,19 +850,16 @@ _iub.csConfiguration = {
             ? Array.from(entry as ArrayLike<unknown>)
             : []);
       if (values[0] === 'consent' && (values[1] === 'update' || values[1] === 'default')) {
-        processEntry(entry);
-        break; // use only the most recent consent entry
+        const state = values[2] as Record<string, string> | undefined;
+        if (!state || typeof state !== 'object') break;
+        this._setExternalConsent({
+          necessary: true,
+          preferences: state.functionality_storage === 'granted' || state.personalization_storage === 'granted',
+          analytics: state.analytics_storage === 'granted',
+          marketing: state.ad_storage === 'granted',
+        });
+        break; // use only the most recent entry
       }
-    }
-
-    // Intercept future dataLayer.push calls to catch consent signals pushed after Lynx loads
-    if (!win.__lynxDataLayerIntercepted) {
-      win.__lynxDataLayerIntercepted = true;
-      const originalPush = dataLayer.push.bind(dataLayer);
-      dataLayer.push = (...args: unknown[]) => {
-        for (const entry of args) processEntry(entry);
-        return originalPush(...args);
-      };
     }
   }
 }
