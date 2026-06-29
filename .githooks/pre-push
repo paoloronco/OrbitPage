@@ -2,21 +2,35 @@
 # Pre-push hook: lint, unit tests, and build before allowing git push.
 # Install with: sh scripts/install-git-hooks.sh
 
+echo "========================================================="
+echo "  🛡️  Lynx Pre-Push Hook: Running quality checks...     "
+echo "========================================================="
+
 set -e
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT/LYNX"
 
-echo "Pre-push: building frontend..."
-npm run build
-
-echo "Pre-push: linting..."
+# 1. Linting
+echo ""
+echo "👉 [1/3] Checking: Linting (ESLint)..."
 npm run lint
 
-echo "Pre-push: frontend unit tests..."
+# 2. Unit tests (frontend + backend)
+echo ""
+echo "👉 [2/3] Running: Unit Tests (Vitest)..."
 npm run test -- --run
-
-echo "Pre-push: backend unit tests..."
 cd server && npm test -- --run
+cd ..
 
-echo "Pre-push checks passed."
+# 3. Frontend build
+echo ""
+echo "👉 [3/3] Checking: Frontend build..."
+npm run build
+
+echo ""
+echo "========================================================="
+echo "  ✅ All local checks passed successfully!               "
+echo "  🚀 Pushing to GitHub...                                "
+echo "  (To skip these checks use: git push --no-verify)       "
+echo "========================================================="
