@@ -38,6 +38,8 @@ try {
 
 const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
+const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'cookie_consent_config'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -1042,8 +1044,126 @@ const resetLimiter = rateLimit({
 // Apply rate limiting
 app.use('/api', apiLimiter);
 
+let demoDatabaseSnapshot = null;
+let demoResetInProgress = false;
+const demoUploadsSnapshotPath = join(DATA_DIR, '.demo-reset-snapshot', 'uploads');
+
+const copyDirectoryContents = (sourceDir, destinationDir) => {
+  if (!fs.existsSync(sourceDir)) return;
+  fs.mkdirSync(destinationDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(sourceDir, { withFileTypes: true })) {
+    const sourcePath = join(sourceDir, entry.name);
+    const destinationPath = join(destinationDir, entry.name);
+    if (entry.isDirectory()) {
+      copyDirectoryContents(sourcePath, destinationPath);
+    } else if (entry.isFile()) {
+      fs.copyFileSync(sourcePath, destinationPath);
+    }
+  }
+};
+
+const clearDirectoryContents = (targetDir) => {
+  if (!fs.existsSync(targetDir)) return;
+  for (const entry of fs.readdirSync(targetDir, { withFileTypes: true })) {
+    fs.rmSync(join(targetDir, entry.name), { recursive: true, force: true });
+  }
+};
+
+const captureDemoUploadsSnapshot = () => {
+  if (process.env.NODE_ENV === 'test') return;
+  try {
+    const snapshotRoot = dirname(demoUploadsSnapshotPath);
+    fs.rmSync(snapshotRoot, { recursive: true, force: true });
+    fs.mkdirSync(demoUploadsSnapshotPath, { recursive: true });
+    copyDirectoryContents(uploadsPath, demoUploadsSnapshotPath);
+  } catch (error) {
+    console.error('Failed to snapshot demo uploads:', error);
+  }
+};
+
+const restoreDemoUploadsSnapshot = () => {
+  if (process.env.NODE_ENV === 'test') return;
+  try {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+    clearDirectoryContents(uploadsPath);
+    copyDirectoryContents(demoUploadsSnapshotPath, uploadsPath);
+  } catch (error) {
+    console.error('Failed to restore demo uploads:', error);
+  }
+};
+
+const captureDemoDatabaseSnapshot = async () => {
+  const snapshot = {};
+  for (const table of DEMO_RESET_TABLES) {
+    const columns = await dbAll(`PRAGMA table_info(${table})`);
+    const rows = await dbAll(`SELECT * FROM ${table}`);
+    snapshot[table] = {
+      columns: columns.map((column) => column.name),
+      rows: rows.map((row) => ({ ...row })),
+    };
+  }
+  return snapshot;
+};
+
+const restoreDemoDatabaseSnapshot = async () => {
+  if (!demoDatabaseSnapshot) return;
+
+  await withTransaction(async () => {
+    for (const table of DEMO_RESET_TABLES) {
+      await dbRun(`DELETE FROM ${table}`);
+    }
+
+    for (const table of DEMO_RESET_TABLES) {
+      const { columns, rows } = demoDatabaseSnapshot[table] || {};
+      if (!columns?.length || !rows?.length) continue;
+
+      const placeholders = columns.map(() => '?').join(', ');
+      const columnList = columns.join(', ');
+      for (const row of rows) {
+        await dbRun(
+          `INSERT INTO ${table} (${columnList}) VALUES (${placeholders})`,
+          columns.map((column) => row[column])
+        );
+      }
+    }
+
+    await dbRun(
+      `DELETE FROM sqlite_sequence WHERE name IN (${DEMO_RESET_TABLES.map(() => '?').join(', ')})`,
+      DEMO_RESET_TABLES
+    ).catch(() => {});
+  });
+};
+
+const restoreDemoState = async () => {
+  if (demoResetInProgress) return;
+  demoResetInProgress = true;
+  try {
+    await restoreDemoDatabaseSnapshot();
+    restoreDemoUploadsSnapshot();
+    console.log('Demo mode state restored to startup snapshot.');
+  } catch (error) {
+    console.error('Demo mode automatic reset failed:', error);
+  } finally {
+    demoResetInProgress = false;
+  }
+};
+
+const initializeDemoReset = async () => {
+  demoDatabaseSnapshot = await captureDemoDatabaseSnapshot();
+  captureDemoUploadsSnapshot();
+  const timer = setInterval(() => {
+    void restoreDemoState();
+  }, DEMO_RESET_INTERVAL_MS);
+  if (typeof timer.unref === 'function') timer.unref();
+  console.log(`Demo mode automatic reset scheduled every ${DEMO_RESET_INTERVAL_MS / 60000} minutes.`);
+};
+
 // Initialize database
 await initializeDatabase();
+if (DEMO_MODE) {
+  await initializeDemoReset();
+}
 
 // Auth Routes
 app.get('/api/auth/setup-status', async (req, res) => {
@@ -1302,8 +1422,13 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
     const showAvatarRaw = body.showAvatar ?? body.show_avatar;
     const showAvatar = typeof showAvatarRaw === 'number' ? showAvatarRaw !== 0 : !!showAvatarRaw;
 
-    // Check if profile exists
-    const existing = await dbGet('SELECT id FROM profile_data LIMIT 1');
+    // Check if profile exists. In demo mode, privacy/compliance fields are read-only,
+    // so profile saves preserve the original legal policy URLs.
+    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url FROM profile_data LIMIT 1');
+    if (DEMO_MODE) {
+      privacyPolicyUrl = existing?.privacy_policy_url || DEMO_LEGAL_URLS.privacyPolicyUrl;
+      cookiePolicyUrl = existing?.cookie_policy_url || DEMO_LEGAL_URLS.cookiePolicyUrl;
+    }
 
     if (existing) {
       await dbRun(
@@ -1825,7 +1950,6 @@ app.get('/api/users', authenticateToken, requirePermission('users:manage'), asyn
 });
 
 app.post('/api/users', authenticateToken, requirePermission('users:manage'), async (req, res) => {
-  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
   try {
     const { username, password, role } = req.body || {};
     if (!username || !password) {

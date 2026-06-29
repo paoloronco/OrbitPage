@@ -261,20 +261,18 @@ export const UserManager = () => {
           <Users className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold gradient-text">Users</h2>
         </div>
-        {!demoMode && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 text-xs"
-            onClick={() => {
-              setShowAddForm((v) => !v);
-              setAddMsg(null);
-            }}
-          >
-            {showAddForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-            {showAddForm ? 'Cancel' : 'Add user'}
-          </Button>
-        )}
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5 text-xs"
+          onClick={() => {
+            setShowAddForm((v) => !v);
+            setAddMsg(null);
+          }}
+        >
+          {showAddForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+          {showAddForm ? 'Cancel' : 'Add user'}
+        </Button>
       </div>
 
       {globalMsg && (

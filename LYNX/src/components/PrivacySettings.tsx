@@ -836,10 +836,12 @@ export function PrivacySettings({
   privacyPolicyUrl,
   cookiePolicyUrl,
   onLegalPolicyUpdate,
+  readOnly = false,
 }: {
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
   onLegalPolicyUpdate?: (links: { privacyPolicyUrl?: string; cookiePolicyUrl?: string }) => void | Promise<void>;
+  readOnly?: boolean;
 } = {}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -954,6 +956,8 @@ export function PrivacySettings({
   }, [cookieExternalUrl, cookieMethod, showLegalLinks]);
 
   const handleSave = async () => {
+    if (readOnly) return;
+
     setSaving(true);
     setSaveError('');
     setSaveSuccess(false);
@@ -1085,104 +1089,111 @@ export function PrivacySettings({
             ? `Active - ${activeLabel} is live on the public page`
             : 'Cookie consent is disabled - no banner is shown'}
         </div>
-      </section>
-
-      <section className="admin-panel space-y-3">
-        <SectionHeader
-          icon={Globe2}
-          title="Legal pages"
-          description="Privacy Policy = legal document. Cookie Policy = cookie document."
-        />
-        <LegalPoliciesForm
-          showLegalLinks={showLegalLinks}
-          onShowLegalLinksChange={setShowLegalLinks}
-          privacy={{
-            method: privacyMethod,
-            externalUrl: privacyExternalUrl,
-            hostedText: privacyHostedText,
-            hostedFileName: privacyHostedFileName,
-            providerConfig: privacyProviderConfig,
-            onMethodChange: (method) => changePolicyMethod('privacy', method),
-            onExternalUrlChange: setPrivacyExternalUrl,
-            onHostedTextChange: setPrivacyHostedText,
-            onHostedFileNameChange: setPrivacyHostedFileName,
-            onProviderConfigChange: setPrivacyProviderConfig,
-          }}
-          cookie={{
-            method: cookieMethod,
-            externalUrl: cookieExternalUrl,
-            hostedText: cookieHostedText,
-            hostedFileName: cookieHostedFileName,
-            providerConfig: cookieProviderConfig,
-            onMethodChange: (method) => changePolicyMethod('cookie', method),
-            onExternalUrlChange: setCookieExternalUrl,
-            onHostedTextChange: setCookieHostedText,
-            onHostedFileNameChange: setCookieHostedFileName,
-            onProviderConfigChange: setCookieProviderConfig,
-          }}
-        />
-      </section>
-
-      <section className="admin-panel space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <SectionHeader
-            icon={ShieldCheck}
-            title="Consent management"
-            description="CMP = cookie consent banner. Choose who shows it."
-          />
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Off'}</span>
-            <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Enable consent management" />
+        {readOnly && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
+            Demo mode is active. Privacy Policy, Cookie Policy, Consent Management, and related compliance settings are view-only.
           </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <ModeCard
-            mode="hardcoded"
-            active={mode}
-            title="Native (Lynx built-in)"
-            description="Lynx shows the cookie banner. No external script is loaded."
-            icon={ShieldCheck}
-            badge="Recommended"
-            onClick={() => changeConsentMode('hardcoded')}
-          />
-          <ModeCard
-            mode="builder"
-            active={mode}
-            title="External (custom script)"
-            description="Your provider shows the banner. Lynx banner stays off."
-            icon={Globe2}
-            onClick={() => changeConsentMode('builder')}
-          />
-        </div>
+        )}
+      </section>
 
-        {mode === 'hardcoded' && enabled && (
-          <div className="mt-5 border-t border-slate-200 pt-5">
+      <fieldset disabled={readOnly} className={`m-0 min-w-0 space-y-6 border-0 p-0 ${readOnly ? 'opacity-75' : ''}`}>
+        <section className="admin-panel space-y-3">
+          <SectionHeader
+            icon={Globe2}
+            title="Legal pages"
+            description="Privacy Policy = legal document. Cookie Policy = cookie document."
+          />
+          <LegalPoliciesForm
+            showLegalLinks={showLegalLinks}
+            onShowLegalLinksChange={setShowLegalLinks}
+            privacy={{
+              method: privacyMethod,
+              externalUrl: privacyExternalUrl,
+              hostedText: privacyHostedText,
+              hostedFileName: privacyHostedFileName,
+              providerConfig: privacyProviderConfig,
+              onMethodChange: (method) => changePolicyMethod('privacy', method),
+              onExternalUrlChange: setPrivacyExternalUrl,
+              onHostedTextChange: setPrivacyHostedText,
+              onHostedFileNameChange: setPrivacyHostedFileName,
+              onProviderConfigChange: setPrivacyProviderConfig,
+            }}
+            cookie={{
+              method: cookieMethod,
+              externalUrl: cookieExternalUrl,
+              hostedText: cookieHostedText,
+              hostedFileName: cookieHostedFileName,
+              providerConfig: cookieProviderConfig,
+              onMethodChange: (method) => changePolicyMethod('cookie', method),
+              onExternalUrlChange: setCookieExternalUrl,
+              onHostedTextChange: setCookieHostedText,
+              onHostedFileNameChange: setCookieHostedFileName,
+              onProviderConfigChange: setCookieProviderConfig,
+            }}
+          />
+        </section>
+
+        <section className="admin-panel space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <SectionHeader
               icon={ShieldCheck}
-              title="Native banner settings"
-              description="Customise the built-in consent banner shown to visitors."
+              title="Consent management"
+              description="CMP = cookie consent banner. Choose who shows it."
             />
-            <HardcodedForm
-              cfg={hardcoded}
-              onChange={(u) => setHardcoded((prev) => ({ ...prev, ...u }))}
-            />
+            <div className="flex shrink-0 items-center gap-2">
+              <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Off'}</span>
+              <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Enable consent management" />
+            </div>
           </div>
-        )}
-
-        {mode === 'builder' && enabled && (
-          <div className="mt-5 border-t border-slate-200 pt-5">
-            <SectionHeader
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ModeCard
+              mode="hardcoded"
+              active={mode}
+              title="Native (Lynx built-in)"
+              description="Lynx shows the cookie banner. No external script is loaded."
+              icon={ShieldCheck}
+              badge="Recommended"
+              onClick={() => changeConsentMode('hardcoded')}
+            />
+            <ModeCard
+              mode="builder"
+              active={mode}
+              title="External (custom script)"
+              description="Your provider shows the banner. Lynx banner stays off."
               icon={Globe2}
-              title="External CMP script"
-              description="Paste the script from the service that will show your cookie banner."
-            />
-            <BuilderForm
-              cfg={builder}
-              onChange={(u) => setBuilder((prev) => ({ ...prev, ...u, provider: 'custom' }))}
+              onClick={() => changeConsentMode('builder')}
             />
           </div>
-        )}
-      </section>
+
+          {mode === 'hardcoded' && enabled && (
+            <div className="mt-5 border-t border-slate-200 pt-5">
+              <SectionHeader
+                icon={ShieldCheck}
+                title="Native banner settings"
+                description="Customise the built-in consent banner shown to visitors."
+              />
+              <HardcodedForm
+                cfg={hardcoded}
+                onChange={(u) => setHardcoded((prev) => ({ ...prev, ...u }))}
+              />
+            </div>
+          )}
+
+          {mode === 'builder' && enabled && (
+            <div className="mt-5 border-t border-slate-200 pt-5">
+              <SectionHeader
+                icon={Globe2}
+                title="External CMP script"
+                description="Paste the script from the service that will show your cookie banner."
+              />
+              <BuilderForm
+                cfg={builder}
+                onChange={(u) => setBuilder((prev) => ({ ...prev, ...u, provider: 'custom' }))}
+              />
+            </div>
+          )}
+        </section>
+      </fieldset>
       {/* Compliance checklist */}
       <section className="admin-panel space-y-3">
         <SectionHeader
@@ -1257,7 +1268,7 @@ export function PrivacySettings({
         </div>
         <Button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || readOnly}
           className="admin-action admin-action-primary"
           size="sm"
         >

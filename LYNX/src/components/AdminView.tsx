@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { CurrentUser } from "@/pages/Admin";
 import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/lib/permissions";
 import {
+  AlertTriangle,
   BarChart2,
   CheckCircle2,
   Cookie,
@@ -35,6 +36,7 @@ import { UserManager } from "./UserManager";
 import { PrivacySettings } from "./PrivacySettings";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
+import { DEMO_MODE } from "@/lib/config";
 
 interface ProfileData {
   name: string;
@@ -381,6 +383,7 @@ export const AdminView = ({
             <PrivacySettings
               privacyPolicyUrl={profile.privacyPolicyUrl}
               cookiePolicyUrl={profile.cookiePolicyUrl}
+              readOnly={DEMO_MODE}
               onLegalPolicyUpdate={({ privacyPolicyUrl, cookiePolicyUrl }) =>
                 onProfileUpdate({ ...profile, privacyPolicyUrl, cookiePolicyUrl })
               }
@@ -389,6 +392,17 @@ export const AdminView = ({
         </Tabs>
 
         <footer className="admin-footer">
+          {DEMO_MODE && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs leading-5 text-amber-900">
+              <div className="mb-1 flex items-center gap-2 font-semibold">
+                <AlertTriangle className="h-4 w-4" />
+                <span>Demo Mode</span>
+              </div>
+              <p>
+                This instance is automatically reset every 5 minutes. Any changes made during the demo will be lost after the reset. Any users created during the demo will be removed. Changing the admin password is disabled. Editing privacy settings, including Privacy Policy, Cookie Policy, Consent Management, and related compliance configuration, is disabled.
+              </p>
+            </div>
+          )}
           {profile.footerText && (
             <p className="whitespace-pre-line text-xs text-slate-500">
               {profile.footerText}
