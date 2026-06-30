@@ -1,327 +1,184 @@
 # Contributing to Lynx
 
-Thank you for your interest in contributing to Lynx! We welcome contributions from the community and are excited to see what you'll bring to this project.
+Thanks for helping improve Lynx. This guide keeps the local setup, checks, and contribution flow aligned with the current repository structure.
 
-## 🤝 Code of Conduct
+## Project Layout
 
-By participating in this project, you agree to abide by our Code of Conduct. We expect all contributors to be respectful, inclusive, and constructive in their interactions.
+Application code lives under `LYNX/`.
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-Before you begin, ensure you have the following installed:
-- **Node.js** 18+ or **Bun**
-- **Git**
-- A code editor (we recommend **VS Code**)
-
-### Setting Up Your Development Environment
-
-1. **Fork the repository**
-   ```bash
-   git clone https://github.com/paoloronco/lynx.git
-   cd lynx
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   bun install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm run dev
-   # or
-   bun dev
-   ```
-
-4. **Verify everything works**
-   - Visit `http://localhost:5173` for the public view
-   - Visit `http://localhost:5173/admin` for the admin panel
-
-## 📋 How to Contribute
-
-### Reporting Issues
-
-Before creating an issue, please:
-1. **Search existing issues** to avoid duplicates
-2. **Use the issue templates** when available
-3. **Provide detailed information** including:
-   - Steps to reproduce the issue
-   - Expected vs actual behavior
-   - Screenshots or videos if applicable
-   - Browser and OS information
-   - Console errors (if any)
-
-### Suggesting Features
-
-We love feature suggestions! When proposing a new feature:
-1. **Check existing feature requests** first
-2. **Explain the use case** and why it would be valuable
-3. **Provide mockups or examples** if possible
-4. **Consider the scope** - start with smaller, focused features
-
-### Submitting Pull Requests
-
-1. **Create a new branch** from `main`
-   ```bash
-   git checkout -b feature/your-feature-name
-   # or
-   git checkout -b fix/your-bug-fix
-   ```
-
-2. **Make your changes** following our coding standards
-3. **Test thoroughly** - ensure all existing functionality still works
-4. **Write or update tests** if applicable
-5. **Update documentation** if needed
-6. **Commit with clear messages** (see commit guidelines below)
-7. **Push to your fork** and create a pull request
-
-## 🎯 Development Guidelines
-
-### Project Structure
-
+```text
+LYNX/
+  src/      React frontend (Vite + TypeScript)
+  server/   Express backend (Node.js + SQLite)
+  public/   Static assets copied into the frontend build
+  dist/     Generated frontend build output
 ```
 
-```
+Repository-level files contain Docker, CI, release, and documentation configuration.
 
-### Coding Standards
+## Requirements
 
-#### TypeScript
-- Use **TypeScript** for all new code
-- Define proper **interfaces** and **types**
-- Avoid `any` types - use proper typing
-- Use **strict mode** settings
+- Node.js `^20.19.0` or `>=22.12.0`
+- npm
+- Git
+- Docker, only when testing container builds
 
-#### React
-- Use **functional components** with hooks
-- Follow **React best practices**
-- Use **proper prop types** and interfaces
-- Implement **error boundaries** where appropriate
+## Local Setup
 
-#### Styling
-- Use **Tailwind CSS** for styling
-- Follow **existing design patterns**
-- Use **shadcn/ui components** when possible
-- Maintain **responsive design** principles
-
-#### Code Quality
-- Follow **ESLint** rules (run `npm run lint`)
-- Use **meaningful variable names**
-- Write **clear comments** for complex logic
-- Keep functions **small and focused**
-
-### Component Guidelines
-
-#### Creating New Components
-```typescript
-// components/MyComponent.tsx
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-
-interface MyComponentProps {
-  title: string;
-  onAction: (data: string) => void;
-  isLoading?: boolean;
-}
-
-export const MyComponent = ({ title, onAction, isLoading = false }: MyComponentProps) => {
-  const [state, setState] = useState<string>("");
-
-  const handleClick = () => {
-    onAction(state);
-  };
-
-  return (
-    <Card className="p-4">
-      <h2 className="text-lg font-semibold mb-2">{title}</h2>
-      <Button onClick={handleClick} disabled={isLoading}>
-        {isLoading ? "Loading..." : "Submit"}
-      </Button>
-    </Card>
-  );
-};
-```
-
-#### Theme Integration
-When creating components that should respect the theme:
-```typescript
-// Use CSS custom properties for theme colors
-<div className="bg-card text-foreground border-border">
-  <h3 className="text-primary">Themed Content</h3>
-</div>
-
-// For dynamic styling, use the theme utilities
-import { applyTheme } from "@/lib/theme";
-```
-
-### Database Guidelines
-
-#### Supabase Integration
-- Use the existing **Supabase client** from `@/integrations/supabase/client`
-- Follow **existing patterns** for database operations
-- Implement **proper error handling**
-- Use **TypeScript types** for database schemas
-
-#### Data Operations
-```typescript
-// lib/supabase-data.ts example
-export const createLink = async (linkData: LinkData): Promise<LinkData> => {
-  try {
-    const { data, error } = await supabase
-      .from('links')
-      .insert(linkData)
-      .select()
-      .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error creating link:', error);
-    throw error;
-  }
-};
-```
-
-### Security Considerations
-
-- **Never expose sensitive data** in client-side code
-- Use **proper authentication** checks
-- **Validate all inputs** on both client and server
-- Follow **OWASP security guidelines**
-- Use **environment variables** for secrets
-
-## 🧪 Testing
-
-### Running Tests
 ```bash
-npm run test          # Run all tests
-npm run test:watch    # Run tests in watch mode
-npm run test:coverage # Run tests with coverage
+git clone https://github.com/paoloronco/Lynx.git
+cd Lynx/LYNX
+npm ci
+npm run install:server
 ```
 
-### Writing Tests
-- Write **unit tests** for utility functions
-- Write **integration tests** for components
-- Test **error scenarios** and edge cases
-- Maintain **good test coverage**
+Production-style local run:
 
-Example test:
-```typescript
-// __tests__/components/LinkCard.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react';
-import { LinkCard } from '@/components/LinkCard';
-
-describe('LinkCard', () => {
-  const mockLink = {
-    id: '1',
-    title: 'Test Link',
-    url: 'https://example.com',
-    description: 'Test description'
-  };
-
-  it('renders link information correctly', () => {
-    render(<LinkCard link={mockLink} onUpdate={jest.fn()} onDelete={jest.fn()} />);
-    
-    expect(screen.getByText('Test Link')).toBeInTheDocument();
-    expect(screen.getByText('Test description')).toBeInTheDocument();
-  });
-});
+```bash
+npm run start
 ```
 
-## 📝 Commit Guidelines
+Open:
 
-### Commit Message Format
+- Public page: http://localhost:3001
+- Admin panel: http://localhost:3001/admin
+- Health check: http://localhost:3001/health
+
+The first admin visit asks you to create credentials. The initial username is `admin`.
+
+## Development Mode
+
+Development uses two processes.
+
+Terminal 1:
+
+```bash
+cd LYNX
+npm run server:dev
 ```
+
+Terminal 2:
+
+```bash
+cd LYNX
+npm run dev
+```
+
+Open:
+
+- Frontend: http://localhost:8080
+- Admin panel: http://localhost:8080/admin
+- Backend health check: http://localhost:3001/health
+
+## Checks
+
+Run these before opening a pull request:
+
+```bash
+cd LYNX
+npm run lint
+npm run test:unit
+npm run build
+```
+
+For browser coverage:
+
+```bash
+npm run test:e2e
+```
+
+The repository may contain existing ESLint warnings. New changes should avoid adding warnings or errors.
+
+## How to Contribute
+
+1. Search existing issues or discussions before starting larger work.
+2. Fork the repository.
+3. Create a focused branch from `main`.
+4. Keep the change scoped to one bug fix, feature, or documentation improvement.
+5. Add or update tests when behavior changes.
+6. Update documentation when commands, configuration, or user-visible behavior changes.
+7. Run the checks listed above.
+8. Open a pull request with a clear summary and verification notes.
+
+Branch examples:
+
+```bash
+git checkout -b feat/theme-presets
+git checkout -b fix/docker-healthcheck
+git checkout -b docs/deployment-guide
+```
+
+## Commit Messages
+
+Use this format:
+
+```text
 type(scope): description
-
-[optional body]
-
-[optional footer]
 ```
 
-### Types
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, etc.)
-- **refactor**: Code refactoring
-- **test**: Adding or updating tests
-- **chore**: Maintenance tasks
+Common types:
 
-### Examples
+- `feat`: new feature
+- `fix`: bug fix
+- `docs`: documentation only
+- `style`: formatting or visual polish
+- `refactor`: code restructuring without behavior changes
+- `test`: test additions or updates
+- `chore`: maintenance
+- `ci`: CI/CD and workflow changes
+
+Examples:
+
 ```bash
-feat(theme): add gradient direction selector
-fix(auth): resolve session expiry issue
-docs(readme): update installation instructions
-style(components): improve button hover states
-refactor(utils): simplify theme application logic
-test(auth): add authentication flow tests
-chore(deps): update dependencies
+feat(theme): add preset export
+fix(auth): handle expired admin sessions
+docs(readme): clarify docker deployment
+ci(release): publish versioned github releases
 ```
 
-## 🎨 Design Guidelines
+## Coding Guidelines
 
-### UI/UX Principles
-- **Consistency**: Follow existing design patterns
-- **Accessibility**: Ensure WCAG compliance
-- **Performance**: Optimize for speed and responsiveness
-- **Mobile-first**: Design for mobile, enhance for desktop
+- Follow existing patterns before introducing new abstractions.
+- Use TypeScript types for new frontend code.
+- Avoid `any` unless a boundary genuinely cannot be typed.
+- Keep React components functional and hook-based.
+- Use existing shadcn/ui and local UI patterns.
+- Keep public links as real `<a href="...">` elements where possible.
+- Validate input on the server, even when the frontend already validates it.
+- Use parameterized database helpers instead of string-built SQL.
+- Keep migrations additive and backward compatible.
 
-### Color Usage
-- Use **CSS custom properties** for theme colors
-- Maintain **sufficient contrast** ratios
-- Support **both light and dark** themes
-- Test with **color blindness** simulators
+## Backend and Data
 
-### Animation Guidelines
-- Use **subtle animations** for better UX
-- Keep animations **under 300ms** for interactions
-- Use **easing functions** for natural motion
-- Provide **reduced motion** options
+Lynx uses SQLite through `LYNX/server/database.js`.
 
-## 🚀 Release Process
+- Local data defaults to `LYNX/server/lynx.db`.
+- Docker data belongs in `/app/data`.
+- Uploads are stored under `DATA_DIR/uploads`.
+- Schema changes should be additive so existing installs can start after an upgrade.
 
-### Versioning
-We follow [Semantic Versioning](https://semver.org/):
-- **MAJOR**: Breaking changes
-- **MINOR**: New features (backward compatible)
-- **PATCH**: Bug fixes (backward compatible)
+## Security Guidelines
 
-### Release Checklist
-- [ ] All tests pass
-- [ ] Documentation updated
-- [ ] CHANGELOG.md updated
-- [ ] Version bumped appropriately
-- [ ] Security review completed
-- [ ] Performance impact assessed
+- Never commit secrets, tokens, private keys, or real production data.
+- Do not expose sensitive values to frontend code.
+- Keep `JWT_SECRET` stable and private in production.
+- Use `RESET_TOKEN` only when recovery endpoints are needed.
+- Report vulnerabilities privately through the process in [SECURITY.md](./SECURITY.md).
 
-## 📞 Getting Help
+## Pull Request Checklist
 
-### Community Support
-- **GitHub Discussions**: For questions and general discussion
-- **Discord**: Join our community chat
-- **Issues**: For bug reports and feature requests
+- [ ] The change is focused and easy to review.
+- [ ] Documentation is updated when needed.
+- [ ] Tests are added or updated for behavior changes.
+- [ ] `npm run lint` has been run from `LYNX/`.
+- [ ] `npm run test:unit` has been run from `LYNX/`.
+- [ ] `npm run build` has been run from `LYNX/`.
+- [ ] E2E tests are run or explicitly called out as not applicable.
 
-### Maintainer Contact
-- Create an issue for **technical questions**
-- Use discussions for **general questions**
-- Email for **security concerns**: security@yourapp.com
+## Release Notes
 
-## 🏆 Recognition
+Maintainers handle version bumps, tags, GitHub releases, and published Docker images. Pull requests should describe user-visible changes clearly so release notes can be written without archaeology.
 
-Contributors will be recognized in:
-- **README.md** contributors section
-- **Release notes** for significant contributions
-- **Hall of Fame** for outstanding contributions
+## License
 
-## 📄 License
-
-By contributing to Lynx, you agree that your contributions will be licensed under the same [MIT License](LICENSE) that covers the project.
-
----
-
-Thank you for contributing to Lynx! Your efforts help make this project better for everyone. 🎉
+By contributing to Lynx, you agree that your contribution will be licensed under the MIT License in [LICENSE.txt](./LICENSE.txt).

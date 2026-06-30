@@ -1,103 +1,92 @@
-## 🔒 Security Policy
+# Security Policy
 
-Security is a top priority for the **Lynx** project.  
+Security reports are welcome and should be handled privately until a fix is available.
 
-### Reporting a Vulnerability
-If you discover a security issue, please report it responsibly:
-- **Preferred:** [GitHub Security Advisory](../../security/advisories/new) — creates a private, coordinated channel with maintainers.  
-- **Email:** `info@paoloronco.it`.  
-- **Do not** open public issues for unpatched vulnerabilities.
+## Reporting a Vulnerability
 
-Include in your report:
-1. Clear description of the issue and its impact.  
-2. Steps to reproduce (PoC, payload, HTTP requests, required accounts).  
-3. Affected versions/commits and environment details (OS, Node.js, browser).  
-4. Known mitigations or workarounds if any.  
+Please do not open a public issue for an unpatched vulnerability.
 
-### Response Timeline
-- **Acknowledgement:** within 72 hours.  
-- **Triage:** within 7 days.  
-- **Fix & Release:** usually within 90 days of confirmation (faster for critical issues).  
+Preferred reporting channels:
 
-### Scope
-In-scope vulnerabilities include:
-- Authentication and session flaws  
-- Authorization/privilege escalation  
-- Injection (SQLi, command injection, template injection)  
-- XSS with practical impact  
-- Path traversal, RCE, LFI/RFI  
-- Exposed secrets or misconfigurations with impact  
-- Vulnerable dependencies with exploitable vectors  
+- GitHub Security Advisory: <https://github.com/paoloronco/Lynx/security/advisories/new>
+- Email: `info@paoloronco.it`
 
-### Out of Scope
-- **Demo instance**: credentials `admin/demo123` reset every ~15 minutes by design.  
-- DoS/DDoS without demonstrated impact.  
-- Purely theoretical issues.  
-- Browser or third-party platform vulnerabilities.  
-- Automated scanner reports without PoC.  
+Include as much of this information as possible:
 
-### Supported Versions
+- affected version, commit, or Docker image tag
+- deployment method and environment details
+- clear impact description
+- reproduction steps, proof of concept, payloads, or HTTP requests
+- required account role or authentication state
+- known workaround, if any
+
+## Response Targets
+
+| Step | Target |
+| --- | --- |
+| Acknowledgement | within 72 hours |
+| Initial triage | within 7 days |
+| Fix or mitigation plan | within 30 days for confirmed high/critical issues |
+| Public disclosure | after a release or documented mitigation is available |
+
+These are targets, not contractual guarantees.
+
+## Supported Versions
+
 | Version | Security status |
-|---------|-----------------|
-| 3.x (≥ 3.0.0) | ✅ Supported |
-| 2.x and earlier | ❌ Not supported |
+| --- | --- |
+| Latest `4.x` release | Supported |
+| Older `4.x` releases | Best effort; update to latest before reporting when possible |
+| `3.x` and earlier | Not supported |
 
-### Security Practices
-- Password hashing with *bcryptjs* (12 salt rounds)  
-- JWT authentication with 7-day expiry  
-- HttpOnly + SameSite cookies  
-- Parameterized queries for SQLite  
+## In Scope
 
-We recommend deployers to enforce HTTPS, use proper security headers, rate limiting, least privilege runtime, encrypted backups, and keep Node.js & dependencies updated.
+- Authentication or session handling flaws
+- Authorization bypass or privilege escalation
+- SQL injection, command injection, path traversal, LFI/RFI, or RCE
+- Stored or reflected XSS with practical impact
+- File upload issues that lead to unauthorized access or execution
+- Sensitive data exposure
+- Dependency vulnerabilities with a realistic exploit path in Lynx
+- Docker or deployment defaults that create unsafe production behavior
 
-### Disclosure
-Please **do not disclose** details publicly until a fix is released.  
-Safe Harbor applies for good-faith security research following this policy.  
+## Out of Scope
 
-### Bug Bounty
-No paid bug bounty at this time. Researchers may be credited in release notes at the maintainers' discretion.
+- Denial-of-service reports without demonstrated practical impact
+- Automated scanner output without reproduction steps
+- Theoretical issues that do not cross a trust boundary
+- Vulnerabilities in browsers, hosting providers, or third-party services
+- Social engineering or physical attacks
+- Public demo content changes made through published demo credentials
 
----
+## Current Security Model
 
-## 🔒 Recent Security Updates
+- Passwords are hashed with `bcryptjs` using 12 salt rounds.
+- Admin sessions use signed JWTs with a 12-hour expiry.
+- In secure browser contexts, the frontend stores the JWT encrypted with AES-GCM in `localStorage`.
+- On non-secure HTTP contexts where Web Crypto is unavailable, the frontend falls back to `sessionStorage`.
+- SQLite queries use parameterized statements through server-side helpers.
+- Auth, reset, API, and SPA routes are rate-limited.
+- Docker startup requires `JWT_SECRET`; production Node deployments should also set it explicitly.
+- Optional `RESET_TOKEN` enables protected recovery endpoints and should be at least 32 characters.
+- Uploaded files are written under `DATA_DIR/uploads` and served from `/uploads`.
 
-### February 2026 - Critical Vulnerabilities Resolved
-**Status:** ✅ All runtime vulnerabilities fixed
-**Last Updated:** 2026-02-20
+## Deployment Recommendations
 
-#### Fixed Vulnerabilities
-All GitHub Dependabot alerts have been resolved:
+- Run behind HTTPS in production.
+- Set a long random `JWT_SECRET` and keep it stable across restarts.
+- Persist and back up `DATA_DIR`; it contains the SQLite database and uploads.
+- Keep Docker images, Node.js, npm dependencies, and host packages updated.
+- Limit admin access to trusted users.
+- Disable indexing on staging/private deployments with `SEO_INDEXING=false`.
+- Do not reuse the public demo password on a real deployment.
 
-| Package | Severity | Issue | Fix |
-|---------|----------|-------|-----|
-| **multer** | High | DoS via memory leaks, malicious requests (#18-21) | Updated to v2.0.2 |
-| **express/qs** | High | DoS via memory exhaustion (#27, #33) | Updated to v4.22.1 |
-| **react-router-dom** | High | XSS via Open Redirects (#28) | Updated to v7.13.0 |
-| **lodash** | Moderate | Prototype Pollution (#31) | Override to v4.17.23 |
-| **minimatch** | High | ReDoS vulnerability | Override to v10.2.1 |
-| **ajv** | Moderate | ReDoS with $data option | Override to v8.18.0 |
+## Disclosure
 
-#### Security Audit Results
-- **Frontend:** 0 vulnerabilities ✅
-- **Backend:** 0 vulnerabilities ✅
-- **Docker:** Secure build with updated system packages ✅
+Please keep vulnerability details private until a fix, mitigation, or maintainer-approved disclosure is available.
 
-#### Updated Dependencies
-```json
-Backend: express ^4.21.3, multer ^2.0.2, sqlite3 ^5.1.7
-Frontend: react-router-dom ^7.13.0, recharts ^3.7.0
+Safe harbor applies for good-faith research that follows this policy, avoids privacy violations, avoids service disruption, and does not access or modify data beyond what is needed to prove the issue.
 
-Build dependencies (via overrides):
-- tar: 7.5.9 (resolves all CVE-2026-* vulnerabilities)
-- minimatch: 10.2.2 (resolves ReDoS)
-- glob: 11.1.0 (resolves CVE-2025-64756)
-- cross-spawn: 7.0.6 (resolves CVE-2024-21538)
-```
+## Bug Bounty
 
-#### Docker Security
-- System packages updated via `apt-get upgrade`
-- Resolves CVE-2025-14831 (gnutls28) and CVE-2025-45582 (tar)
-- Multi-stage build with minimal attack surface
-- Non-root user execution recommended
-
----
+There is no paid bug bounty program at this time. Researchers may be credited in release notes when appropriate.

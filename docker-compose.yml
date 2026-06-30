@@ -1,6 +1,6 @@
 services:
   lynx:
-    image: paoloronco/lynx:latest   # or build: .
+    image: paueron/lynx:latest   # or ghcr.io/paoloronco/lynx:latest
     ports:
       - "8080:8080"
     environment:
