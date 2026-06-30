@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.3-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.4-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
 [![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/Lynx)
 
@@ -344,6 +344,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.4</strong></summary>
+
+### Minor container tag reliability
+
+- Fixes the main-branch Docker workflow so `X.X` tags are computed without shell-interpreted JavaScript template literals.
+- Adds regression coverage to keep version and minor-version image tags published from the package version.
+- Keeps Docker Hub and GHCR publishing aligned for `latest`, `X.X.X`, `vX.X.X`, and `X.X` tags.
+
+</details>
 
 <details>
 <summary><strong>v4.3.3</strong></summary>

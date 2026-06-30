@@ -64,6 +64,8 @@ describe('deployment configuration', () => {
 
     expect(workflow).toContain('id: version');
     expect(workflow).toContain("require('./LYNX/package.json').version");
+    expect(workflow).toContain("version.split('.').slice(0, 2).join('.')");
+    expect(workflow).not.toContain('`${v[0]}.${v[1]}`');
     expect(workflow).toContain('major_minor=');
     expect(workflow).toContain('type=raw,value=${{ steps.version.outputs.version }}');
     expect(workflow).toContain('type=raw,value=v${{ steps.version.outputs.version }}');

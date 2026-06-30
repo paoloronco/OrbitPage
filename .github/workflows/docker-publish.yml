@@ -32,7 +32,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="$(node -p "require('./LYNX/package.json').version")"
-          MAJOR_MINOR="$(node -p "const v = require('./LYNX/package.json').version.split('.'); `${v[0]}.${v[1]}`")"
+          MAJOR_MINOR="$(node -p "require('./LYNX/package.json').version.split('.').slice(0, 2).join('.')")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "major_minor=$MAJOR_MINOR" >> "$GITHUB_OUTPUT"
 
