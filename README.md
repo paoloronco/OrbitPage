@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.0-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.1-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
 [![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/Lynx)
 
@@ -340,6 +340,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.1</strong></summary>
+
+### Deployment and admin startup fixes
+
+- Aligns both Dockerfiles on the production runtime contract: Node 22, `PORT=8080`, `DATA_DIR=/app/data`, and mandatory `JWT_SECRET`.
+- Makes the `LYNX/` Dockerfile self-contained for `docker build ./LYNX`.
+- Avoids the expected unauthenticated `/api/auth/verify` call when opening the admin login page without a stored token.
+
+</details>
 
 <details>
 <summary><strong>v4.3.0</strong></summary>

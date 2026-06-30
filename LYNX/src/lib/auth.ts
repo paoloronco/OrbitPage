@@ -71,6 +71,10 @@ export const isAuthenticated = (): boolean => {
   return authApi.isAuthenticated();
 };
 
+export const hasStoredAuthToken = (): boolean => {
+  return authApi.hasStoredToken();
+};
+
 // Kept for backward compatibility — token management is handled by the API client
 export const setAuthenticated = (_username: string): void => { /* no-op */ };
 

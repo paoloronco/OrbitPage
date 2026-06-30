@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/LoginForm";
 import { InitialSetup } from "@/components/InitialSetup";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
-import { isFirstTimeSetup } from "@/lib/auth";
+import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
 import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
@@ -74,17 +74,21 @@ const Admin = () => {
     const checkAuth = async () => {
       const firstTime = await isFirstTimeSetup();
       setShowSetup(firstTime);
-      try {
-        const result = await authApi.verify();
-        setIsLoggedIn(result.valid);
-        if (result.valid && result.user) {
-          setCurrentUser({
-            username: result.user.username,
-            role: result.user.role || 'admin',
-            permissions: (result.user.permissions || []) as Permission[],
-          });
+      if (hasStoredAuthToken()) {
+        try {
+          const result = await authApi.verify();
+          setIsLoggedIn(result.valid);
+          if (result.valid && result.user) {
+            setCurrentUser({
+              username: result.user.username,
+              role: result.user.role || 'admin',
+              permissions: (result.user.permissions || []) as Permission[],
+            });
+          }
+        } catch {
+          setIsLoggedIn(false);
         }
-      } catch {
+      } else {
         setIsLoggedIn(false);
       }
       setIsLoading(false);

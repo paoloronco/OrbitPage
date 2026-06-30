@@ -114,6 +114,26 @@ const getAuthToken = (): string | null => {
   return null;
 };
 
+const hasStoredAuthToken = (): boolean => {
+  try {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(TOKEN_FALLBACK_KEY)) {
+      return true;
+    }
+  } catch {
+    // Storage can be unavailable in restricted browser contexts.
+  }
+
+  try {
+    if (typeof localStorage === 'undefined') return false;
+    return Boolean(
+      localStorage.getItem(TOKEN_STORAGE_KEY) &&
+      localStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY)
+    );
+  } catch {
+    return false;
+  }
+};
+
 // Async variant for flows that can await (API calls)
 const getAuthTokenAsync = async (): Promise<string | null> => {
   // Fallback path: plain sessionStorage (non-secure context)
@@ -368,6 +388,10 @@ export const authApi = {
 
   logout: (): void => {
     removeAuthToken();
+  },
+
+  hasStoredToken: (): boolean => {
+    return hasStoredAuthToken();
   },
 
   isAuthenticated: (): boolean => {

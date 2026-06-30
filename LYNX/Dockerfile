@@ -1,35 +1,56 @@
-# Multi-stage Dockerfile
-# Builder: install root dev deps and build the frontend
-FROM node:20-bookworm-slim AS builder
-WORKDIR /app
+# ---------- STAGE 1: build (frontend + server deps) ----------
+FROM node:22-alpine AS builder
 
-# Copy only package manifests to leverage layer caching
-COPY package.json package-lock.json ./
+LABEL org.opencontainers.image.version="4.3.1"
+LABEL org.opencontainers.image.title="Lynx"
+LABEL org.opencontainers.image.description="Your personal links hub"
+LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
 
-# Install dependencies (including dev) for build
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app/LYNX
+COPY package*.json ./
 RUN npm ci
-
-# Copy project files and build frontend
-COPY . .
+COPY . ./
+ARG VITE_ENABLE_USERCENTRICS_PRIVACY_PAGE=true
+ARG VITE_USERCENTRICS_PRIVACY_POLICY_ID=fd1ffcdf-b560-4ea0-ba72-da943d39d953
+ARG VITE_USERCENTRICS_PRIVACY_POLICY_LANGUAGE=en
+ARG VITE_DEFAULT_PRIVACY_POLICY_URL=/privacy
+ENV VITE_ENABLE_USERCENTRICS_PRIVACY_PAGE=${VITE_ENABLE_USERCENTRICS_PRIVACY_PAGE}
+ENV VITE_USERCENTRICS_PRIVACY_POLICY_ID=${VITE_USERCENTRICS_PRIVACY_POLICY_ID}
+ENV VITE_USERCENTRICS_PRIVACY_POLICY_LANGUAGE=${VITE_USERCENTRICS_PRIVACY_POLICY_LANGUAGE}
+ENV VITE_DEFAULT_PRIVACY_POLICY_URL=${VITE_DEFAULT_PRIVACY_POLICY_URL}
+RUN rm -rf dist
 RUN npm run build
 
-# Production image: install only server production deps and copy build output
-FROM node:20-bookworm-slim AS runtime
+WORKDIR /app/LYNX/server
+COPY server/package*.json ./
+RUN npm ci --omit=dev --omit=optional
+
+# ---------- STAGE 2: runtime ----------
+FROM node:22-alpine
+
+LABEL org.opencontainers.image.version="4.3.1"
+LABEL org.opencontainers.image.title="Lynx"
+LABEL org.opencontainers.image.description="Your personal links hub"
+LABEL org.opencontainers.image.source="https://github.com/paoloronco/Lynx"
+
+RUN apk add --no-cache sqlite
+RUN npm uninstall -g npm
+
 WORKDIR /app
+COPY --from=builder /app/LYNX/dist /app/dist
+COPY --from=builder /app/LYNX/server /app/server
 
-# Copy server package manifests and install only production deps
-COPY server/package.json server/package-lock.json ./server/
-RUN cd server && npm ci --omit=dev
+COPY docker-entrypoint.sh /app/server/docker-entrypoint.sh
+RUN chmod +x /app/server/docker-entrypoint.sh
 
-# Copy built frontend and server code
-COPY --from=builder /app/dist ./dist
-COPY server ./server
+ENV PORT=8080
+ENV DATA_DIR=/app/data
+RUN mkdir -p /app/data
 
-# Bundle the update script so the host can extract it via: docker cp
-COPY scripts/lynx-update.sh /app/lynx-update.sh
-RUN chmod +x /app/lynx-update.sh
+EXPOSE 8080 8443
 
-ENV NODE_ENV=production
-EXPOSE 3001
-
-CMD ["node", "server/server.js"]
+WORKDIR /app/server
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "server.js"]
