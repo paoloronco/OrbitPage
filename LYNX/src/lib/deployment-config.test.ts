@@ -35,4 +35,14 @@ describe('deployment configuration', () => {
       expect(dockerfile).toContain('EXPOSE 8080 8443');
     }
   });
+
+  it('creates GitHub releases from the package version tag on main pushes', () => {
+    const workflow = read('.github/workflows/release.yml');
+
+    expect(workflow).toContain('branches: [ "main" ]');
+    expect(workflow).toContain("require('./LYNX/package.json').version");
+    expect(workflow).toContain("require('./LYNX/server/package.json').version");
+    expect(workflow).toContain('TAG="v${VERSION}"');
+    expect(workflow).toContain('gh release create "$TAG"');
+  });
 });
