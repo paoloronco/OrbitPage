@@ -8,8 +8,8 @@ on:
     branches: [ "main" ]
 
 env:
-  REGISTRY: docker.io
-  IMAGE_NAME: paueron/lynx
+  DOCKERHUB_IMAGE: docker.io/paueron/lynx
+  GHCR_IMAGE: ghcr.io/paoloronco/lynx
 
 jobs:
   docker:
@@ -18,6 +18,7 @@ jobs:
 
     permissions:
       contents: read
+      packages: write
 
     steps:
       - name: Checkout
@@ -30,7 +31,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
           tags: |
             type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
             type=sha,format=short,prefix=sha-
@@ -42,9 +45,17 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
       - name: Build and push
         uses: docker/build-push-action@v6

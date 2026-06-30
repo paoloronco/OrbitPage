@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.1-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.2-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
 [![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/Lynx)
 
@@ -179,6 +179,8 @@ The included `docker-compose.yml` uses:
 - port: `8080`
 - volume: `./lynx-data:/app/data`
 
+The same image is also published to GitHub Container Registry as `ghcr.io/paoloronco/lynx:latest`.
+
 Before exposing the app, replace the sample `JWT_SECRET` in `docker-compose.yml`.
 
 Open:
@@ -250,6 +252,8 @@ Before exposing the app, replace the sample `JWT_SECRET` in `docker-compose.yml`
 
 ```bash
 docker pull paueron/lynx:latest
+# or
+docker pull ghcr.io/paoloronco/lynx:latest
 
 docker run -d --name lynx \
   -p 8080:8080 \
@@ -340,6 +344,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.2</strong></summary>
+
+### Dual container registry publishing
+
+- Publishes Docker images to both Docker Hub (`paueron/lynx`) and GitHub Container Registry (`ghcr.io/paoloronco/lynx`).
+- Keeps `latest`, semantic version, minor version, and short SHA tags aligned across both registries.
+- Documents the GHCR pull path alongside the existing Docker Hub distribution path.
+
+</details>
 
 <details>
 <summary><strong>v4.3.1</strong></summary>

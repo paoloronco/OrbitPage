@@ -45,4 +45,17 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('TAG="v${VERSION}"');
     expect(workflow).toContain('gh release create "$TAG"');
   });
+
+  it('publishes Docker images to both Docker Hub and GitHub Container Registry', () => {
+    const workflow = read('.github/workflows/docker-publish.yml');
+
+    expect(workflow).toContain('DOCKERHUB_IMAGE: docker.io/paueron/lynx');
+    expect(workflow).toContain('GHCR_IMAGE: ghcr.io/paoloronco/lynx');
+    expect(workflow).toContain('packages: write');
+    expect(workflow).toContain('registry: ghcr.io');
+    expect(workflow).toContain('username: ${{ github.actor }}');
+    expect(workflow).toContain('password: ${{ github.token }}');
+    expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}');
+    expect(workflow).toContain('${{ env.GHCR_IMAGE }}');
+  });
 });
