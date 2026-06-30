@@ -27,6 +27,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - id: version
+        name: Resolve package version
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./LYNX/package.json').version")"
+          MAJOR_MINOR="$(node -p "const v = require('./LYNX/package.json').version.split('.'); `${v[0]}.${v[1]}`")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "major_minor=$MAJOR_MINOR" >> "$GITHUB_OUTPUT"
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -36,6 +45,9 @@ jobs:
             ${{ env.GHCR_IMAGE }}
           tags: |
             type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
+            type=raw,value=${{ steps.version.outputs.version }},enable=${{ github.event_name != 'pull_request' }}
+            type=raw,value=v${{ steps.version.outputs.version }},enable=${{ github.event_name != 'pull_request' }}
+            type=raw,value=${{ steps.version.outputs.major_minor }},enable=${{ github.event_name != 'pull_request' }}
             type=sha,format=short,prefix=sha-
             type=ref,event=pr
             type=semver,pattern={{version}}

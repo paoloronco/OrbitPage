@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.2-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.3-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
 [![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/Lynx)
 
@@ -344,6 +344,17 @@ For any container deployment, persist `/app/data` and set `JWT_SECRET`.
 </details>
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.3</strong></summary>
+
+### Versioned container tags from main
+
+- Publishes Docker version tags directly from the main-branch build, including `X.X.X`, `vX.X.X`, and `X.X`.
+- Avoids relying on tag-triggered workflows for automated release tags created by GitHub Actions.
+- Keeps Docker Hub and GHCR tags aligned from the same build output.
+
+</details>
 
 <details>
 <summary><strong>v4.3.2</strong></summary>

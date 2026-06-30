@@ -58,4 +58,15 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}');
     expect(workflow).toContain('${{ env.GHCR_IMAGE }}');
   });
+
+  it('publishes package-version Docker tags on main pushes without relying on tag-triggered workflows', () => {
+    const workflow = read('.github/workflows/docker-publish.yml');
+
+    expect(workflow).toContain('id: version');
+    expect(workflow).toContain("require('./LYNX/package.json').version");
+    expect(workflow).toContain('major_minor=');
+    expect(workflow).toContain('type=raw,value=${{ steps.version.outputs.version }}');
+    expect(workflow).toContain('type=raw,value=v${{ steps.version.outputs.version }}');
+    expect(workflow).toContain('type=raw,value=${{ steps.version.outputs.major_minor }}');
+  });
 });
