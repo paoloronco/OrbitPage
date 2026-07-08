@@ -14,8 +14,8 @@ ghcr.io/paoloronco/lynx:latest
 Versioned tags are also published, for example:
 
 ```bash
-paueron/lynx:4.3.5
-paueron/lynx:v4.3.5
+paueron/lynx:4.3.6
+paueron/lynx:v4.3.6
 paueron/lynx:4.3
 ```
 
