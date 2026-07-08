@@ -611,29 +611,81 @@ _iub.csConfiguration = {
     if (win.__lynxIubendaConsentEventsWired) return;
     win.__lynxIubendaConsentEventsWired = true;
 
-    const syncIubendaConsent = (explicit: boolean) => {
-      const purposes = win._iub?.cs?.consent?.purposes;
-      if (!purposes) return;
-      // Iubenda purpose IDs: 4 = statistics/analytics, 5 = marketing
-      this._setExternalConsent({
+    const parsePurpose = (purposes: unknown, purposeId: number): boolean | null => {
+      if (Array.isArray(purposes)) {
+        return purposes[purposeId] === true || purposes[purposeId] === 1 || purposes[purposeId] === '1';
+      }
+      if (purposes && typeof purposes === 'object') {
+        const obj = purposes as Record<string | number, unknown>;
+        const value = obj[purposeId] ?? obj[String(purposeId)] ?? obj[`purpose_${purposeId}`] ?? obj[`id_${purposeId}`];
+        return value === true || value === 1 || value === '1';
+      }
+      return null;
+    };
+
+    const readIubendaConsent = () => {
+      const consent = win._iub?.cs?.consent;
+      if (!consent || typeof consent !== 'object') return null;
+      let purposes = (consent as any).purposes ?? (consent as any).coreStorage?.purposes;
+      if (!purposes && typeof (consent as any).coreStorage === 'object') {
+        const coreStorage = (consent as any).coreStorage as any;
+        if (coreStorage && typeof coreStorage === 'object') {
+          purposes = coreStorage.purposes ?? coreStorage.consent;
+        }
+      }
+      if (!purposes || (typeof purposes !== 'object' && !Array.isArray(purposes))) return null;
+
+      const hasPurpose2 = parsePurpose(purposes, 2);
+      const hasPurpose3 = parsePurpose(purposes, 3);
+      const hasPurpose4 = parsePurpose(purposes, 4);
+      const hasPurpose5 = parsePurpose(purposes, 5);
+      const allUnknown =
+        hasPurpose2 === null &&
+        hasPurpose3 === null &&
+        hasPurpose4 === null &&
+        hasPurpose5 === null;
+      if (allUnknown) return null;
+
+      return {
         necessary: true,
-        preferences: purposes[2] === true || purposes[3] === true,
-        analytics: purposes[4] === true,
-        marketing: purposes[5] === true,
-      }, explicit ? 'explicit' : 'implicit');
+        preferences: hasPurpose2 === true || hasPurpose3 === true,
+        analytics: hasPurpose4 === true,
+        marketing: hasPurpose5 === true,
+      };
+    };
+
+    const syncIubendaConsent = (explicit: boolean) => {
+      const categories = readIubendaConsent();
+      if (!categories) return;
+      this._setExternalConsent(categories, explicit ? 'explicit' : 'implicit');
     };
 
     const syncIubendaPurposeGrant = (purposeId: number, explicit: boolean) => {
-      const purposes = win._iub?.cs?.consent?.purposes;
-      if (!purposes) return;
-      const nextConsent = {
-        necessary: true,
-        preferences: purposes[2] === true || purposes[3] === true,
-        analytics: purposeId === 4 ? true : purposes[4] === true,
-        marketing: purposeId === 5 ? true : purposes[5] === true,
-      };
-      this._setExternalConsent(nextConsent, explicit ? 'explicit' : 'implicit');
+      const categories = readIubendaConsent();
+      if (!categories) return;
+      this._setExternalConsent({
+        ...categories,
+        analytics: purposeId === 4 ? true : categories.analytics,
+        marketing: purposeId === 5 ? true : categories.marketing,
+      }, explicit ? 'explicit' : 'implicit');
     };
+
+    const registerIubendaCallback = (eventName: string, explicit = false) => {
+      const cs = win._iub?.cs;
+      if (!cs || typeof cs.on !== 'function') return;
+      try {
+        cs.on(eventName, () => syncIubendaConsent(explicit));
+      } catch (err) {
+        // Event registration can fail with some CDN-cached stubs; keep trying other hooks.
+      }
+    };
+
+    // Iubenda v2 emits callbacks on this channel, with stable callback names.
+    registerIubendaCallback('callback.before.onPreferenceFirstExpressed', true);
+    registerIubendaCallback('callback.before.onPreferenceExpressed', true);
+    registerIubendaCallback('callback.after.onPreferenceExpressed', true);
+    registerIubendaCallback('onConsentGiven', true);
+    registerIubendaCallback('onConsentExpressed', true);
 
     window.addEventListener('iubenda_consent_given', () => syncIubendaConsent(true));
     window.addEventListener('iubenda_consent_given_purpose_2', () => syncIubendaPurposeGrant(2, true));
@@ -663,10 +715,10 @@ _iub.csConfiguration = {
     let attempts = 0;
     const poll = setInterval(() => {
       attempts++;
-      const purposes = win._iub?.cs?.consent?.purposes;
-      if (purposes || attempts >= 20) {
+      const categories = readIubendaConsent();
+      if (categories || attempts >= 20) {
         clearInterval(poll);
-        if (purposes) syncIubendaConsent(true);
+        if (categories) syncIubendaConsent(true);
       }
     }, 250);
   }
