@@ -251,6 +251,28 @@ const Index = () => {
       }
     : consentConfig;
 
+  const resolvePolicyUrl = (kind: 'privacy' | 'cookie'): string | undefined => {
+    const profileUrl = kind === 'privacy'
+      ? profile.privacyPolicyUrl
+      : profile.cookiePolicyUrl;
+    const fallback = kind === 'privacy' ? '/privacy' : '/cookies';
+
+    if (profileUrl && profileUrl.trim()) {
+      return profileUrl.trim();
+    }
+
+    const policy = consentConfig?.legalPolicies?.[kind === 'privacy' ? 'privacyPolicy' : 'cookiePolicy'];
+    if (!policy) return fallback;
+    if (policy.mode === 'external') {
+      return policy.externalUrl?.trim() || fallback;
+    }
+    return fallback;
+  };
+
+  const privacyPolicyUrl = resolvePolicyUrl('privacy');
+  const cookiePolicyUrl = resolvePolicyUrl('cookie');
+  const ccpaPolicyUrl = privacyPolicyUrl || cookiePolicyUrl;
+
   return (
     <>
       {backgroundMedia && (
@@ -260,8 +282,9 @@ const Index = () => {
         profile={profile}
         links={links}
         footerText={profile.footerText}
-        privacyPolicyUrl={profile.privacyPolicyUrl}
-        cookiePolicyUrl={profile.cookiePolicyUrl}
+        privacyPolicyUrl={privacyPolicyUrl}
+        cookiePolicyUrl={cookiePolicyUrl}
+        ccpaPolicyUrl={ccpaPolicyUrl}
       />
       {/* Render the native banner only when mode === 'hardcoded'.
           Builder mode: external CMP injects its own UI via injectBuilderScript().

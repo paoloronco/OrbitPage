@@ -489,9 +489,12 @@ class ConsentManager {
    */
   private _dispatchGcmUpdate(categories: Record<ConsentCategory, boolean>): void {
     this.ensureGoogleConsentDefaults();
-    const gtag = (window as any).gtag;
-    if (typeof gtag !== 'function') return;
-    gtag('consent', 'update', this._buildGcmState(categories));
+    const win = window as any;
+    win.dataLayer = win.dataLayer || [];
+    if (typeof win.gtag !== 'function') {
+      win.gtag = function () { win.dataLayer.push(arguments); };
+    }
+    win.gtag('consent', 'update', this._buildGcmState(categories));
   }
 
   private _safeCall(fn: () => void): void {
@@ -620,7 +623,29 @@ _iub.csConfiguration = {
       }, explicit ? 'explicit' : 'implicit');
     };
 
+    const syncIubendaPurposeGrant = (purposeId: number, explicit: boolean) => {
+      const purposes = win._iub?.cs?.consent?.purposes;
+      if (!purposes) return;
+      const nextConsent = {
+        necessary: true,
+        preferences: purposes[2] === true || purposes[3] === true,
+        analytics: purposeId === 4 ? true : purposes[4] === true,
+        marketing: purposeId === 5 ? true : purposes[5] === true,
+      };
+      this._setExternalConsent(nextConsent, explicit ? 'explicit' : 'implicit');
+    };
+
     window.addEventListener('iubenda_consent_given', () => syncIubendaConsent(true));
+    window.addEventListener('iubenda_consent_given_purpose_2', () => syncIubendaPurposeGrant(2, true));
+    window.addEventListener('iubenda_consent_given_purpose_3', () => syncIubendaPurposeGrant(3, true));
+    window.addEventListener('iubenda_consent_given_purpose_4', () => syncIubendaPurposeGrant(4, true));
+    window.addEventListener('iubenda_consent_given_purpose_5', () => syncIubendaPurposeGrant(5, true));
+    window.addEventListener('iubenda_preference_not_needed', () => this._setExternalConsent({
+      necessary: true,
+      preferences: true,
+      analytics: true,
+      marketing: true,
+    }, 'explicit'));
     window.addEventListener('iubenda_reject_public_digital_content', () => {
       this._setExternalConsent({
         necessary: true,
@@ -666,7 +691,7 @@ _iub.csConfiguration = {
     if (win.__lynxCookiebotConsentEventsWired) return;
     win.__lynxCookiebotConsentEventsWired = true;
 
-    const syncCookiebotConsent = () => {
+    const syncCookiebotConsent = (explicit: boolean = false) => {
       const consent = win.Cookiebot?.consent;
       if (!consent) return;
       this._setExternalConsent({
@@ -674,16 +699,19 @@ _iub.csConfiguration = {
         preferences: consent.preferences === true,
         analytics: consent.statistics === true,
         marketing: consent.marketing === true,
-      }, 'explicit');
+      }, explicit ? 'explicit' : 'implicit');
     };
 
-    window.addEventListener('CookiebotOnConsentReady', syncCookiebotConsent);
-    window.addEventListener('CookiebotOnAccept', syncCookiebotConsent);
-    window.addEventListener('CookiebotOnDecline', syncCookiebotConsent);
-    window.addEventListener('CookiebotOnLoad', syncCookiebotConsent);
+    // OnConsentReady/OnLoad can fire during bootstrap with preloaded consent.
+    // Treat those as implicit until a clear user action event arrives.
+    window.addEventListener('CookiebotOnConsentReady', () => syncCookiebotConsent(false));
+    window.addEventListener('CookiebotOnLoad', () => syncCookiebotConsent(false));
+    window.addEventListener('CookiebotOnAccept', () => syncCookiebotConsent(true));
+    window.addEventListener('CookiebotOnDecline', () => syncCookiebotConsent(true));
 
-    // Try immediately — Cookiebot may have already loaded before Lynx registered listeners
-    syncCookiebotConsent();
+    // Try immediately — Cookiebot may have already loaded before Lynx registered listeners.
+    // Keep this bootstrap pass implicit to avoid activating tracking before a user action.
+    syncCookiebotConsent(false);
 
     // Poll briefly to catch the case where Cookiebot fires before our listeners attached
     let attempts = 0;
@@ -691,7 +719,7 @@ _iub.csConfiguration = {
       attempts++;
       if (win.Cookiebot?.consent || attempts >= 20) {
         clearInterval(poll);
-        syncCookiebotConsent();
+        syncCookiebotConsent(false);
       }
     }, 250);
   }
@@ -714,21 +742,22 @@ _iub.csConfiguration = {
     if (win.__lynxCookieYesConsentEventsWired) return;
     win.__lynxCookieYesConsentEventsWired = true;
 
-    const syncCookieYesConsent = (detail?: any) => {
+    const syncCookieYesConsent = (detail?: any, explicit: boolean = false) => {
       const accepted: string[] = detail?.accepted ?? win.getCkyConsent?.()?.categories?.accepted ?? [];
       this._setExternalConsent({
         necessary: true,
         preferences: accepted.includes('functional'),
         analytics: accepted.includes('analytics'),
         marketing: accepted.includes('advertisement'),
-      }, 'explicit');
+      }, explicit ? 'explicit' : 'implicit');
     };
 
     window.addEventListener('cookieyes-consent-update', (e: Event) => {
-      syncCookieYesConsent((e as CustomEvent).detail);
+      syncCookieYesConsent((e as CustomEvent).detail, true);
     });
-    // Try reading current state on page load if consent already given
-    syncCookieYesConsent();
+    // Try reading current state on page load for compatibility with persisted consent.
+    // Keep bootstrap state implicit until a user action is detected.
+    syncCookieYesConsent(undefined, false);
   }
 
   private _injectOneTrust(cfg: BuilderConfig['providerConfig']): void {
@@ -750,7 +779,7 @@ _iub.csConfiguration = {
     const prevWrapper = typeof win.OptanonWrapper === 'function' ? win.OptanonWrapper : null;
     win.OptanonWrapper = () => {
       prevWrapper?.();
-      this._syncOneTrustConsent();
+      this._syncOneTrustConsent(false);
     };
 
     const wrapper = document.createElement('script');
@@ -759,17 +788,17 @@ _iub.csConfiguration = {
     document.head.appendChild(wrapper);
   }
 
-  private _syncOneTrustConsent(): void {
+  private _syncOneTrustConsent(explicit: boolean = false): void {
     const win = window as any;
     // OneTrust exposes active groups as a comma-separated string in window.OnetrustActiveGroups
     const active: string = win.OnetrustActiveGroups ?? '';
     // Common OneTrust group IDs: C0001=necessary, C0002=performance/analytics, C0003=functional, C0004=targeting
     this._setExternalConsent({
-      necessary: true,
-      preferences: active.includes('C0003'),
-      analytics: active.includes('C0002'),
-      marketing: active.includes('C0004'),
-    }, 'explicit');
+        necessary: true,
+        preferences: active.includes('C0003'),
+        analytics: active.includes('C0002'),
+        marketing: active.includes('C0004'),
+      }, explicit ? 'explicit' : 'implicit');
   }
 
   private _injectCustom(cfg: BuilderConfig['providerConfig']): void {
@@ -827,14 +856,15 @@ _iub.csConfiguration = {
 
     // Auto-detect OneTrust — poll OnetrustActiveGroups if available
     if (win.OnetrustActiveGroups !== undefined) {
-      this._syncOneTrustConsent();
+      // Initial state may come from stored cookie preferences; treat as implicit.
+      this._syncOneTrustConsent(false);
     }
-    window.addEventListener('consent.onetrust', () => this._syncOneTrustConsent());
+    window.addEventListener('consent.onetrust', () => this._syncOneTrustConsent(true));
 
     // Generic GCM v2 fallback: if an external CMP has already pushed a
     // consent/update with analytics_storage=granted into dataLayer before
     // Lynx loaded, read it back so GA can still fire on this page view.
-    this._syncFromDataLayer('implicit');
+    this._syncFromDataLayer();
     this._observeDataLayerConsentSignals();
   }
 
@@ -900,7 +930,9 @@ _iub.csConfiguration = {
     const wrappedPush = (...entries: unknown[]) => {
       const result = originalPush.apply(dataLayer, entries);
       for (const entry of entries) {
-        this._syncFromDataLayerEntry(entry, 'explicit');
+        // Keep default dataLayer bootstrap updates implicit unless a dedicated
+        // explicit handler reports a concrete user action.
+        this._syncFromDataLayerEntry(entry, 'implicit');
       }
       return result;
     };

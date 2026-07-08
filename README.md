@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.6-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.8-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -215,6 +215,29 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.8</strong></summary>
+
+### CMP consent flow hardening + CCPA link polish
+
+- Treat bootstrap CMP states from Cookiebot, OneTrust, and Cookiebot events as implicit until a user action is explicitly detected, preventing pre-granted consent from loading Google Analytics too early.
+- Improve Google Consent Mode propagation from builder CMPs and keep script dispatch aligned with explicit consent only.
+- Ensure the CCPA "Do not sell my personal information" footer link remains available with locale-aware label variants and a stable fallback target.
+
+</details>
+
+<details>
+<summary><strong>v4.3.6</strong></summary>
+
+### Consent signal hardening for Google & CCPA
+
+- Distinguishes implicit consent state from explicit user consent for all supported external CMPs (iubenda, Cookiebot, CookieYes, OneTrust, custom snippets).
+- Defers third-party tag loading until consent is explicitly granted, including GA4 script/config gating and Google Consent Mode updates.
+- Syncs Google Consent Mode updates even when `gtag` is not yet loaded, avoiding silent failures and premature network requests.
+- Restores privacy footer policy URL resolution from `consentConfig.legalPolicies`, so CCPA "Do not sell my personal information" links remain available when hosted/embedded legal pages are used.
+
+</details>
 
 <details>
 <summary><strong>v4.3.6</strong></summary>
@@ -499,3 +522,5 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 ## License
 
 MIT License. See [LICENSE.txt](./LICENSE.txt).
+
+

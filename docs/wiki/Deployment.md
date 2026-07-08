@@ -14,8 +14,10 @@ ghcr.io/paoloronco/lynx:latest
 Versioned tags are also published, for example:
 
 ```bash
-paueron/lynx:4.3.6
-paueron/lynx:v4.3.6
+paueron/lynx:4.3.7
+paueron/lynx:v4.3.7
+paueron/lynx:4.3.8
+paueron/lynx:v4.3.8
 paueron/lynx:4.3
 ```
 
@@ -123,3 +125,5 @@ docker run -d --name lynx \
 ```
 
 Keep the same `JWT_SECRET` across restarts to avoid invalidating active sessions unexpectedly.
+
+

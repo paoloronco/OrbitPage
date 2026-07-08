@@ -21,12 +21,22 @@ interface PublicViewProps {
   footerText?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
+  ccpaPolicyUrl?: string;
 }
 
-export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cookiePolicyUrl }: PublicViewProps) => {
+export const PublicView = ({
+  profile,
+  links,
+  footerText,
+  privacyPolicyUrl,
+  cookiePolicyUrl,
+  ccpaPolicyUrl,
+}: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withBasePath(cookiePolicyUrl.trim()) : undefined;
-  const ccpaHref = privacyHref || cookieHref;
+  const ccpaHref = ccpaPolicyUrl?.trim()
+    ? withBasePath(ccpaPolicyUrl.trim())
+    : (privacyHref || cookieHref || withBasePath('/privacy'));
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&
@@ -114,7 +124,7 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
                 rel="noopener noreferrer"
                 className="underline hover:text-primary"
               >
-                Do not sell my personal information
+                Do not sell my personal information (Non vendere le mie informazioni personali)
               </a>
             </p>
           )}
