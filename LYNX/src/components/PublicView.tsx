@@ -26,6 +26,7 @@ interface PublicViewProps {
 export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cookiePolicyUrl }: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withBasePath(cookiePolicyUrl.trim()) : undefined;
+  const ccpaHref = privacyHref || cookieHref;
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&
@@ -103,6 +104,18 @@ export const PublicView = ({ profile, links, footerText, privacyPolicyUrl, cooki
                   Cookie Policy
                 </a>
               )}
+            </p>
+          )}
+          {ccpaHref && (
+            <p className="text-xs text-muted-foreground opacity-60 break-words">
+              <a
+                href={ccpaHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-primary"
+              >
+                Do not sell my personal information
+              </a>
             </p>
           )}
           <p className="text-xs text-muted-foreground opacity-60">
