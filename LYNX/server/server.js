@@ -50,7 +50,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.24';
+let APP_VERSION = '4.3.25';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -569,6 +569,9 @@ const getPublicThemePayload = async () => {
 };
 
 const PUBLIC_SPA_ROUTES = new Set(['/', '/privacy', '/cookies', '/admin']);
+if (DEMO_MODE) {
+  PUBLIC_SPA_ROUTES.add('/about');
+}
 
 const escapeHtml = (value = '') => String(value)
   .replace(/&/g, '&amp;')
@@ -633,7 +636,7 @@ const toAbsoluteHttpUrl = (value, origin) => {
 
 const canonicalPathForRequest = (req) => {
   const pathOnly = req.path || '/';
-  if (pathOnly === '/privacy' || pathOnly === '/cookies' || pathOnly === '/admin') return pathOnly;
+  if (pathOnly === '/privacy' || pathOnly === '/cookies' || pathOnly === '/admin' || (DEMO_MODE && pathOnly === '/about')) return pathOnly;
   return '/';
 };
 
@@ -641,6 +644,7 @@ const getPageKind = (pathName) => {
   if (pathName === '/privacy') return 'privacy';
   if (pathName === '/cookies') return 'cookies';
   if (pathName === '/admin') return 'admin';
+  if (DEMO_MODE && pathName === '/about') return 'about';
   return 'home';
 };
 
@@ -652,6 +656,7 @@ const getSeoTitle = (profile, pageKind) => {
   if (pageKind === 'privacy') return `Privacy Policy | ${profile?.name || PUBLIC_SITE_NAME}`;
   if (pageKind === 'cookies') return `Cookie Policy | ${profile?.name || PUBLIC_SITE_NAME}`;
   if (pageKind === 'admin') return `Admin | ${PUBLIC_SITE_NAME}`;
+  if (pageKind === 'about') return 'Lynx | Self-hosted Linktree Alternative';
   return profile?.tab_title || profile?.name || PUBLIC_SITE_NAME;
 };
 
@@ -659,6 +664,7 @@ const getSeoDescription = (profile, pageKind) => {
   if (pageKind === 'privacy') return 'Privacy information for this Lynx instance.';
   if (pageKind === 'cookies') return 'Cookie policy information for this Lynx instance.';
   if (pageKind === 'admin') return 'Private Lynx administration area.';
+  if (pageKind === 'about') return 'Learn how Lynx provides a self-hosted Linktree alternative with Docker, SQLite, themes, analytics, privacy controls, and backup/restore.';
   return compactText(
     profile?.meta_description ||
     profile?.bio ||
@@ -907,6 +913,8 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
   const [profile, links] = pageKind === 'admin'
     ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
+    : pageKind === 'about'
+      ? [{ name: 'Lynx', social_links: {} }, []]
     : await Promise.all([getPublicProfilePayload(), getPublicLinksPayload()]);
 
   const title = getSeoTitle(profile, pageKind);
@@ -987,6 +995,9 @@ app.get('/sitemap.xml', async (req, res) => {
   const urls = [
     { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
   ];
+  if (DEMO_MODE) {
+    urls.push({ loc: new URL(withRequestBasePath(req, '/about'), origin).toString(), priority: '0.8', changefreq: 'monthly' });
+  }
 
   try {
     const legalUrls = await getProfileLegalUrls();

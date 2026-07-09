@@ -452,6 +452,7 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<loc>https://links.example.test/</loc>');
     expect(response.text).toContain('<loc>https://links.example.test/privacy</loc>');
     expect(response.text).toContain('<loc>https://links.example.test/cookies</loc>');
+    expect(response.text).not.toContain('<loc>https://links.example.test/about</loc>');
   });
 
   it('GET /lynx/sitemap.xml includes BASE_PATH-prefixed canonical URLs', async () => {
@@ -477,6 +478,14 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.headers['x-robots-tag']).toContain('noindex');
     expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
+  });
+
+  it('GET /about is not exposed outside demo mode', async () => {
+    const response = await request(app).get('/about');
+
+    expect(response.status).toBe(404);
+    expect(response.headers['x-robots-tag']).toContain('noindex');
+    expect(response.text).not.toContain('Self-hosted Linktree alternative');
   });
 
   it('unknown SPA routes return 404 and noindex to avoid duplicate indexed pages', async () => {

@@ -2,7 +2,7 @@
 
 ### A self-hosted Linktree alternative for creators, developers, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.3.24-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.25-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -48,6 +48,7 @@ The demo is the fastest way to see both sides of Lynx: the public page visitors 
 | Area | Link | Login |
 | --- | --- | --- |
 | Public page | [lynx-demo.paoloronco.it](https://lynx-demo.paoloronco.it/) | No login required |
+| About Lynx | [lynx-demo.paoloronco.it/about](https://lynx-demo.paoloronco.it/about) | No login required |
 | Admin panel | [lynx-demo.paoloronco.it/admin](https://lynx-demo.paoloronco.it/admin) | `admin` / `ChangeMe123!` |
 
 Demo changes may be reset and should not be used for private data.
@@ -257,6 +258,16 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.25</strong></summary>
+
+### Demo-only product about page
+
+- Adds a polished `/about` page for the public demo instance.
+- Keeps `/about` unavailable outside demo mode and links it from the README demo table.
+
+</details>
 
 <details>
 <summary><strong>v4.3.24</strong></summary>
