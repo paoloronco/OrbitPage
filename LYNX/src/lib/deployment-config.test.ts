@@ -98,4 +98,14 @@ describe('deployment configuration', () => {
 
     expect(workflow.indexOf('npm run build')).toBeLessThan(workflow.indexOf('npm run test:unit'));
   });
+
+  it('keeps read-only GitHub token permissions on workflows that only need checkout', () => {
+    const ciWorkflow = read('.github/workflows/ci.yml');
+    const mirrorWorkflow = read('.github/workflows/gitea-mirror.yml');
+
+    for (const workflow of [ciWorkflow, mirrorWorkflow]) {
+      expect(workflow).toContain('permissions:');
+      expect(workflow).toContain('contents: read');
+    }
+  });
 });
