@@ -6,6 +6,7 @@ import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
 import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
+import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { Permission } from "@/lib/permissions";
@@ -126,42 +127,7 @@ const Admin = () => {
         const linksData = await linksApi.get();
         
         if (linksData && linksData.length > 0) {
-          const formattedLinks = linksData.map(link => ({
-            id: String(link.id),
-            title: link.title,
-            description: link.description || '',
-            url: link.url,
-            type: link.type as 'link' | 'text' | 'separator',
-            icon: link.icon,
-            iconType: link.iconType,
-            backgroundColor: link.backgroundColor,
-            titleFontFamily: (link as any).titleFontFamily || (link as any).titleFont || undefined,
-            descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
-            alignment: (link as any).alignment || undefined,
-            textColor: link.textColor,
-            size: link.size,
-            content: link.content,
-            textItems: link.textItems,
-            isActive: link.isActive !== false,
-            clickCount: link.clickCount || 0,
-            startDate: link.startDate || undefined,
-            endDate: link.endDate || undefined,
-            coverImage: (link as any).coverImage || undefined,
-            coverImageAlt: (link as any).coverImageAlt || undefined,
-          }));
-          // Ensure typography fields are preserved in normalized links
-          const fullyNormalized = formattedLinks.map(link => ({
-            ...link,
-            titleFontFamily: (link as any).titleFontFamily || undefined,
-            descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
-            alignment: (link as any).alignment || undefined,
-            titleFontSize: (link as any).titleFontSize || undefined,
-            descriptionFontSize: (link as any).descriptionFontSize || undefined,
-            clickCount: (link as any).clickCount || 0,
-            startDate: (link as any).startDate || undefined,
-            endDate: (link as any).endDate || undefined,
-          }));
-          setLinks(fullyNormalized);
+          setLinks(normalizeLinkDtos(linksData));
         }
 
         // Load theme data (for editing purposes) and apply it to admin too
@@ -232,11 +198,11 @@ const Admin = () => {
         const formattedLinks = newLinks.map(link => ({
           ...link,
           id: String(link.id),
-          type: (link as any).type || 'link',
-          titleFontSize: (link as any).titleFontSize || undefined,
-          descriptionFontSize: (link as any).descriptionFontSize || undefined,
-          startDate: (link as any).startDate || undefined,
-          endDate: (link as any).endDate || undefined,
+          type: link.type || 'link',
+          titleFontSize: link.titleFontSize || undefined,
+          descriptionFontSize: link.descriptionFontSize || undefined,
+          startDate: link.startDate || undefined,
+          endDate: link.endDate || undefined,
         }));
         await linksApi.update(formattedLinks);
       } else if (canStyle || canImages) {
@@ -250,8 +216,8 @@ const Admin = () => {
               titleFontFamily: newLink.titleFontFamily,
               descriptionFontFamily: newLink.descriptionFontFamily,
               alignment: newLink.alignment,
-              titleFontSize: (newLink as any).titleFontSize,
-              descriptionFontSize: (newLink as any).descriptionFontSize,
+              titleFontSize: newLink.titleFontSize,
+              descriptionFontSize: newLink.descriptionFontSize,
               size: newLink.size,
             });
           }
@@ -259,41 +225,15 @@ const Admin = () => {
             await linksApi.patchIcon(id, {
               icon: newLink.icon ?? null,
               iconType: newLink.iconType ?? null,
-              coverImage: (newLink as any).coverImage ?? null,
-              coverImageAlt: (newLink as any).coverImageAlt ?? null,
+              coverImage: newLink.coverImage ?? null,
+              coverImageAlt: newLink.coverImageAlt ?? null,
             });
           }
         }));
       }
       // Re-fetch from backend to guarantee public and admin are in sync
       const reloaded = await linksApi.get();
-      const normalized = (reloaded || []).map(link => ({
-        id: String(link.id),
-        title: link.title,
-        description: link.description || '',
-        url: link.url,
-        type: link.type as 'link' | 'text' | 'separator',
-        icon: link.icon,
-        iconType: link.iconType,
-        backgroundColor: link.backgroundColor,
-        textColor: link.textColor,
-        size: link.size,
-        content: link.content,
-        // Preserve new typography and alignment fields
-        titleFontFamily: (link as any).titleFontFamily || (link as any).titleFont || undefined,
-        descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
-        alignment: (link as any).alignment || undefined,
-        titleFontSize: (link as any).titleFontSize || undefined,
-        descriptionFontSize: (link as any).descriptionFontSize || undefined,
-        textItems: link.textItems,
-        isActive: link.isActive !== false,
-        clickCount: link.clickCount || 0,
-        startDate: link.startDate || undefined,
-        endDate: link.endDate || undefined,
-        coverImage: (link as any).coverImage || undefined,
-        coverImageAlt: (link as any).coverImageAlt || undefined,
-      }));
-      setLinks(normalized);
+      setLinks(normalizeLinkDtos(reloaded));
     } catch (error: any) {
       if (error?.message === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);

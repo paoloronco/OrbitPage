@@ -6,6 +6,7 @@ import { LinkData } from "@/components/LinkCard";
 import { applyTheme, normalizeTheme, BackgroundMediaConfig } from "@/lib/theme";
 import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
 import { consentManager } from "@/lib/consent-manager";
+import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { withBasePath } from "@/lib/base-path";
@@ -189,33 +190,7 @@ const Index = () => {
           }
         }
 
-        const formattedLinks = (pageData.links || []).map(link => {
-          const iconType = link.iconType || (link as any).icon_type;
-          return {
-            id: String(link.id),
-            title: link.title,
-            description: link.description || '',
-            url: link.url,
-            type: (link.type as 'link' | 'text' | 'separator') || 'link',
-            icon: link.icon || undefined,
-            iconType: iconType || undefined,
-            backgroundColor: link.backgroundColor,
-            textColor: link.textColor,
-            size: link.size,
-            content: link.content,
-            textItems: link.textItems,
-            // Preserve per-link typography and alignment
-            titleFontFamily: (link as any).titleFontFamily || (link as any).titleFont || undefined,
-            descriptionFontFamily: (link as any).descriptionFontFamily || undefined,
-            titleFontSize: (link as any).titleFontSize || undefined,
-            descriptionFontSize: (link as any).descriptionFontSize || undefined,
-            alignment: (link as any).alignment || undefined,
-            coverImage: (link as any).coverImage || undefined,
-            coverImageAlt: (link as any).coverImageAlt || undefined,
-          };
-        });
-
-        setLinks(formattedLinks);
+        setLinks(normalizeLinkDtos(pageData.links));
         document.body.classList.remove('lynx-booting');
         setLoading(false);
       } catch (error) {
