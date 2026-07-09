@@ -17,8 +17,6 @@ import {
   generateSecurePassword,
   requirePermission,
   requireAnyPermission,
-  ROLES,
-  ROLE_PERMISSIONS,
   getPermissionsForRole,
 } from './auth.js';
 import helmet from 'helmet';
@@ -28,6 +26,15 @@ import { timingSafeEqual } from 'crypto';
 import multer from 'multer';
 import { LinkSchema, LinksPayloadSchema } from './schemas/link.schema.js';
 import { ConsentConfigBodySchema } from './schemas/consent.schema.js';
+import {
+  ChangePasswordBodySchema,
+  CreateUserBodySchema,
+  LoginBodySchema,
+  ResetViaTokenBodySchema,
+  SetupBodySchema,
+  UpdateRoleBodySchema,
+  UpdateUserPasswordBodySchema,
+} from './schemas/auth.schema.js';
 import {
   UPLOAD_FILE_MODE,
   UploadQuotaExceededError,
@@ -43,7 +50,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.19';
+let APP_VERSION = '4.3.20';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -58,6 +65,9 @@ const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config
 // When running locally without the env var, data lives next to server.js.
 const DATA_DIR = process.env.DATA_DIR || __dirname;
 const uploadStorageQuotaBytes = getUploadStorageQuotaBytes(process.env);
+
+const getZodErrorMessage = (error) =>
+  error instanceof z.ZodError ? (error.issues[0]?.message || 'Invalid request body') : null;
 
 function safeJsonParse(jsonString, defaultValue = {}) {
   try {
@@ -1196,11 +1206,7 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
   }
 
   try {
-    const { password } = req.body;
-    
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
-    }
+    const { password } = SetupBodySchema.parse(req.body || {});
     
     await setupInitialCredentials(password);
     const token = generateToken('admin');
@@ -1211,20 +1217,14 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
       message: 'Admin account created successfully' 
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    const validationMessage = getZodErrorMessage(error);
+    res.status(400).json({ error: validationMessage || error.message });
   }
 });
 
 app.post('/api/auth/login', loginLimiter, async (req, res) => {
   try {
-    const { password, username = 'admin' } = req.body;
-
-    if (!password) {
-      return res.status(400).json({ error: 'Password is required' });
-    }
-    if (!username) {
-      return res.status(400).json({ error: 'Username is required' });
-    }
+    const { password, username } = LoginBodySchema.parse(req.body || {});
 
     console.log('Login attempt received for:', username);
     const isValid = await authenticateUser(password, username);
@@ -1239,6 +1239,8 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     res.json({ success: true, token });
     return;
   } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ error: validationMessage });
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
   }
@@ -1918,24 +1920,20 @@ app.get('/api/users', authenticateToken, requirePermission('users:manage'), asyn
 
 app.post('/api/users', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   try {
-    const { username, password, role } = req.body || {};
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-    if (!/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
-      return res.status(400).json({ error: 'Username must be 3–32 alphanumeric characters (underscores and hyphens allowed)' });
-    }
+    const { username, password, role } = CreateUserBodySchema.parse(req.body || {});
     if (!isPasswordStrong(password)) {
       return res.status(400).json({ error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' });
     }
     const existing = await dbGet('SELECT username FROM admin_users WHERE username = ?', [username]);
     if (existing) return res.status(409).json({ error: 'Username already exists' });
-    const validRole = ROLES.includes(role) ? role : 'viewer';
+    const validRole = role;
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
     await dbRun('INSERT INTO admin_users (username, password_hash, salt, role) VALUES (?, ?, ?, ?)', [username, passwordHash, salt, validRole]);
     res.status(201).json({ success: true, username, role: validRole });
   } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ error: validationMessage });
     console.error('Error creating user:', error);
     res.status(500).json({ error: 'Failed to create user' });
   }
@@ -1945,14 +1943,13 @@ app.put('/api/users/:username', authenticateToken, async (req, res) => {
   if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
   try {
     const { username } = req.params;
-    const { password } = req.body || {};
+    const { password } = UpdateUserPasswordBodySchema.parse(req.body || {});
     // Only allow users to change their own password, or users with users:manage permission
     const isSelf = req.user.username === username;
     const canManage = (req.user.permissions || []).includes('users:manage');
     if (!isSelf && !canManage) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
-    if (!password) return res.status(400).json({ error: 'New password is required' });
     if (!isPasswordStrong(password)) {
       return res.status(400).json({ error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' });
     }
@@ -1965,6 +1962,8 @@ app.put('/api/users/:username', authenticateToken, async (req, res) => {
     const newToken = req.user.username === username ? generateToken(username) : undefined;
     res.json({ success: true, ...(newToken ? { token: newToken } : {}) });
   } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ error: validationMessage });
     console.error('Error updating user:', error);
     res.status(500).json({ error: 'Failed to update user' });
   }
@@ -1991,13 +1990,14 @@ app.patch('/api/users/:username/role', authenticateToken, requirePermission('use
   try {
     const { username } = req.params;
     if (username === 'admin') return res.status(403).json({ error: 'Cannot change the role of the admin user' });
-    const { role } = req.body || {};
-    if (!ROLES.includes(role)) return res.status(400).json({ error: 'Invalid role' });
+    const { role } = UpdateRoleBodySchema.parse(req.body || {});
     const user = await dbGet('SELECT username FROM admin_users WHERE username = ?', [username]);
     if (!user) return res.status(404).json({ error: 'User not found' });
     await dbRun('UPDATE admin_users SET role = ? WHERE username = ?', [role, username]);
     res.json({ success: true, username, role });
   } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ error: validationMessage });
     console.error('Error updating user role:', error);
     res.status(500).json({ error: 'Failed to update role' });
   }
@@ -2075,11 +2075,7 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
   }
 
   try {
-    const { currentPassword, newPassword } = req.body || {};
-
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ success: false, error: 'Current and new passwords are required' });
-    }
+    const { currentPassword, newPassword } = ChangePasswordBodySchema.parse(req.body || {});
 
     // Get current user (the one making the request)
     const callerUsername = req.user.username;
@@ -2121,6 +2117,8 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
 
     return res.json({ success: true, message: 'Password changed successfully', token });
   } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ success: false, error: validationMessage });
     console.error('Change password error:', error);
     return res.status(500).json({ success: false, error: 'Failed to change password' });
   }
@@ -2133,15 +2131,11 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
   }
 
   try {
-    const { token, newPassword } = req.body || {};
+    const { token, newPassword } = ResetViaTokenBodySchema.parse(req.body || {});
     const resetToken = process.env.RESET_TOKEN;
 
     if (!resetToken) {
       return res.status(400).json({ success: false, error: 'RESET_TOKEN is not configured on this server. Set the RESET_TOKEN environment variable to enable token-based password reset.' });
-    }
-
-    if (!token || typeof token !== 'string') {
-      return res.status(400).json({ success: false, error: 'Reset token is required' });
     }
 
     // Constant-time comparison to prevent timing attacks
@@ -2166,6 +2160,8 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
 
     res.json({ success: true, message: 'Password reset successfully. You can now log in with your new password.' });
   } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ success: false, error: validationMessage });
     console.error('Reset-via-token error:', error);
     res.status(500).json({ success: false, error: 'Password reset failed' });
   }
