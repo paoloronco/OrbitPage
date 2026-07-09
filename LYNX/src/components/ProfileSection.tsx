@@ -10,6 +10,7 @@ import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } fro
 import { Switch } from "@/components/ui/switch";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath, withBasePath } from "@/lib/base-path";
+import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 
 interface ProfileData {
   name: string;
@@ -84,18 +85,8 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
       image.src = src;
     });
 
-    // If SVG, avoid canvas draw (may produce CORS/taint issues) and just return a data URL
-    const isSvg = file.type === 'image/svg+xml' || file.name?.toLowerCase().endsWith('.svg');
-    if (isSvg) {
-      // Read as text then build a data URL to preserve vector content
-      const svgData = await new Promise<string>((resolve, reject) => {
-        const fr = new FileReader();
-        fr.onload = () => resolve(String(fr.result || ''));
-        fr.onerror = () => reject(new Error('Failed to read SVG file.'));
-        fr.readAsText(file);
-      });
-      const encoded = encodeURIComponent(svgData).replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
-      return `data:image/svg+xml;charset=utf-8,${encoded}`;
+    if (!isAllowedRasterImageFile(file)) {
+      throw new Error('Unsupported image type. Use PNG, JPG, GIF, or WebP.');
     }
 
     // Try loading from object URL first, then fall back to data URL if needed
@@ -219,7 +210,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept={RASTER_IMAGE_ACCEPT}
           onChange={handleAvatarUpload}
           className="hidden"
         />

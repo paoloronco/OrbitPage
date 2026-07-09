@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.14-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.15-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -215,6 +215,16 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.15</strong></summary>
+
+### Raster-only image uploads
+
+- Aligns client-side avatar, icon, and cover image uploads with the backend raster-image policy.
+- Rejects unsanitized SVG files before they can be converted into stored data URLs.
+
+</details>
 
 <details>
 <summary><strong>v4.3.14</strong></summary>

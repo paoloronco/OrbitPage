@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image } from "lucide-react";
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
+import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 
 interface TextCardProps {
   link: LinkData;
@@ -44,13 +45,17 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!isAllowedRasterImageFile(file)) {
+        e.target.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         const result = event.target?.result as string;
         setEditLink(prev => ({
           ...prev,
           icon: result,
-          iconType: file.type.startsWith('image/svg') ? 'svg' : 'image'
+          iconType: 'image'
         }));
       };
       reader.readAsDataURL(file);
@@ -60,6 +65,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!isAllowedRasterImageFile(file)) {
+        e.target.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         setEditLink(prev => ({ ...prev, coverImage: event.target?.result as string }));
@@ -369,7 +378,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,.svg"
+                  accept={RASTER_IMAGE_ACCEPT}
                   onChange={handleIconUpload}
                   className="hidden"
                 />
@@ -418,7 +427,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 <input
                   ref={coverImageInputRef}
                   type="file"
-                  accept="image/*"
+                  accept={RASTER_IMAGE_ACCEPT}
                   onChange={handleCoverImageUpload}
                   className="hidden"
                 />
