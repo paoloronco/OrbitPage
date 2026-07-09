@@ -8,12 +8,13 @@ import { SeparatorCard } from "./SeparatorCard";
 import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
+import { commitWorkingLinks } from "./link-save-state";
 
 interface LinkManagerProps {
   links: LinkData[];
   editMode?: LinkEditMode;
   // Called only when user clicks Save
-  onLinksUpdate: (links: LinkData[]) => void;
+  onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
 }
 
 export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkManagerProps) => {
@@ -25,12 +26,14 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
   const [isDirty, setIsDirty] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   // Keep working copy in sync when parent provides a new links array
   useEffect(() => {
     // Replace working copy only when the incoming prop reference changes
     setWorkingLinks(links);
     setIsDirty(false);
+    setSaveError("");
   }, [links]);
 
   const addNewLink = () => {
@@ -44,6 +47,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
     const updated = [...workingLinks, newLink];
     setWorkingLinks(updated);
     setIsDirty(true);
+    setSaveError("");
   };
 
   const addNewTextCard = () => {
@@ -58,6 +62,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
     const updated = [...workingLinks, newTextCard];
     setWorkingLinks(updated);
     setIsDirty(true);
+    setSaveError("");
   };
 
   // Create a bulleted list text card (clickable list items)
@@ -73,6 +78,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
     const updated = [...workingLinks, newListCard];
     setWorkingLinks(updated);
     setIsDirty(true);
+    setSaveError("");
   };
 
   const addNewSeparator = () => {
@@ -87,6 +93,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
     const updated = [...workingLinks, newSeparator];
     setWorkingLinks(updated);
     setIsDirty(true);
+    setSaveError("");
   };
 
   const updateLink = (updatedLink: LinkData) => {
@@ -95,12 +102,14 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
     );
     setWorkingLinks(updatedLinks);
     setIsDirty(true);
+    setSaveError("");
   };
 
   const deleteLink = (id: string) => {
     const updatedLinks = workingLinks.filter(link => String(link.id) !== String(id));
     setWorkingLinks(updatedLinks);
     setIsDirty(true);
+    setSaveError("");
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
@@ -123,6 +132,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
     newLinks.splice(targetIndex, 0, draggedLink);
     setWorkingLinks(newLinks);
     setIsDirty(true);
+    setSaveError("");
     return newLinks;
   };
 
@@ -230,6 +240,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
         type: link.type as 'link' | 'text' | 'separator'
       })));
       setIsDirty(false);
+      setSaveError("");
       
       toast({
         title: "Import Successful",
@@ -269,12 +280,21 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
     newLinks.splice(newIndex, 0, item);
     setWorkingLinks(newLinks);
     setIsDirty(true);
+    setSaveError("");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isDirty) return;
-    onLinksUpdate(workingLinks);
-    setIsDirty(false);
+    setBusy(true);
+    setSaveError("");
+    const result = await commitWorkingLinks({
+      isDirty,
+      links: workingLinks,
+      onSave: onLinksUpdate,
+    });
+    setIsDirty(result.isDirty);
+    setSaveError(result.error);
+    setBusy(false);
   };
 
   const isFullEdit = editMode === 'full';
@@ -303,6 +323,11 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
           <p className="mt-1 text-sm text-slate-600">
             {workingLinks.length === 0 ? "Start with a link, text block, list, or separator." : `${workingLinks.length} items in your public page order.`}
           </p>
+          {saveError && (
+            <p className="mt-2 text-sm font-medium text-red-600" role="alert">
+              {saveError}
+            </p>
+          )}
         </div>
 
         <div className="admin-link-actions">
