@@ -2,7 +2,7 @@
 
 ### A self-hosted Linktree alternative for creators, developers, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.3.23-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.24-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -28,9 +28,9 @@ Most link-in-bio tools are either hosted SaaS products or self-hosted projects t
 
 - [Why Lynx?](#why-lynx)
 - [Try the Demo](#try-the-demo)
-- [Quick Start with Docker](#quick-start-with-docker)
 - [Features](#features)
 - [Screenshots](#screenshots)
+- [Quick Start with Docker](#quick-start-with-docker)
 - [Quick Start](#quick-start)
 - [Production Notes](#production-notes)
 - [Deploy Anywhere](#deploy-anywhere)
@@ -51,27 +51,6 @@ The demo is the fastest way to see both sides of Lynx: the public page visitors 
 | Admin panel | [lynx-demo.paoloronco.it/admin](https://lynx-demo.paoloronco.it/admin) | `admin` / `ChangeMe123!` |
 
 Demo changes may be reset and should not be used for private data.
-
-## Quick Start with Docker
-
-Docker is the recommended way to run Lynx in production or on a home server.
-
-```bash
-docker run -d --name lynx \
-  -p 8080:8080 \
-  -e NODE_ENV=production \
-  -e PORT=8080 \
-  -e JWT_SECRET="$(openssl rand -hex 32)" \
-  -v lynx_data:/app/data \
-  paueron/lynx:latest
-```
-
-Open:
-
-- Public page: http://localhost:8080
-- Admin panel: http://localhost:8080/admin
-
-The first admin visit asks you to create the admin password. The first username is always `admin`.
 
 ## Features
 
@@ -99,6 +78,27 @@ Walkthroughs:
 
 - [Public page walkthrough](https://app.arcade.software/share/avEiscyqITMJJFngqacr)
 - [Admin panel walkthrough](https://app.arcade.software/share/PhdZgUB3JnSnyIFZaQEq)
+
+## Quick Start with Docker
+
+Docker is the recommended way to run Lynx in production or on a home server.
+
+```bash
+docker run -d --name lynx \
+  -p 8080:8080 \
+  -e NODE_ENV=production \
+  -e PORT=8080 \
+  -e JWT_SECRET="$(openssl rand -hex 32)" \
+  -v lynx_data:/app/data \
+  paueron/lynx:latest
+```
+
+Open:
+
+- Public page: http://localhost:8080
+- Admin panel: http://localhost:8080/admin
+
+The first admin visit asks you to create the admin password. The first username is always `admin`.
 
 ## Quick Start
 
@@ -257,6 +257,16 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.24</strong></summary>
+
+### README quick start flow
+
+- Moves the Docker quick start directly above the source quick start.
+- Keeps the README contents order aligned with the rendered section order.
+
+</details>
 
 <details>
 <summary><strong>v4.3.23</strong></summary>
