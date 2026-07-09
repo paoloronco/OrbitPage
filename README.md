@@ -1,21 +1,38 @@
 # Lynx
 
-### Your personal links hub
+### A self-hosted Linktree alternative for creators, developers, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.3.22-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.23-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
 [![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/Lynx)
 
-**Lynx** is an open-source, self-hosted link page manager. It gives you a polished public profile page, a private admin panel, theme editing, click analytics, SQLite persistence, and production-ready Docker distribution without requiring an external database service.
+**Lynx** is an open-source link-in-bio manager you can run on your own server. It gives you a polished public profile page, a private admin panel, themes, scheduled links, click analytics, privacy controls, backup/restore, and production-ready Docker images without requiring an external database.
+
+![Lynx public page screenshot](./docs/screenshots/01-public-page.png)
+
+## Why Lynx?
+
+Most link-in-bio tools are either hosted SaaS products or self-hosted projects that need extra services before you can get started. Lynx is built for people who want a clean public page and an admin experience that still feels simple when it runs on their own infrastructure.
+
+| If you want... | Lynx gives you... |
+| --- | --- |
+| A Linktree-style public page | Links, text cards, separators, social links, avatars, cover images, and SEO metadata |
+| A self-hosted setup | Docker, SQLite, local uploads, health checks, and a single persistent data volume |
+| Control over privacy | Optional analytics, consent/legal settings, no required external database, and self-owned data |
+| A usable admin panel | Live preview, drag-and-drop ordering, theme editing, scheduling, access management, and inline feedback |
+| Safer operations | JWT auth, bcrypt passwords, upload restrictions, storage quotas, backup/restore, CI, and Docker smoke tests |
 
 ## Contents
 
+- [Why Lynx?](#why-lynx)
 - [Try the Demo](#try-the-demo)
-- [What You Get](#what-you-get)
+- [Quick Start with Docker](#quick-start-with-docker)
+- [Features](#features)
+- [Screenshots](#screenshots)
 - [Quick Start](#quick-start)
-- [Production Docker](#production-docker)
+- [Production Notes](#production-notes)
 - [Deploy Anywhere](#deploy-anywhere)
 - [Configuration](#configuration)
 - [Development](#development)
@@ -35,24 +52,57 @@ The demo is the fastest way to see both sides of Lynx: the public page visitors 
 
 Demo changes may be reset and should not be used for private data.
 
-[![Public page walkthrough](./docs/demo-public.gif)](https://app.arcade.software/share/avEiscyqITMJJFngqacr)
+## Quick Start with Docker
 
-[![Admin panel walkthrough](./docs/demo-admin.gif)](https://app.arcade.software/share/PhdZgUB3JnSnyIFZaQEq)
+Docker is the recommended way to run Lynx in production or on a home server.
 
-## What You Get
+```bash
+docker run -d --name lynx \
+  -p 8080:8080 \
+  -e NODE_ENV=production \
+  -e PORT=8080 \
+  -e JWT_SECRET="$(openssl rand -hex 32)" \
+  -v lynx_data:/app/data \
+  paueron/lynx:latest
+```
+
+Open:
+
+- Public page: http://localhost:8080
+- Admin panel: http://localhost:8080/admin
+
+The first admin visit asks you to create the admin password. The first username is always `admin`.
+
+## Features
 
 | Area | Highlights |
 | --- | --- |
 | Public page | Profile, avatar, bio, social links, link cards, text cards, separators, cover images, SEO metadata, legal footer links |
-| Admin panel | Profile editor, link manager, live preview, theme editor, analytics, privacy/legal settings, access management |
-| Customization | Colors, gradients, typography, spacing, radius, blur, glow, button styles, link styles, custom CSS |
-| Publishing control | Scheduled links, visibility toggles, drag-and-drop ordering, JSON import/export |
-| Storage and operations | SQLite database, local uploads, full JSON backup/restore, Docker image, health endpoint, persistent `/app/data` volume |
-| Security | bcrypt password hashing, signed JWT sessions, encrypted browser token storage, rate limits, parameterized SQLite queries, required Docker `JWT_SECRET` |
+| Link management | Link/text/separator blocks, visibility toggles, scheduling, drag-and-drop ordering, JSON import/export |
+| Design | Theme editor, live preview, colors, gradients, typography, spacing, radius, blur, glow, custom CSS |
+| Admin | Profile editor, analytics, privacy/legal settings, access management, password management, demo mode support |
+| Data ownership | SQLite persistence, local uploads, full JSON backup/restore, Docker volume support |
+| Security | bcrypt password hashing, signed JWT sessions, encrypted browser token storage, rate limits, upload restrictions, storage quota |
+| Deployment | Docker Hub, GHCR, Docker Compose, health endpoint, Cloud Run compatible, no external database required |
+
+## Screenshots
+
+| Public page | Admin links |
+| --- | --- |
+| ![Public page](./docs/screenshots/01-public-page.png) | ![Admin link manager](./docs/screenshots/04-admin-links.png) |
+
+| Theme editor | Profile editor |
+| --- | --- |
+| ![Theme editor](./docs/screenshots/05-admin-theme.png) | ![Profile editor](./docs/screenshots/03-admin-profile.png) |
+
+Walkthroughs:
+
+- [Public page walkthrough](https://app.arcade.software/share/avEiscyqITMJJFngqacr)
+- [Admin panel walkthrough](https://app.arcade.software/share/PhdZgUB3JnSnyIFZaQEq)
 
 ## Quick Start
 
-Use this path when you want to try Lynx locally without Docker.
+Use this path when you want to run Lynx from source.
 
 ```bash
 git clone https://github.com/paoloronco/Lynx.git
@@ -76,30 +126,21 @@ Requirements:
 - npm
 - Git
 
-## Production Docker
+## Production Notes
 
-Docker is the recommended production path. The same image is published to Docker Hub and GitHub Container Registry.
+The same image is published to Docker Hub and GitHub Container Registry.
+
+Docker Hub:
 
 ```bash
-docker run -d --name lynx \
-  -p 8080:8080 \
-  -e NODE_ENV=production \
-  -e PORT=8080 \
-  -e JWT_SECRET="$(openssl rand -hex 32)" \
-  -v lynx_data:/app/data \
-  paueron/lynx:latest
+paueron/lynx:latest
 ```
 
-Alternative image:
+GHCR:
 
 ```bash
 ghcr.io/paoloronco/lynx:latest
 ```
-
-Open:
-
-- Public page: http://localhost:8080
-- Admin panel: http://localhost:8080/admin
 
 The `/app/data` volume stores the SQLite database and uploads. Keep it mounted before upgrading or recreating the container.
 
@@ -216,6 +257,16 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.23</strong></summary>
+
+### README and discoverability refresh
+
+- Reworks the GitHub README around self-hosted Linktree alternative positioning.
+- Adds clearer demo, Docker quick start, feature, screenshot, and deployment sections.
+
+</details>
 
 <details>
 <summary><strong>v4.3.22</strong></summary>
