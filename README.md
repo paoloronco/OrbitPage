@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.18-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.19-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -216,6 +216,16 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.19</strong></summary>
+
+### Backup and restore UI
+
+- Adds admin dashboard controls to download a full backup JSON.
+- Adds guarded restore from backup with inline success and error states.
+
+</details>
 
 <details>
 <summary><strong>v4.3.18</strong></summary>

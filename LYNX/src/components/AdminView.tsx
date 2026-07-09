@@ -34,6 +34,7 @@ import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
 import { UserManager } from "./UserManager";
 import { PrivacySettings } from "./PrivacySettings";
+import { BackupManager } from "./BackupManager";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
@@ -100,7 +101,7 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
-  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.3.18");
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.3.19");
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
@@ -298,6 +299,7 @@ export const AdminView = ({
           <TabsContent value="access" className="admin-tab-content">
             <div className="admin-single-column space-y-6">
               {canManageUsers && <UserManager />}
+              {canManageUsers && <BackupManager />}
               <PasswordManager />
             </div>
           </TabsContent>

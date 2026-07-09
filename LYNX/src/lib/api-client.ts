@@ -414,6 +414,29 @@ export const authApi = {
   },
 };
 
+export const backupApi = {
+  download: async (): Promise<Blob> => {
+    const token = await getAuthTokenAsync();
+    const response = await fetch(apiPath('/admin/backup'), {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch((): { error?: string } => ({}));
+      throw new Error(errorData.error || 'Backup export failed');
+    }
+
+    return response.blob();
+  },
+
+  restore: async (backup: unknown): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>('/admin/restore', {
+      method: 'POST',
+      body: JSON.stringify(backup),
+    });
+  },
+};
+
 // Profile API
 export const profileApi = {
   get: async (): Promise<ProfileResponse> => {
