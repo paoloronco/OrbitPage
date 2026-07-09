@@ -28,11 +28,12 @@ import { timingSafeEqual } from 'crypto';
 import multer from 'multer';
 import { LinkSchema, LinksPayloadSchema } from './schemas/link.schema.js';
 import { ConsentConfigBodySchema } from './schemas/consent.schema.js';
+import { UPLOAD_FILE_MODE, createUploadFilename } from './services/upload-policy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.15';
+let APP_VERSION = '4.3.16';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -2341,9 +2342,7 @@ const storage = multer.diskStorage({
     cb(null, uploadsPath);
   },
   filename: function (req, file, cb) {
-    // Generate unique filename with original extension
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'img-' + uniqueSuffix + path.extname(file.originalname).toLowerCase());
+    cb(null, createUploadFilename('img', file.originalname));
   }
 });
 
@@ -2406,7 +2405,7 @@ app.post('/api/upload', authenticateToken, requireAnyPermission('profile:write',
 
     // Set file permissions (Windows compatible)
     try {
-      fs.chmodSync(resolvedFilePath, 0o666); // Read/write for all
+      fs.chmodSync(resolvedFilePath, UPLOAD_FILE_MODE);
       console.log('File permissions set successfully');
     } catch (err) {
       console.warn('Could not set file permissions:', err.message);
@@ -2443,8 +2442,7 @@ const bgStorage = multer.diskStorage({
     cb(null, uploadsPath);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'bg-' + uniqueSuffix + path.extname(file.originalname).toLowerCase());
+    cb(null, createUploadFilename('bg', file.originalname));
   }
 });
 
@@ -2477,7 +2475,7 @@ app.post('/api/upload/background', authenticateToken, requirePermission('theme:w
       return res.status(500).json({ error: 'Failed to save file' });
     }
 
-    try { fs.chmodSync(resolvedFilePath, 0o666); } catch { /* Windows may not support chmod */ }
+    try { fs.chmodSync(resolvedFilePath, UPLOAD_FILE_MODE); } catch { /* Windows may not support chmod */ }
 
     const fileUrl = `/uploads/${req.file.filename}`;
     const fullUrl = `${req.protocol}://${req.get('host')}${fileUrl}`;

@@ -40,6 +40,7 @@ describe('deployment configuration', () => {
     const rootDockerfile = read('Dockerfile');
 
     expect(rootDockerfile).toContain('COPY LYNX/server/schemas ./schemas');
+    expect(rootDockerfile).toContain('COPY LYNX/server/services ./services');
   });
 
   it('creates GitHub releases from the package version tag on main pushes', () => {
