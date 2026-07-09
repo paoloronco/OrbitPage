@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.16-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.17-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -134,6 +134,7 @@ The production essentials are intentionally small:
 | `JWT_SECRET` | Yes in Docker/production | Stable signing key for admin sessions. Use a long random value. |
 | `PORT` | Usually | HTTP port. Docker defaults to `8080`; local Node defaults to `3001`. |
 | `DATA_DIR` | Recommended for custom installs | Directory for `lynx.db` and uploads. Docker uses `/app/data`. |
+| `UPLOAD_STORAGE_QUOTA_MB` | Optional | Maximum total upload storage in MB. Defaults to `1024`. |
 | `PUBLIC_SITE_URL` | Recommended behind proxies | Canonical public URL for SEO, sitemap, and social previews. |
 | `SEO_INDEXING` | Optional | Set to `false` for staging/private deployments. |
 | `RESET_TOKEN` | Optional | Enables protected recovery/reset endpoints. Use at least 32 characters. |
@@ -215,6 +216,16 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.17</strong></summary>
+
+### Upload storage quota
+
+- Adds a configurable `UPLOAD_STORAGE_QUOTA_MB` limit for files stored in `uploads`.
+- Removes the newly uploaded file and returns `413` when the quota is exceeded.
+
+</details>
 
 <details>
 <summary><strong>v4.3.16</strong></summary>

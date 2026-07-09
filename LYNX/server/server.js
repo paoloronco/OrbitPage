@@ -28,12 +28,18 @@ import { timingSafeEqual } from 'crypto';
 import multer from 'multer';
 import { LinkSchema, LinksPayloadSchema } from './schemas/link.schema.js';
 import { ConsentConfigBodySchema } from './schemas/consent.schema.js';
-import { UPLOAD_FILE_MODE, createUploadFilename } from './services/upload-policy.js';
+import {
+  UPLOAD_FILE_MODE,
+  UploadQuotaExceededError,
+  createUploadFilename,
+  enforceUploadStorageQuota,
+  getUploadStorageQuotaBytes,
+} from './services/upload-policy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.16';
+let APP_VERSION = '4.3.17';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -47,6 +53,7 @@ const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
 const DATA_DIR = process.env.DATA_DIR || __dirname;
+const uploadStorageQuotaBytes = getUploadStorageQuotaBytes(process.env);
 
 function safeJsonParse(jsonString, defaultValue = {}) {
   try {
@@ -2403,6 +2410,27 @@ app.post('/api/upload', authenticateToken, requireAnyPermission('profile:write',
       });
     }
 
+    try {
+      enforceUploadStorageQuota({
+        uploadsPath,
+        filePath: resolvedFilePath,
+        quotaBytes: uploadStorageQuotaBytes,
+      });
+    } catch (error) {
+      if (error instanceof UploadQuotaExceededError) {
+        console.warn('Upload rejected because storage quota was exceeded:', {
+          quotaBytes: error.quotaBytes,
+          totalBytes: error.totalBytes,
+        });
+        return res.status(413).json({
+          error: 'Upload storage quota exceeded',
+          quotaBytes: error.quotaBytes,
+          totalBytes: error.totalBytes,
+        });
+      }
+      throw error;
+    }
+
     // Set file permissions (Windows compatible)
     try {
       fs.chmodSync(resolvedFilePath, UPLOAD_FILE_MODE);
@@ -2473,6 +2501,27 @@ app.post('/api/upload/background', authenticateToken, requirePermission('theme:w
 
     if (!fs.existsSync(resolvedFilePath)) {
       return res.status(500).json({ error: 'Failed to save file' });
+    }
+
+    try {
+      enforceUploadStorageQuota({
+        uploadsPath,
+        filePath: resolvedFilePath,
+        quotaBytes: uploadStorageQuotaBytes,
+      });
+    } catch (error) {
+      if (error instanceof UploadQuotaExceededError) {
+        console.warn('Background upload rejected because storage quota was exceeded:', {
+          quotaBytes: error.quotaBytes,
+          totalBytes: error.totalBytes,
+        });
+        return res.status(413).json({
+          error: 'Upload storage quota exceeded',
+          quotaBytes: error.quotaBytes,
+          totalBytes: error.totalBytes,
+        });
+      }
+      throw error;
     }
 
     try { fs.chmodSync(resolvedFilePath, UPLOAD_FILE_MODE); } catch { /* Windows may not support chmod */ }

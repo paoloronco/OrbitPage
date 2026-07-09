@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import {
+  DEFAULT_UPLOAD_STORAGE_QUOTA_BYTES,
+  UploadQuotaExceededError,
   UPLOAD_FILE_MODE,
   createUploadFilename,
+  enforceUploadStorageQuota,
+  getUploadStorageQuotaBytes,
 } from './upload-policy.js';
 
 describe('upload policy', () => {
@@ -21,5 +28,34 @@ describe('upload policy', () => {
 
   it('uses owner-writable, non-world-writable upload permissions', () => {
     expect(UPLOAD_FILE_MODE).toBe(0o644);
+  });
+
+  it('uses a safe default upload storage quota', () => {
+    expect(getUploadStorageQuotaBytes({})).toBe(DEFAULT_UPLOAD_STORAGE_QUOTA_BYTES);
+  });
+
+  it('reads upload storage quota from megabytes', () => {
+    expect(getUploadStorageQuotaBytes({ UPLOAD_STORAGE_QUOTA_MB: '2' })).toBe(2 * 1024 * 1024);
+  });
+
+  it('removes the newly uploaded file when storage quota is exceeded', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lynx-upload-quota-'));
+    const existingPath = path.join(tempDir, 'existing.png');
+    const newPath = path.join(tempDir, 'new.png');
+
+    fs.writeFileSync(existingPath, Buffer.alloc(8));
+    fs.writeFileSync(newPath, Buffer.alloc(8));
+
+    expect(() =>
+      enforceUploadStorageQuota({
+        uploadsPath: tempDir,
+        filePath: newPath,
+        quotaBytes: 12,
+      }),
+    ).toThrow(UploadQuotaExceededError);
+    expect(fs.existsSync(newPath)).toBe(false);
+    expect(fs.existsSync(existingPath)).toBe(true);
+
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 });

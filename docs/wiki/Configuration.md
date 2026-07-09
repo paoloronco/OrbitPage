@@ -10,6 +10,7 @@ Lynx is configured through environment variables. Frontend `VITE_*` values are b
 | `NODE_ENV` | unset | Set to `production` in production. |
 | `PORT` | `3001` local, `8080` Docker | Set to the port your platform expects. |
 | `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production. |
+| `UPLOAD_STORAGE_QUOTA_MB` | `1024` | Keep local uploads bounded. Raise this only when the data volume is sized accordingly. |
 | `PUBLIC_SITE_URL` | derived from request | Set to the canonical public URL behind proxies or cloud platforms. |
 | `PUBLIC_SITE_NAME` | `Lynx` | Set to your name, brand, or site label. |
 | `SEO_INDEXING` | `true` | Set to `false` for staging/private deployments. |
@@ -21,6 +22,7 @@ Lynx is configured through environment variables. Frontend `VITE_*` values are b
 | `JWT_SECRET` | Signs admin JWT sessions. Docker startup aborts when missing. |
 | `PORT` | HTTP listener port. |
 | `DATA_DIR` | Stores `lynx.db` and uploads. |
+| `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |
 | `DEMO_MODE` | Disables destructive mutations and resets demo data. Not for normal production. |
 | `ENABLE_HTTPS` | Enables a self-signed HTTPS listener. Usually unnecessary behind real HTTPS proxies. |
@@ -50,6 +52,7 @@ NODE_ENV=production
 PORT=8080
 JWT_SECRET=replace-with-a-long-random-secret
 DATA_DIR=/app/data
+UPLOAD_STORAGE_QUOTA_MB=1024
 PUBLIC_SITE_URL=https://links.example.com
 PUBLIC_SITE_NAME="Example Links"
 SEO_INDEXING=true
@@ -62,6 +65,7 @@ NODE_ENV=production
 PORT=8080
 JWT_SECRET=replace-with-a-long-random-secret
 DATA_DIR=/app/data
+UPLOAD_STORAGE_QUOTA_MB=256
 PUBLIC_SITE_URL=https://staging-links.example.com
 SEO_INDEXING=false
 ```
