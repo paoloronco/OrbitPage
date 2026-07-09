@@ -50,7 +50,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.25';
+let APP_VERSION = '4.3.26';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -88,6 +88,11 @@ const ENABLE_HTTPS = String(process.env.ENABLE_HTTPS || '').toLowerCase() === 't
 const SSL_PORT = Number.parseInt(process.env.SSL_PORT || '', 10) || 8443;
 const PUBLIC_SITE_URL = String(process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '').trim();
 const PUBLIC_SITE_NAME = String(process.env.PUBLIC_SITE_NAME || 'Lynx').trim() || 'Lynx';
+const ABOUT_PAGE_TITLE = 'Lynx | Self-hosted Linktree Alternative with Docker';
+const ABOUT_PAGE_DESCRIPTION = 'Lynx is an open-source, self-hosted Linktree alternative with Docker, SQLite, themes, analytics, privacy controls, and full backup/restore.';
+const ABOUT_PAGE_IMAGE_URL = 'https://raw.githubusercontent.com/paoloronco/Lynx/main/docs/screenshots/01-public-page.png';
+const ABOUT_PAGE_IMAGE_ALT = 'Screenshot of the Lynx public profile page';
+const ABOUT_PAGE_KEYWORDS = 'self-hosted Linktree alternative, open-source link in bio, Docker link page, privacy-friendly link hub, Lynx';
 const SEO_INDEXING = !['0', 'false', 'no', 'off'].includes(
   String(process.env.SEO_INDEXING ?? 'true').trim().toLowerCase()
 );
@@ -656,7 +661,7 @@ const getSeoTitle = (profile, pageKind) => {
   if (pageKind === 'privacy') return `Privacy Policy | ${profile?.name || PUBLIC_SITE_NAME}`;
   if (pageKind === 'cookies') return `Cookie Policy | ${profile?.name || PUBLIC_SITE_NAME}`;
   if (pageKind === 'admin') return `Admin | ${PUBLIC_SITE_NAME}`;
-  if (pageKind === 'about') return 'Lynx | Self-hosted Linktree Alternative';
+  if (pageKind === 'about') return ABOUT_PAGE_TITLE;
   return profile?.tab_title || profile?.name || PUBLIC_SITE_NAME;
 };
 
@@ -664,7 +669,7 @@ const getSeoDescription = (profile, pageKind) => {
   if (pageKind === 'privacy') return 'Privacy information for this Lynx instance.';
   if (pageKind === 'cookies') return 'Cookie policy information for this Lynx instance.';
   if (pageKind === 'admin') return 'Private Lynx administration area.';
-  if (pageKind === 'about') return 'Learn how Lynx provides a self-hosted Linktree alternative with Docker, SQLite, themes, analytics, privacy controls, and backup/restore.';
+  if (pageKind === 'about') return ABOUT_PAGE_DESCRIPTION;
   return compactText(
     profile?.meta_description ||
     profile?.bio ||
@@ -673,11 +678,26 @@ const getSeoDescription = (profile, pageKind) => {
   );
 };
 
+const getSeoImageUrl = (profile, pageKind, origin) => {
+  if (pageKind === 'about') return ABOUT_PAGE_IMAGE_URL;
+  return toAbsoluteHttpUrl(profile?.avatar, origin);
+};
+
+const getSeoKeywords = (pageKind) => {
+  if (pageKind === 'about') return ABOUT_PAGE_KEYWORDS;
+  return '';
+};
+
+const getSeoImageAlt = (profile, pageKind) => {
+  if (pageKind === 'about') return ABOUT_PAGE_IMAGE_ALT;
+  return profile?.name ? `${profile.name} profile image` : '';
+};
+
 const buildStructuredData = ({ profile, links, origin, canonicalUrl, pageKind }) => {
   const pageName = getSeoTitle(profile, pageKind);
   const description = getSeoDescription(profile, pageKind);
   const sameAs = getSocialUrls(profile, origin);
-  const image = toAbsoluteHttpUrl(profile?.avatar, origin);
+  const image = getSeoImageUrl(profile, pageKind, origin);
 
   const graph = [
     {
@@ -696,6 +716,63 @@ const buildStructuredData = ({ profile, links, origin, canonicalUrl, pageKind })
       isPartOf: { '@id': `${origin}/#website` },
     },
   ];
+
+  if (pageKind === 'about') {
+    graph[1] = {
+      ...graph[1],
+      '@type': 'AboutPage',
+      primaryImageOfPage: image ? { '@id': `${canonicalUrl}#primaryimage` } : undefined,
+      about: { '@id': `${origin}/#software` },
+    };
+
+    if (image) {
+      graph.push({
+        '@type': 'ImageObject',
+        '@id': `${canonicalUrl}#primaryimage`,
+        url: image,
+        contentUrl: image,
+        caption: ABOUT_PAGE_IMAGE_ALT,
+      });
+    }
+
+    graph.push({
+      '@type': 'SoftwareApplication',
+      '@id': `${origin}/#software`,
+      name: 'Lynx',
+      description,
+      applicationCategory: 'WebApplication',
+      operatingSystem: 'Docker, Linux, Windows, macOS',
+      softwareVersion: APP_VERSION,
+      codeRepository: 'https://github.com/paoloronco/Lynx',
+      downloadUrl: 'https://hub.docker.com/r/paueron/lynx',
+      license: 'https://github.com/paoloronco/Lynx/blob/main/LICENSE.txt',
+      image: image || undefined,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    });
+
+    graph.push({
+      '@type': 'BreadcrumbList',
+      '@id': `${canonicalUrl}#breadcrumb`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Demo',
+          item: new URL(withBasePathForStructuredData('/', canonicalUrl), canonicalUrl).toString(),
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'About Lynx',
+          item: canonicalUrl,
+        },
+      ],
+    });
+  }
 
   if (pageKind === 'home' && profile?.name) {
     graph.push({
@@ -737,13 +814,24 @@ const buildStructuredData = ({ profile, links, origin, canonicalUrl, pageKind })
   };
 };
 
-const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, robots, structuredData, basePath }) => {
+const withBasePathForStructuredData = (targetPath, canonicalUrl) => {
+  const current = new URL(canonicalUrl);
+  const pathPrefix = current.pathname.endsWith('/about')
+    ? current.pathname.slice(0, -'/about'.length)
+    : '';
+  const normalizedTarget = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
+  return `${pathPrefix}${normalizedTarget}`.replace(/\/{2,}/g, '/') || '/';
+};
+
+const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, imageAlt, keywords, robots, structuredData, basePath }) => {
   const cardType = imageUrl ? 'summary_large_image' : 'summary';
   return [
     `<script>window.__LYNX_BASE_PATH__=${safeJsonForHtml(basePath || '')};</script>`,
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
     `<meta name="robots" content="${escapeHtml(robots)}" />`,
+    keywords ? `<meta name="keywords" content="${escapeHtml(keywords)}" />` : '',
+    `<meta name="application-name" content="${escapeHtml(PUBLIC_SITE_NAME)}" />`,
     `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
     `<link rel="alternate" hreflang="x-default" href="${escapeHtml(canonicalUrl)}" />`,
     `<meta property="og:title" content="${escapeHtml(title)}" />`,
@@ -751,11 +839,17 @@ const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, robots, str
     `<meta property="og:type" content="website" />`,
     `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
     `<meta property="og:site_name" content="${escapeHtml(PUBLIC_SITE_NAME)}" />`,
+    `<meta property="og:locale" content="en_US" />`,
     imageUrl ? `<meta property="og:image" content="${escapeHtml(imageUrl)}" />` : '',
+    imageUrl ? `<meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />` : '',
+    imageUrl ? `<meta property="og:image:width" content="1919" />` : '',
+    imageUrl ? `<meta property="og:image:height" content="1019" />` : '',
+    imageUrl && imageAlt ? `<meta property="og:image:alt" content="${escapeHtml(imageAlt)}" />` : '',
     `<meta name="twitter:card" content="${cardType}" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
     imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}" />` : '',
+    imageUrl && imageAlt ? `<meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}" />` : '',
     `<script type="application/ld+json" id="lynx-structured-data">${safeJsonForHtml(structuredData)}</script>`,
   ].filter(Boolean).join('\n    ');
 };
@@ -919,13 +1013,15 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
 
   const title = getSeoTitle(profile, pageKind);
   const description = getSeoDescription(profile, pageKind);
-  const imageUrl = toAbsoluteHttpUrl(profile?.avatar, origin);
+  const imageUrl = getSeoImageUrl(profile, pageKind, origin);
+  const imageAlt = getSeoImageAlt(profile, pageKind);
+  const keywords = getSeoKeywords(pageKind);
   const shouldIndex = SEO_INDEXING && statusCode < 400 && pageKind !== 'admin';
   const robots = shouldIndex ? 'index, follow, max-image-preview:large' : 'noindex, nofollow, noarchive';
   const structuredData = buildStructuredData({ profile, links, origin, canonicalUrl, pageKind });
 
   return {
-    seoTags: renderSeoTags({ title, description, canonicalUrl, imageUrl, robots, structuredData, basePath: BASE_PATH }),
+    seoTags: renderSeoTags({ title, description, canonicalUrl, imageUrl, imageAlt, keywords, robots, structuredData, basePath: BASE_PATH }),
     noScriptContent: pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
     robots,
   };
@@ -2906,7 +3002,7 @@ app.get('*', spaLimiter, (req, res) => {
   serveSpaIndex(req, res, { statusCode });
 });
 
-export { app, stripStaticSeoTags };
+export { app, stripStaticSeoTags, buildStructuredData, renderSeoTags };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
 app.listen(PORT, '0.0.0.0', async () => {

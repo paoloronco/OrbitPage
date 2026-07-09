@@ -37,7 +37,7 @@ vi.mock('./services/backup-service.js', () => ({
 }));
 
 // Now import app
-import { app, stripStaticSeoTags } from './server.js';
+import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
 import { isFirstTimeSetup } from './auth.js';
 import { dbAll, dbGet, dbRun, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
@@ -419,6 +419,59 @@ describe('API Endpoints', () => {
     expect(stripped).not.toContain('application/ld+json');
     expect(stripped).not.toContain('<script');
     expect(stripped).not.toContain('<title>');
+  });
+
+  it('renders rich SEO tags for the demo about page', () => {
+    const structuredData = buildStructuredData({
+      profile: { name: 'Lynx', social_links: {} },
+      links: [],
+      origin: 'https://lynx-demo.paoloronco.it',
+      canonicalUrl: 'https://lynx-demo.paoloronco.it/about',
+      pageKind: 'about',
+    });
+
+    const tags = renderSeoTags({
+      title: 'Lynx | Self-hosted Linktree Alternative with Docker',
+      description: 'Lynx is an open-source, self-hosted Linktree alternative with Docker, SQLite, themes, analytics, privacy controls, and full backup/restore.',
+      canonicalUrl: 'https://lynx-demo.paoloronco.it/about',
+      imageUrl: 'https://raw.githubusercontent.com/paoloronco/Lynx/main/docs/screenshots/01-public-page.png',
+      imageAlt: 'Screenshot of the Lynx public profile page',
+      keywords: 'self-hosted Linktree alternative, open-source link in bio, Docker link page, privacy-friendly link hub, Lynx',
+      robots: 'index, follow, max-image-preview:large',
+      structuredData,
+      basePath: '',
+    });
+
+    expect(tags).toContain('<title>Lynx | Self-hosted Linktree Alternative with Docker</title>');
+    expect(tags).toContain('<link rel="canonical" href="https://lynx-demo.paoloronco.it/about"');
+    expect(tags).toContain('<meta name="keywords" content="self-hosted Linktree alternative');
+    expect(tags).toContain('<meta property="og:image:alt" content="Screenshot of the Lynx public profile page"');
+    expect(tags).toContain('<meta property="og:image:width" content="1919"');
+    expect(tags).toContain('<meta name="twitter:image:alt" content="Screenshot of the Lynx public profile page"');
+    expect(tags).toContain('"@type":"SoftwareApplication"');
+    expect(tags).toContain('"codeRepository":"https://github.com/paoloronco/Lynx"');
+  });
+
+  it('builds about-page structured data with product and breadcrumb entities', () => {
+    const data = buildStructuredData({
+      profile: { name: 'Lynx', social_links: {} },
+      links: [],
+      origin: 'https://lynx-demo.paoloronco.it',
+      canonicalUrl: 'https://lynx-demo.paoloronco.it/about',
+      pageKind: 'about',
+    });
+
+    const types = data['@graph'].map((entry) => entry['@type']);
+    expect(types).toContain('AboutPage');
+    expect(types).toContain('SoftwareApplication');
+    expect(types).toContain('ImageObject');
+    expect(types).toContain('BreadcrumbList');
+    expect(data['@graph'].find((entry) => entry['@type'] === 'SoftwareApplication')).toMatchObject({
+      name: 'Lynx',
+      applicationCategory: 'WebApplication',
+      operatingSystem: 'Docker, Linux, Windows, macOS',
+      codeRepository: 'https://github.com/paoloronco/Lynx',
+    });
   });
 
   it('GET /robots.txt points crawlers to the dynamic sitemap and blocks private routes', async () => {
