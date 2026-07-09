@@ -36,6 +36,12 @@ describe('deployment configuration', () => {
     }
   });
 
+  it('keeps extracted server modules available in the root Docker image', () => {
+    const rootDockerfile = read('Dockerfile');
+
+    expect(rootDockerfile).toContain('COPY LYNX/server/schemas ./schemas');
+  });
+
   it('creates GitHub releases from the package version tag on main pushes', () => {
     const workflow = read('.github/workflows/release.yml');
 
