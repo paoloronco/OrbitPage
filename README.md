@@ -2,7 +2,7 @@
 
 ### Your personal links hub
 
-[![Version](https://img.shields.io/badge/version-4.3.17-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.18-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -47,7 +47,7 @@ Demo changes may be reset and should not be used for private data.
 | Admin panel | Profile editor, link manager, live preview, theme editor, analytics, privacy/legal settings, access management |
 | Customization | Colors, gradients, typography, spacing, radius, blur, glow, button styles, link styles, custom CSS |
 | Publishing control | Scheduled links, visibility toggles, drag-and-drop ordering, JSON import/export |
-| Storage and operations | SQLite database, local uploads, Docker image, health endpoint, persistent `/app/data` volume |
+| Storage and operations | SQLite database, local uploads, full JSON backup/restore, Docker image, health endpoint, persistent `/app/data` volume |
 | Security | bcrypt password hashing, signed JWT sessions, encrypted browser token storage, rate limits, parameterized SQLite queries, required Docker `JWT_SECRET` |
 
 ## Quick Start
@@ -216,6 +216,16 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.18</strong></summary>
+
+### Backup and restore API
+
+- Adds admin-only backup export for application tables and upload files.
+- Adds restore support with safe upload path validation and transactional database writes.
+
+</details>
 
 <details>
 <summary><strong>v4.3.17</strong></summary>

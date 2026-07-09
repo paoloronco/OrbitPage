@@ -31,10 +31,16 @@ vi.mock('./auth.js', () => ({
   generateSecurePassword: vi.fn(() => 'SecurePass123!')
 }));
 
+vi.mock('./services/backup-service.js', () => ({
+  createApplicationBackup: vi.fn(),
+  restoreApplicationBackup: vi.fn(),
+}));
+
 // Now import app
 import { app, stripStaticSeoTags } from './server.js';
 import { isFirstTimeSetup } from './auth.js';
-import { dbAll, dbGet, dbRun } from './database.js';
+import { dbAll, dbGet, dbRun, withTransaction } from './database.js';
+import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
 
 describe('API Endpoints', () => {
   beforeEach(() => {
@@ -42,6 +48,15 @@ describe('API Endpoints', () => {
     vi.mocked(dbGet).mockResolvedValue(null);
     vi.mocked(dbAll).mockResolvedValue([]);
     vi.mocked(dbRun).mockResolvedValue({ changes: 1 });
+    vi.mocked(withTransaction).mockImplementation(cb => cb());
+    vi.mocked(createApplicationBackup).mockResolvedValue({
+      schemaVersion: 1,
+      appVersion: 'test',
+      createdAt: '2026-07-09T00:00:00.000Z',
+      tables: {},
+      uploads: [],
+    });
+    vi.mocked(restoreApplicationBackup).mockResolvedValue(undefined);
   });
 
   it('GET /health should return 200 and status ok', async () => {
@@ -90,6 +105,49 @@ describe('API Endpoints', () => {
     const response = await request(app).get('/api/auth/setup-status');
     expect(response.status).toBe(200);
     expect(response.body.isFirstTimeSetup).toBe(true);
+  });
+
+  it('GET /api/admin/backup downloads a complete backup payload', async () => {
+    vi.mocked(createApplicationBackup).mockResolvedValueOnce({
+      schemaVersion: 1,
+      appVersion: '4.3.18',
+      createdAt: '2026-07-09T00:00:00.000Z',
+      tables: { profile_data: [{ id: 1, name: 'Paolo' }] },
+      uploads: [{ path: 'avatar.png', data: 'YXZhdGFy' }],
+    });
+
+    const response = await request(app).get('/api/admin/backup');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['content-disposition']).toContain('lynx-backup-');
+    expect(response.body.tables.profile_data[0].name).toBe('Paolo');
+    expect(response.body.uploads[0].path).toBe('avatar.png');
+    expect(createApplicationBackup).toHaveBeenCalledWith({
+      appVersion: expect.any(String),
+      dbAll,
+      uploadsPath: expect.any(String),
+    });
+  });
+
+  it('POST /api/admin/restore restores a backup inside a transaction', async () => {
+    const backup = {
+      schemaVersion: 1,
+      tables: { profile_data: [{ id: 1, name: 'Restored' }] },
+      uploads: [],
+    };
+
+    const response = await request(app)
+      .post('/api/admin/restore')
+      .send(backup);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(withTransaction).toHaveBeenCalled();
+    expect(restoreApplicationBackup).toHaveBeenCalledWith({
+      backup,
+      dbRun,
+      uploadsPath: expect.any(String),
+    });
   });
 
   it('GET /api/public-page should return profile, links, and theme in one response', async () => {

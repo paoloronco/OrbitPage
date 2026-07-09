@@ -35,11 +35,15 @@ import {
   enforceUploadStorageQuota,
   getUploadStorageQuotaBytes,
 } from './services/upload-policy.js';
+import {
+  createApplicationBackup,
+  restoreApplicationBackup,
+} from './services/backup-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.17';
+let APP_VERSION = '4.3.18';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -254,6 +258,7 @@ app.use((req, res, next) => {
   }
   next();
 });
+app.use('/api/admin/restore', express.json({ limit: '300mb' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Serve static files with proper path resolution
@@ -2333,6 +2338,47 @@ app.post('/api/auth/force-reset', resetLimiter, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: 'Failed to reset application. ' + (error.message || 'Please try again.') 
+    });
+  }
+});
+
+app.get('/api/admin/backup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  try {
+    const backup = await createApplicationBackup({
+      appVersion: APP_VERSION,
+      dbAll,
+      uploadsPath,
+    });
+    const date = new Date().toISOString().slice(0, 10);
+
+    res.setHeader('Content-Disposition', `attachment; filename="lynx-backup-${date}.json"`);
+    res.json(backup);
+  } catch (error) {
+    console.error('Backup export error:', error);
+    res.status(500).json({ error: 'Failed to create backup' });
+  }
+});
+
+app.post('/api/admin/restore', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Backup restore is disabled in demo mode.' });
+  }
+
+  try {
+    await withTransaction(async () => {
+      await restoreApplicationBackup({
+        backup: req.body,
+        dbRun,
+        uploadsPath,
+      });
+    });
+
+    res.json({ success: true, message: 'Backup restored successfully.' });
+  } catch (error) {
+    console.error('Backup restore error:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Failed to restore backup',
     });
   }
 });
