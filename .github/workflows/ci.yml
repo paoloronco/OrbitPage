@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   test:
-    name: Lint, Unit & E2E Tests
+    name: Quality Gate
     runs-on: ubuntu-latest
 
     defaults:
@@ -38,14 +38,40 @@ jobs:
       - name: Install backend dependencies
         run: npm run install:server
 
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+
+      - name: Audit backend dependencies
+        run: npm --prefix server audit --audit-level=high
+
       - name: Run ESLint
         run: npm run lint
+
+      - name: Run unit and integration tests (Vitest)
+        run: npm run test:unit
 
       - name: Build frontend application
         run: npm run build
 
-      - name: Run unit and integration tests (Vitest)
-        run: npm run test:unit
+      - name: Build Docker image for smoke test
+        run: docker build -t lynx-ci-smoke ..
+
+      - name: Smoke test Docker image
+        run: |
+          docker run -d --name lynx-ci-smoke \
+            -p 3001:8080 \
+            -e JWT_SECRET=ci-smoke-secret-ci-smoke-secret-123456 \
+            lynx-ci-smoke
+          for attempt in {1..30}; do
+            if curl --fail http://127.0.0.1:3001/health; then
+              docker rm -f lynx-ci-smoke
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs lynx-ci-smoke
+          docker rm -f lynx-ci-smoke
+          exit 1
 
       - name: Install Playwright browsers and system dependencies
         run: npx playwright install --with-deps

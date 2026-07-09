@@ -71,4 +71,18 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('type=raw,value=v${{ steps.version.outputs.version }}');
     expect(workflow).toContain('type=raw,value=${{ steps.version.outputs.major_minor }}');
   });
+
+  it('runs a blocking CI quality gate for pull requests and main pushes', () => {
+    const workflow = read('.github/workflows/ci.yml');
+
+    expect(workflow).toContain('pull_request:');
+    expect(workflow).toContain('branches: [ "main" ]');
+    expect(workflow).toContain('npm run lint');
+    expect(workflow).toContain('npm run test:unit');
+    expect(workflow).toContain('npm audit --audit-level=high');
+    expect(workflow).toContain('npm --prefix server audit --audit-level=high');
+    expect(workflow).toContain('npm run build');
+    expect(workflow).toContain('docker build -t lynx-ci-smoke ..');
+    expect(workflow).toContain('curl --fail http://127.0.0.1:3001/health');
+  });
 });
