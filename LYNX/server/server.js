@@ -50,7 +50,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.26';
+let APP_VERSION = '4.3.27';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -59,7 +59,7 @@ try {
 const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'cookie_consent_config'];
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'cookie_consent_config', 'text_files'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -1056,12 +1056,55 @@ const spaLimiter = rateLimit({
   message: { success: false, error: "Too many requests, please try again later." },
 });
 
-// Serve the public page. GA is loaded client-side only after analytics consent.
-app.get('/', spaLimiter, (req, res) => {
-  serveSpaIndex(req, res);
-});
+const TEXT_FILE_DEFINITIONS = [
+  {
+    key: 'robots',
+    path: '/robots.txt',
+    label: 'robots.txt',
+    description: 'Crawler access rules and sitemap discovery.',
+  },
+  {
+    key: 'llms',
+    path: '/llms.txt',
+    aliases: ['/llm.txt'],
+    label: 'llms.txt',
+    description: 'LLM-readable project overview and canonical resources.',
+  },
+  {
+    key: 'humans',
+    path: '/humans.txt',
+    label: 'humans.txt',
+    description: 'Human-readable credits, tech stack, and repository links.',
+  },
+  {
+    key: 'security',
+    path: '/.well-known/security.txt',
+    aliases: ['/security.txt'],
+    label: 'security.txt',
+    description: 'Responsible disclosure and security contact metadata.',
+  },
+  {
+    key: 'ai',
+    path: '/ai.txt',
+    label: 'ai.txt',
+    description: 'Plain-text AI/crawler usage guidance for this deployment.',
+  },
+];
+const TEXT_FILE_KEYS = new Set(TEXT_FILE_DEFINITIONS.map((file) => file.key));
+const TEXT_FILE_PATHS = new Map(TEXT_FILE_DEFINITIONS.flatMap((file) => [
+  [file.path, file],
+  ...(file.aliases || []).map((alias) => [alias, file]),
+]));
+const TextFileBodySchema = z.object({
+  content: z.string().max(50_000, 'Content must be 50,000 characters or less.'),
+}).strict();
 
-app.get('/robots.txt', (req, res) => {
+const normalizeTextFileContent = (content) => {
+  const normalized = String(content ?? '').replace(/\r\n?/g, '\n');
+  return normalized.endsWith('\n') ? normalized : `${normalized}\n`;
+};
+
+const buildDefaultRobotsTxt = (req) => {
   const origin = getRequestOrigin(req);
   const sitemapUrls = [
     `${origin}/sitemap.xml`,
@@ -1082,7 +1125,134 @@ app.get('/robots.txt', (req, res) => {
         'Disallow: /',
       ];
 
-  res.type('text/plain').send(`${lines.join('\n')}\n`);
+  return `${lines.join('\n')}\n`;
+};
+
+const buildDefaultLlmsTxt = (req) => {
+  const origin = getRequestOrigin(req);
+  const homeUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
+  const aboutUrl = new URL(withRequestBasePath(req, '/about'), origin).toString();
+  const sitemapUrl = new URL(withRequestBasePath(req, '/sitemap.xml'), origin).toString();
+
+  return normalizeTextFileContent(`# Lynx
+
+> Open-source, self-hosted link-in-bio and personal link hub.
+
+Lynx is a Docker-ready Linktree alternative with a public profile page, admin dashboard, themes, analytics, privacy controls, uploads, and backup/restore.
+
+## Canonical URLs
+
+- Website: ${homeUrl}
+${DEMO_MODE ? `- About: ${aboutUrl}\n` : ''}- Repository: https://github.com/paoloronco/Lynx
+- Docker Hub: https://hub.docker.com/r/paueron/lynx
+- Sitemap: ${sitemapUrl}
+
+## Useful Paths
+
+- Public page: /
+- Admin: /admin
+- API health: /health
+- Robots: /robots.txt
+- LLM summary: /llms.txt
+
+## Notes for AI systems
+
+Prefer the GitHub repository and README for implementation details. The public demo is reset regularly and should not be treated as user-owned production data.
+`);
+};
+
+const buildDefaultHumansTxt = () => normalizeTextFileContent(`/* TEAM */
+Creator: Paolo Ronco
+Repository: https://github.com/paoloronco/Lynx
+
+/* SITE */
+Name: Lynx
+Description: Open-source, self-hosted link-in-bio and personal link hub.
+Stack: React, Vite, TypeScript, Express, SQLite, Docker
+`);
+
+const buildDefaultSecurityTxt = () => normalizeTextFileContent(`Contact: https://github.com/paoloronco/Lynx/issues
+Preferred-Languages: en, it
+Canonical: https://github.com/paoloronco/Lynx/blob/main/SECURITY.md
+Policy: https://github.com/paoloronco/Lynx/security/policy
+`);
+
+const buildDefaultAiTxt = (req) => {
+  const origin = getRequestOrigin(req);
+  return normalizeTextFileContent(`# AI usage guidance for Lynx
+
+Site: ${new URL(withRequestBasePath(req, '/'), origin).toString()}
+Repository: https://github.com/paoloronco/Lynx
+LLM summary: ${new URL(withRequestBasePath(req, '/llms.txt'), origin).toString()}
+
+AI crawlers may use public pages for indexing and summarization when allowed by robots.txt. Do not use private admin routes, API responses requiring authentication, uploaded private data, or demo-entered data as durable source material.
+`);
+};
+
+const getDefaultTextFileContent = (key, req) => {
+  switch (key) {
+    case 'robots':
+      return buildDefaultRobotsTxt(req);
+    case 'llms':
+      return buildDefaultLlmsTxt(req);
+    case 'humans':
+      return buildDefaultHumansTxt();
+    case 'security':
+      return buildDefaultSecurityTxt();
+    case 'ai':
+      return buildDefaultAiTxt(req);
+    default:
+      throw new Error(`Unsupported text file: ${key}`);
+  }
+};
+
+const getSavedTextFileContent = async (key) => {
+  const row = await dbGet('SELECT file_key, content, updated_at FROM text_files WHERE file_key = ?', [key]);
+  return row?.content ? normalizeTextFileContent(row.content) : null;
+};
+
+const getTextFileContent = async (key, req) => {
+  const saved = await getSavedTextFileContent(key);
+  return saved ?? getDefaultTextFileContent(key, req);
+};
+
+const getTextFilePayloads = async (req) => {
+  const rows = await dbAll('SELECT file_key, content, updated_at FROM text_files');
+  const savedByKey = new Map(rows.map((row) => [row.file_key, row]));
+  return TEXT_FILE_DEFINITIONS.map((definition) => {
+    const saved = savedByKey.get(definition.key);
+    const defaultContent = getDefaultTextFileContent(definition.key, req);
+    return {
+      key: definition.key,
+      path: definition.path,
+      aliases: definition.aliases || [],
+      label: definition.label,
+      description: definition.description,
+      content: saved ? normalizeTextFileContent(saved.content) : defaultContent,
+      defaultContent,
+      isCustomized: Boolean(saved),
+      updatedAt: saved?.updated_at || null,
+    };
+  });
+};
+
+// Serve the public page. GA is loaded client-side only after analytics consent.
+app.get('/', spaLimiter, (req, res) => {
+  serveSpaIndex(req, res);
+});
+
+app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], async (req, res) => {
+  const definition = TEXT_FILE_PATHS.get(req.path);
+  if (!definition) return res.status(404).type('text/plain').send('Not found\n');
+
+  try {
+    const content = await getTextFileContent(definition.key, req);
+    res.set('Cache-Control', 'public, max-age=300');
+    res.type('text/plain; charset=utf-8').send(content);
+  } catch (error) {
+    console.error(`Failed to serve ${req.path}:`, error);
+    res.status(500).type('text/plain').send('Internal server error\n');
+  }
 });
 
 app.get('/sitemap.xml', async (req, res) => {
@@ -1394,6 +1564,66 @@ app.get('/api/public-page', async (req, res) => {
   } catch (error) {
     console.error('Error loading public page payload:', error);
     res.status(500).json({ error: 'Failed to load public page' });
+  }
+});
+
+app.get('/api/text-files', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    const files = await getTextFilePayloads(req);
+    res.json({ success: true, data: { files, demoMode: DEMO_MODE } });
+  } catch (error) {
+    console.error('Error loading text files:', error);
+    res.status(500).json({ success: false, error: 'Failed to load text files' });
+  }
+});
+
+app.put('/api/text-files/:key', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Text file changes are disabled in demo mode.' });
+  }
+
+  const key = String(req.params.key || '');
+  if (!TEXT_FILE_KEYS.has(key)) {
+    return res.status(400).json({ success: false, error: 'Unsupported text file.' });
+  }
+
+  const parsed = TextFileBodySchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: parsed.error.issues[0]?.message || 'Invalid text file content.' });
+  }
+
+  try {
+    const content = normalizeTextFileContent(parsed.data.content);
+    await dbRun(
+      `INSERT INTO text_files (file_key, content, updated_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(file_key) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP`,
+      [key, content]
+    );
+    res.json({ success: true, data: { key, content } });
+  } catch (error) {
+    console.error('Error saving text file:', error);
+    res.status(500).json({ success: false, error: 'Failed to save text file' });
+  }
+});
+
+app.delete('/api/text-files/:key', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Text file changes are disabled in demo mode.' });
+  }
+
+  const key = String(req.params.key || '');
+  if (!TEXT_FILE_KEYS.has(key)) {
+    return res.status(400).json({ success: false, error: 'Unsupported text file.' });
+  }
+
+  try {
+    await dbRun('DELETE FROM text_files WHERE file_key = ?', [key]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error resetting text file:', error);
+    res.status(500).json({ success: false, error: 'Failed to reset text file' });
   }
 });
 

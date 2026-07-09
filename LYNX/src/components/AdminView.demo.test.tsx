@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 const mockState = vi.hoisted(() => ({
   privacyProps: [] as Array<Record<string, unknown>>,
+  textFileProps: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock('@/lib/config', () => ({
@@ -40,6 +41,12 @@ vi.mock('./PrivacySettings', () => ({
     return <div>PrivacySettings</div>;
   },
 }));
+vi.mock('./TextFileManager', () => ({
+  TextFileManager: (props: Record<string, unknown>) => {
+    mockState.textFileProps.push(props);
+    return <div>TextFileManager</div>;
+  },
+}));
 
 import { AdminView } from './AdminView';
 import { defaultTheme } from '@/lib/theme';
@@ -56,8 +63,8 @@ const allPermissions = [
 ] as const;
 
 describe('AdminView demo mode', () => {
-  it('shows a persistent footer notice and makes privacy settings read-only', () => {
-    vi.stubGlobal('__APP_VERSION__', '4.3.26');
+  it('shows a persistent footer notice and makes compliance tools read-only', () => {
+    vi.stubGlobal('__APP_VERSION__', '4.3.27');
 
     const html = renderToStaticMarkup(
       <AdminView
@@ -83,7 +90,9 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Any users created during the demo will be removed');
     expect(html).toContain('Changing the admin password is disabled');
     expect(html).toContain('Editing privacy settings');
+    expect(html).toContain('TXT files');
     expect(mockState.privacyProps[0]).toMatchObject({ readOnly: true });
+    expect(mockState.textFileProps[0]).toMatchObject({ readOnly: true });
   });
 });
 

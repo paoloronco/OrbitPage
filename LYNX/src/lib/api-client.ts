@@ -437,6 +437,37 @@ export const backupApi = {
   },
 };
 
+export interface TextFileConfig {
+  key: 'robots' | 'llms' | 'humans' | 'security' | 'ai';
+  path: string;
+  aliases: string[];
+  label: string;
+  description: string;
+  content: string;
+  defaultContent: string;
+  isCustomized: boolean;
+  updatedAt: string | null;
+}
+
+export const textFilesApi = {
+  get: async (): Promise<{ success: boolean; data: { files: TextFileConfig[]; demoMode: boolean } }> => {
+    return apiRequest<{ success: boolean; data: { files: TextFileConfig[]; demoMode: boolean } }>('/text-files');
+  },
+
+  update: async (key: TextFileConfig['key'], content: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/text-files/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ content }),
+    });
+  },
+
+  reset: async (key: TextFileConfig['key']): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/text-files/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 // Profile API
 export const profileApi = {
   get: async (): Promise<ProfileResponse> => {

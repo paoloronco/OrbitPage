@@ -8,6 +8,7 @@ export const BACKUP_TABLES = [
   'links',
   'theme_config',
   'cookie_consent_config',
+  'text_files',
 ];
 
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;

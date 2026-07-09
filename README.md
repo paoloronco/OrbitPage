@@ -2,7 +2,7 @@
 
 ### A self-hosted Linktree alternative for creators, developers, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.3.26-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.27-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -241,7 +241,11 @@ Lynx also serves:
 - Schema.org JSON-LD
 - dynamic `robots.txt`
 - dynamic `sitemap.xml`
+- editable `llms.txt` plus `llm.txt` alias
+- editable `humans.txt`, `ai.txt`, and `security.txt`
 - `noindex` headers for admin, API, health, and unknown SPA routes
+
+Admins can edit these TXT endpoints from the Privacy/TXT area. Demo deployments expose the files but keep editing disabled.
 
 Full guidance lives in [docs/wiki/SEO-and-indexing.md](./docs/wiki/SEO-and-indexing.md).
 
@@ -258,6 +262,17 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.27</strong></summary>
+
+### Editable crawler and LLM TXT files
+
+- Adds dynamic `robots.txt`, `llms.txt`, `llm.txt`, `humans.txt`, `ai.txt`, and `security.txt` endpoints.
+- Adds an admin TXT editor with save/reset controls and demo-mode read-only protection.
+- Persists custom TXT files in SQLite and includes them in backup/restore.
+
+</details>
 
 <details>
 <summary><strong>v4.3.26</strong></summary>

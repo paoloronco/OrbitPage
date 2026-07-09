@@ -19,6 +19,7 @@ import {
   Cookie,
   ExternalLink,
   Eye,
+  FileText,
   Globe2,
   Key,
   Layers3,
@@ -35,6 +36,7 @@ import { PasswordManager } from "./PasswordManager";
 import { UserManager } from "./UserManager";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
+import { TextFileManager } from "./TextFileManager";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
@@ -79,7 +81,7 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
-type AdminTab = "profile" | "links" | "theme" | "access" | "preview" | "analytics" | "privacy";
+type AdminTab = "profile" | "links" | "theme" | "access" | "preview" | "analytics" | "privacy" | "txt";
 
 const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
   { value: "profile", label: "Profile", icon: User },
@@ -89,6 +91,7 @@ const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> =
   { value: "preview", label: "Preview", icon: Eye },
   { value: "analytics", label: "Analytics", icon: BarChart2 },
   { value: "privacy", label: "Privacy", icon: Cookie },
+  { value: "txt", label: "TXT", icon: FileText },
 ];
 
 export const AdminView = ({
@@ -101,7 +104,7 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
-  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.3.26");
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.3.27");
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
@@ -137,6 +140,7 @@ export const AdminView = ({
       case 'preview':   return canPreview;
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
+      case 'txt':       return canEditCompliance;
       default:          return false;
     }
   });
@@ -391,6 +395,12 @@ export const AdminView = ({
               }
             />
           </TabsContent>
+
+          <TabsContent value="txt" className="admin-tab-content">
+            <div className="admin-single-column">
+              <TextFileManager readOnly={DEMO_MODE} />
+            </div>
+          </TabsContent>
         </Tabs>
 
         <footer className="admin-footer">
@@ -401,7 +411,7 @@ export const AdminView = ({
                 <span>Demo Mode</span>
               </div>
               <p>
-                This instance is automatically reset every 5 minutes. Any changes made during the demo will be lost after the reset. Any users created during the demo will be removed. Changing the admin password is disabled. Editing privacy settings, including Privacy Policy, Cookie Policy, Consent Management, and related compliance configuration, is disabled.
+                This instance is automatically reset every 5 minutes. Any changes made during the demo will be lost after the reset. Any users created during the demo will be removed. Changing the admin password is disabled. Editing privacy settings and TXT files, including Privacy Policy, Cookie Policy, Consent Management, crawler files, and related compliance configuration, is disabled.
               </p>
             </div>
           )}

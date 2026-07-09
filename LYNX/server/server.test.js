@@ -490,6 +490,88 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('Sitemap: https://links.example.test/lynx/sitemap.xml');
   });
 
+  it('GET /robots.txt serves a saved custom robots file when configured', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({
+      file_key: 'robots',
+      content: 'User-agent: *\nAllow: /\nDisallow: /private\n',
+    });
+
+    const response = await request(app).get('/robots.txt');
+
+    expect(response.status).toBe(200);
+    expect(response.type).toMatch(/text\/plain/);
+    expect(response.text).toBe('User-agent: *\nAllow: /\nDisallow: /private\n');
+  });
+
+  it('GET /llms.txt and /llm.txt expose the same LLM-readable project summary', async () => {
+    vi.mocked(dbGet).mockResolvedValue(null);
+
+    const canonical = await request(app)
+      .get('/llms.txt')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+    const alias = await request(app)
+      .get('/llm.txt')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(canonical.status).toBe(200);
+    expect(canonical.text).toContain('# Lynx');
+    expect(canonical.text).toContain('https://github.com/paoloronco/Lynx');
+    expect(alias.status).toBe(200);
+    expect(alias.text).toBe(canonical.text);
+  });
+
+  it('GET text-discovery files exposes useful defaults', async () => {
+    vi.mocked(dbGet).mockResolvedValue(null);
+
+    const humans = await request(app).get('/humans.txt');
+    const security = await request(app).get('/.well-known/security.txt');
+    const ai = await request(app).get('/ai.txt');
+
+    expect(humans.status).toBe(200);
+    expect(humans.text).toContain('/* TEAM */');
+    expect(security.status).toBe(200);
+    expect(security.text).toContain('Contact:');
+    expect(ai.status).toBe(200);
+    expect(ai.text).toContain('Lynx');
+  });
+
+  it('GET /api/text-files returns editable crawler and discovery files', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      { file_key: 'humans', content: '/* TEAM */\nCustom: yes\n', updated_at: '2026-07-09T00:00:00.000Z' },
+    ]);
+
+    const response = await request(app).get('/api/text-files');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.files.map((file) => file.key)).toEqual(['robots', 'llms', 'humans', 'security', 'ai']);
+    expect(response.body.data.files.find((file) => file.key === 'humans').content).toContain('Custom: yes');
+  });
+
+  it('PUT /api/text-files/:key validates and saves custom content', async () => {
+    const response = await request(app)
+      .put('/api/text-files/llms')
+      .send({ content: '# Lynx\nCustom LLM instructions.\n' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO text_files'),
+      ['llms', '# Lynx\nCustom LLM instructions.\n']
+    );
+  });
+
+  it('PUT /api/text-files/:key rejects unknown text files', async () => {
+    const response = await request(app)
+      .put('/api/text-files/not-real')
+      .send({ content: 'Nope' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('Unsupported text file');
+  });
+
   it('GET /sitemap.xml includes the canonical home page', async () => {
     vi.mocked(dbGet).mockResolvedValueOnce({
       privacy_policy_url: '/privacy',

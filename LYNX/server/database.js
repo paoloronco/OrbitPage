@@ -145,6 +145,17 @@ export const initializeDatabase = () => {
         if (err) console.error('Error creating cookie_consent_config table:', err);
       });
 
+      // Public crawler/discovery text files such as robots.txt, llms.txt, humans.txt, security.txt, and ai.txt.
+      db.run(`
+        CREATE TABLE IF NOT EXISTS text_files (
+          file_key TEXT PRIMARY KEY,
+          content TEXT NOT NULL,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) console.error('Error creating text_files table:', err);
+      });
+
       // Theme configuration table
       db.run(`
         CREATE TABLE IF NOT EXISTS theme_config (
