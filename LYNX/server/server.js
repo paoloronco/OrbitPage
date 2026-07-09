@@ -50,7 +50,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.3.27';
+let APP_VERSION = '4.3.28';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -1236,6 +1236,36 @@ const getTextFilePayloads = async (req) => {
   });
 };
 
+const normalizeSitemapLastModified = (value, fallbackDate = new Date()) => {
+  if (!value || typeof value !== 'string') return fallbackDate.toISOString();
+  const trimmed = value.trim();
+  if (!trimmed) return fallbackDate.toISOString();
+  const candidate = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(trimmed)
+    ? `${trimmed.replace(' ', 'T')}Z`
+    : trimmed;
+  const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(candidate);
+  const date = new Date(hasTimezone ? candidate : `${candidate}Z`);
+  return Number.isNaN(date.getTime()) ? fallbackDate.toISOString() : date.toISOString();
+};
+
+const getSitemapLastModified = async () => {
+  try {
+    const row = await dbGet(`
+      SELECT MAX(updated_at) as lastmod FROM (
+        SELECT updated_at FROM profile_data
+        UNION ALL SELECT updated_at FROM links
+        UNION ALL SELECT updated_at FROM theme_config
+        UNION ALL SELECT updated_at FROM cookie_consent_config
+        UNION ALL SELECT updated_at FROM text_files
+      )
+    `);
+    return normalizeSitemapLastModified(row?.lastmod);
+  } catch (error) {
+    console.warn('Sitemap generated with fallback lastmod:', error?.message || error);
+    return new Date().toISOString();
+  }
+};
+
 // Serve the public page. GA is loaded client-side only after analytics consent.
 app.get('/', spaLimiter, (req, res) => {
   serveSpaIndex(req, res);
@@ -1257,7 +1287,7 @@ app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/se
 
 app.get('/sitemap.xml', async (req, res) => {
   const origin = getRequestOrigin(req);
-  const now = new Date().toISOString();
+  const lastmod = await getSitemapLastModified();
   const urls = [
     { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
   ];
@@ -1281,13 +1311,16 @@ app.get('/sitemap.xml', async (req, res) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((url) => `  <url>
     <loc>${escapeHtml(url.loc)}</loc>
-    <lastmod>${now}</lastmod>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>${url.changefreq}</changefreq>
     <priority>${url.priority}</priority>
   </url>`).join('\n')}
 </urlset>
 `;
 
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   res.type('application/xml').send(body);
 });
 

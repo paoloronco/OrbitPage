@@ -2,7 +2,7 @@
 
 ### A self-hosted Linktree alternative for creators, developers, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.3.27-blue.svg)](https://github.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.28-blue.svg)](https://github.com/paoloronco/Lynx)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
@@ -240,7 +240,7 @@ Lynx also serves:
 - Open Graph and Twitter Card metadata
 - Schema.org JSON-LD
 - dynamic `robots.txt`
-- dynamic `sitemap.xml`
+- dynamic `sitemap.xml` with automatic `lastmod` updates from public content changes
 - editable `llms.txt` plus `llm.txt` alias
 - editable `humans.txt`, `ai.txt`, and `security.txt`
 - `noindex` headers for admin, API, health, and unknown SPA routes
@@ -262,6 +262,17 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
 
 ## 📝 Changelog
+
+<details>
+<summary><strong>v4.3.28</strong></summary>
+
+### Automatic sitemap freshness
+
+- Updates `/sitemap.xml` automatically from public content timestamps.
+- Uses profile, links, theme, consent, and TXT file changes to generate stable `lastmod` values.
+- Serves the sitemap with no-store headers so crawlers do not keep stale XML.
+
+</details>
 
 <details>
 <summary><strong>v4.3.27</strong></summary>

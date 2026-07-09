@@ -64,7 +64,7 @@ const allPermissions = [
 
 describe('AdminView demo mode', () => {
   it('shows a persistent footer notice and makes compliance tools read-only', () => {
-    vi.stubGlobal('__APP_VERSION__', '4.3.27');
+    vi.stubGlobal('__APP_VERSION__', '4.3.28');
 
     const html = renderToStaticMarkup(
       <AdminView

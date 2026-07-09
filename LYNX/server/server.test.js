@@ -573,10 +573,12 @@ describe('API Endpoints', () => {
   });
 
   it('GET /sitemap.xml includes the canonical home page', async () => {
-    vi.mocked(dbGet).mockResolvedValueOnce({
-      privacy_policy_url: '/privacy',
-      cookie_policy_url: '/cookies',
-    });
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ lastmod: '2026-07-08 15:30:00' })
+      .mockResolvedValueOnce({
+        privacy_policy_url: '/privacy',
+        cookie_policy_url: '/cookies',
+      });
 
     const response = await request(app)
       .get('/sitemap.xml')
@@ -584,17 +586,40 @@ describe('API Endpoints', () => {
       .set('X-Forwarded-Proto', 'https');
 
     expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toContain('no-store');
     expect(response.text).toContain('<loc>https://links.example.test/</loc>');
     expect(response.text).toContain('<loc>https://links.example.test/privacy</loc>');
     expect(response.text).toContain('<loc>https://links.example.test/cookies</loc>');
+    expect(response.text).toContain('<lastmod>2026-07-08T15:30:00.000Z</lastmod>');
     expect(response.text).not.toContain('<loc>https://links.example.test/about</loc>');
   });
 
+  it('GET /sitemap.xml falls back to the current time when content timestamps are unavailable', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        privacy_policy_url: null,
+        cookie_policy_url: null,
+      });
+
+    const response = await request(app)
+      .get('/sitemap.xml')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(response.status).toBe(200);
+    expect(response.text).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}T/);
+    expect(response.text).not.toContain('<loc>https://links.example.test/privacy</loc>');
+    expect(response.text).not.toContain('<loc>https://links.example.test/cookies</loc>');
+  });
+
   it('GET /lynx/sitemap.xml includes BASE_PATH-prefixed canonical URLs', async () => {
-    vi.mocked(dbGet).mockResolvedValueOnce({
-      privacy_policy_url: '/privacy',
-      cookie_policy_url: '/cookies',
-    });
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ lastmod: '2026-07-08T15:30:00.000Z' })
+      .mockResolvedValueOnce({
+        privacy_policy_url: '/privacy',
+        cookie_policy_url: '/cookies',
+      });
 
     const response = await request(app)
       .get('/lynx/sitemap.xml')
