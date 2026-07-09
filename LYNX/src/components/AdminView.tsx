@@ -74,7 +74,7 @@ interface AdminViewProps {
   currentUser: CurrentUser | null;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
-  onThemeChange: (theme: ThemeConfig) => void;
+  onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onLogout: () => void;
 }
 
@@ -100,7 +100,7 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
-  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.3.9");
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.3.10");
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");

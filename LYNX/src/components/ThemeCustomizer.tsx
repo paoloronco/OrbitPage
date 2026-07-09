@@ -9,12 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle, Palette, Type, Layout, FileDown, Upload, RotateCcw, AlertTriangle, ImagePlay } from "lucide-react";
-import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
+import { ThemeConfig, defaultTheme, normalizeTheme } from "@/lib/theme";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
+import { commitPendingTheme, parseImportedTheme, prepareThemeExport } from "./theme-save-state";
 
 interface ThemeCustomizerProps {
   theme: ThemeConfig;
-  onThemeChange: (theme: ThemeConfig) => void; // Persist to backend
+  onThemeChange: (theme: ThemeConfig) => void | Promise<void>; // Persist to backend
   onThemePreview?: (theme: ThemeConfig) => void; // Live apply in admin without saving
 }
 
@@ -22,30 +23,46 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   const [pendingTheme, setPendingTheme] = useState<ThemeConfig>(theme);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [isDirty, setIsDirty] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   // Sync pendingTheme with theme prop when it changes
   useEffect(() => {
     setPendingTheme(theme);
+    setIsDirty(false);
+    setSaveError("");
+    setSaveState("idle");
   }, [theme]);
   
   const updatePendingTheme = (updates: Partial<ThemeConfig>) => {
     const newTheme = { ...pendingTheme, ...updates } as ThemeConfig;
     setPendingTheme(newTheme);
+    setIsDirty(true);
+    setSaveError("");
     setSaveState("idle");
     // Live preview in admin without persisting
     onThemePreview?.(newTheme);
   };
 
   const saveTheme = async () => {
+    if (!isDirty) return;
     setSaveState("saving");
-    try {
-      await onThemeChange(pendingTheme);
-      // Don't apply theme to admin interface here; preview already applied live
+    setSaveError("");
+    const result = await commitPendingTheme({
+      isDirty,
+      theme: pendingTheme,
+      onSave: onThemeChange,
+    });
+
+    setIsDirty(result.isDirty);
+    setSaveError(result.error);
+    if (result.saved) {
       setSaveState("saved");
       setTimeout(() => setSaveState("idle"), 3000);
-    } catch (error) {
-      console.error('Failed to save theme:', error);
+    } else if (result.error) {
       setSaveState("error");
+    } else {
+      setSaveState("idle");
     }
   };
 
@@ -90,7 +107,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
   );
 
   const exportTheme = () => {
-    const dataStr = JSON.stringify(theme, null, 2);
+    const dataStr = prepareThemeExport(pendingTheme);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -105,15 +122,15 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const raw = JSON.parse(e.target?.result as string);
-        // normalizeTheme fills in missing fields with defaults, ensuring
-        // old backups (pre-backgroundMedia) and future schemas all work
-        const imported = normalizeTheme(raw);
-        setPendingTheme(imported);
-        void onThemeChange(imported);
-        applyTheme(imported);
+        const result = parseImportedTheme(e.target?.result as string, normalizeTheme);
+        setPendingTheme(result.theme);
+        setIsDirty(result.isDirty);
+        setSaveError(result.error);
+        setSaveState("idle");
+        onThemePreview?.(result.theme);
       } catch (error) {
         console.error('Failed to import theme:', error);
+        setSaveError("Theme import failed. Choose a valid JSON theme file.");
         setSaveState("error");
       }
     };
@@ -123,8 +140,11 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
   };
 
   const resetTheme = () => {
-    onThemeChange(defaultTheme);
-    applyTheme(defaultTheme);
+    setPendingTheme(defaultTheme);
+    setIsDirty(true);
+    setSaveError("");
+    setSaveState("idle");
+    onThemePreview?.(defaultTheme);
   };
 
   return (
@@ -133,9 +153,10 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
         <div className="flex items-center gap-2">
           <Palette className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold">Theme Customizer</h2>
+          {isDirty && <span className="admin-dirty-badge">Unsaved changes</span>}
         </div>
         <div className="flex gap-2">
-          <Button onClick={saveTheme} size="sm" disabled={saveState === "saving"}>
+          <Button onClick={saveTheme} size="sm" disabled={!isDirty || saveState === "saving"}>
             {saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : "Save Changes"}
           </Button>
           <Button variant="outline" size="sm" onClick={exportTheme}>
@@ -171,7 +192,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
       {saveState === "error" && (
         <div className="admin-save-confirmation admin-save-confirmation-error" role="alert">
           <AlertTriangle className="h-4 w-4" />
-          <span>Theme could not be saved. Try again.</span>
+          <span>{saveError || "Theme could not be saved. Try again."}</span>
         </div>
       )}
 
