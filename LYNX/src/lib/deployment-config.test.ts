@@ -92,4 +92,10 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('docker build -t lynx-ci-smoke ..');
     expect(workflow).toContain('curl --fail http://127.0.0.1:3001/health');
   });
+
+  it('builds the frontend before server tests that exercise SPA rendering', () => {
+    const workflow = read('.github/workflows/ci.yml');
+
+    expect(workflow.indexOf('npm run build')).toBeLessThan(workflow.indexOf('npm run test:unit'));
+  });
 });

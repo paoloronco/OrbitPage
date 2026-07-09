@@ -47,11 +47,11 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-      - name: Run unit and integration tests (Vitest)
-        run: npm run test:unit
-
       - name: Build frontend application
         run: npm run build
+
+      - name: Run unit and integration tests (Vitest)
+        run: npm run test:unit
 
       - name: Build Docker image for smoke test
         run: docker build -t lynx-ci-smoke ..
