@@ -91,6 +91,14 @@ const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> =
   { value: "txt", label: "TXT", icon: FileText },
 ];
 
+const ctaActionLabels: Record<string, string> = {
+  book: "Prenota",
+  contact: "Contattami",
+  download: "Scarica",
+  subscribe: "Iscriviti",
+  buy: "Compra",
+};
+
 export const AdminView = ({
   profile,
   links,
@@ -154,14 +162,23 @@ export const AdminView = ({
 
   const metrics = useMemo(() => {
     const contentLinks = links.filter(link => link.type !== "separator");
+    const ctaLinks = contentLinks.filter(link => link.type === "cta");
+    const ctaPerformance = ctaLinks
+      .filter(link => (link.ctaClicks ?? 0) > 0)
+      .sort((a, b) => (b.ctaClicks ?? 0) - (a.ctaClicks ?? 0))
+      .slice(0, 5);
     const visibleLinks = contentLinks.filter(link => link.isActive !== false);
     const scheduledLinks = contentLinks.filter(link => link.startDate || link.endDate);
     const totalClicks = links.reduce((sum, link) => sum + (link.clickCount ?? 0), 0);
+    const ctaClicks = ctaLinks.reduce((sum, link) => sum + (link.ctaClicks ?? 0), 0);
     const socialCount = Object.values(profile.socialLinks || {}).filter(Boolean).length;
 
     return {
       visibleLinks: visibleLinks.length,
       totalLinks: contentLinks.length,
+      ctaLinks: ctaLinks.length,
+      ctaClicks,
+      ctaPerformance,
       scheduledLinks: scheduledLinks.length,
       totalClicks,
       socialCount,
@@ -221,7 +238,7 @@ export const AdminView = ({
             icon={MousePointerClick}
             label="Total clicks"
             value={String(metrics.totalClicks)}
-            detail="Built-in tracking"
+            detail={metrics.ctaClicks > 0 ? `${metrics.ctaClicks} CTA clicks` : "Built-in tracking"}
           />
           <MetricCard
             icon={CheckCircle2}
@@ -310,8 +327,32 @@ export const AdminView = ({
                 <div className="mb-5 grid grid-cols-2 gap-3">
                   <StatusTile label="Total clicks" value={String(metrics.totalClicks)} />
                   <StatusTile label="Tracked items" value={String(metrics.totalLinks)} />
+                  <StatusTile label="CTA clicks" value={String(metrics.ctaClicks)} />
+                  <StatusTile label="Smart CTAs" value={String(metrics.ctaLinks)} />
                 </div>
                 <ClickAnalyticsChart links={links} />
+                <div className="mt-6 border-t border-slate-200 pt-5">
+                  <PanelHeader icon={MousePointerClick} title="CTA performance" />
+                  {metrics.ctaPerformance.length > 0 ? (
+                    <div className="space-y-2">
+                      {metrics.ctaPerformance.map((link) => (
+                        <div key={link.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-950">{link.title || 'Untitled CTA'}</p>
+                            <p className="text-xs text-slate-500">{ctaActionLabels[link.ctaAction || 'book']}</p>
+                          </div>
+                          <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                            {link.ctaClicks ?? 0} clicks
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm leading-6 text-slate-600">
+                      Smart CTA clicks will appear here separately from normal link clicks.
+                    </p>
+                  )}
+                </div>
               </section>
 
               <Card className="admin-panel space-y-5">

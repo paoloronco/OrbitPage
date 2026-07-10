@@ -139,6 +139,9 @@ export const initializeDatabase = () => {
   db.run(`ALTER TABLE links ADD COLUMN end_time TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN timezone TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN campaign_name TEXT`, (err) => { /* ignore if exists */ });
+  // Smart CTA metadata and dedicated analytics
+  db.run(`ALTER TABLE links ADD COLUMN cta_action TEXT`, (err) => { /* ignore if exists */ });
+  db.run(`ALTER TABLE links ADD COLUMN cta_click_count INTEGER DEFAULT 0`, (err) => { /* ignore if exists */ });
   // Cover / header image
   db.run(`ALTER TABLE links ADD COLUMN cover_image TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN cover_image_alt TEXT`, (err) => { /* ignore if exists */ });

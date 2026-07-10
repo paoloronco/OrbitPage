@@ -39,6 +39,8 @@ export const LinkSchema = z.object({
   isActive: z.boolean().optional().default(true),
   sortOrder: z.number().int().nullable().optional(),
   status: z.enum(['draft', 'live', 'expired']).nullable().optional().default('live'),
+  ctaAction: z.enum(['book', 'contact', 'download', 'subscribe', 'buy']).nullable().optional(),
+  ctaClicks: z.number().int().nonnegative().nullable().optional(),
   campaignName: z.string().max(200).nullable().optional(),
   startDate: z.string().max(10).nullable().optional(),
   endDate: z.string().max(10).nullable().optional(),

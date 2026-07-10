@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Image, Link, List, Minus, Palette, Plus, Save, Type, Upload } from "lucide-react";
+import { Download, Image, Link, List, Minus, MousePointerClick, Palette, Plus, Save, Type, Upload } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { SeparatorCard } from "./SeparatorCard";
@@ -46,6 +46,23 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       status: "live",
     };
     const updated = [...workingLinks, newLink];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewCta = () => {
+    const newCta: LinkData = {
+      id: Date.now().toString(),
+      title: "Prenota",
+      description: "",
+      url: "",
+      type: "cta",
+      ctaAction: "book",
+      status: "live",
+      size: "large",
+    };
+    const updated = [...workingLinks, newCta];
     setWorkingLinks(updated);
     setIsDirty(true);
     setSaveError("");
@@ -240,7 +257,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       const updatedLinks = await linksApi.get();
       setWorkingLinks(updatedLinks.map(link => ({
         ...link,
-        type: link.type as 'link' | 'text' | 'separator'
+        type: link.type as 'link' | 'text' | 'separator' | 'cta'
       })));
       setIsDirty(false);
       setSaveError("");
@@ -362,6 +379,15 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
             <span>
               <span className="block font-semibold">Link</span>
               <span className="block text-xs opacity-70">URL card</span>
+            </span>
+          </Button>
+          <Button onClick={addNewCta} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <MousePointerClick className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">CTA</span>
+              <span className="block text-xs opacity-70">Smart action</span>
             </span>
           </Button>
           <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">

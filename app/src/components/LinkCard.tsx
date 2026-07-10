@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, ExternalLink, GripVertical, Upload, Eye, EyeOff, Image, X } from "lucide-react";
+import { Edit, Trash2, ExternalLink, GripVertical, Upload, Eye, EyeOff, Image, X, MousePointerClick } from "lucide-react";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 
@@ -26,10 +26,12 @@ export interface LinkData {
   // Alignment for content inside the card: left | center | right
   alignment?: 'left' | 'center' | 'right';
   size?: 'small' | 'medium' | 'large';
-  type?: 'link' | 'text' | 'separator';
+  type?: 'link' | 'text' | 'separator' | 'cta';
   isActive?: boolean; // Visibility toggle (undefined treated as true)
   content?: string; // For text-only cards
   clickCount?: number;
+  ctaAction?: 'book' | 'contact' | 'download' | 'subscribe' | 'buy';
+  ctaClicks?: number;
   status?: 'draft' | 'live' | 'expired';
   campaignName?: string;
   startDate?: string;
@@ -153,6 +155,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   };
 
   const isVisible = link.isActive !== false;
+  const isCta = link.type === 'cta';
 
   return (
     <Card
@@ -276,6 +279,28 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               placeholder="https://example.com"
               className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
             />
+            {editLink.type === 'cta' && (
+              <div className="space-y-1">
+                <Label className="text-xs">CTA action</Label>
+                <Select
+                  value={editLink.ctaAction || 'book'}
+                  onValueChange={(value: 'book' | 'contact' | 'download' | 'subscribe' | 'buy') =>
+                    setEditLink(prev => ({ ...prev, ctaAction: value }))
+                  }
+                >
+                  <SelectTrigger className="h-8 bg-white text-black">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="book">Prenota</SelectItem>
+                    <SelectItem value="contact">Contattami</SelectItem>
+                    <SelectItem value="download">Scarica</SelectItem>
+                    <SelectItem value="subscribe">Iscriviti</SelectItem>
+                    <SelectItem value="buy">Compra</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Link Scheduler */}
             <div className="grid grid-cols-2 gap-2">
@@ -512,6 +537,12 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </div>
               )}
               <div className="flex items-center gap-2 mb-1">
+                {isCta && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                    <MousePointerClick className="h-3 w-3" />
+                    CTA
+                  </span>
+                )}
                 {link.icon && (
                   <div className="flex-shrink-0">
                     {link.iconType === 'image' || link.iconType === 'svg' ? (
@@ -551,6 +582,11 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                     : ''}
                 </span>
               ) : null}
+              {isCta && (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  CTA clicks: {link.ctaClicks ?? 0}
+                </span>
+              )}
             </div>
             
             {canEdit && (

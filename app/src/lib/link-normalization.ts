@@ -3,11 +3,12 @@ import type { LinkData } from '@/components/LinkCard';
 
 const optionalString = z.string().nullish();
 const optionalNumber = z.number().int().nonnegative().nullish();
-const linkTypeSchema = z.enum(['link', 'text', 'separator']).catch('link');
+const linkTypeSchema = z.enum(['link', 'text', 'separator', 'cta']).catch('link');
 const iconTypeSchema = z.enum(['emoji', 'image', 'svg']).optional().catch(undefined);
 const alignmentSchema = z.enum(['left', 'center', 'right']).optional().catch(undefined);
 const sizeSchema = z.enum(['small', 'medium', 'large']).optional().catch(undefined);
 const statusSchema = z.enum(['draft', 'live', 'expired']).optional().catch('live');
+const ctaActionSchema = z.enum(['book', 'contact', 'download', 'subscribe', 'buy']).optional().catch(undefined);
 
 const textItemSchema = z.object({
   text: z.string(),
@@ -33,6 +34,8 @@ const linkDtoSchema = z.object({
   textItems: z.array(textItemSchema).nullish(),
   isActive: z.boolean().nullish(),
   clickCount: optionalNumber,
+  ctaAction: ctaActionSchema,
+  ctaClicks: optionalNumber,
   status: statusSchema,
   campaignName: optionalString,
   startDate: optionalString,
@@ -54,13 +57,14 @@ const emptyToUndefined = (value: string | null | undefined) => value || undefine
 
 export function normalizeLinkDto(input: unknown): LinkData {
   const link = linkDtoSchema.parse(input);
+  const type = link.type || 'link';
 
   return {
     id: String(link.id),
     title: link.title,
     description: link.description || '',
     url: link.url || '',
-    type: link.type || 'link',
+    type,
     icon: emptyToUndefined(link.icon),
     iconType: link.iconType || link.icon_type || undefined,
     backgroundColor: emptyToUndefined(link.backgroundColor),
@@ -75,6 +79,7 @@ export function normalizeLinkDto(input: unknown): LinkData {
     descriptionFontSize: emptyToUndefined(link.descriptionFontSize),
     isActive: link.isActive !== false,
     clickCount: link.clickCount || 0,
+    ...(type === 'cta' ? { ctaAction: link.ctaAction, ctaClicks: link.ctaClicks || 0 } : {}),
     status: link.status || 'live',
     campaignName: emptyToUndefined(link.campaignName),
     startDate: emptyToUndefined(link.startDate),

@@ -590,6 +590,8 @@ const formatLinkPayload = (link) => {
     size: link.size || 'medium',
     isActive: link.is_active !== 0,
     clickCount: link.click_count || 0,
+    ctaAction: link.cta_action || null,
+    ctaClicks: link.cta_click_count || 0,
     status: normalizeLinkStatus(link.status),
     campaignName: link.campaign_name || null,
     startDate: link.start_date || null,
@@ -1953,7 +1955,10 @@ app.post('/api/links/:id/click', apiLimiter, async (req, res) => {
     if (!id || typeof id !== 'string' || id.length > 100) {
       return res.status(400).json({ error: 'Invalid id' });
     }
-    await dbRun('UPDATE links SET click_count = click_count + 1 WHERE id = ?', [id]);
+    await dbRun(
+      "UPDATE links SET click_count = click_count + 1, cta_click_count = CASE WHEN type = 'cta' THEN COALESCE(cta_click_count, 0) + 1 ELSE cta_click_count END WHERE id = ?",
+      [id]
+    );
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to record click' });
@@ -1991,6 +1996,8 @@ app.get('/api/links/export', authenticateToken, requireAnyPermission('links:writ
       sortOrder: link.sort_order,
       isActive: link.is_active !== 0,
       clickCount: link.click_count || 0,
+      ctaAction: link.cta_action || null,
+      ctaClicks: link.cta_click_count || 0,
       status: normalizeLinkStatus(link.status),
       campaignName: link.campaign_name || null,
       startDate: link.start_date || null,
@@ -2040,9 +2047,9 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             title_font_family, description_font_family,
             text_alignment, title_font_size, description_font_size,
             text_items, sort_order, is_active,
-            click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone,
+            click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone,
             cover_image, cover_image_alt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
@@ -2064,6 +2071,8 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             link.sortOrder ?? index,
             link.isActive !== false ? 1 : 0,
             link.clickCount || 0,
+            link.ctaAction || null,
+            link.ctaClicks || 0,
             normalizeLinkStatus(link.status),
             link.campaignName || null,
             link.startDate || null,
@@ -2104,8 +2113,9 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
 
     // Snapshot current click counts BEFORE deleting so analytics are never wiped.
     // Prefer the live DB value over the (potentially stale) frontend value.
-    const existingRows = await dbAll('SELECT id, click_count FROM links').catch(() => []);
+    const existingRows = await dbAll('SELECT id, click_count, cta_click_count FROM links').catch(() => []);
     const savedClicks = new Map(existingRows.map(r => [String(r.id), r.click_count || 0]));
+    const savedCtaClicks = new Map(existingRows.map(r => [String(r.id), r.cta_click_count || 0]));
 
     const result = await withTransaction(async () => {
       await dbRun('DELETE FROM links');
@@ -2134,9 +2144,12 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
         const clickCount = savedClicks.has(linkId)
           ? savedClicks.get(linkId)
           : (link.clickCount || 0);
+        const ctaClicks = savedCtaClicks.has(linkId)
+          ? savedCtaClicks.get(linkId)
+          : (link.ctaClicks || 0);
 
         await dbRun(
-          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             linkId,
             link.title,
@@ -2158,6 +2171,8 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
             link.titleFontSize || null,
             link.descriptionFontSize || null,
             clickCount,
+            link.ctaAction || null,
+            ctaClicks,
             normalizeLinkStatus(link.status),
             link.campaignName || null,
             link.startDate || null,

@@ -70,6 +70,22 @@ describe('link normalization', () => {
     });
   });
 
+  it('keeps smart CTA fields from API DTOs', () => {
+    expect(normalizeLinkDto({
+      id: 'cta-1',
+      title: 'Reserve a table',
+      url: 'https://example.com/book',
+      type: 'cta',
+      ctaAction: 'book',
+      ctaClicks: 12,
+    })).toMatchObject({
+      id: 'cta-1',
+      type: 'cta',
+      ctaAction: 'book',
+      ctaClicks: 12,
+    });
+  });
+
   it('normalizes arrays safely when the API returns nullish values', () => {
     expect(normalizeLinkDtos(null)).toEqual([]);
     expect(normalizeLinkDtos([{ id: 'a', title: 'A' }])).toHaveLength(1);

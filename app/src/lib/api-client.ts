@@ -271,6 +271,8 @@ interface LinkItem {
   textItems?: Array<{ text: string; url?: string }>;
   isActive?: boolean;
   clickCount?: number;
+  ctaAction?: 'book' | 'contact' | 'download' | 'subscribe' | 'buy';
+  ctaClicks?: number;
   status?: 'draft' | 'live' | 'expired';
   campaignName?: string;
   startDate?: string;

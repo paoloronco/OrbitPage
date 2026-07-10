@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { ExternalLink, Copy, Check } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, MailPlus, Phone, ShoppingBag } from "lucide-react";
 import { LinkData } from "./LinkCard";
 import { apiPath, internalAssetPath } from "@/lib/base-path";
 
@@ -13,6 +13,14 @@ const resolveCoverImageUrl = (src?: string | null): string | null => {
 interface PublicLinkCardProps {
   link: LinkData;
 }
+
+const ctaActionConfig = {
+  book: { label: 'Prenota', Icon: CalendarCheck },
+  contact: { label: 'Contattami', Icon: Phone },
+  download: { label: 'Scarica', Icon: Download },
+  subscribe: { label: 'Iscriviti', Icon: MailPlus },
+  buy: { label: 'Compra', Icon: ShoppingBag },
+} as const;
 
 function buildValidatedBlobUrl(blobUrl: string): string {
   try {
@@ -160,6 +168,51 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
 
   const coverUrl = resolveCoverImageUrl(link.coverImage);
   const hasCoverImage = !!(coverUrl && !coverImageError);
+  const isCta = link.type === 'cta';
+  const ctaConfig = ctaActionConfig[link.ctaAction || 'book'];
+
+  if (isCta) {
+    const { Icon } = ctaConfig;
+    return (
+      <Card
+        className="public-cta-card group overflow-hidden border-primary/20 bg-primary text-primary-foreground shadow-sm transition-smooth hover:glow-effect"
+        style={getCustomStyles()}
+      >
+        <a
+          href={link.url || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleLinkClick}
+          className="flex min-h-[88px] items-center gap-4 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-5"
+          aria-label={`${ctaConfig.label}: ${link.title || 'Open action'}`}
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/16 text-white ring-1 ring-white/25">
+            <Icon className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="mb-1 inline-flex rounded-md bg-white/14 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85">
+              {ctaConfig.label}
+            </span>
+            <span
+              className="block line-clamp-2 text-base font-semibold leading-tight"
+              style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
+            >
+              {link.title || ctaConfig.label}
+            </span>
+            {link.description && (
+              <span
+                className="mt-1 block line-clamp-2 text-sm text-white/78"
+                style={{ ...(link.textColor ? { color: link.textColor, opacity: 0.78 } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
+              >
+                {link.description}
+              </span>
+            )}
+          </span>
+          <ArrowRight className="h-5 w-5 shrink-0 text-white/75 transition-transform group-hover:translate-x-0.5" />
+        </a>
+      </Card>
+    );
+  }
 
   return (
     <Card

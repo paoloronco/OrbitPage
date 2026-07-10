@@ -902,6 +902,39 @@ describe('API Endpoints', () => {
     expect(insertValues).toContain(7);
   });
 
+  it('PUT /api/links preserves smart CTA metadata and existing CTA clicks', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      { id: 'cta-1', click_count: 30, cta_click_count: 9 },
+    ]);
+
+    const response = await request(app)
+      .put('/orbitpage/api/links')
+      .set('Authorization', 'Bearer mock-token')
+      .send([
+        {
+          id: 'cta-1',
+          title: 'Book now',
+          description: 'Reserve a slot',
+          url: 'https://example.com/book',
+          type: 'cta',
+          ctaAction: 'book',
+          ctaClicks: 0,
+          isActive: true,
+        },
+      ]);
+
+    expect(response.status).toBe(200);
+
+    const insertCall = vi.mocked(dbRun).mock.calls.find(
+      ([sql]) => typeof sql === 'string' && sql.trim().toUpperCase().startsWith('INSERT')
+    );
+    expect(insertCall).toBeDefined();
+    expect(insertCall[0]).toContain('cta_action');
+    expect(insertCall[0]).toContain('cta_click_count');
+    expect(insertCall[1]).toContain('book');
+    expect(insertCall[1]).toContain(9);
+  });
+
   it('POST /api/links/:id/click increments click count', async () => {
     vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
 
@@ -916,5 +949,21 @@ describe('API Endpoints', () => {
     );
     expect(updateCall).toBeDefined();
     expect(updateCall[1]).toContain('link-abc');
+  });
+
+  it('POST /api/links/:id/click increments dedicated CTA click count when link is a CTA', async () => {
+    vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
+
+    const response = await request(app)
+      .post('/orbitpage/api/links/cta-abc/click');
+
+    expect(response.status).toBe(200);
+
+    const updateCall = vi.mocked(dbRun).mock.calls.find(
+      ([sql]) => typeof sql === 'string' && sql.includes('cta_click_count')
+    );
+    expect(updateCall).toBeDefined();
+    expect(updateCall[0]).toContain("type = 'cta'");
+    expect(updateCall[1]).toContain('cta-abc');
   });
 });
