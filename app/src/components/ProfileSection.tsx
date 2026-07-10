@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
+import { ProfileQrCode } from "./ProfileQrCode";
 
 interface ProfileData {
   name: string;
@@ -610,6 +611,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
           </div>
         </div>
       )}
+      <ProfileQrCode />
     </Card>
   );
 };

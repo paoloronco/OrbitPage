@@ -1663,6 +1663,22 @@ app.get('/api/public-page', async (req, res) => {
   }
 });
 
+app.get('/api/public-url', apiLimiter, (req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    const origin = getRequestOrigin(req);
+    const publicUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
+    res.json({
+      success: true,
+      publicUrl,
+      source: normalizeOrigin(PUBLIC_SITE_URL) ? 'configured' : 'request',
+    });
+  } catch (error) {
+    console.error('Error resolving public URL:', error);
+    res.status(500).json({ success: false, error: 'Failed to resolve public URL' });
+  }
+});
+
 app.get('/api/text-files', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
   try {
     setNoStoreHeaders(res);

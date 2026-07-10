@@ -359,6 +359,12 @@ export const publicPageApi = {
   },
 };
 
+export const publicUrlApi = {
+  get: async (): Promise<{ success: boolean; publicUrl: string; source: 'configured' | 'request' }> => {
+    return apiRequest<{ success: boolean; publicUrl: string; source: 'configured' | 'request' }>('/public-url');
+  },
+};
+
 // Auth API
 export const authApi = {
   checkSetupStatus: async (): Promise<{ isFirstTimeSetup: boolean }> => {
