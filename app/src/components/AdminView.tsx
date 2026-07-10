@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
-import { LivePreview } from "./LivePreview";
 import { LinkData } from "./LinkCard";
 import { ClickAnalyticsChart } from "./ClickAnalyticsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +17,6 @@ import {
   CheckCircle2,
   Cookie,
   ExternalLink,
-  Eye,
   FileText,
   Globe2,
   Key,
@@ -81,14 +79,13 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
-type AdminTab = "profile" | "links" | "theme" | "access" | "preview" | "analytics" | "privacy" | "txt";
+type AdminTab = "profile" | "links" | "theme" | "access" | "analytics" | "privacy" | "txt";
 
 const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
   { value: "profile", label: "Page", icon: User },
   { value: "links", label: "Links", icon: Link },
   { value: "theme", label: "Theme", icon: Palette },
   { value: "access", label: "Access", icon: Key },
-  { value: "preview", label: "Preview", icon: Eye },
   { value: "analytics", label: "Analytics", icon: BarChart2 },
   { value: "privacy", label: "Privacy", icon: Cookie },
   { value: "txt", label: "TXT", icon: FileText },
@@ -116,7 +113,6 @@ export const AdminView = ({
   const canEditTheme = hasPermission(userPerms, 'theme:write');
   const canViewAnalytics = hasPermission(userPerms, 'analytics:read');
   const canEditCompliance = hasPermission(userPerms, 'compliance:write');
-  const canPreview = canEditLinks || canEditTheme || canEditProfile;
   const linkEditMode = getLinkEditMode(userPerms);
 
   useEffect(() => {
@@ -137,7 +133,6 @@ export const AdminView = ({
       case 'links':     return canEditLinks;
       case 'theme':     return canEditTheme;
       case 'access':    return true;
-      case 'preview':   return canPreview;
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
       case 'txt':       return canEditCompliance;
@@ -305,24 +300,6 @@ export const AdminView = ({
               {canManageUsers && <UserManager />}
               {canManageUsers && <BackupManager />}
               <PasswordManager />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="preview" className="admin-tab-content">
-            <div className="admin-preview-grid">
-              <section className="admin-preview-copy">
-                <PanelHeader icon={Eye} title="Saved public page" />
-                <p className="text-sm leading-6 text-slate-600">
-                  Save changes in each editor before checking this preview. Open the public page for the full-size version.
-                </p>
-                <a href={withBasePath('/')} target="_blank" rel="noopener noreferrer">
-                  <Button className="admin-action admin-action-primary mt-4" size="sm">
-                    <ExternalLink className="h-4 w-4" />
-                    Open public page
-                  </Button>
-                </a>
-              </section>
-              <LivePreview profile={profile} links={links} theme={theme} />
             </div>
           </TabsContent>
 
