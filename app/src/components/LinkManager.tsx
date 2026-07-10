@@ -334,7 +334,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
         </div>
       )}
 
-      <div className="admin-link-toolbar">
+      <div className="admin-link-toolbar" data-onboarding="links-toolbar">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold text-slate-950">Content cards</h2>
@@ -352,7 +352,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
 
         <div className="admin-link-actions">
           {!isViewOnly && (
-            <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy}>
+            <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy} data-onboarding="links-save">
               <Save className="h-4 w-4" />
               Save
             </Button>
@@ -371,7 +371,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       </div>
 
       {isFullEdit && (
-        <div className="admin-add-grid">
+        <div className="admin-add-grid" data-onboarding="link-add-grid">
           <Button onClick={addNewLink} className="admin-add-card">
             <span className="admin-add-icon">
               <Link className="h-4 w-4" />

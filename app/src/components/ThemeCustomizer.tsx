@@ -148,7 +148,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
   };
 
   return (
-    <Card className="glass-card p-6 space-y-6">
+    <Card className="glass-card p-6 space-y-6" data-onboarding="theme-customizer">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Palette className="w-5 h-5 text-primary" />
@@ -216,7 +216,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="colors" className="space-y-6">
+        <TabsContent value="colors" className="space-y-6" data-onboarding="theme-colors">
           <div className="grid grid-cols-2 gap-4 relative">
             <ColorPicker
               id="primary"

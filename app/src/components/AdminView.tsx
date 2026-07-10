@@ -19,6 +19,7 @@ import {
   ExternalLink,
   FileText,
   Globe2,
+  HelpCircle,
   Key,
   Layers3,
   Link,
@@ -35,6 +36,7 @@ import { UserManager } from "./UserManager";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TextFileManager } from "./TextFileManager";
+import { AdminOnboarding } from "./AdminOnboarding";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
@@ -79,7 +81,7 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
-type AdminTab = "profile" | "links" | "theme" | "access" | "analytics" | "privacy" | "txt";
+export type AdminTab = "profile" | "links" | "theme" | "access" | "analytics" | "privacy" | "txt";
 
 const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
   { value: "profile", label: "Page", icon: User },
@@ -113,6 +115,8 @@ export const AdminView = ({
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
+  const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
+  const [didPickInitialTab, setDidPickInitialTab] = useState(false);
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
@@ -150,11 +154,20 @@ export const AdminView = ({
 
   // Keep activeTab in sync when permission set changes (e.g. after login)
   useEffect(() => {
-    if (visibleTabs.length > 0 && !visibleTabs.some(t => t.value === activeTab)) {
+    if (visibleTabs.length === 0) return;
+
+    if (currentUser && !didPickInitialTab) {
+      const preferred = visibleTabs.find(tab => tab.value === "profile") || visibleTabs[0];
+      setActiveTab(preferred.value);
+      setDidPickInitialTab(true);
+      return;
+    }
+
+    if (!visibleTabs.some(t => t.value === activeTab)) {
       setActiveTab(visibleTabs[0].value);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [currentUser, didPickInitialTab]);
 
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
@@ -214,7 +227,16 @@ export const AdminView = ({
           </div>
 
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <a href={withBasePath('/')} target="_blank" rel="noopener noreferrer">
+            <Button
+              className="admin-action w-full sm:w-auto"
+              variant="outline"
+              size="sm"
+              onClick={() => setOnboardingReplayKey(key => key + 1)}
+            >
+              <HelpCircle className="h-4 w-4" />
+              Guide
+            </Button>
+            <a href={withBasePath('/')} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <Button className="admin-action admin-action-primary w-full sm:w-auto" size="sm">
                 <ExternalLink className="h-4 w-4" />
                 Public page
@@ -258,7 +280,7 @@ export const AdminView = ({
           <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
               {visibleTabs.map(({ value, label, icon: Icon }) => (
-                <TabsTrigger key={value} value={value} className="admin-tab">
+                <TabsTrigger key={value} value={value} className="admin-tab" data-onboarding={`${value}-tab`}>
                   <Icon className="h-4 w-4" />
                   <span>{label}</span>
                 </TabsTrigger>
@@ -420,6 +442,14 @@ export const AdminView = ({
             </div>
           </TabsContent>
         </Tabs>
+
+        <AdminOnboarding
+          key={onboardingReplayKey}
+          activeTab={activeTab}
+          visibleTabs={visibleTabs.map(tab => tab.value)}
+          onSelectTab={setActiveTab}
+          forceOpen={onboardingReplayKey > 0}
+        />
 
         <footer className="admin-footer">
           {DEMO_MODE && (

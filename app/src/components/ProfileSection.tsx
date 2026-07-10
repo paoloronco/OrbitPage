@@ -185,7 +185,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
 
   return (
     <div className="space-y-6">
-      <Card className="glass-card p-8 text-center transition-smooth hover:glow-effect">
+      <Card className="glass-card p-8 text-center transition-smooth hover:glow-effect" data-onboarding="profile-card">
       <div className="relative inline-block mb-6">
         {current.showAvatar !== false && (
         <Avatar className="w-24 h-24">
@@ -462,7 +462,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
             </div>
           </div>
           
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center" data-onboarding="profile-actions">
             <Button onClick={handleSave} variant="gradient" size="sm">
               Save
             </Button>
@@ -606,6 +606,7 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
                variant="ghost"
                size="icon"
                className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-smooth"
+               data-onboarding="profile-edit"
              >
                <Edit className="w-4 h-4" />
              </Button>
