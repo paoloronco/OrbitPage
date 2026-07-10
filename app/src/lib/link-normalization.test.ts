@@ -35,10 +35,38 @@ describe('link normalization', () => {
       descriptionFontSize: '13px',
       isActive: true,
       clickCount: 7,
+      status: 'live',
+      campaignName: undefined,
       startDate: undefined,
+      startTime: undefined,
       endDate: undefined,
+      endTime: undefined,
+      timezone: undefined,
       coverImage: '/uploads/cover.webp',
       coverImageAlt: undefined,
+    });
+  });
+
+  it('keeps campaign scheduling fields from API DTOs', () => {
+    expect(normalizeLinkDto({
+      id: 'launch',
+      title: 'Launch',
+      status: 'draft',
+      campaignName: 'Summer launch',
+      startDate: '2026-07-10',
+      startTime: '09:00',
+      endDate: '2026-07-12',
+      endTime: '18:30',
+      timezone: 'Europe/Rome',
+    })).toMatchObject({
+      id: 'launch',
+      status: 'draft',
+      campaignName: 'Summer launch',
+      startDate: '2026-07-10',
+      startTime: '09:00',
+      endDate: '2026-07-12',
+      endTime: '18:30',
+      timezone: 'Europe/Rome',
     });
   });
 

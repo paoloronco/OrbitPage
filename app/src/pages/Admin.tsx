@@ -201,8 +201,13 @@ const Admin = () => {
           type: link.type || 'link',
           titleFontSize: link.titleFontSize || undefined,
           descriptionFontSize: link.descriptionFontSize || undefined,
+          status: link.status || 'live',
+          campaignName: link.campaignName || undefined,
           startDate: link.startDate || undefined,
+          startTime: link.startTime || undefined,
           endDate: link.endDate || undefined,
+          endTime: link.endTime || undefined,
+          timezone: link.timezone || undefined,
         }));
         await linksApi.update(formattedLinks);
       } else if (canStyle || canImages) {

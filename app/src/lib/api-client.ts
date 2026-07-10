@@ -271,8 +271,13 @@ interface LinkItem {
   textItems?: Array<{ text: string; url?: string }>;
   isActive?: boolean;
   clickCount?: number;
+  status?: 'draft' | 'live' | 'expired';
+  campaignName?: string;
   startDate?: string;
+  startTime?: string;
   endDate?: string;
+  endTime?: string;
+  timezone?: string;
   coverImage?: string;
   coverImageAlt?: string;
 }

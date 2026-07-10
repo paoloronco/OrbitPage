@@ -30,8 +30,13 @@ export interface LinkData {
   isActive?: boolean; // Visibility toggle (undefined treated as true)
   content?: string; // For text-only cards
   clickCount?: number;
+  status?: 'draft' | 'live' | 'expired';
+  campaignName?: string;
   startDate?: string;
+  startTime?: string;
   endDate?: string;
+  endTime?: string;
+  timezone?: string;
   textItems?: Array<{
     text: string;
     url?: string;
@@ -275,7 +280,32 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             {/* Link Scheduler */}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Show from (optional)</Label>
+                <Label className="text-xs">Status</Label>
+                <Select
+                  value={editLink.status || 'live'}
+                  onValueChange={(value: 'draft' | 'live' | 'expired') => setEditLink(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger className="h-8 bg-white text-black">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="live">Live</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Campaign</Label>
+                <Input
+                  value={editLink.campaignName || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, campaignName: e.target.value || undefined }))}
+                  placeholder="Launch, event..."
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Show from date</Label>
                 <Input
                   type="date"
                   value={editLink.startDate || ''}
@@ -284,11 +314,43 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Hide after (optional)</Label>
+                <Label className="text-xs">Show from time</Label>
+                <Input
+                  type="time"
+                  value={editLink.startTime || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, startTime: e.target.value || undefined }))}
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hide after date</Label>
                 <Input
                   type="date"
                   value={editLink.endDate || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, endDate: e.target.value || undefined }))}
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hide after time</Label>
+                <Input
+                  type="time"
+                  value={editLink.endTime || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, endTime: e.target.value || undefined }))}
+                  className="h-8 w-full glass-card border-primary/20"
+                />
+              </div>
+              <div className="col-span-2 space-y-1">
+                <Label className="text-xs">Timezone</Label>
+                <Input
+                  value={editLink.timezone || ''}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, timezone: e.target.value || undefined }))}
+                  onFocus={() => {
+                    if (!editLink.timezone) {
+                      setEditLink(prev => ({ ...prev, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' }));
+                    }
+                  }}
+                  placeholder="Europe/Rome"
                   className="h-8 w-full glass-card border-primary/20"
                 />
               </div>
@@ -480,9 +542,15 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   {link.url}
                 </p>
               )}
-              {(link.startDate || link.endDate) && (
-                <span className="text-xs text-muted-foreground">⏰ {link.startDate || '…'} → {link.endDate || '…'}</span>
-              )}
+              {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {(link.status || 'live').toUpperCase()}
+                  {link.campaignName ? ` · ${link.campaignName}` : ''}
+                  {(link.startDate || link.startTime || link.endDate || link.endTime)
+                    ? ` · ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
+                    : ''}
+                </span>
+              ) : null}
             </div>
             
             {canEdit && (

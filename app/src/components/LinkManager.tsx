@@ -43,6 +43,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       description: "",
       url: "",
       type: "link",
+      status: "live",
     };
     const updated = [...workingLinks, newLink];
     setWorkingLinks(updated);
@@ -58,6 +59,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       url: "",
       type: "text",
       content: "",
+      status: "live",
     };
     const updated = [...workingLinks, newTextCard];
     setWorkingLinks(updated);
@@ -74,6 +76,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       url: "",
       type: "text",
       textItems: [],
+      status: "live",
     };
     const updated = [...workingLinks, newListCard];
     setWorkingLinks(updated);

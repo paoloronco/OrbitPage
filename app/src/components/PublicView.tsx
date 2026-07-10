@@ -4,6 +4,7 @@ import { PublicTextCard } from "./PublicTextCard";
 import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { LinkData } from "./LinkCard";
 import { withBasePath } from "@/lib/base-path";
+import { isLinkVisibleNow } from "@/lib/link-visibility";
 
 interface ProfileData {
   name: string;
@@ -50,7 +51,7 @@ export const PublicView = ({
   );
 
   const visibleLinks = links.filter(link => {
-    if (link.isActive === false) return false;
+    if (!isLinkVisibleNow(link)) return false;
 
     if (link.type === 'separator') return true;
 

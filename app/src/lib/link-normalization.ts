@@ -7,6 +7,7 @@ const linkTypeSchema = z.enum(['link', 'text', 'separator']).catch('link');
 const iconTypeSchema = z.enum(['emoji', 'image', 'svg']).optional().catch(undefined);
 const alignmentSchema = z.enum(['left', 'center', 'right']).optional().catch(undefined);
 const sizeSchema = z.enum(['small', 'medium', 'large']).optional().catch(undefined);
+const statusSchema = z.enum(['draft', 'live', 'expired']).optional().catch('live');
 
 const textItemSchema = z.object({
   text: z.string(),
@@ -32,8 +33,13 @@ const linkDtoSchema = z.object({
   textItems: z.array(textItemSchema).nullish(),
   isActive: z.boolean().nullish(),
   clickCount: optionalNumber,
+  status: statusSchema,
+  campaignName: optionalString,
   startDate: optionalString,
+  startTime: optionalString,
   endDate: optionalString,
+  endTime: optionalString,
+  timezone: optionalString,
   titleFont: optionalString,
   titleFontFamily: optionalString,
   descriptionFontFamily: optionalString,
@@ -69,8 +75,13 @@ export function normalizeLinkDto(input: unknown): LinkData {
     descriptionFontSize: emptyToUndefined(link.descriptionFontSize),
     isActive: link.isActive !== false,
     clickCount: link.clickCount || 0,
+    status: link.status || 'live',
+    campaignName: emptyToUndefined(link.campaignName),
     startDate: emptyToUndefined(link.startDate),
+    startTime: emptyToUndefined(link.startTime),
     endDate: emptyToUndefined(link.endDate),
+    endTime: emptyToUndefined(link.endTime),
+    timezone: emptyToUndefined(link.timezone),
     coverImage: emptyToUndefined(link.coverImage),
     coverImageAlt: emptyToUndefined(link.coverImageAlt),
   };
