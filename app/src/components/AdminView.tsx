@@ -92,11 +92,11 @@ const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> =
 ];
 
 const ctaActionLabels: Record<string, string> = {
-  book: "Prenota",
-  contact: "Contattami",
-  download: "Scarica",
-  subscribe: "Iscriviti",
-  buy: "Compra",
+  book: "Book",
+  contact: "Contact me",
+  download: "Download",
+  subscribe: "Subscribe",
+  buy: "Buy",
 };
 
 export const AdminView = ({

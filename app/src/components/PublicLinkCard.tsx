@@ -15,11 +15,11 @@ interface PublicLinkCardProps {
 }
 
 const ctaActionConfig = {
-  book: { label: 'Prenota', Icon: CalendarCheck },
-  contact: { label: 'Contattami', Icon: Phone },
-  download: { label: 'Scarica', Icon: Download },
-  subscribe: { label: 'Iscriviti', Icon: MailPlus },
-  buy: { label: 'Compra', Icon: ShoppingBag },
+  book: { label: 'Book', Icon: CalendarCheck },
+  contact: { label: 'Contact me', Icon: Phone },
+  download: { label: 'Download', Icon: Download },
+  subscribe: { label: 'Subscribe', Icon: MailPlus },
+  buy: { label: 'Buy', Icon: ShoppingBag },
 } as const;
 
 function buildValidatedBlobUrl(blobUrl: string): string {

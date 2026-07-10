@@ -292,11 +292,11 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="book">Prenota</SelectItem>
-                    <SelectItem value="contact">Contattami</SelectItem>
-                    <SelectItem value="download">Scarica</SelectItem>
-                    <SelectItem value="subscribe">Iscriviti</SelectItem>
-                    <SelectItem value="buy">Compra</SelectItem>
+                    <SelectItem value="book">Book</SelectItem>
+                    <SelectItem value="contact">Contact me</SelectItem>
+                    <SelectItem value="download">Download</SelectItem>
+                    <SelectItem value="subscribe">Subscribe</SelectItem>
+                    <SelectItem value="buy">Buy</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

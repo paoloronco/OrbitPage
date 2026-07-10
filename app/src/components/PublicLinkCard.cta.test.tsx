@@ -22,7 +22,8 @@ describe('PublicLinkCard CTA rendering', () => {
     );
 
     expect(html).toContain('public-cta-card');
-    expect(html).toContain('Prenota');
+    expect(html).toContain('Book');
+    expect(html).not.toContain('Prenota');
     expect(html).toContain('Reserve your slot');
     expect(html).toContain('Limited seats this week');
   });

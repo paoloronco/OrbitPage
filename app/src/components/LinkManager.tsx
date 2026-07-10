@@ -54,7 +54,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
   const addNewCta = () => {
     const newCta: LinkData = {
       id: Date.now().toString(),
-      title: "Prenota",
+      title: "Book now",
       description: "",
       url: "",
       type: "cta",
