@@ -1792,6 +1792,7 @@ app.get('/api/profile', async (req, res) => {
         google_analytics_id: undefined,
         privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : undefined,
         cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : undefined,
+        admin_onboarding_enabled: 1,
       });
     }
 
@@ -1810,6 +1811,7 @@ app.get('/api/profile', async (req, res) => {
       google_analytics_id: profile.google_analytics_id || undefined,
       privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : (profile.privacy_policy_url || undefined),
       cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : (profile.cookie_policy_url || undefined),
+      admin_onboarding_enabled: profile.admin_onboarding_enabled === 0 ? 0 : 1,
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to load profile' });
@@ -1848,6 +1850,8 @@ const ProfileSchema = z.object({
   privacy_policy_url: z.string().max(500).nullable().optional(),
   cookiePolicyUrl: z.string().max(500).nullable().optional(),
   cookie_policy_url: z.string().max(500).nullable().optional(),
+  adminOnboardingEnabled: z.union([z.boolean(), z.number()]).optional(),
+  admin_onboarding_enabled: z.union([z.boolean(), z.number()]).optional(),
 }).strip();
 
 app.put('/api/profile', authenticateToken, requirePermission('profile:write'), async (req, res) => {
@@ -1873,6 +1877,7 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
     const footerText = body.footerText ?? body.footer_text ?? null;
     const favicon = body.favicon ?? null;
     const googleAnalyticsId = body.googleAnalyticsId ?? body.google_analytics_id ?? null;
+    const onboardingRaw = body.adminOnboardingEnabled ?? body.admin_onboarding_enabled;
     let privacyPolicyUrl;
     let cookiePolicyUrl;
     try {
@@ -1892,7 +1897,12 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 
     // Check if profile exists. In demo mode, privacy/compliance fields are read-only,
     // so profile saves preserve the original legal policy URLs.
-    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url FROM profile_data LIMIT 1');
+    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled FROM profile_data LIMIT 1');
+    const adminOnboardingEnabled = typeof onboardingRaw === 'number'
+      ? onboardingRaw !== 0
+      : (typeof onboardingRaw === 'boolean'
+        ? onboardingRaw
+        : (existing?.admin_onboarding_enabled === 0 ? false : true));
     if (DEMO_MODE) {
       privacyPolicyUrl = existing?.privacy_policy_url || DEMO_LEGAL_URLS.privacyPolicyUrl;
       cookiePolicyUrl = existing?.cookie_policy_url || DEMO_LEGAL_URLS.cookiePolicyUrl;
@@ -1900,13 +1910,13 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 
     if (existing) {
       await dbRun(
-        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, existing.id]
+        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, admin_onboarding_enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0, existing.id]
       );
     } else {
       await dbRun(
-        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl]
+        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0]
       );
     }
 

@@ -68,6 +68,7 @@ interface ProfileData {
   googleAnalyticsId?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
+  adminOnboardingEnabled?: boolean;
 }
 
 interface AdminViewProps {
@@ -117,6 +118,7 @@ export const AdminView = ({
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
   const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
+  const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
@@ -210,6 +212,11 @@ export const AdminView = ({
     setTimeout(() => setGaSaved(false), 2500);
   };
 
+  const handleThemeSave = async (nextTheme: ThemeConfig) => {
+    await onThemeChange(nextTheme);
+    setOnboardingThemeSaved(true);
+  };
+
   return (
     <div className="orbitpage-admin min-h-screen">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
@@ -294,6 +301,10 @@ export const AdminView = ({
                 <ProfileSection
                   profile={profile}
                   onProfileUpdate={(nextProfile) => { void onProfileUpdate(nextProfile); }}
+                  onStartOnboarding={() => setOnboardingReplayKey(key => key + 1)}
+                  onAdminOnboardingEnabledChange={(enabled) => {
+                    void onProfileUpdate({ ...profile, adminOnboardingEnabled: enabled });
+                  }}
                 />
               </div>
               <aside className="admin-side-panel admin-checklist-panel">
@@ -329,13 +340,13 @@ export const AdminView = ({
           <TabsContent value="theme" className="admin-tab-content">
             <ThemeCustomizer
               theme={theme}
-              onThemeChange={onThemeChange}
+              onThemeChange={handleThemeSave}
               onThemePreview={(nextTheme) => applyTheme(nextTheme)}
             />
           </TabsContent>
 
           <TabsContent value="access" className="admin-tab-content">
-            <div className="admin-single-column space-y-6">
+            <div className="admin-single-column space-y-6" data-onboarding="access-section">
               {canManageUsers && <UserManager />}
               {canManageUsers && <BackupManager />}
               <PasswordManager />
@@ -344,7 +355,7 @@ export const AdminView = ({
 
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">
-              <section className="admin-panel">
+              <section className="admin-panel" data-onboarding="analytics-section">
                 <PanelHeader icon={BarChart2} title="Click analytics" />
                 <div className="mb-5 grid grid-cols-2 gap-3">
                   <StatusTile label="Total clicks" value={String(metrics.totalClicks)} />
@@ -426,18 +437,20 @@ export const AdminView = ({
           </TabsContent>
 
           <TabsContent value="privacy" className="admin-tab-content">
-            <PrivacySettings
-              privacyPolicyUrl={profile.privacyPolicyUrl}
-              cookiePolicyUrl={profile.cookiePolicyUrl}
-              readOnly={DEMO_MODE}
-              onLegalPolicyUpdate={({ privacyPolicyUrl, cookiePolicyUrl }) =>
-                onProfileUpdate({ ...profile, privacyPolicyUrl, cookiePolicyUrl })
-              }
-            />
+            <div data-onboarding="privacy-section">
+              <PrivacySettings
+                privacyPolicyUrl={profile.privacyPolicyUrl}
+                cookiePolicyUrl={profile.cookiePolicyUrl}
+                readOnly={DEMO_MODE}
+                onLegalPolicyUpdate={({ privacyPolicyUrl, cookiePolicyUrl }) =>
+                  onProfileUpdate({ ...profile, privacyPolicyUrl, cookiePolicyUrl })
+                }
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="txt" className="admin-tab-content">
-            <div className="admin-single-column">
+            <div className="admin-single-column" data-onboarding="txt-section">
               <TextFileManager readOnly={DEMO_MODE} />
             </div>
           </TabsContent>
@@ -449,6 +462,16 @@ export const AdminView = ({
           visibleTabs={visibleTabs.map(tab => tab.value)}
           onSelectTab={setActiveTab}
           forceOpen={onboardingReplayKey > 0}
+          repeatEnabled={profile.adminOnboardingEnabled !== false}
+          profile={{
+            name: profile.name,
+            bio: profile.bio,
+            googleAnalyticsId: profile.googleAnalyticsId,
+            privacyPolicyUrl: profile.privacyPolicyUrl,
+            cookiePolicyUrl: profile.cookiePolicyUrl,
+          }}
+          savedLinkCount={links.length}
+          themeSaved={onboardingThemeSaved}
         />
 
         <footer className="admin-footer">

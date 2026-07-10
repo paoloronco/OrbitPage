@@ -97,6 +97,8 @@ export const initializeDatabase = () => {
       // Legal policy links (configurable, not hardcoded — required for open-source deployments)
       db.run(`ALTER TABLE profile_data ADD COLUMN privacy_policy_url TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE profile_data ADD COLUMN cookie_policy_url TEXT`, (err) => { /* ignore if exists */ });
+      // Admin onboarding preference. Default enabled so new admin/customer sessions see the guided setup.
+      db.run(`ALTER TABLE profile_data ADD COLUMN admin_onboarding_enabled BOOLEAN DEFAULT 1`, (err) => { /* ignore if exists */ });
 
       // Role-based access control — default 'admin' keeps backward compatibility for the main admin user
       db.run(`ALTER TABLE admin_users ADD COLUMN role TEXT DEFAULT 'admin'`, (err) => { /* ignore if exists */ });

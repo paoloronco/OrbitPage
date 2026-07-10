@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { Edit, Camera, Linkedin, Github, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+import { Compass, Edit, Camera, Linkedin, Github, Instagram, Facebook, Play, Twitter, Youtube } from "lucide-react";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import { Switch } from "@/components/ui/switch";
 import profileAvatar from "@/assets/profile-avatar.jpg";
@@ -40,14 +40,22 @@ interface ProfileData {
   // Footer and browser bar customization
   footerText?: string;
   favicon?: string;
+  adminOnboardingEnabled?: boolean;
 }
 
 interface ProfileSectionProps {
   profile: ProfileData;
   onProfileUpdate: (profile: ProfileData) => void;
+  onStartOnboarding?: () => void;
+  onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
 }
 
-export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps) => {
+export const ProfileSection = ({
+  profile,
+  onProfileUpdate,
+  onStartOnboarding,
+  onAdminOnboardingEnabledChange,
+}: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editProfile, setEditProfile] = useState(profile);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -615,6 +623,43 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
       )}
       </Card>
       <ProfileQrCode />
+      {(onStartOnboarding || onAdminOnboardingEnabledChange) && (
+        <Card className="glass-card p-5" data-onboarding="onboarding-settings">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="admin-panel-icon">
+                  <Compass className="h-4 w-4" />
+                </span>
+                <h2 className="text-base font-semibold text-slate-950">Guided setup</h2>
+              </div>
+              <p className="text-sm leading-6 text-slate-600">
+                Keep the setup guide enabled for new customers, then turn it off when they are ready to work alone.
+              </p>
+            </div>
+            {onStartOnboarding && (
+              <Button onClick={onStartOnboarding} className="admin-action admin-action-primary shrink-0" size="sm">
+                <Play className="h-4 w-4" />
+                Start guide
+              </Button>
+            )}
+          </div>
+          {onAdminOnboardingEnabledChange && (
+            <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">Show at every login</p>
+                <p className="text-xs leading-5 text-slate-500">
+                  Useful while onboarding a new customer.
+                </p>
+              </div>
+              <Switch
+                checked={profile.adminOnboardingEnabled !== false}
+                onCheckedChange={onAdminOnboardingEnabledChange}
+              />
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 };

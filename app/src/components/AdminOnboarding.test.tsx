@@ -5,21 +5,31 @@ import { describe, expect, it } from 'vitest';
 import { AdminOnboarding } from './AdminOnboarding';
 
 describe('AdminOnboarding', () => {
-  it('renders a skippable animated guide with workflow steps', () => {
+  it('renders a skippable guided setup with the full admin route', () => {
     const html = renderToStaticMarkup(
       <AdminOnboarding
         activeTab="profile"
-        visibleTabs={['profile', 'links', 'theme']}
+        visibleTabs={['profile', 'links', 'theme', 'analytics', 'access', 'privacy', 'txt']}
         onSelectTab={() => undefined}
         forceOpen
+        repeatEnabled
+        profile={{ name: '', bio: '' }}
+        savedLinkCount={0}
+        themeSaved={false}
       />,
     );
 
-    expect(html).toContain('Start guide');
-    expect(html).toContain('Skip');
-    expect(html).toContain('Profile first');
-    expect(html).toContain('Add your first card');
-    expect(html).toContain('Shape the look');
+    expect(html).toContain('Start setup');
+    expect(html).toContain('Skip for now');
+    expect(html).toContain('Page profile');
+    expect(html).toContain('First card');
+    expect(html).toContain('Theme save');
+    expect(html).toContain('Analytics');
+    expect(html).toContain('Access');
+    expect(html).toContain('Privacy');
+    expect(html).toContain('TXT');
+    expect(html).toContain('Public check');
+    expect(html).toContain('enabled at every login');
     expect(html).toContain('aria-label="OrbitPage onboarding guide"');
   });
 });

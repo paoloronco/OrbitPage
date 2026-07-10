@@ -2,16 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import type { ElementType } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  BarChart2,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Compass,
   ExternalLink,
+  FileText,
+  Key,
   Link,
   Minimize2,
   MousePointerClick,
   Palette,
   Play,
+  ShieldCheck,
   User,
   X,
 } from "lucide-react";
@@ -19,11 +23,23 @@ import {
 type AdminOnboardingTab = "profile" | "links" | "theme" | "access" | "analytics" | "privacy" | "txt";
 type OnboardingMode = "hidden" | "welcome" | "tour" | "minimized";
 
+interface AdminOnboardingProfile {
+  name?: string;
+  bio?: string;
+  googleAnalyticsId?: string;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
+}
+
 interface AdminOnboardingProps {
   activeTab: AdminOnboardingTab;
   visibleTabs: AdminOnboardingTab[];
   onSelectTab: (tab: AdminOnboardingTab) => void;
   forceOpen?: boolean;
+  repeatEnabled?: boolean;
+  profile?: AdminOnboardingProfile;
+  savedLinkCount?: number;
+  themeSaved?: boolean;
 }
 
 interface TourStep {
@@ -35,7 +51,10 @@ interface TourStep {
   title: string;
   body: string;
   action: string;
-  visual: "profile" | "save" | "links" | "cards" | "theme" | "public";
+  required?: boolean;
+  doneLabel: string;
+  waitingLabel?: string;
+  checklist: string[];
 }
 
 const STORAGE_KEY = "orbitpage-admin-onboarding-completed";
@@ -45,74 +64,135 @@ const forcedByEnv = import.meta.env.VITE_FORCE_ADMIN_ONBOARDING === "true" || im
 
 const tourSteps: TourStep[] = [
   {
-    id: "profile-home",
+    id: "profile-basics",
     tab: "profile",
     target: "[data-onboarding='profile-card']",
     icon: User,
     eyebrow: "1. Page",
-    title: "Profile first",
-    body: "Start from the Page tab. Open the profile card, set the public name, add a short description, and connect the social links that matter.",
-    action: "Click the profile card edit button.",
-    visual: "profile",
+    title: "Complete the public profile",
+    body: "This is the card visitors see first. Edit it, enter the public name and a short description, then press Save inside the profile card.",
+    action: "Click the pencil on the profile card, add name and description, then save.",
+    required: true,
+    doneLabel: "Profile saved",
+    waitingLabel: "Waiting for name and description to be saved",
+    checklist: ["Click the profile edit pencil", "Enter the public name", "Add a short description", "Press Save"],
   },
   {
-    id: "profile-save",
+    id: "onboarding-settings",
     tab: "profile",
-    target: "[data-onboarding='profile-card']",
-    icon: CheckCircle2,
-    eyebrow: "2. Save",
-    title: "Lock in the first change",
-    body: "After editing, save the profile. The checklist on the right helps you see what is still missing before publishing.",
-    action: "Save when the profile looks right.",
-    visual: "save",
-  },
-  {
-    id: "links-overview",
-    tab: "links",
-    target: "[data-onboarding='links-toolbar']",
-    icon: Link,
-    eyebrow: "3. Links",
-    title: "Build the public order",
-    body: "Links are the public cards people click. Normal links, smart CTAs, lists, text cards, and separators can live together in one ordered stack.",
-    action: "Review the content toolbar.",
-    visual: "links",
+    target: "[data-onboarding='onboarding-settings']",
+    icon: Compass,
+    eyebrow: "2. Guide control",
+    title: "Decide if the guide should reopen",
+    body: "Use this box when a new customer is learning the dashboard. Keep the guide enabled while onboarding; turn it off when they no longer need it at every login.",
+    action: "Use Start guide to replay it, or switch off Show at every login.",
+    doneLabel: "Guide controls reviewed",
+    checklist: ["Start guide replays this flow", "Show at every login is saved for the whole instance", "Disable it when onboarding is complete"],
   },
   {
     id: "links-first-card",
     tab: "links",
     target: "[data-onboarding='link-add-grid']",
-    icon: MousePointerClick,
-    eyebrow: "4. First card",
-    title: "Add one useful action",
-    body: "Create the first link or CTA. CTAs are best for actions like booking, buying, subscribing, downloading, or contacting you.",
-    action: "Choose Link, CTA, Text, List, or Separator.",
-    visual: "cards",
+    icon: Link,
+    eyebrow: "3. Links",
+    title: "Create and save the first public card",
+    body: "This grid creates the blocks shown on the public page. Add a Link, CTA, Text/List, or Separator, fill the card, then press Save in the toolbar.",
+    action: "Add at least one card and press the Links Save button.",
+    required: true,
+    doneLabel: "First card saved",
+    waitingLabel: "Waiting for a saved link, CTA, text card, list, or separator",
+    checklist: ["Choose a card type", "Fill the title and URL if needed", "Use CTA for actions like Book or Contact", "Press Save in the Links toolbar"],
   },
   {
-    id: "theme-overview",
+    id: "links-save",
+    tab: "links",
+    target: "[data-onboarding='links-toolbar']",
+    icon: MousePointerClick,
+    eyebrow: "4. Content order",
+    title: "Use the Links toolbar as the publish checkpoint",
+    body: "Changes in Links stay local until Save is pressed. This protects public pages from accidental edits while cards are reordered or drafted.",
+    action: "Check the Unsaved changes badge and save before leaving Links.",
+    doneLabel: "Save behavior understood",
+    checklist: ["Drag cards to change order", "Watch for Unsaved changes", "Save only when the public order is ready"],
+  },
+  {
+    id: "theme-save",
     tab: "theme",
     target: "[data-onboarding='theme-customizer']",
     icon: Palette,
     eyebrow: "5. Theme",
-    title: "Shape the look",
-    body: "Use Theme to tune colors, typography, layout, and background. Changes preview immediately, so you can test the feel before saving.",
-    action: "Start with colors, then adjust spacing.",
-    visual: "theme",
+    title: "Tune the visual style and save it",
+    body: "Theme controls affect the public page look. Make a small color, typography, layout, or background adjustment, preview it, then press Save Changes.",
+    action: "Adjust one theme setting and save the theme.",
+    required: true,
+    doneLabel: "Theme saved in this session",
+    waitingLabel: "Waiting for Save Changes in Theme",
+    checklist: ["Start with Colors", "Preview the change", "Check spacing or background", "Press Save Changes"],
+  },
+  {
+    id: "analytics",
+    tab: "analytics",
+    target: "[data-onboarding='analytics-section']",
+    icon: BarChart2,
+    eyebrow: "6. Analytics",
+    title: "Understand clicks and optional GA4",
+    body: "Analytics shows total clicks, CTA clicks, and top-performing cards. If the customer uses Google Analytics 4, add the Measurement ID here.",
+    action: "Review click metrics and optionally save a GA4 Measurement ID.",
+    doneLabel: "Analytics reviewed",
+    checklist: ["Check Total clicks", "Check CTA clicks", "Add GA4 only if available"],
+  },
+  {
+    id: "access",
+    tab: "access",
+    target: "[data-onboarding='access-section']",
+    icon: Key,
+    eyebrow: "7. Access",
+    title: "Review users, backups, and password tools",
+    body: "Access is where admins manage users, export backups, restore data, and change the admin password. This is the operational safety area.",
+    action: "Confirm who can access the admin and where backups are handled.",
+    doneLabel: "Access reviewed",
+    checklist: ["Review existing users", "Know where backups live", "Change password only when needed"],
+  },
+  {
+    id: "privacy",
+    tab: "privacy",
+    target: "[data-onboarding='privacy-section']",
+    icon: ShieldCheck,
+    eyebrow: "8. Privacy",
+    title: "Set legal links and consent behavior",
+    body: "Privacy controls decide which policy links appear publicly and whether consent management is active. This should match the customer legal setup.",
+    action: "Add Privacy/Cookie links or configure hosted policies if required.",
+    doneLabel: "Privacy reviewed",
+    checklist: ["Choose hosted or external policies", "Save Privacy Policy and Cookie Policy links", "Review consent mode if tracking is used"],
+  },
+  {
+    id: "txt",
+    tab: "txt",
+    target: "[data-onboarding='txt-section']",
+    icon: FileText,
+    eyebrow: "9. TXT",
+    title: "Check crawler and AI-facing text files",
+    body: "TXT files control crawler hints, LLM-facing instructions, humans.txt, security.txt, and related public metadata.",
+    action: "Review defaults and edit only when the customer has specific SEO or AI-indexing needs.",
+    doneLabel: "TXT reviewed",
+    checklist: ["Review robots.txt", "Review llms.txt", "Edit security.txt if needed"],
   },
   {
     id: "public-page",
     target: "[data-onboarding='public-page']",
     icon: ExternalLink,
-    eyebrow: "6. Publish check",
-    title: "Open the public page",
-    body: "Once the basics are saved, open the public page and check it like a visitor would: profile, first action, visual rhythm, and mobile fit.",
-    action: "Open Public page in a new tab.",
-    visual: "public",
+    eyebrow: "10. Final check",
+    title: "Open the public page like a visitor",
+    body: "After setup, open the public page and verify the profile, first card, CTA style, policy links, and mobile layout.",
+    action: "Click Public page and inspect the result in a new tab.",
+    doneLabel: "Ready for public review",
+    checklist: ["Open Public page", "Check profile and first action", "Check visual theme", "Check footer/legal links"],
   },
 ];
 
-function getInitialMode(forceOpen?: boolean): OnboardingMode {
+function getInitialMode(forceOpen?: boolean, repeatEnabled?: boolean): OnboardingMode {
   if (forceOpen || forcedByEnv) return "welcome";
+  if (repeatEnabled) return "welcome";
   if (typeof window === "undefined") return "hidden";
 
   try {
@@ -122,7 +202,7 @@ function getInitialMode(forceOpen?: boolean): OnboardingMode {
     return "hidden";
   }
 
-  return "welcome";
+  return "hidden";
 }
 
 function markCompleted() {
@@ -134,9 +214,19 @@ function markCompleted() {
   }
 }
 
-export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen }: AdminOnboardingProps) => {
-  const [mode, setMode] = useState<OnboardingMode>(() => getInitialMode(forceOpen));
+export const AdminOnboarding = ({
+  activeTab,
+  visibleTabs,
+  onSelectTab,
+  forceOpen,
+  repeatEnabled = true,
+  profile,
+  savedLinkCount = 0,
+  themeSaved = false,
+}: AdminOnboardingProps) => {
+  const [mode, setMode] = useState<OnboardingMode>(() => getInitialMode(forceOpen, repeatEnabled));
   const [stepIndex, setStepIndex] = useState(0);
+  const [dismissedThisSession, setDismissedThisSession] = useState(false);
 
   const steps = useMemo(
     () => tourSteps.filter(step => !step.tab || visibleTabs.includes(step.tab)),
@@ -145,11 +235,23 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
   const step = steps[Math.min(stepIndex, Math.max(steps.length - 1, 0))];
   const progress = steps.length > 0 ? ((stepIndex + 1) / steps.length) * 100 : 0;
 
+  const profileComplete = Boolean(profile?.name?.trim() && profile?.bio?.trim());
+  const stepComplete = !step?.required ||
+    (step.id === "profile-basics" && profileComplete) ||
+    (step.id === "links-first-card" && savedLinkCount > 0) ||
+    (step.id === "theme-save" && themeSaved);
+
   useEffect(() => {
     if (forceOpen || forcedByEnv) {
       setMode(current => (current === "hidden" ? "welcome" : current));
     }
   }, [forceOpen]);
+
+  useEffect(() => {
+    if (repeatEnabled && !dismissedThisSession && mode === "hidden") {
+      setMode("welcome");
+    }
+  }, [dismissedThisSession, mode, repeatEnabled]);
 
   useEffect(() => {
     if (mode !== "tour" || !step) return;
@@ -168,7 +270,7 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
       if (!target) return;
       target.setAttribute("data-onboarding-active", "true");
       target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-    }, 120);
+    }, 180);
 
     return () => {
       window.clearTimeout(id);
@@ -179,16 +281,19 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
   }, [mode, step]);
 
   const close = () => {
-    markCompleted();
+    if (!repeatEnabled) markCompleted();
+    setDismissedThisSession(true);
     setMode("hidden");
   };
 
   const start = () => {
+    setDismissedThisSession(false);
     setStepIndex(0);
     setMode("tour");
   };
 
   const next = () => {
+    if (!stepComplete) return;
     if (stepIndex >= steps.length - 1) {
       close();
       return;
@@ -225,29 +330,34 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
           <span />
         </div>
         <div className="admin-onboarding-welcome-copy">
-          <span className="admin-onboarding-kicker">Quick start</span>
-          <h2>Build the first useful version of your page.</h2>
+          <span className="admin-onboarding-kicker">Guided setup</span>
+          <h2>Set up the page by doing the real first actions.</h2>
           <p>
-            A short animated guide will walk through profile, first content card, theme, and final public check.
+            The guide will move through every admin area. Core steps wait until the profile, first content card, and theme are actually saved.
           </p>
         </div>
-        <div className="admin-onboarding-map" aria-hidden="true">
-          <MiniVisual type="profile" />
-          <MiniVisual type="cards" />
-          <MiniVisual type="theme" />
+        <div className="admin-onboarding-roadmap admin-onboarding-roadmap-grid">
+          <span>Page profile</span>
+          <span>First card</span>
+          <span>Theme save</span>
+          <span>Analytics</span>
+          <span>Access</span>
+          <span>Privacy</span>
+          <span>TXT</span>
+          <span>Public check</span>
         </div>
-        <div className="admin-onboarding-roadmap">
-          <span>Profile first</span>
-          <span>Add your first card</span>
-          <span>Shape the look</span>
-        </div>
+        {repeatEnabled && (
+          <p className="admin-onboarding-repeat-note">
+            This guide is enabled at every login. Turn it off from Page, Guided setup when onboarding is complete.
+          </p>
+        )}
         <div className="admin-onboarding-actions">
           <Button className="admin-action admin-action-primary" size="sm" onClick={start}>
             <Play className="h-4 w-4" />
-            Start guide
+            Start setup
           </Button>
           <Button className="admin-action" variant="outline" size="sm" onClick={close}>
-            Skip
+            Skip for now
           </Button>
         </div>
       </aside>
@@ -255,6 +365,7 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
   }
 
   const Icon = step.icon;
+  const statusLabel = stepComplete ? step.doneLabel : (step.waitingLabel || "Waiting for this step");
 
   return (
     <>
@@ -278,12 +389,25 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
           </div>
         </div>
 
-        <MiniVisual type={step.visual} />
+        <div className="admin-onboarding-focus-card">
+          <div className="admin-onboarding-focus-heading">
+            <span>{step.target ? "Highlighted now" : "Current task"}</span>
+            <strong>{step.action}</strong>
+          </div>
+          <ul>
+            {step.checklist.map(item => (
+              <li key={item}>
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         <p className="admin-onboarding-body">{step.body}</p>
-        <div className="admin-onboarding-instruction">
-          <MousePointerClick className="h-4 w-4" />
-          <span>{step.action}</span>
+        <div className={stepComplete ? "admin-onboarding-instruction admin-onboarding-instruction-done" : "admin-onboarding-instruction"}>
+          {stepComplete ? <CheckCircle2 className="h-4 w-4" /> : <MousePointerClick className="h-4 w-4" />}
+          <span>{statusLabel}</span>
         </div>
 
         <div className="admin-onboarding-progress" aria-hidden="true">
@@ -297,9 +421,9 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
               <ChevronLeft className="h-4 w-4" />
               Back
             </Button>
-            <Button className="admin-action admin-action-primary" size="sm" onClick={next}>
-              {stepIndex >= steps.length - 1 ? "Done" : "Next"}
-              {stepIndex < steps.length - 1 && <ChevronRight className="h-4 w-4" />}
+            <Button className="admin-action admin-action-primary" size="sm" onClick={next} disabled={!stepComplete}>
+              {!stepComplete ? "Waiting" : stepIndex >= steps.length - 1 ? "Done" : "Next"}
+              {stepComplete && stepIndex < steps.length - 1 && <ChevronRight className="h-4 w-4" />}
             </Button>
           </div>
         </div>
@@ -307,63 +431,3 @@ export const AdminOnboarding = ({ activeTab, visibleTabs, onSelectTab, forceOpen
     </>
   );
 };
-
-function MiniVisual({ type }: { type: TourStep["visual"] }) {
-  return (
-    <div className={`admin-onboarding-visual admin-onboarding-visual-${type}`}>
-      <div className="admin-onboarding-visual-toolbar">
-        <span />
-        <span />
-        <span />
-      </div>
-      {type === "profile" && (
-        <div className="admin-onboarding-visual-profile">
-          <span className="avatar" />
-          <span className="line strong" />
-          <span className="line" />
-          <div className="socials"><i /><i /><i /></div>
-        </div>
-      )}
-      {type === "save" && (
-        <div className="admin-onboarding-visual-save">
-          <span className="field" />
-          <span className="field small" />
-          <span className="button" />
-        </div>
-      )}
-      {type === "links" && (
-        <div className="admin-onboarding-visual-links">
-          <span className="row" />
-          <span className="row accent" />
-          <span className="row" />
-        </div>
-      )}
-      {type === "cards" && (
-        <div className="admin-onboarding-visual-cards">
-          <span>Link</span>
-          <span>CTA</span>
-          <span>Text</span>
-          <span>List</span>
-        </div>
-      )}
-      {type === "theme" && (
-        <div className="admin-onboarding-visual-theme">
-          <span className="swatch blue" />
-          <span className="swatch green" />
-          <span className="swatch ink" />
-          <span className="range" />
-        </div>
-      )}
-      {type === "public" && (
-        <div className="admin-onboarding-visual-public">
-          <span className="phone">
-            <i />
-            <i />
-            <i />
-          </span>
-          <span className="arrow" />
-        </div>
-      )}
-    </div>
-  );
-}

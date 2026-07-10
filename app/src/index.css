@@ -817,6 +817,12 @@
     margin-top: 12px;
   }
 
+  .admin-onboarding-roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
   .admin-onboarding-roadmap span {
     border: 1px solid rgb(226 232 240);
     border-radius: 999px;
@@ -825,6 +831,18 @@
     color: rgb(51 65 85);
     font-size: 11px;
     font-weight: 800;
+  }
+
+  .admin-onboarding-repeat-note {
+    margin-top: 12px;
+    border: 1px solid rgb(250 204 21 / 0.42);
+    border-radius: 8px;
+    background: #fefce8;
+    padding: 9px 10px;
+    color: #854d0e;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
   }
 
   .admin-onboarding-panel {
@@ -890,6 +908,62 @@
     font-size: 13px;
     font-weight: 700;
     line-height: 1.4;
+  }
+
+  .admin-onboarding-instruction-done {
+    border-color: rgb(16 185 129 / 0.28);
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  .admin-onboarding-focus-card {
+    margin-top: 14px;
+    border: 1px solid rgb(226 232 240);
+    border-radius: 8px;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    padding: 13px;
+  }
+
+  .admin-onboarding-focus-heading {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .admin-onboarding-focus-heading span {
+    color: #1d4ed8;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .admin-onboarding-focus-heading strong {
+    color: rgb(15 23 42);
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .admin-onboarding-focus-card ul {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .admin-onboarding-focus-card li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: rgb(51 65 85);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .admin-onboarding-focus-card li svg {
+    margin-top: 2px;
+    color: #0f9f8f;
   }
 
   .admin-onboarding-progress {
