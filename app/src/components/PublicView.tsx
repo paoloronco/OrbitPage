@@ -2,6 +2,13 @@ import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicTextCard } from "./PublicTextCard";
 import { PublicSeparatorCard } from "./PublicSeparatorCard";
+import { PublicHeadingCard } from "./PublicHeadingCard";
+import { PublicImageCard } from "./PublicImageCard";
+import { PublicContactCard } from "./PublicContactCard";
+import { PublicSocialRowCard } from "./PublicSocialRowCard";
+import { PublicCalloutCard } from "./PublicCalloutCard";
+import { PublicMapCard } from "./PublicMapCard";
+import { PublicEventCard } from "./PublicEventCard";
 import { LinkData } from "./LinkCard";
 import { withBasePath } from "@/lib/base-path";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
@@ -50,6 +57,15 @@ export const PublicView = ({
     if (!isLinkVisibleNow(link)) return false;
 
     if (link.type === 'separator') return true;
+    if (link.type === 'heading') return link.title.trim() !== '' || link.description.trim() !== '';
+    if (link.type === 'image') return (link.url || link.coverImage) !== '';
+    if (link.type === 'contact' || link.type === 'social_row' || link.type === 'callout' || link.type === 'map' || link.type === 'event') {
+      return (
+        link.title.trim() !== '' ||
+        link.description.trim() !== '' ||
+        (link.content || '').trim() !== ''
+      );
+    }
 
     if (link.backgroundColor || link.textColor || link.icon) {
       return true;
@@ -75,6 +91,20 @@ export const PublicView = ({
                 <PublicSeparatorCard key={link.id} link={link} />
               ) : link.type === 'text' ? (
                 <PublicTextCard key={link.id} link={link} />
+              ) : link.type === 'heading' ? (
+                <PublicHeadingCard key={link.id} link={link} />
+              ) : link.type === 'image' ? (
+                <PublicImageCard key={link.id} link={link} />
+              ) : link.type === 'contact' ? (
+                <PublicContactCard key={link.id} link={link} />
+              ) : link.type === 'social_row' ? (
+                <PublicSocialRowCard key={link.id} link={link} />
+              ) : link.type === 'callout' ? (
+                <PublicCalloutCard key={link.id} link={link} />
+              ) : link.type === 'map' ? (
+                <PublicMapCard key={link.id} link={link} />
+              ) : link.type === 'event' ? (
+                <PublicEventCard key={link.id} link={link} />
               ) : (
                 <PublicLinkCard key={link.id} link={link} />
               )

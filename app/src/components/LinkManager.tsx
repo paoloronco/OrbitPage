@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Download, Image, Link, List, Minus, MousePointerClick, Palette, Plus, Save, Type, Upload } from "lucide-react";
+import { CalendarClock, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { SeparatorCard } from "./SeparatorCard";
@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
+import { type LinkBlockType, buildBlockContent } from "@/lib/link-blocks";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -111,6 +112,144 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       isActive: true,
     };
     const updated = [...workingLinks, newSeparator];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewHeading = () => {
+    const newHeading: LinkData = {
+      id: Date.now().toString(),
+      title: "New heading",
+      description: "",
+      url: "",
+      type: "heading",
+      status: "live",
+    };
+    const updated = [...workingLinks, newHeading];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewImage = () => {
+    const newImage: LinkData = {
+      id: Date.now().toString(),
+      title: "Image block",
+      description: "",
+      url: "",
+      type: "image",
+      status: "live",
+    };
+    const updated = [...workingLinks, newImage];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewContact = () => {
+    const newContact: LinkData = {
+      id: Date.now().toString(),
+      title: "Contact",
+      description: "",
+      url: "",
+      type: "contact",
+      content: buildBlockContent({
+        name: "",
+        title: "",
+        role: "",
+        phone: "",
+        email: "",
+        website: "",
+        address: "",
+        note: "",
+        whatsapp: "",
+        telegram: "",
+      }),
+      status: "live",
+    };
+    const updated = [...workingLinks, newContact];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewSocialRow = () => {
+    const newSocialRow: LinkData = {
+      id: Date.now().toString(),
+      title: "Social row",
+      description: "",
+      url: "",
+      type: "social_row",
+      content: buildBlockContent({
+        items: [],
+      }),
+      status: "live",
+    };
+    const updated = [...workingLinks, newSocialRow];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewCallout = () => {
+    const newCallout: LinkData = {
+      id: Date.now().toString(),
+      title: "Callout",
+      description: "",
+      url: "",
+      type: "callout",
+      content: buildBlockContent({
+        badge: "Info",
+        buttonLabel: "Open",
+      }),
+      status: "live",
+    };
+    const updated = [...workingLinks, newCallout];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewMap = () => {
+    const newMap: LinkData = {
+      id: Date.now().toString(),
+      title: "Map",
+      description: "",
+      url: "",
+      type: "map",
+      content: buildBlockContent({
+        placeName: "",
+        address: "",
+        mapUrl: "",
+      }),
+      status: "live",
+    };
+    const updated = [...workingLinks, newMap];
+    setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewEvent = () => {
+    const newEvent: LinkData = {
+      id: Date.now().toString(),
+      title: "Event",
+      description: "",
+      url: "",
+      type: "event",
+      content: buildBlockContent({
+        date: "",
+        time: "",
+        endDate: "",
+        endTime: "",
+        location: "",
+        ticketLabel: "Get ticket",
+        notes: "",
+      }),
+      status: "live",
+    };
+    const updated = [...workingLinks, newEvent];
     setWorkingLinks(updated);
     setIsDirty(true);
     setSaveError("");
@@ -254,10 +393,10 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       await linksApi.import(data);
       
       // Refresh the links after successful import
-      const updatedLinks = await linksApi.get();
+        const updatedLinks = await linksApi.get();
       setWorkingLinks(updatedLinks.map(link => ({
         ...link,
-        type: link.type as 'link' | 'text' | 'separator' | 'cta'
+        type: link.type as LinkBlockType,
       })));
       setIsDirty(false);
       setSaveError("");
@@ -340,8 +479,8 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
             <h2 className="text-lg font-semibold text-slate-950">Content cards</h2>
             {isDirty && <span className="admin-dirty-badge">Unsaved changes</span>}
           </div>
-          <p className="mt-1 text-sm text-slate-600">
-            {workingLinks.length === 0 ? "Start with a link, text block, list, or separator." : `${workingLinks.length} items in your public page order.`}
+            <p className="mt-1 text-sm text-slate-600">
+            {workingLinks.length === 0 ? "Start with a block, then arrange your public page." : `${workingLinks.length} items in your public page order.`}
           </p>
           {saveError && (
             <p className="mt-2 text-sm font-medium text-red-600" role="alert">
@@ -381,13 +520,76 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
               <span className="block text-xs opacity-70">URL card</span>
             </span>
           </Button>
-          <Button onClick={addNewCta} variant="outline" className="admin-add-card">
+            <Button onClick={addNewCta} variant="outline" className="admin-add-card">
+              <span className="admin-add-icon">
+                <MousePointerClick className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="block font-semibold">CTA</span>
+                <span className="block text-xs opacity-70">Smart action</span>
+              </span>
+            </Button>
+          <Button onClick={addNewHeading} variant="outline" className="admin-add-card">
             <span className="admin-add-icon">
-              <MousePointerClick className="h-4 w-4" />
+              <Type className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">CTA</span>
-              <span className="block text-xs opacity-70">Smart action</span>
+              <span className="block font-semibold">Heading</span>
+              <span className="block text-xs opacity-70">Section title</span>
+            </span>
+          </Button>
+          <Button onClick={addNewImage} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <Image className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Image</span>
+              <span className="block text-xs opacity-70">Photo block</span>
+            </span>
+          </Button>
+          <Button onClick={addNewContact} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <UserCircle2 className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Contact</span>
+              <span className="block text-xs opacity-70">Contact details</span>
+            </span>
+          </Button>
+          <Button onClick={addNewSocialRow} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <Share2 className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Social row</span>
+              <span className="block text-xs opacity-70">Social links</span>
+            </span>
+          </Button>
+          <Button onClick={addNewCallout} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <Tag className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Callout</span>
+              <span className="block text-xs opacity-70">Promo block</span>
+            </span>
+          </Button>
+          <Button onClick={addNewMap} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <MapPin className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Map</span>
+              <span className="block text-xs opacity-70">Location block</span>
+            </span>
+          </Button>
+          <Button onClick={addNewEvent} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <CalendarClock className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Event</span>
+              <span className="block text-xs opacity-70">Calendar row</span>
             </span>
           </Button>
           <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">
@@ -441,6 +643,10 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
                   <Button onClick={addNewBulletedList} variant="outline" className="admin-action">
                     <List className="h-4 w-4" />
                     Add list
+                  </Button>
+                  <Button onClick={addNewHeading} variant="outline" className="admin-action">
+                    <Type className="h-4 w-4" />
+                    Add heading
                   </Button>
                 </div>
               )}

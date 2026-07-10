@@ -50,6 +50,9 @@ app/lint-report.json
 scripts/
 docs/superpowers/
 
+# Local private workspace
+.local/
+
 # Temporary files
 *.tmp
 *.temp

@@ -1,9 +1,13 @@
 import { z } from 'zod';
 import type { LinkData } from '@/components/LinkCard';
+import { isBlockType, type LinkBlockType } from '@/lib/link-blocks';
 
 const optionalString = z.string().nullish();
 const optionalNumber = z.number().int().nonnegative().nullish();
-const linkTypeSchema = z.enum(['link', 'text', 'separator', 'cta']).catch('link');
+const linkTypeSchema = z.string().transform((value) => {
+  if (isBlockType(value)) return value;
+  return 'link';
+});
 const iconTypeSchema = z.enum(['emoji', 'image', 'svg']).optional().catch(undefined);
 const alignmentSchema = z.enum(['left', 'center', 'right']).optional().catch(undefined);
 const sizeSchema = z.enum(['small', 'medium', 'large']).optional().catch(undefined);
@@ -57,7 +61,7 @@ const emptyToUndefined = (value: string | null | undefined) => value || undefine
 
 export function normalizeLinkDto(input: unknown): LinkData {
   const link = linkDtoSchema.parse(input);
-  const type = link.type || 'link';
+  const type = isBlockType(link.type as string) ? link.type : ('link' as LinkBlockType);
 
   return {
     id: String(link.id),

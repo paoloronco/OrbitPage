@@ -1,13 +1,27 @@
-import { useState, useRef } from "react";
+import { type ChangeEvent, type CSSProperties, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, ExternalLink, GripVertical, Upload, Eye, EyeOff, Image, X, MousePointerClick } from "lucide-react";
+import { CalendarClock, Image, MapPin, Plus, Share2, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
+import {
+  type ContactBlockData,
+  type EventBlockData,
+  type LinkBlockType,
+  type MapBlockData,
+  type SocialRowItemData,
+  buildBlockContent,
+  getCalloutData,
+  getContactData,
+  getEventData,
+  getMapData,
+  getSocialRowData,
+  isPublicActionableBlock,
+} from "@/lib/link-blocks";
 
 export interface LinkData {
   id: string;
@@ -26,7 +40,7 @@ export interface LinkData {
   // Alignment for content inside the card: left | center | right
   alignment?: 'left' | 'center' | 'right';
   size?: 'small' | 'medium' | 'large';
-  type?: 'link' | 'text' | 'separator' | 'cta';
+  type?: LinkBlockType;
   isActive?: boolean; // Visibility toggle (undefined treated as true)
   content?: string; // For text-only cards
   clickCount?: number;
@@ -85,7 +99,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
 
-  const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIconUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!isAllowedRasterImageFile(file)) {
@@ -105,7 +119,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
     }
   };
 
-  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!isAllowedRasterImageFile(file)) {
@@ -131,7 +145,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   };
 
   const getCustomStyles = () => {
-    const styles: React.CSSProperties = {};
+    const styles: CSSProperties = {};
     if (link.backgroundColor) {
       styles.backgroundColor = link.backgroundColor;
     }
@@ -149,17 +163,331 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   };
 
   const handleClick = () => {
-    if (!isEditing && link.url) {
+    if (!isEditing && isPublicActionableBlock(link.type) && link.url) {
       window.open(link.url, '_blank');
     }
   };
 
+  const isHeading = link.type === 'heading';
+  const isImage = link.type === 'image';
+  const isContact = link.type === 'contact';
+  const isSocialRow = link.type === 'social_row';
+  const isCallout = link.type === 'callout';
+  const isMap = link.type === 'map';
+  const isEvent = link.type === 'event';
+  const isActionable = isPublicActionableBlock(link.type);
+  const isClickable = isActionable && !!link.url;
+
+  const contactData = getContactData(editLink.content);
+  const socialData = getSocialRowData(editLink.content);
+  const calloutData = getCalloutData(editLink.content);
+  const mapData = getMapData(editLink.content);
+  const eventData = getEventData(editLink.content);
+
+  const updateContactData = (field: keyof ContactBlockData, value: string) => {
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...contactData, [field]: value }) }));
+  };
+
+  const updateCalloutData = (field: keyof ReturnType<typeof getCalloutData>, value: string) => {
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...calloutData, [field]: value }) }));
+  };
+
+  const updateMapData = (field: keyof MapBlockData, value: string) => {
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...mapData, [field]: value }) }));
+  };
+
+  const updateEventData = (field: keyof EventBlockData, value: string) => {
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...eventData, [field]: value }) }));
+  };
+
+  const addSocialItem = () => {
+    setEditLink((prev) => {
+      const current = getSocialRowData(prev.content);
+      return {
+        ...prev,
+        content: buildBlockContent({
+          items: [...(current.items || []), { label: "", url: "" }],
+        }),
+      };
+    });
+  };
+
+  const updateSocialItem = (index: number, field: keyof SocialRowItemData, value: string) => {
+    setEditLink((prev) => {
+      const current = getSocialRowData(prev.content);
+      return {
+        ...prev,
+        content: buildBlockContent({
+          items: current.items.map((item, itemIndex) => (
+            itemIndex === index ? { ...item, [field]: value } : item
+          )),
+        }),
+      };
+    });
+  };
+
+  const removeSocialItem = (index: number) => {
+    setEditLink((prev) => {
+      const current = getSocialRowData(prev.content);
+      return {
+        ...prev,
+        content: buildBlockContent({
+          items: current.items.filter((_, itemIndex) => itemIndex !== index),
+        }),
+      };
+    });
+  };
+
+  const titlePlaceholder = isHeading
+    ? 'Heading title'
+    : isImage
+      ? 'Image title'
+      : isContact
+        ? 'Contact card title'
+        : isCallout
+          ? 'Callout title'
+          : isMap
+            ? 'Map title'
+            : isEvent
+              ? 'Event title'
+              : 'Link title';
+  const showUrlField = isActionable && !isContact && !isSocialRow;
+
   const isVisible = link.isActive !== false;
   const isCta = link.type === 'cta';
+  const renderReadOnlyBody = () => {
+    if (isHeading) {
+      return (
+        <div className="min-w-0">
+          <h3 className="font-bold text-base" style={{ ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+            {link.title || 'Heading'}
+          </h3>
+          {link.description && (
+            <p
+              className="text-sm mt-1"
+              style={{
+                ...(link.textColor ? { color: link.textColor } : {}),
+                ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}),
+                ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}),
+              }}
+            >
+              {link.description}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    if (isImage) {
+      return (
+        <div className="min-w-0">
+          {link.coverImage && (
+            <div className="mb-2 rounded overflow-hidden" style={{ aspectRatio: '16/9' }}>
+              <img
+                src={link.coverImage}
+                alt={link.coverImageAlt || link.title || 'Image block'}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <h3 className="font-semibold truncate" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+            {link.title || 'Image'}
+          </h3>
+          {link.description && (
+            <p
+              className="text-sm line-clamp-2"
+              style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
+            >
+              {link.description}
+            </p>
+          )}
+          {link.url && (
+            <p className="text-xs mt-1 truncate underline font-medium" style={link.textColor ? { color: link.textColor } : undefined}>
+              {link.url}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    if (isContact) {
+      const contactRows = [
+        { label: 'Phone', value: contactData.phone },
+        { label: 'Email', value: contactData.email },
+        { label: 'Website', value: contactData.website },
+        { label: 'Address', value: contactData.address },
+        { label: 'WhatsApp', value: contactData.whatsapp },
+        { label: 'Telegram', value: contactData.telegram },
+      ].filter((row) => row.value);
+      return (
+        <div className="min-w-0">
+          <h3 className="font-semibold" style={{ ...(link.textColor ? { color: link.textColor } : {}) }}>
+            {contactData.name || link.title || 'Contact'}
+          </h3>
+          {(contactData.role || contactData.title) && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {[contactData.role, contactData.title].filter(Boolean).join(' · ')}
+            </p>
+          )}
+          {contactRows.length > 0 && (
+            <div className="mt-2 space-y-1 text-sm">
+              {contactRows.map((row) => (
+                <div key={row.label} className="flex gap-2">
+                  <span className="w-20 text-muted-foreground">{row.label}</span>
+                  <span>{row.value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (isSocialRow) {
+      return (
+        <div className="min-w-0">
+          <h3 className="font-semibold" style={{ ...(link.textColor ? { color: link.textColor } : {}) }}>
+            {link.title || 'Social links'}
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {socialData.items.map((item) => (
+              <a
+                key={`${item.label}-${item.url}`}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-primary/25 px-3 py-1 text-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (isCallout) {
+      return (
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            {calloutData.badge ? (
+              <span className="inline-flex rounded-full bg-primary/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                {calloutData.badge}
+              </span>
+            ) : null}
+            <h3 className="font-semibold truncate">{link.title || 'Callout'}</h3>
+          </div>
+          {link.description && <p className="text-sm mt-1 text-muted-foreground">{link.description}</p>}
+          {link.url && (
+            <p className="text-xs mt-1 truncate underline font-medium">
+              {calloutData.buttonLabel || 'Open'}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    if (isMap) {
+      return (
+        <div className="min-w-0">
+          <h3 className="font-semibold" style={{ ...(link.textColor ? { color: link.textColor } : {}) }}>
+            {mapData.placeName || link.title || 'Map'}
+          </h3>
+          {(mapData.address || link.description) && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {mapData.address || link.description}
+            </p>
+          )}
+          {mapData.mapUrl && (
+            <p className="text-xs mt-1 truncate underline font-medium" style={link.textColor ? { color: link.textColor } : undefined}>
+              {mapData.mapUrl}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    if (isEvent) {
+      return (
+        <div className="min-w-0">
+          <h3 className="font-semibold" style={{ ...(link.textColor ? { color: link.textColor } : {}) }}>
+            {link.title || 'Event'}
+          </h3>
+          {link.description && <p className="text-sm text-muted-foreground mt-1">{link.description}</p>}
+          <p className="text-sm mt-1">
+            {[
+              eventData.date ? `Date: ${eventData.date}` : null,
+              eventData.time ? `· ${eventData.time}` : null,
+              eventData.location ? `· ${eventData.location}` : null,
+            ].filter(Boolean).join(' ')}
+          </p>
+          {eventData.notes && <p className="text-sm text-muted-foreground mt-1">{eventData.notes}</p>}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex-1 min-w-0">
+        {link.coverImage && (
+          <div className="mb-2 rounded overflow-hidden" style={{ aspectRatio: '16/9' }}>
+            <img
+              src={link.coverImage}
+              alt={link.coverImageAlt || ''}
+              loading="lazy"
+              decoding="async"
+              className="w-full h-full object-cover opacity-80"
+            />
+          </div>
+        )}
+        <div className="flex items-center gap-2 mb-1">
+          {isCta && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+              <MousePointerClick className="h-3 w-3" />
+              CTA
+            </span>
+          )}
+          {link.icon && (
+            <div className="flex-shrink-0">
+              {link.iconType === 'image' || link.iconType === 'svg' ? (
+                <img src={link.icon} alt="" className="w-5 h-5 object-cover rounded" />
+              ) : (
+                <span className="text-lg">{link.icon}</span>
+              )}
+            </div>
+          )}
+          <h3 className="font-semibold truncate" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+            {link.title || "Untitled Link"}
+          </h3>
+          <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />
+        </div>
+        {link.description && (
+          <p
+            className="text-sm line-clamp-2"
+            style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
+          >
+            {link.description}
+          </p>
+        )}
+        {isActionable && link.url && (
+          <p
+            className="text-xs mt-1 truncate underline font-medium"
+            style={link.textColor ? { color: link.textColor } : undefined}
+          >
+            {link.url}
+          </p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Card
       className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group cursor-pointer relative ${
+        isClickable ? 'cursor-pointer' : 'cursor-default'
+      } ${
         isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
       } ${isEditing ? 'admin-edit' : ''}`}
       onClick={handleClick}
@@ -173,12 +501,12 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       
       <div className={canReorder ? "ml-6" : ""}>
         {isEditing ? (
-          <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             {isFullEdit && (
               <Input
                 value={editLink.title}
                 onChange={(e) => setEditLink(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Link title"
+                placeholder={titlePlaceholder}
                 className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
               />
             )}
@@ -266,41 +594,237 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             )}
             {isFullEdit && (
               <>
-            <Textarea
-              value={editLink.description}
-              onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Link description"
-              className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
-              rows={2}
-            />
-            <Input
-              value={editLink.url}
-              onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
-              placeholder="https://example.com"
-              className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
-            />
-            {editLink.type === 'cta' && (
-              <div className="space-y-1">
-                <Label className="text-xs">CTA action</Label>
-                <Select
-                  value={editLink.ctaAction || 'book'}
-                  onValueChange={(value: 'book' | 'contact' | 'download' | 'subscribe' | 'buy') =>
-                    setEditLink(prev => ({ ...prev, ctaAction: value }))
-                  }
-                >
-                  <SelectTrigger className="h-8 bg-white text-black">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="book">Book</SelectItem>
-                    <SelectItem value="contact">Contact me</SelectItem>
-                    <SelectItem value="download">Download</SelectItem>
-                    <SelectItem value="subscribe">Subscribe</SelectItem>
-                    <SelectItem value="buy">Buy</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                <Textarea
+                  value={editLink.description}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Block description"
+                  className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
+                  rows={2}
+                />
+                {showUrlField && (
+                  <Input
+                    value={editLink.url}
+                    onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
+                    placeholder="https://example.com"
+                    className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
+                  />
+                )}
+                {isContact && (
+                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <UserCircle2 className="h-4 w-4" />
+                      Contact fields
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={contactData.name || ''}
+                        onChange={(e) => updateContactData('name', e.target.value)}
+                        placeholder="Name"
+                      />
+                      <Input
+                        value={contactData.title || ''}
+                        onChange={(e) => updateContactData('title', e.target.value)}
+                        placeholder="Title"
+                      />
+                    </div>
+                    <Input
+                      value={contactData.role || ''}
+                      onChange={(e) => updateContactData('role', e.target.value)}
+                      placeholder="Role"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={contactData.phone || ''}
+                        onChange={(e) => updateContactData('phone', e.target.value)}
+                        placeholder="Phone"
+                      />
+                      <Input
+                        value={contactData.whatsapp || ''}
+                        onChange={(e) => updateContactData('whatsapp', e.target.value)}
+                        placeholder="WhatsApp (number)"
+                      />
+                    </div>
+                    <Input
+                      value={contactData.email || ''}
+                      onChange={(e) => updateContactData('email', e.target.value)}
+                      placeholder="Email"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={contactData.website || ''}
+                        onChange={(e) => updateContactData('website', e.target.value)}
+                        placeholder="Website"
+                      />
+                      <Input
+                        value={contactData.telegram || ''}
+                        onChange={(e) => updateContactData('telegram', e.target.value)}
+                        placeholder="Telegram (@username)"
+                      />
+                    </div>
+                    <Input
+                      value={contactData.address || ''}
+                      onChange={(e) => updateContactData('address', e.target.value)}
+                      placeholder="Address"
+                    />
+                    <Input
+                      value={contactData.note || ''}
+                      onChange={(e) => updateContactData('note', e.target.value)}
+                      placeholder="Note"
+                    />
+                  </div>
+                )}
+                {isSocialRow && (
+                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Share2 className="h-4 w-4" />
+                      Social links
+                    </div>
+                    {socialData.items.map((item, index) => (
+                      <div key={`${item.label}-${index}`} className="space-y-2 rounded border border-primary/10 bg-white/10 p-2">
+                        <div className="grid grid-cols-[1fr,1fr,auto] gap-2">
+                          <Input
+                            value={item.label}
+                            onChange={(e) => updateSocialItem(index, 'label', e.target.value)}
+                            placeholder="Label"
+                          />
+                          <Input
+                            value={item.url}
+                            onChange={(e) => updateSocialItem(index, 'url', e.target.value)}
+                            placeholder="https://..."
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 text-destructive"
+                            onClick={() => removeSocialItem(index)}
+                            title="Remove social"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={addSocialItem}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add social
+                    </Button>
+                  </div>
+                )}
+                {isCallout && (
+                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Tag className="h-4 w-4" />
+                      Callout settings
+                    </div>
+                    <Input
+                      value={calloutData.badge || ''}
+                      onChange={(e) => updateCalloutData('badge', e.target.value)}
+                      placeholder="Badge (optional)"
+                    />
+                    <Input
+                      value={calloutData.buttonLabel || ''}
+                      onChange={(e) => updateCalloutData('buttonLabel', e.target.value)}
+                      placeholder="Button label"
+                    />
+                  </div>
+                )}
+                {isMap && (
+                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <MapPin className="h-4 w-4" />
+                      Map settings
+                    </div>
+                    <Input
+                      value={mapData.placeName || ''}
+                      onChange={(e) => updateMapData('placeName', e.target.value)}
+                      placeholder="Place name"
+                    />
+                    <Input
+                      value={mapData.address || ''}
+                      onChange={(e) => updateMapData('address', e.target.value)}
+                      placeholder="Address"
+                    />
+                    <Input
+                      value={mapData.mapUrl || ''}
+                      onChange={(e) => updateMapData('mapUrl', e.target.value)}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
+                )}
+                {isEvent && (
+                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <CalendarClock className="h-4 w-4" />
+                      Event settings
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={eventData.date || ''}
+                        onChange={(e) => updateEventData('date', e.target.value)}
+                        placeholder="Date (YYYY-MM-DD)"
+                      />
+                      <Input
+                        value={eventData.time || ''}
+                        onChange={(e) => updateEventData('time', e.target.value)}
+                        placeholder="Start time"
+                      />
+                      <Input
+                        value={eventData.endDate || ''}
+                        onChange={(e) => updateEventData('endDate', e.target.value)}
+                        placeholder="End date"
+                      />
+                      <Input
+                        value={eventData.endTime || ''}
+                        onChange={(e) => updateEventData('endTime', e.target.value)}
+                        placeholder="End time"
+                      />
+                    </div>
+                    <Input
+                      value={eventData.location || ''}
+                      onChange={(e) => updateEventData('location', e.target.value)}
+                      placeholder="Location"
+                    />
+                    <Input
+                      value={eventData.ticketLabel || ''}
+                      onChange={(e) => updateEventData('ticketLabel', e.target.value)}
+                      placeholder="Button label"
+                    />
+                    <Input
+                      value={eventData.notes || ''}
+                      onChange={(e) => updateEventData('notes', e.target.value)}
+                      placeholder="Notes"
+                    />
+                  </div>
+                )}
+                {editLink.type === 'cta' && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">CTA action</Label>
+                    <Select
+                      value={editLink.ctaAction || 'book'}
+                      onValueChange={(value: 'book' | 'contact' | 'download' | 'subscribe' | 'buy') =>
+                        setEditLink(prev => ({ ...prev, ctaAction: value }))
+                      }
+                    >
+                      <SelectTrigger className="h-8 bg-white text-black">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="book">Book</SelectItem>
+                        <SelectItem value="contact">Contact me</SelectItem>
+                        <SelectItem value="download">Download</SelectItem>
+                        <SelectItem value="subscribe">Subscribe</SelectItem>
+                        <SelectItem value="buy">Buy</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
             {/* Link Scheduler */}
             <div className="grid grid-cols-2 gap-2">
@@ -524,55 +1048,8 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
           </div>
         ) : (
             <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              {link.coverImage && (
-                <div className="mb-2 rounded overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                  <img
-                    src={link.coverImage}
-                    alt={link.coverImageAlt || ''}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover opacity-80"
-                  />
-                </div>
-              )}
-              <div className="flex items-center gap-2 mb-1">
-                {isCta && (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
-                    <MousePointerClick className="h-3 w-3" />
-                    CTA
-                  </span>
-                )}
-                {link.icon && (
-                  <div className="flex-shrink-0">
-                    {link.iconType === 'image' || link.iconType === 'svg' ? (
-                      <img src={link.icon} alt="" className="w-5 h-5 object-cover rounded" />
-                    ) : (
-                      <span className="text-lg">{link.icon}</span>
-                    )}
-                  </div>
-                )}
-                <h3 className="font-semibold truncate" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
-                  {link.title || "Untitled Link"}
-                </h3>
-                <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />
-              </div>
-              {link.description && (
-                <p
-                  className="text-sm line-clamp-2"
-                  style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
-                >
-                  {link.description}
-                </p>
-              )}
-              {link.url && (
-                <p
-                  className="text-xs mt-1 truncate underline font-medium"
-                  style={link.textColor ? { color: link.textColor } : undefined}
-                >
-                  {link.url}
-                </p>
-              )}
+            <div className="min-w-0">
+              {renderReadOnlyBody()}
               {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
                 <span className="mt-1 block text-xs text-muted-foreground">
                   {(link.status || 'live').toUpperCase()}
@@ -588,7 +1065,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </span>
               )}
             </div>
-            
+
             {canEdit && (
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-smooth" onClick={(e) => e.stopPropagation()}>
               {canReorder && onMoveUp && (
