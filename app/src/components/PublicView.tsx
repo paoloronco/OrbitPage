@@ -31,13 +31,9 @@ export const PublicView = ({
   footerText,
   privacyPolicyUrl,
   cookiePolicyUrl,
-  ccpaPolicyUrl,
 }: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withBasePath(cookiePolicyUrl.trim()) : undefined;
-  const ccpaHref = ccpaPolicyUrl?.trim()
-    ? withBasePath(ccpaPolicyUrl.trim())
-    : (privacyHref || cookieHref || withBasePath('/privacy'));
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&
@@ -115,18 +111,6 @@ export const PublicView = ({
                   Cookie Policy
                 </a>
               )}
-            </p>
-          )}
-          {ccpaHref && (
-            <p className="text-xs text-muted-foreground opacity-60 break-words">
-              <a
-                href={ccpaHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-primary"
-              >
-                Do not sell my personal information (Non vendere le mie informazioni personali)
-              </a>
             </p>
           )}
           <p className="text-xs text-muted-foreground opacity-60">
