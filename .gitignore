@@ -47,6 +47,7 @@ app/test-results/
 app/e2e-data/
 app/lint-report.json
 scripts/
+docs/superpowers/
 
 # Temporary files
 *.tmp
