@@ -35,19 +35,25 @@ export function ProfileQrCode() {
   }, []);
 
   useEffect(() => {
-    if (!publicUrl || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    if (!publicUrl || !canvas) return;
 
-    QRCode.toCanvas(canvasRef.current, publicUrl, {
+    QRCode.toCanvas(canvas, publicUrl, {
       width: size,
-      margin: 2,
+      margin: 4,
       errorCorrectionLevel: "H",
       color: {
         dark: foreground,
         light: background,
       },
-    }).catch((err) => {
-      setError(err instanceof Error ? err.message : "Failed to render QR code");
-    });
+    })
+      .then(() => {
+        canvas.style.width = "100%";
+        canvas.style.height = "auto";
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Failed to render QR code");
+      });
   }, [background, foreground, publicUrl, size]);
 
   const downloadPng = () => {
@@ -64,7 +70,7 @@ export function ProfileQrCode() {
     if (!publicUrl) return;
     const svg = await QRCode.toString(publicUrl, {
       type: "svg",
-      margin: 2,
+      margin: 4,
       errorCorrectionLevel: "H",
       color: {
         dark: foreground,
@@ -98,13 +104,8 @@ export function ProfileQrCode() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(220px,280px)_1fr]">
         <div className="flex items-center justify-center rounded-lg border border-primary/10 bg-white p-4">
-          <div className="relative aspect-square w-full max-w-[260px] overflow-hidden">
-            <canvas
-              ref={canvasRef}
-              width={size}
-              height={size}
-              className="absolute inset-0 h-full w-full"
-            />
+          <div className="flex w-full max-w-[260px] items-center justify-center">
+            <canvas ref={canvasRef} width={size} height={size} className="block h-auto max-w-full" />
           </div>
         </div>
 
