@@ -8,8 +8,8 @@ on:
     branches: [ "main" ]
 
 env:
-  DOCKERHUB_IMAGE: docker.io/paueron/lynx
-  GHCR_IMAGE: ghcr.io/paoloronco/lynx
+  DOCKERHUB_IMAGE: docker.io/paueron/orbitpage
+  GHCR_IMAGE: ghcr.io/paoloronco/orbitpage
 
 jobs:
   docker:
@@ -31,8 +31,8 @@ jobs:
         name: Resolve package version
         run: |
           set -euo pipefail
-          VERSION="$(node -p "require('./LYNX/package.json').version")"
-          MAJOR_MINOR="$(node -p "require('./LYNX/package.json').version.split('.').slice(0, 2).join('.')")"
+          VERSION="$(node -p "require('./app/package.json').version")"
+          MAJOR_MINOR="$(node -p "require('./app/package.json').version.split('.').slice(0, 2).join('.')")"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "major_minor=$MAJOR_MINOR" >> "$GITHUB_OUTPUT"
 

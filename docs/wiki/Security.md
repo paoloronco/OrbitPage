@@ -1,6 +1,6 @@
 # Security
 
-This page summarizes how Lynx handles security-sensitive behavior. For vulnerability reporting, see the repository `SECURITY.md`.
+This page summarizes how OrbitPage handles security-sensitive behavior. For vulnerability reporting, see the repository `SECURITY.md`.
 
 ## Authentication
 
@@ -12,9 +12,9 @@ This page summarizes how Lynx handles security-sensitive behavior. For vulnerabi
 
 ## Browser Token Storage
 
-In secure browser contexts, Lynx stores the JWT encrypted with AES-GCM in `localStorage`.
+In secure browser contexts, OrbitPage stores the JWT encrypted with AES-GCM in `localStorage`.
 
-When Web Crypto is unavailable on non-secure HTTP contexts, Lynx falls back to `sessionStorage`, which is cleared when the tab/session ends.
+When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage falls back to `sessionStorage`, which is cleared when the tab/session ends.
 
 ## Backend Protections
 
@@ -41,13 +41,13 @@ Recommended production practices:
 
 Uploads are stored in `DATA_DIR/uploads` and served from `/uploads`.
 
-Only expose upload storage that is intended to be public on the profile page. Do not place private files in the upload directory.
+Only expose upload storage that is intended to be public on the public page. Do not place private files in the upload directory.
 
 ## Security Reporting
 
 Report suspected vulnerabilities privately:
 
-- GitHub Security Advisory: <https://github.com/paoloronco/Lynx/security/advisories/new>
+- GitHub Security Advisory: <https://github.com/paoloronco/OrbitPage/security/advisories/new>
 - Email: `info@paoloronco.it`
 
 Do not open public issues for unpatched vulnerabilities.

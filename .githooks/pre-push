@@ -3,13 +3,13 @@
 # Install with: sh scripts/install-git-hooks.sh
 
 echo "========================================================="
-echo "  🛡️  Lynx Pre-Push Hook: Running quality checks...     "
+echo "  OrbitPage Pre-Push Hook: Running quality checks...    "
 echo "========================================================="
 
 set -e
 
 ROOT="$(git rev-parse --show-toplevel)"
-cd "$ROOT/LYNX"
+cd "$ROOT/app"
 
 # 1. Linting
 echo ""
@@ -19,9 +19,7 @@ npm run lint
 # 2. Unit tests (frontend + backend)
 echo ""
 echo "👉 [2/3] Running: Unit Tests (Vitest)..."
-npm run test -- --run
-cd server && npm test -- --run
-cd ..
+npm run test:unit
 
 # 3. Frontend build
 echo ""

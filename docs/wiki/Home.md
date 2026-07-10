@@ -1,12 +1,12 @@
-# Lynx Wiki
+# OrbitPage Wiki
 
-Welcome to the operational documentation for Lynx.
+Welcome to the operational documentation for OrbitPage.
 
 The README is intentionally short and demo-focused. This wiki contains the longer guides for installation, production deployment, configuration, development, indexing, and troubleshooting.
 
 ## Start Here
 
-- [Getting started](./Getting-started.md): try Lynx locally, understand the public/admin split, and create the first admin account.
+- [Getting started](./Getting-started.md): try OrbitPage locally, understand the public/admin split, and create the first admin account.
 - [Deployment](./Deployment.md): production Docker, generic cloud deployment, persistence, upgrades, and reverse proxies.
 - [Configuration](./Configuration.md): environment variables and recommended values.
 - [Development](./Development.md): local development workflow, tests, and repository layout.
@@ -16,17 +16,17 @@ The README is intentionally short and demo-focused. This wiki contains the longe
 
 ## Useful Links
 
-- Demo public page: <https://lynx-demo.paoloronco.it/>
-- Demo admin panel: <https://lynx-demo.paoloronco.it/admin>
-- Repository: <https://github.com/paoloronco/Lynx>
-- Docker Hub: <https://hub.docker.com/r/paueron/lynx>
-- GitHub Container Registry: <https://github.com/paoloronco/Lynx/pkgs/container/lynx>
+- Demo public page: <https://orbitpage-demo.paoloronco.it/>
+- Demo admin panel: <https://orbitpage-demo.paoloronco.it/admin>
+- Repository: <https://github.com/paoloronco/OrbitPage>
+- Docker Hub: <https://hub.docker.com/r/paueron/orbitpage>
+- GitHub Container Registry: <https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage>
 
 ## Demo Credentials
 
 | Area | Value |
 | --- | --- |
-| Admin URL | <https://lynx-demo.paoloronco.it/admin> |
+| Admin URL | <https://orbitpage-demo.paoloronco.it/admin> |
 | Username | `admin` |
 | Password | `ChangeMe123!` |
 

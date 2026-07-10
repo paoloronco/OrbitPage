@@ -1,11 +1,11 @@
 # Development
 
-This page describes the local development workflow for Lynx.
+This page describes the local development workflow for OrbitPage.
 
 ## Repository Layout
 
 ```text
-LYNX/
+app/
   src/           React frontend
   server/        Express backend
   public/        Static public files
@@ -14,18 +14,18 @@ LYNX/
 
 Important files:
 
-- `LYNX/src/pages/Index.tsx`: public profile page
-- `LYNX/src/pages/Admin.tsx`: admin shell
-- `LYNX/src/lib/api-client.ts`: frontend API client and token storage
-- `LYNX/src/lib/theme.ts`: theme configuration and CSS variable application
-- `LYNX/server/server.js`: Express app and API routes
-- `LYNX/server/database.js`: SQLite helpers and migrations
-- `LYNX/server/auth.js`: authentication, JWTs, password helpers, permissions
+- `app/src/pages/Index.tsx`: public page
+- `app/src/pages/Admin.tsx`: admin shell
+- `app/src/lib/api-client.ts`: frontend API client and token storage
+- `app/src/lib/theme.ts`: theme configuration and CSS variable application
+- `app/server/server.js`: Express app and API routes
+- `app/server/database.js`: SQLite helpers and migrations
+- `app/server/auth.js`: authentication, JWTs, password helpers, permissions
 
 ## Install Dependencies
 
 ```bash
-cd LYNX
+cd OrbitPage
 npm ci
 npm run install:server
 ```
@@ -35,14 +35,14 @@ npm run install:server
 Terminal 1:
 
 ```bash
-cd LYNX
+cd OrbitPage
 npm run server:dev
 ```
 
 Terminal 2:
 
 ```bash
-cd LYNX
+cd OrbitPage
 npm run dev
 ```
 
@@ -55,7 +55,7 @@ Open:
 ## Run Production-Style Locally
 
 ```bash
-cd LYNX
+cd OrbitPage
 npm run start
 ```
 
@@ -64,7 +64,7 @@ This builds the frontend and starts the backend server.
 ## Checks
 
 ```bash
-cd LYNX
+cd OrbitPage
 npm run lint
 npm run test:unit
 npm run build
@@ -76,15 +76,15 @@ E2E:
 npm run test:e2e
 ```
 
-All frontend commands should be run from `LYNX/`. Backend-only commands should be run from `LYNX/server/`.
+All frontend commands should be run from `app/`. Backend-only commands should be run from `app/server/`.
 
 ## Database Notes
 
-Lynx uses SQLite. Local data defaults to:
+OrbitPage uses SQLite. Local data defaults to:
 
 ```text
-LYNX/server/lynx.db
-LYNX/server/uploads/
+app/server/orbitpage.db
+app/server/uploads/
 ```
 
 Schema migrations are additive and run on startup. Avoid destructive migrations unless there is a clear migration path and backup guidance.

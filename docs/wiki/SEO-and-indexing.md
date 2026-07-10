@@ -1,6 +1,6 @@
 # SEO and Indexing
 
-Lynx generates search and sharing metadata from the saved profile plus environment variables. Most deployments do not need source-code edits for SEO.
+OrbitPage generates search and sharing metadata from the saved public page plus environment variables. Most deployments do not need source-code edits for SEO.
 
 ## Recommended Production Settings
 
@@ -12,15 +12,15 @@ SEO_INDEXING=true
 
 Then use the admin panel to configure:
 
-- profile name
-- bio
+- page name
+- description
 - page title
 - meta description
 - avatar
 - social links
 - legal policy URLs
 
-## What Lynx Generates
+## What OrbitPage Generates
 
 - HTML title
 - meta description
@@ -41,7 +41,7 @@ Disable indexing without changing source code:
 SEO_INDEXING=false
 ```
 
-This makes Lynx:
+This makes OrbitPage:
 
 - emit `noindex, nofollow, noarchive`
 - serve a restrictive `robots.txt`
@@ -49,23 +49,23 @@ This makes Lynx:
 
 ## Canonical URLs
 
-Set `PUBLIC_SITE_URL` when Lynx is behind:
+Set `PUBLIC_SITE_URL` when OrbitPage is behind:
 
 - a reverse proxy
 - a tunnel
 - a CDN
 - a managed platform that sends internal host headers
 
-Without `PUBLIC_SITE_URL`, Lynx derives canonical URLs from the incoming request host and protocol.
+Without `PUBLIC_SITE_URL`, OrbitPage derives canonical URLs from the incoming request host and protocol.
 
 ## Sitemap
 
-Lynx includes:
+OrbitPage includes:
 
 - the public home page
 - local legal pages when `/privacy` or `/cookies` are configured as profile policy URLs
 
-The sitemap is generated on each request and uses the latest public-content timestamp from profile data, links, theme settings, consent settings, and editable TXT files. This keeps `lastmod` useful for crawlers without requiring a manual rebuild.
+The sitemap is generated on each request and uses the latest public-content timestamp from page data, links, theme settings, consent settings, and editable TXT files. This keeps `lastmod` useful for crawlers without requiring a manual rebuild.
 
 Private routes such as admin, API, health, and unknown SPA routes are excluded and marked `noindex`.
 
@@ -76,4 +76,4 @@ Private routes such as admin, API, health, and unknown SPA routes are excluded a
 - New public pages should enter the sitemap only when they contain durable public content.
 - Public links should remain real anchors when possible.
 - Do not block `/assets`, CSS, JavaScript, or public uploaded images in `robots.txt`.
-- Keep metadata configurable through profile data or environment variables.
+- Keep metadata configurable through page data or environment variables.

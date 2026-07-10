@@ -1,6 +1,6 @@
 # Configuration
 
-Lynx is configured through environment variables. Frontend `VITE_*` values are build-time settings; backend values are runtime settings.
+OrbitPage is configured through environment variables. Frontend `VITE_*` values are build-time settings; backend values are runtime settings.
 
 ## Production Essentials
 
@@ -12,7 +12,7 @@ Lynx is configured through environment variables. Frontend `VITE_*` values are b
 | `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production. |
 | `UPLOAD_STORAGE_QUOTA_MB` | `1024` | Keep local uploads bounded. Raise this only when the data volume is sized accordingly. |
 | `PUBLIC_SITE_URL` | derived from request | Set to the canonical public URL behind proxies or cloud platforms. |
-| `PUBLIC_SITE_NAME` | `Lynx` | Set to your name, brand, or site label. |
+| `PUBLIC_SITE_NAME` | `OrbitPage` | Set to your name, brand, or site label. |
 | `SEO_INDEXING` | `true` | Set to `false` for staging/private deployments. |
 
 ## Runtime Variables
@@ -21,13 +21,13 @@ Lynx is configured through environment variables. Frontend `VITE_*` values are b
 | --- | --- |
 | `JWT_SECRET` | Signs admin JWT sessions. Docker startup aborts when missing. |
 | `PORT` | HTTP listener port. |
-| `DATA_DIR` | Stores `lynx.db` and uploads. |
+| `DATA_DIR` | Stores `orbitpage.db` and uploads. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |
 | `DEMO_MODE` | Disables destructive mutations and resets demo data. Not for normal production. |
 | `ENABLE_HTTPS` | Enables a self-signed HTTPS listener. Usually unnecessary behind real HTTPS proxies. |
 | `SSL_PORT` | HTTPS listener port when `ENABLE_HTTPS=true`. |
-| `BASE_PATH` | Optional mount path, for example `/lynx`. |
+| `BASE_PATH` | Optional mount path, for example `/orbitpage`. |
 | `PUBLIC_BASE_PATH` | Backward-compatible alias for `BASE_PATH`. |
 | `PUBLIC_SITE_URL` | Canonical public URL used for metadata, sitemap, and social previews. |
 | `PUBLIC_SITE_NAME` | Site name used in generated metadata. |
@@ -72,15 +72,15 @@ SEO_INDEXING=false
 
 ## Base Path Deployments
 
-Set `BASE_PATH` when Lynx is mounted below a path:
+Set `BASE_PATH` when OrbitPage is mounted below a path:
 
 ```bash
-BASE_PATH=/lynx
+BASE_PATH=/orbitpage
 ```
 
-With that setting, Lynx serves the app from both root and the base path:
+With that setting, OrbitPage serves the app from both root and the base path:
 
-- `/` and `/lynx`
-- `/admin` and `/lynx/admin`
-- `/api/...` and `/lynx/api/...`
-- `/uploads/...` and `/lynx/uploads/...`
+- `/` and `/orbitpage`
+- `/admin` and `/orbitpage/admin`
+- `/api/...` and `/orbitpage/api/...`
+- `/uploads/...` and `/orbitpage/uploads/...`

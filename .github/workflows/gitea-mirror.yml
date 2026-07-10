@@ -21,5 +21,5 @@ jobs:
 
       - name: Push mirror to Gitea
         run: |
-          git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/Lynx.git
+          git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/OrbitPage.git
           git push gitea --mirror

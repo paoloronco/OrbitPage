@@ -1,6 +1,6 @@
 services:
-  lynx:
-    image: paueron/lynx:latest   # or ghcr.io/paoloronco/lynx:latest
+  orbitpage:
+    image: paueron/orbitpage:latest   # or ghcr.io/paoloronco/orbitpage:latest
     ports:
       - "8080:8080"
     environment:
@@ -11,5 +11,5 @@ services:
       # DATA_DIR: "/app/data"
     volumes:
       # Mount a host directory so the database and uploads survive container updates
-      - ./lynx-data:/app/data
+      - ./orbitpage-data:/app/data
     restart: unless-stopped

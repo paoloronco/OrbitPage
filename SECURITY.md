@@ -8,7 +8,7 @@ Please do not open a public issue for an unpatched vulnerability.
 
 Preferred reporting channels:
 
-- GitHub Security Advisory: <https://github.com/paoloronco/Lynx/security/advisories/new>
+- GitHub Security Advisory: <https://github.com/paoloronco/OrbitPage/security/advisories/new>
 - Email: `info@paoloronco.it`
 
 Include as much of this information as possible:
@@ -47,7 +47,7 @@ These are targets, not contractual guarantees.
 - Stored or reflected XSS with practical impact
 - File upload issues that lead to unauthorized access or execution
 - Sensitive data exposure
-- Dependency vulnerabilities with a realistic exploit path in Lynx
+- Dependency vulnerabilities with a realistic exploit path in OrbitPage
 - Docker or deployment defaults that create unsafe production behavior
 
 ## Out of Scope

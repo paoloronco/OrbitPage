@@ -1,17 +1,17 @@
 # Getting Started
 
-This guide is for evaluating Lynx locally without Docker.
+This guide is for evaluating OrbitPage locally without Docker.
 
-## What Lynx Runs
+## What OrbitPage Runs
 
-Lynx has two surfaces:
+OrbitPage has two surfaces:
 
 | Surface | Purpose | Authentication |
 | --- | --- | --- |
-| Public page | The profile/link page visitors see | None |
-| Admin panel | The private editor for profile, links, theme, analytics, and settings | Username/password |
+| Public page | The public page visitors see | None |
+| Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
 
-The first admin username is `admin`. On a fresh install, Lynx asks you to create the first password when you open `/admin`.
+The first admin username is `admin`. On a fresh install, OrbitPage asks you to create the first password when you open `/admin`.
 
 ## Requirements
 
@@ -22,8 +22,8 @@ The first admin username is `admin`. On a fresh install, Lynx asks you to create
 ## Local Production-Style Run
 
 ```bash
-git clone https://github.com/paoloronco/Lynx.git
-cd Lynx/LYNX
+git clone https://github.com/paoloronco/OrbitPage.git
+cd OrbitPage/app
 npm ci
 npm run install:server
 npm run start
@@ -42,16 +42,16 @@ Open:
 Without custom configuration, local data is stored under:
 
 ```text
-LYNX/server/lynx.db
-LYNX/server/uploads/
+app/server/orbitpage.db
+app/server/uploads/
 ```
 
 Set `DATA_DIR` if you want to store data somewhere else.
 
 ## Try the Demo First
 
-- Public page: <https://lynx-demo.paoloronco.it/>
-- Admin panel: <https://lynx-demo.paoloronco.it/admin>
+- Public page: <https://orbitpage-demo.paoloronco.it/>
+- Admin panel: <https://orbitpage-demo.paoloronco.it/admin>
 - Username: `admin`
 - Password: `ChangeMe123!`
 

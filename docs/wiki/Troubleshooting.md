@@ -5,7 +5,7 @@
 Check whether `JWT_SECRET` is set. Docker production startup requires it.
 
 ```bash
-docker logs lynx
+docker logs orbitpage
 ```
 
 Fix:
@@ -21,10 +21,10 @@ The container likely started without the same persisted data volume.
 Make sure `/app/data` is mounted:
 
 ```bash
--v lynx_data:/app/data
+-v orbitpage_data:/app/data
 ```
 
-For Compose, keep the `./lynx-data:/app/data` mount or migrate the old data directory before recreating the container.
+For Compose, keep the `./orbitpage-data:/app/data` mount or migrate the old data directory before recreating the container.
 
 ## Admin Login Stops Working After Restart
 
@@ -83,15 +83,15 @@ Then refresh the preview in the relevant social platform debugger.
 Use one of the published image paths:
 
 ```bash
-docker pull paueron/lynx:latest
-docker pull ghcr.io/paoloronco/lynx:latest
+docker pull paueron/orbitpage:latest
+docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
 Versioned examples:
 
 ```bash
-docker pull paueron/lynx:4.3
-docker pull ghcr.io/paoloronco/lynx:4.3
+docker pull paueron/orbitpage:4.3
+docker pull ghcr.io/paoloronco/orbitpage:4.3
 ```
 
 ## Local Development Ports

@@ -20,7 +20,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: LYNX
+        working-directory: app
 
     steps:
       - name: Checkout repository
@@ -32,8 +32,8 @@ jobs:
           node-version: 22
           cache: 'npm'
           cache-dependency-path: |
-            LYNX/package-lock.json
-            LYNX/server/package-lock.json
+            app/package-lock.json
+            app/server/package-lock.json
 
       - name: Install frontend dependencies
         run: npm ci
@@ -57,23 +57,23 @@ jobs:
         run: npm run test:unit
 
       - name: Build Docker image for smoke test
-        run: docker build -t lynx-ci-smoke ..
+        run: docker build -t orbitpage-ci-smoke ..
 
       - name: Smoke test Docker image
         run: |
-          docker run -d --name lynx-ci-smoke \
+          docker run -d --name orbitpage-ci-smoke \
             -p 3001:8080 \
             -e JWT_SECRET=ci-smoke-secret-ci-smoke-secret-123456 \
-            lynx-ci-smoke
+            orbitpage-ci-smoke
           for attempt in {1..30}; do
             if curl --fail http://127.0.0.1:3001/health; then
-              docker rm -f lynx-ci-smoke
+              docker rm -f orbitpage-ci-smoke
               exit 0
             fi
             sleep 1
           done
-          docker logs lynx-ci-smoke
-          docker rm -f lynx-ci-smoke
+          docker logs orbitpage-ci-smoke
+          docker rm -f orbitpage-ci-smoke
           exit 1
 
       - name: Install Playwright browsers and system dependencies
@@ -88,6 +88,6 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
-          path: LYNX/playwright-report/
+          path: app/playwright-report/
           retention-days: 30
         continue-on-error: true

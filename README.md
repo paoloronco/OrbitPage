@@ -1,24 +1,24 @@
-# Lynx
+# OrbitPage
 
-### A self-hosted Linktree alternative for creators, developers, and privacy-minded teams.
+### A self-hosted public page for people, brands, venues, events, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.3.28-blue.svg)](https://github.com/paoloronco/Lynx)
-[![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Flynx-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/lynx)
-[![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Flynx-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx/pkgs/container/lynx)
-[![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/Lynx)
-[![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/Lynx)
+[![Version](https://img.shields.io/badge/version-4.3.28-blue.svg)](https://github.com/paoloronco/OrbitPage)
+[![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Forbitpage-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/orbitpage)
+[![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Forbitpage-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage)
+[![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage)
+[![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/OrbitPage)
 
-**Lynx** is an open-source link-in-bio manager you can run on your own server. It gives you a polished public profile page, a private admin panel, themes, scheduled links, click analytics, privacy controls, backup/restore, and production-ready Docker images without requiring an external database.
+**OrbitPage** is an open-source public page manager you can run on your own server. It gives you one polished place for links, text blocks, social destinations, venue details, campaigns, announcements, click analytics, privacy controls, backup/restore, and production-ready Docker images without requiring an external database.
 
-![Lynx public page screenshot](./docs/screenshots/01-public-page.png)
+![OrbitPage public page screenshot](./docs/screenshots/01-public-page.png)
 
-## Why Lynx?
+## Why OrbitPage?
 
-Most link-in-bio tools are either hosted SaaS products or self-hosted projects that need extra services before you can get started. Lynx is built for people who want a clean public page and an admin experience that still feels simple when it runs on their own infrastructure.
+Most public-page tools are either hosted SaaS products or self-hosted projects that need extra services before you can get started. OrbitPage is built for anyone who wants a clean public page and an admin experience that still feels simple when it runs on their own infrastructure.
 
-| If you want... | Lynx gives you... |
+| If you want... | OrbitPage gives you... |
 | --- | --- |
-| A Linktree-style public page | Links, text cards, separators, social links, avatars, cover images, and SEO metadata |
+| A flexible public page | Links, text cards, separators, social links, avatars, cover images, venue or brand details, and SEO metadata |
 | A self-hosted setup | Docker, SQLite, local uploads, health checks, and a single persistent data volume |
 | Control over privacy | Optional analytics, consent/legal settings, no required external database, and self-owned data |
 | A usable admin panel | Live preview, drag-and-drop ordering, theme editing, scheduling, access management, and inline feedback |
@@ -26,7 +26,7 @@ Most link-in-bio tools are either hosted SaaS products or self-hosted projects t
 
 ## Contents
 
-- [Why Lynx?](#why-lynx)
+- [Why OrbitPage?](#why-orbitpage)
 - [Try the Demo](#try-the-demo)
 - [Features](#features)
 - [Screenshots](#screenshots)
@@ -43,13 +43,13 @@ Most link-in-bio tools are either hosted SaaS products or self-hosted projects t
 
 ## Try the Demo
 
-The demo is the fastest way to see both sides of Lynx: the public page visitors see, and the admin panel you use to manage it.
+The demo is the fastest way to see both sides of OrbitPage: the public page visitors see, and the admin panel you use to manage it.
 
 | Area | Link | Login |
 | --- | --- | --- |
-| Public page | [lynx-demo.paoloronco.it](https://lynx-demo.paoloronco.it/) | No login required |
-| About Lynx | [lynx-demo.paoloronco.it/about](https://lynx-demo.paoloronco.it/about) | No login required |
-| Admin panel | [lynx-demo.paoloronco.it/admin](https://lynx-demo.paoloronco.it/admin) | `admin` / `ChangeMe123!` |
+| Public page | [orbitpage-demo.paoloronco.it](https://orbitpage-demo.paoloronco.it/) | No login required |
+| About OrbitPage | [orbitpage-demo.paoloronco.it/about](https://orbitpage-demo.paoloronco.it/about) | No login required |
+| Admin panel | [orbitpage-demo.paoloronco.it/admin](https://orbitpage-demo.paoloronco.it/admin) | `admin` / `ChangeMe123!` |
 
 Demo changes may be reset and should not be used for private data.
 
@@ -57,10 +57,10 @@ Demo changes may be reset and should not be used for private data.
 
 | Area | Highlights |
 | --- | --- |
-| Public page | Profile, avatar, bio, social links, link cards, text cards, separators, cover images, SEO metadata, legal footer links |
+| Public page | Name/brand, avatar or logo, bio/description, social links, link cards, text cards, separators, cover images, SEO metadata, legal footer links |
 | Link management | Link/text/separator blocks, visibility toggles, scheduling, drag-and-drop ordering, JSON import/export |
 | Design | Theme editor, live preview, colors, gradients, typography, spacing, radius, blur, glow, custom CSS |
-| Admin | Profile editor, analytics, privacy/legal settings, access management, password management, demo mode support |
+| Admin | Page editor, analytics, privacy/legal settings, access management, password management, demo mode support |
 | Data ownership | SQLite persistence, local uploads, full JSON backup/restore, Docker volume support |
 | Security | bcrypt password hashing, signed JWT sessions, encrypted browser token storage, rate limits, upload restrictions, storage quota |
 | Deployment | Docker Hub, GHCR, Docker Compose, health endpoint, Cloud Run compatible, no external database required |
@@ -71,9 +71,9 @@ Demo changes may be reset and should not be used for private data.
 | --- | --- |
 | ![Public page](./docs/screenshots/01-public-page.png) | ![Admin link manager](./docs/screenshots/04-admin-links.png) |
 
-| Theme editor | Profile editor |
+| Theme editor | Page editor |
 | --- | --- |
-| ![Theme editor](./docs/screenshots/05-admin-theme.png) | ![Profile editor](./docs/screenshots/03-admin-profile.png) |
+| ![Theme editor](./docs/screenshots/05-admin-theme.png) | ![Page editor](./docs/screenshots/03-admin-profile.png) |
 
 Walkthroughs:
 
@@ -82,16 +82,16 @@ Walkthroughs:
 
 ## Quick Start with Docker
 
-Docker is the recommended way to run Lynx in production or on a home server.
+Docker is the recommended way to run OrbitPage in production or on a home server.
 
 ```bash
-docker run -d --name lynx \
+docker run -d --name orbitpage \
   -p 8080:8080 \
   -e NODE_ENV=production \
   -e PORT=8080 \
   -e JWT_SECRET="$(openssl rand -hex 32)" \
-  -v lynx_data:/app/data \
-  paueron/lynx:latest
+  -v orbitpage_data:/app/data \
+  paueron/orbitpage:latest
 ```
 
 Open:
@@ -103,11 +103,11 @@ The first admin visit asks you to create the admin password. The first username 
 
 ## Quick Start
 
-Use this path when you want to run Lynx from source.
+Use this path when you want to run OrbitPage from source.
 
 ```bash
-git clone https://github.com/paoloronco/Lynx.git
-cd Lynx/LYNX
+git clone https://github.com/paoloronco/OrbitPage.git
+cd OrbitPage/app
 npm ci
 npm run install:server
 npm run start
@@ -119,7 +119,7 @@ Open:
 - Admin panel: http://localhost:3001/admin
 - Health check: http://localhost:3001/health
 
-On the first admin visit, Lynx asks you to create the admin password. The first username is always `admin`.
+On the first admin visit, OrbitPage asks you to create the admin password. The first username is always `admin`.
 
 Requirements:
 
@@ -134,13 +134,13 @@ The same image is published to Docker Hub and GitHub Container Registry.
 Docker Hub:
 
 ```bash
-paueron/lynx:latest
+paueron/orbitpage:latest
 ```
 
 GHCR:
 
 ```bash
-ghcr.io/paoloronco/lynx:latest
+ghcr.io/paoloronco/orbitpage:latest
 ```
 
 The `/app/data` volume stores the SQLite database and uploads. Keep it mounted before upgrading or recreating the container.
@@ -155,7 +155,7 @@ Before exposing the app publicly, replace the sample `JWT_SECRET` in [docker-com
 
 ## Deploy Anywhere
 
-Lynx can run on any platform that supports a Docker container or a Node.js service: Cloud Run, Render, Fly.io, DigitalOcean App Platform, Azure App Service, Koyeb, Northflank, CapRover, Dokku, Coolify, and similar providers.
+OrbitPage can run on any platform that supports a Docker container or a Node.js service: Cloud Run, Render, Fly.io, DigitalOcean App Platform, Azure App Service, Koyeb, Northflank, CapRover, Dokku, Coolify, and similar providers.
 
 For container platforms, the deployment shape is always the same:
 
@@ -175,7 +175,7 @@ The production essentials are intentionally small:
 | --- | --- | --- |
 | `JWT_SECRET` | Yes in Docker/production | Stable signing key for admin sessions. Use a long random value. |
 | `PORT` | Usually | HTTP port. Docker defaults to `8080`; local Node defaults to `3001`. |
-| `DATA_DIR` | Recommended for custom installs | Directory for `lynx.db` and uploads. Docker uses `/app/data`. |
+| `DATA_DIR` | Recommended for custom installs | Directory for `orbitpage.db` and uploads. Docker uses `/app/data`. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Optional | Maximum total upload storage in MB. Defaults to `1024`. |
 | `PUBLIC_SITE_URL` | Recommended behind proxies | Canonical public URL for SEO, sitemap, and social previews. |
 | `SEO_INDEXING` | Optional | Set to `false` for staging/private deployments. |
@@ -188,7 +188,7 @@ See the full environment reference in [docs/wiki/Configuration.md](./docs/wiki/C
 Development mode uses two processes: Express for the API and Vite for the frontend.
 
 ```bash
-cd Lynx/LYNX
+cd OrbitPage/app
 npm ci
 npm run install:server
 ```
@@ -221,7 +221,7 @@ npm run build
 
 ## Search and Sharing
 
-Lynx generates metadata from your saved profile and environment, so most deployments do not need source-code SEO edits.
+OrbitPage generates metadata from your saved public page and environment, so most deployments do not need source-code SEO edits.
 
 Recommended production values:
 
@@ -231,11 +231,11 @@ PUBLIC_SITE_NAME="Your Name or Brand"
 SEO_INDEXING=true
 ```
 
-Use `SEO_INDEXING=false` for private, staging, or preview deployments. Lynx will emit `noindex` metadata and a blocking `robots.txt`.
+Use `SEO_INDEXING=false` for private, staging, or preview deployments. OrbitPage will emit `noindex` metadata and a blocking `robots.txt`.
 
-Lynx also serves:
+OrbitPage also serves:
 
-- profile-based title and meta description
+- page-based title and meta description
 - canonical URL
 - Open Graph and Twitter Card metadata
 - Schema.org JSON-LD
@@ -321,7 +321,7 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 
 ### README and discoverability refresh
 
-- Reworks the GitHub README around self-hosted Linktree alternative positioning.
+- Reworks the GitHub README around self-hosted public page positioning.
 - Adds clearer demo, Docker quick start, feature, screenshot, and deployment sections.
 
 </details>
@@ -539,7 +539,7 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 
 ### Dual container registry publishing
 
-- Publishes Docker images to both Docker Hub (`paueron/lynx`) and GitHub Container Registry (`ghcr.io/paoloronco/lynx`).
+- Publishes Docker images to both Docker Hub (`paueron/orbitpage`) and GitHub Container Registry (`ghcr.io/paoloronco/orbitpage`).
 - Keeps `latest`, semantic version, minor version, and short SHA tags aligned across both registries.
 - Documents the GHCR pull path alongside the existing Docker Hub distribution path.
 
@@ -551,7 +551,7 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 ### Deployment and admin startup fixes
 
 - Aligns both Dockerfiles on the production runtime contract: Node 22, `PORT=8080`, `DATA_DIR=/app/data`, and mandatory `JWT_SECRET`.
-- Makes the `LYNX/` Dockerfile self-contained for `docker build ./LYNX`.
+- Makes the `app/` Dockerfile self-contained for `docker build ./app`.
 - Avoids the expected unauthenticated `/api/auth/verify` call when opening the admin login page without a stored token.
 
 </details>
@@ -668,7 +668,7 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 
 ### Privacy and legal UX
 
-- Moved Privacy Policy and Cookie Policy editing from Profile to Privacy.
+- Moved Privacy Policy and Cookie Policy editing from the page editor to Privacy.
 - Kept the existing profile-backed fields as the single persistence source.
 - Forced the public `/privacy` page to render in a readable light layout.
 
@@ -679,9 +679,9 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 
 ### Legal links
 
-- Made Admin > Profile > Legal links the single editable source for Privacy Policy and Cookie Policy URLs.
+- Made Admin > Page > Legal links the single editable source for Privacy Policy and Cookie Policy URLs.
 - Shows configured legal links in the public footer and hides them cleanly when empty.
-- Makes the Privacy & Cookies tab read-only for policy URLs, with an Edit in Profile shortcut.
+- Makes the Privacy & Cookies tab read-only for policy URLs, with an Edit in Page shortcut.
 - Ensures the native cookie banner derives policy URLs from the profile instead of storing duplicate consent-config URLs.
 
 </details>

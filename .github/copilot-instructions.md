@@ -1,32 +1,33 @@
-# Lynx AI Agent Instructions
+# OrbitPage AI Agent Instructions
 
 ## Project Overview
-Lynx is a self-hosted link management system built with React, Express, and SQLite. The application enables users to create a personalized hub for their digital touchpoints with secure authentication and customizable themes.
+OrbitPage is a self-hosted public page manager built with React, Express, and SQLite. The application lets people, brands, venues, events, and teams publish one customizable page for links, content, social destinations, and public information.
 
 ## Architecture
 
-### Frontend (`/src`)
+### Frontend (`app/src`)
 - React + Vite application using TypeScript
-- Tailwind CSS for styling with a custom design system (`/src/index.css`)
+- Tailwind CSS for styling with a custom design system (`app/src/index.css`)
 - Component structure:
-  - `/components` - UI components including admin and public views
-  - `/hooks` - Custom React hooks
-  - `/lib` - Core utilities and API client
-  - `/pages` - Main route components (Admin, Index, NotFound)
+  - `app/src/components` - UI components including admin and public views
+  - `app/src/hooks` - Custom React hooks
+  - `app/src/lib` - Core utilities and API client
+  - `app/src/pages` - Main route components (Admin, Index, NotFound)
 
-### Backend (`/server`)
+### Backend (`app/server`)
 - Express.js server with SQLite database
 - Key modules:
-  - `server.js` - Main Express application
-  - `auth.js` - Authentication logic (JWT + bcrypt)
-  - `database.js` - SQLite operations
-  - `uploads/` - User uploaded assets
+  - `app/server/server.js` - Main Express application
+  - `app/server/auth.js` - Authentication logic (JWT + bcrypt)
+  - `app/server/database.js` - SQLite operations
+  - `app/server/uploads/` - User uploaded assets
 
 ## Critical Workflows
 
 ### Development
 1. Start development:
    ```bash
+   cd app
    npm install
    # Terminal 1 - Frontend
    npm run dev
@@ -46,14 +47,12 @@ Lynx is a self-hosted link management system built with React, Express, and SQLi
 
 ### Authentication
 - JWT tokens with 7-day expiry
-- Default admin credentials:
-  - Username: `admin`
-  - Password: `ChangeMe123!`
+- First setup creates the initial admin password. The initial username is `admin`.
 
 ## Project Conventions
 
 ### State Management
-- API calls centralized in `/lib/api-client.ts`
+- API calls centralized in `app/src/lib/api-client.ts`
 - Authentication state handled via `auth.ts`
 - Theme customization through CSS variables in `index.css`
 
@@ -70,7 +69,7 @@ Lynx is a self-hosted link management system built with React, Express, and SQLi
 
 2. File Uploads
    - Handled in `server.js` via multer
-   - Stored in `/server/uploads/`
+   - Stored in `app/server/uploads/`
 
 ## Common Tasks
 1. Adding new link types:

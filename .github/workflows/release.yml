@@ -35,8 +35,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          VERSION="$(node -p "require('./LYNX/package.json').version")"
-          SERVER_VERSION="$(node -p "require('./LYNX/server/package.json').version")"
+          VERSION="$(node -p "require('./app/package.json').version")"
+          SERVER_VERSION="$(node -p "require('./app/server/package.json').version")"
 
           if [ "$VERSION" != "$SERVER_VERSION" ]; then
             echo "::error::Frontend version ($VERSION) and backend version ($SERVER_VERSION) must match."
@@ -52,7 +52,7 @@ jobs:
           git fetch --tags origin
 
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "::error::Tag $TAG already exists. Bump LYNX/package.json and LYNX/server/package.json before pushing to main."
+            echo "::error::Tag $TAG already exists. Bump app/package.json and app/server/package.json before pushing to main."
             exit 1
           fi
 

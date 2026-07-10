@@ -1,13 +1,13 @@
-# Contributing to Lynx
+# Contributing to OrbitPage
 
-Thanks for helping improve Lynx. This guide keeps the local setup, checks, and contribution flow aligned with the current repository structure.
+Thanks for helping improve OrbitPage. This guide keeps the local setup, checks, and contribution flow aligned with the current repository structure.
 
 ## Project Layout
 
-Application code lives under `LYNX/`.
+Application code lives under `app/`.
 
 ```text
-LYNX/
+app/
   src/      React frontend (Vite + TypeScript)
   server/   Express backend (Node.js + SQLite)
   public/   Static assets copied into the frontend build
@@ -26,8 +26,8 @@ Repository-level files contain Docker, CI, release, and documentation configurat
 ## Local Setup
 
 ```bash
-git clone https://github.com/paoloronco/Lynx.git
-cd Lynx/LYNX
+git clone https://github.com/paoloronco/OrbitPage.git
+cd OrbitPage/app
 npm ci
 npm run install:server
 ```
@@ -53,14 +53,14 @@ Development uses two processes.
 Terminal 1:
 
 ```bash
-cd LYNX
+cd OrbitPage/app
 npm run server:dev
 ```
 
 Terminal 2:
 
 ```bash
-cd LYNX
+cd OrbitPage/app
 npm run dev
 ```
 
@@ -75,7 +75,7 @@ Open:
 Run these before opening a pull request:
 
 ```bash
-cd LYNX
+cd OrbitPage/app
 npm run lint
 npm run test:unit
 npm run build
@@ -150,9 +150,9 @@ ci(release): publish versioned github releases
 
 ## Backend and Data
 
-Lynx uses SQLite through `LYNX/server/database.js`.
+OrbitPage uses SQLite through `app/server/database.js`.
 
-- Local data defaults to `LYNX/server/lynx.db`.
+- Local data defaults to `app/server/orbitpage.db`.
 - Docker data belongs in `/app/data`.
 - Uploads are stored under `DATA_DIR/uploads`.
 - Schema changes should be additive so existing installs can start after an upgrade.
@@ -170,9 +170,9 @@ Lynx uses SQLite through `LYNX/server/database.js`.
 - [ ] The change is focused and easy to review.
 - [ ] Documentation is updated when needed.
 - [ ] Tests are added or updated for behavior changes.
-- [ ] `npm run lint` has been run from `LYNX/`.
-- [ ] `npm run test:unit` has been run from `LYNX/`.
-- [ ] `npm run build` has been run from `LYNX/`.
+- [ ] `npm run lint` has been run from `app/`.
+- [ ] `npm run test:unit` has been run from `app/`.
+- [ ] `npm run build` has been run from `app/`.
 - [ ] E2E tests are run or explicitly called out as not applicable.
 
 ## Release Notes
@@ -181,4 +181,4 @@ Maintainers handle version bumps, tags, GitHub releases, and published Docker im
 
 ## License
 
-By contributing to Lynx, you agree that your contribution will be licensed under the MIT License in [LICENSE.txt](./LICENSE.txt).
+By contributing to OrbitPage, you agree that your contribution will be licensed under the MIT License in [LICENSE.txt](./LICENSE.txt).
