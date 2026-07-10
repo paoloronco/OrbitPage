@@ -98,12 +98,14 @@ export function ProfileQrCode() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(220px,280px)_1fr]">
         <div className="flex items-center justify-center rounded-lg border border-primary/10 bg-white p-4">
-          <canvas
-            ref={canvasRef}
-            width={size}
-            height={size}
-            className="aspect-square h-auto w-full max-w-[260px]"
-          />
+          <div className="relative aspect-square w-full max-w-[260px] overflow-hidden">
+            <canvas
+              ref={canvasRef}
+              width={size}
+              height={size}
+              className="absolute inset-0 h-full w-full"
+            />
+          </div>
         </div>
 
         <div className="min-w-0 space-y-4">
