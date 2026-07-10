@@ -21,6 +21,7 @@ describe('link schemas', () => {
       type: 'link',
       iconType: 'emoji',
       isActive: true,
+      status: 'live',
     });
   });
 

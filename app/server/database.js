@@ -134,6 +134,11 @@ export const initializeDatabase = () => {
   // Link scheduler
   db.run(`ALTER TABLE links ADD COLUMN start_date TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN end_date TEXT`, (err) => { /* ignore if exists */ });
+  db.run(`ALTER TABLE links ADD COLUMN status TEXT DEFAULT 'live'`, (err) => { /* ignore if exists */ });
+  db.run(`ALTER TABLE links ADD COLUMN start_time TEXT`, (err) => { /* ignore if exists */ });
+  db.run(`ALTER TABLE links ADD COLUMN end_time TEXT`, (err) => { /* ignore if exists */ });
+  db.run(`ALTER TABLE links ADD COLUMN timezone TEXT`, (err) => { /* ignore if exists */ });
+  db.run(`ALTER TABLE links ADD COLUMN campaign_name TEXT`, (err) => { /* ignore if exists */ });
   // Cover / header image
   db.run(`ALTER TABLE links ADD COLUMN cover_image TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN cover_image_alt TEXT`, (err) => { /* ignore if exists */ });

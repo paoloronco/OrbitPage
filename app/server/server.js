@@ -499,6 +499,71 @@ const getPublicProfilePayload = async () => {
   };
 };
 
+const LINK_STATUSES = new Set(['draft', 'live', 'expired']);
+
+const normalizeLinkStatus = (status) => {
+  const value = String(status || 'live').trim().toLowerCase();
+  return LINK_STATUSES.has(value) ? value : 'live';
+};
+
+const parseTimeToMinutes = (value) => {
+  if (typeof value !== 'string' || !/^\d{2}:\d{2}$/.test(value)) return null;
+  const [hours, minutes] = value.split(':').map(Number);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+};
+
+const getDatePartsForTimezone = (date, timezone) => {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone || process.env.TZ || 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const parts = Object.fromEntries(
+      formatter.formatToParts(date).map((part) => [part.type, part.value])
+    );
+    const hour = Number(parts.hour === '24' ? '00' : parts.hour);
+    const minute = Number(parts.minute);
+    return {
+      date: `${parts.year}-${parts.month}-${parts.day}`,
+      minutes: hour * 60 + minute,
+    };
+  } catch {
+    return {
+      date: date.toISOString().slice(0, 10),
+      minutes: date.getUTCHours() * 60 + date.getUTCMinutes(),
+    };
+  }
+};
+
+const isLinkPubliclyVisible = (link, now = new Date()) => {
+  if (link.is_active === 0) return false;
+
+  const status = normalizeLinkStatus(link.status);
+  if (status !== 'live') return false;
+
+  const { date: currentDate, minutes: currentMinutes } = getDatePartsForTimezone(
+    now,
+    link.timezone || process.env.TZ || 'UTC'
+  );
+  const startDate = link.start_date || null;
+  const endDate = link.end_date || null;
+  const startMinutes = parseTimeToMinutes(link.start_time);
+  const endMinutes = parseTimeToMinutes(link.end_time);
+
+  if (startDate && startDate > currentDate) return false;
+  if (endDate && endDate < currentDate) return false;
+  if ((!startDate || startDate <= currentDate) && startMinutes != null && startMinutes > currentMinutes) return false;
+  if ((!endDate || endDate >= currentDate) && endMinutes != null && endMinutes < currentMinutes) return false;
+
+  return true;
+};
+
 const formatLinkPayload = (link) => {
   const icon = link.icon && (link.icon.startsWith('data:image/') || link.icon.startsWith('blob:'))
     ? link.icon
@@ -525,8 +590,13 @@ const formatLinkPayload = (link) => {
     size: link.size || 'medium',
     isActive: link.is_active !== 0,
     clickCount: link.click_count || 0,
+    status: normalizeLinkStatus(link.status),
+    campaignName: link.campaign_name || null,
     startDate: link.start_date || null,
+    startTime: link.start_time || null,
     endDate: link.end_date || null,
+    endTime: link.end_time || null,
+    timezone: link.timezone || null,
     coverImage: link.cover_image || undefined,
     coverImageAlt: link.cover_image_alt || undefined,
     createdAt: link.created_at,
@@ -535,16 +605,9 @@ const formatLinkPayload = (link) => {
 };
 
 const getPublicLinksPayload = async () => {
-  const today = new Date().toISOString().slice(0, 10);
-  const links = await dbAll(
-    `SELECT * FROM links WHERE is_active = 1
-     AND (start_date IS NULL OR start_date <= ?)
-     AND (end_date IS NULL OR end_date >= ?)
-     ORDER BY sort_order`,
-    [today, today]
-  );
+  const links = await dbAll('SELECT * FROM links WHERE is_active = 1 ORDER BY sort_order');
 
-  return links.map(formatLinkPayload);
+  return links.filter((link) => isLinkPubliclyVisible(link)).map(formatLinkPayload);
 };
 
 const getPublicThemePayload = async () => {
@@ -1855,53 +1918,11 @@ app.get('/api/links', async (req, res) => {
     if (isAdmin) {
       links = await dbAll('SELECT * FROM links ORDER BY sort_order');
     } else {
-      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-      links = await dbAll(
-        `SELECT * FROM links WHERE is_active = 1
-         AND (start_date IS NULL OR start_date <= ?)
-         AND (end_date IS NULL OR end_date >= ?)
-         ORDER BY sort_order`,
-        [today, today]
-      );
+      const rows = await dbAll('SELECT * FROM links WHERE is_active = 1 ORDER BY sort_order');
+      links = rows.filter((link) => isLinkPubliclyVisible(link));
     }
-    
-    // Format links for response
-    const formattedLinks = links.map(link => {
-      // Check if icon is base64 data URL and ensure it's preserved
-      const icon = link.icon && (link.icon.startsWith('data:image/') || link.icon.startsWith('blob:')) 
-        ? link.icon 
-        : link.icon || null;
-        
-      return {
-        id: link.id,
-        title: link.title,
-        description: link.description || '',
-        url: link.url || '',
-        icon: icon,
-        iconType: link.icon_type || (icon ? 'image' : undefined),
-        // Provide content and parsed text items for text cards
-        content: link.content || null,
-        textItems: link.text_items ? (() => { try { return JSON.parse(link.text_items); } catch { return null; } })() : null,
-        type: link.type || 'link',
-        backgroundColor: link.background_color || undefined,
-  titleFontFamily: link.title_font_family || undefined,
-  descriptionFontFamily: link.description_font_family || undefined,
-  alignment: link.text_alignment || undefined,
-  titleFontSize: link.title_font_size || undefined,
-  descriptionFontSize: link.description_font_size || undefined,
-        textColor: link.text_color || undefined,
-        order: link.sort_order || 0,
-        size: link.size || 'medium',
-        isActive: link.is_active !== 0,
-        clickCount: link.click_count || 0,
-        startDate: link.start_date || null,
-        endDate: link.end_date || null,
-        coverImage: link.cover_image || undefined,
-        coverImageAlt: link.cover_image_alt || undefined,
-        createdAt: link.created_at,
-        updatedAt: link.updated_at
-      };
-    });
+
+    const formattedLinks = links.map(formatLinkPayload);
 
     res.json(formattedLinks);
   } catch (error) {
@@ -1954,8 +1975,13 @@ app.get('/api/links/export', authenticateToken, requireAnyPermission('links:writ
       sortOrder: link.sort_order,
       isActive: link.is_active !== 0,
       clickCount: link.click_count || 0,
+      status: normalizeLinkStatus(link.status),
+      campaignName: link.campaign_name || null,
       startDate: link.start_date || null,
+      startTime: link.start_time || null,
       endDate: link.end_date || null,
+      endTime: link.end_time || null,
+      timezone: link.timezone || null,
       coverImage: link.cover_image || null,
       coverImageAlt: link.cover_image_alt || null,
     }));
@@ -1998,9 +2024,9 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             title_font_family, description_font_family,
             text_alignment, title_font_size, description_font_size,
             text_items, sort_order, is_active,
-            click_count, start_date, end_date,
+            click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone,
             cover_image, cover_image_alt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
@@ -2022,8 +2048,13 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             link.sortOrder ?? index,
             link.isActive !== false ? 1 : 0,
             link.clickCount || 0,
+            normalizeLinkStatus(link.status),
+            link.campaignName || null,
             link.startDate || null,
+            link.startTime || null,
             link.endDate || null,
+            link.endTime || null,
+            link.timezone || null,
             link.coverImage || null,
             link.coverImageAlt || null
           ]
@@ -2089,7 +2120,7 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
           : (link.clickCount || 0);
 
         await dbRun(
-          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, start_date, end_date, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             linkId,
             link.title,
@@ -2111,8 +2142,13 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
             link.titleFontSize || null,
             link.descriptionFontSize || null,
             clickCount,
+            normalizeLinkStatus(link.status),
+            link.campaignName || null,
             link.startDate || null,
+            link.startTime || null,
             link.endDate || null,
+            link.endTime || null,
+            link.timezone || null,
             link.coverImage || null,
             link.coverImageAlt || null
           ]

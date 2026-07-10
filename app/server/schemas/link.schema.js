@@ -38,8 +38,13 @@ export const LinkSchema = z.object({
   content: z.string().max(10000).nullable().optional(),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.number().int().nullable().optional(),
+  status: z.enum(['draft', 'live', 'expired']).nullable().optional().default('live'),
+  campaignName: z.string().max(200).nullable().optional(),
   startDate: z.string().max(10).nullable().optional(),
   endDate: z.string().max(10).nullable().optional(),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
+  timezone: z.string().max(100).nullable().optional(),
   // clickCount is preserved on import so analytics survive a round-trip export/import.
   clickCount: z.number().int().nonnegative().nullable().optional(),
   coverImage: z.string().max(5000000).nullable().optional(),

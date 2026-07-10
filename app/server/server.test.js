@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 
 vi.hoisted(() => {
@@ -57,6 +57,10 @@ describe('API Endpoints', () => {
       uploads: [],
     });
     vi.mocked(restoreApplicationBackup).mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('GET /health should return 200 and status ok', async () => {
@@ -190,6 +194,133 @@ describe('API Endpoints', () => {
     expect(response.body.profile.cookie_policy_url).toBe('https://example.com/cookies');
     expect(response.body.links).toHaveLength(1);
     expect(response.body.theme.primary).toBe('#111111');
+  });
+
+  it('GET /api/public-page hides draft, expired, and out-of-window links', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-10T10:30:00.000Z'));
+
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({
+        name: 'Paolo',
+        bio: 'Test bio',
+        avatar: '/uploads/avatar.png',
+        social_links: '{}',
+        show_avatar: 1,
+      })
+      .mockResolvedValueOnce({
+        full_config: JSON.stringify({ primary: '#111111', background: '#ffffff', foreground: '#222222' }),
+      });
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      {
+        id: 'draft-link',
+        title: 'Draft',
+        url: 'https://example.com/draft',
+        type: 'link',
+        is_active: 1,
+        status: 'draft',
+        sort_order: 0,
+      },
+      {
+        id: 'expired-status-link',
+        title: 'Expired Status',
+        url: 'https://example.com/expired-status',
+        type: 'link',
+        is_active: 1,
+        status: 'expired',
+        sort_order: 1,
+      },
+      {
+        id: 'future-link',
+        title: 'Future',
+        url: 'https://example.com/future',
+        type: 'link',
+        is_active: 1,
+        status: 'live',
+        start_date: '2026-07-11',
+        sort_order: 2,
+      },
+      {
+        id: 'before-hours-link',
+        title: 'Before Hours',
+        url: 'https://example.com/before-hours',
+        type: 'link',
+        is_active: 1,
+        status: 'live',
+        start_date: '2026-07-10',
+        start_time: '11:00',
+        sort_order: 3,
+      },
+      {
+        id: 'current-link',
+        title: 'Current',
+        url: 'https://example.com/current',
+        type: 'link',
+        is_active: 1,
+        status: 'live',
+        start_date: '2026-07-10',
+        start_time: '09:00',
+        end_date: '2026-07-10',
+        end_time: '12:00',
+        sort_order: 4,
+      },
+      {
+        id: 'legacy-live-link',
+        title: 'Legacy Live',
+        url: 'https://example.com/legacy',
+        type: 'link',
+        is_active: 1,
+        sort_order: 5,
+      },
+    ]);
+
+    const response = await request(app).get('/api/public-page');
+
+    expect(response.status).toBe(200);
+    expect(response.body.links.map((link) => link.id)).toEqual(['current-link', 'legacy-live-link']);
+    expect(response.body.links[0]).toMatchObject({
+      status: 'live',
+      startDate: '2026-07-10',
+      startTime: '09:00',
+      endDate: '2026-07-10',
+      endTime: '12:00',
+    });
+    expect(response.body.links[1].status).toBe('live');
+  });
+
+  it('GET /api/links includes campaign scheduling fields for admins', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      {
+        id: 'campaign-link',
+        title: 'Campaign Link',
+        description: '',
+        url: 'https://example.com',
+        type: 'link',
+        is_active: 1,
+        status: 'live',
+        campaign_name: 'Summer launch',
+        start_date: '2026-07-10',
+        start_time: '09:00',
+        end_date: '2026-07-12',
+        end_time: '18:30',
+        timezone: 'Europe/Rome',
+        sort_order: 0,
+      },
+    ]);
+
+    const response = await request(app).get('/api/links');
+
+    expect(response.status).toBe(200);
+    expect(response.body[0]).toMatchObject({
+      id: 'campaign-link',
+      status: 'live',
+      campaignName: 'Summer launch',
+      startDate: '2026-07-10',
+      startTime: '09:00',
+      endDate: '2026-07-12',
+      endTime: '18:30',
+      timezone: 'Europe/Rome',
+    });
   });
 
   it('GET /orbitpage/api/public-page should serve the same API through BASE_PATH', async () => {
