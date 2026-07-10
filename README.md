@@ -264,6 +264,9 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 ## 📝 Changelog
 
 <details>
+<summary><strong>Show full changelog</strong></summary>
+
+<details>
 <summary><strong>v4.3.28</strong></summary>
 
 ### Automatic sitemap freshness
@@ -767,6 +770,8 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - Added theme controls for page styling, typography, title, meta description, and footer text.
 - Added Docker startup validation for `JWT_SECRET`.
 - Added optional self-signed HTTPS support with `ENABLE_HTTPS=true`.
+
+</details>
 
 </details>
 
