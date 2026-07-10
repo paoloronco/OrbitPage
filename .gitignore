@@ -1,6 +1,7 @@
 # Claude Code local directory
 .claude/
 CLAUDE.md
+AGENTS.md
 
 # Dependencies
 node_modules/
