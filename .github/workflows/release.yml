@@ -51,20 +51,30 @@ jobs:
           TAG="v${VERSION}"
           git fetch --tags origin
 
+          TAG_EXISTS=false
+          RELEASE_EXISTS=false
+
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "::error::Tag $TAG already exists. Bump app/package.json and app/server/package.json before pushing to main."
-            exit 1
+            TAG_EXISTS=true
           fi
 
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::Release $TAG already exists. Bump the app version before pushing to main."
-            exit 1
+            RELEASE_EXISTS=true
+          fi
+
+          if [ "$RELEASE_EXISTS" = "true" ]; then
+            echo "::notice::Release $TAG already exists. Skipping release creation."
+          elif [ "$TAG_EXISTS" = "true" ]; then
+            echo "::notice::Tag $TAG already exists. Reusing it to create the missing release."
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "tag_exists=$TAG_EXISTS" >> "$GITHUB_OUTPUT"
+          echo "release_exists=$RELEASE_EXISTS" >> "$GITHUB_OUTPUT"
 
       - name: Create tag
+        if: ${{ steps.version.outputs.tag_exists != 'true' }}
         run: |
           set -euo pipefail
           TAG="${{ steps.version.outputs.tag }}"
@@ -74,6 +84,7 @@ jobs:
           git push origin "$TAG"
 
       - name: Create GitHub release
+        if: ${{ steps.version.outputs.release_exists != 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
