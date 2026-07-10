@@ -184,7 +184,8 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
   };
 
   return (
-    <Card className="glass-card p-8 text-center transition-smooth hover:glow-effect">
+    <div className="space-y-6">
+      <Card className="glass-card p-8 text-center transition-smooth hover:glow-effect">
       <div className="relative inline-block mb-6">
         {current.showAvatar !== false && (
         <Avatar className="w-24 h-24">
@@ -611,7 +612,8 @@ export const ProfileSection = ({ profile, onProfileUpdate }: ProfileSectionProps
           </div>
         </div>
       )}
+      </Card>
       <ProfileQrCode />
-    </Card>
+    </div>
   );
 };

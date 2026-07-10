@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { Download, ExternalLink, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { publicUrlApi } from "@/lib/api-client";
@@ -80,11 +81,11 @@ export function ProfileQrCode() {
   };
 
   return (
-    <section className="border-t border-primary/10 pt-5 text-left">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <QrCode className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-foreground">Public QR</h2>
+    <Card className="glass-card p-6 text-left transition-smooth hover:glow-effect">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <QrCode className="h-4 w-4 shrink-0 text-primary" />
+          <h2 className="truncate text-base font-semibold text-foreground">Public QR</h2>
         </div>
         {publicUrl && (
           <a href={publicUrl} target="_blank" rel="noopener noreferrer">
@@ -95,13 +96,18 @@ export function ProfileQrCode() {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[auto_1fr]">
-        <div className="flex justify-center rounded-lg border border-primary/10 bg-white p-3">
-          <canvas ref={canvasRef} width={size} height={size} className="h-40 w-40" />
+      <div className="grid gap-6 lg:grid-cols-[minmax(220px,280px)_1fr]">
+        <div className="flex items-center justify-center rounded-lg border border-primary/10 bg-white p-4">
+          <canvas
+            ref={canvasRef}
+            width={size}
+            height={size}
+            className="aspect-square h-auto w-full max-w-[260px]"
+          />
         </div>
 
-        <div className="space-y-3">
-          <div className="space-y-1">
+        <div className="min-w-0 space-y-4">
+          <div className="space-y-1.5">
             <Label className="text-xs">Locked URL</Label>
             <Input value={publicUrl || "Loading..."} readOnly className="glass-card border-primary/20 text-xs" />
             <p className="text-[10px] text-muted-foreground opacity-70">
@@ -109,17 +115,17 @@ export function ProfileQrCode() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-1">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="min-w-0 space-y-1.5">
               <Label className="text-xs">Foreground</Label>
-              <Input type="color" value={foreground} onChange={(e) => setForeground(e.target.value)} className="h-8 w-full" />
+              <Input type="color" value={foreground} onChange={(e) => setForeground(e.target.value)} className="h-10 w-full" />
             </div>
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1.5">
               <Label className="text-xs">Background</Label>
-              <Input type="color" value={background} onChange={(e) => setBackground(e.target.value)} className="h-8 w-full" />
+              <Input type="color" value={background} onChange={(e) => setBackground(e.target.value)} className="h-10 w-full" />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs">Size</Label>
+            <div className="min-w-0 space-y-1.5 sm:col-span-2">
+              <Label className="text-xs">Output size</Label>
               <Input
                 type="number"
                 min={160}
@@ -127,14 +133,14 @@ export function ProfileQrCode() {
                 step={40}
                 value={size}
                 onChange={(e) => setSize(Math.max(160, Math.min(1024, Number(e.target.value) || 320)))}
-                className="h-8 w-full"
+                className="h-10 w-full"
               />
             </div>
           </div>
 
           {error && <p className="text-xs font-medium text-destructive">{error}</p>}
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 pt-1">
             <Button type="button" onClick={downloadPng} size="sm" variant="outline" disabled={!publicUrl}>
               <Download className="h-4 w-4" />
               PNG
@@ -146,6 +152,6 @@ export function ProfileQrCode() {
           </div>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
