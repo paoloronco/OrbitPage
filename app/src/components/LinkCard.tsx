@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { CalendarClock, Image, MapPin, Plus, Share2, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
@@ -793,17 +792,23 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 )}
                 {isSeparator && (
                   <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-medium">Boxed separator</div>
-                        <p className="text-xs text-muted-foreground">
-                          Adds background and border. Off keeps it as a line only.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={separatorData.boxed === true}
-                        onCheckedChange={(checked) => updateSeparatorData('boxed', checked)}
-                      />
+                    <div className="space-y-1">
+                      <Label className="text-xs">Separator background</Label>
+                      <Select
+                        value={separatorData.boxed === true ? 'full' : 'transparent'}
+                        onValueChange={(value: 'transparent' | 'full') => updateSeparatorData('boxed', value === 'full')}
+                      >
+                        <SelectTrigger className="h-8 bg-white text-black">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="transparent">Transparent line</SelectItem>
+                          <SelectItem value="full">Full background</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Transparent keeps a classic separator. Full background turns it into a boxed section label.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1149,18 +1154,20 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             )}
 
             {canEditStyle && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${isSeparator && separatorData.boxed !== true ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {(!isSeparator || separatorData.boxed === true) && (
+                <div className="space-y-1">
+                  <Label className="text-xs">{isSeparator ? 'Full Background' : 'Background'}</Label>
+                  <Input
+                    type="color"
+                    value={editLink.backgroundColor || '#000000'}
+                    onChange={(e) => setEditLink(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                    className="h-8 w-full"
+                  />
+                </div>
+              )}
               <div className="space-y-1">
-                <Label className="text-xs">{isSeparator ? 'Box Background' : 'Background'}</Label>
-                <Input
-                  type="color"
-                  value={editLink.backgroundColor || '#000000'}
-                  onChange={(e) => setEditLink(prev => ({ ...prev, backgroundColor: e.target.value }))}
-                  className="h-8 w-full"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Text Color</Label>
+                <Label className="text-xs">{isSeparator ? 'Line/Text Color' : 'Text Color'}</Label>
                 <Input
                   type="color"
                   value={editLink.textColor || '#ffffff'}
