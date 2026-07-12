@@ -2342,6 +2342,60 @@ app.put('/api/theme', authenticateToken, requirePermission('theme:write'), async
   }
 });
 
+const MAP_PREVIEW_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const mapPreviewCache = new Map();
+
+app.get('/api/map-preview', apiLimiter, async (req, res) => {
+  const query = typeof req.query.query === 'string' ? req.query.query.trim() : '';
+  if (!query || query.length > 300) {
+    return res.status(400).json({ error: 'A valid map query is required' });
+  }
+
+  const cacheKey = query.toLocaleLowerCase('it');
+  const cached = mapPreviewCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < MAP_PREVIEW_CACHE_TTL_MS) {
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.json(cached.value);
+  }
+
+  try {
+    const lookupUrl = new URL('https://nominatim.openstreetmap.org/search');
+    lookupUrl.searchParams.set('format', 'jsonv2');
+    lookupUrl.searchParams.set('limit', '1');
+    lookupUrl.searchParams.set('accept-language', 'it');
+    lookupUrl.searchParams.set('q', query);
+
+    const response = await fetch(lookupUrl, {
+      signal: AbortSignal.timeout(8000),
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': `OrbitPage/${APP_VERSION} (map preview)`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Map provider returned ${response.status}`);
+    }
+
+    const results = await response.json();
+    const result = Array.isArray(results) ? results[0] : null;
+    if (!result?.lat || !result?.lon) {
+      return res.status(404).json({ error: 'Map location not found' });
+    }
+
+    const value = {
+      lat: String(result.lat),
+      lon: String(result.lon),
+      displayName: typeof result.display_name === 'string' ? result.display_name : query,
+    };
+    mapPreviewCache.set(cacheKey, { timestamp: Date.now(), value });
+    res.set('Cache-Control', 'public, max-age=86400');
+    return res.json(value);
+  } catch (error) {
+    console.error('Map preview lookup failed:', error?.message || error);
+    return res.status(502).json({ error: 'Map preview is temporarily unavailable' });
+  }
+});
+
 // Utility Routes
 app.get('/api/generate-password', (req, res) => {
   const password = generateSecurePassword();

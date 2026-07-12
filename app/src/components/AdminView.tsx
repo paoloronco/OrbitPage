@@ -322,6 +322,7 @@ export const AdminView = ({
               <div className="admin-main-column">
                 <LinkManager
                   links={links}
+                  theme={theme}
                   onLinksUpdate={onLinksUpdate}
                   editMode={linkEditMode}
                 />

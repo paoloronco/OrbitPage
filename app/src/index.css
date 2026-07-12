@@ -243,6 +243,15 @@
     -webkit-backdrop-filter: none;
   }
 
+  .orbitpage-admin .public-block-preview .glass-card {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--glass-tint) 12%, transparent), transparent), var(--glass-bg);
+    border: var(--glass-border);
+    box-shadow: var(--card-glow, var(--shadow-card));
+    color: hsl(var(--card-foreground));
+    backdrop-filter: blur(var(--blur-intensity, 20px));
+    -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
+  }
+
   .orbitpage-admin .glow-effect,
   .orbitpage-admin .hover\:glow-effect:hover {
     box-shadow: 0 18px 48px rgb(15 23 42 / 0.1);

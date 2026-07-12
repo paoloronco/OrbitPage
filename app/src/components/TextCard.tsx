@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { type CSSProperties, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // removed large Textarea editor to keep the card compact
@@ -19,9 +19,10 @@ interface TextCardProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
+  publicPreviewStyle?: CSSProperties;
 }
 
-export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full' }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
 
@@ -220,7 +221,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             <GripVertical className="w-4 h-4 text-muted-foreground" />
           </div>
         )}
-        <div className="pointer-events-none">
+        <div className="public-block-preview pointer-events-none" style={publicPreviewStyle}>
           <PublicBlockRenderer link={link} />
         </div>
         <div className="pointer-events-auto absolute right-2 top-2 z-20">

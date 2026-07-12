@@ -96,7 +96,7 @@ export const getContactData = (content: string | null | undefined): ContactBlock
   };
 };
 
-export const getSocialRowData = (content: string | null | undefined): SocialRowBlockData => {
+export const getSocialRowDraftData = (content: string | null | undefined): SocialRowBlockData => {
   const parsed = parseBlockContent<SocialRowBlockData>(content);
   if (!isPlainObject(parsed)) return {};
 
@@ -109,10 +109,15 @@ export const getSocialRowData = (content: string | null | undefined): SocialRowB
       label: toString(entry.label),
       url: toString(entry.url),
     } : undefined))
-    .filter((item): item is SocialRowItemData => Boolean(item?.label && item?.url));
+    .filter((item): item is SocialRowItemData => Boolean(item));
 
   return { items };
 };
+
+export const getSocialRowData = (content: string | null | undefined): SocialRowBlockData => ({
+  items: (getSocialRowDraftData(content).items || [])
+    .filter((item) => Boolean(item.label && item.url)),
+});
 
 export const getCalloutData = (content: string | null | undefined): CalloutBlockData => {
   const parsed = parseBlockContent<CalloutBlockData>(content);

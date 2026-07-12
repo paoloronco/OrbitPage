@@ -21,7 +21,7 @@ import {
   getEventData,
   getMapData,
   getSeparatorData,
-  getSocialRowData,
+  getSocialRowDraftData,
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
 
@@ -75,9 +75,10 @@ interface LinkCardProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
+  publicPreviewStyle?: CSSProperties;
 }
 
-export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full' }: LinkCardProps) => {
+export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle }: LinkCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
 
@@ -193,7 +194,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const isClickable = isActionable && !!link.url;
 
   const contactData = getContactData(editLink.content);
-  const socialData = getSocialRowData(editLink.content);
+  const socialData = getSocialRowDraftData(editLink.content);
   const calloutData = getCalloutData(editLink.content);
   const mapData = getMapData(editLink.content);
   const eventData = getEventData(editLink.content);
@@ -221,7 +222,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
   const addSocialItem = () => {
     setEditLink((prev) => {
-      const current = getSocialRowData(prev.content);
+      const current = getSocialRowDraftData(prev.content);
       return {
         ...prev,
         content: buildBlockContent({
@@ -233,7 +234,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
   const updateSocialItem = (index: number, field: keyof SocialRowItemData, value: string) => {
     setEditLink((prev) => {
-      const current = getSocialRowData(prev.content);
+      const current = getSocialRowDraftData(prev.content);
       return {
         ...prev,
         content: buildBlockContent({
@@ -247,7 +248,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
   const removeSocialItem = (index: number) => {
     setEditLink((prev) => {
-      const current = getSocialRowData(prev.content);
+      const current = getSocialRowDraftData(prev.content);
       return {
         ...prev,
         content: buildBlockContent({
@@ -343,7 +344,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
           </div>
         )}
         <div>
-          <div className="pointer-events-none">
+          <div className="public-block-preview pointer-events-none" style={publicPreviewStyle}>
             <PublicBlockRenderer link={link} />
           </div>
           <div className="pointer-events-auto absolute right-2 top-2 z-20">

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CalendarClock, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
@@ -9,15 +9,17 @@ import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
 import { type LinkBlockType, buildBlockContent } from "@/lib/link-blocks";
+import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 
 interface LinkManagerProps {
   links: LinkData[];
+  theme: ThemeConfig;
   editMode?: LinkEditMode;
   // Called only when user clicks Save
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
 }
 
-export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkManagerProps) => {
+export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: LinkManagerProps) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,6 +29,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const publicPreviewStyle = getThemeCssVariables(theme) as CSSProperties;
 
   // Keep working copy in sync when parent provides a new links array
   useEffect(() => {
@@ -678,6 +681,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   editMode={editMode}
+                  publicPreviewStyle={publicPreviewStyle}
                 />
               ) : (
                 <LinkCard
@@ -688,6 +692,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   isDragging={draggedItem === link.id}
                   editMode={editMode}
+                  publicPreviewStyle={publicPreviewStyle}
                 />
               )}
             </div>

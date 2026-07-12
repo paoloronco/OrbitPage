@@ -168,13 +168,12 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
 
     const controller = new AbortController();
     setIsResolvingMap(true);
-    fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=it&q=${encodeURIComponent(mapQuery)}`, {
+    fetch(apiPath(`/map-preview?query=${encodeURIComponent(mapQuery)}`), {
       signal: controller.signal,
     })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Map lookup failed")))
-      .then((results: Array<{ lat?: string; lon?: string }>) => {
+      .then((result: { lat?: string; lon?: string }) => {
         if (cancelled) return;
-        const result = results[0];
         setCoordinates(toCoordinate(result?.lat, result?.lon));
         setIsResolvingMap(false);
       })
