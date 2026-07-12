@@ -2,6 +2,7 @@ import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { LinkData } from "./LinkCard";
 import { withBasePath } from "@/lib/base-path";
+import { getSocialRowData } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 
 interface ProfileData {
@@ -50,7 +51,10 @@ export const PublicView = ({
     if (link.type === 'separator') return true;
     if (link.type === 'heading') return link.title.trim() !== '' || link.description.trim() !== '';
     if (link.type === 'image') return (link.url || link.coverImage) !== '';
-    if (link.type === 'contact' || link.type === 'social_row' || link.type === 'callout' || link.type === 'map' || link.type === 'event') {
+    if (link.type === 'social_row') {
+      return (getSocialRowData(link.content).items || []).length > 0;
+    }
+    if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event') {
       return (
         link.title.trim() !== '' ||
         link.description.trim() !== '' ||
