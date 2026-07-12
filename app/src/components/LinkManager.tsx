@@ -108,6 +108,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
       description: '',
       url: '',
       type: 'separator',
+      content: buildBlockContent({ boxed: false }),
       isActive: true,
     };
     const updated = [...workingLinks, newSeparator];

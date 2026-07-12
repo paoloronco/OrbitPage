@@ -43,6 +43,10 @@ export interface EventBlockData {
   notes?: string;
 }
 
+export interface SeparatorBlockData {
+  boxed?: boolean;
+}
+
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -143,6 +147,15 @@ export const getEventData = (content: string | null | undefined): EventBlockData
     location: toString((parsed as Record<string, unknown>).location),
     ticketLabel: toString((parsed as Record<string, unknown>).ticketLabel),
     notes: toString((parsed as Record<string, unknown>).notes),
+  };
+};
+
+export const getSeparatorData = (content: string | null | undefined): SeparatorBlockData => {
+  const parsed = parseBlockContent<SeparatorBlockData>(content);
+  if (!isPlainObject(parsed)) return {};
+
+  return {
+    boxed: (parsed as Record<string, unknown>).boxed === true,
   };
 };
 

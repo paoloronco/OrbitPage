@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { CalendarClock, Image, MapPin, Plus, Share2, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
@@ -20,6 +21,7 @@ import {
   getContactData,
   getEventData,
   getMapData,
+  getSeparatorData,
   getSocialRowData,
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
@@ -88,7 +90,18 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const canReorder = editMode === 'full';
 
   const handleSave = () => {
-    onUpdate(editLink);
+    const sanitizedLink = editLink.type === 'separator'
+      ? {
+          ...editLink,
+          description: '',
+          url: '',
+          icon: undefined,
+          iconType: undefined,
+          coverImage: undefined,
+          coverImageAlt: undefined,
+        }
+      : editLink;
+    onUpdate(sanitizedLink);
     setIsEditing(false);
   };
 
@@ -170,6 +183,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   };
 
   const isHeading = link.type === 'heading';
+  const isSeparator = link.type === 'separator';
   const isImage = link.type === 'image';
   const isContact = link.type === 'contact';
   const isSocialRow = link.type === 'social_row';
@@ -184,6 +198,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const calloutData = getCalloutData(editLink.content);
   const mapData = getMapData(editLink.content);
   const eventData = getEventData(editLink.content);
+  const separatorData = getSeparatorData(editLink.content);
 
   const updateContactData = (field: keyof ContactBlockData, value: string) => {
     setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...contactData, [field]: value }) }));
@@ -199,6 +214,10 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
   const updateEventData = (field: keyof EventBlockData, value: string) => {
     setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...eventData, [field]: value }) }));
+  };
+
+  const updateSeparatorData = (field: keyof ReturnType<typeof getSeparatorData>, value: boolean) => {
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...separatorData, [field]: value }) }));
   };
 
   const addSocialItem = () => {
@@ -691,13 +710,15 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             )}
             {isFullEdit && (
               <>
-                <Textarea
-                  value={editLink.description}
-                  onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Block description"
-                  className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
-                  rows={2}
-                />
+                {!isSeparator && (
+                  <Textarea
+                    value={editLink.description}
+                    onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Block description"
+                    className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
+                    rows={2}
+                  />
+                )}
                 {showUrlField && (
                   <Input
                     value={editLink.url}
@@ -768,6 +789,22 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                       onChange={(e) => updateContactData('note', e.target.value)}
                       placeholder="Note"
                     />
+                  </div>
+                )}
+                {isSeparator && (
+                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-medium">Boxed separator</div>
+                        <p className="text-xs text-muted-foreground">
+                          Adds background and border. Off keeps it as a line only.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={separatorData.boxed === true}
+                        onCheckedChange={(checked) => updateSeparatorData('boxed', checked)}
+                      />
+                    </div>
                   </div>
                 )}
                 {isSocialRow && (
@@ -1005,7 +1042,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             )}
 
             {/* Icon Upload */}
-            {canEditImages && (
+            {canEditImages && !isSeparator && (
             <div className="space-y-2">
               <Label className="text-sm font-medium">Icon</Label>
               <div className="flex items-center gap-2">
@@ -1034,7 +1071,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
             )}
 
-            {canEditImages && (
+            {canEditImages && !isSeparator && (
             <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-1">
                 <Image className="w-3.5 h-3.5" />
@@ -1114,7 +1151,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             {canEditStyle && (
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Background</Label>
+                <Label className="text-xs">{isSeparator ? 'Box Background' : 'Background'}</Label>
                 <Input
                   type="color"
                   value={editLink.backgroundColor || '#000000'}

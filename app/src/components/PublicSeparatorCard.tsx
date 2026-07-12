@@ -1,13 +1,19 @@
 import type { LinkData } from "./LinkCard";
-import { getPublicBlockPadding, getPublicBlockStyle } from "@/lib/public-block-style";
+import { getSeparatorData } from "@/lib/link-blocks";
+import { getPublicBlockPadding } from "@/lib/public-block-style";
 
 export const PublicSeparatorCard = ({ link }: { link: LinkData }) => {
-  const hasPanel = Boolean(link.backgroundColor);
-  const style = getPublicBlockStyle(link);
+  const { boxed } = getSeparatorData(link.content);
+  const style = {
+    ...(boxed && link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
+    ...(link.textColor ? { color: link.textColor } : {}),
+    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
+    ...(link.alignment ? { textAlign: link.alignment } : {}),
+  };
 
   return (
     <div
-      className={`${hasPanel ? `rounded-md ${getPublicBlockPadding(link.size)}` : "py-1"} flex items-center gap-3`}
+      className={`${boxed ? `rounded-md border border-current/15 ${getPublicBlockPadding(link.size)}` : "py-1"} flex items-center gap-3`}
       style={style}
     >
       <div className="h-px flex-1 bg-current opacity-25" />
