@@ -86,7 +86,11 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
 
             {visibleLinks.length > 0 && (
               <div className="public-card-stack flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
-            {visibleLinks.map(link => <PublicBlockRenderer key={link.id} link={link} />)}
+            {visibleLinks.map((link, index) => (
+              <div key={link.id} className={`content-card-variant-${index % 6}`}>
+                <PublicBlockRenderer link={link} />
+              </div>
+            ))}
               </div>
             )}
 

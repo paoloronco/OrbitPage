@@ -1,62 +1,64 @@
-import type { ThemeConfig } from "@/lib/theme";
+import type { ThemeConfig } from '@/lib/theme';
+
+type CardSurface = ThemeConfig['contentCard'];
 
 export interface CardThemePreset {
   id: string;
   name: string;
   description: string;
   mood: string;
-  card: ThemeConfig["contentCard"];
+  mode: 'mono' | 'multi';
+  card: CardSurface;
+  variants: CardSurface[];
 }
 
-const card = (
-  id: string,
-  name: string,
-  description: string,
-  mood: string,
-  colors: Omit<ThemeConfig["contentCard"], "direction"> & { direction?: string },
-): CardThemePreset => ({
-  id,
-  name,
-  description,
-  mood,
-  card: { direction: "145deg", ...colors },
+const surface = (background: string, backgroundSecondary: string, foreground: string, muted: string, border: string, accent: string, accentForeground: string, direction = '145deg'): CardSurface => ({
+  background, backgroundSecondary, foreground, muted, border, accent, accentForeground, direction,
 });
+const mono = (id: string, name: string, description: string, mood: string, card: CardSurface): CardThemePreset => ({ id, name, description, mood, mode: 'mono', card, variants: [card] });
+const multi = (id: string, name: string, description: string, mood: string, variants: CardSurface[]): CardThemePreset => ({ id, name, description, mood, mode: 'multi', card: variants[0], variants });
 
 export const cardThemePresets: CardThemePreset[] = [
-  card("ink-signal", "Ink Signal", "Near-black cards with crisp type and an electric blue action.", "Dark / precise", {
-    background: "#111827", backgroundSecondary: "#1f2937", foreground: "#f8fafc", muted: "#aebbd0", border: "#334155", accent: "#3b82f6", accentForeground: "#f8fafc",
-  }),
-  card("porcelain", "Porcelain", "Clean warm-white surfaces with navy type and a confident cobalt CTA.", "Light / clean", {
-    background: "#fffdf8", backgroundSecondary: "#f4efe5", foreground: "#172033", muted: "#667085", border: "#d9d1c4", accent: "#155eef", accentForeground: "#f8fafc",
-  }),
-  card("citrus-press", "Citrus Press", "Graphic cream cards, dark ink and a punchy citrus action color.", "Editorial / bold", {
-    background: "#fff7d6", backgroundSecondary: "#f4e7ae", foreground: "#26251e", muted: "#6f694d", border: "#d4c36e", accent: "#d64f18", accentForeground: "#fffaf0", direction: "90deg",
-  }),
-  card("ocean-ledger", "Ocean Ledger", "Deep teal surfaces with airy labels and a bright aqua signal.", "Coastal / premium", {
-    background: "#0d3440", backgroundSecondary: "#164d58", foreground: "#effcfa", muted: "#abd3d0", border: "#2d6870", accent: "#5eead4", accentForeground: "#10343a",
-  }),
-  card("cherry-club", "Cherry Club", "Burgundy depth, soft rose type and a high-energy cherry CTA.", "Social / dramatic", {
-    background: "#321521", backgroundSecondary: "#4a1d2c", foreground: "#fff1f4", muted: "#d7a9b5", border: "#71364a", accent: "#ff5b78", accentForeground: "#2b111a",
-  }),
-  card("moss-paper", "Moss Paper", "Natural paper tones with forest text and an earthy olive action.", "Organic / calm", {
-    background: "#eef0df", backgroundSecondary: "#dfe4c8", foreground: "#253127", muted: "#63705f", border: "#b9c29f", accent: "#4f6f52", accentForeground: "#f7faef",
-  }),
-  card("cobalt-poster", "Cobalt Poster", "Poster-blue cards with warm white text and a decisive red button.", "Graphic / direct", {
-    background: "#173f9f", backgroundSecondary: "#2456bd", foreground: "#fff8e8", muted: "#cfdbff", border: "#7e9be7", accent: "#f05a3f", accentForeground: "#fffaf4", direction: "90deg",
-  }),
-  card("mono-redline", "Mono Redline", "Quiet monochrome cards sharpened by one precise red action.", "Minimal / exact", {
-    background: "#f6f6f2", backgroundSecondary: "#e9e9e3", foreground: "#20201e", muted: "#686864", border: "#c8c8c1", accent: "#d83232", accentForeground: "#fff8f5",
-  }),
-  card("violet-studio", "Violet Studio", "Soft lilac surfaces, plum typography and a saturated violet CTA.", "Creative / soft", {
-    background: "#f7f0fa", backgroundSecondary: "#eadcf0", foreground: "#38243e", muted: "#79657f", border: "#cfb9d6", accent: "#76529d", accentForeground: "#fff9ff",
-  }),
-  card("terracotta", "Terracotta", "Sun-baked clay cards with cream lettering and apricot actions.", "Warm / crafted", {
-    background: "#59372d", backgroundSecondary: "#71483a", foreground: "#fff3e8", muted: "#dfbdac", border: "#936250", accent: "#f29a6e", accentForeground: "#3a211b",
-  }),
-  card("highlighter", "Highlighter", "Charcoal cards and acid-lime actions built for maximum visibility.", "Bold / high contrast", {
-    background: "#20231d", backgroundSecondary: "#30352a", foreground: "#f5f8ed", muted: "#b7c0aa", border: "#4a5240", accent: "#c8f33d", accentForeground: "#20231d",
-  }),
-  card("skyline", "Skyline", "Cool mist cards, strong slate type and a clear azure interaction color.", "Fresh / versatile", {
-    background: "#eef7fb", backgroundSecondary: "#dceef5", foreground: "#183442", muted: "#607b88", border: "#b3d4df", accent: "#087ea4", accentForeground: "#f5fcff",
-  }),
+  mono('ink-signal', 'Mono · Ink Signal', 'Dark editorial cards with a sharp blue signal.', 'Editorial', surface('#111827', '#1f2937', '#f9fafb', '#cbd5e1', '#334155', '#3b82f6', '#ffffff')),
+  mono('porcelain', 'Mono · Porcelain', 'Quiet warm cards with precise black typography.', 'Minimal', surface('#fffdf7', '#f4efe3', '#171717', '#57534e', '#d6d3d1', '#171717', '#ffffff')),
+  mono('ocean-ledger', 'Mono · Ocean Ledger', 'Deep blue surfaces with cool cyan actions.', 'Professional', surface('#0b2545', '#133c67', '#f0f9ff', '#bae6fd', '#2b5d87', '#38bdf8', '#082f49')),
+  mono('moss-paper', 'Mono · Moss Paper', 'Natural green cards with soft paper contrast.', 'Organic', surface('#e7eadf', '#d7ddc8', '#26351f', '#526149', '#aab89b', '#395b2c', '#ffffff')),
+  mono('mono-redline', 'Mono · Redline', 'Neutral monochrome cards with a disciplined red accent.', 'Graphic', surface('#f5f5f4', '#e7e5e4', '#1c1917', '#57534e', '#a8a29e', '#dc2626', '#ffffff')),
+  mono('highlighter', 'Mono · Highlighter', 'Bold yellow cards built for direct calls to action.', 'Energetic', surface('#fde047', '#facc15', '#1c1917', '#44403c', '#ca8a04', '#1c1917', '#ffffff')),
+  multi('sunset-stack', 'Multi · Sunset Stack', 'Warm cards alternate through coral, amber and wine.', 'Warm', [
+    surface('#fb7185', '#e11d48', '#fff7ed', '#ffe4e6', '#be123c', '#fff7ed', '#9f1239'),
+    surface('#f59e0b', '#ea580c', '#1c1917', '#422006', '#c2410c', '#1c1917', '#ffffff'),
+    surface('#fff7ed', '#fed7aa', '#7c2d12', '#9a3412', '#fb923c', '#c2410c', '#ffffff'),
+    surface('#881337', '#4c0519', '#fff1f2', '#fecdd3', '#be123c', '#fb7185', '#4c0519'),
+  ]),
+  multi('coastal-sequence', 'Multi · Coastal Sequence', 'A calm sequence of navy, teal, sky and mist.', 'Calm', [
+    surface('#0f172a', '#164e63', '#f0fdfa', '#a5f3fc', '#155e75', '#22d3ee', '#083344'),
+    surface('#0f766e', '#14b8a6', '#f0fdfa', '#ccfbf1', '#2dd4bf', '#f0fdfa', '#115e59'),
+    surface('#7dd3fc', '#38bdf8', '#082f49', '#0c4a6e', '#0284c7', '#082f49', '#ffffff'),
+    surface('#f0fdfa', '#cffafe', '#134e4a', '#0f766e', '#5eead4', '#0f766e', '#ffffff'),
+  ]),
+  multi('studio-pop', 'Multi · Studio Pop', 'Primary colors rotate like a graphic poster system.', 'Playful', [
+    surface('#2563eb', '#1d4ed8', '#eff6ff', '#dbeafe', '#60a5fa', '#facc15', '#172554'),
+    surface('#dc2626', '#991b1b', '#fff7ed', '#fee2e2', '#f87171', '#facc15', '#450a0a'),
+    surface('#facc15', '#eab308', '#1c1917', '#44403c', '#ca8a04', '#2563eb', '#ffffff'),
+    surface('#fff7ed', '#ffedd5', '#1e3a8a', '#475569', '#fdba74', '#dc2626', '#ffffff'),
+  ]),
+  multi('garden-notes', 'Multi · Garden Notes', 'Forest, sage and clay tones create an organic rhythm.', 'Natural', [
+    surface('#14532d', '#166534', '#f0fdf4', '#bbf7d0', '#22c55e', '#fbbf24', '#422006'),
+    surface('#84a98c', '#52796f', '#081c15', '#1b4332', '#354f52', '#081c15', '#ffffff'),
+    surface('#ecfccb', '#d9f99d', '#365314', '#4d7c0f', '#bef264', '#3f6212', '#ffffff'),
+    surface('#c2410c', '#9a3412', '#fff7ed', '#fed7aa', '#fb923c', '#ffedd5', '#7c2d12'),
+  ]),
+  multi('night-market', 'Multi · Night Market', 'Dark saturated cards shift through neon city colors.', 'Nightlife', [
+    surface('#18181b', '#27272a', '#fafafa', '#d4d4d8', '#52525b', '#22d3ee', '#083344'),
+    surface('#4c0519', '#881337', '#fff1f2', '#fecdd3', '#be123c', '#fb7185', '#4c0519'),
+    surface('#3b0764', '#6b21a8', '#faf5ff', '#e9d5ff', '#9333ea', '#d8b4fe', '#3b0764'),
+    surface('#78350f', '#b45309', '#fffbeb', '#fde68a', '#d97706', '#facc15', '#422006'),
+  ]),
+  multi('pastel-relay', 'Multi · Pastel Relay', 'Soft lilac, peach, mint and sky cards rotate gently.', 'Soft', [
+    surface('#ede9fe', '#ddd6fe', '#4c1d95', '#6d28d9', '#c4b5fd', '#7c3aed', '#ffffff'),
+    surface('#ffedd5', '#fed7aa', '#7c2d12', '#9a3412', '#fdba74', '#ea580c', '#ffffff'),
+    surface('#d1fae5', '#a7f3d0', '#064e3b', '#047857', '#6ee7b7', '#059669', '#ffffff'),
+    surface('#e0f2fe', '#bae6fd', '#0c4a6e', '#0369a1', '#7dd3fc', '#0284c7', '#ffffff'),
+  ]),
 ];

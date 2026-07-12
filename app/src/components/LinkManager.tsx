@@ -10,7 +10,7 @@ import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
 import { type LinkBlockType, buildBlockContent } from "@/lib/link-blocks";
-import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
+import { getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -35,7 +35,10 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
   }, []);
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const publicPreviewStyle = getThemeCssVariables(theme) as CSSProperties;
+  const publicPreviewStyle = (index: number) => ({
+    ...getThemeCssVariables(theme),
+    ...getContentCardVariantCssVariables(theme, index),
+  }) as CSSProperties;
 
   // Keep working copy in sync when parent provides a new links array
   useEffect(() => {
@@ -700,7 +703,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
         </Card>
       ) : (
         <div className="admin-link-list">
-          {workingLinks.map((link) => (
+          {workingLinks.map((link, index) => (
             <div
               key={link.id}
               data-link-id={link.id}
@@ -724,7 +727,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   editMode={editMode}
-                  publicPreviewStyle={publicPreviewStyle}
+                  publicPreviewStyle={publicPreviewStyle(index)}
                 />
               ) : (
                 <LinkCard
@@ -735,7 +738,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   isDragging={draggedItem === link.id}
                   editMode={editMode}
-                  publicPreviewStyle={publicPreviewStyle}
+                  publicPreviewStyle={publicPreviewStyle(index)}
                 />
               )}
             </div>

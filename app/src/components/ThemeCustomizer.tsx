@@ -66,6 +66,7 @@ const findMatchingPreset = (theme: ThemeConfig) => themePresets.find((preset) =>
 ))?.id || null;
 
 const findMatchingCardPreset = (theme: ThemeConfig) => cardThemePresets.find((preset) => (
+  preset.mode === theme.contentCardMode &&
   preset.card.background === theme.contentCard.background &&
   preset.card.backgroundSecondary === theme.contentCard.backgroundSecondary &&
   preset.card.foreground === theme.contentCard.foreground &&
@@ -251,7 +252,12 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
 
   const updatePendingTheme = (updates: Partial<EditableTheme>) => {
     if (updates.contentCard || updates.card || updates.cardGradient) setSelectedCardPresetId(null);
-    previewTheme({ ...pendingTheme, ...updates }, null);
+    const nextTheme = { ...pendingTheme, ...updates };
+    if (updates.contentCard && !updates.contentCardVariants) {
+      nextTheme.contentCardMode = 'mono';
+      nextTheme.contentCardVariants = [updates.contentCard];
+    }
+    previewTheme(nextTheme, null);
   };
 
   const applyPreset = (preset: ThemePreset) => {
@@ -259,6 +265,8 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
       ...preset.theme,
       content: pendingTheme.content,
       contentCard: pendingTheme.contentCard,
+      contentCardMode: pendingTheme.contentCardMode,
+      contentCardVariants: pendingTheme.contentCardVariants,
     };
     previewTheme(nextTheme, preset.id);
   };
@@ -273,6 +281,8 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
         direction: preset.card.direction,
       },
       contentCard: preset.card,
+      contentCardMode: preset.mode,
+      contentCardVariants: preset.variants,
     };
     previewTheme(nextTheme, selectedPresetId);
     setSelectedCardPresetId(preset.id);
@@ -440,8 +450,8 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
             <>
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">12 card styles</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-950">Ready-balanced content cards</h3>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">6 Mono + 6 Multi</p>
+                  <h3 className="mt-1 text-xl font-bold text-slate-950">Ready-balanced Mono and Multi cards</h3>
                   <p className="mt-1 text-sm text-slate-500">Surface, text, borders, icons and CTA are designed as one palette.</p>
                 </div>
                 <div className="flex gap-2">

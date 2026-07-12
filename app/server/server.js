@@ -51,7 +51,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.4.1';
+let APP_VERSION = '4.5.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -2374,6 +2374,8 @@ const ThemeSchema = z.object({
   }).optional(),
   profileCard: ThemeSurfaceSchema.omit({ accentForeground: true }).optional(),
   contentCard: ThemeSurfaceSchema.optional(),
+  contentCardMode: z.enum(['mono', 'multi']).optional(),
+  contentCardVariants: z.array(ThemeSurfaceSchema).max(8).optional(),
   fontFamily: z.string().max(300).optional(),
   cardRadius: z.number().optional(),
   cardSpacing: z.number().optional(),
