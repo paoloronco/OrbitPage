@@ -9,11 +9,39 @@ interface PublicMapCardProps {
   link: LinkData;
 }
 
+const getMapQuery = (placeName?: string, address?: string, fallbackTitle?: string) => (
+  [placeName, address].filter(Boolean).join(", ") || fallbackTitle || ""
+).trim();
+
+const buildGoogleMapsEmbedUrl = (mapUrl?: string, query?: string) => {
+  if (query) {
+    return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+  }
+
+  if (!mapUrl) return "";
+
+  try {
+    const url = new URL(mapUrl);
+    if (url.hostname.includes("google.") && url.pathname.includes("/maps")) {
+      url.searchParams.set("output", "embed");
+      return url.toString();
+    }
+  } catch {
+    return `https://www.google.com/maps?q=${encodeURIComponent(mapUrl)}&output=embed`;
+  }
+
+  return `https://www.google.com/maps?q=${encodeURIComponent(mapUrl)}&output=embed`;
+};
+
 export const PublicMapCard = ({ link }: PublicMapCardProps) => {
   const { placeName, address, mapUrl } = getMapData(link.content);
+  const mapQuery = getMapQuery(placeName, address, link.title);
   const resolvedMapUrl = mapUrl || (address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+    : mapQuery
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`
     : "");
+  const embedUrl = buildGoogleMapsEmbedUrl(mapUrl, mapQuery);
 
   const handleOpen = () => {
     if (resolvedMapUrl) {
@@ -22,7 +50,7 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
     }
   };
 
-  const hasContent = Boolean(placeName || address);
+  const hasContent = Boolean(placeName || address || mapUrl || link.title);
   if (!hasContent) {
     return null;
   }
@@ -30,10 +58,20 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
-      <div className="relative h-24 overflow-hidden bg-primary/10">
-        <div className="absolute inset-0 opacity-55 [background-image:linear-gradient(90deg,hsl(var(--primary)/.16)_1px,transparent_1px),linear-gradient(0deg,hsl(var(--primary)/.16)_1px,transparent_1px)] [background-size:22px_22px]" />
-        <div className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background/60" style={getPublicButtonStyle(link)}>
-          {getPublicIconContent(link, <MapPinned className="h-5 w-5" />)}
+      <div className={`relative overflow-hidden bg-muted/30 ${link.size === "small" ? "h-32" : link.size === "large" ? "h-52" : "h-40"}`}>
+        {embedUrl ? (
+          <iframe
+            title={placeName || address || link.title || "Map preview"}
+            src={embedUrl}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="h-full w-full border-0"
+          />
+        ) : (
+          <div className="absolute inset-0 opacity-55 [background-image:linear-gradient(90deg,hsl(var(--primary)/.16)_1px,transparent_1px),linear-gradient(0deg,hsl(var(--primary)/.16)_1px,transparent_1px)] [background-size:22px_22px]" />
+        )}
+        <div className="pointer-events-none absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background/70" style={getPublicButtonStyle(link)}>
+          {getPublicIconContent(link, <MapPinned className="h-4 w-4" />)}
         </div>
       </div>
       <div className={`space-y-3 ${getPublicBlockPadding(link.size)}`}>
