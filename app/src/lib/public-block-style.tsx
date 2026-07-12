@@ -1,9 +1,33 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { LinkData } from "@/components/LinkCard";
 
+const parseHexColor = (color?: string) => {
+  if (!color) return null;
+  const normalized = color.trim().replace(/^#/, "");
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((part) => part + part).join("")
+    : normalized;
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) return null;
+  return {
+    r: parseInt(expanded.slice(0, 2), 16),
+    g: parseInt(expanded.slice(2, 4), 16),
+    b: parseInt(expanded.slice(4, 6), 16),
+  };
+};
+
+const getReadableTextColor = (backgroundColor?: string) => {
+  const rgb = parseHexColor(backgroundColor);
+  if (!rgb) return undefined;
+  const luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+  return luminance > 0.58 ? "#111827" : "#f8fafc";
+};
+
+export const getPublicTextColor = (link: LinkData) =>
+  link.textColor || getReadableTextColor(link.backgroundColor);
+
 export const getPublicBlockStyle = (link: LinkData): CSSProperties => ({
   ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-  ...(link.textColor ? { color: link.textColor } : {}),
+  ...(getPublicTextColor(link) ? { color: getPublicTextColor(link) } : {}),
   ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
   ...(link.alignment ? { textAlign: link.alignment } : {}),
 });
@@ -35,7 +59,7 @@ export const getPublicIconContent = (link: LinkData, fallback: ReactNode) => {
 };
 
 export const getPublicAccentStyle = (link: LinkData): CSSProperties | undefined => (
-  link.textColor ? { color: link.textColor } : undefined
+  getPublicTextColor(link) ? { color: getPublicTextColor(link) } : undefined
 );
 
 export const getPublicButtonStyle = (link: LinkData): CSSProperties | undefined => {

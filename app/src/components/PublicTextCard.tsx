@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Type, ExternalLink } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { apiPath, internalAssetPath } from "@/lib/base-path";
+import { getPublicTextColor } from "@/lib/public-block-style";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   if (!src) return null;
@@ -40,11 +41,12 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
 
   const getCustomStyles = () => {
     const styles: React.CSSProperties = {};
+    const readableTextColor = getPublicTextColor(link);
     if (link.backgroundColor) {
       styles.backgroundColor = link.backgroundColor;
     }
-    if (link.textColor) {
-      styles.color = link.textColor;
+    if (readableTextColor) {
+      styles.color = readableTextColor;
     }
     return styles;
   };
@@ -94,6 +96,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
 
   const coverUrl = resolveCoverImageUrl(link.coverImage);
   const hasCoverImage = !!(coverUrl && !coverImageError);
+  const readableTextColor = getPublicTextColor(link);
 
   return (
     <Card
@@ -146,14 +149,14 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                   trackClick();
                 }}
                 className="font-semibold truncate rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                style={link.textColor ? { color: link.textColor } : undefined}
+                style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
               </a>
             ) : (
               <h3
                 className="font-semibold truncate"
-                style={link.textColor ? { color: link.textColor } : undefined}
+                style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
               </h3>
@@ -161,13 +164,13 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             {link.url && <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />}
           </div>
           {link.textItems && link.textItems.length > 0 && (
-            <ul className="text-sm leading-relaxed space-y-2 mb-3" style={link.textColor ? { color: link.textColor } : undefined}>
+            <ul className="text-sm leading-relaxed space-y-2 mb-3" style={readableTextColor ? { color: readableTextColor } : undefined}>
               {link.textItems.map((item, index) => (
                 <li key={index} className="flex">
-                  <span className="mr-2" style={{ color: item.textColor || link.textColor }}>•</span>
+                  <span className="mr-2" style={{ color: item.textColor || readableTextColor }}>•</span>
                   <div className="flex-1 min-w-0">
                     {/* Label on its own line */}
-                    <div style={{ color: item.textColor || link.textColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || undefined }}>{item.text}</div>
+                    <div style={{ color: item.textColor || readableTextColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || undefined }}>{item.text}</div>
                     {/* URL on second indented line without wrapping */}
                     {item.url && (
                       <a
@@ -177,7 +180,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                         onClick={(e) => e.stopPropagation()}
                         className="ml-6 block whitespace-nowrap overflow-x-auto hover:underline hover:text-primary transition-colors text-left"
                         title={item.url}
-                        style={{ color: item.textColor || link.textColor }}
+                        style={{ color: item.textColor || readableTextColor }}
                       >
                         {item.url}
                       </a>
@@ -190,7 +193,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
           {link.content && (
             <div 
               className="text-sm leading-relaxed"
-              style={link.textColor ? { color: link.textColor } : undefined}
+              style={readableTextColor ? { color: readableTextColor } : undefined}
               dangerouslySetInnerHTML={{ __html: formatContent(link.content) }}
             />
           )}
