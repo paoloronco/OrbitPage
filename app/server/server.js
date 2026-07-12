@@ -135,6 +135,19 @@ const IUBENDA_CSP_SOURCES = [
   "https://*.iubenda.com",
 ];
 
+const EXTERNAL_CMP_CDN_SOURCES = [
+  "https://cdn-cookieyes.com",
+  "https://cdn.cookielaw.org",
+];
+
+const EXTERNAL_CMP_CONNECT_SOURCES = [
+  ...EXTERNAL_CMP_CDN_SOURCES,
+  "https://cookie-cdn.cookiepro.com",
+  "https://privacyportal.onetrust.com",
+  "https://privacyportal-cdn.onetrust.com",
+  "https://geolocation.onetrust.com",
+];
+
 const LEGAL_EMBED_CSP_SOURCES = [
   ...USERCENTRICS_CSP_SOURCES,
   ...IUBENDA_CSP_SOURCES,
@@ -195,12 +208,14 @@ app.use(helmet({
         // and CDN assets e.g. configuration.js (consentcdn.cookiebot.com)
         "https://consent.cookiebot.com",
         "https://consentcdn.cookiebot.com",
+        ...EXTERNAL_CMP_CDN_SOURCES,
         ...LEGAL_EMBED_CSP_SOURCES,
       ],
       styleSrc: [
         "'self'", "'unsafe-inline'",
         "https://fonts.googleapis.com",
         "https://tagassistant.google.com",
+        ...EXTERNAL_CMP_CDN_SOURCES,
         ...LEGAL_EMBED_CSP_SOURCES,
       ],
       imgSrc: ["'self'", "data:", "https:", "http:"],
@@ -215,6 +230,7 @@ app.use(helmet({
             // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
             "https://consentcdn.cookiebot.com",
+            ...EXTERNAL_CMP_CONNECT_SOURCES,
             ...LEGAL_EMBED_CSP_SOURCES,
           ]
         : [
@@ -227,6 +243,7 @@ app.use(helmet({
             // and CDN config/settings fetches e.g. settings.json (consentcdn.cookiebot.com)
             "https://consent.cookiebot.com",
             "https://consentcdn.cookiebot.com",
+            ...EXTERNAL_CMP_CONNECT_SOURCES,
             ...LEGAL_EMBED_CSP_SOURCES,
           ],
       fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],

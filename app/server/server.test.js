@@ -79,6 +79,10 @@ describe('API Endpoints', () => {
     expect(csp).toContain('https://*.usercentrics.eu');
     expect(csp).toContain('https://*.cmp.usercentrics.eu');
     expect(csp).toContain('https://*.iubenda.com');
+    expect(csp).toContain('https://cdn-cookieyes.com');
+    expect(csp).toContain('https://cdn.cookielaw.org');
+    expect(csp).toContain('https://privacyportal.onetrust.com');
+    expect(csp).toContain('https://geolocation.onetrust.com');
   });
 
   it('HTTP response: no Strict-Transport-Security header', async () => {

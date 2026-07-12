@@ -107,6 +107,14 @@ const DEFAULT_BUILDER: NonNullable<ConsentConfigData['builder']> = {
   reopenSelector: '',
 };
 
+function isBuilderProviderConfigured(builder: NonNullable<ConsentConfigData['builder']>) {
+  const cfg = builder.providerConfig;
+  if (builder.provider === 'iubenda') return !!cfg.siteId?.trim() && !!cfg.cookiePolicyId?.trim();
+  if (builder.provider === 'cookiebot' || builder.provider === 'cookieyes') return !!cfg.scriptId?.trim();
+  if (builder.provider === 'onetrust') return !!cfg.siteId?.trim();
+  return !!cfg.headSnippet?.trim();
+}
+
 // ── Utility helpers ───────────────────────────────────────────────────────────
 
 function isValidPolicyUrl(s: string) {
@@ -739,26 +747,53 @@ function BuilderForm({
         External scripts are injected into the public page. Only paste code from a service you trust.
       </WarnBox>
 
-      <FieldRow
-        label="CMP script"
-        description="Paste your CMP script, for example Cookiebot, iubenda, CookieYes, OneTrust, or another provider."
-      >
-        <Textarea
-          className="admin-input min-h-[140px] resize-y font-mono text-xs"
-          value={cfg.providerConfig.headSnippet ?? ''}
-          onChange={(e) => updateCfg({
-            headSnippet: e.target.value,
-            bodySnippet: '',
-            siteId: '',
-            cookiePolicyId: '',
-            scriptId: '',
-            privacyPolicyUrl: '',
-            cookiePolicyUrl: '',
-          })}
-          placeholder="<script src=&quot;https://...&quot;></script>"
-          maxLength={10000}
-        />
+      <FieldRow label="CMP provider" description="Choose a supported integration. Use Custom only when your provider is not listed.">
+        <Select value={cfg.provider} onValueChange={(provider) => onChange({ provider: provider as typeof cfg.provider })}>
+          <SelectTrigger className="admin-input"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="iubenda">iubenda</SelectItem>
+            <SelectItem value="cookiebot">Cookiebot</SelectItem>
+            <SelectItem value="cookieyes">CookieYes</SelectItem>
+            <SelectItem value="onetrust">OneTrust</SelectItem>
+            <SelectItem value="custom">Custom snippet</SelectItem>
+          </SelectContent>
+        </Select>
       </FieldRow>
+
+      {cfg.provider === 'iubenda' && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FieldRow label="Site ID" description="The site ID from your iubenda project.">
+            <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.siteId ?? ''} onChange={(e) => updateCfg({ siteId: e.target.value })} />
+          </FieldRow>
+          <FieldRow label="Cookie Policy ID" description="The Cookie Policy ID linked to the CMP.">
+            <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.cookiePolicyId ?? ''} onChange={(e) => updateCfg({ cookiePolicyId: e.target.value })} />
+          </FieldRow>
+        </div>
+      )}
+
+      {(cfg.provider === 'cookiebot' || cfg.provider === 'cookieyes') && (
+        <FieldRow label={cfg.provider === 'cookiebot' ? 'Cookiebot CBID' : 'CookieYes script ID'} description="Copy the identifier from the provider installation code.">
+          <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.scriptId ?? ''} onChange={(e) => updateCfg({ scriptId: e.target.value })} />
+        </FieldRow>
+      )}
+
+      {cfg.provider === 'onetrust' && (
+        <FieldRow label="OneTrust domain script ID" description="The data-domain-script value from the OneTrust installation code.">
+          <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.siteId ?? ''} onChange={(e) => updateCfg({ siteId: e.target.value })} />
+        </FieldRow>
+      )}
+
+      {cfg.provider === 'custom' && (
+        <FieldRow label="CMP script" description="Paste the trusted installation snippet supplied by your CMP.">
+          <Textarea
+            className="admin-input min-h-[140px] resize-y font-mono text-xs"
+            value={cfg.providerConfig.headSnippet ?? ''}
+            onChange={(e) => updateCfg({ headSnippet: e.target.value, bodySnippet: '' })}
+            placeholder="<script src=&quot;https://...&quot;></script>"
+            maxLength={10000}
+          />
+        </FieldRow>
+      )}
       <FieldRow
         label="Reopen selector (optional)"
         description='Optional CSS selector or JS expression that opens your provider preferences again. Example: ".cky-btn-revisit".'
@@ -995,8 +1030,8 @@ export function PrivacySettings({
         setSaveError('Paste the Cookie Policy embed code or choose another source.');
         return;
       }
-      if (mode === 'builder' && enabled && !builder.providerConfig?.headSnippet?.trim()) {
-        setSaveError('Paste your external CMP script before enabling External consent management.');
+      if (mode === 'builder' && enabled && !isBuilderProviderConfigured(builder)) {
+        setSaveError('Complete the required configuration for the selected CMP provider.');
         return;
       }
 
@@ -1007,10 +1042,9 @@ export function PrivacySettings({
 
       const nextBuilder = {
         ...builder,
-        provider: 'custom' as const,
         providerConfig: {
           ...DEFAULT_BUILDER.providerConfig,
-          headSnippet: builder.providerConfig?.headSnippet || '',
+          ...builder.providerConfig,
         },
       };
       const legalPolicies: NonNullable<ConsentConfigData['legalPolicies']> = {
@@ -1188,7 +1222,7 @@ export function PrivacySettings({
               />
               <BuilderForm
                 cfg={builder}
-                onChange={(u) => setBuilder((prev) => ({ ...prev, ...u, provider: 'custom' }))}
+                onChange={(u) => setBuilder((prev) => ({ ...prev, ...u }))}
               />
             </div>
           )}
@@ -1216,7 +1250,7 @@ export function PrivacySettings({
             text: 'All enabled categories have descriptions',
           },
           {
-            ok: mode === 'hardcoded' || !!builder.providerConfig?.headSnippet?.trim(),
+            ok: mode === 'hardcoded' || isBuilderProviderConfigured(builder),
             text: mode === 'hardcoded' ? 'Native banner is selected' : 'External CMP script is configured',
           },
           {

@@ -111,6 +111,16 @@ const ALWAYS_ACTIVE: ConsentCategory[] = ['necessary'];
 
 type ConsentChangeListener = (record: ConsentRecord | null) => void;
 type ScriptLoader = () => void;
+type GoogleConsentValue = 'granted' | 'denied';
+type GoogleConsentState = {
+  analytics_storage: GoogleConsentValue;
+  ad_storage: GoogleConsentValue;
+  ad_user_data: GoogleConsentValue;
+  ad_personalization: GoogleConsentValue;
+  functionality_storage: GoogleConsentValue;
+  personalization_storage: GoogleConsentValue;
+  security_storage: GoogleConsentValue;
+};
 
 // ── Consent Manager Class ────────────────────────────────────────────────────
 
@@ -184,7 +194,7 @@ class ConsentManager {
       win.gtag = function () { win.dataLayer.push(arguments); };
     }
 
-    win.gtag('consent', 'default', this._buildGcmState());
+    win.gtag('consent', 'default', this._buildGcmState(undefined, true));
     win.__orbitpageGcmDefaultConsentSet = true;
   }
 
@@ -388,7 +398,7 @@ class ConsentManager {
     // consent/update signals the external CMP pushes — both past (already in
     // the array before OrbitPage loaded) and future (pushed after injection).
     // Provider-specific wirings below add their own event listeners on top.
-    this._syncFromDataLayer();
+    this._syncFromDataLayer('explicit');
 
     const { provider, providerConfig } = this.config.builder;
     switch (provider) {
@@ -498,14 +508,17 @@ class ConsentManager {
    * The registered consent-dependent scripts (which call config) are fired
    * by _dispatchPendingScripts() immediately after this method returns.
    */
-  private _dispatchGcmUpdate(categories: Record<ConsentCategory, boolean>): void {
+  private _dispatchGcmUpdate(
+    categories: Record<ConsentCategory, boolean>,
+    exactState?: Partial<GoogleConsentState>,
+  ): void {
     this.ensureGoogleConsentDefaults();
     const win = window as any;
     win.dataLayer = win.dataLayer || [];
     if (typeof win.gtag !== 'function') {
       win.gtag = function () { win.dataLayer.push(arguments); };
     }
-    win.gtag('consent', 'update', this._buildGcmState(categories));
+    win.gtag('consent', 'update', { ...this._buildGcmState(categories), ...(exactState || {}) });
   }
 
   private _safeCall(fn: () => void): void {
@@ -514,7 +527,10 @@ class ConsentManager {
     }
   }
 
-  private _buildGcmState(categories?: Partial<Record<ConsentCategory, boolean>>) {
+  private _buildGcmState(
+    categories?: Partial<Record<ConsentCategory, boolean>>,
+    includeWaitForUpdate = false,
+  ): GoogleConsentState & { wait_for_update?: number } {
     const isAllowed = (category: ConsentCategory) =>
       categories ? categories[category] === true : this.isGranted(category);
 
@@ -526,7 +542,7 @@ class ConsentManager {
       functionality_storage: isAllowed('preferences') ? 'granted' : 'denied',
       personalization_storage: isAllowed('preferences') ? 'granted' : 'denied',
       security_storage: 'granted',
-      wait_for_update: 2000,
+      ...(includeWaitForUpdate ? { wait_for_update: 2000 } : {}),
     };
   }
 
@@ -546,11 +562,13 @@ class ConsentManager {
   private _setExternalConsent(
     categories: Record<ConsentCategory, boolean>,
     source: 'implicit' | 'explicit' = 'implicit',
+    exactState?: Partial<GoogleConsentState>,
+    dispatchGoogleUpdate = true,
   ): void {
     this.externalConsent = categories;
     if (source === 'explicit') {
       this.externalConsentExplicit = true;
-      this._dispatchGcmUpdate(categories);
+      if (dispatchGoogleUpdate) this._dispatchGcmUpdate(categories, exactState);
       this._dispatchPendingScripts();
     }
     this._notifyListeners();
@@ -767,14 +785,14 @@ _iub.csConfiguration = {
 
     // OnConsentReady/OnLoad can fire during bootstrap with preloaded consent.
     // Treat those as implicit until a clear user action event arrives.
-    window.addEventListener('CookiebotOnConsentReady', () => syncCookiebotConsent(false));
-    window.addEventListener('CookiebotOnLoad', () => syncCookiebotConsent(false));
+    window.addEventListener('CookiebotOnConsentReady', () => syncCookiebotConsent(true));
+    window.addEventListener('CookiebotOnLoad', () => syncCookiebotConsent(true));
     window.addEventListener('CookiebotOnAccept', () => syncCookiebotConsent(true));
     window.addEventListener('CookiebotOnDecline', () => syncCookiebotConsent(true));
 
     // Try immediately — Cookiebot may have already loaded before OrbitPage registered listeners.
     // Keep this bootstrap pass implicit to avoid activating tracking before a user action.
-    syncCookiebotConsent(false);
+    syncCookiebotConsent(true);
 
     // Poll briefly to catch the case where Cookiebot fires before our listeners attached
     let attempts = 0;
@@ -782,7 +800,7 @@ _iub.csConfiguration = {
       attempts++;
       if (win.Cookiebot?.consent || attempts >= 20) {
         clearInterval(poll);
-        syncCookiebotConsent(false);
+        syncCookiebotConsent(true);
       }
     }, 250);
   }
@@ -820,7 +838,7 @@ _iub.csConfiguration = {
     });
     // Try reading current state on page load for compatibility with persisted consent.
     // Keep bootstrap state implicit until a user action is detected.
-    syncCookieYesConsent(undefined, false);
+    syncCookieYesConsent(undefined, true);
   }
 
   private _injectOneTrust(cfg: BuilderConfig['providerConfig']): void {
@@ -842,13 +860,8 @@ _iub.csConfiguration = {
     const prevWrapper = typeof win.OptanonWrapper === 'function' ? win.OptanonWrapper : null;
     win.OptanonWrapper = () => {
       prevWrapper?.();
-      this._syncOneTrustConsent(false);
+      this._syncOneTrustConsent(true);
     };
-
-    const wrapper = document.createElement('script');
-    wrapper.type = 'text/javascript';
-    wrapper.text = 'function OptanonWrapper() { window.OptanonWrapper && window.OptanonWrapper(); }';
-    document.head.appendChild(wrapper);
   }
 
   private _syncOneTrustConsent(explicit: boolean = false): void {
@@ -908,26 +921,10 @@ _iub.csConfiguration = {
       }, 'explicit');
     });
 
-    // Auto-detect iubenda — fires when the custom headSnippet contains iubenda
-    this._wireIubendaConsentEvents();
-
-    // Auto-detect Cookiebot
-    this._wireCookiebotConsentEvents();
-
-    // Auto-detect CookieYes
-    this._wireCookieYesConsentEvents();
-
-    // Auto-detect OneTrust — poll OnetrustActiveGroups if available
-    if (win.OnetrustActiveGroups !== undefined) {
-      // Initial state may come from stored cookie preferences; treat as implicit.
-      this._syncOneTrustConsent(false);
-    }
-    window.addEventListener('consent.onetrust', () => this._syncOneTrustConsent(true));
-
     // Generic GCM v2 fallback: if an external CMP has already pushed a
     // consent/update with analytics_storage=granted into dataLayer before
     // OrbitPage loaded, read it back so GA can still fire on this page view.
-    this._syncFromDataLayer();
+    this._syncFromDataLayer('explicit');
     this._observeDataLayerConsentSignals();
   }
 
@@ -972,12 +969,26 @@ _iub.csConfiguration = {
     const state = values[2] as Record<string, string> | undefined;
     if (!state || typeof state !== 'object') return false;
 
+    const exactState: Partial<GoogleConsentState> = {};
+    const gcmKeys: Array<keyof GoogleConsentState> = [
+      'analytics_storage',
+      'ad_storage',
+      'ad_user_data',
+      'ad_personalization',
+      'functionality_storage',
+      'personalization_storage',
+      'security_storage',
+    ];
+    for (const key of gcmKeys) {
+      if (state[key] === 'granted' || state[key] === 'denied') exactState[key] = state[key];
+    }
+
     this._setExternalConsent({
       necessary: true,
       preferences: state.functionality_storage === 'granted' || state.personalization_storage === 'granted',
       analytics: state.analytics_storage === 'granted',
-      marketing: state.ad_storage === 'granted',
-    }, source);
+      marketing: state.ad_storage === 'granted' && state.ad_user_data === 'granted' && state.ad_personalization === 'granted',
+    }, source, source === 'explicit' ? exactState : undefined, false);
     return true;
   }
 
@@ -993,9 +1004,9 @@ _iub.csConfiguration = {
     const wrappedPush = (...entries: unknown[]) => {
       const result = originalPush.apply(dataLayer, entries);
       for (const entry of entries) {
-        // Keep default dataLayer bootstrap updates implicit unless a dedicated
-        // explicit handler reports a concrete user action.
-        this._syncFromDataLayerEntry(entry, 'implicit');
+        // A GCM `update` represents a concrete current CMP decision. Defaults
+        // are ignored by _syncFromDataLayerEntry and never activate scripts.
+        this._syncFromDataLayerEntry(entry, 'explicit');
       }
       return result;
     };
