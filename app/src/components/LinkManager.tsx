@@ -1,4 +1,5 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CalendarClock, Code2, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
@@ -27,6 +28,11 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
   const { toast } = useToast();
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
+  const [addMenuPortalTarget, setAddMenuPortalTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setAddMenuPortalTarget(document.getElementById('link-add-sidebar'));
+  }, []);
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
   const publicPreviewStyle = getThemeCssVariables(theme) as CSSProperties;
@@ -532,8 +538,14 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
         </div>
       </div>
 
-      {isFullEdit && (
-        <div className="admin-add-grid" data-onboarding="link-add-grid">
+      {isFullEdit && addMenuPortalTarget && createPortal(
+        <div className="mt-5 border-t border-slate-200 pt-5" data-onboarding="link-add-grid">
+          <div className="mb-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">Block library</p>
+            <h3 className="mt-1 text-sm font-semibold text-slate-950">Add content</h3>
+            <p className="mt-1 text-xs leading-5 text-slate-500">Choose a block to append it to the public page.</p>
+          </div>
+          <div className="grid gap-2">
           <Button onClick={addNewLink} className="admin-add-card">
             <span className="admin-add-icon">
               <Link className="h-4 w-4" />
@@ -651,7 +663,9 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
               <span className="block text-xs opacity-70">Section label</span>
             </span>
           </Button>
-        </div>
+          </div>
+        </div>,
+        addMenuPortalTarget,
       )}
 
       {workingLinks.length === 0 ? (

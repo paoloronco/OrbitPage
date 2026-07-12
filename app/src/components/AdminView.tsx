@@ -337,6 +337,7 @@ export const AdminView = ({
                   <StatusRow label="Hidden" value={String(Math.max(metrics.totalLinks - metrics.visibleLinks, 0))} />
                   <StatusRow label="Scheduled" value={String(metrics.scheduledLinks)} />
                 </div>
+                <div id="link-add-sidebar" />
               </aside>
             </div>
           </TabsContent>
