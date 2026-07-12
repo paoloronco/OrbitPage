@@ -14,23 +14,10 @@ const getMapQuery = (placeName?: string, address?: string, fallbackTitle?: strin
 ).trim();
 
 const buildGoogleMapsEmbedUrl = (mapUrl?: string, query?: string) => {
-  if (query) {
-    return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
-  }
+  const embedQuery = query || mapUrl || "";
+  if (!embedQuery) return "";
 
-  if (!mapUrl) return "";
-
-  try {
-    const url = new URL(mapUrl);
-    if (url.hostname.includes("google.") && url.pathname.includes("/maps")) {
-      url.searchParams.set("output", "embed");
-      return url.toString();
-    }
-  } catch {
-    return `https://www.google.com/maps?q=${encodeURIComponent(mapUrl)}&output=embed`;
-  }
-
-  return `https://www.google.com/maps?q=${encodeURIComponent(mapUrl)}&output=embed`;
+  return `https://maps.google.com/maps?hl=it&z=14&ie=UTF8&iwloc=B&output=embed&q=${encodeURIComponent(embedQuery)}`;
 };
 
 export const PublicMapCard = ({ link }: PublicMapCardProps) => {
