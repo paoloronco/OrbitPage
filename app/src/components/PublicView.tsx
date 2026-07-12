@@ -20,6 +20,7 @@ interface ProfileData {
 interface PublicViewProps {
   profile: ProfileData;
   links: LinkData[];
+  theme: ThemeConfig;
   footerText?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
@@ -29,6 +30,7 @@ interface PublicViewProps {
 export const PublicView = ({
   profile,
   links,
+  theme,
   footerText,
   privacyPolicyUrl,
   cookiePolicyUrl,
@@ -84,7 +86,11 @@ export const PublicView = ({
         {visibleLinks.length > 0 && (
           <div className="public-card-stack flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
             {visibleLinks.map((link, index) => (
-              <div key={link.id} className={`content-card-variant-${index % 6}`}>
+              <div
+                key={link.id}
+                className={`content-card-variant-${index % 6}`}
+                style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
+              >
                 <PublicBlockRenderer link={link} />
               </div>
             ))}
@@ -138,3 +144,5 @@ export const PublicView = ({
     </main>
   );
 };
+import type { CSSProperties } from "react";
+import { getContentCardVariantCssVariables, type ThemeConfig } from "@/lib/theme";

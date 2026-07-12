@@ -3,7 +3,7 @@ import { PublicView } from "@/components/PublicView";
 import { CookieBanner } from "@/components/CookieBanner";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { LinkData } from "@/components/LinkCard";
-import { applyTheme, normalizeTheme, BackgroundMediaConfig } from "@/lib/theme";
+import { applyTheme, normalizeTheme, BackgroundMediaConfig, type ThemeConfig } from "@/lib/theme";
 import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
 import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
@@ -51,6 +51,7 @@ const Index = () => {
   });
   const [links, setLinks] = useState<LinkData[]>([]);
   const [backgroundMedia, setBackgroundMedia] = useState<BackgroundMediaConfig | null>(null);
+  const [theme, setTheme] = useState<ThemeConfig>(() => normalizeTheme(null));
   // Consent config drives whether CookieBanner is rendered
   const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
 
@@ -75,6 +76,7 @@ const Index = () => {
 
         const loadedTheme = normalizeTheme(pageData.theme);
         applyTheme(loadedTheme);
+        setTheme(loadedTheme);
         setBackgroundMedia(loadedTheme.backgroundMedia ?? null);
 
         // In builder mode, inject the external CMP script immediately after init
@@ -259,6 +261,7 @@ const Index = () => {
       <PublicView
         profile={profile}
         links={links}
+        theme={theme}
         footerText={profile.footerText}
         privacyPolicyUrl={privacyPolicyUrl}
         cookiePolicyUrl={cookiePolicyUrl}
