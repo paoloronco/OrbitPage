@@ -281,6 +281,24 @@
   .content-card-variant-4 { --content-card-background: var(--content-card-v4-background); --content-card-background-hsl: var(--content-card-v4-background-hsl); --content-card-secondary-hsl: var(--content-card-v4-secondary-hsl); --content-card-foreground: var(--content-card-v4-foreground); --content-card-foreground-hsl: var(--content-card-v4-foreground-hsl); --content-card-muted: var(--content-card-v4-muted); --content-card-muted-hsl: var(--content-card-v4-muted-hsl); --content-card-border: var(--content-card-v4-border); --content-card-border-hsl: var(--content-card-v4-border-hsl); --content-card-accent: var(--content-card-v4-accent); --content-card-accent-hsl: var(--content-card-v4-accent-hsl); --content-card-accent-foreground: var(--content-card-v4-accent-foreground); --content-card-accent-foreground-hsl: var(--content-card-v4-accent-foreground-hsl); }
   .content-card-variant-5 { --content-card-background: var(--content-card-v5-background); --content-card-background-hsl: var(--content-card-v5-background-hsl); --content-card-secondary-hsl: var(--content-card-v5-secondary-hsl); --content-card-foreground: var(--content-card-v5-foreground); --content-card-foreground-hsl: var(--content-card-v5-foreground-hsl); --content-card-muted: var(--content-card-v5-muted); --content-card-muted-hsl: var(--content-card-v5-muted-hsl); --content-card-border: var(--content-card-v5-border); --content-card-border-hsl: var(--content-card-v5-border-hsl); --content-card-accent: var(--content-card-v5-accent); --content-card-accent-hsl: var(--content-card-v5-accent-hsl); --content-card-accent-foreground: var(--content-card-v5-accent-foreground); --content-card-accent-foreground-hsl: var(--content-card-v5-accent-foreground-hsl); }
 
+  .content-card-variant-0,
+  .content-card-variant-1,
+  .content-card-variant-2,
+  .content-card-variant-3,
+  .content-card-variant-4,
+  .content-card-variant-5 {
+    --card: var(--content-card-background-hsl);
+    --card-foreground: var(--content-card-foreground-hsl);
+    --foreground: var(--content-card-foreground-hsl);
+    --muted: var(--content-card-secondary-hsl);
+    --muted-foreground: var(--content-card-muted-hsl);
+    --primary: var(--content-card-accent-hsl);
+    --primary-foreground: var(--content-card-accent-foreground-hsl);
+    --accent: var(--content-card-accent-hsl);
+    --accent-foreground: var(--content-card-accent-foreground-hsl);
+    --border: var(--content-card-border-hsl);
+  }
+
   .orbitpage-admin {
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;

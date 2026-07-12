@@ -2,7 +2,7 @@
 
 ### A self-hosted public page for people, brands, venues, events, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.5.0-blue.svg)](https://github.com/paoloronco/OrbitPage)
+[![Version](https://img.shields.io/badge/version-4.5.1-blue.svg)](https://github.com/paoloronco/OrbitPage)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Forbitpage-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/orbitpage)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Forbitpage-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage)
@@ -267,7 +267,7 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 <summary><strong>Show full changelog</strong></summary>
 
 <details>
-<summary><strong>v4.5.0</strong></summary>
+<summary><strong>v4.5.1</strong></summary>
 
 ### Theme persistence fix
 

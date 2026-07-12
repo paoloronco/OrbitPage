@@ -267,24 +267,25 @@ const Admin = () => {
     try {
       const themedLinks = links.map((link) => ({
         ...link,
-        backgroundColor: undefined,
-        textColor: undefined,
-        titleFontFamily: undefined,
-        descriptionFontFamily: undefined,
-        titleFontSize: undefined,
-        descriptionFontSize: undefined,
+        backgroundColor: null as unknown as string,
+        textColor: null as unknown as string,
+        titleFontFamily: null as unknown as string,
+        descriptionFontFamily: null as unknown as string,
+        titleFontSize: null as unknown as string,
+        descriptionFontSize: null as unknown as string,
         textItems: link.textItems?.map((item) => ({
           ...item,
-          textColor: undefined,
-          fontFamily: undefined,
-          fontSize: undefined,
+          textColor: null as unknown as string,
+          fontFamily: null as unknown as string,
+          fontSize: null as unknown as string,
         })),
       }));
       // Pass the full theme configuration to the API
       await themeApi.update(newTheme);
       if (themedLinks.length) {
         await linksApi.update(themedLinks);
-        setLinks(themedLinks);
+        const reloadedLinks = await linksApi.get();
+        setLinks(normalizeLinkDtos(reloadedLinks));
       }
       setTheme(newTheme);
       // Apply theme to admin interface too

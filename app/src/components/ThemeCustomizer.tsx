@@ -193,18 +193,18 @@ const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: 
 
 const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; active: boolean; onApply: () => void }) => (
   <article className={`w-[17rem] shrink-0 overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
-    <div className="h-44 p-4" style={{ background: `linear-gradient(145deg, ${preset.card.backgroundSecondary}, ${preset.card.background})` }} aria-hidden="true">
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-3 rounded-xl border px-3 py-3 shadow-sm" style={{ background: `linear-gradient(${preset.card.direction}, ${preset.card.background}, ${preset.card.backgroundSecondary})`, borderColor: preset.card.border }}>
-          <span className="h-8 w-8 rounded-lg" style={{ background: preset.card.accent }} />
-          <span className="h-2 flex-1 rounded-full" style={{ background: preset.card.foreground }} />
+    <div className="flex h-44 flex-col gap-2 bg-slate-100 p-4" aria-hidden="true">
+      {(preset.mode === 'multi' ? preset.variants.slice(0, 3) : [preset.card, preset.card]).map((variant, index) => (
+        <div
+          key={`${preset.id}-${index}`}
+          className="flex min-h-0 flex-1 items-center gap-3 rounded-xl border px-3 shadow-sm"
+          style={{ background: `linear-gradient(${variant.direction}, ${variant.background}, ${variant.backgroundSecondary})`, borderColor: variant.border }}
+        >
+          <span className="h-7 w-7 shrink-0 rounded-lg" style={{ background: variant.accent }} />
+          <span className="h-2 flex-1 rounded-full" style={{ background: variant.foreground }} />
+          <span className="h-5 w-8 rounded-md" style={{ background: variant.accent, color: variant.accentForeground }} />
         </div>
-        <div className="rounded-xl border px-3 py-3 shadow-sm" style={{ background: `linear-gradient(${preset.card.direction}, ${preset.card.background}, ${preset.card.backgroundSecondary})`, borderColor: preset.card.border }}>
-          <span className="block h-2 w-20 rounded-full" style={{ background: preset.card.foreground }} />
-          <span className="mt-2 block h-1.5 w-full rounded-full" style={{ background: preset.card.muted }} />
-          <span className="mt-3 flex h-8 items-center justify-center rounded-lg text-[9px] font-bold uppercase tracking-[0.14em]" style={{ background: preset.card.accent, color: preset.card.accentForeground }}>Open link</span>
-        </div>
-      </div>
+      ))}
     </div>
     <div className="space-y-3 p-4">
       <div>
