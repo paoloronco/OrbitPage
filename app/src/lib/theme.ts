@@ -60,6 +60,16 @@ export interface ThemeConfig {
     accent: string;
     direction: string;
   };
+  contentCard: {
+    background: string;
+    backgroundSecondary: string;
+    foreground: string;
+    muted: string;
+    border: string;
+    accent: string;
+    accentForeground: string;
+    direction: string;
+  };
 
   // Typography
   fontFamily: string;
@@ -114,6 +124,16 @@ export const defaultTheme: ThemeConfig = {
     muted: '#8b949e',
     border: '#21262d',
     accent: '#2f81f7',
+    direction: '135deg',
+  },
+  contentCard: {
+    background: '#1c2433',
+    backgroundSecondary: '#21303f',
+    foreground: '#e6edf3',
+    muted: '#8b949e',
+    border: '#21262d',
+    accent: '#2f81f7',
+    accentForeground: '#f8fafc',
     direction: '135deg',
   },
   
@@ -184,6 +204,17 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
       direction: legacyCardGradient.direction,
       ...(themeData.profileCard || {}),
     },
+    contentCard: {
+      background: legacyCard,
+      backgroundSecondary: legacyCardGradient.to,
+      foreground: foreground || defaultTheme.foreground,
+      muted: themeData.muted || defaultTheme.muted,
+      border: themeData.border || defaultTheme.border,
+      accent: primary || defaultTheme.primary,
+      accentForeground: getReadableForeground(primary || defaultTheme.primary, foreground || defaultTheme.foreground),
+      direction: legacyCardGradient.direction,
+      ...(themeData.contentCard || {}),
+    },
     backgroundMedia: {
       ...defaultBackgroundMedia,
       ...(themeData.backgroundMedia || {}),
@@ -243,6 +274,7 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
   const primaryForegroundHsl = hexToHsl(getReadableForeground(theme.primary, theme.foreground));
   const tint = (theme as any).cardBlurTint || theme.card;
   const profileAccentForeground = getReadableForeground(theme.profileCard.accent, theme.profileCard.foreground);
+  const contentAccentForeground = theme.contentCard.accentForeground || getReadableForeground(theme.contentCard.accent, theme.contentCard.foreground);
 
   return {
     '--primary': hexToHsl(theme.primary),
@@ -282,6 +314,19 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
     '--profile-card-border': theme.profileCard.border,
     '--profile-card-accent': theme.profileCard.accent,
     '--profile-card-accent-foreground': profileAccentForeground,
+    '--content-card-background': `linear-gradient(${theme.contentCard.direction}, ${theme.contentCard.background}, ${theme.contentCard.backgroundSecondary})`,
+    '--content-card-background-hsl': hexToHsl(theme.contentCard.background),
+    '--content-card-secondary-hsl': hexToHsl(theme.contentCard.backgroundSecondary),
+    '--content-card-foreground': theme.contentCard.foreground,
+    '--content-card-foreground-hsl': hexToHsl(theme.contentCard.foreground),
+    '--content-card-muted': theme.contentCard.muted,
+    '--content-card-muted-hsl': hexToHsl(theme.contentCard.muted),
+    '--content-card-border': theme.contentCard.border,
+    '--content-card-border-hsl': hexToHsl(theme.contentCard.border),
+    '--content-card-accent': theme.contentCard.accent,
+    '--content-card-accent-hsl': hexToHsl(theme.contentCard.accent),
+    '--content-card-accent-foreground': contentAccentForeground,
+    '--content-card-accent-foreground-hsl': hexToHsl(contentAccentForeground),
   };
 };
 

@@ -80,7 +80,7 @@ export const PublicView = ({
         {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
 
         {visibleLinks.length > 0 && (
-          <div className="flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
+          <div className="public-card-stack flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
             {visibleLinks.map((link) => (
               <PublicBlockRenderer key={link.id} link={link} />
             ))}

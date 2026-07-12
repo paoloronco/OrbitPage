@@ -1,4 +1,4 @@
-import { type ChangeEvent, type CSSProperties, useEffect, useState } from "react";
+import { type ChangeEvent, type CSSProperties, useEffect, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,13 @@ import {
   AlertTriangle,
   Check,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Eye,
   FileDown,
   ImagePlay,
   Layout,
+  Layers3,
   Palette,
   RotateCcw,
   SlidersHorizontal,
@@ -24,6 +27,7 @@ import {
 } from "lucide-react";
 import { type ThemeConfig, defaultTheme, normalizeTheme } from "@/lib/theme";
 import { themePresets, type ThemePreset } from "@/lib/theme-presets";
+import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
 import { commitPendingTheme, parseImportedTheme, prepareThemeExport } from "./theme-save-state";
 
@@ -35,6 +39,7 @@ interface ThemeCustomizerProps {
 
 type EditableTheme = ThemeConfig & { cardBlurTint?: string };
 type WorkspaceMode = "presets" | "manual";
+type PresetScope = "page" | "cards";
 
 interface ThemeColorControlProps {
   id: string;
@@ -55,10 +60,16 @@ const getPreviewBackground = (theme: ThemeConfig) => (
 const findMatchingPreset = (theme: ThemeConfig) => themePresets.find((preset) => (
   preset.theme.primary === theme.primary &&
   preset.theme.background === theme.background &&
-  preset.theme.card === theme.card &&
   preset.theme.foreground === theme.foreground &&
   preset.theme.fontFamily === theme.fontFamily &&
   preset.theme.cardRadius === theme.cardRadius
+))?.id || null;
+
+const findMatchingCardPreset = (theme: ThemeConfig) => cardThemePresets.find((preset) => (
+  preset.card.background === theme.contentCard.background &&
+  preset.card.backgroundSecondary === theme.contentCard.backgroundSecondary &&
+  preset.card.foreground === theme.contentCard.foreground &&
+  preset.card.accent === theme.contentCard.accent
 ))?.id || null;
 
 const ThemeColorControl = ({
@@ -104,8 +115,8 @@ const ThemeColorControl = ({
 
 const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?: boolean }) => {
   const cardStyle: CSSProperties = {
-    background: `linear-gradient(${theme.cardGradient.direction}, ${theme.cardGradient.from}, ${theme.cardGradient.to})`,
-    borderColor: theme.border,
+    background: `linear-gradient(${theme.contentCard.direction}, ${theme.contentCard.background}, ${theme.contentCard.backgroundSecondary})`,
+    borderColor: theme.contentCard.border,
     borderRadius: `${Math.max(3, theme.cardRadius * 0.72)}px`,
   };
   const profileStyle: CSSProperties = {
@@ -133,18 +144,18 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
         <div className="flex flex-col" style={{ gap: `${Math.max(6, theme.cardSpacing * 0.58)}px` }}>
           <div className="flex items-center gap-2 border px-3 py-2.5 shadow-sm" style={cardStyle}>
             <div className="h-5 w-5 rounded-md" style={{ backgroundColor: theme.primary }} />
-            <div className="h-1.5 flex-1 rounded-full opacity-90" style={{ backgroundColor: theme.foreground }} />
-            <div className="h-1.5 w-5 rounded-full opacity-50" style={{ backgroundColor: theme.muted }} />
+            <div className="h-1.5 flex-1 rounded-full opacity-90" style={{ backgroundColor: theme.contentCard.foreground }} />
+            <div className="h-1.5 w-5 rounded-full opacity-70" style={{ backgroundColor: theme.contentCard.muted }} />
           </div>
           <div className="border px-3 py-2.5 shadow-sm" style={cardStyle}>
-            <div className="h-1.5 w-16 rounded-full" style={{ backgroundColor: theme.foreground }} />
-            <div className="mt-2 h-1.5 w-full rounded-full opacity-50" style={{ backgroundColor: theme.muted }} />
-            <div className="mt-1.5 h-1.5 w-3/4 rounded-full opacity-50" style={{ backgroundColor: theme.muted }} />
+            <div className="h-1.5 w-16 rounded-full" style={{ backgroundColor: theme.contentCard.foreground }} />
+            <div className="mt-2 h-1.5 w-full rounded-full opacity-70" style={{ backgroundColor: theme.contentCard.muted }} />
+            <div className="mt-1.5 h-1.5 w-3/4 rounded-full opacity-70" style={{ backgroundColor: theme.contentCard.muted }} />
           </div>
           {!compact ? (
             <div
               className="flex h-9 items-center justify-center rounded-lg text-[9px] font-bold uppercase tracking-[0.16em]"
-              style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.primaryGlow})`, color: theme.background }}
+              style={{ background: theme.contentCard.accent, color: theme.contentCard.accentForeground }}
             >
               Call to action
             </div>
@@ -179,11 +190,43 @@ const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: 
   </article>
 );
 
+const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; active: boolean; onApply: () => void }) => (
+  <article className={`w-[17rem] shrink-0 overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
+    <div className="h-44 p-4" style={{ background: `linear-gradient(145deg, ${preset.card.backgroundSecondary}, ${preset.card.background})` }} aria-hidden="true">
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-3 rounded-xl border px-3 py-3 shadow-sm" style={{ background: `linear-gradient(${preset.card.direction}, ${preset.card.background}, ${preset.card.backgroundSecondary})`, borderColor: preset.card.border }}>
+          <span className="h-8 w-8 rounded-lg" style={{ background: preset.card.accent }} />
+          <span className="h-2 flex-1 rounded-full" style={{ background: preset.card.foreground }} />
+        </div>
+        <div className="rounded-xl border px-3 py-3 shadow-sm" style={{ background: `linear-gradient(${preset.card.direction}, ${preset.card.background}, ${preset.card.backgroundSecondary})`, borderColor: preset.card.border }}>
+          <span className="block h-2 w-20 rounded-full" style={{ background: preset.card.foreground }} />
+          <span className="mt-2 block h-1.5 w-full rounded-full" style={{ background: preset.card.muted }} />
+          <span className="mt-3 flex h-8 items-center justify-center rounded-lg text-[9px] font-bold uppercase tracking-[0.14em]" style={{ background: preset.card.accent, color: preset.card.accentForeground }}>Open link</span>
+        </div>
+      </div>
+    </div>
+    <div className="space-y-3 p-4">
+      <div>
+        <p className="font-bold text-slate-950">{preset.name}</p>
+        <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{preset.mood}</p>
+      </div>
+      <p className="min-h-10 text-sm leading-5 text-slate-600">{preset.description}</p>
+      <Button type="button" variant={active ? "default" : "outline"} className="w-full" onClick={onApply}>
+        {active ? <Check className="mr-2 h-4 w-4" /> : <Layers3 className="mr-2 h-4 w-4" />}
+        {active ? "Selected" : "Use card style"}
+      </Button>
+    </div>
+  </article>
+);
+
 export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeCustomizerProps) => {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("presets");
+  const [presetScope, setPresetScope] = useState<PresetScope>("page");
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   const [pendingTheme, setPendingTheme] = useState<EditableTheme>(theme);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(() => findMatchingPreset(theme));
+  const [selectedCardPresetId, setSelectedCardPresetId] = useState<string | null>(() => findMatchingCardPreset(theme));
+  const cardPresetRailRef = useRef<HTMLDivElement>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -191,6 +234,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
   useEffect(() => {
     setPendingTheme(theme);
     setSelectedPresetId(findMatchingPreset(theme));
+    setSelectedCardPresetId(findMatchingCardPreset(theme));
     setIsDirty(false);
     setSaveError("");
     setSaveState("idle");
@@ -206,6 +250,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
   };
 
   const updatePendingTheme = (updates: Partial<EditableTheme>) => {
+    if (updates.contentCard || updates.card || updates.cardGradient) setSelectedCardPresetId(null);
     previewTheme({ ...pendingTheme, ...updates }, null);
   };
 
@@ -213,8 +258,24 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
     const nextTheme: EditableTheme = {
       ...preset.theme,
       content: pendingTheme.content,
+      contentCard: pendingTheme.contentCard,
     };
     previewTheme(nextTheme, preset.id);
+  };
+
+  const applyCardPreset = (preset: CardThemePreset) => {
+    const nextTheme: EditableTheme = {
+      ...pendingTheme,
+      card: preset.card.background,
+      cardGradient: {
+        from: preset.card.background,
+        to: preset.card.backgroundSecondary,
+        direction: preset.card.direction,
+      },
+      contentCard: preset.card,
+    };
+    previewTheme(nextTheme, selectedPresetId);
+    setSelectedCardPresetId(preset.id);
   };
 
   const saveTheme = async () => {
@@ -254,6 +315,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
         const importedTheme = result.theme as EditableTheme;
         setPendingTheme(importedTheme);
         setSelectedPresetId(findMatchingPreset(importedTheme));
+        setSelectedCardPresetId(findMatchingCardPreset(importedTheme));
         setIsDirty(result.isDirty);
         setSaveError(result.error);
         setSaveState("idle");
@@ -350,18 +412,50 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
 
       {workspaceMode === "presets" ? (
         <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
-          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">12 starting points</p>
-              <h3 className="mt-1 text-xl font-bold text-slate-950">Pick by personality, not by hex code</h3>
-            </div>
-            <p className="text-sm text-slate-500">Applying a preset changes the live preview, not the saved page.</p>
+          <div className="relative mb-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
+            <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
+            <button type="button" onClick={() => setPresetScope("page")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "page" ? "text-blue-700" : "text-slate-600"}`}>
+              <Palette className="h-4 w-4" /> Page themes
+            </button>
+            <button type="button" onClick={() => setPresetScope("cards")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "cards" ? "text-blue-700" : "text-slate-600"}`}>
+              <Layers3 className="h-4 w-4" /> Card styles
+            </button>
           </div>
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {themePresets.map((preset) => (
-              <PresetCard key={preset.id} preset={preset} active={selectedPresetId === preset.id} onApply={() => applyPreset(preset)} />
-            ))}
-          </div>
+          {presetScope === "page" ? (
+            <>
+              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">12 page themes</p>
+                  <h3 className="mt-1 text-xl font-bold text-slate-950">Page identity and background</h3>
+                </div>
+                <p className="text-sm text-slate-500">Page themes leave your selected card style untouched.</p>
+              </div>
+              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {themePresets.map((preset) => (
+                  <PresetCard key={preset.id} preset={preset} active={selectedPresetId === preset.id} onApply={() => applyPreset(preset)} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">12 card styles</p>
+                  <h3 className="mt-1 text-xl font-bold text-slate-950">Ready-balanced content cards</h3>
+                  <p className="mt-1 text-sm text-slate-500">Surface, text, borders, icons and CTA are designed as one palette.</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" size="icon" aria-label="Previous card styles" onClick={() => cardPresetRailRef.current?.scrollBy({ left: -300, behavior: "smooth" })}><ChevronLeft className="h-4 w-4" /></Button>
+                  <Button type="button" variant="outline" size="icon" aria-label="Next card styles" onClick={() => cardPresetRailRef.current?.scrollBy({ left: 300, behavior: "smooth" })}><ChevronRight className="h-4 w-4" /></Button>
+                </div>
+              </div>
+              <div ref={cardPresetRailRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 pt-1 [scrollbar-width:thin]">
+                {cardThemePresets.map((preset) => (
+                  <div key={preset.id} className="snap-start"><CardPresetCard preset={preset} active={selectedCardPresetId === preset.id} onApply={() => applyCardPreset(preset)} /></div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       ) : (
         <section className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -408,8 +502,22 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
                       ...(pendingTheme.backgroundMedia?.type === "gradient" ? { backgroundGradient: { ...pendingTheme.backgroundGradient, from: background } } : {}),
                     }))}
                     {colorControl("backgroundSecondary", "Secondary surface", pendingTheme.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ backgroundSecondary }))}
-                    {colorControl("card", "Card background", pendingTheme.card, (card) => updatePendingTheme({ card, cardGradient: { ...pendingTheme.cardGradient, from: card } }))}
+                    {colorControl("card", "Card background", pendingTheme.contentCard.background, (card) => updatePendingTheme({ card, cardGradient: { ...pendingTheme.cardGradient, from: card }, contentCard: { ...pendingTheme.contentCard, background: card } }))}
                     {colorControl("cardTint", "Card blur tint", pendingTheme.cardBlurTint || pendingTheme.card, (cardBlurTint) => updatePendingTheme({ cardBlurTint }))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h4 className="font-bold text-slate-900">Content cards</h4>
+                  <p className="mt-1 text-sm text-slate-500">Fine tune the selected card style without changing the page or profile palette.</p>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {colorControl("contentForeground", "Card text", pendingTheme.contentCard.foreground, (foreground) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, foreground } }))}
+                    {colorControl("contentMuted", "Secondary text", pendingTheme.contentCard.muted, (muted) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, muted } }))}
+                    {colorControl("contentBorder", "Card border", pendingTheme.contentCard.border, (border) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, border } }))}
+                    {colorControl("contentAccent", "Icons & CTA", pendingTheme.contentCard.accent, (accent) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, accent } }))}
+                    {colorControl("contentAccentForeground", "CTA text", pendingTheme.contentCard.accentForeground, (accentForeground) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, accentForeground } }))}
                   </div>
                 </div>
 
@@ -468,12 +576,12 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
                   <div>
                     <h4 className="font-bold text-slate-900">Card gradient</h4>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {colorControl("cardGradientFrom", "Start", pendingTheme.cardGradient.from, (from) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, from } }))}
-                      {colorControl("cardGradientTo", "End", pendingTheme.cardGradient.to, (to) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, to } }))}
+                      {colorControl("cardGradientFrom", "Start", pendingTheme.contentCard.background, (from) => updatePendingTheme({ card: from, cardGradient: { ...pendingTheme.cardGradient, from }, contentCard: { ...pendingTheme.contentCard, background: from } }))}
+                      {colorControl("cardGradientTo", "End", pendingTheme.contentCard.backgroundSecondary, (to) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, to }, contentCard: { ...pendingTheme.contentCard, backgroundSecondary: to } }))}
                     </div>
                     <div className="mt-4 space-y-2">
                       <Label>Direction</Label>
-                      <Select value={pendingTheme.cardGradient.direction} onValueChange={(direction) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, direction } })}>
+                      <Select value={pendingTheme.contentCard.direction} onValueChange={(direction) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, direction }, contentCard: { ...pendingTheme.contentCard, direction } })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="0deg">Top to bottom</SelectItem>

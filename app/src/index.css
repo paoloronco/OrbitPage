@@ -251,6 +251,28 @@
     color: inherit;
   }
 
+  .public-card-stack,
+  .public-block-preview {
+    --background: var(--content-card-secondary-hsl);
+    --foreground: var(--content-card-foreground-hsl);
+    --card: var(--content-card-background-hsl);
+    --card-foreground: var(--content-card-foreground-hsl);
+    --muted: var(--content-card-secondary-hsl);
+    --muted-foreground: var(--content-card-muted-hsl);
+    --primary: var(--content-card-accent-hsl);
+    --primary-foreground: var(--content-card-accent-foreground-hsl);
+    --accent: var(--content-card-accent-hsl);
+    --accent-foreground: var(--content-card-accent-foreground-hsl);
+    --border: var(--content-card-border-hsl);
+  }
+
+  .public-card-stack .glass-card,
+  .public-block-preview .glass-card {
+    background: var(--content-card-background);
+    border-color: var(--content-card-border);
+    color: var(--content-card-foreground);
+  }
+
   .orbitpage-admin {
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
@@ -294,10 +316,10 @@
   }
 
   .orbitpage-admin .public-block-preview .glass-card {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--glass-tint) 12%, transparent), transparent), var(--glass-bg);
-    border: var(--glass-border);
+    background: var(--content-card-background);
+    border-color: var(--content-card-border);
     box-shadow: var(--card-glow, var(--shadow-card));
-    color: hsl(var(--card-foreground));
+    color: var(--content-card-foreground);
     backdrop-filter: blur(var(--blur-intensity, 20px));
     -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
   }

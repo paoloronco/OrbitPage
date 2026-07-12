@@ -83,7 +83,7 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
             <PublicProfileSection profile={profile} />
 
             {visibleLinks.length > 0 && (
-              <div className="flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
+              <div className="public-card-stack flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
             {visibleLinks.map(link => <PublicBlockRenderer key={link.id} link={link} />)}
               </div>
             )}
