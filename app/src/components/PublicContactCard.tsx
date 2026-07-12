@@ -1,14 +1,15 @@
+import type { CSSProperties } from "react";
 import type { LinkData } from "./LinkCard";
 import { getContactData } from "@/lib/link-blocks";
 import { Card } from "@/components/ui/card";
 import { Globe, Mail, MapPin, MessageCircle, Phone, Send, UserRound } from "lucide-react";
-import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
+import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize, getPublicTextColor } from "@/lib/public-block-style";
 
 interface PublicContactCardProps {
   link: LinkData;
 }
 
-const buildLink = (href?: string, text?: string) => {
+const buildLink = (href?: string, text?: string, style?: CSSProperties) => {
   if (!href) return null;
   return (
     <a
@@ -16,6 +17,7 @@ const buildLink = (href?: string, text?: string) => {
       target="_blank"
       rel="noopener noreferrer"
       className="text-sm font-medium break-all hover:text-primary hover:underline"
+      style={style}
     >
       {text || href}
     </a>
@@ -34,6 +36,16 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
   ];
   const primaryAction = items.find((item) => item.href && (item.key === "Phone" || item.key === "Email" || item.key === "WhatsApp"));
   const cardStyle = getPublicBlockStyle(link);
+  const textColor = getPublicTextColor(link);
+  const textStyle = textColor ? { color: textColor } : undefined;
+  const secondaryTextStyle = textColor ? { color: textColor, opacity: 0.74 } : undefined;
+  const panelStyle = textColor
+    ? {
+        borderColor: "color-mix(in srgb, currentColor 20%, transparent)",
+        backgroundColor: "color-mix(in srgb, currentColor 8%, transparent)",
+        color: textColor,
+      }
+    : undefined;
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
@@ -48,6 +60,7 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
               style={{
                 ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}),
                 ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
+                ...textStyle,
               }}
             >
               {contact.name || link.title || "Contact"}
@@ -56,7 +69,7 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
               <div
                 className="mt-1 text-sm text-muted-foreground"
                 style={{
-                  ...(link.textColor ? { color: link.textColor, opacity: 0.72 } : {}),
+                  ...secondaryTextStyle,
                   ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}),
                   ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}),
                 }}
@@ -67,18 +80,18 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
           </div>
         </div>
         {contact.note ? (
-          <div className="rounded-md bg-muted/35 px-3 py-2 text-sm leading-relaxed text-muted-foreground">
+          <div className="rounded-md bg-muted/35 px-3 py-2 text-sm leading-relaxed text-muted-foreground" style={panelStyle || secondaryTextStyle}>
             {contact.note}
           </div>
         ) : null}
 
         <div className="grid gap-2">
           {items.map((item) => item.value ? (
-            <div key={item.key} className="flex items-start gap-3 rounded-md border border-border/55 bg-background/35 px-3 py-2 text-sm">
+            <div key={item.key} className="flex items-start gap-3 rounded-md border border-border/55 bg-background/35 px-3 py-2 text-sm" style={panelStyle}>
               <item.Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" style={getPublicAccentStyle(link)} />
               <div className="min-w-0 flex-1">
-                <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{item.key}</span>
-                {item.href ? buildLink(item.href, item.value) : <span className="break-words">{item.value}</span>}
+                <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground" style={secondaryTextStyle}>{item.key}</span>
+                {item.href ? buildLink(item.href, item.value, textStyle) : <span className="break-words" style={textStyle}>{item.value}</span>}
               </div>
             </div>
           ) : null)}
