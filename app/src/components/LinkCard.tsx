@@ -646,16 +646,23 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       <div className={canReorder ? "ml-6" : ""}>
         {isEditing ? (
             <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-            {isFullEdit && (
-              <Input
-                value={editLink.title}
-                onChange={(e) => setEditLink(prev => ({ ...prev, title: e.target.value }))}
-                placeholder={titlePlaceholder}
-                className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
-              />
-            )}
-            {canEditStyle && (
-            <div className="grid grid-cols-2 gap-2">
+            {(isFullEdit || canEditStyle) && (
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Content hierarchy</p>
+                <p className="text-sm font-semibold text-slate-900">Title &amp; typography</p>
+              </div>
+              <div className="space-y-3">
+              {isFullEdit && (
+                <Input
+                  value={editLink.title}
+                  onChange={(e) => setEditLink(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder={titlePlaceholder}
+                  className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
+                />
+              )}
+              {canEditStyle && (
+              <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Title Font Size (px)</Label>
                 <Input
@@ -674,10 +681,10 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   className="h-8 w-full"
                 />
               </div>
-            </div>
-            )}
-            {canEditStyle && (
-            <div className="grid grid-cols-3 gap-2">
+              </div>
+              )}
+              {canEditStyle && (
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <div className="space-y-1">
                 <Label className="text-xs">Title Font</Label>
                 <Select
@@ -734,26 +741,39 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+              </div>
+              )}
+              </div>
+            </section>
             )}
             {isFullEdit && (
               <>
-                {!isSeparator && (
-                  <Textarea
-                    value={editLink.description}
-                    onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Block description"
-                    className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
-                    rows={2}
-                  />
-                )}
-                {showUrlField && (
-                  <Input
-                    value={editLink.url}
-                    onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
-                    placeholder="https://example.com"
-                    className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
-                  />
+                {(!isSeparator || showUrlField) && (
+                  <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+                    <div className="mb-3">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Destination</p>
+                      <p className="text-sm font-semibold text-slate-900">Description &amp; link</p>
+                    </div>
+                    <div className="space-y-3">
+                      {!isSeparator && (
+                        <Textarea
+                          value={editLink.description}
+                          onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Block description"
+                          className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
+                          rows={2}
+                        />
+                      )}
+                      {showUrlField && (
+                        <Input
+                          value={editLink.url}
+                          onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
+                          placeholder="https://example.com"
+                          className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        />
+                      )}
+                    </div>
+                  </section>
                 )}
                 {isContact && (
                   <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
@@ -1063,7 +1083,12 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 )}
 
             {/* Link Scheduler */}
-            <div className="grid grid-cols-2 gap-2">
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Publishing</p>
+                <p className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs">Status</Label>
                 <Select
@@ -1125,7 +1150,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   className="h-8 w-full glass-card border-primary/20"
                 />
               </div>
-              <div className="col-span-2 space-y-1">
+              <div className="space-y-1 sm:col-span-2">
                 <Label className="text-xs">Timezone</Label>
                 <Input
                   value={editLink.timezone || ''}
@@ -1139,12 +1164,19 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   className="h-8 w-full glass-card border-primary/20"
                 />
               </div>
-            </div>
+              </div>
+            </section>
               </>
             )}
 
             {/* Icon Upload */}
             {canEditImages && !isSeparator && (
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Media</p>
+                <p className="text-sm font-semibold text-slate-900">Icon &amp; cover image</p>
+              </div>
+              <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-sm font-medium">Icon</Label>
               <div className="flex items-center gap-2">
@@ -1171,9 +1203,6 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
             </div>
-            )}
-
-            {canEditImages && !isSeparator && (
             <div className="space-y-2">
               <Label className="text-sm font-medium flex items-center gap-1">
                 <Image className="w-3.5 h-3.5" />
@@ -1227,9 +1256,17 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 className="glass-card border-primary/20 text-sm"
               />
             </div>
+              </div>
+            </section>
             )}
 
             {canEditStyle && (
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Appearance</p>
+                <p className="text-sm font-semibold text-slate-900">Size &amp; colors</p>
+              </div>
+              <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-sm font-medium">Size</Label>
               <Select
@@ -1248,9 +1285,6 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </SelectContent>
               </Select>
             </div>
-            )}
-
-            {canEditStyle && (
             <div className={`grid gap-2 ${isSeparator && separatorData.boxed !== true ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {(!isSeparator || separatorData.boxed === true) && (
                 <div className="space-y-1">
@@ -1273,6 +1307,8 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
             </div>
+              </div>
+            </section>
             )}
             
             <div className="flex gap-2">
