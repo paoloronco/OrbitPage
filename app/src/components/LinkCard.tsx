@@ -820,7 +820,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                       Social links
                     </div>
                     {socialData.items.map((item, index) => (
-                      <div key={`${item.label}-${index}`} className="space-y-2 rounded border border-primary/10 bg-white/10 p-2">
+                      <div key={index} className="space-y-2 rounded border border-primary/10 bg-white/10 p-2">
                         <div className="grid grid-cols-[1fr,1fr,auto] gap-2">
                           <Input
                             value={item.label}
