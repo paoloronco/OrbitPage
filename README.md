@@ -2,7 +2,7 @@
 
 ### A self-hosted public page for people, brands, venues, events, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.3.28-blue.svg)](https://github.com/paoloronco/OrbitPage)
+[![Version](https://img.shields.io/badge/version-4.4.0-blue.svg)](https://github.com/paoloronco/OrbitPage)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Forbitpage-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/orbitpage)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Forbitpage-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage)
@@ -265,6 +265,20 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 
 <details>
 <summary><strong>Show full changelog</strong></summary>
+
+<details>
+<summary><strong>v4.4.0</strong></summary>
+
+### Explicit blocks, theme studio, and privacy-ready embeds
+
+- Expands the block system with headings, images, contacts, social rows, callouts, maps, events, and consent-aware embeds.
+- Adds independent ready-made page themes and card-style presets with live previews and unrestricted fine tuning.
+- Adds complete profile-card and avatar customization, including colors, borders, accents, and image shape.
+- Aligns Admin previews with public rendering and reorganizes the Links editor into clear content, publishing, media, and appearance sections.
+- Hardens Google Analytics Consent Mode v2 and external CMP integrations for Cookiebot, CookieYes, OneTrust, iubenda, and custom providers.
+- Adds secure embed sandboxing, stricter CSP provider allowlists, and expanded CMP regression coverage.
+
+</details>
 
 <details>
 <summary><strong>v4.3.28</strong></summary>
