@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Compass, Edit, Camera, Linkedin, Github, Instagram, Facebook, Play, Twitter, Youtube } from "lucide-react";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
@@ -232,6 +233,7 @@ export const ProfileSection = ({
         avatarBorderEnabled: prev.appearance?.avatarBorderEnabled,
         avatarBorderColor: prev.appearance?.avatarBorderColor,
         avatarShape: prev.appearance?.avatarShape,
+        avatarSize: prev.appearance?.avatarSize,
       },
     }));
   };
@@ -245,7 +247,7 @@ export const ProfileSection = ({
       >
       <div className="relative inline-block mb-6">
         {current.showAvatar !== false && (
-        <Avatar className="profile-card__avatar h-24 w-24" style={getProfileAvatarStyle(current.appearance)}>
+        <Avatar className="profile-card__avatar" style={getProfileAvatarStyle(current.appearance)}>
           <AvatarImage
             src={getAvatarUrl(current.avatar)}
             alt={current.name || 'User'}
@@ -325,6 +327,22 @@ export const ProfileSection = ({
                   ))}
                 </div>
               </div>
+            </div>
+            <div className="mt-5 border-t border-current/10 pt-4">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <Label htmlFor="profile-avatar-size" className="text-xs">Image size</Label>
+                <span className="rounded-md border border-current/15 px-2 py-1 text-xs font-semibold tabular-nums">{editProfile.appearance?.avatarSize ?? 112}px</span>
+              </div>
+              <Slider
+                id="profile-avatar-size"
+                min={56}
+                max={192}
+                step={4}
+                value={[editProfile.appearance?.avatarSize ?? 112]}
+                onValueChange={([avatarSize]) => updateAppearance({ avatarSize })}
+                aria-label="Profile image size"
+              />
+              <div className="mt-2 flex justify-between text-[10px] opacity-60"><span>56px</span><span>192px</span></div>
             </div>
           </div>
 

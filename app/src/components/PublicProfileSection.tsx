@@ -49,7 +49,7 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand" }
     <Card className="profile-card glass-card p-8 text-center transition-smooth hover:glow-effect" style={getProfileAppearanceStyle(profile.appearance)}>
       {profile.showAvatar !== false && (
         <div className="mb-6 flex justify-center">
-          <Avatar className="profile-card__avatar w-28 h-28" style={getProfileAvatarStyle(profile.appearance)}>
+          <Avatar className="profile-card__avatar" style={getProfileAvatarStyle(profile.appearance)}>
             <AvatarImage className="object-cover object-center" src={getAvatarUrl(profile.avatar)} alt={profile.name || 'Page avatar'} />
             <AvatarFallback className="profile-card__avatar-fallback text-4xl font-bold">{profile.name?.charAt(0) ?? 'U'}</AvatarFallback>
           </Avatar>

@@ -10,6 +10,7 @@ export interface ProfileAppearance {
   avatarBorderEnabled?: boolean;
   avatarBorderColor?: string;
   avatarShape?: "round" | "square";
+  avatarSize?: number;
 }
 
 type ProfileCssProperties = CSSProperties & Record<`--profile-card-${string}`, string>;
@@ -39,8 +40,9 @@ export const getProfileAppearanceStyle = (appearance?: ProfileAppearance): Profi
 };
 
 export const getProfileAvatarStyle = (appearance?: ProfileAppearance): CSSProperties => {
-  if (!appearance) return {};
-  const style: CSSProperties = {};
+  const avatarSize = Math.min(192, Math.max(56, appearance?.avatarSize ?? 112));
+  const style: CSSProperties = { width: `${avatarSize}px`, height: `${avatarSize}px` };
+  if (!appearance) return style;
   if (appearance.avatarShape) style.borderRadius = appearance.avatarShape === "square" ? "12px" : "9999px";
   if (appearance.avatarBorderEnabled === false) {
     style.border = "none";
