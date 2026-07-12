@@ -10,6 +10,7 @@ import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { withBasePath } from "@/lib/base-path";
+import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -31,6 +32,7 @@ interface ProfileData {
   showAvatar?: boolean;
   nameFontSize?: string;
   bioFontSize?: string;
+  appearance?: ProfileAppearance;
   footerText?: string;
   favicon?: string;
   googleAnalyticsId?: string;
@@ -99,6 +101,7 @@ const Index = () => {
               : ((profileData as any).showAvatar ?? true),
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
+            appearance: (profileData as any).appearance || {},
             socialLinks: profileData.social_links || {},
             footerText,
             favicon,

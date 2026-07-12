@@ -495,6 +495,7 @@ const getPublicProfilePayload = async () => {
       show_avatar: 0,
       name_font_size: '2rem',
       bio_font_size: '14px',
+      appearance: {},
       tab_title: undefined,
       meta_description: undefined,
       footer_text: undefined,
@@ -513,6 +514,7 @@ const getPublicProfilePayload = async () => {
     show_avatar: profile.show_avatar === 0 ? 0 : 1,
     name_font_size: profile.name_font_size || '2rem',
     bio_font_size: profile.bio_font_size || '14px',
+    appearance: safeJsonParse(profile.appearance, {}),
     tab_title: profile.tab_title || undefined,
     meta_description: profile.meta_description || undefined,
     footer_text: profile.footer_text || undefined,
@@ -1809,6 +1811,7 @@ app.get('/api/profile', async (req, res) => {
         show_avatar: 1,
         name_font_size: '2rem',
         bio_font_size: '14px',
+        appearance: {},
         tab_title: undefined,
         meta_description: undefined,
         footer_text: undefined,
@@ -1828,6 +1831,7 @@ app.get('/api/profile', async (req, res) => {
       show_avatar: profile.show_avatar === 0 ? 0 : 1,
       name_font_size: profile.name_font_size || '2rem',
       bio_font_size: profile.bio_font_size || '14px',
+      appearance: safeJsonParse(profile.appearance, {}),
       tab_title: profile.tab_title || undefined,
       meta_description: profile.meta_description || undefined,
       footer_text: profile.footer_text || undefined,
@@ -1843,6 +1847,18 @@ app.get('/api/profile', async (req, res) => {
 });
 
 const SocialLinksSchema = z.record(z.string().max(2048)).optional().default({});
+const ProfileColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const ProfileAppearanceSchema = z.object({
+  cardBackgroundColor: ProfileColorSchema.optional(),
+  cardTextColor: ProfileColorSchema.optional(),
+  cardMutedColor: ProfileColorSchema.optional(),
+  cardBorderEnabled: z.boolean().optional(),
+  cardBorderColor: ProfileColorSchema.optional(),
+  accentColor: ProfileColorSchema.optional(),
+  avatarBorderEnabled: z.boolean().optional(),
+  avatarBorderColor: ProfileColorSchema.optional(),
+  avatarShape: z.enum(['round', 'square']).optional(),
+}).strip();
 
 const ProfileSchema = z.object({
   // Accept both camelCase and snake_case field names sent by different frontend versions
@@ -1876,6 +1892,7 @@ const ProfileSchema = z.object({
   cookie_policy_url: z.string().max(500).nullable().optional(),
   adminOnboardingEnabled: z.union([z.boolean(), z.number()]).optional(),
   admin_onboarding_enabled: z.union([z.boolean(), z.number()]).optional(),
+  appearance: ProfileAppearanceSchema.optional(),
 }).strip();
 
 app.put('/api/profile', authenticateToken, requirePermission('profile:write'), async (req, res) => {
@@ -1921,7 +1938,8 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 
     // Check if profile exists. In demo mode, privacy/compliance fields are read-only,
     // so profile saves preserve the original legal policy URLs.
-    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled FROM profile_data LIMIT 1');
+    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1');
+    const appearance = body.appearance ?? safeJsonParse(existing?.appearance, {});
     const adminOnboardingEnabled = typeof onboardingRaw === 'number'
       ? onboardingRaw !== 0
       : (typeof onboardingRaw === 'boolean'
@@ -1934,13 +1952,13 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 
     if (existing) {
       await dbRun(
-        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, admin_onboarding_enabled = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0, existing.id]
+        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, admin_onboarding_enabled = ?, appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0, JSON.stringify(appearance), existing.id]
       );
     } else {
       await dbRun(
-        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0]
+        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0, JSON.stringify(appearance)]
       );
     }
 

@@ -3,6 +3,7 @@ import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { LinkData } from "./LinkCard";
 import { getSocialRowData } from "@/lib/link-blocks";
 import { getThemeCssVariables, ThemeConfig } from "@/lib/theme";
+import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -18,6 +19,7 @@ interface ProfileData {
   };
   nameFontSize?: string;
   bioFontSize?: string;
+  appearance?: ProfileAppearance;
 }
 
 interface LivePreviewProps {

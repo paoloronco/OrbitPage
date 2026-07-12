@@ -40,6 +40,7 @@ import { AdminOnboarding } from "./AdminOnboarding";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
+import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -61,6 +62,7 @@ interface ProfileData {
   };
   nameFontSize?: string;
   bioFontSize?: string;
+  appearance?: ProfileAppearance;
   tabTitle?: string;
   metaDescription?: string;
   footerText?: string;

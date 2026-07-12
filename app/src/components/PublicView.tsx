@@ -4,6 +4,7 @@ import type { LinkData } from "./LinkCard";
 import { withBasePath } from "@/lib/base-path";
 import { getSocialRowData } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
+import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -13,6 +14,7 @@ interface ProfileData {
   socialLinks?: Record<string, string | undefined>;
   nameFontSize?: string;
   bioFontSize?: string;
+  appearance?: ProfileAppearance;
 }
 
 interface PublicViewProps {

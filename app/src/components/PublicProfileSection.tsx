@@ -5,6 +5,7 @@ import { Linkedin, Github, Instagram, Facebook, Twitter, Youtube } from "lucide-
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
+import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -26,6 +27,7 @@ interface ProfileData {
   };
   nameFontSize?: string;
   bioFontSize?: string;
+  appearance?: ProfileAppearance;
 }
 
 interface PublicProfileSectionProps {
@@ -44,10 +46,10 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand" }
   if (!hasVisibleProfile) return null;
 
   return (
-    <Card className="profile-card glass-card p-8 text-center transition-smooth hover:glow-effect">
+    <Card className="profile-card glass-card p-8 text-center transition-smooth hover:glow-effect" style={getProfileAppearanceStyle(profile.appearance)}>
       {profile.showAvatar !== false && (
         <div className="mb-6 flex justify-center">
-          <Avatar className="profile-card__avatar w-28 h-28">
+          <Avatar className="profile-card__avatar w-28 h-28" style={getProfileAvatarStyle(profile.appearance)}>
             <AvatarImage className="object-cover object-center" src={getAvatarUrl(profile.avatar)} alt={profile.name || 'Page avatar'} />
             <AvatarFallback className="profile-card__avatar-fallback text-4xl font-bold">{profile.name?.charAt(0) ?? 'U'}</AvatarFallback>
           </Avatar>

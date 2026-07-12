@@ -10,6 +10,7 @@ import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { Permission } from "@/lib/permissions";
+import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -31,6 +32,7 @@ interface ProfileData {
   };
   nameFontSize?: string;
   bioFontSize?: string;
+  appearance?: ProfileAppearance;
   tabTitle?: string;
   metaDescription?: string;
   footerText?: string;
@@ -115,6 +117,7 @@ const Admin = () => {
             socialLinks: profileData.social_links || {},
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
+            appearance: profileData.appearance || {},
             tabTitle: (profileData as any).tab_title || (profileData as any).tabTitle || undefined,
             metaDescription: (profileData as any).meta_description || (profileData as any).metaDescription || undefined,
             footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
@@ -169,6 +172,7 @@ const Admin = () => {
         showAvatar: typeof newProfile.showAvatar === 'boolean' ? newProfile.showAvatar : true,
         nameFontSize: newProfile.nameFontSize,
         bioFontSize: newProfile.bioFontSize,
+        appearance: newProfile.appearance,
         tabTitle: newProfile.tabTitle,
         metaDescription: newProfile.metaDescription,
         footerText: newProfile.footerText,

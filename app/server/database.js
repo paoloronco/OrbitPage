@@ -99,6 +99,8 @@ export const initializeDatabase = () => {
       db.run(`ALTER TABLE profile_data ADD COLUMN cookie_policy_url TEXT`, (err) => { /* ignore if exists */ });
       // Admin onboarding preference. Default enabled so new admin/customer sessions see the guided setup.
       db.run(`ALTER TABLE profile_data ADD COLUMN admin_onboarding_enabled BOOLEAN DEFAULT 1`, (err) => { /* ignore if exists */ });
+      // Per-profile visual overrides. JSON keeps the schema extensible while old profiles inherit the active theme.
+      db.run(`ALTER TABLE profile_data ADD COLUMN appearance TEXT`, (err) => { /* ignore if exists */ });
 
       // Role-based access control — default 'admin' keeps backward compatibility for the main admin user
       db.run(`ALTER TABLE admin_users ADD COLUMN role TEXT DEFAULT 'admin'`, (err) => { /* ignore if exists */ });

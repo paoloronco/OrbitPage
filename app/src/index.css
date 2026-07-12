@@ -223,6 +223,7 @@
   .profile-card__avatar-fallback {
     background: var(--profile-card-accent);
     color: var(--profile-card-accent-foreground);
+    border-radius: inherit;
   }
 
   .profile-card__social {

@@ -13,6 +13,7 @@ import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { ProfileQrCode } from "./ProfileQrCode";
 import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
+import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -35,6 +36,7 @@ interface ProfileData {
   // Per-profile typography
   nameFontSize?: string;
   bioFontSize?: string;
+  appearance?: ProfileAppearance;
   // Site metadata
   tabTitle?: string;
   metaDescription?: string;
@@ -51,6 +53,31 @@ interface ProfileSectionProps {
   onStartOnboarding?: () => void;
   onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
 }
+
+const ProfileColorField = ({
+  label,
+  value,
+  inherited,
+  onChange,
+  onReset,
+}: {
+  label: string;
+  value: string;
+  inherited: boolean;
+  onChange: (value: string) => void;
+  onReset: () => void;
+}) => (
+  <div className="space-y-1.5">
+    <div className="flex items-center justify-between gap-2">
+      <Label className="text-xs">{label}</Label>
+      {!inherited && <button type="button" onClick={onReset} className="text-[10px] font-semibold text-primary hover:underline">Use theme</button>}
+    </div>
+    <div className="flex items-center gap-2">
+      <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-11 cursor-pointer rounded-md border border-current/20 bg-transparent p-1" />
+      <Input value={value} onChange={(event) => onChange(event.target.value)} className="h-9 font-mono text-xs uppercase" maxLength={7} />
+    </div>
+  </div>
+);
 
 export const ProfileSection = ({
   profile,
@@ -194,16 +221,31 @@ export const ProfileSection = ({
     }
   };
 
+  const updateAppearance = (updates: Partial<ProfileAppearance>) => {
+    setEditProfile(prev => ({ ...prev, appearance: { ...prev.appearance, ...updates } }));
+  };
+
+  const resetCardAppearance = () => {
+    setEditProfile(prev => ({
+      ...prev,
+      appearance: {
+        avatarBorderEnabled: prev.appearance?.avatarBorderEnabled,
+        avatarBorderColor: prev.appearance?.avatarBorderColor,
+        avatarShape: prev.appearance?.avatarShape,
+      },
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <Card
         className="public-profile-preview profile-card glass-card p-8 text-center transition-smooth hover:glow-effect"
-        style={getThemeCssVariables(theme) as CSSProperties}
+        style={{ ...getThemeCssVariables(theme), ...getProfileAppearanceStyle(current.appearance) } as CSSProperties}
         data-onboarding="profile-card"
       >
       <div className="relative inline-block mb-6">
         {current.showAvatar !== false && (
-        <Avatar className="profile-card__avatar h-24 w-24">
+        <Avatar className="profile-card__avatar h-24 w-24" style={getProfileAvatarStyle(current.appearance)}>
           <AvatarImage
             src={getAvatarUrl(current.avatar)}
             alt={current.name || 'User'}
@@ -246,6 +288,44 @@ export const ProfileSection = ({
               checked={editProfile.showAvatar !== false}
               onCheckedChange={(checked) => setEditProfile(prev => ({ ...prev, showAvatar: !!checked }))}
             />
+          </div>
+
+          <div className="rounded-xl border border-current/15 bg-current/[0.035] p-4 text-left">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">Profile card appearance</p>
+                <p className="mt-0.5 text-xs opacity-70">These settings override the active theme only for this profile.</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={resetCardAppearance}>Use theme colors</Button>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ProfileColorField label="Card background" value={editProfile.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!editProfile.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
+              <ProfileColorField label="Main text" value={editProfile.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!editProfile.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />
+              <ProfileColorField label="Secondary text" value={editProfile.appearance?.cardMutedColor || theme.profileCard.muted} inherited={!editProfile.appearance?.cardMutedColor} onChange={(cardMutedColor) => updateAppearance({ cardMutedColor })} onReset={() => updateAppearance({ cardMutedColor: undefined })} />
+              <ProfileColorField label="Card border" value={editProfile.appearance?.cardBorderColor || theme.profileCard.border} inherited={!editProfile.appearance?.cardBorderColor} onChange={(cardBorderColor) => updateAppearance({ cardBorderColor })} onReset={() => updateAppearance({ cardBorderColor: undefined })} />
+              <ProfileColorField label="Social & accent" value={editProfile.appearance?.accentColor || theme.profileCard.accent} inherited={!editProfile.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
+              <ProfileColorField label="Image border" value={editProfile.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!editProfile.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
+            </div>
+
+            <div className="mt-5 grid gap-4 border-t border-current/10 pt-4 sm:grid-cols-3">
+              <div className="flex items-center justify-between gap-3 sm:block">
+                <Label htmlFor="profile-card-border" className="text-xs">Show card border</Label>
+                <Switch id="profile-card-border" checked={editProfile.appearance?.cardBorderEnabled !== false} onCheckedChange={(cardBorderEnabled) => updateAppearance({ cardBorderEnabled })} className="sm:mt-2" />
+              </div>
+              <div className="flex items-center justify-between gap-3 sm:block">
+                <Label htmlFor="profile-avatar-border" className="text-xs">Show image border</Label>
+                <Switch id="profile-avatar-border" checked={editProfile.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} className="sm:mt-2" />
+              </div>
+              <div>
+                <Label className="text-xs">Image shape</Label>
+                <div className="mt-2 grid grid-cols-2 rounded-lg border border-current/15 p-1">
+                  {(['round', 'square'] as const).map((avatarShape) => (
+                    <button key={avatarShape} type="button" onClick={() => updateAppearance({ avatarShape })} className={`rounded-md px-2 py-1.5 text-xs font-semibold capitalize transition-colors ${(editProfile.appearance?.avatarShape || 'round') === avatarShape ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/10'}`}>{avatarShape}</button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           <Input
