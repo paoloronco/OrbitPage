@@ -9,6 +9,7 @@ import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, E
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
+import { PublicBlockRenderer } from "./PublicBlockRenderer";
 
 interface TextCardProps {
   link: LinkData;
@@ -149,6 +150,94 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   };
 
   const isVisible = link.isActive !== false;
+  const canReorder = isFullEdit;
+
+  const renderAdminControls = () => canEdit ? (
+    <div className="flex gap-1 rounded-md border border-slate-200 bg-white/95 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+      {isFullEdit && onMoveUp && (
+        <Button
+          onClick={() => onMoveUp?.()}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8"
+          title="Move up"
+        >
+          ▲
+        </Button>
+      )}
+      {isFullEdit && onMoveDown && (
+        <Button
+          onClick={() => onMoveDown?.()}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8"
+          title="Move down"
+        >
+          ▼
+        </Button>
+      )}
+      {isFullEdit && (
+        <Button
+          onClick={() => onUpdate({ ...link, isActive: !isVisible })}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8"
+          title={isVisible ? 'Hide card' : 'Show card'}
+        >
+          {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
+        </Button>
+      )}
+      <Button
+        onClick={() => setIsEditing(true)}
+        variant="ghost"
+        size="icon"
+        className="w-8 h-8"
+      >
+        <Edit className="w-3 h-3" />
+      </Button>
+      {isFullEdit && (
+        <Button
+          onClick={() => onDelete(link.id)}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="w-3 h-3" />
+        </Button>
+      )}
+    </div>
+  ) : null;
+
+  if (!isEditing) {
+    return (
+      <div
+        className={`group relative transition-smooth ${
+          isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
+        }`}
+      >
+        {canReorder && (
+          <div className="absolute left-2 top-2 z-20 rounded-md bg-white/90 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          </div>
+        )}
+        <div className="pointer-events-none">
+          <PublicBlockRenderer link={link} />
+        </div>
+        <div className="pointer-events-auto absolute right-2 top-2 z-20">
+          {renderAdminControls()}
+        </div>
+        {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
+          <div className="mt-2 text-xs text-slate-500">
+            {(link.status || 'live').toUpperCase()}
+            {link.campaignName ? ` · ${link.campaignName}` : ''}
+            {(link.startDate || link.startTime || link.endDate || link.endTime)
+              ? ` · ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
+              : ''}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <Card
