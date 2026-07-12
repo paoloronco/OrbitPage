@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { CalendarClock, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
-import { SeparatorCard } from "./SeparatorCard";
 import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
@@ -669,17 +668,7 @@ export const LinkManager = ({ links, onLinksUpdate, editMode = 'full' }: LinkMan
               onTouchEnd={isFullEdit ? handleTouchEnd : undefined}
               className={dragOverId === link.id ? 'rounded-lg ring-2 ring-blue-400/50' : ''}
             >
-              {link.type === 'separator' ? (
-                <SeparatorCard
-                  link={link}
-                  onUpdate={updateLink}
-                  onDelete={deleteLink}
-                  isDragging={draggedItem === link.id}
-                  onMoveUp={() => moveByOffset(link.id, -1)}
-                  onMoveDown={() => moveByOffset(link.id, 1)}
-                  editMode={editMode}
-                />
-              ) : link.type === 'text' ? (
+              {link.type === 'text' ? (
                 <TextCard
                   link={link}
                   onUpdate={updateLink}

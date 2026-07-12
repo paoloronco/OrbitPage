@@ -33,3 +33,15 @@ export const getPublicIconContent = (link: LinkData, fallback: ReactNode) => {
   }
   return <span className="text-xl leading-none">{link.icon}</span>;
 };
+
+export const getPublicAccentStyle = (link: LinkData): CSSProperties | undefined => (
+  link.textColor ? { color: link.textColor } : undefined
+);
+
+export const getPublicButtonStyle = (link: LinkData): CSSProperties | undefined => {
+  if (!link.textColor) return undefined;
+  return {
+    backgroundColor: link.textColor,
+    color: link.backgroundColor || "hsl(var(--background))",
+  };
+};

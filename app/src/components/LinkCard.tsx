@@ -320,11 +320,11 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
         }`}
       >
         {canReorder && (
-          <div className="absolute left-2 top-1/2 z-20 -translate-y-1/2 opacity-0 transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
+          <div className="absolute left-2 top-2 z-20 rounded-md bg-white/90 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
             <GripVertical className="w-4 h-4 text-muted-foreground" />
           </div>
         )}
-        <div className={canReorder ? "pl-7" : ""}>
+        <div>
           <div className="pointer-events-none">
             <PublicBlockRenderer link={link} />
           </div>
@@ -332,7 +332,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             {renderAdminControls()}
           </div>
           {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime || isCta ? (
-            <div className={`mt-2 text-xs text-slate-500 ${canReorder ? "pl-7" : ""}`}>
+            <div className="mt-2 text-xs text-slate-500">
               {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
                 <span>
                   {(link.status || 'live').toUpperCase()}

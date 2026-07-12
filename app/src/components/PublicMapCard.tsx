@@ -3,7 +3,7 @@ import type { LinkData } from "./LinkCard";
 import { apiPath } from "@/lib/base-path";
 import { getMapData } from "@/lib/link-blocks";
 import { ArrowUpRight, MapPinned, Navigation } from "lucide-react";
-import { getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent } from "@/lib/public-block-style";
+import { getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent } from "@/lib/public-block-style";
 
 interface PublicMapCardProps {
   link: LinkData;
@@ -32,7 +32,7 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
       <div className="relative h-24 overflow-hidden bg-primary/10">
         <div className="absolute inset-0 opacity-55 [background-image:linear-gradient(90deg,hsl(var(--primary)/.16)_1px,transparent_1px),linear-gradient(0deg,hsl(var(--primary)/.16)_1px,transparent_1px)] [background-size:22px_22px]" />
-        <div className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background/60">
+        <div className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background/60" style={getPublicButtonStyle(link)}>
           {getPublicIconContent(link, <MapPinned className="h-5 w-5" />)}
         </div>
       </div>
@@ -65,6 +65,7 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
             type="button"
             onClick={handleOpen}
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-smooth hover:bg-primary/90"
+            style={getPublicButtonStyle(link)}
           >
             <Navigation className="h-4 w-4" />
             Open map

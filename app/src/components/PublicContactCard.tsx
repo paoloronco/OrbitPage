@@ -2,7 +2,7 @@ import type { LinkData } from "./LinkCard";
 import { getContactData } from "@/lib/link-blocks";
 import { Card } from "@/components/ui/card";
 import { Globe, Mail, MapPin, MessageCircle, Phone, Send, UserRound } from "lucide-react";
-import { getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
+import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
 
 interface PublicContactCardProps {
   link: LinkData;
@@ -39,7 +39,7 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
       <div className={`space-y-4 ${getPublicBlockPadding(link.size)}`}>
         <div className="flex items-start gap-3">
-          <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15`}>
+          <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15`} style={getPublicAccentStyle(link)}>
             {getPublicIconContent(link, <UserRound className="h-5 w-5" />)}
           </div>
           <div className="min-w-0 flex-1">
@@ -75,7 +75,7 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
         <div className="grid gap-2">
           {items.map((item) => item.value ? (
             <div key={item.key} className="flex items-start gap-3 rounded-md border border-border/55 bg-background/35 px-3 py-2 text-sm">
-              <item.Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <item.Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" style={getPublicAccentStyle(link)} />
               <div className="min-w-0 flex-1">
                 <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{item.key}</span>
                 {item.href ? buildLink(item.href, item.value) : <span className="break-words">{item.value}</span>}
@@ -89,6 +89,7 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-smooth hover:bg-primary/90"
+            style={getPublicButtonStyle(link)}
           >
             <primaryAction.Icon className="h-4 w-4" />
             {primaryAction.key === "Email" ? "Send email" : primaryAction.key === "WhatsApp" ? "Open WhatsApp" : "Call now"}
