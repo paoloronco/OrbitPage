@@ -51,7 +51,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.4.0';
+let APP_VERSION = '4.4.1';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -2341,6 +2341,17 @@ app.get('/api/theme', async (req, res) => {
   }
 });
 
+const ThemeSurfaceSchema = z.object({
+  background: z.string().max(100),
+  backgroundSecondary: z.string().max(100),
+  foreground: z.string().max(100),
+  muted: z.string().max(100),
+  border: z.string().max(100),
+  accent: z.string().max(100),
+  accentForeground: z.string().max(100).optional(),
+  direction: z.string().max(100),
+});
+
 const ThemeSchema = z.object({
   primary: z.string().max(100).optional(),
   primaryGlow: z.string().max(100).optional(),
@@ -2361,6 +2372,8 @@ const ThemeSchema = z.object({
     to: z.string().max(100).optional(),
     direction: z.string().max(100).optional(),
   }).optional(),
+  profileCard: ThemeSurfaceSchema.omit({ accentForeground: true }).optional(),
+  contentCard: ThemeSurfaceSchema.optional(),
   fontFamily: z.string().max(300).optional(),
   cardRadius: z.number().optional(),
   cardSpacing: z.number().optional(),

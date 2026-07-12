@@ -390,6 +390,41 @@ describe('API Endpoints', () => {
     expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('/privacy');
   });
 
+  it('PUT /api/theme accepts and persists modern profile and content card palettes', async () => {
+    const response = await request(app)
+      .put('/api/theme')
+      .send({
+        primary: '#2f81f7',
+        background: '#0d1117',
+        foreground: '#e6edf3',
+        profileCard: {
+          background: '#1c2433',
+          backgroundSecondary: '#21303f',
+          foreground: '#e6edf3',
+          muted: '#8b949e',
+          border: '#21262d',
+          accent: '#2f81f7',
+          direction: '135deg',
+        },
+        contentCard: {
+          background: '#111827',
+          backgroundSecondary: '#1f2937',
+          foreground: '#f8fafc',
+          muted: '#aebbd0',
+          border: '#334155',
+          accent: '#3b82f6',
+          accentForeground: '#f8fafc',
+          direction: '145deg',
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    const savedTheme = JSON.parse(vi.mocked(dbRun).mock.calls[0][1][3]);
+    expect(savedTheme.profileCard.background).toBe('#1c2433');
+    expect(savedTheme.contentCard.accentForeground).toBe('#f8fafc');
+  });
+
   it('GET /api/consent-config/public derives policy URLs from Profile', async () => {
     vi.mocked(dbGet)
       .mockResolvedValueOnce({
