@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
+import { CalendarClock, Code2, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -254,6 +254,26 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
     };
     const updated = [...workingLinks, newEvent];
     setWorkingLinks(updated);
+    setIsDirty(true);
+    setSaveError("");
+  };
+
+  const addNewEmbed = () => {
+    const newEmbed: LinkData = {
+      id: Date.now().toString(),
+      title: "Embed",
+      description: "",
+      url: "",
+      type: "embed",
+      content: buildBlockContent({
+        provider: "auto",
+        consentCategory: "marketing",
+        height: 360,
+        snippet: "",
+      }),
+      status: "live",
+    };
+    setWorkingLinks([...workingLinks, newEmbed]);
     setIsDirty(true);
     setSaveError("");
   };
@@ -593,6 +613,15 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
             <span>
               <span className="block font-semibold">Event</span>
               <span className="block text-xs opacity-70">Calendar row</span>
+            </span>
+          </Button>
+          <Button onClick={addNewEmbed} variant="outline" className="admin-add-card">
+            <span className="admin-add-icon">
+              <Code2 className="h-4 w-4" />
+            </span>
+            <span>
+              <span className="block font-semibold">Embed</span>
+              <span className="block text-xs opacity-70">Video, music, booking...</span>
             </span>
           </Button>
           <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">

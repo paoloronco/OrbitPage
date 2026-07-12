@@ -2,6 +2,7 @@ import type { LinkData } from "./LinkCard";
 import { PublicCalloutCard } from "./PublicCalloutCard";
 import { PublicContactCard } from "./PublicContactCard";
 import { PublicEventCard } from "./PublicEventCard";
+import { PublicEmbedCard } from "./PublicEmbedCard";
 import { PublicHeadingCard } from "./PublicHeadingCard";
 import { PublicImageCard } from "./PublicImageCard";
 import { PublicLinkCard } from "./PublicLinkCard";
@@ -24,5 +25,6 @@ export const PublicBlockRenderer = ({ link }: PublicBlockRendererProps) => {
   if (link.type === "callout") return <PublicCalloutCard link={link} />;
   if (link.type === "map") return <PublicMapCard link={link} />;
   if (link.type === "event") return <PublicEventCard link={link} />;
+  if (link.type === "embed") return <PublicEmbedCard link={link} />;
   return <PublicLinkCard link={link} />;
 };

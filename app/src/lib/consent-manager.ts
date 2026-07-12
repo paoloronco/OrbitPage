@@ -327,7 +327,18 @@ class ConsentManager {
 
   /** Programmatically open the preferences modal */
   openPreferences(): void {
-    this._openPrefsCb?.();
+    if (this._openPrefsCb) {
+      this._openPrefsCb();
+      return;
+    }
+    const selector = this.config?.mode === 'builder' ? this.config.builder?.reopenSelector?.trim() : '';
+    if (!selector) return;
+    try {
+      const trigger = document.querySelector<HTMLElement>(selector);
+      trigger?.click();
+    } catch {
+      // Invalid selectors supplied by an external CMP are ignored safely.
+    }
   }
 
   /**

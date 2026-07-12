@@ -25,6 +25,7 @@ import { z } from 'zod';
 import { timingSafeEqual } from 'crypto';
 import multer from 'multer';
 import { LinkSchema, LinksPayloadSchema } from './schemas/link.schema.js';
+import { buildEmbedFrameDocument, buildEmbedFrameErrorDocument, EMBED_FRAME_CSP } from './embed-frame.js';
 import { ConsentConfigBodySchema } from './schemas/consent.schema.js';
 import {
   ChangePasswordBodySchema,
@@ -233,6 +234,12 @@ app.use(helmet({
       mediaSrc: ["'self'"],
       frameSrc: [
         "'self'",
+        "https://www.youtube-nocookie.com",
+        "https://open.spotify.com",
+        "https://calendly.com",
+        "https://www.calendly.com",
+        "https://www.google.com",
+        "https://maps.google.com",
         // Cookiebot: iframe that renders the consent dialog UI
         "https://consentcdn.cookiebot.com",
         ...LEGAL_EMBED_CSP_SOURCES,
@@ -1955,6 +1962,50 @@ app.get('/api/links', async (req, res) => {
     res.json(formattedLinks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to load links' });
+  }
+});
+
+const sendEmbedFrame = (res, status, html) => {
+  res.set({
+    'Content-Type': 'text/html; charset=utf-8',
+    'Content-Security-Policy': EMBED_FRAME_CSP,
+    'Cache-Control': 'no-store, private',
+    'Referrer-Policy': 'no-referrer',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'X-Robots-Tag': 'noindex, nofollow, nosnippet',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  });
+  return res.status(status).send(html);
+};
+
+app.get('/api/embed/:id', apiLimiter, async (req, res) => {
+  const { id } = req.params;
+  if (!id || typeof id !== 'string' || id.length > 100) {
+    return sendEmbedFrame(res, 400, buildEmbedFrameErrorDocument('Invalid embed'));
+  }
+
+  try {
+    const link = await dbGet('SELECT * FROM links WHERE id = ?', [id]);
+    if (!link || link.type !== 'embed' || !isLinkPubliclyVisible(link)) {
+      return sendEmbedFrame(res, 404, buildEmbedFrameErrorDocument());
+    }
+
+    let content = {};
+    try {
+      content = JSON.parse(link.content || '{}');
+    } catch {
+      content = {};
+    }
+    const snippet = typeof content.snippet === 'string' ? content.snippet.trim() : '';
+    if (!snippet || snippet.length > 90000) {
+      return sendEmbedFrame(res, 422, buildEmbedFrameErrorDocument('Invalid embed snippet'));
+    }
+
+    return sendEmbedFrame(res, 200, buildEmbedFrameDocument(snippet));
+  } catch (error) {
+    console.error('Embed frame error:', error?.message || error);
+    return sendEmbedFrame(res, 500, buildEmbedFrameErrorDocument('Embed temporarily unavailable'));
   }
 });
 

@@ -1,4 +1,4 @@
-export type LinkBlockType = 'link' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'contact' | 'social_row' | 'callout' | 'map' | 'event';
+export type LinkBlockType = 'link' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'contact' | 'social_row' | 'callout' | 'map' | 'event' | 'embed';
 
 export interface ContactBlockData {
   name?: string;
@@ -41,6 +41,16 @@ export interface EventBlockData {
   location?: string;
   ticketLabel?: string;
   notes?: string;
+}
+
+export type EmbedProvider = 'auto' | 'youtube' | 'spotify' | 'calendly' | 'google_maps' | 'newsletter' | 'custom';
+export type EmbedConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marketing';
+
+export interface EmbedBlockData {
+  snippet?: string;
+  provider?: EmbedProvider;
+  consentCategory?: EmbedConsentCategory;
+  height?: number;
 }
 
 export interface SeparatorBlockData {
@@ -155,6 +165,98 @@ export const getEventData = (content: string | null | undefined): EventBlockData
   };
 };
 
+const embedProviders: EmbedProvider[] = ['auto', 'youtube', 'spotify', 'calendly', 'google_maps', 'newsletter', 'custom'];
+const embedConsentCategories: EmbedConsentCategory[] = ['necessary', 'preferences', 'analytics', 'marketing'];
+
+export const detectEmbedProvider = (snippet?: string): Exclude<EmbedProvider, 'auto'> => {
+  const value = (snippet || '').toLowerCase();
+  if (value.includes('youtu.be') || value.includes('youtube.com') || value.includes('youtube-nocookie.com')) return 'youtube';
+  if (value.includes('spotify.com')) return 'spotify';
+  if (value.includes('calendly.com')) return 'calendly';
+  if (value.includes('google.com/maps') || value.includes('maps.google.')) return 'google_maps';
+  if (value.includes('mailchimp') || value.includes('substack') || value.includes('beehiiv') || value.includes('convertkit') || value.includes('<form')) return 'newsletter';
+  return 'custom';
+};
+
+const getEmbedUrlCandidates = (snippet?: string) => {
+  const value = (snippet || '').trim();
+  const candidates = /^https:\/\/\S+$/i.test(value) ? [value] : [];
+  for (const match of value.matchAll(/(?:src|data-url)\s*=\s*["']([^"']+)["']/gi)) {
+    if (match[1]) candidates.push(match[1].replaceAll('&amp;', '&'));
+  }
+  return candidates;
+};
+
+export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snippet?: string): string | null => {
+  for (const candidate of getEmbedUrlCandidates(snippet)) {
+    try {
+      const url = new URL(candidate);
+      if (url.protocol !== 'https:') continue;
+      const host = url.hostname.toLowerCase();
+
+      if (provider === 'youtube' && (host === 'youtube.com' || host === 'www.youtube.com' || host === 'youtube-nocookie.com' || host === 'www.youtube-nocookie.com' || host === 'youtu.be')) {
+        const videoId = host === 'youtu.be'
+          ? url.pathname.split('/').filter(Boolean)[0]
+          : url.searchParams.get('v') || url.pathname.match(/\/embed\/([^/?]+)/)?.[1];
+        if (videoId && /^[a-z0-9_-]{6,20}$/i.test(videoId)) {
+          return `https://www.youtube-nocookie.com/embed/${videoId}`;
+        }
+      }
+
+      if (provider === 'spotify' && host === 'open.spotify.com') {
+        const path = url.pathname.startsWith('/embed/') ? url.pathname : `/embed${url.pathname}`;
+        return `https://open.spotify.com${path}${url.search}`;
+      }
+
+      if (provider === 'calendly' && (host === 'calendly.com' || host === 'www.calendly.com')) {
+        return url.toString();
+      }
+
+      if (provider === 'google_maps' && (host === 'www.google.com' || host === 'maps.google.com')) {
+        if (url.pathname.includes('/maps/embed') || url.searchParams.get('output') === 'embed') return url.toString();
+      }
+    } catch {
+      // Invalid provider URLs are ignored and rendered through the generic sandbox.
+    }
+  }
+  return null;
+};
+
+export const resolveEmbedProvider = (provider?: EmbedProvider, snippet?: string): Exclude<EmbedProvider, 'auto'> => (
+  provider && provider !== 'auto' ? provider : detectEmbedProvider(snippet)
+);
+
+export const getDefaultEmbedConsentCategory = (provider: Exclude<EmbedProvider, 'auto'>): EmbedConsentCategory => {
+  if (provider === 'google_maps' || provider === 'spotify') return 'preferences';
+  return 'marketing';
+};
+
+export const getEmbedProviderLabel = (provider: Exclude<EmbedProvider, 'auto'>) => ({
+  youtube: 'YouTube',
+  spotify: 'Spotify',
+  calendly: 'Calendly',
+  google_maps: 'Google Maps',
+  newsletter: 'Newsletter',
+  custom: 'Custom embed',
+}[provider]);
+
+export const getEmbedData = (content: string | null | undefined): EmbedBlockData => {
+  const parsed = parseBlockContent<EmbedBlockData>(content);
+  if (!isPlainObject(parsed)) return { provider: 'auto', consentCategory: 'marketing', height: 360, snippet: '' };
+  const record = parsed as Record<string, unknown>;
+  const snippet = typeof record.snippet === 'string' ? record.snippet.trim() : '';
+  const provider = typeof record.provider === 'string' && embedProviders.includes(record.provider as EmbedProvider)
+    ? record.provider as EmbedProvider
+    : 'auto';
+  const resolvedProvider = resolveEmbedProvider(provider, snippet);
+  const consentCategory = typeof record.consentCategory === 'string' && embedConsentCategories.includes(record.consentCategory as EmbedConsentCategory)
+    ? record.consentCategory as EmbedConsentCategory
+    : getDefaultEmbedConsentCategory(resolvedProvider);
+  const rawHeight = typeof record.height === 'number' ? record.height : Number(record.height);
+  const height = Number.isFinite(rawHeight) ? Math.min(900, Math.max(180, Math.round(rawHeight))) : 360;
+  return { snippet, provider, consentCategory, height };
+};
+
 export const getSeparatorData = (content: string | null | undefined): SeparatorBlockData => {
   const parsed = parseBlockContent<SeparatorBlockData>(content);
   if (!isPlainObject(parsed)) return {};
@@ -167,8 +269,8 @@ export const getSeparatorData = (content: string | null | undefined): SeparatorB
 export const isBlockType = (type: string | undefined): type is LinkBlockType => (
   type === 'link' || type === 'text' || type === 'separator' || type === 'cta' ||
   type === 'heading' || type === 'image' || type === 'contact' || type === 'social_row' ||
-  type === 'callout' || type === 'map' || type === 'event'
+  type === 'callout' || type === 'map' || type === 'event' || type === 'embed'
 );
 
 export const isPublicActionableBlock = (type?: LinkBlockType | string) =>
-  type !== 'separator' && type !== 'heading';
+  type !== 'separator' && type !== 'heading' && type !== 'embed';

@@ -35,7 +35,7 @@ export const LinkSchema = z.object({
   descriptionFontFamily: z.string().max(200).nullable().optional(),
   alignment: z.enum(['left', 'center', 'right']).nullable().optional(),
   size: z.string().max(50).nullable().optional(),
-  content: z.string().max(10000).nullable().optional(),
+  content: z.string().max(100000).nullable().optional(),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.number().int().nullable().optional(),
   status: z.enum(['draft', 'live', 'expired']).nullable().optional().default('live'),

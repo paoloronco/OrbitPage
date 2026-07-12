@@ -36,7 +36,7 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
     if (link.type === 'social_row') {
       return (getSocialRowData(link.content).items || []).length > 0;
     }
-    if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event') {
+    if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event' || link.type === 'embed') {
       return (
         link.title.trim() !== '' ||
         link.description.trim() !== '' ||

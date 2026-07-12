@@ -5,12 +5,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { CalendarClock, Image, MapPin, Plus, Share2, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
+import { CalendarClock, Code2, Image, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import {
   type ContactBlockData,
+  type EmbedBlockData,
+  type EmbedConsentCategory,
+  type EmbedProvider,
   type EventBlockData,
   type LinkBlockType,
   type MapBlockData,
@@ -18,10 +21,14 @@ import {
   buildBlockContent,
   getCalloutData,
   getContactData,
+  getDefaultEmbedConsentCategory,
+  getEmbedData,
+  getEmbedProviderLabel,
   getEventData,
   getMapData,
   getSeparatorData,
   getSocialRowDraftData,
+  resolveEmbedProvider,
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
 
@@ -190,6 +197,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const isCallout = link.type === 'callout';
   const isMap = link.type === 'map';
   const isEvent = link.type === 'event';
+  const isEmbed = link.type === 'embed';
   const isActionable = isPublicActionableBlock(link.type);
   const isClickable = isActionable && !!link.url;
 
@@ -198,6 +206,8 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const calloutData = getCalloutData(editLink.content);
   const mapData = getMapData(editLink.content);
   const eventData = getEventData(editLink.content);
+  const embedData = getEmbedData(editLink.content);
+  const resolvedEmbedProvider = resolveEmbedProvider(embedData.provider, embedData.snippet);
   const separatorData = getSeparatorData(editLink.content);
 
   const updateContactData = (field: keyof ContactBlockData, value: string) => {
@@ -214,6 +224,22 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
   const updateEventData = (field: keyof EventBlockData, value: string) => {
     setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...eventData, [field]: value }) }));
+  };
+
+  const updateEmbedData = <K extends keyof EmbedBlockData,>(field: K, value: EmbedBlockData[K]) => {
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...embedData, [field]: value }) }));
+  };
+
+  const updateEmbedProvider = (provider: EmbedProvider) => {
+    const resolvedProvider = resolveEmbedProvider(provider, embedData.snippet);
+    setEditLink(prev => ({
+      ...prev,
+      content: buildBlockContent({
+        ...embedData,
+        provider,
+        consentCategory: getDefaultEmbedConsentCategory(resolvedProvider),
+      }),
+    }));
   };
 
   const updateSeparatorData = (field: keyof ReturnType<typeof getSeparatorData>, value: boolean) => {
@@ -270,7 +296,9 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             ? 'Map title'
             : isEvent
               ? 'Event title'
-              : 'Link title';
+              : isEmbed
+                ? 'Embed title'
+                : 'Link title';
   const showUrlField = isActionable && !isContact && !isSocialRow;
 
   const isVisible = link.isActive !== false;
@@ -941,6 +969,74 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                       onChange={(e) => updateEventData('notes', e.target.value)}
                       placeholder="Notes"
                     />
+                  </div>
+                )}
+                {isEmbed && (
+                  <div className="space-y-3 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <Code2 className="h-4 w-4" />
+                      Secure embed settings
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Provider</Label>
+                        <Select value={embedData.provider || 'auto'} onValueChange={(value: EmbedProvider) => updateEmbedProvider(value)}>
+                          <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="auto">Auto detect</SelectItem>
+                            <SelectItem value="youtube">YouTube</SelectItem>
+                            <SelectItem value="spotify">Spotify</SelectItem>
+                            <SelectItem value="calendly">Calendly</SelectItem>
+                            <SelectItem value="google_maps">Google Maps</SelectItem>
+                            <SelectItem value="newsletter">Newsletter</SelectItem>
+                            <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Consent category</Label>
+                        <Select value={embedData.consentCategory || 'marketing'} onValueChange={(value: EmbedConsentCategory) => updateEmbedData('consentCategory', value)}>
+                          <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="necessary">Necessary · load immediately</SelectItem>
+                            <SelectItem value="preferences">Preferences</SelectItem>
+                            <SelectItem value="analytics">Analytics</SelectItem>
+                            <SelectItem value="marketing">Marketing</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Embed height</Label>
+                      <Input
+                        type="number"
+                        min={180}
+                        max={900}
+                        value={embedData.height || 360}
+                        onChange={(event) => updateEmbedData('height', Number(event.target.value))}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Label className="text-xs">Snippet or HTTPS embed URL</Label>
+                        <span className="text-[11px] font-medium text-muted-foreground">Detected: {getEmbedProviderLabel(resolvedEmbedProvider)}</span>
+                      </div>
+                      <Textarea
+                        value={embedData.snippet || ''}
+                        onChange={(event) => updateEmbedData('snippet', event.target.value)}
+                        placeholder={'<iframe src="https://..."></iframe>\n\nor paste a provider embed URL'}
+                        maxLength={90000}
+                        className="min-h-40 font-mono text-xs leading-5"
+                      />
+                    </div>
+                    <div className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs leading-5 ${embedData.consentCategory === 'necessary' ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-emerald-200 bg-emerald-50 text-emerald-900'}`}>
+                      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        {embedData.consentCategory === 'necessary'
+                          ? 'Necessary loads before consent. Use it only for content that performs no tracking.'
+                          : 'The provider receives no request until the visitor grants this consent category. The snippet then runs in an isolated sandbox.'}
+                      </span>
+                    </div>
                   </div>
                 )}
                 {editLink.type === 'cta' && (
