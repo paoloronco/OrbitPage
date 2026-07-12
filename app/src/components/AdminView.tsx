@@ -300,6 +300,7 @@ export const AdminView = ({
               <div className="admin-main-column">
                 <ProfileSection
                   profile={profile}
+                  theme={theme}
                   onProfileUpdate={(nextProfile) => { void onProfileUpdate(nextProfile); }}
                   onStartOnboarding={() => setOnboardingReplayKey(key => key + 1)}
                   onAdminOnboardingEnabledChange={(enabled) => {

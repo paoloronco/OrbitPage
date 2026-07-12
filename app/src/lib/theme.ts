@@ -51,6 +51,15 @@ export interface ThemeConfig {
     to: string;
     direction: string;
   };
+  profileCard: {
+    background: string;
+    backgroundSecondary: string;
+    foreground: string;
+    muted: string;
+    border: string;
+    accent: string;
+    direction: string;
+  };
 
   // Typography
   fontFamily: string;
@@ -98,6 +107,15 @@ export const defaultTheme: ThemeConfig = {
     to: '#21303f',
     direction: '135deg'
   },
+  profileCard: {
+    background: '#1c2433',
+    backgroundSecondary: '#21303f',
+    foreground: '#e6edf3',
+    muted: '#8b949e',
+    border: '#21262d',
+    accent: '#2f81f7',
+    direction: '135deg',
+  },
   
   fontFamily: 'Inter, system-ui, sans-serif',
   // font sizes removed from theme defaults; items will use their own saved sizes
@@ -132,6 +150,12 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
   if (background) legacyColors.background = background;
   if (foreground) legacyColors.foreground = foreground;
 
+  const legacyCard = themeData.card || defaultTheme.card;
+  const legacyCardGradient = {
+    ...defaultTheme.cardGradient,
+    ...(themeData.cardGradient || {}),
+  };
+
   return {
     ...defaultTheme,
     ...themeData,
@@ -149,6 +173,16 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
     cardGradient: {
       ...defaultTheme.cardGradient,
       ...(themeData.cardGradient || {}),
+    },
+    profileCard: {
+      background: legacyCard,
+      backgroundSecondary: legacyCardGradient.to,
+      foreground: foreground || defaultTheme.foreground,
+      muted: themeData.muted || defaultTheme.muted,
+      border: themeData.border || defaultTheme.border,
+      accent: primary || defaultTheme.primary,
+      direction: legacyCardGradient.direction,
+      ...(themeData.profileCard || {}),
     },
     backgroundMedia: {
       ...defaultBackgroundMedia,
@@ -208,6 +242,7 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
   const primaryGlowHsl = hexToHsl(theme.primaryGlow);
   const primaryForegroundHsl = hexToHsl(getReadableForeground(theme.primary, theme.foreground));
   const tint = (theme as any).cardBlurTint || theme.card;
+  const profileAccentForeground = getReadableForeground(theme.profileCard.accent, theme.profileCard.foreground);
 
   return {
     '--primary': hexToHsl(theme.primary),
@@ -241,6 +276,12 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
     '--glass-border': `1px solid hsl(${borderHsl} / 0.5)`,
     '--card-glow': `0 8px ${theme.blurIntensity}px hsl(${primaryGlowHsl} / ${Math.min(0.9, theme.glowIntensity)})`,
     '--glass-tint': tint,
+    '--profile-card-background': `linear-gradient(${theme.profileCard.direction}, ${theme.profileCard.background}, ${theme.profileCard.backgroundSecondary})`,
+    '--profile-card-foreground': theme.profileCard.foreground,
+    '--profile-card-muted': theme.profileCard.muted,
+    '--profile-card-border': theme.profileCard.border,
+    '--profile-card-accent': theme.profileCard.accent,
+    '--profile-card-accent-foreground': profileAccentForeground,
   };
 };
 

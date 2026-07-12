@@ -201,6 +201,56 @@
     background-clip: text;
   }
 
+  .profile-card {
+    background: var(--profile-card-background);
+    border-color: var(--profile-card-border);
+    color: var(--profile-card-foreground);
+  }
+
+  .profile-card__title {
+    color: var(--profile-card-foreground);
+  }
+
+  .profile-card__bio {
+    color: var(--profile-card-muted);
+  }
+
+  .profile-card__avatar {
+    border: 3px solid var(--profile-card-accent);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--profile-card-accent) 24%, transparent);
+  }
+
+  .profile-card__avatar-fallback {
+    background: var(--profile-card-accent);
+    color: var(--profile-card-accent-foreground);
+  }
+
+  .profile-card__social {
+    color: var(--profile-card-accent);
+    border: 1px solid color-mix(in srgb, var(--profile-card-accent) 35%, transparent);
+    background: color-mix(in srgb, var(--profile-card-accent) 9%, transparent);
+  }
+
+  .profile-card__social:hover {
+    color: var(--profile-card-accent-foreground);
+    background: var(--profile-card-accent);
+  }
+
+  .public-profile-preview .profile-card__socials button {
+    color: var(--profile-card-accent);
+    border: 1px solid color-mix(in srgb, var(--profile-card-accent) 35%, transparent);
+    background: color-mix(in srgb, var(--profile-card-accent) 9%, transparent);
+  }
+
+  .public-profile-preview .profile-card__socials button:hover {
+    color: var(--profile-card-accent-foreground);
+    background: var(--profile-card-accent);
+  }
+
+  .profile-card__socials button svg {
+    color: inherit;
+  }
+
   .orbitpage-admin {
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
@@ -250,6 +300,13 @@
     color: hsl(var(--card-foreground));
     backdrop-filter: blur(var(--blur-intensity, 20px));
     -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
+  }
+
+  .orbitpage-admin .public-profile-preview.glass-card {
+    background: var(--profile-card-background);
+    border-color: var(--profile-card-border);
+    color: var(--profile-card-foreground);
+    box-shadow: var(--card-glow, var(--shadow-card));
   }
 
   .orbitpage-admin .glow-effect,

@@ -108,6 +108,11 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
     borderColor: theme.border,
     borderRadius: `${Math.max(3, theme.cardRadius * 0.72)}px`,
   };
+  const profileStyle: CSSProperties = {
+    background: `linear-gradient(${theme.profileCard.direction}, ${theme.profileCard.background}, ${theme.profileCard.backgroundSecondary})`,
+    borderColor: theme.profileCard.border,
+    borderRadius: `${Math.max(3, theme.cardRadius * 0.72)}px`,
+  };
 
   return (
     <div
@@ -117,13 +122,13 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(255,255,255,0.18),transparent_38%)]" />
       <div className={`relative mx-auto flex h-full max-w-[15rem] flex-col ${compact ? "px-4 py-4" : "px-5 py-6"}`}>
-        <div className="mb-4 flex flex-col items-center text-center">
+        <div className="mb-4 flex flex-col items-center border px-3 py-3 text-center shadow-sm" style={profileStyle}>
           <div
             className={`${compact ? "h-9 w-9" : "h-12 w-12"} rounded-full border-2 shadow-sm`}
-            style={{ backgroundColor: theme.primary, borderColor: theme.primaryGlow }}
+            style={{ backgroundColor: theme.profileCard.accent, borderColor: theme.profileCard.border }}
           />
-          <div className="mt-2 h-2.5 w-20 rounded-full" style={{ backgroundColor: theme.foreground }} />
-          <div className="mt-1.5 h-1.5 w-28 rounded-full opacity-60" style={{ backgroundColor: theme.muted }} />
+          <div className="mt-2 h-2.5 w-20 rounded-full" style={{ backgroundColor: theme.profileCard.foreground }} />
+          <div className="mt-1.5 h-1.5 w-28 rounded-full opacity-75" style={{ backgroundColor: theme.profileCard.muted }} />
         </div>
         <div className="flex flex-col" style={{ gap: `${Math.max(6, theme.cardSpacing * 0.58)}px` }}>
           <div className="flex items-center gap-2 border px-3 py-2.5 shadow-sm" style={cardStyle}>
@@ -405,6 +410,34 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
                     {colorControl("backgroundSecondary", "Secondary surface", pendingTheme.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ backgroundSecondary }))}
                     {colorControl("card", "Card background", pendingTheme.card, (card) => updatePendingTheme({ card, cardGradient: { ...pendingTheme.cardGradient, from: card } }))}
                     {colorControl("cardTint", "Card blur tint", pendingTheme.cardBlurTint || pendingTheme.card, (cardBlurTint) => updatePendingTheme({ cardBlurTint }))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h4 className="font-bold text-slate-900">Profile card</h4>
+                  <p className="mt-1 text-sm text-slate-500">A dedicated palette for the page header, logo, profile text and social actions.</p>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {colorControl("profileBackground", "Background start", pendingTheme.profileCard.background, (background) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, background } }))}
+                    {colorControl("profileBackgroundSecondary", "Background end", pendingTheme.profileCard.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, backgroundSecondary } }))}
+                    {colorControl("profileForeground", "Profile text", pendingTheme.profileCard.foreground, (foreground) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, foreground } }))}
+                    {colorControl("profileMuted", "Profile secondary text", pendingTheme.profileCard.muted, (muted) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, muted } }))}
+                    {colorControl("profileBorder", "Profile border", pendingTheme.profileCard.border, (border) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, border } }))}
+                    {colorControl("profileAccent", "Logo & social accent", pendingTheme.profileCard.accent, (accent) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, accent } }))}
+                  </div>
+                  <div className="mt-4 max-w-sm space-y-2">
+                    <Label>Profile gradient direction</Label>
+                    <Select value={pendingTheme.profileCard.direction} onValueChange={(direction) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, direction } })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0deg">Top to bottom</SelectItem>
+                        <SelectItem value="90deg">Left to right</SelectItem>
+                        <SelectItem value="135deg">Diagonal down</SelectItem>
+                        <SelectItem value="45deg">Diagonal up</SelectItem>
+                        <SelectItem value="180deg">Bottom to top</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

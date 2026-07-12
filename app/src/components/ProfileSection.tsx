@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type CSSProperties } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { ProfileQrCode } from "./ProfileQrCode";
+import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 
 interface ProfileData {
   name: string;
@@ -45,6 +46,7 @@ interface ProfileData {
 
 interface ProfileSectionProps {
   profile: ProfileData;
+  theme: ThemeConfig;
   onProfileUpdate: (profile: ProfileData) => void;
   onStartOnboarding?: () => void;
   onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
@@ -52,6 +54,7 @@ interface ProfileSectionProps {
 
 export const ProfileSection = ({
   profile,
+  theme,
   onProfileUpdate,
   onStartOnboarding,
   onAdminOnboardingEnabledChange,
@@ -193,16 +196,20 @@ export const ProfileSection = ({
 
   return (
     <div className="space-y-6">
-      <Card className="glass-card p-8 text-center transition-smooth hover:glow-effect" data-onboarding="profile-card">
+      <Card
+        className="public-profile-preview profile-card glass-card p-8 text-center transition-smooth hover:glow-effect"
+        style={getThemeCssVariables(theme) as CSSProperties}
+        data-onboarding="profile-card"
+      >
       <div className="relative inline-block mb-6">
         {current.showAvatar !== false && (
-        <Avatar className="w-24 h-24">
+        <Avatar className="profile-card__avatar h-24 w-24">
           <AvatarImage
             src={getAvatarUrl(current.avatar)}
             alt={current.name || 'User'}
             onError={(e) => { (e.target as HTMLImageElement).src = withBasePath('/placeholder.svg'); }}
           />
-          <AvatarFallback className="text-2xl font-bold gradient-text">
+          <AvatarFallback className="profile-card__avatar-fallback text-2xl font-bold">
             {(current.name && current.name.length > 0) ? current.name.charAt(0) : 'U'}
           </AvatarFallback>
         </Avatar>
@@ -482,13 +489,13 @@ export const ProfileSection = ({
       ) : (
         <div className="space-y-4">
           <div className="relative group">
-            <h1 className="font-bold text-foreground mb-2" style={{ ...(current.nameFontSize ? { fontSize: current.nameFontSize } : { fontSize: '2rem' }) }}>
+            <h1 className="profile-card__title mb-2 font-bold" style={{ ...(current.nameFontSize ? { fontSize: current.nameFontSize } : { fontSize: '2rem' }) }}>
               {current.name || "Your Name"}
             </h1>
             
             {/* Social Icons */}
             {current.socialLinks && Object.values(current.socialLinks).some(link => link) && (
-              <div className="flex justify-center gap-3 mb-4">
+              <div className="profile-card__socials mb-4 flex flex-wrap justify-center gap-3">
                 {current.socialLinks.linkedin && (
                   <Button
                     variant="ghost"
@@ -602,7 +609,7 @@ export const ProfileSection = ({
               </div>
             )}
             
-            <p className="text-muted-foreground leading-relaxed whitespace-pre-line" style={{ ...(current.bioFontSize ? { fontSize: current.bioFontSize } : {}) }}>
+            <p className="profile-card__bio whitespace-pre-line leading-relaxed" style={{ ...(current.bioFontSize ? { fontSize: current.bioFontSize } : {}) }}>
               {current.bio || "Add a description for this page..."}
             </p>
             <Button
