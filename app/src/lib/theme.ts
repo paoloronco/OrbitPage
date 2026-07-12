@@ -189,16 +189,30 @@ const hexToHsl = (hex: string) => {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
+const getReadableForeground = (background: string, fallback: string) => {
+  const normalized = background.trim().replace(/^#/, "");
+  const expanded = normalized.length === 3
+    ? normalized.split("").map((part) => part + part).join("")
+    : normalized;
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) return fallback;
+  const red = parseInt(expanded.slice(0, 2), 16);
+  const green = parseInt(expanded.slice(2, 4), 16);
+  const blue = parseInt(expanded.slice(4, 6), 16);
+  const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+  return luminance > 0.58 ? "#172033" : "#f8fafc";
+};
+
 export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string> => {
   const cardHsl = hexToHsl(theme.card);
   const borderHsl = hexToHsl(theme.border);
   const primaryGlowHsl = hexToHsl(theme.primaryGlow);
+  const primaryForegroundHsl = hexToHsl(getReadableForeground(theme.primary, theme.foreground));
   const tint = (theme as any).cardBlurTint || theme.card;
 
   return {
     '--primary': hexToHsl(theme.primary),
     '--primary-glow': primaryGlowHsl,
-    '--primary-foreground': hexToHsl(theme.foreground),
+    '--primary-foreground': primaryForegroundHsl,
     '--background': hexToHsl(theme.background),
     '--card': cardHsl,
     '--card-foreground': hexToHsl(theme.foreground),
@@ -206,7 +220,7 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
     '--muted': hexToHsl(theme.backgroundSecondary),
     '--muted-foreground': hexToHsl(theme.muted),
     '--accent': hexToHsl(theme.primary),
-    '--accent-foreground': hexToHsl(theme.foreground),
+    '--accent-foreground': primaryForegroundHsl,
     '--border': borderHsl,
     '--input': hexToHsl(theme.backgroundSecondary),
     '--ring': hexToHsl(theme.primary),
