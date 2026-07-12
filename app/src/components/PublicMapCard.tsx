@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
 import { apiPath } from "@/lib/base-path";
@@ -14,7 +14,21 @@ const getMapQuery = (placeName?: string, address?: string, fallbackTitle?: strin
   [placeName, address].filter(Boolean).join(", ") || fallbackTitle || ""
 ).trim();
 
-const extractLatLng = (value?: string) => {
+interface MapCoordinates {
+  lat: number;
+  lon: number;
+}
+
+const toCoordinate = (lat?: string, lon?: string): MapCoordinates | null => {
+  if (!lat || !lon) return null;
+  const parsedLat = Number.parseFloat(lat);
+  const parsedLon = Number.parseFloat(lon);
+  if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLon)) return null;
+  if (parsedLat < -90 || parsedLat > 90 || parsedLon < -180 || parsedLon > 180) return null;
+  return { lat: parsedLat, lon: parsedLon };
+};
+
+const extractLatLng = (value?: string): MapCoordinates | null => {
   if (!value) return null;
   let decoded = value;
   try {
@@ -30,74 +44,130 @@ const extractLatLng = (value?: string) => {
 
   for (const pattern of patterns) {
     const match = decoded.match(pattern);
-    if (match) return { lat: match[1], lon: match[2] };
+    const coordinate = toCoordinate(match?.[1], match?.[2]);
+    if (coordinate) return coordinate;
   }
 
   return null;
 };
 
-const buildStaticMapUrl = (lat: string, lon: string, size = "800x360") =>
-  `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lon}&zoom=14&size=${size}&maptype=mapnik&markers=${lat},${lon},red-pushpin`;
+const TILE_SIZE = 256;
+const DEFAULT_MAP_ZOOM = 14;
 
-const escapeSvgText = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const lonToTile = (lon: number, zoom: number) =>
+  ((lon + 180) / 360) * Math.pow(2, zoom);
 
-const buildFallbackMapArtwork = (query: string) => {
-  const label = escapeSvgText(query || "Map");
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="800" height="360" viewBox="0 0 800 360">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#eef2ff"/>
-          <stop offset="1" stop-color="#dbeafe"/>
-        </linearGradient>
-        <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
-          <path d="M44 0H0V44" fill="none" stroke="#93a4bf" stroke-opacity=".32" stroke-width="1"/>
-        </pattern>
-      </defs>
-      <rect width="800" height="360" fill="url(#bg)"/>
-      <rect width="800" height="360" fill="url(#grid)"/>
-      <path d="M-40 260C96 196 182 236 292 184s210-142 342-94 176 18 242-26" fill="none" stroke="#60a5fa" stroke-width="28" stroke-linecap="round" stroke-opacity=".5"/>
-      <path d="M84 84h196m-82 0v170m206-130h248m-80-52v208M126 286h566" fill="none" stroke="#64748b" stroke-width="8" stroke-linecap="round" stroke-opacity=".45"/>
-      <circle cx="400" cy="180" r="30" fill="#ef4444"/>
-      <circle cx="400" cy="180" r="12" fill="#fff"/>
-      <text x="400" y="318" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1e293b">${label}</text>
-    </svg>
-  `)}`;
+const latToTile = (lat: number, zoom: number) => {
+  const rad = lat * Math.PI / 180;
+  return ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * Math.pow(2, zoom);
+};
+
+const getTileUrl = (zoom: number, x: number, y: number) => {
+  const subdomain = ["a", "b", "c"][Math.abs(x + y) % 3];
+  return `https://${subdomain}.tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+};
+
+const RealMapPreview = ({ coordinates, label }: { coordinates: MapCoordinates; label: string }) => {
+  const zoom = DEFAULT_MAP_ZOOM;
+  const xFloat = lonToTile(coordinates.lon, zoom);
+  const yFloat = latToTile(coordinates.lat, zoom);
+  const centerX = Math.floor(xFloat);
+  const centerY = Math.floor(yFloat);
+  const markerX = (xFloat - (centerX - 1)) * TILE_SIZE;
+  const markerY = (yFloat - (centerY - 1)) * TILE_SIZE;
+  const tiles = [-1, 0, 1].flatMap((row) =>
+    [-1, 0, 1].map((col) => ({
+      key: `${centerX + col}-${centerY + row}`,
+      x: centerX + col,
+      y: centerY + row,
+      left: (col + 1) * TILE_SIZE,
+      top: (row + 1) * TILE_SIZE,
+    }))
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-slate-200">
+      <div
+        className="absolute"
+        style={{
+          left: `calc(50% - ${markerX}px)`,
+          top: `calc(50% - ${markerY}px)`,
+          width: TILE_SIZE * 3,
+          height: TILE_SIZE * 3,
+        }}
+      >
+        {tiles.map((tile) => (
+          <img
+            key={tile.key}
+            src={getTileUrl(zoom, tile.x, tile.y)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            className="absolute select-none"
+            style={{
+              left: tile.left,
+              top: tile.top,
+              width: TILE_SIZE,
+              height: TILE_SIZE,
+            }}
+          />
+        ))}
+      </div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0,transparent_38%,rgba(15,23,42,0.1)_100%)]" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-full">
+        <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_10px_24px_rgba(15,23,42,0.32)] ring-4 ring-white">
+          <MapPinned className="h-5 w-5" />
+          <span className="absolute left-1/2 top-full h-3 w-3 -translate-x-1/2 -translate-y-1 rotate-45 bg-red-500" />
+        </div>
+      </div>
+      <span className="sr-only">Map preview for {label}</span>
+      <a
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute bottom-1 right-1 rounded bg-white/85 px-1.5 py-0.5 text-[10px] font-medium text-slate-700"
+        onClick={(event) => event.stopPropagation()}
+      >
+        © OpenStreetMap
+      </a>
+    </div>
+  );
 };
 
 export const PublicMapCard = ({ link }: PublicMapCardProps) => {
   const { placeName, address, mapUrl } = getMapData(link.content);
   const mapQuery = getMapQuery(placeName, address, link.title);
-  const [staticMapUrl, setStaticMapUrl] = useState("");
-  const [mapPreviewFailed, setMapPreviewFailed] = useState(false);
+  const [coordinates, setCoordinates] = useState<MapCoordinates | null>(null);
+  const [isResolvingMap, setIsResolvingMap] = useState(false);
   const resolvedMapUrl = mapUrl || (address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
     : mapQuery
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`
     : "");
-  const fallbackArtwork = useMemo(() => buildFallbackMapArtwork(mapQuery), [mapQuery]);
 
   useEffect(() => {
     let cancelled = false;
-    setMapPreviewFailed(false);
 
     const directCoordinates = extractLatLng(mapUrl) || extractLatLng(address) || extractLatLng(placeName);
     if (directCoordinates) {
-      setStaticMapUrl(buildStaticMapUrl(directCoordinates.lat, directCoordinates.lon));
+      setCoordinates(directCoordinates);
+      setIsResolvingMap(false);
       return () => {
         cancelled = true;
       };
     }
 
     if (!mapQuery) {
-      setStaticMapUrl("");
+      setCoordinates(null);
+      setIsResolvingMap(false);
       return () => {
         cancelled = true;
       };
     }
 
     const controller = new AbortController();
+    setIsResolvingMap(true);
     fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&accept-language=it&q=${encodeURIComponent(mapQuery)}`, {
       signal: controller.signal,
     })
@@ -105,10 +175,14 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
       .then((results: Array<{ lat?: string; lon?: string }>) => {
         if (cancelled) return;
         const result = results[0];
-        setStaticMapUrl(result?.lat && result?.lon ? buildStaticMapUrl(result.lat, result.lon) : "");
+        setCoordinates(toCoordinate(result?.lat, result?.lon));
+        setIsResolvingMap(false);
       })
       .catch(() => {
-        if (!cancelled) setStaticMapUrl("");
+        if (!cancelled) {
+          setCoordinates(null);
+          setIsResolvingMap(false);
+        }
       });
 
     return () => {
@@ -133,14 +207,16 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
       <div className={`relative overflow-hidden bg-muted/30 ${link.size === "small" ? "h-32" : link.size === "large" ? "h-52" : "h-40"}`}>
-        <img
-          src={!mapPreviewFailed && staticMapUrl ? staticMapUrl : fallbackArtwork}
-          alt={mapQuery ? `Map preview for ${mapQuery}` : "Map preview"}
-          loading="lazy"
-          decoding="async"
-          className="h-full w-full object-cover"
-          onError={() => setMapPreviewFailed(true)}
-        />
+        {coordinates ? (
+          <RealMapPreview coordinates={coordinates} label={mapQuery || placeName || address || link.title || "Map"} />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-100 text-slate-500">
+            <MapPinned className="h-8 w-8" />
+            <span className="text-xs font-semibold uppercase tracking-[0.14em]">
+              {isResolvingMap ? "Loading real map" : "Map preview unavailable"}
+            </span>
+          </div>
+        )}
         <div className="pointer-events-none absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background/70" style={getPublicButtonStyle(link)}>
           {getPublicIconContent(link, <MapPinned className="h-4 w-4" />)}
         </div>
