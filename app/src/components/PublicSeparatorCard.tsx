@@ -1,4 +1,4 @@
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 
 export const PublicSeparatorCard = ({ link }: { link: LinkData }) => (
   <div className="flex items-center gap-3 py-1">

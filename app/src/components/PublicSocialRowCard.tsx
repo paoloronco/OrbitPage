@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { getSocialRowData } from "@/lib/link-blocks";
 import { ArrowUpRight, Share2 } from "lucide-react";
+import { getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent } from "@/lib/public-block-style";
 
 interface PublicSocialRowCardProps {
   link: LinkData;
@@ -13,18 +14,14 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
   if (items.length === 0) {
     return null;
   }
-  const cardStyle = {
-    ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-  };
+  const cardStyle = getPublicBlockStyle(link);
 
   return (
     <Card className="glass-card p-0" style={cardStyle}>
-      <div className="space-y-3 p-4 sm:p-5">
+      <div className={`space-y-3 ${getPublicBlockPadding(link.size)}`}>
         <div className="flex items-center gap-2">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15">
-            <Share2 className="h-4 w-4" />
+            {getPublicIconContent(link, <Share2 className="h-4 w-4" />)}
           </span>
           <p
             className="text-sm font-semibold leading-tight text-muted-foreground"

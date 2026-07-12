@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { apiPath, internalAssetPath } from "@/lib/base-path";
 import { ArrowUpRight, ImageOff } from "lucide-react";
+import { getPublicBlockPadding, getPublicBlockStyle } from "@/lib/public-block-style";
 
 interface PublicImageCardProps {
   link: LinkData;
@@ -18,11 +19,7 @@ export const PublicImageCard = ({ link }: PublicImageCardProps) => {
   const [imageError, setImageError] = useState(false);
   const imageUrl = resolveImageUrl(link.coverImage || link.url);
   const hasCaption = Boolean(link.title || link.description);
-  const cardStyle = {
-    ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-  };
+  const cardStyle = getPublicBlockStyle(link);
 
   const trackClick = () => {
     if (!link.url) return;
@@ -70,7 +67,7 @@ export const PublicImageCard = ({ link }: PublicImageCardProps) => {
         </div>
       </button>
       {hasCaption ? (
-        <div className="px-4 py-3 sm:px-5" style={imageError ? { opacity: 0.75 } : undefined}>
+        <div className={getPublicBlockPadding(link.size)} style={imageError ? { opacity: 0.75 } : undefined}>
           {link.title ? (
             <p
               className="text-sm font-semibold leading-tight"

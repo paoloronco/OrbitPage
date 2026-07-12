@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, MailPlus, Phone, ShoppingBag } from "lucide-react";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { apiPath, internalAssetPath } from "@/lib/base-path";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {

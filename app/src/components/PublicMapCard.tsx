@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { apiPath } from "@/lib/base-path";
 import { getMapData } from "@/lib/link-blocks";
 import { ArrowUpRight, MapPinned, Navigation } from "lucide-react";
+import { getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent } from "@/lib/public-block-style";
 
 interface PublicMapCardProps {
   link: LinkData;
@@ -25,21 +26,17 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
   if (!hasContent) {
     return null;
   }
-  const cardStyle = {
-    ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-  };
+  const cardStyle = getPublicBlockStyle(link);
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
       <div className="relative h-24 overflow-hidden bg-primary/10">
         <div className="absolute inset-0 opacity-55 [background-image:linear-gradient(90deg,hsl(var(--primary)/.16)_1px,transparent_1px),linear-gradient(0deg,hsl(var(--primary)/.16)_1px,transparent_1px)] [background-size:22px_22px]" />
         <div className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-background/60">
-          <MapPinned className="h-5 w-5" />
+          {getPublicIconContent(link, <MapPinned className="h-5 w-5" />)}
         </div>
       </div>
-      <div className="space-y-3 p-4 sm:p-5">
+      <div className={`space-y-3 ${getPublicBlockPadding(link.size)}`}>
         <div>
           <p
             className="text-base font-semibold leading-tight"

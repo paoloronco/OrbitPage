@@ -1,15 +1,6 @@
 import { PublicProfileSection } from "./PublicProfileSection";
-import { PublicLinkCard } from "./PublicLinkCard";
-import { PublicTextCard } from "./PublicTextCard";
-import { PublicSeparatorCard } from "./PublicSeparatorCard";
-import { PublicHeadingCard } from "./PublicHeadingCard";
-import { PublicImageCard } from "./PublicImageCard";
-import { PublicContactCard } from "./PublicContactCard";
-import { PublicSocialRowCard } from "./PublicSocialRowCard";
-import { PublicCalloutCard } from "./PublicCalloutCard";
-import { PublicMapCard } from "./PublicMapCard";
-import { PublicEventCard } from "./PublicEventCard";
-import { LinkData } from "./LinkCard";
+import { PublicBlockRenderer } from "./PublicBlockRenderer";
+import type { LinkData } from "./LinkCard";
 import { getThemeCssVariables, ThemeConfig } from "@/lib/theme";
 
 interface ProfileData {
@@ -89,27 +80,7 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
 
             {visibleLinks.length > 0 && (
               <div className="flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
-            {visibleLinks.map(link =>
-                link.type === 'separator'
-                  ? <PublicSeparatorCard key={link.id} link={link} />
-                  : link.type === 'text'
-                    ? <PublicTextCard key={link.id} link={link} />
-                    : link.type === 'heading'
-                      ? <PublicHeadingCard key={link.id} link={link} />
-                      : link.type === 'image'
-                        ? <PublicImageCard key={link.id} link={link} />
-                        : link.type === 'contact'
-                          ? <PublicContactCard key={link.id} link={link} />
-                          : link.type === 'social_row'
-                            ? <PublicSocialRowCard key={link.id} link={link} />
-                            : link.type === 'callout'
-                              ? <PublicCalloutCard key={link.id} link={link} />
-                              : link.type === 'map'
-                                ? <PublicMapCard key={link.id} link={link} />
-                                : link.type === 'event'
-                                  ? <PublicEventCard key={link.id} link={link} />
-                                  : <PublicLinkCard key={link.id} link={link} />
-            )}
+            {visibleLinks.map(link => <PublicBlockRenderer key={link.id} link={link} />)}
               </div>
             )}
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Type, ExternalLink } from "lucide-react";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { apiPath, internalAssetPath } from "@/lib/base-path";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {

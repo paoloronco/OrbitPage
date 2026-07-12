@@ -1,7 +1,8 @@
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { getContactData } from "@/lib/link-blocks";
 import { Card } from "@/components/ui/card";
 import { Globe, Mail, MapPin, MessageCircle, Phone, Send, UserRound } from "lucide-react";
+import { getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
 
 interface PublicContactCardProps {
   link: LinkData;
@@ -32,26 +33,14 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
     { key: "Telegram", value: contact.telegram, href: contact.telegram ? (contact.telegram.includes("http") ? contact.telegram : `https://t.me/${contact.telegram.replace(/^@/, '')}`) : undefined, Icon: Send },
   ];
   const primaryAction = items.find((item) => item.href && (item.key === "Phone" || item.key === "Email" || item.key === "WhatsApp"));
-  const cardStyle = {
-    ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-  };
+  const cardStyle = getPublicBlockStyle(link);
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
-      <div className="space-y-4 p-4 sm:p-5">
+      <div className={`space-y-4 ${getPublicBlockPadding(link.size)}`}>
         <div className="flex items-start gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15">
-            {link.icon ? (
-              link.iconType === "image" || link.iconType === "svg" ? (
-                <img src={link.icon} alt="" className="h-full w-full rounded-lg object-cover" loading="lazy" decoding="async" />
-              ) : (
-                <span className="text-xl leading-none">{link.icon}</span>
-              )
-            ) : (
-              <UserRound className="h-5 w-5" />
-            )}
+          <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15`}>
+            {getPublicIconContent(link, <UserRound className="h-5 w-5" />)}
           </div>
           <div className="min-w-0 flex-1">
             <div

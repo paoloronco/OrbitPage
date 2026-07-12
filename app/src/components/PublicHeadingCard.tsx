@@ -1,16 +1,13 @@
 import { Card } from "@/components/ui/card";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
+import { getPublicBlockStyle } from "@/lib/public-block-style";
 
 interface PublicHeadingCardProps {
   link: LinkData;
 }
 
 export const PublicHeadingCard = ({ link }: PublicHeadingCardProps) => {
-  const headingStyles = {
-    ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-  };
+  const headingStyles = getPublicBlockStyle(link);
 
   return (
     <Card

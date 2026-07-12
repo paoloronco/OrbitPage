@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { CalendarClock, Image, MapPin, Plus, Share2, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
+import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import {
@@ -255,6 +256,102 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
   const isVisible = link.isActive !== false;
   const isCta = link.type === 'cta';
+  const renderAdminControls = () => canEdit ? (
+    <div className="flex gap-1 rounded-md border border-slate-200 bg-white/95 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+      {canReorder && onMoveUp && (
+        <Button
+          onClick={onMoveUp}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8"
+          title="Move up"
+        >
+          ▲
+        </Button>
+      )}
+      {canReorder && onMoveDown && (
+        <Button
+          onClick={onMoveDown}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8"
+          title="Move down"
+        >
+          ▼
+        </Button>
+      )}
+      {isFullEdit && (
+        <Button
+          onClick={() => onUpdate({ ...link, isActive: !isVisible })}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8"
+          title={isVisible ? 'Hide link' : 'Show link'}
+        >
+          {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
+        </Button>
+      )}
+      <Button
+        onClick={() => setIsEditing(true)}
+        variant="ghost"
+        size="icon"
+        className="w-8 h-8"
+      >
+        <Edit className="w-3 h-3" />
+      </Button>
+      {canDelete && (
+        <Button
+          onClick={() => onDelete(link.id)}
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="w-3 h-3" />
+        </Button>
+      )}
+    </div>
+  ) : null;
+
+  if (!isEditing) {
+    return (
+      <div
+        className={`group relative transition-smooth ${
+          isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
+        }`}
+      >
+        {canReorder && (
+          <div className="absolute left-2 top-1/2 z-20 -translate-y-1/2 opacity-0 transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          </div>
+        )}
+        <div className={canReorder ? "pl-7" : ""}>
+          <div className="pointer-events-none">
+            <PublicBlockRenderer link={link} />
+          </div>
+          <div className="pointer-events-auto absolute right-2 top-2 z-20">
+            {renderAdminControls()}
+          </div>
+          {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime || isCta ? (
+            <div className={`mt-2 text-xs text-slate-500 ${canReorder ? "pl-7" : ""}`}>
+              {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
+                <span>
+                  {(link.status || 'live').toUpperCase()}
+                  {link.campaignName ? ` · ${link.campaignName}` : ''}
+                  {(link.startDate || link.startTime || link.endDate || link.endTime)
+                    ? ` · ${link.startDate || 'any'} ${link.startTime || ''} -> ${link.endDate || 'any'} ${link.endTime || ''}`.trim()
+                    : ''}
+                </span>
+              ) : null}
+              {isCta ? (
+                <span className="ml-2">CTA clicks: {link.ctaClicks ?? 0}</span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   const renderReadOnlyBody = () => {
     if (isHeading) {
       return (

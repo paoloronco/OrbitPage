@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { apiPath } from "@/lib/base-path";
 import { getEventData } from "@/lib/link-blocks";
 import { ArrowUpRight, CalendarDays, Clock3, MapPin, Ticket } from "lucide-react";
+import { getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent } from "@/lib/public-block-style";
 
 interface PublicEventCardProps {
   link: LinkData;
@@ -13,11 +14,7 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
   const hasData = Boolean(eventData.date || eventData.location || eventData.time || eventData.notes);
   const dateLabel = eventData.date || "Date";
   const timeLabel = [eventData.time, eventData.endTime ? `- ${eventData.endTime}` : ""].filter(Boolean).join(" ");
-  const cardStyle = {
-    ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-  };
+  const cardStyle = getPublicBlockStyle(link);
 
   const handleOpen = () => {
     if (link.url) {
@@ -34,10 +31,12 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
       <div className="flex">
         <div className="flex w-20 shrink-0 flex-col items-center justify-center bg-primary/12 px-3 py-5 text-center text-primary ring-1 ring-inset ring-primary/15">
-          <CalendarDays className="mb-2 h-5 w-5" />
+          <span className="mb-2 flex h-6 w-6 items-center justify-center">
+            {getPublicIconContent(link, <CalendarDays className="h-5 w-5" />)}
+          </span>
           <span className="text-xs font-semibold uppercase tracking-[0.12em]">Event</span>
         </div>
-        <div className="min-w-0 flex-1 space-y-3 p-4 sm:p-5">
+        <div className={`min-w-0 flex-1 space-y-3 ${getPublicBlockPadding(link.size)}`}>
           <div>
             <p
               className="text-base font-semibold leading-tight"

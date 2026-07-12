@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
-import { LinkData } from "./LinkCard";
+import type { LinkData } from "./LinkCard";
 import { getCalloutData } from "@/lib/link-blocks";
 import { apiPath } from "@/lib/base-path";
 import { ArrowUpRight, Sparkles } from "lucide-react";
+import { getPublicBlockGap, getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
 
 interface PublicCalloutCardProps {
   link: LinkData;
@@ -10,11 +11,7 @@ interface PublicCalloutCardProps {
 
 export const PublicCalloutCard = ({ link }: PublicCalloutCardProps) => {
   const { badge, buttonLabel } = getCalloutData(link.content);
-  const cardStyle = {
-    ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-  };
+  const cardStyle = getPublicBlockStyle(link);
 
   const handleOpen = () => {
     if (link.url) {
@@ -33,9 +30,9 @@ export const PublicCalloutCard = ({ link }: PublicCalloutCardProps) => {
       style={cardStyle}
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
-      <div className="flex gap-4 p-4 sm:p-5">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/14 text-primary ring-1 ring-primary/20">
-          <Sparkles className="h-5 w-5" />
+      <div className={`flex ${getPublicBlockGap(link.size)} ${getPublicBlockPadding(link.size)}`}>
+        <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/14 text-primary ring-1 ring-primary/20`}>
+          {getPublicIconContent(link, <Sparkles className="h-5 w-5" />)}
         </div>
         <div className="min-w-0 flex-1 space-y-2">
           {badge ? (
