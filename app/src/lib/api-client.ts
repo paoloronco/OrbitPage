@@ -10,9 +10,52 @@ const TOKEN_STORAGE_KEY = 'orbitpage-auth-token';
 const TOKEN_IV_PREFIX = 'orbitpage-auth-iv-';
 const DEVICE_SECRET_KEY = 'orbitpage-device-secret';
 const TOKEN_FALLBACK_KEY = 'orbitpage-auth-token-plain';
+const SAAS_TOKEN_STORAGE_KEY = 'orbitpage-saas-api-token';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
+
+const getSaasApiBase = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  const value = new URLSearchParams(window.location.search).get('apiBase');
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return null;
+  }
+};
+
+const getSaasPublicSlug = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  const value = new URLSearchParams(window.location.search).get('publicSlug');
+  return value ? value.trim() : null;
+};
+
+const getSaasAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  const hashToken = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('apiToken');
+  if (hashToken) {
+    sessionStorage.setItem(SAAS_TOKEN_STORAGE_KEY, hashToken);
+    return hashToken;
+  }
+  return sessionStorage.getItem(SAAS_TOKEN_STORAGE_KEY);
+};
+
+const resolveApiUrl = (endpoint: string): string => {
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const saasApiBase = getSaasApiBase();
+  if (!saasApiBase) return apiPath(normalizedEndpoint);
+
+  const url = new URL(`${saasApiBase}${normalizedEndpoint}`);
+  if (normalizedEndpoint === '/public-page') {
+    const slug = getSaasPublicSlug();
+    if (slug) url.searchParams.set('slug', slug);
+  }
+  return url.toString();
+};
 
 /** Returns true when the Web Crypto subtle API is usable (secure context). */
 const isCryptoAvailable = (): boolean =>
@@ -136,6 +179,9 @@ const hasStoredAuthToken = (): boolean => {
 
 // Async variant for flows that can await (API calls)
 const getAuthTokenAsync = async (): Promise<string | null> => {
+  const saasToken = getSaasAuthToken();
+  if (saasToken) return saasToken;
+
   // Fallback path: plain sessionStorage (non-secure context)
   if (!isCryptoAvailable()) {
     return sessionStorage.getItem(TOKEN_FALLBACK_KEY);
@@ -187,6 +233,7 @@ const removeAuthToken = (): void => {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   sessionStorage.removeItem(TOKEN_FALLBACK_KEY);
+  sessionStorage.removeItem(SAAS_TOKEN_STORAGE_KEY);
   delete (window as any).__orbitpageTokenCache;
 };
 
@@ -305,7 +352,7 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
 
   // Prevent any caching of API responses and bust caches for GETs
   const method = (options.method || 'GET').toUpperCase();
-  let url = apiPath(endpoint);
+  let url = resolveApiUrl(endpoint);
   if (method === 'GET') {
     const sep = url.includes('?') ? '&' : '?';
     url = `${url}${sep}_ts=${Date.now()}`;
@@ -405,10 +452,12 @@ export const authApi = {
   },
 
   hasStoredToken: (): boolean => {
+    if (getSaasAuthToken()) return true;
     return hasStoredAuthToken();
   },
 
   isAuthenticated: (): boolean => {
+    if (getSaasAuthToken()) return true;
     return !!getAuthToken();
   },
 
@@ -431,7 +480,7 @@ export const authApi = {
 export const backupApi = {
   download: async (): Promise<Blob> => {
     const token = await getAuthTokenAsync();
-    const response = await fetch(apiPath('/admin/backup'), {
+    const response = await fetch(resolveApiUrl('/admin/backup'), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
@@ -573,7 +622,7 @@ export const linksApi = {
   export: async (): Promise<Blob> => {
     try {
       const token = await getAuthTokenAsync();
-      const resp = await fetch(apiPath('/links/export'), {
+      const resp = await fetch(resolveApiUrl('/links/export'), {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       
@@ -603,7 +652,7 @@ export const linksApi = {
 
   trackClick: async (id: string): Promise<void> => {
     try {
-      await fetch(apiPath(`/links/${encodeURIComponent(id)}/click`), { method: 'POST' });
+      await fetch(resolveApiUrl(`/links/${encodeURIComponent(id)}/click`), { method: 'POST' });
     } catch { /* fire-and-forget, don't break the UI */ }
   },
 
@@ -650,7 +699,7 @@ export const uploadApi = {
     const formData = new FormData();
     formData.append('file', file);
     const token = await getAuthTokenAsync();
-    const response = await fetch(apiPath('/upload/background'), {
+    const response = await fetch(resolveApiUrl('/upload/background'), {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,

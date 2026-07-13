@@ -40,6 +40,19 @@ export const withBasePath = (path = '/'): string => {
 
 export const apiPath = (path = ''): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window !== 'undefined') {
+    const apiBase = new URLSearchParams(window.location.search).get('apiBase');
+    if (apiBase) {
+      try {
+        const url = new URL(apiBase);
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          return `${url.toString().replace(/\/$/, '')}${normalizedPath}`;
+        }
+      } catch {
+        // Fall back to the local API path below.
+      }
+    }
+  }
   return `${withBasePath('/api')}${normalizedPath}`;
 };
 
