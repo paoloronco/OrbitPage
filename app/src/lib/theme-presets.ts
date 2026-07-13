@@ -38,6 +38,11 @@ const createPreset = (definition: PresetDefinition): ThemePreset => ({
   mood: definition.mood,
   theme: {
     ...defaultTheme,
+    orbitPageAccess: {
+      mode: "preset",
+      presetId: definition.id,
+      cardPresetId: null,
+    },
     primary: definition.primary,
     primaryGlow: definition.primaryGlow,
     background: definition.background,

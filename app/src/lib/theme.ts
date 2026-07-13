@@ -29,6 +29,11 @@ export const defaultBackgroundMedia: BackgroundMediaConfig = {
 };
 
 export interface ThemeConfig {
+  orbitPageAccess?: {
+    mode: 'preset' | 'custom';
+    presetId?: string | null;
+    cardPresetId?: string | null;
+  };
   // Colors
   primary: string;
   primaryGlow: string;
@@ -99,6 +104,11 @@ export interface ThemeConfig {
 }
 
 export const defaultTheme: ThemeConfig = {
+  orbitPageAccess: {
+    mode: 'preset',
+    presetId: 'default',
+    cardPresetId: null,
+  },
   primary: '#2f81f7',
   primaryGlow: '#58a6ff',
   background: '#0d1117',

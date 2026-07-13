@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { CalendarClock, Code2, Image, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
+import { CalendarClock, Code2, Image, LockKeyhole, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
@@ -85,9 +85,22 @@ interface LinkCardProps {
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
   publicPreviewStyle?: CSSProperties;
+  schedulingEnabled?: boolean;
+  managePlanHref?: string;
 }
 
-export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle }: LinkCardProps) => {
+export const LinkCard = ({
+  link,
+  onUpdate,
+  onDelete,
+  isDragging,
+  onMoveUp,
+  onMoveDown,
+  editMode = 'full',
+  publicPreviewStyle,
+  schedulingEnabled = true,
+  managePlanHref = "/dashboard?section=billing",
+}: LinkCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
 
@@ -1103,6 +1116,13 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Publishing</p>
                 <p className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</p>
               </div>
+              {!schedulingEnabled && (
+                <div className="admin-inline-plan-lock mb-3">
+                  <LockKeyhole className="h-4 w-4" />
+                  <span>Campaign scheduling is available on Pro.</span>
+                  <a href={managePlanHref} target="_top">View plans</a>
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs">Status</Label>
@@ -1123,6 +1143,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Campaign</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   value={editLink.campaignName || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, campaignName: e.target.value || undefined }))}
                   placeholder="Launch, event..."
@@ -1132,6 +1153,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Show from date</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.startDate || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, startDate: e.target.value || undefined }))}
@@ -1141,6 +1163,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Show from time</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.startTime || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, startTime: e.target.value || undefined }))}
@@ -1150,6 +1173,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Hide after date</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.endDate || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, endDate: e.target.value || undefined }))}
@@ -1159,6 +1183,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Hide after time</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.endTime || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, endTime: e.target.value || undefined }))}
@@ -1168,6 +1193,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1 sm:col-span-2">
                 <Label className="text-xs">Timezone</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   value={editLink.timezone || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, timezone: e.target.value || undefined }))}
                   onFocus={() => {

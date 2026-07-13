@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { Compass, Edit, ImageUp, Loader2, Linkedin, Github, Instagram, Facebook, Play, Twitter, Youtube } from "lucide-react";
+import { Compass, Edit, ImageUp, Loader2, Linkedin, Github, Instagram, Facebook, LockKeyhole, Play, Twitter, Youtube } from "lucide-react";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -16,6 +16,7 @@ import { ProfileQrCode } from "./ProfileQrCode";
 import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 import { uploadApi } from "@/lib/api-client";
+import type { SaasSeoAccess } from "@/lib/saas-plan";
 
 interface ProfileData {
   name: string;
@@ -54,6 +55,8 @@ interface ProfileSectionProps {
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onStartOnboarding?: () => void;
   onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
+  seoAccess?: SaasSeoAccess;
+  managePlanHref?: string;
 }
 
 const ProfileColorField = ({
@@ -87,6 +90,8 @@ export const ProfileSection = ({
   onProfileUpdate,
   onStartOnboarding,
   onAdminOnboardingEnabledChange,
+  seoAccess,
+  managePlanHref = "/dashboard?section=billing",
 }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editProfile, setEditProfile] = useState(profile);
@@ -95,6 +100,7 @@ export const ProfileSection = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
+  const seoLocked = seoAccess === "none";
 
   // Keep editable state in sync with incoming profile when not editing
   useEffect(() => {
@@ -426,9 +432,17 @@ export const ProfileSection = ({
             className="glass-card border-primary/20 text-center resize-none"
             rows={3}
           />
+          {seoLocked && (
+            <div className="admin-inline-plan-lock">
+              <LockKeyhole className="h-4 w-4" />
+              <span>SEO title and description unlock on Starter.</span>
+              <a href={managePlanHref} target="_top">View plans</a>
+            </div>
+          )}
           <div className="space-y-1">
             <Label className="text-xs">Browser Tab Title</Label>
             <Input
+              disabled={seoLocked}
               value={editProfile.tabTitle || ''}
               onChange={(e) => setEditProfile(prev => ({ ...prev, tabTitle: e.target.value }))}
               placeholder="Title shown in browser tab"
@@ -438,6 +452,7 @@ export const ProfileSection = ({
           <div className="space-y-1">
             <Label className="text-xs">Meta Description</Label>
             <Textarea
+              disabled={seoLocked}
               value={editProfile.metaDescription || ''}
               onChange={(e) => setEditProfile(prev => ({ ...prev, metaDescription: e.target.value }))}
               placeholder="Short description for search engines and previews"

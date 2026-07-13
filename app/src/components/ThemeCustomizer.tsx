@@ -18,6 +18,7 @@ import {
   ImagePlay,
   Layout,
   Layers3,
+  LockKeyhole,
   Palette,
   RotateCcw,
   SlidersHorizontal,
@@ -30,12 +31,16 @@ import { themePresets, type ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
 import { commitPendingTheme, parseImportedTheme, prepareThemeExport } from "./theme-save-state";
+import type { SaasThemeAccess } from "@/lib/saas-plan";
 
 interface ThemeCustomizerProps {
   theme: ThemeConfig;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onThemePreview?: (theme: ThemeConfig) => void;
   renderPreview?: (theme: ThemeConfig) => ReactNode;
+  accessLevel?: SaasThemeAccess;
+  videoUploadsEnabled?: boolean;
+  managePlanHref?: string;
 }
 
 type EditableTheme = ThemeConfig & { cardBlurTint?: string };
@@ -221,7 +226,15 @@ const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; 
   </article>
 );
 
-export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPreview }: ThemeCustomizerProps) => {
+export const ThemeCustomizer = ({
+  theme,
+  onThemeChange,
+  onThemePreview,
+  renderPreview,
+  accessLevel,
+  videoUploadsEnabled = true,
+  managePlanHref = "/dashboard?section=billing",
+}: ThemeCustomizerProps) => {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("presets");
   const [presetScope, setPresetScope] = useState<PresetScope>("page");
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
@@ -232,6 +245,9 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const advancedCustomizationEnabled = !accessLevel || accessLevel === "advanced";
+  const premiumThemesEnabled = !accessLevel || accessLevel === "premium" || accessLevel === "advanced";
+  const availableThemePresets = accessLevel === "essential" ? themePresets.slice(0, 3) : themePresets;
 
   useEffect(() => {
     setPendingTheme(theme);
@@ -241,6 +257,11 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
     setSaveError("");
     setSaveState("idle");
   }, [theme]);
+
+  useEffect(() => {
+    if (!advancedCustomizationEnabled && workspaceMode === "manual") setWorkspaceMode("presets");
+    if (!premiumThemesEnabled && presetScope === "cards") setPresetScope("page");
+  }, [advancedCustomizationEnabled, premiumThemesEnabled, presetScope, workspaceMode]);
 
   const previewTheme = (nextTheme: EditableTheme, presetId: string | null) => {
     setPendingTheme(nextTheme);
@@ -253,7 +274,11 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
 
   const updatePendingTheme = (updates: Partial<EditableTheme>) => {
     if (updates.contentCard || updates.card || updates.cardGradient) setSelectedCardPresetId(null);
-    const nextTheme = { ...pendingTheme, ...updates };
+    const nextTheme = {
+      ...pendingTheme,
+      ...updates,
+      orbitPageAccess: { mode: 'custom' as const, presetId: null, cardPresetId: null },
+    };
     if (updates.contentCard && !updates.contentCardVariants) {
       nextTheme.contentCardMode = 'mono';
       nextTheme.contentCardVariants = [updates.contentCard];
@@ -265,9 +290,14 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
     const nextTheme: EditableTheme = {
       ...preset.theme,
       content: pendingTheme.content,
-      contentCard: pendingTheme.contentCard,
-      contentCardMode: pendingTheme.contentCardMode,
-      contentCardVariants: pendingTheme.contentCardVariants,
+      contentCard: premiumThemesEnabled ? pendingTheme.contentCard : preset.theme.contentCard,
+      contentCardMode: premiumThemesEnabled ? pendingTheme.contentCardMode : preset.theme.contentCardMode,
+      contentCardVariants: premiumThemesEnabled ? pendingTheme.contentCardVariants : preset.theme.contentCardVariants,
+      orbitPageAccess: {
+        mode: "preset",
+        presetId: preset.id,
+        cardPresetId: premiumThemesEnabled ? pendingTheme.orbitPageAccess?.cardPresetId || null : null,
+      },
     };
     previewTheme(nextTheme, preset.id);
   };
@@ -284,6 +314,11 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
       contentCard: preset.card,
       contentCardMode: preset.mode,
       contentCardVariants: preset.variants,
+      orbitPageAccess: {
+        mode: "preset",
+        presetId: pendingTheme.orbitPageAccess?.presetId || selectedPresetId || "default",
+        cardPresetId: preset.id,
+      },
     };
     previewTheme(nextTheme, selectedPresetId);
     setSelectedCardPresetId(preset.id);
@@ -324,6 +359,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
       try {
         const result = parseImportedTheme(loadEvent.target?.result as string, normalizeTheme);
         const importedTheme = result.theme as EditableTheme;
+        importedTheme.orbitPageAccess = { mode: "custom", presetId: null, cardPresetId: null };
         setPendingTheme(importedTheme);
         setSelectedPresetId(findMatchingPreset(importedTheme));
         setSelectedCardPresetId(findMatchingCardPreset(importedTheme));
@@ -342,7 +378,11 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
   };
 
   const resetTheme = () => {
-    previewTheme({ ...defaultTheme, content: pendingTheme.content }, findMatchingPreset(defaultTheme));
+    previewTheme({
+      ...defaultTheme,
+      content: pendingTheme.content,
+      orbitPageAccess: { mode: "preset", presetId: "default", cardPresetId: null },
+    }, findMatchingPreset(defaultTheme));
   };
 
   const colorControl = (id: string, label: string, value: string, onChange: (color: string) => void) => (
@@ -402,12 +442,18 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
             <Button type="button" variant="outline" onClick={exportTheme} className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
               <FileDown className="mr-2 h-4 w-4" /> Export
             </Button>
-            <Button type="button" variant="outline" asChild className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
-              <label className="cursor-pointer">
-                <Upload className="mr-2 h-4 w-4" /> Import
-                <input type="file" accept=".json" onChange={importTheme} className="hidden" />
-              </label>
-            </Button>
+            {advancedCustomizationEnabled ? (
+              <Button type="button" variant="outline" asChild className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
+                <label className="cursor-pointer">
+                  <Upload className="mr-2 h-4 w-4" /> Import
+                  <input type="file" accept=".json" onChange={importTheme} className="hidden" />
+                </label>
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" disabled className="border-slate-700 bg-transparent text-slate-400">
+                <LockKeyhole className="mr-2 h-4 w-4" /> Import
+              </Button>
+            )}
           </div>
         </div>
         {(isDirty || saveState === "saved" || saveState === "error") ? (
@@ -433,14 +479,15 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
         </button>
         <button
           type="button"
-          onClick={() => setWorkspaceMode("manual")}
+          onClick={() => advancedCustomizationEnabled && setWorkspaceMode("manual")}
+          disabled={!advancedCustomizationEnabled}
           aria-pressed={workspaceMode === "manual"}
-          className={`flex items-start gap-4 rounded-2xl border p-5 text-left transition-all ${workspaceMode === "manual" ? "border-blue-500 bg-blue-50 shadow-[0_0_0_3px_rgb(59_130_246_/_0.1)]" : "border-slate-200 bg-white hover:border-slate-300"}`}
+          className={`flex items-start gap-4 rounded-2xl border p-5 text-left transition-all ${workspaceMode === "manual" ? "border-blue-500 bg-blue-50 shadow-[0_0_0_3px_rgb(59_130_246_/_0.1)]" : "border-slate-200 bg-white hover:border-slate-300"} ${!advancedCustomizationEnabled ? "cursor-not-allowed opacity-65" : ""}`}
         >
           <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${workspaceMode === "manual" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><SlidersHorizontal className="h-5 w-5" /></span>
           <span>
-            <span className="block font-bold text-slate-950">Fine tuning</span>
-            <span className="mt-1 block text-sm leading-5 text-slate-600">Edit every color, surface, type and layout value without restrictions.</span>
+            <span className="block font-bold text-slate-950">Fine tuning {!advancedCustomizationEnabled && <LockKeyhole className="ml-1 inline h-4 w-4" />}</span>
+            <span className="mt-1 block text-sm leading-5 text-slate-600">{advancedCustomizationEnabled ? "Edit every color, surface, type and layout value without restrictions." : "Advanced customization is available on Pro."}</span>
           </span>
         </button>
       </div>
@@ -453,24 +500,31 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
             <button type="button" onClick={() => setPresetScope("page")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "page" ? "text-blue-700" : "text-slate-600"}`}>
               <Palette className="h-4 w-4" /> Page themes
             </button>
-            <button type="button" onClick={() => setPresetScope("cards")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "cards" ? "text-blue-700" : "text-slate-600"}`}>
-              <Layers3 className="h-4 w-4" /> Card styles
+            <button type="button" disabled={!premiumThemesEnabled} onClick={() => premiumThemesEnabled && setPresetScope("cards")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "cards" ? "text-blue-700" : "text-slate-600"} ${!premiumThemesEnabled ? "cursor-not-allowed opacity-60" : ""}`}>
+              {premiumThemesEnabled ? <Layers3 className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />} Card styles
             </button>
           </div>
           {presetScope === "page" ? (
             <>
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">12 page themes</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{availableThemePresets.length} page themes</p>
                   <h3 className="mt-1 text-xl font-bold text-slate-950">Page identity and background</h3>
                 </div>
-                <p className="text-sm text-slate-500">Page themes leave your selected card style untouched.</p>
+                <p className="text-sm text-slate-500">{premiumThemesEnabled ? "Page themes leave your selected card style untouched." : "Essential themes style the complete page."}</p>
               </div>
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {themePresets.map((preset) => (
+                {availableThemePresets.map((preset) => (
                   <PresetCard key={preset.id} preset={preset} active={selectedPresetId === preset.id} onApply={() => applyPreset(preset)} />
                 ))}
               </div>
+              {!premiumThemesEnabled && (
+                <div className="admin-inline-plan-lock mt-5">
+                  <LockKeyhole className="h-4 w-4" />
+                  <span>Starter adds premium page themes and card styles.</span>
+                  <a href={managePlanHref} target="_top">View plans</a>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -695,7 +749,12 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPr
               </TabsContent>
 
               <TabsContent value="background" className="mt-6">
-                <BackgroundMediaCustomizer config={pendingTheme.backgroundMedia} onChange={(backgroundMedia) => updatePendingTheme({ backgroundMedia })} />
+                <BackgroundMediaCustomizer
+                  config={pendingTheme.backgroundMedia}
+                  onChange={(backgroundMedia) => updatePendingTheme({ backgroundMedia })}
+                  videoUploadsEnabled={videoUploadsEnabled}
+                  managePlanHref={managePlanHref}
+                />
               </TabsContent>
             </Tabs>
           </div>

@@ -350,6 +350,9 @@ export interface WorkspaceBootstrapResponse {
   theme: Record<string, any>;
   consentConfig?: Record<string, any>;
   publicUrl?: string;
+  plan?: import('./saas-plan').SaasPlanDefinition;
+  usage?: import('./saas-plan').SaasWorkspaceUsage;
+  billing?: import('./saas-plan').SaasBillingContext;
 }
 
 // API request helper with auth

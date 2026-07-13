@@ -449,6 +449,95 @@
     text-transform: none;
   }
 
+  .admin-plan-badge {
+    align-items: center;
+    background: #eaf2ff;
+    border: 1px solid #c7dcff;
+    border-radius: 999px;
+    color: #1d5ec3;
+    display: inline-flex;
+    font-size: 10px;
+    font-weight: 800;
+    min-height: 22px;
+    padding: 2px 8px;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .admin-plan-badge:hover {
+    background: #dceaff;
+    color: #174b9b;
+  }
+
+  .admin-inline-plan-lock {
+    align-items: center;
+    background: #fff8e7;
+    border: 1px solid #f1d89b;
+    border-radius: 8px;
+    color: #735313;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 12px;
+    font-weight: 650;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .admin-inline-plan-lock svg {
+    flex: 0 0 auto;
+  }
+
+  .admin-inline-plan-lock a {
+    color: #1d5ec3;
+    font-weight: 800;
+    margin-left: auto;
+    text-decoration: none;
+  }
+
+  .admin-plan-locked {
+    align-items: flex-start;
+    background: #f8fafc;
+    border: 1px solid rgb(203 213 225);
+    border-radius: 8px;
+    display: grid;
+    gap: 14px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding: 20px;
+  }
+
+  .admin-plan-locked-icon {
+    align-items: center;
+    background: #eaf2ff;
+    border-radius: 8px;
+    color: #1d5ec3;
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    width: 40px;
+  }
+
+  .admin-plan-locked h2 {
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 750;
+    margin: 0;
+  }
+
+  .admin-plan-locked p {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 5px 0 0;
+  }
+
+  .admin-plan-locked > a {
+    align-self: center;
+    color: #1d5ec3;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+  }
+
   .admin-title {
     color: rgb(15 23 42);
     font-size: 19px;
@@ -1480,6 +1569,20 @@
   }
 
   @media (max-width: 720px) {
+    .admin-plan-locked {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .admin-plan-locked > a {
+      grid-column: 2;
+      justify-self: start;
+    }
+
+    .admin-inline-plan-lock a {
+      margin-left: 0;
+      width: 100%;
+    }
+
     .admin-onboarding-panel {
       top: auto;
       right: 12px;

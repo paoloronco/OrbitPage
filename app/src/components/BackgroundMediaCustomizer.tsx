@@ -16,6 +16,7 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  LockKeyhole,
 } from "lucide-react";
 import { BackgroundMediaConfig, defaultBackgroundMedia } from "@/lib/theme";
 import { uploadApi } from "@/lib/api-client";
@@ -23,6 +24,8 @@ import { uploadApi } from "@/lib/api-client";
 interface BackgroundMediaCustomizerProps {
   config: BackgroundMediaConfig;
   onChange: (config: BackgroundMediaConfig) => void;
+  videoUploadsEnabled?: boolean;
+  managePlanHref?: string;
 }
 
 type BgType = "color" | "gradient" | "video" | "gif";
@@ -41,7 +44,12 @@ const ACCEPTED_MIME: Record<"video" | "gif", string> = {
 
 type UploadState = "idle" | "uploading" | "done" | "error";
 
-export const BackgroundMediaCustomizer = ({ config, onChange }: BackgroundMediaCustomizerProps) => {
+export const BackgroundMediaCustomizer = ({
+  config,
+  onChange,
+  videoUploadsEnabled = true,
+  managePlanHref = "/dashboard?section=billing",
+}: BackgroundMediaCustomizerProps) => {
   const [overlayPickerOpen, setOverlayPickerOpen] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [uploadError, setUploadError] = useState<string>("");
@@ -94,14 +102,16 @@ export const BackgroundMediaCustomizer = ({ config, onChange }: BackgroundMediaC
             <button
               key={type}
               type="button"
-              onClick={() => handleTypeChange(type)}
-              title={description}
+              onClick={() => (type !== "video" || videoUploadsEnabled) && handleTypeChange(type)}
+              disabled={type === "video" && !videoUploadsEnabled}
+              title={type === "video" && !videoUploadsEnabled ? "Video backgrounds require Pro" : description}
               className={[
                 "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-xs font-medium transition-all",
                 "hover:border-primary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 config.type === type
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border bg-card/50 text-muted-foreground hover:text-foreground",
+                type === "video" && !videoUploadsEnabled ? "cursor-not-allowed opacity-45" : "",
               ].join(" ")}
             >
               <Icon className="h-5 w-5" />
@@ -115,6 +125,13 @@ export const BackgroundMediaCustomizer = ({ config, onChange }: BackgroundMediaC
               ? "Uses the Background color from the Colors tab."
               : "Uses the Background Gradient settings from the Colors tab."}
           </p>
+        )}
+        {!videoUploadsEnabled && (
+          <div className="admin-inline-plan-lock">
+            <LockKeyhole className="h-4 w-4" />
+            <span>Video backgrounds are available on Pro.</span>
+            <a href={managePlanHref} target="_top">View plans</a>
+          </div>
         )}
       </div>
 

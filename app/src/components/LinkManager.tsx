@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
+import { CalendarClock, Code2, Download, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,9 +18,23 @@ interface LinkManagerProps {
   // Called only when user clicks Save
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
   onLinksPreview?: (links: LinkData[]) => void;
+  maxBlocks?: number | null;
+  planName?: string;
+  schedulingEnabled?: boolean;
+  managePlanHref?: string;
 }
 
-export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editMode = 'full' }: LinkManagerProps) => {
+export const LinkManager = ({
+  links,
+  theme,
+  onLinksUpdate,
+  onLinksPreview,
+  editMode = 'full',
+  maxBlocks,
+  planName,
+  schedulingEnabled = true,
+  managePlanHref = "/dashboard?section=billing",
+}: LinkManagerProps) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,6 +49,21 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
     ...getThemeCssVariables(theme),
     ...getContentCardVariantCssVariables(theme, index),
   }) as CSSProperties;
+  const atBlockLimit = maxBlocks !== undefined && maxBlocks !== null && workingLinks.length >= maxBlocks;
+
+  const appendBlock = (block: LinkData) => {
+    if (atBlockLimit) {
+      toast({
+        title: `${planName || "Current plan"} block limit reached`,
+        description: `This workspace can contain up to ${maxBlocks} blocks.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setWorkingLinks((current) => [...current, block]);
+    setIsDirty(true);
+    setSaveError("");
+  };
 
   // Keep working copy in sync when parent provides a new links array
   useEffect(() => {
@@ -57,10 +86,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       type: "link",
       status: "live",
     };
-    const updated = [...workingLinks, newLink];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newLink);
   };
 
   const addNewCta = () => {
@@ -74,10 +100,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       status: "live",
       size: "large",
     };
-    const updated = [...workingLinks, newCta];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newCta);
   };
 
   const addNewTextCard = () => {
@@ -90,10 +113,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       content: "",
       status: "live",
     };
-    const updated = [...workingLinks, newTextCard];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newTextCard);
   };
 
   // Create a bulleted list text card (clickable list items)
@@ -107,10 +127,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       textItems: [],
       status: "live",
     };
-    const updated = [...workingLinks, newListCard];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newListCard);
   };
 
   const addNewSeparator = () => {
@@ -123,10 +140,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       content: buildBlockContent({ boxed: false }),
       isActive: true,
     };
-    const updated = [...workingLinks, newSeparator];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newSeparator);
   };
 
   const addNewHeading = () => {
@@ -138,10 +152,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       type: "heading",
       status: "live",
     };
-    const updated = [...workingLinks, newHeading];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newHeading);
   };
 
   const addNewImage = () => {
@@ -153,10 +164,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       type: "image",
       status: "live",
     };
-    const updated = [...workingLinks, newImage];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newImage);
   };
 
   const addNewContact = () => {
@@ -180,10 +188,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       }),
       status: "live",
     };
-    const updated = [...workingLinks, newContact];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newContact);
   };
 
   const addNewSocialRow = () => {
@@ -198,10 +203,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       }),
       status: "live",
     };
-    const updated = [...workingLinks, newSocialRow];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newSocialRow);
   };
 
   const addNewCallout = () => {
@@ -217,10 +219,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       }),
       status: "live",
     };
-    const updated = [...workingLinks, newCallout];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newCallout);
   };
 
   const addNewMap = () => {
@@ -237,10 +236,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       }),
       status: "live",
     };
-    const updated = [...workingLinks, newMap];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newMap);
   };
 
   const addNewEvent = () => {
@@ -261,10 +257,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       }),
       status: "live",
     };
-    const updated = [...workingLinks, newEvent];
-    setWorkingLinks(updated);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newEvent);
   };
 
   const addNewEmbed = () => {
@@ -282,9 +275,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
       }),
       status: "live",
     };
-    setWorkingLinks([...workingLinks, newEmbed]);
-    setIsDirty(true);
-    setSaveError("");
+    appendBlock(newEmbed);
   };
 
   const updateLink = (updatedLink: LinkData) => {
@@ -511,8 +502,10 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
             <h2 className="text-lg font-semibold text-slate-950">Content cards</h2>
             {isDirty && <span className="admin-dirty-badge">Unsaved changes</span>}
           </div>
-            <p className="mt-1 text-sm text-slate-600">
-            {workingLinks.length === 0 ? "Start with a block, then arrange your public page." : `${workingLinks.length} items in your public page order.`}
+          <p className="mt-1 text-sm text-slate-600">
+            {workingLinks.length === 0
+              ? "Start with a block, then arrange your public page."
+              : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` of ${maxBlocks}` : ""} blocks in your public page order.`}
           </p>
           {saveError && (
             <p className="mt-2 text-sm font-medium text-red-600" role="alert">
@@ -527,6 +520,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
               onClick={() => setIsBlockLibraryOpen((open) => !open)}
               variant="outline"
               className="admin-action"
+              disabled={atBlockLimit}
               aria-expanded={isBlockLibraryOpen}
               aria-controls="admin-block-library"
             >
@@ -550,6 +544,14 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
           )}
         </div>
       </div>
+
+      {atBlockLimit && (
+        <div className="admin-inline-plan-lock mb-4">
+          <LockKeyhole className="h-4 w-4" />
+          <span>{planName || "Your plan"} includes up to {maxBlocks} blocks. Existing blocks remain editable.</span>
+          <a href={managePlanHref} target="_top">View plans</a>
+        </div>
+      )}
 
       {isFullEdit && isBlockLibraryOpen && (
         <section id="admin-block-library" className="admin-block-library" data-onboarding="link-add-grid">
@@ -694,15 +696,15 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
               </div>
               {isFullEdit && (
                 <div className="flex flex-wrap justify-center gap-2">
-                  <Button onClick={addNewLink} className="admin-action admin-action-primary">
+                  <Button onClick={addNewLink} className="admin-action admin-action-primary" disabled={atBlockLimit}>
                     <Link className="h-4 w-4" />
                     Add link
                   </Button>
-                  <Button onClick={addNewBulletedList} variant="outline" className="admin-action">
+                  <Button onClick={addNewBulletedList} variant="outline" className="admin-action" disabled={atBlockLimit}>
                     <List className="h-4 w-4" />
                     Add list
                   </Button>
-                  <Button onClick={addNewHeading} variant="outline" className="admin-action">
+                  <Button onClick={addNewHeading} variant="outline" className="admin-action" disabled={atBlockLimit}>
                     <Type className="h-4 w-4" />
                     Add heading
                   </Button>
@@ -737,6 +739,8 @@ export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editM
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
+                  schedulingEnabled={schedulingEnabled}
+                  managePlanHref={managePlanHref}
                 />
               ) : (
                 <LinkCard

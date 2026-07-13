@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { Permission } from "@/lib/permissions";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
 
 interface ProfileData {
   name: string;
@@ -69,6 +70,9 @@ const Admin = () => {
   const [links, setLinks] = useState<LinkData[]>([]);
 
   const [theme, setTheme] = useState<ThemeConfig>(defaultTheme);
+  const [saasPlan, setSaasPlan] = useState<SaasPlanDefinition | null>(null);
+  const [saasUsage, setSaasUsage] = useState<SaasWorkspaceUsage | null>(null);
+  const [saasBilling, setSaasBilling] = useState<SaasBillingContext | null>(null);
 
   // Check authentication status and setup status on mount.
   // Use async token verify so a page refresh doesn't clear the session:
@@ -109,6 +113,12 @@ const Admin = () => {
         const [profileData, linksData, themeData] = bootstrap
           ? [bootstrap.profile, bootstrap.links, bootstrap.theme]
           : await Promise.all([profileApi.get(), linksApi.get(), themeApi.get()]);
+
+        if (bootstrap) {
+          setSaasPlan(bootstrap.plan || null);
+          setSaasUsage(bootstrap.usage || null);
+          setSaasBilling(bootstrap.billing || null);
+        }
         
         if (profileData) {
           setProfile({
@@ -246,7 +256,9 @@ const Admin = () => {
       }
       // Re-fetch from backend to guarantee public and admin are in sync
       const reloaded = await linksApi.get();
-      setLinks(normalizeLinkDtos(reloaded));
+      const normalizedLinks = normalizeLinkDtos(reloaded);
+      setLinks(normalizedLinks);
+      setSaasUsage((current) => current ? { ...current, blocks: normalizedLinks.length } : current);
     } catch (error: any) {
       if (error?.message === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);
@@ -349,6 +361,9 @@ const Admin = () => {
       links={links}
       theme={theme}
       currentUser={currentUser}
+      saasPlan={saasPlan}
+      saasUsage={saasUsage}
+      saasBilling={saasBilling}
       onProfileUpdate={saveProfile}
       onLinksUpdate={saveLinks}
       onThemeChange={saveTheme}

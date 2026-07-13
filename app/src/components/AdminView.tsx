@@ -22,6 +22,7 @@ import {
   HelpCircle,
   Key,
   Link,
+  LockKeyhole,
   LogOut,
   MousePointerClick,
   Palette,
@@ -43,6 +44,7 @@ import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
 
 interface ProfileData {
   name: string;
@@ -80,6 +82,9 @@ interface AdminViewProps {
   links: LinkData[];
   theme: ThemeConfig;
   currentUser: CurrentUser | null;
+  saasPlan?: SaasPlanDefinition | null;
+  saasUsage?: SaasWorkspaceUsage | null;
+  saasBilling?: SaasBillingContext | null;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
@@ -111,6 +116,9 @@ export const AdminView = ({
   links,
   theme,
   currentUser,
+  saasPlan,
+  saasUsage,
+  saasBilling,
   onProfileUpdate,
   onLinksUpdate,
   onThemeChange,
@@ -125,6 +133,8 @@ export const AdminView = ({
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
   const [previewLinks, setPreviewLinks] = useState(links);
   const publicPageHref = getPublicUrlOverride() || withBasePath('/');
+  const entitlements = saasPlan?.entitlements;
+  const managePlanHref = saasBilling?.manageUrl || "/dashboard?section=billing";
 
   useEffect(() => {
     setPreviewLinks(links);
@@ -237,6 +247,11 @@ export const AdminView = ({
               <div className="admin-title-row">
                 <h1 className="admin-title">OrbitPage <span>Admin</span></h1>
                 {appVersion && <span className="admin-version">v{appVersion}</span>}
+                {saasPlan && (
+                  <a className="admin-plan-badge" href={managePlanHref} target="_top" title="Manage plan">
+                    {saasPlan.name}
+                  </a>
+                )}
               </div>
               <p className="admin-subtitle">
                 Your page workspace
@@ -272,7 +287,9 @@ export const AdminView = ({
             icon={Globe2}
             label="Visible links"
             value={`${metrics.visibleLinks}/${metrics.totalLinks}`}
-            detail={metrics.scheduledLinks > 0 ? `${metrics.scheduledLinks} scheduled` : "Ready to publish"}
+            detail={entitlements?.maxBlocks !== undefined
+              ? `${saasUsage?.blocks ?? links.length}/${entitlements.maxBlocks ?? "∞"} plan blocks`
+              : metrics.scheduledLinks > 0 ? `${metrics.scheduledLinks} scheduled` : "Ready to publish"}
           />
           <MetricCard
             icon={MousePointerClick}
@@ -313,6 +330,8 @@ export const AdminView = ({
                   profile={profile}
                   theme={theme}
                   onProfileUpdate={onProfileUpdate}
+                  seoAccess={entitlements?.seo}
+                  managePlanHref={managePlanHref}
                   onStartOnboarding={() => setOnboardingReplayKey(key => key + 1)}
                   onAdminOnboardingEnabledChange={(enabled) => {
                     void onProfileUpdate({ ...profile, adminOnboardingEnabled: enabled });
@@ -347,6 +366,10 @@ export const AdminView = ({
                   onLinksUpdate={onLinksUpdate}
                   onLinksPreview={setPreviewLinks}
                   editMode={linkEditMode}
+                  maxBlocks={entitlements?.maxBlocks}
+                  planName={saasPlan?.name}
+                  schedulingEnabled={entitlements?.scheduling ?? true}
+                  managePlanHref={managePlanHref}
                 />
               </div>
               <aside className="admin-workbench-rail">
@@ -374,12 +397,22 @@ export const AdminView = ({
                   publicPageHref={publicPageHref}
                 />
               )}
+              accessLevel={entitlements?.themes}
+              videoUploadsEnabled={entitlements?.videoUploads ?? true}
+              managePlanHref={managePlanHref}
             />
           </TabsContent>
 
           <TabsContent value="access" className="admin-tab-content">
             <div className="admin-single-column space-y-6" data-onboarding="access-section">
-              {canManageUsers && <UserManager />}
+              {canManageUsers && (!saasPlan || entitlements?.collaborators) && <UserManager />}
+              {canManageUsers && saasPlan && !entitlements?.collaborators && (
+                <PlanLockedFeature
+                  title="Collaborators"
+                  description="Shared workspace access is available on Pro."
+                  managePlanHref={managePlanHref}
+                />
+              )}
               {canManageUsers && <BackupManager />}
               <PasswordManager />
             </div>
@@ -395,8 +428,14 @@ export const AdminView = ({
                   <StatusTile label="CTA clicks" value={String(metrics.ctaClicks)} />
                   <StatusTile label="Smart CTAs" value={String(metrics.ctaLinks)} />
                 </div>
-                <ClickAnalyticsChart links={links} />
-                <div className="mt-6 border-t border-slate-200 pt-5">
+                {(!saasPlan || entitlements?.analytics !== "basic-clicks") ? (
+                  <ClickAnalyticsChart links={links} />
+                ) : (
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                    Free includes basic click totals. Trends and per-block comparisons unlock on Starter.
+                  </p>
+                )}
+                {(!saasPlan || entitlements?.analytics !== "basic-clicks") && <div className="mt-6 border-t border-slate-200 pt-5">
                   <PanelHeader icon={MousePointerClick} title="CTA performance" />
                   {metrics.ctaPerformance.length > 0 ? (
                     <div className="space-y-2">
@@ -417,10 +456,10 @@ export const AdminView = ({
                       Smart CTA clicks will appear here separately from normal link clicks.
                     </p>
                   )}
-                </div>
+                </div>}
               </section>
 
-              <Card className="admin-panel space-y-5">
+              {(!saasPlan || entitlements?.analytics === "advanced-ga4") ? <Card className="admin-panel space-y-5">
                 <PanelHeader icon={Globe2} title="Google Analytics 4" />
                 <p className="text-sm leading-6 text-slate-600">
                   Tracking runs on the public page only. Admin activity stays out of analytics.
@@ -464,7 +503,13 @@ export const AdminView = ({
                     </p>
                   )}
                 </div>
-              </Card>
+              </Card> : (
+                <PlanLockedFeature
+                  title="Google Analytics 4"
+                  description="Connect a GA4 Measurement ID with the Pro plan."
+                  managePlanHref={managePlanHref}
+                />
+              )}
             </div>
           </TabsContent>
 
@@ -622,6 +667,27 @@ function StatusTile({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
     </div>
+  );
+}
+
+function PlanLockedFeature({
+  title,
+  description,
+  managePlanHref,
+}: {
+  title: string;
+  description: string;
+  managePlanHref: string;
+}) {
+  return (
+    <Card className="admin-plan-locked">
+      <span className="admin-plan-locked-icon"><LockKeyhole className="h-5 w-5" /></span>
+      <div>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <a href={managePlanHref} target="_top">View plans</a>
+    </Card>
   );
 }
 
