@@ -31,4 +31,16 @@ export default defineConfig(({ mode }) => ({
     // Injected at build time — access via __APP_VERSION__ in source code
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: "assets/orbitpage.js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: (assetInfo) =>
+          assetInfo.name?.endsWith(".css")
+            ? "assets/orbitpage.css"
+            : "assets/[name]-[hash][extname]",
+      },
+    },
+  },
 }));

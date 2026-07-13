@@ -15,7 +15,7 @@ const SAAS_TOKEN_STORAGE_KEY = 'orbitpage-saas-api-token';
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-const getSaasApiBase = (): string | null => {
+export const getSaasApiBase = (): string | null => {
   if (typeof window === 'undefined') return null;
   const value = new URLSearchParams(window.location.search).get('apiBase');
   if (!value) return null;
@@ -28,6 +28,8 @@ const getSaasApiBase = (): string | null => {
   }
 };
 
+export const isSaasMode = (): boolean => Boolean(getSaasApiBase());
+
 const getSaasPublicSlug = (): string | null => {
   if (typeof window === 'undefined') return null;
   const value = new URLSearchParams(window.location.search).get('publicSlug');
@@ -39,6 +41,7 @@ const getSaasAuthToken = (): string | null => {
   const hashToken = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('apiToken');
   if (hashToken) {
     sessionStorage.setItem(SAAS_TOKEN_STORAGE_KEY, hashToken);
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
     return hashToken;
   }
   return sessionStorage.getItem(SAAS_TOKEN_STORAGE_KEY);
@@ -283,7 +286,7 @@ interface ChangePasswordResponse extends ApiResponse {
   token?: string;
 }
 
-interface ProfileResponse extends ApiResponse {
+export interface ProfileResponse extends ApiResponse {
   name: string;
   bio: string;
   avatar: string;
@@ -302,7 +305,7 @@ interface ProfileResponse extends ApiResponse {
   appearance?: import('./profile-appearance').ProfileAppearance;
 }
 
-interface LinkItem {
+export interface LinkItem {
   id: string;
   title: string;
   description: string;
@@ -332,10 +335,21 @@ interface LinkItem {
   coverImageAlt?: string;
 }
 
-interface PublicPageResponse {
+export interface PublicPageResponse {
   profile: ProfileResponse;
   links: LinkItem[];
   theme: Record<string, any>;
+  branding?: {
+    showOrbitPageBadge?: boolean;
+  };
+}
+
+export interface WorkspaceBootstrapResponse {
+  profile: ProfileResponse;
+  links: LinkItem[];
+  theme: Record<string, any>;
+  consentConfig?: Record<string, any>;
+  publicUrl?: string;
 }
 
 // API request helper with auth
@@ -406,6 +420,12 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
 export const publicPageApi = {
   get: async (): Promise<PublicPageResponse> => {
     return apiRequest<PublicPageResponse>('/public-page');
+  },
+};
+
+export const workspaceBootstrapApi = {
+  get: async (): Promise<WorkspaceBootstrapResponse> => {
+    return apiRequest<WorkspaceBootstrapResponse>('/workspace/bootstrap');
   },
 };
 

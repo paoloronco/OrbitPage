@@ -1,6 +1,7 @@
 declare global {
   interface Window {
     __ORBITPAGE_BASE_PATH__?: string;
+    __ORBITPAGE_API_BASE__?: string;
   }
 }
 
@@ -41,7 +42,7 @@ export const withBasePath = (path = '/'): string => {
 export const apiPath = (path = ''): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   if (typeof window !== 'undefined') {
-    const apiBase = new URLSearchParams(window.location.search).get('apiBase');
+    const apiBase = window.__ORBITPAGE_API_BASE__ || new URLSearchParams(window.location.search).get('apiBase');
     if (apiBase) {
       try {
         const url = new URL(apiBase);

@@ -25,6 +25,7 @@ interface PublicViewProps {
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
   ccpaPolicyUrl?: string;
+  showOrbitPageBadge?: boolean;
 }
 
 export const PublicView = ({
@@ -34,6 +35,7 @@ export const PublicView = ({
   footerText,
   privacyPolicyUrl,
   cookiePolicyUrl,
+  showOrbitPageBadge = true,
 }: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withBasePath(cookiePolicyUrl.trim()) : undefined;
@@ -128,17 +130,19 @@ export const PublicView = ({
               )}
             </p>
           )}
-          <p className="text-xs text-muted-foreground opacity-60">
-            Powered by{" "}
-            <a
-              href="https://github.com/paoloronco/OrbitPage"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-primary"
-            >
-              OrbitPage
-            </a>
-          </p>
+          {showOrbitPageBadge && (
+            <p className="text-xs text-muted-foreground opacity-60">
+              Powered by{" "}
+              <a
+                href="https://github.com/paoloronco/OrbitPage"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-primary"
+              >
+                OrbitPage
+              </a>
+            </p>
+          )}
         </footer>
       </div>
     </main>

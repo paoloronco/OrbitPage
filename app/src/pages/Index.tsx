@@ -4,7 +4,7 @@ import { CookieBanner } from "@/components/CookieBanner";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { LinkData } from "@/components/LinkCard";
 import { applyTheme, normalizeTheme, BackgroundMediaConfig, type ThemeConfig } from "@/lib/theme";
-import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
+import { publicPageApi, consentConfigPublicApi, type ConsentConfigData, type PublicPageResponse } from "@/lib/api-client";
 import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
@@ -40,6 +40,15 @@ interface ProfileData {
   cookiePolicyUrl?: string;
 }
 
+declare global {
+  interface Window {
+    __ORBITPAGE_STATIC_SNAPSHOT__?: {
+      page: PublicPageResponse;
+      consentConfig?: ConsentConfigData;
+    };
+  }
+}
+
 const Index = () => {
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -54,6 +63,7 @@ const Index = () => {
   const [theme, setTheme] = useState<ThemeConfig>(() => normalizeTheme(null));
   // Consent config drives whether CookieBanner is rendered
   const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
+  const [showOrbitPageBadge, setShowOrbitPageBadge] = useState(true);
 
   // Load all public page data in one request so the default UI never flashes.
   useEffect(() => {
@@ -61,11 +71,16 @@ const Index = () => {
 
     const loadData = async () => {
       try {
-        // Fetch public page data and consent config in parallel
-        const [pageData, consentRes] = await Promise.all([
-          publicPageApi.get(),
-          consentConfigPublicApi.get().catch(() => ({ data: { mode: 'disabled' as const, enabled: false } })),
-        ]);
+        const staticSnapshot = window.__ORBITPAGE_STATIC_SNAPSHOT__;
+        const [pageData, consentRes] = staticSnapshot
+          ? [
+              staticSnapshot.page,
+              { data: staticSnapshot.consentConfig || { mode: 'disabled' as const, enabled: false } },
+            ]
+          : await Promise.all([
+              publicPageApi.get(),
+              consentConfigPublicApi.get().catch(() => ({ data: { mode: 'disabled' as const, enabled: false } })),
+            ]);
         if (cancelled) return;
 
         // Initialise consent manager with backend config.
@@ -196,6 +211,7 @@ const Index = () => {
         }
 
         setLinks(normalizeLinkDtos(pageData.links));
+        setShowOrbitPageBadge(pageData.branding?.showOrbitPageBadge !== false);
         document.body.classList.remove('orbitpage-booting');
         setLoading(false);
       } catch (error) {
@@ -266,6 +282,7 @@ const Index = () => {
         privacyPolicyUrl={privacyPolicyUrl}
         cookiePolicyUrl={cookiePolicyUrl}
         ccpaPolicyUrl={ccpaPolicyUrl}
+        showOrbitPageBadge={showOrbitPageBadge}
       />
       {/* Render the native banner only when mode === 'hardcoded'.
           Builder mode: external CMP injects its own UI via injectBuilderScript().

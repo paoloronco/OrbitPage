@@ -5,7 +5,7 @@ import { InitialSetup } from "@/components/InitialSetup";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, themeApi, authApi } from "@/lib/api-client";
+import { profileApi, linksApi, themeApi, authApi, isSaasMode, workspaceBootstrapApi } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
@@ -77,7 +77,7 @@ const Admin = () => {
   // from localStorage and confirms it with the server.
   useEffect(() => {
     const checkAuth = async () => {
-      const firstTime = await isFirstTimeSetup();
+      const firstTime = isSaasMode() ? false : await isFirstTimeSetup();
       setShowSetup(firstTime);
       if (hasStoredAuthToken()) {
         try {
@@ -105,8 +105,10 @@ const Admin = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load profile data
-        const profileData = await profileApi.get();
+        const bootstrap = isSaasMode() ? await workspaceBootstrapApi.get() : null;
+        const [profileData, linksData, themeData] = bootstrap
+          ? [bootstrap.profile, bootstrap.links, bootstrap.theme]
+          : await Promise.all([profileApi.get(), linksApi.get(), themeApi.get()]);
         
         if (profileData) {
           setProfile({
@@ -131,16 +133,10 @@ const Admin = () => {
           });
         }
 
-        // Load links data
-        const linksData = await linksApi.get();
-        
         if (linksData && linksData.length > 0) {
           setLinks(normalizeLinkDtos(linksData));
         }
 
-        // Load theme data (for editing purposes) and apply it to admin too
-        const themeData = await themeApi.get();
-        
         if (themeData) {
           const loadedTheme = normalizeTheme(themeData);
           setTheme(loadedTheme);
