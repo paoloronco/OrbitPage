@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image } from "lucide-react";
+import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole } from "lucide-react";
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
+import { optimizeImageForUpload, type ImageUploadVariant } from "@/lib/image-upload";
+import { uploadApi } from "@/lib/api-client";
 
 interface TextCardProps {
   link: LinkData;
@@ -20,11 +22,15 @@ interface TextCardProps {
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
   publicPreviewStyle?: CSSProperties;
+  schedulingEnabled?: boolean;
+  managePlanHref?: string;
 }
 
-export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, schedulingEnabled = true, managePlanHref = "/dashboard?section=billing" }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
+  const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
+  const [imageUploadError, setImageUploadError] = useState("");
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
@@ -32,50 +38,58 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const canEdit = editMode !== 'view';
 
   const handleSave = () => {
+    if (uploadingImage) return;
     onUpdate(editLink);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditLink(link);
+    setImageUploadError("");
     setIsEditing(false);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
 
-  const handleIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!isAllowedRasterImageFile(file)) {
-        e.target.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setEditLink(prev => ({
-          ...prev,
-          icon: result,
-          iconType: 'image'
-        }));
-      };
-      reader.readAsDataURL(file);
+  const uploadBlockImage = async (file: File, variant: "icon" | "cover") => {
+    setUploadingImage(variant);
+    setImageUploadError("");
+    try {
+      const optimized = await optimizeImageForUpload(file, variant);
+      const uploaded = await uploadApi.uploadImage(optimized, `block-${link.id}-${variant}`);
+      setEditLink((previous) => variant === "icon"
+        ? { ...previous, icon: uploaded.filePath, iconType: "image" }
+        : { ...previous, coverImage: uploaded.filePath });
+    } catch (error) {
+      setImageUploadError(error instanceof Error ? error.message : "Image upload failed.");
+    } finally {
+      setUploadingImage(null);
     }
   };
 
-  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!isAllowedRasterImageFile(file)) {
+        setImageUploadError("Unsupported image type. Use PNG, JPG, GIF, or WebP.");
         e.target.value = '';
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setEditLink(prev => ({ ...prev, coverImage: event.target?.result as string }));
-      };
-      reader.readAsDataURL(file);
+      await uploadBlockImage(file, "icon");
+    }
+    e.target.value = '';
+  };
+
+  const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!isAllowedRasterImageFile(file)) {
+        setImageUploadError("Unsupported image type. Use PNG, JPG, GIF, or WebP.");
+        e.target.value = '';
+        return;
+      }
+      await uploadBlockImage(file, "cover");
     }
     e.target.value = '';
   };
@@ -426,6 +440,13 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             />
 
             {/* Link Scheduler */}
+            {!schedulingEnabled && (
+              <div className="admin-inline-plan-lock">
+                <LockKeyhole className="h-4 w-4" />
+                <span>Scheduling is available on Pro.</span>
+                <a href={managePlanHref} target="_top">View plans</a>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Status</Label>
@@ -446,6 +467,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Campaign</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   value={editLink.campaignName || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, campaignName: e.target.value || undefined }))}
                   placeholder="Launch, event..."
@@ -455,6 +477,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Show from date</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.startDate || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, startDate: e.target.value || undefined }))}
@@ -464,6 +487,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Show from time</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.startTime || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, startTime: e.target.value || undefined }))}
@@ -473,6 +497,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Hide after date</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.endDate || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, endDate: e.target.value || undefined }))}
@@ -482,6 +507,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="space-y-1">
                 <Label className="text-xs">Hide after time</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.endTime || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, endTime: e.target.value || undefined }))}
@@ -491,6 +517,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               <div className="col-span-2 space-y-1">
                 <Label className="text-xs">Timezone</Label>
                 <Input
+                  disabled={!schedulingEnabled}
                   value={editLink.timezone || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, timezone: e.target.value || undefined }))}
                   onFocus={() => {
@@ -519,8 +546,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={Boolean(uploadingImage)}
                 >
-                  <Upload className="w-4 h-4" />
+                  {uploadingImage === "icon" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -568,8 +596,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   size="sm"
                   onClick={() => coverImageInputRef.current?.click()}
                   title="Upload image"
+                  disabled={Boolean(uploadingImage)}
                 >
-                  <Upload className="w-4 h-4" />
+                  {uploadingImage === "cover" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 </Button>
                 <input
                   ref={coverImageInputRef}
@@ -585,6 +614,8 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 placeholder="Image description (alt text, optional)"
                 className="glass-card border-primary/20 text-sm"
               />
+              {imageUploadError && <p className="text-xs font-medium text-destructive" role="alert">{imageUploadError}</p>}
+              <p className="text-xs text-muted-foreground">Images up to 10 MB are optimized before upload.</p>
             </div>
 
             {/* Size Selection */}
@@ -630,10 +661,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={handleSave} variant="gradient" size="sm">
-                Save
+              <Button onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>
+                {uploadingImage ? "Uploading..." : "Save"}
               </Button>
-              <Button onClick={handleCancel} variant="outline" size="sm">
+              <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage)}>
                 Cancel
               </Button>
             </div>

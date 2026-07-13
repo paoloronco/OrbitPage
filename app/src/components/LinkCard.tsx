@@ -6,10 +6,12 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { CalendarClock, Code2, Image, LockKeyhole, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
+import { CalendarClock, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
+import { optimizeImageForUpload, type ImageUploadVariant } from "@/lib/image-upload";
+import { uploadApi } from "@/lib/api-client";
 import {
   type ContactBlockData,
   type EmbedBlockData,
@@ -103,6 +105,8 @@ export const LinkCard = ({
 }: LinkCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
+  const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
+  const [imageUploadError, setImageUploadError] = useState("");
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
@@ -112,6 +116,7 @@ export const LinkCard = ({
   const canReorder = editMode === 'full';
 
   const handleSave = () => {
+    if (uploadingImage) return;
     const sanitizedLink = editLink.type === 'separator'
       ? {
           ...editLink,
@@ -129,44 +134,51 @@ export const LinkCard = ({
 
   const handleCancel = () => {
     setEditLink(link);
+    setImageUploadError("");
     setIsEditing(false);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
 
-  const handleIconUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!isAllowedRasterImageFile(file)) {
-        e.target.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setEditLink(prev => ({
-          ...prev,
-          icon: result,
-          iconType: 'image'
-        }));
-      };
-      reader.readAsDataURL(file);
+  const uploadBlockImage = async (file: File, variant: "icon" | "cover") => {
+    setUploadingImage(variant);
+    setImageUploadError("");
+    try {
+      const optimized = await optimizeImageForUpload(file, variant);
+      const uploaded = await uploadApi.uploadImage(optimized, `block-${link.id}-${variant}`);
+      setEditLink((previous) => variant === "icon"
+        ? { ...previous, icon: uploaded.filePath, iconType: "image" }
+        : { ...previous, coverImage: uploaded.filePath });
+    } catch (error) {
+      setImageUploadError(error instanceof Error ? error.message : "Image upload failed.");
+    } finally {
+      setUploadingImage(null);
     }
   };
 
-  const handleCoverImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleIconUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!isAllowedRasterImageFile(file)) {
+        setImageUploadError("Unsupported image type. Use PNG, JPG, GIF, or WebP.");
         e.target.value = '';
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setEditLink(prev => ({ ...prev, coverImage: event.target?.result as string }));
-      };
-      reader.readAsDataURL(file);
+      await uploadBlockImage(file, "icon");
+    }
+    e.target.value = '';
+  };
+
+  const handleCoverImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!isAllowedRasterImageFile(file)) {
+        setImageUploadError("Unsupported image type. Use PNG, JPG, GIF, or WebP.");
+        e.target.value = '';
+        return;
+      }
+      await uploadBlockImage(file, "cover");
     }
     // Reset input so the same file can be re-selected
     e.target.value = '';
@@ -1232,8 +1244,10 @@ export const LinkCard = ({
                   variant="outline"
                   size="sm"
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={Boolean(uploadingImage)}
+                  title="Upload and optimize icon"
                 >
-                  <Upload className="w-4 h-4" />
+                  {uploadingImage === "icon" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 </Button>
                 <input
                   ref={fileInputRef}
@@ -1279,8 +1293,9 @@ export const LinkCard = ({
                   size="sm"
                   onClick={() => coverImageInputRef.current?.click()}
                   title="Upload image"
+                  disabled={Boolean(uploadingImage)}
                 >
-                  <Upload className="w-4 h-4" />
+                  {uploadingImage === "cover" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 </Button>
                 <input
                   ref={coverImageInputRef}
@@ -1296,6 +1311,8 @@ export const LinkCard = ({
                 placeholder="Image description (alt text, optional)"
                 className="glass-card border-primary/20 text-sm"
               />
+              {imageUploadError && <p className="text-xs font-medium text-destructive" role="alert">{imageUploadError}</p>}
+              <p className="text-xs text-muted-foreground">Images up to 10 MB are optimized before upload.</p>
             </div>
               </div>
             </section>
@@ -1353,10 +1370,10 @@ export const LinkCard = ({
             )}
             
             <div className="flex gap-2">
-              <Button onClick={handleSave} variant="gradient" size="sm">
-                Save
+              <Button onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>
+                {uploadingImage ? "Uploading..." : "Save"}
               </Button>
-              <Button onClick={handleCancel} variant="outline" size="sm">
+              <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage)}>
                 Cancel
               </Button>
             </div>

@@ -399,6 +399,7 @@ export const AdminView = ({
               )}
               accessLevel={entitlements?.themes}
               videoUploadsEnabled={entitlements?.videoUploads ?? true}
+              maxUploadBytes={entitlements?.maxUploadBytes}
               managePlanHref={managePlanHref}
             />
           </TabsContent>

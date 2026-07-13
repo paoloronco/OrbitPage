@@ -752,6 +752,8 @@ export const LinkManager = ({
                   isDragging={draggedItem === link.id}
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
+                  schedulingEnabled={schedulingEnabled}
+                  managePlanHref={managePlanHref}
                 />
               )}
             </div>

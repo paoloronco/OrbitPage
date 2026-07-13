@@ -20,12 +20,14 @@ import {
 } from "lucide-react";
 import { BackgroundMediaConfig, defaultBackgroundMedia } from "@/lib/theme";
 import { uploadApi } from "@/lib/api-client";
+import { formatFileSize } from "@/lib/image-upload";
 
 interface BackgroundMediaCustomizerProps {
   config: BackgroundMediaConfig;
   onChange: (config: BackgroundMediaConfig) => void;
   videoUploadsEnabled?: boolean;
   managePlanHref?: string;
+  maxUploadBytes?: number | null;
 }
 
 type BgType = "color" | "gradient" | "video" | "gif";
@@ -49,6 +51,7 @@ export const BackgroundMediaCustomizer = ({
   onChange,
   videoUploadsEnabled = true,
   managePlanHref = "/dashboard?section=billing",
+  maxUploadBytes,
 }: BackgroundMediaCustomizerProps) => {
   const [overlayPickerOpen, setOverlayPickerOpen] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>("idle");
@@ -67,6 +70,13 @@ export const BackgroundMediaCustomizer = ({
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (maxUploadBytes !== undefined && maxUploadBytes !== null && file.size > maxUploadBytes) {
+      setUploadError(`This file is ${formatFileSize(file.size)}. ${config.type === "video" ? "Video" : "GIF"} uploads on this plan are limited to ${formatFileSize(maxUploadBytes)}.`);
+      setUploadState("error");
+      e.target.value = "";
+      return;
+    }
 
     setUploadState("uploading");
     setUploadError("");
@@ -180,7 +190,7 @@ export const BackgroundMediaCustomizer = ({
                     {config.type === "video" ? "Upload MP4 / WebM" : "Upload GIF"}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {config.type === "video" ? "Up to 200 MB" : "Up to 200 MB"}
+                    {maxUploadBytes ? `Up to ${formatFileSize(maxUploadBytes)}` : "Up to 200 MB when self-hosted"}
                   </span>
                 </>
               )}

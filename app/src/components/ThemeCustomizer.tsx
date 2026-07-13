@@ -40,6 +40,7 @@ interface ThemeCustomizerProps {
   renderPreview?: (theme: ThemeConfig) => ReactNode;
   accessLevel?: SaasThemeAccess;
   videoUploadsEnabled?: boolean;
+  maxUploadBytes?: number | null;
   managePlanHref?: string;
 }
 
@@ -233,6 +234,7 @@ export const ThemeCustomizer = ({
   renderPreview,
   accessLevel,
   videoUploadsEnabled = true,
+  maxUploadBytes,
   managePlanHref = "/dashboard?section=billing",
 }: ThemeCustomizerProps) => {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("presets");
@@ -753,6 +755,7 @@ export const ThemeCustomizer = ({
                   config={pendingTheme.backgroundMedia}
                   onChange={(backgroundMedia) => updatePendingTheme({ backgroundMedia })}
                   videoUploadsEnabled={videoUploadsEnabled}
+                  maxUploadBytes={maxUploadBytes}
                   managePlanHref={managePlanHref}
                 />
               </TabsContent>

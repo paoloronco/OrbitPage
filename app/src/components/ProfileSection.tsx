@@ -11,7 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath, withBasePath } from "@/lib/base-path";
-import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
+import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
+import { optimizeImageForUpload } from "@/lib/image-upload";
 import { ProfileQrCode } from "./ProfileQrCode";
 import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
@@ -100,6 +101,7 @@ export const ProfileSection = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
+  const [pendingLogoPreviewUrl, setPendingLogoPreviewUrl] = useState<string | null>(null);
   const seoLocked = seoAccess === "none";
 
   // Keep editable state in sync with incoming profile when not editing
@@ -109,13 +111,17 @@ export const ProfileSection = ({
     }
   }, [profile, isEditing]);
 
+  useEffect(() => () => {
+    if (pendingLogoPreviewUrl) URL.revokeObjectURL(pendingLogoPreviewUrl);
+  }, [pendingLogoPreviewUrl]);
+
   const handleSave = async () => {
     setUploadError(null);
     setIsUploadingLogo(true);
     try {
       let nextProfile = editProfile;
       if (pendingLogoFile) {
-        const uploaded = await uploadApi.uploadImage(pendingLogoFile);
+        const uploaded = await uploadApi.uploadImage(pendingLogoFile, "profile-logo");
         nextProfile = {
           ...editProfile,
           avatar: uploaded.filePath,
@@ -126,6 +132,7 @@ export const ProfileSection = ({
       await onProfileUpdate(nextProfile);
       setEditProfile(nextProfile);
       setPendingLogoFile(null);
+      setPendingLogoPreviewUrl(null);
       setIsEditing(false);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Failed to save the profile.');
@@ -137,98 +144,9 @@ export const ProfileSection = ({
   const handleCancel = () => {
     setEditProfile(profile);
     setPendingLogoFile(null);
+    setPendingLogoPreviewUrl(null);
     setUploadError(null);
     setIsEditing(false);
-  };
-
-  const processImage = async (file: File): Promise<string> => {
-    // Reject unreasonable files early (pre-compress)
-    const MAX_INPUT_BYTES = 20 * 1024 * 1024; // 20MB
-    if (file.size > MAX_INPUT_BYTES) {
-      throw new Error('Selected file is too large (max 20MB).');
-    }
-
-    // Helper to load an image from a src and return the image element
-    const loadImageFromSrc = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = (e) => reject(new Error('Could not load the selected image from provided source.'));
-      image.src = src;
-    });
-
-    if (!isAllowedRasterImageFile(file)) {
-      throw new Error('Unsupported image type. Use PNG, JPG, GIF, or WebP.');
-    }
-
-    // Try loading from object URL first, then fall back to data URL if needed
-    let objectUrl: string | null = null;
-    let dataUrl: string | null = null;
-    let img: HTMLImageElement | null = null;
-    try {
-      objectUrl = URL.createObjectURL(file);
-      img = await loadImageFromSrc(objectUrl);
-      // success
-      URL.revokeObjectURL(objectUrl);
-      objectUrl = null;
-    } catch (err) {
-      // try data URL fallback
-      if (objectUrl) {
-        try { URL.revokeObjectURL(objectUrl); } catch (e) {}
-        objectUrl = null;
-      }
-      try {
-        dataUrl = await new Promise<string>((resolve, reject) => {
-          const fr = new FileReader();
-          fr.onload = () => resolve(String(fr.result || ''));
-          fr.onerror = () => reject(new Error('Failed to read file as data URL.'));
-          fr.readAsDataURL(file);
-        });
-        img = await loadImageFromSrc(dataUrl);
-      } catch (err2) {
-        throw new Error('Could not load the selected image. The file may be corrupt or in an unsupported format.');
-      }
-    }
-
-    // Resize to fit within bounds while keeping aspect ratio
-    const MAX_DIM = 512; // avatar-friendly, keeps payload small
-    let { width, height } = img;
-    if (width > MAX_DIM || height > MAX_DIM) {
-      const scale = Math.min(MAX_DIM / width, MAX_DIM / height);
-      width = Math.round(width * scale);
-      height = Math.round(height * scale);
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Canvas not supported.');
-    try {
-      ctx.drawImage(img as HTMLImageElement, 0, 0, width, height);
-    } catch (drawErr) {
-      // Canvas draw may fail for certain SVGs or security-restricted images. If so, return original data URL if available.
-      if (dataUrl) return dataUrl;
-      // As a last resort, if we still have the original file as an object URL, attempt to return that (but it won't be persisted across sessions)
-      if (objectUrl) return objectUrl;
-      throw new Error('Failed to process image on canvas. Try a different image or smaller file.');
-    }
-
-    // Preserve transparent logo formats while keeping photos compact.
-    const isPng = file.type === 'image/png';
-    const isWebp = file.type === 'image/webp';
-    const quality = 0.9; // good quality for avatars
-    const mime = isPng ? 'image/png' : isWebp ? 'image/webp' : 'image/jpeg';
-
-    const outputDataUrl = canvas.toDataURL(mime, quality);
-
-    // Final payload sanity check (~base64 expands by ~33%)
-    const approxBytes = Math.ceil((outputDataUrl.length - 'data:;base64,'.length) * 0.75);
-    const MAX_OUTPUT_BYTES = 5 * 1024 * 1024; // 5MB after compression
-    if (approxBytes > MAX_OUTPUT_BYTES) {
-      throw new Error('Processed image is still too large. Try a smaller image.');
-    }
-
-    return outputDataUrl;
   };
 
   const getAvatarUrl = (avatar?: string | null) => {
@@ -243,18 +161,14 @@ export const ProfileSection = ({
     if (!file) return;
     setIsUploadingLogo(true);
     try {
-      if (!file.type.startsWith('image/')) {
-        throw new Error('Unsupported file type. Please select an image.');
-      }
-      const processed = await processImage(file);
-      const blob = await fetch(processed).then((response) => response.blob());
-      const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
-      const uploadFile = new File([blob], `profile-logo.${extension}`, { type: blob.type });
+      const uploadFile = await optimizeImageForUpload(file, "profile");
+      const previewUrl = URL.createObjectURL(uploadFile);
       setPendingLogoFile(uploadFile);
+      setPendingLogoPreviewUrl(previewUrl);
       setEditProfile(prev => ({
         ...prev,
-        avatar: processed,
-        favicon: processed,
+        avatar: previewUrl,
+        favicon: previewUrl,
         showAvatar: true,
       }));
     } catch (err) {
@@ -342,7 +256,7 @@ export const ProfileSection = ({
               {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageUp className="h-4 w-4" />}
               {isUploadingLogo ? 'Uploading...' : 'Upload logo'}
             </Button>
-            <p className="text-xs opacity-70">PNG, JPG, GIF or WebP. The same image becomes the favicon.</p>
+            <p className="text-xs opacity-70">PNG, JPG, GIF or WebP up to 10 MB. Optimized automatically and also used as favicon.</p>
           </div>
 
           <div className="rounded-xl border border-current/15 bg-current/[0.035] p-4 text-left">

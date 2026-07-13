@@ -7,6 +7,7 @@ export interface SaasPlanEntitlements {
   personalizedUrl: boolean;
   maxBlocks: number | null;
   storageBytes: number | null;
+  maxUploadBytes: number | null;
   badgeRequired: boolean;
   themes: SaasThemeAccess;
   analytics: SaasAnalyticsAccess;

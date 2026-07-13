@@ -718,9 +718,13 @@ export const themeApi = {
 
 // Background media upload API
 export const uploadApi = {
-  uploadImage: async (file: File): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
+  uploadImage: async (file: File, slot?: string): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
+    if (file.size > 2 * 1024 * 1024) {
+      throw new Error('Optimized images must be 2 MB or smaller.');
+    }
     const formData = new FormData();
     formData.append('file', file);
+    if (slot) formData.append('slot', slot);
     const token = await getAuthTokenAsync();
     const response = await fetch(resolveApiUrl('/upload'), {
       method: 'POST',
@@ -734,9 +738,10 @@ export const uploadApi = {
     return response.json();
   },
 
-  uploadBackgroundMedia: async (file: File): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
+  uploadBackgroundMedia: async (file: File, slot = 'background-media'): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('slot', slot);
     const token = await getAuthTokenAsync();
     const response = await fetch(resolveApiUrl('/upload/background'), {
       method: 'POST',
