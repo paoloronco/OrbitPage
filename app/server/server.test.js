@@ -38,7 +38,7 @@ vi.mock('./services/backup-service.js', () => ({
 
 // Now import app
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
-import { isFirstTimeSetup } from './auth.js';
+import { isFirstTimeSetup, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
 
@@ -293,6 +293,7 @@ describe('API Endpoints', () => {
   });
 
   it('GET /api/links includes campaign scheduling fields for admins', async () => {
+    vi.mocked(verifyToken).mockReturnValue({ username: 'admin' });
     vi.mocked(dbAll).mockResolvedValueOnce([
       {
         id: 'campaign-link',
@@ -312,7 +313,9 @@ describe('API Endpoints', () => {
       },
     ]);
 
-    const response = await request(app).get('/api/links');
+    const response = await request(app)
+      .get('/api/links')
+      .set('Authorization', 'Bearer mock-token');
 
     expect(response.status).toBe(200);
     expect(response.body[0]).toMatchObject({

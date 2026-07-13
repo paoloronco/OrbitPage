@@ -38,6 +38,7 @@ import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TextFileManager } from "./TextFileManager";
 import { AdminOnboarding } from "./AdminOnboarding";
+import { LivePreview } from "./LivePreview";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
@@ -224,26 +225,24 @@ export const AdminView = ({
 
   return (
     <div className="orbitpage-admin min-h-screen">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
+      <div className="admin-app-shell">
         <header className="admin-topbar">
           <div className="admin-heading min-w-0">
-            <OrbitPageBrand showName={false} size="lg" />
+            <OrbitPageBrand showName={false} size="md" />
             <div className="min-w-0">
-              {appVersion && (
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className="admin-version">v{appVersion}</span>
-                </div>
-              )}
-              <h1 className="admin-title">OrbitPage Admin</h1>
+              <div className="admin-title-row">
+                <h1 className="admin-title">OrbitPage <span>Admin</span></h1>
+                {appVersion && <span className="admin-version">v{appVersion}</span>}
+              </div>
               <p className="admin-subtitle">
-                Manage page content, theme, security, and analytics from one workspace.
+                Your page workspace
               </p>
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <div className="admin-header-actions">
             <Button
-              className="admin-action w-full sm:w-auto"
+              className="admin-action"
               variant="outline"
               size="sm"
               onClick={() => setOnboardingReplayKey(key => key + 1)}
@@ -252,12 +251,12 @@ export const AdminView = ({
               Guide
             </Button>
             <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
-              <Button className="admin-action admin-action-primary w-full sm:w-auto" size="sm">
+              <Button className="admin-action admin-action-primary" size="sm">
                 <ExternalLink className="h-4 w-4" />
                 Public page
               </Button>
             </a>
-            <Button className="admin-action w-full sm:w-auto" variant="outline" size="sm" onClick={handleLogout}>
+            <Button className="admin-action" variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               Logout
             </Button>
@@ -304,7 +303,7 @@ export const AdminView = ({
           </div>
 
           <TabsContent value="profile" className="admin-tab-content">
-            <div className="admin-content-grid">
+            <div className="admin-content-grid admin-content-grid-editor">
               <div className="admin-main-column">
                 <ProfileSection
                   profile={profile}
@@ -316,12 +315,21 @@ export const AdminView = ({
                   }}
                 />
               </div>
-              <aside className="admin-side-panel admin-checklist-panel">
-                <PanelHeader icon={User} title="Page checklist" />
-                <ChecklistItem checked={Boolean(profile.name?.trim())} label="Name or brand is set" />
-                <ChecklistItem checked={Boolean(profile.bio?.trim())} label="Description is set" />
-                <ChecklistItem checked={metrics.socialCount > 0} label="At least one social link" />
-                <ChecklistItem checked={Boolean(profile.tabTitle?.trim())} label="Browser title customized" />
+              <aside className="admin-workbench-rail">
+                <PreviewPanel
+                  title="Public page"
+                  profile={profile}
+                  links={links}
+                  theme={theme}
+                  publicPageHref={publicPageHref}
+                />
+                <section className="admin-side-panel admin-checklist-panel">
+                  <PanelHeader icon={User} title="Page checklist" />
+                  <ChecklistItem checked={Boolean(profile.name?.trim())} label="Name or brand is set" />
+                  <ChecklistItem checked={Boolean(profile.bio?.trim())} label="Description is set" />
+                  <ChecklistItem checked={metrics.socialCount > 0} label="At least one social link" />
+                  <ChecklistItem checked={Boolean(profile.tabTitle?.trim())} label="Browser title customized" />
+                </section>
               </aside>
             </div>
           </TabsContent>
@@ -336,14 +344,23 @@ export const AdminView = ({
                   editMode={linkEditMode}
                 />
               </div>
-              <aside className="admin-side-panel">
-                <PanelHeader icon={Layers3} title="Content status" />
-                <div className="space-y-3">
-                  <StatusRow label="Visible" value={String(metrics.visibleLinks)} />
-                  <StatusRow label="Hidden" value={String(Math.max(metrics.totalLinks - metrics.visibleLinks, 0))} />
-                  <StatusRow label="Scheduled" value={String(metrics.scheduledLinks)} />
-                </div>
-                <div id="link-add-sidebar" />
+              <aside className="admin-workbench-rail">
+                <PreviewPanel
+                  title="Page composition"
+                  profile={profile}
+                  links={links}
+                  theme={theme}
+                  publicPageHref={publicPageHref}
+                />
+                <section className="admin-side-panel">
+                  <PanelHeader icon={Layers3} title="Content status" />
+                  <div className="space-y-3">
+                    <StatusRow label="Visible" value={String(metrics.visibleLinks)} />
+                    <StatusRow label="Hidden" value={String(Math.max(metrics.totalLinks - metrics.visibleLinks, 0))} />
+                    <StatusRow label="Scheduled" value={String(metrics.scheduledLinks)} />
+                  </div>
+                  <div id="link-add-sidebar" />
+                </section>
               </aside>
             </div>
           </TabsContent>
@@ -537,6 +554,41 @@ function MetricCard({
         <p className="admin-metric-detail">{detail}</p>
       </div>
     </div>
+  );
+}
+
+function PreviewPanel({
+  title,
+  profile,
+  links,
+  theme,
+  publicPageHref,
+}: {
+  title: string;
+  profile: ProfileData;
+  links: LinkData[];
+  theme: ThemeConfig;
+  publicPageHref: string;
+}) {
+  return (
+    <section className="admin-preview-panel">
+      <div className="admin-preview-heading">
+        <div>
+          <p className="admin-kicker">Live canvas</p>
+          <h2>{title}</h2>
+        </div>
+        <a
+          href={publicPageHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open public page"
+          title="Open public page"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </div>
+      <LivePreview profile={profile} links={links} theme={theme} publicPageHref={publicPageHref} />
+    </section>
   );
 }
 

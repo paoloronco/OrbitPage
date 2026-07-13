@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 const mockState = vi.hoisted(() => ({
   privacyProps: [] as Array<Record<string, unknown>>,
   textFileProps: [] as Array<Record<string, unknown>>,
+  previewProps: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock('@/lib/config', () => ({
@@ -31,7 +32,12 @@ vi.mock('@/components/ui/tabs', () => ({
 vi.mock('./ProfileSection', () => ({ ProfileSection: () => <div>ProfileSection</div> }));
 vi.mock('./LinkManager', () => ({ LinkManager: () => <div>LinkManager</div> }));
 vi.mock('./ThemeCustomizer', () => ({ ThemeCustomizer: () => <div>ThemeCustomizer</div> }));
-vi.mock('./LivePreview', () => ({ LivePreview: () => <div>LivePreview</div> }));
+vi.mock('./LivePreview', () => ({
+  LivePreview: (props: Record<string, unknown>) => {
+    mockState.previewProps.push(props);
+    return <div>LivePreview</div>;
+  },
+}));
 vi.mock('./ClickAnalyticsChart', () => ({ ClickAnalyticsChart: () => <div>ClickAnalyticsChart</div> }));
 vi.mock('./PasswordManager', () => ({ PasswordManager: () => <div>PasswordManager</div> }));
 vi.mock('./UserManager', () => ({ UserManager: () => <div>UserManager</div> }));
@@ -93,6 +99,8 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('TXT files');
     expect(mockState.privacyProps[0]).toMatchObject({ readOnly: true });
     expect(mockState.textFileProps[0]).toMatchObject({ readOnly: true });
+    expect(mockState.previewProps).toHaveLength(2);
+    expect(mockState.previewProps[0]).toMatchObject({ publicPageHref: '/' });
   });
 });
 

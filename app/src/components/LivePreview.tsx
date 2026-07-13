@@ -26,9 +26,10 @@ interface LivePreviewProps {
   profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
+  publicPageHref?: string;
 }
 
-export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
+export const LivePreview = ({ profile, links, theme, publicPageHref = "/" }: LivePreviewProps) => {
   // Show only active links (same logic as PublicView)
   const visibleLinks = links.filter(link => {
     if (link.isActive === false) return false;
@@ -65,7 +66,7 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
   const previewThemeVars = getThemeCssVariables(theme) as React.CSSProperties;
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" style={{ height: '560px' }}>
+    <div className="admin-live-preview relative overflow-hidden border border-slate-200 bg-white" style={{ height: '560px' }}>
       {/* Scrollable layer */}
       <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
         {/* Scaled content — transformOrigin top-left so it aligns flush left */}
@@ -104,10 +105,10 @@ export const LivePreview = ({ profile, links, theme }: LivePreviewProps) => {
       </div>
 
       {/* Footer bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 px-3 py-2 flex items-center justify-between pointer-events-none">
-        <span className="text-xs text-slate-500">Live Preview</span>
+      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-3 py-2 flex items-center justify-between pointer-events-none">
+        <span className="text-xs font-medium text-slate-500">Live preview</span>
         <a
-          href="/"
+          href={publicPageHref}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-blue-700 underline hover:no-underline pointer-events-auto"
