@@ -40,6 +40,7 @@ import { AdminOnboarding } from "./AdminOnboarding";
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
+import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
@@ -121,6 +122,7 @@ export const AdminView = ({
   const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
+  const publicPageHref = getPublicUrlOverride() || withBasePath('/');
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
@@ -245,7 +247,7 @@ export const AdminView = ({
               <HelpCircle className="h-4 w-4" />
               Guide
             </Button>
-            <a href={withBasePath('/')} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
+            <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <Button className="admin-action admin-action-primary w-full sm:w-auto" size="sm">
                 <ExternalLink className="h-4 w-4" />
                 Public page

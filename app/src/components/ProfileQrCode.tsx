@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { publicUrlApi } from "@/lib/api-client";
+import { getPublicUrlOverride } from "@/lib/public-url-override";
 
 function buildLockedQrUrl(baseUrl: string, path: string) {
   if (!baseUrl) return { url: "", error: "" };
@@ -46,6 +47,14 @@ export function ProfileQrCode() {
 
   useEffect(() => {
     let cancelled = false;
+    const override = getPublicUrlOverride();
+    if (override) {
+      setPublicUrl(override);
+      setSource("configured");
+      return () => {
+        cancelled = true;
+      };
+    }
 
     publicUrlApi.get()
       .then((result) => {
