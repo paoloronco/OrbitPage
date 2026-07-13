@@ -33,6 +33,7 @@ import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
 import { UserManager } from "./UserManager";
+import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TextFileManager } from "./TextFileManager";
@@ -225,16 +226,19 @@ export const AdminView = ({
     <div className="orbitpage-admin min-h-screen">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
         <header className="admin-topbar">
-          <div className="min-w-0">
-            {appVersion && (
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="admin-version">v{appVersion}</span>
-              </div>
-            )}
-            <h1 className="admin-title">OrbitPage Admin</h1>
-            <p className="admin-subtitle">
-              Manage page content, theme, security, and analytics from one workspace.
-            </p>
+          <div className="admin-heading min-w-0">
+            <OrbitPageBrand showName={false} size="lg" />
+            <div className="min-w-0">
+              {appVersion && (
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="admin-version">v{appVersion}</span>
+                </div>
+              )}
+              <h1 className="admin-title">OrbitPage Admin</h1>
+              <p className="admin-subtitle">
+                Manage page content, theme, security, and analytics from one workspace.
+              </p>
+            </div>
           </div>
 
           <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
@@ -305,7 +309,7 @@ export const AdminView = ({
                 <ProfileSection
                   profile={profile}
                   theme={theme}
-                  onProfileUpdate={(nextProfile) => { void onProfileUpdate(nextProfile); }}
+                  onProfileUpdate={onProfileUpdate}
                   onStartOnboarding={() => setOnboardingReplayKey(key => key + 1)}
                   onAdminOnboardingEnabledChange={(enabled) => {
                     void onProfileUpdate({ ...profile, adminOnboardingEnabled: enabled });

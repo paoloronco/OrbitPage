@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Shield, AlertTriangle, Info } from "lucide-react";
+import { Eye, EyeOff, AlertTriangle, Info } from "lucide-react";
 import { authenticateUser, setAuthenticated } from "@/lib/auth";
+import { OrbitPageBrand } from "./OrbitPageBrand";
 
 interface LoginFormProps {
   onLogin: () => void;
@@ -44,7 +45,7 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
       <Card className="glass-card p-8 w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
-            <Shield className="w-12 h-12 text-primary" />
+            <OrbitPageBrand showName={false} size="lg" />
           </div>
           <h1 className="text-2xl font-bold gradient-text">Admin Access</h1>
           <p className="text-muted-foreground text-sm">

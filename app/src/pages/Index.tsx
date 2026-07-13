@@ -9,7 +9,7 @@ import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
-import { withBasePath } from "@/lib/base-path";
+import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
@@ -47,6 +47,16 @@ declare global {
       consentConfig?: ConsentConfigData;
     };
   }
+}
+
+function faviconHref(value: string) {
+  if (/^(?:https?:|data:image\/|blob:)/i.test(value)) return value;
+  if (value.startsWith('/') || /\.(?:png|jpe?g|gif|webp|ico|svg)(?:\?.*)?$/i.test(value)) {
+    return internalAssetPath(value) || withBasePath('/brand/orbitpage-mark.svg');
+  }
+  const escapedValue = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${escapedValue}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
 const Index = () => {
@@ -189,24 +199,23 @@ const Index = () => {
             }
             tag.setAttribute('content', metaDesc);
           }
-          // Apply favicon (emoji or URL)
+          // Apply the uploaded profile logo as the browser favicon.
           if (favicon && typeof favicon === 'string') {
-            let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
-            if (!link) {
-              link = document.createElement('link');
-              link.rel = 'icon';
-              document.head.appendChild(link);
+            document.querySelectorAll<HTMLLinkElement>("link[rel~='icon']").forEach((icon) => icon.remove());
+            const href = faviconHref(favicon);
+            const link = document.createElement('link');
+            link.rel = 'icon';
+            link.href = href;
+            if (link.href.startsWith('data:image/svg+xml')) link.type = 'image/svg+xml';
+            document.head.appendChild(link);
+
+            let touchIcon = document.querySelector<HTMLLinkElement>("link[rel='apple-touch-icon']");
+            if (!touchIcon) {
+              touchIcon = document.createElement('link');
+              touchIcon.rel = 'apple-touch-icon';
+              document.head.appendChild(touchIcon);
             }
-            if (favicon.match(/^https?:\/\//)) {
-              // External URL
-              link.type = 'image/x-icon';
-              link.href = favicon;
-            } else {
-              // Treat as emoji — render to SVG so it shows in the tab
-              const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${favicon}</text></svg>`;
-              link.type = 'image/svg+xml';
-              link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
-            }
+            touchIcon.href = href;
           }
         }
 

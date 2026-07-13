@@ -715,6 +715,22 @@ export const themeApi = {
 
 // Background media upload API
 export const uploadApi = {
+  uploadImage: async (file: File): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = await getAuthTokenAsync();
+    const response = await fetch(resolveApiUrl('/upload'), {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({})) as { error?: string };
+      throw new Error(err.error || 'Image upload failed');
+    }
+    return response.json();
+  },
+
   uploadBackgroundMedia: async (file: File): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
     const formData = new FormData();
     formData.append('file', file);

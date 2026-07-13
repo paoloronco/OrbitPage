@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Shield, Check, X, Sparkles } from "lucide-react";
 import { setupInitialCredentials, setAuthenticated, isPasswordStrong, generateSecurePassword } from "@/lib/auth";
+import { OrbitPageBrand } from "./OrbitPageBrand";
 
 interface InitialSetupProps {
   onSetupComplete: () => void;
@@ -79,21 +80,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
 
         {/* Logo + heading */}
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="relative">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, hsl(260 75% 60%), hsl(280 80% 70%))",
-                boxShadow: "0 0 40px hsl(265 75% 65% / 0.45), 0 4px 20px hsl(0 0% 0% / 0.4)",
-              }}
-            >
-              <Shield className="w-8 h-8 text-white" strokeWidth={1.75} />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2"
-                 style={{ background: "hsl(240 15% 9%)", borderColor: "hsl(260 75% 65%)" }}>
-              <Sparkles className="w-3 h-3" style={{ color: "hsl(260 75% 70%)" }} />
-            </div>
-          </div>
+          <OrbitPageBrand showName={false} size="lg" />
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white tracking-tight">Welcome to OrbitPage</h1>
             <p className="text-sm mt-1" style={{ color: "hsl(240 10% 62%)" }}>

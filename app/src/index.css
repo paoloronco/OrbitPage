@@ -393,6 +393,12 @@
     box-shadow: 0 18px 48px rgb(15 23 42 / 0.08);
   }
 
+  .admin-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 18px;
+  }
+
   .admin-status-dot {
     width: 8px;
     height: 8px;

@@ -16,6 +16,7 @@ import {
 import { utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import NotFound from "./NotFound";
+import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 
 const githubUrl = "https://github.com/paoloronco/OrbitPage";
 const dockerUrl = "https://hub.docker.com/r/paueron/orbitpage";
@@ -105,8 +106,8 @@ const About = () => {
     <main className="min-h-screen overflow-x-hidden bg-[#f7fbff] text-slate-950" style={{ colorScheme: "light" }}>
       <header className="border-b border-slate-200/80 bg-white/88 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-          <a href={withBasePath("/")} className="text-lg font-semibold tracking-tight text-slate-950">
-            OrbitPage
+          <a href={withBasePath("/")} className="text-slate-950" aria-label="OrbitPage home">
+            <OrbitPageBrand size="sm" />
           </a>
           <nav className="flex items-center gap-3 text-sm">
             <a className="hidden text-slate-600 hover:text-slate-950 sm:inline" href={withBasePath("/")}>

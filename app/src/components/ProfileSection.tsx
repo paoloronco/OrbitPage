@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { Compass, Edit, Camera, Linkedin, Github, Instagram, Facebook, Play, Twitter, Youtube } from "lucide-react";
+import { Compass, Edit, ImageUp, Loader2, Linkedin, Github, Instagram, Facebook, Play, Twitter, Youtube } from "lucide-react";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -15,6 +15,7 @@ import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-valid
 import { ProfileQrCode } from "./ProfileQrCode";
 import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
+import { uploadApi } from "@/lib/api-client";
 
 interface ProfileData {
   name: string;
@@ -50,7 +51,7 @@ interface ProfileData {
 interface ProfileSectionProps {
   profile: ProfileData;
   theme: ThemeConfig;
-  onProfileUpdate: (profile: ProfileData) => void;
+  onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onStartOnboarding?: () => void;
   onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
 }
@@ -92,6 +93,8 @@ export const ProfileSection = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const current = isEditing ? editProfile : profile;
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
 
   // Keep editable state in sync with incoming profile when not editing
   useEffect(() => {
@@ -100,13 +103,35 @@ export const ProfileSection = ({
     }
   }, [profile, isEditing]);
 
-  const handleSave = () => {
-    onProfileUpdate(editProfile);
-    setIsEditing(false);
+  const handleSave = async () => {
+    setUploadError(null);
+    setIsUploadingLogo(true);
+    try {
+      let nextProfile = editProfile;
+      if (pendingLogoFile) {
+        const uploaded = await uploadApi.uploadImage(pendingLogoFile);
+        nextProfile = {
+          ...editProfile,
+          avatar: uploaded.filePath,
+          favicon: uploaded.filePath,
+          showAvatar: true,
+        };
+      }
+      await onProfileUpdate(nextProfile);
+      setEditProfile(nextProfile);
+      setPendingLogoFile(null);
+      setIsEditing(false);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Failed to save the profile.');
+    } finally {
+      setIsUploadingLogo(false);
+    }
   };
 
   const handleCancel = () => {
     setEditProfile(profile);
+    setPendingLogoFile(null);
+    setUploadError(null);
     setIsEditing(false);
   };
 
@@ -182,12 +207,11 @@ export const ProfileSection = ({
       throw new Error('Failed to process image on canvas. Try a different image or smaller file.');
     }
 
-    // Decide output format
+    // Preserve transparent logo formats while keeping photos compact.
     const isPng = file.type === 'image/png';
-    // If PNG is small, keep PNG to preserve transparency; otherwise use JPEG for photos
-    const usePng = isPng && file.size < 2 * 1024 * 1024; // <2MB
+    const isWebp = file.type === 'image/webp';
     const quality = 0.9; // good quality for avatars
-    const mime = usePng ? 'image/png' : 'image/jpeg';
+    const mime = isPng ? 'image/png' : isWebp ? 'image/webp' : 'image/jpeg';
 
     const outputDataUrl = canvas.toDataURL(mime, quality);
 
@@ -211,14 +235,27 @@ export const ProfileSection = ({
     setUploadError(null);
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsUploadingLogo(true);
     try {
       if (!file.type.startsWith('image/')) {
         throw new Error('Unsupported file type. Please select an image.');
       }
       const processed = await processImage(file);
-      setEditProfile(prev => ({ ...prev, avatar: processed }));
-    } catch (err: any) {
-      setUploadError(err?.message || 'Failed to process the selected image.');
+      const blob = await fetch(processed).then((response) => response.blob());
+      const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+      const uploadFile = new File([blob], `profile-logo.${extension}`, { type: blob.type });
+      setPendingLogoFile(uploadFile);
+      setEditProfile(prev => ({
+        ...prev,
+        avatar: processed,
+        favicon: processed,
+        showAvatar: true,
+      }));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : 'Failed to process the selected image.');
+    } finally {
+      setIsUploadingLogo(false);
+      e.target.value = '';
     }
   };
 
@@ -264,8 +301,11 @@ export const ProfileSection = ({
             variant="glass"
             className="absolute -bottom-2 -right-2 rounded-full w-8 h-8"
             onClick={() => fileInputRef.current?.click()}
+            disabled={isUploadingLogo}
+            aria-label="Change logo"
+            title="Change logo"
           >
-            <Camera className="w-4 h-4" />
+            {isUploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageUp className="w-4 h-4" />}
           </Button>
         )}
         <input
@@ -284,12 +324,19 @@ export const ProfileSection = ({
         <div className="space-y-4">
           {/* Show Avatar Toggle */}
           <div className="flex items-center justify-center gap-3">
-            <Label htmlFor="show-avatar" className="text-sm">Show image or logo</Label>
+            <Label htmlFor="show-avatar" className="text-sm">Show logo or profile image</Label>
             <Switch
               id="show-avatar"
               checked={editProfile.showAvatar !== false}
               onCheckedChange={(checked) => setEditProfile(prev => ({ ...prev, showAvatar: !!checked }))}
             />
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploadingLogo}>
+              {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageUp className="h-4 w-4" />}
+              {isUploadingLogo ? 'Uploading...' : 'Upload logo'}
+            </Button>
+            <p className="text-xs opacity-70">PNG, JPG, GIF or WebP. The same image becomes the favicon.</p>
           </div>
 
           <div className="rounded-xl border border-current/15 bg-current/[0.035] p-4 text-left">
@@ -403,23 +450,20 @@ export const ProfileSection = ({
           <div className="space-y-3 pt-4 border-t border-primary/10">
             <Label className="text-sm font-medium">Browser bar &amp; Footer</Label>
             <div className="space-y-1">
-              <Label className="text-xs">Favicon (emoji or image URL)</Label>
-              <div className="flex items-center gap-2">
+              <Label className="text-xs">Favicon</Label>
+              <div className="flex items-center gap-3 rounded-lg border border-current/15 bg-current/[0.035] p-3">
                 {editProfile.favicon && (
-                  <span className="text-2xl leading-none select-none" title="Preview">
-                    {editProfile.favicon.match(/^https?:\/\//) ? '🌐' : editProfile.favicon}
-                  </span>
+                  /^(?:https?:|data:image\/|\/)/i.test(editProfile.favicon) ? (
+                    <img className="h-9 w-9 rounded-md object-contain" src={getAvatarUrl(editProfile.favicon)} alt="Favicon preview" />
+                  ) : (
+                    <span className="text-2xl leading-none select-none" title="Preview">{editProfile.favicon}</span>
+                  )
                 )}
-                <Input
-                  value={editProfile.favicon || ''}
-                  onChange={(e) => setEditProfile(prev => ({ ...prev, favicon: e.target.value }))}
-                  placeholder="e.g. 🔗 or https://example.com/icon.png"
-                  className="glass-card border-primary/20 text-sm"
-                />
+                <div>
+                  <p className="text-sm font-medium">Synced with your logo</p>
+                  <p className="text-[11px] opacity-70">Upload a new logo above to update the browser icon automatically.</p>
+                </div>
               </div>
-              <p className="text-[10px] text-muted-foreground opacity-70">
-                Use a single emoji or paste an image URL. Leave empty for the default icon.
-              </p>
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Footer text</Label>
@@ -576,8 +620,9 @@ export const ProfileSection = ({
           </div>
           
           <div className="flex gap-2 justify-center" data-onboarding="profile-actions">
-            <Button onClick={handleSave} variant="gradient" size="sm">
-              Save
+            <Button onClick={handleSave} variant="gradient" size="sm" disabled={isUploadingLogo}>
+              {isUploadingLogo && <Loader2 className="h-4 w-4 animate-spin" />}
+              {isUploadingLogo ? 'Saving...' : 'Save'}
             </Button>
             <Button onClick={handleCancel} variant="outline" size="sm">
               Cancel

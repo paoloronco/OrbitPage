@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">OrbitPage</title>
+  <desc id="desc">An open page crossed by a two-node orbital path.</desc>
+  <rect width="64" height="64" rx="14" fill="#111827"/>
+  <path fill="#F8FAFC" d="M16 15h31v8H24v26h22v8H16V15Z"/>
+  <path fill="none" stroke="#20A3A8" stroke-linecap="round" stroke-width="6" d="M18 45c12 7 29-1 29-22"/>
+  <rect x="13" y="40" width="10" height="10" rx="2" fill="#20A3A8"/>
+  <rect x="42" y="17" width="10" height="10" rx="2" fill="#20A3A8"/>
+</svg>
