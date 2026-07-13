@@ -124,7 +124,7 @@ export const AdminView = ({
   onThemeChange,
   onLogout
 }: AdminViewProps) => {
-  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__ || "4.6.0");
+  const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
@@ -246,7 +246,7 @@ export const AdminView = ({
             <div className="min-w-0">
               <div className="admin-title-row">
                 <h1 className="admin-title">OrbitPage <span>Admin</span></h1>
-                {appVersion && <span className="admin-version">v{appVersion}</span>}
+                {appVersion && <span className="admin-version" title="Embedded OrbitPage OSS runtime version">OSS v{appVersion}</span>}
                 {saasPlan && (
                   <a className="admin-plan-badge" href={managePlanHref} target="_top" title="Manage plan">
                     {saasPlan.name}
@@ -574,7 +574,7 @@ export const AdminView = ({
             <a href="https://github.com/paoloronco/OrbitPage" target="_blank" rel="noopener noreferrer">
               OrbitPage
             </a>
-            {appVersion && <span> v{appVersion}</span>}
+            {appVersion && <span> OSS v{appVersion}</span>}
           </p>
         </footer>
       </div>
