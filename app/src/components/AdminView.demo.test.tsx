@@ -101,6 +101,29 @@ describe('AdminView demo mode', () => {
     expect(mockState.textFileProps[0]).toMatchObject({ readOnly: true });
     expect(mockState.previewProps).toHaveLength(2);
     expect(mockState.previewProps[0]).toMatchObject({ publicPageHref: '/' });
+    expect(html).toContain('Admin access');
+  });
+
+  it('hides standalone session details in the hosted SaaS admin', () => {
+    vi.stubGlobal('__APP_VERSION__', '4.7.0');
+
+    const html = renderToStaticMarkup(
+      <AdminView
+        profile={{ name: 'Hosted', bio: '', avatar: '' }}
+        links={[]}
+        theme={defaultTheme}
+        currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+        saasUsage={{ blocks: 0, storageBytes: 0 }}
+        onProfileUpdate={vi.fn()}
+        onLinksUpdate={vi.fn()}
+        onThemeChange={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(html).not.toContain('Admin access');
+    expect(html).not.toContain('Encrypted session token');
+    expect(html).toContain('admin-metrics-saas');
   });
 });
 

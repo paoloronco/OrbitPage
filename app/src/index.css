@@ -594,6 +594,10 @@
     background: #ffffff;
   }
 
+  .admin-metrics-saas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .admin-metric-card {
     display: flex;
     align-items: center;

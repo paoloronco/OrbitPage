@@ -135,6 +135,12 @@ export const AdminView = ({
   const publicPageHref = getPublicUrlOverride() || withBasePath('/');
   const entitlements = saasPlan?.entitlements;
   const managePlanHref = saasBilling?.manageUrl || "/dashboard?section=billing";
+  const isHostedAdmin = Boolean(
+    saasPlan ||
+    saasUsage ||
+    saasBilling ||
+    (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("apiBase"))
+  );
 
   useEffect(() => {
     setPreviewLinks(links);
@@ -282,7 +288,7 @@ export const AdminView = ({
           </div>
         </header>
 
-        <section className="admin-metrics" aria-label="Workspace status">
+        <section className={`admin-metrics${isHostedAdmin ? " admin-metrics-saas" : ""}`} aria-label="Workspace status">
           <MetricCard
             icon={Globe2}
             label="Visible links"
@@ -303,12 +309,14 @@ export const AdminView = ({
             value={metrics.profileReady ? "Ready" : "Draft"}
             detail={`${metrics.socialCount} social links`}
           />
-          <MetricCard
-            icon={ShieldCheck}
-            label="Admin access"
-            value="Protected"
-            detail="Encrypted session token"
-          />
+          {!isHostedAdmin && (
+            <MetricCard
+              icon={ShieldCheck}
+              label="Admin access"
+              value="Protected"
+              detail="Encrypted session token"
+            />
+          )}
         </section>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AdminTab)} className="mt-5 flex-1">
