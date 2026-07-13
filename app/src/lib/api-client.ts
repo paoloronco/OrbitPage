@@ -739,6 +739,9 @@ export const uploadApi = {
   },
 
   uploadBackgroundMedia: async (file: File, slot = 'background-media'): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
+    if (file.type.startsWith('video/')) {
+      return uploadVideoWithDirectFallback(file, slot, 'background');
+    }
     const formData = new FormData();
     formData.append('file', file);
     formData.append('slot', slot);
@@ -754,7 +757,111 @@ export const uploadApi = {
     }
     return response.json();
   },
+
+  uploadVideo: async (
+    file: File,
+    slot: string,
+    onProgress?: (percentage: number) => void,
+  ): Promise<{ filePath: string; fullUrl: string; fileName: string }> => (
+    uploadVideoWithDirectFallback(file, slot, 'upload', onProgress)
+  ),
 };
+
+type DirectUploadReservation = {
+  uploadToken: string;
+  slot: string;
+  uploadUrl: string;
+  headers?: Record<string, string>;
+};
+
+const putFileWithProgress = (
+  uploadUrl: string,
+  file: File,
+  headers: Record<string, string>,
+  onProgress?: (percentage: number) => void,
+) => new Promise<void>((resolve, reject) => {
+  const request = new XMLHttpRequest();
+  request.open('PUT', uploadUrl, true);
+  Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
+  request.upload.onprogress = (event) => {
+    if (event.lengthComputable) onProgress?.(Math.min(99, Math.round((event.loaded / event.total) * 100)));
+  };
+  request.onerror = () => reject(new Error('The video upload was interrupted. Check the connection and retry.'));
+  request.onabort = () => reject(new Error('The video upload was cancelled.'));
+  request.onload = () => {
+    if (request.status >= 200 && request.status < 300) resolve();
+    else reject(new Error(`Storage rejected the video upload (${request.status}).`));
+  };
+  request.send(file);
+});
+
+async function uploadVideoWithDirectFallback(
+  file: File,
+  slot: string,
+  purpose: 'background' | 'upload',
+  onProgress?: (percentage: number) => void,
+): Promise<{ filePath: string; fullUrl: string; fileName: string }> {
+  const token = await getAuthTokenAsync();
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  const reserveResponse = await fetch(resolveApiUrl('/upload/direct/reserve'), {
+    method: 'POST',
+    headers: { ...authHeaders, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      filename: file.name,
+      contentType: file.type,
+      sizeBytes: file.size,
+      purpose,
+      slot,
+    }),
+  });
+
+  if (reserveResponse.ok) {
+    const reservation = await reserveResponse.json() as DirectUploadReservation;
+    try {
+      await putFileWithProgress(
+        reservation.uploadUrl,
+        file,
+        reservation.headers || { 'Content-Type': file.type },
+        onProgress,
+      );
+      const finalizeResponse = await fetch(resolveApiUrl('/upload/direct/finalize'), {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uploadToken: reservation.uploadToken, slot: reservation.slot }),
+      });
+      const result = await finalizeResponse.json().catch(() => ({})) as { error?: string; filePath?: string; fullUrl?: string; fileName?: string };
+      if (!finalizeResponse.ok || !result.filePath) throw new Error(result.error || 'The uploaded video could not be verified.');
+      onProgress?.(100);
+      return result as { filePath: string; fullUrl: string; fileName: string };
+    } catch (error) {
+      await fetch(resolveApiUrl('/upload/direct/abort'), {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uploadToken: reservation.uploadToken, slot: reservation.slot }),
+      }).catch(() => undefined);
+      throw error;
+    }
+  }
+
+  // The self-hosted OSS backend does not expose the R2 reservation protocol.
+  if (reserveResponse.status !== 404 && reserveResponse.status !== 405) {
+    const error = await reserveResponse.json().catch(() => ({})) as { error?: string };
+    throw new Error(error.error || 'Video upload could not be started.');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('slot', slot);
+  const response = await fetch(resolveApiUrl(purpose === 'background' ? '/upload/background' : '/upload/video'), {
+    method: 'POST',
+    headers: authHeaders,
+    body: formData,
+  });
+  const result = await response.json().catch(() => ({})) as { error?: string; filePath?: string; fullUrl?: string; fileName?: string };
+  if (!response.ok || !result.filePath) throw new Error(result.error || 'Video upload failed.');
+  onProgress?.(100);
+  return result as { filePath: string; fullUrl: string; fileName: string };
+}
 
 // ---- Consent Config API ----
 

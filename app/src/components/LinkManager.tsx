@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
+import { CalendarClock, Code2, Download, Film, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,6 +21,8 @@ interface LinkManagerProps {
   maxBlocks?: number | null;
   planName?: string;
   schedulingEnabled?: boolean;
+  videoUploadsEnabled?: boolean;
+  maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
 }
 
@@ -33,6 +35,8 @@ export const LinkManager = ({
   maxBlocks,
   planName,
   schedulingEnabled = true,
+  videoUploadsEnabled = true,
+  maxVideoUploadBytes,
   managePlanHref = "/dashboard?section=billing",
 }: LinkManagerProps) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -165,6 +169,34 @@ export const LinkManager = ({
       status: "live",
     };
     appendBlock(newImage);
+  };
+
+  const addNewVideo = () => {
+    if (!videoUploadsEnabled) {
+      toast({
+        title: "Video requires Pro",
+        description: "Upgrade the workspace to add uploaded video blocks.",
+        variant: "destructive",
+      });
+      return;
+    }
+    appendBlock({
+      id: Date.now().toString(),
+      title: "Video",
+      description: "",
+      url: "",
+      type: "video",
+      content: buildBlockContent({
+        mediaUrl: "",
+        posterUrl: "",
+        controls: true,
+        autoplay: false,
+        loop: false,
+        muted: true,
+        objectFit: "cover",
+      }),
+      status: "live",
+    });
   };
 
   const addNewContact = () => {
@@ -597,6 +629,21 @@ export const LinkManager = ({
               <span className="block text-xs opacity-70">Photo block</span>
             </span>
           </Button>
+          <Button
+            onClick={addNewVideo}
+            variant="outline"
+            className="admin-add-card"
+            aria-disabled={!videoUploadsEnabled}
+            title={!videoUploadsEnabled ? "Video blocks require Pro" : "Upload an MP4 or WebM video"}
+          >
+            <span className="admin-add-icon">
+              {videoUploadsEnabled ? <Film className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+            </span>
+            <span>
+              <span className="block font-semibold">Video</span>
+              <span className="block text-xs opacity-70">{videoUploadsEnabled ? "MP4 / WebM" : "Pro feature"}</span>
+            </span>
+          </Button>
           <Button onClick={addNewContact} variant="outline" className="admin-add-card">
             <span className="admin-add-icon">
               <UserCircle2 className="h-4 w-4" />
@@ -740,6 +787,8 @@ export const LinkManager = ({
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
                   schedulingEnabled={schedulingEnabled}
+                  videoUploadsEnabled={videoUploadsEnabled}
+                  maxVideoUploadBytes={maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
                 />
               ) : (

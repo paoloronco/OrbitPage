@@ -4,11 +4,13 @@ import os from 'os';
 import path from 'path';
 import {
   DEFAULT_UPLOAD_STORAGE_QUOTA_BYTES,
+  DEFAULT_VIDEO_UPLOAD_LIMIT_BYTES,
   UploadQuotaExceededError,
   UPLOAD_FILE_MODE,
   createUploadFilename,
   enforceUploadStorageQuota,
   getUploadStorageQuotaBytes,
+  getVideoUploadLimitBytes,
 } from './upload-policy.js';
 
 describe('upload policy', () => {
@@ -36,6 +38,11 @@ describe('upload policy', () => {
 
   it('reads upload storage quota from megabytes', () => {
     expect(getUploadStorageQuotaBytes({ UPLOAD_STORAGE_QUOTA_MB: '2' })).toBe(2 * 1024 * 1024);
+  });
+
+  it('uses a configurable video upload limit', () => {
+    expect(getVideoUploadLimitBytes({})).toBe(DEFAULT_VIDEO_UPLOAD_LIMIT_BYTES);
+    expect(getVideoUploadLimitBytes({ VIDEO_UPLOAD_LIMIT_MB: '25' })).toBe(25 * 1024 * 1024);
   });
 
   it('removes the newly uploaded file when storage quota is exceeded', () => {

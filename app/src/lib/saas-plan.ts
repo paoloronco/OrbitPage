@@ -8,6 +8,7 @@ export interface SaasPlanEntitlements {
   maxBlocks: number | null;
   storageBytes: number | null;
   maxUploadBytes: number | null;
+  maxVideoUploadBytes: number | null;
   badgeRequired: boolean;
   themes: SaasThemeAccess;
   analytics: SaasAnalyticsAccess;

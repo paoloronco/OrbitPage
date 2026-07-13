@@ -1,4 +1,14 @@
-export type LinkBlockType = 'link' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'contact' | 'social_row' | 'callout' | 'map' | 'event' | 'embed';
+export type LinkBlockType = 'link' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'video' | 'contact' | 'social_row' | 'callout' | 'map' | 'event' | 'embed';
+
+export interface VideoBlockData {
+  mediaUrl?: string;
+  posterUrl?: string;
+  controls?: boolean;
+  autoplay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+  objectFit?: 'cover' | 'contain';
+}
 
 export interface ContactBlockData {
   name?: string;
@@ -266,11 +276,28 @@ export const getSeparatorData = (content: string | null | undefined): SeparatorB
   };
 };
 
+export const getVideoData = (content: string | null | undefined): VideoBlockData => {
+  const parsed = parseBlockContent<VideoBlockData>(content);
+  if (!isPlainObject(parsed)) {
+    return { controls: true, autoplay: false, loop: false, muted: true, objectFit: 'cover' };
+  }
+  const record = parsed as Record<string, unknown>;
+  return {
+    mediaUrl: toString(record.mediaUrl),
+    posterUrl: toString(record.posterUrl),
+    controls: record.controls !== false,
+    autoplay: record.autoplay === true,
+    loop: record.loop === true,
+    muted: record.muted !== false,
+    objectFit: record.objectFit === 'contain' ? 'contain' : 'cover',
+  };
+};
+
 export const isBlockType = (type: string | undefined): type is LinkBlockType => (
   type === 'link' || type === 'text' || type === 'separator' || type === 'cta' ||
-  type === 'heading' || type === 'image' || type === 'contact' || type === 'social_row' ||
+  type === 'heading' || type === 'image' || type === 'video' || type === 'contact' || type === 'social_row' ||
   type === 'callout' || type === 'map' || type === 'event' || type === 'embed'
 );
 
 export const isPublicActionableBlock = (type?: LinkBlockType | string) =>
-  type !== 'separator' && type !== 'heading' && type !== 'embed';
+  type !== 'separator' && type !== 'heading' && type !== 'embed' && type !== 'video';

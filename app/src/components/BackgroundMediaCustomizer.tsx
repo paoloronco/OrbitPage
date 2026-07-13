@@ -21,6 +21,7 @@ import {
 import { BackgroundMediaConfig, defaultBackgroundMedia } from "@/lib/theme";
 import { uploadApi } from "@/lib/api-client";
 import { formatFileSize } from "@/lib/image-upload";
+import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, validateVideoFile } from "@/lib/media-validation";
 
 interface BackgroundMediaCustomizerProps {
   config: BackgroundMediaConfig;
@@ -28,6 +29,7 @@ interface BackgroundMediaCustomizerProps {
   videoUploadsEnabled?: boolean;
   managePlanHref?: string;
   maxUploadBytes?: number | null;
+  maxVideoUploadBytes?: number | null;
 }
 
 type BgType = "color" | "gradient" | "video" | "gif";
@@ -52,10 +54,12 @@ export const BackgroundMediaCustomizer = ({
   videoUploadsEnabled = true,
   managePlanHref = "/dashboard?section=billing",
   maxUploadBytes,
+  maxVideoUploadBytes,
 }: BackgroundMediaCustomizerProps) => {
   const [overlayPickerOpen, setOverlayPickerOpen] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [uploadError, setUploadError] = useState<string>("");
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const update = (patch: Partial<BackgroundMediaConfig>) =>
@@ -71,18 +75,29 @@ export const BackgroundMediaCustomizer = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (maxUploadBytes !== undefined && maxUploadBytes !== null && file.size > maxUploadBytes) {
-      setUploadError(`This file is ${formatFileSize(file.size)}. ${config.type === "video" ? "Video" : "GIF"} uploads on this plan are limited to ${formatFileSize(maxUploadBytes)}.`);
+    const selectedLimit = config.type === "video"
+      ? (maxVideoUploadBytes ?? DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES)
+      : maxUploadBytes;
+    try {
+      if (config.type === "video") validateVideoFile(file, selectedLimit ?? DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES);
+      if (config.type !== "video" && selectedLimit !== undefined && selectedLimit !== null && file.size > selectedLimit) {
+        throw new Error(`GIF uploads on this plan are limited to ${formatFileSize(selectedLimit)}.`);
+      }
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Unsupported media file.");
       setUploadState("error");
       e.target.value = "";
       return;
     }
 
     setUploadState("uploading");
+    setUploadProgress(0);
     setUploadError("");
 
     try {
-      const result = await uploadApi.uploadBackgroundMedia(file);
+      const result = config.type === "video"
+        ? await uploadApi.uploadVideo(file, "background-media", setUploadProgress)
+        : await uploadApi.uploadBackgroundMedia(file);
       update({ mediaUrl: result.filePath });
       setUploadState("done");
     } catch (err: unknown) {
@@ -176,6 +191,7 @@ export const BackgroundMediaCustomizer = ({
                 <>
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                   <span className="text-xs text-muted-foreground">Uploading…</span>
+                  {uploadProgress > 0 ? <span className="text-xs font-medium text-primary">{uploadProgress}%</span> : null}
                 </>
               ) : uploadState === "error" ? (
                 <>
@@ -190,7 +206,9 @@ export const BackgroundMediaCustomizer = ({
                     {config.type === "video" ? "Upload MP4 / WebM" : "Upload GIF"}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {maxUploadBytes ? `Up to ${formatFileSize(maxUploadBytes)}` : "Up to 200 MB when self-hosted"}
+                    {config.type === "video"
+                      ? `Up to ${formatFileSize(maxVideoUploadBytes ?? DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES)}`
+                      : (maxUploadBytes ? `Up to ${formatFileSize(maxUploadBytes)}` : "Storage limit set by your server")}
                   </span>
                 </>
               )}

@@ -11,6 +11,7 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 | `PORT` | `3001` local, `8080` Docker | Set to the port your platform expects. |
 | `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production. |
 | `UPLOAD_STORAGE_QUOTA_MB` | `1024` | Keep local uploads bounded. Raise this only when the data volume is sized accordingly. |
+| `VIDEO_UPLOAD_LIMIT_MB` | `100` | Maximum size for one uploaded MP4/WebM/GIF media file. |
 | `PUBLIC_SITE_URL` | derived from request | Set to the canonical public URL behind proxies or cloud platforms. |
 | `PUBLIC_SITE_NAME` | `OrbitPage` | Set to your name, brand, or site label. |
 | `SEO_INDEXING` | `true` | Set to `false` for staging/private deployments. |
@@ -23,6 +24,7 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 | `PORT` | HTTP listener port. |
 | `DATA_DIR` | Stores `orbitpage.db` and uploads. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
+| `VIDEO_UPLOAD_LIMIT_MB` | Per-file limit for uploaded video/background media. Content is also validated by MIME, extension, and binary signature. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |
 | `DEMO_MODE` | Disables destructive mutations and resets demo data. Not for normal production. |
 | `ENABLE_HTTPS` | Enables a self-signed HTTPS listener. Usually unnecessary behind real HTTPS proxies. |
@@ -53,6 +55,7 @@ PORT=8080
 JWT_SECRET=replace-with-a-long-random-secret
 DATA_DIR=/app/data
 UPLOAD_STORAGE_QUOTA_MB=1024
+VIDEO_UPLOAD_LIMIT_MB=100
 PUBLIC_SITE_URL=https://links.example.com
 PUBLIC_SITE_NAME="Example Links"
 SEO_INDEXING=true
@@ -66,6 +69,7 @@ PORT=8080
 JWT_SECRET=replace-with-a-long-random-secret
 DATA_DIR=/app/data
 UPLOAD_STORAGE_QUOTA_MB=256
+VIDEO_UPLOAD_LIMIT_MB=50
 PUBLIC_SITE_URL=https://staging-links.example.com
 SEO_INDEXING=false
 ```

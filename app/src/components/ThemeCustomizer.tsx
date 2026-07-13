@@ -41,6 +41,7 @@ interface ThemeCustomizerProps {
   accessLevel?: SaasThemeAccess;
   videoUploadsEnabled?: boolean;
   maxUploadBytes?: number | null;
+  maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
 }
 
@@ -235,6 +236,7 @@ export const ThemeCustomizer = ({
   accessLevel,
   videoUploadsEnabled = true,
   maxUploadBytes,
+  maxVideoUploadBytes,
   managePlanHref = "/dashboard?section=billing",
 }: ThemeCustomizerProps) => {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("presets");
@@ -756,6 +758,7 @@ export const ThemeCustomizer = ({
                   onChange={(backgroundMedia) => updatePendingTheme({ backgroundMedia })}
                   videoUploadsEnabled={videoUploadsEnabled}
                   maxUploadBytes={maxUploadBytes}
+                  maxVideoUploadBytes={maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
                 />
               </TabsContent>

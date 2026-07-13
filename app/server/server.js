@@ -42,7 +42,9 @@ import {
   createUploadFilename,
   enforceUploadStorageQuota,
   getUploadStorageQuotaBytes,
+  getVideoUploadLimitBytes,
 } from './services/upload-policy.js';
+import { assertUploadedMediaSignature } from './services/media-signature.js';
 import {
   createApplicationBackup,
   restoreApplicationBackup,
@@ -51,7 +53,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.6.0';
+let APP_VERSION = '4.7.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -66,6 +68,7 @@ const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config
 // When running locally without the env var, data lives next to server.js.
 const DATA_DIR = process.env.DATA_DIR || __dirname;
 const uploadStorageQuotaBytes = getUploadStorageQuotaBytes(process.env);
+const videoUploadLimitBytes = getVideoUploadLimitBytes(process.env);
 
 const getZodErrorMessage = (error) =>
   error instanceof z.ZodError ? (error.issues[0]?.message || 'Invalid request body') : null;
@@ -1443,6 +1446,8 @@ app.use(express.static(distPath, {
 app.use('/uploads', express.static(uploadsPath, {
   setHeaders: (res) => {
     res.set('Cache-Control', 'public, max-age=31536000');
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Accept-Ranges', 'bytes');
   }
 }));
 // Rate limiting
@@ -3135,24 +3140,27 @@ const bgStorage = multer.diskStorage({
 
 const bgUpload = multer({
   storage: bgStorage,
-  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB
+  limits: { fileSize: videoUploadLimitBytes },
   fileFilter: (req, file, cb) => {
     const allowedExtensions = /\.(mp4|webm|gif)$/i;
     const allowedMimeTypes = ['video/mp4', 'video/webm', 'image/gif'];
     if (!allowedExtensions.test(file.originalname) || !allowedMimeTypes.includes(file.mimetype)) {
-      return cb(new Error('Only video (mp4, webm) and GIF files are allowed for background media'), false);
+      const error = new Error('Only MP4, WebM, and GIF files with matching extensions are allowed');
+      error.statusCode = 415;
+      return cb(error, false);
     }
     cb(null, true);
   }
 });
 
-app.post('/api/upload/background', authenticateToken, requirePermission('theme:write'), bgUpload.single('file'), async (req, res) => {
+const handleMediaUpload = async (req, res) => {
+  let resolvedFilePath = null;
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const resolvedFilePath = path.resolve(req.file.path);
+    resolvedFilePath = path.resolve(req.file.path);
     const resolvedUploadsDir = path.resolve(uploadsPath);
     if (!resolvedFilePath.startsWith(resolvedUploadsDir + path.sep)) {
       return res.status(500).json({ error: 'File path validation failed' });
@@ -3161,6 +3169,8 @@ app.post('/api/upload/background', authenticateToken, requirePermission('theme:w
     if (!fs.existsSync(resolvedFilePath)) {
       return res.status(500).json({ error: 'Failed to save file' });
     }
+
+    assertUploadedMediaSignature({ filePath: resolvedFilePath, contentType: req.file.mimetype });
 
     try {
       enforceUploadStorageQuota({
@@ -3191,19 +3201,25 @@ app.post('/api/upload/background', authenticateToken, requirePermission('theme:w
 
     res.json({ success: true, filePath: fileUrl, fullUrl, fileName: req.file.filename });
   } catch (error) {
+    if (resolvedFilePath) fs.rmSync(resolvedFilePath, { force: true });
     console.error('Background upload error:', error);
-    res.status(500).json({ error: 'Failed to upload background media' });
+    res.status(400).json({ error: error.message || 'Failed to upload media' });
   }
-});
+};
+
+app.post('/api/upload/background', authenticateToken, requirePermission('theme:write'), bgUpload.single('file'), handleMediaUpload);
+app.post('/api/upload/video', authenticateToken, requireAnyPermission('links:write', 'links:images'), bgUpload.single('file'), handleMediaUpload);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    // A Multer error occurred when uploading
-    return res.status(400).json({ error: err.message });
+    return res.status(err.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({
+      error: err.code === 'LIMIT_FILE_SIZE'
+        ? `Video files must be ${Math.round(videoUploadLimitBytes / (1024 * 1024))} MB or smaller.`
+        : err.message,
+    });
   } else if (err) {
-    // An unknown error occurred
-    return res.status(500).json({ error: err.message || 'File upload failed' });
+    return res.status(err.statusCode || 500).json({ error: err.message || 'File upload failed' });
   }
   next();
 });

@@ -369,6 +369,8 @@ export const AdminView = ({
                   maxBlocks={entitlements?.maxBlocks}
                   planName={saasPlan?.name}
                   schedulingEnabled={entitlements?.scheduling ?? true}
+                  videoUploadsEnabled={entitlements?.videoUploads ?? true}
+                  maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
                 />
               </div>
@@ -400,6 +402,7 @@ export const AdminView = ({
               accessLevel={entitlements?.themes}
               videoUploadsEnabled={entitlements?.videoUploads ?? true}
               maxUploadBytes={entitlements?.maxUploadBytes}
+              maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
               managePlanHref={managePlanHref}
             />
           </TabsContent>

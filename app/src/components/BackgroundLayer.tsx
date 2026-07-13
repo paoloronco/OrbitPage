@@ -7,9 +7,6 @@ interface BackgroundLayerProps {
 
 export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Only used for GIF (display:none when reduced motion). Video always plays
-  // because the site-owner explicitly configured it as a background; blocking
-  // it silently would make the background appear broken with no feedback.
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
@@ -33,10 +30,14 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
     if (!v) return;
     v.muted = true;
     v.defaultMuted = true;
+    if (prefersReducedMotion) {
+      v.pause();
+      return;
+    }
     v.play().catch((err: Error) => {
       console.warn("[OrbitPage] Background video autoplay failed:", err.name, "-", err.message);
     });
-  }, [config.mediaUrl]);
+  }, [config.mediaUrl, prefersReducedMotion]);
 
   if (config.type !== "video" && config.type !== "gif") return null;
   if (!config.mediaUrl) return null;
@@ -81,11 +82,11 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
         <video
           ref={videoRef}
           src={config.mediaUrl}
-          autoPlay
+          autoPlay={!prefersReducedMotion}
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
           style={mediaStyle}
         />
       ) : (

@@ -6,10 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { CalendarClock, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
+import { CalendarClock, Code2, Film, Image, Loader2, LockKeyhole, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
-import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
+import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload, type ImageUploadVariant } from "@/lib/image-upload";
 import { uploadApi } from "@/lib/api-client";
 import {
@@ -21,6 +21,7 @@ import {
   type LinkBlockType,
   type MapBlockData,
   type SocialRowItemData,
+  type VideoBlockData,
   buildBlockContent,
   getCalloutData,
   getContactData,
@@ -31,6 +32,7 @@ import {
   getMapData,
   getSeparatorData,
   getSocialRowDraftData,
+  getVideoData,
   resolveEmbedProvider,
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
@@ -88,6 +90,8 @@ interface LinkCardProps {
   editMode?: LinkEditMode;
   publicPreviewStyle?: CSSProperties;
   schedulingEnabled?: boolean;
+  videoUploadsEnabled?: boolean;
+  maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
 }
 
@@ -101,12 +105,17 @@ export const LinkCard = ({
   editMode = 'full',
   publicPreviewStyle,
   schedulingEnabled = true,
+  videoUploadsEnabled = true,
+  maxVideoUploadBytes,
   managePlanHref = "/dashboard?section=billing",
 }: LinkCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
   const [imageUploadError, setImageUploadError] = useState("");
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoUploadError, setVideoUploadError] = useState("");
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
@@ -116,7 +125,7 @@ export const LinkCard = ({
   const canReorder = editMode === 'full';
 
   const handleSave = () => {
-    if (uploadingImage) return;
+    if (uploadingImage || uploadingVideo) return;
     const sanitizedLink = editLink.type === 'separator'
       ? {
           ...editLink,
@@ -135,11 +144,13 @@ export const LinkCard = ({
   const handleCancel = () => {
     setEditLink(link);
     setImageUploadError("");
+    setVideoUploadError("");
     setIsEditing(false);
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const uploadBlockImage = async (file: File, variant: "icon" | "cover") => {
     setUploadingImage(variant);
@@ -184,6 +195,31 @@ export const LinkCard = ({
     e.target.value = '';
   };
 
+  const handleVideoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!videoUploadsEnabled) {
+      setVideoUploadError('Video uploads are not available on this plan.');
+      return;
+    }
+    try {
+      validateVideoFile(file, maxVideoUploadBytes ?? DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES);
+      setUploadingVideo(true);
+      setVideoUploadProgress(0);
+      setVideoUploadError('');
+      const uploaded = await uploadApi.uploadVideo(file, `block-${link.id}-video`, setVideoUploadProgress);
+      setEditLink((previous) => ({
+        ...previous,
+        content: buildBlockContent({ ...getVideoData(previous.content), mediaUrl: uploaded.filePath }),
+      }));
+    } catch (error) {
+      setVideoUploadError(error instanceof Error ? error.message : 'Video upload failed.');
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
   const getSizeClasses = (size?: string) => {
     switch (size) {
       case 'small': return 'p-3';
@@ -219,6 +255,7 @@ export const LinkCard = ({
   const isHeading = link.type === 'heading';
   const isSeparator = link.type === 'separator';
   const isImage = link.type === 'image';
+  const isVideo = link.type === 'video';
   const isContact = link.type === 'contact';
   const isSocialRow = link.type === 'social_row';
   const isCallout = link.type === 'callout';
@@ -236,6 +273,7 @@ export const LinkCard = ({
   const embedData = getEmbedData(editLink.content);
   const resolvedEmbedProvider = resolveEmbedProvider(embedData.provider, embedData.snippet);
   const separatorData = getSeparatorData(editLink.content);
+  const videoData = getVideoData(editLink.content);
 
   const updateContactData = (field: keyof ContactBlockData, value: string) => {
     setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...contactData, [field]: value }) }));
@@ -271,6 +309,13 @@ export const LinkCard = ({
 
   const updateSeparatorData = (field: keyof ReturnType<typeof getSeparatorData>, value: boolean) => {
     setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...separatorData, [field]: value }) }));
+  };
+
+  const updateVideoData = <K extends keyof VideoBlockData>(field: K, value: VideoBlockData[K]) => {
+    setEditLink((previous) => ({
+      ...previous,
+      content: buildBlockContent({ ...getVideoData(previous.content), [field]: value }),
+    }));
   };
 
   const addSocialItem = () => {
@@ -313,6 +358,8 @@ export const LinkCard = ({
 
   const titlePlaceholder = isHeading
     ? 'Heading title'
+    : isVideo
+      ? 'Video title'
     : isImage
       ? 'Image title'
       : isContact
@@ -1222,6 +1269,66 @@ export const LinkCard = ({
               </>
             )}
 
+            {isVideo && canEditImages && (
+              <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+                <div className="mb-3">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Video</p>
+                  <p className="text-sm font-semibold text-slate-900">Uploaded media</p>
+                </div>
+                <div className="space-y-3">
+                  {videoData.mediaUrl ? (
+                    <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
+                      <video src={videoData.mediaUrl} preload="metadata" muted playsInline className="h-full w-full object-cover" />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="absolute right-2 top-2 h-8 w-8"
+                        onClick={() => updateVideoData('mediaUrl', '')}
+                        title="Remove video"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={videoData.mediaUrl || ''}
+                      onChange={(event) => updateVideoData('mediaUrl', event.target.value)}
+                      placeholder="https://example.com/video.mp4"
+                      className="glass-card border-primary/20 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => videoInputRef.current?.click()}
+                      disabled={uploadingVideo || !videoUploadsEnabled}
+                      title={videoUploadsEnabled ? "Upload video" : "Video uploads require Pro"}
+                    >
+                      {uploadingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : videoUploadsEnabled ? <Upload className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+                    </Button>
+                    <input ref={videoInputRef} type="file" accept={VIDEO_ACCEPT} onChange={handleVideoUpload} className="hidden" />
+                  </div>
+                  {uploadingVideo ? <p className="text-xs font-medium text-primary">Uploading and verifying: {videoUploadProgress}%</p> : null}
+                  {videoUploadError ? <p className="text-xs font-medium text-destructive" role="alert">{videoUploadError}</p> : null}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <ToggleSetting label="Show controls" checked={videoData.controls !== false} onCheckedChange={(value) => updateVideoData('controls', value)} />
+                    <ToggleSetting label="Autoplay muted" checked={videoData.autoplay === true} onCheckedChange={(value) => updateVideoData('autoplay', value)} />
+                    <ToggleSetting label="Loop" checked={videoData.loop === true} onCheckedChange={(value) => updateVideoData('loop', value)} />
+                    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                      <Label className="text-sm font-medium text-slate-900">Fit</Label>
+                      <Select value={videoData.objectFit || 'cover'} onValueChange={(value: 'cover' | 'contain') => updateVideoData('objectFit', value)}>
+                        <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                        <SelectContent><SelectItem value="cover">Cover</SelectItem><SelectItem value="contain">Contain</SelectItem></SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">MP4 or WebM, up to {Math.round((maxVideoUploadBytes ?? DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES) / (1024 * 1024))} MB. Autoplay is always muted by the browser.</p>
+                </div>
+              </section>
+            )}
+
             {/* Icon Upload */}
             {canEditImages && !isSeparator && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
@@ -1370,10 +1477,10 @@ export const LinkCard = ({
             )}
             
             <div className="flex gap-2">
-              <Button onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>
-                {uploadingImage ? "Uploading..." : "Save"}
+              <Button onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo}>
+                {uploadingImage || uploadingVideo ? "Uploading..." : "Save"}
               </Button>
-              <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage)}>
+              <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo}>
                 Cancel
               </Button>
             </div>
@@ -1459,3 +1566,18 @@ export const LinkCard = ({
     </Card>
   );
 };
+
+const ToggleSetting = ({
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) => (
+  <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+    <Label className="text-sm font-medium text-slate-900">{label}</Label>
+    <Switch checked={checked} onCheckedChange={onCheckedChange} />
+  </div>
+);

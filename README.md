@@ -2,7 +2,7 @@
 
 ### A self-hosted public page for people, brands, venues, events, and privacy-minded teams.
 
-[![Version](https://img.shields.io/badge/version-4.6.0-blue.svg)](https://github.com/paoloronco/OrbitPage)
+[![Version](https://img.shields.io/badge/version-4.7.0-blue.svg)](https://github.com/paoloronco/OrbitPage)
 [![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Forbitpage-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/orbitpage)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Forbitpage-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage)
 [![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage)
@@ -177,6 +177,7 @@ The production essentials are intentionally small:
 | `PORT` | Usually | HTTP port. Docker defaults to `8080`; local Node defaults to `3001`. |
 | `DATA_DIR` | Recommended for custom installs | Directory for `orbitpage.db` and uploads. Docker uses `/app/data`. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Optional | Maximum total upload storage in MB. Defaults to `1024`. |
+| `VIDEO_UPLOAD_LIMIT_MB` | Optional | Maximum MP4/WebM upload size in MB. Defaults to `100`. |
 | `PUBLIC_SITE_URL` | Recommended behind proxies | Canonical public URL for SEO, sitemap, and social previews. |
 | `SEO_INDEXING` | Optional | Set to `false` for staging/private deployments. |
 | `RESET_TOKEN` | Optional | Enables protected recovery/reset endpoints. Use at least 32 characters. |
@@ -265,6 +266,18 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 
 <details>
 <summary><strong>Show full changelog</strong></summary>
+
+<details>
+<summary><strong>v4.7.0</strong></summary>
+
+### Secure native video media
+
+- Adds native MP4/WebM blocks with poster images, controls, autoplay, loop, and fit settings.
+- Reuses the video pipeline for page backgrounds and respects reduced-motion preferences.
+- Rejects oversized or mismatched files on the client and validates MIME, extension, and binary container signatures on the server.
+- Adds configurable per-video and total-storage limits without Base64 media payloads.
+
+</details>
 
 <details>
 <summary><strong>v4.6.0</strong></summary>

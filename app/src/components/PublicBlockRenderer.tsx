@@ -10,6 +10,7 @@ import { PublicMapCard } from "./PublicMapCard";
 import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { PublicSocialRowCard } from "./PublicSocialRowCard";
 import { PublicTextCard } from "./PublicTextCard";
+import { PublicVideoCard } from "./PublicVideoCard";
 
 interface PublicBlockRendererProps {
   link: LinkData;
@@ -20,6 +21,7 @@ export const PublicBlockRenderer = ({ link }: PublicBlockRendererProps) => {
   if (link.type === "text") return <PublicTextCard link={link} />;
   if (link.type === "heading") return <PublicHeadingCard link={link} />;
   if (link.type === "image") return <PublicImageCard link={link} />;
+  if (link.type === "video") return <PublicVideoCard link={link} />;
   if (link.type === "contact") return <PublicContactCard link={link} />;
   if (link.type === "social_row") return <PublicSocialRowCard link={link} />;
   if (link.type === "callout") return <PublicCalloutCard link={link} />;
