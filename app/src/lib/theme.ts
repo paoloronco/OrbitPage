@@ -174,11 +174,17 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
   if (background) legacyColors.background = background;
   if (foreground) legacyColors.foreground = foreground;
 
-  const legacyCard = themeData.card || defaultTheme.card;
-  const legacyCardGradient = {
-    ...defaultTheme.cardGradient,
-    ...(themeData.cardGradient || {}),
-  };
+  const legacyCard = themeData.card || background || defaultTheme.card;
+  const legacyCardGradient = themeData.cardGradient
+    ? {
+        ...defaultTheme.cardGradient,
+        ...themeData.cardGradient,
+      }
+    : {
+        from: legacyCard,
+        to: themeData.backgroundSecondary || legacyCard,
+        direction: defaultTheme.cardGradient.direction,
+      };
   const normalizedContentCard = {
     background: legacyCard,
     backgroundSecondary: legacyCardGradient.to,
@@ -211,10 +217,7 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
           from: background || defaultTheme.backgroundGradient.from,
           to: background || defaultTheme.backgroundGradient.to,
         },
-    cardGradient: {
-      ...defaultTheme.cardGradient,
-      ...(themeData.cardGradient || {}),
-    },
+    cardGradient: legacyCardGradient,
     profileCard: {
       background: legacyCard,
       backgroundSecondary: legacyCardGradient.to,

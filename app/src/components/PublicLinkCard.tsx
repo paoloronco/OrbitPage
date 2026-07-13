@@ -279,7 +279,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
                   {link.description}
                 </p>
               )}
-              {link.url && (
+              {link.url && !link.hideUrl && (
                 <p
                   className="text-xs mt-1 truncate text-muted-foreground"
                   style={link.textColor ? { color: link.textColor, opacity: 0.8 } : undefined}

@@ -8,6 +8,7 @@ describe('link schemas', () => {
       id: 12,
       title: 'Portfolio',
       url: 'https://example.com',
+      hideUrl: true,
       iconType: { type: 'emoji' },
       unknown: 'remove me',
     });
@@ -17,6 +18,7 @@ describe('link schemas', () => {
       title: 'Portfolio',
       description: '',
       url: 'https://example.com',
+      hideUrl: true,
       icon: null,
       type: 'link',
       iconType: 'emoji',

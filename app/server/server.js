@@ -600,6 +600,7 @@ const formatLinkPayload = (link) => {
     title: link.title,
     description: link.description || '',
     url: link.url || '',
+    hideUrl: link.hide_url === 1,
     icon,
     iconType: link.icon_type || (icon ? 'image' : undefined),
     content: link.content || null,
@@ -638,15 +639,30 @@ const getPublicLinksPayload = async () => {
   return links.filter((link) => isLinkPubliclyVisible(link)).map(formatLinkPayload);
 };
 
+const DEFAULT_THEME_PAYLOAD = {
+  primary: '#2563eb',
+  background: '#ffffff',
+  foreground: '#0f172a',
+  muted: '#64748b',
+  border: '#e2e8f0',
+  card: '#ffffff',
+  backgroundGradient: {
+    from: '#ffffff',
+    to: '#f8fafc',
+    direction: '135deg',
+  },
+  cardGradient: {
+    from: '#ffffff',
+    to: '#f8fafc',
+    direction: '135deg',
+  },
+};
+
 const getPublicThemePayload = async () => {
   const theme = await dbGet('SELECT * FROM theme_config ORDER BY id DESC LIMIT 1');
 
   if (!theme) {
-    return {
-      primary: '#007bff',
-      background: '#ffffff',
-      foreground: '#000000',
-    };
+    return { ...DEFAULT_THEME_PAYLOAD };
   }
 
   if (theme.full_config) {
@@ -2139,19 +2155,20 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
       for (const [index, link] of links.entries()) {
         await dbRun(
           `INSERT INTO links (
-            id, title, description, url, type, icon, icon_type,
+            id, title, description, url, hide_url, type, icon, icon_type,
             background_color, text_color, size, content,
             title_font_family, description_font_family,
             text_alignment, title_font_size, description_font_size,
             text_items, sort_order, is_active,
             click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone,
             cover_image, cover_image_alt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
             link.description,
             link.url,
+            link.hideUrl ? 1 : 0,
             link.type,
             link.icon,
             link.iconType,
@@ -2246,12 +2263,13 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
           : (link.ctaClicks || 0);
 
         await dbRun(
-          'INSERT INTO links (id, title, description, url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             linkId,
             link.title,
             link.description || '',
             link.url || '',
+            link.hideUrl ? 1 : 0,
             iconValue,
             link.type || 'link',
             textItemsValue,
@@ -2314,11 +2332,7 @@ app.get('/api/theme', async (req, res) => {
     const theme = await dbGet('SELECT * FROM theme_config ORDER BY id DESC LIMIT 1');
     
     if (!theme) {
-      return res.json({
-        primary: '#007bff',
-        background: '#ffffff',
-        foreground: '#000000'
-      });
+      return res.json({ ...DEFAULT_THEME_PAYLOAD });
     }
     
     // If we have a full theme configuration stored, return it

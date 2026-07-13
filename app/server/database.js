@@ -127,6 +127,7 @@ export const initializeDatabase = () => {
       db.run(`ALTER TABLE links ADD COLUMN size TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE links ADD COLUMN icon_type TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE links ADD COLUMN content TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE links ADD COLUMN hide_url BOOLEAN DEFAULT 0`, (err) => { /* ignore if exists */ });
   // Add columns for per-link typography and alignment
   db.run(`ALTER TABLE links ADD COLUMN title_font_family TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN description_font_family TEXT`, (err) => { /* ignore if exists */ });

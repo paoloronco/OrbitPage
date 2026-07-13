@@ -1,8 +1,10 @@
+import type { CSSProperties } from "react";
 import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { LinkData } from "./LinkCard";
 import { getSocialRowData } from "@/lib/link-blocks";
-import { getThemeCssVariables, ThemeConfig } from "@/lib/theme";
+import { isLinkVisibleNow } from "@/lib/link-visibility";
+import { getContentCardVariantCssVariables, getThemeCssVariables, ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
@@ -30,9 +32,19 @@ interface LivePreviewProps {
 }
 
 export const LivePreview = ({ profile, links, theme, publicPageHref = "/" }: LivePreviewProps) => {
-  // Show only active links (same logic as PublicView)
+  const hasCustomAvatar = Boolean(
+    profile.showAvatar !== false &&
+    profile.avatar &&
+    !profile.avatar.includes('profile-avatar')
+  );
+  const hasProfileContent = Boolean(
+    profile.name?.trim() ||
+    profile.bio?.trim() ||
+    (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||
+    hasCustomAvatar
+  );
   const visibleLinks = links.filter(link => {
-    if (link.isActive === false) return false;
+    if (!isLinkVisibleNow(link)) return false;
     if (link.type === 'separator') return true;
     if (link.type === 'heading') return link.title.trim() !== '' || link.description.trim() !== '';
     if (link.type === 'image') return (link.url || link.coverImage) !== '';
@@ -58,40 +70,39 @@ export const LivePreview = ({ profile, links, theme, publicPageHref = "/" }: Liv
     return link.title.trim() !== '' && (link.url?.trim() !== '');
   });
 
-  // Background derived directly from the theme (document.body is global, so we set it inline)
   const bgType = theme.backgroundMedia?.type;
   const previewBackground = (bgType === 'color' || bgType === 'video' || bgType === 'gif')
     ? theme.background
     : `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
-  const previewThemeVars = getThemeCssVariables(theme) as React.CSSProperties;
+  const previewThemeVars = getThemeCssVariables(theme) as CSSProperties;
 
   return (
-    <div className="admin-live-preview relative overflow-hidden border border-slate-200 bg-white" style={{ height: '560px' }}>
-      {/* Scrollable layer */}
-      <div className="absolute inset-0 overflow-y-auto overflow-x-hidden">
-        {/* Scaled content — transformOrigin top-left so it aligns flush left */}
+    <div className="admin-live-preview relative overflow-hidden border border-slate-200 bg-white">
+      <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
         <div
+          className="admin-live-preview__page min-h-full"
           style={{
             ...previewThemeVars,
-            transform: 'scale(0.68)',
-            transformOrigin: 'top left',
-            width: `${(100 / 0.68).toFixed(2)}%`,
             background: previewBackground,
             color: theme.foreground,
             fontFamily: theme.fontFamily,
-            padding: '32px 16px 48px',
+            padding: '32px 16px 72px',
           }}
         >
-          <div style={{ maxWidth: '28rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <PublicProfileSection profile={profile} />
+          <div style={{ maxWidth: theme.maxWidth || '28rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
 
             {visibleLinks.length > 0 && (
               <div className="public-card-stack flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
-            {visibleLinks.map((link, index) => (
-              <div key={link.id} className={`content-card-variant-${index % 6}`}>
-                <PublicBlockRenderer link={link} />
-              </div>
-            ))}
+              {visibleLinks.map((link, index) => (
+                <div
+                  key={link.id}
+                  className={`content-card-variant-${index % 6}`}
+                  style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
+                >
+                  <PublicBlockRenderer link={link} />
+                </div>
+              ))}
               </div>
             )}
 
@@ -104,7 +115,6 @@ export const LivePreview = ({ profile, links, theme, publicPageHref = "/" }: Liv
         </div>
       </div>
 
-      {/* Footer bar */}
       <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-3 py-2 flex items-center justify-between pointer-events-none">
         <span className="text-xs font-medium text-slate-500">Live preview</span>
         <a

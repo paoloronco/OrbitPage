@@ -122,7 +122,9 @@ const Index = () => {
           setProfile({
             name: profileData.name || "",
             bio: profileData.bio || "",
-            avatar: profileData.avatar || (profileAvatar as string),
+            avatar: profileData.avatar && !profileData.avatar.endsWith('/assets/profile-avatar.jpg')
+              ? profileData.avatar
+              : (profileAvatar as string),
             showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
               ? (profileData as any).show_avatar !== 0
               : ((profileData as any).showAvatar ?? true),

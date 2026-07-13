@@ -1,4 +1,4 @@
-import { type ChangeEvent, type CSSProperties, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ interface ThemeCustomizerProps {
   theme: ThemeConfig;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onThemePreview?: (theme: ThemeConfig) => void;
+  renderPreview?: (theme: ThemeConfig) => ReactNode;
 }
 
 type EditableTheme = ThemeConfig & { cardBlurTint?: string };
@@ -220,7 +221,7 @@ const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; 
   </article>
 );
 
-export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeCustomizerProps) => {
+export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview, renderPreview }: ThemeCustomizerProps) => {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("presets");
   const [presetScope, setPresetScope] = useState<PresetScope>("page");
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
@@ -356,6 +357,30 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
     />
   );
 
+  const livePreviewPanel = (
+    <aside className="sticky top-5 min-w-0 space-y-3">
+      <div className="flex items-end justify-between gap-3 px-1">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">Live page</p>
+          <p className="mt-1 font-bold text-slate-950">
+            {selectedPresetId ? themePresets.find((preset) => preset.id === selectedPresetId)?.name : "Custom theme"}
+          </p>
+        </div>
+        <div className="flex gap-1.5" aria-label="Active theme colors">
+          {[pendingTheme.background, pendingTheme.card, pendingTheme.primary, pendingTheme.foreground].map((color, index) => (
+            <span key={`${color}-${index}`} className="h-6 w-6 rounded-md border border-slate-200" style={{ backgroundColor: color }} title={color} />
+          ))}
+        </div>
+      </div>
+      {renderPreview ? renderPreview(pendingTheme) : (
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <ThemeMockup theme={pendingTheme} />
+        </div>
+      )}
+      <p className="px-1 text-xs leading-5 text-slate-500">This is the same renderer used by the public page. Changes remain a preview until you save the theme.</p>
+    </aside>
+  );
+
   return (
     <div className="space-y-6" data-onboarding="theme-customizer">
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 text-white shadow-[0_24px_70px_rgb(15_23_42_/_0.18)]">
@@ -421,6 +446,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
       </div>
 
       {workspaceMode === "presets" ? (
+        <div className="admin-theme-layout">
         <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
           <div className="relative mb-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
             <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
@@ -467,8 +493,10 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
             </>
           )}
         </section>
+        {livePreviewPanel}
+        </div>
       ) : (
-        <section className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <section className="admin-theme-layout">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -672,21 +700,7 @@ export const ThemeCustomizer = ({ theme, onThemeChange, onThemePreview }: ThemeC
             </Tabs>
           </div>
 
-          <aside className="sticky top-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
-            <ThemeMockup theme={pendingTheme} />
-            <div className="space-y-4 p-5">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">Current preview</p>
-                <p className="mt-1 font-bold text-slate-950">{selectedPresetId ? themePresets.find((preset) => preset.id === selectedPresetId)?.name : "Custom theme"}</p>
-              </div>
-              <div className="flex gap-2">
-                {[pendingTheme.background, pendingTheme.card, pendingTheme.primary, pendingTheme.foreground].map((color, index) => (
-                  <span key={`${color}-${index}`} className="h-7 flex-1 rounded-md border border-slate-200" style={{ backgroundColor: color }} title={color} />
-                ))}
-              </div>
-              <p className="text-xs leading-5 text-slate-500">The mockup updates immediately. Saving publishes the same theme across the profile and every public card.</p>
-            </div>
-          </aside>
+          {livePreviewPanel}
         </section>
       )}
     </div>

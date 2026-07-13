@@ -21,7 +21,6 @@ import {
   Globe2,
   HelpCircle,
   Key,
-  Layers3,
   Link,
   LogOut,
   MousePointerClick,
@@ -124,7 +123,12 @@ export const AdminView = ({
   const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
+  const [previewLinks, setPreviewLinks] = useState(links);
   const publicPageHref = getPublicUrlOverride() || withBasePath('/');
+
+  useEffect(() => {
+    setPreviewLinks(links);
+  }, [links]);
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
@@ -341,6 +345,7 @@ export const AdminView = ({
                   links={links}
                   theme={theme}
                   onLinksUpdate={onLinksUpdate}
+                  onLinksPreview={setPreviewLinks}
                   editMode={linkEditMode}
                 />
               </div>
@@ -348,19 +353,10 @@ export const AdminView = ({
                 <PreviewPanel
                   title="Page composition"
                   profile={profile}
-                  links={links}
+                  links={previewLinks}
                   theme={theme}
                   publicPageHref={publicPageHref}
                 />
-                <section className="admin-side-panel">
-                  <PanelHeader icon={Layers3} title="Content status" />
-                  <div className="space-y-3">
-                    <StatusRow label="Visible" value={String(metrics.visibleLinks)} />
-                    <StatusRow label="Hidden" value={String(Math.max(metrics.totalLinks - metrics.visibleLinks, 0))} />
-                    <StatusRow label="Scheduled" value={String(metrics.scheduledLinks)} />
-                  </div>
-                  <div id="link-add-sidebar" />
-                </section>
               </aside>
             </div>
           </TabsContent>
@@ -370,6 +366,14 @@ export const AdminView = ({
               theme={theme}
               onThemeChange={handleThemeSave}
               onThemePreview={(nextTheme) => applyTheme(nextTheme)}
+              renderPreview={(previewTheme) => (
+                <LivePreview
+                  profile={profile}
+                  links={links}
+                  theme={previewTheme}
+                  publicPageHref={publicPageHref}
+                />
+              )}
             />
           </TabsContent>
 
@@ -608,15 +612,6 @@ function ChecklistItem({ checked, label }: { checked: boolean; label: string }) 
     <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
       <span className={checked ? "admin-check admin-check-active" : "admin-check"} />
       <span>{label}</span>
-    </div>
-  );
-}
-
-function StatusRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between border-b border-slate-200 pb-3 last:border-b-0 last:pb-0">
-      <span className="text-sm text-slate-600">{label}</span>
-      <span className="text-sm font-semibold text-slate-950">{value}</span>
     </div>
   );
 }

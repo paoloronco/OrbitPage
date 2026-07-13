@@ -1,5 +1,4 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CalendarClock, Code2, Download, Image, Link, List, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
@@ -18,9 +17,10 @@ interface LinkManagerProps {
   editMode?: LinkEditMode;
   // Called only when user clicks Save
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
+  onLinksPreview?: (links: LinkData[]) => void;
 }
 
-export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: LinkManagerProps) => {
+export const LinkManager = ({ links, theme, onLinksUpdate, onLinksPreview, editMode = 'full' }: LinkManagerProps) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -28,11 +28,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
   const { toast } = useToast();
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
-  const [addMenuPortalTarget, setAddMenuPortalTarget] = useState<HTMLElement | null>(null);
-
-  useEffect(() => {
-    setAddMenuPortalTarget(document.getElementById('link-add-sidebar'));
-  }, []);
+  const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
   const publicPreviewStyle = (index: number) => ({
@@ -47,6 +43,10 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
     setIsDirty(false);
     setSaveError("");
   }, [links]);
+
+  useEffect(() => {
+    onLinksPreview?.(workingLinks);
+  }, [onLinksPreview, workingLinks]);
 
   const addNewLink = () => {
     const newLink: LinkData = {
@@ -522,33 +522,43 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
         </div>
 
         <div className="admin-link-actions">
+          {isFullEdit && (
+            <Button
+              onClick={() => setIsBlockLibraryOpen((open) => !open)}
+              variant="outline"
+              className="admin-action"
+              aria-expanded={isBlockLibraryOpen}
+              aria-controls="admin-block-library"
+            >
+              <Plus className="h-4 w-4" />
+              {isBlockLibraryOpen ? "Close library" : "Add block"}
+            </Button>
+          )}
           {!isViewOnly && (
             <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy} data-onboarding="links-save">
               <Save className="h-4 w-4" />
               Save
             </Button>
           )}
-          <Button onClick={exportLinks} variant="outline" className="admin-action" disabled={busy}>
+          <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label="Export links" title="Export links">
             <Download className="h-4 w-4" />
-            Export
           </Button>
           {isFullEdit && (
-            <Button onClick={handleImportFile} variant="outline" className="admin-action" disabled={busy}>
+            <Button onClick={handleImportFile} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label="Import links" title="Import links">
               <Upload className="h-4 w-4" />
-              Import
             </Button>
           )}
         </div>
       </div>
 
-      {isFullEdit && addMenuPortalTarget && createPortal(
-        <div className="mt-5 border-t border-slate-200 pt-5" data-onboarding="link-add-grid">
+      {isFullEdit && isBlockLibraryOpen && (
+        <section id="admin-block-library" className="admin-block-library" data-onboarding="link-add-grid">
           <div className="mb-3">
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">Block library</p>
             <h3 className="mt-1 text-sm font-semibold text-slate-950">Add content</h3>
             <p className="mt-1 text-xs leading-5 text-slate-500">Choose a block to append it to the public page.</p>
           </div>
-          <div className="grid gap-2">
+          <div className="admin-add-grid">
           <Button onClick={addNewLink} className="admin-add-card">
             <span className="admin-add-icon">
               <Link className="h-4 w-4" />
@@ -667,8 +677,7 @@ export const LinkManager = ({ links, theme, onLinksUpdate, editMode = 'full' }: 
             </span>
           </Button>
           </div>
-        </div>,
-        addMenuPortalTarget,
+        </section>
       )}
 
       {workingLinks.length === 0 ? (

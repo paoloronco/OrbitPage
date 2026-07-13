@@ -944,6 +944,32 @@ describe('API Endpoints', () => {
     expect(insertValues).toContain(7);
   });
 
+  it('PUT /api/links persists the public URL visibility preference', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([]);
+
+    const response = await request(app)
+      .put('/orbitpage/api/links')
+      .set('Authorization', 'Bearer mock-token')
+      .send([
+        {
+          id: 'private-label-link',
+          title: 'Portfolio',
+          url: 'https://example.com',
+          type: 'link',
+          hideUrl: true,
+        },
+      ]);
+
+    expect(response.status).toBe(200);
+
+    const insertCall = vi.mocked(dbRun).mock.calls.find(
+      ([sql]) => typeof sql === 'string' && sql.trim().toUpperCase().startsWith('INSERT')
+    );
+    expect(insertCall).toBeDefined();
+    expect(insertCall[0]).toContain('hide_url');
+    expect(insertCall[1][4]).toBe(1);
+  });
+
   it('PUT /api/links preserves smart CTA metadata and existing CTA clicks', async () => {
     vi.mocked(dbAll).mockResolvedValueOnce([
       { id: 'cta-1', click_count: 30, cta_click_count: 9 },

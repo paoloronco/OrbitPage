@@ -114,7 +114,9 @@ const Admin = () => {
           setProfile({
             name: profileData.name,
             bio: profileData.bio,
-            avatar: profileData.avatar || (profileAvatar as string),
+            avatar: profileData.avatar && !profileData.avatar.endsWith('/assets/profile-avatar.jpg')
+              ? profileData.avatar
+              : (profileAvatar as string),
             showAvatar: (profileData as any).showAvatar ?? true,
             socialLinks: profileData.social_links || {},
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,

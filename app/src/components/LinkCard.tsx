@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { CalendarClock, Code2, Image, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
@@ -37,6 +38,7 @@ export interface LinkData {
   title: string;
   description: string;
   url: string;
+  hideUrl?: boolean;
   icon?: string;
   iconType?: 'emoji' | 'image' | 'svg';
   backgroundColor?: string;
@@ -615,7 +617,7 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             {link.description}
           </p>
         )}
-        {isActionable && link.url && (
+        {isActionable && link.url && !link.hideUrl && (
           <p
             className="text-xs mt-1 truncate underline font-medium"
             style={link.textColor ? { color: link.textColor } : undefined}
@@ -765,12 +767,25 @@ export const LinkCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                         />
                       )}
                       {showUrlField && (
-                        <Input
-                          value={editLink.url}
-                          onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
-                          placeholder="https://example.com"
-                          className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
-                        />
+                        <>
+                          <Input
+                            value={editLink.url}
+                            onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
+                            placeholder="https://example.com"
+                            className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
+                          />
+                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                            <div>
+                              <Label htmlFor={`show-url-${link.id}`} className="text-sm font-medium text-slate-900">Show URL on card</Label>
+                              <p className="mt-0.5 text-xs text-slate-500">The entire card stays clickable when hidden.</p>
+                            </div>
+                            <Switch
+                              id={`show-url-${link.id}`}
+                              checked={editLink.hideUrl !== true}
+                              onCheckedChange={(checked) => setEditLink(prev => ({ ...prev, hideUrl: !checked }))}
+                            />
+                          </div>
+                        </>
                       )}
                     </div>
                   </section>
