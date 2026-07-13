@@ -226,11 +226,11 @@ export const AdminView = ({
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
         <header className="admin-topbar">
           <div className="min-w-0">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="admin-status-dot" />
-              <span className="admin-kicker">Self-hosted dashboard</span>
-              {appVersion && <span className="admin-version">v{appVersion}</span>}
-            </div>
+            {appVersion && (
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="admin-version">v{appVersion}</span>
+              </div>
+            )}
             <h1 className="admin-title">OrbitPage Admin</h1>
             <p className="admin-subtitle">
               Manage page content, theme, security, and analytics from one workspace.
