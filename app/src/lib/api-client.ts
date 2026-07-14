@@ -11,6 +11,7 @@ const TOKEN_IV_PREFIX = 'orbitpage-auth-iv-';
 const DEVICE_SECRET_KEY = 'orbitpage-device-secret';
 const TOKEN_FALLBACK_KEY = 'orbitpage-auth-token-plain';
 const SAAS_TOKEN_STORAGE_KEY = 'orbitpage-saas-api-token';
+const SAAS_APP_CHECK_STORAGE_KEY = 'orbitpage-saas-app-check-token';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -36,15 +37,28 @@ const getSaasPublicSlug = (): string | null => {
   return value ? value.trim() : null;
 };
 
+const captureSaasCredentials = (): void => {
+  if (typeof window === 'undefined') return;
+  const values = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const apiToken = values.get('apiToken');
+  const appCheckToken = values.get('appCheckToken');
+  if (apiToken) sessionStorage.setItem(SAAS_TOKEN_STORAGE_KEY, apiToken);
+  if (appCheckToken) sessionStorage.setItem(SAAS_APP_CHECK_STORAGE_KEY, appCheckToken);
+  if (apiToken || appCheckToken) {
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
+  }
+};
+
 const getSaasAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
-  const hashToken = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('apiToken');
-  if (hashToken) {
-    sessionStorage.setItem(SAAS_TOKEN_STORAGE_KEY, hashToken);
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
-    return hashToken;
-  }
+  captureSaasCredentials();
   return sessionStorage.getItem(SAAS_TOKEN_STORAGE_KEY);
+};
+
+const getSaasAppCheckToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  captureSaasCredentials();
+  return sessionStorage.getItem(SAAS_APP_CHECK_STORAGE_KEY);
 };
 
 const resolveApiUrl = (endpoint: string): string => {
@@ -202,6 +216,15 @@ const getAuthTokenAsync = async (): Promise<string | null> => {
   return val;
 };
 
+const getAuthenticatedRequestHeaders = async (): Promise<Record<string, string>> => {
+  const token = await getAuthTokenAsync();
+  const appCheckToken = getSaasAppCheckToken();
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {}),
+  };
+};
+
 // Set auth token.
 // In a secure context (HTTPS / localhost): AES-GCM encrypted in localStorage.
 // In a non-secure context (HTTP over IP): stored unencrypted in sessionStorage.
@@ -237,6 +260,7 @@ const removeAuthToken = (): void => {
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   sessionStorage.removeItem(TOKEN_FALLBACK_KEY);
   sessionStorage.removeItem(SAAS_TOKEN_STORAGE_KEY);
+  sessionStorage.removeItem(SAAS_APP_CHECK_STORAGE_KEY);
   delete (window as any).__orbitpageTokenCache;
 };
 
@@ -357,15 +381,12 @@ export interface WorkspaceBootstrapResponse {
 
 // API request helper with auth
 const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
-  const token = await getAuthTokenAsync();
+  const authHeaders = await getAuthenticatedRequestHeaders();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
+    ...authHeaders,
     ...options.headers,
   };
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
 
   // Prevent any caching of API responses and bust caches for GETs
   const method = (options.method || 'GET').toUpperCase();
@@ -396,8 +417,9 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
 
     if (!response.ok) {
       const errorMessage = data?.error || data?.message || 'Request failed';
+      const isAppCheckError = data?.code === 'APP_CHECK_REQUIRED' || data?.code === 'APP_CHECK_INVALID';
       const isAuthExpired =
-        response.status === 401 ||
+        (!isAppCheckError && response.status === 401) ||
         (response.status === 403 && /invalid or expired token|user not found|access token required/i.test(errorMessage));
 
       // Only auth failures should clear the token. Other 403 responses are real
@@ -502,9 +524,9 @@ export const authApi = {
 
 export const backupApi = {
   download: async (): Promise<Blob> => {
-    const token = await getAuthTokenAsync();
+    const authHeaders = await getAuthenticatedRequestHeaders();
     const response = await fetch(resolveApiUrl('/admin/backup'), {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders,
     });
 
     if (!response.ok) {
@@ -644,9 +666,9 @@ export const linksApi = {
 
   export: async (): Promise<Blob> => {
     try {
-      const token = await getAuthTokenAsync();
+      const authHeaders = await getAuthenticatedRequestHeaders();
       const resp = await fetch(resolveApiUrl('/links/export'), {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: authHeaders,
       });
       
       if (!resp.ok) {
@@ -725,10 +747,10 @@ export const uploadApi = {
     const formData = new FormData();
     formData.append('file', file);
     if (slot) formData.append('slot', slot);
-    const token = await getAuthTokenAsync();
+    const authHeaders = await getAuthenticatedRequestHeaders();
     const response = await fetch(resolveApiUrl('/upload'), {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders,
       body: formData,
     });
     if (!response.ok) {
@@ -745,10 +767,10 @@ export const uploadApi = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('slot', slot);
-    const token = await getAuthTokenAsync();
+    const authHeaders = await getAuthenticatedRequestHeaders();
     const response = await fetch(resolveApiUrl('/upload/background'), {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders,
       body: formData,
     });
     if (!response.ok) {
@@ -801,8 +823,7 @@ async function uploadVideoWithDirectFallback(
   purpose: 'background' | 'upload',
   onProgress?: (percentage: number) => void,
 ): Promise<{ filePath: string; fullUrl: string; fileName: string }> {
-  const token = await getAuthTokenAsync();
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  const authHeaders = await getAuthenticatedRequestHeaders();
   const reserveResponse = await fetch(resolveApiUrl('/upload/direct/reserve'), {
     method: 'POST',
     headers: { ...authHeaders, 'Content-Type': 'application/json' },
