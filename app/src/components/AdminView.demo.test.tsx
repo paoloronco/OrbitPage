@@ -13,6 +13,7 @@ vi.mock('@/lib/config', () => ({
 }));
 
 vi.mock('@/lib/api-client', () => ({
+  isSaasMode: () => false,
   utilityApi: {
     getHealth: vi.fn(),
   },
@@ -123,6 +124,8 @@ describe('AdminView demo mode', () => {
 
     expect(html).not.toContain('Admin access');
     expect(html).not.toContain('Encrypted session token');
+    expect(html).not.toContain('PasswordManager');
+    expect(html).not.toContain('Logout');
     expect(html).toContain('admin-metrics-saas');
   });
 });

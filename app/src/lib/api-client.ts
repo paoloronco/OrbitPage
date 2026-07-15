@@ -17,14 +17,24 @@ const SAAS_APP_CHECK_STORAGE_KEY = 'orbitpage-saas-app-check-token';
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+export const isHostedRuntime = (): boolean =>
+  import.meta.env.VITE_ORBITPAGE_HOSTED_MODE === 'true' ||
+  import.meta.env.VITE_ORBITPAGE_HOSTED_MODE === '1';
+
 export const getSaasApiBase = (): string | null => {
   if (typeof window === 'undefined') return null;
   const value = new URLSearchParams(window.location.search).get('apiBase');
   if (!value) return null;
-  return resolveSafeBrowserHttpUrl(value, window.location.href)?.toString().replace(/\/$/, '') ?? null;
+  const resolved = resolveSafeBrowserHttpUrl(value, window.location.href);
+  if (!resolved) return null;
+
+  // The hosted build may only send Firebase credentials back to its own origin.
+  // This prevents a crafted apiBase query parameter from becoming a token sink.
+  if (isHostedRuntime() && resolved.origin !== window.location.origin) return null;
+  return resolved.toString().replace(/\/$/, '');
 };
 
-export const isSaasMode = (): boolean => Boolean(getSaasApiBase());
+export const isSaasMode = (): boolean => isHostedRuntime() || Boolean(getSaasApiBase());
 
 const getSaasPublicSlug = (): string | null => {
   if (typeof window === 'undefined') return null;

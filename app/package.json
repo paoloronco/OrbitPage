@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:hosted": "cross-env VITE_ORBITPAGE_HOSTED_MODE=true vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "test": "vitest",

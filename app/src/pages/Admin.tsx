@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { AdminView } from "@/components/AdminView";
 import { LoginForm } from "@/components/LoginForm";
 import { InitialSetup } from "@/components/InitialSetup";
+import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, themeApi, authApi, isSaasMode, workspaceBootstrapApi } from "@/lib/api-client";
+import { profileApi, linksApi, themeApi, authApi, isHostedRuntime, isSaasMode, workspaceBootstrapApi } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
@@ -56,6 +57,7 @@ const Admin = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSetup, setShowSetup] = useState(false);
+  const [hostedAccessDenied, setHostedAccessDenied] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   
   // Use empty/neutral profile while real data is loading
@@ -82,9 +84,41 @@ const Admin = () => {
   // from localStorage and confirms it with the server.
   useEffect(() => {
     const checkAuth = async () => {
-      const firstTime = isSaasMode() ? false : await isFirstTimeSetup();
+      const hosted = isSaasMode();
+
+      // The SaaS editor is an authenticated dashboard surface, never a second
+      // login destination. Standalone visits return to the Firebase dashboard.
+      if (isHostedRuntime() && window.self === window.top) {
+        window.location.replace('/dashboard');
+        return;
+      }
+
+      const firstTime = hosted ? false : await isFirstTimeSetup();
       setShowSetup(firstTime);
-      if (hasStoredAuthToken()) {
+
+      if (hosted) {
+        if (!authApi.hasStoredToken()) {
+          setHostedAccessDenied(true);
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          const result = await authApi.verify();
+          setIsLoggedIn(result.valid);
+          setHostedAccessDenied(!result.valid);
+          if (result.valid && result.user) {
+            setCurrentUser({
+              username: result.user.username,
+              role: result.user.role || 'admin',
+              permissions: (result.user.permissions || []) as Permission[],
+            });
+          }
+        } catch {
+          setIsLoggedIn(false);
+          setHostedAccessDenied(true);
+        }
+      } else if (hasStoredAuthToken()) {
         try {
           const result = await authApi.verify();
           setIsLoggedIn(result.valid);
@@ -350,6 +384,26 @@ const Admin = () => {
   }
 
   if (!isLoggedIn) {
+    if (isSaasMode() || hostedAccessDenied) {
+      return (
+        <main className="min-h-screen bg-slate-50 px-5 py-10 text-slate-950">
+          <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center text-center">
+            <OrbitPageBrand size="lg" />
+            <h1 className="mt-8 text-2xl font-bold">Open the editor from your dashboard</h1>
+            <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
+              This hosted editor requires an active OrbitPage session. No separate admin username or password is used.
+            </p>
+            <a
+              className="mt-7 inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              href="/dashboard"
+              target="_top"
+            >
+              Return to dashboard
+            </a>
+          </section>
+        </main>
+      );
+    }
     if (showSetup) {
       return <InitialSetup onSetupComplete={handleLogin} />;
     }

@@ -39,7 +39,7 @@ import { BackupManager } from "./BackupManager";
 import { TextFileManager } from "./TextFileManager";
 import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview } from "./LivePreview";
-import { utilityApi } from "@/lib/api-client";
+import { isSaasMode, utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
@@ -135,7 +135,7 @@ export const AdminView = ({
   const publicPageHref = getPublicUrlOverride() || withBasePath('/');
   const entitlements = saasPlan?.entitlements;
   const managePlanHref = saasBilling?.manageUrl || "/dashboard?section=billing";
-  const isHostedAdmin = Boolean(
+  const isHostedAdmin = isSaasMode() || Boolean(
     saasPlan ||
     saasUsage ||
     saasBilling ||
@@ -172,7 +172,7 @@ export const AdminView = ({
       case 'profile':   return canEditProfile;
       case 'links':     return canEditLinks;
       case 'theme':     return canEditTheme;
-      case 'access':    return true;
+      case 'access':    return !isHostedAdmin;
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
       case 'txt':       return canEditCompliance;
@@ -281,10 +281,12 @@ export const AdminView = ({
                 Public page
               </Button>
             </a>
-            <Button className="admin-action" variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
+            {!isHostedAdmin && (
+              <Button className="admin-action" variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+                Logout
+              </Button>
+            )}
           </div>
         </header>
 
@@ -415,20 +417,15 @@ export const AdminView = ({
             />
           </TabsContent>
 
-          <TabsContent value="access" className="admin-tab-content">
-            <div className="admin-single-column space-y-6" data-onboarding="access-section">
-              {canManageUsers && (!saasPlan || entitlements?.collaborators) && <UserManager />}
-              {canManageUsers && saasPlan && !entitlements?.collaborators && (
-                <PlanLockedFeature
-                  title="Collaborators"
-                  description="Shared workspace access is available on Pro."
-                  managePlanHref={managePlanHref}
-                />
-              )}
-              {canManageUsers && <BackupManager />}
-              <PasswordManager />
-            </div>
-          </TabsContent>
+          {!isHostedAdmin && (
+            <TabsContent value="access" className="admin-tab-content">
+              <div className="admin-single-column space-y-6" data-onboarding="access-section">
+                {canManageUsers && <UserManager />}
+                {canManageUsers && <BackupManager />}
+                <PasswordManager />
+              </div>
+            </TabsContent>
+          )}
 
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">

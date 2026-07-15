@@ -341,7 +341,7 @@ export const AdminOnboarding = ({
           <span>First card</span>
           <span>Theme save</span>
           <span>Analytics</span>
-          <span>Access</span>
+          {visibleTabs.includes("access") && <span>Access</span>}
           <span>Privacy</span>
           <span>TXT</span>
           <span>Public check</span>
