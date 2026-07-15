@@ -34,6 +34,6 @@ export interface SaasWorkspaceUsage {
 }
 
 export interface SaasBillingContext {
-  mode: 'test';
+  mode: 'free' | 'test' | 'stripe';
   manageUrl: string;
 }
