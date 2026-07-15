@@ -1,4 +1,4 @@
-import type { ThemeConfig } from '@/lib/theme';
+import { ensureReadableColor, getReadableForeground, type ThemeConfig } from '@/lib/theme';
 
 type CardSurface = ThemeConfig['contentCard'];
 
@@ -12,9 +12,20 @@ export interface CardThemePreset {
   variants: CardSurface[];
 }
 
-const surface = (background: string, backgroundSecondary: string, foreground: string, muted: string, border: string, accent: string, accentForeground: string, direction = '145deg'): CardSurface => ({
-  background, backgroundSecondary, foreground, muted, border, accent, accentForeground, direction,
-});
+const surface = (background: string, backgroundSecondary: string, foreground: string, muted: string, border: string, accent: string, accentForeground: string, direction = '145deg'): CardSurface => {
+  const backgrounds = [background, backgroundSecondary];
+  const readableForeground = ensureReadableColor(foreground, backgrounds, getReadableForeground(background, foreground));
+  return {
+    background,
+    backgroundSecondary,
+    foreground: readableForeground,
+    muted: ensureReadableColor(muted, backgrounds, readableForeground),
+    border,
+    accent,
+    accentForeground: ensureReadableColor(accentForeground, [accent], getReadableForeground(accent, readableForeground)),
+    direction,
+  };
+};
 const mono = (id: string, name: string, description: string, mood: string, card: CardSurface): CardThemePreset => ({ id, name, description, mood, mode: 'mono', card, variants: [card] });
 const multi = (id: string, name: string, description: string, mood: string, variants: CardSurface[]): CardThemePreset => ({ id, name, description, mood, mode: 'multi', card: variants[0], variants });
 
@@ -26,14 +37,14 @@ export const cardThemePresets: CardThemePreset[] = [
   mono('mono-redline', 'Mono · Redline', 'Neutral monochrome cards with a disciplined red accent.', 'Graphic', surface('#f5f5f4', '#e7e5e4', '#1c1917', '#57534e', '#a8a29e', '#dc2626', '#ffffff')),
   mono('highlighter', 'Mono · Highlighter', 'Bold yellow cards built for direct calls to action.', 'Energetic', surface('#fde047', '#facc15', '#1c1917', '#44403c', '#ca8a04', '#1c1917', '#ffffff')),
   multi('sunset-stack', 'Multi · Sunset Stack', 'Warm cards alternate through coral, amber and wine.', 'Warm', [
-    surface('#fb7185', '#e11d48', '#fff7ed', '#ffe4e6', '#be123c', '#fff7ed', '#9f1239'),
+    surface('#be123c', '#9f1239', '#fff7ed', '#ffe4e6', '#881337', '#fff7ed', '#881337'),
     surface('#f59e0b', '#ea580c', '#1c1917', '#422006', '#c2410c', '#1c1917', '#ffffff'),
     surface('#fff7ed', '#fed7aa', '#7c2d12', '#9a3412', '#fb923c', '#c2410c', '#ffffff'),
     surface('#881337', '#4c0519', '#fff1f2', '#fecdd3', '#be123c', '#fb7185', '#4c0519'),
   ]),
   multi('coastal-sequence', 'Multi · Coastal Sequence', 'A calm sequence of navy, teal, sky and mist.', 'Calm', [
     surface('#0f172a', '#164e63', '#f0fdfa', '#a5f3fc', '#155e75', '#22d3ee', '#083344'),
-    surface('#0f766e', '#14b8a6', '#f0fdfa', '#ccfbf1', '#2dd4bf', '#f0fdfa', '#115e59'),
+    surface('#0f766e', '#115e59', '#f0fdfa', '#ccfbf1', '#2dd4bf', '#f0fdfa', '#115e59'),
     surface('#7dd3fc', '#38bdf8', '#082f49', '#0c4a6e', '#0284c7', '#082f49', '#ffffff'),
     surface('#f0fdfa', '#cffafe', '#134e4a', '#0f766e', '#5eead4', '#0f766e', '#ffffff'),
   ]),
@@ -45,7 +56,7 @@ export const cardThemePresets: CardThemePreset[] = [
   ]),
   multi('garden-notes', 'Multi · Garden Notes', 'Forest, sage and clay tones create an organic rhythm.', 'Natural', [
     surface('#14532d', '#166534', '#f0fdf4', '#bbf7d0', '#22c55e', '#fbbf24', '#422006'),
-    surface('#84a98c', '#52796f', '#081c15', '#1b4332', '#354f52', '#081c15', '#ffffff'),
+    surface('#9ab9a0', '#7fa096', '#081c15', '#1b4332', '#52796f', '#081c15', '#ffffff'),
     surface('#ecfccb', '#d9f99d', '#365314', '#4d7c0f', '#bef264', '#3f6212', '#ffffff'),
     surface('#c2410c', '#9a3412', '#fff7ed', '#fed7aa', '#fb923c', '#ffedd5', '#7c2d12'),
   ]),

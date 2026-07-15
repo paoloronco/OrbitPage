@@ -26,7 +26,13 @@ import {
   Type,
   Upload,
 } from "lucide-react";
-import { type ThemeConfig, defaultTheme, normalizeTheme } from "@/lib/theme";
+import {
+  type CardShadowConfig,
+  type ThemeConfig,
+  defaultTheme,
+  getCardShadowCss,
+  normalizeTheme,
+} from "@/lib/theme";
 import { themePresets, type ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
@@ -58,6 +64,13 @@ interface ThemeColorControlProps {
   onClose: () => void;
   onChange: (color: string) => void;
 }
+
+const cardShadowPresets: Array<{ id: string; label: string; value: CardShadowConfig }> = [
+  { id: 'none', label: 'None', value: { color: '#07111f', offsetX: 0, offsetY: 0, blur: 0, spread: 0, opacity: 0 } },
+  { id: 'soft', label: 'Soft', value: { color: '#172033', offsetX: 0, offsetY: 12, blur: 30, spread: -10, opacity: 0.2 } },
+  { id: 'lifted', label: 'Lifted', value: { color: '#07111f', offsetX: 0, offsetY: 18, blur: 42, spread: -12, opacity: 0.34 } },
+  { id: 'graphic', label: 'Graphic', value: { color: '#172033', offsetX: 7, offsetY: 7, blur: 0, spread: 0, opacity: 0.72 } },
+];
 
 const getPreviewBackground = (theme: ThemeConfig) => (
   theme.backgroundMedia?.type === "color"
@@ -123,15 +136,18 @@ const ThemeColorControl = ({
 );
 
 const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?: boolean }) => {
+  const boxShadow = getCardShadowCss(theme.cardShadow);
   const cardStyle: CSSProperties = {
     background: `linear-gradient(${theme.contentCard.direction}, ${theme.contentCard.background}, ${theme.contentCard.backgroundSecondary})`,
     borderColor: theme.contentCard.border,
     borderRadius: `${Math.max(3, theme.cardRadius * 0.72)}px`,
+    boxShadow,
   };
   const profileStyle: CSSProperties = {
     background: `linear-gradient(${theme.profileCard.direction}, ${theme.profileCard.background}, ${theme.profileCard.backgroundSecondary})`,
     borderColor: theme.profileCard.border,
     borderRadius: `${Math.max(3, theme.cardRadius * 0.72)}px`,
+    boxShadow,
   };
 
   return (
@@ -142,7 +158,7 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(255,255,255,0.18),transparent_38%)]" />
       <div className={`relative mx-auto flex h-full max-w-[15rem] flex-col ${compact ? "px-4 py-4" : "px-5 py-6"}`}>
-        <div className="mb-4 flex flex-col items-center border px-3 py-3 text-center shadow-sm" style={profileStyle}>
+        <div className="mb-4 flex flex-col items-center border px-3 py-3 text-center" style={profileStyle}>
           <div
             className={`${compact ? "h-9 w-9" : "h-12 w-12"} rounded-full border-2 shadow-sm`}
             style={{ backgroundColor: theme.profileCard.accent, borderColor: theme.profileCard.border }}
@@ -151,12 +167,12 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
           <div className="mt-1.5 h-1.5 w-28 rounded-full opacity-75" style={{ backgroundColor: theme.profileCard.muted }} />
         </div>
         <div className="flex flex-col" style={{ gap: `${Math.max(6, theme.cardSpacing * 0.58)}px` }}>
-          <div className="flex items-center gap-2 border px-3 py-2.5 shadow-sm" style={cardStyle}>
+          <div className="flex items-center gap-2 border px-3 py-2.5" style={cardStyle}>
             <div className="h-5 w-5 rounded-md" style={{ backgroundColor: theme.primary }} />
             <div className="h-1.5 flex-1 rounded-full opacity-90" style={{ backgroundColor: theme.contentCard.foreground }} />
             <div className="h-1.5 w-5 rounded-full opacity-70" style={{ backgroundColor: theme.contentCard.muted }} />
           </div>
-          <div className="border px-3 py-2.5 shadow-sm" style={cardStyle}>
+          <div className="border px-3 py-2.5" style={cardStyle}>
             <div className="h-1.5 w-16 rounded-full" style={{ backgroundColor: theme.contentCard.foreground }} />
             <div className="mt-2 h-1.5 w-full rounded-full opacity-70" style={{ backgroundColor: theme.contentCard.muted }} />
             <div className="mt-1.5 h-1.5 w-3/4 rounded-full opacity-70" style={{ backgroundColor: theme.contentCard.muted }} />
@@ -181,7 +197,7 @@ const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: 
     <div className="space-y-4 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-base font-bold text-slate-950">{preset.name}</p>
+          <p className="min-h-10 text-base font-bold leading-5 text-slate-950">{preset.name}</p>
           <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">{preset.mood}</p>
         </div>
         <div className="flex shrink-0 -space-x-1">
@@ -288,6 +304,10 @@ export const ThemeCustomizer = ({
       nextTheme.contentCardVariants = [updates.contentCard];
     }
     previewTheme(nextTheme, null);
+  };
+
+  const updateCardShadow = (updates: Partial<CardShadowConfig>) => {
+    updatePendingTheme({ cardShadow: { ...pendingTheme.cardShadow, ...updates } });
   };
 
   const applyPreset = (preset: ThemePreset) => {
@@ -729,14 +749,74 @@ export const ThemeCustomizer = ({
                     <Slider value={[pendingTheme.cardSpacing]} onValueChange={([cardSpacing]) => updatePendingTheme({ cardSpacing })} max={32} min={4} step={1} />
                   </div>
                   <div className="space-y-3">
-                    <Label>Glow intensity <span className="text-slate-500">{pendingTheme.glowIntensity.toFixed(1)}</span></Label>
-                    <Slider value={[pendingTheme.glowIntensity]} onValueChange={([glowIntensity]) => updatePendingTheme({ glowIntensity })} max={1} min={0} step={0.1} />
-                  </div>
-                  <div className="space-y-3">
-                    <Label>Blur intensity <span className="text-slate-500">{pendingTheme.blurIntensity}px</span></Label>
+                    <Label>Surface blur <span className="text-slate-500">{pendingTheme.blurIntensity}px</span></Label>
                     <Slider value={[pendingTheme.blurIntensity]} onValueChange={([blurIntensity]) => updatePendingTheme({ blurIntensity })} max={50} min={0} step={1} />
                   </div>
                 </div>
+
+                <Separator />
+
+                <div className="space-y-6">
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="max-w-2xl">
+                      <h4 className="font-bold text-slate-900">Card shadow</h4>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">Shape the depth of profile and content cards. Start from a style, then tune every value.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2" aria-label="Card shadow styles">
+                      {cardShadowPresets.map((preset) => (
+                        <Button
+                          key={preset.id}
+                          type="button"
+                          size="sm"
+                          variant={JSON.stringify(pendingTheme.cardShadow) === JSON.stringify(preset.value) ? 'default' : 'outline'}
+                          onClick={() => updatePendingTheme({ cardShadow: preset.value })}
+                        >
+                          {preset.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_12rem]">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {colorControl('cardShadowColor', 'Shadow color', pendingTheme.cardShadow.color, (color) => updateCardShadow({ color }))}
+                      <div className="space-y-3">
+                        <Label>Opacity <span className="text-slate-500">{Math.round(pendingTheme.cardShadow.opacity * 100)}%</span></Label>
+                        <Slider value={[pendingTheme.cardShadow.opacity]} onValueChange={([opacity]) => updateCardShadow({ opacity })} max={1} min={0} step={0.01} />
+                      </div>
+                      <div className="space-y-3">
+                        <Label>Horizontal offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetX}px</span></Label>
+                        <Slider value={[pendingTheme.cardShadow.offsetX]} onValueChange={([offsetX]) => updateCardShadow({ offsetX })} max={32} min={-32} step={1} />
+                      </div>
+                      <div className="space-y-3">
+                        <Label>Vertical offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetY}px</span></Label>
+                        <Slider value={[pendingTheme.cardShadow.offsetY]} onValueChange={([offsetY]) => updateCardShadow({ offsetY })} max={48} min={-32} step={1} />
+                      </div>
+                      <div className="space-y-3">
+                        <Label>Softness <span className="text-slate-500">{pendingTheme.cardShadow.blur}px</span></Label>
+                        <Slider value={[pendingTheme.cardShadow.blur]} onValueChange={([blur]) => updateCardShadow({ blur })} max={96} min={0} step={1} />
+                      </div>
+                      <div className="space-y-3">
+                        <Label>Spread <span className="text-slate-500">{pendingTheme.cardShadow.spread}px</span></Label>
+                        <Slider value={[pendingTheme.cardShadow.spread]} onValueChange={([spread]) => updateCardShadow({ spread })} max={48} min={-32} step={1} />
+                      </div>
+                    </div>
+
+                    <div className="flex min-h-40 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100 p-8">
+                      <div
+                        className="h-24 w-28 border"
+                        style={{
+                          background: `linear-gradient(${pendingTheme.contentCard.direction}, ${pendingTheme.contentCard.background}, ${pendingTheme.contentCard.backgroundSecondary})`,
+                          borderColor: pendingTheme.contentCard.border,
+                          borderRadius: `${pendingTheme.cardRadius}px`,
+                          boxShadow: getCardShadowCss(pendingTheme.cardShadow),
+                        }}
+                        aria-label="Card shadow preview"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="max-w-xl space-y-2">
                   <Label>Public page width</Label>
                   <Select value={pendingTheme.maxWidth} onValueChange={(maxWidth) => updatePendingTheme({ maxWidth })}>

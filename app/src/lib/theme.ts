@@ -28,6 +28,24 @@ export const defaultBackgroundMedia: BackgroundMediaConfig = {
   glassmorphism: false,
 };
 
+export interface CardShadowConfig {
+  color: string;
+  offsetX: number;
+  offsetY: number;
+  blur: number;
+  spread: number;
+  opacity: number;
+}
+
+export const defaultCardShadow: CardShadowConfig = {
+  color: '#07111f',
+  offsetX: 0,
+  offsetY: 14,
+  blur: 36,
+  spread: -12,
+  opacity: 0.28,
+};
+
 export interface ThemeConfig {
   orbitPageAccess?: {
     mode: 'preset' | 'custom';
@@ -90,6 +108,7 @@ export interface ThemeConfig {
   // Effects
   glowIntensity: number;
   blurIntensity: number;
+  cardShadow: CardShadowConfig;
 
   // Background Media (video / gif / color / gradient)
   backgroundMedia: BackgroundMediaConfig;
@@ -160,6 +179,7 @@ export const defaultTheme: ThemeConfig = {
   
   glowIntensity: 0.45,
   blurIntensity: 28,
+  cardShadow: defaultCardShadow,
 
   backgroundMedia: defaultBackgroundMedia,
 
@@ -241,6 +261,14 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
     contentCard: normalizedContentCard,
     contentCardMode: themeData.contentCardMode === 'multi' ? 'multi' : 'mono',
     contentCardVariants: normalizedContentCardVariants.length ? normalizedContentCardVariants : [normalizedContentCard],
+    cardShadow: normalizeCardShadow(themeData.cardShadow, {
+      color: themeData.primaryGlow || defaultCardShadow.color,
+      offsetX: 0,
+      offsetY: 8,
+      blur: themeData.blurIntensity ?? defaultCardShadow.blur,
+      spread: 0,
+      opacity: Math.min(0.9, themeData.glowIntensity ?? defaultCardShadow.opacity),
+    }),
     backgroundMedia: {
       ...defaultBackgroundMedia,
       ...(themeData.backgroundMedia || {}),
@@ -250,6 +278,39 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
       ...(themeData.content || {}),
     },
   };
+};
+
+const clampNumber = (value: unknown, fallback: number, min: number, max: number) => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+};
+
+const normalizeHexColor = (value: unknown, fallback: string) => (
+  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value.trim()) ? value.trim() : fallback
+);
+
+export const normalizeCardShadow = (
+  shadow?: Partial<CardShadowConfig> | null,
+  fallback: Partial<CardShadowConfig> = defaultCardShadow,
+): CardShadowConfig => {
+  const base = { ...defaultCardShadow, ...fallback };
+  return {
+    color: normalizeHexColor(shadow?.color, base.color),
+    offsetX: clampNumber(shadow?.offsetX, base.offsetX, -32, 32),
+    offsetY: clampNumber(shadow?.offsetY, base.offsetY, -32, 48),
+    blur: clampNumber(shadow?.blur, base.blur, 0, 96),
+    spread: clampNumber(shadow?.spread, base.spread, -32, 48),
+    opacity: clampNumber(shadow?.opacity, base.opacity, 0, 1),
+  };
+};
+
+export const getCardShadowCss = (shadow: CardShadowConfig): string => {
+  const normalized = normalizeCardShadow(shadow);
+  const hex = normalized.color.slice(1);
+  const red = parseInt(hex.slice(0, 2), 16);
+  const green = parseInt(hex.slice(2, 4), 16);
+  const blue = parseInt(hex.slice(4, 6), 16);
+  return `${normalized.offsetX}px ${normalized.offsetY}px ${normalized.blur}px ${normalized.spread}px rgba(${red}, ${green}, ${blue}, ${normalized.opacity})`;
 };
 
 // Convert hex to HSL for CSS variables
@@ -280,17 +341,71 @@ const hexToHsl = (hex: string) => {
   return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 };
 
-const getReadableForeground = (background: string, fallback: string) => {
+const getRelativeLuminance = (color: string) => {
+  const normalized = color.trim().replace(/^#/, '');
+  const expanded = normalized.length === 3
+    ? normalized.split('').map((part) => part + part).join('')
+    : normalized;
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) return null;
+  const channels = [0, 2, 4].map((offset) => {
+    const value = parseInt(expanded.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+};
+
+export const getContrastRatio = (first: string, second: string) => {
+  const firstLuminance = getRelativeLuminance(first);
+  const secondLuminance = getRelativeLuminance(second);
+  if (firstLuminance === null || secondLuminance === null) return 1;
+  const lighter = Math.max(firstLuminance, secondLuminance);
+  const darker = Math.min(firstLuminance, secondLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+};
+
+export const getReadableForeground = (background: string, fallback: string) => {
   const normalized = background.trim().replace(/^#/, "");
   const expanded = normalized.length === 3
     ? normalized.split("").map((part) => part + part).join("")
     : normalized;
   if (!/^[0-9a-f]{6}$/i.test(expanded)) return fallback;
-  const red = parseInt(expanded.slice(0, 2), 16);
-  const green = parseInt(expanded.slice(2, 4), 16);
-  const blue = parseInt(expanded.slice(4, 6), 16);
-  const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
-  return luminance > 0.58 ? "#172033" : "#f8fafc";
+  return [fallback, '#05070a', '#ffffff'].reduce((best, candidate) => (
+    getContrastRatio(background, candidate) > getContrastRatio(background, best) ? candidate : best
+  ));
+};
+
+const mixHexColors = (from: string, to: string, amount: number) => {
+  const parse = (value: string) => {
+    const normalized = value.trim().replace(/^#/, '');
+    if (!/^[0-9a-f]{6}$/i.test(normalized)) return null;
+    return [0, 2, 4].map((offset) => parseInt(normalized.slice(offset, offset + 2), 16));
+  };
+  const fromChannels = parse(from);
+  const toChannels = parse(to);
+  if (!fromChannels || !toChannels) return to;
+  const mixed = fromChannels.map((channel, index) => Math.round(channel + (toChannels[index] - channel) * amount));
+  return `#${mixed.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+};
+
+export const ensureReadableColor = (
+  preferred: string,
+  backgrounds: string[],
+  fallback: string,
+  minimumContrast = 4.5,
+) => {
+  const isReadable = (color: string) => backgrounds.every((background) => getContrastRatio(color, background) >= minimumContrast);
+  if (isReadable(preferred)) return preferred;
+
+  for (let step = 1; step <= 20; step += 1) {
+    const candidate = mixHexColors(preferred, fallback, step / 20);
+    if (isReadable(candidate)) return candidate;
+  }
+
+  return [fallback, '#05070a', '#ffffff'].reduce((best, candidate) => {
+    const weakestContrast = Math.min(...backgrounds.map((background) => getContrastRatio(candidate, background)));
+    const bestWeakestContrast = Math.min(...backgrounds.map((background) => getContrastRatio(best, background)));
+    return weakestContrast > bestWeakestContrast ? candidate : best;
+  });
 };
 
 export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string> => {
@@ -355,7 +470,7 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
     '--card-spacing': `${theme.cardSpacing}px`,
     '--glass-bg': `hsl(${cardHsl} / 0.78)`,
     '--glass-border': `1px solid hsl(${borderHsl} / 0.5)`,
-    '--card-glow': `0 8px ${theme.blurIntensity}px hsl(${primaryGlowHsl} / ${Math.min(0.9, theme.glowIntensity)})`,
+    '--card-glow': getCardShadowCss(theme.cardShadow),
     '--glass-tint': tint,
     '--profile-card-background': `linear-gradient(${theme.profileCard.direction}, ${theme.profileCard.background}, ${theme.profileCard.backgroundSecondary})`,
     '--profile-card-foreground': theme.profileCard.foreground,
