@@ -12,6 +12,7 @@ import profileAvatar from "@/assets/profile-avatar.jpg";
 import { Permission } from "@/lib/permissions";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
+import { isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
 
 interface ProfileData {
   name: string;
@@ -124,7 +125,7 @@ const Admin = () => {
           setProfile({
             name: profileData.name,
             bio: profileData.bio,
-            avatar: profileData.avatar && !profileData.avatar.endsWith('/assets/profile-avatar.jpg')
+            avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
               ? profileData.avatar
               : (profileAvatar as string),
             showAvatar: (profileData as any).showAvatar ?? true,
@@ -135,7 +136,7 @@ const Admin = () => {
             tabTitle: (profileData as any).tab_title || (profileData as any).tabTitle || undefined,
             metaDescription: (profileData as any).meta_description || (profileData as any).metaDescription || undefined,
             footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
-            favicon: (profileData as any).favicon || undefined,
+            favicon: isBundledProfileAvatar((profileData as any).favicon) ? undefined : ((profileData as any).favicon || undefined),
             googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
             privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
             cookiePolicyUrl: (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined,
@@ -175,7 +176,7 @@ const Admin = () => {
       await profileApi.update({
         name: newProfile.name,
         bio: newProfile.bio,
-        avatar: newProfile.avatar,
+        avatar: persistedProfileAvatar(newProfile.avatar),
         socialLinks: newProfile.socialLinks || {},
         showAvatar: typeof newProfile.showAvatar === 'boolean' ? newProfile.showAvatar : true,
         nameFontSize: newProfile.nameFontSize,
@@ -184,7 +185,7 @@ const Admin = () => {
         tabTitle: newProfile.tabTitle,
         metaDescription: newProfile.metaDescription,
         footerText: newProfile.footerText,
-        favicon: newProfile.favicon,
+        favicon: persistedProfileAvatar(newProfile.favicon) || undefined,
         googleAnalyticsId: newProfile.googleAnalyticsId,
         privacyPolicyUrl: newProfile.privacyPolicyUrl,
         cookiePolicyUrl: newProfile.cookiePolicyUrl,

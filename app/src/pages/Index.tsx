@@ -11,6 +11,7 @@ import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 
 interface ProfileData {
   name: string;
@@ -114,7 +115,8 @@ const Index = () => {
         const profileData = pageData.profile;
         if (profileData) {
           const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
-          const favicon = (profileData as any).favicon || undefined;
+          const faviconValue = (profileData as any).favicon;
+          const favicon = isBundledProfileAvatar(faviconValue) ? undefined : (faviconValue || undefined);
           const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
           const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
           const privacyPolicyUrl = getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl);
@@ -122,7 +124,7 @@ const Index = () => {
           setProfile({
             name: profileData.name || "",
             bio: profileData.bio || "",
-            avatar: profileData.avatar && !profileData.avatar.endsWith('/assets/profile-avatar.jpg')
+            avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
               ? profileData.avatar
               : (profileAvatar as string),
             showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
