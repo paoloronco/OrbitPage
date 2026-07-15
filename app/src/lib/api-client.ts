@@ -1,4 +1,5 @@
 import { apiPath } from './base-path';
+import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 
 // --- Secure token storage (AES-GCM via Web Crypto with sessionStorage fallback) ---
 //
@@ -20,13 +21,7 @@ export const getSaasApiBase = (): string | null => {
   if (typeof window === 'undefined') return null;
   const value = new URLSearchParams(window.location.search).get('apiBase');
   if (!value) return null;
-  try {
-    const url = new URL(value);
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-    return url.toString().replace(/\/$/, '');
-  } catch {
-    return null;
-  }
+  return resolveSafeBrowserHttpUrl(value, window.location.href)?.toString().replace(/\/$/, '') ?? null;
 };
 
 export const isSaasMode = (): boolean => Boolean(getSaasApiBase());

@@ -1,3 +1,5 @@
+import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
+
 declare global {
   interface Window {
     __ORBITPAGE_BASE_PATH__?: string;
@@ -44,14 +46,8 @@ export const apiPath = (path = ''): string => {
   if (typeof window !== 'undefined') {
     const apiBase = window.__ORBITPAGE_API_BASE__ || new URLSearchParams(window.location.search).get('apiBase');
     if (apiBase) {
-      try {
-        const url = new URL(apiBase);
-        if (url.protocol === 'http:' || url.protocol === 'https:') {
-          return `${url.toString().replace(/\/$/, '')}${normalizedPath}`;
-        }
-      } catch {
-        // Fall back to the local API path below.
-      }
+      const url = resolveSafeBrowserHttpUrl(apiBase, window.location.href);
+      if (url) return `${url.toString().replace(/\/$/, '')}${normalizedPath}`;
     }
   }
   return `${withBasePath('/api')}${normalizedPath}`;
