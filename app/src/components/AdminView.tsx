@@ -39,7 +39,7 @@ import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TextFileManager } from "./TextFileManager";
 import { AdminOnboarding } from "./AdminOnboarding";
-import { LivePreview } from "./LivePreview";
+import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isSaasMode, utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
@@ -353,7 +353,7 @@ export const AdminView = ({
               </div>
               <aside className="admin-workbench-rail">
                 <PreviewPanel
-                  title="Public page"
+                  title="Profile and identity"
                   profile={profile}
                   links={links}
                   theme={theme}
@@ -389,7 +389,7 @@ export const AdminView = ({
               </div>
               <aside className="admin-workbench-rail">
                 <PreviewPanel
-                  title="Page composition"
+                  title="Blocks and composition"
                   profile={profile}
                   links={previewLinks}
                   theme={theme}
@@ -404,12 +404,13 @@ export const AdminView = ({
               theme={theme}
               onThemeChange={handleThemeSave}
               onThemePreview={(nextTheme) => applyTheme(nextTheme)}
-              renderPreview={(previewTheme) => (
+              renderPreview={(previewTheme, device) => (
                 <LivePreview
                   profile={profile}
                   links={links}
                   theme={previewTheme}
                   publicPageHref={publicPageHref}
+                  device={device}
                 />
               )}
               accessLevel={entitlements?.themes}
@@ -639,24 +640,29 @@ function PreviewPanel({
   theme: ThemeConfig;
   publicPageHref: string;
 }) {
+  const [device, setDevice] = useState<PreviewDevice>("mobile");
+
   return (
     <section className="admin-preview-panel">
       <div className="admin-preview-heading">
         <div>
-          <p className="admin-kicker">Live canvas</p>
-          <h2>{title}</h2>
+          <h2>Page preview</h2>
+          <p>{title}</p>
         </div>
-        <a
-          href={publicPageHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open public page"
-          title="Open public page"
-        >
-          <ExternalLink className="h-4 w-4" />
-        </a>
+        <div className="admin-preview-heading-actions">
+          <PreviewDeviceToggle value={device} onChange={setDevice} />
+          <a
+            href={publicPageHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open published page"
+            title="Open published page"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
       </div>
-      <LivePreview profile={profile} links={links} theme={theme} publicPageHref={publicPageHref} />
+      <LivePreview profile={profile} links={links} theme={theme} publicPageHref={publicPageHref} device={device} />
     </section>
   );
 }

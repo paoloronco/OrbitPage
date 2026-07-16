@@ -39,12 +39,13 @@ import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
 import { commitPendingTheme, parseImportedTheme, prepareThemeExport } from "./theme-save-state";
 import type { SaasThemeAccess } from "@/lib/saas-plan";
+import { PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 
 interface ThemeCustomizerProps {
   theme: ThemeConfig;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onThemePreview?: (theme: ThemeConfig) => void;
-  renderPreview?: (theme: ThemeConfig) => ReactNode;
+  renderPreview?: (theme: ThemeConfig, device: PreviewDevice) => ReactNode;
   accessLevel?: SaasThemeAccess;
   videoUploadsEnabled?: boolean;
   maxUploadBytes?: number | null;
@@ -266,6 +267,7 @@ export const ThemeCustomizer = ({
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("mobile");
   const advancedCustomizationEnabled = !accessLevel || accessLevel === "advanced";
   const premiumThemesEnabled = !accessLevel || accessLevel === "premium" || accessLevel === "advanced";
   const availableThemePresets = accessLevel === "essential" ? themePresets.slice(0, 3) : themePresets;
@@ -426,18 +428,19 @@ export const ThemeCustomizer = ({
     <aside className="sticky top-5 min-w-0 space-y-3">
       <div className="flex items-end justify-between gap-3 px-1">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">Live page</p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">Page preview</p>
           <p className="mt-1 font-bold text-slate-950">
             {selectedPresetId ? themePresets.find((preset) => preset.id === selectedPresetId)?.name : "Custom theme"}
           </p>
         </div>
-        <div className="flex gap-1.5" aria-label="Active theme colors">
-          {[pendingTheme.background, pendingTheme.card, pendingTheme.primary, pendingTheme.foreground].map((color, index) => (
-            <span key={`${color}-${index}`} className="h-6 w-6 rounded-md border border-slate-200" style={{ backgroundColor: color }} title={color} />
-          ))}
-        </div>
+        <PreviewDeviceToggle value={previewDevice} onChange={setPreviewDevice} />
       </div>
-      {renderPreview ? renderPreview(pendingTheme) : (
+      <div className="flex gap-1.5 px-1" aria-label="Active theme colors">
+        {[pendingTheme.background, pendingTheme.card, pendingTheme.primary, pendingTheme.foreground].map((color, index) => (
+          <span key={`${color}-${index}`} className="h-5 w-5 rounded-md border border-slate-200" style={{ backgroundColor: color }} title={color} />
+        ))}
+      </div>
+      {renderPreview ? renderPreview(pendingTheme, previewDevice) : (
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
           <ThemeMockup theme={pendingTheme} />
         </div>

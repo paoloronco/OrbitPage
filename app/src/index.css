@@ -721,13 +721,13 @@
   .admin-preview-grid,
   .admin-analytics-grid {
     display: grid;
-    grid-template-columns: minmax(520px, 1.1fr) minmax(440px, 0.9fr);
+    grid-template-columns: minmax(560px, 1.04fr) minmax(500px, 0.96fr);
     gap: 14px;
     align-items: start;
   }
 
   .admin-content-grid-wide {
-    grid-template-columns: minmax(560px, 1.05fr) minmax(460px, 0.95fr);
+    grid-template-columns: minmax(600px, 1.04fr) minmax(520px, 0.96fr);
   }
 
   .admin-preview-grid {
@@ -795,10 +795,55 @@
   }
 
   .admin-preview-heading h2 {
-    margin-top: 2px;
     color: rgb(15 23 42);
     font-size: 15px;
     font-weight: 750;
+  }
+
+  .admin-preview-heading > div:first-child > p {
+    color: rgb(100 116 139);
+    font-size: 11px;
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+
+  .admin-preview-heading-actions {
+    align-items: center;
+    display: flex;
+    flex: 0 0 auto;
+    gap: 7px;
+  }
+
+  .admin-preview-device-toggle {
+    align-items: center;
+    background: #edf1f6;
+    border: 1px solid rgb(203 213 225);
+    border-radius: 7px;
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+  }
+
+  .admin-preview-device-toggle button {
+    align-items: center;
+    background: transparent;
+    border-radius: 5px;
+    color: rgb(100 116 139);
+    display: inline-flex;
+    height: 30px;
+    justify-content: center;
+    transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    width: 32px;
+  }
+
+  .admin-preview-device-toggle button:hover {
+    color: rgb(29 78 216);
+  }
+
+  .admin-preview-device-toggle button.active {
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgb(15 23 42 / 0.14);
+    color: #155eef;
   }
 
   .admin-preview-heading a {
@@ -819,9 +864,176 @@
   }
 
   .admin-live-preview {
-    height: 680px;
-    border-radius: 6px;
+    height: 100%;
+    border-radius: inherit;
     box-shadow: none;
+  }
+
+  .admin-preview-device {
+    align-items: center;
+    background: #e9eef5;
+    border: 1px solid #d8e0ea;
+    border-radius: 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .admin-preview-device--mobile {
+    min-height: 720px;
+    padding: 26px 20px;
+  }
+
+  .admin-preview-device--desktop {
+    min-height: 500px;
+    padding: 30px 18px 58px;
+  }
+
+  .admin-preview-device__hardware {
+    animation: admin-preview-device-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    background: #111827;
+    box-shadow: 0 22px 48px rgb(15 23 42 / 0.22);
+    box-sizing: border-box;
+    isolation: isolate;
+    position: relative;
+  }
+
+  .admin-preview-device--mobile .admin-preview-device__hardware {
+    border: 1px solid #020617;
+    border-radius: 40px;
+    height: 664px;
+    max-width: 334px;
+    padding: 10px;
+    width: 100%;
+  }
+
+  .admin-preview-device--desktop .admin-preview-device__hardware {
+    aspect-ratio: 16 / 10;
+    border: 1px solid #020617;
+    border-radius: 14px;
+    max-width: 720px;
+    padding: 36px 10px 12px;
+    width: 100%;
+  }
+
+  .admin-preview-device__screen {
+    background: #ffffff;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+  }
+
+  .admin-preview-device--mobile .admin-preview-device__screen {
+    border-radius: 31px;
+  }
+
+  .admin-preview-device--desktop .admin-preview-device__screen {
+    border-radius: 6px;
+  }
+
+  .admin-preview-device__island {
+    align-items: center;
+    background: #030712;
+    border-radius: 999px;
+    display: flex;
+    height: 23px;
+    justify-content: flex-end;
+    left: 50%;
+    padding-right: 7px;
+    position: absolute;
+    top: 17px;
+    transform: translateX(-50%);
+    width: 78px;
+    z-index: 5;
+  }
+
+  .admin-preview-device__island i {
+    background: #172554;
+    border: 1px solid #334155;
+    border-radius: 50%;
+    height: 7px;
+    width: 7px;
+  }
+
+  .admin-preview-device__side-button {
+    background: #1e293b;
+    border-radius: 2px 0 0 2px;
+    height: 48px;
+    left: -4px;
+    position: absolute;
+    width: 4px;
+  }
+
+  .admin-preview-device__side-button--one { top: 118px; }
+  .admin-preview-device__side-button--two { top: 176px; }
+
+  .admin-preview-device__browser-bar {
+    align-items: center;
+    color: #cbd5e1;
+    display: flex;
+    gap: 12px;
+    height: 35px;
+    left: 10px;
+    position: absolute;
+    right: 10px;
+    top: 0;
+  }
+
+  .admin-preview-device__browser-bar > span {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 5px;
+  }
+
+  .admin-preview-device__browser-bar i {
+    background: #64748b;
+    border-radius: 50%;
+    height: 6px;
+    width: 6px;
+  }
+
+  .admin-preview-device__browser-bar b {
+    background: #1e293b;
+    border-radius: 5px;
+    color: #cbd5e1;
+    display: block;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 22px;
+    overflow: hidden;
+    padding: 0 10px;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: min(68%, 360px);
+  }
+
+  .admin-preview-device__stand {
+    background: #1e293b;
+    height: 42px;
+    position: absolute;
+    bottom: 18px;
+    width: 74px;
+  }
+
+  .admin-preview-device__stand i {
+    background: #111827;
+    border-radius: 999px;
+    bottom: -5px;
+    height: 9px;
+    left: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+    width: 146px;
+  }
+
+  @keyframes admin-preview-device-enter {
+    from { opacity: 0; transform: translateY(8px) scale(0.985); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   .orbitpage-admin .admin-live-preview .public-card-stack .glass-card {
@@ -1763,7 +1975,31 @@
     }
 
     .admin-live-preview {
-      height: 480px !important;
+      height: 100% !important;
+    }
+
+    .admin-preview-device {
+      padding-inline: 8px;
+    }
+
+    .admin-preview-device--mobile {
+      min-height: 590px;
+      padding-block: 14px;
+    }
+
+    .admin-preview-device--mobile .admin-preview-device__hardware {
+      height: min(610px, 165vw);
+      min-height: 520px;
+    }
+
+    .admin-preview-device--desktop {
+      min-height: 330px;
+      padding-block: 18px 48px;
+    }
+
+    .admin-preview-device-toggle button {
+      height: 44px;
+      width: 44px;
     }
 
     .admin-add-grid {

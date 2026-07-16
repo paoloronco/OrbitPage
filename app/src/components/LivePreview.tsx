@@ -6,6 +6,7 @@ import { getSocialRowData } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import { getContentCardVariantCssVariables, getThemeCssVariables, ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import { Monitor, Smartphone } from "lucide-react";
 
 interface ProfileData {
   name: string;
@@ -29,9 +30,47 @@ interface LivePreviewProps {
   links: LinkData[];
   theme: ThemeConfig;
   publicPageHref?: string;
+  device?: PreviewDevice;
 }
 
-export const LivePreview = ({ profile, links, theme, publicPageHref = "/" }: LivePreviewProps) => {
+export type PreviewDevice = "mobile" | "desktop";
+
+export function PreviewDeviceToggle({
+  value,
+  onChange,
+  className = "",
+}: {
+  value: PreviewDevice;
+  onChange: (device: PreviewDevice) => void;
+  className?: string;
+}) {
+  return (
+    <div className={`admin-preview-device-toggle ${className}`} role="group" aria-label="Preview device">
+      <button
+        type="button"
+        className={value === "mobile" ? "active" : ""}
+        aria-pressed={value === "mobile"}
+        aria-label="Mobile preview"
+        title="Mobile preview"
+        onClick={() => onChange("mobile")}
+      >
+        <Smartphone className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        className={value === "desktop" ? "active" : ""}
+        aria-pressed={value === "desktop"}
+        aria-label="Desktop preview"
+        title="Desktop preview"
+        onClick={() => onChange("desktop")}
+      >
+        <Monitor className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+export const LivePreview = ({ profile, links, theme, publicPageHref = "/", device = "mobile" }: LivePreviewProps) => {
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&
@@ -77,55 +116,62 @@ export const LivePreview = ({ profile, links, theme, publicPageHref = "/" }: Liv
   const previewThemeVars = getThemeCssVariables(theme) as CSSProperties;
 
   return (
-    <div className="admin-live-preview relative overflow-hidden border border-slate-200 bg-white">
-      <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
-        <div
-          className="admin-live-preview__page min-h-full"
-          style={{
-            ...previewThemeVars,
-            background: previewBackground,
-            color: theme.foreground,
-            fontFamily: theme.fontFamily,
-            padding: '32px 16px 72px',
-          }}
-        >
-          <div style={{ maxWidth: theme.maxWidth || '28rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
+    <div className={`admin-preview-device admin-preview-device--${device}`} data-preview-device={device}>
+      <div className="admin-preview-device__hardware">
+        {device === "mobile" ? (
+          <>
+            <span className="admin-preview-device__side-button admin-preview-device__side-button--one" />
+            <span className="admin-preview-device__side-button admin-preview-device__side-button--two" />
+            <span className="admin-preview-device__island"><i /></span>
+          </>
+        ) : (
+          <div className="admin-preview-device__browser-bar" aria-hidden="true">
+            <span><i /><i /><i /></span>
+            <b>{publicPageHref.replace(/^https?:\/\//, "").replace(/\/$/, "") || "Public preview"}</b>
+          </div>
+        )}
+        <div className="admin-preview-device__screen">
+          <div className="admin-live-preview relative overflow-hidden bg-white">
+            <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
+              <div
+                className="admin-live-preview__page min-h-full"
+                style={{
+                  ...previewThemeVars,
+                  background: previewBackground,
+                  color: theme.foreground,
+                  fontFamily: theme.fontFamily,
+                  padding: device === "desktop" ? '38px 32px 56px' : '32px 16px 56px',
+                }}
+              >
+                <div style={{ maxWidth: theme.maxWidth || '28rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
 
-            {visibleLinks.length > 0 && (
-              <div className="public-card-stack flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
-              {visibleLinks.map((link, index) => (
-                <div
-                  key={link.id}
-                  className={`content-card-variant-${index % 6}`}
-                  style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
-                >
-                  <PublicBlockRenderer link={link} />
+                  {visibleLinks.length > 0 && (
+                    <div className="public-card-stack flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
+                    {visibleLinks.map((link, index) => (
+                      <div
+                        key={link.id}
+                        className={`content-card-variant-${index % 6}`}
+                        style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
+                      >
+                        <PublicBlockRenderer link={link} />
+                      </div>
+                    ))}
+                    </div>
+                  )}
+
+                  {visibleLinks.length === 0 && (
+                    <p className="text-center text-muted-foreground text-sm opacity-60">
+                      No visible links yet.
+                    </p>
+                  )}
                 </div>
-              ))}
               </div>
-            )}
-
-            {visibleLinks.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm opacity-60">
-                No visible links yet.
-              </p>
-            )}
+            </div>
           </div>
         </div>
       </div>
-
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white/95 px-3 py-2 flex items-center justify-between pointer-events-none">
-        <span className="text-xs font-medium text-slate-500">Live preview</span>
-        <a
-          href={publicPageHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-blue-700 underline hover:no-underline pointer-events-auto"
-        >
-          Open public page →
-        </a>
-      </div>
+      {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
     </div>
   );
 };
