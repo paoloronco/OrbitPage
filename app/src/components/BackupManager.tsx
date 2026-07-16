@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, Download, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database, Download, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { backupApi } from "@/lib/api-client";
@@ -7,7 +7,13 @@ import { DEMO_MODE } from "@/lib/config";
 
 type BackupState = "idle" | "exporting" | "restoring" | "success" | "error";
 
-export function BackupManager() {
+const MAX_MANAGED_BACKUP_BYTES = 768 * 1024;
+
+interface BackupManagerProps {
+  hosted?: boolean;
+}
+
+export function BackupManager({ hosted = false }: BackupManagerProps) {
   const [state, setState] = useState<BackupState>("idle");
   const [message, setMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,13 +43,24 @@ export function BackupManager() {
   const restoreBackup = async (file?: File) => {
     if (!file) return;
 
+    if (hosted && file.size > MAX_MANAGED_BACKUP_BYTES) {
+      setState("error");
+      setMessage("This managed-page backup is too large. The maximum size is 768 KB.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
     if (DEMO_MODE) {
       setState("error");
       setMessage("Backup restore is disabled in demo mode.");
       return;
     }
 
-    const confirmed = window.confirm("Restore this backup? Current data and uploads will be replaced.");
+    const confirmed = window.confirm(
+      hosted
+        ? "Restore this page backup? The current profile, blocks, theme, and privacy settings will be replaced. Managed media files will remain in storage."
+        : "Restore this backup? Current data and uploads will be replaced."
+    );
     if (!confirmed) {
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
@@ -76,7 +93,9 @@ export function BackupManager() {
           <div>
             <h3 className="text-lg font-semibold">Backup & Restore</h3>
             <p className="text-sm leading-6 text-muted-foreground">
-              Export database records and uploaded media, or restore a saved JSON backup.
+              {hosted
+                ? "Export or restore this page's profile, blocks, theme, privacy settings, and managed media references. Account, billing, and media files are not included."
+                : "Export database records and uploaded media, or restore a saved JSON backup."}
             </p>
           </div>
         </div>
@@ -101,8 +120,9 @@ export function BackupManager() {
           className="admin-action admin-action-primary"
           onClick={downloadBackup}
           disabled={busy}
+          aria-busy={state === "exporting"}
         >
-          <Download className="h-4 w-4" />
+          {state === "exporting" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
           {state === "exporting" ? "Exporting" : "Download backup"}
         </Button>
         <Button
@@ -111,8 +131,9 @@ export function BackupManager() {
           className="admin-action"
           onClick={() => fileInputRef.current?.click()}
           disabled={busy || DEMO_MODE}
+          aria-busy={state === "restoring"}
         >
-          <Upload className="h-4 w-4" />
+          {state === "restoring" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           {state === "restoring" ? "Restoring" : "Restore backup"}
         </Button>
         <input

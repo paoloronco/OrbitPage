@@ -16,6 +16,7 @@ import {
   BarChart2,
   CheckCircle2,
   Cookie,
+  Database,
   ExternalLink,
   FileText,
   Globe2,
@@ -91,13 +92,14 @@ interface AdminViewProps {
   onLogout: () => void;
 }
 
-export type AdminTab = "profile" | "links" | "theme" | "access" | "analytics" | "privacy" | "txt";
+export type AdminTab = "profile" | "links" | "theme" | "access" | "backup" | "analytics" | "privacy" | "txt";
 
 const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
   { value: "profile", label: "Page", icon: User },
   { value: "links", label: "Links", icon: Link },
   { value: "theme", label: "Theme", icon: Palette },
   { value: "access", label: "Access", icon: Key },
+  { value: "backup", label: "Backup", icon: Database },
   { value: "analytics", label: "Analytics", icon: BarChart2 },
   { value: "privacy", label: "Privacy", icon: Cookie },
   { value: "txt", label: "TXT", icon: FileText },
@@ -173,6 +175,7 @@ export const AdminView = ({
       case 'links':     return canEditLinks;
       case 'theme':     return canEditTheme;
       case 'access':    return !isHostedAdmin;
+      case 'backup':    return isHostedAdmin && canManageUsers;
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
       case 'txt':       return canEditCompliance;
@@ -423,6 +426,14 @@ export const AdminView = ({
                 {canManageUsers && <UserManager />}
                 {canManageUsers && <BackupManager />}
                 <PasswordManager />
+              </div>
+            </TabsContent>
+          )}
+
+          {isHostedAdmin && canManageUsers && (
+            <TabsContent value="backup" className="admin-tab-content">
+              <div className="admin-single-column" data-onboarding="backup-section">
+                <BackupManager hosted />
               </div>
             </TabsContent>
           )}

@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 const mockState = vi.hoisted(() => ({
+  backupProps: [] as Array<Record<string, unknown>>,
   privacyProps: [] as Array<Record<string, unknown>>,
   textFileProps: [] as Array<Record<string, unknown>>,
   previewProps: [] as Array<Record<string, unknown>>,
@@ -42,6 +43,12 @@ vi.mock('./LivePreview', () => ({
 vi.mock('./ClickAnalyticsChart', () => ({ ClickAnalyticsChart: () => <div>ClickAnalyticsChart</div> }));
 vi.mock('./PasswordManager', () => ({ PasswordManager: () => <div>PasswordManager</div> }));
 vi.mock('./UserManager', () => ({ UserManager: () => <div>UserManager</div> }));
+vi.mock('./BackupManager', () => ({
+  BackupManager: (props: Record<string, unknown>) => {
+    mockState.backupProps.push(props);
+    return <div>BackupManager</div>;
+  },
+}));
 vi.mock('./PrivacySettings', () => ({
   PrivacySettings: (props: Record<string, unknown>) => {
     mockState.privacyProps.push(props);
@@ -126,6 +133,8 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Encrypted session token');
     expect(html).not.toContain('PasswordManager');
     expect(html).not.toContain('Logout');
+    expect(html).toContain('Backup');
+    expect(mockState.backupProps.at(-1)).toMatchObject({ hosted: true });
     expect(html).toContain('admin-metrics-saas');
   });
 });

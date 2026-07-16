@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Compass,
+  Database,
   ExternalLink,
   FileText,
   Key,
@@ -20,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 
-type AdminOnboardingTab = "profile" | "links" | "theme" | "access" | "analytics" | "privacy" | "txt";
+type AdminOnboardingTab = "profile" | "links" | "theme" | "access" | "backup" | "analytics" | "privacy" | "txt";
 type OnboardingMode = "hidden" | "welcome" | "tour" | "minimized";
 
 interface AdminOnboardingProfile {
@@ -152,6 +153,18 @@ const tourSteps: TourStep[] = [
     action: "Confirm who can access the admin and where backups are handled.",
     doneLabel: "Access reviewed",
     checklist: ["Review existing users", "Know where backups live", "Change password only when needed"],
+  },
+  {
+    id: "backup",
+    tab: "backup",
+    target: "[data-onboarding='backup-section']",
+    icon: Database,
+    eyebrow: "7. Backup",
+    title: "Keep a portable copy of the managed page",
+    body: "Download the current profile, blocks, theme, privacy settings, and managed media references. Restoring affects only this signed-in workspace; account and billing data stay untouched.",
+    action: "Download a backup now and keep it somewhere you control.",
+    doneLabel: "Backup tools reviewed",
+    checklist: ["Download the JSON backup", "Keep it outside OrbitPage", "Restore only into the intended workspace"],
   },
   {
     id: "privacy",
@@ -342,6 +355,7 @@ export const AdminOnboarding = ({
           <span>Theme save</span>
           <span>Analytics</span>
           {visibleTabs.includes("access") && <span>Access</span>}
+          {visibleTabs.includes("backup") && <span>Backup</span>}
           <span>Privacy</span>
           <span>TXT</span>
           <span>Public check</span>
