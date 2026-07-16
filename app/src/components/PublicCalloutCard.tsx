@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
 import { getCalloutData } from "@/lib/link-blocks";
-import { apiPath } from "@/lib/base-path";
+import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { getPublicAccentStyle, getPublicBlockGap, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
 
@@ -15,7 +15,7 @@ export const PublicCalloutCard = ({ link }: PublicCalloutCardProps) => {
 
   const handleOpen = () => {
     if (link.url) {
-      fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
+      trackPublicLinkClick(link.id);
       window.open(link.url, "_blank", "noopener,noreferrer");
     }
   };

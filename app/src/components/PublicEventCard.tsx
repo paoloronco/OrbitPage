@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
-import { apiPath } from "@/lib/base-path";
+import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { getEventData } from "@/lib/link-blocks";
 import { ArrowUpRight, CalendarDays, Clock3, MapPin, Ticket } from "lucide-react";
 import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent } from "@/lib/public-block-style";
@@ -18,7 +18,7 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
 
   const handleOpen = () => {
     if (link.url) {
-      fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
+      trackPublicLinkClick(link.id);
       window.open(link.url, "_blank", "noopener,noreferrer");
     }
   };

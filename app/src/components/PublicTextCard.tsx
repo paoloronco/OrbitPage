@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Type, ExternalLink } from "lucide-react";
 import type { LinkData } from "./LinkCard";
-import { apiPath, internalAssetPath } from "@/lib/base-path";
+import { internalAssetPath } from "@/lib/base-path";
+import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { getPublicTextColor } from "@/lib/public-block-style";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
@@ -21,7 +22,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
 
   const trackClick = () => {
     if (link.url) {
-      fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
+      trackPublicLinkClick(link.id);
     }
   };
 

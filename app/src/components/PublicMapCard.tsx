@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
 import { apiPath } from "@/lib/base-path";
 import { getMapData } from "@/lib/link-blocks";
+import { hasStaticPublicSnapshot, trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, MapPinned, Navigation } from "lucide-react";
 import { getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent } from "@/lib/public-block-style";
 
@@ -166,6 +167,14 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
       };
     }
 
+    if (hasStaticPublicSnapshot()) {
+      setCoordinates(null);
+      setIsResolvingMap(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const controller = new AbortController();
     setIsResolvingMap(true);
     fetch(apiPath(`/map-preview?query=${encodeURIComponent(mapQuery)}`), {
@@ -192,7 +201,7 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
 
   const handleOpen = () => {
     if (resolvedMapUrl) {
-      fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
+      trackPublicLinkClick(link.id);
       window.open(resolvedMapUrl, "_blank", "noopener,noreferrer");
     }
   };

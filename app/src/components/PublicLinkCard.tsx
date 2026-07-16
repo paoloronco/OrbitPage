@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, MailPlus, Phone, ShoppingBag } from "lucide-react";
 import type { LinkData } from "./LinkCard";
-import { apiPath, internalAssetPath } from "@/lib/base-path";
+import { internalAssetPath } from "@/lib/base-path";
+import { trackPublicLinkClick } from "@/lib/public-runtime";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   if (!src) return null;
@@ -91,7 +92,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   
   const handleLinkClick = () => {
     if (link.url) {
-      fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
+      trackPublicLinkClick(link.id);
     }
   };
 

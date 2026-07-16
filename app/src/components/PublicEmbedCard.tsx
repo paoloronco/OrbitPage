@@ -3,6 +3,7 @@ import { CalendarDays, Code2, Mail, MapPinned, Music2, PlaySquare, ShieldCheck }
 import { Card } from "@/components/ui/card";
 import { consentManager } from "@/lib/consent-manager";
 import { apiPath } from "@/lib/base-path";
+import { hasStaticPublicSnapshot } from "@/lib/public-runtime";
 import {
   getEmbedData,
   getKnownEmbedUrl,
@@ -49,6 +50,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   const secondaryStyle = textColor ? { color: textColor, opacity: 0.72 } : undefined;
   const providerLabel = getEmbedProviderLabel(provider);
   const knownProviderUrl = getKnownEmbedUrl(provider, embed.snippet);
+  const staticCustomEmbedUnavailable = !knownProviderUrl && hasStaticPublicSnapshot();
 
   if (!embed.snippet) {
     return (
@@ -77,7 +79,17 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
         </div>
       </div>
 
-      {isGranted ? (
+      {isGranted && staticCustomEmbedUnavailable ? (
+        <div className={`border-t border-current/10 ${getPublicBlockPadding(link.size)}`}>
+          <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-current/15 bg-current/[0.04] px-5 py-7 text-center">
+            <Code2 className="h-7 w-7 opacity-65" />
+            <p className="mt-3 text-sm font-semibold">Custom embed unavailable</p>
+            <p className="mt-1 max-w-sm text-xs leading-5" style={secondaryStyle}>
+              This published page does not load custom embed code from the account API.
+            </p>
+          </div>
+        </div>
+      ) : isGranted ? (
         <div className="relative w-full overflow-hidden border-t border-current/10 bg-slate-950/10" style={{ height: `${embed.height || 360}px` }}>
           <iframe
             src={knownProviderUrl || apiPath(`/embed/${encodeURIComponent(link.id)}`)}

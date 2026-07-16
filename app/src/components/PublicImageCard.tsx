@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
-import { apiPath, internalAssetPath } from "@/lib/base-path";
+import { internalAssetPath } from "@/lib/base-path";
+import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, ImageOff } from "lucide-react";
 import { getPublicBlockPadding, getPublicBlockStyle } from "@/lib/public-block-style";
 
@@ -23,7 +24,7 @@ export const PublicImageCard = ({ link }: PublicImageCardProps) => {
 
   const trackClick = () => {
     if (!link.url) return;
-    fetch(apiPath(`/links/${encodeURIComponent(link.id)}/click`), { method: 'POST' }).catch(() => {});
+    trackPublicLinkClick(link.id);
   };
 
   if (!imageUrl) {
