@@ -234,6 +234,10 @@
     color: var(--profile-card-muted);
   }
 
+  .profile-card__details {
+    color: var(--profile-card-muted);
+  }
+
   .profile-card__avatar {
     border: 3px solid var(--profile-card-accent);
     box-shadow: 0 8px 24px color-mix(in srgb, var(--profile-card-accent) 24%, transparent);

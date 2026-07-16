@@ -29,23 +29,18 @@ test.describe('OrbitPage Application Flow', () => {
     await expect(profileTabTrigger).toBeVisible();
     await profileTabTrigger.click();
     
-    // Il profilo è inizialmente in modalità sola lettura. Clicchiamo sul pulsante Modifica (l'unico bottone con icona nella scheda profilo)
-    const editProfileButton = page.locator('.glass-card button').first();
-    await expect(editProfileButton).toBeVisible();
-    await editProfileButton.click();
-    
-    // Ora che siamo in modalità di modifica, modifichiamo il profilo
-    const nameInput = page.getByPlaceholder('Name, brand, venue, or project', { exact: true });
+    // Il nuovo editor del profilo resta sempre disponibile senza una modalita di sola lettura.
+    const nameInput = page.getByLabel('Page name');
     await expect(nameInput).toBeVisible();
     await nameInput.clear();
     await nameInput.fill('Mario Rossi');
 
-    const bioInput = page.getByPlaceholder('Tell people what this page is for...');
+    const bioInput = page.getByRole('textbox', { name: 'Description', exact: true });
     await bioInput.clear();
     await bioInput.fill('Sviluppatore Web ed entusiasta dell\'open-source.');
 
     // Clicchiamo su Salva nel Profilo
-    const saveProfileButton = page.locator('button:has-text("Save")').first();
+    const saveProfileButton = page.getByRole('button', { name: 'Save page' });
     await saveProfileButton.click();
 
     // 3. Spostiamoci sulla scheda "Links" e aggiungiamo un link pubblico
@@ -54,14 +49,13 @@ test.describe('OrbitPage Application Flow', () => {
     await linksTabTrigger.click();
 
     // Aggiungiamo una card link dalla griglia di creazione
-    await page.getByRole('button', { name: 'Link URL card' }).click();
+    await page.getByRole('button', { name: 'Add link' }).click();
 
     // La card viene creata in modalità visualizzazione: entriamo in modifica
     const linkCard = page.locator('.admin-link-list [data-link-id]').first();
     await expect(linkCard.getByRole('heading', { name: 'New link' })).toBeVisible();
     await linkCard.hover();
-    // Pulsanti azione (▲ ▼ Hide Edit Delete): Edit è il quarto
-    await linkCard.locator('button').nth(3).click();
+    await linkCard.getByRole('button', { name: 'Edit block' }).click();
 
     const linkTitleInput = page.getByPlaceholder('Link title');
     await expect(linkTitleInput).toBeVisible();

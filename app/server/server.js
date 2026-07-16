@@ -1087,8 +1087,10 @@ const stripStaticSeoTags = (html) => {
 
 const rewriteViteAssetUrls = (html, req) => {
   const assetBase = withRequestBasePath(req, '/assets/');
+  const brandBase = withRequestBasePath(req, '/brand/');
   return html
     .replace(/\b(src|href)=["'](?:\.\/|\/)?assets\//g, (_match, attr) => `${attr}="${assetBase}`)
+    .replace(/\b(src|href)=["'](?:\.\/|\/)?brand\//g, (_match, attr) => `${attr}="${brandBase}`)
     .replace(/\b(src|href)=["'](?:\.\/|\/)?favicon\.ico["']/g, (_match, attr) => `${attr}="${withRequestBasePath(req, '/favicon.ico')}"`)
     .replace(/\b(src|href)=["'](?:\.\/|\/)?placeholder\.svg["']/g, (_match, attr) => `${attr}="${withRequestBasePath(req, '/placeholder.svg')}"`);
 };
@@ -1887,8 +1889,13 @@ const ProfileAppearanceSchema = z.object({
   accentColor: ProfileColorSchema.optional(),
   avatarBorderEnabled: z.boolean().optional(),
   avatarBorderColor: ProfileColorSchema.optional(),
-  avatarShape: z.enum(['round', 'square']).optional(),
+  avatarShape: z.enum(['round', 'rounded', 'square']).optional(),
   avatarSize: z.number().min(56).max(192).optional(),
+  profilePreset: z.enum(['creator', 'company', 'studio']).optional(),
+  profileDetails: z.object({
+    primary: z.string().max(160).optional(),
+    secondary: z.string().max(240).optional(),
+  }).strip().optional(),
 }).strip();
 
 const ProfileSchema = z.object({

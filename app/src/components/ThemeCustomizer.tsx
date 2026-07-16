@@ -22,7 +22,6 @@ import {
   LockKeyhole,
   Palette,
   RotateCcw,
-  SlidersHorizontal,
   Sparkles,
   Type,
   Upload,
@@ -54,7 +53,6 @@ interface ThemeCustomizerProps {
 }
 
 type EditableTheme = ThemeConfig & { cardBlurTint?: string };
-type WorkspaceMode = "presets" | "manual";
 type PresetScope = "page" | "cards";
 
 interface ThemeColorControlProps {
@@ -257,7 +255,6 @@ export const ThemeCustomizer = ({
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
 }: ThemeCustomizerProps) => {
-  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("presets");
   const [presetScope, setPresetScope] = useState<PresetScope>("page");
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   const [pendingTheme, setPendingTheme] = useState<EditableTheme>(theme);
@@ -282,9 +279,8 @@ export const ThemeCustomizer = ({
   }, [theme]);
 
   useEffect(() => {
-    if (!advancedCustomizationEnabled && workspaceMode === "manual") setWorkspaceMode("presets");
     if (!premiumThemesEnabled && presetScope === "cards") setPresetScope("page");
-  }, [advancedCustomizationEnabled, premiumThemesEnabled, presetScope, workspaceMode]);
+  }, [premiumThemesEnabled, presetScope]);
 
   const previewTheme = (nextTheme: EditableTheme, presetId: string | null) => {
     setPendingTheme(nextTheme);
@@ -493,36 +489,7 @@ export const ThemeCustomizer = ({
         ) : null}
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-2" aria-label="Theme workflow">
-        <button
-          type="button"
-          onClick={() => setWorkspaceMode("presets")}
-          aria-pressed={workspaceMode === "presets"}
-          className={`flex items-start gap-4 rounded-2xl border p-5 text-left transition-all ${workspaceMode === "presets" ? "border-blue-500 bg-blue-50 shadow-[0_0_0_3px_rgb(59_130_246_/_0.1)]" : "border-slate-200 bg-white hover:border-slate-300"}`}
-        >
-          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${workspaceMode === "presets" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><Palette className="h-5 w-5" /></span>
-          <span>
-            <span className="block font-bold text-slate-950">Ready-made themes</span>
-            <span className="mt-1 block text-sm leading-5 text-slate-600">Start from a complete visual system with a real page mockup.</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => advancedCustomizationEnabled && setWorkspaceMode("manual")}
-          disabled={!advancedCustomizationEnabled}
-          aria-pressed={workspaceMode === "manual"}
-          className={`flex items-start gap-4 rounded-2xl border p-5 text-left transition-all ${workspaceMode === "manual" ? "border-blue-500 bg-blue-50 shadow-[0_0_0_3px_rgb(59_130_246_/_0.1)]" : "border-slate-200 bg-white hover:border-slate-300"} ${!advancedCustomizationEnabled ? "cursor-not-allowed opacity-65" : ""}`}
-        >
-          <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${workspaceMode === "manual" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><SlidersHorizontal className="h-5 w-5" /></span>
-          <span>
-            <span className="block font-bold text-slate-950">Fine tuning {!advancedCustomizationEnabled && <LockKeyhole className="ml-1 inline h-4 w-4" />}</span>
-            <span className="mt-1 block text-sm leading-5 text-slate-600">{advancedCustomizationEnabled ? "Edit every color, surface, type and layout value without restrictions." : "Advanced customization is available on Pro."}</span>
-          </span>
-        </button>
-      </div>
-
-      {workspaceMode === "presets" ? (
-        <div className="admin-theme-layout">
+      <div className="admin-theme-layout">
         <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
           <div className="relative mb-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
             <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
@@ -577,20 +544,27 @@ export const ThemeCustomizer = ({
           )}
         </section>
         {livePreviewPanel}
-        </div>
-      ) : (
-        <section className="admin-theme-layout">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+      </div>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">Manual controls</p>
                 <h3 className="mt-1 text-xl font-bold text-slate-950">Fine tuning</h3>
+                <p className="mt-1 text-sm text-slate-500">Adjust colors, type, layout and background after choosing a starting theme.</p>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={resetTheme}>
+              <Button type="button" variant="outline" size="sm" onClick={resetTheme} disabled={!advancedCustomizationEnabled}>
                 <RotateCcw className="mr-2 h-4 w-4" /> Reset defaults
               </Button>
             </div>
 
+            {!advancedCustomizationEnabled ? (
+              <div className="admin-inline-plan-lock">
+                <LockKeyhole className="h-4 w-4" />
+                <span>Fine tuning is available on Pro. Your preset and card-style controls remain available above.</span>
+                <a href={managePlanHref} target="_top">View plans</a>
+              </div>
+            ) : (
             <Tabs defaultValue="colors" className="w-full">
               <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-slate-100 p-1 sm:grid-cols-4">
                 <TabsTrigger value="colors" className="gap-1.5 py-2.5"><Palette className="h-4 w-4" /> Colors</TabsTrigger>
@@ -848,11 +822,8 @@ export const ThemeCustomizer = ({
                 />
               </TabsContent>
             </Tabs>
-          </div>
-
-          {livePreviewPanel}
-        </section>
-      )}
+            )}
+      </section>
     </div>
   );
 };

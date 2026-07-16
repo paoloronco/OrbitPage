@@ -80,6 +80,8 @@ export const LivePreview = ({ profile, links, theme, publicPageHref = "/", devic
     profile.name?.trim() ||
     profile.bio?.trim() ||
     (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||
+    profile.appearance?.profileDetails?.primary ||
+    profile.appearance?.profileDetails?.secondary ||
     hasCustomAvatar
   );
   const visibleLinks = links.filter(link => {

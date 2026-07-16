@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Linkedin, Github, Instagram, Facebook, Twitter, Youtube } from "lucide-react";
+import { BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, Twitter, Youtube } from "lucide-react";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
@@ -41,7 +41,9 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand" }
   const hasSocialLinks = Boolean(
     profile.socialLinks && Object.values(profile.socialLinks).some(link => link)
   );
-  const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || profile.showAvatar !== false);
+  const profileDetails = profile.appearance?.profileDetails;
+  const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);
+  const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || profile.showAvatar !== false);
 
   if (!hasVisibleProfile) return null;
 
@@ -60,6 +62,13 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand" }
           <h1 className="profile-card__title mb-2 font-bold" style={{ ...(profile.nameFontSize ? { fontSize: profile.nameFontSize } : { fontSize: '2rem' }) }}>
             {displayName}
           </h1>
+        )}
+
+        {hasProfileDetails && (
+          <div className="profile-card__details flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
+            {profileDetails?.primary && <span className="inline-flex items-center gap-1.5"><BriefcaseBusiness className="h-3.5 w-3.5" />{profileDetails.primary}</span>}
+            {profileDetails?.secondary && <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{profileDetails.secondary}</span>}
+          </div>
         )}
         
         {/* Social Icons */}

@@ -432,6 +432,42 @@ describe('API Endpoints', () => {
     expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('/privacy');
   });
 
+  it('PUT /api/profile persists contextual profile presets and rounded avatars', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({ id: 1, appearance: '{}' });
+    vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
+
+    const response = await request(app)
+      .put('/api/profile')
+      .send({
+        name: 'Orbit Studio',
+        bio: 'Independent design practice.',
+        avatar: '',
+        social_links: {},
+        appearance: {
+          profilePreset: 'studio',
+          profileDetails: {
+            primary: 'Brand and digital design',
+            secondary: 'Turin, Italy',
+          },
+          avatarShape: 'rounded',
+          cardBorderEnabled: false,
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    const savedAppearance = JSON.parse(vi.mocked(dbRun).mock.calls[0][1][15]);
+    expect(savedAppearance).toEqual({
+      profilePreset: 'studio',
+      profileDetails: {
+        primary: 'Brand and digital design',
+        secondary: 'Turin, Italy',
+      },
+      avatarShape: 'rounded',
+      cardBorderEnabled: false,
+    });
+  });
+
   it('PUT /api/theme accepts and persists modern profile and content card palettes', async () => {
     const response = await request(app)
       .put('/api/theme')
@@ -588,7 +624,9 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('href="https://github.com/example"');
     expect(response.text).toContain('src="/assets/');
     expect(response.text).toContain('href="/assets/');
+    expect(response.text).toContain('href="/brand/orbitpage-mark.svg"');
     expect(response.text).not.toContain('src="./assets/');
+    expect(response.text).not.toContain('href="./brand/');
   });
 
   it('GET /orbitpage serves the SPA with base-path-aware metadata and runtime config', async () => {
@@ -614,8 +652,10 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/orbitpage/"');
     expect(response.text).toContain('src="/orbitpage/assets/');
     expect(response.text).toContain('href="/orbitpage/assets/');
+    expect(response.text).toContain('href="/orbitpage/brand/orbitpage-mark.svg"');
     expect(response.text).not.toContain('src="/assets/');
     expect(response.text).not.toContain('href="/assets/');
+    expect(response.text).not.toContain('href="./brand/');
   });
 
   it('removes static structured-data scripts even when nested markup reintroduces a script tag', () => {

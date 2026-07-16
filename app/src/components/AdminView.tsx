@@ -136,6 +136,7 @@ export const AdminView = ({
   const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
+  const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
   const publicPageHref = getPublicUrlOverride() || withBasePath('/');
   const entitlements = saasPlan?.entitlements;
@@ -146,6 +147,10 @@ export const AdminView = ({
     saasBilling ||
     (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("apiBase"))
   );
+
+  useEffect(() => {
+    setPreviewProfile(profile);
+  }, [profile]);
 
   useEffect(() => {
     setPreviewLinks(links);
@@ -361,6 +366,7 @@ export const AdminView = ({
                   profile={profile}
                   theme={theme}
                   onProfileUpdate={onProfileUpdate}
+                  onProfilePreview={setPreviewProfile}
                   seoAccess={entitlements?.seo}
                   managePlanHref={managePlanHref}
                   onStartOnboarding={() => setOnboardingReplayKey(key => key + 1)}
@@ -372,7 +378,7 @@ export const AdminView = ({
               <aside className="admin-workbench-rail">
                 <PreviewPanel
                   title="Profile and identity"
-                  profile={profile}
+                  profile={previewProfile}
                   links={links}
                   theme={theme}
                   publicPageHref={publicPageHref}

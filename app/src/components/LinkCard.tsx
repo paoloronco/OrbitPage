@@ -386,6 +386,7 @@ export const LinkCard = ({
           size="icon"
           className="w-8 h-8"
           title="Move up"
+          aria-label="Move up"
         >
           ▲
         </Button>
@@ -397,6 +398,7 @@ export const LinkCard = ({
           size="icon"
           className="w-8 h-8"
           title="Move down"
+          aria-label="Move down"
         >
           ▼
         </Button>
@@ -408,6 +410,7 @@ export const LinkCard = ({
           size="icon"
           className="w-8 h-8"
           title={isVisible ? 'Hide link' : 'Show link'}
+          aria-label={isVisible ? 'Hide link' : 'Show link'}
         >
           {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
         </Button>
@@ -417,6 +420,8 @@ export const LinkCard = ({
         variant="ghost"
         size="icon"
         className="w-8 h-8"
+        title="Edit block"
+        aria-label="Edit block"
       >
         <Edit className="w-3 h-3" />
       </Button>
@@ -426,6 +431,8 @@ export const LinkCard = ({
           variant="ghost"
           size="icon"
           className="w-8 h-8 text-destructive hover:text-destructive"
+          title="Delete block"
+          aria-label="Delete block"
         >
           <Trash2 className="w-3 h-3" />
         </Button>
@@ -1515,6 +1522,7 @@ export const LinkCard = ({
                   size="icon"
                   className="w-8 h-8"
                   title="Move up"
+                  aria-label="Move up"
                 >
                   ▲
                 </Button>
@@ -1526,6 +1534,7 @@ export const LinkCard = ({
                   size="icon"
                   className="w-8 h-8"
                   title="Move down"
+                  aria-label="Move down"
                 >
                   ▼
                 </Button>
@@ -1537,6 +1546,7 @@ export const LinkCard = ({
                   size="icon"
                   className="w-8 h-8"
                   title={isVisible ? 'Hide link' : 'Show link'}
+                  aria-label={isVisible ? 'Hide link' : 'Show link'}
                 >
                   {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
                 </Button>
@@ -1546,6 +1556,8 @@ export const LinkCard = ({
                 variant="ghost"
                 size="icon"
                 className="w-8 h-8"
+                title="Edit block"
+                aria-label="Edit block"
               >
                 <Edit className="w-3 h-3" />
               </Button>
@@ -1555,6 +1567,8 @@ export const LinkCard = ({
                   variant="ghost"
                   size="icon"
                   className="w-8 h-8 text-destructive hover:text-destructive"
+                  title="Delete block"
+                  aria-label="Delete block"
                 >
                   <Trash2 className="w-3 h-3" />
                 </Button>

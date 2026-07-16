@@ -48,6 +48,8 @@ export const PublicView = ({
     profile.name?.trim() ||
     profile.bio?.trim() ||
     (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||
+    profile.appearance?.profileDetails?.primary ||
+    profile.appearance?.profileDetails?.secondary ||
     hasCustomAvatar
   );
 

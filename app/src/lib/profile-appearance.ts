@@ -9,8 +9,13 @@ export interface ProfileAppearance {
   accentColor?: string;
   avatarBorderEnabled?: boolean;
   avatarBorderColor?: string;
-  avatarShape?: "round" | "square";
+  avatarShape?: "round" | "rounded" | "square";
   avatarSize?: number;
+  profilePreset?: "creator" | "company" | "studio";
+  profileDetails?: {
+    primary?: string;
+    secondary?: string;
+  };
 }
 
 type ProfileCssProperties = CSSProperties & Record<`--profile-card-${string}`, string>;
@@ -43,7 +48,13 @@ export const getProfileAvatarStyle = (appearance?: ProfileAppearance): CSSProper
   const avatarSize = Math.min(192, Math.max(56, appearance?.avatarSize ?? 112));
   const style: CSSProperties = { width: `${avatarSize}px`, height: `${avatarSize}px` };
   if (!appearance) return style;
-  if (appearance.avatarShape) style.borderRadius = appearance.avatarShape === "square" ? "12px" : "9999px";
+  if (appearance.avatarShape) {
+    style.borderRadius = appearance.avatarShape === "square"
+      ? "0px"
+      : appearance.avatarShape === "rounded"
+        ? "20px"
+        : "9999px";
+  }
   if (appearance.avatarBorderEnabled === false) {
     style.border = "none";
     style.boxShadow = "none";
