@@ -1477,8 +1477,9 @@ export const LinkCard = ({
             )}
             
             <div className="flex gap-2">
-              <Button onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo}>
-                {uploadingImage || uploadingVideo ? "Uploading..." : "Save"}
+              <Button aria-busy={Boolean(uploadingImage) || uploadingVideo} onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo}>
+                {(uploadingImage || uploadingVideo) && <Loader2 className="h-4 w-4 animate-spin" />}
+                {uploadingImage || uploadingVideo ? "Preparing media" : "Save"}
               </Button>
               <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo}>
                 Cancel

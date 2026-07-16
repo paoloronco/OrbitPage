@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ExternalLink, FileText, RotateCcw, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, FileText, Loader2, RotateCcw, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -191,6 +191,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
+                aria-busy={state === "saving"}
                 type="button"
                 variant="outline"
                 className="admin-action"
@@ -206,8 +207,8 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
                 onClick={save}
                 disabled={busy || readOnly || !dirty}
               >
-                <Save className="h-4 w-4" />
-                {state === "saving" ? "Saving" : "Save"}
+                {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {state === "saving" ? "Saving file" : "Save"}
               </Button>
             </div>
           </div>

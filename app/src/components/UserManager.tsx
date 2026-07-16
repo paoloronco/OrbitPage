@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
+  Loader2,
   Pencil,
   Plus,
   Shield,
@@ -335,8 +336,9 @@ export const UserManager = () => {
               {addMsg.text}
             </div>
           )}
-          <Button type="submit" variant="gradient" size="sm" className="w-full" disabled={addLoading}>
-            {addLoading ? 'Creating…' : 'Create user'}
+          <Button aria-busy={addLoading} type="submit" variant="gradient" size="sm" className="w-full" disabled={addLoading}>
+            {addLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+            {addLoading ? 'Creating user' : 'Create user'}
           </Button>
         </form>
       )}
@@ -440,8 +442,9 @@ export const UserManager = () => {
                       </div>
                     )}
                     <div className="flex gap-2">
-                      <Button type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
-                        {editLoading ? 'Saving…' : 'Save password'}
+                      <Button aria-busy={editLoading} type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
+                        {editLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {editLoading ? 'Saving password' : 'Save password'}
                       </Button>
                       <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={editLoading}>
                         Cancel
@@ -477,8 +480,9 @@ export const UserManager = () => {
                       </div>
                     )}
                     <div className="flex gap-2">
-                      <Button type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
-                        {editLoading ? 'Saving…' : 'Save role'}
+                      <Button aria-busy={editLoading} type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
+                        {editLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                        {editLoading ? 'Saving role' : 'Save role'}
                       </Button>
                       <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={editLoading}>
                         Cancel

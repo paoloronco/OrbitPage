@@ -18,6 +18,7 @@ import {
   ImagePlay,
   Layout,
   Layers3,
+  Loader2,
   LockKeyhole,
   Palette,
   RotateCcw,
@@ -460,8 +461,9 @@ export const ThemeCustomizer = ({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={saveTheme} disabled={!isDirty || saveState === "saving"} className="bg-blue-500 text-white hover:bg-blue-400">
-              {saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved" : "Save theme"}
+            <Button aria-busy={saveState === "saving"} type="button" onClick={saveTheme} disabled={!isDirty || saveState === "saving"} className="bg-blue-500 text-white hover:bg-blue-400">
+              {saveState === "saving" && <Loader2 className="h-4 w-4 animate-spin" />}
+              {saveState === "saving" ? "Saving theme" : saveState === "saved" ? "Saved" : "Save theme"}
             </Button>
             <Button type="button" variant="outline" onClick={exportTheme} className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
               <FileDown className="mr-2 h-4 w-4" /> Export

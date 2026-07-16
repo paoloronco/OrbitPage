@@ -113,6 +113,25 @@
   }
 }
 
+/* One calm loading language across the OSS editor and the embedded SaaS app. */
+.animate-spin {
+  animation: orbitpage-loader-turn 1.8s linear infinite !important;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@keyframes orbitpage-loader-turn {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin {
+    animation: none !important;
+    opacity: 0.72;
+    will-change: auto;
+  }
+}
+
 @layer base {
   * {
     border-color: hsl(var(--border));

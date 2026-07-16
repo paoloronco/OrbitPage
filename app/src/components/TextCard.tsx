@@ -661,8 +661,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
             
             <div className="flex gap-2">
-              <Button onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>
-                {uploadingImage ? "Uploading..." : "Save"}
+              <Button aria-busy={Boolean(uploadingImage)} onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>
+                {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
+                {uploadingImage ? "Preparing image" : "Save"}
               </Button>
               <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage)}>
                 Cancel
