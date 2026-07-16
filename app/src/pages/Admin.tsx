@@ -297,7 +297,7 @@ const Admin = () => {
     } catch (error: any) {
       if (error?.message === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);
-        return;
+        throw new Error('Your session expired. Sign in again before retrying the save.');
       }
       console.error('Error saving links:', error);
       toast({
@@ -305,6 +305,7 @@ const Admin = () => {
         description: error?.message || 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
+      throw error instanceof Error ? error : new Error('Changes could not be saved. Try again.');
     }
   };
 
