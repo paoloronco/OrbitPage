@@ -528,9 +528,10 @@ export const authApi = {
 };
 
 export const backupApi = {
-  download: async (): Promise<Blob> => {
+  download: async (sections?: readonly string[]): Promise<Blob> => {
     const authHeaders = await getAuthenticatedRequestHeaders();
-    const response = await fetch(resolveApiUrl('/admin/backup'), {
+    const query = sections?.length ? `?sections=${encodeURIComponent(sections.join(','))}` : '';
+    const response = await fetch(resolveApiUrl(`/admin/backup${query}`), {
       headers: authHeaders,
     });
 
@@ -542,10 +543,10 @@ export const backupApi = {
     return response.blob();
   },
 
-  restore: async (backup: unknown): Promise<ApiResponse> => {
+  restore: async (backup: unknown, sections?: readonly string[]): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>('/admin/restore', {
       method: 'POST',
-      body: JSON.stringify(backup),
+      body: JSON.stringify(sections ? { backup, sections } : backup),
     });
   },
 };

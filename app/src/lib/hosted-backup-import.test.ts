@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { prepareHostedRestoreBackup } from './hosted-backup-import';
+import { inspectOrbitPageBackup, prepareHostedRestoreBackup } from './hosted-backup-import';
 
 describe('hosted backup import', () => {
   it('converts an OSS application backup without carrying admin credentials', async () => {
@@ -79,6 +79,51 @@ describe('hosted backup import', () => {
     const result = await prepareHostedRestoreBackup(backup, vi.fn());
     expect(result.source).toBe('managed');
     expect(result.backup).toEqual(backup);
+  });
+
+  it('converts only selected OSS sections and skips media migration when media is excluded', async () => {
+    const upload = vi.fn();
+    const source = {
+      schemaVersion: 1,
+      appVersion: '4.7.0',
+      createdAt: '2026-07-16T14:35:34.176Z',
+      tables: {
+        profile_data: [{ name: 'Selected', avatar: '/uploads/avatar.png' }],
+        links: [{ id: 'not-selected', title: 'Link' }],
+        theme_config: [{ full_config: '{"primary":"#167d91"}' }],
+        cookie_consent_config: [{ full_config: '{"enabled":true}' }],
+      },
+      uploads: [{ path: 'avatar.png', data: 'YXZhdGFy' }],
+    };
+
+    const result = await prepareHostedRestoreBackup(source, upload, ['profile']);
+
+    expect(result.backup).toMatchObject({
+      schemaVersion: 2,
+      includedSections: ['profile'],
+      content: { profile: { name: 'Selected', avatar: '/uploads/avatar.png' } },
+    });
+    expect((result.backup as { content: Record<string, unknown> }).content).not.toHaveProperty('links');
+    expect(upload).not.toHaveBeenCalled();
+    expect(result.skippedUploads).toBe(1);
+  });
+
+  it('detects sections in legacy and selective backups', () => {
+    expect(inspectOrbitPageBackup({
+      schemaVersion: 2,
+      includedSections: ['profile', 'media'],
+      tables: { profile_data: [] },
+      uploads: [],
+    })).toEqual({ source: 'self-hosted', sections: ['profile', 'media'] });
+
+    expect(inspectOrbitPageBackup({
+      format: 'orbitpage-managed-page',
+      schemaVersion: 1,
+      runtimeVersion: '4.7.0',
+      createdAt: '2026-07-16T14:35:34.176Z',
+      source: { username: 'legacy' },
+      content: { profile: {}, links: [], theme: {}, consentConfig: {} },
+    }).sections).toEqual(['profile', 'links', 'theme', 'privacy']);
   });
 
   it('rejects unknown backup formats', async () => {

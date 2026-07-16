@@ -2,6 +2,17 @@ export const MAX_HOSTED_BACKUP_FILE_BYTES = 256 * 1024 * 1024;
 export const MAX_MANAGED_BACKUP_PAYLOAD_BYTES = 2 * 1024 * 1024;
 
 const MANAGED_BACKUP_FORMAT = 'orbitpage-managed-page';
+export const BACKUP_SECTION_IDS = [
+  'profile',
+  'links',
+  'theme',
+  'privacy',
+  'discovery',
+  'accounts',
+  'media',
+] as const;
+export const MANAGED_BACKUP_SECTION_IDS = ['profile', 'links', 'theme', 'privacy'] as const;
+export type BackupSectionId = typeof BACKUP_SECTION_IDS[number];
 const ALLOWED_MEDIA_TYPES = new Set([
   'image/gif',
   'image/jpeg',
@@ -32,6 +43,11 @@ export type HostedBackupImportResult = {
   source: 'managed' | 'self-hosted';
   migratedMedia: number;
   skippedUploads: number;
+};
+
+export type OrbitPageBackupInspection = {
+  source: 'managed' | 'self-hosted';
+  sections: BackupSectionId[];
 };
 
 type HostedBackupMediaUploader = (media: HostedBackupMedia) => Promise<string>;
@@ -231,14 +247,53 @@ function asUploadMap(input: unknown) {
 }
 
 function isManagedBackup(input: unknown): input is JsonRecord {
-  return isRecord(input) && input.format === MANAGED_BACKUP_FORMAT && isRecord(input.content);
+  return isRecord(input) && input.format === MANAGED_BACKUP_FORMAT &&
+    (input.schemaVersion === 1 || input.schemaVersion === 2) && isRecord(input.content);
 }
 
 function isOssApplicationBackup(input: unknown): input is JsonRecord {
-  return isRecord(input) && input.schemaVersion === 1 && isRecord(input.tables) && Array.isArray(input.uploads);
+  return isRecord(input) && (input.schemaVersion === 1 || input.schemaVersion === 2) &&
+    isRecord(input.tables) && Array.isArray(input.uploads);
 }
 
-function selfHostedContent(input: JsonRecord) {
+function normalizeDeclaredSections(value: unknown, fallback: readonly BackupSectionId[]) {
+  if (value === undefined) return [...fallback];
+  if (!Array.isArray(value) || value.length === 0) throw new Error('This backup has no selectable sections.');
+  const sections = [...new Set(value.map(String))];
+  if (sections.some((section) => !BACKUP_SECTION_IDS.includes(section as BackupSectionId))) {
+    throw new Error('This backup declares an unsupported section.');
+  }
+  return sections as BackupSectionId[];
+}
+
+export function inspectOrbitPageBackup(input: unknown): OrbitPageBackupInspection {
+  if (isManagedBackup(input)) {
+    if (input.schemaVersion === 2 && !Array.isArray(input.includedSections)) {
+      throw new Error('This selective managed backup is missing its included sections.');
+    }
+    const sections = input.schemaVersion === 1
+      ? [...MANAGED_BACKUP_SECTION_IDS]
+      : normalizeDeclaredSections(input.includedSections, []);
+    if (sections.some((section) => !MANAGED_BACKUP_SECTION_IDS.includes(section as typeof MANAGED_BACKUP_SECTION_IDS[number]))) {
+      throw new Error('This managed backup declares an unsupported section.');
+    }
+    return { source: 'managed', sections };
+  }
+  if (isOssApplicationBackup(input)) {
+    if (input.schemaVersion === 2 && !Array.isArray(input.includedSections)) {
+      throw new Error('This selective backup is missing its included sections.');
+    }
+    return {
+      source: 'self-hosted',
+      sections: input.schemaVersion === 1
+        ? [...BACKUP_SECTION_IDS]
+        : normalizeDeclaredSections(input.includedSections, []),
+    };
+  }
+  throw new Error('This is not a supported OrbitPage backup.');
+}
+
+function selfHostedContent(input: JsonRecord, sections: readonly BackupSectionId[]) {
   const tables = input.tables as JsonRecord;
   const profileRows = Array.isArray(tables.profile_data) ? tables.profile_data.filter(isRecord) : [];
   const linkRows = Array.isArray(tables.links) ? tables.links.filter(isRecord) : [];
@@ -246,32 +301,45 @@ function selfHostedContent(input: JsonRecord) {
   const consentRows = Array.isArray(tables.cookie_consent_config) ? tables.cookie_consent_config.filter(isRecord) : [];
 
   return {
-    profile: mapProfile(profileRows[0] || {}),
-    links: linkRows
-      .slice()
-      .sort((left, right) => Number(left.sort_order || 0) - Number(right.sort_order || 0))
-      .map(mapLink),
-    theme: mapTheme(themeRows[0] || {}),
-    consentConfig: mapConsentConfig(consentRows[0] || {}),
+    ...(sections.includes('profile') ? { profile: mapProfile(profileRows[0] || {}) } : {}),
+    ...(sections.includes('links') ? {
+      links: linkRows
+        .slice()
+        .sort((left, right) => Number(left.sort_order || 0) - Number(right.sort_order || 0))
+        .map(mapLink),
+    } : {}),
+    ...(sections.includes('theme') ? { theme: mapTheme(themeRows[0] || {}) } : {}),
+    ...(sections.includes('privacy') ? { consentConfig: mapConsentConfig(consentRows[0] || {}) } : {}),
   };
 }
 
 export async function prepareHostedRestoreBackup(
   input: unknown,
   uploadMedia: HostedBackupMediaUploader,
+  requestedSections?: readonly BackupSectionId[],
 ): Promise<HostedBackupImportResult> {
-  if (!isManagedBackup(input) && !isOssApplicationBackup(input)) {
-    throw new Error('This is not a supported OrbitPage backup.');
-  }
-
-  const source = isManagedBackup(input) ? 'managed' : 'self-hosted';
-  const uploads = source === 'self-hosted' ? asUploadMap(input.uploads) : new Map<string, OssUpload>();
+  const managedInput = isManagedBackup(input) ? input : null;
+  const selfHostedInput = isOssApplicationBackup(input) ? input : null;
+  if (!managedInput && !selfHostedInput) throw new Error('This is not a supported OrbitPage backup.');
+  const inspection = inspectOrbitPageBackup(input);
+  const source = inspection.source;
+  const selectedSections = requestedSections
+    ? [...new Set(requestedSections)]
+    : inspection.sections;
+  const unavailable = selectedSections.find((section) => !inspection.sections.includes(section));
+  if (unavailable) throw new Error(`Backup does not contain section: ${unavailable}`);
+  const contentSections = selectedSections.filter((section) =>
+    MANAGED_BACKUP_SECTION_IDS.includes(section as typeof MANAGED_BACKUP_SECTION_IDS[number]));
+  if (contentSections.length === 0) throw new Error('Select at least one page section to restore.');
+  const migrateSelectedMedia = source === 'self-hosted' && selectedSections.includes('media');
+  const uploads = selfHostedInput ? asUploadMap(selfHostedInput.uploads) : new Map<string, OssUpload>();
   const referencedUploads = new Set<string>();
   const mediaCache = new Map<string, Promise<string>>();
   let migratedMedia = 0;
 
   const migrateValue = async (value: unknown, path: Array<string | number>): Promise<unknown> => {
     if (typeof value === 'string') {
+      if (!migrateSelectedMedia && source === 'self-hosted') return value;
       if (!isMediaPath(path)) return value;
       const embedded = parseDataUrl(value);
       const uploadPath = embedded ? null : normalizeUploadPath(value);
@@ -317,9 +385,13 @@ export async function prepareHostedRestoreBackup(
     return value;
   };
 
+  const sourceContent = managedInput ? managedInput.content as JsonRecord : null;
   const rawContent = source === 'managed'
-    ? (input.content as JsonRecord)
-    : selfHostedContent(input);
+    ? Object.fromEntries(contentSections.map((section) => {
+        const key = section === 'privacy' ? 'consentConfig' : section;
+        return [key, sourceContent?.[key]];
+      }))
+    : selfHostedContent(selfHostedInput as JsonRecord, contentSections);
   const content = await migrateValue(rawContent, ['content']) as JsonRecord;
 
   const links = Array.isArray(content.links) ? content.links : [];
@@ -330,18 +402,23 @@ export async function prepareHostedRestoreBackup(
     link.content = JSON.stringify(await migrateValue(parsedContent, ['content', 'links', index, 'content']));
   }
 
-  const backup = source === 'managed'
-    ? { ...input, content }
-    : {
-        format: MANAGED_BACKUP_FORMAT,
-        schemaVersion: 1,
-        runtimeVersion: requiredString(input.appVersion).slice(0, 40) || 'self-hosted',
-        createdAt: typeof input.createdAt === 'string' && !Number.isNaN(Date.parse(input.createdAt))
-          ? input.createdAt
-          : new Date().toISOString(),
-        source: { username: 'self-hosted' },
-        content,
-      };
+  const isComplete = MANAGED_BACKUP_SECTION_IDS.every((section) => contentSections.includes(section));
+  const backup = {
+    format: MANAGED_BACKUP_FORMAT,
+    schemaVersion: isComplete ? 1 : 2,
+    runtimeVersion: managedInput
+      ? requiredString(managedInput.runtimeVersion).slice(0, 40) || 'managed'
+      : requiredString(selfHostedInput?.appVersion).slice(0, 40) || 'self-hosted',
+    createdAt: typeof (managedInput || selfHostedInput)?.createdAt === 'string' &&
+      !Number.isNaN(Date.parse((managedInput || selfHostedInput)?.createdAt as string))
+      ? (managedInput || selfHostedInput)?.createdAt
+      : new Date().toISOString(),
+    source: managedInput && isRecord(managedInput.source)
+      ? managedInput.source
+      : { username: 'self-hosted' },
+    ...(!isComplete ? { includedSections: contentSections } : {}),
+    content,
+  };
 
   return {
     backup,

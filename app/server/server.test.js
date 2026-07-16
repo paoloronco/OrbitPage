@@ -137,6 +137,25 @@ describe('API Endpoints', () => {
     });
   });
 
+  it('GET /api/admin/backup forwards an explicit section selection', async () => {
+    vi.mocked(createApplicationBackup).mockResolvedValueOnce({
+      schemaVersion: 2,
+      includedSections: ['profile', 'theme'],
+      tables: { profile_data: [], theme_config: [] },
+      uploads: [],
+    });
+
+    const response = await request(app).get('/api/admin/backup?sections=profile,theme');
+
+    expect(response.status).toBe(200);
+    expect(createApplicationBackup).toHaveBeenCalledWith({
+      appVersion: expect.any(String),
+      dbAll,
+      uploadsPath: expect.any(String),
+      sections: ['profile', 'theme'],
+    });
+  });
+
   it('POST /api/admin/restore restores a backup inside a transaction', async () => {
     const backup = {
       schemaVersion: 1,
@@ -153,6 +172,26 @@ describe('API Endpoints', () => {
     expect(withTransaction).toHaveBeenCalled();
     expect(restoreApplicationBackup).toHaveBeenCalledWith({
       backup,
+      dbRun,
+      uploadsPath: expect.any(String),
+    });
+  });
+
+  it('POST /api/admin/restore forwards a selective restore without changing the backup', async () => {
+    const backup = {
+      schemaVersion: 1,
+      tables: { profile_data: [{ id: 1, name: 'Restored' }] },
+      uploads: [],
+    };
+
+    const response = await request(app)
+      .post('/api/admin/restore')
+      .send({ backup, sections: ['profile'] });
+
+    expect(response.status).toBe(200);
+    expect(restoreApplicationBackup).toHaveBeenCalledWith({
+      backup,
+      sections: ['profile'],
       dbRun,
       uploadsPath: expect.any(String),
     });

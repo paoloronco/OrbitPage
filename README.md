@@ -208,7 +208,9 @@ orbitpage.db
 uploads/
 ```
 
-For Docker, persist `/app/data`. Back up both the database and uploads together, or use the JSON backup/restore controls in the Admin workspace. Never recreate a production container without its existing volume or bind mount.
+For Docker, persist `/app/data`. Back up both the database and uploads together, or use the JSON backup/restore controls in the Admin workspace. Export and restore can be limited to profile data, blocks, appearance, privacy, discovery files, administrator accounts, or uploaded media. Unselected restore sections are left unchanged.
+
+Complete exports retain the historical schema-v1 format. Selective exports use schema v2 and declare their included sections explicitly; current versions accept both formats. Keep an occasional complete backup even when selective backups are convenient, and never recreate a production container without its existing volume or bind mount.
 
 ## Deploying in Production
 

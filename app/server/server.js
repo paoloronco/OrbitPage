@@ -2962,11 +2962,16 @@ app.post('/api/auth/force-reset', resetLimiter, async (req, res) => {
 
 app.get('/api/admin/backup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   try {
-    const backup = await createApplicationBackup({
+    const requestedSections = typeof req.query.sections === 'string'
+      ? req.query.sections.split(',').map((section) => section.trim()).filter(Boolean)
+      : undefined;
+    const backupOptions = {
       appVersion: APP_VERSION,
       dbAll,
       uploadsPath,
-    });
+    };
+    if (requestedSections) backupOptions.sections = requestedSections;
+    const backup = await createApplicationBackup(backupOptions);
     const date = new Date().toISOString().slice(0, 10);
 
     res.setHeader('Content-Disposition', `attachment; filename="orbitpage-backup-${date}.json"`);
@@ -2983,12 +2988,18 @@ app.post('/api/admin/restore', authenticateToken, requirePermission('users:manag
   }
 
   try {
+    const isSelectiveRequest = req.body && typeof req.body === 'object' && !Array.isArray(req.body) &&
+      Object.prototype.hasOwnProperty.call(req.body, 'backup');
+    const backup = isSelectiveRequest ? req.body.backup : req.body;
+    const requestedSections = isSelectiveRequest ? req.body.sections : undefined;
     await withTransaction(async () => {
-      await restoreApplicationBackup({
-        backup: req.body,
+      const restoreOptions = {
+        backup,
         dbRun,
         uploadsPath,
-      });
+      };
+      if (requestedSections !== undefined) restoreOptions.sections = requestedSections;
+      await restoreApplicationBackup(restoreOptions);
     });
 
     res.json({ success: true, message: 'Backup restored successfully.' });

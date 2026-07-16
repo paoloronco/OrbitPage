@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 export const BACKUP_SCHEMA_VERSION = 1;
+export const SELECTIVE_BACKUP_SCHEMA_VERSION = 2;
 export const BACKUP_TABLES = [
   'admin_users',
   'profile_data',
@@ -10,6 +11,25 @@ export const BACKUP_TABLES = [
   'cookie_consent_config',
   'text_files',
 ];
+export const BACKUP_SECTIONS = [
+  'profile',
+  'links',
+  'theme',
+  'privacy',
+  'discovery',
+  'accounts',
+  'media',
+];
+
+const SECTION_TABLES = {
+  profile: ['profile_data'],
+  links: ['links'],
+  theme: ['theme_config'],
+  privacy: ['cookie_consent_config'],
+  discovery: ['text_files'],
+  accounts: ['admin_users'],
+  media: [],
+};
 
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -66,13 +86,48 @@ function normalizeBackupUploadPath(uploadPath) {
   return normalized;
 }
 
+export function normalizeBackupSections(input, fallback = BACKUP_SECTIONS) {
+  if (input === undefined || input === null) return [...fallback];
+  if (!Array.isArray(input) || input.length === 0) {
+    throw new Error('Select at least one backup section');
+  }
+
+  const sections = [...new Set(input.map((value) => String(value)))];
+  const invalid = sections.find((section) => !BACKUP_SECTIONS.includes(section));
+  if (invalid) throw new Error(`Unsupported backup section: ${invalid}`);
+  return sections;
+}
+
+function tablesForSections(sections) {
+  return new Set(sections.flatMap((section) => SECTION_TABLES[section]));
+}
+
 function normalizeBackupPayload(backup) {
-  if (!backup || backup.schemaVersion !== BACKUP_SCHEMA_VERSION) {
+  const schemaVersion = backup?.schemaVersion;
+  if (schemaVersion !== BACKUP_SCHEMA_VERSION && schemaVersion !== SELECTIVE_BACKUP_SCHEMA_VERSION) {
     throw new Error('Unsupported backup schema version');
   }
 
   const tables = backup.tables && typeof backup.tables === 'object' ? backup.tables : {};
   const uploads = Array.isArray(backup.uploads) ? backup.uploads : [];
+  if (schemaVersion === SELECTIVE_BACKUP_SCHEMA_VERSION && !Array.isArray(backup.includedSections)) {
+    throw new Error('Selective backup is missing its included sections');
+  }
+  const availableSections = schemaVersion === BACKUP_SCHEMA_VERSION
+    ? [...BACKUP_SECTIONS]
+    : normalizeBackupSections(backup.includedSections, []);
+
+  if (schemaVersion === SELECTIVE_BACKUP_SCHEMA_VERSION) {
+    const includedTables = tablesForSections(availableSections);
+    for (const tableName of includedTables) {
+      if (!Array.isArray(tables[tableName])) {
+        throw new Error(`Backup section is incomplete: ${tableName}`);
+      }
+    }
+    if (availableSections.includes('media') && !Array.isArray(backup.uploads)) {
+      throw new Error('Backup section is incomplete: media');
+    }
+  }
 
   return {
     tables,
@@ -80,6 +135,7 @@ function normalizeBackupPayload(backup) {
       path: normalizeBackupUploadPath(entry?.path),
       data: String(entry?.data || ''),
     })),
+    availableSections,
   };
 }
 
@@ -117,39 +173,54 @@ function replaceUploads({ uploadsPath, uploads }) {
   }
 }
 
-export async function createApplicationBackup({ appVersion, dbAll, uploadsPath }) {
+export async function createApplicationBackup({ appVersion, dbAll, uploadsPath, sections: requestedSections }) {
+  const sections = normalizeBackupSections(requestedSections);
+  const includedTables = tablesForSections(sections);
   const tables = {};
 
   for (const tableName of BACKUP_TABLES) {
-    tables[tableName] = await dbAll(`SELECT * FROM ${tableName}`);
+    if (includedTables.has(tableName)) {
+      tables[tableName] = await dbAll(`SELECT * FROM ${tableName}`);
+    }
   }
 
+  const isComplete = BACKUP_SECTIONS.every((section) => sections.includes(section));
   return {
-    schemaVersion: BACKUP_SCHEMA_VERSION,
+    schemaVersion: isComplete ? BACKUP_SCHEMA_VERSION : SELECTIVE_BACKUP_SCHEMA_VERSION,
     appVersion,
     createdAt: new Date().toISOString(),
+    ...(!isComplete ? { includedSections: sections } : {}),
     tables,
-    uploads: readUploadFiles(uploadsPath),
+    uploads: sections.includes('media') ? readUploadFiles(uploadsPath) : [],
   };
 }
 
-export async function restoreApplicationBackup({ backup, dbRun, uploadsPath }) {
+export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sections: requestedSections }) {
   const normalizedBackup = normalizeBackupPayload(backup);
+  const sections = normalizeBackupSections(requestedSections, normalizedBackup.availableSections);
+  const unavailable = sections.find((section) => !normalizedBackup.availableSections.includes(section));
+  if (unavailable) throw new Error(`Backup does not contain section: ${unavailable}`);
+  const includedTables = tablesForSections(sections);
 
   await dbRun('PRAGMA foreign_keys = OFF');
+  try {
+    for (const tableName of BACKUP_TABLES) {
+      if (includedTables.has(tableName)) await dbRun(`DELETE FROM ${tableName}`);
+    }
 
-  for (const tableName of BACKUP_TABLES) {
-    await dbRun(`DELETE FROM ${tableName}`);
+    for (const tableName of BACKUP_TABLES) {
+      if (!includedTables.has(tableName)) continue;
+      const rows = Array.isArray(normalizedBackup.tables[tableName])
+        ? normalizedBackup.tables[tableName]
+        : [];
+
+      await insertRows({ dbRun, tableName, rows });
+    }
+
+    if (sections.includes('media')) {
+      replaceUploads({ uploadsPath, uploads: normalizedBackup.uploads });
+    }
+  } finally {
+    await dbRun('PRAGMA foreign_keys = ON');
   }
-
-  for (const tableName of BACKUP_TABLES) {
-    const rows = Array.isArray(normalizedBackup.tables[tableName])
-      ? normalizedBackup.tables[tableName]
-      : [];
-
-    await insertRows({ dbRun, tableName, rows });
-  }
-
-  await dbRun('PRAGMA foreign_keys = ON');
-  replaceUploads({ uploadsPath, uploads: normalizedBackup.uploads });
 }
