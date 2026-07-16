@@ -1215,9 +1215,47 @@ const TEXT_FILE_PATHS = new Map(TEXT_FILE_DEFINITIONS.flatMap((file) => [
   [file.path, file],
   ...(file.aliases || []).map((alias) => [alias, file]),
 ]));
+const MAX_CUSTOM_TEXT_FILES = 20;
+const MAX_TEXT_FILE_CONTENT_CHARS = 50_000;
 const TextFileBodySchema = z.object({
-  content: z.string().max(50_000, 'Content must be 50,000 characters or less.'),
+  content: z.string().max(MAX_TEXT_FILE_CONTENT_CHARS, 'Content must be 50,000 characters or less.'),
 }).strict();
+const CustomTextFileSchema = z.object({
+  path: z.string().min(1).max(96),
+  content: z.string().max(MAX_TEXT_FILE_CONTENT_CHARS, 'Content must be 50,000 characters or less.').default(''),
+}).strict();
+
+const normalizeCustomTextFilePath = (value) => {
+  let pathName = String(value || '').trim().toLowerCase();
+  if (!pathName || pathName.includes('\\') || pathName.includes('?') || pathName.includes('#')) {
+    throw new Error('Enter a valid .txt path.');
+  }
+  if (!pathName.startsWith('/')) pathName = `/${pathName}`;
+  if (pathName.includes('..')) throw new Error('TXT paths cannot contain consecutive dots.');
+
+  const rootFile = /^\/[a-z0-9][a-z0-9._-]{0,70}\.txt$/.test(pathName);
+  const wellKnownFile = /^\/\.well-known\/[a-z0-9][a-z0-9._-]{0,70}\.txt$/.test(pathName);
+  if (!rootFile && !wellKnownFile) {
+    throw new Error('Use /name.txt or /.well-known/name.txt with letters, numbers, dots, dashes, or underscores.');
+  }
+  if (TEXT_FILE_PATHS.has(pathName)) throw new Error('This path is already managed by OrbitPage.');
+  return pathName;
+};
+
+const customTextFileKey = (pathName) => `custom-${Buffer.from(pathName).toString('base64url')}`;
+
+const customTextFilePayload = (row) => ({
+  key: row.file_key,
+  path: row.file_path,
+  aliases: [],
+  label: row.file_path.replace(/^\//, ''),
+  description: 'Custom public text endpoint.',
+  content: normalizeTextFileContent(row.content),
+  defaultContent: null,
+  isCustomized: true,
+  isCustom: true,
+  updatedAt: row.updated_at || null,
+});
 
 const normalizeTextFileContent = (content) => {
   const normalized = String(content ?? '').replace(/\r\n?/g, '\n');
@@ -1338,9 +1376,9 @@ const getTextFileContent = async (key, req) => {
 };
 
 const getTextFilePayloads = async (req) => {
-  const rows = await dbAll('SELECT file_key, content, updated_at FROM text_files');
-  const savedByKey = new Map(rows.map((row) => [row.file_key, row]));
-  return TEXT_FILE_DEFINITIONS.map((definition) => {
+  const rows = await dbAll('SELECT file_key, file_path, is_custom, content, updated_at FROM text_files');
+  const savedByKey = new Map(rows.filter((row) => !row.is_custom).map((row) => [row.file_key, row]));
+  const builtInFiles = TEXT_FILE_DEFINITIONS.map((definition) => {
     const saved = savedByKey.get(definition.key);
     const defaultContent = getDefaultTextFileContent(definition.key, req);
     return {
@@ -1352,9 +1390,35 @@ const getTextFilePayloads = async (req) => {
       content: saved ? normalizeTextFileContent(saved.content) : defaultContent,
       defaultContent,
       isCustomized: Boolean(saved),
+      isCustom: false,
       updatedAt: saved?.updated_at || null,
     };
   });
+  const customFiles = rows
+    .filter((row) => row.is_custom === 1 && typeof row.file_path === 'string')
+    .filter((row) => {
+      try {
+        return normalizeCustomTextFilePath(row.file_path) === row.file_path;
+      } catch {
+        return false;
+      }
+    })
+    .sort((left, right) => left.file_path.localeCompare(right.file_path))
+    .map(customTextFilePayload);
+  return [...builtInFiles, ...customFiles];
+};
+
+const getCustomTextFileByPath = async (pathName) => {
+  let normalizedPath;
+  try {
+    normalizedPath = normalizeCustomTextFilePath(pathName);
+  } catch {
+    return null;
+  }
+  return dbGet(
+    'SELECT file_key, file_path, is_custom, content, updated_at FROM text_files WHERE is_custom = 1 AND file_path = ?',
+    [normalizedPath]
+  );
 };
 
 const normalizeSitemapLastModified = (value, fallbackDate = new Date()) => {
@@ -1392,7 +1456,7 @@ app.get('/', spaLimiter, (req, res) => {
   serveSpaIndex(req, res);
 });
 
-app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], async (req, res) => {
+const serveBuiltInTextFile = async (req, res) => {
   const definition = TEXT_FILE_PATHS.get(req.path);
   if (!definition) return res.status(404).type('text/plain').send('Not found\n');
 
@@ -1403,6 +1467,20 @@ app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/se
   } catch (error) {
     console.error(`Failed to serve ${req.path}:`, error);
     res.status(500).type('text/plain').send('Internal server error\n');
+  }
+};
+
+app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], serveBuiltInTextFile);
+
+app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, res) => {
+  try {
+    const file = await getCustomTextFileByPath(req.path.toLowerCase());
+    if (!file) return res.status(404).type('text/plain').send('Not found\n');
+    res.set('Cache-Control', 'public, max-age=300');
+    return res.type('text/plain; charset=utf-8').send(normalizeTextFileContent(file.content));
+  } catch (error) {
+    console.error(`Failed to serve custom TXT file ${req.path}:`, error);
+    return res.status(500).type('text/plain').send('Internal server error\n');
   }
 });
 
@@ -1750,13 +1828,61 @@ app.get('/api/text-files', authenticateToken, requirePermission('compliance:writ
   }
 });
 
+app.post('/api/text-files', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Text file changes are disabled in demo mode.' });
+  }
+
+  const parsed = CustomTextFileSchema.safeParse(req.body || {});
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: parsed.error.issues[0]?.message || 'Invalid text file.' });
+  }
+
+  let filePath;
+  try {
+    filePath = normalizeCustomTextFilePath(parsed.data.path);
+  } catch (error) {
+    return res.status(400).json({ success: false, error: error instanceof Error ? error.message : 'Invalid TXT path.' });
+  }
+
+  try {
+    const count = await dbGet('SELECT COUNT(*) AS count FROM text_files WHERE is_custom = 1');
+    if (Number(count?.count || 0) >= MAX_CUSTOM_TEXT_FILES) {
+      return res.status(400).json({ success: false, error: `You can create up to ${MAX_CUSTOM_TEXT_FILES} custom TXT files.` });
+    }
+    const key = customTextFileKey(filePath);
+    const content = normalizeTextFileContent(parsed.data.content);
+    await dbRun(
+      `INSERT INTO text_files (file_key, file_path, is_custom, content, updated_at)
+       VALUES (?, ?, 1, ?, CURRENT_TIMESTAMP)`,
+      [key, filePath, content]
+    );
+    return res.status(201).json({
+      success: true,
+      data: customTextFilePayload({ file_key: key, file_path: filePath, content, updated_at: new Date().toISOString() })
+    });
+  } catch (error) {
+    const message = String(error?.message || '');
+    if (message.includes('UNIQUE') || message.includes('custom text file limit exceeded')) {
+      return res.status(409).json({ success: false, error: message.includes('limit')
+        ? `You can create up to ${MAX_CUSTOM_TEXT_FILES} custom TXT files.`
+        : 'A TXT file already uses this path.' });
+    }
+    console.error('Error creating text file:', error);
+    return res.status(500).json({ success: false, error: 'Failed to create text file' });
+  }
+});
+
 app.put('/api/text-files/:key', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
   if (DEMO_MODE) {
     return res.status(403).json({ success: false, error: 'Text file changes are disabled in demo mode.' });
   }
 
   const key = String(req.params.key || '');
-  if (!TEXT_FILE_KEYS.has(key)) {
+  const customFile = TEXT_FILE_KEYS.has(key)
+    ? null
+    : await dbGet('SELECT file_key, file_path, is_custom FROM text_files WHERE file_key = ? AND is_custom = 1', [key]);
+  if (!TEXT_FILE_KEYS.has(key) && !customFile) {
     return res.status(400).json({ success: false, error: 'Unsupported text file.' });
   }
 
@@ -1768,10 +1894,12 @@ app.put('/api/text-files/:key', authenticateToken, requirePermission('compliance
   try {
     const content = normalizeTextFileContent(parsed.data.content);
     await dbRun(
-      `INSERT INTO text_files (file_key, content, updated_at)
-       VALUES (?, ?, CURRENT_TIMESTAMP)
-       ON CONFLICT(file_key) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP`,
-      [key, content]
+      customFile
+        ? 'UPDATE text_files SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE file_key = ? AND is_custom = 1'
+        : `INSERT INTO text_files (file_key, file_path, is_custom, content, updated_at)
+           VALUES (?, NULL, 0, ?, CURRENT_TIMESTAMP)
+           ON CONFLICT(file_key) DO UPDATE SET content = excluded.content, updated_at = CURRENT_TIMESTAMP`,
+      customFile ? [content, key] : [key, content]
     );
     res.json({ success: true, data: { key, content } });
   } catch (error) {
@@ -1786,7 +1914,10 @@ app.delete('/api/text-files/:key', authenticateToken, requirePermission('complia
   }
 
   const key = String(req.params.key || '');
-  if (!TEXT_FILE_KEYS.has(key)) {
+  const customFile = TEXT_FILE_KEYS.has(key)
+    ? null
+    : await dbGet('SELECT file_key FROM text_files WHERE file_key = ? AND is_custom = 1', [key]);
+  if (!TEXT_FILE_KEYS.has(key) && !customFile) {
     return res.status(400).json({ success: false, error: 'Unsupported text file.' });
   }
 

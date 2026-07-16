@@ -826,6 +826,52 @@ describe('API Endpoints', () => {
     expect(response.body.error).toContain('Unsupported text file');
   });
 
+  it('POST /api/text-files creates a safe custom TXT endpoint', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({ count: 0 });
+
+    const response = await request(app)
+      .post('/api/text-files')
+      .send({ path: 'ads.txt', content: 'example.com, publisher-1' });
+
+    expect(response.status).toBe(201);
+    expect(response.body.data.path).toBe('/ads.txt');
+    expect(response.body.data.isCustom).toBe(true);
+    expect(response.body.data.content).toBe('example.com, publisher-1\n');
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO text_files'),
+      [expect.stringMatching(/^custom-/), '/ads.txt', 'example.com, publisher-1\n']
+    );
+  });
+
+  it('POST /api/text-files rejects traversal and reserved aliases', async () => {
+    const traversal = await request(app)
+      .post('/api/text-files')
+      .send({ path: '../private.txt' });
+    const alias = await request(app)
+      .post('/api/text-files')
+      .send({ path: 'llm.txt' });
+
+    expect(traversal.status).toBe(400);
+    expect(alias.status).toBe(400);
+    expect(alias.body.error).toContain('already managed');
+  });
+
+  it('GET a custom TXT path serves its saved plain-text content', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({
+      file_key: 'custom-test',
+      file_path: '/ads.txt',
+      is_custom: 1,
+      content: 'publisher=alice',
+      updated_at: '2026-07-16T10:00:00.000Z'
+    });
+
+    const response = await request(app).get('/ads.txt');
+
+    expect(response.status).toBe(200);
+    expect(response.type).toMatch(/text\/plain/);
+    expect(response.text).toBe('publisher=alice\n');
+  });
+
   it('GET /sitemap.xml includes the canonical home page', async () => {
     vi.mocked(dbGet)
       .mockResolvedValueOnce({ lastmod: '2026-07-08 15:30:00' })

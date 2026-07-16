@@ -69,6 +69,12 @@ The sitemap is generated on each request and uses the latest public-content time
 
 Private routes such as admin, API, health, and unknown SPA routes are excluded and marked `noindex`.
 
+## TXT Files
+
+The Admin **TXT** section can edit `robots.txt`, `llms.txt`, `humans.txt`, `security.txt`, and `ai.txt`. The plural `llms.txt` is canonical; `/llm.txt` serves the same content as a compatibility alias.
+
+You can also add up to 20 custom endpoints using `/name.txt` or `/.well-known/name.txt`. OrbitPage normalizes paths to lowercase, prevents reserved-name collisions and path traversal, and serves every file as `text/plain` with browser sniffing disabled. TXT files and custom paths are included in the **Discovery files** backup section.
+
 ## Contributor Checklist
 
 - Public routes should have one canonical URL.

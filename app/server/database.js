@@ -172,11 +172,28 @@ export const initializeDatabase = () => {
       db.run(`
         CREATE TABLE IF NOT EXISTS text_files (
           file_key TEXT PRIMARY KEY,
+          file_path TEXT,
+          is_custom INTEGER NOT NULL DEFAULT 0,
           content TEXT NOT NULL,
           updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `, (err) => {
         if (err) console.error('Error creating text_files table:', err);
+      });
+      db.run(`ALTER TABLE text_files ADD COLUMN file_path TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE text_files ADD COLUMN is_custom INTEGER NOT NULL DEFAULT 0`, (err) => { /* ignore if exists */ });
+      db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_text_files_custom_path ON text_files(file_path) WHERE is_custom = 1`, (err) => {
+        if (err) console.error('Error indexing custom text files:', err);
+      });
+      db.run(`
+        CREATE TRIGGER IF NOT EXISTS limit_custom_text_files
+        BEFORE INSERT ON text_files
+        WHEN NEW.is_custom = 1 AND (SELECT COUNT(*) FROM text_files WHERE is_custom = 1) >= 20
+        BEGIN
+          SELECT RAISE(ABORT, 'custom text file limit exceeded');
+        END
+      `, (err) => {
+        if (err) console.error('Error creating custom text file limit:', err);
       });
 
       // Theme configuration table

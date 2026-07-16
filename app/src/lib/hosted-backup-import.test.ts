@@ -81,6 +81,32 @@ describe('hosted backup import', () => {
     expect(result.backup).toEqual(backup);
   });
 
+  it('keeps discovery TXT files when restoring a current managed backup', async () => {
+    const backup = {
+      format: 'orbitpage-managed-page',
+      schemaVersion: 2,
+      runtimeVersion: '4.7.0',
+      createdAt: '2026-07-16T14:35:34.176Z',
+      source: { username: 'paolo' },
+      includedSections: ['discovery'],
+      content: {
+        textFiles: [{
+          key: 'robots',
+          path: '/robots.txt',
+          content: 'User-agent: *\nDisallow: /private\n',
+          isCustom: false,
+          createdAt: '2026-07-16T14:35:34.176Z',
+          updatedAt: '2026-07-16T14:35:34.176Z',
+        }],
+      },
+    };
+
+    const result = await prepareHostedRestoreBackup(backup, vi.fn());
+
+    expect(result.backup).toEqual(backup);
+    expect(result.backup).toMatchObject({ includedSections: ['discovery'] });
+  });
+
   it('converts only selected OSS sections and skips media migration when media is excluded', async () => {
     const upload = vi.fn();
     const source = {

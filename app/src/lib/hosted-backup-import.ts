@@ -11,7 +11,8 @@ export const BACKUP_SECTION_IDS = [
   'accounts',
   'media',
 ] as const;
-export const MANAGED_BACKUP_SECTION_IDS = ['profile', 'links', 'theme', 'privacy'] as const;
+const LEGACY_MANAGED_BACKUP_SECTION_IDS = ['profile', 'links', 'theme', 'privacy'] as const;
+export const MANAGED_BACKUP_SECTION_IDS = [...LEGACY_MANAGED_BACKUP_SECTION_IDS, 'discovery'] as const;
 export type BackupSectionId = typeof BACKUP_SECTION_IDS[number];
 const ALLOWED_MEDIA_TYPES = new Set([
   'image/gif',
@@ -157,6 +158,33 @@ function mapConsentConfig(row: JsonRecord) {
   } satisfies JsonRecord;
 }
 
+function mapTextFiles(rows: JsonRecord[]) {
+  const builtInPaths: Record<string, string> = {
+    robots: '/robots.txt',
+    llms: '/llms.txt',
+    humans: '/humans.txt',
+    security: '/.well-known/security.txt',
+    ai: '/ai.txt',
+  };
+  return rows.flatMap((row) => {
+    const originalKey = requiredString(row.file_key);
+    const isCustom = row.is_custom === 1 || row.is_custom === true;
+    const path = isCustom ? requiredString(row.file_path).toLowerCase() : builtInPaths[originalKey];
+    if (!path || typeof row.content !== 'string') return [];
+    const updatedAt = typeof row.updated_at === 'string' && !Number.isNaN(Date.parse(row.updated_at))
+      ? row.updated_at
+      : new Date(0).toISOString();
+    return [{
+      key: originalKey,
+      path,
+      content: row.content,
+      isCustom,
+      createdAt: updatedAt,
+      updatedAt,
+    }];
+  });
+}
+
 function normalizeUploadPath(value: string) {
   let pathname = value.trim();
   if (!pathname) return null;
@@ -272,7 +300,7 @@ export function inspectOrbitPageBackup(input: unknown): OrbitPageBackupInspectio
       throw new Error('This selective managed backup is missing its included sections.');
     }
     const sections = input.schemaVersion === 1
-      ? [...MANAGED_BACKUP_SECTION_IDS]
+      ? [...LEGACY_MANAGED_BACKUP_SECTION_IDS]
       : normalizeDeclaredSections(input.includedSections, []);
     if (sections.some((section) => !MANAGED_BACKUP_SECTION_IDS.includes(section as typeof MANAGED_BACKUP_SECTION_IDS[number]))) {
       throw new Error('This managed backup declares an unsupported section.');
@@ -299,6 +327,7 @@ function selfHostedContent(input: JsonRecord, sections: readonly BackupSectionId
   const linkRows = Array.isArray(tables.links) ? tables.links.filter(isRecord) : [];
   const themeRows = Array.isArray(tables.theme_config) ? tables.theme_config.filter(isRecord) : [];
   const consentRows = Array.isArray(tables.cookie_consent_config) ? tables.cookie_consent_config.filter(isRecord) : [];
+  const textFileRows = Array.isArray(tables.text_files) ? tables.text_files.filter(isRecord) : [];
 
   return {
     ...(sections.includes('profile') ? { profile: mapProfile(profileRows[0] || {}) } : {}),
@@ -310,6 +339,7 @@ function selfHostedContent(input: JsonRecord, sections: readonly BackupSectionId
     } : {}),
     ...(sections.includes('theme') ? { theme: mapTheme(themeRows[0] || {}) } : {}),
     ...(sections.includes('privacy') ? { consentConfig: mapConsentConfig(consentRows[0] || {}) } : {}),
+    ...(sections.includes('discovery') ? { textFiles: mapTextFiles(textFileRows) } : {}),
   };
 }
 
@@ -388,7 +418,7 @@ export async function prepareHostedRestoreBackup(
   const sourceContent = managedInput ? managedInput.content as JsonRecord : null;
   const rawContent = source === 'managed'
     ? Object.fromEntries(contentSections.map((section) => {
-        const key = section === 'privacy' ? 'consentConfig' : section;
+        const key = section === 'privacy' ? 'consentConfig' : section === 'discovery' ? 'textFiles' : section;
         return [key, sourceContent?.[key]];
       }))
     : selfHostedContent(selfHostedInput as JsonRecord, contentSections);
@@ -402,10 +432,11 @@ export async function prepareHostedRestoreBackup(
     link.content = JSON.stringify(await migrateValue(parsedContent, ['content', 'links', index, 'content']));
   }
 
-  const isComplete = MANAGED_BACKUP_SECTION_IDS.every((section) => contentSections.includes(section));
+  const isLegacyComplete = LEGACY_MANAGED_BACKUP_SECTION_IDS.every((section) => contentSections.includes(section)) &&
+    !contentSections.includes('discovery');
   const backup = {
     format: MANAGED_BACKUP_FORMAT,
-    schemaVersion: isComplete ? 1 : 2,
+    schemaVersion: isLegacyComplete ? 1 : 2,
     runtimeVersion: managedInput
       ? requiredString(managedInput.runtimeVersion).slice(0, 40) || 'managed'
       : requiredString(selfHostedInput?.appVersion).slice(0, 40) || 'self-hosted',
@@ -416,7 +447,7 @@ export async function prepareHostedRestoreBackup(
     source: managedInput && isRecord(managedInput.source)
       ? managedInput.source
       : { username: 'self-hosted' },
-    ...(!isComplete ? { includedSections: contentSections } : {}),
+    ...(!isLegacyComplete ? { includedSections: contentSections } : {}),
     content,
   };
 

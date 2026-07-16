@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ExternalLink, FileText, Loader2, RotateCcw, Save } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, FilePlus2, FileText, Loader2, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TextFileConfig, textFilesApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
@@ -18,6 +19,9 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
   const [draft, setDraft] = useState("");
   const [state, setState] = useState<SaveState>("loading");
   const [message, setMessage] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [newPath, setNewPath] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const activeFile = useMemo(
     () => files.find((file) => file.key === activeKey) || files[0],
@@ -59,7 +63,28 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
     setActiveKey(file.key);
     setDraft(file.content);
     setMessage("");
+    setConfirmDelete(false);
     setState("idle");
+  };
+
+  const createFile = async () => {
+    if (readOnly || !newPath.trim()) return;
+    setState("saving");
+    setMessage("");
+    try {
+      const response = await textFilesApi.create(newPath.trim());
+      const file = response.data;
+      setFiles((current) => [...current, file]);
+      setActiveKey(file.key);
+      setDraft(file.content);
+      setNewPath("");
+      setCreating(false);
+      setState("success");
+      setMessage(`${file.label} created.`);
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "Failed to create the TXT file.");
+    }
   };
 
   const save = async () => {
@@ -68,11 +93,13 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
     setMessage("");
     try {
       await textFilesApi.update(activeFile.key, draft);
+      const normalizedDraft = draft.endsWith("\n") ? draft : `${draft}\n`;
       setFiles((current) => current.map((file) => (
         file.key === activeFile.key
-          ? { ...file, content: draft.endsWith("\n") ? draft : `${draft}\n`, isCustomized: true, updatedAt: new Date().toISOString() }
+          ? { ...file, content: normalizedDraft, isCustomized: true, updatedAt: new Date().toISOString() }
           : file
       )));
+      setDraft(normalizedDraft);
       setState("success");
       setMessage(`${activeFile.label} saved.`);
     } catch (error) {
@@ -87,17 +114,29 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
     setMessage("");
     try {
       await textFilesApi.reset(activeFile.key);
-      setFiles((current) => current.map((file) => (
-        file.key === activeFile.key
-          ? { ...file, content: file.defaultContent, isCustomized: false, updatedAt: null }
-          : file
-      )));
-      setDraft(activeFile.defaultContent);
+      if (activeFile.isCustom) {
+        const remaining = files.filter((file) => file.key !== activeFile.key);
+        const selected = remaining.find((file) => file.key === "robots") || remaining[0];
+        setFiles(remaining);
+        if (selected) {
+          setActiveKey(selected.key);
+          setDraft(selected.content);
+        }
+      } else {
+        const defaultContent = activeFile.defaultContent || "";
+        setFiles((current) => current.map((file) => (
+          file.key === activeFile.key
+            ? { ...file, content: defaultContent, isCustomized: false, updatedAt: null }
+            : file
+        )));
+        setDraft(defaultContent);
+      }
       setState("success");
-      setMessage(`${activeFile.label} reset to default.`);
+      setConfirmDelete(false);
+      setMessage(activeFile.isCustom ? `${activeFile.label} deleted.` : `${activeFile.label} reset to default.`);
     } catch (error) {
       setState("error");
-      setMessage(error instanceof Error ? error.message : `Failed to reset ${activeFile.label}.`);
+      setMessage(error instanceof Error ? error.message : `Failed to update ${activeFile.label}.`);
     }
   };
 
@@ -118,12 +157,63 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
             </p>
           </div>
         </div>
-        {readOnly && (
+        {readOnly ? (
           <span className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
             Demo read-only
           </span>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            className="admin-action"
+            onClick={() => {
+              setCreating((current) => !current);
+              setMessage("");
+            }}
+            disabled={busy}
+          >
+            {creating ? <X className="h-4 w-4" /> : <FilePlus2 className="h-4 w-4" />}
+            {creating ? "Cancel" : "Add TXT file"}
+          </Button>
         )}
       </div>
+
+      {creating && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
+              Public TXT path
+              <Input
+                value={newPath}
+                onChange={(event) => setNewPath(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void createFile();
+                  }
+                }}
+                placeholder="ads.txt"
+                autoComplete="off"
+                spellCheck={false}
+                disabled={busy}
+                className="mt-2 bg-white font-mono"
+              />
+            </label>
+            <Button
+              type="button"
+              className="admin-action admin-action-primary"
+              onClick={() => void createFile()}
+              disabled={busy || !newPath.trim()}
+            >
+              {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Plus className="h-4 w-4" />}
+              Create file
+            </Button>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-600">
+            Use <span className="font-mono">name.txt</span> or <span className="font-mono">.well-known/name.txt</span>. OrbitPage keeps system paths unique and allows up to 20 custom files.
+          </p>
+        </div>
+      )}
 
       {message && (
         <div className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
@@ -149,7 +239,11 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
             >
               <span className="flex items-center justify-between gap-2">
                 <span className="font-mono text-sm font-semibold">{file.label}</span>
-                {file.isCustomized && <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Custom</span>}
+                {file.isCustom ? (
+                  <span className="rounded bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">Added</span>
+                ) : file.isCustomized ? (
+                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Edited</span>
+                ) : null}
               </span>
               <span className="mt-1 block text-xs leading-5 text-slate-500">{file.description}</span>
             </button>
@@ -166,7 +260,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
             </div>
             {activeFile && (
               <a
-                href={withBasePath(activeFile.path)}
+                href={activeFile.publicUrl || withBasePath(activeFile.path)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
@@ -187,27 +281,40 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
-              {dirty ? "Unsaved changes" : activeFile?.isCustomized ? "Custom content active" : "Default content active"}
+              {dirty ? "Unsaved changes" : activeFile?.isCustom ? "Custom TXT file active" : activeFile?.isCustomized ? "Edited content active" : "Default content active"}
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button
-                aria-busy={state === "saving"}
-                type="button"
-                variant="outline"
-                className="admin-action"
-                onClick={resetToDefault}
-                disabled={busy || readOnly || !activeFile?.isCustomized}
-              >
-                <RotateCcw className="h-4 w-4" />
-                Reset
-              </Button>
+              {activeFile?.isCustom && confirmDelete ? (
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" className="admin-action" onClick={() => setConfirmDelete(false)} disabled={busy}>
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                  <Button type="button" variant="destructive" className="admin-action" onClick={() => void resetToDefault()} disabled={busy || readOnly}>
+                    <Trash2 className="h-4 w-4" />
+                    Confirm delete
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  aria-busy={state === "saving"}
+                  type="button"
+                  variant="outline"
+                  className="admin-action"
+                  onClick={() => activeFile?.isCustom ? setConfirmDelete(true) : void resetToDefault()}
+                  disabled={busy || readOnly || (!activeFile?.isCustom && !activeFile?.isCustomized)}
+                >
+                  {activeFile?.isCustom ? <Trash2 className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
+                  {activeFile?.isCustom ? "Delete file" : "Reset"}
+                </Button>
+              )}
               <Button
                 type="button"
                 className="admin-action admin-action-primary"
                 onClick={save}
                 disabled={busy || readOnly || !dirty}
               >
-                {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Save className="h-4 w-4" />}
                 {state === "saving" ? "Saving file" : "Save"}
               </Button>
             </div>

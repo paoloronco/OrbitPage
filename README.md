@@ -66,7 +66,8 @@ The managed control plane, billing system, and hosting infrastructure are not in
 - Editable title, description, canonical URL, and social-preview metadata
 - Open Graph, Twitter Card, and Schema.org output
 - Dynamic `robots.txt` and `sitemap.xml`
-- Editable `llms.txt`, `humans.txt`, `ai.txt`, and `security.txt`
+- Editable `robots.txt`, canonical `llms.txt` (`llm.txt` alias), `humans.txt`, `ai.txt`, and `security.txt`
+- Safe custom `/name.txt` and `/.well-known/name.txt` endpoints
 - Optional `noindex` mode for private, staging, or preview deployments
 
 ### Privacy and operations

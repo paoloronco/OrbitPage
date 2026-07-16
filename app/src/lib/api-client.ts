@@ -552,15 +552,17 @@ export const backupApi = {
 };
 
 export interface TextFileConfig {
-  key: 'robots' | 'llms' | 'humans' | 'security' | 'ai';
+  key: string;
   path: string;
   aliases: string[];
   label: string;
   description: string;
   content: string;
-  defaultContent: string;
+  defaultContent: string | null;
   isCustomized: boolean;
+  isCustom: boolean;
   updatedAt: string | null;
+  publicUrl?: string;
 }
 
 export const textFilesApi = {
@@ -572,6 +574,13 @@ export const textFilesApi = {
     return apiRequest<ApiResponse>(`/text-files/${encodeURIComponent(key)}`, {
       method: 'PUT',
       body: JSON.stringify({ content }),
+    });
+  },
+
+  create: async (path: string, content = ''): Promise<{ success: boolean; data: TextFileConfig }> => {
+    return apiRequest<{ success: boolean; data: TextFileConfig }>('/text-files', {
+      method: 'POST',
+      body: JSON.stringify({ path, content }),
     });
   },
 
