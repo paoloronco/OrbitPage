@@ -1,6 +1,6 @@
 # OrbitPage brand assets
 
-The OrbitPage mark combines an open page frame with a two-node path. The shape is intentionally simple enough to stay recognizable as a browser favicon and app icon.
+The OrbitPage mark is an `O/P` monogram: an open orbit wraps around a page-shaped letter `P`. The open path represents a page that can keep evolving, while the node identifies the public destination people share. Its two bold strokes remain recognizable as a 16 px favicon without relying on small text or decorative effects.
 
 ## Production assets
 
@@ -12,8 +12,9 @@ The OrbitPage mark combines an open page frame with a two-node path. The shape i
 
 ## Palette
 
-- Ink: `#111827`
-- Paper: `#F8FAFC`
-- Orbit teal: `#20A3A8`
+- Night: `#0C1628`
+- Paper: `#FFFFFF`
+- Orbit blue: `#4C7DFF`
+- Wordmark ink: `#101828`
 
-Keep clear space around the mark equal to at least one node width. Do not add gradients, shadows, rotations, or alternate colors inside the mark. The SVG files are the canonical production artwork.
+Keep clear space around the mark equal to at least the white node diameter. Do not add gradients, shadows, rotations, outlines or alternate internal colors. Do not separate the node from the orbit or typeset initials inside the symbol. The SVG files are the canonical production artwork; PNG and ICO files are generated from them.
