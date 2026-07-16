@@ -10,6 +10,7 @@ export const BACKUP_TABLES = [
   'theme_config',
   'cookie_consent_config',
   'text_files',
+  'sitemap_config',
 ];
 export const BACKUP_SECTIONS = [
   'profile',
@@ -26,7 +27,7 @@ const SECTION_TABLES = {
   links: ['links'],
   theme: ['theme_config'],
   privacy: ['cookie_consent_config'],
-  discovery: ['text_files'],
+  discovery: ['text_files', 'sitemap_config'],
   accounts: ['admin_users'],
   media: [],
 };

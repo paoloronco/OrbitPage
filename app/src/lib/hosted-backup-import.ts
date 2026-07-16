@@ -185,6 +185,13 @@ function mapTextFiles(rows: JsonRecord[]) {
   });
 }
 
+function mapSitemap(rows: JsonRecord[]) {
+  const generatedAt = rows[0]?.generated_at;
+  return typeof generatedAt === 'string' && !Number.isNaN(Date.parse(generatedAt))
+    ? { generatedAt }
+    : undefined;
+}
+
 function normalizeUploadPath(value: string) {
   let pathname = value.trim();
   if (!pathname) return null;
@@ -328,6 +335,7 @@ function selfHostedContent(input: JsonRecord, sections: readonly BackupSectionId
   const themeRows = Array.isArray(tables.theme_config) ? tables.theme_config.filter(isRecord) : [];
   const consentRows = Array.isArray(tables.cookie_consent_config) ? tables.cookie_consent_config.filter(isRecord) : [];
   const textFileRows = Array.isArray(tables.text_files) ? tables.text_files.filter(isRecord) : [];
+  const sitemapRows = Array.isArray(tables.sitemap_config) ? tables.sitemap_config.filter(isRecord) : [];
 
   return {
     ...(sections.includes('profile') ? { profile: mapProfile(profileRows[0] || {}) } : {}),
@@ -339,7 +347,10 @@ function selfHostedContent(input: JsonRecord, sections: readonly BackupSectionId
     } : {}),
     ...(sections.includes('theme') ? { theme: mapTheme(themeRows[0] || {}) } : {}),
     ...(sections.includes('privacy') ? { consentConfig: mapConsentConfig(consentRows[0] || {}) } : {}),
-    ...(sections.includes('discovery') ? { textFiles: mapTextFiles(textFileRows) } : {}),
+    ...(sections.includes('discovery') ? {
+      textFiles: mapTextFiles(textFileRows),
+      ...(mapSitemap(sitemapRows) ? { sitemap: mapSitemap(sitemapRows) } : {}),
+    } : {}),
   };
 }
 
@@ -417,10 +428,12 @@ export async function prepareHostedRestoreBackup(
 
   const sourceContent = managedInput ? managedInput.content as JsonRecord : null;
   const rawContent = source === 'managed'
-    ? Object.fromEntries(contentSections.map((section) => {
+    ? contentSections.reduce<JsonRecord>((result, section) => {
         const key = section === 'privacy' ? 'consentConfig' : section === 'discovery' ? 'textFiles' : section;
-        return [key, sourceContent?.[key]];
-      }))
+        result[key] = sourceContent?.[key];
+        if (section === 'discovery' && sourceContent?.sitemap !== undefined) result.sitemap = sourceContent.sitemap;
+        return result;
+      }, {})
     : selfHostedContent(selfHostedInput as JsonRecord, contentSections);
   const content = await migrateValue(rawContent, ['content']) as JsonRecord;
 

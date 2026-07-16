@@ -591,6 +591,27 @@ export const textFilesApi = {
   },
 };
 
+export interface SitemapStatus {
+  generated: boolean;
+  generatedAt: string | null;
+  updatedAt: string | null;
+  url: string;
+  entryCount: number;
+  automaticUpdates: boolean;
+}
+
+export const sitemapApi = {
+  get: async (): Promise<{ success: boolean; data: SitemapStatus }> => {
+    return apiRequest<{ success: boolean; data: SitemapStatus }>('/sitemap');
+  },
+
+  generate: async (): Promise<{ success: boolean; data: SitemapStatus }> => {
+    return apiRequest<{ success: boolean; data: SitemapStatus }>('/sitemap/generate', {
+      method: 'POST',
+    });
+  },
+};
+
 // Page/Profile API
 export const profileApi = {
   get: async (): Promise<ProfileResponse> => {

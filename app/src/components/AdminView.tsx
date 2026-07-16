@@ -26,6 +26,7 @@ import {
   LockKeyhole,
   LogOut,
   MousePointerClick,
+  Map,
   Palette,
   ShieldCheck,
   User,
@@ -38,6 +39,7 @@ import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TextFileManager } from "./TextFileManager";
+import { SitemapManager } from "./SitemapManager";
 import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isSaasMode, utilityApi } from "@/lib/api-client";
@@ -104,6 +106,7 @@ const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> =
   { value: "analytics", label: "Analytics", icon: BarChart2 },
   { value: "privacy", label: "Privacy", icon: Cookie },
   { value: "txt", label: "TXT", icon: FileText },
+  { value: "sitemap", label: "Sitemap", icon: Map },
 ];
 
 const ctaActionLabels: Record<string, string> = {
@@ -187,6 +190,7 @@ export const AdminView = ({
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
       case 'txt':       return canEditCompliance;
+      case 'sitemap':   return canEditCompliance;
       default:          return false;
     }
   });
@@ -574,6 +578,12 @@ export const AdminView = ({
           <TabsContent value="txt" className="admin-tab-content">
             <div className="admin-single-column" data-onboarding="txt-section">
               <TextFileManager readOnly={DEMO_MODE} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sitemap" className="admin-tab-content">
+            <div className="admin-single-column" data-onboarding="sitemap-section">
+              <SitemapManager readOnly={DEMO_MODE} />
             </div>
           </TabsContent>
         </Tabs>

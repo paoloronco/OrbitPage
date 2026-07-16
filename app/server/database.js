@@ -196,6 +196,18 @@ export const initializeDatabase = () => {
         if (err) console.error('Error creating custom text file limit:', err);
       });
 
+      // Sitemap generation state. The XML is derived from current public data so
+      // it remains valid when the instance hostname or reverse-proxy path changes.
+      db.run(`
+        CREATE TABLE IF NOT EXISTS sitemap_config (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          generated_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) console.error('Error creating sitemap_config table:', err);
+      });
+
       // Theme configuration table
       db.run(`
         CREATE TABLE IF NOT EXISTS theme_config (

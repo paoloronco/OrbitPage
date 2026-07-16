@@ -62,7 +62,7 @@ try {
 const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'cookie_consent_config', 'text_files'];
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'cookie_consent_config', 'text_files', 'sitemap_config'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -1470,21 +1470,7 @@ const serveBuiltInTextFile = async (req, res) => {
   }
 };
 
-app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], serveBuiltInTextFile);
-
-app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, res) => {
-  try {
-    const file = await getCustomTextFileByPath(req.path.toLowerCase());
-    if (!file) return res.status(404).type('text/plain').send('Not found\n');
-    res.set('Cache-Control', 'public, max-age=300');
-    return res.type('text/plain; charset=utf-8').send(normalizeTextFileContent(file.content));
-  } catch (error) {
-    console.error(`Failed to serve custom TXT file ${req.path}:`, error);
-    return res.status(500).type('text/plain').send('Internal server error\n');
-  }
-});
-
-app.get('/sitemap.xml', async (req, res) => {
+const buildSitemapDocument = async (req) => {
   const origin = getRequestOrigin(req);
   const lastmod = await getSitemapLastModified();
   const urls = [
@@ -1506,7 +1492,7 @@ app.get('/sitemap.xml', async (req, res) => {
     console.warn('Sitemap generated without legal policy URLs:', error?.message || error);
   }
 
-  const body = `<?xml version="1.0" encoding="UTF-8"?>
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map((url) => `  <url>
     <loc>${escapeHtml(url.loc)}</loc>
@@ -1517,10 +1503,50 @@ ${urls.map((url) => `  <url>
 </urlset>
 `;
 
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  res.type('application/xml').send(body);
+  return { xml, entryCount: urls.length, lastModified: lastmod };
+};
+
+const getSitemapStatusPayload = async (req) => {
+  const [state, document] = await Promise.all([
+    dbGet('SELECT generated_at, updated_at FROM sitemap_config WHERE id = 1'),
+    buildSitemapDocument(req),
+  ]);
+  const origin = getRequestOrigin(req);
+  return {
+    generated: Boolean(state?.generated_at),
+    generatedAt: state?.generated_at || null,
+    updatedAt: state?.updated_at || null,
+    url: new URL(withRequestBasePath(req, '/sitemap.xml'), origin).toString(),
+    entryCount: document.entryCount,
+    automaticUpdates: true,
+  };
+};
+
+app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], serveBuiltInTextFile);
+
+app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, res) => {
+  try {
+    const file = await getCustomTextFileByPath(req.path.toLowerCase());
+    if (!file) return res.status(404).type('text/plain').send('Not found\n');
+    res.set('Cache-Control', 'public, max-age=300');
+    return res.type('text/plain; charset=utf-8').send(normalizeTextFileContent(file.content));
+  } catch (error) {
+    console.error(`Failed to serve custom TXT file ${req.path}:`, error);
+    return res.status(500).type('text/plain').send('Internal server error\n');
+  }
+});
+
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const document = await buildSitemapDocument(req);
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.type('application/xml').send(document.xml);
+  } catch (error) {
+    console.error('Failed to serve sitemap.xml:', error);
+    res.status(500).type('text/plain').send('Failed to generate sitemap.\n');
+  }
 });
 
 // Serve static files from the dist directory
@@ -1814,6 +1840,39 @@ app.get('/api/public-url', apiLimiter, (req, res) => {
   } catch (error) {
     console.error('Error resolving public URL:', error);
     res.status(500).json({ success: false, error: 'Failed to resolve public URL' });
+  }
+});
+
+app.get('/api/sitemap', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    res.json({ success: true, data: await getSitemapStatusPayload(req) });
+  } catch (error) {
+    console.error('Error loading sitemap status:', error);
+    res.status(500).json({ success: false, error: 'Failed to load sitemap status' });
+  }
+});
+
+app.post('/api/sitemap/generate', authenticateToken, requirePermission('compliance:write'), async (req, res) => {
+  if (DEMO_MODE) {
+    return res.status(403).json({ success: false, error: 'Sitemap generation is disabled in demo mode.' });
+  }
+
+  try {
+    // Build first so invalid public URL configuration can never be persisted as
+    // a successful generation.
+    await buildSitemapDocument(req);
+    const generatedAt = new Date().toISOString();
+    await dbRun(
+      `INSERT INTO sitemap_config (id, generated_at, updated_at)
+       VALUES (1, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(id) DO UPDATE SET generated_at = excluded.generated_at, updated_at = CURRENT_TIMESTAMP`,
+      [generatedAt]
+    );
+    res.json({ success: true, data: await getSitemapStatusPayload(req) });
+  } catch (error) {
+    console.error('Error generating sitemap:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate sitemap' });
   }
 });
 

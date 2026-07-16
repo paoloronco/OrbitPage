@@ -30,7 +30,7 @@ Then use the admin panel to configure:
 - Twitter Card metadata
 - Schema.org JSON-LD
 - dynamic `/robots.txt`
-- dynamic `/sitemap.xml` with `lastmod` based on public content changes
+- generated `/sitemap.xml` with `lastmod` based on public content changes
 - no-JavaScript fallback links for crawlers
 
 ## Staging and Private Deployments
@@ -65,7 +65,9 @@ OrbitPage includes:
 - the public home page
 - local legal pages when `/privacy` or `/cookies` are configured as profile policy URLs
 
-The sitemap is generated on each request and uses the latest public-content timestamp from page data, links, theme settings, consent settings, and editable TXT files. This keeps `lastmod` useful for crawlers without requiring a manual rebuild.
+Open **Admin > Sitemap** and select **Generate sitemap** to create the sitemap state and expose its public URL. The XML is derived from current public data on request, so hostname changes and later page publications stay aligned without accepting raw XML from the browser. Use **Regenerate sitemap** when you want to record a new explicit generation time.
+
+The section shows the public URL, included URL count, generation date, copy/open controls and current publication status. Sitemap state is included in the **Discovery files** backup section.
 
 Private routes such as admin, API, health, and unknown SPA routes are excluded and marked `noindex`.
 

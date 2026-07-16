@@ -23,6 +23,8 @@ describe("admin navigation", () => {
   it("builds only known dashboard destinations", () => {
     expect(adminDashboardPath("backup")).toBe("/dashboard/backup");
     expect(isAdminTab("txt")).toBe(true);
+    expect(adminDashboardPath("sitemap")).toBe("/dashboard/sitemap");
+    expect(isAdminTab("sitemap")).toBe(true);
     expect(isAdminTab("billing")).toBe(false);
   });
 

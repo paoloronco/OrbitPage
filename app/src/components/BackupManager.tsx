@@ -37,7 +37,7 @@ const SECTION_COPY: Record<BackupSectionId, { label: string; description: string
   links: { label: "Blocks & links", description: "Content, order, scheduling and block settings" },
   theme: { label: "Theme & appearance", description: "Colors, typography, cards and background" },
   privacy: { label: "Privacy & consent", description: "Cookie banner and consent preferences" },
-  discovery: { label: "Discovery files", description: "robots.txt, llms.txt and related text files" },
+  discovery: { label: "Discovery files", description: "robots.txt, llms.txt, custom TXT files and sitemap state" },
   accounts: { label: "Admin accounts", description: "Self-hosted users, roles and credentials" },
   media: { label: "Uploaded media", description: "Images, video and other uploaded assets" },
 };

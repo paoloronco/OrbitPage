@@ -7,6 +7,7 @@ export const ADMIN_TAB_IDS = [
   "analytics",
   "privacy",
   "txt",
+  "sitemap",
 ] as const;
 
 export type AdminTab = (typeof ADMIN_TAB_IDS)[number];

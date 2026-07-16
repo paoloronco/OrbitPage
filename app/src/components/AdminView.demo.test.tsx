@@ -6,6 +6,7 @@ const mockState = vi.hoisted(() => ({
   backupProps: [] as Array<Record<string, unknown>>,
   privacyProps: [] as Array<Record<string, unknown>>,
   textFileProps: [] as Array<Record<string, unknown>>,
+  sitemapProps: [] as Array<Record<string, unknown>>,
   previewProps: [] as Array<Record<string, unknown>>,
 }));
 
@@ -62,6 +63,12 @@ vi.mock('./TextFileManager', () => ({
     return <div>TextFileManager</div>;
   },
 }));
+vi.mock('./SitemapManager', () => ({
+  SitemapManager: (props: Record<string, unknown>) => {
+    mockState.sitemapProps.push(props);
+    return <div>SitemapManager</div>;
+  },
+}));
 
 import { AdminView } from './AdminView';
 import { defaultTheme } from '@/lib/theme';
@@ -108,6 +115,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('TXT files');
     expect(mockState.privacyProps[0]).toMatchObject({ readOnly: true });
     expect(mockState.textFileProps[0]).toMatchObject({ readOnly: true });
+    expect(mockState.sitemapProps[0]).toMatchObject({ readOnly: true });
     expect(mockState.previewProps).toHaveLength(2);
     expect(mockState.previewProps[0]).toMatchObject({ publicPageHref: '/' });
     expect(html).toContain('Admin access');

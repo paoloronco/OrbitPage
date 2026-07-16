@@ -1071,6 +1071,46 @@ describe('API Endpoints', () => {
     expect(insertValues).toContain(7);
   });
 
+  it('GET /api/sitemap exposes generation status and its public URL', async () => {
+    vi.mocked(dbGet).mockReset();
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ generated_at: '2026-07-16T12:00:00.000Z', updated_at: '2026-07-16T12:00:00.000Z' })
+      .mockResolvedValueOnce({ lastmod: '2026-07-16T12:00:00.000Z' })
+      .mockResolvedValueOnce({ privacy_policy_url: '/privacy', cookie_policy_url: null });
+
+    const response = await request(app)
+      .get('/api/sitemap')
+      .set('Host', 'links.example.test')
+      .set('X-Forwarded-Proto', 'https');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toMatchObject({
+      generated: true,
+      url: 'https://links.example.test/sitemap.xml',
+      entryCount: 2,
+      automaticUpdates: true,
+    });
+  });
+
+  it('POST /api/sitemap/generate persists a fresh generation', async () => {
+    vi.mocked(dbGet).mockReset();
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ lastmod: '2026-07-16T12:00:00.000Z' })
+      .mockResolvedValueOnce({ privacy_policy_url: null, cookie_policy_url: null })
+      .mockResolvedValueOnce({ generated_at: '2026-07-16T12:00:00.000Z', updated_at: '2026-07-16T12:00:00.000Z' })
+      .mockResolvedValueOnce({ lastmod: '2026-07-16T12:00:00.000Z' })
+      .mockResolvedValueOnce({ privacy_policy_url: null, cookie_policy_url: null });
+
+    const response = await request(app).post('/api/sitemap/generate');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.generated).toBe(true);
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO sitemap_config'),
+      [expect.stringMatching(/^2026-/)]
+    );
+  });
+
   it('GET /orbitpage/dashboard/theme supports direct section refreshes with noindex headers', async () => {
     const response = await request(app).get('/orbitpage/dashboard/theme');
 
