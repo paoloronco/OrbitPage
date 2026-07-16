@@ -45,6 +45,7 @@ Do not cache:
 ```text
 /api/*
 /admin
+/dashboard/*
 /health
 ```
 

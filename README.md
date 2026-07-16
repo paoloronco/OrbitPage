@@ -93,7 +93,7 @@ The self-hosted edition is intentionally compact:
 ```text
 Browser
   ├─ Public OrbitPage
-  └─ /admin React workspace
+  └─ /dashboard/profile React workspace
            │
            ▼
       Express API
@@ -134,10 +134,10 @@ docker run -d \
 Open:
 
 - Public page: <http://localhost:8080>
-- Admin workspace: <http://localhost:8080/admin>
+- Admin workspace: <http://localhost:8080/dashboard/profile>
 - Health check: <http://localhost:8080/health>
 
-On the first visit to `/admin`, OrbitPage asks you to create the initial admin password. The first username is `admin`.
+On the first visit to `/dashboard/profile`, OrbitPage asks you to create the initial admin password. The first username is `admin`. Each workspace area has a stable URL, such as `/dashboard/links` and `/dashboard/theme`; the legacy `/admin` URL redirects to the profile section.
 
 The Docker image is published to both registries:
 
@@ -250,7 +250,7 @@ npm run dev
 Development endpoints:
 
 - Frontend: <http://localhost:8080>
-- Admin workspace: <http://localhost:8080/admin>
+- Admin workspace: <http://localhost:8080/dashboard/profile>
 - API and health endpoint: <http://localhost:3001>
 
 Quality checks:

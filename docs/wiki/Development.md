@@ -49,7 +49,7 @@ npm run dev
 Open:
 
 - Frontend: <http://localhost:8080>
-- Admin panel: <http://localhost:8080/admin>
+- Admin panel: <http://localhost:8080/dashboard/profile>
 - Backend health check: <http://localhost:3001/health>
 
 ## Run Production-Style Locally

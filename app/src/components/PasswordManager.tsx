@@ -92,7 +92,7 @@ export const PasswordManager = () => {
         setTimeout(() => {
           // No need to logout since the password change was successful
           // and we already have a valid token
-          window.location.href = withBasePath('/admin');
+          window.location.href = withBasePath('/dashboard/access');
         }, 2000);
       } else {
         const errorMessage = result.error || 'Failed to change password. Please try again.';
@@ -155,7 +155,7 @@ export const PasswordManager = () => {
     
     // Redirect to setup page
     setTimeout(() => {
-      window.location.href = withBasePath('/admin');
+      window.location.href = withBasePath('/dashboard/access');
     }, 2000);
   };
 

@@ -295,7 +295,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path === '/health') {
+  if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path.startsWith('/dashboard') || req.path === '/health') {
     res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   }
   next();
@@ -683,7 +683,15 @@ const getPublicThemePayload = async () => {
   };
 };
 
-const PUBLIC_SPA_ROUTES = new Set(['/', '/privacy', '/cookies', '/admin']);
+const PUBLIC_SPA_ROUTES = new Set(['/', '/privacy', '/cookies']);
+const ADMIN_SPA_SECTIONS = new Set(['profile', 'links', 'theme', 'access', 'backup', 'analytics', 'privacy', 'txt']);
+const isAdminSpaRoute = (pathName) => {
+  const segments = String(pathName || '').split('/').filter(Boolean);
+  if (segments.length === 1 && (segments[0] === 'admin' || segments[0] === 'dashboard')) return true;
+  return segments.length === 2
+    && (segments[0] === 'admin' || segments[0] === 'dashboard')
+    && ADMIN_SPA_SECTIONS.has(segments[1]);
+};
 if (DEMO_MODE) {
   PUBLIC_SPA_ROUTES.add('/about');
 }
@@ -751,14 +759,14 @@ const toAbsoluteHttpUrl = (value, origin) => {
 
 const canonicalPathForRequest = (req) => {
   const pathOnly = req.path || '/';
-  if (pathOnly === '/privacy' || pathOnly === '/cookies' || pathOnly === '/admin' || (DEMO_MODE && pathOnly === '/about')) return pathOnly;
+  if (pathOnly === '/privacy' || pathOnly === '/cookies' || isAdminSpaRoute(pathOnly) || (DEMO_MODE && pathOnly === '/about')) return pathOnly;
   return '/';
 };
 
 const getPageKind = (pathName) => {
   if (pathName === '/privacy') return 'privacy';
   if (pathName === '/cookies') return 'cookies';
-  if (pathName === '/admin') return 'admin';
+  if (isAdminSpaRoute(pathName)) return 'admin';
   if (DEMO_MODE && pathName === '/about') return 'about';
   return 'home';
 };
@@ -1225,8 +1233,9 @@ const buildDefaultRobotsTxt = (req) => {
         'User-agent: *',
         'Allow: /',
         'Disallow: /admin',
+        'Disallow: /dashboard',
         'Disallow: /api',
-        ...(BASE_PATH ? [`Disallow: ${BASE_PATH}/admin`, `Disallow: ${BASE_PATH}/api`] : []),
+        ...(BASE_PATH ? [`Disallow: ${BASE_PATH}/admin`, `Disallow: ${BASE_PATH}/dashboard`, `Disallow: ${BASE_PATH}/api`] : []),
         '',
         ...sitemapUrls.map((url) => `Sitemap: ${url}`),
       ]
@@ -1260,7 +1269,7 @@ ${DEMO_MODE ? `- About: ${aboutUrl}\n` : ''}- Repository: https://github.com/pao
 ## Useful Paths
 
 - Public page: /
-- Admin: /admin
+- Admin: /dashboard/profile
 - API health: /health
 - Robots: /robots.txt
 - LLM summary: /llms.txt
@@ -3535,7 +3544,7 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, requirePermission(
 // Catch-all route for SPA
 app.get('*', spaLimiter, (req, res) => {
   console.log(`SPA catch-all serving index.html for: ${req.path}`);
-  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) ? 200 : 404;
+  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) ? 200 : 404;
   serveSpaIndex(req, res, { statusCode });
 });
 

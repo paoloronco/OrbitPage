@@ -26,7 +26,7 @@ interface TextCardProps {
   managePlanHref?: string;
 }
 
-export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, schedulingEnabled = true, managePlanHref = "/dashboard?section=billing" }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, schedulingEnabled = true, managePlanHref = "/dashboard/billing" }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);

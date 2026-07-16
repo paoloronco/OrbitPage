@@ -92,7 +92,7 @@ export const ProfileSection = ({
   onStartOnboarding,
   onAdminOnboardingEnabledChange,
   seoAccess,
-  managePlanHref = "/dashboard?section=billing",
+  managePlanHref = "/dashboard/billing",
 }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editProfile, setEditProfile] = useState(profile);

@@ -85,6 +85,7 @@ BASE_PATH=/orbitpage
 With that setting, OrbitPage serves the app from both root and the base path:
 
 - `/` and `/orbitpage`
-- `/admin` and `/orbitpage/admin`
+- `/dashboard/<section>` and `/orbitpage/dashboard/<section>` (for example `profile`, `links`, or `theme`)
+- `/admin` and `/orbitpage/admin` remain compatibility aliases
 - `/api/...` and `/orbitpage/api/...`
 - `/uploads/...` and `/orbitpage/uploads/...`

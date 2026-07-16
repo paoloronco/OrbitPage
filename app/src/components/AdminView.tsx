@@ -46,6 +46,7 @@ import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
+import type { AdminTab } from "@/lib/admin-navigation";
 
 interface ProfileData {
   name: string;
@@ -90,9 +91,9 @@ interface AdminViewProps {
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onLogout: () => void;
+  requestedTab?: AdminTab;
+  onTabChange?: (tab: AdminTab) => void;
 }
-
-export type AdminTab = "profile" | "links" | "theme" | "access" | "backup" | "analytics" | "privacy" | "txt";
 
 const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
   { value: "profile", label: "Page", icon: User },
@@ -124,7 +125,9 @@ export const AdminView = ({
   onProfileUpdate,
   onLinksUpdate,
   onThemeChange,
-  onLogout
+  onLogout,
+  requestedTab = "profile",
+  onTabChange,
 }: AdminViewProps) => {
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
@@ -136,7 +139,7 @@ export const AdminView = ({
   const [previewLinks, setPreviewLinks] = useState(links);
   const publicPageHref = getPublicUrlOverride() || withBasePath('/');
   const entitlements = saasPlan?.entitlements;
-  const managePlanHref = saasBilling?.manageUrl || "/dashboard?section=billing";
+  const managePlanHref = saasBilling?.manageUrl || "/dashboard/billing";
   const isHostedAdmin = isSaasMode() || Boolean(
     saasPlan ||
     saasUsage ||
@@ -183,22 +186,37 @@ export const AdminView = ({
     }
   });
 
+  const selectTab = (tab: AdminTab) => {
+    setActiveTab(tab);
+    onTabChange?.(tab);
+  };
+
   // Keep activeTab in sync when permission set changes (e.g. after login)
   useEffect(() => {
     if (visibleTabs.length === 0) return;
 
     if (currentUser && !didPickInitialTab) {
-      const preferred = visibleTabs.find(tab => tab.value === "profile") || visibleTabs[0];
+      const preferred = visibleTabs.find(tab => tab.value === requestedTab)
+        || visibleTabs.find(tab => tab.value === "profile")
+        || visibleTabs[0];
       setActiveTab(preferred.value);
+      if (preferred.value !== requestedTab) onTabChange?.(preferred.value);
       setDidPickInitialTab(true);
       return;
     }
 
     if (!visibleTabs.some(t => t.value === activeTab)) {
-      setActiveTab(visibleTabs[0].value);
+      selectTab(visibleTabs[0].value);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, didPickInitialTab]);
+  }, [currentUser, didPickInitialTab, requestedTab]);
+
+  useEffect(() => {
+    if (!didPickInitialTab || !visibleTabs.some((tab) => tab.value === requestedTab)) return;
+    setActiveTab((current) => current === requestedTab ? current : requestedTab);
+  // Permission booleans are included so a deep link is applied as soon as its tab becomes available.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedTab, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canManageUsers, canViewAnalytics, canEditCompliance]);
 
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
@@ -324,7 +342,7 @@ export const AdminView = ({
           )}
         </section>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AdminTab)} className="mt-5 flex-1">
+        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className="mt-5 flex-1">
           <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
               {visibleTabs.map(({ value, label, icon: Icon }) => (
@@ -558,7 +576,7 @@ export const AdminView = ({
           key={onboardingReplayKey}
           activeTab={activeTab}
           visibleTabs={visibleTabs.map(tab => tab.value)}
-          onSelectTab={setActiveTab}
+          onSelectTab={selectTab}
           forceOpen={onboardingReplayKey > 0}
           repeatEnabled={profile.adminOnboardingEnabled !== false}
           profile={{

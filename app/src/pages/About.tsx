@@ -138,7 +138,7 @@ const About = () => {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <a
               className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-800"
-              href={withBasePath("/admin")}
+              href={withBasePath("/dashboard/profile")}
             >
               Try the admin demo
               <ArrowRight className="h-4 w-4" />
@@ -281,7 +281,7 @@ const About = () => {
             <a className="inline-flex items-center justify-center rounded-md bg-blue-700 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800" href={withBasePath("/")}>
               View public page
             </a>
-            <a className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-50" href={withBasePath("/admin")}>
+            <a className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-50" href={withBasePath("/dashboard/profile")}>
               Open admin demo
             </a>
           </div>

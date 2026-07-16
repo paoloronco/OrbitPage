@@ -107,7 +107,7 @@ export const LinkCard = ({
   schedulingEnabled = true,
   videoUploadsEnabled = true,
   maxVideoUploadBytes,
-  managePlanHref = "/dashboard?section=billing",
+  managePlanHref = "/dashboard/billing",
 }: LinkCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);

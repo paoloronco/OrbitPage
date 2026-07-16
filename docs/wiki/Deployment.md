@@ -36,7 +36,7 @@ docker run -d --name orbitpage \
 Open:
 
 - Public page: <http://localhost:8080>
-- Admin panel: <http://localhost:8080/admin>
+- Admin panel: <http://localhost:8080/dashboard/profile>
 
 ## Docker Compose
 

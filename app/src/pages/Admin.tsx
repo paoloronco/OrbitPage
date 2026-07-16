@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AdminView } from "@/components/AdminView";
 import { LoginForm } from "@/components/LoginForm";
 import { InitialSetup } from "@/components/InitialSetup";
@@ -14,6 +15,14 @@ import { Permission } from "@/lib/permissions";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
 import { isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
+import {
+  ADMIN_SECTION_CHANGED_MESSAGE,
+  ADMIN_SECTION_NAVIGATE_MESSAGE,
+  adminDashboardPath,
+  adminTabFromLocation,
+  isAdminSectionMessage,
+  type AdminTab,
+} from "@/lib/admin-navigation";
 
 interface ProfileData {
   name: string;
@@ -54,6 +63,11 @@ export interface CurrentUser {
 
 const Admin = () => {
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const hostedFrame = typeof window !== "undefined" && isSaasMode() && window.self !== window.top;
+  const locationTab = adminTabFromLocation(location.pathname, location.search);
+  const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSetup, setShowSetup] = useState(false);
@@ -77,6 +91,38 @@ const Admin = () => {
   const [saasUsage, setSaasUsage] = useState<SaasWorkspaceUsage | null>(null);
   const [saasBilling, setSaasBilling] = useState<SaasBillingContext | null>(null);
 
+  const requestedTab = hostedFrame ? hostedTab : locationTab;
+
+  useEffect(() => {
+    if (hostedFrame) return;
+    const expectedPath = adminDashboardPath(locationTab);
+    if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
+  }, [hostedFrame, location.pathname, locationTab, navigate]);
+
+  useEffect(() => {
+    if (!hostedFrame) return;
+    const receiveNavigation = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== window.parent) return;
+      if (isAdminSectionMessage(event.data, ADMIN_SECTION_NAVIGATE_MESSAGE)) {
+        setHostedTab(event.data.section);
+      }
+    };
+    window.addEventListener("message", receiveNavigation);
+    return () => window.removeEventListener("message", receiveNavigation);
+  }, [hostedFrame]);
+
+  const handleTabChange = (tab: AdminTab) => {
+    if (hostedFrame) {
+      setHostedTab(tab);
+      window.parent.postMessage(
+        { type: ADMIN_SECTION_CHANGED_MESSAGE, section: tab },
+        window.location.origin,
+      );
+      return;
+    }
+    navigate(adminDashboardPath(tab));
+  };
+
   // Check authentication status and setup status on mount.
   // Use async token verify so a page refresh doesn't clear the session:
   // the synchronous isAuthenticated() only checks the in-memory cache
@@ -89,7 +135,7 @@ const Admin = () => {
       // The SaaS editor is an authenticated dashboard surface, never a second
       // login destination. Standalone visits return to the Firebase dashboard.
       if (isHostedRuntime() && window.self === window.top) {
-        window.location.replace('/dashboard');
+        window.location.replace('/dashboard/profile');
         return;
       }
 
@@ -396,7 +442,7 @@ const Admin = () => {
             </p>
             <a
               className="mt-7 inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-              href="/dashboard"
+               href="/dashboard/profile"
               target="_top"
             >
               Return to dashboard
@@ -424,6 +470,8 @@ const Admin = () => {
       onLinksUpdate={saveLinks}
       onThemeChange={saveTheme}
       onLogout={handleLogout}
+      requestedTab={requestedTab}
+      onTabChange={handleTabChange}
     />
   );
 };

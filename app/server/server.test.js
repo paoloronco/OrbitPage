@@ -695,8 +695,10 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.text).toContain('Allow: /');
     expect(response.text).toContain('Disallow: /admin');
+    expect(response.text).toContain('Disallow: /dashboard');
     expect(response.text).toContain('Disallow: /api');
     expect(response.text).toContain('Disallow: /orbitpage/admin');
+    expect(response.text).toContain('Disallow: /orbitpage/dashboard');
     expect(response.text).toContain('Disallow: /orbitpage/api');
     expect(response.text).toContain('Sitemap: https://links.example.test/sitemap.xml');
     expect(response.text).toContain('Sitemap: https://links.example.test/orbitpage/sitemap.xml');
@@ -981,6 +983,14 @@ describe('API Endpoints', () => {
     // No existing DB row → frontend clickCount (7) is used
     const insertValues = insertCall[1];
     expect(insertValues).toContain(7);
+  });
+
+  it('GET /orbitpage/dashboard/theme supports direct section refreshes with noindex headers', async () => {
+    const response = await request(app).get('/orbitpage/dashboard/theme');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-robots-tag']).toContain('noindex');
+    expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
   });
 
   it('PUT /api/links persists the public URL visibility preference', async () => {

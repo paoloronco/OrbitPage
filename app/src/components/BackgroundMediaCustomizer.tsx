@@ -52,7 +52,7 @@ export const BackgroundMediaCustomizer = ({
   config,
   onChange,
   videoUploadsEnabled = true,
-  managePlanHref = "/dashboard?section=billing",
+  managePlanHref = "/dashboard/billing",
   maxUploadBytes,
   maxVideoUploadBytes,
 }: BackgroundMediaCustomizerProps) => {

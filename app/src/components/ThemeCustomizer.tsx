@@ -255,7 +255,7 @@ export const ThemeCustomizer = ({
   videoUploadsEnabled = true,
   maxUploadBytes,
   maxVideoUploadBytes,
-  managePlanHref = "/dashboard?section=billing",
+  managePlanHref = "/dashboard/billing",
 }: ThemeCustomizerProps) => {
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("presets");
   const [presetScope, setPresetScope] = useState<PresetScope>("page");

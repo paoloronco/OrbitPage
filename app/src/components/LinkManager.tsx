@@ -37,7 +37,7 @@ export const LinkManager = ({
   schedulingEnabled = true,
   videoUploadsEnabled = true,
   maxVideoUploadBytes,
-  managePlanHref = "/dashboard?section=billing",
+  managePlanHref = "/dashboard/billing",
 }: LinkManagerProps) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
