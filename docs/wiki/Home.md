@@ -2,7 +2,7 @@
 
 Welcome to the operational documentation for OrbitPage.
 
-The README is intentionally short and demo-focused. This wiki contains the longer guides for installation, production deployment, configuration, development, indexing, and troubleshooting.
+The README provides the product overview and fastest installation path. This wiki contains the longer guides for installation, production deployment, configuration, development, indexing, and troubleshooting.
 
 ## Start Here
 
@@ -16,18 +16,11 @@ The README is intentionally short and demo-focused. This wiki contains the longe
 
 ## Useful Links
 
-- Demo public page: <https://orbitpage-demo.paoloronco.it/>
-- Demo admin panel: <https://orbitpage-demo.paoloronco.it/admin>
+- Official website and managed SaaS: <https://orbitpage.com>
+- Open-source product page: <https://orbitpage.com/open-source>
 - Repository: <https://github.com/paoloronco/OrbitPage>
 - Docker Hub: <https://hub.docker.com/r/paueron/orbitpage>
 - GitHub Container Registry: <https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage>
+- Releases: <https://github.com/paoloronco/OrbitPage/releases>
 
-## Demo Credentials
-
-| Area | Value |
-| --- | --- |
-| Admin URL | <https://orbitpage-demo.paoloronco.it/admin> |
-| Username | `admin` |
-| Password | `ChangeMe123!` |
-
-The public page does not require login. Demo changes may be reset and should not be used for private data.
+This wiki documents the open-source self-hosted edition. The managed service does not require these installation steps.

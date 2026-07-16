@@ -1,91 +1,128 @@
 # OrbitPage
 
-### A self-hosted public page for people, brands, venues, events, and privacy-minded teams.
+<p align="center">
+  <img src="./app/public/brand/orbitpage-lockup.svg" alt="OrbitPage" width="420" />
+</p>
 
-[![Version](https://img.shields.io/badge/version-4.7.0-blue.svg)](https://github.com/paoloronco/OrbitPage)
-[![Docker Hub](https://img.shields.io/badge/Docker_Hub-paueron%2Forbitpage-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/paueron/orbitpage)
-[![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fpaoloronco%2Forbitpage-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage)
-[![Available on GitHub](https://img.shields.io/badge/Available_on-GitHub-181717?logo=github&logoColor=white)](https://github.com/paoloronco/OrbitPage)
-[![Available on Gitea](https://img.shields.io/badge/Available_on-Gitea-609926?logo=gitea&logoColor=white)](https://gitea.com/paoloronco/OrbitPage)
+<p align="center">
+  Build a flexible public page for a person, brand, venue, event, or small business.<br />
+  Self-host the open-source edition or use the managed service at <a href="https://orbitpage.com">orbitpage.com</a>.
+</p>
 
-**OrbitPage** is an open-source public page manager you can run on your own server. It gives you one polished place for links, text blocks, social destinations, venue details, campaigns, announcements, click analytics, privacy controls, backup/restore, and production-ready Docker images without requiring an external database.
+<p align="center">
+  <a href="https://github.com/paoloronco/OrbitPage/releases"><img src="https://img.shields.io/github/v/release/paoloronco/OrbitPage?label=version&amp;color=2563EB" alt="Latest OrbitPage version" /></a>
+  <a href="./LICENSE.txt"><img src="https://img.shields.io/badge/license-MIT-111827" alt="MIT License" /></a>
+  <a href="https://hub.docker.com/r/paueron/orbitpage"><img src="https://img.shields.io/badge/Docker_Hub-paueron%2Forbitpage-2496ED?logo=docker&logoColor=white" alt="Docker Hub" /></a>
+  <a href="https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage"><img src="https://img.shields.io/badge/GHCR-orbitpage-181717?logo=github&logoColor=white" alt="GitHub Container Registry" /></a>
+</p>
 
-![OrbitPage public page screenshot](./docs/screenshots/01-public-page.png)
+<p align="center">
+  <a href="https://orbitpage.com/product">Product</a> ·
+  <a href="https://orbitpage.com/open-source">Open source</a> ·
+  <a href="https://orbitpage.com/hosting">Managed hosting</a> ·
+  <a href="https://orbitpage.com/pricing">Pricing</a> ·
+  <a href="./docs/wiki/Home.md">Documentation</a>
+</p>
 
-## Why OrbitPage?
+OrbitPage is a public-page builder with a real editing workspace, not only a list of buttons. It supports links, rich content blocks, media, social profiles, maps, events, contact information, themes, analytics, SEO controls, consent settings, and responsive public rendering.
 
-Most public-page tools are either hosted SaaS products or self-hosted projects that need extra services before you can get started. OrbitPage is built for anyone who wants a clean public page and an admin experience that still feels simple when it runs on their own infrastructure.
+This repository contains the **open-source, self-hosted edition**. It runs as one Node.js application with a React admin interface, an Express API, SQLite persistence, and local file storage. No external database is required.
 
-| If you want... | OrbitPage gives you... |
-| --- | --- |
-| A flexible public page | Links, text cards, separators, social links, avatars, cover images, venue or brand details, and SEO metadata |
-| A self-hosted setup | Docker, SQLite, local uploads, health checks, and a single persistent data volume |
-| Control over privacy | Optional analytics, consent/legal settings, no required external database, and self-owned data |
-| A usable admin panel | Live preview, drag-and-drop ordering, theme editing, scheduling, access management, and inline feedback |
-| Safer operations | JWT auth, bcrypt passwords, upload restrictions, storage quotas, backup/restore, CI, and Docker smoke tests |
+## Choose Your Edition
 
-## Contents
+OrbitPage is available in two forms built around the same page builder and public-page experience.
 
-- [Why OrbitPage?](#why-orbitpage)
-- [Try the Demo](#try-the-demo)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Quick Start with Docker](#quick-start-with-docker)
-- [Quick Start](#quick-start)
-- [Production Notes](#production-notes)
-- [Deploy Anywhere](#deploy-anywhere)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Search and Sharing](#search-and-sharing)
-- [Documentation](#documentation)
-- [Changelog](#-changelog)
-- [License](#license)
-
-## Try the Demo
-
-The demo is the fastest way to see both sides of OrbitPage: the public page visitors see, and the admin panel you use to manage it.
-
-| Area | Link | Login |
+| | Open-source edition | Managed SaaS |
 | --- | --- | --- |
-| Public page | [orbitpage-demo.paoloronco.it](https://orbitpage-demo.paoloronco.it/) | No login required |
-| About OrbitPage | [orbitpage-demo.paoloronco.it/about](https://orbitpage-demo.paoloronco.it/about) | No login required |
-| Admin panel | [orbitpage-demo.paoloronco.it/admin](https://orbitpage-demo.paoloronco.it/admin) | `admin` / `ChangeMe123!` |
+| Best for | Self-hosters, homelabs, developers, and teams that want infrastructure control | People and businesses that want OrbitPage without operating a server |
+| Where it runs | Your Docker host, VM, or Node.js platform | Managed at [orbitpage.com](https://orbitpage.com) |
+| Source | This public repository, MIT licensed | Hosted platform and managed control plane |
+| Data | SQLite database and uploads on your persistent volume | Managed accounts, storage, publishing, and backups |
+| Public URL | Your own deployment URL | Hosted username URL, with custom domains on eligible plans |
+| Operations | You handle deployment, TLS, updates, backups, and availability | OrbitPage handles the hosting workflow |
+| Cost | Software is free; you pay for your infrastructure | Free and paid plans are listed on the [pricing page](https://orbitpage.com/pricing) |
 
-Demo changes may be reset and should not be used for private data.
+The managed control plane, billing system, and hosting infrastructure are not included in this repository. Improvements to the shared OrbitPage application can be released in both editions.
 
 ## Features
 
-| Area | Highlights |
-| --- | --- |
-| Public page | Name/brand, avatar or logo, bio/description, social links, link cards, text cards, separators, cover images, SEO metadata, legal footer links |
-| Link management | Link/text/separator blocks, visibility toggles, scheduling, drag-and-drop ordering, JSON import/export |
-| Design | Theme editor, live preview, colors, gradients, typography, spacing, radius, blur, glow, custom CSS |
-| Admin | Page editor, analytics, privacy/legal settings, access management, password management, demo mode support |
-| Data ownership | SQLite persistence, local uploads, full JSON backup/restore, Docker volume support |
-| Security | bcrypt password hashing, signed JWT sessions, encrypted browser token storage, rate limits, upload restrictions, storage quota |
-| Deployment | Docker Hub, GHCR, Docker Compose, health endpoint, Cloud Run compatible, no external database required |
+### Page building
 
-## Screenshots
+- Link cards, text blocks, headings, separators, images, and native video
+- Social rows, contact details, maps, events, callouts, and consent-aware embeds
+- Per-block visibility, ordering, scheduling, icons, cover media, and layout controls
+- Responsive rendering for desktop and mobile pages
 
-| Public page | Admin links |
-| --- | --- |
-| ![Public page](./docs/screenshots/01-public-page.png) | ![Admin link manager](./docs/screenshots/04-admin-links.png) |
+### Design
 
-| Theme editor | Page editor |
-| --- | --- |
-| ![Theme editor](./docs/screenshots/05-admin-theme.png) | ![Page editor](./docs/screenshots/03-admin-profile.png) |
+- Ready-made page themes and card-style presets
+- Live preview while editing profile, links, content, and themes
+- Colors, typography, spacing, radius, borders, shadows, blur, and glow
+- Profile-card, avatar/logo, background image, video, and favicon controls
+- Optional advanced CSS customization
 
-Walkthroughs:
+### Publishing and discovery
 
-- [Public page walkthrough](https://app.arcade.software/share/avEiscyqITMJJFngqacr)
-- [Admin panel walkthrough](https://app.arcade.software/share/PhdZgUB3JnSnyIFZaQEq)
+- Editable title, description, canonical URL, and social-preview metadata
+- Open Graph, Twitter Card, and Schema.org output
+- Dynamic `robots.txt` and `sitemap.xml`
+- Editable `llms.txt`, `humans.txt`, `ai.txt`, and `security.txt`
+- Optional `noindex` mode for private, staging, or preview deployments
 
-## Quick Start with Docker
+### Privacy and operations
 
-Docker is the recommended way to run OrbitPage in production or on a home server.
+- Basic click analytics with privacy and consent controls
+- Google Consent Mode and external CMP integration options
+- Privacy Policy and Cookie Policy links or hosted content
+- JSON backup and restore
+- Storage quotas and validated image/video uploads
+- Health endpoint, Docker health support, and persistent application data
+
+### Administration and security
+
+- First-run admin setup and bcrypt password hashing
+- Signed JWT sessions and protected password recovery
+- Multi-user access controls and scoped editing permissions
+- Rate limits, file-type checks, upload-size limits, and path validation
+- Admin, API, health, and unknown application routes excluded from indexing
+
+## How It Works
+
+The self-hosted edition is intentionally compact:
+
+```text
+Browser
+  ├─ Public OrbitPage
+  └─ /admin React workspace
+           │
+           ▼
+      Express API
+       ├─ SQLite database
+       └─ Local uploads
+```
+
+Repository layout:
+
+```text
+app/
+  src/          React + TypeScript frontend
+  server/       Express API, authentication, SQLite, and uploads
+  public/       Static and brand assets
+docs/
+  wiki/         Installation and operations guides
+.github/        CI, release, and container workflows
+Dockerfile      Production multi-stage image
+docker-compose.yml
+```
+
+## Quick Start With Docker
+
+Docker is the recommended production path.
 
 ```bash
-docker run -d --name orbitpage \
+docker run -d \
+  --name orbitpage \
+  --restart unless-stopped \
   -p 8080:8080 \
   -e NODE_ENV=production \
   -e PORT=8080 \
@@ -96,14 +133,42 @@ docker run -d --name orbitpage \
 
 Open:
 
-- Public page: http://localhost:8080
-- Admin panel: http://localhost:8080/admin
+- Public page: <http://localhost:8080>
+- Admin workspace: <http://localhost:8080/admin>
+- Health check: <http://localhost:8080/health>
 
-The first admin visit asks you to create the admin password. The first username is always `admin`.
+On the first visit to `/admin`, OrbitPage asks you to create the initial admin password. The first username is `admin`.
 
-## Quick Start
+The Docker image is published to both registries:
 
-Use this path when you want to run OrbitPage from source.
+```text
+paueron/orbitpage:latest
+ghcr.io/paoloronco/orbitpage:latest
+```
+
+Versioned image tags are available from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases).
+
+## Docker Compose
+
+1. Review [docker-compose.yml](./docker-compose.yml).
+2. Replace the sample `JWT_SECRET` with a long random value.
+3. Start the service:
+
+```bash
+docker compose up -d
+```
+
+The included Compose file stores persistent data in `./orbitpage-data`. Keep this directory when recreating or upgrading the container.
+
+## Run From Source
+
+Requirements:
+
+- Node.js `^20.19.0` or `>=22.12.0`
+- npm
+- Git
+
+Install and start:
 
 ```bash
 git clone https://github.com/paoloronco/OrbitPage.git
@@ -113,106 +178,80 @@ npm run install:server
 npm run start
 ```
 
-Open:
-
-- Public page: http://localhost:3001
-- Admin panel: http://localhost:3001/admin
-- Health check: http://localhost:3001/health
-
-On the first admin visit, OrbitPage asks you to create the admin password. The first username is always `admin`.
-
-Requirements:
-
-- Node.js `^20.19.0` or `>=22.12.0`
-- npm
-- Git
-
-## Production Notes
-
-The same image is published to Docker Hub and GitHub Container Registry.
-
-Docker Hub:
-
-```bash
-paueron/orbitpage:latest
-```
-
-GHCR:
-
-```bash
-ghcr.io/paoloronco/orbitpage:latest
-```
-
-The `/app/data` volume stores the SQLite database and uploads. Keep it mounted before upgrading or recreating the container.
-
-### Docker Compose
-
-```bash
-docker compose up -d
-```
-
-Before exposing the app publicly, replace the sample `JWT_SECRET` in [docker-compose.yml](./docker-compose.yml).
-
-## Deploy Anywhere
-
-OrbitPage can run on any platform that supports a Docker container or a Node.js service: Cloud Run, Render, Fly.io, DigitalOcean App Platform, Azure App Service, Koyeb, Northflank, CapRover, Dokku, Coolify, and similar providers.
-
-For container platforms, the deployment shape is always the same:
-
-```bash
-NODE_ENV=production
-PORT=8080
-JWT_SECRET=replace-with-a-long-random-secret
-```
-
-Then persist `/app/data` and expose port `8080`. Most platforms provide HTTPS at the edge, so `ENABLE_HTTPS` is usually only useful for local or private self-signed deployments.
+The production-style source installation runs on <http://localhost:3001> by default.
 
 ## Configuration
 
-The production essentials are intentionally small:
+The essential server configuration is deliberately small.
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `JWT_SECRET` | Yes in Docker/production | Stable signing key for admin sessions. Use a long random value. |
-| `PORT` | Usually | HTTP port. Docker defaults to `8080`; local Node defaults to `3001`. |
-| `DATA_DIR` | Recommended for custom installs | Directory for `orbitpage.db` and uploads. Docker uses `/app/data`. |
-| `UPLOAD_STORAGE_QUOTA_MB` | Optional | Maximum total upload storage in MB. Defaults to `1024`. |
-| `VIDEO_UPLOAD_LIMIT_MB` | Optional | Maximum MP4/WebM upload size in MB. Defaults to `100`. |
-| `PUBLIC_SITE_URL` | Recommended behind proxies | Canonical public URL for SEO, sitemap, and social previews. |
-| `SEO_INDEXING` | Optional | Set to `false` for staging/private deployments. |
-| `RESET_TOKEN` | Optional | Enables protected recovery/reset endpoints. Use at least 32 characters. |
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `JWT_SECRET` | Production | Random at runtime | Signs admin sessions. Use a stable, long random value in production. |
+| `PORT` | No | `3001` (`8080` in Docker) | HTTP listening port. |
+| `DATA_DIR` | Recommended | Server directory (`/app/data` in Docker) | Stores `orbitpage.db` and uploaded media. |
+| `PUBLIC_SITE_URL` | Recommended | Request origin | Canonical public URL used for SEO, sharing, sitemap, and QR codes. |
+| `PUBLIC_SITE_NAME` | No | `OrbitPage` | Site name used in generated metadata. |
+| `SEO_INDEXING` | No | `true` | Set to `false` for private or staging deployments. |
+| `UPLOAD_STORAGE_QUOTA_MB` | No | `1024` | Total upload quota for the installation. |
+| `VIDEO_UPLOAD_LIMIT_MB` | No | `100` | Per-file MP4/WebM upload limit. |
+| `RESET_TOKEN` | No | Disabled | Enables protected credential recovery. Use at least 32 characters. |
+| `BASE_PATH` | No | Empty | Serves OrbitPage from a subpath such as `/links`. |
 
-See the full environment reference in [docs/wiki/Configuration.md](./docs/wiki/Configuration.md).
+See [Configuration](./docs/wiki/Configuration.md) for the complete reference, including HTTPS, reverse proxies, legal pages, and optional integrations.
+
+## Persistent Data and Backups
+
+Everything that must survive a restart lives under `DATA_DIR`:
+
+```text
+orbitpage.db
+uploads/
+```
+
+For Docker, persist `/app/data`. Back up both the database and uploads together, or use the JSON backup/restore controls in the Admin workspace. Never recreate a production container without its existing volume or bind mount.
+
+## Deploying in Production
+
+OrbitPage can run anywhere that supports a persistent Docker container or Node.js service, including a VM, home server, Cloud Run, Render, Fly.io, DigitalOcean, Azure App Service, Coolify, CapRover, Dokku, and similar platforms.
+
+For a production deployment:
+
+1. Set a stable `JWT_SECRET`.
+2. Persist `DATA_DIR` or `/app/data`.
+3. Put the service behind HTTPS using your platform or reverse proxy.
+4. Set `PUBLIC_SITE_URL` to the final public origin.
+5. Back up the database and uploads before upgrades.
+6. Check `/health` after each deployment.
+
+Read [Deployment](./docs/wiki/Deployment.md) for reverse-proxy headers, subpath hosting, upgrades, and rollback guidance.
 
 ## Development
 
-Development mode uses two processes: Express for the API and Vite for the frontend.
+Install dependencies:
 
 ```bash
-cd OrbitPage/app
+cd app
 npm ci
 npm run install:server
 ```
 
-Terminal 1:
+Run the API and Vite frontend in separate terminals:
 
 ```bash
+# Terminal 1
 npm run server:dev
-```
 
-Terminal 2:
-
-```bash
+# Terminal 2
 npm run dev
 ```
 
-Open:
+Development endpoints:
 
-- Frontend: http://localhost:8080
-- Admin panel: http://localhost:8080/admin
-- API health check: http://localhost:3001/health
+- Frontend: <http://localhost:8080>
+- Admin workspace: <http://localhost:8080/admin>
+- API and health endpoint: <http://localhost:3001>
 
-Useful checks:
+Quality checks:
 
 ```bash
 npm run lint
@@ -220,39 +259,9 @@ npm run test:unit
 npm run build
 ```
 
-## Search and Sharing
-
-OrbitPage generates metadata from your saved public page and environment, so most deployments do not need source-code SEO edits.
-
-Recommended production values:
-
-```bash
-PUBLIC_SITE_URL=https://links.example.com
-PUBLIC_SITE_NAME="Your Name or Brand"
-SEO_INDEXING=true
-```
-
-Use `SEO_INDEXING=false` for private, staging, or preview deployments. OrbitPage will emit `noindex` metadata and a blocking `robots.txt`.
-
-OrbitPage also serves:
-
-- page-based title and meta description
-- canonical URL
-- Open Graph and Twitter Card metadata
-- Schema.org JSON-LD
-- dynamic `robots.txt`
-- dynamic `sitemap.xml` with automatic `lastmod` updates from public content changes
-- editable `llms.txt` plus `llm.txt` alias
-- editable `humans.txt`, `ai.txt`, and `security.txt`
-- `noindex` headers for admin, API, health, and unknown SPA routes
-
-Admins can edit these TXT endpoints from the Privacy/TXT area. Demo deployments expose the files but keep editing disabled.
-
-Full guidance lives in [docs/wiki/SEO-and-indexing.md](./docs/wiki/SEO-and-indexing.md).
+Browser tests are available through `npm run test:e2e`.
 
 ## Documentation
-
-The README is the quick path. Longer operational docs live in `docs/wiki/` and are ready to mirror into the GitHub Wiki:
 
 - [Getting started](./docs/wiki/Getting-started.md)
 - [Deployment](./docs/wiki/Deployment.md)
@@ -261,560 +270,21 @@ The README is the quick path. Longer operational docs live in `docs/wiki/` and a
 - [SEO and indexing](./docs/wiki/SEO-and-indexing.md)
 - [Security](./docs/wiki/Security.md)
 - [Troubleshooting](./docs/wiki/Troubleshooting.md)
+- [Brand assets](./docs/brand/README.md)
+- [Release history](https://github.com/paoloronco/OrbitPage/releases)
 
-## 📝 Changelog
+## Security
 
-<details>
-<summary><strong>Show full changelog</strong></summary>
+Do not report unpatched vulnerabilities through a public issue. Use a private [GitHub Security Advisory](https://github.com/paoloronco/OrbitPage/security/advisories/new) or email `info@paoloronco.it`.
 
-<details>
-<summary><strong>v4.7.0</strong></summary>
+Deployment hardening and supported-version information are in [SECURITY.md](./SECURITY.md).
 
-### Secure native video media
+## Contributing
 
-- Adds native MP4/WebM blocks with poster images, controls, autoplay, loop, and fit settings.
-- Reuses the video pipeline for page backgrounds and respects reduced-motion preferences.
-- Rejects oversized or mismatched files on the client and validates MIME, extension, and binary container signatures on the server.
-- Adds configurable per-video and total-storage limits without Base64 media payloads.
+Issues and pull requests for the open-source application are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, testing, coding conventions, and the contribution workflow.
 
-</details>
-
-<details>
-<summary><strong>v4.6.0</strong></summary>
-
-### Theme persistence fix
-
-- Accepts and persists the new profile-card and content-card palette objects in the theme API.
-- Restores saving for ready-made themes, card styles, imports, and manual fine tuning.
-- Adds backend regression coverage for modern nested theme payloads.
-
-</details>
-
-<details>
-<summary><strong>v4.4.0</strong></summary>
-
-### Explicit blocks, theme studio, and privacy-ready embeds
-
-- Expands the block system with headings, images, contacts, social rows, callouts, maps, events, and consent-aware embeds.
-- Adds independent ready-made page themes and card-style presets with live previews and unrestricted fine tuning.
-- Adds complete profile-card and avatar customization, including colors, borders, accents, and image shape.
-- Aligns Admin previews with public rendering and reorganizes the Links editor into clear content, publishing, media, and appearance sections.
-- Hardens Google Analytics Consent Mode v2 and external CMP integrations for Cookiebot, CookieYes, OneTrust, iubenda, and custom providers.
-- Adds secure embed sandboxing, stricter CSP provider allowlists, and expanded CMP regression coverage.
-
-</details>
-
-<details>
-<summary><strong>v4.3.28</strong></summary>
-
-### Automatic sitemap freshness
-
-- Updates `/sitemap.xml` automatically from public content timestamps.
-- Uses profile, links, theme, consent, and TXT file changes to generate stable `lastmod` values.
-- Serves the sitemap with no-store headers so crawlers do not keep stale XML.
-
-</details>
-
-<details>
-<summary><strong>v4.3.27</strong></summary>
-
-### Editable crawler and LLM TXT files
-
-- Adds dynamic `robots.txt`, `llms.txt`, `llm.txt`, `humans.txt`, `ai.txt`, and `security.txt` endpoints.
-- Adds an admin TXT editor with save/reset controls and demo-mode read-only protection.
-- Persists custom TXT files in SQLite and includes them in backup/restore.
-
-</details>
-
-<details>
-<summary><strong>v4.3.26</strong></summary>
-
-### About page SEO hardening
-
-- Adds richer server-rendered SEO metadata for the demo `/about` page.
-- Adds Open Graph/Twitter image metadata and SoftwareApplication JSON-LD for better social previews and search snippets.
-- Covers the About SEO metadata with backend regression tests.
-
-</details>
-
-<details>
-<summary><strong>v4.3.25</strong></summary>
-
-### Demo-only product about page
-
-- Adds a polished `/about` page for the public demo instance.
-- Keeps `/about` unavailable outside demo mode and links it from the README demo table.
-
-</details>
-
-<details>
-<summary><strong>v4.3.24</strong></summary>
-
-### README quick start flow
-
-- Moves the Docker quick start directly above the source quick start.
-- Keeps the README contents order aligned with the rendered section order.
-
-</details>
-
-<details>
-<summary><strong>v4.3.23</strong></summary>
-
-### README and discoverability refresh
-
-- Reworks the GitHub README around self-hosted public page positioning.
-- Adds clearer demo, Docker quick start, feature, screenshot, and deployment sections.
-
-</details>
-
-<details>
-<summary><strong>v4.3.22</strong></summary>
-
-### GitHub Actions hardening
-
-- Adds explicit read-only `GITHUB_TOKEN` permissions to CI and Gitea mirror workflows.
-- Covers the workflow permission policy with deployment configuration tests.
-
-</details>
-
-<details>
-<summary><strong>v4.3.21</strong></summary>
-
-### CI server test ordering
-
-- Builds the frontend before running server tests in GitHub Actions.
-- Locks the workflow order so SPA and SEO tests always have `dist/index.html` on clean runners.
-
-</details>
-
-<details>
-<summary><strong>v4.3.20</strong></summary>
-
-### Auth schema extraction
-
-- Moves auth and user-management request validation into a dedicated Zod schema module.
-- Replaces duplicated manual checks in setup, login, user, role, password, and reset handlers.
-
-</details>
-
-<details>
-<summary><strong>v4.3.19</strong></summary>
-
-### Backup and restore UI
-
-- Adds admin dashboard controls to download a full backup JSON.
-- Adds guarded restore from backup with inline success and error states.
-
-</details>
-
-<details>
-<summary><strong>v4.3.18</strong></summary>
-
-### Backup and restore API
-
-- Adds admin-only backup export for application tables and upload files.
-- Adds restore support with safe upload path validation and transactional database writes.
-
-</details>
-
-<details>
-<summary><strong>v4.3.17</strong></summary>
-
-### Upload storage quota
-
-- Adds a configurable `UPLOAD_STORAGE_QUOTA_MB` limit for files stored in `uploads`.
-- Removes the newly uploaded file and returns `413` when the quota is exceeded.
-
-</details>
-
-<details>
-<summary><strong>v4.3.16</strong></summary>
-
-### Upload hardening policy
-
-- Generates upload filenames with UUIDs instead of predictable random suffixes.
-- Stores uploaded media with owner-writable, non-world-writable permissions.
-- Copies extracted backend service modules into the production Docker image.
-
-</details>
-
-<details>
-<summary><strong>v4.3.15</strong></summary>
-
-### Raster-only image uploads
-
-- Aligns client-side avatar, icon, and cover image uploads with the backend raster-image policy.
-- Rejects unsanitized SVG files before they can be converted into stored data URLs.
-
-</details>
-
-<details>
-<summary><strong>v4.3.14</strong></summary>
-
-### Shared link DTO normalization
-
-- Adds a shared frontend link DTO normalizer backed by Zod.
-- Replaces duplicated link mapping in Admin and public page loading, reducing lint warnings from 154 to 114.
-
-</details>
-
-<details>
-<summary><strong>v4.3.13</strong></summary>
-
-### Consent schema extraction
-
-- Moves consent configuration validation schemas into a dedicated backend schema module.
-- Adds regression coverage for consent config defaults and supported CMP providers.
-
-</details>
-
-<details>
-<summary><strong>v4.3.12</strong></summary>
-
-### Link schema extraction
-
-- Extracts backend link validation schemas from the server monolith into a dedicated module.
-- Keeps the production Docker image aware of extracted server modules.
-
-</details>
-
-<details>
-<summary><strong>v4.3.11</strong></summary>
-
-### CI quality gate
-
-- Adds blocking dependency audits for frontend and backend packages in GitHub Actions.
-- Adds a Docker smoke test that builds the production image, starts it with a CI secret, and checks `/health`.
-
-</details>
-
-<details>
-<summary><strong>v4.3.10</strong></summary>
-
-### Theme save consistency
-
-- Makes theme import, reset, and editing follow the same preview-then-save workflow.
-- Exports the pending theme and keeps unsaved theme changes visible when saving fails.
-
-</details>
-
-<details>
-<summary><strong>v4.3.9</strong></summary>
-
-### Link save reliability
-
-- Keeps unsaved link changes visible when saving fails instead of clearing the dirty state too early.
-- Shows the save error inline in the link manager so admins can retry without losing context.
-
-</details>
-
-<details>
-<summary><strong>v4.3.8</strong></summary>
-
-### CMP consent flow hardening + CCPA link polish
-
-- Treat bootstrap CMP states from Cookiebot, OneTrust, and Cookiebot events as implicit until a user action is explicitly detected, preventing pre-granted consent from loading Google Analytics too early.
-- Improve Google Consent Mode propagation from builder CMPs and keep script dispatch aligned with explicit consent only.
-- Ensure the CCPA "Do not sell my personal information" footer link remains available with locale-aware label variants and a stable fallback target.
-
-</details>
-
-<details>
-<summary><strong>v4.3.6</strong></summary>
-
-### Consent signal hardening for Google & CCPA
-
-- Distinguishes implicit consent state from explicit user consent for all supported external CMPs (iubenda, Cookiebot, CookieYes, OneTrust, custom snippets).
-- Defers third-party tag loading until consent is explicitly granted, including GA4 script/config gating and Google Consent Mode updates.
-- Syncs Google Consent Mode updates even when `gtag` is not yet loaded, avoiding silent failures and premature network requests.
-- Restores privacy footer policy URL resolution from `consentConfig.legalPolicies`, so CCPA "Do not sell my personal information" links remain available when hosted/embedded legal pages are used.
-
-</details>
-
-<details>
-<summary><strong>v4.3.6</strong></summary>
-
-### CMP hardening for Google Consent Mode
-
-- Prevents builder-mode external CMP signals (especially iubenda) from being treated as explicit consent before user interaction.
-- Separates implicit provider state from explicit consent, so `gtag('consent', 'update')` and consent-dependent scripts dispatch only after explicit choice.
-- Restricts dataLayer fallback sync to `consent update` entries only, preventing default/implicit consent bootstrap from firing tags early.
-
-</details>
-
-<details>
-<summary><strong>v4.3.5</strong></summary>
-
-### Documentation and wiki refresh
-
-- Reworks the README around demo-first evaluation, shorter feature scanning, Docker production setup, configuration, development, and SEO basics.
-- Adds a wiki-ready documentation set with expanded deployment, configuration, development, SEO, security, and troubleshooting guides.
-- Updates `SECURITY.md`, `CONTRIBUTING.md`, and the Docker Compose image reference to match the current app architecture.
-
-</details>
-
-<details>
-<summary><strong>v4.3.4</strong></summary>
-
-### Minor container tag reliability
-
-- Fixes the main-branch Docker workflow so `X.X` tags are computed without shell-interpreted JavaScript template literals.
-- Adds regression coverage to keep version and minor-version image tags published from the package version.
-- Keeps Docker Hub and GHCR publishing aligned for `latest`, `X.X.X`, `vX.X.X`, and `X.X` tags.
-
-</details>
-
-<details>
-<summary><strong>v4.3.3</strong></summary>
-
-### Versioned container tags from main
-
-- Publishes Docker version tags directly from the main-branch build, including `X.X.X`, `vX.X.X`, and `X.X`.
-- Avoids relying on tag-triggered workflows for automated release tags created by GitHub Actions.
-- Keeps Docker Hub and GHCR tags aligned from the same build output.
-
-</details>
-
-<details>
-<summary><strong>v4.3.2</strong></summary>
-
-### Dual container registry publishing
-
-- Publishes Docker images to both Docker Hub (`paueron/orbitpage`) and GitHub Container Registry (`ghcr.io/paoloronco/orbitpage`).
-- Keeps `latest`, semantic version, minor version, and short SHA tags aligned across both registries.
-- Documents the GHCR pull path alongside the existing Docker Hub distribution path.
-
-</details>
-
-<details>
-<summary><strong>v4.3.1</strong></summary>
-
-### Deployment and admin startup fixes
-
-- Aligns both Dockerfiles on the production runtime contract: Node 22, `PORT=8080`, `DATA_DIR=/app/data`, and mandatory `JWT_SECRET`.
-- Makes the `app/` Dockerfile self-contained for `docker build ./app`.
-- Avoids the expected unauthenticated `/api/auth/verify` call when opening the admin login page without a stored token.
-
-</details>
-
-<details>
-<summary><strong>v4.3.0</strong></summary>
-
-### Multi-user access management
-
-- Renames the **Security** admin tab to **Access**.
-- Adds full multi-user management: list users, create users, change any user's password, and delete users.
-- The `admin` user is created by default and cannot be deleted.
-- Login form now accepts any username; backend validates credentials per-user.
-- `POST /api/auth/change-password` now changes the password of the currently authenticated user (not hardcoded to `admin`).
-- New API endpoints: `GET /api/users`, `POST /api/users`, `PUT /api/users/:username`, `DELETE /api/users/:username`.
-
-</details>
-
-<details>
-<summary><strong>v4.2.0</strong></summary>
-
-### Card cover images
-
-- Adds optional cover/header image to link and text cards.
-- Full-bleed 16:9 image displayed at the top of each card on both the public page and admin panel.
-- Supports URL input or local file upload; alt text field for accessibility.
-- Graceful fallback on broken image (no layout shift).
-- DB migrations for `cover_image` and `cover_image_alt` columns (additive, non-destructive).
-
-</details>
-
-<details>
-<summary><strong>v4.1.8</strong></summary>
-
-### Legal policy embed fix
-
-- Allows the current Usercentrics embed domains in the production CSP.
-- Keeps embedded legal policy scripts executable and ordered when rendered on `/privacy` and `/cookies`.
-- Adds a regression test for legal policy provider CSP sources.
-
-</details>
-
-<details>
-<summary><strong>v4.1.7</strong></summary>
-
-### CMP and release workflow fix
-
-- Executes custom external CMP scripts reliably, including pasted iubenda widget snippets.
-- Publishes Docker images only from release tags to avoid duplicate Docker builds on `main` and `v*`.
-- Keeps `latest`, semantic version, and short SHA Docker tags on release builds.
-
-</details>
-
-<details>
-<summary><strong>v4.1.6</strong></summary>
-
-### Demo legal policy preset
-
-- Adds a server-side demo preset for Privacy Policy, Cookie Policy, and external CMP.
-- Serves the demo legal pages from the requested iubenda embeds when `DEMO_MODE=true`.
-- Keeps public footer links on `/privacy` and `/cookies` in demo mode.
-- Ensures iubenda embedded policy scripts load reliably in SPA-rendered legal pages.
-
-</details>
-
-<details>
-<summary><strong>v4.1.5</strong></summary>
-
-### Privacy hotfix
-
-- Stops demo-mode write protection from being shown as an expired admin session.
-- Ensures embedded legal policy scripts execute on `/privacy` and `/cookies`.
-- Infers hosted legal pages from existing `/privacy` and `/cookies` profile URLs for upgraded installs.
-
-</details>
-
-<details>
-<summary><strong>v4.1.4</strong></summary>
-
-### Privacy and CMP configuration
-
-- Separates legal pages from consent management in the Privacy tab.
-- Adds provider-agnostic legal policy sources: external link, hosted text, and embedded code.
-- Replaces provider-specific CMP fields with a single external script flow.
-- Ensures `/privacy` and `/cookies` always render the latest selected source without stale provider fallback.
-- Keeps form edits on screen when the admin session expires during save.
-
-</details>
-
-<details>
-<summary><strong>v4.1.3</strong></summary>
-
-### Consent mode
-
-- Ensures Google Consent Mode v2 defaults are set before analytics scripts load.
-- Defaults ad storage, analytics storage, user data, and personalization to denied when consent is enabled.
-- Avoids duplicate default consent blocks when an advanced provider already supplies one.
-
-</details>
-
-<details>
-<summary><strong>v4.1.2</strong></summary>
-
-### Legal policies
-
-- Redesigned the Privacy tab legal policy setup with a guided, non-technical flow.
-- Added a footer visibility toggle, configured/missing status, and preview links for `/privacy` and `/cookies`.
-- Added a public `/cookies` placeholder page.
-
-</details>
-
-<details>
-<summary><strong>v4.1.1</strong></summary>
-
-### Privacy and legal UX
-
-- Moved Privacy Policy and Cookie Policy editing from the page editor to Privacy.
-- Kept the existing profile-backed fields as the single persistence source.
-- Forced the public `/privacy` page to render in a readable light layout.
-
-</details>
-
-<details>
-<summary><strong>v4.1.0</strong></summary>
-
-### Legal links
-
-- Made Admin > Page > Legal links the single editable source for Privacy Policy and Cookie Policy URLs.
-- Shows configured legal links in the public footer and hides them cleanly when empty.
-- Makes the Privacy & Cookies tab read-only for policy URLs, with an Edit in Page shortcut.
-- Ensures the native cookie banner derives policy URLs from the profile instead of storing duplicate consent-config URLs.
-
-</details>
-
-<details>
-<summary><strong>v4.0.0</strong></summary>
-
-### Admin experience
-
-- Redesigned the Admin panel with a clearer dashboard layout, status metrics, sticky centered navigation, and a lighter operational workspace.
-- Improved the Links editor with a clearer toolbar, content creation cards, save state visibility, and a more helpful empty state.
-- Added animated profile checklist guidance and save confirmation feedback for theme changes.
-- Kept the public page preview isolated from the Admin styling so it continues to reflect the saved public theme.
-
-### Loading and compatibility
-
-- Added a single public-page payload endpoint to load profile, links, and theme together and avoid flashes of default content.
-- Preserved compatibility with existing SQLite databases through additive migrations only.
-
-</details>
-
-<details>
-<summary><strong>v3.8.0</strong></summary>
-
-### Integrations
-
-- Added Google Analytics 4 integration in the Admin panel (new **Integrations** tab).
-- The GA4 Measurement ID (`G-XXXXXXXXXX`) is stored in the database and injected as a `gtag.js` script on the public page only — the admin panel is never tracked.
-- Content Security Policy updated to allow `googletagmanager.com` and `google-analytics.com` script and connect sources.
-- Measurement ID is validated client-side before saving (format `G-XXXXXXXXXX`).
-
-</details>
-
-<details>
-<summary><strong>v3.7.0</strong></summary>
-
-### Critical fixes
-
-- Fixed production blank page behavior caused by CORS/CSP headers blocking API calls in production containers.
-- Fixed stale frontend assets in Docker builds by cleaning `dist` before building.
-- Fixed legacy database migration handling.
-- Fixed missing `fs` import in `database.js`.
-
-### Production stability
-
-- Improved production CORS handling for same-origin and reverse-proxy deployments.
-- Refined Content Security Policy settings.
-- Added static asset serving logs for deployment troubleshooting.
-- Improved database migration validation and error handling.
-
-</details>
-
-<details>
-<summary><strong>v3.6.0</strong></summary>
-
-- Added live preview inside the admin panel.
-- Added a View Public Page action from the admin header.
-- Added link visibility toggles.
-- Added mobile drag-and-drop ordering.
-- Removed sensitive authentication logs.
-- Removed unused Supabase and Firebase code.
-- Fixed duplicate database migration logic.
-- Removed debug logging from `PublicLinkCard`.
-
-</details>
-
-<details>
-<summary><strong>v3.5.1</strong></summary>
-
-- Updated vulnerable frontend, backend, and Docker dependencies.
-- Resolved Dependabot alerts and Docker image CVEs reported at the time of release.
-- Optimized Docker build time by avoiding source builds where precompiled binaries are available.
-
-</details>
-
-<details>
-<summary><strong>v3.5.0</strong></summary>
-
-- Added editable profile fields with line-break support in the bio.
-- Added social link controls and profile picture display controls.
-- Added text cards and bulleted lists.
-- Added JSON import/export for links and themes.
-- Added theme controls for page styling, typography, title, meta description, and footer text.
-- Added Docker startup validation for `JWT_SECRET`.
-- Added optional self-signed HTTPS support with `ENABLE_HTTPS=true`.
-
-</details>
-
-</details>
+Please keep reports for the hosted service separate from reproducible issues in the self-hosted application. Product and managed-hosting questions can be directed through [orbitpage.com](https://orbitpage.com).
 
 ## License
 
-MIT License. See [LICENSE.txt](./LICENSE.txt).
-
-
+OrbitPage's open-source edition is released under the [MIT License](./LICENSE.txt).

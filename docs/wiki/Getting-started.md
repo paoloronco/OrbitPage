@@ -48,11 +48,6 @@ app/server/uploads/
 
 Set `DATA_DIR` if you want to store data somewhere else.
 
-## Try the Demo First
+## Managed Alternative
 
-- Public page: <https://orbitpage-demo.paoloronco.it/>
-- Admin panel: <https://orbitpage-demo.paoloronco.it/admin>
-- Username: `admin`
-- Password: `ChangeMe123!`
-
-Do not store private data in the public demo.
+This guide covers the open-source self-hosted edition. To use OrbitPage without operating a Node.js server, database, storage, backups, or updates, start from <https://orbitpage.com> instead.
