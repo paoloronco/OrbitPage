@@ -1896,6 +1896,19 @@
     padding: 16px 0;
   }
 
+  @media (max-width: 900px) {
+    .admin-preview-panel,
+    .admin-theme-layout > aside {
+      display: none;
+    }
+
+    .admin-content-grid,
+    .admin-content-grid-wide,
+    .admin-theme-layout {
+      gap: 0;
+    }
+  }
+
   @media (max-width: 820px) {
     .admin-topbar,
     .admin-link-toolbar {
@@ -1931,6 +1944,7 @@
     .admin-workbench-rail {
       display: flex;
     }
+
   }
 
   @media (max-width: 640px) {
@@ -1943,15 +1957,22 @@
       padding: 11px;
     }
 
+    .admin-subtitle,
+    .admin-version {
+      display: none;
+    }
+
     .admin-header-actions {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      display: flex;
+      flex-wrap: nowrap;
       width: 100%;
     }
 
     .admin-header-actions > *,
     .admin-header-actions .admin-action {
-      width: 100%;
+      flex: 1 1 0;
+      min-width: 0;
+      width: auto;
     }
 
     .admin-header-actions .admin-action {
@@ -1960,12 +1981,38 @@
     }
 
     .admin-metric-card {
-      min-height: 76px;
-      padding: 10px;
+      min-height: 66px;
+      padding: 9px;
     }
 
     .admin-metric-icon {
       display: none;
+    }
+
+    .admin-metrics-saas {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .admin-metrics-saas .admin-metric-card {
+      border-bottom: 0;
+      border-right: 1px solid rgb(226 232 240);
+    }
+
+    .admin-metrics-saas .admin-metric-card:last-child {
+      border-right: 0;
+    }
+
+    .admin-metrics-saas .admin-metric-detail {
+      display: none;
+    }
+
+    .admin-metric-label {
+      font-size: 9px;
+      letter-spacing: 0;
+    }
+
+    .admin-metric-value {
+      font-size: 16px;
     }
 
     .admin-nav-shell {
@@ -1976,34 +2023,6 @@
     .admin-tab {
       min-height: 44px;
       padding-inline: 12px;
-    }
-
-    .admin-live-preview {
-      height: 100% !important;
-    }
-
-    .admin-preview-device {
-      padding-inline: 8px;
-    }
-
-    .admin-preview-device--mobile {
-      min-height: 590px;
-      padding-block: 14px;
-    }
-
-    .admin-preview-device--mobile .admin-preview-device__hardware {
-      height: min(610px, 165vw);
-      min-height: 520px;
-    }
-
-    .admin-preview-device--desktop {
-      min-height: 330px;
-      padding-block: 18px 48px;
-    }
-
-    .admin-preview-device-toggle button {
-      height: 44px;
-      width: 44px;
     }
 
     .admin-add-grid {
