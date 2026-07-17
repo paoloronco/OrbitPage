@@ -17,27 +17,35 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Set every mute/autoplay property imperatively so browser autoplay policy is
-  // satisfied regardless of how React serializes JSX attributes to the DOM:
-  //  - muted        : the JSX attribute is unreliable as a DOM property in some builds
-  //  - defaultMuted : prevents the browser from treating the video as "user-unmuted"
-  //  - playsInline  : required on iOS Safari to autoplay without entering full-screen
-  // play() is called explicitly to handle browsers that ignore the autoplay attribute.
-  // Any failure is logged so developers can diagnose real problems (codec, network, etc.)
-  // without silencing errors entirely.
+  // Background video is author-selected page content, so keep it playing even when
+  // reduced motion is enabled. Decorative GIFs still honor that preference below.
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
-    v.muted = true;
-    v.defaultMuted = true;
-    if (prefersReducedMotion) {
-      v.pause();
-      return;
-    }
-    v.play().catch((err: Error) => {
-      console.warn("[OrbitPage] Background video autoplay failed:", err.name, "-", err.message);
-    });
-  }, [config.mediaUrl, prefersReducedMotion]);
+    if (!v || config.type !== "video") return;
+
+    const play = () => {
+      v.muted = true;
+      v.defaultMuted = true;
+      v.playsInline = true;
+      if (document.visibilityState !== "visible") return;
+      void v.play().catch((err: Error) => {
+        // A concurrent source/navigation change can legitimately cancel play().
+        if (err.name !== "AbortError") {
+          console.warn("[OrbitPage] Background video autoplay failed:", err.name, "-", err.message);
+        }
+      });
+    };
+
+    play();
+    v.addEventListener("canplay", play);
+    window.addEventListener("pageshow", play);
+    document.addEventListener("visibilitychange", play);
+    return () => {
+      v.removeEventListener("canplay", play);
+      window.removeEventListener("pageshow", play);
+      document.removeEventListener("visibilitychange", play);
+    };
+  }, [config.mediaUrl, config.type]);
 
   if (config.type !== "video" && config.type !== "gif") return null;
   if (!config.mediaUrl) return null;
@@ -82,11 +90,11 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
         <video
           ref={videoRef}
           src={config.mediaUrl}
-          autoPlay={!prefersReducedMotion}
+          autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           style={mediaStyle}
         />
       ) : (
