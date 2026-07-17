@@ -45,6 +45,7 @@ declare global {
   interface Window {
     __ORBITPAGE_STATIC_SNAPSHOT__?: {
       page: PublicPageResponse;
+      menu?: unknown;
       consentConfig?: ConsentConfigData;
     };
   }

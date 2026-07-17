@@ -7,7 +7,7 @@ import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, themeApi, authApi, isHostedRuntime, isSaasMode, workspaceBootstrapApi } from "@/lib/api-client";
+import { profileApi, linksApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, workspaceBootstrapApi } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
@@ -15,6 +15,7 @@ import { Permission } from "@/lib/permissions";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
 import { isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
+import { createDefaultMenu, normalizeMenuCatalog, type MenuCatalog } from "@/lib/menu";
 import {
   ADMIN_SECTION_CHANGED_MESSAGE,
   ADMIN_SECTION_NAVIGATE_MESSAGE,
@@ -87,6 +88,7 @@ const Admin = () => {
   const [links, setLinks] = useState<LinkData[]>([]);
 
   const [theme, setTheme] = useState<ThemeConfig>(defaultTheme);
+  const [menu, setMenu] = useState<MenuCatalog>(() => createDefaultMenu());
   const [saasPlan, setSaasPlan] = useState<SaasPlanDefinition | null>(null);
   const [saasUsage, setSaasUsage] = useState<SaasWorkspaceUsage | null>(null);
   const [saasBilling, setSaasBilling] = useState<SaasBillingContext | null>(null);
@@ -191,9 +193,9 @@ const Admin = () => {
     const loadData = async () => {
       try {
         const bootstrap = isSaasMode() ? await workspaceBootstrapApi.get() : null;
-        const [profileData, linksData, themeData] = bootstrap
-          ? [bootstrap.profile, bootstrap.links, bootstrap.theme]
-          : await Promise.all([profileApi.get(), linksApi.get(), themeApi.get()]);
+        const [profileData, linksData, themeData, menuData] = bootstrap
+          ? [bootstrap.profile, bootstrap.links, bootstrap.theme, bootstrap.menu]
+          : await Promise.all([profileApi.get(), linksApi.get(), themeApi.get(), menuApi.get()]);
 
         if (bootstrap) {
           setSaasPlan(bootstrap.plan || null);
@@ -240,6 +242,7 @@ const Admin = () => {
           setTheme(defaultTheme);
           applyTheme(defaultTheme);
         }
+        if (menuData) setMenu(normalizeMenuCatalog(menuData));
       } catch (error) {
         console.error('Error loading data:', error);
         applyTheme(defaultTheme);
@@ -399,6 +402,17 @@ const Admin = () => {
     }
   };
 
+  const saveMenu = async (newMenu: MenuCatalog) => {
+    try {
+      await menuApi.update(newMenu);
+      const reloaded = await menuApi.get();
+      setMenu(normalizeMenuCatalog(reloaded, saasPlan?.entitlements.maxMenuItems ?? 250));
+    } catch (error: any) {
+      if (error?.message === 'AUTH_EXPIRED') setIsLoggedIn(false);
+      throw error instanceof Error ? error : new Error('Menu changes could not be saved.');
+    }
+  };
+
   const handleLogin = async () => {
     setIsLoggedIn(true);
     try {
@@ -464,6 +478,7 @@ const Admin = () => {
       profile={profile}
       links={links}
       theme={theme}
+      menu={menu}
       currentUser={currentUser}
       saasPlan={saasPlan}
       saasUsage={saasUsage}
@@ -471,6 +486,7 @@ const Admin = () => {
       onProfileUpdate={saveProfile}
       onLinksUpdate={saveLinks}
       onThemeChange={saveTheme}
+      onMenuUpdate={saveMenu}
       onLogout={handleLogout}
       requestedTab={requestedTab}
       onTabChange={handleTabChange}

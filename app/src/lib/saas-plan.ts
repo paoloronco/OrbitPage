@@ -17,6 +17,11 @@ export interface SaasPlanEntitlements {
   pages: number | null;
   collaborators: boolean;
   videoUploads: boolean;
+  nativeMenu: boolean;
+  maxMenuItems: number | null;
+  maxMenuCatalogs: number | null;
+  menuLanguages: number | null;
+  menuScheduling: boolean;
   available: boolean;
 }
 

@@ -4,6 +4,7 @@ export type Permission =
   | 'links:images'
   | 'theme:write'
   | 'profile:write'
+  | 'menu:write'
   | 'analytics:read'
   | 'compliance:write'
   | 'users:manage';
@@ -46,8 +47,8 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
 };
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  admin:        ['links:write', 'links:style', 'links:images', 'theme:write', 'profile:write', 'analytics:read', 'compliance:write', 'users:manage'],
-  editor:       ['links:write', 'profile:write', 'analytics:read'],
+  admin:        ['links:write', 'links:style', 'links:images', 'theme:write', 'profile:write', 'menu:write', 'analytics:read', 'compliance:write', 'users:manage'],
+  editor:       ['links:write', 'profile:write', 'menu:write', 'analytics:read'],
   links_editor: ['links:write', 'analytics:read'],
   links_style:  ['links:style'],
   links_images: ['links:images'],

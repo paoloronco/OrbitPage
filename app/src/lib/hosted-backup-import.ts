@@ -6,13 +6,14 @@ export const BACKUP_SECTION_IDS = [
   'profile',
   'links',
   'theme',
+  'menu',
   'privacy',
   'discovery',
   'accounts',
   'media',
 ] as const;
 const LEGACY_MANAGED_BACKUP_SECTION_IDS = ['profile', 'links', 'theme', 'privacy'] as const;
-export const MANAGED_BACKUP_SECTION_IDS = [...LEGACY_MANAGED_BACKUP_SECTION_IDS, 'discovery'] as const;
+export const MANAGED_BACKUP_SECTION_IDS = [...LEGACY_MANAGED_BACKUP_SECTION_IDS, 'menu', 'discovery'] as const;
 export type BackupSectionId = typeof BACKUP_SECTION_IDS[number];
 const ALLOWED_MEDIA_TYPES = new Set([
   'image/gif',
@@ -261,7 +262,7 @@ function purposeForPath(path: Array<string | number>): MediaPurpose {
 function isMediaPath(path: Array<string | number>) {
   const field = String(path[path.length - 1] || '').toLowerCase();
   return field === 'avatar' || field === 'favicon' || field === 'icon' ||
-    field === 'coverimage' || field === 'mediaurl' || field === 'posterurl';
+    field === 'coverimage' || field === 'mediaurl' || field === 'posterurl' || field === 'imageurl';
 }
 
 function parseDataUrl(value: string) {
@@ -333,6 +334,7 @@ function selfHostedContent(input: JsonRecord, sections: readonly BackupSectionId
   const profileRows = Array.isArray(tables.profile_data) ? tables.profile_data.filter(isRecord) : [];
   const linkRows = Array.isArray(tables.links) ? tables.links.filter(isRecord) : [];
   const themeRows = Array.isArray(tables.theme_config) ? tables.theme_config.filter(isRecord) : [];
+  const menuRows = Array.isArray(tables.menu_config) ? tables.menu_config.filter(isRecord) : [];
   const consentRows = Array.isArray(tables.cookie_consent_config) ? tables.cookie_consent_config.filter(isRecord) : [];
   const textFileRows = Array.isArray(tables.text_files) ? tables.text_files.filter(isRecord) : [];
   const sitemapRows = Array.isArray(tables.sitemap_config) ? tables.sitemap_config.filter(isRecord) : [];
@@ -346,6 +348,7 @@ function selfHostedContent(input: JsonRecord, sections: readonly BackupSectionId
         .map(mapLink),
     } : {}),
     ...(sections.includes('theme') ? { theme: mapTheme(themeRows[0] || {}) } : {}),
+    ...(sections.includes('menu') ? { menu: parseJsonRecord(menuRows[0]?.full_config) } : {}),
     ...(sections.includes('privacy') ? { consentConfig: mapConsentConfig(consentRows[0] || {}) } : {}),
     ...(sections.includes('discovery') ? {
       textFiles: mapTextFiles(textFileRows),

@@ -8,6 +8,7 @@ import { getActiveBasePath } from "@/lib/base-path";
 
 const Index = lazy(() => import("./pages/Index"));
 const Admin = lazy(() => import("./pages/Admin"));
+const Menu = lazy(() => import("./pages/Menu"));
 const About = lazy(() => import("./pages/About"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cookies = lazy(() => import("./pages/Cookies"));
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/admin/:section" element={<Admin />} />
             <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
             <Route path="/dashboard/:section" element={<Admin />} />
+            <Route path="/menu" element={<Menu />} />
             <Route path="/about" element={<About />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

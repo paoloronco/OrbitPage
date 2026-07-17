@@ -368,6 +368,7 @@ export interface PublicPageResponse {
   profile: ProfileResponse;
   links: LinkItem[];
   theme: Record<string, any>;
+  menu?: import('./menu').MenuCatalog;
   branding?: {
     showOrbitPageBadge?: boolean;
   };
@@ -377,6 +378,7 @@ export interface WorkspaceBootstrapResponse {
   profile: ProfileResponse;
   links: LinkItem[];
   theme: Record<string, any>;
+  menu?: import('./menu').MenuCatalog;
   consentConfig?: Record<string, any>;
   publicUrl?: string;
   plan?: import('./saas-plan').SaasPlanDefinition;
@@ -823,6 +825,14 @@ export const uploadApi = {
   ): Promise<{ filePath: string; fullUrl: string; fileName: string }> => (
     uploadVideoWithDirectFallback(file, slot, 'upload', onProgress)
   ),
+};
+
+export const menuApi = {
+  get: async (): Promise<import('./menu').MenuCatalog> => apiRequest<import('./menu').MenuCatalog>('/menu'),
+  update: async (menu: import('./menu').MenuCatalog): Promise<ApiResponse> => apiRequest<ApiResponse>('/menu', {
+    method: 'PUT',
+    body: JSON.stringify(menu),
+  }),
 };
 
 type DirectUploadReservation = {

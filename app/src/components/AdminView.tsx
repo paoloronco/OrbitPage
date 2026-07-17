@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
+import { MenuEditor } from "./MenuEditor";
 import { LinkData } from "./LinkCard";
 import { ClickAnalyticsChart } from "./ClickAnalyticsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,6 +29,7 @@ import {
   MousePointerClick,
   Map,
   Palette,
+  UtensilsCrossed,
   ShieldCheck,
   User,
 } from "lucide-react";
@@ -49,6 +51,7 @@ import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
 import type { AdminTab } from "@/lib/admin-navigation";
+import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 
 interface ProfileData {
   name: string;
@@ -85,6 +88,7 @@ interface AdminViewProps {
   profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
+  menu?: MenuCatalog;
   currentUser: CurrentUser | null;
   saasPlan?: SaasPlanDefinition | null;
   saasUsage?: SaasWorkspaceUsage | null;
@@ -92,6 +96,7 @@ interface AdminViewProps {
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
+  onMenuUpdate: (menu: MenuCatalog) => Promise<void>;
   onLogout: () => void;
   requestedTab?: AdminTab;
   onTabChange?: (tab: AdminTab) => void;
@@ -101,6 +106,7 @@ const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> =
   { value: "profile", label: "Page", icon: User },
   { value: "links", label: "Links", icon: Link },
   { value: "theme", label: "Theme", icon: Palette },
+  { value: "menu", label: "Menu", icon: UtensilsCrossed },
   { value: "access", label: "Access", icon: Key },
   { value: "backup", label: "Backup", icon: Database },
   { value: "analytics", label: "Analytics", icon: BarChart2 },
@@ -121,6 +127,7 @@ export const AdminView = ({
   profile,
   links,
   theme,
+  menu = createDefaultMenu(),
   currentUser,
   saasPlan,
   saasUsage,
@@ -128,6 +135,7 @@ export const AdminView = ({
   onProfileUpdate,
   onLinksUpdate,
   onThemeChange,
+  onMenuUpdate,
   onLogout,
   requestedTab = "profile",
   onTabChange,
@@ -164,6 +172,7 @@ export const AdminView = ({
   const canEditProfile = hasPermission(userPerms, 'profile:write');
   const canEditLinks = hasAnyPermission(userPerms, 'links:write', 'links:style', 'links:images');
   const canEditTheme = hasPermission(userPerms, 'theme:write');
+  const canEditMenu = hasPermission(userPerms, 'menu:write');
   const canViewAnalytics = hasPermission(userPerms, 'analytics:read');
   const canEditCompliance = hasPermission(userPerms, 'compliance:write');
   const linkEditMode = getLinkEditMode(userPerms);
@@ -185,6 +194,7 @@ export const AdminView = ({
       case 'profile':   return canEditProfile;
       case 'links':     return canEditLinks;
       case 'theme':     return canEditTheme;
+      case 'menu':      return canEditMenu;
       case 'access':    return !isHostedAdmin;
       case 'backup':    return isHostedAdmin && canManageUsers;
       case 'analytics': return canViewAnalytics;
@@ -225,7 +235,7 @@ export const AdminView = ({
     setActiveTab((current) => current === requestedTab ? current : requestedTab);
   // Permission booleans are included so a deep link is applied as soon as its tab becomes available.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestedTab, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canManageUsers, canViewAnalytics, canEditCompliance]);
+  }, [requestedTab, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
 
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
@@ -452,6 +462,34 @@ export const AdminView = ({
             />
           </TabsContent>
 
+          <TabsContent value="menu" className="admin-tab-content">
+            <MenuEditor
+              menu={menu}
+              publicPageHref={publicPageHref}
+              enabled={!saasPlan || entitlements?.nativeMenu === true}
+              maxItems={entitlements?.maxMenuItems ?? null}
+              planName={saasPlan?.name}
+              advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
+              onSave={onMenuUpdate}
+              onPreview={() => undefined}
+              onAddMenuLink={async () => {
+                const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
+                const menuLink: LinkData = {
+                  id: 'orbitpage-native-menu',
+                  title: 'View menu',
+                  description: 'Browse our current menu',
+                  url: menuUrl,
+                  type: 'link',
+                  isActive: true,
+                };
+                const exists = links.some((link) => link.id === menuLink.id);
+                await onLinksUpdate(exists
+                  ? links.map((link) => link.id === menuLink.id ? { ...link, ...menuLink } : link)
+                  : [menuLink, ...links]);
+              }}
+            />
+          </TabsContent>
+
           {!isHostedAdmin && (
             <TabsContent value="access" className="admin-tab-content">
               <div className="admin-single-column space-y-6" data-onboarding="access-section">
@@ -669,6 +707,7 @@ function PreviewPanel({
   profile,
   links,
   theme,
+  menu,
   publicPageHref,
   showOrbitPageBadge,
 }: {
@@ -676,6 +715,7 @@ function PreviewPanel({
   profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
+  menu: MenuCatalog;
   publicPageHref: string;
   showOrbitPageBadge: boolean;
 }) {

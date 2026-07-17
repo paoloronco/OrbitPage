@@ -36,6 +36,7 @@ const SECTION_COPY: Record<BackupSectionId, { label: string; description: string
   profile: { label: "Profile & page", description: "Name, bio, social links and page metadata" },
   links: { label: "Blocks & links", description: "Content, order, scheduling and block settings" },
   theme: { label: "Theme & appearance", description: "Colors, typography, cards and background" },
+  menu: { label: "Venue menu", description: "Menu identity, sections, products and appearance" },
   privacy: { label: "Privacy & consent", description: "Cookie banner and consent preferences" },
   discovery: { label: "Discovery files", description: "robots.txt, llms.txt, custom TXT files and sitemap state" },
   accounts: { label: "Admin accounts", description: "Self-hosted users, roles and credentials" },

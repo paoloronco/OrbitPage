@@ -27,6 +27,7 @@ import multer from 'multer';
 import { LinkSchema, LinksPayloadSchema } from './schemas/link.schema.js';
 import { buildEmbedFrameDocument, buildEmbedFrameErrorDocument, EMBED_FRAME_CSP } from './embed-frame.js';
 import { ConsentConfigBodySchema } from './schemas/consent.schema.js';
+import { DEFAULT_MENU_CATALOG, parseMenuCatalog } from './schemas/menu.schema.js';
 import {
   ChangePasswordBodySchema,
   CreateUserBodySchema,
@@ -62,7 +63,7 @@ try {
 const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'cookie_consent_config', 'text_files', 'sitemap_config'];
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'cookie_consent_config', 'text_files', 'sitemap_config'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -1809,18 +1810,55 @@ app.post('/api/auth/verify', authenticateToken, async (req, res) => {
   }
 });
 
+async function getMenuPayload() {
+  const row = await dbGet('SELECT full_config FROM menu_config WHERE id = 1');
+  if (!row?.full_config) return { ...DEFAULT_MENU_CATALOG };
+  try {
+    return parseMenuCatalog(JSON.parse(row.full_config));
+  } catch {
+    return { ...DEFAULT_MENU_CATALOG };
+  }
+}
+
+app.get('/api/menu', async (_req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    res.json(await getMenuPayload());
+  } catch (error) {
+    console.error('Error loading menu:', error);
+    res.status(500).json({ error: 'Failed to load menu' });
+  }
+});
+
+app.put('/api/menu', authenticateToken, requirePermission('menu:write'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Menu changes are disabled in demo mode.' });
+  try {
+    const menu = parseMenuCatalog(req.body);
+    await dbRun(
+      `INSERT INTO menu_config (id, full_config, updated_at)
+       VALUES (1, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(id) DO UPDATE SET full_config = excluded.full_config, updated_at = CURRENT_TIMESTAMP`,
+      [JSON.stringify(menu)]
+    );
+    res.json({ success: true, data: menu });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'Invalid menu data' });
+  }
+});
+
 // Aggregated public payload used by the home page to avoid visible default states.
 app.get('/api/public-page', async (req, res) => {
   try {
     setNoStoreHeaders(res);
 
-    const [profile, links, theme] = await Promise.all([
+    const [profile, links, theme, menu] = await Promise.all([
       getPublicProfilePayload(),
       getPublicLinksPayload(),
       getPublicThemePayload(),
+      getMenuPayload(),
     ]);
 
-    res.json({ profile, links, theme });
+    res.json({ profile, links, theme, menu });
   } catch (error) {
     console.error('Error loading public page payload:', error);
     res.status(500).json({ error: 'Failed to load public page' });
