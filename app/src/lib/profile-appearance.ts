@@ -32,7 +32,9 @@ const getReadableColor = (hex: string) => {
 export const getProfileAppearanceStyle = (appearance?: ProfileAppearance): ProfileCssProperties => {
   const style = {} as ProfileCssProperties;
   if (!appearance) return style;
-  if (appearance.cardBackgroundColor) style["--profile-card-background"] = appearance.cardBackgroundColor;
+  if (appearance.cardBackgroundColor) {
+    style["--profile-card-background"] = `color-mix(in srgb, ${appearance.cardBackgroundColor} var(--profile-card-opacity-percent, 100%), transparent)`;
+  }
   if (appearance.cardTextColor) style["--profile-card-foreground"] = appearance.cardTextColor;
   if (appearance.cardMutedColor) style["--profile-card-muted"] = appearance.cardMutedColor;
   if (appearance.cardBorderColor) style["--profile-card-border"] = appearance.cardBorderColor;

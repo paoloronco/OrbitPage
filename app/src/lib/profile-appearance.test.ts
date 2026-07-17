@@ -16,4 +16,9 @@ describe("profile appearance", () => {
     expect(getProfileAvatarStyle({ avatarSize: 12 }).height).toBe("56px");
     expect(getProfileAppearanceStyle({ cardBorderEnabled: false }).border).toBe("none");
   });
+
+  it("preserves theme transparency for a custom profile card color", () => {
+    expect(getProfileAppearanceStyle({ cardBackgroundColor: "#123456" })["--profile-card-background"])
+      .toBe("color-mix(in srgb, #123456 var(--profile-card-opacity-percent, 100%), transparent)");
+  });
 });

@@ -30,6 +30,7 @@ import {
   type CardShadowConfig,
   type ThemeConfig,
   defaultTheme,
+  getCardSurfaceGradient,
   getCardShadowCss,
   normalizeTheme,
 } from "@/lib/theme";
@@ -138,13 +139,13 @@ const ThemeColorControl = ({
 const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?: boolean }) => {
   const boxShadow = getCardShadowCss(theme.cardShadow);
   const cardStyle: CSSProperties = {
-    background: `linear-gradient(${theme.contentCard.direction}, ${theme.contentCard.background}, ${theme.contentCard.backgroundSecondary})`,
+    background: getCardSurfaceGradient(theme.contentCard, theme.contentCardOpacity),
     borderColor: theme.contentCard.border,
     borderRadius: `${Math.max(3, theme.cardRadius * 0.72)}px`,
     boxShadow,
   };
   const profileStyle: CSSProperties = {
-    background: `linear-gradient(${theme.profileCard.direction}, ${theme.profileCard.background}, ${theme.profileCard.backgroundSecondary})`,
+    background: getCardSurfaceGradient(theme.profileCard, theme.profileCardOpacity),
     borderColor: theme.profileCard.border,
     borderRadius: `${Math.max(3, theme.cardRadius * 0.72)}px`,
     boxShadow,
@@ -735,6 +736,47 @@ export const ThemeCustomizer = ({
 
                 <Separator />
 
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="font-bold text-slate-900">Card transparency</h4>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">Reveal more of the page background while keeping text, media and actions fully opaque.</p>
+                  </div>
+                  <div className="grid gap-6 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:p-5">
+                    <div className="space-y-3">
+                      <Label htmlFor="content-card-transparency" className="flex items-center justify-between gap-3">
+                        <span>Content cards</span>
+                        <span className="tabular-nums text-slate-500">{Math.round((1 - pendingTheme.contentCardOpacity) * 100)}%</span>
+                      </Label>
+                      <Slider
+                        id="content-card-transparency"
+                        aria-label="Content card transparency"
+                        value={[1 - pendingTheme.contentCardOpacity]}
+                        onValueChange={([transparency]) => updatePendingTheme({ contentCardOpacity: 1 - transparency })}
+                        max={0.85}
+                        min={0}
+                        step={0.01}
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <Label htmlFor="profile-card-transparency" className="flex items-center justify-between gap-3">
+                        <span>Profile card</span>
+                        <span className="tabular-nums text-slate-500">{Math.round((1 - pendingTheme.profileCardOpacity) * 100)}%</span>
+                      </Label>
+                      <Slider
+                        id="profile-card-transparency"
+                        aria-label="Profile card transparency"
+                        value={[1 - pendingTheme.profileCardOpacity]}
+                        onValueChange={([transparency]) => updatePendingTheme({ profileCardOpacity: 1 - transparency })}
+                        max={0.85}
+                        min={0}
+                        step={0.01}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div className="space-y-6">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-2xl">
@@ -785,7 +827,7 @@ export const ThemeCustomizer = ({
                       <div
                         className="h-24 w-28 border"
                         style={{
-                          background: `linear-gradient(${pendingTheme.contentCard.direction}, ${pendingTheme.contentCard.background}, ${pendingTheme.contentCard.backgroundSecondary})`,
+                          background: getCardSurfaceGradient(pendingTheme.contentCard, pendingTheme.contentCardOpacity),
                           borderColor: pendingTheme.contentCard.border,
                           borderRadius: `${pendingTheme.cardRadius}px`,
                           boxShadow: getCardShadowCss(pendingTheme.cardShadow),

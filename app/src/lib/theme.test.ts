@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCardShadowCss, normalizeTheme } from './theme';
+import { getCardShadowCss, getCardSurfaceGradient, getThemeCssVariables, normalizeTheme } from './theme';
 
 describe('theme normalization', () => {
   it('keeps legacy light themes readable when card settings are absent', () => {
@@ -59,5 +59,27 @@ describe('theme normalization', () => {
       spread: -32,
       opacity: 1,
     });
+  });
+
+  it('keeps existing themes opaque and clamps imported card opacity', () => {
+    const existingTheme = normalizeTheme({ primary: '#2563eb' });
+    const importedTheme = normalizeTheme({ profileCardOpacity: 0, contentCardOpacity: 4 });
+
+    expect(existingTheme.profileCardOpacity).toBe(1);
+    expect(existingTheme.contentCardOpacity).toBe(1);
+    expect(importedTheme.profileCardOpacity).toBe(0.15);
+    expect(importedTheme.contentCardOpacity).toBe(1);
+  });
+
+  it('applies transparency to card surfaces without changing their content colors', () => {
+    const theme = normalizeTheme({ profileCardOpacity: 0.4, contentCardOpacity: 0.25 });
+    const variables = getThemeCssVariables(theme);
+
+    expect(variables['--profile-card-background']).toContain('rgba(28, 36, 51, 0.4)');
+    expect(variables['--content-card-background']).toContain('rgba(28, 36, 51, 0.25)');
+    expect(variables['--content-card-foreground']).toBe(theme.contentCard.foreground);
+    expect(variables['--profile-card-opacity-percent']).toBe('40%');
+    expect(variables['--content-card-opacity-percent']).toBe('25%');
+    expect(getCardSurfaceGradient(theme.contentCard, 0)).toContain('0.15');
   });
 });

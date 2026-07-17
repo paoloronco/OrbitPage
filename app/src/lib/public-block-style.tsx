@@ -26,7 +26,7 @@ export const getPublicTextColor = (link: LinkData) =>
   link.textColor || getReadableTextColor(link.backgroundColor);
 
 export const getPublicBlockStyle = (link: LinkData): CSSProperties => ({
-  ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
+  ...(link.backgroundColor ? { background: `color-mix(in srgb, ${link.backgroundColor} var(--content-card-opacity-percent, 100%), transparent)` } : {}),
   ...(getPublicTextColor(link) ? { color: getPublicTextColor(link) } : {}),
   ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
   ...(link.alignment ? { textAlign: link.alignment } : {}),

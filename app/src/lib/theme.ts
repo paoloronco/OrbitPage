@@ -95,6 +95,8 @@ export interface ThemeConfig {
   };
   contentCardMode: 'mono' | 'multi';
   contentCardVariants: ThemeConfig['contentCard'][];
+  profileCardOpacity: number;
+  contentCardOpacity: number;
 
   // Typography
   fontFamily: string;
@@ -169,6 +171,8 @@ export const defaultTheme: ThemeConfig = {
   },
   contentCardMode: 'mono',
   contentCardVariants: [],
+  profileCardOpacity: 1,
+  contentCardOpacity: 1,
   
   fontFamily: 'Inter, system-ui, sans-serif',
   // font sizes removed from theme defaults; items will use their own saved sizes
@@ -261,6 +265,8 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
     contentCard: normalizedContentCard,
     contentCardMode: themeData.contentCardMode === 'multi' ? 'multi' : 'mono',
     contentCardVariants: normalizedContentCardVariants.length ? normalizedContentCardVariants : [normalizedContentCard],
+    profileCardOpacity: clampNumber(themeData.profileCardOpacity, defaultTheme.profileCardOpacity, 0.15, 1),
+    contentCardOpacity: clampNumber(themeData.contentCardOpacity, defaultTheme.contentCardOpacity, 0.15, 1),
     cardShadow: normalizeCardShadow(themeData.cardShadow, {
       color: themeData.primaryGlow || defaultCardShadow.color,
       offsetX: 0,
@@ -311,6 +317,26 @@ export const getCardShadowCss = (shadow: CardShadowConfig): string => {
   const green = parseInt(hex.slice(2, 4), 16);
   const blue = parseInt(hex.slice(4, 6), 16);
   return `${normalized.offsetX}px ${normalized.offsetY}px ${normalized.blur}px ${normalized.spread}px rgba(${red}, ${green}, ${blue}, ${normalized.opacity})`;
+};
+
+const withOpacity = (color: string, opacity: number) => {
+  const normalized = color.trim().replace(/^#/, '');
+  const expanded = normalized.length === 3
+    ? normalized.split('').map((part) => part + part).join('')
+    : normalized;
+  if (!/^[0-9a-f]{6}$/i.test(expanded)) {
+    return `color-mix(in srgb, ${color} ${Math.round(opacity * 10000) / 100}%, transparent)`;
+  }
+  const channels = [0, 2, 4].map((offset) => parseInt(expanded.slice(offset, offset + 2), 16));
+  return `rgba(${channels[0]}, ${channels[1]}, ${channels[2]}, ${opacity})`;
+};
+
+export const getCardSurfaceGradient = (
+  surface: Pick<ThemeConfig['contentCard'], 'background' | 'backgroundSecondary' | 'direction'>,
+  opacity = 1,
+) => {
+  const normalizedOpacity = clampNumber(opacity, 1, 0.15, 1);
+  return `linear-gradient(${surface.direction}, ${withOpacity(surface.background, normalizedOpacity)}, ${withOpacity(surface.backgroundSecondary, normalizedOpacity)})`;
 };
 
 // Convert hex to HSL for CSS variables
@@ -409,6 +435,8 @@ export const ensureReadableColor = (
 };
 
 export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string> => {
+  const profileCardOpacity = clampNumber(theme.profileCardOpacity, defaultTheme.profileCardOpacity, 0.15, 1);
+  const contentCardOpacity = clampNumber(theme.contentCardOpacity, defaultTheme.contentCardOpacity, 0.15, 1);
   const cardHsl = hexToHsl(theme.card);
   const borderHsl = hexToHsl(theme.border);
   const primaryGlowHsl = hexToHsl(theme.primaryGlow);
@@ -426,7 +454,7 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
       const prefix = `--content-card-v${index}`;
       const accentForeground = variant.accentForeground || getReadableForeground(variant.accent, variant.foreground);
       return [
-        [`${prefix}-background`, `linear-gradient(${variant.direction}, ${variant.background}, ${variant.backgroundSecondary})`],
+        [`${prefix}-background`, getCardSurfaceGradient(variant, contentCardOpacity)],
         [`${prefix}-background-hsl`, hexToHsl(variant.background)],
         [`${prefix}-secondary-hsl`, hexToHsl(variant.backgroundSecondary)],
         [`${prefix}-foreground`, variant.foreground],
@@ -472,13 +500,15 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
     '--glass-border': `1px solid hsl(${borderHsl} / 0.5)`,
     '--card-glow': getCardShadowCss(theme.cardShadow),
     '--glass-tint': tint,
-    '--profile-card-background': `linear-gradient(${theme.profileCard.direction}, ${theme.profileCard.background}, ${theme.profileCard.backgroundSecondary})`,
+    '--profile-card-opacity-percent': `${Math.round(profileCardOpacity * 10000) / 100}%`,
+    '--content-card-opacity-percent': `${Math.round(contentCardOpacity * 10000) / 100}%`,
+    '--profile-card-background': getCardSurfaceGradient(theme.profileCard, profileCardOpacity),
     '--profile-card-foreground': theme.profileCard.foreground,
     '--profile-card-muted': theme.profileCard.muted,
     '--profile-card-border': theme.profileCard.border,
     '--profile-card-accent': theme.profileCard.accent,
     '--profile-card-accent-foreground': profileAccentForeground,
-    '--content-card-background': `linear-gradient(${theme.contentCard.direction}, ${theme.contentCard.background}, ${theme.contentCard.backgroundSecondary})`,
+    '--content-card-background': getCardSurfaceGradient(theme.contentCard, contentCardOpacity),
     '--content-card-background-hsl': hexToHsl(theme.contentCard.background),
     '--content-card-secondary-hsl': hexToHsl(theme.contentCard.backgroundSecondary),
     '--content-card-foreground': theme.contentCard.foreground,
@@ -502,7 +532,7 @@ export const getContentCardVariantCssVariables = (theme: ThemeConfig, index: num
   const accentForeground = variant.accentForeground || getReadableForeground(variant.accent, variant.foreground);
 
   return {
-    '--content-card-background': `linear-gradient(${variant.direction}, ${variant.background}, ${variant.backgroundSecondary})`,
+    '--content-card-background': getCardSurfaceGradient(variant, theme.contentCardOpacity),
     '--content-card-background-hsl': hexToHsl(variant.background),
     '--content-card-secondary-hsl': hexToHsl(variant.backgroundSecondary),
     '--content-card-foreground': variant.foreground,
