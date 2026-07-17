@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { CalendarClock, Code2, Film, Image, Loader2, LockKeyhole, MapPin, Plus, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick } from "lucide-react";
+import { CalendarClock, Code2, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";
@@ -36,6 +36,7 @@ import {
   resolveEmbedProvider,
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
+import { isNativeMenuLink } from "@/lib/native-menu-link";
 
 export interface LinkData {
   id: string;
@@ -89,6 +90,8 @@ interface LinkCardProps {
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
   publicPreviewStyle?: CSSProperties;
+  inheritedBackgroundColor?: string;
+  inheritedTextColor?: string;
   schedulingEnabled?: boolean;
   videoUploadsEnabled?: boolean;
   maxVideoUploadBytes?: number | null;
@@ -104,6 +107,8 @@ export const LinkCard = ({
   onMoveDown,
   editMode = 'full',
   publicPreviewStyle,
+  inheritedBackgroundColor = '#000000',
+  inheritedTextColor = '#ffffff',
   schedulingEnabled = true,
   videoUploadsEnabled = true,
   maxVideoUploadBytes,
@@ -126,9 +131,12 @@ export const LinkCard = ({
 
   const handleSave = () => {
     if (uploadingImage || uploadingVideo) return;
-    const sanitizedLink = editLink.type === 'separator'
+    const normalizedLink = isNativeMenuLink(editLink)
+      ? { ...editLink, type: 'menu' as const, hideUrl: true }
+      : editLink;
+    const sanitizedLink = normalizedLink.type === 'separator'
       ? {
-          ...editLink,
+          ...normalizedLink,
           description: '',
           url: '',
           icon: undefined,
@@ -136,7 +144,7 @@ export const LinkCard = ({
           coverImage: undefined,
           coverImageAlt: undefined,
         }
-      : editLink;
+      : normalizedLink;
     onUpdate(sanitizedLink);
     setIsEditing(false);
   };
@@ -262,6 +270,7 @@ export const LinkCard = ({
   const isMap = link.type === 'map';
   const isEvent = link.type === 'event';
   const isEmbed = link.type === 'embed';
+  const isMenu = isNativeMenuLink(link);
   const isActionable = isPublicActionableBlock(link.type);
   const isClickable = isActionable && !!link.url;
 
@@ -372,8 +381,10 @@ export const LinkCard = ({
               ? 'Event title'
               : isEmbed
                 ? 'Embed title'
-                : 'Link title';
-  const showUrlField = isActionable && !isContact && !isSocialRow;
+                : isMenu
+                  ? 'Menu title'
+                  : 'Link title';
+  const showUrlField = isActionable && !isContact && !isSocialRow && !isMenu;
 
   const isVisible = link.isActive !== false;
   const isCta = link.type === 'cta';
@@ -844,6 +855,17 @@ export const LinkCard = ({
                           className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
                           rows={2}
                         />
+                      )}
+                      {isMenu && (
+                        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-blue-950">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+                            <UtensilsCrossed className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold">Native menu</p>
+                            <p className="truncate text-xs text-blue-700">{editLink.url}</p>
+                          </div>
+                        </div>
                       )}
                       {showUrlField && (
                         <>
@@ -1463,7 +1485,7 @@ export const LinkCard = ({
                   <Label className="text-xs">{isSeparator ? 'Full Background' : 'Background'}</Label>
                   <Input
                     type="color"
-                    value={editLink.backgroundColor || '#000000'}
+                    value={editLink.backgroundColor || inheritedBackgroundColor}
                     onChange={(e) => setEditLink(prev => ({ ...prev, backgroundColor: e.target.value }))}
                     className="h-8 w-full"
                   />
@@ -1473,12 +1495,25 @@ export const LinkCard = ({
                 <Label className="text-xs">{isSeparator ? 'Line/Text Color' : 'Text Color'}</Label>
                 <Input
                   type="color"
-                  value={editLink.textColor || '#ffffff'}
+                  value={editLink.textColor || inheritedTextColor}
                   onChange={(e) => setEditLink(prev => ({ ...prev, textColor: e.target.value }))}
                   className="h-8 w-full"
                 />
               </div>
             </div>
+            {(editLink.backgroundColor || editLink.textColor) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-fit px-2 text-xs text-slate-600"
+                onClick={() => setEditLink(prev => ({ ...prev, backgroundColor: undefined, textColor: undefined }))}
+                title="Use theme colors"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Use theme colors
+              </Button>
+            )}
               </div>
             </section>
             )}

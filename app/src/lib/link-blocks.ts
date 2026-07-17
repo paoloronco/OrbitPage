@@ -1,4 +1,4 @@
-export type LinkBlockType = 'link' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'video' | 'contact' | 'social_row' | 'callout' | 'map' | 'event' | 'embed';
+export type LinkBlockType = 'link' | 'menu' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'video' | 'contact' | 'social_row' | 'callout' | 'map' | 'event' | 'embed';
 
 export interface VideoBlockData {
   mediaUrl?: string;
@@ -294,7 +294,7 @@ export const getVideoData = (content: string | null | undefined): VideoBlockData
 };
 
 export const isBlockType = (type: string | undefined): type is LinkBlockType => (
-  type === 'link' || type === 'text' || type === 'separator' || type === 'cta' ||
+  type === 'link' || type === 'menu' || type === 'text' || type === 'separator' || type === 'cta' ||
   type === 'heading' || type === 'image' || type === 'video' || type === 'contact' || type === 'social_row' ||
   type === 'callout' || type === 'map' || type === 'event' || type === 'embed'
 );

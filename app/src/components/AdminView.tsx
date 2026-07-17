@@ -54,6 +54,7 @@ import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from 
 import type { AdminTab } from "@/lib/admin-navigation";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 import { useAppI18n } from "@/lib/i18n";
+import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 
 interface ProfileData {
   name: string;
@@ -439,6 +440,8 @@ export const AdminView = ({
                   videoUploadsEnabled={entitlements?.videoUploads ?? true}
                   maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
+                  nativeMenuEnabled={!saasPlan || entitlements?.nativeMenu === true}
+                  publicPageHref={publicPageHref}
                 />
               </div>
               <aside className="admin-workbench-rail">
@@ -488,19 +491,12 @@ export const AdminView = ({
               onSave={onMenuUpdate}
               onPreview={() => undefined}
               onAddMenuLink={async () => {
-                const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
-                const menuLink: LinkData = {
-                  id: 'orbitpage-native-menu',
+                const menuLink = createNativeMenuLink(publicPageHref, {
                   title: tr('View menu', 'Vedi il menu'),
-                  description: tr('Browse our current menu', 'Scopri il nostro menu attuale'),
-                  url: menuUrl,
-                  type: 'link',
-                  isActive: true,
-                };
-                const exists = links.some((link) => link.id === menuLink.id);
-                await onLinksUpdate(exists
-                  ? links.map((link) => link.id === menuLink.id ? { ...link, ...menuLink } : link)
-                  : [menuLink, ...links]);
+                  description: tr('Browse food and drinks', 'Scopri piatti e bevande'),
+                });
+                const exists = links.some(isNativeMenuLink);
+                await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? 'append' : 'prepend'));
               }}
             />
           </TabsContent>

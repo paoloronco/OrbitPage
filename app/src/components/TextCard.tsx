@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole } from "lucide-react";
+import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole, RotateCcw } from "lucide-react";
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
@@ -22,11 +22,13 @@ interface TextCardProps {
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
   publicPreviewStyle?: CSSProperties;
+  inheritedBackgroundColor?: string;
+  inheritedTextColor?: string;
   schedulingEnabled?: boolean;
   managePlanHref?: string;
 }
 
-export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, schedulingEnabled = true, managePlanHref = "/dashboard/billing" }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing" }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
@@ -644,7 +646,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 <Label className="text-xs">Background</Label>
                 <Input
                   type="color"
-                  value={editLink.backgroundColor || '#000000'}
+                  value={editLink.backgroundColor || inheritedBackgroundColor}
                   onChange={(e) => setEditLink(prev => ({ ...prev, backgroundColor: e.target.value }))}
                   className="h-8 w-full"
                 />
@@ -653,12 +655,25 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 <Label className="text-xs">Text Color</Label>
                 <Input
                   type="color"
-                  value={editLink.textColor || '#ffffff'}
+                  value={editLink.textColor || inheritedTextColor}
                   onChange={(e) => setEditLink(prev => ({ ...prev, textColor: e.target.value }))}
                   className="h-8 w-full"
                 />
               </div>
             </div>
+            {(editLink.backgroundColor || editLink.textColor) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-fit px-2 text-xs text-slate-600"
+                onClick={() => setEditLink(prev => ({ ...prev, backgroundColor: undefined, textColor: undefined }))}
+                title="Use theme colors"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Use theme colors
+              </Button>
+            )}
             
             <div className="flex gap-2">
               <Button aria-busy={Boolean(uploadingImage)} onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>

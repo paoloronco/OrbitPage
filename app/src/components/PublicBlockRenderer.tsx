@@ -7,16 +7,19 @@ import { PublicHeadingCard } from "./PublicHeadingCard";
 import { PublicImageCard } from "./PublicImageCard";
 import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicMapCard } from "./PublicMapCard";
+import { PublicMenuCard } from "./PublicMenuCard";
 import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { PublicSocialRowCard } from "./PublicSocialRowCard";
 import { PublicTextCard } from "./PublicTextCard";
 import { PublicVideoCard } from "./PublicVideoCard";
+import { isNativeMenuLink } from "@/lib/native-menu-link";
 
 interface PublicBlockRendererProps {
   link: LinkData;
 }
 
 export const PublicBlockRenderer = ({ link }: PublicBlockRendererProps) => {
+  if (isNativeMenuLink(link)) return <PublicMenuCard link={link} />;
   if (link.type === "separator") return <PublicSeparatorCard link={link} />;
   if (link.type === "text") return <PublicTextCard link={link} />;
   if (link.type === "heading") return <PublicHeadingCard link={link} />;

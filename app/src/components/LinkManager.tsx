@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, Film, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2 } from "lucide-react";
+import { CalendarClock, Code2, Download, Film, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -9,8 +9,9 @@ import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
 import { type LinkBlockType, buildBlockContent } from "@/lib/link-blocks";
-import { getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
+import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
+import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -25,6 +26,8 @@ interface LinkManagerProps {
   videoUploadsEnabled?: boolean;
   maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
+  nativeMenuEnabled?: boolean;
+  publicPageHref?: string;
 }
 
 export const LinkManager = ({
@@ -39,6 +42,8 @@ export const LinkManager = ({
   videoUploadsEnabled = true,
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
+  nativeMenuEnabled = true,
+  publicPageHref = "/",
 }: LinkManagerProps) => {
   const { tr } = useAppI18n();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -93,6 +98,36 @@ export const LinkManager = ({
       status: "live",
     };
     appendBlock(newLink);
+  };
+
+  const addNativeMenu = () => {
+    if (!nativeMenuEnabled) {
+      toast({
+        title: tr("Menu requires Starter", "Il menu richiede Starter"),
+        description: tr("Upgrade the workspace to add a native menu card.", "Aggiorna il workspace per aggiungere una card menu nativa."),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const menuLink = createNativeMenuLink(publicPageHref, {
+      title: tr("View menu", "Vedi il menu"),
+      description: tr("Browse food and drinks", "Scopri piatti e bevande"),
+    });
+    const existingMenu = workingLinks.find(isNativeMenuLink);
+
+    if (existingMenu) {
+      setWorkingLinks((current) => upsertNativeMenuLink(current, menuLink));
+      setIsDirty(true);
+      setSaveError("");
+      toast({
+        title: tr("Menu card refreshed", "Card menu aggiornata"),
+        description: tr("The existing card now points to the native menu.", "La card esistente ora punta al menu nativo."),
+      });
+      return;
+    }
+
+    appendBlock(menuLink);
   };
 
   const addNewCta = () => {
@@ -604,6 +639,23 @@ export const LinkManager = ({
               <span className="block text-xs opacity-70">{tr("URL card", "Card URL")}</span>
             </span>
           </Button>
+          <Button
+            onClick={addNativeMenu}
+            variant="outline"
+            className="admin-add-card"
+            aria-disabled={!nativeMenuEnabled}
+            title={!nativeMenuEnabled
+              ? tr("Native menus require Starter", "I menu nativi richiedono Starter")
+              : tr("Add a ready-made card for your menu", "Aggiungi una card pronta per il tuo menu")}
+          >
+            <span className="admin-add-icon">
+              {nativeMenuEnabled ? <UtensilsCrossed className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+            </span>
+            <span>
+              <span className="block font-semibold">Menu</span>
+              <span className="block text-xs opacity-70">{nativeMenuEnabled ? tr("Native menu card", "Card menu nativa") : tr("Starter feature", "Funzione Starter")}</span>
+            </span>
+          </Button>
             <Button onClick={addNewCta} variant="outline" className="admin-add-card">
               <span className="admin-add-icon">
                 <MousePointerClick className="h-4 w-4" />
@@ -749,6 +801,10 @@ export const LinkManager = ({
                     <Link className="h-4 w-4" />
                     {tr("Add link", "Aggiungi link")}
                   </Button>
+                  <Button onClick={addNativeMenu} variant="outline" className="admin-action" disabled={atBlockLimit}>
+                    {nativeMenuEnabled ? <UtensilsCrossed className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
+                    {tr("Add menu", "Aggiungi menu")}
+                  </Button>
                   <Button onClick={addNewBulletedList} variant="outline" className="admin-action" disabled={atBlockLimit}>
                     <List className="h-4 w-4" />
                     {tr("Add list", "Aggiungi elenco")}
@@ -788,6 +844,8 @@ export const LinkManager = ({
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
+                  inheritedBackgroundColor={getContentCardVariant(theme, index).background}
+                  inheritedTextColor={getContentCardVariant(theme, index).foreground}
                   schedulingEnabled={schedulingEnabled}
                   videoUploadsEnabled={videoUploadsEnabled}
                   maxVideoUploadBytes={maxVideoUploadBytes}
@@ -803,6 +861,8 @@ export const LinkManager = ({
                   isDragging={draggedItem === link.id}
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
+                  inheritedBackgroundColor={getContentCardVariant(theme, index).background}
+                  inheritedTextColor={getContentCardVariant(theme, index).foreground}
                   schedulingEnabled={schedulingEnabled}
                   managePlanHref={managePlanHref}
                 />

@@ -88,6 +88,19 @@ describe('link normalization', () => {
     });
   });
 
+  it('preserves native menu blocks from API DTOs', () => {
+    expect(normalizeLinkDto({
+      id: 'orbitpage-native-menu',
+      title: 'View menu',
+      url: '/venue/menu',
+      type: 'menu',
+    })).toMatchObject({
+      id: 'orbitpage-native-menu',
+      type: 'menu',
+      url: '/venue/menu',
+    });
+  });
+
   it('normalizes arrays safely when the API returns nullish values', () => {
     expect(normalizeLinkDtos(null)).toEqual([]);
     expect(normalizeLinkDtos([{ id: 'a', title: 'A' }])).toHaveLength(1);

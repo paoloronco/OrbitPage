@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCardShadowCss, getCardSurfaceGradient, getThemeCssVariables, normalizeTheme } from './theme';
+import { getCardShadowCss, getCardSurfaceGradient, getContentCardVariant, getThemeCssVariables, normalizeTheme } from './theme';
 
 describe('theme normalization', () => {
   it('keeps legacy light themes readable when card settings are absent', () => {
@@ -81,5 +81,36 @@ describe('theme normalization', () => {
     expect(variables['--profile-card-opacity-percent']).toBe('40%');
     expect(variables['--content-card-opacity-percent']).toBe('25%');
     expect(getCardSurfaceGradient(theme.contentCard, 0)).toContain('0.15');
+  });
+
+  it('returns the inherited content-card colors for mono themes', () => {
+    const theme = normalizeTheme({
+      contentCardMode: 'mono',
+      contentCard: {
+        ...normalizeTheme({}).contentCard,
+        background: '#123456',
+        foreground: '#f8fafc',
+      },
+    });
+
+    expect(getContentCardVariant(theme, 4)).toMatchObject({
+      background: '#123456',
+      foreground: '#f8fafc',
+    });
+  });
+
+  it('cycles through the effective content-card colors for multi themes', () => {
+    const baseTheme = normalizeTheme({});
+    const theme = normalizeTheme({
+      contentCardMode: 'multi',
+      contentCardVariants: [
+        { ...baseTheme.contentCard, background: '#102030', foreground: '#ffffff' },
+        { ...baseTheme.contentCard, background: '#f4f5f6', foreground: '#111827' },
+      ],
+    });
+
+    expect(getContentCardVariant(theme, 0).background).toBe('#102030');
+    expect(getContentCardVariant(theme, 1).foreground).toBe('#111827');
+    expect(getContentCardVariant(theme, 2).background).toBe('#102030');
   });
 });

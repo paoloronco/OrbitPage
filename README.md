@@ -39,10 +39,13 @@ OrbitPage is available in two forms built around the same page builder and publi
 | Source | This public repository, MIT licensed | Hosted platform and managed control plane |
 | Data | SQLite database and uploads on your persistent volume | Managed accounts, storage, publishing, and backups |
 | Public URL | Your own deployment URL | Hosted username URL, with custom domains on eligible plans |
+| Newsletters | Not included; connect an external newsletter tool if needed | Tenant SMTP, double opt-in subscribers, scheduled campaigns, and delivery reports on eligible paid plans |
 | Operations | You handle deployment, TLS, updates, backups, and availability | OrbitPage handles the hosting workflow |
 | Cost | Software is free; you pay for your infrastructure | Free and paid plans are listed on the [pricing page](https://orbitpage.com/pricing) |
 
 The managed control plane, billing system, and hosting infrastructure are not included in this repository. Improvements to the shared OrbitPage application can be released in both editions.
+
+Managed newsletters are also a hosted-platform feature rather than part of this repository. Eligible paid workspaces can connect their own SMTP server, collect confirmed subscribers, create and schedule branded campaigns, and review SMTP acceptance, opens, clicks, rejections, and unsubscribes. The customer remains responsible for consent, sender-domain authentication, provider charges, and mailing-list compliance. See the [managed service](https://orbitpage.com/hosting) and [pricing](https://orbitpage.com/pricing) for current availability and limits.
 
 ## Features
 

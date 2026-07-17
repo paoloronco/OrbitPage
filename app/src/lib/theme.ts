@@ -524,11 +524,15 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
   };
 };
 
-export const getContentCardVariantCssVariables = (theme: ThemeConfig, index: number): Record<string, string> => {
+export const getContentCardVariant = (theme: ThemeConfig, index: number): ThemeConfig['contentCard'] => {
   const variants = theme.contentCardMode === 'multi' && theme.contentCardVariants.length
     ? theme.contentCardVariants
     : [theme.contentCard];
-  const variant = variants[index % variants.length] || theme.contentCard;
+  return variants[index % variants.length] || theme.contentCard;
+};
+
+export const getContentCardVariantCssVariables = (theme: ThemeConfig, index: number): Record<string, string> => {
+  const variant = getContentCardVariant(theme, index);
   const accentForeground = variant.accentForeground || getReadableForeground(variant.accent, variant.foreground);
 
   return {
