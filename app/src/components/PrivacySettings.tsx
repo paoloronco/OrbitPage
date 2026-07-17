@@ -38,6 +38,7 @@ import {
   Sliders,
   Type,
 } from 'lucide-react';
+import { useAppI18n } from '@/lib/i18n';
 import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
 
@@ -878,6 +879,7 @@ export function PrivacySettings({
   onLegalPolicyUpdate?: (links: { privacyPolicyUrl?: string; cookiePolicyUrl?: string }) => void | Promise<void>;
   readOnly?: boolean;
 } = {}) {
+  const { tr } = useAppI18n();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -1092,7 +1094,7 @@ export function PrivacySettings({
     );
   }
 
-  const activeLabel = mode === 'hardcoded' ? 'Native banner' : mode === 'builder' ? 'External CMP' : null;
+  const activeLabel = mode === 'hardcoded' ? tr('Native banner', 'Banner nativo') : mode === 'builder' ? 'CMP esterna' : null;
 
   return (
     <div className="admin-single-column space-y-6">
@@ -1105,7 +1107,7 @@ export function PrivacySettings({
           <div>
             <h2 className="text-base font-semibold text-slate-950">Privacy &amp; Cookies</h2>
             <p className="text-xs leading-5 text-slate-500">
-              Legal pages are your documents. Consent management is the cookie banner.
+              {tr("Legal pages are your documents. Consent management is the cookie banner.", "Le pagine legali sono i tuoi documenti. La gestione del consenso è il banner cookie.")}
             </p>
           </div>
         </div>
@@ -1120,12 +1122,12 @@ export function PrivacySettings({
             enabled ? 'bg-green-500' : 'bg-slate-400'
           }`} />
           {enabled
-            ? `Active - ${activeLabel} is live on the public page`
-            : 'Cookie consent is disabled - no banner is shown'}
+            ? `${tr("Active", "Attivo")} - ${activeLabel} ${tr("is live on the public page", "è online sulla pagina pubblica")}`
+            : tr('Cookie consent is disabled - no banner is shown', 'Il consenso cookie è disabilitato: non viene mostrato alcun banner')}
         </div>
         {readOnly && (
           <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-            Demo mode is active. Privacy Policy, Cookie Policy, Consent Management, and related compliance settings are view-only.
+            {tr("Demo mode is active. Privacy Policy, Cookie Policy, Consent Management, and related compliance settings are view-only.", "La modalità demo è attiva. Privacy Policy, Cookie Policy, gestione del consenso e impostazioni collegate sono in sola lettura.")}
           </div>
         )}
       </section>
@@ -1134,8 +1136,8 @@ export function PrivacySettings({
         <section className="admin-panel space-y-3">
           <SectionHeader
             icon={Globe2}
-            title="Legal pages"
-            description="Privacy Policy = legal document. Cookie Policy = cookie document."
+            title={tr("Legal pages", "Pagine legali")}
+            description={tr("Privacy Policy = legal document. Cookie Policy = cookie document.", "Privacy Policy = documento sulla privacy. Cookie Policy = documento sui cookie.")}
           />
           <LegalPoliciesForm
             showLegalLinks={showLegalLinks}
@@ -1171,29 +1173,29 @@ export function PrivacySettings({
           <div className="flex flex-wrap items-start justify-between gap-4">
             <SectionHeader
               icon={ShieldCheck}
-              title="Consent management"
-              description="CMP = cookie consent banner. Choose who shows it."
+              title={tr("Consent management", "Gestione consenso")}
+              description={tr("CMP = cookie consent banner. Choose who shows it.", "CMP = banner per il consenso cookie. Scegli chi lo mostra.")}
             />
             <div className="flex shrink-0 items-center gap-2">
-              <span className="text-xs text-slate-500">{enabled ? 'Live' : 'Off'}</span>
-              <Switch checked={enabled} onCheckedChange={setEnabled} aria-label="Enable consent management" />
+              <span className="text-xs text-slate-500">{enabled ? tr('Live', 'Online') : tr('Off', 'Disattivo')}</span>
+              <Switch checked={enabled} onCheckedChange={setEnabled} aria-label={tr("Enable consent management", "Abilita gestione consenso")} />
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <ModeCard
               mode="hardcoded"
               active={mode}
-              title="Native (OrbitPage built-in)"
-              description="OrbitPage shows the cookie banner. No external script is loaded."
+              title={tr("Native (OrbitPage built-in)", "Nativo (integrato in OrbitPage)")}
+              description={tr("OrbitPage shows the cookie banner. No external script is loaded.", "OrbitPage mostra il banner cookie. Non viene caricato alcuno script esterno.")}
               icon={ShieldCheck}
-              badge="Recommended"
+              badge={tr("Recommended", "Consigliato")}
               onClick={() => changeConsentMode('hardcoded')}
             />
             <ModeCard
               mode="builder"
               active={mode}
-              title="External (custom script)"
-              description="Your provider shows the banner. OrbitPage banner stays off."
+              title={tr("External (custom script)", "Esterno (script personalizzato)")}
+              description={tr("Your provider shows the banner. OrbitPage banner stays off.", "Il provider mostra il banner; quello OrbitPage resta disattivato.")}
               icon={Globe2}
               onClick={() => changeConsentMode('builder')}
             />
@@ -1203,8 +1205,8 @@ export function PrivacySettings({
             <div className="mt-5 border-t border-slate-200 pt-5">
               <SectionHeader
                 icon={ShieldCheck}
-                title="Native banner settings"
-                description="Customise the built-in consent banner shown to visitors."
+                title={tr("Native banner settings", "Impostazioni banner nativo")}
+                description={tr("Customise the built-in consent banner shown to visitors.", "Personalizza il banner del consenso mostrato ai visitatori.")}
               />
               <HardcodedForm
                 cfg={hardcoded}
@@ -1217,8 +1219,8 @@ export function PrivacySettings({
             <div className="mt-5 border-t border-slate-200 pt-5">
               <SectionHeader
                 icon={Globe2}
-                title="External CMP script"
-                description="Paste the script from the service that will show your cookie banner."
+                title={tr("External CMP script", "Script CMP esterna")}
+                description={tr("Paste the script from the service that will show your cookie banner.", "Incolla lo script del servizio che mostrerà il banner cookie.")}
               />
               <BuilderForm
                 cfg={builder}
@@ -1232,14 +1234,14 @@ export function PrivacySettings({
       <section className="admin-panel space-y-3">
         <SectionHeader
           icon={ListChecks}
-          title="GDPR / ePrivacy compliance checklist"
-          description="Review before enabling. This is guidance, not legal advice — consult a lawyer for your specific situation."
+          title={tr("GDPR / ePrivacy compliance checklist", "Verifica conformità GDPR / ePrivacy")}
+          description={tr("Review before enabling. This is guidance, not legal advice — consult a lawyer for your specific situation.", "Controlla prima di abilitare. Queste sono indicazioni, non consulenza legale: rivolgiti a un professionista per il tuo caso.")}
         />
         {[
           {
             // Page-level URLs are persisted as the source of truth.
             ok: !!(resolvedPrivacyPolicyUrl || resolvedCookiePolicyUrl),
-            text: 'At least one legal page is configured',
+            text: tr('At least one legal page is configured', 'È configurata almeno una pagina legale'),
           },
           {
             ok: mode === 'hardcoded'
@@ -1247,35 +1249,35 @@ export function PrivacySettings({
                   (c) => !c.enabled || !!c.description?.trim(),
                 )
               : true,
-            text: 'All enabled categories have descriptions',
+            text: tr('All enabled categories have descriptions', 'Tutte le categorie abilitate hanno una descrizione'),
           },
           {
             ok: mode === 'hardcoded' || isBuilderProviderConfigured(builder),
-            text: mode === 'hardcoded' ? 'Native banner is selected' : 'External CMP script is configured',
+            text: mode === 'hardcoded' ? tr('Native banner is selected', 'È selezionato il banner nativo') : tr('External CMP script is configured', 'Lo script CMP esterno è configurato'),
           },
           {
             ok: enabled,
-            text: 'The selected mode is enabled and will run on the public page',
+            text: tr('The selected mode is enabled and will run on the public page', 'La modalità selezionata è abilitata e verrà eseguita sulla pagina pubblica'),
           },
           {
             ok: true,
-            text: '"Reject all" and "Accept all" receive equal visual weight in the banner',
+            text: tr('"Reject all" and "Accept all" receive equal visual weight in the banner', '"Rifiuta tutto" e "Accetta tutto" hanno lo stesso peso visivo nel banner'),
           },
           {
             ok: true,
-            text: 'Necessary cookies are always active and cannot be disabled by visitors',
+            text: tr('Necessary cookies are always active and cannot be disabled by visitors', 'I cookie necessari sono sempre attivi e non possono essere disabilitati dai visitatori'),
           },
           {
             ok: true,
-            text: 'Consent is stored with timestamp, policy version, and category flags',
+            text: tr('Consent is stored with timestamp, policy version, and category flags', 'Il consenso viene salvato con data, versione della policy e categorie'),
           },
           {
             ok: enabled && mode !== 'disabled',
-            text: 'Tracking blocked until consent is granted — Google Analytics is gated behind analytics consent (GCM v2)',
+            text: tr('Tracking blocked until consent is granted — Google Analytics is gated behind analytics consent (GCM v2)', 'Il monitoraggio resta bloccato fino al consenso; Google Analytics richiede il consenso analytics (GCM v2)'),
           },
           {
             ok: true,
-            text: 'A persistent "Cookie preferences" link allows users to revise choices at any time',
+            text: tr('A persistent "Cookie preferences" link allows users to revise choices at any time', 'Il link persistente "Preferenze cookie" consente di modificare le scelte in qualsiasi momento'),
           },
         ].map(({ ok, text }) => (
           <div key={text} className="flex items-start gap-2.5 text-xs text-slate-700">
@@ -1296,7 +1298,7 @@ export function PrivacySettings({
           {saveSuccess && (
             <p className="flex items-center gap-1 text-xs text-green-600">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Saved successfully
+              {tr("Saved successfully", "Salvato correttamente")}
             </p>
           )}
         </div>
@@ -1306,7 +1308,7 @@ export function PrivacySettings({
           className="admin-action admin-action-primary"
           size="sm"
         >
-          {saving ? 'Saving…' : saveSuccess ? 'Saved' : 'Save changes'}
+          {saving ? tr('Saving…', 'Salvataggio…') : saveSuccess ? tr('Saved', 'Salvato') : tr('Save changes', 'Salva modifiche')}
         </Button>
       </div>
     </div>

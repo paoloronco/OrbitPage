@@ -23,6 +23,7 @@ import {
   Globe2,
   HelpCircle,
   Key,
+  Languages,
   Link,
   LockKeyhole,
   LogOut,
@@ -52,6 +53,7 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
 import type { AdminTab } from "@/lib/admin-navigation";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
+import { useAppI18n } from "@/lib/i18n";
 
 interface ProfileData {
   name: string;
@@ -102,17 +104,17 @@ interface AdminViewProps {
   onTabChange?: (tab: AdminTab) => void;
 }
 
-const tabs: Array<{ value: AdminTab; label: string; icon: React.ElementType }> = [
-  { value: "profile", label: "Page", icon: User },
-  { value: "links", label: "Links", icon: Link },
-  { value: "theme", label: "Theme", icon: Palette },
-  { value: "menu", label: "Menu", icon: UtensilsCrossed },
-  { value: "access", label: "Access", icon: Key },
-  { value: "backup", label: "Backup", icon: Database },
-  { value: "analytics", label: "Analytics", icon: BarChart2 },
-  { value: "privacy", label: "Privacy", icon: Cookie },
-  { value: "txt", label: "TXT", icon: FileText },
-  { value: "sitemap", label: "Sitemap", icon: Map },
+const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
+  { value: "profile", icon: User },
+  { value: "links", icon: Link },
+  { value: "theme", icon: Palette },
+  { value: "menu", icon: UtensilsCrossed },
+  { value: "access", icon: Key },
+  { value: "backup", icon: Database },
+  { value: "analytics", icon: BarChart2 },
+  { value: "privacy", icon: Cookie },
+  { value: "txt", icon: FileText },
+  { value: "sitemap", icon: Map },
 ];
 
 const ctaActionLabels: Record<string, string> = {
@@ -140,6 +142,11 @@ export const AdminView = ({
   requestedTab = "profile",
   onTabChange,
 }: AdminViewProps) => {
+  const { locale, setLocale, tr } = useAppI18n();
+  const tabLabel = (tab: AdminTab) => ({
+    profile: tr("Page", "Pagina"), links: "Links", theme: tr("Theme", "Tema"), menu: "Menu",
+    access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy", txt: "TXT", sitemap: "Sitemap",
+  })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
@@ -292,20 +299,28 @@ export const AdminView = ({
             <div className="min-w-0">
               <div className="admin-title-row">
                 <h1 className="admin-title">OrbitPage <span>Admin</span></h1>
-                {appVersion && <span className="admin-version" title="Embedded OrbitPage OSS runtime version">OSS v{appVersion}</span>}
+                {appVersion && <span className="admin-version" title={tr("Embedded OrbitPage OSS runtime version", "Versione del runtime OrbitPage OSS incorporato")}>OSS v{appVersion}</span>}
                 {saasPlan && (
-                  <a className="admin-plan-badge" href={managePlanHref} target="_top" title="Manage plan">
+                  <a className="admin-plan-badge" href={managePlanHref} target="_top" title={tr("Manage plan", "Gestisci piano")}>
                     {saasPlan.name}
                   </a>
                 )}
               </div>
               <p className="admin-subtitle">
-                Your page workspace
+                {tr("Your page workspace", "Il workspace della tua pagina")}
               </p>
             </div>
           </div>
 
           <div className="admin-header-actions">
+            <label className="admin-action flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700" title={tr("Language", "Lingua")}>
+              <Languages className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">{tr("Language", "Lingua")}</span>
+              <select className="bg-transparent py-1 outline-none" aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as "en" | "it")}>
+                <option value="en">EN</option>
+                <option value="it">IT</option>
+              </select>
+            </label>
             <Button
               className="admin-action"
               variant="outline"
@@ -313,50 +328,50 @@ export const AdminView = ({
               onClick={() => setOnboardingReplayKey(key => key + 1)}
             >
               <HelpCircle className="h-4 w-4" />
-              Guide
+              {tr("Guide", "Guida")}
             </Button>
             <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <Button className="admin-action admin-action-primary" size="sm">
                 <ExternalLink className="h-4 w-4" />
-                Public page
+                {tr("Public page", "Pagina pubblica")}
               </Button>
             </a>
             {!isHostedAdmin && (
               <Button className="admin-action" variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
-                Logout
+                {tr("Logout", "Esci")}
               </Button>
             )}
           </div>
         </header>
 
-        <section className={`admin-metrics${isHostedAdmin ? " admin-metrics-saas" : ""}`} aria-label="Workspace status">
+        <section className={`admin-metrics${isHostedAdmin ? " admin-metrics-saas" : ""}`} aria-label={tr("Workspace status", "Stato del workspace")}>
           <MetricCard
             icon={Globe2}
-            label="Visible links"
+            label={tr("Visible links", "Link visibili")}
             value={`${metrics.visibleLinks}/${metrics.totalLinks}`}
             detail={entitlements?.maxBlocks !== undefined
-              ? `${saasUsage?.blocks ?? links.length}/${entitlements.maxBlocks ?? "∞"} plan blocks`
-              : metrics.scheduledLinks > 0 ? `${metrics.scheduledLinks} scheduled` : "Ready to publish"}
+              ? `${saasUsage?.blocks ?? links.length}/${entitlements.maxBlocks ?? "∞"} ${tr("plan blocks", "blocchi del piano")}`
+              : metrics.scheduledLinks > 0 ? `${metrics.scheduledLinks} ${tr("scheduled", "programmati")}` : tr("Ready to publish", "Pronta per la pubblicazione")}
           />
           <MetricCard
             icon={MousePointerClick}
-            label="Total clicks"
+            label={tr("Total clicks", "Clic totali")}
             value={String(metrics.totalClicks)}
-            detail={metrics.ctaClicks > 0 ? `${metrics.ctaClicks} CTA clicks` : "Built-in tracking"}
+            detail={metrics.ctaClicks > 0 ? `${metrics.ctaClicks} ${tr("CTA clicks", "clic sulle CTA")}` : tr("Built-in tracking", "Monitoraggio integrato")}
           />
           <MetricCard
             icon={CheckCircle2}
-            label="Page"
-            value={metrics.profileReady ? "Ready" : "Draft"}
-            detail={`${metrics.socialCount} social links`}
+            label={tr("Page", "Pagina")}
+            value={metrics.profileReady ? tr("Ready", "Pronta") : tr("Draft", "Bozza")}
+            detail={`${metrics.socialCount} ${tr("social links", "link social")}`}
           />
           {!isHostedAdmin && (
             <MetricCard
               icon={ShieldCheck}
-              label="Admin access"
-              value="Protected"
-              detail="Encrypted session token"
+              label={tr("Admin access", "Accesso amministratore")}
+              value={tr("Protected", "Protetto")}
+              detail={tr("Encrypted session token", "Token di sessione crittografato")}
             />
           )}
         </section>
@@ -364,10 +379,10 @@ export const AdminView = ({
         <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className="mt-5 flex-1">
           <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
-              {visibleTabs.map(({ value, label, icon: Icon }) => (
+              {visibleTabs.map(({ value, icon: Icon }) => (
                 <TabsTrigger key={value} value={value} className="admin-tab" data-onboarding={`${value}-tab`}>
                   <Icon className="h-4 w-4" />
-                  <span>{label}</span>
+                  <span>{tabLabel(value)}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -391,7 +406,7 @@ export const AdminView = ({
               </div>
               <aside className="admin-workbench-rail">
                 <PreviewPanel
-                  title="Profile and identity"
+                  title={tr("Profile and identity", "Profilo e identità")}
                   profile={previewProfile}
                   links={links}
                   theme={theme}
@@ -399,11 +414,11 @@ export const AdminView = ({
                   showOrbitPageBadge={entitlements?.badgeRequired ?? true}
                 />
                 <section className="admin-side-panel admin-checklist-panel">
-                  <PanelHeader icon={User} title="Page checklist" />
-                  <ChecklistItem checked={Boolean(profile.name?.trim())} label="Name or brand is set" />
-                  <ChecklistItem checked={Boolean(profile.bio?.trim())} label="Description is set" />
-                  <ChecklistItem checked={metrics.socialCount > 0} label="At least one social link" />
-                  <ChecklistItem checked={Boolean(profile.tabTitle?.trim())} label="Browser title customized" />
+                  <PanelHeader icon={User} title={tr("Page checklist", "Verifica pagina")} />
+                  <ChecklistItem checked={Boolean(profile.name?.trim())} label={tr("Name or brand is set", "Nome o brand impostato")} />
+                  <ChecklistItem checked={Boolean(profile.bio?.trim())} label={tr("Description is set", "Descrizione impostata")} />
+                  <ChecklistItem checked={metrics.socialCount > 0} label={tr("At least one social link", "Almeno un link social")} />
+                  <ChecklistItem checked={Boolean(profile.tabTitle?.trim())} label={tr("Browser title customized", "Titolo del browser personalizzato")} />
                 </section>
               </aside>
             </div>
@@ -428,7 +443,7 @@ export const AdminView = ({
               </div>
               <aside className="admin-workbench-rail">
                 <PreviewPanel
-                  title="Blocks and composition"
+                  title={tr("Blocks and composition", "Blocchi e composizione")}
                   profile={profile}
                   links={previewLinks}
                   theme={theme}
@@ -476,8 +491,8 @@ export const AdminView = ({
                 const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
                 const menuLink: LinkData = {
                   id: 'orbitpage-native-menu',
-                  title: 'View menu',
-                  description: 'Browse our current menu',
+                  title: tr('View menu', 'Vedi il menu'),
+                  description: tr('Browse our current menu', 'Scopri il nostro menu attuale'),
                   url: menuUrl,
                   type: 'link',
                   isActive: true,
@@ -511,39 +526,39 @@ export const AdminView = ({
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">
               <section className="admin-panel" data-onboarding="analytics-section">
-                <PanelHeader icon={BarChart2} title="Click analytics" />
+                <PanelHeader icon={BarChart2} title={tr("Click analytics", "Analytics dei clic")} />
                 <div className="mb-5 grid grid-cols-2 gap-3">
-                  <StatusTile label="Total clicks" value={String(metrics.totalClicks)} />
-                  <StatusTile label="Tracked items" value={String(metrics.totalLinks)} />
-                  <StatusTile label="CTA clicks" value={String(metrics.ctaClicks)} />
-                  <StatusTile label="Smart CTAs" value={String(metrics.ctaLinks)} />
+                  <StatusTile label={tr("Total clicks", "Clic totali")} value={String(metrics.totalClicks)} />
+                  <StatusTile label={tr("Tracked items", "Elementi monitorati")} value={String(metrics.totalLinks)} />
+                  <StatusTile label={tr("CTA clicks", "Clic sulle CTA")} value={String(metrics.ctaClicks)} />
+                  <StatusTile label={tr("Smart CTAs", "CTA intelligenti")} value={String(metrics.ctaLinks)} />
                 </div>
                 {(!saasPlan || entitlements?.analytics !== "basic-clicks") ? (
                   <ClickAnalyticsChart links={links} />
                 ) : (
                   <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                    Free includes basic click totals. Trends and per-block comparisons unlock on Starter.
+                    {tr("Free includes basic click totals. Trends and per-block comparisons unlock on Starter.", "Free include i totali di base dei clic. Trend e confronti per blocco si sbloccano con Starter.")}
                   </p>
                 )}
                 {(!saasPlan || entitlements?.analytics !== "basic-clicks") && <div className="mt-6 border-t border-slate-200 pt-5">
-                  <PanelHeader icon={MousePointerClick} title="CTA performance" />
+                  <PanelHeader icon={MousePointerClick} title={tr("CTA performance", "Prestazioni CTA")} />
                   {metrics.ctaPerformance.length > 0 ? (
                     <div className="space-y-2">
                       {metrics.ctaPerformance.map((link) => (
                         <div key={link.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-950">{link.title || 'Untitled CTA'}</p>
+                            <p className="truncate text-sm font-semibold text-slate-950">{link.title || tr('Untitled CTA', 'CTA senza titolo')}</p>
                             <p className="text-xs text-slate-500">{ctaActionLabels[link.ctaAction || 'book']}</p>
                           </div>
                           <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                            {link.ctaClicks ?? 0} clicks
+                            {link.ctaClicks ?? 0} {tr("clicks", "clic")}
                           </span>
                         </div>
                       ))}
                     </div>
                   ) : (
                     <p className="text-sm leading-6 text-slate-600">
-                      Smart CTA clicks will appear here separately from normal link clicks.
+                      {tr("Smart CTA clicks will appear here separately from normal link clicks.", "I clic sulle CTA intelligenti compariranno qui separati dai clic sui link normali.")}
                     </p>
                   )}
                 </div>}
@@ -552,12 +567,12 @@ export const AdminView = ({
               {(!saasPlan || entitlements?.analytics === "advanced-ga4") ? <Card className="admin-panel space-y-5">
                 <PanelHeader icon={Globe2} title="Google Analytics 4" />
                 <p className="text-sm leading-6 text-slate-600">
-                  Tracking runs on the public page only. Admin activity stays out of analytics.
+                  {tr("Tracking runs on the public page only. Admin activity stays out of analytics.", "Il monitoraggio viene eseguito solo sulla pagina pubblica. L'attività nell'Admin resta esclusa dalle analytics.")}
                 </p>
 
                 <div className="space-y-2">
                   <Label htmlFor="ga-id" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    Measurement ID
+                    ID di misurazione
                   </Label>
                   <Input
                     id="ga-id"
@@ -568,13 +583,13 @@ export const AdminView = ({
                     spellCheck={false}
                   />
                   <p className="text-xs leading-5 text-slate-500">
-                    Find it in Google Analytics, Admin, Data streams, Measurement ID.
+                    {tr("Find it in Google Analytics, Admin, Data streams, Measurement ID.", "Lo trovi in Google Analytics, Amministrazione, Stream di dati, ID misurazione.")}
                   </p>
                 </div>
 
                 {gaId && !gaId.match(/^G-[A-Z0-9]+$/i) && (
                   <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                    The ID must start with G- and use only letters and numbers.
+                    {tr("The ID must start with G- and use only letters and numbers.", "L'ID deve iniziare con G- e contenere solo lettere e numeri.")}
                   </p>
                 )}
 
@@ -585,18 +600,18 @@ export const AdminView = ({
                     size="sm"
                     disabled={!canEditProfile || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
                   >
-                    {gaSaved ? "Saved" : "Save"}
+                    {gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
                   </Button>
                   {profile.googleAnalyticsId && (
                     <p className="text-xs text-slate-500">
-                      Active: <span className="font-mono text-blue-700">{profile.googleAnalyticsId}</span>
+                      {tr("Active", "Attivo")}: <span className="font-mono text-blue-700">{profile.googleAnalyticsId}</span>
                     </p>
                   )}
                 </div>
               </Card> : (
                 <PlanLockedFeature
                   title="Google Analytics 4"
-                  description="Connect a GA4 Measurement ID with the Pro plan."
+                  description={tr("Connect a GA4 Measurement ID with the Pro plan.", "Collega un ID di misurazione GA4 con il piano Pro.")}
                   managePlanHref={managePlanHref}
                 />
               )}
@@ -652,10 +667,13 @@ export const AdminView = ({
             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs leading-5 text-amber-900">
               <div className="mb-1 flex items-center gap-2 font-semibold">
                 <AlertTriangle className="h-4 w-4" />
-                <span>Demo Mode</span>
+                <span>{tr("Demo Mode", "Modalità demo")}</span>
               </div>
               <p>
-                This instance is automatically reset every 5 minutes. Any changes made during the demo will be lost after the reset. Any users created during the demo will be removed. Changing the admin password is disabled. Editing privacy settings and TXT files, including Privacy Policy, Cookie Policy, Consent Management, crawler files, and related compliance configuration, is disabled.
+                {tr(
+                  "This instance is automatically reset every 5 minutes. Any changes made during the demo will be lost after the reset. Any users created during the demo will be removed. Changing the admin password is disabled. Editing privacy settings and TXT files, including Privacy Policy, Cookie Policy, Consent Management, crawler files, and related compliance configuration, is disabled.",
+                  "Questa istanza viene ripristinata automaticamente ogni 5 minuti. Le modifiche e gli utenti creati durante la demo verranno rimossi. Il cambio della password amministratore e la modifica di privacy, consenso e file TXT sono disabilitati."
+                )}
               </p>
             </div>
           )}
@@ -665,7 +683,7 @@ export const AdminView = ({
             </p>
           )}
           <p>
-            Powered by{" "}
+            {tr("Powered by", "Realizzato con")}{" "}
             <a href="https://github.com/paoloronco/OrbitPage" target="_blank" rel="noopener noreferrer">
               OrbitPage
             </a>
@@ -719,13 +737,14 @@ function PreviewPanel({
   publicPageHref: string;
   showOrbitPageBadge: boolean;
 }) {
+  const { tr } = useAppI18n();
   const [device, setDevice] = useState<PreviewDevice>("mobile");
 
   return (
     <section className="admin-preview-panel">
       <div className="admin-preview-heading">
         <div>
-          <h2>Page preview</h2>
+          <h2>{tr("Page preview", "Anteprima pagina")}</h2>
           <p>{title}</p>
         </div>
         <div className="admin-preview-heading-actions">
@@ -734,8 +753,8 @@ function PreviewPanel({
             href={publicPageHref}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Open published page"
-            title="Open published page"
+            aria-label={tr("Open published page", "Apri la pagina pubblicata")}
+            title={tr("Open published page", "Apri la pagina pubblicata")}
           >
             <ExternalLink className="h-4 w-4" />
           </a>

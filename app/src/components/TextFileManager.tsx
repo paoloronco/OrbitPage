@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TextFileConfig, textFilesApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
+import { useAppI18n } from "@/lib/i18n";
 
 type SaveState = "idle" | "loading" | "saving" | "success" | "error";
 
@@ -14,6 +15,7 @@ interface TextFileManagerProps {
 }
 
 export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
+  const { tr } = useAppI18n();
   const [files, setFiles] = useState<TextFileConfig[]>([]);
   const [activeKey, setActiveKey] = useState<TextFileConfig["key"]>("robots");
   const [draft, setDraft] = useState("");
@@ -151,15 +153,15 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
             <FileText className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-base font-semibold text-slate-950">TXT files</h2>
+            <h2 className="text-base font-semibold text-slate-950">{tr("TXT files", "File TXT")}</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              Manage crawler, LLM, security, and attribution text endpoints.
+              {tr("Manage crawler, LLM, security, and attribution text endpoints.", "Gestisci gli endpoint testuali per crawler, LLM, sicurezza e attribuzione.")}
             </p>
           </div>
         </div>
         {readOnly ? (
           <span className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-            Demo read-only
+            {tr("Demo read-only", "Demo in sola lettura")}
           </span>
         ) : (
           <Button
@@ -173,7 +175,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
             disabled={busy}
           >
             {creating ? <X className="h-4 w-4" /> : <FilePlus2 className="h-4 w-4" />}
-            {creating ? "Cancel" : "Add TXT file"}
+            {creating ? tr("Cancel", "Annulla") : tr("Add TXT file", "Aggiungi file TXT")}
           </Button>
         )}
       </div>
@@ -182,7 +184,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
         <div className="rounded-lg border border-blue-200 bg-blue-50/70 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <label className="min-w-0 flex-1 text-sm font-semibold text-slate-900">
-              Public TXT path
+              {tr("Public TXT path", "Percorso TXT pubblico")}
               <Input
                 value={newPath}
                 onChange={(event) => setNewPath(event.target.value)}
@@ -206,11 +208,11 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
               disabled={busy || !newPath.trim()}
             >
               {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Plus className="h-4 w-4" />}
-              Create file
+              {tr("Create file", "Crea file")}
             </Button>
           </div>
           <p className="mt-2 text-xs leading-5 text-slate-600">
-            Use <span className="font-mono">name.txt</span> or <span className="font-mono">.well-known/name.txt</span>. OrbitPage keeps system paths unique and allows up to 20 custom files.
+            {tr("Use", "Usa")} <span className="font-mono">name.txt</span> {tr("or", "oppure")} <span className="font-mono">.well-known/name.txt</span>. {tr("OrbitPage keeps system paths unique and allows up to 20 custom files.", "OrbitPage mantiene univoci i percorsi di sistema e consente fino a 20 file personalizzati.")}
           </p>
         </div>
       )}
@@ -240,9 +242,9 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
               <span className="flex items-center justify-between gap-2">
                 <span className="font-mono text-sm font-semibold">{file.label}</span>
                 {file.isCustom ? (
-                  <span className="rounded bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">Added</span>
+                  <span className="rounded bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700">{tr("Added", "Aggiunto")}</span>
                 ) : file.isCustomized ? (
-                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Edited</span>
+                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">{tr("Edited", "Modificato")}</span>
                 ) : null}
               </span>
               <span className="mt-1 block text-xs leading-5 text-slate-500">{file.description}</span>
@@ -265,7 +267,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-900"
               >
-                Open
+                {tr("Open", "Apri")}
                 <ExternalLink className="h-4 w-4" />
               </a>
             )}
@@ -281,18 +283,18 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-slate-500">
-              {dirty ? "Unsaved changes" : activeFile?.isCustom ? "Custom TXT file active" : activeFile?.isCustomized ? "Edited content active" : "Default content active"}
+              {dirty ? tr("Unsaved changes", "Modifiche non salvate") : activeFile?.isCustom ? tr("Custom TXT file active", "File TXT personalizzato attivo") : activeFile?.isCustomized ? tr("Edited content active", "Contenuto modificato attivo") : tr("Default content active", "Contenuto predefinito attivo")}
             </p>
             <div className="flex flex-col gap-2 sm:flex-row">
               {activeFile?.isCustom && confirmDelete ? (
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" className="admin-action" onClick={() => setConfirmDelete(false)} disabled={busy}>
                     <X className="h-4 w-4" />
-                    Cancel
+                    {tr("Cancel", "Annulla")}
                   </Button>
                   <Button type="button" variant="destructive" className="admin-action" onClick={() => void resetToDefault()} disabled={busy || readOnly}>
                     <Trash2 className="h-4 w-4" />
-                    Confirm delete
+                    {tr("Confirm delete", "Conferma eliminazione")}
                   </Button>
                 </div>
               ) : (
@@ -305,7 +307,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
                   disabled={busy || readOnly || (!activeFile?.isCustom && !activeFile?.isCustomized)}
                 >
                   {activeFile?.isCustom ? <Trash2 className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
-                  {activeFile?.isCustom ? "Delete file" : "Reset"}
+                  {activeFile?.isCustom ? tr("Delete file", "Elimina file") : tr("Reset", "Ripristina")}
                 </Button>
               )}
               <Button
@@ -315,7 +317,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
                 disabled={busy || readOnly || !dirty}
               >
                 {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Save className="h-4 w-4" />}
-                {state === "saving" ? "Saving file" : "Save"}
+                {state === "saving" ? tr("Saving file", "Salvataggio file") : tr("Save", "Salva")}
               </Button>
             </div>
           </div>

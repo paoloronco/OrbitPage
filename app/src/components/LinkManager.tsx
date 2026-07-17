@@ -10,6 +10,7 @@ import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
 import { type LinkBlockType, buildBlockContent } from "@/lib/link-blocks";
 import { getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
+import { useAppI18n } from "@/lib/i18n";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -39,6 +40,7 @@ export const LinkManager = ({
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
 }: LinkManagerProps) => {
+  const { tr } = useAppI18n();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -58,8 +60,8 @@ export const LinkManager = ({
   const appendBlock = (block: LinkData) => {
     if (atBlockLimit) {
       toast({
-        title: `${planName || "Current plan"} block limit reached`,
-        description: `This workspace can contain up to ${maxBlocks} blocks.`,
+        title: `${planName || tr("Current plan", "Piano attuale")}: ${tr("block limit reached", "limite blocchi raggiunto")}`,
+        description: `${tr("This workspace can contain up to", "Questo workspace può contenere fino a")} ${maxBlocks} ${tr("blocks", "blocchi")}.`,
         variant: "destructive",
       });
       return;
@@ -84,7 +86,7 @@ export const LinkManager = ({
   const addNewLink = () => {
     const newLink: LinkData = {
       id: Date.now().toString(),
-      title: "New link",
+      title: tr("New link", "Nuovo link"),
       description: "",
       url: "",
       type: "link",
@@ -96,7 +98,7 @@ export const LinkManager = ({
   const addNewCta = () => {
     const newCta: LinkData = {
       id: Date.now().toString(),
-      title: "Book now",
+      title: tr("Book now", "Prenota ora"),
       description: "",
       url: "",
       type: "cta",
@@ -522,22 +524,22 @@ export const LinkManager = ({
             ? 'border-slate-200 bg-slate-50 text-slate-600'
             : 'border-blue-200 bg-blue-50 text-blue-700'
         }`}>
-          {editMode === 'style' && <><Palette className="h-4 w-4 shrink-0" /><span>Style editor — you can edit card colors, fonts, and size.</span></>}
-          {editMode === 'images' && <><Image className="h-4 w-4 shrink-0" /><span>Image editor — you can edit card icons and cover images.</span></>}
-          {editMode === 'view' && <span>View-only — you do not have permission to edit links.</span>}
+          {editMode === 'style' && <><Palette className="h-4 w-4 shrink-0" /><span>{tr("Style editor — you can edit card colors, fonts, and size.", "Editor stile: puoi modificare colori, caratteri e dimensioni delle card.")}</span></>}
+          {editMode === 'images' && <><Image className="h-4 w-4 shrink-0" /><span>{tr("Image editor — you can edit card icons and cover images.", "Editor immagini: puoi modificare icone e copertine delle card.")}</span></>}
+          {editMode === 'view' && <span>{tr("View-only — you do not have permission to edit links.", "Sola lettura: non hai il permesso di modificare i link.")}</span>}
         </div>
       )}
 
       <div className="admin-link-toolbar" data-onboarding="links-toolbar">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-950">Content cards</h2>
-            {isDirty && <span className="admin-dirty-badge">Unsaved changes</span>}
+            <h2 className="text-lg font-semibold text-slate-950">{tr("Content cards", "Card dei contenuti")}</h2>
+            {isDirty && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
           </div>
           <p className="mt-1 text-sm text-slate-600">
             {workingLinks.length === 0
-              ? "Start with a block, then arrange your public page."
-              : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` of ${maxBlocks}` : ""} blocks in your public page order.`}
+              ? tr("Start with a block, then arrange your public page.", "Inizia con un blocco, poi organizza la pagina pubblica.")
+              : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` ${tr("of", "di")} ${maxBlocks}` : ""} ${tr("blocks in your public page order.", "blocchi nell'ordine della pagina pubblica.")}`}
           </p>
           {saveError && (
             <p className="mt-2 text-sm font-medium text-red-600" role="alert">
@@ -557,20 +559,20 @@ export const LinkManager = ({
               aria-controls="admin-block-library"
             >
               <Plus className="h-4 w-4" />
-              {isBlockLibraryOpen ? "Close library" : "Add block"}
+              {isBlockLibraryOpen ? tr("Close library", "Chiudi libreria") : tr("Add block", "Aggiungi blocco")}
             </Button>
           )}
           {!isViewOnly && (
             <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy} data-onboarding="links-save">
               <Save className="h-4 w-4" />
-              Save
+              {tr("Save", "Salva")}
             </Button>
           )}
-          <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label="Export links" title="Export links">
+          <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Export links", "Esporta link")} title={tr("Export links", "Esporta link")}>
             <Download className="h-4 w-4" />
           </Button>
           {isFullEdit && (
-            <Button onClick={handleImportFile} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label="Import links" title="Import links">
+            <Button onClick={handleImportFile} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Import links", "Importa link")} title={tr("Import links", "Importa link")}>
               <Upload className="h-4 w-4" />
             </Button>
           )}
@@ -580,17 +582,17 @@ export const LinkManager = ({
       {atBlockLimit && (
         <div className="admin-inline-plan-lock mb-4">
           <LockKeyhole className="h-4 w-4" />
-          <span>{planName || "Your plan"} includes up to {maxBlocks} blocks. Existing blocks remain editable.</span>
-          <a href={managePlanHref} target="_top">View plans</a>
+          <span>{planName || tr("Your plan", "Il tuo piano")} {tr("includes up to", "include fino a")} {maxBlocks} {tr("blocks. Existing blocks remain editable.", "blocchi. I blocchi esistenti restano modificabili.")}</span>
+          <a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a>
         </div>
       )}
 
       {isFullEdit && isBlockLibraryOpen && (
         <section id="admin-block-library" className="admin-block-library" data-onboarding="link-add-grid">
           <div className="mb-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">Block library</p>
-            <h3 className="mt-1 text-sm font-semibold text-slate-950">Add content</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">Choose a block to append it to the public page.</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">{tr("Block library", "Libreria blocchi")}</p>
+            <h3 className="mt-1 text-sm font-semibold text-slate-950">{tr("Add content", "Aggiungi contenuto")}</h3>
+            <p className="mt-1 text-xs leading-5 text-slate-500">{tr("Choose a block to append it to the public page.", "Scegli un blocco da aggiungere alla pagina pubblica.")}</p>
           </div>
           <div className="admin-add-grid">
           <Button onClick={addNewLink} className="admin-add-card">
@@ -599,7 +601,7 @@ export const LinkManager = ({
             </span>
             <span>
               <span className="block font-semibold">Link</span>
-              <span className="block text-xs opacity-70">URL card</span>
+              <span className="block text-xs opacity-70">{tr("URL card", "Card URL")}</span>
             </span>
           </Button>
             <Button onClick={addNewCta} variant="outline" className="admin-add-card">
@@ -608,7 +610,7 @@ export const LinkManager = ({
               </span>
               <span>
                 <span className="block font-semibold">CTA</span>
-                <span className="block text-xs opacity-70">Smart action</span>
+                <span className="block text-xs opacity-70">{tr("Smart action", "Azione intelligente")}</span>
               </span>
             </Button>
           <Button onClick={addNewHeading} variant="outline" className="admin-add-card">
@@ -616,8 +618,8 @@ export const LinkManager = ({
               <Type className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Heading</span>
-              <span className="block text-xs opacity-70">Section title</span>
+              <span className="block font-semibold">{tr("Heading", "Titolo")}</span>
+              <span className="block text-xs opacity-70">{tr("Section title", "Titolo sezione")}</span>
             </span>
           </Button>
           <Button onClick={addNewImage} variant="outline" className="admin-add-card">
@@ -625,8 +627,8 @@ export const LinkManager = ({
               <Image className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Image</span>
-              <span className="block text-xs opacity-70">Photo block</span>
+              <span className="block font-semibold">{tr("Image", "Immagine")}</span>
+              <span className="block text-xs opacity-70">{tr("Photo block", "Blocco immagine")}</span>
             </span>
           </Button>
           <Button
@@ -634,14 +636,14 @@ export const LinkManager = ({
             variant="outline"
             className="admin-add-card"
             aria-disabled={!videoUploadsEnabled}
-            title={!videoUploadsEnabled ? "Video blocks require Pro" : "Upload an MP4 or WebM video"}
+            title={!videoUploadsEnabled ? tr("Video blocks require Pro", "I blocchi video richiedono Pro") : tr("Upload an MP4 or WebM video", "Carica un video MP4 o WebM")}
           >
             <span className="admin-add-icon">
               {videoUploadsEnabled ? <Film className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
             </span>
             <span>
               <span className="block font-semibold">Video</span>
-              <span className="block text-xs opacity-70">{videoUploadsEnabled ? "MP4 / WebM" : "Pro feature"}</span>
+              <span className="block text-xs opacity-70">{videoUploadsEnabled ? "MP4 / WebM" : tr("Pro feature", "Funzione Pro")}</span>
             </span>
           </Button>
           <Button onClick={addNewContact} variant="outline" className="admin-add-card">
@@ -649,8 +651,8 @@ export const LinkManager = ({
               <UserCircle2 className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Contact</span>
-              <span className="block text-xs opacity-70">Contact details</span>
+              <span className="block font-semibold">{tr("Contact", "Contatto")}</span>
+              <span className="block text-xs opacity-70">{tr("Contact details", "Dettagli di contatto")}</span>
             </span>
           </Button>
           <Button onClick={addNewSocialRow} variant="outline" className="admin-add-card">
@@ -658,8 +660,8 @@ export const LinkManager = ({
               <Share2 className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Social row</span>
-              <span className="block text-xs opacity-70">Social links</span>
+              <span className="block font-semibold">{tr("Social row", "Riga social")}</span>
+              <span className="block text-xs opacity-70">{tr("Social links", "Link social")}</span>
             </span>
           </Button>
           <Button onClick={addNewCallout} variant="outline" className="admin-add-card">
@@ -668,7 +670,7 @@ export const LinkManager = ({
             </span>
             <span>
               <span className="block font-semibold">Callout</span>
-              <span className="block text-xs opacity-70">Promo block</span>
+              <span className="block text-xs opacity-70">{tr("Promo block", "Blocco promozionale")}</span>
             </span>
           </Button>
           <Button onClick={addNewMap} variant="outline" className="admin-add-card">
@@ -676,8 +678,8 @@ export const LinkManager = ({
               <MapPin className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Map</span>
-              <span className="block text-xs opacity-70">Location block</span>
+              <span className="block font-semibold">{tr("Map", "Mappa")}</span>
+              <span className="block text-xs opacity-70">{tr("Location block", "Blocco posizione")}</span>
             </span>
           </Button>
           <Button onClick={addNewEvent} variant="outline" className="admin-add-card">
@@ -685,8 +687,8 @@ export const LinkManager = ({
               <CalendarClock className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Event</span>
-              <span className="block text-xs opacity-70">Calendar row</span>
+              <span className="block font-semibold">{tr("Event", "Evento")}</span>
+              <span className="block text-xs opacity-70">{tr("Calendar row", "Riga calendario")}</span>
             </span>
           </Button>
           <Button onClick={addNewEmbed} variant="outline" className="admin-add-card">
@@ -695,7 +697,7 @@ export const LinkManager = ({
             </span>
             <span>
               <span className="block font-semibold">Embed</span>
-              <span className="block text-xs opacity-70">Video, music, booking...</span>
+              <span className="block text-xs opacity-70">{tr("Video, music, booking...", "Video, musica, prenotazioni...")}</span>
             </span>
           </Button>
           <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">
@@ -703,8 +705,8 @@ export const LinkManager = ({
               <List className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">List</span>
-              <span className="block text-xs opacity-70">Grouped items</span>
+              <span className="block font-semibold">{tr("List", "Elenco")}</span>
+              <span className="block text-xs opacity-70">{tr("Grouped items", "Elementi raggruppati")}</span>
             </span>
           </Button>
           <Button onClick={addNewTextCard} variant="outline" className="admin-add-card">
@@ -712,8 +714,8 @@ export const LinkManager = ({
               <Type className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Text</span>
-              <span className="block text-xs opacity-70">Freeform copy</span>
+              <span className="block font-semibold">{tr("Text", "Testo")}</span>
+              <span className="block text-xs opacity-70">{tr("Freeform copy", "Testo libero")}</span>
             </span>
           </Button>
           <Button onClick={addNewSeparator} variant="outline" className="admin-add-card">
@@ -721,8 +723,8 @@ export const LinkManager = ({
               <Minus className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">Separator</span>
-              <span className="block text-xs opacity-70">Section label</span>
+              <span className="block font-semibold">{tr("Separator", "Separatore")}</span>
+              <span className="block text-xs opacity-70">{tr("Section label", "Etichetta sezione")}</span>
             </span>
           </Button>
           </div>
@@ -736,24 +738,24 @@ export const LinkManager = ({
                 <Plus className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="mb-2 font-semibold text-slate-950">No content yet</h3>
+                <h3 className="mb-2 font-semibold text-slate-950">{tr("No content yet", "Nessun contenuto")}</h3>
                 <p className="text-sm leading-6 text-slate-600">
-                  Add a first card, then drag items into the order you want.
+                  {tr("Add a first card, then drag items into the order you want.", "Aggiungi la prima card, poi trascina gli elementi nell'ordine desiderato.")}
                 </p>
               </div>
               {isFullEdit && (
                 <div className="flex flex-wrap justify-center gap-2">
                   <Button onClick={addNewLink} className="admin-action admin-action-primary" disabled={atBlockLimit}>
                     <Link className="h-4 w-4" />
-                    Add link
+                    {tr("Add link", "Aggiungi link")}
                   </Button>
                   <Button onClick={addNewBulletedList} variant="outline" className="admin-action" disabled={atBlockLimit}>
                     <List className="h-4 w-4" />
-                    Add list
+                    {tr("Add list", "Aggiungi elenco")}
                   </Button>
                   <Button onClick={addNewHeading} variant="outline" className="admin-action" disabled={atBlockLimit}>
                     <Type className="h-4 w-4" />
-                    Add heading
+                    {tr("Add heading", "Aggiungi titolo")}
                   </Button>
                 </div>
               )}

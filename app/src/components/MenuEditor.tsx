@@ -16,6 +16,7 @@ import {
   MENU_THEME_PRESETS, createDefaultMenu, normalizeMenuCatalog,
   type MenuCatalog, type MenuItem, type MenuThemePreset, type MenuVenueType,
 } from '@/lib/menu';
+import { useAppI18n } from '@/lib/i18n';
 
 interface MenuEditorProps {
   menu: MenuCatalog;
@@ -69,6 +70,7 @@ export function MenuEditor({
   menu, publicPageHref, enabled, maxItems, planName, advancedTheme,
   onSave, onPreview, onAddMenuLink,
 }: MenuEditorProps) {
+  const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
   const [saving, setSaving] = useState(false);
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export function MenuEditor({
       onPreview(next);
       return next;
     });
-    setMessage('Unsaved changes');
+    setMessage(tr('Unsaved changes', 'Modifiche non salvate'));
   };
 
   const save = async () => {
@@ -167,9 +169,9 @@ export function MenuEditor({
       <section className="admin-panel menu-upgrade-panel">
         <div className="menu-upgrade-panel__icon"><UtensilsCrossed /></div>
         <p>OrbitPage Menu</p>
-        <h2>Turn the page into a complete venue destination.</h2>
-        <div>Free can link an external menu. Starter adds a native, editable menu with categories, products, themes and a QR-ready public URL.</div>
-        <a href="/dashboard/billing" target="_top"><Button>View Starter and Pro</Button></a>
+        <h2>{tr("Turn the page into a complete venue destination.", "Trasforma la pagina in una destinazione completa per il tuo locale.")}</h2>
+        <div>{tr("Free can link an external menu. Starter adds a native, editable menu with categories, products, themes and a QR-ready public URL.", "Free può collegare un menu esterno. Starter aggiunge un menu nativo modificabile con categorie, prodotti, temi e un URL pubblico pronto per il QR.")}</div>
+        <a href="/dashboard/billing" target="_top"><Button>{tr("View Starter and Pro", "Vedi Starter e Pro")}</Button></a>
       </section>
     );
   }
@@ -180,12 +182,12 @@ export function MenuEditor({
         <section className="admin-panel menu-editor-intro">
           <div>
             <p className="admin-eyebrow">{planName || 'Self-hosted'} menu</p>
-            <h2>Venue menu</h2>
+            <h2>{tr("Venue menu", "Menu del locale")}</h2>
             <span>{draft.items.length}/{maxItems ?? '∞'} products</span>
           </div>
           <div className="menu-editor-intro__actions">
             <label className="menu-publish-toggle">
-              <span>Published</span>
+              <span>{tr("Published", "Pubblicato")}</span>
               <Switch checked={draft.enabled} onCheckedChange={(checked) => update((current) => ({ ...current, enabled: checked }))} />
             </label>
             <Button onClick={() => void save()} disabled={saving}>
@@ -197,8 +199,8 @@ export function MenuEditor({
         </section>
 
         <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><UtensilsCrossed /><div><h3>Menu identity</h3><p>Choose the venue type and public heading.</p></div></div>
-          <div className="menu-venue-switch" role="group" aria-label="Venue type">
+          <div className="menu-editor-section-title"><UtensilsCrossed /><div><h3>{tr("Menu identity", "Identità del menu")}</h3><p>{tr("Choose the venue type and public heading.", "Scegli il tipo di locale e l'intestazione pubblica.")}</p></div></div>
+          <div className="menu-venue-switch" role="group" aria-label={tr("Venue type", "Tipo di locale")}>
             {(['restaurant', 'bar', 'cafe'] as const).map((type) => (
               <button key={type} type="button" className={draft.venueType === type ? 'active' : ''} onClick={() => changeVenueType(type)}>
                 {type === 'cafe' ? 'Café' : type[0].toUpperCase() + type.slice(1)}
@@ -206,17 +208,17 @@ export function MenuEditor({
             ))}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2"><Label htmlFor="menu-name">Menu name</Label><Input id="menu-name" value={draft.name} onChange={(e) => update((current) => ({ ...current, name: e.target.value }))} /></div>
+            <div className="space-y-2"><Label htmlFor="menu-name">{tr("Menu name", "Nome menu")}</Label><Input id="menu-name" value={draft.name} onChange={(e) => update((current) => ({ ...current, name: e.target.value }))} /></div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2"><Label htmlFor="menu-currency">Currency</Label><Input id="menu-currency" maxLength={3} value={draft.currency} onChange={(e) => update((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} /></div>
               <div className="space-y-2"><Label htmlFor="menu-locale">Locale</Label><Input id="menu-locale" value={draft.locale} onChange={(e) => update((current) => ({ ...current, locale: e.target.value }))} /></div>
             </div>
           </div>
-          <div className="space-y-2"><Label htmlFor="menu-description">Introduction</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
+          <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
         </section>
 
         <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><div><h3>Sections</h3><p>Organize products into concise, scannable groups.</p></div><Button variant="outline" size="sm" onClick={addSection}><Plus className="h-4 w-4" />Add</Button></div>
+          <div className="menu-editor-section-title"><div><h3>{tr("Sections", "Sezioni")}</h3><p>{tr("Organize products into concise, scannable groups.", "Organizza i prodotti in gruppi brevi e facili da consultare.")}</p></div><Button variant="outline" size="sm" onClick={addSection}><Plus className="h-4 w-4" />{tr("Add", "Aggiungi")}</Button></div>
           <div className="menu-section-list">
             {sortedSections.map((section, index) => (
               <div key={section.id} className="menu-section-row">
@@ -240,7 +242,7 @@ export function MenuEditor({
         </section>
 
         <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><div><h3>Products</h3><p>Prices are stored in cents to avoid rounding errors.</p></div><Button variant="outline" size="sm" onClick={() => addItem()} disabled={maxItems !== null && draft.items.length >= maxItems}><Plus className="h-4 w-4" />Product</Button></div>
+          <div className="menu-editor-section-title"><div><h3>{tr("Products", "Prodotti")}</h3><p>{tr("Prices are stored in cents to avoid rounding errors.", "I prezzi sono salvati in centesimi per evitare errori di arrotondamento.")}</p></div><Button variant="outline" size="sm" onClick={() => addItem()} disabled={maxItems !== null && draft.items.length >= maxItems}><Plus className="h-4 w-4" />{tr("Product", "Prodotto")}</Button></div>
           <div className="menu-product-list">
             {draft.items.map((item) => (
               <article key={item.id} className="menu-product-editor">
@@ -286,12 +288,12 @@ export function MenuEditor({
                 </div>
               </article>
             ))}
-            {draft.items.length === 0 && <button type="button" className="menu-empty-products" onClick={() => addItem()}><Plus /><span>Add the first product</span></button>}
+            {draft.items.length === 0 && <button type="button" className="menu-empty-products" onClick={() => addItem()}><Plus /><span>{tr("Add the first product", "Aggiungi il primo prodotto")}</span></button>}
           </div>
         </section>
 
         <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><Palette /><div><h3>Menu appearance</h3><p>Independent from the main OrbitPage theme.</p></div></div>
+          <div className="menu-editor-section-title"><Palette /><div><h3>{tr("Menu appearance", "Aspetto del menu")}</h3><p>{tr("Independent from the main OrbitPage theme.", "Indipendente dal tema principale OrbitPage.")}</p></div></div>
           <div className="menu-theme-presets">
             {(Object.keys(MENU_THEME_PRESETS) as MenuThemePreset[]).map((preset) => {
               const value = MENU_THEME_PRESETS[preset];
@@ -307,20 +309,20 @@ export function MenuEditor({
         </section>
 
         <section className="admin-panel menu-publish-tools">
-          <div className="menu-editor-section-title"><QrCode /><div><h3>Public menu</h3><p>The URL is static, cacheable and ready for print.</p></div></div>
+          <div className="menu-editor-section-title"><QrCode /><div><h3>{tr("Public menu", "Menu pubblico")}</h3><p>{tr("The URL is static, cacheable and ready for print.", "L'URL è statico, memorizzabile in cache e pronto per la stampa.")}</p></div></div>
           <div className="menu-publish-tools__grid">
             <MenuQr url={menuUrl} color={draft.theme.text} />
             <div>
-              <Label>Menu URL</Label>
+              <Label>URL menu</Label>
               <div className="menu-url-row"><Input value={menuUrl} readOnly /><Button variant="outline" size="icon" title="Copy URL" onClick={() => { void navigator.clipboard.writeText(menuUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}>{copied ? <Check /> : <Copy />}</Button><a href={menuUrl} target="_blank" rel="noopener noreferrer"><Button variant="outline" size="icon" title="Open menu"><ExternalLink /></Button></a></div>
-              <Button className="mt-4" variant="outline" onClick={() => void onAddMenuLink()}>Add menu link to main page</Button>
+              <Button className="mt-4" variant="outline" onClick={() => void onAddMenuLink()}>{tr("Add menu link to main page", "Aggiungi il link al menu nella pagina principale")}</Button>
             </div>
           </div>
         </section>
       </div>
 
       <aside className="menu-editor-preview">
-        <div className="menu-editor-preview__label"><span>Menu preview</span><small>Updates before saving</small></div>
+        <div className="menu-editor-preview__label"><span>{tr("Menu preview", "Anteprima menu")}</span><small>{tr("Updates before saving", "Si aggiorna prima del salvataggio")}</small></div>
         <div className="menu-editor-preview__device"><div className="menu-editor-preview__island" /><div className="menu-editor-preview__screen"><MenuView menu={draft} embedded pageHref="#" /></div></div>
       </aside>
     </div>

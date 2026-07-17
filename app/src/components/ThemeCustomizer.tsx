@@ -40,6 +40,7 @@ import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomize
 import { commitPendingTheme, parseImportedTheme, prepareThemeExport } from "./theme-save-state";
 import type { SaasThemeAccess } from "@/lib/saas-plan";
 import { PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
+import { useAppI18n } from "@/lib/i18n";
 
 interface ThemeCustomizerProps {
   theme: ThemeConfig;
@@ -192,8 +193,9 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
   );
 };
 
-const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: boolean; onApply: () => void }) => (
-  <article className={`group overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
+const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: boolean; onApply: () => void }) => {
+  const { tr } = useAppI18n();
+  return <article className={`group overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
     <ThemeMockup theme={preset.theme} compact />
     <div className="space-y-4 p-4">
       <div className="flex items-start justify-between gap-3">
@@ -210,14 +212,15 @@ const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: 
       <p className="min-h-10 text-sm leading-5 text-slate-600">{preset.description}</p>
       <Button type="button" variant={active ? "default" : "outline"} className="w-full" onClick={onApply}>
         {active ? <Check className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
-        {active ? "Selected" : "Use this theme"}
+        {active ? tr("Selected", "Selezionato") : tr("Use this theme", "Usa questo tema")}
       </Button>
     </div>
-  </article>
-);
+  </article>;
+};
 
-const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; active: boolean; onApply: () => void }) => (
-  <article className={`w-[17rem] shrink-0 overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
+const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; active: boolean; onApply: () => void }) => {
+  const { tr } = useAppI18n();
+  return <article className={`w-[17rem] shrink-0 overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
     <div className="flex h-44 flex-col gap-2 bg-slate-100 p-4" aria-hidden="true">
       {(preset.mode === 'multi' ? preset.variants.slice(0, 3) : [preset.card, preset.card]).map((variant, index) => (
         <div
@@ -239,11 +242,11 @@ const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; 
       <p className="min-h-10 text-sm leading-5 text-slate-600">{preset.description}</p>
       <Button type="button" variant={active ? "default" : "outline"} className="w-full" onClick={onApply}>
         {active ? <Check className="mr-2 h-4 w-4" /> : <Layers3 className="mr-2 h-4 w-4" />}
-        {active ? "Selected" : "Use card style"}
+        {active ? tr("Selected", "Selezionato") : tr("Use card style", "Usa stile card")}
       </Button>
     </div>
-  </article>
-);
+  </article>;
+};
 
 export const ThemeCustomizer = ({
   theme,
@@ -256,6 +259,7 @@ export const ThemeCustomizer = ({
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
 }: ThemeCustomizerProps) => {
+  const { tr } = useAppI18n();
   const [presetScope, setPresetScope] = useState<PresetScope>("page");
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   const [pendingTheme, setPendingTheme] = useState<EditableTheme>(theme);
@@ -442,7 +446,7 @@ export const ThemeCustomizer = ({
           <ThemeMockup theme={pendingTheme} />
         </div>
       )}
-      <p className="px-1 text-xs leading-5 text-slate-500">This is the same renderer used by the public page. Changes remain a preview until you save the theme.</p>
+      <p className="px-1 text-xs leading-5 text-slate-500">{tr("This is the same renderer used by the public page. Changes remain a preview until you save the theme.", "È lo stesso renderer usato dalla pagina pubblica. Le modifiche restano in anteprima finché non salvi il tema.")}</p>
     </aside>
   );
 
@@ -453,31 +457,31 @@ export const ThemeCustomizer = ({
           <div className="max-w-2xl">
             <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-300">
               <Sparkles className="h-4 w-4" />
-              Theme Studio
+              {tr("Theme Studio", "Studio temi")}
             </div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Choose a complete look. Then make it yours.</h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{tr("Choose a complete look. Then make it yours.", "Scegli uno stile completo. Poi rendilo tuo.")}</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
-              Presets style the public background, profile, cards, type and effects together. Every value remains available in Fine tuning.
+              {tr("Presets style the public background, profile, cards, type and effects together. Every value remains available in Fine tuning.", "I preset coordinano sfondo pubblico, profilo, card, caratteri ed effetti. Ogni valore resta modificabile nelle regolazioni fini.")}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button aria-busy={saveState === "saving"} type="button" onClick={saveTheme} disabled={!isDirty || saveState === "saving"} className="bg-blue-500 text-white hover:bg-blue-400">
               {saveState === "saving" && <Loader2 className="h-4 w-4 animate-spin" />}
-              {saveState === "saving" ? "Saving theme" : saveState === "saved" ? "Saved" : "Save theme"}
+              {saveState === "saving" ? tr("Saving theme", "Salvataggio tema") : saveState === "saved" ? tr("Saved", "Salvato") : tr("Save theme", "Salva tema")}
             </Button>
             <Button type="button" variant="outline" onClick={exportTheme} className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
-              <FileDown className="mr-2 h-4 w-4" /> Export
+              <FileDown className="mr-2 h-4 w-4" /> {tr("Export", "Esporta")}
             </Button>
             {advancedCustomizationEnabled ? (
               <Button type="button" variant="outline" asChild className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
                 <label className="cursor-pointer">
-                  <Upload className="mr-2 h-4 w-4" /> Import
+                  <Upload className="mr-2 h-4 w-4" /> {tr("Import", "Importa")}
                   <input type="file" accept=".json" onChange={importTheme} className="hidden" />
                 </label>
               </Button>
             ) : (
               <Button type="button" variant="outline" disabled className="border-slate-700 bg-transparent text-slate-400">
-                <LockKeyhole className="mr-2 h-4 w-4" /> Import
+                <LockKeyhole className="mr-2 h-4 w-4" /> {tr("Import", "Importa")}
               </Button>
             )}
           </div>
@@ -485,7 +489,7 @@ export const ThemeCustomizer = ({
         {(isDirty || saveState === "saved" || saveState === "error") ? (
           <div className={`flex items-center gap-2 border-t px-5 py-3 text-sm sm:px-7 ${saveState === "error" ? "border-red-900/60 bg-red-950/60 text-red-200" : saveState === "saved" ? "border-emerald-900/60 bg-emerald-950/50 text-emerald-200" : "border-amber-900/50 bg-amber-950/35 text-amber-100"}`} role={saveState === "error" ? "alert" : "status"}>
             {saveState === "error" ? <AlertTriangle className="h-4 w-4" /> : saveState === "saved" ? <CheckCircle className="h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-amber-400" />}
-            <span>{saveState === "error" ? saveError || "Theme could not be saved." : saveState === "saved" ? "Theme saved successfully." : "Preview active. Save when you are ready to publish it."}</span>
+            <span>{saveState === "error" ? saveError || tr("Theme could not be saved.", "Non è stato possibile salvare il tema.") : saveState === "saved" ? tr("Theme saved successfully.", "Tema salvato correttamente.") : tr("Preview active. Save when you are ready to publish it.", "Anteprima attiva. Salva quando sei pronto a pubblicarla.")}</span>
           </div>
         ) : null}
       </section>
@@ -495,20 +499,20 @@ export const ThemeCustomizer = ({
           <div className="relative mb-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
             <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
             <button type="button" onClick={() => setPresetScope("page")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "page" ? "text-blue-700" : "text-slate-600"}`}>
-              <Palette className="h-4 w-4" /> Page themes
+              <Palette className="h-4 w-4" /> {tr("Page themes", "Temi pagina")}
             </button>
             <button type="button" disabled={!premiumThemesEnabled} onClick={() => premiumThemesEnabled && setPresetScope("cards")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "cards" ? "text-blue-700" : "text-slate-600"} ${!premiumThemesEnabled ? "cursor-not-allowed opacity-60" : ""}`}>
-              {premiumThemesEnabled ? <Layers3 className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />} Card styles
+              {premiumThemesEnabled ? <Layers3 className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />} {tr("Card styles", "Stili card")}
             </button>
           </div>
           {presetScope === "page" ? (
             <>
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{availableThemePresets.length} page themes</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-950">Page identity and background</h3>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{availableThemePresets.length} {tr("page themes", "temi pagina")}</p>
+                  <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Page identity and background", "Identità e sfondo della pagina")}</h3>
                 </div>
-                <p className="text-sm text-slate-500">{premiumThemesEnabled ? "Page themes leave your selected card style untouched." : "Essential themes style the complete page."}</p>
+                <p className="text-sm text-slate-500">{premiumThemesEnabled ? tr("Page themes leave your selected card style untouched.", "I temi pagina non modificano lo stile card selezionato.") : tr("Essential themes style the complete page.", "I temi essenziali definiscono l'intera pagina.")}</p>
               </div>
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {availableThemePresets.map((preset) => (
@@ -518,8 +522,8 @@ export const ThemeCustomizer = ({
               {!premiumThemesEnabled && (
                 <div className="admin-inline-plan-lock mt-5">
                   <LockKeyhole className="h-4 w-4" />
-                  <span>Starter adds premium page themes and card styles.</span>
-                  <a href={managePlanHref} target="_top">View plans</a>
+                  <span>{tr("Starter adds premium page themes and card styles.", "Starter aggiunge temi pagina premium e stili card.")}</span>
+                  <a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a>
                 </div>
               )}
             </>
@@ -528,12 +532,12 @@ export const ThemeCustomizer = ({
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">6 Mono + 6 Multi</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-950">Ready-balanced Mono and Multi cards</h3>
-                  <p className="mt-1 text-sm text-slate-500">Surface, text, borders, icons and CTA are designed as one palette.</p>
+                  <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Ready-balanced Mono and Multi cards", "Card Mono e Multi già bilanciate")}</h3>
+                  <p className="mt-1 text-sm text-slate-500">{tr("Surface, text, borders, icons and CTA are designed as one palette.", "Superficie, testo, bordi, icone e CTA sono progettati come un'unica palette.")}</p>
                 </div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="icon" aria-label="Previous card styles" onClick={() => cardPresetRailRef.current?.scrollBy({ left: -300, behavior: "smooth" })}><ChevronLeft className="h-4 w-4" /></Button>
-                  <Button type="button" variant="outline" size="icon" aria-label="Next card styles" onClick={() => cardPresetRailRef.current?.scrollBy({ left: 300, behavior: "smooth" })}><ChevronRight className="h-4 w-4" /></Button>
+                  <Button type="button" variant="outline" size="icon" aria-label={tr("Previous card styles", "Stili card precedenti")} onClick={() => cardPresetRailRef.current?.scrollBy({ left: -300, behavior: "smooth" })}><ChevronLeft className="h-4 w-4" /></Button>
+                  <Button type="button" variant="outline" size="icon" aria-label={tr("Next card styles", "Stili card successivi")} onClick={() => cardPresetRailRef.current?.scrollBy({ left: 300, behavior: "smooth" })}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
               </div>
               <div ref={cardPresetRailRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 pt-1 [scrollbar-width:thin]">
@@ -550,34 +554,34 @@ export const ThemeCustomizer = ({
       <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">Manual controls</p>
-                <h3 className="mt-1 text-xl font-bold text-slate-950">Fine tuning</h3>
-                <p className="mt-1 text-sm text-slate-500">Adjust colors, type, layout and background after choosing a starting theme.</p>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{tr("Manual controls", "Controlli manuali")}</p>
+                <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Fine tuning", "Regolazioni fini")}</h3>
+                <p className="mt-1 text-sm text-slate-500">{tr("Adjust colors, type, layout and background after choosing a starting theme.", "Regola colori, caratteri, layout e sfondo dopo aver scelto il tema di partenza.")}</p>
               </div>
               <Button type="button" variant="outline" size="sm" onClick={resetTheme} disabled={!advancedCustomizationEnabled}>
-                <RotateCcw className="mr-2 h-4 w-4" /> Reset defaults
+                <RotateCcw className="mr-2 h-4 w-4" /> {tr("Reset defaults", "Ripristina valori iniziali")}
               </Button>
             </div>
 
             {!advancedCustomizationEnabled ? (
               <div className="admin-inline-plan-lock">
                 <LockKeyhole className="h-4 w-4" />
-                <span>Fine tuning is available on Pro. Your preset and card-style controls remain available above.</span>
-                <a href={managePlanHref} target="_top">View plans</a>
+                <span>{tr("Fine tuning is available on Pro. Your preset and card-style controls remain available above.", "Le regolazioni fini sono disponibili con Pro. I controlli di preset e stile card restano disponibili qui sopra.")}</span>
+                <a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a>
               </div>
             ) : (
             <Tabs defaultValue="colors" className="w-full">
               <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-slate-100 p-1 sm:grid-cols-4">
-                <TabsTrigger value="colors" className="gap-1.5 py-2.5"><Palette className="h-4 w-4" /> Colors</TabsTrigger>
-                <TabsTrigger value="typography" className="gap-1.5 py-2.5"><Type className="h-4 w-4" /> Type</TabsTrigger>
+                <TabsTrigger value="colors" className="gap-1.5 py-2.5"><Palette className="h-4 w-4" /> {tr("Colors", "Colori")}</TabsTrigger>
+                <TabsTrigger value="typography" className="gap-1.5 py-2.5"><Type className="h-4 w-4" /> {tr("Type", "Testo")}</TabsTrigger>
                 <TabsTrigger value="layout" className="gap-1.5 py-2.5"><Layout className="h-4 w-4" /> Layout</TabsTrigger>
-                <TabsTrigger value="background" className="gap-1.5 py-2.5"><ImagePlay className="h-4 w-4" /> Background</TabsTrigger>
+                <TabsTrigger value="background" className="gap-1.5 py-2.5"><ImagePlay className="h-4 w-4" /> {tr("Background", "Sfondo")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="colors" className="mt-6 space-y-7" data-onboarding="theme-colors">
                 <div>
-                  <h4 className="font-bold text-slate-900">Core palette</h4>
-                  <p className="mt-1 text-sm text-slate-500">Shared by the page, profile, cards and calls to action.</p>
+                  <h4 className="font-bold text-slate-900">{tr("Core palette", "Palette principale")}</h4>
+                  <p className="mt-1 text-sm text-slate-500">{tr("Shared by the page, profile, cards and calls to action.", "Condivisa da pagina, profilo, card e call to action.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {colorControl("primary", "Primary", pendingTheme.primary, (primary) => updatePendingTheme({ primary, accent: primary }))}
                     {colorControl("primaryGlow", "Primary glow", pendingTheme.primaryGlow, (primaryGlow) => updatePendingTheme({ primaryGlow }))}
@@ -590,8 +594,8 @@ export const ThemeCustomizer = ({
                 <Separator />
 
                 <div>
-                  <h4 className="font-bold text-slate-900">Surfaces</h4>
-                  <p className="mt-1 text-sm text-slate-500">Control the page canvas and every card surface independently.</p>
+                  <h4 className="font-bold text-slate-900">{tr("Surfaces", "Superfici")}</h4>
+                  <p className="mt-1 text-sm text-slate-500">{tr("Control the page canvas and every card surface independently.", "Controlla separatamente lo sfondo pagina e ogni superficie delle card.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {colorControl("background", "Background", pendingTheme.background, (background) => updatePendingTheme({
                       background,
@@ -606,8 +610,8 @@ export const ThemeCustomizer = ({
                 <Separator />
 
                 <div>
-                  <h4 className="font-bold text-slate-900">Content cards</h4>
-                  <p className="mt-1 text-sm text-slate-500">Fine tune the selected card style without changing the page or profile palette.</p>
+                  <h4 className="font-bold text-slate-900">{tr("Content cards", "Card contenuti")}</h4>
+                  <p className="mt-1 text-sm text-slate-500">{tr("Fine tune the selected card style without changing the page or profile palette.", "Perfeziona lo stile card selezionato senza cambiare la palette di pagina o profilo.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {colorControl("contentForeground", "Card text", pendingTheme.contentCard.foreground, (foreground) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, foreground } }))}
                     {colorControl("contentMuted", "Secondary text", pendingTheme.contentCard.muted, (muted) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, muted } }))}
@@ -620,8 +624,8 @@ export const ThemeCustomizer = ({
                 <Separator />
 
                 <div>
-                  <h4 className="font-bold text-slate-900">Profile card</h4>
-                  <p className="mt-1 text-sm text-slate-500">A dedicated palette for the page header, logo, profile text and social actions.</p>
+                  <h4 className="font-bold text-slate-900">{tr("Profile card", "Card profilo")}</h4>
+                  <p className="mt-1 text-sm text-slate-500">{tr("A dedicated palette for the page header, logo, profile text and social actions.", "Una palette dedicata a intestazione, logo, testo profilo e azioni social.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {colorControl("profileBackground", "Background start", pendingTheme.profileCard.background, (background) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, background } }))}
                     {colorControl("profileBackgroundSecondary", "Background end", pendingTheme.profileCard.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, backgroundSecondary } }))}

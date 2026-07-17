@@ -17,6 +17,7 @@ import {
   type OrbitPageBackupInspection,
 } from "@/lib/hosted-backup-import";
 import { formatFileSize, optimizeImageForUpload } from "@/lib/image-upload";
+import { useAppI18n } from "@/lib/i18n";
 
 type BackupState = "idle" | "exporting" | "restoring" | "success" | "error";
 
@@ -69,6 +70,7 @@ function SectionSelector({
   idPrefix: string;
   disabled?: boolean;
 }) {
+  const { tr } = useAppI18n();
   const toggle = (section: BackupSectionId, checked: boolean) => {
     onChange(checked
       ? sections.filter((candidate) => candidate === section || selected.includes(candidate))
@@ -78,7 +80,18 @@ function SectionSelector({
   return (
     <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
       {sections.map((section) => {
-        const copy = SECTION_COPY[section];
+        const sourceCopy = SECTION_COPY[section];
+        const translated: Record<BackupSectionId, { label: string; description: string }> = {
+          profile: { label: tr("Profile & page", "Profilo e pagina"), description: tr("Name, bio, social links and page metadata", "Nome, bio, link social e metadati della pagina") },
+          links: { label: tr("Blocks & links", "Blocchi e link"), description: tr("Content, order, scheduling and block settings", "Contenuti, ordine, programmazione e impostazioni dei blocchi") },
+          theme: { label: tr("Theme & appearance", "Tema e aspetto"), description: tr("Colors, typography, cards and background", "Colori, tipografia, card e sfondo") },
+          menu: { label: tr("Venue menu", "Menu del locale"), description: tr("Menu identity, sections, products and appearance", "Identità, sezioni, prodotti e aspetto del menu") },
+          privacy: { label: tr("Privacy & consent", "Privacy e consenso"), description: tr("Cookie banner and consent preferences", "Banner cookie e preferenze del consenso") },
+          discovery: { label: tr("Discovery files", "File di indicizzazione"), description: tr("robots.txt, llms.txt, custom TXT files and sitemap state", "robots.txt, llms.txt, file TXT personalizzati e stato sitemap") },
+          accounts: { label: tr("Admin accounts", "Account amministratori"), description: tr("Self-hosted users, roles and credentials", "Utenti self-hosted, ruoli e credenziali") },
+          media: { label: tr("Uploaded media", "Media caricati"), description: tr("Images, video and other uploaded assets", "Immagini, video e altre risorse caricate") },
+        };
+        const copy = translated[section] || sourceCopy;
         const id = `${idPrefix}-backup-section-${section}`;
         return (
           <label key={section} htmlFor={id} className="flex cursor-pointer items-start gap-3 py-1">
@@ -101,6 +114,7 @@ function SectionSelector({
 }
 
 export function BackupManager({ hosted = false }: BackupManagerProps) {
+  const { tr } = useAppI18n();
   const exportableSections = hosted
     ? [...MANAGED_BACKUP_SECTION_IDS]
     : [...BACKUP_SECTION_IDS];
@@ -276,11 +290,11 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           <Database className="h-5 w-5" />
         </span>
         <div>
-          <h3 className="text-lg font-semibold">Backup & Restore</h3>
+          <h3 className="text-lg font-semibold">{tr("Backup & Restore", "Backup e ripristino")}</h3>
           <p className="text-sm leading-6 text-muted-foreground">
             {hosted
-              ? "Choose exactly which managed-page sections to export or restore. Self-hosted backups can migrate referenced page media, while accounts, passwords, billing and internal files stay excluded."
-              : "Choose which database sections and uploaded media to export or restore. Sections left unchecked remain unchanged."}
+              ? tr("Choose exactly which managed-page sections to export or restore. Self-hosted backups can migrate referenced page media, while accounts, passwords, billing and internal files stay excluded.", "Scegli esattamente quali sezioni della pagina gestita esportare o ripristinare. I backup self-hosted possono trasferire i media usati dalla pagina; account, password, fatturazione e file interni restano esclusi.")
+              : tr("Choose which database sections and uploaded media to export or restore. Sections left unchecked remain unchanged.", "Scegli quali sezioni del database e media esportare o ripristinare. Le sezioni non selezionate restano invariate.")}
           </p>
         </div>
       </div>
@@ -306,11 +320,11 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 id="backup-export-heading" className="text-sm font-semibold">Export</h4>
-            <p className="text-xs leading-5 text-muted-foreground">The downloaded file contains only the checked sections.</p>
+            <p className="text-xs leading-5 text-muted-foreground">{tr("The downloaded file contains only the checked sections.", "Il file scaricato contiene solo le sezioni selezionate.")}</p>
           </div>
           <div className="flex gap-3 text-xs">
-            <button type="button" className="font-medium text-primary hover:underline" onClick={() => setExportSections(exportableSections)} disabled={busy}>Select all</button>
-            <button type="button" className="font-medium text-muted-foreground hover:text-foreground hover:underline" onClick={() => setExportSections([])} disabled={busy}>Clear</button>
+            <button type="button" className="font-medium text-primary hover:underline" onClick={() => setExportSections(exportableSections)} disabled={busy}>{tr("Select all", "Seleziona tutto")}</button>
+            <button type="button" className="font-medium text-muted-foreground hover:text-foreground hover:underline" onClick={() => setExportSections([])} disabled={busy}>{tr("Clear", "Deseleziona")}</button>
           </div>
         </div>
         <SectionSelector idPrefix="export" sections={exportableSections} selected={exportSections} onChange={setExportSections} disabled={busy} />
@@ -322,14 +336,14 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           aria-busy={state === "exporting"}
         >
           {state === "exporting" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Download className="h-4 w-4" />}
-          {state === "exporting" ? "Exporting" : "Download selected"}
+          {state === "exporting" ? tr("Exporting", "Esportazione") : tr("Download selected", "Scarica selezione")}
         </Button>
       </section>
 
       <section className="space-y-4 border-t border-border/70 pt-5" aria-labelledby="backup-import-heading">
         <div>
-          <h4 id="backup-import-heading" className="text-sm font-semibold">Restore</h4>
-          <p className="text-xs leading-5 text-muted-foreground">Open a backup first, then choose which of its available sections to apply.</p>
+          <h4 id="backup-import-heading" className="text-sm font-semibold">{tr("Restore", "Ripristina")}</h4>
+          <p className="text-xs leading-5 text-muted-foreground">{tr("Open a backup first, then choose which of its available sections to apply.", "Apri prima un backup, poi scegli quali sezioni disponibili applicare.")}</p>
         </div>
 
         {pendingRestore ? (
@@ -338,12 +352,12 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{pendingRestore.fileName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {pendingRestore.inspection.source === "managed" ? "Managed page backup" : "Self-hosted OrbitPage backup"}
+                  {pendingRestore.inspection.source === "managed" ? tr("Managed page backup", "Backup pagina gestita") : tr("Self-hosted OrbitPage backup", "Backup OrbitPage self-hosted")}
                 </p>
               </div>
-              <Button type="button" size="icon" variant="ghost" onClick={cancelRestore} disabled={busy} title="Close backup">
+              <Button type="button" size="icon" variant="ghost" onClick={cancelRestore} disabled={busy} title={tr("Close backup", "Chiudi backup")}>
                 <X className="h-4 w-4" />
-                <span className="sr-only">Close backup</span>
+                <span className="sr-only">{tr("Close backup", "Chiudi backup")}</span>
               </Button>
             </div>
             <SectionSelector
@@ -355,15 +369,15 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
             />
             {hosted && pendingRestore.inspection.source === "self-hosted" && pendingRestore.availableSections.includes("media") && (
               <p className="text-xs leading-5 text-muted-foreground">
-                Keep Uploaded media selected when restored profile, blocks or theme settings reference local self-hosted files.
+                {tr("Keep Uploaded media selected when restored profile, blocks or theme settings reference local self-hosted files.", "Mantieni selezionato Media caricati quando profilo, blocchi o tema ripristinati fanno riferimento a file self-hosted locali.")}
               </p>
             )}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="button" className="admin-action admin-action-primary" onClick={() => void restoreBackup()} disabled={busy || pendingRestore.selectedSections.length === 0}>
                 {state === "restoring" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Upload className="h-4 w-4" />}
-                {state === "restoring" ? "Restoring" : "Restore selected"}
+                {state === "restoring" ? tr("Restoring", "Ripristino") : tr("Restore selected", "Ripristina selezione")}
               </Button>
-              <Button type="button" variant="outline" className="admin-action" onClick={cancelRestore} disabled={busy}>Cancel</Button>
+              <Button type="button" variant="outline" className="admin-action" onClick={cancelRestore} disabled={busy}>{tr("Cancel", "Annulla")}</Button>
             </div>
           </div>
         ) : (
@@ -375,7 +389,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
             disabled={busy || DEMO_MODE}
           >
             <Upload className="h-4 w-4" />
-            Open backup file
+            {tr("Open backup file", "Apri file di backup")}
           </Button>
         )}
 
