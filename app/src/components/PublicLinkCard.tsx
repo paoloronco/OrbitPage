@@ -64,6 +64,12 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
+    if (link.iconType === 'emoji') {
+      setIconUrl(null);
+      setImageError(false);
+      return;
+    }
+
     const loadIcon = async () => {
       try {
         const url = getIconUrl(link.icon);
@@ -88,7 +94,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     };
 
     loadIcon();
-  }, [link.icon]);
+  }, [link.icon, link.iconType]);
   
   const handleLinkClick = () => {
     if (link.url) {
@@ -139,6 +145,14 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
 
   // Determine what to show in the icon area
   const renderIcon = () => {
+    if (link.icon && link.iconType === 'emoji') {
+      return (
+        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+          <span className="text-lg leading-none" aria-hidden="true">{link.icon}</span>
+        </div>
+      );
+    }
+
     // If no icon or there was an error loading it, show a fallback initial
     if (!iconUrl || imageError) {
       return (

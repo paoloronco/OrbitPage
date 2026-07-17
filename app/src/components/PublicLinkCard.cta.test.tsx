@@ -27,4 +27,25 @@ describe('PublicLinkCard CTA rendering', () => {
     expect(html).toContain('Reserve your slot');
     expect(html).toContain('Limited seats this week');
   });
+
+  it('renders emoji icons as text instead of image paths', () => {
+    const html = renderToStaticMarkup(
+      <PublicLinkCard
+        link={{
+          id: 'directions',
+          title: 'Directions',
+          description: 'Open the map',
+          url: 'https://maps.example.com',
+          type: 'link',
+          icon: '↗',
+          iconType: 'emoji',
+          isActive: true,
+        }}
+      />,
+    );
+
+    expect(html).toContain('↗');
+    expect(html).not.toContain('src="↗"');
+    expect(html).not.toContain('/uploads/');
+  });
 });
