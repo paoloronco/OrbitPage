@@ -208,8 +208,10 @@ const Admin = () => {
             avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
               ? profileData.avatar
               : (profileAvatar as string),
-            showAvatar: (profileData as any).showAvatar ?? true,
-            socialLinks: profileData.social_links || {},
+            showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
+              ? (profileData as any).show_avatar !== 0
+              : ((profileData as any).showAvatar ?? true),
+            socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
             appearance: profileData.appearance || {},

@@ -1,12 +1,10 @@
 import type { CSSProperties } from "react";
-import { PublicProfileSection } from "./PublicProfileSection";
-import { PublicBlockRenderer } from "./PublicBlockRenderer";
-import type { LinkData } from "./LinkCard";
-import { getSocialRowData } from "@/lib/link-blocks";
-import { isLinkVisibleNow } from "@/lib/link-visibility";
-import { getContentCardVariantCssVariables, getThemeCssVariables, ThemeConfig } from "@/lib/theme";
-import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { Monitor, Smartphone } from "lucide-react";
+import { BackgroundLayer } from "./BackgroundLayer";
+import { PublicView } from "./PublicView";
+import type { LinkData } from "./LinkCard";
+import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
+import type { ProfileAppearance } from "@/lib/profile-appearance";
 
 interface ProfileData {
   name: string;
@@ -19,10 +17,19 @@ interface ProfileData {
     instagram?: string;
     facebook?: string;
     twitter?: string;
+    youtube?: string;
+    tiktok?: string;
+    discord?: string;
+    telegram?: string;
+    whatsapp?: string;
+    mastodon?: string;
   };
   nameFontSize?: string;
   bioFontSize?: string;
   appearance?: ProfileAppearance;
+  footerText?: string;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
 }
 
 interface LivePreviewProps {
@@ -31,6 +38,7 @@ interface LivePreviewProps {
   theme: ThemeConfig;
   publicPageHref?: string;
   device?: PreviewDevice;
+  showOrbitPageBadge?: boolean;
 }
 
 export type PreviewDevice = "mobile" | "desktop";
@@ -70,49 +78,16 @@ export function PreviewDeviceToggle({
   );
 }
 
-export const LivePreview = ({ profile, links, theme, publicPageHref = "/", device = "mobile" }: LivePreviewProps) => {
-  const hasCustomAvatar = Boolean(
-    profile.showAvatar !== false &&
-    profile.avatar &&
-    !profile.avatar.includes('profile-avatar')
-  );
-  const hasProfileContent = Boolean(
-    profile.name?.trim() ||
-    profile.bio?.trim() ||
-    (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||
-    profile.appearance?.profileDetails?.primary ||
-    profile.appearance?.profileDetails?.secondary ||
-    hasCustomAvatar
-  );
-  const visibleLinks = links.filter(link => {
-    if (!isLinkVisibleNow(link)) return false;
-    if (link.type === 'separator') return true;
-    if (link.type === 'heading') return link.title.trim() !== '' || link.description.trim() !== '';
-    if (link.type === 'image') return (link.url || link.coverImage) !== '';
-    if (link.type === 'social_row') {
-      return (getSocialRowData(link.content).items || []).length > 0;
-    }
-    if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event' || link.type === 'embed') {
-      return (
-        link.title.trim() !== '' ||
-        link.description.trim() !== '' ||
-        (link.content || '').trim() !== ''
-      );
-    }
-    if (link.backgroundColor || link.textColor || link.icon) return true;
-    if (link.type === 'text') {
-      return (
-        link.title.trim() !== '' &&
-        ((link.content?.trim() !== '') ||
-          (link.textItems && link.textItems.length > 0 &&
-            link.textItems.some(item => item.text.trim() !== '')))
-      );
-    }
-    return link.title.trim() !== '' && (link.url?.trim() !== '');
-  });
-
+export const LivePreview = ({
+  profile,
+  links,
+  theme,
+  publicPageHref = "/",
+  device = "mobile",
+  showOrbitPageBadge = true,
+}: LivePreviewProps) => {
   const bgType = theme.backgroundMedia?.type;
-  const previewBackground = (bgType === 'color' || bgType === 'video' || bgType === 'gif')
+  const previewBackground = (bgType === "color" || bgType === "video" || bgType === "gif")
     ? theme.background
     : `linear-gradient(${theme.backgroundGradient.direction}, ${theme.backgroundGradient.from}, ${theme.backgroundGradient.to})`;
   const previewThemeVars = getThemeCssVariables(theme) as CSSProperties;
@@ -136,37 +111,28 @@ export const LivePreview = ({ profile, links, theme, publicPageHref = "/", devic
           <div className="admin-live-preview relative overflow-hidden bg-white">
             <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
               <div
-                className="admin-live-preview__page min-h-full"
+                className="admin-live-preview__page relative isolate min-h-full overflow-hidden"
                 style={{
                   ...previewThemeVars,
                   background: previewBackground,
                   color: theme.foreground,
                   fontFamily: theme.fontFamily,
-                  padding: device === "desktop" ? '38px 32px 56px' : '32px 16px 56px',
                 }}
               >
-                <div style={{ maxWidth: theme.maxWidth || '28rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                  {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
-
-                  {visibleLinks.length > 0 && (
-                    <div className="public-card-stack flex flex-col" style={{ gap: `${theme.cardSpacing}px` }}>
-                    {visibleLinks.map((link, index) => (
-                      <div
-                        key={link.id}
-                        className={`content-card-variant-${index % 6}`}
-                        style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
-                      >
-                        <PublicBlockRenderer link={link} />
-                      </div>
-                    ))}
-                    </div>
-                  )}
-
-                  {visibleLinks.length === 0 && (
-                    <p className="text-center text-muted-foreground text-sm opacity-60">
-                      No visible links yet.
-                    </p>
-                  )}
+                {(bgType === "video" || bgType === "gif") && theme.backgroundMedia?.mediaUrl && (
+                  <BackgroundLayer config={theme.backgroundMedia} mode="container" />
+                )}
+                <div className="relative z-[1] min-h-full">
+                  <PublicView
+                    profile={profile}
+                    links={links}
+                    theme={theme}
+                    footerText={profile.footerText}
+                    privacyPolicyUrl={profile.privacyPolicyUrl || "/privacy"}
+                    cookiePolicyUrl={profile.cookiePolicyUrl || "/cookies"}
+                    showOrbitPageBadge={showOrbitPageBadge}
+                    embedded
+                  />
                 </div>
               </div>
             </div>

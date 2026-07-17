@@ -353,6 +353,29 @@
     font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
   }
 
+  .public-page-content {
+    container-name: orbitpage-public-page;
+    container-type: inline-size;
+  }
+
+  .public-cta-link {
+    padding: 1rem;
+  }
+
+  .public-social-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @container orbitpage-public-page (min-width: 420px) {
+    .public-cta-link {
+      padding: 1.25rem;
+    }
+
+    .public-social-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
   .admin-app-shell {
     width: min(100%, 1640px);
     min-height: 100vh;
@@ -1044,6 +1067,15 @@
     background: var(--content-card-background);
     border-color: var(--content-card-border);
     color: var(--content-card-foreground);
+    box-shadow: var(--card-glow, var(--shadow-card));
+    backdrop-filter: blur(var(--blur-intensity, 20px));
+    -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
+  }
+
+  .orbitpage-admin .admin-live-preview .profile-card.glass-card {
+    background: var(--profile-card-background);
+    border-color: var(--profile-card-border);
+    color: var(--profile-card-foreground);
     box-shadow: var(--card-glow, var(--shadow-card));
     backdrop-filter: blur(var(--blur-intensity, 20px));
     -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));

@@ -133,7 +133,7 @@ const Index = () => {
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
             appearance: (profileData as any).appearance || {},
-            socialLinks: profileData.social_links || {},
+            socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
             footerText,
             favicon,
             googleAnalyticsId,

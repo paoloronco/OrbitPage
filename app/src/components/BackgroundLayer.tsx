@@ -3,9 +3,10 @@ import { BackgroundMediaConfig } from "@/lib/theme";
 
 interface BackgroundLayerProps {
   config: BackgroundMediaConfig;
+  mode?: "viewport" | "container";
 }
 
-export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
+export const BackgroundLayer = ({ config, mode = "viewport" }: BackgroundLayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
@@ -78,10 +79,11 @@ export const BackgroundLayer = ({ config }: BackgroundLayerProps) => {
   return (
     <div
       aria-hidden="true"
+      data-background-layer-mode={mode}
       style={{
-        position: "fixed",
+        position: mode === "container" ? "absolute" : "fixed",
         inset: 0,
-        zIndex: -1,
+        zIndex: mode === "container" ? 0 : -1,
         overflow: "hidden",
         pointerEvents: "none",
       }}

@@ -31,4 +31,29 @@ describe("BackgroundLayer", () => {
     expect(html).toContain("playsinline=\"\"");
     expect(html).toContain("preload=\"auto\"");
   });
+
+  it("can contain background media inside the admin preview", () => {
+    const html = renderToStaticMarkup(
+      <BackgroundLayer
+        mode="container"
+        config={{
+          type: "video",
+          mediaUrl: "/media/background.mp4",
+          opacity: 1,
+          blur: 0,
+          overlayColor: "#000000",
+          overlayOpacity: 0,
+          brightness: 1,
+          saturation: 1,
+          contrast: 1,
+          scale: 1,
+          objectFit: "cover",
+          glassmorphism: false,
+        }}
+      />,
+    );
+
+    expect(html).toContain('data-background-layer-mode="container"');
+    expect(html).toContain('position:absolute');
+  });
 });

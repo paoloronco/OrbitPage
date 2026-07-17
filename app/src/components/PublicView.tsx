@@ -2,7 +2,7 @@ import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { LinkData } from "./LinkCard";
 import { withBasePath } from "@/lib/base-path";
-import { getSocialRowData } from "@/lib/link-blocks";
+import { getSocialRowData, getVideoData } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 
@@ -26,6 +26,7 @@ interface PublicViewProps {
   cookiePolicyUrl?: string;
   ccpaPolicyUrl?: string;
   showOrbitPageBadge?: boolean;
+  embedded?: boolean;
 }
 
 export const PublicView = ({
@@ -36,6 +37,7 @@ export const PublicView = ({
   privacyPolicyUrl,
   cookiePolicyUrl,
   showOrbitPageBadge = true,
+  embedded = false,
 }: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withBasePath(cookiePolicyUrl.trim()) : undefined;
@@ -59,6 +61,7 @@ export const PublicView = ({
     if (link.type === 'separator') return true;
     if (link.type === 'heading') return link.title.trim() !== '' || link.description.trim() !== '';
     if (link.type === 'image') return (link.url || link.coverImage) !== '';
+    if (link.type === 'video') return Boolean(getVideoData(link.content).mediaUrl);
     if (link.type === 'social_row') {
       return (getSocialRowData(link.content).items || []).length > 0;
     }
@@ -83,8 +86,8 @@ export const PublicView = ({
   });
 
   return (
-    <main className="min-h-screen py-8 px-4">
-      <div className="max-w-md mx-auto space-y-6">
+    <main className={`${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}>
+      <div className="public-page-content mx-auto space-y-6" style={{ maxWidth: theme.maxWidth || "28rem" }}>
         {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
 
         {visibleLinks.length > 0 && (

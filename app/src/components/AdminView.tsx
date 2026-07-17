@@ -386,6 +386,7 @@ export const AdminView = ({
                   links={links}
                   theme={theme}
                   publicPageHref={publicPageHref}
+                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
                 />
                 <section className="admin-side-panel admin-checklist-panel">
                   <PanelHeader icon={User} title="Page checklist" />
@@ -422,6 +423,7 @@ export const AdminView = ({
                   links={previewLinks}
                   theme={theme}
                   publicPageHref={publicPageHref}
+                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
                 />
               </aside>
             </div>
@@ -439,6 +441,7 @@ export const AdminView = ({
                   theme={previewTheme}
                   publicPageHref={publicPageHref}
                   device={device}
+                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
                 />
               )}
               accessLevel={entitlements?.themes}
@@ -667,12 +670,14 @@ function PreviewPanel({
   links,
   theme,
   publicPageHref,
+  showOrbitPageBadge,
 }: {
   title: string;
   profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
   publicPageHref: string;
+  showOrbitPageBadge: boolean;
 }) {
   const [device, setDevice] = useState<PreviewDevice>("mobile");
 
@@ -696,7 +701,14 @@ function PreviewPanel({
           </a>
         </div>
       </div>
-      <LivePreview profile={profile} links={links} theme={theme} publicPageHref={publicPageHref} device={device} />
+      <LivePreview
+        profile={profile}
+        links={links}
+        theme={theme}
+        publicPageHref={publicPageHref}
+        device={device}
+        showOrbitPageBadge={showOrbitPageBadge}
+      />
     </section>
   );
 }

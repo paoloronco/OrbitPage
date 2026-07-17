@@ -1,0 +1,48 @@
+import React from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it } from "vitest";
+import { LivePreview } from "./LivePreview";
+import { defaultTheme, normalizeTheme } from "@/lib/theme";
+
+describe("LivePreview", () => {
+  it("uses the public renderer and contains the real background video", () => {
+    const theme = normalizeTheme({
+      ...defaultTheme,
+      backgroundMedia: {
+        ...defaultTheme.backgroundMedia,
+        type: "video",
+        mediaUrl: "/media/prospect-background.mp4",
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      <LivePreview
+        profile={{
+          name: "Prospect preview",
+          bio: "The same content as the public page",
+          avatar: "",
+          showAvatar: false,
+          footerText: "Public footer",
+        }}
+        links={[{
+          id: "1",
+          type: "link",
+          title: "Book now",
+          description: "",
+          url: "https://example.com",
+        }]}
+        theme={theme}
+        showOrbitPageBadge={false}
+      />,
+    );
+
+    expect(html).toContain('data-background-layer-mode="container"');
+    expect(html).toContain('/media/prospect-background.mp4');
+    expect(html).toContain('Prospect preview');
+    expect(html).toContain('Book now');
+    expect(html).toContain('Public footer');
+    expect(html).toContain('Privacy Policy');
+    expect(html).toContain('Cookie Policy');
+    expect(html).not.toContain('Powered by');
+  });
+});

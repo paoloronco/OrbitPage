@@ -33,7 +33,7 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
           </p>
         </div>
         {hasItems ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="public-social-grid grid gap-2">
             {items.map((item) => (
               <a
                 key={`${item.label}-${item.url}`}

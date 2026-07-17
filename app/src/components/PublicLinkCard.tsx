@@ -184,7 +184,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleLinkClick}
-          className="flex min-h-[88px] items-center gap-4 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:p-5"
+          className="public-cta-link flex min-h-[88px] items-center gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label={`${ctaConfig.label}: ${link.title || 'Open action'}`}
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/16 text-white ring-1 ring-white/25">
