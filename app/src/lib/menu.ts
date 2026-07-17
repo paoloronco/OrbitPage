@@ -58,6 +58,10 @@ export interface MenuCatalog {
   updatedAt?: string;
 }
 
+export interface NormalizeMenuCatalogOptions {
+  preserveTextEdges?: boolean;
+}
+
 export const MENU_THEME_PRESETS: Record<MenuThemePreset, MenuTheme> = {
   editorial: {
     preset: 'editorial', background: '#f4f1eb', surface: '#fffdf8', text: '#17201d', muted: '#66706b',
@@ -147,17 +151,25 @@ export function createDefaultMenu(venueType: MenuVenueType = 'restaurant'): Menu
   };
 }
 
-export function normalizeMenuCatalog(value: unknown, maxItems = 250): MenuCatalog {
+export function normalizeMenuCatalog(
+  value: unknown,
+  maxItems = 250,
+  options: NormalizeMenuCatalogOptions = {},
+): MenuCatalog {
   const input = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
   const venueType: MenuVenueType = input.venueType === 'bar' || input.venueType === 'cafe' ? input.venueType : 'restaurant';
   const fallback = createDefaultMenu(venueType);
+  const editableText = (textValue: unknown, max: number, textFallback = '') => {
+    if (!options.preserveTextEdges) return text(textValue, max, textFallback);
+    return typeof textValue === 'string' ? textValue.slice(0, max) : textFallback;
+  };
   const rawSections = Array.isArray(input.sections) ? input.sections : fallback.sections;
   const sections = rawSections.slice(0, 30).map((entry, index) => {
     const section = entry && typeof entry === 'object' && !Array.isArray(entry) ? entry as Record<string, unknown> : {};
     return {
       id: safeId(section.id, `section-${index + 1}`),
-      name: text(section.name, 80, `Section ${index + 1}`),
-      description: text(section.description, 240) || undefined,
+      name: editableText(section.name, 80, `Section ${index + 1}`),
+      description: editableText(section.description, 240) || undefined,
       visible: section.visible !== false,
       position: index,
     };
@@ -174,7 +186,7 @@ export function normalizeMenuCatalog(value: unknown, maxItems = 250): MenuCatalo
         ? entryVariant as Record<string, unknown> : {};
       return {
         id: safeId(variant.id, `variant-${variantIndex + 1}`),
-        name: text(variant.name, 60, `Option ${variantIndex + 1}`),
+        name: editableText(variant.name, 60, `Option ${variantIndex + 1}`),
         priceMinor: price(variant.priceMinor),
       };
     });
@@ -182,10 +194,10 @@ export function normalizeMenuCatalog(value: unknown, maxItems = 250): MenuCatalo
     return {
       id: safeId(item.id, `item-${index + 1}`),
       sectionId: sectionIds.has(requestedSectionId) ? requestedSectionId : fallbackSectionId,
-      name: text(item.name, 120, `Item ${index + 1}`),
-      description: text(item.description, 500) || undefined,
+      name: editableText(item.name, 120, `Item ${index + 1}`),
+      description: editableText(item.description, 500) || undefined,
       priceMinor: price(item.priceMinor),
-      details: text(item.details, 100) || undefined,
+      details: editableText(item.details, 100) || undefined,
       imageUrl: passiveMediaUrl(item.imageUrl) || undefined,
       imageAlt: text(item.imageAlt, 160) || undefined,
       variants,
@@ -206,8 +218,8 @@ export function normalizeMenuCatalog(value: unknown, maxItems = 250): MenuCatalo
     version: 1,
     enabled: input.enabled === true,
     venueType,
-    name: text(input.name, 120, fallback.name),
-    description: text(input.description, 500, fallback.description),
+    name: editableText(input.name, 120, fallback.name),
+    description: editableText(input.description, 500, fallback.description),
     currency: /^[A-Z]{3}$/.test(text(input.currency, 3)) ? text(input.currency, 3) : 'EUR',
     locale: /^[a-z]{2}(?:-[A-Z]{2})?$/.test(text(input.locale, 8)) ? text(input.locale, 8) : 'en-GB',
     sections,

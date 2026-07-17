@@ -43,11 +43,32 @@ function move<T>(items: T[], index: number, direction: -1 | 1) {
 }
 
 function TagsInput({ value, onChange, placeholder }: { value: string[]; onChange: (value: string[]) => void; placeholder: string }) {
+  const [inputValue, setInputValue] = useState(() => value.join(', '));
+  const focused = useRef(false);
+
+  useEffect(() => {
+    if (!focused.current) setInputValue(value.join(', '));
+  }, [value]);
+
+  const parseTags = (rawValue: string) => (
+    [...new Set(rawValue.split(',').map((tag) => tag.trim()).filter(Boolean))].slice(0, 20)
+  );
+
   return (
     <Input
-      value={value.join(', ')}
+      value={inputValue}
       placeholder={placeholder}
-      onChange={(event) => onChange([...new Set(event.target.value.split(',').map((tag) => tag.trim()).filter(Boolean))].slice(0, 20))}
+      onFocus={() => { focused.current = true; }}
+      onChange={(event) => {
+        setInputValue(event.target.value);
+        onChange(parseTags(event.target.value));
+      }}
+      onBlur={(event) => {
+        focused.current = false;
+        const tags = parseTags(event.target.value);
+        setInputValue(tags.join(', '));
+        onChange(tags);
+      }}
     />
   );
 }
@@ -87,7 +108,11 @@ export function MenuEditor({
 
   const update = (producer: (current: MenuCatalog) => MenuCatalog) => {
     setDraft((current) => {
-      const next = normalizeMenuCatalog({ ...producer(current), updatedAt: new Date().toISOString() }, maxItems ?? 250);
+      const next = normalizeMenuCatalog(
+        { ...producer(current), updatedAt: new Date().toISOString() },
+        maxItems ?? 250,
+        { preserveTextEdges: true },
+      );
       onPreview(next);
       return next;
     });
@@ -98,7 +123,10 @@ export function MenuEditor({
     setSaving(true);
     setMessage('');
     try {
-      await onSave(draft);
+      const normalized = normalizeMenuCatalog(draft, maxItems ?? 250);
+      await onSave(normalized);
+      setDraft(normalized);
+      onPreview(normalized);
       setMessage('Menu saved and queued for publication');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Menu could not be saved');
