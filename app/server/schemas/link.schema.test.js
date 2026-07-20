@@ -9,6 +9,7 @@ describe('link schemas', () => {
       title: 'Portfolio',
       url: 'https://example.com',
       hideUrl: true,
+      availability: 'available',
       iconType: { type: 'emoji' },
       unknown: 'remove me',
     });
@@ -24,6 +25,7 @@ describe('link schemas', () => {
       iconType: 'emoji',
       isActive: true,
       status: 'live',
+      availability: 'available',
     });
   });
 

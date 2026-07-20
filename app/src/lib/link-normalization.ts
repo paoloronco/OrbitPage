@@ -13,6 +13,7 @@ const alignmentSchema = z.enum(['left', 'center', 'right']).optional().catch(und
 const sizeSchema = z.enum(['small', 'medium', 'large']).optional().catch(undefined);
 const statusSchema = z.enum(['draft', 'live', 'expired']).optional().catch('live');
 const ctaActionSchema = z.enum(['book', 'contact', 'download', 'subscribe', 'buy']).optional().catch(undefined);
+const availabilitySchema = z.enum(['available', 'unavailable']).optional().catch('available');
 
 const textItemSchema = z.object({
   text: z.string(),
@@ -48,6 +49,7 @@ const linkDtoSchema = z.object({
   endDate: optionalString,
   endTime: optionalString,
   timezone: optionalString,
+  availability: availabilitySchema,
   titleFont: optionalString,
   titleFontFamily: optionalString,
   descriptionFontFamily: optionalString,
@@ -93,6 +95,7 @@ export function normalizeLinkDto(input: unknown): LinkData {
     endDate: emptyToUndefined(link.endDate),
     endTime: emptyToUndefined(link.endTime),
     timezone: emptyToUndefined(link.timezone),
+    availability: link.availability || 'available',
     coverImage: emptyToUndefined(link.coverImage),
     coverImageAlt: emptyToUndefined(link.coverImageAlt),
   };

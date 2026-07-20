@@ -52,7 +52,8 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 ### Page building
 
 - Link cards, text blocks, headings, separators, images, and native video
-- Social rows, contact details, maps, events, callouts, and consent-aware embeds
+- Social rows, contact details, maps, events with timezone-aware countdowns, callouts, and consent-aware embeds
+- Scheduled menu cards plus visible unavailable states for links, tickets, menus, and dishes
 - Per-block visibility, ordering, scheduling, icons, cover media, and layout controls
 - Responsive rendering for desktop and mobile pages
 

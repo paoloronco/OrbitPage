@@ -44,6 +44,7 @@ describe('link normalization', () => {
       endDate: undefined,
       endTime: undefined,
       timezone: undefined,
+      availability: 'available',
       coverImage: '/uploads/cover.webp',
       coverImageAlt: undefined,
     });
@@ -94,10 +95,12 @@ describe('link normalization', () => {
       title: 'View menu',
       url: '/venue/menu',
       type: 'menu',
+      availability: 'unavailable',
     })).toMatchObject({
       id: 'orbitpage-native-menu',
       type: 'menu',
       url: '/venue/menu',
+      availability: 'unavailable',
     });
   });
 

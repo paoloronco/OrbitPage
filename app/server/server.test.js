@@ -1132,6 +1132,7 @@ describe('API Endpoints', () => {
           url: 'https://example.com',
           type: 'link',
           hideUrl: true,
+          availability: 'unavailable',
         },
       ]);
 
@@ -1142,7 +1143,9 @@ describe('API Endpoints', () => {
     );
     expect(insertCall).toBeDefined();
     expect(insertCall[0]).toContain('hide_url');
+    expect(insertCall[0]).toContain('availability');
     expect(insertCall[1][4]).toBe(1);
+    expect(insertCall[1].at(-1)).toBe('unavailable');
   });
 
   it('PUT /api/links preserves smart CTA metadata and existing CTA clicks', async () => {

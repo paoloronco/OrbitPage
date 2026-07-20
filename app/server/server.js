@@ -630,6 +630,7 @@ const formatLinkPayload = (link) => {
     endDate: link.end_date || null,
     endTime: link.end_time || null,
     timezone: link.timezone || null,
+    availability: link.availability === 'unavailable' ? 'unavailable' : 'available',
     coverImage: link.cover_image || undefined,
     coverImageAlt: link.cover_image_alt || undefined,
     createdAt: link.created_at,
@@ -2367,6 +2368,7 @@ app.get('/api/links/export', authenticateToken, requireAnyPermission('links:writ
       endDate: link.end_date || null,
       endTime: link.end_time || null,
       timezone: link.timezone || null,
+      availability: link.availability === 'unavailable' ? 'unavailable' : 'available',
       coverImage: link.cover_image || null,
       coverImageAlt: link.cover_image_alt || null,
     }));
@@ -2410,8 +2412,8 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             text_alignment, title_font_size, description_font_size,
             text_items, sort_order, is_active,
             click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone,
-            cover_image, cover_image_alt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            cover_image, cover_image_alt, availability
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
@@ -2444,7 +2446,8 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             link.endTime || null,
             link.timezone || null,
             link.coverImage || null,
-            link.coverImageAlt || null
+            link.coverImageAlt || null,
+            link.availability === 'unavailable' ? 'unavailable' : 'available'
           ]
         );
       }
@@ -2512,7 +2515,7 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
           : (link.ctaClicks || 0);
 
         await dbRun(
-          'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             linkId,
             link.title,
@@ -2545,7 +2548,8 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
             link.endTime || null,
             link.timezone || null,
             link.coverImage || null,
-            link.coverImageAlt || null
+            link.coverImageAlt || null,
+            link.availability === 'unavailable' ? 'unavailable' : 'available'
           ]
         );
       }

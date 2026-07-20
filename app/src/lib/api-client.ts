@@ -360,6 +360,7 @@ export interface LinkItem {
   endDate?: string;
   endTime?: string;
   timezone?: string;
+  availability?: 'available' | 'unavailable';
   coverImage?: string;
   coverImageAlt?: string;
 }

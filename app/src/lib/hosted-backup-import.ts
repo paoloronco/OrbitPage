@@ -133,6 +133,7 @@ function mapLink(row: JsonRecord, index: number) {
     endDate: optionalString(row.end_date),
     endTime: optionalString(row.end_time),
     timezone: optionalString(row.timezone),
+    availability: row.availability === 'unavailable' ? 'unavailable' : 'available',
     coverImage: optionalString(row.cover_image),
     coverImageAlt: optionalString(row.cover_image_alt),
     position: index,

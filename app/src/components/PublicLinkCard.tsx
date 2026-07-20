@@ -4,6 +4,7 @@ import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, MailPlu
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
+import { useAppI18n } from '@/lib/i18n';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   if (!src) return null;
@@ -60,8 +61,10 @@ const getIconUrl = (iconPath?: string | null) => {
 };
 
 export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
+  const { tr } = useAppI18n();
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const unavailable = link.availability === 'unavailable';
 
   useEffect(() => {
     if (link.iconType === 'emoji') {
@@ -96,7 +99,11 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     loadIcon();
   }, [link.icon, link.iconType]);
   
-  const handleLinkClick = () => {
+  const handleLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (unavailable) {
+      event.preventDefault();
+      return;
+    }
     if (link.url) {
       trackPublicLinkClick(link.id);
     }
@@ -190,15 +197,17 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     const { Icon } = ctaConfig;
     return (
       <Card
-        className="public-cta-card group overflow-hidden border-primary/20 bg-primary text-primary-foreground shadow-sm transition-smooth hover:glow-effect"
+        className={`public-cta-card group overflow-hidden border-primary/20 bg-primary text-primary-foreground shadow-sm transition-smooth ${unavailable ? 'opacity-65' : 'hover:glow-effect'}`}
         style={getCustomStyles()}
       >
         <a
-          href={link.url || '#'}
+          href={unavailable ? undefined : link.url || '#'}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleLinkClick}
-          className="public-cta-link flex min-h-[88px] items-center gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-disabled={unavailable}
+          tabIndex={unavailable ? -1 : undefined}
+          className={`public-cta-link flex min-h-[88px] items-center gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed' : ''}`}
           aria-label={`${ctaConfig.label}: ${link.title || 'Open action'}`}
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/16 text-white ring-1 ring-white/25">
@@ -206,7 +215,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
           </span>
           <span className="min-w-0 flex-1">
             <span className="mb-1 inline-flex rounded-md bg-white/14 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85">
-              {ctaConfig.label}
+              {unavailable ? tr('Unavailable', 'Non disponibile') : ctaConfig.label}
             </span>
             <span
               className="block line-clamp-2 text-base font-semibold leading-tight"
@@ -236,12 +245,13 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     >
       {hasCoverImage && (
         <a
-          href={link.url || '#'}
+          href={unavailable ? undefined : link.url || '#'}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleLinkClick}
           className="block overflow-hidden"
           tabIndex={-1}
+          aria-disabled={unavailable}
           aria-hidden="true"
         >
           <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
@@ -259,11 +269,13 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
       <div className={hasCoverImage ? getSizeClasses(link.size) : ''}>
         <div className="flex items-center justify-between gap-3">
           <a
-            href={link.url || '#'}
+            href={unavailable ? undefined : link.url || '#'}
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleLinkClick}
-            className="flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-disabled={unavailable}
+            tabIndex={unavailable ? -1 : undefined}
+            className={`flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed opacity-65' : ''}`}
             aria-label={link.title ? `Open ${link.title}` : 'Open link'}
           >
             <div className="flex-shrink-0">
@@ -278,13 +290,16 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
                   {link.title || "Untitled Link"}
                 </h3>
                 <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />
-                <button
+                {unavailable ? (
+                  <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{tr('Unavailable', 'Non disponibile')}</span>
+                ) : null}
+                {!unavailable && <button
                   onClick={handleCopy}
                   className="opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
                   title="Copy link"
                 >
                   {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
-                </button>
+                </button>}
               </div>
               {link.description && (
                 <p

@@ -40,4 +40,23 @@ describe('PublicMenuCard', () => {
 
     expect(html).toContain('data-orbitpage-block="menu"');
   });
+
+  it('keeps an unavailable menu visible without exposing a clickable destination', () => {
+    const html = renderToStaticMarkup(
+      <PublicBlockRenderer
+        link={{
+          id: 'orbitpage-native-menu',
+          title: 'Dinner menu',
+          description: 'Back tomorrow',
+          url: '/venue/menu',
+          type: 'menu',
+          availability: 'unavailable',
+        }}
+      />,
+    );
+
+    expect(html).toContain('Currently unavailable');
+    expect(html).toContain('aria-disabled="true"');
+    expect(html).not.toContain('href="/venue/menu"');
+  });
 });

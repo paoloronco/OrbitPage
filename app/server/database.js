@@ -150,6 +150,8 @@ export const initializeDatabase = () => {
   // Cover / header image
   db.run(`ALTER TABLE links ADD COLUMN cover_image TEXT`, (err) => { /* ignore if exists */ });
   db.run(`ALTER TABLE links ADD COLUMN cover_image_alt TEXT`, (err) => { /* ignore if exists */ });
+  // Keep an actionable card visible while disabling its destination.
+  db.run(`ALTER TABLE links ADD COLUMN availability TEXT DEFAULT 'available'`, (err) => { /* ignore if exists */ });
 
       // Cookie consent configuration table
       // mode: 'disabled' | 'hardcoded' | 'builder'

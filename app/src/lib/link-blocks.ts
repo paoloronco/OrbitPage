@@ -48,6 +48,8 @@ export interface EventBlockData {
   time?: string;
   endDate?: string;
   endTime?: string;
+  timezone?: string;
+  showCountdown?: boolean;
   location?: string;
   ticketLabel?: string;
   notes?: string;
@@ -169,6 +171,8 @@ export const getEventData = (content: string | null | undefined): EventBlockData
     time: toString((parsed as Record<string, unknown>).time),
     endDate: toString((parsed as Record<string, unknown>).endDate),
     endTime: toString((parsed as Record<string, unknown>).endTime),
+    timezone: toString((parsed as Record<string, unknown>).timezone),
+    showCountdown: (parsed as Record<string, unknown>).showCountdown !== false,
     location: toString((parsed as Record<string, unknown>).location),
     ticketLabel: toString((parsed as Record<string, unknown>).ticketLabel),
     notes: toString((parsed as Record<string, unknown>).notes),

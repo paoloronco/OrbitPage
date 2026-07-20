@@ -70,6 +70,7 @@ export interface LinkData {
   endDate?: string;
   endTime?: string;
   timezone?: string;
+  availability?: 'available' | 'unavailable';
   textItems?: Array<{
     text: string;
     url?: string;
@@ -300,7 +301,7 @@ export const LinkCard = ({
     setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...mapData, [field]: value }) }));
   };
 
-  const updateEventData = (field: keyof EventBlockData, value: string) => {
+  const updateEventData = <K extends keyof EventBlockData>(field: K, value: EventBlockData[K]) => {
     setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...eventData, [field]: value }) }));
   };
 
@@ -1082,21 +1083,25 @@ export const LinkCard = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Input
+                        type="date"
                         value={eventData.date || ''}
                         onChange={(e) => updateEventData('date', e.target.value)}
                         placeholder="Date (YYYY-MM-DD)"
                       />
                       <Input
+                        type="time"
                         value={eventData.time || ''}
                         onChange={(e) => updateEventData('time', e.target.value)}
                         placeholder="Start time"
                       />
                       <Input
+                        type="date"
                         value={eventData.endDate || ''}
                         onChange={(e) => updateEventData('endDate', e.target.value)}
                         placeholder="End date"
                       />
                       <Input
+                        type="time"
                         value={eventData.endTime || ''}
                         onChange={(e) => updateEventData('endTime', e.target.value)}
                         placeholder="End time"
@@ -1117,6 +1122,27 @@ export const LinkCard = ({
                       onChange={(e) => updateEventData('notes', e.target.value)}
                       placeholder="Notes"
                     />
+                    <div className="grid gap-2 sm:grid-cols-[1fr,auto] sm:items-end">
+                      <div className="space-y-1">
+                        <Label className="text-xs">{tr('Event timezone', 'Fuso orario evento')}</Label>
+                        <Input
+                          value={eventData.timezone || ''}
+                          onChange={(e) => updateEventData('timezone', e.target.value)}
+                          onFocus={() => {
+                            if (!eventData.timezone) updateEventData('timezone', Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+                          }}
+                          placeholder="Europe/Rome"
+                        />
+                      </div>
+                      <div className="flex min-h-9 items-center justify-between gap-4 rounded-md border bg-background px-3">
+                        <Label htmlFor={`event-countdown-${link.id}`} className="text-xs">Countdown</Label>
+                        <Switch
+                          id={`event-countdown-${link.id}`}
+                          checked={eventData.showCountdown !== false}
+                          onCheckedChange={(checked) => updateEventData('showCountdown', checked)}
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
                 {isEmbed && (
@@ -1214,7 +1240,7 @@ export const LinkCard = ({
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Publishing</p>
-                <p className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</p>
+                <p className="text-sm font-semibold text-slate-900">{isMenu ? tr('Menu availability schedule', 'Programmazione disponibilità menu') : tr('Status, campaign & schedule', 'Stato, campagna e programmazione')}</p>
               </div>
               {!schedulingEnabled && (
                 <div className="admin-inline-plan-lock mb-3">
@@ -1224,6 +1250,19 @@ export const LinkCard = ({
                 </div>
               )}
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {isActionable && (
+                <div className="flex min-h-14 items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3 sm:col-span-2">
+                  <div>
+                    <Label htmlFor={`availability-${link.id}`} className="text-sm font-medium text-slate-900">{tr('Available now', 'Disponibile ora')}</Label>
+                    <p className="mt-0.5 text-xs text-slate-500">{tr('Keep the card visible but disable its destination when unavailable.', 'Mantieni visibile la card, ma disattiva la destinazione quando non è disponibile.')}</p>
+                  </div>
+                  <Switch
+                    id={`availability-${link.id}`}
+                    checked={editLink.availability !== 'unavailable'}
+                    onCheckedChange={(checked) => setEditLink(prev => ({ ...prev, availability: checked ? 'available' : 'unavailable' }))}
+                  />
+                </div>
+              )}
               <div className="space-y-1">
                 <Label className="text-xs">Status</Label>
                 <Select
