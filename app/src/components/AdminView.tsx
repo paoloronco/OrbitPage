@@ -56,6 +56,7 @@ import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
+import { VersionHistory } from "./VersionHistory";
 
 interface ProfileData {
   name: string;
@@ -514,7 +515,8 @@ export const AdminView = ({
 
           {isHostedAdmin && canManageUsers && (
             <TabsContent value="backup" className="admin-tab-content">
-              <div className="admin-single-column" data-onboarding="backup-section">
+              <div className="admin-single-column space-y-6" data-onboarding="backup-section">
+                <VersionHistory />
                 <BackupManager hosted />
               </div>
             </TabsContent>

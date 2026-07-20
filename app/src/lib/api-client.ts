@@ -574,6 +574,27 @@ export const managedAnalyticsApi = {
   },
 };
 
+export type ManagedPageVersion = {
+  revision: number;
+  lastModified: string;
+  sizeBytes: number;
+  current: boolean;
+};
+
+export type ManagedVersionHistory = {
+  retention: number;
+  currentRevision: number;
+  publishedRevision: number;
+  versions: ManagedPageVersion[];
+};
+
+export const versionHistoryApi = {
+  list: async (): Promise<ManagedVersionHistory> => apiRequest<ManagedVersionHistory>('/versions'),
+  restore: async (revision: number): Promise<ApiResponse> => apiRequest<ApiResponse>(`/versions/${revision}/restore`, {
+    method: 'POST',
+  }),
+};
+
 export interface TextFileConfig {
   key: string;
   path: string;
