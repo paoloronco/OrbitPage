@@ -11,6 +11,7 @@ export const APP_LOCALE_LABELS: Record<AppLocale, string> = {
 
 type PhraseCatalog = Record<string, string>;
 type AdditionalAppLocale = Exclude<AppLocale, "en" | "it">;
+export type AppI18nMode = "editor" | "public";
 const SUPPORTED_APP_LOCALES = new Set<string>(APP_LOCALES);
 const RTL_APP_LOCALES = new Set<AppLocale>(["ar"]);
 const phraseCatalogLoaders: Record<AdditionalAppLocale, () => Promise<PhraseCatalog>> = {
@@ -68,21 +69,22 @@ async function loadPhraseCatalog(locale: AppLocale) {
   }
 }
 
-function initialLocale(): AppLocale {
-  if (typeof window === "undefined") return "en";
-  const queryLocale = normalizeAppLocale(new URLSearchParams(window.location.search).get("locale"));
+export function resolveInitialAppLocale(mode: AppI18nMode, search: string, storedLocale: string | null): AppLocale {
+  if (mode === "public") return "en";
+  const queryLocale = normalizeAppLocale(new URLSearchParams(search).get("locale"));
   if (queryLocale) return queryLocale;
-  const stored = normalizeAppLocale(window.localStorage.getItem(STORAGE_KEY));
+  const stored = normalizeAppLocale(storedLocale);
   if (stored) return stored;
-  for (const language of navigator.languages || [navigator.language]) {
-    const locale = normalizeAppLocale(language);
-    if (locale) return locale;
-  }
   return "en";
 }
 
-export function AppI18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<AppLocale>(initialLocale);
+function initialLocale(mode: AppI18nMode): AppLocale {
+  if (typeof window === "undefined") return "en";
+  return resolveInitialAppLocale(mode, window.location.search, window.localStorage.getItem(STORAGE_KEY));
+}
+
+export function AppI18nProvider({ children, mode = "editor" }: { children: ReactNode; mode?: AppI18nMode }) {
+  const [locale, setLocaleState] = useState<AppLocale>(() => initialLocale(mode));
   const [catalogVersion, setCatalogVersion] = useState(0);
   const localeRequest = useRef(0);
 
@@ -97,8 +99,14 @@ export function AppI18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void loadPhraseCatalog(locale).then(() => setCatalogVersion((version) => version + 1));
-  }, [locale]);
+    const nextLocale = initialLocale(mode);
+    const request = ++localeRequest.current;
+    void loadPhraseCatalog(nextLocale).then(() => {
+      if (localeRequest.current !== request) return;
+      setLocaleState(nextLocale);
+      setCatalogVersion((version) => version + 1);
+    });
+  }, [mode]);
 
   useEffect(() => {
     document.documentElement.lang = locale;
