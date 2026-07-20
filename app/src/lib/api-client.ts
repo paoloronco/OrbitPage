@@ -553,6 +553,27 @@ export const backupApi = {
   },
 };
 
+export type ManagedAnalyticsDimension = { label: string; value: number };
+export type ManagedAnalyticsReport = {
+  configured: boolean;
+  detailed: boolean;
+  periodDays: number;
+  maxPeriodDays: number;
+  summary: { visits: number; visitors: number; clicks: number; ctr: number };
+  trend: Array<{ date: string; visits: number; visitors: number; clicks: number }>;
+  sources: ManagedAnalyticsDimension[];
+  devices: ManagedAnalyticsDimension[];
+  countries: ManagedAnalyticsDimension[];
+  campaigns: ManagedAnalyticsDimension[];
+  links: ManagedAnalyticsDimension[];
+};
+
+export const managedAnalyticsApi = {
+  get: async (days: number): Promise<ManagedAnalyticsReport> => {
+    return apiRequest<ManagedAnalyticsReport>(`/analytics?days=${encodeURIComponent(String(days))}`);
+  },
+};
+
 export interface TextFileConfig {
   key: string;
   path: string;

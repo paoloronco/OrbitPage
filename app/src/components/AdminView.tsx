@@ -55,6 +55,7 @@ import type { AdminTab } from "@/lib/admin-navigation";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
+import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 
 interface ProfileData {
   name: string;
@@ -520,7 +521,7 @@ export const AdminView = ({
           )}
 
           <TabsContent value="analytics" className="admin-tab-content">
-            <div className="admin-analytics-grid">
+            {isHostedAdmin ? <ManagedAnalyticsDashboard /> : <div className="admin-analytics-grid">
               <section className="admin-panel" data-onboarding="analytics-section">
                 <PanelHeader icon={BarChart2} title={tr("Click analytics", "Analytics dei clic")} />
                 <div className="mb-5 grid grid-cols-2 gap-3">
@@ -611,7 +612,7 @@ export const AdminView = ({
                   managePlanHref={managePlanHref}
                 />
               )}
-            </div>
+            </div>}
           </TabsContent>
 
           <TabsContent value="privacy" className="admin-tab-content">

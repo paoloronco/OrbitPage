@@ -12,6 +12,7 @@ import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { isBundledProfileAvatar } from "@/lib/profile-avatar";
+import { trackPublicPageView } from "@/lib/public-runtime";
 
 interface ProfileData {
   name: string;
@@ -225,6 +226,7 @@ const Index = () => {
         }
 
         setLinks(normalizeLinkDtos(pageData.links));
+        trackPublicPageView();
         setShowOrbitPageBadge(pageData.branding?.showOrbitPageBadge !== false);
         document.body.classList.remove('orbitpage-booting');
         setLoading(false);

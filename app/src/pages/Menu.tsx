@@ -3,6 +3,7 @@ import { MenuView } from '@/components/MenuView';
 import { normalizeMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { publicPageApi } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
+import { trackPublicPageView } from '@/lib/public-runtime';
 
 export default function MenuPage() {
   const [menu, setMenu] = useState<MenuCatalog | null>(null);
@@ -13,7 +14,10 @@ export default function MenuPage() {
       try {
         const value = window.__ORBITPAGE_STATIC_SNAPSHOT__?.menu ?? (await publicPageApi.get()).menu;
         const normalized = normalizeMenuCatalog(value);
-        if (active && normalized.enabled) setMenu(normalized);
+        if (active && normalized.enabled) {
+          setMenu(normalized);
+          trackPublicPageView();
+        }
       } catch {
         if (active) setMenu(null);
       }
