@@ -41,7 +41,6 @@ import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
 import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
-import { ProfileQrCode } from "./ProfileQrCode";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { uploadApi } from "@/lib/api-client";
@@ -516,7 +515,6 @@ export const ProfileSection = ({
         </DialogContent>
       </Dialog>
 
-      <ProfileQrCode />
       {(onStartOnboarding || onAdminOnboardingEnabledChange) && (
         <Card className="p-5" data-onboarding="onboarding-settings">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

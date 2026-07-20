@@ -686,7 +686,7 @@ const getPublicThemePayload = async () => {
 };
 
 const PUBLIC_SPA_ROUTES = new Set(['/', '/privacy', '/cookies']);
-const ADMIN_SPA_SECTIONS = new Set(['profile', 'links', 'theme', 'access', 'backup', 'analytics', 'privacy', 'txt']);
+const ADMIN_SPA_SECTIONS = new Set(['profile', 'links', 'theme', 'menu', 'qr', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const isAdminSpaRoute = (pathName) => {
   const segments = String(pathName || '').split('/').filter(Boolean);
   if (segments.length === 1 && (segments[0] === 'admin' || segments[0] === 'dashboard')) return true;

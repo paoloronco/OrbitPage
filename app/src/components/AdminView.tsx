@@ -30,6 +30,7 @@ import {
   MousePointerClick,
   Map,
   Palette,
+  QrCode,
   UtensilsCrossed,
   ShieldCheck,
   User,
@@ -57,6 +58,7 @@ import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import { VersionHistory } from "./VersionHistory";
+import { ProfileQrCode } from "./ProfileQrCode";
 
 interface ProfileData {
   name: string;
@@ -112,6 +114,7 @@ const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "links", icon: Link },
   { value: "theme", icon: Palette },
   { value: "menu", icon: UtensilsCrossed },
+  { value: "qr", icon: QrCode },
   { value: "access", icon: Key },
   { value: "backup", icon: Database },
   { value: "analytics", icon: BarChart2 },
@@ -147,7 +150,7 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: tr("Page", "Pagina"), links: "Links", theme: tr("Theme", "Tema"), menu: "Menu",
+    profile: tr("Page", "Pagina"), links: "Links", theme: tr("Theme", "Tema"), menu: "Menu", qr: "QR",
     access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy", txt: "TXT", sitemap: "Sitemap",
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
@@ -205,6 +208,7 @@ export const AdminView = ({
       case 'links':     return canEditLinks;
       case 'theme':     return canEditTheme;
       case 'menu':      return canEditMenu;
+      case 'qr':        return canEditProfile;
       case 'access':    return !isHostedAdmin;
       case 'backup':    return isHostedAdmin && canManageUsers;
       case 'analytics': return canViewAnalytics;
@@ -501,6 +505,12 @@ export const AdminView = ({
                 await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? 'append' : 'prepend'));
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="qr" className="admin-tab-content">
+            <div className="admin-single-column">
+              <ProfileQrCode menuEnabled={menu.enabled} />
+            </div>
           </TabsContent>
 
           {!isHostedAdmin && (

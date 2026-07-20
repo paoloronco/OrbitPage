@@ -55,6 +55,7 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 - Social rows, contact details, maps, events with timezone-aware countdowns, callouts, and consent-aware embeds
 - Scheduled menu cards plus visible unavailable states for links, tickets, menus, and dishes
 - Per-block visibility, ordering, scheduling, icons, cover media, and layout controls
+- Link-health indicators supplied by the managed platform without exposing browser-side probes
 - Responsive rendering for desktop and mobile pages
 
 ### Design
@@ -70,16 +71,17 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 - Editable title, description, canonical URL, and social-preview metadata
 - Open Graph, Twitter Card, and Schema.org output
 - Editable discovery TXT files and Admin-generated `sitemap.xml`
+- Customizable PNG/SVG QR codes for the main page, menu, or a safe relative campaign path
 - Editable `robots.txt`, canonical `llms.txt` (`llm.txt` alias), `humans.txt`, `ai.txt`, and `security.txt`
 - Safe custom `/name.txt` and `/.well-known/name.txt` endpoints
 - Optional `noindex` mode for private, staging, or preview deployments
 
 ### Privacy and operations
 
-- Basic click analytics with privacy and consent controls
+- Basic self-hosted click analytics with privacy and consent controls
 - Google Consent Mode and external CMP integration options
 - Privacy Policy and Cookie Policy links or hosted content
-- JSON backup and restore
+- Selective, backward-compatible JSON backup and restore
 - Storage quotas and validated image/video uploads
 - Health endpoint, Docker health support, and persistent application data
 

@@ -27,6 +27,8 @@ describe("admin navigation", () => {
     expect(isAdminTab("sitemap")).toBe(true);
     expect(adminDashboardPath("menu")).toBe("/dashboard/menu");
     expect(isAdminTab("menu")).toBe(true);
+    expect(adminDashboardPath("qr")).toBe("/dashboard/qr");
+    expect(isAdminTab("qr")).toBe(true);
     expect(isAdminTab("billing")).toBe(false);
   });
 

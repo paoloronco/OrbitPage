@@ -1119,6 +1119,12 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
   });
 
+  it.each(['menu', 'qr', 'sitemap'])('GET /orbitpage/dashboard/%s supports direct section refreshes', async (section) => {
+    const response = await request(app).get(`/orbitpage/dashboard/${section}`);
+    expect(response.status).toBe(200);
+    expect(response.headers['x-robots-tag']).toContain('noindex');
+  });
+
   it('PUT /api/links persists the public URL visibility preference', async () => {
     vi.mocked(dbAll).mockResolvedValueOnce([]);
 

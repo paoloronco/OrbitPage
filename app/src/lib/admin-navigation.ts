@@ -3,6 +3,7 @@ export const ADMIN_TAB_IDS = [
   "links",
   "theme",
   "menu",
+  "qr",
   "access",
   "backup",
   "analytics",
