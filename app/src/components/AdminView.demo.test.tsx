@@ -146,6 +146,32 @@ describe('AdminView demo mode', () => {
     expect(mockState.backupProps.at(-1)).toMatchObject({ hosted: true });
     expect(html).toContain('admin-metrics-saas');
   });
+
+  it('marks prospect sessions as read-only while keeping the hosted sections visible', () => {
+    vi.stubGlobal('__APP_VERSION__', '4.7.0');
+
+    const html = renderToStaticMarkup(
+      <AdminView
+        profile={{ name: 'Prospect demo', bio: 'Preview', avatar: '' }}
+        links={[]}
+        theme={defaultTheme}
+        currentUser={{ username: 'demo', role: 'admin', permissions: [...allPermissions], readOnly: true }}
+        saasUsage={{ blocks: 0, storageBytes: 0 }}
+        onProfileUpdate={vi.fn()}
+        onLinksUpdate={vi.fn()}
+        onThemeChange={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(html).toContain('Prospect demo account');
+    expect(html).toContain('Read-only access');
+    expect(html).toContain('admin-readonly-stage');
+    expect(html).toContain('inert=""');
+    expect(html).toContain('ProfileSection');
+    expect(html).toContain('LinkManager');
+    expect(html).not.toContain('>Guide<');
+  });
 });
 
 

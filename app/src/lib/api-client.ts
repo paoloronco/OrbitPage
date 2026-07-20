@@ -300,6 +300,7 @@ interface VerifyResponse extends ApiResponse {
     username: string;
     role?: string;
     permissions?: string[];
+    readOnly?: boolean;
   };
 }
 

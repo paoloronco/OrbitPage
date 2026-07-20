@@ -745,6 +745,24 @@
     margin-top: 12px;
   }
 
+  .admin-readonly-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-top: 14px;
+    border: 1px solid #a9c9e9;
+    border-radius: 7px;
+    background: #eef7ff;
+    padding: 13px 15px;
+    color: #12456f;
+  }
+
+  .admin-readonly-banner > svg { flex: 0 0 auto; margin-top: 1px; }
+  .admin-readonly-banner > div { display: grid; gap: 2px; }
+  .admin-readonly-banner strong { color: #0f3456; font-size: 13px; }
+  .admin-readonly-banner span { font-size: 12px; line-height: 1.55; }
+  .admin-readonly-stage { cursor: not-allowed; opacity: .74; }
+
   .admin-content-grid,
   .admin-preview-grid,
   .admin-analytics-grid {

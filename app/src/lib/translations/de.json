@@ -455,5 +455,8 @@
   "OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.": "OrbitPage behält die neuesten 25 veröffentlichten Versionen. Beim Wiederherstellen wird eine neue Version erstellt, sodass nichts überschrieben wird.",
   "Loading versions": "Versionen werden geladen",
   "Version": "Version",
-  "Publish your page to create the first restorable version.": "Veröffentlichen Sie Ihre Seite, um die erste wiederherstellbare Version zu erstellen."
+  "Publish your page to create the first restorable version.": "Veröffentlichen Sie Ihre Seite, um die erste wiederherstellbare Version zu erstellen.",
+  "Demo plan": "Demo-Tarif",
+  "Prospect demo account": "Demokonto für Interessenten",
+  "Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.": "Schreibgeschützter Zugriff. Erkunden Sie den Workspace und seine öffentliche Seite; Änderungen, Uploads, Wiederherstellungen und Veröffentlichungen sind deaktiviert."
 }

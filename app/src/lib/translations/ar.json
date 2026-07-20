@@ -455,5 +455,8 @@
   "OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.": "تحتفظ OrbitPage بأحدث 25 نسخة منشورة. تؤدي عملية الاستعادة إلى إنشاء إصدار جديد، بحيث لا تتم الكتابة فوق أي شيء في مكانه.",
   "Loading versions": "جارٍ تحميل الإصدارات",
   "Version": "الإصدار",
-  "Publish your page to create the first restorable version.": "انشر صفحتك لإنشاء أول نسخة قابلة للاستعادة."
+  "Publish your page to create the first restorable version.": "انشر صفحتك لإنشاء أول نسخة قابلة للاستعادة.",
+  "Demo plan": "خطة العرض التوضيحي",
+  "Prospect demo account": "حساب توضيحي للعميل المحتمل",
+  "Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.": "وصول للقراءة فقط. يمكنك استكشاف مساحة العمل وصفحتها العامة؛ التغييرات ورفع الملفات والاستعادة والنشر معطلة."
 }

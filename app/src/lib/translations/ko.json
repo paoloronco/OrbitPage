@@ -455,5 +455,8 @@
   "OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.": "OrbitPage는 최신 게시 버전 25개를 유지합니다. 복원하면 새 버전이 생성되므로 덮어쓰여지는 것이 없습니다.",
   "Loading versions": "버전 로드 중",
   "Version": "버전",
-  "Publish your page to create the first restorable version.": "복원 가능한 첫 번째 버전을 만들려면 페이지를 게시하세요."
+  "Publish your page to create the first restorable version.": "복원 가능한 첫 번째 버전을 만들려면 페이지를 게시하세요.",
+  "Demo plan": "데모 플랜",
+  "Prospect demo account": "잠재 고객용 데모 계정",
+  "Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.": "읽기 전용 액세스입니다. 워크스페이스와 공개 페이지를 둘러볼 수 있지만 변경, 업로드, 복원 및 게시는 비활성화되어 있습니다."
 }

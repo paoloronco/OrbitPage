@@ -60,6 +60,7 @@ export interface CurrentUser {
   username: string;
   role: string;
   permissions: Permission[];
+  readOnly?: boolean;
 }
 
 const Admin = () => {
@@ -160,6 +161,7 @@ const Admin = () => {
               username: result.user.username,
               role: result.user.role || 'admin',
               permissions: (result.user.permissions || []) as Permission[],
+              readOnly: result.user.readOnly === true,
             });
           }
         } catch {
@@ -175,6 +177,7 @@ const Admin = () => {
               username: result.user.username,
               role: result.user.role || 'admin',
               permissions: (result.user.permissions || []) as Permission[],
+              readOnly: result.user.readOnly === true,
             });
           }
         } catch {
@@ -422,6 +425,7 @@ const Admin = () => {
           username: result.user.username,
           role: result.user.role || 'admin',
           permissions: (result.user.permissions || []) as Permission[],
+          readOnly: result.user.readOnly === true,
         });
       }
     } catch { /* ignore — user is still logged in */ }

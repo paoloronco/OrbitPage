@@ -171,6 +171,7 @@ export const AdminView = ({
     saasBilling ||
     (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("apiBase"))
   );
+  const isProspectReadOnly = currentUser?.readOnly === true;
 
   useEffect(() => {
     setPreviewProfile(profile);
@@ -203,6 +204,7 @@ export const AdminView = ({
   }, []);
 
   const visibleTabs = tabs.filter(tab => {
+    if (isProspectReadOnly) return tab.value !== "access";
     switch (tab.value) {
       case 'profile':   return canEditProfile;
       case 'links':     return canEditLinks;
@@ -307,10 +309,9 @@ export const AdminView = ({
               <div className="admin-title-row">
                 <h1 className="admin-title">OrbitPage <span>Admin</span></h1>
                 {appVersion && <span className="admin-version" title={tr("Embedded OrbitPage OSS runtime version", "Versione del runtime OrbitPage OSS incorporato")}>OSS v{appVersion}</span>}
-                {saasPlan && (
-                  <a className="admin-plan-badge" href={managePlanHref} target="_top" title={tr("Manage plan", "Gestisci piano")}>
-                    {saasPlan.name}
-                  </a>
+                {saasPlan && (isProspectReadOnly
+                  ? <span className="admin-plan-badge" title={tr("Demo plan", "Piano demo")}>{saasPlan.name}</span>
+                  : <a className="admin-plan-badge" href={managePlanHref} target="_top" title={tr("Manage plan", "Gestisci piano")}>{saasPlan.name}</a>
                 )}
               </div>
               <p className="admin-subtitle">
@@ -327,15 +328,17 @@ export const AdminView = ({
                 {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
               </select>
             </label>
-            <Button
-              className="admin-action"
-              variant="outline"
-              size="sm"
-              onClick={() => setOnboardingReplayKey(key => key + 1)}
-            >
-              <HelpCircle className="h-4 w-4" />
-              {tr("Guide", "Guida")}
-            </Button>
+            {!isProspectReadOnly && (
+              <Button
+                className="admin-action"
+                variant="outline"
+                size="sm"
+                onClick={() => setOnboardingReplayKey(key => key + 1)}
+              >
+                <HelpCircle className="h-4 w-4" />
+                {tr("Guide", "Guida")}
+              </Button>
+            )}
             <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <Button className="admin-action admin-action-primary" size="sm">
                 <ExternalLink className="h-4 w-4" />
@@ -350,6 +353,16 @@ export const AdminView = ({
             )}
           </div>
         </header>
+
+        {isProspectReadOnly && (
+          <section className="admin-readonly-banner" role="status">
+            <LockKeyhole className="h-5 w-5" aria-hidden="true" />
+            <div>
+              <strong>{tr("Prospect demo account", "Account demo prospect")}</strong>
+              <span>{tr("Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.", "Accesso in sola lettura. Puoi esplorare il workspace e la pagina pubblica; modifiche, upload, ripristini e pubblicazione sono disabilitati.")}</span>
+            </div>
+          </section>
+        )}
 
         <section className={`admin-metrics${isHostedAdmin ? " admin-metrics-saas" : ""}`} aria-label={tr("Workspace status", "Stato del workspace")}>
           <MetricCard
@@ -394,6 +407,10 @@ export const AdminView = ({
             </TabsList>
           </div>
 
+          <div
+            className={isProspectReadOnly && activeTab !== "analytics" ? "admin-tab-stage admin-readonly-stage" : "admin-tab-stage"}
+            inert={isProspectReadOnly && activeTab !== "analytics" ? "" : undefined}
+          >
           <TabsContent value="profile" className="admin-tab-content">
             <div className="admin-content-grid admin-content-grid-editor">
               <div className="admin-main-column">
@@ -650,9 +667,10 @@ export const AdminView = ({
               <SitemapManager readOnly={DEMO_MODE} />
             </div>
           </TabsContent>
+          </div>
         </Tabs>
 
-        <AdminOnboarding
+        {!isProspectReadOnly && <AdminOnboarding
           key={onboardingReplayKey}
           activeTab={activeTab}
           visibleTabs={visibleTabs.map(tab => tab.value)}
@@ -668,7 +686,7 @@ export const AdminView = ({
           }}
           savedLinkCount={links.length}
           themeSaved={onboardingThemeSaved}
-        />
+        />}
 
         <footer className="admin-footer">
           {DEMO_MODE && (

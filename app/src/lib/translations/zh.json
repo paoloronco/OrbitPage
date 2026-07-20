@@ -455,5 +455,8 @@
   "OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.": "OrbitPage 保留最新的 25 个已发布版本。恢复会创建一个新版本，因此不会覆盖任何内容。",
   "Loading versions": "加载版本",
   "Version": "版本",
-  "Publish your page to create the first restorable version.": "发布您的页面以创建第一个可恢复版本。"
+  "Publish your page to create the first restorable version.": "发布您的页面以创建第一个可恢复版本。",
+  "Demo plan": "演示方案",
+  "Prospect demo account": "潜在客户演示账户",
+  "Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.": "只读访问。您可以浏览工作区及其公共页面；更改、上传、恢复和发布功能均已禁用。"
 }

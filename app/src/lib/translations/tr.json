@@ -455,5 +455,8 @@
   "OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.": "OrbitPage, yayınlanan en son 25 sürümü saklar. Geri yükleme yeni bir sürüm oluşturduğundan hiçbir şeyin üzerine yazılmaz.",
   "Loading versions": "Sürümler yükleniyor",
   "Version": "Sürüm",
-  "Publish your page to create the first restorable version.": "İlk geri yüklenebilir sürümü oluşturmak için sayfanızı yayınlayın."
+  "Publish your page to create the first restorable version.": "İlk geri yüklenebilir sürümü oluşturmak için sayfanızı yayınlayın.",
+  "Demo plan": "Demo planı",
+  "Prospect demo account": "Müşteri adayı demo hesabı",
+  "Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.": "Salt okunur erişim. Çalışma alanını ve herkese açık sayfasını inceleyebilirsiniz; değişiklikler, yüklemeler, geri yüklemeler ve yayınlama devre dışıdır."
 }

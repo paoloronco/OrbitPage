@@ -455,5 +455,8 @@
   "OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.": "OrbitPage には最新の 25 の公開バージョンが保存されています。復元すると新しいバージョンが作成されるため、その場では何も上書きされません。",
   "Loading versions": "バージョンをロードしています",
   "Version": "バージョン",
-  "Publish your page to create the first restorable version.": "ページを公開して、最初の復元可能なバージョンを作成します。"
+  "Publish your page to create the first restorable version.": "ページを公開して、最初の復元可能なバージョンを作成します。",
+  "Demo plan": "デモプラン",
+  "Prospect demo account": "見込み客向けデモアカウント",
+  "Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.": "読み取り専用アクセスです。ワークスペースと公開ページを確認できますが、変更、アップロード、復元、公開は無効です。"
 }

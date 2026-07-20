@@ -455,5 +455,8 @@
   "OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.": "OrbitPage mantém as últimas 25 versões publicadas. A restauração cria uma nova versão, portanto nada é substituído no lugar.",
   "Loading versions": "Carregando versões",
   "Version": "Versão",
-  "Publish your page to create the first restorable version.": "Publique sua página para criar a primeira versão restaurável."
+  "Publish your page to create the first restorable version.": "Publique sua página para criar a primeira versão restaurável.",
+  "Demo plan": "Plano de demonstração",
+  "Prospect demo account": "Conta de demonstração para prospect",
+  "Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.": "Acesso somente leitura. Explore o workspace e a página pública; alterações, uploads, restaurações e publicação estão desativados."
 }
