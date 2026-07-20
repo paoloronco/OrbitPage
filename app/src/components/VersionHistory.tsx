@@ -64,7 +64,7 @@ export function VersionHistory() {
             {tr('Version', 'Versione')} {version.revision}
             {version.current && <span className="inline-flex items-center gap-1 rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700"><CheckCircle2 className="h-3 w-3" />{tr('Published', 'Pubblicata')}</span>}
           </span>
-          <span className="block truncate text-xs text-muted-foreground">{new Date(version.lastModified).toLocaleString(locale === 'it' ? 'it-IT' : 'en-GB')}</span>
+          <span className="block truncate text-xs text-muted-foreground">{new Date(version.lastModified).toLocaleString(locale)}</span>
         </span>
         <Button type="button" variant="outline" size="sm" className="admin-action" disabled={version.current || restoring !== null} onClick={() => void restore(version.revision)}>
           {restoring === version.revision ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <RotateCcw className="h-4 w-4" />}

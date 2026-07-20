@@ -11,12 +11,12 @@ interface SitemapManagerProps {
   readOnly?: boolean;
 }
 
-function formatDate(value: string | null, locale: AppLocale) {
-  if (!value) return locale === "it" ? "Non ancora generata" : "Not generated yet";
+function formatDate(value: string | null, locale: AppLocale, tr: (english: string, italian: string) => string) {
+  if (!value) return tr("Not generated yet", "Non ancora generata");
   const date = new Date(value);
   return Number.isNaN(date.getTime())
-    ? locale === "it" ? "Generata" : "Generated"
-    : new Intl.DateTimeFormat(locale === "it" ? "it-IT" : "en", { dateStyle: "medium", timeStyle: "short" }).format(date);
+    ? tr("Generated", "Generata")
+    : new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 export function SitemapManager({ readOnly = false }: SitemapManagerProps) {
@@ -111,7 +111,7 @@ export function SitemapManager({ readOnly = false }: SitemapManagerProps) {
         </div>
         <div className="bg-white px-4 py-4 sm:col-span-2">
           <p className="text-xs font-semibold uppercase text-slate-500">{tr("Last generated", "Ultima generazione")}</p>
-          <p className="mt-2 text-sm font-semibold text-slate-900">{formatDate(sitemap?.generatedAt || null, locale)}</p>
+          <p className="mt-2 text-sm font-semibold text-slate-900">{formatDate(sitemap?.generatedAt || null, locale, tr)}</p>
           <p className="mt-1 text-xs text-slate-500">{tr("After generation, OrbitPage keeps the file aligned with future publications.", "Dopo la generazione, OrbitPage mantiene il file allineato alle pubblicazioni successive.")}</p>
         </div>
       </div>

@@ -25,8 +25,7 @@ function Ranking({ title, items, empty }: { title: string; items: ManagedAnalyti
 }
 
 export function ManagedAnalyticsDashboard() {
-  const { locale } = useAppI18n();
-  const it = locale === 'it';
+  const { locale, tr } = useAppI18n();
   const [period, setPeriod] = useState(30);
   const [report, setReport] = useState<ManagedAnalyticsReport>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -39,44 +38,44 @@ export function ManagedAnalyticsDashboard() {
       setReport(next);
       setPeriod(next.periodDays);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : (it ? 'Impossibile caricare le analytics.' : 'Analytics could not be loaded.'));
+      setError(reason instanceof Error ? reason.message : tr('Analytics could not be loaded.', 'Impossibile caricare le analytics.'));
     } finally { setLoading(false); }
-  }, [it]);
+  }, [tr]);
 
   useEffect(() => { void load(period); }, [load, period]);
   const periods = useMemo(() => [7, 30, 90].filter((days) => days <= report.maxPeriodDays), [report.maxPeriodDays]);
-  const number = (value: number) => value.toLocaleString(it ? 'it-IT' : 'en-GB');
+  const number = (value: number) => value.toLocaleString(locale);
 
   return <section className="managed-analytics" data-testid="managed-analytics">
     <header className="managed-analytics-header">
-      <div><span>{it ? 'Attività della pagina pubblica' : 'Public page activity'}</span><h2>{it ? 'Analytics' : 'Analytics'}</h2><p>{it ? 'Visite e interazioni raccolte all’edge, senza contare l’attività nell’Admin.' : 'Visits and interactions collected at the edge, excluding Admin activity.'}</p></div>
+      <div><span>{tr('Public page activity', 'Attività della pagina pubblica')}</span><h2>Analytics</h2><p>{tr('Visits and interactions collected at the edge, excluding Admin activity.', 'Visite e interazioni raccolte all’edge, senza contare l’attività nell’Admin.')}</p></div>
       <div className="managed-analytics-actions">
-        <div role="group" aria-label={it ? 'Intervallo analytics' : 'Analytics range'}>{periods.map((days) => <button aria-pressed={period === days} key={days} onClick={() => setPeriod(days)} type="button">{days}d</button>)}</div>
-        <button aria-label={it ? 'Aggiorna analytics' : 'Refresh analytics'} className="managed-analytics-refresh" disabled={loading} onClick={() => void load(period)} type="button"><RefreshCw className={loading ? 'is-loading' : ''} size={16} /></button>
+        <div role="group" aria-label={tr('Analytics range', 'Intervallo analytics')}>{periods.map((days) => <button aria-pressed={period === days} key={days} onClick={() => setPeriod(days)} type="button">{days}d</button>)}</div>
+        <button aria-label={tr('Refresh analytics', 'Aggiorna analytics')} className="managed-analytics-refresh" disabled={loading} onClick={() => void load(period)} type="button"><RefreshCw className={loading ? 'is-loading' : ''} size={16} /></button>
       </div>
     </header>
 
-    {!report.configured && <div className="managed-analytics-notice"><BarChart3 size={18} /><span><strong>{it ? 'Raccolta pronta, lettura da configurare' : 'Collection ready, reporting needs configuration'}</strong><small>{it ? 'Gli eventi pubblici vengono raccolti, ma il token Analytics Read non è ancora disponibile.' : 'Public events are collected, but the Analytics Read token is not available yet.'}</small></span></div>}
+    {!report.configured && <div className="managed-analytics-notice"><BarChart3 size={18} /><span><strong>{tr('Collection ready, reporting needs configuration', 'Raccolta pronta, lettura da configurare')}</strong><small>{tr('Public events are collected, but the Analytics Read token is not available yet.', 'Gli eventi pubblici vengono raccolti, ma il token Analytics Read non è ancora disponibile.')}</small></span></div>}
     {error && <div className="managed-analytics-error" role="alert">{error}</div>}
 
     <div className="managed-analytics-metrics" aria-busy={loading}>
-      <div><Eye size={18} /><span>{it ? 'Visite' : 'Visits'}<strong>{number(report.summary.visits)}</strong></span></div>
-      <div><UsersRound size={18} /><span>{it ? 'Visitatori' : 'Visitors'}<strong>{number(report.summary.visitors)}</strong></span></div>
-      <div><MousePointerClick size={18} /><span>{it ? 'Clic' : 'Clicks'}<strong>{number(report.summary.clicks)}</strong></span></div>
-      <div><BarChart3 size={18} /><span>CTR<strong>{report.summary.ctr.toLocaleString(it ? 'it-IT' : 'en-GB', { maximumFractionDigits: 1 })}%</strong></span></div>
+      <div><Eye size={18} /><span>{tr('Visits', 'Visite')}<strong>{number(report.summary.visits)}</strong></span></div>
+      <div><UsersRound size={18} /><span>{tr('Visitors', 'Visitatori')}<strong>{number(report.summary.visitors)}</strong></span></div>
+      <div><MousePointerClick size={18} /><span>{tr('Clicks', 'Clic')}<strong>{number(report.summary.clicks)}</strong></span></div>
+      <div><BarChart3 size={18} /><span>CTR<strong>{report.summary.ctr.toLocaleString(locale, { maximumFractionDigits: 1 })}%</strong></span></div>
     </div>
 
     <div className="managed-analytics-chart">
-      <div><h3>{it ? 'Andamento' : 'Trend'}</h3><p>{it ? 'Visite e clic nel periodo selezionato.' : 'Visits and clicks in the selected range.'}</p></div>
-      {report.trend.length ? <ResponsiveContainer height={260} width="100%"><AreaChart data={report.trend} margin={{ left: -18, right: 8, top: 12, bottom: 0 }}><defs><linearGradient id="visits-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity=".22"/><stop offset="100%" stopColor="#2563eb" stopOpacity="0"/></linearGradient></defs><CartesianGrid stroke="#e5eaf1" strokeDasharray="3 5" vertical={false}/><XAxis axisLine={false} dataKey="date" fontSize={11} tickLine={false}/><YAxis allowDecimals={false} axisLine={false} fontSize={11} tickLine={false}/><Tooltip/><Area dataKey="visits" fill="url(#visits-fill)" name={it ? 'Visite' : 'Visits'} stroke="#2563eb" strokeWidth={2}/><Area dataKey="clicks" fill="transparent" name={it ? 'Clic' : 'Clicks'} stroke="#0f766e" strokeWidth={2}/></AreaChart></ResponsiveContainer> : <div className="managed-analytics-empty">{it ? 'I primi dati compariranno dopo una visita alla pagina pubblica.' : 'The first data will appear after someone visits the public page.'}</div>}
+      <div><h3>{tr('Trend', 'Andamento')}</h3><p>{tr('Visits and clicks in the selected range.', 'Visite e clic nel periodo selezionato.')}</p></div>
+      {report.trend.length ? <ResponsiveContainer height={260} width="100%"><AreaChart data={report.trend} margin={{ left: -18, right: 8, top: 12, bottom: 0 }}><defs><linearGradient id="visits-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity=".22"/><stop offset="100%" stopColor="#2563eb" stopOpacity="0"/></linearGradient></defs><CartesianGrid stroke="#e5eaf1" strokeDasharray="3 5" vertical={false}/><XAxis axisLine={false} dataKey="date" fontSize={11} tickLine={false}/><YAxis allowDecimals={false} axisLine={false} fontSize={11} tickLine={false}/><Tooltip/><Area dataKey="visits" fill="url(#visits-fill)" name={tr('Visits', 'Visite')} stroke="#2563eb" strokeWidth={2}/><Area dataKey="clicks" fill="transparent" name={tr('Clicks', 'Clic')} stroke="#0f766e" strokeWidth={2}/></AreaChart></ResponsiveContainer> : <div className="managed-analytics-empty">{tr('The first data will appear after someone visits the public page.', 'I primi dati compariranno dopo una visita alla pagina pubblica.')}</div>}
     </div>
 
     {report.detailed ? <div className="managed-analytics-details">
-      <Ranking empty={it ? 'Nessuna sorgente rilevata.' : 'No sources detected.'} items={report.sources} title={it ? 'Sorgenti' : 'Sources'} />
-      <Ranking empty={it ? 'Nessun dispositivo rilevato.' : 'No devices detected.'} items={report.devices} title={it ? 'Dispositivi' : 'Devices'} />
-      <Ranking empty={it ? 'Nessun paese rilevato.' : 'No countries detected.'} items={report.countries} title={it ? 'Paesi' : 'Countries'} />
-      <Ranking empty={it ? 'Nessuna campagna UTM.' : 'No UTM campaigns.'} items={report.campaigns} title="UTM" />
-      <Ranking empty={it ? 'Nessun clic sui blocchi.' : 'No block clicks.'} items={report.links} title={it ? 'Link più cliccati' : 'Top links'} />
-    </div> : <div className="managed-analytics-locked"><strong>{it ? 'Dettagli disponibili con Starter' : 'Details available on Starter'}</strong><span>{it ? 'Sorgenti, dispositivi, paesi, UTM e andamento esteso si sbloccano con un piano a pagamento.' : 'Sources, devices, countries, UTM and longer trends unlock on a paid plan.'}</span></div>}
+      <Ranking empty={tr('No sources detected.', 'Nessuna sorgente rilevata.')} items={report.sources} title={tr('Sources', 'Sorgenti')} />
+      <Ranking empty={tr('No devices detected.', 'Nessun dispositivo rilevato.')} items={report.devices} title={tr('Devices', 'Dispositivi')} />
+      <Ranking empty={tr('No countries detected.', 'Nessun paese rilevato.')} items={report.countries} title={tr('Countries', 'Paesi')} />
+      <Ranking empty={tr('No UTM campaigns.', 'Nessuna campagna UTM.')} items={report.campaigns} title="UTM" />
+      <Ranking empty={tr('No block clicks.', 'Nessun clic sui blocchi.')} items={report.links} title={tr('Top links', 'Link più cliccati')} />
+    </div> : <div className="managed-analytics-locked"><strong>{tr('Details available on Starter', 'Dettagli disponibili con Starter')}</strong><span>{tr('Sources, devices, countries, UTM and longer trends unlock on a paid plan.', 'Sorgenti, dispositivi, paesi, UTM e andamento esteso si sbloccano con un piano a pagamento.')}</span></div>}
   </section>;
 }

@@ -4,35 +4,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Shield, Check, X, Sparkles } from "lucide-react";
 import { setupInitialCredentials, setAuthenticated, isPasswordStrong, generateSecurePassword } from "@/lib/auth";
+import { useAppI18n } from "@/lib/i18n";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 
 interface InitialSetupProps {
   onSetupComplete: () => void;
 }
 
-interface Requirement {
-  label: string;
-  test: (p: string) => boolean;
-}
-
-const REQUIREMENTS: Requirement[] = [
-  { label: "At least 8 characters",  test: (p) => p.length >= 8 },
-  { label: "Uppercase letter (A–Z)",  test: (p) => /[A-Z]/.test(p) },
-  { label: "Lowercase letter (a–z)",  test: (p) => /[a-z]/.test(p) },
-  { label: "Number (0–9)",            test: (p) => /\d/.test(p) },
-  { label: "Special character",       test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
-];
-
 export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
+  const { tr } = useAppI18n();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const requirements = [
+    { label: tr("At least 8 characters", "Almeno 8 caratteri"), test: (value: string) => value.length >= 8 },
+    { label: tr("Uppercase letter (A-Z)", "Una lettera maiuscola (A-Z)"), test: (value: string) => /[A-Z]/.test(value) },
+    { label: tr("Lowercase letter (a-z)", "Una lettera minuscola (a-z)"), test: (value: string) => /[a-z]/.test(value) },
+    { label: tr("Number (0-9)", "Un numero (0-9)"), test: (value: string) => /\d/.test(value) },
+    { label: tr("Special character", "Un carattere speciale"), test: (value: string) => /[!@#$%^&*(),.?":{}|<>]/.test(value) },
+  ];
 
-  const metCount = REQUIREMENTS.filter((r) => r.test(password)).length;
-  const allMet = metCount === REQUIREMENTS.length;
+  const metCount = requirements.filter((requirement) => requirement.test(password)).length;
+  const allMet = metCount === requirements.length;
   const passwordsMatch = password.length > 0 && password === confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,13 +37,13 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
     setError("");
 
     if (!(await isPasswordStrong(password))) {
-      setError("Please meet all password requirements before continuing.");
+      setError(tr("Please meet all password requirements before continuing.", "Soddisfa tutti i requisiti della password prima di continuare."));
       setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError(tr("Passwords do not match.", "Le password non coincidono."));
       setIsLoading(false);
       return;
     }
@@ -58,10 +54,10 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
         setAuthenticated("admin");
         onSetupComplete();
       } else {
-        setError("Setup failed. Please try again.");
+        setError(tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Setup failed. Please try again.");
+      setError(err instanceof Error ? err.message : tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
     } finally {
       setIsLoading(false);
     }
@@ -82,9 +78,9 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
         <div className="flex flex-col items-center gap-3 mb-8">
           <OrbitPageBrand showName={false} size="lg" />
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Welcome to OrbitPage</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">{tr("Welcome to OrbitPage", "Benvenuto in OrbitPage")}</h1>
             <p className="text-sm mt-1" style={{ color: "hsl(240 10% 62%)" }}>
-              Create an admin password to get started
+              {tr("Create an admin password to get started", "Crea una password amministratore per iniziare")}
             </p>
           </div>
         </div>
@@ -108,10 +104,9 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(260 75% 70%)" }} />
             </div>
             <p className="text-xs leading-relaxed" style={{ color: "hsl(240 15% 78%)" }}>
-              Credentials are stored locally with{" "}
-              <span className="font-semibold text-white">bcrypt hashing</span>.
-              Change the password anytime from the{" "}
-              <span style={{ color: "hsl(260 75% 72%)" }}>Security</span> tab.
+              {tr("Credentials are stored locally with", "Le credenziali sono conservate localmente con")} {" "}
+              <span className="font-semibold text-white">bcrypt hashing</span>. {" "}
+              {tr("Change the password anytime from the Security tab.", "Puoi cambiare la password in qualsiasi momento dalla sezione Sicurezza.")}
             </p>
           </div>
 
@@ -120,7 +115,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
             {/* Username (fixed) */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(240 10% 55%)" }}>
-                Username
+                {tr("Username", "Nome utente")}
               </Label>
               <div
                 className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm"
@@ -131,7 +126,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                   className="text-xs font-medium px-2 py-0.5 rounded-full"
                   style={{ background: "hsl(260 75% 65% / 0.18)", color: "hsl(260 75% 75%)" }}
                 >
-                  Fixed
+                  {tr("Fixed", "Fisso")}
                 </span>
               </div>
             </div>
@@ -141,7 +136,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider"
                        style={{ color: "hsl(240 10% 55%)" }}>
-                  Password
+                  {tr("Password", "Password")}
                 </Label>
                 <button
                   type="button"
@@ -152,7 +147,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                   onMouseLeave={e => (e.currentTarget.style.background = "hsl(260 75% 65% / 0.12)")}
                 >
                   <Sparkles className="w-3 h-3" />
-                  Generate
+                  {tr("Generate", "Genera")}
                 </button>
               </div>
               <div className="relative">
@@ -161,11 +156,11 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Choose a secure password"
+                  placeholder={tr("Choose a secure password", "Scegli una password sicura")}
                   required
                   minLength={8}
                   autoComplete="new-password"
-                  className="pr-10 text-sm h-11"
+                  className="pe-10 text-sm h-11"
                   style={{
                     background: "hsl(240 15% 16%)",
                     border: "1px solid hsl(240 15% 26%)",
@@ -174,7 +169,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute end-3 top-1/2 -translate-y-1/2"
                   style={{ color: "hsl(240 10% 52%)" }}
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
@@ -189,7 +184,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                   className="rounded-xl p-3.5 space-y-2 mt-1"
                   style={{ background: "hsl(240 15% 8%)", border: "1px solid hsl(240 15% 20%)" }}
                 >
-                  {REQUIREMENTS.map((req) => {
+                  {requirements.map((req) => {
                     const ok = req.test(password);
                     return (
                       <div key={req.label} className="flex items-center gap-2.5">
@@ -223,7 +218,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                         <Check className="w-2.5 h-2.5" style={{ color: "hsl(142 72% 50%)" }} />
                       </div>
                       <span className="text-xs font-semibold" style={{ color: "hsl(142 65% 60%)" }}>
-                        Strong password
+                        {tr("Strong password", "Password sicura")}
                       </span>
                     </div>
                   )}
@@ -235,7 +230,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
             <div className="space-y-1.5">
               <Label htmlFor="confirm-password" className="text-xs font-semibold uppercase tracking-wider"
                      style={{ color: "hsl(240 10% 55%)" }}>
-                Confirm Password
+                {tr("Confirm password", "Conferma password")}
               </Label>
               <div className="relative">
                 <Input
@@ -243,10 +238,10 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
+                  placeholder={tr("Confirm your password", "Conferma la password")}
                   required
                   autoComplete="new-password"
-                  className="pr-10 text-sm h-11 transition-all"
+                  className="pe-10 text-sm h-11 transition-all"
                   style={{
                     background: "hsl(240 15% 16%)",
                     border: confirmPassword.length === 0
@@ -259,7 +254,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  className="absolute end-3 top-1/2 -translate-y-1/2"
                   style={{ color: "hsl(240 10% 52%)" }}
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   tabIndex={-1}
@@ -271,8 +266,8 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                 <p className="flex items-center gap-1.5 text-xs"
                    style={{ color: passwordsMatch ? "hsl(142 65% 55%)" : "hsl(0 70% 62%)" }}>
                   {passwordsMatch
-                    ? <><Check className="w-3 h-3" /> Passwords match</>
-                    : <><X className="w-3 h-3" /> Passwords do not match</>
+                    ? <><Check className="w-3 h-3" /> {tr("Passwords match", "Le password coincidono")}</>
+                    : <><X className="w-3 h-3" /> {tr("Passwords do not match", "Le password non coincidono")}</>
                   }
                 </p>
               )}
@@ -306,12 +301,12 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Setting up…
+                  {tr("Setting up...", "Configurazione...")}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <Shield className="w-4 h-4" />
-                  Complete Setup
+                  {tr("Complete setup", "Completa configurazione")}
                 </span>
               )}
             </Button>
@@ -320,7 +315,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
 
         {/* Footer */}
         <p className="text-center text-xs mt-6" style={{ color: "hsl(240 10% 38%)" }}>
-          Powered by{" "}
+          {tr("Powered by", "Realizzato con")} {" "}
           <a
             href="https://github.com/paoloronco/OrbitPage"
             target="_blank"
@@ -332,7 +327,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
           >
             OrbitPage
           </a>
-          {" "}— Your self-hosted public page
+          {" - "}{tr("Your self-hosted public page", "La tua pagina pubblica self-hosted")}
         </p>
 
       </div>

@@ -64,6 +64,7 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 - Live preview while editing profile, links, content, and themes
 - Colors, typography, spacing, radius, borders, shadows, blur, and glow
 - Profile-card, avatar/logo, background image, video, and favicon controls
+- Editor localization in 14 languages, automatic browser-language detection, and Arabic RTL layout
 - Optional advanced CSS customization
 
 ### Publishing and discovery

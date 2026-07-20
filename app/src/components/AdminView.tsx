@@ -54,7 +54,7 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
 import type { AdminTab } from "@/lib/admin-navigation";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
-import { useAppI18n } from "@/lib/i18n";
+import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import { VersionHistory } from "./VersionHistory";
@@ -323,9 +323,8 @@ export const AdminView = ({
             <label className="admin-action flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700" title={tr("Language", "Lingua")}>
               <Languages className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only">{tr("Language", "Lingua")}</span>
-              <select className="bg-transparent py-1 outline-none" aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as "en" | "it")}>
-                <option value="en">EN</option>
-                <option value="it">IT</option>
+              <select className="bg-transparent py-1 outline-none" aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>
+                {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
               </select>
             </label>
             <Button
