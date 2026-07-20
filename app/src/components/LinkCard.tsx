@@ -37,6 +37,7 @@ import {
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
+import { useAppI18n } from "@/lib/i18n";
 
 export interface LinkData {
   id: string;
@@ -96,6 +97,7 @@ interface LinkCardProps {
   videoUploadsEnabled?: boolean;
   maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
+  health?: { status: 'healthy' | 'unreachable' | 'checking'; httpStatus: number | null; message: string };
 }
 
 export const LinkCard = ({
@@ -113,7 +115,9 @@ export const LinkCard = ({
   videoUploadsEnabled = true,
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
+  health,
 }: LinkCardProps) => {
+  const { tr } = useAppI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
@@ -470,6 +474,14 @@ export const LinkCard = ({
           <div className="pointer-events-auto absolute right-2 top-2 z-20">
             {renderAdminControls()}
           </div>
+          {health && <div className="mt-2 flex items-center gap-2 text-xs text-slate-500" title={health.message || undefined}>
+            <span className={`h-2 w-2 shrink-0 rounded-full ${health.status === 'healthy' ? 'bg-emerald-500' : health.status === 'unreachable' ? 'bg-red-500' : 'bg-slate-300'}`} aria-hidden="true" />
+            <span>{health.status === 'healthy'
+              ? tr('Link reachable', 'Link raggiungibile')
+              : health.status === 'unreachable'
+                ? `${tr('Link unreachable', 'Link non raggiungibile')}${health.httpStatus ? ` (${health.httpStatus})` : ''}`
+                : tr('Checking link', 'Verifica link')}</span>
+          </div>}
           {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime || isCta ? (
             <div className="mt-2 text-xs text-slate-500">
               {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
