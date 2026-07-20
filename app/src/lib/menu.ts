@@ -242,3 +242,22 @@ export function normalizeMenuCatalog(
 export function formatMenuPrice(priceMinor: number, currency: string, locale: string) {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(priceMinor / 100);
 }
+
+export function formatMenuPriceInput(priceMinor: number, locale: string) {
+  return new Intl.NumberFormat(locale, {
+    useGrouping: false,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(priceMinor / 100);
+}
+
+export function parseMenuPriceInput(value: string) {
+  const compact = value.trim().replace(/[\s\u00a0\u202f]/g, '');
+  if (!/^\d+(?:[.,]\d{0,2})?$/.test(compact)) return null;
+
+  const [whole, fraction = ''] = compact.replace(',', '.').split('.');
+  const priceMinor = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  return Number.isSafeInteger(priceMinor) && priceMinor >= 0 && priceMinor <= 10_000_000
+    ? priceMinor
+    : null;
+}

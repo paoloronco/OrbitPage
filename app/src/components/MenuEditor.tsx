@@ -13,7 +13,7 @@ import { MenuView } from '@/components/MenuView';
 import { optimizeImageForUpload } from '@/lib/image-upload';
 import { uploadApi } from '@/lib/api-client';
 import {
-  MENU_THEME_PRESETS, createDefaultMenu, normalizeMenuCatalog,
+  MENU_THEME_PRESETS, createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
   type MenuCatalog, type MenuItem, type MenuThemePreset, type MenuVenueType,
 } from '@/lib/menu';
 import { useAppI18n } from '@/lib/i18n';
@@ -68,6 +68,59 @@ function TagsInput({ value, onChange, placeholder }: { value: string[]; onChange
         const tags = parseTags(event.target.value);
         setInputValue(tags.join(', '));
         onChange(tags);
+      }}
+    />
+  );
+}
+
+function PriceInput({
+  value, locale, label, onChange,
+}: {
+  value: number;
+  locale: string;
+  label: string;
+  onChange: (priceMinor: number) => void;
+}) {
+  const [inputValue, setInputValue] = useState(() => formatMenuPriceInput(value, locale));
+  const focused = useRef(false);
+  const parsedValue = parseMenuPriceInput(inputValue);
+
+  useEffect(() => {
+    if (!focused.current) setInputValue(formatMenuPriceInput(value, locale));
+  }, [locale, value]);
+
+  const commit = () => {
+    focused.current = false;
+    const priceMinor = parseMenuPriceInput(inputValue);
+    if (priceMinor === null) {
+      setInputValue(formatMenuPriceInput(value, locale));
+      return;
+    }
+    onChange(priceMinor);
+    setInputValue(formatMenuPriceInput(priceMinor, locale));
+  };
+
+  return (
+    <Input
+      aria-label={label}
+      aria-invalid={inputValue !== '' && parsedValue === null}
+      inputMode="decimal"
+      type="text"
+      value={inputValue}
+      onFocus={() => { focused.current = true; }}
+      onChange={(event) => {
+        const nextValue = event.target.value;
+        setInputValue(nextValue);
+        const priceMinor = parseMenuPriceInput(nextValue);
+        if (priceMinor !== null) onChange(priceMinor);
+      }}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter') event.currentTarget.blur();
+        if (event.key === 'Escape') {
+          setInputValue(formatMenuPriceInput(value, locale));
+          event.currentTarget.blur();
+        }
       }}
     />
   );
@@ -281,7 +334,7 @@ export function MenuEditor({
                   </label>
                   <div className="min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
                     <div className="space-y-2"><Label>Name</Label><Input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} /></div>
-                    <div className="space-y-2"><Label>Price</Label><Input type="number" min="0" step="0.01" value={(item.priceMinor / 100).toFixed(2)} onChange={(e) => updateItem(item.id, { priceMinor: Math.max(0, Math.round(Number(e.target.value) * 100)) })} /></div>
+                    <div className="space-y-2"><Label>Price</Label><PriceInput value={item.priceMinor} locale={draft.locale} label="Product price" onChange={(priceMinor) => updateItem(item.id, { priceMinor })} /></div>
                   </div>
                   <Button variant="ghost" size="icon" title="Delete product" onClick={() => update((current) => ({ ...current, items: current.items.filter((candidate) => candidate.id !== item.id).map((candidate, position) => ({ ...candidate, position })) }))}><Trash2 className="h-4 w-4" /></Button>
                 </div>
@@ -302,8 +355,8 @@ export function MenuEditor({
                       <Input aria-label="Option name" placeholder="Glass, bottle, large" value={variant.name} onChange={(event) => updateItem(item.id, {
                         variants: item.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, name: event.target.value } : candidate),
                       })} />
-                      <div className="menu-variant-price"><span>{draft.currency}</span><Input aria-label="Option price" type="number" min="0" step="0.01" value={(variant.priceMinor / 100).toFixed(2)} onChange={(event) => updateItem(item.id, {
-                        variants: item.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, priceMinor: Math.max(0, Math.round(Number(event.target.value) * 100)) } : candidate),
+                      <div className="menu-variant-price"><span>{draft.currency}</span><PriceInput value={variant.priceMinor} locale={draft.locale} label="Option price" onChange={(priceMinor) => updateItem(item.id, {
+                        variants: item.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, priceMinor } : candidate),
                       })} /></div>
                       <Button type="button" variant="ghost" size="icon" title="Delete option" onClick={() => updateItem(item.id, { variants: item.variants.filter((candidate) => candidate.id !== variant.id) })}><Trash2 className="h-4 w-4" /></Button>
                     </div>

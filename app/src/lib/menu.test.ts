@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultMenu, normalizeMenuCatalog } from './menu';
+import {
+  createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
+} from './menu';
 
 describe('menu catalog normalization', () => {
   it('preserves an in-progress space while editing menu text', () => {
@@ -46,5 +48,30 @@ describe('menu catalog normalization', () => {
     expect(persisted.name).toBe('Dinner menu');
     expect(persisted.items[0].name).toBe('Pasta al pomodoro');
     expect(persisted.items[0].description).toBe('Tomato, basil and olive oil');
+  });
+});
+
+describe('menu price input', () => {
+  it.each([
+    ['12', 1200],
+    ['12,5', 1250],
+    ['12,50', 1250],
+    ['12.50', 1250],
+    ['0,09', 9],
+    ['12,', 1200],
+  ])('parses %s into integer cents', (value, expected) => {
+    expect(parseMenuPriceInput(value)).toBe(expected);
+  });
+
+  it.each(['', '-1', '12,345', '12.3.4', 'free', '100000,01'])(
+    'rejects invalid price %s',
+    (value) => {
+      expect(parseMenuPriceInput(value)).toBeNull();
+    },
+  );
+
+  it('formats the editable value using the menu locale', () => {
+    expect(formatMenuPriceInput(1250, 'it-IT')).toBe('12,50');
+    expect(formatMenuPriceInput(1250, 'en-GB')).toBe('12.50');
   });
 });
