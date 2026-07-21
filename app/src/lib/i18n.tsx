@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { getHostedThemeRoot, isIntegratedHostedSurface } from "./hosted-surface";
 
 export const APP_LOCALES = ["en", "it", "es", "fr", "de", "pt", "nl", "pl", "tr", "ru", "ar", "zh", "ja", "ko"] as const;
 export type AppLocale = typeof APP_LOCALES[number];
@@ -109,8 +110,9 @@ export function AppI18nProvider({ children, mode = "editor" }: { children: React
   }, [mode]);
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = RTL_APP_LOCALES.has(locale) ? "rtl" : "ltr";
+    const root = isIntegratedHostedSurface() ? getHostedThemeRoot() : document.documentElement;
+    root.lang = locale;
+    root.dir = RTL_APP_LOCALES.has(locale) ? "rtl" : "ltr";
   }, [locale]);
 
   const tr = useCallback((english: string, italian: string) => {

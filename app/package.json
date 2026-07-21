@@ -1,12 +1,13 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.9.2",
+  "version": "4.10.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "build:hosted": "cross-env VITE_ORBITPAGE_HOSTED_MODE=true vite build",
+    "build:hosted-library": "vite build --config vite.hosted.config.ts",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "test": "vitest",

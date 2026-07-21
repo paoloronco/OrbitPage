@@ -15,6 +15,7 @@ vi.mock('@/lib/config', () => ({
 }));
 
 vi.mock('@/lib/api-client', () => ({
+  isIntegratedHostedSurface: () => false,
   isSaasMode: () => false,
   utilityApi: {
     getHealth: vi.fn(),

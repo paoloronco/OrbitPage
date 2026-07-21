@@ -9,6 +9,7 @@ node_modules/
 
 # Build outputs
 dist/
+app/dist-hosted/
 build/
 *.tsbuildinfo
 

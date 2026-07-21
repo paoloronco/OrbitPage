@@ -1,3 +1,5 @@
+import { getHostedThemeRoot, isIntegratedHostedSurface } from './hosted-surface';
+
 export interface BackgroundMediaConfig {
   type: 'color' | 'gradient' | 'video' | 'gif';
   mediaUrl?: string;
@@ -554,12 +556,18 @@ export const getContentCardVariantCssVariables = (theme: ThemeConfig, index: num
 
 // Apply theme for public view (affects the entire page)
 export const applyTheme = (theme: ThemeConfig) => {
-  const root = document.documentElement;
+  const root = getHostedThemeRoot();
+  const integrated = isIntegratedHostedSurface();
   const variables = getThemeCssVariables(theme);
 
   Object.entries(variables).forEach(([property, value]) => {
     root.style.setProperty(property, value);
   });
+
+  if (integrated) {
+    root.style.setProperty('--glassmorphism', theme.backgroundMedia?.glassmorphism ? '1' : '0');
+    return;
+  }
 
   document.body.style.fontFamily = theme.fontFamily;
 
@@ -569,11 +577,11 @@ export const applyTheme = (theme: ThemeConfig) => {
     // Body must be transparent so the fixed video shows through.
     // <html> carries the dark fallback while the media loads.
     root.style.setProperty('--gradient-background', 'transparent');
-    document.documentElement.style.background = theme.background;
+    root.style.background = theme.background;
     document.body.style.background = 'transparent';
     document.body.style.backgroundColor = 'transparent';
   } else {
-    document.documentElement.style.background = '';
+    root.style.background = '';
     document.body.style.backgroundColor = '';
     if (bgType === 'color') {
       document.body.style.background = theme.background;
@@ -588,7 +596,8 @@ export const applyTheme = (theme: ThemeConfig) => {
 
 // Apply admin theme (maintains consistent admin styling)
 export const applyAdminTheme = () => {
-  const root = document.documentElement;
+  const root = getHostedThemeRoot();
+  const integrated = isIntegratedHostedSurface();
   
   // Consistent admin theme — dark slate + electric blue
   const adminTheme = {
@@ -639,7 +648,7 @@ export const applyAdminTheme = () => {
   
   // Apply admin typography
   root.style.setProperty('--font-family', 'Inter, system-ui, sans-serif');
-  document.body.style.fontFamily = 'Inter, system-ui, sans-serif';
+  (integrated ? root : document.body).style.fontFamily = 'Inter, system-ui, sans-serif';
   
   // Apply admin layout
   root.style.setProperty('--radius', '12px');
@@ -651,5 +660,5 @@ export const applyAdminTheme = () => {
   root.style.setProperty('--glass-border', `1px solid hsl(${hexToHsl(adminTheme.border)} / 0.5)`);
   
   // Force body background update for admin
-  document.body.style.background = `linear-gradient(${adminTheme.backgroundGradient.direction}, ${adminTheme.backgroundGradient.from}, ${adminTheme.backgroundGradient.to})`;
+  (integrated ? root : document.body).style.background = `linear-gradient(${adminTheme.backgroundGradient.direction}, ${adminTheme.backgroundGradient.from}, ${adminTheme.backgroundGradient.to})`;
 };

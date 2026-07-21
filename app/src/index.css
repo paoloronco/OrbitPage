@@ -384,6 +384,30 @@
     padding: clamp(12px, 2vw, 24px);
   }
 
+  .orbitpage-admin.admin-integrated-surface {
+    min-height: 0;
+    background: transparent;
+  }
+
+  .admin-integrated-surface .admin-app-shell {
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .admin-integrated-surface .admin-metrics {
+    margin-top: 0;
+  }
+
+  .admin-integrated-surface .admin-integrated-tabs {
+    margin-top: 12px;
+  }
+
+  .admin-integrated-surface .admin-tab-stage {
+    padding-bottom: 24px;
+  }
+
   .admin-dashboard-shell {
     display: grid;
     grid-template-columns: 260px minmax(0, 1fr);

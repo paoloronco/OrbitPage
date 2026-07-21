@@ -50,7 +50,7 @@ import { TextFileManager } from "./TextFileManager";
 import { SitemapManager } from "./SitemapManager";
 import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
-import { isSaasMode, utilityApi } from "@/lib/api-client";
+import { isIntegratedHostedSurface, isSaasMode, utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
@@ -188,6 +188,7 @@ export const AdminView = ({
     saasBilling ||
     (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("apiBase"))
   );
+  const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const isProspectReadOnly = currentUser?.readOnly === true;
 
   useEffect(() => {
@@ -351,7 +352,7 @@ export const AdminView = ({
   };
 
   return (
-    <div className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : ""}`}>
+    <div className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : isIntegratedHostedAdmin ? " admin-integrated-surface" : ""}`}>
       {!isHostedAdmin && (
         <aside className="admin-dashboard-sidebar">
           <div className="admin-dashboard-logo-row">
@@ -412,7 +413,7 @@ export const AdminView = ({
       )}
 
       <div className={isHostedAdmin ? "admin-app-shell" : "admin-dashboard-main"}>
-        {isHostedAdmin ? <header className="admin-topbar">
+        {isHostedAdmin && !isIntegratedHostedAdmin ? <header className="admin-topbar">
           <div className="admin-heading min-w-0">
             <OrbitPageBrand showName={false} size="md" />
             <div className="min-w-0">
@@ -450,7 +451,7 @@ export const AdminView = ({
               </Button>
             )}
           </div>
-        </header> : <header className="admin-dashboard-header">
+        </header> : !isHostedAdmin ? <header className="admin-dashboard-header">
           <div>
             <p className="admin-dashboard-kicker">{tr("Self-hosted workspace", "Workspace self-hosted")}</p>
             <div className="admin-dashboard-heading-row">
@@ -473,7 +474,7 @@ export const AdminView = ({
               </Button>
             </a>
           </div>
-        </header>}
+        </header> : null}
 
         {isProspectReadOnly && (
           <section className="admin-readonly-banner" role="status">
@@ -516,8 +517,8 @@ export const AdminView = ({
           )}
         </section>
 
-        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin ? "mt-5 flex-1" : "admin-dashboard-tabs flex-1"}>
-          {isHostedAdmin && <div className="admin-nav-shell">
+        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin && !isIntegratedHostedAdmin ? "mt-5 flex-1" : isIntegratedHostedAdmin ? "admin-integrated-tabs flex-1" : "admin-dashboard-tabs flex-1"}>
+          {isHostedAdmin && !isIntegratedHostedAdmin && <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
               {visibleTabs.map(({ value, icon: Icon }) => (
                 <TabsTrigger key={value} value={value} className="admin-tab" data-onboarding={`${value}-tab`}>

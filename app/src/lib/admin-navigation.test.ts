@@ -14,7 +14,7 @@ describe("admin navigation", () => {
     expect(adminTabFromLocation("/orbitpage/dashboard/theme")).toBe("theme");
   });
 
-  it("keeps the hosted query bridge and legacy admin route compatible", () => {
+  it("keeps the hosted surface and legacy admin route compatible", () => {
     expect(adminTabFromLocation("/admin", "?section=analytics")).toBe("analytics");
     expect(adminTabFromLocation("/admin/privacy")).toBe("privacy");
     expect(adminTabFromLocation("/admin", "?section=unknown")).toBe("profile");
@@ -32,7 +32,7 @@ describe("admin navigation", () => {
     expect(isAdminTab("billing")).toBe(false);
   });
 
-  it("validates iframe navigation messages", () => {
+  it("validates hosted navigation messages", () => {
     expect(isAdminSectionMessage(
       { type: ADMIN_SECTION_CHANGED_MESSAGE, section: "links" },
       ADMIN_SECTION_CHANGED_MESSAGE,

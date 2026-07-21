@@ -7,7 +7,7 @@ import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, workspaceBootstrapApi, type SubpageItem } from "@/lib/api-client";
+import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, isIntegratedHostedSurface, workspaceBootstrapApi, type SubpageItem } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
@@ -25,6 +25,7 @@ import {
   type AdminTab,
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
+import { HOSTED_SECTION_CHANGED_EVENT, HOSTED_SECTION_NAVIGATE_EVENT } from "@/lib/hosted-surface";
 
 interface ProfileData {
   name: string;
@@ -68,7 +69,8 @@ const Admin = () => {
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
-  const hostedFrame = typeof window !== "undefined" && isSaasMode() && window.self !== window.top;
+  const integratedHostedSurface = isIntegratedHostedSurface();
+  const hostedSurface = typeof window !== "undefined" && isSaasMode() && (window.self !== window.top || integratedHostedSurface);
   const locationTab = adminTabFromLocation(location.pathname, location.search);
   const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -96,16 +98,26 @@ const Admin = () => {
   const [saasUsage, setSaasUsage] = useState<SaasWorkspaceUsage | null>(null);
   const [saasBilling, setSaasBilling] = useState<SaasBillingContext | null>(null);
 
-  const requestedTab = hostedFrame ? hostedTab : locationTab;
+  const requestedTab = hostedSurface ? hostedTab : locationTab;
 
   useEffect(() => {
-    if (hostedFrame) return;
+    if (hostedSurface) return;
     const expectedPath = adminDashboardPath(locationTab);
     if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
-  }, [hostedFrame, location.pathname, locationTab, navigate]);
+  }, [hostedSurface, location.pathname, locationTab, navigate]);
 
   useEffect(() => {
-    if (!hostedFrame) return;
+    if (!hostedSurface) return;
+    if (integratedHostedSurface) {
+      const receiveNavigation = (event: Event) => {
+        const detail = (event as CustomEvent<{ section?: unknown }>).detail;
+        if (isAdminSectionMessage({ type: ADMIN_SECTION_NAVIGATE_MESSAGE, section: detail?.section }, ADMIN_SECTION_NAVIGATE_MESSAGE)) {
+          setHostedTab(detail.section as AdminTab);
+        }
+      };
+      window.addEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
+      return () => window.removeEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
+    }
     const receiveNavigation = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== window.parent) return;
       if (isAdminSectionMessage(event.data, ADMIN_SECTION_NAVIGATE_MESSAGE)) {
@@ -114,11 +126,15 @@ const Admin = () => {
     };
     window.addEventListener("message", receiveNavigation);
     return () => window.removeEventListener("message", receiveNavigation);
-  }, [hostedFrame]);
+  }, [hostedSurface, integratedHostedSurface]);
 
   const handleTabChange = (tab: AdminTab) => {
-    if (hostedFrame) {
+    if (hostedSurface) {
       setHostedTab(tab);
+      if (integratedHostedSurface) {
+        window.dispatchEvent(new CustomEvent(HOSTED_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
+        return;
+      }
       window.parent.postMessage(
         { type: ADMIN_SECTION_CHANGED_MESSAGE, section: tab },
         window.location.origin,
@@ -139,7 +155,7 @@ const Admin = () => {
 
       // The SaaS editor is an authenticated dashboard surface, never a second
       // login destination. Standalone visits return to the Firebase dashboard.
-      if (isHostedRuntime() && window.self === window.top) {
+      if (isHostedRuntime() && window.self === window.top && !integratedHostedSurface) {
         window.location.replace('/dashboard/profile');
         return;
       }
@@ -191,7 +207,7 @@ const Admin = () => {
       setIsLoading(false);
     };
     checkAuth();
-  }, []);
+  }, [integratedHostedSurface]);
 
   // Load data from database and apply theme
   useEffect(() => {

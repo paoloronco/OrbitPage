@@ -1,5 +1,6 @@
 import { apiPath, getActiveBasePath } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
+import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
 
 // --- Secure token storage (AES-GCM via Web Crypto with sessionStorage fallback) ---
 //
@@ -23,7 +24,7 @@ export const isHostedRuntime = (): boolean =>
 
 export const getSaasApiBase = (): string | null => {
   if (typeof window === 'undefined') return null;
-  const value = new URLSearchParams(window.location.search).get('apiBase');
+  const value = getHostedSurfaceConfig()?.apiBase || new URLSearchParams(window.location.search).get('apiBase');
   if (!value) return null;
   const resolved = resolveSafeBrowserHttpUrl(value, window.location.href);
   if (!resolved) return null;
@@ -36,9 +37,11 @@ export const getSaasApiBase = (): string | null => {
 
 export const isSaasMode = (): boolean => isHostedRuntime() || Boolean(getSaasApiBase());
 
+export { isIntegratedHostedSurface };
+
 const getSaasPublicSlug = (): string | null => {
   if (typeof window === 'undefined') return null;
-  const value = new URLSearchParams(window.location.search).get('publicSlug');
+  const value = getHostedSurfaceConfig()?.publicSlug || new URLSearchParams(window.location.search).get('publicSlug');
   return value ? value.trim() : null;
 };
 
