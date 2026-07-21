@@ -155,6 +155,9 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('admin-metrics-saas');
     expect(html).not.toContain('admin-dashboard-sidebar');
     expect(html).not.toContain('data-onboarding="public-page"');
+    expect(html).toContain('data-testid="managed-analytics"');
+    expect(html).toContain('data-testid="google-analytics-settings"');
+    expect(html).toContain('id="ga-id"');
   });
 
   it('marks prospect sessions as read-only while keeping the hosted sections visible', () => {

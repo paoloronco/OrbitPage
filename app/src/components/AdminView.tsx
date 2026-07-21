@@ -454,6 +454,60 @@ export const AdminView = ({
     setOnboardingThemeSaved(true);
   };
 
+  const googleAnalyticsPanel = (!saasPlan || entitlements?.analytics === "advanced-ga4") ? (
+    <Card className="admin-panel space-y-5" data-testid="google-analytics-settings">
+      <PanelHeader icon={Globe2} title="Google Analytics 4" />
+      <p className="text-sm leading-6 text-slate-600">
+        {tr("Tracking runs on the public page only. Admin activity stays out of analytics.", "Il monitoraggio viene eseguito solo sulla pagina pubblica. L'attività nell'Admin resta esclusa dalle analytics.")}
+      </p>
+
+      <div className="space-y-2">
+        <Label htmlFor="ga-id" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          {tr("Measurement ID", "ID di misurazione")}
+        </Label>
+        <Input
+          id="ga-id"
+          value={gaId}
+          onChange={(event) => setGaId(event.target.value)}
+          placeholder="G-XXXXXXXXXX"
+          className="admin-input font-mono text-sm"
+          spellCheck={false}
+        />
+        <p className="text-xs leading-5 text-slate-500">
+          {tr("Find it in Google Analytics, Admin, Data streams, Measurement ID.", "Lo trovi in Google Analytics, Amministrazione, Stream di dati, ID misurazione.")}
+        </p>
+      </div>
+
+      {gaId && !gaId.match(/^G-[A-Z0-9]+$/i) && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {tr("The ID must start with G- and use only letters and numbers.", "L'ID deve iniziare con G- e contenere solo lettere e numeri.")}
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          onClick={handleSaveIntegrations}
+          className="admin-action admin-action-primary"
+          size="sm"
+          disabled={!canEditProfile || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
+        >
+          {gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
+        </Button>
+        {profile.googleAnalyticsId && (
+          <p className="text-xs text-slate-500">
+            {tr("Active", "Attivo")}: <span className="font-mono text-blue-700">{profile.googleAnalyticsId}</span>
+          </p>
+        )}
+      </div>
+    </Card>
+  ) : (
+    <PlanLockedFeature
+      title="Google Analytics 4"
+      description={tr("Connect a GA4 Measurement ID with the Pro plan.", "Collega un ID di misurazione GA4 con il piano Pro.")}
+      managePlanHref={managePlanHref}
+    />
+  );
+
   return (
     <div className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : isIntegratedHostedAdmin ? " admin-integrated-surface" : ""}`}>
       {!isHostedAdmin && (
@@ -891,98 +945,49 @@ export const AdminView = ({
           )}
 
           <TabsContent value="analytics" className="admin-tab-content">
-            {isHostedAdmin ? <ManagedAnalyticsDashboard /> : <div className="admin-analytics-grid">
-              <section className="admin-panel" data-onboarding="analytics-section">
-                <PanelHeader icon={BarChart2} title={tr("Click analytics", "Analytics dei clic")} />
-                <div className="mb-5 grid grid-cols-2 gap-3">
-                  <StatusTile label={tr("Total clicks", "Clic totali")} value={String(metrics.totalClicks)} />
-                  <StatusTile label={tr("Tracked items", "Elementi monitorati")} value={String(metrics.totalLinks)} />
-                  <StatusTile label={tr("CTA clicks", "Clic sulle CTA")} value={String(metrics.ctaClicks)} />
-                  <StatusTile label={tr("Smart CTAs", "CTA intelligenti")} value={String(metrics.ctaLinks)} />
-                </div>
-                {(!saasPlan || entitlements?.analytics !== "basic-clicks") ? (
-                  <ClickAnalyticsChart links={links} />
-                ) : (
-                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                    {tr("Free includes basic click totals. Trends and per-block comparisons unlock on Starter.", "Free include i totali di base dei clic. Trend e confronti per blocco si sbloccano con Starter.")}
-                  </p>
-                )}
-                {(!saasPlan || entitlements?.analytics !== "basic-clicks") && <div className="mt-6 border-t border-slate-200 pt-5">
-                  <PanelHeader icon={MousePointerClick} title={tr("CTA performance", "Prestazioni CTA")} />
-                  {metrics.ctaPerformance.length > 0 ? (
-                    <div className="space-y-2">
-                      {metrics.ctaPerformance.map((link) => (
-                        <div key={link.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-950">{link.title || tr('Untitled CTA', 'CTA senza titolo')}</p>
-                            <p className="text-xs text-slate-500">{ctaActionLabels[link.ctaAction || 'book']}</p>
-                          </div>
-                          <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                            {link.ctaClicks ?? 0} {tr("clicks", "clic")}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+            <div className="admin-analytics-grid">
+              {isHostedAdmin ? <ManagedAnalyticsDashboard /> : (
+                <section className="admin-panel" data-onboarding="analytics-section">
+                  <PanelHeader icon={BarChart2} title={tr("Click analytics", "Analytics dei clic")} />
+                  <div className="mb-5 grid grid-cols-2 gap-3">
+                    <StatusTile label={tr("Total clicks", "Clic totali")} value={String(metrics.totalClicks)} />
+                    <StatusTile label={tr("Tracked items", "Elementi monitorati")} value={String(metrics.totalLinks)} />
+                    <StatusTile label={tr("CTA clicks", "Clic sulle CTA")} value={String(metrics.ctaClicks)} />
+                    <StatusTile label={tr("Smart CTAs", "CTA intelligenti")} value={String(metrics.ctaLinks)} />
+                  </div>
+                  {(!saasPlan || entitlements?.analytics !== "basic-clicks") ? (
+                    <ClickAnalyticsChart links={links} />
                   ) : (
-                    <p className="text-sm leading-6 text-slate-600">
-                      {tr("Smart CTA clicks will appear here separately from normal link clicks.", "I clic sulle CTA intelligenti compariranno qui separati dai clic sui link normali.")}
+                    <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                      {tr("Free includes basic click totals. Trends and per-block comparisons unlock on Starter.", "Free include i totali di base dei clic. Trend e confronti per blocco si sbloccano con Starter.")}
                     </p>
                   )}
-                </div>}
-              </section>
-
-              {(!saasPlan || entitlements?.analytics === "advanced-ga4") ? <Card className="admin-panel space-y-5">
-                <PanelHeader icon={Globe2} title="Google Analytics 4" />
-                <p className="text-sm leading-6 text-slate-600">
-                  {tr("Tracking runs on the public page only. Admin activity stays out of analytics.", "Il monitoraggio viene eseguito solo sulla pagina pubblica. L'attività nell'Admin resta esclusa dalle analytics.")}
-                </p>
-
-                <div className="space-y-2">
-                  <Label htmlFor="ga-id" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                    ID di misurazione
-                  </Label>
-                  <Input
-                    id="ga-id"
-                    value={gaId}
-                    onChange={(e) => setGaId(e.target.value)}
-                    placeholder="G-XXXXXXXXXX"
-                    className="admin-input font-mono text-sm"
-                    spellCheck={false}
-                  />
-                  <p className="text-xs leading-5 text-slate-500">
-                    {tr("Find it in Google Analytics, Admin, Data streams, Measurement ID.", "Lo trovi in Google Analytics, Amministrazione, Stream di dati, ID misurazione.")}
-                  </p>
-                </div>
-
-                {gaId && !gaId.match(/^G-[A-Z0-9]+$/i) && (
-                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                    {tr("The ID must start with G- and use only letters and numbers.", "L'ID deve iniziare con G- e contenere solo lettere e numeri.")}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button
-                    onClick={handleSaveIntegrations}
-                    className="admin-action admin-action-primary"
-                    size="sm"
-                    disabled={!canEditProfile || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
-                  >
-                    {gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
-                  </Button>
-                  {profile.googleAnalyticsId && (
-                    <p className="text-xs text-slate-500">
-                      {tr("Active", "Attivo")}: <span className="font-mono text-blue-700">{profile.googleAnalyticsId}</span>
-                    </p>
-                  )}
-                </div>
-              </Card> : (
-                <PlanLockedFeature
-                  title="Google Analytics 4"
-                  description={tr("Connect a GA4 Measurement ID with the Pro plan.", "Collega un ID di misurazione GA4 con il piano Pro.")}
-                  managePlanHref={managePlanHref}
-                />
+                  {(!saasPlan || entitlements?.analytics !== "basic-clicks") && <div className="mt-6 border-t border-slate-200 pt-5">
+                    <PanelHeader icon={MousePointerClick} title={tr("CTA performance", "Prestazioni CTA")} />
+                    {metrics.ctaPerformance.length > 0 ? (
+                      <div className="space-y-2">
+                        {metrics.ctaPerformance.map((link) => (
+                          <div key={link.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-950">{link.title || tr('Untitled CTA', 'CTA senza titolo')}</p>
+                              <p className="text-xs text-slate-500">{ctaActionLabels[link.ctaAction || 'book']}</p>
+                            </div>
+                            <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                              {link.ctaClicks ?? 0} {tr("clicks", "clic")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm leading-6 text-slate-600">
+                        {tr("Smart CTA clicks will appear here separately from normal link clicks.", "I clic sulle CTA intelligenti compariranno qui separati dai clic sui link normali.")}
+                      </p>
+                    )}
+                  </div>}
+                </section>
               )}
-            </div>}
+              {googleAnalyticsPanel}
+            </div>
           </TabsContent>
 
           <TabsContent value="privacy" className="admin-tab-content">
