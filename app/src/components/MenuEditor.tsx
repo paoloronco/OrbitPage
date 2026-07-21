@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { MenuView } from '@/components/MenuView';
 import { optimizeImageForUpload } from '@/lib/image-upload';
 import { uploadApi } from '@/lib/api-client';
 import {
@@ -310,7 +309,7 @@ export function MenuEditor({
   }
 
   return (
-    <div className="menu-editor-layout">
+    <div className="menu-editor-stack">
       <div className="menu-editor-main space-y-5">
         <section className="admin-panel menu-editor-intro">
           <div>
@@ -460,11 +459,6 @@ export function MenuEditor({
           </div>
         </section>
       </div>
-
-      <aside className="menu-editor-preview">
-        <div className="menu-editor-preview__label"><span>{tr("Menu preview", "Anteprima menu")}</span><small>{tr("Updates before saving", "Si aggiorna prima del salvataggio")}</small></div>
-        <div className="menu-editor-preview__device"><div className="menu-editor-preview__island" /><div className="menu-editor-preview__screen"><MenuView menu={draft} embedded pageHref="#" /></div></div>
-      </aside>
     </div>
   );
 }

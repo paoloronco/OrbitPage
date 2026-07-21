@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Monitor, Smartphone } from "lucide-react";
 import { BackgroundLayer } from "./BackgroundLayer";
 import { PublicView } from "./PublicView";
@@ -42,6 +42,37 @@ interface LivePreviewProps {
 }
 
 export type PreviewDevice = "mobile" | "desktop";
+
+export function PreviewDeviceFrame({
+  device,
+  publicPageHref = "/",
+  children,
+}: {
+  device: PreviewDevice;
+  publicPageHref?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`admin-preview-device admin-preview-device--${device}`} data-preview-device={device}>
+      <div className="admin-preview-device__hardware">
+        {device === "mobile" ? (
+          <>
+            <span className="admin-preview-device__side-button admin-preview-device__side-button--one" />
+            <span className="admin-preview-device__side-button admin-preview-device__side-button--two" />
+            <span className="admin-preview-device__island"><i /></span>
+          </>
+        ) : (
+          <div className="admin-preview-device__browser-bar" aria-hidden="true">
+            <span><i /><i /><i /></span>
+            <b>{publicPageHref.replace(/^https?:\/\//, "").replace(/\/$/, "") || "Public preview"}</b>
+          </div>
+        )}
+        <div className="admin-preview-device__screen">{children}</div>
+      </div>
+      {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
+    </div>
+  );
+}
 
 export function PreviewDeviceToggle({
   value,
@@ -93,53 +124,36 @@ export const LivePreview = ({
   const previewThemeVars = getThemeCssVariables(theme) as CSSProperties;
 
   return (
-    <div className={`admin-preview-device admin-preview-device--${device}`} data-preview-device={device}>
-      <div className="admin-preview-device__hardware">
-        {device === "mobile" ? (
-          <>
-            <span className="admin-preview-device__side-button admin-preview-device__side-button--one" />
-            <span className="admin-preview-device__side-button admin-preview-device__side-button--two" />
-            <span className="admin-preview-device__island"><i /></span>
-          </>
-        ) : (
-          <div className="admin-preview-device__browser-bar" aria-hidden="true">
-            <span><i /><i /><i /></span>
-            <b>{publicPageHref.replace(/^https?:\/\//, "").replace(/\/$/, "") || "Public preview"}</b>
-          </div>
-        )}
-        <div className="admin-preview-device__screen">
-          <div className="admin-live-preview relative overflow-hidden bg-white">
-            <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
-              <div
-                className="admin-live-preview__page relative isolate min-h-full overflow-hidden"
-                style={{
-                  ...previewThemeVars,
-                  background: previewBackground,
-                  color: theme.foreground,
-                  fontFamily: theme.fontFamily,
-                }}
-              >
-                {(bgType === "video" || bgType === "gif") && theme.backgroundMedia?.mediaUrl && (
-                  <BackgroundLayer config={theme.backgroundMedia} mode="container" />
-                )}
-                <div className="relative z-[1] min-h-full">
-                  <PublicView
-                    profile={profile}
-                    links={links}
-                    theme={theme}
-                    footerText={profile.footerText}
-                    privacyPolicyUrl={profile.privacyPolicyUrl || "/privacy"}
-                    cookiePolicyUrl={profile.cookiePolicyUrl || "/cookies"}
-                    showOrbitPageBadge={showOrbitPageBadge}
-                    embedded
-                  />
-                </div>
-              </div>
+    <PreviewDeviceFrame device={device} publicPageHref={publicPageHref}>
+      <div className="admin-live-preview relative overflow-hidden bg-white">
+        <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
+          <div
+            className="admin-live-preview__page relative isolate min-h-full overflow-hidden"
+            style={{
+              ...previewThemeVars,
+              background: previewBackground,
+              color: theme.foreground,
+              fontFamily: theme.fontFamily,
+            }}
+          >
+            {(bgType === "video" || bgType === "gif") && theme.backgroundMedia?.mediaUrl && (
+              <BackgroundLayer config={theme.backgroundMedia} mode="container" />
+            )}
+            <div className="relative z-[1] min-h-full">
+              <PublicView
+                profile={profile}
+                links={links}
+                theme={theme}
+                footerText={profile.footerText}
+                privacyPolicyUrl={profile.privacyPolicyUrl || "/privacy"}
+                cookiePolicyUrl={profile.cookiePolicyUrl || "/cookies"}
+                showOrbitPageBadge={showOrbitPageBadge}
+                embedded
+              />
             </div>
           </div>
         </div>
       </div>
-      {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
-    </div>
+    </PreviewDeviceFrame>
   );
 };

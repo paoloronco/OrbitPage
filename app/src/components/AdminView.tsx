@@ -3,6 +3,7 @@ import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { MenuEditor } from "./MenuEditor";
+import { MenuView } from "./MenuView";
 import { LinkData } from "./LinkCard";
 import { ClickAnalyticsChart } from "./ClickAnalyticsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,7 +50,7 @@ import { TwoFactorManager } from "./TwoFactorManager";
 import { TextFileManager } from "./TextFileManager";
 import { SitemapManager } from "./SitemapManager";
 import { AdminOnboarding } from "./AdminOnboarding";
-import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
+import { LivePreview, PreviewDeviceFrame, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
@@ -188,6 +189,7 @@ export const AdminView = ({
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
+  const [previewMenu, setPreviewMenu] = useState(menu);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
@@ -233,6 +235,10 @@ export const AdminView = ({
   useEffect(() => {
     setPreviewLinks(links);
   }, [links]);
+
+  useEffect(() => {
+    setPreviewMenu(menu);
+  }, [menu]);
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
@@ -705,33 +711,41 @@ export const AdminView = ({
               )}
 
               {contentSection === "menu" && (
-                <div className="content-workspace-section">
-                  {(!saasPlan || entitlements?.nativeMenu === true) && !menu.enabled && (
-                    <section className="content-activation-panel">
-                      <span className="content-workspace-option-icon"><UtensilsCrossed aria-hidden="true" /></span>
-                      <div><strong>{tr("Activate the native menu", "Attiva il menu nativo")}</strong><p>{tr("It will be published at /menu. You can configure it before or after activation.", "Sarà pubblicato su /menu. Puoi configurarlo prima o dopo l'attivazione.")}</p></div>
-                      <Button onClick={() => void activateMenu()} disabled={menuActivationBusy || linkEditMode === "view"}>{menuActivationBusy ? tr("Activating…", "Attivazione…") : tr("Activate menu", "Attiva menu")}</Button>
-                    </section>
-                  )}
-                  {menuActivationError && <p className="content-workspace-error" role="alert">{menuActivationError}</p>}
-                  <MenuEditor
-                    menu={menu}
-                    publicPageHref={publicPageHref}
-                    enabled={!saasPlan || entitlements?.nativeMenu === true}
-                    maxItems={entitlements?.maxMenuItems ?? null}
-                    planName={saasPlan?.name}
-                    advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
-                    onSave={onMenuUpdate}
-                    onPreview={() => undefined}
-                    onAddMenuLink={async () => {
-                      const menuLink = createNativeMenuLink(publicPageHref, {
-                        title: tr('View menu', 'Vedi il menu'),
-                        description: tr('Browse food and drinks', 'Scopri piatti e bevande'),
-                      });
-                      const exists = links.some(isNativeMenuLink);
-                      await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? 'append' : 'prepend'));
-                    }}
-                  />
+                <div className="admin-content-grid admin-content-grid-wide">
+                  <div className="admin-main-column content-workspace-section">
+                    {(!saasPlan || entitlements?.nativeMenu === true) && !menu.enabled && (
+                      <section className="content-activation-panel">
+                        <span className="content-workspace-option-icon"><UtensilsCrossed aria-hidden="true" /></span>
+                        <div><strong>{tr("Activate the native menu", "Attiva il menu nativo")}</strong><p>{tr("It will be published at /menu. You can configure it before or after activation.", "Sarà pubblicato su /menu. Puoi configurarlo prima o dopo l'attivazione.")}</p></div>
+                        <Button onClick={() => void activateMenu()} disabled={menuActivationBusy || linkEditMode === "view"}>{menuActivationBusy ? tr("Activating…", "Attivazione…") : tr("Activate menu", "Attiva menu")}</Button>
+                      </section>
+                    )}
+                    {menuActivationError && <p className="content-workspace-error" role="alert">{menuActivationError}</p>}
+                    <MenuEditor
+                      menu={menu}
+                      publicPageHref={publicPageHref}
+                      enabled={!saasPlan || entitlements?.nativeMenu === true}
+                      maxItems={entitlements?.maxMenuItems ?? null}
+                      planName={saasPlan?.name}
+                      advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
+                      onSave={onMenuUpdate}
+                      onPreview={setPreviewMenu}
+                      onAddMenuLink={async () => {
+                        const menuLink = createNativeMenuLink(publicPageHref, {
+                          title: tr('View menu', 'Vedi il menu'),
+                          description: tr('Browse food and drinks', 'Scopri piatti e bevande'),
+                        });
+                        const exists = links.some(isNativeMenuLink);
+                        await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? 'append' : 'prepend'));
+                      }}
+                    />
+                  </div>
+                  <aside className="admin-workbench-rail">
+                    <MenuPreviewPanel
+                      menu={previewMenu}
+                      publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}
+                    />
+                  </aside>
                 </div>
               )}
 
@@ -1057,6 +1071,45 @@ function PreviewPanel({
         device={device}
         showOrbitPageBadge={showOrbitPageBadge}
       />
+    </section>
+  );
+}
+
+function MenuPreviewPanel({
+  menu,
+  publicPageHref,
+}: {
+  menu: MenuCatalog;
+  publicPageHref: string;
+}) {
+  const { tr } = useAppI18n();
+  const [device, setDevice] = useState<PreviewDevice>("mobile");
+
+  return (
+    <section className="admin-preview-panel">
+      <div className="admin-preview-heading">
+        <div>
+          <h2>{tr("Menu preview", "Anteprima menu")}</h2>
+          <p>{tr("Updates as you edit, before saving", "Si aggiorna durante le modifiche, prima del salvataggio")}</p>
+        </div>
+        <div className="admin-preview-heading-actions">
+          <PreviewDeviceToggle value={device} onChange={setDevice} />
+          <a
+            href={publicPageHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={tr("Open published menu", "Apri il menu pubblicato")}
+            title={tr("Open published menu", "Apri il menu pubblicato")}
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+      <PreviewDeviceFrame device={device} publicPageHref={publicPageHref}>
+        <div className={`admin-menu-live-preview admin-menu-live-preview--${device}`}>
+          <MenuView menu={menu} embedded pageHref={publicPageHref.replace(/\/menu\/?$/, "")} />
+        </div>
+      </PreviewDeviceFrame>
     </section>
   );
 }
