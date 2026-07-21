@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide is for evaluating OrbitPage locally without Docker.
+This guide is for evaluating OrbitPage locally without Docker. For a complete production-style installation on an existing Debian or Ubuntu server, use the [one-command Linux installer](./Deployment.md#one-command-linux-install).
 
 ## What OrbitPage Runs
 

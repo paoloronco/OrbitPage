@@ -27,6 +27,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate one-command installer
+        working-directory: .
+        run: |
+          bash -n install.sh
+          bash -n scripts/test-installer.sh
+          shellcheck install.sh scripts/test-installer.sh
+          sudo bash scripts/test-installer.sh
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:

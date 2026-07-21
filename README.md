@@ -131,6 +131,31 @@ docker-compose.yml
 
 Docker is the recommended production path.
 
+### One-command Linux install
+
+On a clean x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC, run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | sudo bash
+```
+
+The installer uses Docker's official apt repository, creates a persistent data directory, generates a private JWT secret, starts OrbitPage, and waits for its health check. It is idempotent: running it again preserves the existing secret and data.
+
+Do not run it directly on a Proxmox VE host. Create a Debian guest first. The installer is designed so a Community Scripts-style LXC wrapper can call the same tested application setup inside the guest.
+
+After installation:
+
+```bash
+orbitpage status
+orbitpage logs
+orbitpage update
+orbitpage backup
+```
+
+See [One-command deployment](./docs/wiki/Deployment.md#one-command-linux-install) for port, bind-address, image pinning, backups, update, and uninstall options.
+
+### Docker run
+
 ```bash
 docker run -d \
   --name orbitpage \

@@ -2,6 +2,78 @@
 
 Docker is the recommended production deployment path for OrbitPage. It keeps the frontend build, backend runtime, SQLite database location, and upload directory consistent across hosts.
 
+## One-command Linux install
+
+The repository includes a production installer for an existing x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | sudo bash
+```
+
+It performs the complete application setup:
+
+- validates the operating system and architecture;
+- refuses to modify a Proxmox VE host directly;
+- installs Docker Engine and Compose v2 from Docker's official apt repository when needed;
+- generates a 256-bit JWT secret without printing it;
+- persists SQLite and uploaded media under `/var/lib/orbitpage`;
+- stores secrets under `/etc/orbitpage` with owner-only permissions;
+- starts the container with `no-new-privileges` and a health check;
+- installs the `orbitpage` management command.
+
+The default endpoint is `http://SERVER_IP:8080`. The initial administrator is created from `/dashboard/profile`.
+
+### Installation options
+
+Set options before the one-command installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
+  sudo ORBITPAGE_HTTP_PORT=8090 \
+  ORBITPAGE_BIND_ADDRESS=127.0.0.1 \
+  ORBITPAGE_PUBLIC_SITE_URL=https://links.example.com \
+  bash
+```
+
+Supported overrides include:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ORBITPAGE_HTTP_PORT` | `8080` | Host HTTP port |
+| `ORBITPAGE_BIND_ADDRESS` | `0.0.0.0` | Host interface; use `127.0.0.1` behind a local reverse proxy |
+| `ORBITPAGE_PUBLIC_SITE_URL` | Empty | Canonical HTTPS URL |
+| `ORBITPAGE_IMAGE` | `ghcr.io/paoloronco/orbitpage:latest` | Image or versioned tag to deploy |
+| `ORBITPAGE_DATA_DIR` | `/var/lib/orbitpage` | Persistent database and media path |
+
+Pin a release instead of following `latest` when deterministic upgrades are required:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
+  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.8.3 bash
+```
+
+### Operations
+
+```bash
+orbitpage status
+orbitpage logs
+orbitpage restart
+orbitpage backup
+orbitpage update
+orbitpage config
+```
+
+`orbitpage update` first creates a consistent backup while the container is stopped, downloads the latest installer, pulls the configured image, recreates the service, and waits for the health check. Backups are stored in `/var/backups/orbitpage` by default.
+
+Removal preserves data unless an explicit purge is requested:
+
+```bash
+orbitpage uninstall
+orbitpage uninstall --purge
+```
+
+For Community Scripts integration, this installer is the guest-side application installer. A Community Scripts contribution still needs its standard `ct/`, `install/`, and metadata wrapper files in their development repository to provision the LXC itself. The wrapper should enable the container features required by Docker and invoke this script inside the guest.
+
 ## Images
 
 The same image is published to both registries:

@@ -47,7 +47,8 @@ app/playwright-report/
 app/test-results/
 app/e2e-data/
 app/lint-report.json
-scripts/
+scripts/*
+!scripts/test-installer.sh
 docs/superpowers/
 
 # Local private workspace
