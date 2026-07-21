@@ -100,6 +100,7 @@ describe('API Endpoints', () => {
       'https://player.vimeo.com',
       'https://www.tiktok.com',
       'https://giphy.com',
+      'https://calendar.google.com',
     ]) {
       expect(csp).toContain(origin);
     }

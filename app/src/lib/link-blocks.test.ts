@@ -81,6 +81,8 @@ describe('official service embeds', () => {
     ['vimeo', 'https://vimeo.com/76979871', 'https://player.vimeo.com/video/76979871?dnt=1'],
     ['tiktok', 'https://www.tiktok.com/@scout2015/video/6718335390845095173', 'https://www.tiktok.com/player/v1/6718335390845095173'],
     ['giphy', 'https://giphy.com/gifs/reaction-example-3o7aD2saalBwwftBIY', 'https://giphy.com/embed/3o7aD2saalBwwftBIY'],
+    ['google_calendar', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd?gv=true'],
+    ['calendly', 'https://calendly.com/orbitpage-demo/30min', 'https://calendly.com/orbitpage-demo/30min'],
   ] as const)('creates an allowlisted %s player URL', (provider, source, expected) => {
     expect(getKnownEmbedUrl(provider, source)).toBe(expected);
   });
@@ -95,6 +97,8 @@ describe('official service embeds', () => {
     expect(getKnownEmbedUrl('spotify', 'https://open.spotify.com.evil.example/track/example')).toBeNull();
     expect(getKnownEmbedUrl('vimeo', 'http://vimeo.com/76979871')).toBeNull();
     expect(getKnownEmbedUrl('giphy', 'https://example.com/embed/3o7aD2saalBwwftBIY')).toBeNull();
+    expect(getKnownEmbedUrl('google_calendar', 'https://calendar.google.com.evil.example/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd')).toBeNull();
+    expect(getKnownEmbedUrl('google_calendar', 'https://calendar.google.com/calendar/u/0/r')).toBeNull();
   });
 
   it('keeps branded service-link metadata backward compatible', () => {

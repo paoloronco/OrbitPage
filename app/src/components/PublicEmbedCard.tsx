@@ -116,7 +116,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
             loading="lazy"
             referrerPolicy="no-referrer"
             sandbox={knownProviderUrl
-              ? "allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+              ? "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-top-navigation-by-user-activation"
               : "allow-scripts allow-forms allow-popups allow-presentation"}
             allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
             allowFullScreen

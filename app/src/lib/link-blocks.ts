@@ -71,7 +71,7 @@ export interface EventBlockData {
   notes?: string;
 }
 
-export type EmbedProvider = 'auto' | 'instagram' | 'youtube' | 'spotify' | 'deezer' | 'soundcloud' | 'vimeo' | 'tiktok' | 'giphy' | 'calendly' | 'google_maps' | 'newsletter' | 'custom';
+export type EmbedProvider = 'auto' | 'instagram' | 'youtube' | 'spotify' | 'deezer' | 'soundcloud' | 'vimeo' | 'tiktok' | 'giphy' | 'google_calendar' | 'calendly' | 'google_maps' | 'newsletter' | 'custom';
 export type EmbedConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marketing';
 export type ServiceLinkProvider = 'whatsapp' | 'github';
 
@@ -233,7 +233,7 @@ export const getEventData = (content: string | null | undefined): EventBlockData
   };
 };
 
-const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'youtube', 'spotify', 'deezer', 'soundcloud', 'vimeo', 'tiktok', 'giphy', 'calendly', 'google_maps', 'newsletter', 'custom'];
+const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'youtube', 'spotify', 'deezer', 'soundcloud', 'vimeo', 'tiktok', 'giphy', 'google_calendar', 'calendly', 'google_maps', 'newsletter', 'custom'];
 const embedConsentCategories: EmbedConsentCategory[] = ['necessary', 'preferences', 'analytics', 'marketing'];
 const serviceLinkProviders: ServiceLinkProvider[] = ['whatsapp', 'github'];
 
@@ -247,6 +247,7 @@ export const detectEmbedProvider = (snippet?: string): Exclude<EmbedProvider, 'a
   if (value.includes('vimeo.com')) return 'vimeo';
   if (value.includes('tiktok.com')) return 'tiktok';
   if (value.includes('giphy.com')) return 'giphy';
+  if (value.includes('calendar.google.com/calendar/appointments/schedules/')) return 'google_calendar';
   if (value.includes('calendly.com')) return 'calendly';
   if (value.includes('google.com/maps') || value.includes('maps.google.')) return 'google_maps';
   if (value.includes('mailchimp') || value.includes('substack') || value.includes('beehiiv') || value.includes('convertkit') || value.includes('<form')) return 'newsletter';
@@ -324,6 +325,15 @@ export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snipp
         if (id) return `https://giphy.com/embed/${id}`;
       }
 
+      if (provider === 'google_calendar' && host === 'calendar.google.com') {
+        const match = url.pathname.match(/^\/calendar\/appointments\/schedules\/([a-z0-9_-]{20,300})\/?$/i);
+        if (match) {
+          const bookingUrl = new URL(`https://calendar.google.com/calendar/appointments/schedules/${match[1]}`);
+          bookingUrl.searchParams.set('gv', 'true');
+          return bookingUrl.toString();
+        }
+      }
+
       if (provider === 'calendly' && (host === 'calendly.com' || host === 'www.calendly.com')) {
         return url.toString();
       }
@@ -343,7 +353,7 @@ export const resolveEmbedProvider = (provider?: EmbedProvider, snippet?: string)
 );
 
 export const getDefaultEmbedConsentCategory = (provider: Exclude<EmbedProvider, 'auto'>): EmbedConsentCategory => {
-  if (provider === 'google_maps' || provider === 'spotify' || provider === 'deezer' || provider === 'soundcloud') return 'preferences';
+  if (provider === 'google_maps' || provider === 'google_calendar' || provider === 'calendly' || provider === 'spotify' || provider === 'deezer' || provider === 'soundcloud') return 'preferences';
   return 'marketing';
 };
 
@@ -356,6 +366,7 @@ export const getEmbedProviderLabel = (provider: Exclude<EmbedProvider, 'auto'>) 
   vimeo: 'Vimeo',
   tiktok: 'TikTok',
   giphy: 'Giphy',
+  google_calendar: 'Google Calendar',
   calendly: 'Calendly',
   google_maps: 'Google Maps',
   newsletter: 'Newsletter',
@@ -371,6 +382,7 @@ export const getEmbedProviderPlaceholder = (provider: Exclude<EmbedProvider, 'au
   vimeo: 'https://vimeo.com/123456789',
   tiktok: 'https://www.tiktok.com/@creator/video/...',
   giphy: 'https://giphy.com/gifs/...',
+  google_calendar: 'https://calendar.google.com/calendar/appointments/schedules/...',
   calendly: 'https://calendly.com/your-name',
   google_maps: 'https://www.google.com/maps/embed?...',
   newsletter: '<form>...</form>',
@@ -386,6 +398,7 @@ export const getEmbedProviderDefaultHeight = (provider: Exclude<EmbedProvider, '
   vimeo: 360,
   tiktok: 680,
   giphy: 420,
+  google_calendar: 680,
   calendly: 680,
   google_maps: 360,
   newsletter: 420,

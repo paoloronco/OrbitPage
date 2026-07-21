@@ -9,6 +9,8 @@ import {
   SiVimeo,
   SiWhatsapp,
   SiYoutube,
+  SiGooglecalendar,
+  SiCalendly,
 } from "react-icons/si";
 import type { BrandServiceProvider } from "@/lib/service-brand";
 
@@ -22,6 +24,8 @@ const brandIcons = {
   vimeo: SiVimeo,
   tiktok: SiTiktok,
   giphy: SiGiphy,
+  google_calendar: SiGooglecalendar,
+  calendly: SiCalendly,
   github: SiGithub,
 } satisfies Record<BrandServiceProvider, typeof SiInstagram>;
 

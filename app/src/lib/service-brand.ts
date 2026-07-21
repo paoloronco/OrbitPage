@@ -2,7 +2,7 @@ import type { EmbedProvider, ServiceLinkProvider } from "./link-blocks";
 
 export type BrandServiceProvider = Extract<
   Exclude<EmbedProvider, "auto"> | ServiceLinkProvider,
-  "instagram" | "youtube" | "spotify" | "deezer" | "soundcloud" | "vimeo" | "tiktok" | "giphy" | "whatsapp" | "github"
+  "instagram" | "youtube" | "spotify" | "deezer" | "soundcloud" | "vimeo" | "tiktok" | "giphy" | "google_calendar" | "calendly" | "whatsapp" | "github"
 >;
 
 export const brandServiceColors: Record<BrandServiceProvider, string> = {
@@ -15,6 +15,8 @@ export const brandServiceColors: Record<BrandServiceProvider, string> = {
   vimeo: "#1AB7EA",
   tiktok: "#111111",
   giphy: "#6A5CFF",
+  google_calendar: "#4285F4",
+  calendly: "#006BFF",
   github: "#181717",
 };
 

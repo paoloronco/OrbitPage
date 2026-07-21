@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.12.0';
+let APP_VERSION = '4.13.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -297,6 +297,7 @@ app.use(helmet({
         "https://player.vimeo.com",
         "https://www.tiktok.com",
         "https://giphy.com",
+        "https://calendar.google.com",
         "https://calendly.com",
         "https://www.calendly.com",
         "https://www.google.com",

@@ -1427,6 +1427,7 @@ export const LinkCard = ({
                             <SelectItem value="vimeo">Vimeo</SelectItem>
                             <SelectItem value="tiktok">TikTok</SelectItem>
                             <SelectItem value="giphy">Giphy</SelectItem>
+                            <SelectItem value="google_calendar">Google Calendar</SelectItem>
                             <SelectItem value="calendly">Calendly</SelectItem>
                             <SelectItem value="google_maps">Google Maps</SelectItem>
                             <SelectItem value="newsletter">Newsletter</SelectItem>
@@ -1484,7 +1485,20 @@ export const LinkCard = ({
                       )}
                       {usesDirectEmbedUrl && (
                         <p className="text-[11px] leading-5 text-muted-foreground">
-                          Paste the public share URL from {getEmbedProviderLabel(resolvedEmbedProvider)}. OrbitPage converts it to the official embedded player and rejects unrelated domains.
+                          {resolvedEmbedProvider === 'google_calendar'
+                            ? tr(
+                                'In Google Calendar, open the booking page sharing options and paste its public URL or iframe source here.',
+                                'In Google Calendar, apri le opzioni di condivisione della pagina di prenotazione e incolla qui il suo URL pubblico o il sorgente iframe.',
+                              )
+                            : resolvedEmbedProvider === 'calendly'
+                              ? tr(
+                                  'In Calendly, open the event type and paste its public scheduling link here.',
+                                  'In Calendly, apri il tipo di evento e incolla qui il link pubblico di prenotazione.',
+                                )
+                              : tr(
+                                  `Paste the public share URL from ${getEmbedProviderLabel(resolvedEmbedProvider)}. OrbitPage converts it to the official embedded player and rejects unrelated domains.`,
+                                  `Incolla l'URL pubblico di ${getEmbedProviderLabel(resolvedEmbedProvider)}. OrbitPage lo converte nel player ufficiale e rifiuta domini estranei.`,
+                                )}
                         </p>
                       )}
                     </div>

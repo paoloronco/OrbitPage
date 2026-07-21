@@ -55,7 +55,7 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 - Stable editor routes such as `/dashboard/pages` and public subpage routes such as `/services`
 
 - Link cards, text blocks, headings, separators, images, and native video
-- Social rows, contact details, maps, events with timezone-aware countdowns, callouts, and consent-aware embeds
+- Social rows, contact details, maps, events with timezone-aware countdowns, callouts, Google Calendar and Calendly bookings, and consent-aware embeds
 - Native venue menus with sections, one-level subsections, products, variants, images, and availability controls
 - Scheduled menu cards plus visible unavailable states for links, tickets, menus, and dishes
 - Per-block visibility, ordering, scheduling, icons, cover media, and layout controls

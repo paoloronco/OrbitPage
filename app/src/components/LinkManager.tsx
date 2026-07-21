@@ -15,7 +15,7 @@ import { type EmbedProvider, type LinkBlockType, type ServiceLinkProvider, build
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
-import { SiDeezer, SiGithub, SiGiphy, SiInstagram, SiSoundcloud, SiSpotify, SiTiktok, SiVimeo, SiWhatsapp, SiYoutube } from "react-icons/si";
+import { SiCalendly, SiDeezer, SiGithub, SiGiphy, SiGooglecalendar, SiInstagram, SiSoundcloud, SiSpotify, SiTiktok, SiVimeo, SiWhatsapp, SiYoutube } from "react-icons/si";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -427,10 +427,22 @@ export const LinkManager = ({
   };
 
   const addServiceEmbed = (
-    provider: Extract<EmbedProvider, "instagram" | "youtube" | "spotify" | "deezer" | "soundcloud" | "vimeo" | "tiktok" | "giphy">,
+    provider: Extract<EmbedProvider, "instagram" | "youtube" | "spotify" | "deezer" | "soundcloud" | "vimeo" | "tiktok" | "giphy" | "google_calendar" | "calendly">,
     title: string,
     description: string,
   ) => {
+    if ((provider === "google_calendar" || provider === "calendly") && !schedulingEnabled) {
+      toast({
+        title: tr("Booking requires Pro", "Le prenotazioni richiedono Pro"),
+        description: tr(
+          "Upgrade to Pro to show live availability and accept bookings from your page.",
+          "Passa a Pro per mostrare la disponibilita in tempo reale e accettare prenotazioni dalla pagina.",
+        ),
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newEmbed: LinkData = {
       id: Date.now().toString(),
       title,
@@ -700,6 +712,8 @@ export const LinkManager = ({
         { id: "vimeo", title: "Vimeo", description: tr("Show a Vimeo video in an embedded player.", "Mostra un video Vimeo nel player incorporato."), keywords: "vimeo video player", icon: SiVimeo, onSelect: () => addServiceEmbed("vimeo", "Vimeo", tr("Watch the video", "Guarda il video")) },
         { id: "tiktok", title: "TikTok", description: tr("Embed a public TikTok video.", "Incorpora un video TikTok pubblico."), keywords: "tiktok video social", icon: SiTiktok, onSelect: () => addServiceEmbed("tiktok", "TikTok", tr("Watch on TikTok", "Guarda su TikTok")) },
         { id: "giphy", title: "Giphy", description: tr("Embed an animated GIF without uploading it.", "Incorpora una GIF animata senza caricarla."), keywords: "giphy gif animation animated", icon: SiGiphy, onSelect: () => addServiceEmbed("giphy", "Giphy", tr("Animated GIF", "GIF animata")) },
+        { id: "google-calendar", title: "Google Calendar", description: tr("Show live appointment availability and accept bookings.", "Mostra gli slot liberi e accetta prenotazioni."), keywords: "google calendar appointment schedule booking call availability appuntamenti prenotazioni disponibilita", icon: schedulingEnabled ? SiGooglecalendar : LockKeyhole, onSelect: () => addServiceEmbed("google_calendar", tr("Book an appointment", "Prenota un appuntamento"), tr("Choose an available time in Google Calendar", "Scegli un orario disponibile su Google Calendar")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
+        { id: "calendly", title: "Calendly", description: tr("Let visitors choose an available call or meeting slot.", "Permetti di scegliere uno slot libero per call o incontri."), keywords: "calendly calendar booking meeting call availability prenotazioni disponibilita", icon: schedulingEnabled ? SiCalendly : LockKeyhole, onSelect: () => addServiceEmbed("calendly", tr("Book a call", "Prenota una call"), tr("Choose a time that works for you", "Scegli l'orario piu comodo")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
         { id: "github", title: "GitHub", description: tr("Link a repository, profile or release.", "Collega repository, profilo o release."), keywords: "github repository repo code profile release codice", icon: SiGithub, onSelect: () => addServiceLink("github", "GitHub", tr("View on GitHub", "Apri su GitHub")) },
       ],
     },
