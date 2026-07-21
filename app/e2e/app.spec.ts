@@ -52,6 +52,10 @@ test.describe('OrbitPage Application Flow', () => {
     await linkUrlInput.clear();
     await linkUrlInput.fill('https://mariorossi.dev');
 
+    const surfaceSelect = linkCard.getByText('Card surface', { exact: true }).locator('..').getByRole('combobox');
+    await surfaceSelect.click();
+    await page.getByRole('option', { name: 'Liquid glass', exact: true }).click();
+
     // Salviamo la modifica sulla singola card, poi persistiamo con Save della toolbar
     await linkCard.getByRole('button', { name: 'Save' }).click();
     await page.locator('.admin-link-actions button:has-text("Save")').click();
@@ -69,5 +73,21 @@ test.describe('OrbitPage Application Flow', () => {
     const publicLink = page.getByRole('link', { name: 'Mio Sito Web' }).first();
     await expect(publicLink).toBeVisible();
     await expect(publicLink).toHaveAttribute('href', 'https://mariorossi.dev');
+
+    const liquidGlassCard = page.locator('[data-surface-effect="liquid-glass"]').filter({ has: publicLink }).locator('.glass-card');
+    await expect(liquidGlassCard).toBeVisible();
+    const liquidGlassStyle = await liquidGlassCard.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        backdropFilter: style.backdropFilter || style.getPropertyValue('-webkit-backdrop-filter'),
+        backgroundImage: style.backgroundImage,
+        borderColor: style.borderTopColor,
+        boxShadow: style.boxShadow,
+      };
+    });
+    expect(liquidGlassStyle.backdropFilter).toContain('blur');
+    expect(liquidGlassStyle.backgroundImage).not.toBe('none');
+    expect(liquidGlassStyle.borderColor).not.toBe('rgba(0, 0, 0, 0)');
+    expect(liquidGlassStyle.boxShadow).not.toBe('none');
   });
 });

@@ -553,6 +553,7 @@ export const getContentCardVariantCssVariables = (theme: ThemeConfig, index: num
 
   return {
     '--content-card-background': getCardSurfaceGradient(variant, theme.contentCardOpacity),
+    '--content-card-surface-tint': variant.background,
     '--content-card-background-hsl': hexToHsl(variant.background),
     '--content-card-secondary-hsl': hexToHsl(variant.backgroundSecondary),
     '--content-card-foreground': variant.foreground,

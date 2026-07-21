@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCardShadowCss, getCardSurfaceGradient, getContentCardVariant, getThemeCssVariables, normalizeTheme } from './theme';
+import { getCardShadowCss, getCardSurfaceGradient, getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, normalizeTheme } from './theme';
 
 describe('theme normalization', () => {
   it('keeps legacy light themes readable when card settings are absent', () => {
@@ -110,6 +110,7 @@ describe('theme normalization', () => {
       background: '#123456',
       foreground: '#f8fafc',
     });
+    expect(getContentCardVariantCssVariables(theme, 4)['--content-card-surface-tint']).toBe('#123456');
   });
 
   it('cycles through the effective content-card colors for multi themes', () => {
