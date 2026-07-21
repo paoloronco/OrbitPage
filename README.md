@@ -68,6 +68,7 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 - Live preview while editing profile, links, content, and themes
 - Colors, typography, spacing, radius, borders, shadows, blur, and glow
 - Solid, fully transparent, and liquid-glass surfaces, configurable globally and per profile or content card
+- A live setup checklist for the first three login sessions that then retires automatically
 - Profile-card, avatar/logo, background image, video, and favicon controls
 - Explicit editor localization in 14 languages with Arabic RTL layout; public pages preserve the author's published content
 - Optional advanced CSS customization

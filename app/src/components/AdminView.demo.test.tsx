@@ -124,6 +124,9 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('admin-dashboard-sidebar');
     expect(html).toContain('Self-hosted workspace');
     expect(html).toContain('aria-current="page"');
+    expect(html).toContain('Page checklist');
+    expect(html).toContain('Getting started · login 1 of 3');
+    expect(html).toContain('role="progressbar"');
   });
 
   it('hides standalone session details in the hosted SaaS admin', () => {
@@ -178,6 +181,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('ProfileSection');
     expect(html).toContain('LinkManager');
     expect(html).not.toContain('>Guide<');
+    expect(html).not.toContain('Page checklist');
   });
 });
 

@@ -38,6 +38,7 @@ import {
   UtensilsCrossed,
   ShieldCheck,
   User,
+  X,
 } from "lucide-react";
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
@@ -61,6 +62,13 @@ import type { AdminTab } from "@/lib/admin-navigation";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
+import {
+  beginOnboardingChecklistSession,
+  dismissOnboardingChecklist,
+  endOnboardingChecklistSession,
+  readOnboardingChecklistSession,
+  type OnboardingChecklistSession,
+} from "@/lib/onboarding-checklist-storage";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import { VersionHistory } from "./VersionHistory";
 import { ProfileQrCode } from "./ProfileQrCode";
@@ -207,6 +215,26 @@ export const AdminView = ({
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const isProspectReadOnly = currentUser?.readOnly === true;
+  const checklistIdentity = currentUser
+    ? `${isHostedAdmin ? "hosted" : "self-hosted"}:${currentUser.username}`
+    : "";
+  const [checklistSession, setChecklistSession] = useState<OnboardingChecklistSession>(() => (
+    checklistIdentity
+      ? readOnboardingChecklistSession(
+          checklistIdentity,
+          typeof window === "undefined" ? undefined : window.localStorage,
+          typeof window === "undefined" ? undefined : window.sessionStorage,
+        )
+      : { visible: false, sessionNumber: 1, sessionLimit: 3 }
+  ));
+
+  useEffect(() => {
+    if (!checklistIdentity || isProspectReadOnly) {
+      setChecklistSession((current) => ({ ...current, visible: false }));
+      return;
+    }
+    setChecklistSession(beginOnboardingChecklistSession(checklistIdentity, window.localStorage, window.sessionStorage));
+  }, [checklistIdentity, isProspectReadOnly]);
 
   useEffect(() => {
     if (publicUrlOverride) {
@@ -396,9 +424,23 @@ export const AdminView = ({
     };
   }, [links, profile]);
 
+  const pageChecklistItems = [
+    { checked: Boolean(profile.name?.trim()), label: tr("Name or brand is set", "Nome o brand impostato") },
+    { checked: Boolean(profile.bio?.trim()), label: tr("Description is set", "Descrizione impostata") },
+    { checked: metrics.socialCount > 0, label: tr("At least one social link", "Almeno un link social") },
+    { checked: Boolean(profile.tabTitle?.trim()), label: tr("Browser title customized", "Titolo del browser personalizzato") },
+  ];
+  const completedChecklistItems = pageChecklistItems.filter((item) => item.checked).length;
+
   const handleLogout = () => {
+    if (checklistIdentity) endOnboardingChecklistSession(checklistIdentity, window.sessionStorage);
     logout();
     onLogout();
+  };
+
+  const dismissPageChecklist = () => {
+    if (checklistIdentity) dismissOnboardingChecklist(checklistIdentity, window.localStorage, window.sessionStorage);
+    setChecklistSession((current) => ({ ...current, visible: false }));
   };
 
   const handleSaveIntegrations = () => {
@@ -619,13 +661,34 @@ export const AdminView = ({
                   publicPageHref={publicPageHref}
                   showOrbitPageBadge={entitlements?.badgeRequired ?? true}
                 />
-                <section className="admin-side-panel admin-checklist-panel">
-                  <PanelHeader icon={User} title={tr("Page checklist", "Verifica pagina")} />
-                  <ChecklistItem checked={Boolean(profile.name?.trim())} label={tr("Name or brand is set", "Nome o brand impostato")} />
-                  <ChecklistItem checked={Boolean(profile.bio?.trim())} label={tr("Description is set", "Descrizione impostata")} />
-                  <ChecklistItem checked={metrics.socialCount > 0} label={tr("At least one social link", "Almeno un link social")} />
-                  <ChecklistItem checked={Boolean(profile.tabTitle?.trim())} label={tr("Browser title customized", "Titolo del browser personalizzato")} />
-                </section>
+                {checklistSession.visible && !isProspectReadOnly && (
+                  <section className="admin-side-panel admin-checklist-panel" aria-label={tr("Page checklist", "Verifica pagina")}>
+                    <div className="admin-checklist-heading">
+                      <span className="admin-panel-icon"><User className="h-4 w-4" /></span>
+                      <div>
+                        <h2>{tr("Page checklist", "Verifica pagina")}</h2>
+                        <p>{tr(
+                          `Getting started · login ${checklistSession.sessionNumber} of ${checklistSession.sessionLimit}`,
+                          `Primi passi · accesso ${checklistSession.sessionNumber} di ${checklistSession.sessionLimit}`,
+                        )}</p>
+                      </div>
+                      <button type="button" onClick={dismissPageChecklist} aria-label={tr("Hide onboarding checklist", "Nascondi checklist iniziale")} title={tr("Do not show again", "Non mostrare più")}>
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="admin-checklist-progress-copy">
+                      <span>{tr("Setup progress", "Avanzamento configurazione")}</span>
+                      <strong>{completedChecklistItems}/{pageChecklistItems.length}</strong>
+                    </div>
+                    <div className="admin-checklist-progress" role="progressbar" aria-valuemin={0} aria-valuemax={pageChecklistItems.length} aria-valuenow={completedChecklistItems}>
+                      <span style={{ width: `${(completedChecklistItems / pageChecklistItems.length) * 100}%` }} />
+                    </div>
+                    <div className="admin-checklist-items">
+                      {pageChecklistItems.map((item) => <ChecklistItem key={item.label} {...item} />)}
+                    </div>
+                    <p className="admin-checklist-expiry">{tr("This panel disappears automatically after your first three login sessions.", "Questo pannello scompare automaticamente dopo le prime tre sessioni di accesso.")}</p>
+                  </section>
+                )}
               </aside>
             </div>
           </TabsContent>
@@ -1127,7 +1190,7 @@ function PanelHeader({ icon: Icon, title }: { icon: React.ElementType; title: st
 
 function ChecklistItem({ checked, label }: { checked: boolean; label: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+    <div className={checked ? "admin-checklist-item admin-checklist-item-complete" : "admin-checklist-item"}>
       <span className={checked ? "admin-check admin-check-active" : "admin-check"} />
       <span>{label}</span>
     </div>

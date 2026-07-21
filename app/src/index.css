@@ -1814,6 +1814,7 @@
   .admin-checklist-panel {
     max-width: none;
     padding: 14px;
+    animation: admin-checklist-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .admin-checklist-panel .admin-panel-icon {
@@ -1825,9 +1826,97 @@
     font-size: 14px;
   }
 
-  .admin-checklist-panel .flex.items-center.gap-3.rounded-lg {
+  .admin-checklist-heading {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) 30px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .admin-checklist-heading p,
+  .admin-checklist-expiry {
+    margin-top: 2px;
+    color: #52647d;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .admin-checklist-heading button {
+    display: inline-grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #52647d;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  }
+
+  .admin-checklist-heading button:hover,
+  .admin-checklist-heading button:focus-visible {
+    border-color: #c9d6e8;
+    background: #f3f7fc;
+    color: #1d4ed8;
+  }
+
+  .admin-checklist-progress-copy {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #52647d;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .admin-checklist-progress-copy strong {
+    color: #1d4ed8;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .admin-checklist-progress {
+    height: 4px;
+    margin: 7px 0 12px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dbe5f2;
+  }
+
+  .admin-checklist-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #2f66e8;
+    transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .admin-checklist-items {
+    display: grid;
+    gap: 7px;
+  }
+
+  .admin-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 7px 10px;
+    border: 1px solid #d8e1ed;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #34435a;
     font-size: 13px;
+    transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease;
+  }
+
+  .admin-checklist-item-complete {
+    border-color: rgb(16 185 129 / 0.24);
+    background: rgb(236 253 245 / 0.72);
+    color: #166534;
+  }
+
+  .admin-checklist-expiry {
+    margin: 10px 2px 0;
   }
 
   .admin-check {
@@ -1840,6 +1929,17 @@
   .admin-check-active {
     background: #10b981;
     box-shadow: 0 0 0 4px rgb(16 185 129 / 0.12);
+  }
+
+  @keyframes admin-checklist-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-checklist-panel { animation: none; }
+    .admin-checklist-progress span,
+    .admin-checklist-item { transition: none; }
   }
 
   .admin-link-manager {
