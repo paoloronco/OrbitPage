@@ -60,6 +60,7 @@ interface TourStep {
 
 const STORAGE_KEY = "orbitpage-admin-onboarding-completed";
 const FORCE_STORAGE_KEY = "orbitpage-admin-onboarding-force";
+const SESSION_DISMISSED_KEY = "orbitpage-admin-onboarding-dismissed";
 
 const forcedByEnv = import.meta.env.VITE_FORCE_ADMIN_ONBOARDING === "true" || import.meta.env.VITE_FORCE_ADMIN_ONBOARDING === "1";
 
@@ -205,17 +206,27 @@ const tourSteps: TourStep[] = [
 
 function getInitialMode(forceOpen?: boolean, repeatEnabled?: boolean): OnboardingMode {
   if (forceOpen || forcedByEnv) return "welcome";
-  if (repeatEnabled) return "welcome";
-  if (typeof window === "undefined") return "hidden";
+  if (typeof window === "undefined") return repeatEnabled ? "welcome" : "hidden";
 
   try {
+    if (window.sessionStorage.getItem(SESSION_DISMISSED_KEY) === "true") return "hidden";
     if (window.localStorage.getItem(FORCE_STORAGE_KEY) === "true") return "welcome";
     if (window.localStorage.getItem(STORAGE_KEY) === "true") return "hidden";
   } catch {
     return "hidden";
   }
 
-  return "hidden";
+  return repeatEnabled ? "welcome" : "hidden";
+}
+
+function setSessionDismissed(dismissed: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    if (dismissed) window.sessionStorage.setItem(SESSION_DISMISSED_KEY, "true");
+    else window.sessionStorage.removeItem(SESSION_DISMISSED_KEY);
+  } catch {
+    // sessionStorage can be unavailable in private or restricted contexts.
+  }
 }
 
 function markCompleted() {
@@ -239,7 +250,7 @@ export const AdminOnboarding = ({
 }: AdminOnboardingProps) => {
   const [mode, setMode] = useState<OnboardingMode>(() => getInitialMode(forceOpen, repeatEnabled));
   const [stepIndex, setStepIndex] = useState(0);
-  const [dismissedThisSession, setDismissedThisSession] = useState(false);
+  const [dismissedThisSession, setDismissedThisSession] = useState(() => getInitialMode(forceOpen, repeatEnabled) === "hidden");
 
   const steps = useMemo(
     () => tourSteps.filter(step => !step.tab || visibleTabs.includes(step.tab)),
@@ -295,11 +306,13 @@ export const AdminOnboarding = ({
 
   const close = () => {
     if (!repeatEnabled) markCompleted();
+    setSessionDismissed(true);
     setDismissedThisSession(true);
     setMode("hidden");
   };
 
   const start = () => {
+    setSessionDismissed(false);
     setDismissedThisSession(false);
     setStepIndex(0);
     setMode("tour");
@@ -430,13 +443,16 @@ export const AdminOnboarding = ({
 
         <div className="admin-onboarding-footer">
           <span>{stepIndex + 1} of {steps.length}</span>
-          <div className="flex items-center gap-2">
+          <div className="admin-onboarding-footer-actions flex items-center gap-2">
+            <Button className="admin-action" variant="ghost" size="sm" onClick={close}>
+              Skip
+            </Button>
             <Button className="admin-action" variant="outline" size="sm" onClick={previous} disabled={stepIndex === 0}>
               <ChevronLeft className="h-4 w-4" />
               Back
             </Button>
             <Button className="admin-action admin-action-primary" size="sm" onClick={next} disabled={!stepComplete}>
-              {!stepComplete ? "Waiting" : stepIndex >= steps.length - 1 ? "Done" : "Next"}
+              {stepIndex >= steps.length - 1 ? "Done" : "Next"}
               {stepComplete && stepIndex < steps.length - 1 && <ChevronRight className="h-4 w-4" />}
             </Button>
           </div>

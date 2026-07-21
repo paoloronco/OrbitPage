@@ -170,7 +170,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const canReorder = isFullEdit;
 
   const renderAdminControls = () => canEdit ? (
-    <div className="flex gap-1 rounded-md border border-slate-200 bg-white/95 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+    <div className="admin-card-controls flex gap-1 rounded-md border border-slate-200 bg-white/95 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
       {isFullEdit && onMoveUp && (
         <Button
           onClick={() => onMoveUp?.()}
@@ -233,14 +233,14 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
         }`}
       >
         {canReorder && (
-          <div className="absolute left-2 top-2 z-20 rounded-md bg-white/90 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
+          <div className="admin-card-drag-handle absolute left-2 top-2 z-20 rounded-md bg-white/90 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
             <GripVertical className="w-4 h-4 text-muted-foreground" />
           </div>
         )}
         <div className="public-block-preview pointer-events-none" style={publicPreviewStyle}>
           <PublicBlockRenderer link={link} />
         </div>
-        <div className="pointer-events-auto absolute right-2 top-2 z-20">
+        <div className="admin-card-controls-wrap pointer-events-auto absolute right-2 top-2 z-20">
           {renderAdminControls()}
         </div>
         {(link.status && link.status !== 'live') || link.campaignName || link.startDate || link.startTime || link.endDate || link.endTime ? (
@@ -265,12 +265,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       style={getCustomStyles()}
     >
       {isFullEdit && (
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
+        <div className="admin-card-drag-handle absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </div>
       )}
 
-      <div className={isFullEdit ? "ml-6" : ""}>
+      <div className={isFullEdit ? "admin-card-edit-body ml-6" : "admin-card-edit-body"}>
         {isEditing ? (
           <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             <Input
@@ -755,7 +755,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
             
             {canEdit && (
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-smooth" onClick={(e) => e.stopPropagation()}>
+            <div className="admin-card-controls flex gap-1 opacity-0 group-hover:opacity-100 transition-smooth" onClick={(e) => e.stopPropagation()}>
               {isFullEdit && onMoveUp && (
                 <Button
                   onClick={() => onMoveUp?.()}

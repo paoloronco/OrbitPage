@@ -1,7 +1,7 @@
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, Film, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
+import { CalendarClock, Code2, Download, Film, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -75,6 +75,7 @@ export const LinkManager = ({
     setWorkingLinks((current) => [...current, block]);
     setIsDirty(true);
     setSaveError("");
+    setIsBlockLibraryOpen(false);
   };
 
   // Keep working copy in sync when parent provides a new links array
@@ -141,6 +142,7 @@ export const LinkManager = ({
       setWorkingLinks((current) => upsertNativeMenuLink(current, menuLink));
       setIsDirty(true);
       setSaveError("");
+      setIsBlockLibraryOpen(false);
       toast({
         title: tr("Menu card refreshed", "Card menu aggiornata"),
         description: tr("The existing card now points to the native menu.", "La card esistente ora punta al menu nativo."),
@@ -644,13 +646,32 @@ export const LinkManager = ({
       )}
 
       {isFullEdit && isBlockLibraryOpen && (
-        <section id="admin-block-library" className="admin-block-library" data-onboarding="link-add-grid">
-          <div className="mb-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">{tr("Block library", "Libreria blocchi")}</p>
-            <h3 className="mt-1 text-sm font-semibold text-slate-950">{tr("Add content", "Aggiungi contenuto")}</h3>
-            <p className="mt-1 text-xs leading-5 text-slate-500">{tr("Choose a block to append it to the public page.", "Scegli un blocco da aggiungere alla pagina pubblica.")}</p>
-          </div>
-          <div className="admin-add-grid">
+        <>
+          <button
+            type="button"
+            className="admin-block-library-backdrop"
+            aria-label={tr("Close block library", "Chiudi libreria blocchi")}
+            onClick={() => setIsBlockLibraryOpen(false)}
+          />
+          <section id="admin-block-library" className="admin-block-library" data-onboarding="link-add-grid">
+            <div className="admin-block-library-heading mb-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">{tr("Block library", "Libreria blocchi")}</p>
+                <h3 className="mt-1 text-sm font-semibold text-slate-950">{tr("Add content", "Aggiungi contenuto")}</h3>
+                <p className="mt-1 text-xs leading-5 text-slate-500">{tr("Choose a block to append it to the public page.", "Scegli un blocco da aggiungere alla pagina pubblica.")}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="admin-block-library-close"
+                onClick={() => setIsBlockLibraryOpen(false)}
+                aria-label={tr("Close block library", "Chiudi libreria blocchi")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="admin-add-grid">
           <Button onClick={addNewLink} className="admin-add-card">
             <span className="admin-add-icon">
               <Link className="h-4 w-4" />
@@ -800,8 +821,9 @@ export const LinkManager = ({
               <span className="block text-xs opacity-70">{tr("Section label", "Etichetta sezione")}</span>
             </span>
           </Button>
-          </div>
-        </section>
+            </div>
+          </section>
+        </>
       )}
 
       {workingLinks.length === 0 ? (
