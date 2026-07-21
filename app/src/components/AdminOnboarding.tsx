@@ -26,7 +26,7 @@ import {
   X,
 } from "lucide-react";
 
-type AdminOnboardingTab = "profile" | "links" | "theme" | "access" | "backup" | "analytics" | "privacy" | "txt";
+type AdminOnboardingTab = "profile" | "content" | "theme" | "access" | "backup" | "analytics" | "privacy" | "txt";
 type OnboardingMode = "hidden" | "welcome" | "tour" | "minimized";
 
 interface AdminOnboardingProfile {
@@ -94,7 +94,7 @@ const tourSteps: TourStep[] = [
   },
   {
     id: "links-first-card",
-    tab: "links",
+    tab: "content",
     target: "[data-onboarding='link-add-grid']",
     icon: Link,
     eyebrow: "3. Links",
@@ -108,7 +108,7 @@ const tourSteps: TourStep[] = [
   },
   {
     id: "links-save",
-    tab: "links",
+    tab: "content",
     target: "[data-onboarding='links-toolbar']",
     icon: MousePointerClick,
     eyebrow: "4. Content order",

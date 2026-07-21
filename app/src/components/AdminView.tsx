@@ -118,10 +118,8 @@ interface AdminViewProps {
 
 const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "profile", icon: User },
-  { value: "links", icon: Link },
-  { value: "pages", icon: Files },
+  { value: "content", icon: Files },
   { value: "theme", icon: Palette },
-  { value: "menu", icon: UtensilsCrossed },
   { value: "qr", icon: QrCode },
   { value: "access", icon: Key },
   { value: "backup", icon: Database },
@@ -130,6 +128,19 @@ const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "txt", icon: FileText },
   { value: "sitemap", icon: Map },
 ];
+
+type ContentSection = "home" | "menu" | "pages";
+
+function contentSectionForTab(tab: AdminTab): ContentSection | null {
+  if (tab === "links") return "home";
+  if (tab === "menu") return "menu";
+  if (tab === "pages") return "pages";
+  return null;
+}
+
+function canonicalViewTab(tab: AdminTab): AdminTab {
+  return contentSectionForTab(tab) ? "content" : tab;
+}
 
 const ctaActionLabels: Record<string, string> = {
   book: "Book",
@@ -162,13 +173,16 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: tr("Page", "Pagina"), links: "Links", pages: tr("Pages", "Pagine"), theme: tr("Theme", "Tema"), menu: "Menu", qr: "QR",
+    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"), qr: "QR",
     access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy", txt: "TXT", sitemap: "Sitemap",
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
+  const [contentSection, setContentSection] = useState<ContentSection>(() => contentSectionForTab(requestedTab) || "home");
+  const [menuActivationBusy, setMenuActivationBusy] = useState(false);
+  const [menuActivationError, setMenuActivationError] = useState("");
   const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
@@ -246,10 +260,8 @@ export const AdminView = ({
     if (isProspectReadOnly) return tab.value !== "access";
     switch (tab.value) {
       case 'profile':   return canEditProfile;
-      case 'links':     return canEditLinks;
-      case 'pages':     return canEditLinks;
+      case 'content':   return canEditLinks || canEditMenu;
       case 'theme':     return canEditTheme;
-      case 'menu':      return canEditMenu;
       case 'qr':        return canEditProfile;
       case 'access':    return !isHostedAdmin;
       case 'backup':    return isHostedAdmin && canManageUsers;
@@ -262,8 +274,24 @@ export const AdminView = ({
   });
 
   const selectTab = (tab: AdminTab) => {
-    setActiveTab(tab);
-    onTabChange?.(tab);
+    const requestedContentSection = contentSectionForTab(tab);
+    if (requestedContentSection) setContentSection(requestedContentSection);
+    const canonicalTab = canonicalViewTab(tab);
+    setActiveTab(canonicalTab);
+    onTabChange?.(canonicalTab);
+  };
+
+  const activateMenu = async () => {
+    if (menu.enabled || menuActivationBusy) return;
+    setMenuActivationBusy(true);
+    setMenuActivationError("");
+    try {
+      await onMenuUpdate({ ...menu, enabled: true, updatedAt: new Date().toISOString() });
+    } catch (error) {
+      setMenuActivationError(error instanceof Error ? error.message : tr("The menu could not be activated.", "Non è stato possibile attivare il menu."));
+    } finally {
+      setMenuActivationBusy(false);
+    }
   };
 
   const toggleSidebar = () => {
@@ -279,11 +307,14 @@ export const AdminView = ({
     if (visibleTabs.length === 0) return;
 
     if (currentUser && !didPickInitialTab) {
-      const preferred = visibleTabs.find(tab => tab.value === requestedTab)
+      const requestedContentSection = contentSectionForTab(requestedTab);
+      if (requestedContentSection) setContentSection(requestedContentSection);
+      const canonicalRequestedTab = canonicalViewTab(requestedTab);
+      const preferred = visibleTabs.find(tab => tab.value === canonicalRequestedTab)
         || visibleTabs.find(tab => tab.value === "profile")
         || visibleTabs[0];
       setActiveTab(preferred.value);
-      if (preferred.value !== requestedTab) onTabChange?.(preferred.value);
+      if (preferred.value !== canonicalRequestedTab) onTabChange?.(preferred.value);
       setDidPickInitialTab(true);
       return;
     }
@@ -295,8 +326,11 @@ export const AdminView = ({
   }, [currentUser, didPickInitialTab, requestedTab]);
 
   useEffect(() => {
-    if (!didPickInitialTab || !visibleTabs.some((tab) => tab.value === requestedTab)) return;
-    setActiveTab((current) => current === requestedTab ? current : requestedTab);
+    const requestedContentSection = contentSectionForTab(requestedTab);
+    if (requestedContentSection) setContentSection(requestedContentSection);
+    const canonicalRequestedTab = canonicalViewTab(requestedTab);
+    if (!didPickInitialTab || !visibleTabs.some((tab) => tab.value === canonicalRequestedTab)) return;
+    setActiveTab((current) => current === canonicalRequestedTab ? current : canonicalRequestedTab);
   // Permission booleans are included so a deep link is applied as soon as its tab becomes available.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedTab, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
@@ -590,63 +624,140 @@ export const AdminView = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="links" className="admin-tab-content">
-            <div className="admin-content-grid admin-content-grid-wide">
-              <div className="admin-main-column">
-                <LinkManager
-                  links={links}
+          <TabsContent value="content" className="admin-tab-content">
+            <section className="content-workspace" aria-labelledby="content-workspace-title">
+              <header className="content-workspace-header">
+                <div>
+                  <p className="admin-dashboard-kicker">{tr("Page structure", "Struttura pagina")}</p>
+                  <h2 id="content-workspace-title">{tr("Choose what your OrbitPage contains", "Scegli cosa contiene la tua OrbitPage")}</h2>
+                  <p>{tr("The home is always available. Add a native menu or focused pages only when they are useful.", "La home è sempre disponibile. Aggiungi un menu nativo o pagine dedicate solo quando servono.")}</p>
+                </div>
+              </header>
+
+              <nav className="content-workspace-switcher" aria-label={tr("Content destinations", "Destinazioni contenuto")}>
+                <button
+                  aria-current={contentSection === "home" ? "page" : undefined}
+                  className={contentSection === "home" ? "content-workspace-option active" : "content-workspace-option"}
+                  data-onboarding="links-tab"
+                  onClick={() => setContentSection("home")}
+                  type="button"
+                >
+                  <span className="content-workspace-option-icon"><Link aria-hidden="true" /></span>
+                  <span><strong>{tr("Home links", "Link della home")}</strong><small>{tr("Profile, links and blocks on your main URL", "Profilo, link e blocchi sul tuo URL principale")}</small></span>
+                  <em className="content-status content-status-always"><LockKeyhole aria-hidden="true" />{tr("Always active", "Sempre attiva")}</em>
+                </button>
+                <button
+                  aria-current={contentSection === "menu" ? "page" : undefined}
+                  className={contentSection === "menu" ? "content-workspace-option active" : "content-workspace-option"}
+                  onClick={() => setContentSection("menu")}
+                  type="button"
+                >
+                  <span className="content-workspace-option-icon"><UtensilsCrossed aria-hidden="true" /></span>
+                  <span><strong>{tr("Menu", "Menu")}</strong><small>{tr("A dedicated food and drinks destination", "Una destinazione dedicata a piatti e bevande")}</small></span>
+                  <em className={menu.enabled ? "content-status content-status-live" : "content-status"}>{menu.enabled ? tr("Active", "Attivo") : tr("Optional", "Facoltativo")}</em>
+                </button>
+                <button
+                  aria-current={contentSection === "pages" ? "page" : undefined}
+                  className={contentSection === "pages" ? "content-workspace-option active" : "content-workspace-option"}
+                  onClick={() => setContentSection("pages")}
+                  type="button"
+                >
+                  <span className="content-workspace-option-icon"><Files aria-hidden="true" /></span>
+                  <span><strong>{tr("Additional pages", "Pagine aggiuntive")}</strong><small>{tr("Separate URLs for events, services or campaigns", "URL separati per eventi, servizi o campagne")}</small></span>
+                  <em className={subpages.length > 0 ? "content-status content-status-live" : "content-status"}>{subpages.length} {tr("created", "create")}</em>
+                </button>
+              </nav>
+
+              {contentSection === "home" && (
+                <div className="admin-content-grid admin-content-grid-wide">
+                  <div className="admin-main-column">
+                    <LinkManager
+                      links={links}
+                      theme={theme}
+                      onLinksUpdate={onLinksUpdate}
+                      onLinksPreview={setPreviewLinks}
+                      editMode={linkEditMode}
+                      maxBlocks={entitlements?.maxBlocks}
+                      planName={saasPlan?.name}
+                      schedulingEnabled={entitlements?.scheduling ?? true}
+                      videoUploadsEnabled={entitlements?.videoUploads ?? true}
+                      maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
+                      managePlanHref={managePlanHref}
+                      nativeMenuEnabled={!saasPlan || entitlements?.nativeMenu === true}
+                      publicPageHref={publicPageHref}
+                    />
+                  </div>
+                  <aside className="admin-workbench-rail">
+                    <PreviewPanel
+                      title={tr("Home blocks and composition", "Blocchi e composizione della home")}
+                      profile={profile}
+                      links={previewLinks}
+                      theme={theme}
+                      publicPageHref={publicPageHref}
+                      showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                    />
+                  </aside>
+                </div>
+              )}
+
+              {contentSection === "menu" && (
+                <div className="content-workspace-section">
+                  {(!saasPlan || entitlements?.nativeMenu === true) && !menu.enabled && (
+                    <section className="content-activation-panel">
+                      <span className="content-workspace-option-icon"><UtensilsCrossed aria-hidden="true" /></span>
+                      <div><strong>{tr("Activate the native menu", "Attiva il menu nativo")}</strong><p>{tr("It will be published at /menu. You can configure it before or after activation.", "Sarà pubblicato su /menu. Puoi configurarlo prima o dopo l'attivazione.")}</p></div>
+                      <Button onClick={() => void activateMenu()} disabled={menuActivationBusy || linkEditMode === "view"}>{menuActivationBusy ? tr("Activating…", "Attivazione…") : tr("Activate menu", "Attiva menu")}</Button>
+                    </section>
+                  )}
+                  {menuActivationError && <p className="content-workspace-error" role="alert">{menuActivationError}</p>}
+                  <MenuEditor
+                    menu={menu}
+                    publicPageHref={publicPageHref}
+                    enabled={!saasPlan || entitlements?.nativeMenu === true}
+                    maxItems={entitlements?.maxMenuItems ?? null}
+                    planName={saasPlan?.name}
+                    advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
+                    onSave={onMenuUpdate}
+                    onPreview={() => undefined}
+                    onAddMenuLink={async () => {
+                      const menuLink = createNativeMenuLink(publicPageHref, {
+                        title: tr('View menu', 'Vedi il menu'),
+                        description: tr('Browse food and drinks', 'Scopri piatti e bevande'),
+                      });
+                      const exists = links.some(isNativeMenuLink);
+                      await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? 'append' : 'prepend'));
+                    }}
+                  />
+                </div>
+              )}
+
+              {contentSection === "pages" && (
+                <SubpageManager
+                  pages={subpages}
                   theme={theme}
-                  onLinksUpdate={onLinksUpdate}
-                  onLinksPreview={setPreviewLinks}
+                  publicPageHref={publicPageHref}
+                  onPagesUpdate={onSubpagesUpdate}
                   editMode={linkEditMode}
+                  maxPages={entitlements?.pages}
                   maxBlocks={entitlements?.maxBlocks}
                   planName={saasPlan?.name}
                   schedulingEnabled={entitlements?.scheduling ?? true}
                   videoUploadsEnabled={entitlements?.videoUploads ?? true}
                   maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
-                  nativeMenuEnabled={!saasPlan || entitlements?.nativeMenu === true}
-                  publicPageHref={publicPageHref}
-                />
-              </div>
-              <aside className="admin-workbench-rail">
-                <PreviewPanel
-                  title={tr("Blocks and composition", "Blocchi e composizione")}
-                  profile={profile}
-                  links={previewLinks}
-                  theme={theme}
-                  publicPageHref={publicPageHref}
-                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
-                />
-              </aside>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="pages" className="admin-tab-content">
-            <SubpageManager
-              pages={subpages}
-              theme={theme}
-              publicPageHref={publicPageHref}
-              onPagesUpdate={onSubpagesUpdate}
-              editMode={linkEditMode}
-              maxPages={entitlements?.pages}
-              maxBlocks={entitlements?.maxBlocks}
-              planName={saasPlan?.name}
-              schedulingEnabled={entitlements?.scheduling ?? true}
-              videoUploadsEnabled={entitlements?.videoUploads ?? true}
-              maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
-              managePlanHref={managePlanHref}
-              renderPreview={(page, pageLinks) => (
-                <PreviewPanel
-                  title={tr("Subpage preview", "Anteprima sottopagina")}
-                  profile={{ ...profile, name: page.title, bio: page.description }}
-                  links={pageLinks}
-                  theme={theme}
-                  publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${page.slug}`}
-                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                  renderPreview={(page, pageLinks) => (
+                    <PreviewPanel
+                      title={tr("Subpage preview", "Anteprima sottopagina")}
+                      profile={{ ...profile, name: page.title, bio: page.description }}
+                      links={pageLinks}
+                      theme={theme}
+                      publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${page.slug}`}
+                      showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                    />
+                  )}
                 />
               )}
-            />
+            </section>
           </TabsContent>
 
           <TabsContent value="theme" className="admin-tab-content">
@@ -669,27 +780,6 @@ export const AdminView = ({
               maxUploadBytes={entitlements?.maxUploadBytes}
               maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
               managePlanHref={managePlanHref}
-            />
-          </TabsContent>
-
-          <TabsContent value="menu" className="admin-tab-content">
-            <MenuEditor
-              menu={menu}
-              publicPageHref={publicPageHref}
-              enabled={!saasPlan || entitlements?.nativeMenu === true}
-              maxItems={entitlements?.maxMenuItems ?? null}
-              planName={saasPlan?.name}
-              advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
-              onSave={onMenuUpdate}
-              onPreview={() => undefined}
-              onAddMenuLink={async () => {
-                const menuLink = createNativeMenuLink(publicPageHref, {
-                  title: tr('View menu', 'Vedi il menu'),
-                  description: tr('Browse food and drinks', 'Scopri piatti e bevande'),
-                });
-                const exists = links.some(isNativeMenuLink);
-                await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? 'append' : 'prepend'));
-              }}
             />
           </TabsContent>
 
@@ -922,7 +1012,6 @@ function PreviewPanel({
   profile,
   links,
   theme,
-  menu,
   publicPageHref,
   showOrbitPageBadge,
 }: {
@@ -930,7 +1019,6 @@ function PreviewPanel({
   profile: ProfileData;
   links: LinkData[];
   theme: ThemeConfig;
-  menu: MenuCatalog;
   publicPageHref: string;
   showOrbitPageBadge: boolean;
 }) {

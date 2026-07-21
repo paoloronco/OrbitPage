@@ -10,7 +10,9 @@ import {
 describe("admin navigation", () => {
   it("maps standalone dashboard paths to tabs", () => {
     expect(adminTabFromLocation("/dashboard/profile")).toBe("profile");
-    expect(adminTabFromLocation("/dashboard/links")).toBe("links");
+    expect(adminTabFromLocation("/dashboard/links")).toBe("content");
+    expect(adminTabFromLocation("/dashboard/menu")).toBe("content");
+    expect(adminTabFromLocation("/dashboard/pages")).toBe("content");
     expect(adminTabFromLocation("/orbitpage/dashboard/theme")).toBe("theme");
   });
 
@@ -25,7 +27,9 @@ describe("admin navigation", () => {
     expect(isAdminTab("txt")).toBe(true);
     expect(adminDashboardPath("sitemap")).toBe("/dashboard/sitemap");
     expect(isAdminTab("sitemap")).toBe(true);
-    expect(adminDashboardPath("menu")).toBe("/dashboard/menu");
+    expect(adminDashboardPath("content")).toBe("/dashboard/content");
+    expect(adminDashboardPath("menu")).toBe("/dashboard/content");
+    expect(isAdminTab("content")).toBe(true);
     expect(isAdminTab("menu")).toBe(true);
     expect(adminDashboardPath("qr")).toBe("/dashboard/qr");
     expect(isAdminTab("qr")).toBe(true);

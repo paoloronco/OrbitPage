@@ -3089,6 +3089,36 @@
   .subpage-details-heading { align-items: flex-start; }
 }
 
+/* Unified home, menu and subpage workspace */
+.content-workspace { display: grid; gap: 1.1rem; min-width: 0; }
+.content-workspace-header { display: flex; align-items: end; justify-content: space-between; gap: 1rem; padding: .1rem .1rem 0; }
+.content-workspace-header h2 { margin: .25rem 0 .35rem; color: #0f172a; font-size: clamp(1.25rem,2vw,1.65rem); line-height: 1.2; }
+.content-workspace-header p:last-child { max-width: 45rem; margin: 0; color: #64748b; font-size: .9rem; line-height: 1.55; }
+.content-workspace-switcher { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .65rem; }
+.content-workspace-option { display: grid; grid-template-columns: 2.65rem minmax(0,1fr); grid-template-rows: 1fr auto; gap: .5rem .75rem; min-width: 0; min-height: 6.5rem; padding: .85rem; border: 1px solid #dbe3ef; border-radius: .5rem; background: #fff; color: #172033; font: inherit; text-align: left; cursor: pointer; transition: border-color 160ms ease,box-shadow 160ms ease,background-color 160ms ease; }
+.content-workspace-option:hover { border-color: #9bb6ea; box-shadow: 0 .5rem 1.4rem rgb(15 23 42 / 7%); }
+.content-workspace-option.active { border-color: #4f7df0; background: #f6f9ff; box-shadow: inset 0 3px 0 #356df3; }
+.content-workspace-option-icon { display: inline-flex; grid-row: 1/span 2; align-items: center; justify-content: center; width: 2.65rem; height: 2.65rem; border-radius: .5rem; background: #edf3ff; color: #356df3; flex: none; }
+.content-workspace-option-icon svg { width: 1.2rem; height: 1.2rem; }
+.content-workspace-option>span:nth-child(2) { display: grid; align-content: start; gap: .2rem; min-width: 0; }
+.content-workspace-option strong { font-size: .92rem; line-height: 1.25; }
+.content-workspace-option small { color: #667085; font-size: .76rem; line-height: 1.4; }
+.content-status { display: inline-flex; align-items: center; gap: .3rem; width: fit-content; padding: .2rem .45rem; border-radius: 999px; background: #f1f5f9; color: #64748b; font-size: .68rem; font-style: normal; font-weight: 700; line-height: 1.2; }
+.content-status svg { width: .7rem; height: .7rem; }
+.content-status-live { background: #e8f7ef; color: #16794c; }
+.content-status-always { background: #eaf1ff; color: #285ebc; }
+.content-workspace-section { display: grid; gap: .85rem; }
+.content-activation-panel { display: grid; grid-template-columns: 2.65rem minmax(0,1fr) auto; align-items: center; gap: .85rem; padding: .85rem 1rem; border: 1px solid #bfd0f5; border-radius: .5rem; background: #f7faff; }
+.content-activation-panel strong { color: #14213a; font-size: .92rem; }
+.content-activation-panel p { margin: .2rem 0 0; color: #64748b; font-size: .8rem; line-height: 1.45; }
+.content-workspace-error { margin: 0; padding: .65rem .75rem; border: 1px solid #fecaca; border-radius: .5rem; background: #fff1f2; color: #b42318; font-size: .82rem; }
+@media (max-width:760px) {
+  .content-workspace-switcher { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(15.5rem,82vw); overflow-x: auto; padding: .1rem .1rem .5rem; scroll-snap-type: x mandatory; overscroll-behavior-inline: contain; }
+  .content-workspace-option { scroll-snap-align: start; }
+  .content-activation-panel { grid-template-columns: 2.65rem minmax(0,1fr); }
+  .content-activation-panel .button { grid-column: 1/-1; width: 100%; }
+}
+
 /* First-run public state. Kept independent from user theme variables so an
    unconfigured installation is always readable. */
 .orbitpage-construction-shell {

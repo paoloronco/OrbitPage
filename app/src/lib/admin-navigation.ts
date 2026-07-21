@@ -1,5 +1,7 @@
 export const ADMIN_TAB_IDS = [
   "profile",
+  "content",
+  // Legacy section ids stay valid for older bookmarks and hosted runtimes.
   "links",
   "pages",
   "theme",
@@ -15,6 +17,10 @@ export const ADMIN_TAB_IDS = [
 
 export type AdminTab = (typeof ADMIN_TAB_IDS)[number];
 
+export function canonicalAdminTab(tab: AdminTab): AdminTab {
+  return tab === "links" || tab === "pages" || tab === "menu" ? "content" : tab;
+}
+
 export const ADMIN_SECTION_CHANGED_MESSAGE = "orbitpage:admin-section-changed";
 export const ADMIN_SECTION_NAVIGATE_MESSAGE = "orbitpage:admin-section-navigate";
 
@@ -23,17 +29,17 @@ export function isAdminTab(value: unknown): value is AdminTab {
 }
 
 export function adminDashboardPath(tab: AdminTab = "profile") {
-  return `/dashboard/${tab}`;
+  return `/dashboard/${canonicalAdminTab(tab)}`;
 }
 
 export function adminTabFromLocation(pathname: string, search = "") {
   const queryTab = new URLSearchParams(search).get("section");
-  if (isAdminTab(queryTab)) return queryTab;
+  if (isAdminTab(queryTab)) return canonicalAdminTab(queryTab);
 
   const segments = pathname.split("/").filter(Boolean);
   const routeIndex = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");
   const pathTab = routeIndex >= 0 ? segments[routeIndex + 1] : null;
-  return isAdminTab(pathTab) ? pathTab : "profile";
+  return isAdminTab(pathTab) ? canonicalAdminTab(pathTab) : "profile";
 }
 
 export function isAdminSectionMessage(data: unknown, type: string): data is { type: string; section: AdminTab } {

@@ -9,7 +9,7 @@ describe('AdminOnboarding', () => {
     const html = renderToStaticMarkup(
       <AdminOnboarding
         activeTab="profile"
-        visibleTabs={['profile', 'links', 'theme', 'analytics', 'access', 'privacy', 'txt']}
+        visibleTabs={['profile', 'content', 'theme', 'analytics', 'access', 'privacy', 'txt']}
         onSelectTab={() => undefined}
         forceOpen
         repeatEnabled
