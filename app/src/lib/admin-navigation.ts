@@ -6,6 +6,8 @@ export const ADMIN_TAB_IDS = [
   "pages",
   "theme",
   "menu",
+  "publish",
+  // Legacy publishing ids stay valid for older bookmarks and hosted runtimes.
   "qr",
   "access",
   "backup",
@@ -18,7 +20,9 @@ export const ADMIN_TAB_IDS = [
 export type AdminTab = (typeof ADMIN_TAB_IDS)[number];
 
 export function canonicalAdminTab(tab: AdminTab): AdminTab {
-  return tab === "links" || tab === "pages" || tab === "menu" ? "content" : tab;
+  if (tab === "links" || tab === "pages" || tab === "menu") return "content";
+  if (tab === "qr" || tab === "txt" || tab === "sitemap") return "publish";
+  return tab;
 }
 
 export const ADMIN_SECTION_CHANGED_MESSAGE = "orbitpage:admin-section-changed";

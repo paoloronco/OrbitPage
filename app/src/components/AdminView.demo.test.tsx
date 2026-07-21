@@ -5,8 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 const mockState = vi.hoisted(() => ({
   backupProps: [] as Array<Record<string, unknown>>,
   privacyProps: [] as Array<Record<string, unknown>>,
-  textFileProps: [] as Array<Record<string, unknown>>,
-  sitemapProps: [] as Array<Record<string, unknown>>,
+  publishProps: [] as Array<Record<string, unknown>>,
   previewProps: [] as Array<Record<string, unknown>>,
 }));
 
@@ -58,16 +57,10 @@ vi.mock('./PrivacySettings', () => ({
     return <div>PrivacySettings</div>;
   },
 }));
-vi.mock('./TextFileManager', () => ({
-  TextFileManager: (props: Record<string, unknown>) => {
-    mockState.textFileProps.push(props);
-    return <div>TextFileManager</div>;
-  },
-}));
-vi.mock('./SitemapManager', () => ({
-  SitemapManager: (props: Record<string, unknown>) => {
-    mockState.sitemapProps.push(props);
-    return <div>SitemapManager</div>;
+vi.mock('./PublishTools', () => ({
+  PublishTools: (props: Record<string, unknown>) => {
+    mockState.publishProps.push(props);
+    return <div>Publish tools: QR, Sitemap and TXT files</div>;
   },
 }));
 
@@ -115,8 +108,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Editing privacy settings');
     expect(html).toContain('TXT files');
     expect(mockState.privacyProps[0]).toMatchObject({ readOnly: true });
-    expect(mockState.textFileProps[0]).toMatchObject({ readOnly: true });
-    expect(mockState.sitemapProps[0]).toMatchObject({ readOnly: true });
+    expect(mockState.publishProps[0]).toMatchObject({ readOnly: true, canUseQr: true, canUseDiscovery: true });
     expect(mockState.previewProps).toHaveLength(2);
     expect(mockState.previewProps[0]).toMatchObject({ publicPageHref: '/' });
     expect(html).toContain('Admin access');

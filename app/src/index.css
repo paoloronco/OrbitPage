@@ -1435,6 +1435,134 @@
     grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   }
 
+  .publish-tools {
+    display: grid;
+    gap: 16px;
+  }
+
+  .publish-tools-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+    padding: 4px 2px 2px;
+  }
+
+  .publish-tools-header-icon {
+    display: inline-grid;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid #bfd2f4;
+    border-radius: 7px;
+    background: #eaf2ff;
+    color: #155eef;
+  }
+
+  .publish-tools-header p {
+    margin: 0 0 3px;
+    color: #155eef;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .publish-tools-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 22px;
+    font-weight: 760;
+    line-height: 1.2;
+  }
+
+  .publish-tools-header div > span {
+    display: block;
+    margin-top: 5px;
+    color: #52647d;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .publish-tools-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 6px;
+    border: 1px solid #d8e1ed;
+    border-radius: 8px;
+    background: #edf2f8;
+  }
+
+  .publish-tools-tab {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    min-width: 0;
+    min-height: 66px;
+    column-gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: #34435a;
+    text-align: left;
+    transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, color 160ms ease;
+  }
+
+  .publish-tools-tab > span {
+    display: inline-grid;
+    width: 32px;
+    height: 32px;
+    grid-row: 1 / 3;
+    place-items: center;
+    border-radius: 6px;
+    background: #dce7f5;
+    color: #52647d;
+  }
+
+  .publish-tools-tab strong {
+    align-self: end;
+    color: #172033;
+    font-size: 13px;
+  }
+
+  .publish-tools-tab small {
+    overflow: hidden;
+    color: #63738a;
+    font-size: 11px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .publish-tools-tab:hover,
+  .publish-tools-tab:focus-visible {
+    border-color: #c2d1e5;
+    background: rgb(255 255 255 / .72);
+  }
+
+  .publish-tools-tab.active {
+    border-color: #9bbaf4;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgb(37 99 235 / .08);
+  }
+
+  .publish-tools-tab.active > span {
+    background: #155eef;
+    color: #ffffff;
+  }
+
+  .publish-tools-panel {
+    min-width: 0;
+    animation: publish-tool-enter 220ms cubic-bezier(.22, 1, .36, 1) both;
+  }
+
+  @keyframes publish-tool-enter {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .managed-analytics { display: grid; gap: 16px; }
   .managed-analytics-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid #d8e1ed; padding: 2px 0 16px; }
   .managed-analytics-header > div:first-child > span { color: #155eef; font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
@@ -1469,12 +1597,24 @@
   .managed-analytics-locked { justify-content: space-between; color: #92400e; font-size: 12px; }
 
   @media (max-width: 760px) {
+    .publish-tools-header h2 { font-size: 18px; }
+    .publish-tools-tabs {
+      grid-template-columns: repeat(3, minmax(168px, 1fr));
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+    }
+    .publish-tools-tab { scroll-snap-align: start; }
     .managed-analytics-header { align-items: stretch; flex-direction: column; gap: 12px; }
     .managed-analytics-actions { justify-content: space-between; }
     .managed-analytics-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .managed-analytics-metrics > div:nth-child(2) { border-right: 0; } .managed-analytics-metrics > div:nth-child(-n+2) { border-bottom: 1px solid #e5eaf1; }
     .managed-analytics-details { grid-template-columns: 1fr; }
     .managed-analytics-locked { align-items: flex-start; flex-direction: column; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .publish-tools-tab { transition: none; }
+    .publish-tools-panel { animation: none; }
   }
 
   .admin-main-column,

@@ -77,8 +77,7 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 
 - Editable title, description, canonical URL, and social-preview metadata
 - Open Graph, Twitter Card, and Schema.org output
-- Editable discovery TXT files and Admin-generated `sitemap.xml`
-- Customizable PNG/SVG QR codes for the main page, menu, or a safe relative campaign path
+- Unified **Publish** workspace for customizable PNG/SVG QR codes, generated `sitemap.xml`, and editable discovery files
 - Editable `robots.txt`, canonical `llms.txt` (`llm.txt` alias), `humans.txt`, `ai.txt`, and `security.txt`
 - Safe custom `/name.txt` and `/.well-known/name.txt` endpoints
 - Optional `noindex` mode for private, staging, or preview deployments

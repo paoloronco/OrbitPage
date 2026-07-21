@@ -26,7 +26,7 @@ import {
   X,
 } from "lucide-react";
 
-type AdminOnboardingTab = "profile" | "content" | "theme" | "access" | "backup" | "analytics" | "privacy" | "txt";
+type AdminOnboardingTab = "profile" | "content" | "theme" | "publish" | "access" | "backup" | "analytics" | "privacy";
 type OnboardingMode = "hidden" | "welcome" | "tour" | "minimized";
 
 interface AdminOnboardingProfile {
@@ -181,16 +181,16 @@ const tourSteps: TourStep[] = [
     checklist: ["Choose hosted or external policies", "Save Privacy Policy and Cookie Policy links", "Review consent mode if tracking is used"],
   },
   {
-    id: "txt",
-    tab: "txt",
-    target: "[data-onboarding='txt-section']",
+    id: "publish",
+    tab: "publish",
+    target: "[data-onboarding='publish-section']",
     icon: FileText,
-    eyebrow: "9. TXT",
-    title: "Check crawler and AI-facing text files",
-    body: "TXT files control crawler hints, LLM-facing instructions, humans.txt, security.txt, and related public metadata.",
-    action: "Review defaults and edit only when the customer has specific SEO or AI-indexing needs.",
-    doneLabel: "TXT reviewed",
-    checklist: ["Review robots.txt", "Review llms.txt", "Edit security.txt if needed"],
+    eyebrow: "9. Publish",
+    title: "Prepare sharing and discovery",
+    body: "Publish tools keep QR codes, the sitemap, and crawler or AI-facing text files together.",
+    action: "Review the public routes and generate only the assets this page needs.",
+    doneLabel: "Publish tools reviewed",
+    checklist: ["Test the QR destination", "Generate the sitemap", "Review robots.txt and llms.txt"],
   },
   {
     id: "public-page",

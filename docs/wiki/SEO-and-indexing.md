@@ -65,7 +65,7 @@ OrbitPage includes:
 - the public home page
 - local legal pages when `/privacy` or `/cookies` are configured as profile policy URLs
 
-Open **Admin > Sitemap** and select **Generate sitemap** to create the sitemap state and expose its public URL. The XML is derived from current public data on request, so hostname changes and later page publications stay aligned without accepting raw XML from the browser. Use **Regenerate sitemap** when you want to record a new explicit generation time.
+Open **Admin > Publish > Sitemap** and select **Generate sitemap** to create the sitemap state and expose its public URL. The XML is derived from current public data on request, so hostname changes and later page publications stay aligned without accepting raw XML from the browser. Use **Regenerate sitemap** when you want to record a new explicit generation time.
 
 The section shows the public URL, included URL count, generation date, copy/open controls and current publication status. Sitemap state is included in the **Discovery files** backup section.
 
@@ -73,7 +73,7 @@ Private routes such as admin, API, health, and unknown SPA routes are excluded a
 
 ## TXT Files
 
-The Admin **TXT** section can edit `robots.txt`, `llms.txt`, `humans.txt`, `security.txt`, and `ai.txt`. The plural `llms.txt` is canonical; `/llm.txt` serves the same content as a compatibility alias.
+The **Admin > Publish > TXT** tool can edit `robots.txt`, `llms.txt`, `humans.txt`, `security.txt`, and `ai.txt`. The plural `llms.txt` is canonical; `/llm.txt` serves the same content as a compatibility alias.
 
 You can also add up to 20 custom endpoints using `/name.txt` or `/.well-known/name.txt`. OrbitPage normalizes paths to lowercase, prevents reserved-name collisions and path traversal, and serves every file as `text/plain` with browser sniffing disabled. TXT files and custom paths are included in the **Discovery files** backup section.
 

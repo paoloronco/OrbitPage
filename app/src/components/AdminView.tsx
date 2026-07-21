@@ -20,7 +20,6 @@ import {
   Cookie,
   Database,
   ExternalLink,
-  FileText,
   Files,
   Globe2,
   HelpCircle,
@@ -30,11 +29,10 @@ import {
   LockKeyhole,
   LogOut,
   MousePointerClick,
-  Map,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
-  QrCode,
+  Share2,
   UtensilsCrossed,
   ShieldCheck,
   User,
@@ -48,8 +46,6 @@ import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
-import { TextFileManager } from "./TextFileManager";
-import { SitemapManager } from "./SitemapManager";
 import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview, PreviewDeviceFrame, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
@@ -58,7 +54,7 @@ import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
-import type { AdminTab } from "@/lib/admin-navigation";
+import { canonicalAdminTab, type AdminTab } from "@/lib/admin-navigation";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
@@ -71,8 +67,8 @@ import {
 } from "@/lib/onboarding-checklist-storage";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import { VersionHistory } from "./VersionHistory";
-import { ProfileQrCode } from "./ProfileQrCode";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
+import { PublishTools } from "./PublishTools";
 
 interface ProfileData {
   name: string;
@@ -129,13 +125,11 @@ const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "profile", icon: User },
   { value: "content", icon: Files },
   { value: "theme", icon: Palette },
-  { value: "qr", icon: QrCode },
+  { value: "publish", icon: Share2 },
   { value: "access", icon: Key },
   { value: "backup", icon: Database },
   { value: "analytics", icon: BarChart2 },
   { value: "privacy", icon: Cookie },
-  { value: "txt", icon: FileText },
-  { value: "sitemap", icon: Map },
 ];
 
 type ContentSection = "home" | "menu" | "pages";
@@ -148,7 +142,7 @@ function contentSectionForTab(tab: AdminTab): ContentSection | null {
 }
 
 function canonicalViewTab(tab: AdminTab): AdminTab {
-  return contentSectionForTab(tab) ? "content" : tab;
+  return canonicalAdminTab(tab);
 }
 
 const ctaActionLabels: Record<string, string> = {
@@ -182,8 +176,9 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"), qr: "QR",
-    access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy", txt: "TXT", sitemap: "Sitemap",
+    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
+    publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
+    access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
@@ -296,13 +291,11 @@ export const AdminView = ({
       case 'profile':   return canEditProfile;
       case 'content':   return canEditLinks || canEditMenu;
       case 'theme':     return canEditTheme;
-      case 'qr':        return canEditProfile;
+      case 'publish':   return canEditProfile || canEditCompliance;
       case 'access':    return !isHostedAdmin;
       case 'backup':    return isHostedAdmin && canManageUsers;
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
-      case 'txt':       return canEditCompliance;
-      case 'sitemap':   return canEditCompliance;
       default:          return false;
     }
   });
@@ -918,10 +911,13 @@ export const AdminView = ({
             />
           </TabsContent>
 
-          <TabsContent value="qr" className="admin-tab-content">
-            <div className="admin-single-column">
-              <ProfileQrCode menuEnabled={menu.enabled} />
-            </div>
+          <TabsContent value="publish" className="admin-tab-content">
+            <PublishTools
+              menuEnabled={menu.enabled}
+              readOnly={DEMO_MODE}
+              canUseQr={canEditProfile}
+              canUseDiscovery={canEditCompliance}
+            />
           </TabsContent>
 
           {!isHostedAdmin && (
@@ -1003,17 +999,6 @@ export const AdminView = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="txt" className="admin-tab-content">
-            <div className="admin-single-column" data-onboarding="txt-section">
-              <TextFileManager readOnly={DEMO_MODE} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="sitemap" className="admin-tab-content">
-            <div className="admin-single-column" data-onboarding="sitemap-section">
-              <SitemapManager readOnly={DEMO_MODE} />
-            </div>
-          </TabsContent>
           </div>
         </Tabs>
 

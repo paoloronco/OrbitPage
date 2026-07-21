@@ -14,6 +14,9 @@ describe("admin navigation", () => {
     expect(adminTabFromLocation("/dashboard/menu")).toBe("content");
     expect(adminTabFromLocation("/dashboard/pages")).toBe("content");
     expect(adminTabFromLocation("/orbitpage/dashboard/theme")).toBe("theme");
+    expect(adminTabFromLocation("/dashboard/qr")).toBe("publish");
+    expect(adminTabFromLocation("/dashboard/sitemap")).toBe("publish");
+    expect(adminTabFromLocation("/dashboard/txt")).toBe("publish");
   });
 
   it("keeps the hosted surface and legacy admin route compatible", () => {
@@ -25,14 +28,16 @@ describe("admin navigation", () => {
   it("builds only known dashboard destinations", () => {
     expect(adminDashboardPath("backup")).toBe("/dashboard/backup");
     expect(isAdminTab("txt")).toBe(true);
-    expect(adminDashboardPath("sitemap")).toBe("/dashboard/sitemap");
+    expect(adminDashboardPath("sitemap")).toBe("/dashboard/publish");
     expect(isAdminTab("sitemap")).toBe(true);
     expect(adminDashboardPath("content")).toBe("/dashboard/content");
     expect(adminDashboardPath("menu")).toBe("/dashboard/content");
     expect(isAdminTab("content")).toBe(true);
     expect(isAdminTab("menu")).toBe(true);
-    expect(adminDashboardPath("qr")).toBe("/dashboard/qr");
+    expect(adminDashboardPath("qr")).toBe("/dashboard/publish");
     expect(isAdminTab("qr")).toBe(true);
+    expect(adminDashboardPath("publish")).toBe("/dashboard/publish");
+    expect(isAdminTab("publish")).toBe(true);
     expect(isAdminTab("billing")).toBe(false);
   });
 
