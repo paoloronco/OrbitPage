@@ -52,6 +52,7 @@ app/e2e-data/
 app/lint-report.json
 scripts/*
 !scripts/test-installer.sh
+!scripts/test-pve-installer.sh
 docs/superpowers/
 
 # Local private workspace

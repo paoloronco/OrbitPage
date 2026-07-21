@@ -31,9 +31,12 @@ jobs:
         working-directory: .
         run: |
           bash -n install.sh
+          bash -n install-pve.sh
           bash -n scripts/test-installer.sh
-          shellcheck install.sh scripts/test-installer.sh
+          bash -n scripts/test-pve-installer.sh
+          shellcheck install.sh install-pve.sh scripts/test-installer.sh scripts/test-pve-installer.sh
           sudo bash scripts/test-installer.sh
+          sudo bash scripts/test-pve-installer.sh
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

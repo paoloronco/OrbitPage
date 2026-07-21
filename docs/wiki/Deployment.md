@@ -49,7 +49,7 @@ Pin a release instead of following `latest` when deterministic upgrades are requ
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
-  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.11.0 bash
+  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.11.1 bash
 ```
 
 ### Operations
@@ -72,7 +72,89 @@ orbitpage uninstall
 orbitpage uninstall --purge
 ```
 
-For Community Scripts integration, this installer is the guest-side application installer. A Community Scripts contribution still needs its standard `ct/`, `install/`, and metadata wrapper files in their development repository to provision the LXC itself. The wrapper should enable the container features required by Docker and invoke this script inside the guest.
+For Community Scripts integration, this remains the guest-side application installer. The PVE installer below provides the complete host-to-LXC flow without modifying the Proxmox host with application dependencies.
+
+## One-command Proxmox VE install
+
+Run this command as `root` on an x86-64 Proxmox VE 8 or newer node:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | bash
+```
+
+The host installer:
+
+- verifies that it is running on a supported Proxmox VE node;
+- chooses the next free CT ID and compatible active storages;
+- downloads the newest Debian 12 amd64 LXC template when it is not cached;
+- creates an unprivileged LXC with 2 cores, 2 GB RAM, 512 MB swap, and a 12 GB root disk;
+- enables only `nesting=1` and `keyctl=1`, which Docker needs inside an unprivileged LXC;
+- connects `eth0` to `vmbr0` with DHCP, IPv6 autoconfiguration, and the Proxmox firewall enabled;
+- enables automatic startup with a controlled startup/shutdown order;
+- installs Docker and OrbitPage inside the container through the tested Linux installer;
+- waits for container networking and the OrbitPage health check before printing the URLs.
+
+Docker, the database, media, and OrbitPage secrets stay inside the LXC. The PVE host receives no Docker packages and no application secrets. The LXC has no password embedded in the command: use `pct enter CTID` from the host, or supply an SSH public key. The OrbitPage administrator password is chosen later in the browser setup wizard.
+
+### PVE installation options
+
+Pass overrides before `bash`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | \
+  ORBITPAGE_PVE_CTID=250 \
+  ORBITPAGE_PVE_HOSTNAME=orbitpage \
+  ORBITPAGE_PVE_CORES=4 \
+  ORBITPAGE_PVE_MEMORY=4096 \
+  ORBITPAGE_PVE_DISK_GB=24 \
+  ORBITPAGE_PVE_BRIDGE=vmbr0 \
+  ORBITPAGE_HTTP_PORT=8080 \
+  bash
+```
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ORBITPAGE_PVE_CTID` | Next cluster ID | Explicit unused container ID |
+| `ORBITPAGE_PVE_HOSTNAME` | `orbitpage` | LXC hostname |
+| `ORBITPAGE_PVE_CORES` | `2` | CPU cores |
+| `ORBITPAGE_PVE_MEMORY` | `2048` | RAM in MB |
+| `ORBITPAGE_PVE_SWAP` | `512` | Swap in MB |
+| `ORBITPAGE_PVE_DISK_GB` | `12` | Root disk size in GB |
+| `ORBITPAGE_PVE_ROOTFS_STORAGE` | First active `rootdir` storage | Root disk storage |
+| `ORBITPAGE_PVE_TEMPLATE_STORAGE` | First active `vztmpl` storage | Template storage |
+| `ORBITPAGE_PVE_TEMPLATE` | Latest Debian 12 amd64 | Exact Proxmox template filename |
+| `ORBITPAGE_PVE_BRIDGE` | `vmbr0` | PVE network bridge |
+| `ORBITPAGE_PVE_IP` | `dhcp` | `dhcp` or static IPv4 CIDR |
+| `ORBITPAGE_PVE_GATEWAY` | Empty | IPv4 gateway for static addressing |
+| `ORBITPAGE_PVE_VLAN` | Empty | Optional VLAN tag, 1-4094 |
+| `ORBITPAGE_PVE_FIREWALL` | `1` | Enable the PVE firewall flag on `eth0` |
+| `ORBITPAGE_PVE_SSH_PUBLIC_KEY` | Empty | Host path to a public key authorized for LXC root |
+| `ORBITPAGE_HTTP_PORT` | `8080` | OrbitPage port inside the LXC |
+| `ORBITPAGE_PUBLIC_SITE_URL` | Empty | Optional canonical public HTTPS URL |
+| `ORBITPAGE_IMAGE` | `ghcr.io/paoloronco/orbitpage:latest` | Image or pinned version installed in the LXC |
+
+Example with a static address and VLAN:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | \
+  ORBITPAGE_PVE_IP=192.0.2.50/24 \
+  ORBITPAGE_PVE_GATEWAY=192.0.2.1 \
+  ORBITPAGE_PVE_VLAN=30 \
+  ORBITPAGE_PVE_SSH_PUBLIC_KEY=/root/.ssh/id_ed25519.pub \
+  bash
+```
+
+After installation, use the CT ID printed by the installer:
+
+```bash
+pct exec CTID -- orbitpage status
+pct exec CTID -- orbitpage logs
+pct exec CTID -- orbitpage update
+pct exec CTID -- orbitpage backup
+pct enter CTID
+```
+
+The first public visit shows **Under construction**. Open `http://LXC_IP:8080/dashboard/profile` to complete dependency checks, set the fixed `admin` password, choose the page slug, and start the guided tutorial.
 
 ## Images
 

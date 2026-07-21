@@ -141,7 +141,28 @@ curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.s
 
 The installer uses Docker's official apt repository, creates a persistent data directory, generates a private JWT secret, starts OrbitPage, and waits for its health check. It is idempotent: running it again preserves the existing secret and data.
 
-Do not run it directly on a Proxmox VE host. Create a Debian guest first. The installer is designed so a Community Scripts-style LXC wrapper can call the same tested application setup inside the guest.
+Do not run this guest installer directly on a Proxmox VE host. Use the dedicated host installer below instead.
+
+### One-command Proxmox VE install
+
+On an x86-64 Proxmox VE 8 or newer host, run as `root`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | bash
+```
+
+It downloads the latest Debian 12 template when needed, creates an unprivileged LXC with Docker-compatible `nesting` and `keyctl`, enables DHCP and the Proxmox firewall on `vmbr0`, installs OrbitPage inside the guest, and prints the public and first-setup URLs. Docker is never installed on the PVE host.
+
+Defaults are 2 cores, 2 GB RAM, 12 GB disk, CT ID from the cluster, and port `8080`. Every value can be overridden without editing the script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | \
+  ORBITPAGE_PVE_CTID=250 \
+  ORBITPAGE_PVE_HOSTNAME=orbitpage \
+  ORBITPAGE_PVE_BRIDGE=vmbr0 \
+  ORBITPAGE_PVE_MEMORY=4096 \
+  bash
+```
 
 After installation:
 
@@ -152,7 +173,7 @@ orbitpage update
 orbitpage backup
 ```
 
-See [One-command deployment](./docs/wiki/Deployment.md#one-command-linux-install) for port, bind-address, image pinning, backups, update, and uninstall options.
+See [Deployment](./docs/wiki/Deployment.md) for Linux and Proxmox options, static networking, image pinning, backups, updates, and removal.
 
 ### Docker run
 
