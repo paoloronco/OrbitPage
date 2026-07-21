@@ -37,6 +37,7 @@ export async function openAuthenticatedAdmin(page: Page) {
     await loginButton.click();
   }
 
-  await expect(page.locator('h1.admin-title, .admin-title')).toHaveText('OrbitPage Admin');
+  await expect(page.locator('.admin-dashboard-shell')).toBeVisible();
+  await expect(page.locator('.admin-dashboard-logo-copy strong')).toHaveText('OrbitPage');
   await dismissOnboarding(page);
 }

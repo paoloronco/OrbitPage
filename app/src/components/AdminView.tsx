@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
@@ -31,6 +31,8 @@ import {
   MousePointerClick,
   Map,
   Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
   QrCode,
   UtensilsCrossed,
   ShieldCheck,
@@ -137,6 +139,8 @@ const ctaActionLabels: Record<string, string> = {
   buy: "Buy",
 };
 
+const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
+
 export const AdminView = ({
   profile,
   links,
@@ -170,6 +174,11 @@ export const AdminView = ({
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
+  });
+  const standaloneNavRef = useRef<HTMLElement>(null);
   const publicPageHref = getPublicUrlOverride() || withBasePath('/');
   const entitlements = saasPlan?.entitlements;
   const managePlanHref = saasBilling?.manageUrl || "/dashboard/billing";
@@ -235,6 +244,14 @@ export const AdminView = ({
     onTabChange?.(tab);
   };
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed((current) => {
+      const next = !current;
+      window.localStorage.setItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY, String(next));
+      return next;
+    });
+  };
+
   // Keep activeTab in sync when permission set changes (e.g. after login)
   useEffect(() => {
     if (visibleTabs.length === 0) return;
@@ -261,6 +278,31 @@ export const AdminView = ({
   // Permission booleans are included so a deep link is applied as soon as its tab becomes available.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedTab, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
+
+  useEffect(() => {
+    if (isHostedAdmin) return;
+
+    const centerActiveItem = () => {
+      const navigation = standaloneNavRef.current;
+      const activeItem = navigation?.querySelector<HTMLElement>('[aria-current="page"]');
+      if (!navigation || !activeItem) return;
+
+      navigation.scrollTo({
+        behavior: "smooth",
+        left: Math.max(0, activeItem.offsetLeft - ((navigation.clientWidth - activeItem.offsetWidth) / 2)),
+      });
+    };
+
+    const animationFrame = window.requestAnimationFrame(centerActiveItem);
+    const settledLayoutTimer = window.setTimeout(centerActiveItem, 350);
+    window.addEventListener("resize", centerActiveItem);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(settledLayoutTimer);
+      window.removeEventListener("resize", centerActiveItem);
+    };
+  }, [activeTab, isHostedAdmin]);
 
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
@@ -309,9 +351,68 @@ export const AdminView = ({
   };
 
   return (
-    <div className="orbitpage-admin min-h-screen">
-      <div className="admin-app-shell">
-        <header className="admin-topbar">
+    <div className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : ""}`}>
+      {!isHostedAdmin && (
+        <aside className="admin-dashboard-sidebar">
+          <div className="admin-dashboard-logo-row">
+            <div className="admin-dashboard-logo">
+              <OrbitPageBrand showName={false} size="md" />
+              <div className="admin-dashboard-logo-copy">
+                <strong>OrbitPage</strong>
+                <small>{tr("Self-hosted workspace", "Workspace self-hosted")}</small>
+              </div>
+            </div>
+            <button
+              aria-label={sidebarCollapsed ? tr("Expand navigation", "Espandi navigazione") : tr("Collapse navigation", "Comprimi navigazione")}
+              aria-pressed={sidebarCollapsed}
+              className="admin-dashboard-collapse"
+              onClick={toggleSidebar}
+              title={sidebarCollapsed ? tr("Expand navigation", "Espandi navigazione") : tr("Collapse navigation", "Comprimi navigazione")}
+              type="button"
+            >
+              {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" aria-hidden="true" /> : <PanelLeftClose className="h-4 w-4" aria-hidden="true" />}
+            </button>
+          </div>
+
+          <nav ref={standaloneNavRef} className="admin-dashboard-nav" aria-label={tr("Dashboard sections", "Sezioni dashboard")}>
+            {visibleTabs.map(({ value, icon: Icon }) => (
+              <button
+                aria-current={activeTab === value ? "page" : undefined}
+                className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
+                data-onboarding={`${value}-tab`}
+                key={value}
+                onClick={() => selectTab(value)}
+                title={tabLabel(value)}
+                type="button"
+              >
+                <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" aria-hidden="true" />
+                <span>{tabLabel(value)}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="admin-dashboard-sidebar-footer">
+            <label className="admin-dashboard-language" title={tr("Language", "Lingua")}>
+              <Languages className="h-4 w-4" aria-hidden="true" />
+              <span>{tr("Language", "Lingua")}</span>
+              <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>
+                {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
+              </select>
+            </label>
+            <a className="admin-dashboard-footer-action" href={publicPageHref} target="_blank" rel="noopener noreferrer" title={tr("Public page", "Pagina pubblica")}>
+              <Globe2 className="h-4 w-4" aria-hidden="true" />
+              <span>{tr("Public page", "Pagina pubblica")}</span>
+            </a>
+            <button className="admin-dashboard-footer-action" onClick={handleLogout} title={tr("Logout", "Esci")} type="button">
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <span>{tr("Logout", "Esci")}</span>
+            </button>
+          </div>
+        </aside>
+      )}
+
+      <div className={isHostedAdmin ? "admin-app-shell" : "admin-dashboard-main"}>
+        {isHostedAdmin ? <header className="admin-topbar">
           <div className="admin-heading min-w-0">
             <OrbitPageBrand showName={false} size="md" />
             <div className="min-w-0">
@@ -354,14 +455,31 @@ export const AdminView = ({
                 {tr("Public page", "Pagina pubblica")}
               </Button>
             </a>
-            {!isHostedAdmin && (
-              <Button className="admin-action" variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-                {tr("Logout", "Esci")}
+          </div>
+        </header> : <header className="admin-dashboard-header">
+          <div>
+            <p className="admin-dashboard-kicker">{tr("Self-hosted workspace", "Workspace self-hosted")}</p>
+            <div className="admin-dashboard-heading-row">
+              <h1>{tabLabel(activeTab)}</h1>
+              {appVersion && <span className="admin-version" title={tr("OrbitPage OSS version", "Versione OrbitPage OSS")}>v{appVersion}</span>}
+            </div>
+            <p>{tr("Manage the page from your private OrbitPage installation.", "Gestisci la pagina dalla tua installazione privata di OrbitPage.")}</p>
+          </div>
+          <div className="admin-dashboard-header-actions">
+            {!isProspectReadOnly && (
+              <Button className="admin-action" variant="outline" size="sm" onClick={() => setOnboardingReplayKey(key => key + 1)}>
+                <HelpCircle className="h-4 w-4" />
+                {tr("Guide", "Guida")}
               </Button>
             )}
+            <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
+              <Button className="admin-action admin-action-primary" size="sm">
+                <ExternalLink className="h-4 w-4" />
+                {tr("Public page", "Pagina pubblica")}
+              </Button>
+            </a>
           </div>
-        </header>
+        </header>}
 
         {isProspectReadOnly && (
           <section className="admin-readonly-banner" role="status">
@@ -404,8 +522,8 @@ export const AdminView = ({
           )}
         </section>
 
-        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className="mt-5 flex-1">
-          <div className="admin-nav-shell">
+        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin ? "mt-5 flex-1" : "admin-dashboard-tabs flex-1"}>
+          {isHostedAdmin && <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
               {visibleTabs.map(({ value, icon: Icon }) => (
                 <TabsTrigger key={value} value={value} className="admin-tab" data-onboarding={`${value}-tab`}>
@@ -414,7 +532,7 @@ export const AdminView = ({
                 </TabsTrigger>
               ))}
             </TabsList>
-          </div>
+          </div>}
 
           <div
             className={isProspectReadOnly && activeTab !== "analytics" ? "admin-tab-stage admin-readonly-stage" : "admin-tab-stage"}

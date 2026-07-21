@@ -119,6 +119,10 @@ describe('AdminView demo mode', () => {
     expect(mockState.previewProps).toHaveLength(2);
     expect(mockState.previewProps[0]).toMatchObject({ publicPageHref: '/' });
     expect(html).toContain('Admin access');
+    expect(html).toContain('admin-dashboard-shell');
+    expect(html).toContain('admin-dashboard-sidebar');
+    expect(html).toContain('Self-hosted workspace');
+    expect(html).toContain('aria-current="page"');
   });
 
   it('hides standalone session details in the hosted SaaS admin', () => {
@@ -145,6 +149,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Backup');
     expect(mockState.backupProps.at(-1)).toMatchObject({ hosted: true });
     expect(html).toContain('admin-metrics-saas');
+    expect(html).not.toContain('admin-dashboard-sidebar');
   });
 
   it('marks prospect sessions as read-only while keeping the hosted sections visible', () => {
