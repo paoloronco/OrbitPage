@@ -11,6 +11,8 @@ describe('secure embed frame', () => {
     const markup = prepareEmbedMarkup('https://open.spotify.com/embed/track/example');
     expect(markup).toContain('<iframe');
     expect(markup).toContain('https://open.spotify.com/embed/track/example');
+    expect(markup).toContain('referrerpolicy="strict-origin-when-cross-origin"');
+    expect(markup).not.toContain('referrerpolicy="no-referrer"');
   });
 
   it('keeps arbitrary markup inside the isolated document', () => {

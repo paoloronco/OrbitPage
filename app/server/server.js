@@ -319,7 +319,8 @@ app.use(helmet({
   // the connection is actually HTTPS (direct TLS or behind an HTTPS reverse proxy).
   // Sending HSTS on plain HTTP is a no-op at best and confusing at worst.
   hsts: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 
 // HTTPS-only security headers.
@@ -2610,7 +2611,7 @@ const sendEmbedFrame = (res, status, html) => {
     'Content-Type': 'text/html; charset=utf-8',
     'Content-Security-Policy': EMBED_FRAME_CSP,
     'Cache-Control': 'no-store, private',
-    'Referrer-Policy': 'no-referrer',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'SAMEORIGIN',
     'X-Robots-Tag': 'noindex, nofollow, nosnippet',

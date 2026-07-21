@@ -108,6 +108,11 @@ describe('API Endpoints', () => {
     }
   });
 
+  it('preserves the origin needed by third-party media players', async () => {
+    const response = await request(app).get('/health');
+    expect(response.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+  });
+
   it('HTTP response: no Strict-Transport-Security header', async () => {
     // supertest connects via plain HTTP so req.protocol === 'http'.
     // HSTS must not be sent on non-HTTPS connections — browsers that honour it

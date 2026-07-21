@@ -32,7 +32,7 @@ export const prepareEmbedMarkup = (rawSnippet) => {
   try {
     const directUrl = new URL(snippet);
     if (directUrl.protocol === 'https:') {
-      return `<iframe src="${escapeHtml(normalizeYouTubePrivacyDomain(directUrl.toString()))}" title="Embedded content" loading="lazy" referrerpolicy="no-referrer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+      return `<iframe src="${escapeHtml(normalizeYouTubePrivacyDomain(directUrl.toString()))}" title="Embedded content" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     }
   } catch {
     // Full snippets are handled below inside the isolated frame.

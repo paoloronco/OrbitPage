@@ -137,7 +137,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
               title={`${providerLabel}: ${link.title || 'embedded content'}`}
               className="h-full w-full border-0"
               loading="lazy"
-              referrerPolicy="no-referrer"
+              referrerPolicy="strict-origin-when-cross-origin"
               sandbox={knownProviderUrl
                 ? "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-top-navigation-by-user-activation"
                 : "allow-scripts allow-forms allow-popups allow-presentation"}
