@@ -685,6 +685,10 @@ export const AdminView = ({
                       managePlanHref={managePlanHref}
                       nativeMenuEnabled={!saasPlan || entitlements?.nativeMenu === true}
                       publicPageHref={publicPageHref}
+                      availablePages={subpages.filter((page) => page.enabled).map((page) => ({
+                        title: page.title || page.slug,
+                        url: `${publicPageHref.replace(/\/$/, "")}/${page.slug}`,
+                      }))}
                     />
                   </div>
                   <aside className="admin-workbench-rail">

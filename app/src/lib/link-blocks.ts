@@ -26,10 +26,22 @@ export interface ContactBlockData {
 export interface SocialRowItemData {
   label: string;
   url: string;
+  platform?: SocialLinkPlatform;
+  icon?: string;
 }
+
+export type SocialRowLayout = 'icons' | 'pills' | 'grid';
+export type SocialRowIconStyle = 'brand' | 'theme' | 'outline';
+export type SocialLinkPlatform = 'auto' | 'page' | 'link' | 'website' | 'instagram' | 'facebook' | 'tiktok' | 'x' | 'youtube' | 'linkedin' | 'whatsapp' | 'telegram' | 'discord' | 'github' | 'email';
 
 export interface SocialRowBlockData {
   items?: SocialRowItemData[];
+  layout?: SocialRowLayout;
+  iconStyle?: SocialRowIconStyle;
+  columns?: 2 | 3 | 4;
+  boxed?: boolean;
+  showTitle?: boolean;
+  showLabels?: boolean;
 }
 
 export interface CalloutBlockData {
@@ -85,6 +97,10 @@ const toString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';
 };
 
+const socialRowLayouts: SocialRowLayout[] = ['icons', 'pills', 'grid'];
+const socialRowIconStyles: SocialRowIconStyle[] = ['brand', 'theme', 'outline'];
+const socialLinkPlatforms: SocialLinkPlatform[] = ['auto', 'page', 'link', 'website', 'instagram', 'facebook', 'tiktok', 'x', 'youtube', 'linkedin', 'whatsapp', 'telegram', 'discord', 'github', 'email'];
+
 export const parseBlockContent = <T>(content: string | null | undefined): T | undefined => {
   const parsed = parseJson(content);
   if (parsed === undefined) return undefined;
@@ -130,16 +146,34 @@ export const getSocialRowDraftData = (content: string | null | undefined): Socia
     .map((entry) => (isPlainObject(entry) ? {
       label: toString(entry.label),
       url: toString(entry.url),
+      platform: socialLinkPlatforms.includes(entry.platform as SocialLinkPlatform) ? entry.platform as SocialLinkPlatform : 'auto',
+      icon: toString(entry.icon).slice(0, 24),
     } : undefined))
     .filter((item): item is SocialRowItemData => Boolean(item));
 
-  return { items };
+  const record = parsed as Record<string, unknown>;
+  const layout = socialRowLayouts.includes(record.layout as SocialRowLayout) ? record.layout as SocialRowLayout : 'grid';
+  const iconStyle = socialRowIconStyles.includes(record.iconStyle as SocialRowIconStyle) ? record.iconStyle as SocialRowIconStyle : 'theme';
+  const columns = record.columns === 3 || record.columns === 4 ? record.columns : 2;
+
+  return {
+    items: items.slice(0, 16),
+    layout,
+    iconStyle,
+    columns,
+    boxed: record.boxed !== false,
+    showTitle: record.showTitle !== false,
+    showLabels: record.showLabels !== false,
+  };
 };
 
-export const getSocialRowData = (content: string | null | undefined): SocialRowBlockData => ({
-  items: (getSocialRowDraftData(content).items || [])
-    .filter((item) => Boolean(item.label && item.url)),
-});
+export const getSocialRowData = (content: string | null | undefined): SocialRowBlockData => {
+  const data = getSocialRowDraftData(content);
+  return {
+    ...data,
+    items: (data.items || []).filter((item) => Boolean(item.label && item.url)),
+  };
+};
 
 export const getCalloutData = (content: string | null | undefined): CalloutBlockData => {
   const parsed = parseBlockContent<CalloutBlockData>(content);

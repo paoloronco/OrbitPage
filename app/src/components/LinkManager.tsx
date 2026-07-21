@@ -28,6 +28,7 @@ interface LinkManagerProps {
   managePlanHref?: string;
   nativeMenuEnabled?: boolean;
   publicPageHref?: string;
+  availablePages?: Array<{ title: string; url: string }>;
 }
 
 export const LinkManager = ({
@@ -44,6 +45,7 @@ export const LinkManager = ({
   managePlanHref = "/dashboard/billing",
   nativeMenuEnabled = true,
   publicPageHref = "/",
+  availablePages = [],
 }: LinkManagerProps) => {
   const { tr } = useAppI18n();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -286,12 +288,18 @@ export const LinkManager = ({
   const addNewSocialRow = () => {
     const newSocialRow: LinkData = {
       id: Date.now().toString(),
-      title: "Social row",
+      title: "Quick links",
       description: "",
       url: "",
       type: "social_row",
       content: buildBlockContent({
         items: [],
+        layout: "icons",
+        iconStyle: "brand",
+        columns: 3,
+        boxed: false,
+        showTitle: false,
+        showLabels: true,
       }),
       status: "live",
     };
@@ -754,8 +762,8 @@ export const LinkManager = ({
               <Share2 className="h-4 w-4" />
             </span>
             <span>
-              <span className="block font-semibold">{tr("Social row", "Riga social")}</span>
-              <span className="block text-xs opacity-70">{tr("Social links", "Link social")}</span>
+              <span className="block font-semibold">{tr("Compact links", "Link compatti")}</span>
+              <span className="block text-xs opacity-70">{tr("Pages and social icons", "Pagine e icone social")}</span>
             </span>
           </Button>
           <Button onClick={addNewCallout} variant="outline" className="admin-add-card">
@@ -909,6 +917,7 @@ export const LinkManager = ({
                   schedulingEnabled={schedulingEnabled}
                   managePlanHref={managePlanHref}
                   health={linkHealth.find((item) => item.id === link.id)}
+                  availablePages={availablePages}
                 />
               )}
             </div>

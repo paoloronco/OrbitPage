@@ -1,55 +1,71 @@
+import type { CSSProperties } from "react";
 import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
 import { getSocialRowData } from "@/lib/link-blocks";
-import { ArrowUpRight, Share2 } from "lucide-react";
+import { CompactLinkIcon } from "./CompactLinkIcon";
+import { detectCompactLinkPlatform, getCompactLinkBrandStyle, getSafeCompactLinkHref } from "@/lib/compact-links";
 import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicIconContent } from "@/lib/public-block-style";
+import { Share2 } from "lucide-react";
 
 interface PublicSocialRowCardProps {
   link: LinkData;
 }
 
 export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
-  const { items = [] } = getSocialRowData(link.content);
-  const hasItems = items.length > 0;
-
-  const cardStyle = getPublicBlockStyle(link);
+  const data = getSocialRowData(link.content);
+  const { items = [], layout = "grid", iconStyle = "theme", columns = 2, boxed = true, showTitle = true, showLabels = true } = data;
+  const cardStyle = boxed ? getPublicBlockStyle(link) : ({ color: getPublicBlockStyle(link).color } as CSSProperties);
+  const gridStyle = layout === "grid" ? { "--compact-link-columns": columns } as CSSProperties : undefined;
 
   return (
-    <Card className="glass-card p-0" style={cardStyle}>
-      <div className={`space-y-3 ${getPublicBlockPadding(link.size)}`}>
-        <div className="flex items-center gap-2">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15" style={getPublicAccentStyle(link)}>
-            {getPublicIconContent(link, <Share2 className="h-4 w-4" />)}
-          </span>
-          <p
-            className="text-sm font-semibold leading-tight text-muted-foreground"
-            style={{
-              ...(link.textColor ? { color: link.textColor, opacity: 0.82 } : {}),
-              ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}),
-              ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-            }}
-          >
-            {link.title || "Social links"}
-          </p>
-        </div>
-        {hasItems ? (
-          <div className="public-social-grid grid gap-2">
-            {items.map((item) => (
-              <a
-                key={`${item.label}-${item.url}`}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-border/70 bg-background/35 px-3 py-2 text-center text-sm font-medium transition-smooth hover:border-primary/45 hover:bg-primary/8"
-              >
-                <span className="truncate">{item.label}</span>
-                <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-primary" style={getPublicAccentStyle(link)} />
-              </a>
-            ))}
+    <Card className={`public-compact-links glass-card p-0 ${boxed ? "" : "public-compact-links--transparent"}`} style={cardStyle}>
+      <div className={`${boxed ? getPublicBlockPadding(link.size) : "py-1"} ${showTitle ? "space-y-3" : ""}`}>
+        {showTitle && (
+          <div className="flex items-center gap-2">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15" style={getPublicAccentStyle(link)}>
+              {getPublicIconContent(link, <Share2 className="h-4 w-4" />)}
+            </span>
+            <p
+              className="text-sm font-semibold leading-tight text-muted-foreground"
+              style={{
+                ...(link.textColor ? { color: link.textColor, opacity: 0.82 } : {}),
+                ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}),
+                ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
+              }}
+            >
+              {link.title || "Quick links"}
+            </p>
+          </div>
+        )}
+
+        {items.length > 0 ? (
+          <div className={`public-compact-links__items public-compact-links__items--${layout}`} style={gridStyle}>
+            {items.map((item) => {
+              const platform = item.platform === "auto" || !item.platform ? detectCompactLinkPlatform(item.url) : item.platform;
+              const isInternal = platform === "page" || item.url.startsWith("/") || item.url.startsWith("#");
+              const iconStyleValue = iconStyle === "brand" ? getCompactLinkBrandStyle(platform, item.url) : undefined;
+              const safeHref = getSafeCompactLinkHref(item.url);
+              return (
+                <a
+                  key={`${item.label}-${item.url}`}
+                  href={safeHref || undefined}
+                  target={isInternal ? undefined : "_blank"}
+                  rel={isInternal ? undefined : "noopener noreferrer"}
+                  className={`public-compact-link public-compact-link--${layout} public-compact-link--${iconStyle} ${safeHref ? "" : "public-compact-link--disabled"}`}
+                  aria-label={!showLabels ? item.label : undefined}
+                  aria-disabled={!safeHref || undefined}
+                >
+                  <span className="public-compact-link__icon" style={iconStyleValue}>
+                    <CompactLinkIcon platform={platform} url={item.url} customIcon={item.icon} />
+                  </span>
+                  {(showLabels || layout !== "icons") && <span className="public-compact-link__label">{item.label}</span>}
+                </a>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-border/80 bg-background/25 px-4 py-3 text-center text-sm font-medium text-muted-foreground">
-            Add social links from edit
+            Add links from edit
           </div>
         )}
       </div>
