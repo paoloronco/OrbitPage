@@ -30,6 +30,7 @@ export const LinkSchema = z.object({
   ).nullable().optional(),
   backgroundColor: z.string().max(100).nullable().optional(),
   textColor: z.string().max(100).nullable().optional(),
+  surfaceEffect: z.enum(['inherit', 'solid', 'transparent', 'liquid-glass']).nullable().optional(),
   titleFontSize: z.string().max(50).nullable().optional(),
   descriptionFontSize: z.string().max(50).nullable().optional(),
   titleFontFamily: z.string().max(200).nullable().optional(),

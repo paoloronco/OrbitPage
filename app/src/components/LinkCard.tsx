@@ -54,6 +54,7 @@ import {
 } from "@/lib/map-location";
 import { brandServiceColors, isBrandServiceProvider } from "@/lib/service-brand";
 import { ServiceBrandIcon } from "./ServiceBrandIcon";
+import type { CardSurfaceEffect } from "@/lib/theme";
 
 export interface LinkData {
   id: string;
@@ -65,6 +66,7 @@ export interface LinkData {
   iconType?: 'emoji' | 'image' | 'svg';
   backgroundColor?: string;
   textColor?: string;
+  surfaceEffect?: CardSurfaceEffect | 'inherit';
   // Per-link typography (pixel strings, e.g. '16px')
   titleFontSize?: string;
   titleFontFamily?: string;
@@ -108,6 +110,7 @@ interface LinkCardProps {
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
   publicPreviewStyle?: CSSProperties;
+  defaultSurfaceEffect?: CardSurfaceEffect;
   inheritedBackgroundColor?: string;
   inheritedTextColor?: string;
   schedulingEnabled?: boolean;
@@ -143,6 +146,7 @@ export const LinkCard = ({
   onMoveDown,
   editMode = 'full',
   publicPreviewStyle,
+  defaultSurfaceEffect = 'solid',
   inheritedBackgroundColor = '#000000',
   inheritedTextColor = '#ffffff',
   schedulingEnabled = true,
@@ -601,7 +605,11 @@ export const LinkCard = ({
           </div>
         )}
         <div>
-          <div className="public-block-preview pointer-events-none" style={publicPreviewStyle}>
+          <div
+            className="public-block-preview pointer-events-none"
+            data-surface-effect={link.surfaceEffect && link.surfaceEffect !== 'inherit' ? link.surfaceEffect : defaultSurfaceEffect}
+            style={publicPreviewStyle}
+          >
             <PublicBlockRenderer link={link} />
           </div>
           <div className="admin-card-controls-wrap pointer-events-auto absolute right-2 top-2 z-20">
@@ -1817,6 +1825,24 @@ export const LinkCard = ({
                 <p className="text-sm font-semibold text-slate-900">Size &amp; colors</p>
               </div>
               <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Card surface</Label>
+              <Select
+                value={editLink.surfaceEffect || 'inherit'}
+                onValueChange={(surfaceEffect: CardSurfaceEffect | 'inherit') => setEditLink(prev => ({ ...prev, surfaceEffect }))}
+              >
+                <SelectTrigger className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inherit">Use theme default</SelectItem>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="transparent">Transparent</SelectItem>
+                  <SelectItem value="liquid-glass">Liquid glass</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs leading-5 text-slate-500">Transparent removes the surface. Liquid glass keeps the background visible with blur and a subtle rim.</p>
+            </div>
             <div className="space-y-2">
               <Label className="text-sm font-medium">Size</Label>
               <Select

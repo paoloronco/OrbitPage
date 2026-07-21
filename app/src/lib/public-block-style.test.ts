@@ -14,6 +14,7 @@ describe("public block style", () => {
     });
 
     expect(style.background).toBe("color-mix(in srgb, #123456 var(--content-card-opacity-percent, 100%), transparent)");
+    expect(style["--content-card-surface-tint"]).toBe("#123456");
     expect(style.color).toBe("#f8fafc");
   });
 });

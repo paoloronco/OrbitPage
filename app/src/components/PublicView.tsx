@@ -88,7 +88,7 @@ export const PublicView = ({
   return (
     <main className={`${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}>
       <div className="public-page-content mx-auto space-y-6" style={{ maxWidth: theme.maxWidth || "28rem" }}>
-        {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} />}
+        {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} surfaceEffect={theme.profileCardEffect} />}
 
         {visibleLinks.length > 0 && (
           <div className="public-card-stack flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
@@ -96,6 +96,7 @@ export const PublicView = ({
               <div
                 key={link.id}
                 className={`content-card-variant-${index % 6}`}
+                data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}
                 style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
               >
                 <PublicBlockRenderer link={link} />

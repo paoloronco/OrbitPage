@@ -145,6 +145,7 @@ export const initializeDatabase = () => {
       // Ensure columns for link customization exist (best-effort migrations)
       db.run(`ALTER TABLE links ADD COLUMN background_color TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE links ADD COLUMN text_color TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE links ADD COLUMN surface_effect TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE links ADD COLUMN size TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE links ADD COLUMN icon_type TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE links ADD COLUMN content TEXT`, (err) => { /* ignore if exists */ });

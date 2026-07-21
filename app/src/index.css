@@ -227,6 +227,24 @@
     color: var(--profile-card-foreground);
   }
 
+  .profile-card[data-surface-effect="transparent"] {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .profile-card[data-surface-effect="liquid-glass"] {
+    background:
+      linear-gradient(145deg, rgb(248 252 255 / 0.28), transparent 38%),
+      linear-gradient(135deg, color-mix(in srgb, var(--profile-card-surface-tint) 26%, transparent), color-mix(in srgb, var(--profile-card-surface-tint) 9%, transparent)) !important;
+    border-color: color-mix(in srgb, var(--profile-card-border) 52%, rgb(244 250 255 / 0.72)) !important;
+    box-shadow: inset 0 1px 0 rgb(248 252 255 / 0.48), inset 0 -1px 0 rgb(15 23 42 / 0.08), var(--card-glow, var(--shadow-card)) !important;
+    backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
+    -webkit-backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
+  }
+
   .profile-card__title {
     color: var(--profile-card-foreground);
   }
@@ -296,6 +314,30 @@
     background: var(--content-card-background);
     border-color: var(--content-card-border);
     color: var(--content-card-foreground);
+  }
+
+  .public-card-stack [data-surface-effect="transparent"] > .glass-card,
+  .public-card-stack [data-surface-effect="transparent"] > .public-cta-card,
+  .public-block-preview[data-surface-effect="transparent"] .glass-card,
+  .public-block-preview[data-surface-effect="transparent"] .public-cta-card {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .public-card-stack [data-surface-effect="liquid-glass"] > .glass-card,
+  .public-card-stack [data-surface-effect="liquid-glass"] > .public-cta-card,
+  .public-block-preview[data-surface-effect="liquid-glass"] .glass-card,
+  .public-block-preview[data-surface-effect="liquid-glass"] .public-cta-card {
+    background:
+      linear-gradient(145deg, rgb(248 252 255 / 0.26), transparent 38%),
+      linear-gradient(135deg, color-mix(in srgb, var(--content-card-surface-tint) 24%, transparent), color-mix(in srgb, var(--content-card-surface-tint) 8%, transparent)) !important;
+    border-color: color-mix(in srgb, var(--content-card-border) 50%, rgb(244 250 255 / 0.72)) !important;
+    box-shadow: inset 0 1px 0 rgb(248 252 255 / 0.46), inset 0 -1px 0 rgb(15 23 42 / 0.08), var(--card-glow, var(--shadow-card)) !important;
+    backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
+    -webkit-backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
   }
 
   .content-card-variant-0 { --content-card-background: var(--content-card-v0-background); --content-card-background-hsl: var(--content-card-v0-background-hsl); --content-card-secondary-hsl: var(--content-card-v0-secondary-hsl); --content-card-foreground: var(--content-card-v0-foreground); --content-card-foreground-hsl: var(--content-card-v0-foreground-hsl); --content-card-muted: var(--content-card-v0-muted); --content-card-muted-hsl: var(--content-card-v0-muted-hsl); --content-card-border: var(--content-card-v0-border); --content-card-border-hsl: var(--content-card-v0-border-hsl); --content-card-accent: var(--content-card-v0-accent); --content-card-accent-hsl: var(--content-card-v0-accent-hsl); --content-card-accent-foreground: var(--content-card-v0-accent-foreground); --content-card-accent-foreground-hsl: var(--content-card-v0-accent-foreground-hsl); }

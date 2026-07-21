@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,7 +42,7 @@ import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
 import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
-import type { ThemeConfig } from "@/lib/theme";
+import type { CardSurfaceEffect, ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { uploadApi } from "@/lib/api-client";
 import type { SaasSeoAccess } from "@/lib/saas-plan";
@@ -467,6 +468,18 @@ export const ProfileSection = ({
             </summary>
             <div className="space-y-6 border-t border-slate-200 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-sm font-semibold text-slate-950">{tr("Profile card colors", "Colori card profilo")}</h3><p className="mt-1 text-xs text-slate-500">{tr("These values override the active theme only for this profile.", "Questi valori sostituiscono il tema attivo solo per questo profilo.")}</p></div><Button type="button" variant="outline" size="sm" onClick={resetCardAppearance}>{tr("Use theme colors", "Usa colori del tema")}</Button></div>
+              <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[minmax(0,1fr)_15rem] sm:items-center">
+                <div><p className="text-sm font-semibold text-slate-950">{tr("Profile surface", "Superficie profilo")}</p><p className="mt-1 text-xs leading-5 text-slate-500">{tr("Keep the theme style, remove the card completely, or add a blurred liquid-glass surface.", "Mantieni lo stile del tema, rimuovi completamente la card oppure applica una superficie liquid glass sfocata.")}</p></div>
+                <Select value={draft.appearance?.surfaceEffect || "inherit"} onValueChange={(surfaceEffect: CardSurfaceEffect | "inherit") => updateAppearance({ surfaceEffect })}>
+                  <SelectTrigger aria-label={tr("Profile surface", "Superficie profilo")}><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inherit">{tr("Use theme default", "Usa valore del tema")}</SelectItem>
+                    <SelectItem value="solid">{tr("Solid", "Solida")}</SelectItem>
+                    <SelectItem value="transparent">{tr("Transparent", "Trasparente")}</SelectItem>
+                    <SelectItem value="liquid-glass">Liquid glass</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <ProfileColorField label={tr("Card background", "Sfondo card")} value={draft.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!draft.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
                 <ProfileColorField label={tr("Main text", "Testo principale")} value={draft.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!draft.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />

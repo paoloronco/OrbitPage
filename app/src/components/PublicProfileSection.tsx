@@ -6,6 +6,7 @@ import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } fro
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
+import type { CardSurfaceEffect } from "@/lib/theme";
 
 interface ProfileData {
   name: string;
@@ -33,9 +34,10 @@ interface ProfileData {
 interface PublicProfileSectionProps {
   profile: ProfileData;
   fallbackName?: string | null;
+  surfaceEffect?: CardSurfaceEffect;
 }
 
-export const PublicProfileSection = ({ profile, fallbackName = "Name or brand" }: PublicProfileSectionProps) => {
+export const PublicProfileSection = ({ profile, fallbackName = "Name or brand", surfaceEffect = "solid" }: PublicProfileSectionProps) => {
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
   const displayName = profile.name?.trim() || fallbackName || "";
   const hasSocialLinks = Boolean(
@@ -48,7 +50,11 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand" }
   if (!hasVisibleProfile) return null;
 
   return (
-    <Card className="profile-card glass-card p-8 text-center transition-smooth hover:glow-effect" style={getProfileAppearanceStyle(profile.appearance)}>
+    <Card
+      className="profile-card glass-card p-8 text-center transition-smooth hover:glow-effect"
+      data-surface-effect={profile.appearance?.surfaceEffect && profile.appearance.surfaceEffect !== "inherit" ? profile.appearance.surfaceEffect : surfaceEffect}
+      style={getProfileAppearanceStyle(profile.appearance)}
+    >
       {profile.showAvatar !== false && (
         <div className="mb-6 flex justify-center">
           <Avatar className="profile-card__avatar" style={getProfileAvatarStyle(profile.appearance)}>

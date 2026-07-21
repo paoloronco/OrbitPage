@@ -11,6 +11,7 @@ const linkTypeSchema = z.string().transform((value) => {
 const iconTypeSchema = z.enum(['emoji', 'image', 'svg']).optional().catch(undefined);
 const alignmentSchema = z.enum(['left', 'center', 'right']).optional().catch(undefined);
 const sizeSchema = z.enum(['small', 'medium', 'large']).optional().catch(undefined);
+const surfaceEffectSchema = z.enum(['inherit', 'solid', 'transparent', 'liquid-glass']).optional().catch(undefined);
 const statusSchema = z.enum(['draft', 'live', 'expired']).optional().catch('live');
 const ctaActionSchema = z.enum(['book', 'contact', 'download', 'subscribe', 'buy']).optional().catch(undefined);
 const availabilitySchema = z.enum(['available', 'unavailable']).optional().catch('available');
@@ -19,6 +20,7 @@ const textItemSchema = z.object({
   text: z.string(),
   url: optionalString,
   textColor: optionalString,
+  surfaceEffect: surfaceEffectSchema,
   fontSize: optionalString,
   fontFamily: optionalString,
 });
@@ -61,6 +63,11 @@ const linkDtoSchema = z.object({
 }).passthrough();
 
 const emptyToUndefined = (value: string | null | undefined) => value || undefined;
+const normalizeSurfaceEffect = (value: unknown): LinkData['surfaceEffect'] => (
+  value === 'inherit' || value === 'solid' || value === 'transparent' || value === 'liquid-glass'
+    ? value
+    : undefined
+);
 
 export function normalizeLinkDto(input: unknown): LinkData {
   const link = linkDtoSchema.parse(input);
@@ -77,6 +84,7 @@ export function normalizeLinkDto(input: unknown): LinkData {
     iconType: link.iconType || link.icon_type || undefined,
     backgroundColor: emptyToUndefined(link.backgroundColor),
     textColor: emptyToUndefined(link.textColor),
+    surfaceEffect: normalizeSurfaceEffect(link.surfaceEffect),
     size: link.size,
     content: emptyToUndefined(link.content),
     textItems: link.textItems || undefined,

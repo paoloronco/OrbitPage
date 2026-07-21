@@ -115,6 +115,7 @@ function mapLink(row: JsonRecord, index: number) {
     iconType: optionalString(row.icon_type),
     backgroundColor: optionalString(row.background_color),
     textColor: optionalString(row.text_color),
+    surfaceEffect: optionalString(row.surface_effect),
     size: optionalString(row.size),
     content: optionalString(row.content),
     textItems: parseJsonArray(row.text_items),

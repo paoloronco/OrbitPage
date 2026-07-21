@@ -25,8 +25,13 @@ const getReadableTextColor = (backgroundColor?: string) => {
 export const getPublicTextColor = (link: LinkData) =>
   link.textColor || getReadableTextColor(link.backgroundColor);
 
-export const getPublicBlockStyle = (link: LinkData): CSSProperties => ({
-  ...(link.backgroundColor ? { background: `color-mix(in srgb, ${link.backgroundColor} var(--content-card-opacity-percent, 100%), transparent)` } : {}),
+type PublicBlockCssProperties = CSSProperties & Record<`--${string}`, string>;
+
+export const getPublicBlockStyle = (link: LinkData): PublicBlockCssProperties => ({
+  ...(link.backgroundColor ? {
+    background: `color-mix(in srgb, ${link.backgroundColor} var(--content-card-opacity-percent, 100%), transparent)`,
+    '--content-card-surface-tint': link.backgroundColor,
+  } : {}),
   ...(getPublicTextColor(link) ? { color: getPublicTextColor(link) } : {}),
   ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
   ...(link.alignment ? { textAlign: link.alignment } : {}),

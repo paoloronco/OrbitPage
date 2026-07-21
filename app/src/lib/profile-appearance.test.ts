@@ -18,7 +18,9 @@ describe("profile appearance", () => {
   });
 
   it("preserves theme transparency for a custom profile card color", () => {
-    expect(getProfileAppearanceStyle({ cardBackgroundColor: "#123456" })["--profile-card-background"])
+    const style = getProfileAppearanceStyle({ cardBackgroundColor: "#123456" });
+    expect(style["--profile-card-background"])
       .toBe("color-mix(in srgb, #123456 var(--profile-card-opacity-percent, 100%), transparent)");
+    expect(style["--profile-card-surface-tint"]).toBe("#123456");
   });
 });

@@ -45,4 +45,28 @@ describe("LivePreview", () => {
     expect(html).toContain('Cookie Policy');
     expect(html).not.toContain('Powered by');
   });
+
+  it("renders global and per-card surface effects through the real public renderer", () => {
+    const theme = normalizeTheme({
+      ...defaultTheme,
+      profileCardEffect: "liquid-glass",
+      contentCardEffect: "transparent",
+    });
+
+    const html = renderToStaticMarkup(
+      <LivePreview
+        profile={{ name: "Glass profile", bio: "", avatar: "", showAvatar: false }}
+        links={[
+          { id: "theme-default", type: "link", title: "Transparent", description: "", url: "https://example.com" },
+          { id: "override", type: "link", title: "Solid override", description: "", url: "https://example.com", surfaceEffect: "solid" },
+        ]}
+        theme={theme}
+      />,
+    );
+
+    expect(html).toContain('profile-card glass-card');
+    expect(html).toContain('data-surface-effect="liquid-glass"');
+    expect(html).toContain('data-surface-effect="transparent"');
+    expect(html).toContain('data-surface-effect="solid"');
+  });
 });

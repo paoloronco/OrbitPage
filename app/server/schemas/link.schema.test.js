@@ -37,4 +37,11 @@ describe('link schemas', () => {
 
     expect(() => LinksPayloadSchema.parse(links)).toThrow();
   });
+
+  it('accepts only supported card surface effects', () => {
+    expect(LinkSchema.parse({ id: 'glass', title: 'Glass', surfaceEffect: 'liquid-glass' }).surfaceEffect)
+      .toBe('liquid-glass');
+    expect(() => LinkSchema.parse({ id: 'invalid', title: 'Invalid', surfaceEffect: 'blurred' }))
+      .toThrow();
+  });
 });

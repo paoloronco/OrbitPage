@@ -1036,6 +1036,7 @@ export const LinkManager = ({
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
+                  defaultSurfaceEffect={theme.contentCardEffect}
                   inheritedBackgroundColor={getContentCardVariant(theme, index).background}
                   inheritedTextColor={getContentCardVariant(theme, index).foreground}
                   schedulingEnabled={schedulingEnabled}
@@ -1053,6 +1054,7 @@ export const LinkManager = ({
                   isDragging={draggedItem === link.id}
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
+                  defaultSurfaceEffect={theme.contentCardEffect}
                   inheritedBackgroundColor={getContentCardVariant(theme, index).background}
                   inheritedTextColor={getContentCardVariant(theme, index).foreground}
                   schedulingEnabled={schedulingEnabled}

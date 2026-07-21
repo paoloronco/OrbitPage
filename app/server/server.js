@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.14.0';
+let APP_VERSION = '4.15.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -579,6 +579,9 @@ const normalizeLinkStatus = (status) => {
   return LINK_STATUSES.has(value) ? value : 'live';
 };
 
+const CARD_SURFACE_EFFECTS = new Set(['inherit', 'solid', 'transparent', 'liquid-glass']);
+const normalizeCardSurfaceEffect = (value) => CARD_SURFACE_EFFECTS.has(value) ? value : 'inherit';
+
 const parseTimeToMinutes = (value) => {
   if (typeof value !== 'string' || !/^\d{2}:\d{2}$/.test(value)) return null;
   const [hours, minutes] = value.split(':').map(Number);
@@ -654,6 +657,7 @@ const formatLinkPayload = (link) => {
     textItems: link.text_items ? (() => { try { return JSON.parse(link.text_items); } catch { return null; } })() : null,
     type: link.type || 'link',
     backgroundColor: link.background_color || undefined,
+    surfaceEffect: normalizeCardSurfaceEffect(link.surface_effect),
     titleFontFamily: link.title_font_family || undefined,
     descriptionFontFamily: link.description_font_family || undefined,
     alignment: link.text_alignment || undefined,
@@ -2675,6 +2679,7 @@ app.get('/api/links/export', authenticateToken, requireAnyPermission('links:writ
       icon: link.icon || null,
       iconType: link.icon_type || null,
       backgroundColor: link.background_color || null,
+      surfaceEffect: normalizeCardSurfaceEffect(link.surface_effect),
       titleFontFamily: link.title_font_family || null,
       descriptionFontFamily: link.description_font_family || null,
       alignment: link.text_alignment || null,
@@ -2741,13 +2746,13 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
         await dbRun(
           `INSERT INTO links (
             id, title, description, url, hide_url, type, icon, icon_type,
-            background_color, text_color, size, content,
+            background_color, text_color, surface_effect, size, content,
             title_font_family, description_font_family,
             text_alignment, title_font_size, description_font_size,
             text_items, sort_order, is_active,
             click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone,
             cover_image, cover_image_alt, availability
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
@@ -2759,6 +2764,7 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             link.iconType,
             link.backgroundColor,
             link.textColor,
+            normalizeCardSurfaceEffect(link.surfaceEffect),
             link.size,
             link.content,
             link.titleFontFamily,
@@ -2849,7 +2855,7 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
           : (link.ctaClicks || 0);
 
         await dbRun(
-          'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, surface_effect, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             linkId,
             link.title,
@@ -2863,6 +2869,7 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
             link.isActive !== false ? 1 : 0,
             link.backgroundColor || null,
             link.textColor || null,
+            normalizeCardSurfaceEffect(link.surfaceEffect),
             link.size || null,
             link.iconType || (iconValue ? 'image' : null),
             link.content || null,
@@ -3319,6 +3326,7 @@ app.patch('/api/links/:id/style', authenticateToken, requireAnyPermission('links
     const colMap = {
       backgroundColor:      'background_color',
       textColor:            'text_color',
+      surfaceEffect:        'surface_effect',
       titleFontFamily:      'title_font_family',
       descriptionFontFamily:'description_font_family',
       alignment:            'text_alignment',

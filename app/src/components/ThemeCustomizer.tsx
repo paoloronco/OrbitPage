@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import {
   type CardShadowConfig,
+  type CardSurfaceEffect,
   type ThemeConfig,
   defaultTheme,
   getCardSurfaceGradient,
@@ -321,6 +322,10 @@ export const ThemeCustomizer = ({
       contentCard: premiumThemesEnabled ? pendingTheme.contentCard : preset.theme.contentCard,
       contentCardMode: premiumThemesEnabled ? pendingTheme.contentCardMode : preset.theme.contentCardMode,
       contentCardVariants: premiumThemesEnabled ? pendingTheme.contentCardVariants : preset.theme.contentCardVariants,
+      profileCardEffect: pendingTheme.profileCardEffect,
+      contentCardEffect: pendingTheme.contentCardEffect,
+      profileCardOpacity: pendingTheme.profileCardOpacity,
+      contentCardOpacity: pendingTheme.contentCardOpacity,
       orbitPageAccess: {
         mode: "preset",
         presetId: preset.id,
@@ -742,13 +747,22 @@ export const ThemeCustomizer = ({
 
                 <div className="space-y-5">
                   <div>
-                    <h4 className="font-bold text-slate-900">Card transparency</h4>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">Reveal more of the page background while keeping text, media and actions fully opaque.</p>
+                    <h4 className="font-bold text-slate-900">{tr("Card surfaces", "Superfici delle card")}</h4>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">{tr("Choose a solid, fully transparent or liquid-glass default. Opacity changes only the surface; text, media and actions stay fully visible.", "Scegli un default solido, completamente trasparente o liquid glass. L'opacità modifica solo la superficie: testo, media e azioni restano pienamente visibili.")}</p>
                   </div>
                   <div className="grid gap-6 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:p-5">
                     <div className="space-y-3">
+                      <Label htmlFor="content-card-effect">{tr("Content card style", "Stile card contenuto")}</Label>
+                      <Select value={pendingTheme.contentCardEffect} onValueChange={(contentCardEffect: CardSurfaceEffect) => updatePendingTheme({ contentCardEffect })}>
+                        <SelectTrigger id="content-card-effect"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="solid">{tr("Solid", "Solida")}</SelectItem>
+                          <SelectItem value="transparent">{tr("Transparent", "Trasparente")}</SelectItem>
+                          <SelectItem value="liquid-glass">Liquid glass</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Label htmlFor="content-card-transparency" className="flex items-center justify-between gap-3">
-                        <span>Content cards</span>
+                        <span>{tr("Surface transparency", "Trasparenza superficie")}</span>
                         <span className="tabular-nums text-slate-500">{Math.round((1 - pendingTheme.contentCardOpacity) * 100)}%</span>
                       </Label>
                       <Slider
@@ -756,14 +770,23 @@ export const ThemeCustomizer = ({
                         aria-label="Content card transparency"
                         value={[1 - pendingTheme.contentCardOpacity]}
                         onValueChange={([transparency]) => updatePendingTheme({ contentCardOpacity: 1 - transparency })}
-                        max={0.85}
+                        max={1}
                         min={0}
                         step={0.01}
                       />
                     </div>
                     <div className="space-y-3">
+                      <Label htmlFor="profile-card-effect">{tr("Profile card style", "Stile card profilo")}</Label>
+                      <Select value={pendingTheme.profileCardEffect} onValueChange={(profileCardEffect: CardSurfaceEffect) => updatePendingTheme({ profileCardEffect })}>
+                        <SelectTrigger id="profile-card-effect"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="solid">{tr("Solid", "Solida")}</SelectItem>
+                          <SelectItem value="transparent">{tr("Transparent", "Trasparente")}</SelectItem>
+                          <SelectItem value="liquid-glass">Liquid glass</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Label htmlFor="profile-card-transparency" className="flex items-center justify-between gap-3">
-                        <span>Profile card</span>
+                        <span>{tr("Surface transparency", "Trasparenza superficie")}</span>
                         <span className="tabular-nums text-slate-500">{Math.round((1 - pendingTheme.profileCardOpacity) * 100)}%</span>
                       </Label>
                       <Slider
@@ -771,7 +794,7 @@ export const ThemeCustomizer = ({
                         aria-label="Profile card transparency"
                         value={[1 - pendingTheme.profileCardOpacity]}
                         onValueChange={([transparency]) => updatePendingTheme({ profileCardOpacity: 1 - transparency })}
-                        max={0.85}
+                        max={1}
                         min={0}
                         step={0.01}
                       />

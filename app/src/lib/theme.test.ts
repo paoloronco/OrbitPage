@@ -67,7 +67,7 @@ describe('theme normalization', () => {
 
     expect(existingTheme.profileCardOpacity).toBe(1);
     expect(existingTheme.contentCardOpacity).toBe(1);
-    expect(importedTheme.profileCardOpacity).toBe(0.15);
+    expect(importedTheme.profileCardOpacity).toBe(0);
     expect(importedTheme.contentCardOpacity).toBe(1);
   });
 
@@ -80,7 +80,20 @@ describe('theme normalization', () => {
     expect(variables['--content-card-foreground']).toBe(theme.contentCard.foreground);
     expect(variables['--profile-card-opacity-percent']).toBe('40%');
     expect(variables['--content-card-opacity-percent']).toBe('25%');
-    expect(getCardSurfaceGradient(theme.contentCard, 0)).toContain('0.15');
+    expect(getCardSurfaceGradient(theme.contentCard, 0)).toContain(', 0)');
+  });
+
+  it('keeps valid card surface effects and safely falls back for older or invalid themes', () => {
+    const customizedTheme = normalizeTheme({
+      profileCardEffect: 'transparent',
+      contentCardEffect: 'liquid-glass',
+    });
+    const invalidTheme = normalizeTheme({ profileCardEffect: 'invisible', contentCardEffect: null });
+
+    expect(customizedTheme.profileCardEffect).toBe('transparent');
+    expect(customizedTheme.contentCardEffect).toBe('liquid-glass');
+    expect(invalidTheme.profileCardEffect).toBe('solid');
+    expect(invalidTheme.contentCardEffect).toBe('solid');
   });
 
   it('returns the inherited content-card colors for mono themes', () => {

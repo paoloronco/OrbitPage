@@ -27,6 +27,7 @@ describe('link normalization', () => {
       iconType: 'emoji',
       backgroundColor: undefined,
       textColor: undefined,
+      surfaceEffect: undefined,
       size: undefined,
       content: undefined,
       textItems: undefined,
@@ -87,6 +88,13 @@ describe('link normalization', () => {
       ctaAction: 'book',
       ctaClicks: 12,
     });
+  });
+
+  it('keeps supported surface overrides and drops invalid values', () => {
+    expect(normalizeLinkDto({ id: 'glass', title: 'Glass', surfaceEffect: 'liquid-glass' }).surfaceEffect)
+      .toBe('liquid-glass');
+    expect(normalizeLinkDto({ id: 'old', title: 'Old', surfaceEffect: 'unknown' }).surfaceEffect)
+      .toBeUndefined();
   });
 
   it('preserves native menu blocks from API DTOs', () => {

@@ -12,6 +12,7 @@ import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-valid
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { optimizeImageForUpload, type ImageUploadVariant } from "@/lib/image-upload";
 import { uploadApi } from "@/lib/api-client";
+import type { CardSurfaceEffect } from "@/lib/theme";
 
 interface TextCardProps {
   link: LinkData;
@@ -22,13 +23,14 @@ interface TextCardProps {
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
   publicPreviewStyle?: CSSProperties;
+  defaultSurfaceEffect?: CardSurfaceEffect;
   inheritedBackgroundColor?: string;
   inheritedTextColor?: string;
   schedulingEnabled?: boolean;
   managePlanHref?: string;
 }
 
-export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing" }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing" }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
@@ -237,7 +239,11 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             <GripVertical className="w-4 h-4 text-muted-foreground" />
           </div>
         )}
-        <div className="public-block-preview pointer-events-none" style={publicPreviewStyle}>
+        <div
+          className="public-block-preview pointer-events-none"
+          data-surface-effect={link.surfaceEffect && link.surfaceEffect !== 'inherit' ? link.surfaceEffect : defaultSurfaceEffect}
+          style={publicPreviewStyle}
+        >
           <PublicBlockRenderer link={link} />
         </div>
         <div className="admin-card-controls-wrap pointer-events-auto absolute right-2 top-2 z-20">
@@ -621,6 +627,25 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
 
             {/* Size Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Card surface</Label>
+              <Select
+                value={editLink.surfaceEffect || 'inherit'}
+                onValueChange={(surfaceEffect: CardSurfaceEffect | 'inherit') => setEditLink(prev => ({ ...prev, surfaceEffect }))}
+              >
+                <SelectTrigger className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="inherit">Use theme default</SelectItem>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="transparent">Transparent</SelectItem>
+                  <SelectItem value="liquid-glass">Liquid glass</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs leading-5 text-slate-500">Override the active theme only for this card.</p>
+            </div>
+
             <div className="space-y-2">
               <Label className="text-sm font-medium">Size</Label>
               <Select

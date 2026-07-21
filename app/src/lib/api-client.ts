@@ -369,6 +369,7 @@ export interface LinkItem {
   icon_type?: 'emoji' | 'image' | 'svg';
   backgroundColor?: string;
   textColor?: string;
+  surfaceEffect?: import('./theme').CardSurfaceEffect | 'inherit';
   size?: 'small' | 'medium' | 'large';
   content?: string;
   textItems?: Array<{ text: string; url?: string }>;
@@ -898,6 +899,7 @@ export const linksApi = {
 
   patchStyle: async (id: string, style: {
     backgroundColor?: string; textColor?: string;
+    surfaceEffect?: import('./theme').CardSurfaceEffect | 'inherit';
     titleFontFamily?: string; descriptionFontFamily?: string;
     alignment?: string; titleFontSize?: string; descriptionFontSize?: string;
     size?: string;

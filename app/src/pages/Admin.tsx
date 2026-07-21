@@ -350,6 +350,7 @@ const Admin = () => {
             await linksApi.patchStyle(id, {
               backgroundColor: newLink.backgroundColor,
               textColor: newLink.textColor,
+              surfaceEffect: newLink.surfaceEffect,
               titleFontFamily: newLink.titleFontFamily,
               descriptionFontFamily: newLink.descriptionFontFamily,
               alignment: newLink.alignment,

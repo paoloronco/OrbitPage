@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="4.14.0"
+readonly SCRIPT_VERSION="4.15.0"
 readonly SCRIPT_URL="https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh"
 
 INSTALL_DIR="/opt/orbitpage"

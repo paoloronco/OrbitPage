@@ -39,6 +39,8 @@ export interface CardShadowConfig {
   opacity: number;
 }
 
+export type CardSurfaceEffect = 'solid' | 'transparent' | 'liquid-glass';
+
 export const defaultCardShadow: CardShadowConfig = {
   color: '#07111f',
   offsetX: 0,
@@ -99,6 +101,8 @@ export interface ThemeConfig {
   contentCardVariants: ThemeConfig['contentCard'][];
   profileCardOpacity: number;
   contentCardOpacity: number;
+  profileCardEffect: CardSurfaceEffect;
+  contentCardEffect: CardSurfaceEffect;
 
   // Typography
   fontFamily: string;
@@ -175,6 +179,8 @@ export const defaultTheme: ThemeConfig = {
   contentCardVariants: [],
   profileCardOpacity: 1,
   contentCardOpacity: 1,
+  profileCardEffect: 'solid',
+  contentCardEffect: 'solid',
   
   fontFamily: 'Inter, system-ui, sans-serif',
   // font sizes removed from theme defaults; items will use their own saved sizes
@@ -267,8 +273,10 @@ export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeCon
     contentCard: normalizedContentCard,
     contentCardMode: themeData.contentCardMode === 'multi' ? 'multi' : 'mono',
     contentCardVariants: normalizedContentCardVariants.length ? normalizedContentCardVariants : [normalizedContentCard],
-    profileCardOpacity: clampNumber(themeData.profileCardOpacity, defaultTheme.profileCardOpacity, 0.15, 1),
-    contentCardOpacity: clampNumber(themeData.contentCardOpacity, defaultTheme.contentCardOpacity, 0.15, 1),
+    profileCardOpacity: clampNumber(themeData.profileCardOpacity, defaultTheme.profileCardOpacity, 0, 1),
+    contentCardOpacity: clampNumber(themeData.contentCardOpacity, defaultTheme.contentCardOpacity, 0, 1),
+    profileCardEffect: normalizeCardSurfaceEffect(themeData.profileCardEffect),
+    contentCardEffect: normalizeCardSurfaceEffect(themeData.contentCardEffect),
     cardShadow: normalizeCardShadow(themeData.cardShadow, {
       color: themeData.primaryGlow || defaultCardShadow.color,
       offsetX: 0,
@@ -292,6 +300,10 @@ const clampNumber = (value: unknown, fallback: number, min: number, max: number)
   const parsed = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
 };
+
+export const normalizeCardSurfaceEffect = (value: unknown): CardSurfaceEffect => (
+  value === 'transparent' || value === 'liquid-glass' ? value : 'solid'
+);
 
 const normalizeHexColor = (value: unknown, fallback: string) => (
   typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value.trim()) ? value.trim() : fallback
@@ -337,7 +349,7 @@ export const getCardSurfaceGradient = (
   surface: Pick<ThemeConfig['contentCard'], 'background' | 'backgroundSecondary' | 'direction'>,
   opacity = 1,
 ) => {
-  const normalizedOpacity = clampNumber(opacity, 1, 0.15, 1);
+  const normalizedOpacity = clampNumber(opacity, 1, 0, 1);
   return `linear-gradient(${surface.direction}, ${withOpacity(surface.background, normalizedOpacity)}, ${withOpacity(surface.backgroundSecondary, normalizedOpacity)})`;
 };
 
@@ -437,8 +449,8 @@ export const ensureReadableColor = (
 };
 
 export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string> => {
-  const profileCardOpacity = clampNumber(theme.profileCardOpacity, defaultTheme.profileCardOpacity, 0.15, 1);
-  const contentCardOpacity = clampNumber(theme.contentCardOpacity, defaultTheme.contentCardOpacity, 0.15, 1);
+  const profileCardOpacity = clampNumber(theme.profileCardOpacity, defaultTheme.profileCardOpacity, 0, 1);
+  const contentCardOpacity = clampNumber(theme.contentCardOpacity, defaultTheme.contentCardOpacity, 0, 1);
   const cardHsl = hexToHsl(theme.card);
   const borderHsl = hexToHsl(theme.border);
   const primaryGlowHsl = hexToHsl(theme.primaryGlow);
@@ -502,6 +514,8 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
     '--glass-border': `1px solid hsl(${borderHsl} / 0.5)`,
     '--card-glow': getCardShadowCss(theme.cardShadow),
     '--glass-tint': tint,
+    '--profile-card-surface-tint': theme.profileCard.background,
+    '--content-card-surface-tint': theme.contentCard.background,
     '--profile-card-opacity-percent': `${Math.round(profileCardOpacity * 10000) / 100}%`,
     '--content-card-opacity-percent': `${Math.round(contentCardOpacity * 10000) / 100}%`,
     '--profile-card-background': getCardSurfaceGradient(theme.profileCard, profileCardOpacity),
