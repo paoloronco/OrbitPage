@@ -24,6 +24,7 @@ export interface ContactBlockData {
 }
 
 export interface SocialRowItemData {
+  id?: string;
   label: string;
   url: string;
   platform?: SocialLinkPlatform;
@@ -146,12 +147,17 @@ export const getSocialRowDraftData = (content: string | null | undefined): Socia
     : [];
 
   const items = rawItems
-    .map((entry) => (isPlainObject(entry) ? {
-      label: toString(entry.label),
-      url: toString(entry.url),
-      platform: socialLinkPlatforms.includes(entry.platform as SocialLinkPlatform) ? entry.platform as SocialLinkPlatform : 'auto',
-      icon: toString(entry.icon).slice(0, 24),
-    } : undefined))
+    .map((entry) => {
+      if (!isPlainObject(entry)) return undefined;
+      const id = toString(entry.id).trim().slice(0, 80);
+      return {
+        ...(id ? { id } : {}),
+        label: toString(entry.label),
+        url: toString(entry.url),
+        platform: socialLinkPlatforms.includes(entry.platform as SocialLinkPlatform) ? entry.platform as SocialLinkPlatform : 'auto',
+        icon: toString(entry.icon).slice(0, 24),
+      };
+    })
     .filter((item): item is SocialRowItemData => Boolean(item));
 
   const record = parsed as Record<string, unknown>;

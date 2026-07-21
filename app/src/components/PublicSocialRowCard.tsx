@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
 import { getSocialRowData } from "@/lib/link-blocks";
 import { CompactLinkIcon } from "./CompactLinkIcon";
@@ -13,15 +12,19 @@ interface PublicSocialRowCardProps {
 export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
   const data = getSocialRowData(link.content);
   const { items = [], iconStyle = "brand", showLabels = false } = data;
-  const layout = "icons";
+  const iconStyleClass = iconStyle === "outline"
+    ? "public-compact-link--outline"
+    : iconStyle === "theme"
+      ? "public-compact-link--theme"
+      : "public-compact-link--brand";
   const cardStyle = { color: getPublicBlockStyle(link).color } as CSSProperties;
 
   return (
-    <Card className="public-compact-links public-compact-links--transparent glass-card p-0" style={cardStyle}>
-      <div className="py-1">
+    <div className="public-compact-links" style={cardStyle}>
+      <div className="public-compact-links__content">
         {items.length > 0 ? (
-          <div className={`public-compact-links__items public-compact-links__items--${layout}`}>
-            {items.map((item) => {
+          <div className="public-compact-links__items public-compact-links__items--icons">
+            {items.map((item, index) => {
               const platform = item.platform === "auto" || !item.platform ? detectCompactLinkPlatform(item.url) : item.platform;
               const isInternal = platform === "page" || item.url.startsWith("/") || item.url.startsWith("#");
               const iconStyleValue = iconStyle === "brand" ? getCompactLinkBrandStyle(platform, item.url) : undefined;
@@ -29,11 +32,11 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
               const accessibleLabel = getCompactLinkAccessibleLabel(platform, item.url, item.label);
               return (
                 <a
-                  key={`${item.label}-${item.url}`}
+                  key={item.id || `${platform}-${index}`}
                   href={safeHref || undefined}
                   target={isInternal ? undefined : "_blank"}
                   rel={isInternal ? undefined : "noopener noreferrer"}
-                  className={`public-compact-link public-compact-link--${layout} public-compact-link--${iconStyle} ${safeHref ? "" : "public-compact-link--disabled"}`}
+                  className={`public-compact-link public-compact-link--icons ${iconStyleClass} ${safeHref ? "" : "public-compact-link--disabled"}`}
                   aria-label={!showLabels ? accessibleLabel : undefined}
                   aria-disabled={!safeHref || undefined}
                 >
@@ -51,6 +54,6 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };

@@ -401,10 +401,17 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .public-compact-links--transparent {
+  .public-compact-links {
     border: 0;
     background: transparent !important;
     box-shadow: none !important;
+    color: inherit;
+    padding: 0;
+    width: 100%;
+  }
+
+  .public-compact-links__content {
+    padding: 4px 0;
   }
 
   .public-compact-links__items {
@@ -413,16 +420,11 @@
 
   .public-compact-links__items--icons {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 10px;
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding: 3px 2px 7px;
-    scrollbar-width: none;
-  }
-
-  .public-compact-links__items--icons::-webkit-scrollbar {
-    display: none;
+    justify-content: center;
+    overflow: visible;
+    padding: 3px 0;
   }
 
   .public-compact-links__items--pills {
@@ -438,7 +440,11 @@
   }
 
   .public-compact-link {
+    background: transparent;
+    border: 0;
     color: inherit;
+    margin: 0;
+    padding: 0;
     text-decoration: none;
   }
 

@@ -124,6 +124,11 @@ const compactSocialPresets: Array<{ platform: SocialLinkPlatform; label: string 
   { platform: 'email', label: 'Email' },
 ];
 
+const createCompactLinkItemId = () => {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  return `compact-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export const LinkCard = ({
   link,
   onUpdate,
@@ -428,7 +433,7 @@ export const LinkCard = ({
         ...prev,
         content: buildBlockContent({
           ...current,
-          items: [...(current.items || []), item],
+          items: [...(current.items || []), { ...item, id: item.id || createCompactLinkItemId() }],
         }),
       };
     });
@@ -1166,7 +1171,7 @@ export const LinkCard = ({
                       <div className="admin-compact-link-board">
                         {socialData.items.map((item, index) => (
                           <div
-                            key={`${item.url}-${item.platform}-${index}`}
+                            key={item.id || `${link.id}-compact-${index}`}
                             className="admin-compact-link-item"
                             onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; }}
                             onDrop={(event) => handleSocialDrop(event, index)}
