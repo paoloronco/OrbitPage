@@ -24,8 +24,8 @@ test.describe('OrbitPage Application Flow', () => {
     const saveProfileButton = page.getByRole('button', { name: 'Save page' });
     if (await saveProfileButton.isEnabled()) await saveProfileButton.click();
 
-    // 3. Spostiamoci sulla scheda "Links" e aggiungiamo un link pubblico
-    const linksTabTrigger = page.getByRole('button', { name: 'Links', exact: true });
+    // 3. Apriamo la nuova area Content e aggiungiamo un link alla home.
+    const linksTabTrigger = page.getByRole('button', { name: 'Content', exact: true });
     await expect(linksTabTrigger).toBeVisible();
     await linksTabTrigger.click();
 

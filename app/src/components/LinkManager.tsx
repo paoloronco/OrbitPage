@@ -80,6 +80,21 @@ export const LinkManager = ({
     setIsBlockLibraryOpen(false);
   };
 
+  const prependBlock = (block: LinkData) => {
+    if (atBlockLimit) {
+      toast({
+        title: `${planName || tr("Current plan", "Piano attuale")}: ${tr("block limit reached", "limite blocchi raggiunto")}`,
+        description: `${tr("This workspace can contain up to", "Questo workspace può contenere fino a")} ${maxBlocks} ${tr("blocks", "blocchi")}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setWorkingLinks((current) => [block, ...current]);
+    setIsDirty(true);
+    setSaveError("");
+    setIsBlockLibraryOpen(false);
+  };
+
   // Keep working copy in sync when parent provides a new links array
   useEffect(() => {
     // Replace working copy only when the incoming prop reference changes
@@ -286,6 +301,14 @@ export const LinkManager = ({
   };
 
   const addNewSocialRow = () => {
+    if (workingLinks.some((item) => item.type === 'social_row')) {
+      setIsBlockLibraryOpen(false);
+      toast({
+        title: tr("Quick links already added", "Link rapidi già aggiunti"),
+        description: tr("Edit the existing icon row near the top of the page.", "Modifica la riga di icone già presente in alto nella pagina."),
+      });
+      return;
+    }
     const newSocialRow: LinkData = {
       id: Date.now().toString(),
       title: "Quick links",
@@ -299,11 +322,11 @@ export const LinkManager = ({
         columns: 3,
         boxed: false,
         showTitle: false,
-        showLabels: true,
+        showLabels: false,
       }),
       status: "live",
     };
-    appendBlock(newSocialRow);
+    prependBlock(newSocialRow);
   };
 
   const addNewCallout = () => {

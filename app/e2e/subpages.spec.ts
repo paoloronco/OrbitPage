@@ -3,7 +3,8 @@ import { openAuthenticatedAdmin } from './helpers';
 
 test('creates and serves an independent subpage from the Pages workspace', async ({ page }) => {
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Pages', exact: true }).click();
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: 'Additional pages', exact: false }).click();
 
   const existingPage = page.locator('.subpage-list-item').filter({ hasText: 'Summer events' }).first();
   if (await existingPage.count() > 0) {

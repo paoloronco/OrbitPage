@@ -115,7 +115,7 @@ ORBITPAGE_TEST_CT_STATE="$CT_STATE" \
 ORBITPAGE_TEST_TEMPLATE_STATE="$TEMPLATE_STATE" \
 ORBITPAGE_PVE_TEST_MODE=1 \
 ORBITPAGE_PVE_WAIT_SECONDS=0 \
-ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.11.7 \
+ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.11.8 \
 ORBITPAGE_HTTP_PORT=18080 \
 ORBITPAGE_PUBLIC_SITE_URL=https://page.example.test \
 bash "${REPO_ROOT}/install-pve.sh"
@@ -129,7 +129,7 @@ grep -Fq '<--onboot> <1>' "$CALLS" || fail "container does not start on boot"
 grep -Fq '<--rootfs> <local-lvm:12>' "$CALLS" || fail "rootfs storage was not selected"
 grep -Fq '<--net0> <name=eth0,bridge=vmbr0,ip=dhcp,ip6=auto,firewall=1>' "$CALLS" \
   || fail "safe default network was not configured"
-grep -Fq '<ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.11.7>' "$CALLS" \
+grep -Fq '<ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.11.8>' "$CALLS" \
   || fail "pinned image was not forwarded"
 grep -Fq '<ORBITPAGE_HTTP_PORT=18080>' "$CALLS" || fail "HTTP port was not forwarded"
 grep -Fq '<ORBITPAGE_PUBLIC_SITE_URL=https://page.example.test>' "$CALLS" \

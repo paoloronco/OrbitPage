@@ -152,8 +152,8 @@ export const getSocialRowDraftData = (content: string | null | undefined): Socia
     .filter((item): item is SocialRowItemData => Boolean(item));
 
   const record = parsed as Record<string, unknown>;
-  const layout = socialRowLayouts.includes(record.layout as SocialRowLayout) ? record.layout as SocialRowLayout : 'grid';
-  const iconStyle = socialRowIconStyles.includes(record.iconStyle as SocialRowIconStyle) ? record.iconStyle as SocialRowIconStyle : 'theme';
+  const layout = socialRowLayouts.includes(record.layout as SocialRowLayout) ? record.layout as SocialRowLayout : 'icons';
+  const iconStyle = socialRowIconStyles.includes(record.iconStyle as SocialRowIconStyle) ? record.iconStyle as SocialRowIconStyle : 'brand';
   const columns = record.columns === 3 || record.columns === 4 ? record.columns : 2;
 
   return {
@@ -161,9 +161,9 @@ export const getSocialRowDraftData = (content: string | null | undefined): Socia
     layout,
     iconStyle,
     columns,
-    boxed: record.boxed !== false,
-    showTitle: record.showTitle !== false,
-    showLabels: record.showLabels !== false,
+    boxed: record.boxed === true,
+    showTitle: record.showTitle === true,
+    showLabels: record.showLabels === true,
   };
 };
 
@@ -171,7 +171,10 @@ export const getSocialRowData = (content: string | null | undefined): SocialRowB
   const data = getSocialRowDraftData(content);
   return {
     ...data,
-    items: (data.items || []).filter((item) => Boolean(item.label && item.url)),
+    layout: 'icons',
+    boxed: false,
+    showTitle: false,
+    items: (data.items || []).filter((item) => Boolean(item.url)),
   };
 };
 

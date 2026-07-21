@@ -3,7 +3,8 @@ import { openAuthenticatedAdmin } from './helpers';
 
 test('accepts localized menu prices without rewriting the field while typing', async ({ page }) => {
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: /^Menu/ }).click();
 
   const price = page.getByRole('textbox', { name: 'Product price' }).first();
   const addFirstProduct = page.getByRole('button', { name: 'Add the first product' });
@@ -16,7 +17,7 @@ test('accepts localized menu prices without rewriting the field while typing', a
 
   await price.press('Enter');
   await expect(price).toHaveValue('12.50');
-  await expect(page.locator('.menu-editor-preview')).toContainText('€12.50');
+  await expect(page.locator('.admin-menu-live-preview')).toContainText('€12.50');
 
   await page.getByRole('button', { name: 'Save menu' }).click();
   await expect(page.getByText('Menu saved and queued for publication')).toBeVisible();

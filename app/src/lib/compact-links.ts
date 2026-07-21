@@ -5,8 +5,14 @@ const brandColors: Partial<Record<SocialLinkPlatform, string>> = {
   instagram: '#d62976', facebook: '#1877f2', tiktok: '#111111', x: '#111111',
   youtube: '#ff0000', linkedin: '#0a66c2', whatsapp: '#25d366', telegram: '#229ed9',
   discord: '#5865f2', github: '#24292f', email: '#475569', page: '#315bd8',
-  link: '#315bd8', website: '#0f766e',
+  link: '#315bd8', website: '#2454d6',
 };
+
+export function getCompactLinkAccessibleLabel(platform: SocialLinkPlatform, url: string, label?: string): string {
+  if (label?.trim()) return label.trim();
+  const resolved = platform === 'auto' ? detectCompactLinkPlatform(url) : platform;
+  return compactLinkPlatformOptions.find((option) => option.value === resolved)?.label || 'Link';
+}
 
 export const compactLinkPlatformOptions: Array<{ value: SocialLinkPlatform; label: string }> = [
   { value: 'auto', label: 'Auto detect' },

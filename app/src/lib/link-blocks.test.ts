@@ -11,16 +11,27 @@ describe('compact link block data', () => {
     }));
 
     expect(data).toMatchObject({
-      layout: 'grid',
-      iconStyle: 'theme',
+      layout: 'icons',
+      iconStyle: 'brand',
       columns: 2,
-      boxed: true,
-      showTitle: true,
-      showLabels: true,
+      boxed: false,
+      showTitle: false,
+      showLabels: false,
     });
     expect(data.items).toEqual([
       { label: 'Instagram', url: 'https://instagram.com/orbitpage', platform: 'auto', icon: '' },
     ]);
+  });
+
+  it('keeps icon-only custom URLs without requiring visible text', () => {
+    const data = getSocialRowData(JSON.stringify({
+      items: [{ label: '', url: 'https://orbitpage.com', platform: 'website' }],
+    }));
+
+    expect(data.items).toEqual([
+      { label: '', url: 'https://orbitpage.com', platform: 'website', icon: '' },
+    ]);
+    expect(data).toMatchObject({ layout: 'icons', boxed: false, showTitle: false });
   });
 
   it('normalizes rich compact links and rejects unsupported settings', () => {

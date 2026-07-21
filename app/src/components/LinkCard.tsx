@@ -1,4 +1,4 @@
-import { type ChangeEvent, type CSSProperties, useState, useRef } from "react";
+import { type ChangeEvent, type CSSProperties, type DragEvent, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { CalendarClock, Code2, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Code2, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";
@@ -24,7 +24,6 @@ import {
   type SocialRowBlockData,
   type SocialRowIconStyle,
   type SocialRowItemData,
-  type SocialRowLayout,
   type VideoBlockData,
   buildBlockContent,
   getCalloutData,
@@ -41,7 +40,7 @@ import {
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
 import { CompactLinkIcon } from "./CompactLinkIcon";
-import { compactLinkPlatformOptions } from "@/lib/compact-links";
+import { compactLinkPlatformOptions, getCompactLinkBrandStyle } from "@/lib/compact-links";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
 import { useAppI18n } from "@/lib/i18n";
 
@@ -108,6 +107,17 @@ interface LinkCardProps {
   availablePages?: Array<{ title: string; url: string }>;
 }
 
+const compactSocialPresets: Array<{ platform: SocialLinkPlatform; label: string }> = [
+  { platform: 'instagram', label: 'Instagram' },
+  { platform: 'facebook', label: 'Facebook' },
+  { platform: 'tiktok', label: 'TikTok' },
+  { platform: 'whatsapp', label: 'WhatsApp' },
+  { platform: 'linkedin', label: 'LinkedIn' },
+  { platform: 'youtube', label: 'YouTube' },
+  { platform: 'x', label: 'X / Twitter' },
+  { platform: 'email', label: 'Email' },
+];
+
 export const LinkCard = ({
   link,
   onUpdate,
@@ -141,6 +151,7 @@ export const LinkCard = ({
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [videoUploadError, setVideoUploadError] = useState("");
+  const compactLinkDragIndexRef = useRef<number | null>(null);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
@@ -357,6 +368,7 @@ export const LinkCard = ({
   const addSocialItem = (item: SocialRowItemData = { label: "", url: "", platform: "auto", icon: "" }) => {
     setEditLink((prev) => {
       const current = getSocialRowDraftData(prev.content);
+      if (current.items.length >= 16) return prev;
       return {
         ...prev,
         content: buildBlockContent({
@@ -393,6 +405,33 @@ export const LinkCard = ({
         }),
       };
     });
+  };
+
+  const moveSocialItem = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    setEditLink((prev) => {
+      const current = getSocialRowDraftData(prev.content);
+      if (fromIndex >= current.items.length || toIndex >= current.items.length) return prev;
+      const items = [...current.items];
+      const [moved] = items.splice(fromIndex, 1);
+      items.splice(toIndex, 0, moved);
+      return { ...prev, content: buildBlockContent({ ...current, items }) };
+    });
+  };
+
+  const handleSocialDragStart = (event: DragEvent<HTMLElement>, index: number) => {
+    event.stopPropagation();
+    compactLinkDragIndexRef.current = index;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleSocialDrop = (event: DragEvent<HTMLDivElement>, index: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const sourceIndex = compactLinkDragIndexRef.current;
+    if (sourceIndex !== null) moveSocialItem(sourceIndex, index);
+    compactLinkDragIndexRef.current = null;
   };
 
   const titlePlaceholder = isHeading
@@ -621,24 +660,21 @@ export const LinkCard = ({
 
     if (isSocialRow) {
       return (
-        <div className="min-w-0">
-          <h3 className="font-semibold" style={{ ...(link.textColor ? { color: link.textColor } : {}) }}>
-            {link.title || 'Social links'}
-          </h3>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {socialData.items.map((item) => (
-              <a
-                key={`${item.label}-${item.url}`}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-primary/25 px-3 py-1 text-sm"
-                onClick={(e) => e.stopPropagation()}
+        <div className="admin-compact-link-summary min-w-0">
+          <div className="admin-compact-link-summary-icons" aria-label={tr("Quick link preview", "Anteprima link rapidi")}>
+            {socialData.items.slice(0, 8).map((item, index) => (
+              <span
+                key={`${item.label}-${item.url}-${index}`}
+                className="admin-compact-link-summary-icon"
+                style={socialData.iconStyle === 'brand' ? getCompactLinkBrandStyle(item.platform || 'auto', item.url) : undefined}
+                title={item.label || compactPlatformLabel(item.platform || 'auto', 'Link')}
               >
-                {item.label}
-              </a>
+                <CompactLinkIcon platform={item.platform} url={item.url} customIcon={item.icon} />
+              </span>
             ))}
+            {socialData.items.length === 0 && <span className="admin-compact-link-summary-empty">{tr("No icons yet", "Nessuna icona")}</span>}
           </div>
+          <span>{socialData.items.length} {tr(socialData.items.length === 1 ? "quick link" : "quick links", socialData.items.length === 1 ? "link rapido" : "link rapidi")}</span>
         </div>
       );
     }
@@ -1016,96 +1052,143 @@ export const LinkCard = ({
                   </div>
                 )}
                 {isSocialRow && (
-                  <div className="space-y-3 rounded border border-white/5 bg-white/5 p-3">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Share2 className="h-4 w-4" />
-                      {tr("Compact links", "Link compatti")}
+                  <div className="admin-compact-link-editor">
+                    <div className="admin-compact-link-editor-heading">
+                      <span className="admin-compact-link-editor-mark"><Share2 className="h-4 w-4" /></span>
+                      <span>
+                        <strong>{tr("Quick link dock", "Dock link rapidi")}</strong>
+                        <small>{tr("Square icons in one transparent row below the profile.", "Icone quadrate in una riga trasparente sotto al profilo.")}</small>
+                      </span>
+                      <label className="admin-compact-link-label-toggle">
+                        <span>{tr("Show text", "Mostra testo")}</span>
+                        <Switch checked={socialData.showLabels === true} onCheckedChange={(checked) => updateSocialData('showLabels', checked)} />
+                      </label>
                     </div>
-                    <div className="admin-compact-link-settings">
-                      <div className="space-y-1">
-                        <Label className="text-xs">{tr("Layout", "Layout")}</Label>
-                        <Select value={socialData.layout || 'grid'} onValueChange={(value: SocialRowLayout) => updateSocialData('layout', value)}>
-                          <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="icons">{tr("App icon row", "Riga di icone app")}</SelectItem>
-                            <SelectItem value="pills">{tr("Horizontal links", "Link orizzontali")}</SelectItem>
-                            <SelectItem value="grid">{tr("Link grid", "Griglia di link")}</SelectItem>
-                          </SelectContent>
-                        </Select>
+
+                    <div className="admin-compact-link-add-panel">
+                      <div className="admin-compact-link-add-heading">
+                        <span>
+                          <strong>{tr("Add an icon", "Aggiungi un'icona")}</strong>
+                          <small>{tr("Choose a social app or add any custom URL.", "Scegli un social oppure aggiungi qualsiasi URL.")}</small>
+                        </span>
+                        <Button type="button" variant="outline" size="sm" onClick={() => addSocialItem()} disabled={socialData.items.length >= 16}>
+                          <Plus className="mr-1 h-3.5 w-3.5" />{tr("Custom URL", "URL personalizzato")}
+                        </Button>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">{tr("Icon style", "Stile icone")}</Label>
-                        <Select value={socialData.iconStyle || 'theme'} onValueChange={(value: SocialRowIconStyle) => updateSocialData('iconStyle', value)}>
-                          <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="brand">{tr("Official brand colors", "Colori ufficiali del brand")}</SelectItem>
-                            <SelectItem value="theme">{tr("Page theme", "Tema pagina")}</SelectItem>
-                            <SelectItem value="outline">{tr("Outline", "Contorno")}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="admin-compact-link-presets" aria-label={tr("Social presets", "Preset social")}>
+                        {compactSocialPresets.map((preset) => (
+                          <button
+                            key={preset.platform}
+                            type="button"
+                            onClick={() => addSocialItem({ label: preset.label, url: '', platform: preset.platform, icon: '' })}
+                            disabled={socialData.items.length >= 16}
+                            title={`${tr("Add", "Aggiungi")} ${preset.label}`}
+                            aria-label={`${tr("Add", "Aggiungi")} ${preset.label}`}
+                          >
+                            <span style={getCompactLinkBrandStyle(preset.platform, '')}>
+                              <CompactLinkIcon platform={preset.platform} url="" />
+                            </span>
+                            <small>{preset.label}</small>
+                          </button>
+                        ))}
                       </div>
-                      {socialData.layout === 'grid' && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">{tr("Columns", "Colonne")}</Label>
-                          <Select value={String(socialData.columns || 2)} onValueChange={(value) => updateSocialData('columns', Number(value) as 2 | 3 | 4)}>
-                            <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
-                            <SelectContent><SelectItem value="2">2</SelectItem><SelectItem value="3">3</SelectItem><SelectItem value="4">4</SelectItem></SelectContent>
-                          </Select>
-                        </div>
-                      )}
                     </div>
-                    <div className="admin-compact-link-toggles">
-                      <label><span>{tr("Card container", "Contenitore card")}</span><Switch checked={socialData.boxed !== false} onCheckedChange={(checked) => updateSocialData('boxed', checked)} /></label>
-                      <label><span>{tr("Block title", "Titolo blocco")}</span><Switch checked={socialData.showTitle !== false} onCheckedChange={(checked) => updateSocialData('showTitle', checked)} /></label>
-                      <label><span>{tr("Item labels", "Etichette elementi")}</span><Switch checked={socialData.showLabels !== false} onCheckedChange={(checked) => updateSocialData('showLabels', checked)} /></label>
-                    </div>
+
                     {availablePages.length > 0 && (
-                      <div className="space-y-2 rounded border border-primary/15 bg-primary/5 p-2">
-                        <Label className="text-xs">{tr("Add an OrbitPage page", "Aggiungi una pagina OrbitPage")}</Label>
-                        <div className="flex flex-wrap gap-2">
+                      <div className="admin-compact-link-pages">
+                        <Label>{tr("Your OrbitPage pages", "Le tue pagine OrbitPage")}</Label>
+                        <div>
                           {availablePages.map((page) => (
-                            <Button key={page.url} type="button" variant="outline" size="sm" onClick={() => addSocialItem({ label: page.title, url: page.url, platform: 'page', icon: '' })}>
+                            <Button key={page.url} type="button" variant="outline" size="sm" disabled={socialData.items.length >= 16} onClick={() => addSocialItem({ label: page.title, url: page.url, platform: 'page', icon: '' })}>
                               <Plus className="mr-1 h-3 w-3" />{page.title}
                             </Button>
                           ))}
                         </div>
                       </div>
                     )}
-                    {socialData.items.map((item, index) => (
-                      <div key={index} className="admin-compact-link-item rounded border border-primary/10 bg-white/10 p-2">
-                        <span className="admin-compact-link-icon-preview"><CompactLinkIcon platform={item.platform} url={item.url} customIcon={item.icon} /></span>
-                        <Select value={item.platform || 'auto'} onValueChange={(value: SocialLinkPlatform) => updateSocialItem(index, 'platform', value)}>
-                          <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
-                          <SelectContent>{compactLinkPlatformOptions.map((option) => <SelectItem key={option.value} value={option.value}>{compactPlatformLabel(option.value, option.label)}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <div className="admin-compact-link-item-fields">
-                          <Input
-                            value={item.label}
-                            onChange={(e) => updateSocialItem(index, 'label', e.target.value)}
-                            placeholder={tr("Label", "Etichetta")}
-                          />
-                          <Input
-                            value={item.url}
-                            onChange={(e) => updateSocialItem(index, 'url', e.target.value)}
-                            placeholder="https://… or /page"
-                          />
-                        </div>
-                        <Input className="admin-compact-link-custom-icon" maxLength={4} value={item.icon || ''} onChange={(e) => updateSocialItem(index, 'icon', e.target.value)} placeholder={tr("Custom icon", "Icona custom")} title={tr("Optional emoji or short symbol", "Emoji o simbolo breve opzionale")} />
-                        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-destructive" onClick={() => removeSocialItem(index)} title={tr("Remove link", "Rimuovi link")}>
-                          <X className="h-3 w-3" />
-                        </Button>
+
+                    {socialData.items.length > 0 ? (
+                      <div className="admin-compact-link-board">
+                        {socialData.items.map((item, index) => (
+                          <div
+                            key={`${item.url}-${item.platform}-${index}`}
+                            className="admin-compact-link-item"
+                            onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; }}
+                            onDrop={(event) => handleSocialDrop(event, index)}
+                            onDragEnd={() => { compactLinkDragIndexRef.current = null; }}
+                          >
+                            <div className="admin-compact-link-item-heading">
+                              <button type="button" className="admin-compact-link-drag" draggable onDragStart={(event) => handleSocialDragStart(event, index)} title={tr("Drag to reorder", "Trascina per riordinare")} aria-label={tr("Drag to reorder", "Trascina per riordinare")}>
+                                <GripVertical className="h-4 w-4" />
+                              </button>
+                              <span className="admin-compact-link-icon-preview" style={socialData.iconStyle === 'brand' ? getCompactLinkBrandStyle(item.platform || 'auto', item.url) : undefined}>
+                                <CompactLinkIcon platform={item.platform} url={item.url} customIcon={item.icon} />
+                              </span>
+                              <span className="admin-compact-link-item-copy">
+                                <strong>{item.label || compactPlatformLabel(item.platform || 'auto', tr('Custom link', 'Link personalizzato'))}</strong>
+                                <small>{tr("Drag this tile to change its position.", "Trascina il riquadro per cambiarne la posizione.")}</small>
+                              </span>
+                              <span className="admin-compact-link-order-actions">
+                                <Button type="button" variant="ghost" size="icon" onClick={() => moveSocialItem(index, index - 1)} disabled={index === 0} title={tr("Move left", "Sposta a sinistra")} aria-label={tr("Move left", "Sposta a sinistra")}><ArrowLeft className="h-3.5 w-3.5" /></Button>
+                                <Button type="button" variant="ghost" size="icon" onClick={() => moveSocialItem(index, index + 1)} disabled={index === socialData.items.length - 1} title={tr("Move right", "Sposta a destra")} aria-label={tr("Move right", "Sposta a destra")}><ArrowRight className="h-3.5 w-3.5" /></Button>
+                                <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeSocialItem(index)} title={tr("Remove link", "Rimuovi link")} aria-label={tr("Remove link", "Rimuovi link")}><X className="h-3.5 w-3.5" /></Button>
+                              </span>
+                            </div>
+                            <div className="admin-compact-link-item-fields">
+                              <div>
+                                <Label htmlFor={`compact-link-url-${link.id}-${index}`}>{tr("Destination URL", "URL di destinazione")}</Label>
+                                <Input
+                                  id={`compact-link-url-${link.id}-${index}`}
+                                  value={item.url}
+                                  onChange={(e) => updateSocialItem(index, 'url', e.target.value)}
+                                  placeholder="https://… /page, mailto: or tel:"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`compact-link-platform-${link.id}-${index}`}>{tr("Icon", "Icona")}</Label>
+                                <Select value={item.platform || 'auto'} onValueChange={(value: SocialLinkPlatform) => updateSocialItem(index, 'platform', value)}>
+                                  <SelectTrigger id={`compact-link-platform-${link.id}-${index}`} className="bg-white text-black"><SelectValue /></SelectTrigger>
+                                  <SelectContent>{compactLinkPlatformOptions.map((option) => <SelectItem key={option.value} value={option.value}>{compactPlatformLabel(option.value, option.label)}</SelectItem>)}</SelectContent>
+                                </Select>
+                              </div>
+                              <div>
+                                <Label htmlFor={`compact-link-label-${link.id}-${index}`}>{tr("Optional text", "Testo facoltativo")}</Label>
+                                <Input
+                                  id={`compact-link-label-${link.id}-${index}`}
+                                  value={item.label}
+                                  onChange={(e) => updateSocialItem(index, 'label', e.target.value)}
+                                  placeholder={tr("Used for accessibility and optional labels", "Usato per accessibilità ed etichette opzionali")}
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor={`compact-link-symbol-${link.id}-${index}`}>{tr("Custom symbol", "Simbolo personalizzato")}</Label>
+                                <Input id={`compact-link-symbol-${link.id}-${index}`} maxLength={4} value={item.icon || ''} onChange={(e) => updateSocialItem(index, 'icon', e.target.value)} placeholder={tr("Optional emoji", "Emoji opzionale")} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => addSocialItem()}
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      {tr("Add link", "Aggiungi link")}
-                    </Button>
+                    ) : (
+                      <div className="admin-compact-link-empty">
+                        <Share2 className="h-5 w-5" />
+                        <span><strong>{tr("Start with one icon", "Inizia con un'icona")}</strong><small>{tr("Pick a social app above or add a custom URL.", "Scegli un social qui sopra oppure aggiungi un URL personalizzato.")}</small></span>
+                      </div>
+                    )}
+
+                    <div className="admin-compact-link-footer">
+                      <span>{socialData.items.length}/16</span>
+                      <label>
+                        <span>{tr("Icon appearance", "Aspetto icone")}</span>
+                        <Select value={socialData.iconStyle || 'brand'} onValueChange={(value: SocialRowIconStyle) => updateSocialData('iconStyle', value)}>
+                          <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="brand">{tr("Official brand colors", "Colori ufficiali")}</SelectItem>
+                            <SelectItem value="theme">{tr("Page theme", "Tema pagina")}</SelectItem>
+                            <SelectItem value="outline">{tr("Outline", "Contorno")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </label>
+                    </div>
                   </div>
                 )}
                 {isCallout && (
