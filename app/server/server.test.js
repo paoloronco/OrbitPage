@@ -101,6 +101,8 @@ describe('API Endpoints', () => {
       'https://www.tiktok.com',
       'https://giphy.com',
       'https://calendar.google.com',
+      'https://*.typeform.com',
+      'https://*.typeform.eu',
     ]) {
       expect(csp).toContain(origin);
     }

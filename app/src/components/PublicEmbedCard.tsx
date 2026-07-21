@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { CalendarDays, Code2, Mail, MapPinned, Music2, PlaySquare, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { consentManager } from "@/lib/consent-manager";
@@ -9,6 +9,7 @@ import {
   getKnownEmbedUrl,
   getEmbedProviderPlaceholder,
   getEmbedProviderLabel,
+  getTypeformFormReference,
   resolveEmbedProvider,
   type EmbedProvider,
 } from "@/lib/link-blocks";
@@ -23,6 +24,8 @@ import {
   getPublicTextColor,
 } from "@/lib/public-block-style";
 import type { LinkData } from "./LinkCard";
+
+const TypeformWidget = lazy(() => import("@typeform/embed-react").then(({ Widget }) => ({ default: Widget })));
 
 interface PublicEmbedCardProps {
   link: LinkData;
@@ -54,6 +57,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   const secondaryStyle = textColor ? { color: textColor, opacity: 0.72 } : undefined;
   const providerLabel = getEmbedProviderLabel(provider);
   const knownProviderUrl = getKnownEmbedUrl(provider, embed.snippet);
+  const typeformReference = provider === 'typeform' ? getTypeformFormReference(embed.snippet) : null;
   const requiresAllowlistedUrl = provider !== 'custom' && provider !== 'newsletter';
   const invalidProviderUrl = Boolean(embed.snippet) && requiresAllowlistedUrl && !knownProviderUrl;
   const staticCustomEmbedUnavailable = !requiresAllowlistedUrl && !knownProviderUrl && hasStaticPublicSnapshot();
@@ -109,18 +113,38 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
         </div>
       ) : isGranted ? (
         <div className="relative w-full overflow-hidden border-t border-current/10 bg-slate-950/10" style={{ height: `${embed.height || 360}px` }}>
-          <iframe
-            src={knownProviderUrl || apiPath(`/embed/${encodeURIComponent(link.id)}`)}
-            title={`${providerLabel}: ${link.title || 'embedded content'}`}
-            className="h-full w-full border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            sandbox={knownProviderUrl
-              ? "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-top-navigation-by-user-activation"
-              : "allow-scripts allow-forms allow-popups allow-presentation"}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-          />
+          {typeformReference ? (
+            <Suspense fallback={<div className="flex h-full items-center justify-center text-sm font-medium opacity-65">Loading Typeform...</div>}>
+              <TypeformWidget
+                id={typeformReference.id}
+                region={typeformReference.region}
+                className="h-full w-full"
+                style={{ height: '100%', width: '100%' }}
+                lazy
+                inlineOnMobile
+                disableTracking
+                redirectTarget="_self"
+                iframeProps={{
+                  title: `${providerLabel}: ${link.title || 'embedded form'}`,
+                  loading: 'lazy',
+                  referrerPolicy: 'strict-origin-when-cross-origin',
+                }}
+              />
+            </Suspense>
+          ) : (
+            <iframe
+              src={knownProviderUrl || apiPath(`/embed/${encodeURIComponent(link.id)}`)}
+              title={`${providerLabel}: ${link.title || 'embedded content'}`}
+              className="h-full w-full border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              sandbox={knownProviderUrl
+                ? "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-top-navigation-by-user-activation"
+                : "allow-scripts allow-forms allow-popups allow-presentation"}
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+            />
+          )}
         </div>
       ) : (
         <div className={`border-t border-current/10 ${getPublicBlockPadding(link.size)}`}>

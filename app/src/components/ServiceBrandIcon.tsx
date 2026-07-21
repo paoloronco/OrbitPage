@@ -11,6 +11,7 @@ import {
   SiYoutube,
   SiGooglecalendar,
   SiCalendly,
+  SiTypeform,
 } from "react-icons/si";
 import type { BrandServiceProvider } from "@/lib/service-brand";
 
@@ -26,6 +27,7 @@ const brandIcons = {
   giphy: SiGiphy,
   google_calendar: SiGooglecalendar,
   calendly: SiCalendly,
+  typeform: SiTypeform,
   github: SiGithub,
 } satisfies Record<BrandServiceProvider, typeof SiInstagram>;
 

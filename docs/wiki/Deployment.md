@@ -49,7 +49,7 @@ Pin a release instead of following `latest` when deterministic upgrades are requ
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
-  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.13.0 bash
+  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.14.0 bash
 ```
 
 ### Operations

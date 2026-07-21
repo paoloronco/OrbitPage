@@ -1,7 +1,7 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.13.0",
+  "version": "4.14.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -54,6 +54,7 @@
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.4",
     "@tanstack/react-query": "^5.56.2",
+    "@typeform/embed-react": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

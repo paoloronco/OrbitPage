@@ -71,7 +71,7 @@ export interface EventBlockData {
   notes?: string;
 }
 
-export type EmbedProvider = 'auto' | 'instagram' | 'youtube' | 'spotify' | 'deezer' | 'soundcloud' | 'vimeo' | 'tiktok' | 'giphy' | 'google_calendar' | 'calendly' | 'google_maps' | 'newsletter' | 'custom';
+export type EmbedProvider = 'auto' | 'instagram' | 'youtube' | 'spotify' | 'deezer' | 'soundcloud' | 'vimeo' | 'tiktok' | 'giphy' | 'google_calendar' | 'calendly' | 'typeform' | 'google_maps' | 'newsletter' | 'custom';
 export type EmbedConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marketing';
 export type ServiceLinkProvider = 'whatsapp' | 'github';
 
@@ -233,7 +233,7 @@ export const getEventData = (content: string | null | undefined): EventBlockData
   };
 };
 
-const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'youtube', 'spotify', 'deezer', 'soundcloud', 'vimeo', 'tiktok', 'giphy', 'google_calendar', 'calendly', 'google_maps', 'newsletter', 'custom'];
+const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'youtube', 'spotify', 'deezer', 'soundcloud', 'vimeo', 'tiktok', 'giphy', 'google_calendar', 'calendly', 'typeform', 'google_maps', 'newsletter', 'custom'];
 const embedConsentCategories: EmbedConsentCategory[] = ['necessary', 'preferences', 'analytics', 'marketing'];
 const serviceLinkProviders: ServiceLinkProvider[] = ['whatsapp', 'github'];
 
@@ -249,6 +249,7 @@ export const detectEmbedProvider = (snippet?: string): Exclude<EmbedProvider, 'a
   if (value.includes('giphy.com')) return 'giphy';
   if (value.includes('calendar.google.com/calendar/appointments/schedules/')) return 'google_calendar';
   if (value.includes('calendly.com')) return 'calendly';
+  if (value.includes('typeform.com/to/') || value.includes('typeform.eu/to/')) return 'typeform';
   if (value.includes('google.com/maps') || value.includes('maps.google.')) return 'google_maps';
   if (value.includes('mailchimp') || value.includes('substack') || value.includes('beehiiv') || value.includes('convertkit') || value.includes('<form')) return 'newsletter';
   return 'custom';
@@ -261,6 +262,39 @@ const getEmbedUrlCandidates = (snippet?: string) => {
     if (match[1]) candidates.push(match[1].replaceAll('&amp;', '&'));
   }
   return candidates;
+};
+
+export interface TypeformFormReference {
+  id: string;
+  region: 'us' | 'eu';
+  publicUrl: string;
+}
+
+const parseTypeformUrl = (url: URL): TypeformFormReference | null => {
+  const host = url.hostname.toLowerCase();
+  const isTypeformHost = host === 'typeform.com' || host.endsWith('.typeform.com') || host === 'typeform.eu' || host.endsWith('.typeform.eu');
+  if (url.protocol !== 'https:' || !isTypeformHost) return null;
+  const formId = url.pathname.match(/^\/to\/([a-z0-9_-]{4,80})\/?$/i)?.[1];
+  if (!formId) return null;
+  const region = host === 'eu.typeform.com' || host === 'typeform.eu' || host.endsWith('.typeform.eu') ? 'eu' : 'us';
+  const publicHost = region === 'eu' ? 'eu.typeform.com' : 'form.typeform.com';
+  return {
+    id: formId,
+    region,
+    publicUrl: `https://${publicHost}/to/${formId}`,
+  };
+};
+
+export const getTypeformFormReference = (snippet?: string): TypeformFormReference | null => {
+  for (const candidate of getEmbedUrlCandidates(snippet)) {
+    try {
+      const reference = parseTypeformUrl(new URL(candidate));
+      if (reference) return reference;
+    } catch {
+      // Ignore malformed URLs and continue through the remaining candidates.
+    }
+  }
+  return null;
 };
 
 export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snippet?: string): string | null => {
@@ -338,6 +372,11 @@ export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snipp
         return url.toString();
       }
 
+      if (provider === 'typeform') {
+        const reference = parseTypeformUrl(url);
+        if (reference) return reference.publicUrl;
+      }
+
       if (provider === 'google_maps' && (host === 'www.google.com' || host === 'maps.google.com')) {
         if (url.pathname.includes('/maps/embed') || url.searchParams.get('output') === 'embed') return url.toString();
       }
@@ -368,6 +407,7 @@ export const getEmbedProviderLabel = (provider: Exclude<EmbedProvider, 'auto'>) 
   giphy: 'Giphy',
   google_calendar: 'Google Calendar',
   calendly: 'Calendly',
+  typeform: 'Typeform',
   google_maps: 'Google Maps',
   newsletter: 'Newsletter',
   custom: 'Custom embed',
@@ -384,6 +424,7 @@ export const getEmbedProviderPlaceholder = (provider: Exclude<EmbedProvider, 'au
   giphy: 'https://giphy.com/gifs/...',
   google_calendar: 'https://calendar.google.com/calendar/appointments/schedules/...',
   calendly: 'https://calendly.com/your-name',
+  typeform: 'https://form.typeform.com/to/your-form-id',
   google_maps: 'https://www.google.com/maps/embed?...',
   newsletter: '<form>...</form>',
   custom: '<iframe src="https://..."></iframe>',
@@ -400,6 +441,7 @@ export const getEmbedProviderDefaultHeight = (provider: Exclude<EmbedProvider, '
   giphy: 420,
   google_calendar: 680,
   calendly: 680,
+  typeform: 620,
   google_maps: 360,
   newsletter: 420,
   custom: 360,

@@ -15,7 +15,7 @@ import { type EmbedProvider, type LinkBlockType, type ServiceLinkProvider, build
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
-import { SiCalendly, SiDeezer, SiGithub, SiGiphy, SiGooglecalendar, SiInstagram, SiSoundcloud, SiSpotify, SiTiktok, SiVimeo, SiWhatsapp, SiYoutube } from "react-icons/si";
+import { SiCalendly, SiDeezer, SiGithub, SiGiphy, SiGooglecalendar, SiInstagram, SiSoundcloud, SiSpotify, SiTiktok, SiTypeform, SiVimeo, SiWhatsapp, SiYoutube } from "react-icons/si";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -427,7 +427,7 @@ export const LinkManager = ({
   };
 
   const addServiceEmbed = (
-    provider: Extract<EmbedProvider, "instagram" | "youtube" | "spotify" | "deezer" | "soundcloud" | "vimeo" | "tiktok" | "giphy" | "google_calendar" | "calendly">,
+    provider: Extract<EmbedProvider, "instagram" | "youtube" | "spotify" | "deezer" | "soundcloud" | "vimeo" | "tiktok" | "giphy" | "google_calendar" | "calendly" | "typeform">,
     title: string,
     description: string,
   ) => {
@@ -714,6 +714,7 @@ export const LinkManager = ({
         { id: "giphy", title: "Giphy", description: tr("Embed an animated GIF without uploading it.", "Incorpora una GIF animata senza caricarla."), keywords: "giphy gif animation animated", icon: SiGiphy, onSelect: () => addServiceEmbed("giphy", "Giphy", tr("Animated GIF", "GIF animata")) },
         { id: "google-calendar", title: "Google Calendar", description: tr("Show live appointment availability and accept bookings.", "Mostra gli slot liberi e accetta prenotazioni."), keywords: "google calendar appointment schedule booking call availability appuntamenti prenotazioni disponibilita", icon: schedulingEnabled ? SiGooglecalendar : LockKeyhole, onSelect: () => addServiceEmbed("google_calendar", tr("Book an appointment", "Prenota un appuntamento"), tr("Choose an available time in Google Calendar", "Scegli un orario disponibile su Google Calendar")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
         { id: "calendly", title: "Calendly", description: tr("Let visitors choose an available call or meeting slot.", "Permetti di scegliere uno slot libero per call o incontri."), keywords: "calendly calendar booking meeting call availability prenotazioni disponibilita", icon: schedulingEnabled ? SiCalendly : LockKeyhole, onSelect: () => addServiceEmbed("calendly", tr("Book a call", "Prenota una call"), tr("Choose a time that works for you", "Scegli l'orario piu comodo")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
+        { id: "typeform", title: "Typeform", description: tr("Collect responses with an interactive embedded form.", "Raccogli risposte con un modulo interattivo incorporato."), keywords: "typeform form survey questionnaire lead contact modulo sondaggio questionario contatti", icon: SiTypeform, onSelect: () => addServiceEmbed("typeform", tr("Tell us what you need", "Raccontaci cosa ti serve"), tr("Complete the form without leaving this page", "Compila il modulo senza lasciare questa pagina")) },
         { id: "github", title: "GitHub", description: tr("Link a repository, profile or release.", "Collega repository, profilo o release."), keywords: "github repository repo code profile release codice", icon: SiGithub, onSelect: () => addServiceLink("github", "GitHub", tr("View on GitHub", "Apri su GitHub")) },
       ],
     },

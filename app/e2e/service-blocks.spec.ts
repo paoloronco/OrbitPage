@@ -9,7 +9,7 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
   const dialog = page.getByRole('dialog', { name: 'Add content' });
   await dialog.getByRole('button', { name: /Connected services/ }).click();
 
-  for (const service of ['Instagram', 'WhatsApp', 'YouTube', 'Spotify', 'Deezer', 'SoundCloud', 'Vimeo', 'TikTok', 'Giphy', 'Google Calendar', 'Calendly', 'GitHub']) {
+  for (const service of ['Instagram', 'WhatsApp', 'YouTube', 'Spotify', 'Deezer', 'SoundCloud', 'Vimeo', 'TikTok', 'Giphy', 'Google Calendar', 'Calendly', 'Typeform', 'GitHub']) {
     await expect(dialog.getByRole('button', { name: new RegExp(service, 'i') })).toBeVisible();
   }
 
@@ -35,6 +35,29 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
   await whatsappCard.getByRole('textbox', { name: /whatsapp URL/i }).fill('https://wa.me/391234567890');
   await whatsappCard.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(whatsappCard.locator('[data-service-brand="whatsapp"]')).toBeVisible();
+});
+
+test('adds a consent-aware Typeform using the official widget', async ({ page }) => {
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+
+  await page.getByRole('button', { name: 'Add content' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add content' });
+  await dialog.getByRole('button', { name: /Connected services/ }).click();
+  await dialog.getByRole('button', { name: /Typeform/ }).click();
+
+  const typeformCard = page.locator('[data-link-id]').last();
+  await typeformCard.hover();
+  await typeformCard.getByRole('button', { name: 'Edit block' }).click();
+  await expect(typeformCard.getByText('Typeform embed settings')).toBeVisible();
+  await typeformCard.getByRole('textbox', { name: 'Typeform URL' }).fill('https://form.typeform.com/to/moe6aa');
+  await typeformCard.getByText('Consent category').locator('..').getByRole('combobox').click();
+  await page.getByRole('option', { name: /Necessary/ }).click();
+  await typeformCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await typeformCard.scrollIntoViewIfNeeded();
+
+  await expect(typeformCard.locator('iframe[data-testid="iframe"]')).toHaveAttribute('src', /https:\/\/form\.typeform\.com\/to\/moe6aa/);
+  await expect(typeformCard.locator('[data-service-brand="typeform"]')).toBeVisible();
 });
 
 test('adds Google Calendar and Calendly booking pages with live availability', async ({ page }) => {
@@ -77,5 +100,6 @@ test('keeps connected service blocks selectable on mobile', async ({ page }) => 
   const dialog = page.getByRole('dialog', { name: 'Add content' });
   await dialog.getByRole('button', { name: /Connected services/ }).click();
   await expect(dialog.getByRole('button', { name: /Instagram/ })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: /Typeform/ })).toBeVisible();
   await expect(dialog.getByRole('button', { name: /GitHub/ })).toBeVisible();
 });

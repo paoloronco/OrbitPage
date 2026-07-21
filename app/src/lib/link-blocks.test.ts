@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData } from './link-blocks';
+import { getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference } from './link-blocks';
 
 describe('compact link block data', () => {
   it('keeps legacy social rows compatible', () => {
@@ -83,6 +83,7 @@ describe('official service embeds', () => {
     ['giphy', 'https://giphy.com/gifs/reaction-example-3o7aD2saalBwwftBIY', 'https://giphy.com/embed/3o7aD2saalBwwftBIY'],
     ['google_calendar', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd?gv=true'],
     ['calendly', 'https://calendly.com/orbitpage-demo/30min', 'https://calendly.com/orbitpage-demo/30min'],
+    ['typeform', 'https://orbitpage.typeform.com/to/moe6aa?typeform-source=example.com', 'https://form.typeform.com/to/moe6aa'],
   ] as const)('creates an allowlisted %s player URL', (provider, source, expected) => {
     expect(getKnownEmbedUrl(provider, source)).toBe(expected);
   });
@@ -99,6 +100,21 @@ describe('official service embeds', () => {
     expect(getKnownEmbedUrl('giphy', 'https://example.com/embed/3o7aD2saalBwwftBIY')).toBeNull();
     expect(getKnownEmbedUrl('google_calendar', 'https://calendar.google.com.evil.example/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd')).toBeNull();
     expect(getKnownEmbedUrl('google_calendar', 'https://calendar.google.com/calendar/u/0/r')).toBeNull();
+    expect(getKnownEmbedUrl('typeform', 'https://typeform.com.evil.example/to/moe6aa')).toBeNull();
+    expect(getKnownEmbedUrl('typeform', 'https://admin.typeform.com/form/moe6aa/create')).toBeNull();
+  });
+
+  it('extracts Typeform IDs and selects the matching data region', () => {
+    expect(getTypeformFormReference('https://form.typeform.com/to/moe6aa')).toEqual({
+      id: 'moe6aa',
+      region: 'us',
+      publicUrl: 'https://form.typeform.com/to/moe6aa',
+    });
+    expect(getTypeformFormReference('https://eu.typeform.com/to/AbCd_123')).toEqual({
+      id: 'AbCd_123',
+      region: 'eu',
+      publicUrl: 'https://eu.typeform.com/to/AbCd_123',
+    });
   });
 
   it('keeps branded service-link metadata backward compatible', () => {

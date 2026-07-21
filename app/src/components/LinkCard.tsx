@@ -1429,6 +1429,7 @@ export const LinkCard = ({
                             <SelectItem value="giphy">Giphy</SelectItem>
                             <SelectItem value="google_calendar">Google Calendar</SelectItem>
                             <SelectItem value="calendly">Calendly</SelectItem>
+                            <SelectItem value="typeform">Typeform</SelectItem>
                             <SelectItem value="google_maps">Google Maps</SelectItem>
                             <SelectItem value="newsletter">Newsletter</SelectItem>
                             <SelectItem value="custom">Custom</SelectItem>
@@ -1495,6 +1496,11 @@ export const LinkCard = ({
                                   'In Calendly, open the event type and paste its public scheduling link here.',
                                   'In Calendly, apri il tipo di evento e incolla qui il link pubblico di prenotazione.',
                                 )
+                              : resolvedEmbedProvider === 'typeform'
+                                ? tr(
+                                    'In Typeform, open Share and paste the public form link. OrbitPage uses the official Typeform widget.',
+                                    'In Typeform, apri Condividi e incolla il link pubblico del modulo. OrbitPage usa il widget ufficiale Typeform.',
+                                  )
                               : tr(
                                   `Paste the public share URL from ${getEmbedProviderLabel(resolvedEmbedProvider)}. OrbitPage converts it to the official embedded player and rejects unrelated domains.`,
                                   `Incolla l'URL pubblico di ${getEmbedProviderLabel(resolvedEmbedProvider)}. OrbitPage lo converte nel player ufficiale e rifiuta domini estranei.`,
