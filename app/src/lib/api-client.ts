@@ -309,10 +309,27 @@ interface VerifyResponse extends ApiResponse {
   };
 }
 
+export interface SetupDependency {
+  id: 'runtime' | 'database' | 'storage' | 'frontend' | 'sessions' | string;
+  label: string;
+  ok: boolean;
+  detail: string;
+}
+
+export interface SetupStatus {
+  isFirstTimeSetup: boolean;
+  username: 'admin';
+  usernameLocked: true;
+  pageSlug: string | null;
+  dependencies: SetupDependency[];
+  ready: boolean;
+}
+
 interface SetupResponse extends ApiResponse {
   success: boolean;
   token: string;
   message: string;
+  pageSlug: string;
 }
 
 interface ChangePasswordResponse extends ApiResponse {
@@ -376,6 +393,8 @@ export interface PublicPageResponse {
   links: LinkItem[];
   theme: Record<string, any>;
   menu?: import('./menu').MenuCatalog;
+  setupRequired?: boolean;
+  pageSlug?: string | null;
   branding?: {
     showOrbitPageBadge?: boolean;
   };
@@ -496,14 +515,14 @@ export const publicUrlApi = {
 
 // Auth API
 export const authApi = {
-  checkSetupStatus: async (): Promise<{ isFirstTimeSetup: boolean }> => {
-    return apiRequest<{ isFirstTimeSetup: boolean }>('/auth/setup-status');
+  checkSetupStatus: async (): Promise<SetupStatus> => {
+    return apiRequest<SetupStatus>('/auth/setup-status');
   },
 
-  setup: async (password: string): Promise<SetupResponse> => {
+  setup: async (password: string, slug: string): Promise<SetupResponse> => {
     const response = await apiRequest<SetupResponse>('/auth/setup', {
       method: 'POST',
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password, slug }),
     });
     if (response.token) {
       await setAuthToken(response.token);

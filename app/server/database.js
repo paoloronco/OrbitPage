@@ -9,6 +9,11 @@ const __dirname = dirname(__filename);
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
 const dataDir = process.env.DATA_DIR || __dirname;
+try {
+  fs.mkdirSync(dataDir, { recursive: true });
+} catch (error) {
+  throw new Error(`OrbitPage could not create DATA_DIR (${dataDir}): ${error.message}`);
+}
 const dbPath = join(dataDir, 'orbitpage.db');
 const legacySourceDbPath = join(__dirname, 'lynx.db');
 const legacyDataDirDbPath = join(dataDir, 'lynx.db');
@@ -61,6 +66,16 @@ export const initializeDatabase = () => {
           password_hash TEXT NOT NULL,
           salt TEXT NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // Singleton installation settings. Existing installations remain valid
+      // when no page_slug row exists and continue serving the page at root.
+      db.run(`
+        CREATE TABLE IF NOT EXISTS instance_settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
 

@@ -50,7 +50,7 @@ import { TextFileManager } from "./TextFileManager";
 import { SitemapManager } from "./SitemapManager";
 import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
-import { isIntegratedHostedSurface, isSaasMode, utilityApi } from "@/lib/api-client";
+import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
@@ -179,7 +179,8 @@ export const AdminView = ({
     return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
   });
   const standaloneNavRef = useRef<HTMLElement>(null);
-  const publicPageHref = getPublicUrlOverride() || withBasePath('/');
+  const publicUrlOverride = getPublicUrlOverride();
+  const [publicPageHref, setPublicPageHref] = useState(publicUrlOverride || withBasePath('/'));
   const entitlements = saasPlan?.entitlements;
   const managePlanHref = saasBilling?.manageUrl || "/dashboard/billing";
   const isHostedAdmin = isSaasMode() || Boolean(
@@ -190,6 +191,26 @@ export const AdminView = ({
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const isProspectReadOnly = currentUser?.readOnly === true;
+
+  useEffect(() => {
+    if (publicUrlOverride) {
+      setPublicPageHref(publicUrlOverride);
+      return;
+    }
+    if (isHostedAdmin) return;
+
+    let cancelled = false;
+    void publicUrlApi.get()
+      .then((response) => {
+        if (!cancelled && response.publicUrl) setPublicPageHref(response.publicUrl);
+      })
+      .catch(() => {
+        if (!cancelled) setPublicPageHref(withBasePath('/'));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isHostedAdmin, publicUrlOverride]);
 
   useEffect(() => {
     setPreviewProfile(profile);

@@ -38,7 +38,7 @@ vi.mock('./services/backup-service.js', () => ({
 
 // Now import app
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
-import { isFirstTimeSetup, verifyToken } from './auth.js';
+import { isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
 
@@ -49,6 +49,7 @@ describe('API Endpoints', () => {
     vi.mocked(dbAll).mockResolvedValue([]);
     vi.mocked(dbRun).mockResolvedValue({ changes: 1 });
     vi.mocked(withTransaction).mockImplementation(cb => cb());
+    vi.mocked(isFirstTimeSetup).mockResolvedValue(false);
     vi.mocked(createApplicationBackup).mockResolvedValue({
       schemaVersion: 1,
       appVersion: 'test',
@@ -109,10 +110,47 @@ describe('API Endpoints', () => {
   });
 
   it('GET /api/auth/setup-status should return setup status', async () => {
-    vi.mocked(isFirstTimeSetup).mockResolvedValue(true);
+    vi.mocked(isFirstTimeSetup).mockResolvedValueOnce(true);
     const response = await request(app).get('/api/auth/setup-status');
     expect(response.status).toBe(200);
     expect(response.body.isFirstTimeSetup).toBe(true);
+    expect(response.body.username).toBe('admin');
+    expect(response.body.usernameLocked).toBe(true);
+    expect(response.body.dependencies).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'runtime', ok: true }),
+      expect.objectContaining({ id: 'database', ok: true }),
+      expect.objectContaining({ id: 'storage', ok: true }),
+      expect.objectContaining({ id: 'frontend', ok: true }),
+    ]));
+    expect(response.headers['cache-control']).toContain('no-store');
+  });
+
+  it('POST /api/auth/setup creates the fixed administrator and primary page slug atomically', async () => {
+    vi.mocked(dbGet).mockResolvedValue(null);
+
+    const response = await request(app)
+      .post('/api/auth/setup')
+      .send({ password: 'StrongPassword1!', slug: 'my-public-page' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: 'my-public-page' });
+    expect(withTransaction).toHaveBeenCalledOnce();
+    expect(setupInitialCredentials).toHaveBeenCalledWith('StrongPassword1!');
+    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('instance_settings'), ['my-public-page']);
+    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('admin_onboarding_enabled'));
+  });
+
+  it('POST /api/auth/setup rejects reserved or ambiguous page slugs', async () => {
+    const reserved = await request(app)
+      .post('/api/auth/setup')
+      .send({ password: 'StrongPassword1!', slug: 'dashboard' });
+    const ambiguous = await request(app)
+      .post('/api/auth/setup')
+      .send({ password: 'StrongPassword1!', slug: 'my--page' });
+
+    expect(reserved.status).toBe(400);
+    expect(ambiguous.status).toBe(400);
+    expect(setupInitialCredentials).not.toHaveBeenCalled();
   });
 
   it('GET /api/admin/backup downloads a complete backup payload', async () => {
@@ -1124,9 +1162,11 @@ describe('API Endpoints', () => {
     vi.mocked(dbGet)
       .mockResolvedValueOnce({ lastmod: '2026-07-16T12:00:00.000Z' })
       .mockResolvedValueOnce({ privacy_policy_url: null, cookie_policy_url: null })
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ generated_at: '2026-07-16T12:00:00.000Z', updated_at: '2026-07-16T12:00:00.000Z' })
       .mockResolvedValueOnce({ lastmod: '2026-07-16T12:00:00.000Z' })
-      .mockResolvedValueOnce({ privacy_policy_url: null, cookie_policy_url: null });
+      .mockResolvedValueOnce({ privacy_policy_url: null, cookie_policy_url: null })
+      .mockResolvedValueOnce(null);
 
     const response = await request(app).post('/api/sitemap/generate');
 

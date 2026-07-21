@@ -44,6 +44,8 @@ uploads/
 
 # Testing
 coverage/
+.playwright-cli/
+output/
 app/playwright-report/
 app/test-results/
 app/e2e-data/

@@ -3,6 +3,7 @@ import {
   ChangePasswordBodySchema,
   CreateUserBodySchema,
   LoginBodySchema,
+  PageSlugSchema,
   ResetViaTokenBodySchema,
   SetupBodySchema,
   UpdateRoleBodySchema,
@@ -22,6 +23,13 @@ describe('auth schemas', () => {
     expect(() => ChangePasswordBodySchema.parse({ currentPassword: 'old' })).toThrow();
     expect(() => UpdateUserPasswordBodySchema.parse({})).toThrow();
     expect(() => ResetViaTokenBodySchema.parse({ token: 'reset-token' })).toThrow();
+  });
+
+  it('normalizes and validates the first public page slug', () => {
+    expect(PageSlugSchema.parse(' My-Page ')).toBe('my-page');
+    expect(SetupBodySchema.parse({ password: 'Secret123!', slug: 'my-page' }).slug).toBe('my-page');
+    expect(() => PageSlugSchema.parse('admin')).toThrow();
+    expect(() => PageSlugSchema.parse('../page')).toThrow();
   });
 
   it('validates user names and roles for user management', () => {

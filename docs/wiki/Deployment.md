@@ -21,7 +21,7 @@ It performs the complete application setup:
 - starts the container with `no-new-privileges` and a health check;
 - installs the `orbitpage` management command.
 
-The default endpoint is `http://SERVER_IP:8080`. The initial administrator is created from `/dashboard/profile`.
+The default endpoint is `http://SERVER_IP:8080`. The public URL initially shows **Under construction**. Open `/dashboard/profile` to run dependency checks, create the fixed `admin` account password, choose the primary page slug, and start the dashboard tutorial.
 
 ### Installation options
 
@@ -49,7 +49,7 @@ Pin a release instead of following `latest` when deterministic upgrades are requ
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
-  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.9.2 bash
+  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.11.0 bash
 ```
 
 ### Operations

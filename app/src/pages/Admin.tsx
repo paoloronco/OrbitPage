@@ -75,6 +75,7 @@ const Admin = () => {
   const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [workspaceLoaded, setWorkspaceLoaded] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [hostedAccessDenied, setHostedAccessDenied] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
@@ -271,6 +272,8 @@ const Admin = () => {
       } catch (error) {
         console.error('Error loading data:', error);
         applyTheme(defaultTheme);
+      } finally {
+        setWorkspaceLoaded(true);
       }
     };
 
@@ -455,7 +458,7 @@ const Admin = () => {
   };
 
   const handleLogin = async () => {
-    setIsLoggedIn(true);
+    setWorkspaceLoaded(false);
     try {
       const result = await authApi.verify();
       if (result.valid && result.user) {
@@ -465,13 +468,20 @@ const Admin = () => {
           permissions: (result.user.permissions || []) as Permission[],
           readOnly: result.user.readOnly === true,
         });
+        setIsLoggedIn(true);
+        setShowSetup(false);
+        return;
       }
-    } catch { /* ignore — user is still logged in */ }
+      setIsLoggedIn(false);
+    } catch {
+      setIsLoggedIn(false);
+    }
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
+    setWorkspaceLoaded(false);
   };
 
   const handleThemeChange = (newTheme: ThemeConfig) => {
@@ -480,7 +490,7 @@ const Admin = () => {
     applyTheme(newTheme);
   };
 
-  if (isLoading) {
+  if (isLoading || (isLoggedIn && !workspaceLoaded)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

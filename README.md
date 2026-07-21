@@ -174,7 +174,9 @@ Open:
 - Admin workspace: <http://localhost:8080/dashboard/profile>
 - Health check: <http://localhost:8080/health>
 
-On the first visit to `/dashboard/profile`, OrbitPage asks you to create the initial admin password. The first username is `admin`. Each workspace area has a stable URL, such as `/dashboard/links` and `/dashboard/theme`; the legacy `/admin` URL redirects to the profile section.
+Before setup, the public URL shows a deliberate **Under construction** welcome screen with links to this repository and the managed OrbitPage service. Open `/dashboard/profile` to start the installation wizard. OrbitPage checks the Node.js runtime, SQLite schema, persistent storage, frontend build, and session-secret configuration before it accepts any credentials.
+
+The first username is always `admin` and cannot be changed. Choose its password and the primary public-page slug in the wizard. OrbitPage creates the administrator, page address, and starter profile together; it then opens the real dashboard and offers the guided product tutorial. Each workspace area has a stable URL, such as `/dashboard/links` and `/dashboard/theme`; the legacy `/admin` URL redirects to the profile section.
 
 The Docker image is published to both registries:
 
@@ -212,10 +214,33 @@ git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage/app
 npm ci
 npm run install:server
+export JWT_SECRET="$(openssl rand -hex 32)"
+export DATA_DIR="$PWD/.orbitpage-data"
+npm run start
+```
+
+On Windows PowerShell, set the same stable values before `npm run start`:
+
+```powershell
+$env:JWT_SECRET = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLower()
+$env:DATA_DIR = "$PWD\.orbitpage-data"
 npm run start
 ```
 
 The production-style source installation runs on <http://localhost:3001> by default.
+
+## First-Run Flow
+
+The same onboarding is used by Docker, the one-command installer, and source installations:
+
+1. Open the public URL to confirm that OrbitPage is running. A fresh instance displays **Under construction** and is automatically excluded from indexing and analytics.
+2. Open `/dashboard/profile`.
+3. Review the live dependency checks. Failed checks block setup and include a short corrective message.
+4. Keep the fixed `admin` username and create a strong password.
+5. Choose the primary page slug, for example `my-brand` for `/my-brand`.
+6. Complete setup. The administrator, slug, and empty starter profile are committed atomically, then the dashboard tutorial starts.
+
+The public URL, canonical metadata, sitemap, QR tools, and dashboard **Public page** action use the chosen slug. Existing installations created before this flow remain backward compatible and continue serving their main page at `/` until a slug exists.
 
 ## Configuration
 

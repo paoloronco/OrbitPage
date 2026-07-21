@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { ElementType } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  ADMIN_ONBOARDING_FORCE_STORAGE_KEY,
+  ADMIN_ONBOARDING_SESSION_DISMISSED_KEY,
+  ADMIN_ONBOARDING_STORAGE_KEY,
+} from "@/lib/admin-onboarding-storage";
+import {
   BarChart2,
   CheckCircle2,
   ChevronLeft,
@@ -57,10 +62,6 @@ interface TourStep {
   waitingLabel?: string;
   checklist: string[];
 }
-
-const STORAGE_KEY = "orbitpage-admin-onboarding-completed";
-const FORCE_STORAGE_KEY = "orbitpage-admin-onboarding-force";
-const SESSION_DISMISSED_KEY = "orbitpage-admin-onboarding-dismissed";
 
 const forcedByEnv = import.meta.env.VITE_FORCE_ADMIN_ONBOARDING === "true" || import.meta.env.VITE_FORCE_ADMIN_ONBOARDING === "1";
 
@@ -209,9 +210,9 @@ function getInitialMode(forceOpen?: boolean, repeatEnabled?: boolean): Onboardin
   if (typeof window === "undefined") return repeatEnabled ? "welcome" : "hidden";
 
   try {
-    if (window.sessionStorage.getItem(SESSION_DISMISSED_KEY) === "true") return "hidden";
-    if (window.localStorage.getItem(FORCE_STORAGE_KEY) === "true") return "welcome";
-    if (window.localStorage.getItem(STORAGE_KEY) === "true") return "hidden";
+    if (window.sessionStorage.getItem(ADMIN_ONBOARDING_SESSION_DISMISSED_KEY) === "true") return "hidden";
+    if (window.localStorage.getItem(ADMIN_ONBOARDING_FORCE_STORAGE_KEY) === "true") return "welcome";
+    if (window.localStorage.getItem(ADMIN_ONBOARDING_STORAGE_KEY) === "true") return "hidden";
   } catch {
     return "hidden";
   }
@@ -222,8 +223,8 @@ function getInitialMode(forceOpen?: boolean, repeatEnabled?: boolean): Onboardin
 function setSessionDismissed(dismissed: boolean) {
   if (typeof window === "undefined") return;
   try {
-    if (dismissed) window.sessionStorage.setItem(SESSION_DISMISSED_KEY, "true");
-    else window.sessionStorage.removeItem(SESSION_DISMISSED_KEY);
+    if (dismissed) window.sessionStorage.setItem(ADMIN_ONBOARDING_SESSION_DISMISSED_KEY, "true");
+    else window.sessionStorage.removeItem(ADMIN_ONBOARDING_SESSION_DISMISSED_KEY);
   } catch {
     // sessionStorage can be unavailable in private or restricted contexts.
   }
@@ -232,7 +233,7 @@ function setSessionDismissed(dismissed: boolean) {
 function markCompleted() {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, "true");
+    window.localStorage.setItem(ADMIN_ONBOARDING_STORAGE_KEY, "true");
   } catch {
     // localStorage can be unavailable in private or restricted contexts.
   }

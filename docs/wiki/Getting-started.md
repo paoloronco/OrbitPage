@@ -11,7 +11,7 @@ OrbitPage has two surfaces:
 | Public page | The public page visitors see | None |
 | Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
 
-The first admin username is `admin`. On a fresh install, OrbitPage asks you to create the first password when you open `/dashboard/profile`. Dashboard sections keep their own URL, so refreshing `/dashboard/links` or `/dashboard/theme` preserves the current workspace area. `/admin` remains a compatibility alias.
+Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` first checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, choose the admin password and primary public-page slug. OrbitPage then opens the dashboard tutorial. Dashboard sections keep their own URL, so refreshing `/dashboard/links` or `/dashboard/theme` preserves the current workspace area. `/admin` remains a compatibility alias.
 
 ## Requirements
 
@@ -26,6 +26,8 @@ git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage/app
 npm ci
 npm run install:server
+export JWT_SECRET="$(openssl rand -hex 32)"
+export DATA_DIR="$PWD/.orbitpage-data"
 npm run start
 ```
 
@@ -36,6 +38,25 @@ Open:
 - Health check: <http://localhost:3001/health>
 
 `npm run start` builds the Vite frontend and starts the Express server, which serves both the frontend and API.
+
+Windows PowerShell equivalent:
+
+```powershell
+$env:JWT_SECRET = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLower()
+$env:DATA_DIR = "$PWD\.orbitpage-data"
+npm run start
+```
+
+## Complete the First Run
+
+1. Open the public URL and confirm the **Under construction** screen appears.
+2. Open `/dashboard/profile`.
+3. Wait for every dependency row to show a green check. Correct any failed row and use **Run again**.
+4. Create the password for the fixed `admin` account.
+5. Choose a lowercase slug such as `my-page`.
+6. Select **Complete setup** and follow the in-dashboard guide.
+
+No partially configured account is kept if setup fails. Before completion, the placeholder page is noindexed, excluded from analytics, and omitted from `sitemap.xml`.
 
 ## Local Data
 

@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.8.3';
+let APP_VERSION = '4.11.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -1004,7 +1004,7 @@ const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, imageAlt, k
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
     imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}" />` : '',
     imageUrl && imageAlt ? `<meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}" />` : '',
-    `<script type="application/ld+json" id="orbitpage-structured-data">${safeJsonForHtml(structuredData)}</script>`,
+    structuredData ? `<script type="application/ld+json" id="orbitpage-structured-data">${safeJsonForHtml(structuredData)}</script>` : '',
   ].filter(Boolean).join('\n    ');
 };
 
@@ -1158,27 +1158,34 @@ const injectSeoIntoHtml = (html, { seoTags, noScriptContent }) => {
 
 const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const origin = getRequestOrigin(req);
-  const pathName = canonicalPathForRequest(req);
+  let pathName = canonicalPathForRequest(req);
   const pageKind = getPageKind(pathName);
-  const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
   const [profile, links] = pageKind === 'admin'
     ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
     : pageKind === 'about'
       ? [{ name: 'OrbitPage', social_links: {} }, []]
-    : await Promise.all([getPublicProfilePayload(), getPublicLinksPayload()]);
+      : await Promise.all([getPublicProfilePayload(), getPublicLinksPayload()]);
+  const [setupRequired, pageSlug] = pageKind === 'home'
+    ? await Promise.all([isFirstTimeSetup(), getInstancePageSlug()])
+    : [false, null];
+  if (pageKind === 'home' && pageSlug) pathName = `/${pageSlug}`;
+  const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
 
-  const title = getSeoTitle(profile, pageKind);
-  const description = getSeoDescription(profile, pageKind);
-  const imageUrl = getSeoImageUrl(profile, pageKind, origin);
+  const title = setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
+  const description = setupRequired
+    ? 'This self-hosted OrbitPage installation is ready and waiting for its owner to complete the initial setup.'
+    : getSeoDescription(profile, pageKind);
+  const imageUrl = setupRequired ? null : getSeoImageUrl(profile, pageKind, origin);
   const imageAlt = getSeoImageAlt(profile, pageKind);
   const keywords = getSeoKeywords(pageKind);
-  const shouldIndex = SEO_INDEXING && statusCode < 400 && pageKind !== 'admin';
+  const shouldIndex = SEO_INDEXING && statusCode < 400 && pageKind !== 'admin' && !setupRequired;
   const robots = shouldIndex ? 'index, follow, max-image-preview:large' : 'noindex, nofollow, noarchive';
-  const structuredData = buildStructuredData({ profile, links, origin, canonicalUrl, pageKind });
+  const structuredData = setupRequired ? null : buildStructuredData({ profile, links, origin, canonicalUrl, pageKind });
+  const setupNoScript = '<noscript><main><h1>This page is under construction.</h1><p>Welcome to OrbitPage. Complete the private workspace setup to publish this page.</p></main></noscript>';
 
   return {
     seoTags: renderSeoTags({ title, description, canonicalUrl, imageUrl, imageAlt, keywords, robots, structuredData, basePath: BASE_PATH }),
-    noScriptContent: pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
+    noScriptContent: setupRequired ? setupNoScript : pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
     robots,
   };
 };
@@ -1509,24 +1516,36 @@ const serveBuiltInTextFile = async (req, res) => {
 const buildSitemapDocument = async (req) => {
   const origin = getRequestOrigin(req);
   const lastmod = await getSitemapLastModified();
-  const urls = [
-    { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
-  ];
+  const setupRequired = await isFirstTimeSetup();
+  if (setupRequired) {
+    return {
+      xml: '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>\n',
+      entryCount: 0,
+      lastModified: lastmod,
+    };
+  }
+  const additionalUrls = [];
   if (DEMO_MODE) {
-    urls.push({ loc: new URL(withRequestBasePath(req, '/about'), origin).toString(), priority: '0.8', changefreq: 'monthly' });
+    additionalUrls.push({ loc: new URL(withRequestBasePath(req, '/about'), origin).toString(), priority: '0.8', changefreq: 'monthly' });
   }
 
   try {
     const legalUrls = await getProfileLegalUrls();
     if (legalUrls.privacyPolicyUrl === '/privacy') {
-      urls.push({ loc: new URL(withRequestBasePath(req, '/privacy'), origin).toString(), priority: '0.3', changefreq: 'monthly' });
+      additionalUrls.push({ loc: new URL(withRequestBasePath(req, '/privacy'), origin).toString(), priority: '0.3', changefreq: 'monthly' });
     }
     if (legalUrls.cookiePolicyUrl === '/cookies') {
-      urls.push({ loc: new URL(withRequestBasePath(req, '/cookies'), origin).toString(), priority: '0.3', changefreq: 'monthly' });
+      additionalUrls.push({ loc: new URL(withRequestBasePath(req, '/cookies'), origin).toString(), priority: '0.3', changefreq: 'monthly' });
     }
   } catch (error) {
     console.warn('Sitemap generated without legal policy URLs:', error?.message || error);
   }
+
+  const pageSlug = await getInstancePageSlug();
+  const urls = [
+    { loc: new URL(withRequestBasePath(req, pageSlug ? `/${pageSlug}` : '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
+    ...additionalUrls,
+  ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -1784,11 +1803,95 @@ if (!DEMO_MODE && process.env.NODE_ENV !== 'test' && String(process.env.MEDIA_CL
   if (typeof cleanupTimer.unref === 'function') cleanupTimer.unref();
 }
 
+const getInstancePageSlug = async () => {
+  const row = await dbGet('SELECT value FROM instance_settings WHERE key = ?', ['page_slug']);
+  return typeof row?.value === 'string' && row.value.trim() ? row.value.trim().toLowerCase() : null;
+};
+
+const setInstancePageSlug = async (slug) => {
+  await dbRun(
+    `INSERT INTO instance_settings (key, value, updated_at)
+     VALUES ('page_slug', ?, CURRENT_TIMESTAMP)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
+    [slug],
+  );
+};
+
+const supportedNodeRuntime = () => {
+  const [major = 0, minor = 0] = process.versions.node.split('.').map((part) => Number.parseInt(part, 10));
+  return (major === 20 && minor >= 19) || (major === 22 && minor >= 12) || major > 22;
+};
+
+const getSetupDependencies = async () => {
+  const checks = [];
+  const addCheck = (id, label, ok, detail) => checks.push({ id, label, ok, detail });
+
+  addCheck(
+    'runtime',
+    'Node.js runtime',
+    supportedNodeRuntime(),
+    `${process.version}; OrbitPage requires Node.js 20.19+ or 22.12+`,
+  );
+
+  try {
+    await dbGet('SELECT 1 AS ready');
+    addCheck('database', 'SQLite database', true, 'Connection and schema are available');
+  } catch {
+    addCheck('database', 'SQLite database', false, 'The database cannot be read');
+  }
+
+  try {
+    await fs.promises.access(DATA_DIR, fs.constants.R_OK | fs.constants.W_OK);
+    await fs.promises.access(uploadsPath, fs.constants.R_OK | fs.constants.W_OK);
+    addCheck('storage', 'Persistent storage', true, 'Database and uploads directory are writable');
+  } catch {
+    addCheck('storage', 'Persistent storage', false, 'DATA_DIR or the uploads directory is not writable');
+  }
+
+  addCheck(
+    'frontend',
+    'OrbitPage application',
+    fs.existsSync(indexHtmlPath),
+    fs.existsSync(indexHtmlPath) ? 'Production frontend assets are ready' : 'The frontend build is missing',
+  );
+
+  const configuredSecret = String(process.env.JWT_SECRET || '');
+  const knownPlaceholder = configuredSecret === 'change-me-to-a-long-random-string';
+  const secureSessionConfig = configuredSecret.length >= 32 && !knownPlaceholder;
+  const developmentFallback = process.env.NODE_ENV !== 'production' && !configuredSecret;
+  addCheck(
+    'sessions',
+    'Session security',
+    secureSessionConfig || developmentFallback,
+    secureSessionConfig
+      ? 'A persistent JWT secret is configured'
+      : developmentFallback
+        ? 'Development mode uses an ephemeral session secret'
+        : 'Set JWT_SECRET to a private value of at least 32 characters',
+  );
+
+  return checks;
+};
+
+let setupInProgress = false;
+
 // Auth Routes
 app.get('/api/auth/setup-status', async (req, res) => {
   try {
-    const firstTime = await isFirstTimeSetup();
-    res.json({ isFirstTimeSetup: firstTime });
+    setNoStoreHeaders(res);
+    const [firstTime, dependencies, pageSlug] = await Promise.all([
+      isFirstTimeSetup(),
+      getSetupDependencies(),
+      getInstancePageSlug(),
+    ]);
+    res.json({
+      isFirstTimeSetup: firstTime,
+      username: 'admin',
+      usernameLocked: true,
+      pageSlug,
+      dependencies,
+      ready: dependencies.every((dependency) => dependency.ok),
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to check setup status' });
   }
@@ -1799,20 +1902,50 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
     return res.status(403).json({ success: false, error: 'Setup is disabled in demo mode after initial setup.' });
   }
 
+  if (setupInProgress) {
+    return res.status(409).json({ success: false, error: 'Initial setup is already in progress.' });
+  }
+
+  setupInProgress = true;
   try {
-    const { password } = SetupBodySchema.parse(req.body || {});
-    
-    await setupInitialCredentials(password);
+    const { password, slug } = SetupBodySchema.parse(req.body || {});
+    const dependencies = await getSetupDependencies();
+    if (dependencies.some((dependency) => !dependency.ok)) {
+      return res.status(503).json({ success: false, error: 'Resolve the failed installation checks before continuing.', dependencies });
+    }
+
+    const subpages = await getSubpagesPayload();
+    if (subpages.some((page) => page.slug === slug)) {
+      return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
+    }
+
+    await withTransaction(async () => {
+      await setupInitialCredentials(password);
+      await setInstancePageSlug(slug);
+      await dbRun(
+        `INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, admin_onboarding_enabled)
+         SELECT '', '', '', '{}', 0, 1
+         WHERE NOT EXISTS (SELECT 1 FROM profile_data)`,
+      );
+    });
     const token = generateToken('admin');
     
     res.json({ 
       success: true, 
       token,
+      pageSlug: slug,
       message: 'Admin account created successfully' 
     });
   } catch (error) {
     const validationMessage = getZodErrorMessage(error);
-    res.status(400).json({ error: validationMessage || error.message });
+    if (validationMessage) return res.status(400).json({ error: validationMessage });
+    if (error?.message === 'Admin account already exists') {
+      return res.status(409).json({ error: 'Initial setup has already been completed.' });
+    }
+    console.error('Initial setup failed:', error);
+    return res.status(500).json({ error: 'Initial setup could not be completed. No partial workspace was kept.' });
+  } finally {
+    setupInProgress = false;
   }
 });
 
@@ -2028,33 +2161,41 @@ app.get('/api/public-page', async (req, res) => {
   try {
     setNoStoreHeaders(res);
 
-    const [profile, links, theme, menu, subpages] = await Promise.all([
+    const [profile, links, theme, menu, subpages, pageSlug, setupRequired] = await Promise.all([
       getPublicProfilePayload(),
       getPublicLinksPayload(),
       getPublicThemePayload(),
       getMenuPayload(),
       getSubpagesPayload(),
+      getInstancePageSlug(),
+      isFirstTimeSetup(),
     ]);
     const requestedSubpage = typeof req.query.subpage === 'string' ? req.query.subpage.trim().toLowerCase() : '';
-    const subpage = requestedSubpage ? subpages.find((page) => page.enabled && page.slug === requestedSubpage) : null;
-    if (requestedSubpage && !subpage) return res.status(404).json({ error: 'Page not found' });
+    const requestedPrimaryPage = Boolean(requestedSubpage && pageSlug && requestedSubpage === pageSlug);
+    const subpage = requestedSubpage && !requestedPrimaryPage
+      ? subpages.find((page) => page.enabled && page.slug === requestedSubpage)
+      : null;
+    if (requestedSubpage && !requestedPrimaryPage && !subpage) return res.status(404).json({ error: 'Page not found' });
     res.json(subpage ? {
       profile: { ...profile, name: subpage.title, bio: subpage.description, tab_title: subpage.title, meta_description: subpage.description },
       links: subpage.links,
       theme,
       menu,
-    } : { profile, links, theme, menu });
+      setupRequired: false,
+      pageSlug,
+    } : { profile, links, theme, menu, setupRequired: Boolean(setupRequired), pageSlug });
   } catch (error) {
     console.error('Error loading public page payload:', error);
     res.status(500).json({ error: 'Failed to load public page' });
   }
 });
 
-app.get('/api/public-url', apiLimiter, (req, res) => {
+app.get('/api/public-url', apiLimiter, async (req, res) => {
   try {
     setNoStoreHeaders(res);
     const origin = getRequestOrigin(req);
-    const publicUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
+    const pageSlug = await getInstancePageSlug();
+    const publicUrl = new URL(withRequestBasePath(req, pageSlug ? `/${pageSlug}` : '/'), origin).toString();
     res.json({
       success: true,
       publicUrl,
@@ -3969,15 +4110,19 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, requirePermission(
 app.get('*', spaLimiter, async (req, res) => {
   console.log(`SPA catch-all serving index.html for: ${req.path}`);
   let isConfiguredSubpage = false;
+  let isConfiguredPrimaryPage = false;
   if (/^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path)) {
     try {
       const slug = req.path.slice(1);
-      isConfiguredSubpage = (await getSubpagesPayload()).some((page) => page.enabled && page.slug === slug);
+      const [subpages, pageSlug] = await Promise.all([getSubpagesPayload(), getInstancePageSlug()]);
+      isConfiguredPrimaryPage = pageSlug === slug;
+      isConfiguredSubpage = subpages.some((page) => page.enabled && page.slug === slug);
     } catch {
       isConfiguredSubpage = false;
+      isConfiguredPrimaryPage = false;
     }
   }
-  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) || isConfiguredSubpage ? 200 : 404;
+  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) || isConfiguredPrimaryPage || isConfiguredSubpage ? 200 : 404;
   serveSpaIndex(req, res, { statusCode });
 });
 

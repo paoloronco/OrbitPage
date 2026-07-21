@@ -13,6 +13,7 @@ import { internalAssetPath, withBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
+import { UnderConstruction } from "@/components/UnderConstruction";
 
 interface ProfileData {
   name: string;
@@ -77,6 +78,7 @@ const Index = () => {
   // Consent config drives whether CookieBanner is rendered
   const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
   const [showOrbitPageBadge, setShowOrbitPageBadge] = useState(true);
+  const [setupRequired, setSetupRequired] = useState(false);
 
   // Load all public page data in one request so the default UI never flashes.
   useEffect(() => {
@@ -106,6 +108,7 @@ const Index = () => {
         applyTheme(loadedTheme);
         setTheme(loadedTheme);
         setBackgroundMedia(loadedTheme.backgroundMedia ?? null);
+        setSetupRequired(pageData.setupRequired === true);
 
         // In builder mode, inject the external CMP script immediately after init
         // so consent wiring is in place before any consent-dependent scripts are registered.
@@ -226,8 +229,9 @@ const Index = () => {
         }
 
         setLinks(normalizeLinkDtos(pageData.links));
-        trackPublicPageView();
+        if (pageData.setupRequired !== true) trackPublicPageView();
         setShowOrbitPageBadge(pageData.branding?.showOrbitPageBadge !== false);
+        if (pageData.setupRequired === true) document.title = "Page under construction | OrbitPage";
         document.body.classList.remove('orbitpage-booting');
         setLoading(false);
       } catch (error) {
@@ -247,6 +251,7 @@ const Index = () => {
   }, []);
 
   if (loading || loadFailed) return null;
+  if (setupRequired) return <UnderConstruction />;
 
   // Merge profile-level policy URLs into the consent config so the banner and footer
   // always use the same canonical URLs — no provider-specific IDs hardcoded anywhere.

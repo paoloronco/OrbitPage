@@ -1,67 +1,101 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  Database,
+  Eye,
+  EyeOff,
+  FileCheck2,
+  Globe2,
+  HardDrive,
+  LockKeyhole,
+  RefreshCw,
+  ServerCog,
+  ShieldCheck,
+  Sparkles,
+  X,
+  XCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Shield, Check, X, Sparkles } from "lucide-react";
-import { setupInitialCredentials, setAuthenticated, isPasswordStrong, generateSecurePassword } from "@/lib/auth";
+import { authApi, type SetupDependency, type SetupStatus } from "@/lib/api-client";
+import { generateSecurePassword, isPasswordStrong, setupInitialCredentials } from "@/lib/auth";
+import { withBasePath } from "@/lib/base-path";
 import { useAppI18n } from "@/lib/i18n";
+import { resetAdminOnboardingProgress } from "@/lib/admin-onboarding-storage";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 
 interface InitialSetupProps {
-  onSetupComplete: () => void;
+  onSetupComplete: () => void | Promise<void>;
+}
+
+const dependencyIcons: Record<string, typeof ServerCog> = {
+  runtime: ServerCog,
+  database: Database,
+  storage: HardDrive,
+  frontend: FileCheck2,
+  sessions: ShieldCheck,
+};
+
+function normalizeSlugInput(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+/, "")
+    .slice(0, 48);
 }
 
 export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
   const { tr } = useAppI18n();
+  const [step, setStep] = useState(0);
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+  const [checksLoading, setChecksLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [slug, setSlug] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const requirements = [
+
+  const requirements = useMemo(() => [
     { label: tr("At least 8 characters", "Almeno 8 caratteri"), test: (value: string) => value.length >= 8 },
-    { label: tr("Uppercase letter (A-Z)", "Una lettera maiuscola (A-Z)"), test: (value: string) => /[A-Z]/.test(value) },
-    { label: tr("Lowercase letter (a-z)", "Una lettera minuscola (a-z)"), test: (value: string) => /[a-z]/.test(value) },
-    { label: tr("Number (0-9)", "Un numero (0-9)"), test: (value: string) => /\d/.test(value) },
-    { label: tr("Special character", "Un carattere speciale"), test: (value: string) => /[!@#$%^&*(),.?":{}|<>]/.test(value) },
-  ];
+    { label: tr("Uppercase and lowercase letters", "Lettere maiuscole e minuscole"), test: (value: string) => /[A-Z]/.test(value) && /[a-z]/.test(value) },
+    { label: tr("At least one number", "Almeno un numero"), test: (value: string) => /\d/.test(value) },
+    { label: tr("At least one special character", "Almeno un carattere speciale"), test: (value: string) => /[!@#$%^&*(),.?":{}|<>]/.test(value) },
+  ], [tr]);
 
-  const metCount = requirements.filter((requirement) => requirement.test(password)).length;
-  const allMet = metCount === requirements.length;
+  const passwordReady = requirements.every((requirement) => requirement.test(password));
   const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const slugReady = /^[a-z0-9](?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/.test(slug) && slug.length >= 3 && slug.length <= 48;
+  const publicPagePreview = typeof window === "undefined"
+    ? `/${slug || "your-page"}`
+    : `${window.location.origin}${withBasePath(`/${slug || "your-page"}`)}`;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const refreshChecks = async () => {
+    setChecksLoading(true);
     setError("");
-
-    if (!(await isPasswordStrong(password))) {
-      setError(tr("Please meet all password requirements before continuing.", "Soddisfa tutti i requisiti della password prima di continuare."));
-      setIsLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError(tr("Passwords do not match.", "Le password non coincidono."));
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const success = await setupInitialCredentials(password);
-      if (success) {
-        setAuthenticated("admin");
-        onSetupComplete();
-      } else {
-        setError(tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
+      const status = await authApi.checkSetupStatus();
+      setSetupStatus(status);
+      if (!status.isFirstTimeSetup) await onSetupComplete();
+    } catch (checkError) {
+      setError(checkError instanceof Error ? checkError.message : tr("Installation checks could not be completed.", "Impossibile completare i controlli di installazione."));
     } finally {
-      setIsLoading(false);
+      setChecksLoading(false);
     }
   };
+
+  useEffect(() => {
+    void refreshChecks();
+  // Only run once for the initial installation check.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleGeneratePassword = async () => {
     const generated = await generateSecurePassword();
@@ -69,268 +103,158 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
     setConfirmPassword(generated);
   };
 
+  const handleComplete = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (step !== 2 || !slugReady || !passwordReady || !passwordsMatch) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      if (!(await isPasswordStrong(password))) {
+        throw new Error(tr("Please meet all password requirements before continuing.", "Soddisfa tutti i requisiti della password prima di continuare."));
+      }
+      await setupInitialCredentials(password, slug);
+      resetAdminOnboardingProgress();
+      await onSetupComplete();
+    } catch (setupError) {
+      setError(setupError instanceof Error ? setupError.message : tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const renderDependency = (dependency: SetupDependency) => {
+    const Icon = dependencyIcons[dependency.id] || ServerCog;
+    return (
+      <li className={`setup-dependency${dependency.ok ? " ready" : " failed"}`} key={dependency.id}>
+        <span className="setup-dependency-icon"><Icon aria-hidden="true" size={18} /></span>
+        <span><strong>{dependency.label}</strong><small>{dependency.detail}</small></span>
+        {dependency.ok ? <CheckCircle2 aria-label="OK" size={20} /> : <XCircle aria-label="Error" size={20} />}
+      </li>
+    );
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4"
-         style={{ background: "linear-gradient(135deg, hsl(240 15% 6%) 0%, hsl(260 25% 11%) 100%)" }}>
-      <div className="w-full max-w-[420px]">
-
-        {/* Logo + heading */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <OrbitPageBrand showName={false} size="lg" />
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-white tracking-tight">{tr("Welcome to OrbitPage", "Benvenuto in OrbitPage")}</h1>
-            <p className="text-sm mt-1" style={{ color: "hsl(240 10% 62%)" }}>
-              {tr("Create an admin password to get started", "Crea una password amministratore per iniziare")}
-            </p>
+    <main className="initial-setup-shell">
+      <section className="initial-setup-frame" aria-labelledby="setup-title">
+        <header className="initial-setup-header">
+          <div className="initial-setup-brand">
+            <OrbitPageBrand showName={false} size="md" />
+            <div><strong>OrbitPage</strong><span>{tr("Self-hosted setup", "Configurazione self-hosted")}</span></div>
           </div>
-        </div>
+          <span className="initial-setup-version">v{__APP_VERSION__}</span>
+        </header>
 
-        {/* Card */}
-        <div
-          className="rounded-2xl p-6 space-y-5"
-          style={{
-            background: "hsl(240 15% 11% / 0.95)",
-            border: "1px solid hsl(240 15% 22%)",
-            boxShadow: "0 24px 64px hsl(0 0% 0% / 0.5)",
-          }}
-        >
-          {/* Info banner */}
-          <div
-            className="flex items-start gap-3 rounded-xl p-3.5"
-            style={{ background: "hsl(260 75% 65% / 0.10)", border: "1px solid hsl(260 75% 65% / 0.20)" }}
-          >
-            <div className="w-4 h-4 mt-0.5 shrink-0 rounded-full flex items-center justify-center"
-                 style={{ background: "hsl(260 75% 65% / 0.20)" }}>
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(260 75% 70%)" }} />
-            </div>
-            <p className="text-xs leading-relaxed" style={{ color: "hsl(240 15% 78%)" }}>
-              {tr("Credentials are stored locally with", "Le credenziali sono conservate localmente con")} {" "}
-              <span className="font-semibold text-white">bcrypt hashing</span>. {" "}
-              {tr("Change the password anytime from the Security tab.", "Puoi cambiare la password in qualsiasi momento dalla sezione Sicurezza.")}
-            </p>
-          </div>
+        <ol className="initial-setup-progress" aria-label={tr("Setup progress", "Avanzamento configurazione")}>
+          {[tr("System", "Sistema"), tr("Administrator", "Amministratore"), tr("Public URL", "URL pubblico")].map((label, index) => (
+            <li className={index === step ? "active" : index < step ? "complete" : ""} key={label}>
+              <span>{index < step ? <Check aria-hidden="true" size={14} /> : index + 1}</span>
+              {label}
+            </li>
+          ))}
+        </ol>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleComplete}>
+          {step === 0 && (
+            <div className="initial-setup-content">
+              <p className="initial-setup-kicker">01 / {tr("System check", "Controllo sistema")}</p>
+              <h1 id="setup-title">{tr("Make sure the installation is ready.", "Verifichiamo che l'installazione sia pronta.")}</h1>
+              <p className="initial-setup-lead">{tr("OrbitPage checks its runtime, database, persistent storage, frontend build and session security before creating the administrator.", "OrbitPage controlla runtime, database, storage persistente, build frontend e sicurezza delle sessioni prima di creare l'amministratore.")}</p>
 
-            {/* Username (fixed) */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(240 10% 55%)" }}>
-                {tr("Username", "Nome utente")}
-              </Label>
-              <div
-                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm"
-                style={{ background: "hsl(240 15% 16%)", border: "1px solid hsl(240 15% 24%)" }}
-              >
-                <span className="font-medium text-white">admin</span>
-                <span
-                  className="text-xs font-medium px-2 py-0.5 rounded-full"
-                  style={{ background: "hsl(260 75% 65% / 0.18)", color: "hsl(260 75% 75%)" }}
-                >
-                  {tr("Fixed", "Fisso")}
-                </span>
-              </div>
-            </div>
+              {checksLoading ? (
+                <div className="setup-check-loading" role="status"><RefreshCw className="setup-spinner" aria-hidden="true" size={20} />{tr("Checking this installation", "Controllo dell'installazione")}</div>
+              ) : (
+                <ul className="setup-dependency-list">{setupStatus?.dependencies.map(renderDependency)}</ul>
+              )}
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-semibold uppercase tracking-wider"
-                       style={{ color: "hsl(240 10% 55%)" }}>
-                  {tr("Password", "Password")}
-                </Label>
-                <button
-                  type="button"
-                  onClick={handleGeneratePassword}
-                  className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-lg transition-colors"
-                  style={{ color: "hsl(260 75% 72%)", background: "hsl(260 75% 65% / 0.12)" }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "hsl(260 75% 65% / 0.22)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "hsl(260 75% 65% / 0.12)")}
-                >
-                  <Sparkles className="w-3 h-3" />
-                  {tr("Generate", "Genera")}
-                </button>
-              </div>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={tr("Choose a secure password", "Scegli una password sicura")}
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  className="pe-10 text-sm h-11"
-                  style={{
-                    background: "hsl(240 15% 16%)",
-                    border: "1px solid hsl(240 15% 26%)",
-                    color: "hsl(240 15% 96%)",
-                  }}
-                />
-                <button
-                  type="button"
-                  className="absolute end-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "hsl(240 10% 52%)" }}
-                  onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {/* Requirements */}
-              {password.length > 0 && (
-                <div
-                  className="rounded-xl p-3.5 space-y-2 mt-1"
-                  style={{ background: "hsl(240 15% 8%)", border: "1px solid hsl(240 15% 20%)" }}
-                >
-                  {requirements.map((req) => {
-                    const ok = req.test(password);
-                    return (
-                      <div key={req.label} className="flex items-center gap-2.5">
-                        <div
-                          className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 transition-all"
-                          style={{
-                            background: ok ? "hsl(142 76% 36% / 0.25)" : "hsl(240 15% 18%)",
-                          }}
-                        >
-                          {ok
-                            ? <Check className="w-2.5 h-2.5" style={{ color: "hsl(142 72% 50%)" }} />
-                            : <X className="w-2.5 h-2.5" style={{ color: "hsl(240 10% 42%)" }} />
-                          }
-                        </div>
-                        <span
-                          className="text-xs transition-colors"
-                          style={{ color: ok ? "hsl(142 65% 58%)" : "hsl(240 10% 52%)" }}
-                        >
-                          {req.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {allMet && (
-                    <div
-                      className="flex items-center gap-2.5 pt-2 mt-1"
-                      style={{ borderTop: "1px solid hsl(142 76% 36% / 0.20)" }}
-                    >
-                      <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
-                           style={{ background: "hsl(142 76% 36% / 0.25)" }}>
-                        <Check className="w-2.5 h-2.5" style={{ color: "hsl(142 72% 50%)" }} />
-                      </div>
-                      <span className="text-xs font-semibold" style={{ color: "hsl(142 65% 60%)" }}>
-                        {tr("Strong password", "Password sicura")}
-                      </span>
-                    </div>
-                  )}
+              {!checksLoading && !setupStatus?.ready && (
+                <div className="initial-setup-alert" role="alert">
+                  <XCircle aria-hidden="true" size={19} />
+                  <span>{tr("Resolve the failed checks, then run the check again. No account has been created yet.", "Risolvi i controlli non riusciti, poi ripeti la verifica. Nessun account è stato ancora creato.")}</span>
                 </div>
               )}
             </div>
+          )}
 
-            {/* Confirm password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-password" className="text-xs font-semibold uppercase tracking-wider"
-                     style={{ color: "hsl(240 10% 55%)" }}>
-                {tr("Confirm password", "Conferma password")}
-              </Label>
-              <div className="relative">
-                <Input
-                  id="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={tr("Confirm your password", "Conferma la password")}
-                  required
-                  autoComplete="new-password"
-                  className="pe-10 text-sm h-11 transition-all"
-                  style={{
-                    background: "hsl(240 15% 16%)",
-                    border: confirmPassword.length === 0
-                      ? "1px solid hsl(240 15% 26%)"
-                      : passwordsMatch
-                        ? "1px solid hsl(142 72% 45% / 0.6)"
-                        : "1px solid hsl(0 72% 55% / 0.6)",
-                    color: "hsl(240 15% 96%)",
-                  }}
-                />
-                <button
-                  type="button"
-                  className="absolute end-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "hsl(240 10% 52%)" }}
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+          {step === 1 && (
+            <div className="initial-setup-content">
+              <p className="initial-setup-kicker">02 / {tr("Administrator", "Amministratore")}</p>
+              <h1 id="setup-title">{tr("Protect the private workspace.", "Proteggi il workspace privato.")}</h1>
+              <p className="initial-setup-lead">{tr("The first account always has full administrator permissions. Its username is intentionally fixed.", "Il primo account ha sempre tutti i permessi amministrativi. Il nome utente è volutamente fisso.")}</p>
+
+              <div className="setup-form-grid">
+                <div className="setup-field setup-field-full">
+                  <Label>{tr("Username", "Nome utente")}</Label>
+                  <div className="setup-locked-field"><LockKeyhole aria-hidden="true" size={17} /><strong>admin</strong><span>{tr("Fixed", "Fisso")}</span></div>
+                </div>
+                <div className="setup-field">
+                  <div className="setup-field-heading">
+                    <Label htmlFor="setup-password">Password</Label>
+                    <button onClick={handleGeneratePassword} type="button"><Sparkles aria-hidden="true" size={14} />{tr("Generate", "Genera")}</button>
+                  </div>
+                  <div className="setup-password-field">
+                    <Input id="setup-password" type={showPassword ? "text" : "password"} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} />
+                    <button aria-label={showPassword ? tr("Hide password", "Nascondi password") : tr("Show password", "Mostra password")} onClick={() => setShowPassword((value) => !value)} type="button">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                  </div>
+                </div>
+                <div className="setup-field">
+                  <Label htmlFor="setup-confirm-password">{tr("Confirm password", "Conferma password")}</Label>
+                  <div className="setup-password-field">
+                    <Input id="setup-confirm-password" type={showConfirmPassword ? "text" : "password"} autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} />
+                    <button aria-label={showConfirmPassword ? tr("Hide password", "Nascondi password") : tr("Show password", "Mostra password")} onClick={() => setShowConfirmPassword((value) => !value)} type="button">{showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+                  </div>
+                </div>
               </div>
-              {confirmPassword.length > 0 && (
-                <p className="flex items-center gap-1.5 text-xs"
-                   style={{ color: passwordsMatch ? "hsl(142 65% 55%)" : "hsl(0 70% 62%)" }}>
-                  {passwordsMatch
-                    ? <><Check className="w-3 h-3" /> {tr("Passwords match", "Le password coincidono")}</>
-                    : <><X className="w-3 h-3" /> {tr("Passwords do not match", "Le password non coincidono")}</>
-                  }
-                </p>
-              )}
+
+              <ul className="setup-password-requirements">
+                {requirements.map((requirement) => {
+                  const ready = requirement.test(password);
+                  return <li className={ready ? "ready" : ""} key={requirement.label}>{ready ? <Check size={14} /> : <X size={14} />}{requirement.label}</li>;
+                })}
+                <li className={passwordsMatch ? "ready" : ""}>{passwordsMatch ? <Check size={14} /> : <X size={14} />}{tr("Passwords match", "Le password coincidono")}</li>
+              </ul>
             </div>
+          )}
 
-            {/* Error */}
-            {error && (
-              <div
-                className="flex items-center gap-2.5 text-sm rounded-xl px-3.5 py-3"
-                style={{ background: "hsl(0 72% 50% / 0.12)", border: "1px solid hsl(0 72% 50% / 0.30)", color: "hsl(0 80% 70%)" }}
-              >
-                <X className="w-4 h-4 shrink-0" />
-                {error}
+          {step === 2 && (
+            <div className="initial-setup-content">
+              <p className="initial-setup-kicker">03 / {tr("Public URL", "URL pubblico")}</p>
+              <h1 id="setup-title">{tr("Choose the page address.", "Scegli l'indirizzo della pagina.")}</h1>
+              <p className="initial-setup-lead">{tr("This slug becomes the stable public path for the primary page. You can still create additional pages later.", "Questo slug diventa il percorso pubblico stabile della pagina principale. Potrai comunque creare altre pagine in seguito.")}</p>
+
+              <div className="setup-field setup-slug-field">
+                <Label htmlFor="setup-slug">{tr("Page slug", "Slug pagina")}</Label>
+                <div className="setup-slug-input"><Globe2 aria-hidden="true" size={18} /><Input id="setup-slug" maxLength={48} placeholder="your-page" value={slug} onChange={(event) => setSlug(normalizeSlugInput(event.target.value))} autoCapitalize="none" autoCorrect="off" spellCheck={false} /></div>
+                <small>{tr("Lowercase letters, numbers and hyphens. Between 3 and 48 characters.", "Lettere minuscole, numeri e trattini. Da 3 a 48 caratteri.")}</small>
               </div>
+
+              <div className="setup-url-preview">
+                <span>{tr("Public page", "Pagina pubblica")}</span>
+                <strong>{publicPagePreview}</strong>
+              </div>
+              <div className="initial-setup-summary">
+                <CheckCircle2 aria-hidden="true" size={22} />
+                <div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong><span>{tr("The administrator, page address and starter tutorial will be enabled together.", "Amministratore, indirizzo pagina e tutorial iniziale verranno abilitati insieme.")}</span></div>
+              </div>
+            </div>
+          )}
+
+          {error && <div className="initial-setup-alert" role="alert"><XCircle aria-hidden="true" size={19} /><span>{error}</span></div>}
+
+          <footer className="initial-setup-footer">
+            {step === 0 ? (
+              <Button onClick={() => void refreshChecks()} type="button" variant="outline" disabled={checksLoading}><RefreshCw className={checksLoading ? "setup-spinner" : ""} size={16} />{tr("Run again", "Ripeti controllo")}</Button>
+            ) : (
+              <Button onClick={() => { setError(""); setStep((value) => Math.max(0, value - 1)); }} type="button" variant="outline"><ArrowLeft size={16} />{tr("Back", "Indietro")}</Button>
             )}
 
-            {/* Submit */}
-            <Button
-              type="submit"
-              className="w-full h-11 text-sm font-semibold rounded-xl mt-1 transition-all"
-              disabled={isLoading || !allMet || !passwordsMatch}
-              style={{
-                background: allMet && passwordsMatch
-                  ? "linear-gradient(135deg, hsl(260 75% 60%), hsl(280 80% 68%))"
-                  : "hsl(240 15% 22%)",
-                color: allMet && passwordsMatch ? "white" : "hsl(240 10% 42%)",
-                border: "none",
-                boxShadow: allMet && passwordsMatch ? "0 4px 20px hsl(265 75% 60% / 0.35)" : "none",
-              }}
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  {tr("Setting up...", "Configurazione...")}
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  {tr("Complete setup", "Completa configurazione")}
-                </span>
-              )}
-            </Button>
-          </form>
-        </div>
-
-        {/* Footer */}
-        <p className="text-center text-xs mt-6" style={{ color: "hsl(240 10% 38%)" }}>
-          {tr("Powered by", "Realizzato con")} {" "}
-          <a
-            href="https://github.com/paoloronco/OrbitPage"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="transition-colors"
-            style={{ color: "hsl(260 75% 62%)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "hsl(260 75% 75%)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "hsl(260 75% 62%)")}
-          >
-            OrbitPage
-          </a>
-          {" - "}{tr("Your self-hosted public page", "La tua pagina pubblica self-hosted")}
-        </p>
-
-      </div>
-    </div>
+            {step < 2 ? (
+              <Button className="setup-primary-button" disabled={step === 0 ? !setupStatus?.ready : !passwordReady || !passwordsMatch} onClick={() => { setError(""); setStep((value) => value + 1); }} type="button">{tr("Continue", "Continua")}<ArrowRight size={16} /></Button>
+            ) : (
+              <Button className="setup-primary-button" disabled={!slugReady || isLoading} type="submit">{isLoading ? <RefreshCw className="setup-spinner" size={16} /> : <ShieldCheck size={16} />}{isLoading ? tr("Creating workspace", "Creazione workspace") : tr("Complete setup", "Completa configurazione")}</Button>
+            )}
+          </footer>
+        </form>
+      </section>
+    </main>
   );
 };
