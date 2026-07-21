@@ -4,6 +4,35 @@ import {
 } from './menu';
 
 describe('menu catalog normalization', () => {
+  it('preserves one level of menu subsections without changing existing roots', () => {
+    const menu = createDefaultMenu('bar');
+    menu.sections = [
+      { id: 'beverage', name: 'Beverage', visible: true, position: 0 },
+      { id: 'red-wine', parentId: 'beverage', name: 'Red wine', visible: true, position: 1 },
+    ];
+
+    const normalized = normalizeMenuCatalog(menu);
+
+    expect(normalized.sections[0]).not.toHaveProperty('parentId');
+    expect(normalized.sections[1].parentId).toBe('beverage');
+  });
+
+  it('flattens invalid or deeper subsection relationships during normalization', () => {
+    const menu = createDefaultMenu('bar');
+    menu.sections = [
+      { id: 'beverage', name: 'Beverage', visible: true, position: 0 },
+      { id: 'wine', parentId: 'beverage', name: 'Wine', visible: true, position: 1 },
+      { id: 'red-wine', parentId: 'wine', name: 'Red wine', visible: true, position: 2 },
+      { id: 'orphan', parentId: 'missing', name: 'Orphan', visible: true, position: 3 },
+    ];
+
+    const normalized = normalizeMenuCatalog(menu);
+
+    expect(normalized.sections.find((section) => section.id === 'wine')?.parentId).toBe('beverage');
+    expect(normalized.sections.find((section) => section.id === 'red-wine')).not.toHaveProperty('parentId');
+    expect(normalized.sections.find((section) => section.id === 'orphan')).not.toHaveProperty('parentId');
+  });
+
   it('preserves an in-progress space while editing menu text', () => {
     const menu = createDefaultMenu();
     menu.items = [{

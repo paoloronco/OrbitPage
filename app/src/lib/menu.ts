@@ -9,6 +9,7 @@ export interface MenuVariant {
 
 export interface MenuSection {
   id: string;
+  parentId?: string;
   name: string;
   description?: string;
   visible: boolean;
@@ -164,17 +165,28 @@ export function normalizeMenuCatalog(
     return typeof textValue === 'string' ? textValue.slice(0, max) : textFallback;
   };
   const rawSections = Array.isArray(input.sections) ? input.sections : fallback.sections;
-  const sections = rawSections.slice(0, 30).map((entry, index) => {
+  const normalizedSections: MenuSection[] = rawSections.slice(0, 30).map((entry, index) => {
     const section = entry && typeof entry === 'object' && !Array.isArray(entry) ? entry as Record<string, unknown> : {};
+    const parentId = typeof section.parentId === 'string' ? safeId(section.parentId, '') : '';
     return {
       id: safeId(section.id, `section-${index + 1}`),
+      ...(parentId ? { parentId } : {}),
       name: editableText(section.name, 80, `Section ${index + 1}`),
       description: editableText(section.description, 240) || undefined,
       visible: section.visible !== false,
       position: index,
     };
   });
-  const sectionIds = new Set(sections.map((section) => section.id));
+  const sectionIds = new Set(normalizedSections.map((section) => section.id));
+  const parentById = new Map(normalizedSections.map((section) => [section.id, section.parentId]));
+  const sections = normalizedSections.map((section): MenuSection => {
+    const parentId = section.parentId;
+    if (!parentId || parentId === section.id || !sectionIds.has(parentId) || parentById.get(parentId)) {
+      const { parentId: _parentId, ...rootSection } = section;
+      return rootSection;
+    }
+    return section;
+  });
   const fallbackSectionId = sections[0]?.id || 'section-1';
   if (sections.length === 0) sections.push({ id: fallbackSectionId, name: 'Menu', visible: true, position: 0 });
 

@@ -53,6 +53,7 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 
 - Link cards, text blocks, headings, separators, images, and native video
 - Social rows, contact details, maps, events with timezone-aware countdowns, callouts, and consent-aware embeds
+- Native venue menus with sections, one-level subsections, products, variants, images, and availability controls
 - Scheduled menu cards plus visible unavailable states for links, tickets, menus, and dishes
 - Per-block visibility, ordering, scheduling, icons, cover media, and layout controls
 - Link-health indicators supplied by the managed platform without exposing browser-side probes
