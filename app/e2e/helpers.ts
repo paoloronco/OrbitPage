@@ -2,6 +2,22 @@ import { expect, type Page } from '@playwright/test';
 
 export const E2E_ADMIN_PASSWORD = 'OrbitPageE2E123!';
 
+async function dismissOnboarding(page: Page) {
+  const welcome = page.locator('.admin-onboarding-welcome');
+
+  try {
+    await welcome.waitFor({ state: 'visible', timeout: 3_000 });
+    await welcome.getByRole('button', { name: 'Skip for now' }).click();
+    await expect(welcome).toBeHidden();
+  } catch {
+    const activeGuide = page.locator('.admin-onboarding-panel');
+    if (await activeGuide.isVisible()) {
+      await activeGuide.getByRole('button', { name: 'Skip guide' }).click();
+      await expect(activeGuide).toBeHidden();
+    }
+  }
+}
+
 export async function openAuthenticatedAdmin(page: Page) {
   await page.goto('/admin');
 
@@ -22,4 +38,5 @@ export async function openAuthenticatedAdmin(page: Page) {
   }
 
   await expect(page.locator('h1.admin-title, .admin-title')).toHaveText('OrbitPage Admin');
+  await dismissOnboarding(page);
 }
