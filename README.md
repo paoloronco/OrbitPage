@@ -206,6 +206,8 @@ The essential server configuration is deliberately small.
 | `SEO_INDEXING` | No | `true` | Set to `false` for private or staging deployments. |
 | `UPLOAD_STORAGE_QUOTA_MB` | No | `1024` | Total upload quota for the installation. |
 | `VIDEO_UPLOAD_LIMIT_MB` | No | `100` | Per-file MP4/WebM upload limit. |
+| `MEDIA_CLEANUP_ENABLED` | No | `true` | Automatically remove uploads no longer referenced by page data. |
+| `MEDIA_CLEANUP_GRACE_HOURS` | No | `24` | Minimum age before an unused upload can be removed. |
 | `RESET_TOKEN` | No | Disabled | Enables protected credential recovery. Use at least 32 characters. |
 | `BASE_PATH` | No | Empty | Serves OrbitPage from a subpath such as `/links`. |
 
@@ -223,6 +225,8 @@ uploads/
 For Docker, persist `/app/data`. Back up both the database and uploads together, or use the JSON backup/restore controls in the Admin workspace. Export and restore can be limited to profile data, blocks, appearance, privacy, discovery files, administrator accounts, or uploaded media. Unselected restore sections are left unchanged.
 
 Complete exports retain the historical schema-v1 format. Selective exports use schema v2 and declare their included sections explicitly; current versions accept both formats. Keep an occasional complete backup even when selective backups are convenient, and never recreate a production container without its existing volume or bind mount.
+
+OrbitPage checks unused media automatically every six hours. The cleanup scans all page data before deleting anything and protects recent uploads for at least 24 hours by default. Administrators can preview reclaimable space or run the cleanup immediately from **Backup & Restore**. Set `MEDIA_CLEANUP_ENABLED=false` to disable the scheduled job or increase `MEDIA_CLEANUP_GRACE_HOURS` for a longer safety window.
 
 ## Deploying in Production
 

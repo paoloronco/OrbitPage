@@ -50,6 +50,7 @@ import {
   createApplicationBackup,
   restoreApplicationBackup,
 } from './services/backup-service.js';
+import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1747,6 +1748,27 @@ const initializeDemoReset = async () => {
 await initializeDatabase();
 if (DEMO_MODE) {
   await initializeDemoReset();
+}
+
+const runAutomaticMediaCleanup = async () => {
+  try {
+    const report = await cleanupUnusedMedia({
+      dbAll,
+      uploadsPath,
+      dryRun: false,
+      graceMs: mediaCleanupGraceMs(),
+    });
+    if (report.deleted > 0) console.log(`Unused media cleanup removed ${report.deleted} files (${report.reclaimedBytes} bytes).`);
+  } catch (error) {
+    console.error('Unused media cleanup failed:', error);
+  }
+};
+
+if (!DEMO_MODE && process.env.NODE_ENV !== 'test' && String(process.env.MEDIA_CLEANUP_ENABLED || 'true').toLowerCase() !== 'false') {
+  const initialTimer = setTimeout(() => void runAutomaticMediaCleanup(), 60_000);
+  const cleanupTimer = setInterval(() => void runAutomaticMediaCleanup(), 6 * 60 * 60 * 1000);
+  if (typeof initialTimer.unref === 'function') initialTimer.unref();
+  if (typeof cleanupTimer.unref === 'function') cleanupTimer.unref();
 }
 
 // Auth Routes
@@ -3863,6 +3885,25 @@ app.get('*', spaLimiter, async (req, res) => {
   }
   const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) || isConfiguredSubpage ? 200 : 404;
   serveSpaIndex(req, res, { statusCode });
+});
+
+app.get('/api/admin/media/cleanup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  try {
+    res.json(await cleanupUnusedMedia({ dbAll, uploadsPath, dryRun: true, graceMs: mediaCleanupGraceMs() }));
+  } catch (error) {
+    console.error('Unused media preview error:', error);
+    res.status(500).json({ error: 'Failed to inspect uploaded media.' });
+  }
+});
+
+app.post('/api/admin/media/cleanup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Media cleanup is disabled in demo mode.' });
+  try {
+    res.json(await cleanupUnusedMedia({ dbAll, uploadsPath, dryRun: false, graceMs: mediaCleanupGraceMs() }));
+  } catch (error) {
+    console.error('Unused media cleanup error:', error);
+    res.status(500).json({ error: 'Failed to clean uploaded media.' });
+  }
 });
 
 export { app, stripStaticSeoTags, buildStructuredData, renderSeoTags };

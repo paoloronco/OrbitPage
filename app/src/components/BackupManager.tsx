@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, Download, Loader2, Upload, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database, Download, Loader2, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { backupApi, uploadApi } from "@/lib/api-client";
+import { backupApi, mediaCleanupApi, uploadApi, type MediaCleanupReport } from "@/lib/api-client";
 import { DEMO_MODE } from "@/lib/config";
 import {
   BACKUP_SECTION_IDS,
@@ -124,6 +124,8 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
   const [message, setMessage] = useState("");
   const [exportSections, setExportSections] = useState<BackupSectionId[]>(exportableSections);
   const [pendingRestore, setPendingRestore] = useState<PendingRestore | null>(null);
+  const [cleanupReport, setCleanupReport] = useState<MediaCleanupReport | null>(null);
+  const [cleanupBusy, setCleanupBusy] = useState<"preview" | "clean" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const busy = state === "exporting" || state === "restoring";
@@ -199,6 +201,34 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
     setState("idle");
     setMessage("");
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const inspectUnusedMedia = async () => {
+    setCleanupBusy("preview");
+    try {
+      setCleanupReport(await mediaCleanupApi.preview());
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "Media inspection failed.");
+    } finally {
+      setCleanupBusy(null);
+    }
+  };
+
+  const cleanUnusedMedia = async () => {
+    if (!window.confirm(tr("Remove media that is no longer used by the current page or a restorable version?", "Rimuovere i media non più usati dalla pagina corrente o da una versione ripristinabile?"))) return;
+    setCleanupBusy("clean");
+    try {
+      const report = await mediaCleanupApi.run();
+      setCleanupReport(report);
+      setState("success");
+      setMessage(tr(`Removed ${report.deleted} unused media files.`, `Rimossi ${report.deleted} file multimediali inutilizzati.`));
+    } catch (error) {
+      setState("error");
+      setMessage(error instanceof Error ? error.message : "Media cleanup failed.");
+    } finally {
+      setCleanupBusy(null);
+    }
   };
 
   const restoreBackup = async () => {
@@ -402,6 +432,38 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           className="hidden"
           onChange={(event) => void readBackupFile(event.target.files?.[0])}
         />
+      </section>
+
+      <section className="space-y-4 border-t border-border/70 pt-5" aria-labelledby="media-cleanup-heading">
+        <div className="flex items-start gap-3">
+          <span className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-4 w-4" /></span>
+          <div>
+            <h4 id="media-cleanup-heading" className="text-sm font-semibold">{tr("Unused media", "Media inutilizzati")}</h4>
+            <p className="text-xs leading-5 text-muted-foreground">
+              {hosted
+                ? tr("OrbitPage removes old uploads that are no longer used. Recent files and restorable page versions stay protected.", "OrbitPage rimuove i vecchi caricamenti non più usati. I file recenti e le versioni ripristinabili restano protetti.")
+                : tr("OrbitPage removes old uploads that are no longer used by the page. Recent files stay protected.", "OrbitPage rimuove i vecchi caricamenti non più usati dalla pagina. I file recenti restano protetti.")}
+            </p>
+          </div>
+        </div>
+        {cleanupReport && (
+          <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background/50 p-4 text-sm sm:grid-cols-4">
+            <div><span className="block text-xs text-muted-foreground">{tr("Scanned", "Analizzati")}</span><strong>{cleanupReport.scanned}</strong></div>
+            <div><span className="block text-xs text-muted-foreground">{tr("Protected", "Protetti")}</span><strong>{cleanupReport.referenced + cleanupReport.skippedRecent}</strong></div>
+            <div><span className="block text-xs text-muted-foreground">{tr("Unused", "Inutilizzati")}</span><strong>{cleanupReport.unused}</strong></div>
+            <div><span className="block text-xs text-muted-foreground">{tr("Space", "Spazio")}</span><strong>{formatFileSize(cleanupReport.dryRun ? cleanupReport.reclaimableBytes : cleanupReport.reclaimedBytes)}</strong></div>
+          </div>
+        )}
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button type="button" variant="outline" className="admin-action" onClick={() => void inspectUnusedMedia()} disabled={Boolean(cleanupBusy)}>
+            {cleanupBusy === "preview" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Sparkles className="h-4 w-4" />}
+            {tr("Check unused media", "Controlla media inutilizzati")}
+          </Button>
+          <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !cleanupReport?.unused}>
+            {cleanupBusy === "clean" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Trash2 className="h-4 w-4" />}
+            {tr("Clean now", "Pulisci ora")}
+          </Button>
+        </div>
       </section>
     </Card>
   );

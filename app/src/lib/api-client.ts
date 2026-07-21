@@ -575,6 +575,23 @@ export const backupApi = {
   },
 };
 
+export type MediaCleanupReport = {
+  dryRun: boolean;
+  scanned: number;
+  referenced: number;
+  skippedRecent: number;
+  unused: number;
+  deleted: number;
+  reclaimableBytes: number;
+  reclaimedBytes: number;
+  candidates: Array<{ path: string; sizeBytes: number }>;
+};
+
+export const mediaCleanupApi = {
+  preview: async (): Promise<MediaCleanupReport> => apiRequest<MediaCleanupReport>('/admin/media/cleanup'),
+  run: async (): Promise<MediaCleanupReport> => apiRequest<MediaCleanupReport>('/admin/media/cleanup', { method: 'POST' }),
+};
+
 export type ManagedAnalyticsDimension = { label: string; value: number };
 export type ManagedAnalyticsReport = {
   configured: boolean;
