@@ -453,7 +453,7 @@ export const LinkCard = ({
                 : isMenu
                   ? 'Menu title'
                   : 'Link title';
-  const showUrlField = isActionable && !isContact && !isSocialRow && !isMenu;
+  const showUrlField = isActionable && !isContact && !isSocialRow && !isMenu && !isMap;
 
   const isVisible = link.isActive !== false;
   const isCta = link.type === 'cta';
@@ -914,7 +914,7 @@ export const LinkCard = ({
             )}
             {isFullEdit && (
               <>
-                {(!isSeparator || showUrlField) && (
+                {!isMap && (!isSeparator || showUrlField) && (
                   <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                     <div className="mb-3">
                       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Destination</p>
@@ -1210,27 +1210,46 @@ export const LinkCard = ({
                   </div>
                 )}
                 {isMap && (
-                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <MapPin className="h-4 w-4" />
-                      Map settings
+                  <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+                    <div>
+                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                        <MapPin className="h-4 w-4" />
+                        {tr("Map destination", "Destinazione mappa")}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {tr("Add the location visitors should open. No separate card URL is needed.", "Aggiungi la posizione che i visitatori devono aprire. Non serve un URL separato per la card.")}
+                      </p>
                     </div>
-                    <Input
-                      value={mapData.placeName || ''}
-                      onChange={(e) => updateMapData('placeName', e.target.value)}
-                      placeholder="Place name"
-                    />
-                    <Input
-                      value={mapData.address || ''}
-                      onChange={(e) => updateMapData('address', e.target.value)}
-                      placeholder="Address"
-                    />
-                    <Input
-                      value={mapData.mapUrl || ''}
-                      onChange={(e) => updateMapData('mapUrl', e.target.value)}
-                      placeholder="https://maps.google.com/..."
-                    />
-                  </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`map-place-${link.id}`}>{tr("Place name", "Nome del luogo")}</Label>
+                      <Input
+                        id={`map-place-${link.id}`}
+                        value={mapData.placeName || ''}
+                        onChange={(e) => updateMapData('placeName', e.target.value)}
+                        placeholder={tr("Place name", "Nome del luogo")}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`map-address-${link.id}`}>{tr("Address", "Indirizzo")}</Label>
+                      <Input
+                        id={`map-address-${link.id}`}
+                        value={mapData.address || ''}
+                        onChange={(e) => updateMapData('address', e.target.value)}
+                        placeholder={tr("Street, city, country", "Via, citta, paese")}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor={`map-url-${link.id}`}>{tr("Maps URL", "URL della mappa")}</Label>
+                      <Input
+                        id={`map-url-${link.id}`}
+                        value={mapData.mapUrl || ''}
+                        onChange={(e) => updateMapData('mapUrl', e.target.value)}
+                        placeholder="https://maps.google.com/..."
+                        inputMode="url"
+                      />
+                      <p className="text-xs text-slate-500">{tr("Google Maps and OpenStreetMap links are supported.", "Sono supportati i link di Google Maps e OpenStreetMap.")}</p>
+                    </div>
+                  </section>
                 )}
                 {isEvent && (
                   <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
