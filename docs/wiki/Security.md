@@ -24,6 +24,19 @@ When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage falls back
 - Docker requires `JWT_SECRET` before startup.
 - Optional `RESET_TOKEN` protects recovery endpoints.
 
+### Two-factor authentication
+
+Each self-hosted administrator can enable time-based one-time passwords under **Dashboard > Access**. OrbitPage uses the standard TOTP format supported by Google Authenticator, Microsoft Authenticator, 1Password and compatible password managers.
+
+- The password is always verified before setup, recovery-code rotation or disabling 2FA.
+- The TOTP secret is encrypted at rest with AES-256-GCM using a key derived from the stable `JWT_SECRET`.
+- Ten single-use recovery codes are generated at enrollment and displayed once. Only salted scrypt hashes are stored.
+- A successful recovery-code login consumes that code atomically.
+- Disabling 2FA, changing a password or using the operator reset increments the account authentication version and invalidates older sessions.
+- The short-lived pre-authentication challenge cannot access application APIs and expires after five minutes.
+
+Keep `JWT_SECRET` stable and backed up. Losing it makes encrypted TOTP secrets unreadable. If both the authenticator and recovery codes are lost, the instance owner can use the existing `RESET_TOKEN` recovery flow; this resets the password, removes 2FA and revokes active sessions.
+
 ## Deployment Hardening
 
 Recommended production practices:

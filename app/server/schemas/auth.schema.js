@@ -27,6 +27,19 @@ export const LoginBodySchema = z.object({
   password: RequiredPasswordSchema,
 });
 
+export const TwoFactorVerifyBodySchema = z.object({
+  challengeToken: z.string().min(20).max(4096),
+  code: z.string().trim().min(6).max(32),
+});
+
+export const TwoFactorCodeBodySchema = z.object({
+  code: z.string().trim().min(6).max(32),
+});
+
+export const TwoFactorManageBodySchema = TwoFactorCodeBodySchema.extend({
+  currentPassword: RequiredPasswordSchema,
+});
+
 export const CreateUserBodySchema = z.object({
   username: UsernameSchema,
   password: RequiredPasswordSchema,

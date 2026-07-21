@@ -43,6 +43,7 @@ import { UserManager } from "./UserManager";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
+import { TwoFactorManager } from "./TwoFactorManager";
 import { TextFileManager } from "./TextFileManager";
 import { SitemapManager } from "./SitemapManager";
 import { AdminOnboarding } from "./AdminOnboarding";
@@ -569,6 +570,7 @@ export const AdminView = ({
               <div className="admin-single-column space-y-6" data-onboarding="access-section">
                 {canManageUsers && <UserManager />}
                 {canManageUsers && <BackupManager />}
+                {canManageUsers && <TwoFactorManager />}
                 <PasswordManager />
               </div>
             </TabsContent>

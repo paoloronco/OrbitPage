@@ -106,12 +106,27 @@ export const authenticateUser = async (password, username = 'admin') => {
 };
 
 // Generate JWT token
-export const generateToken = (username) => {
+export const generateToken = (username, authVersion = 0) => {
   return jwt.sign(
-    { username, timestamp: Date.now() },
+    { username, authVersion, timestamp: Date.now() },
     JWT_SECRET,
     { expiresIn: '12h' }
   );
+};
+
+export const generateTwoFactorChallenge = (username, authVersion = 0) => jwt.sign(
+  { username, authVersion, purpose: 'two-factor-login' },
+  JWT_SECRET,
+  { expiresIn: '5m', audience: 'orbitpage-two-factor', issuer: 'orbitpage' },
+);
+
+export const verifyTwoFactorChallenge = (token) => {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET, { audience: 'orbitpage-two-factor', issuer: 'orbitpage' });
+    return decoded?.purpose === 'two-factor-login' ? decoded : null;
+  } catch {
+    return null;
+  }
 };
 
 // Verify JWT token
@@ -206,12 +221,15 @@ export const authenticateToken = async (req, res, next) => {
 
   try {
     const user = await dbGet(
-      'SELECT username, role FROM admin_users WHERE username = ?',
+      'SELECT username, role, auth_version FROM admin_users WHERE username = ?',
       [decoded.username]
     );
 
     if (!user) {
       return res.status(403).json({ error: 'User not found' });
+    }
+    if (Number(decoded.authVersion || 0) !== Number(user.auth_version || 0)) {
+      return res.status(403).json({ error: 'Session has been revoked' });
     }
 
     req.user = {

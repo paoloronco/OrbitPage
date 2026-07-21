@@ -287,9 +287,11 @@ interface AuthSetupResponse extends ApiResponse {
   };
 }
 
-interface LoginResponse extends ApiResponse {
-  token: string;
-  user: {
+export interface LoginResponse extends ApiResponse {
+  token?: string;
+  requiresTwoFactor?: boolean;
+  challengeToken?: string;
+  user?: {
     username: string;
   };
 }
@@ -530,6 +532,15 @@ export const authApi = {
     return hasStoredAuthToken();
   },
 
+  verifyTwoFactor: async (challengeToken: string, code: string): Promise<LoginResponse & { recoveryCodeUsed?: boolean; recoveryCodesRemaining?: number }> => {
+    const response = await apiRequest<LoginResponse & { recoveryCodeUsed?: boolean; recoveryCodesRemaining?: number }>('/auth/2fa/verify', {
+      method: 'POST',
+      body: JSON.stringify({ challengeToken, code }),
+    });
+    if (response.token) await setAuthToken(response.token);
+    return response;
+  },
+
   isAuthenticated: (): boolean => {
     if (getSaasAuthToken()) return true;
     return !!getAuthToken();
@@ -572,6 +583,18 @@ export const backupApi = {
       method: 'POST',
       body: JSON.stringify(sections ? { backup, sections } : backup),
     });
+  },
+};
+
+export const twoFactorApi = {
+  status: () => apiRequest<{ success: boolean; enabled: boolean; recoveryCodesRemaining: number }>('/auth/2fa'),
+  setup: (currentPassword: string) => apiRequest<{ success: boolean; uri: string; secretKey: string; expiresAt: string }>('/auth/2fa/setup', { method: 'POST', body: JSON.stringify({ currentPassword }) }),
+  confirm: (code: string) => apiRequest<{ success: boolean; recoveryCodes: string[] }>('/auth/2fa/confirm', { method: 'POST', body: JSON.stringify({ code }) }),
+  regenerateRecoveryCodes: (currentPassword: string, code: string) => apiRequest<{ success: boolean; recoveryCodes: string[] }>('/auth/2fa/recovery-codes', { method: 'POST', body: JSON.stringify({ currentPassword, code }) }),
+  disable: async (currentPassword: string, code: string) => {
+    const response = await apiRequest<{ success: boolean; token?: string; message?: string }>('/auth/2fa', { method: 'DELETE', body: JSON.stringify({ currentPassword, code }) });
+    if (response.token) await setAuthToken(response.token);
+    return response;
   },
 };
 

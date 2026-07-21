@@ -104,6 +104,12 @@ export const initializeDatabase = () => {
 
       // Role-based access control — default 'admin' keeps backward compatibility for the main admin user
       db.run(`ALTER TABLE admin_users ADD COLUMN role TEXT DEFAULT 'admin'`, (err) => { /* ignore if exists */ });
+      // TOTP secrets are encrypted by the server. Recovery codes are stored as salted hashes.
+      db.run(`ALTER TABLE admin_users ADD COLUMN totp_secret TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE admin_users ADD COLUMN totp_enabled BOOLEAN DEFAULT 0`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE admin_users ADD COLUMN totp_pending_expires_at TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE admin_users ADD COLUMN recovery_codes TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE admin_users ADD COLUMN auth_version INTEGER DEFAULT 0`, (err) => { /* ignore if exists */ });
 
       // Links table
       db.run(`

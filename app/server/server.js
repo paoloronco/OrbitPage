@@ -11,6 +11,8 @@ import {
   setupInitialCredentials,
   authenticateUser,
   generateToken,
+  generateTwoFactorChallenge,
+  verifyTwoFactorChallenge,
   verifyToken,
   authenticateToken,
   isPasswordStrong,
@@ -36,6 +38,9 @@ import {
   SetupBodySchema,
   UpdateRoleBodySchema,
   UpdateUserPasswordBodySchema,
+  TwoFactorCodeBodySchema,
+  TwoFactorManageBodySchema,
+  TwoFactorVerifyBodySchema,
 } from './schemas/auth.schema.js';
 import {
   UPLOAD_FILE_MODE,
@@ -51,11 +56,19 @@ import {
   restoreApplicationBackup,
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
+import {
+  beginTwoFactorSetup,
+  confirmTwoFactorSetup,
+  disableTwoFactor,
+  getTwoFactorStatus,
+  regenerateRecoveryCodes,
+  verifySecondFactor,
+} from './services/two-factor-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.7.0';
+let APP_VERSION = '4.8.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -1814,9 +1827,16 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log('Login successful, generating token...');
-    const token = generateToken(username);
-    console.log('Token generated. Length:', token?.length);
+    const state = await dbGet('SELECT totp_enabled, auth_version FROM admin_users WHERE username = ?', [username]);
+    if (state?.totp_enabled) {
+      return res.json({
+        success: true,
+        requiresTwoFactor: true,
+        challengeToken: generateTwoFactorChallenge(username, Number(state.auth_version || 0)),
+      });
+    }
+
+    const token = generateToken(username, Number(state?.auth_version || 0));
     res.json({ success: true, token });
     return;
   } catch (error) {
@@ -1850,6 +1870,79 @@ app.post('/api/auth/verify', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error verifying user:', error);
     res.status(500).json({ valid: false, error: 'Verification failed' });
+  }
+});
+
+app.post('/api/auth/2fa/verify', loginLimiter, async (req, res) => {
+  try {
+    const { challengeToken, code } = TwoFactorVerifyBodySchema.parse(req.body || {});
+    const challenge = verifyTwoFactorChallenge(challengeToken);
+    if (!challenge) return res.status(401).json({ error: 'The two-factor challenge expired. Sign in again.' });
+    const verification = await verifySecondFactor(challenge.username, code);
+    if (!verification.valid || Number(verification.authVersion) !== Number(challenge.authVersion || 0)) {
+      return res.status(401).json({ error: 'The authentication or recovery code is not valid.' });
+    }
+    return res.json({
+      success: true,
+      token: generateToken(challenge.username, verification.authVersion),
+      recoveryCodeUsed: verification.recoveryCodeUsed,
+      recoveryCodesRemaining: verification.remaining,
+    });
+  } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    return res.status(validationMessage ? 400 : 500).json({ error: validationMessage || 'Two-factor verification failed.' });
+  }
+});
+
+app.get('/api/auth/2fa', authenticateToken, async (req, res) => {
+  try {
+    res.json({ success: true, ...(await getTwoFactorStatus(req.user.username)) });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Two-factor status is unavailable.' });
+  }
+});
+
+app.post('/api/auth/2fa/setup', authLimiter, authenticateToken, async (req, res) => {
+  try {
+    const currentPassword = z.string().min(1).max(256).parse(req.body?.currentPassword);
+    if (!(await authenticateUser(currentPassword, req.user.username))) return res.status(401).json({ error: 'Current password is incorrect.' });
+    res.json({ success: true, ...(await beginTwoFactorSetup(req.user.username)) });
+  } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    res.status(validationMessage ? 400 : 400).json({ error: validationMessage || error.message || 'Two-factor setup failed.' });
+  }
+});
+
+app.post('/api/auth/2fa/confirm', authLimiter, authenticateToken, async (req, res) => {
+  try {
+    const { code } = TwoFactorCodeBodySchema.parse(req.body || {});
+    res.json({ success: true, recoveryCodes: await confirmTwoFactorSetup(req.user.username, code) });
+  } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    res.status(400).json({ error: validationMessage || error.message || 'Two-factor setup failed.' });
+  }
+});
+
+app.post('/api/auth/2fa/recovery-codes', authLimiter, authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, code } = TwoFactorManageBodySchema.parse(req.body || {});
+    if (!(await authenticateUser(currentPassword, req.user.username))) return res.status(401).json({ error: 'Current password is incorrect.' });
+    res.json({ success: true, recoveryCodes: await regenerateRecoveryCodes(req.user.username, code) });
+  } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    res.status(400).json({ error: validationMessage || error.message || 'Recovery codes could not be created.' });
+  }
+});
+
+app.delete('/api/auth/2fa', authLimiter, authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, code } = TwoFactorManageBodySchema.parse(req.body || {});
+    if (!(await authenticateUser(currentPassword, req.user.username))) return res.status(401).json({ error: 'Current password is incorrect.' });
+    const authVersion = await disableTwoFactor(req.user.username, code);
+    res.json({ success: true, token: generateToken(req.user.username, authVersion), message: 'Two-factor authentication disabled.' });
+  } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    res.status(400).json({ error: validationMessage || error.message || 'Two-factor authentication could not be disabled.' });
   }
 });
 
@@ -2918,9 +3011,10 @@ app.put('/api/users/:username', authenticateToken, async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
-    await dbRun('UPDATE admin_users SET password_hash = ?, salt = ? WHERE username = ?', [passwordHash, salt, username]);
+    await dbRun('UPDATE admin_users SET password_hash = ?, salt = ?, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ?', [passwordHash, salt, username]);
     // Issue a fresh token if the user is changing their own password
-    const newToken = req.user.username === username ? generateToken(username) : undefined;
+    const updatedUser = await dbGet('SELECT auth_version FROM admin_users WHERE username = ?', [username]);
+    const newToken = req.user.username === username ? generateToken(username, Number(updatedUser?.auth_version || 0)) : undefined;
     res.json({ success: true, ...(newToken ? { token: newToken } : {}) });
   } catch (error) {
     const validationMessage = getZodErrorMessage(error);
@@ -3041,7 +3135,7 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
     // Get current user (the one making the request)
     const callerUsername = req.user.username;
     const user = await dbGet(
-      'SELECT username, password_hash, salt FROM admin_users WHERE username = ?',
+      'SELECT username, password_hash, salt, auth_version FROM admin_users WHERE username = ?',
       [callerUsername]
     );
 
@@ -3069,12 +3163,12 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
 
     // Update database
     await dbRun(
-      'UPDATE admin_users SET password_hash = ?, salt = ? WHERE username = ?',
+      'UPDATE admin_users SET password_hash = ?, salt = ?, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ?',
       [newHash, newSalt, callerUsername]
     );
 
     // Issue a fresh token
-    const token = generateToken(callerUsername);
+    const token = generateToken(callerUsername, Number(user.auth_version || 0) + 1);
 
     return res.json({ success: true, message: 'Password changed successfully', token });
   } catch (error) {
@@ -3115,11 +3209,11 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(newPassword, salt);
     await dbRun(
-      'UPDATE admin_users SET password_hash = ?, salt = ? WHERE username = ?',
+      'UPDATE admin_users SET password_hash = ?, salt = ?, totp_secret = NULL, totp_enabled = 0, totp_pending_expires_at = NULL, recovery_codes = NULL, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ?',
       [passwordHash, salt, 'admin']
     );
 
-    res.json({ success: true, message: 'Password reset successfully. You can now log in with your new password.' });
+    res.json({ success: true, message: 'Password and two-factor authentication reset successfully. You can now log in and configure a new authenticator.' });
   } catch (error) {
     const validationMessage = getZodErrorMessage(error);
     if (validationMessage) return res.status(400).json({ success: false, error: validationMessage });

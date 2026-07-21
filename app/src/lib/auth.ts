@@ -56,13 +56,15 @@ export const setupInitialCredentials = async (password: string): Promise<boolean
 };
 
 // Authenticate user (username defaults to 'admin' for backward compat)
-export const authenticateUser = async (password: string, username = 'admin'): Promise<boolean> => {
+export const authenticateUser = async (password: string, username = 'admin'): Promise<{ authenticated: boolean; requiresTwoFactor?: boolean; challengeToken?: string }> => {
   try {
-    await authApi.login(password, username);
-    return true;
+    const response = await authApi.login(password, username);
+    return response.requiresTwoFactor
+      ? { authenticated: false, requiresTwoFactor: true, challengeToken: response.challengeToken }
+      : { authenticated: Boolean(response.token) };
   } catch (error) {
     console.error('Error in authenticateUser:', error);
-    return false;
+    return { authenticated: false };
   }
 };
 

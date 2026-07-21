@@ -235,6 +235,7 @@ OrbitPage can run anywhere that supports a persistent Docker container or Node.j
 For a production deployment:
 
 1. Set a stable `JWT_SECRET`.
+2. Enable TOTP two-factor authentication for every privileged user under **Dashboard > Access**, then store the one-time recovery codes outside OrbitPage.
 2. Persist `DATA_DIR` or `/app/data`.
 3. Put the service behind HTTPS using your platform or reverse proxy.
 4. Set `PUBLIC_SITE_URL` to the final public origin.

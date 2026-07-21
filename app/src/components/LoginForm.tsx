@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, AlertTriangle, Info } from "lucide-react";
+import { Eye, EyeOff, KeyRound, ShieldCheck } from "lucide-react";
 import { authenticateUser, setAuthenticated } from "@/lib/auth";
+import { authApi } from "@/lib/api-client";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 
 interface LoginFormProps {
@@ -17,6 +18,9 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [challengeToken, setChallengeToken] = useState("");
+  const [secondFactorCode, setSecondFactorCode] = useState("");
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,9 +28,17 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
     setError("");
 
     try {
-      const isValid = await authenticateUser(password, username);
+      const result = challengeToken
+        ? await authApi.verifyTwoFactor(challengeToken, secondFactorCode)
+        : await authenticateUser(password, username);
 
-      if (isValid) {
+      if ('requiresTwoFactor' in result && result.requiresTwoFactor && result.challengeToken) {
+        setChallengeToken(result.challengeToken);
+        setPassword("");
+        return;
+      }
+
+      if (('authenticated' in result && result.authenticated) || ('token' in result && result.token)) {
         setAuthenticated(username);
         onLogin();
       } else {
@@ -47,15 +59,15 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
           <div className="flex justify-center">
             <OrbitPageBrand showName={false} size="lg" />
           </div>
-          <h1 className="text-2xl font-bold gradient-text">Admin Access</h1>
+          <h1 className="text-2xl font-bold gradient-text">{challengeToken ? "Two-step verification" : "Admin Access"}</h1>
           <p className="text-muted-foreground text-sm">
-            Enter your credentials to access the admin panel
+            {challengeToken ? (recoveryMode ? "Use one of the recovery codes saved during setup." : "Enter the 6-digit code from your authenticator app.") : "Enter your credentials to access the admin panel"}
           </p>
         </div>
 
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+          {!challengeToken && <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
@@ -67,9 +79,9 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
               required
               autoComplete="username"
             />
-          </div>
+          </div>}
 
-          <div className="space-y-2">
+          {!challengeToken && <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
@@ -91,7 +103,15 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </Button>
             </div>
-          </div>
+          </div>}
+
+          {challengeToken && <div className="space-y-2">
+            <Label htmlFor="second-factor-code">{recoveryMode ? "Recovery code" : "Authentication code"}</Label>
+            <div className="relative">
+              <Input id="second-factor-code" autoComplete="one-time-code" autoCapitalize="characters" inputMode={recoveryMode ? "text" : "numeric"} maxLength={recoveryMode ? 32 : 6} value={secondFactorCode} onChange={(event) => setSecondFactorCode(recoveryMode ? event.target.value.toUpperCase() : event.target.value.replace(/\D/g, ''))} className="glass-card border-primary/20 pl-10" required />
+              {recoveryMode ? <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /> : <ShieldCheck className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />}
+            </div>
+          </div>}
 
           {error && (
             <div className="text-destructive text-sm text-center p-2 bg-destructive/10 rounded">
@@ -105,9 +125,14 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
             className="w-full"
             disabled={isLoading}
           >
-            {isLoading ? "Authenticating..." : "Login to Admin"}
+            {isLoading ? "Authenticating..." : challengeToken ? "Verify and continue" : "Login to Admin"}
           </Button>
         </form>
+
+        {challengeToken && <div className="flex flex-col items-center gap-2">
+          <Button type="button" variant="ghost" className="text-sm" onClick={() => { setRecoveryMode((value) => !value); setSecondFactorCode(''); setError(''); }}>{recoveryMode ? "Use authenticator app" : "Use a recovery code"}</Button>
+          <Button type="button" variant="ghost" className="text-sm text-muted-foreground" onClick={() => { setChallengeToken(''); setSecondFactorCode(''); setRecoveryMode(false); setError(''); }}>Back to sign in</Button>
+        </div>}
 
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
