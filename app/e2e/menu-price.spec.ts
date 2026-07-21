@@ -1,18 +1,15 @@
 import { expect, test } from '@playwright/test';
+import { openAuthenticatedAdmin } from './helpers';
 
 test('accepts localized menu prices without rewriting the field while typing', async ({ page }) => {
-  await page.goto('/admin');
-
-  const password = 'PriceTest123!';
-  await page.locator('#password').fill(password);
-  await page.locator('#confirm-password').fill(password);
-  await page.getByRole('button', { name: 'Complete Setup' }).click();
-
-  await expect(page.locator('h1.admin-title, .admin-title')).toHaveText('OrbitPage Admin');
+  await openAuthenticatedAdmin(page);
   await page.getByRole('tab', { name: 'Menu' }).click();
-  await page.getByRole('button', { name: 'Add the first product' }).click();
 
-  const price = page.getByRole('textbox', { name: 'Product price' });
+  const price = page.getByRole('textbox', { name: 'Product price' }).first();
+  const addFirstProduct = page.getByRole('button', { name: 'Add the first product' });
+  await expect(price.or(addFirstProduct)).toBeVisible();
+  if (await price.count() === 0) await addFirstProduct.click();
+  await expect(price).toBeVisible();
   await price.clear();
   await price.pressSequentially('12,50');
   await expect(price).toHaveValue('12,50');
