@@ -449,12 +449,6 @@ export const AdminView = ({
                 {tr("Guide", "Guida")}
               </Button>
             )}
-            <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
-              <Button className="admin-action admin-action-primary" size="sm">
-                <ExternalLink className="h-4 w-4" />
-                {tr("Public page", "Pagina pubblica")}
-              </Button>
-            </a>
           </div>
         </header> : <header className="admin-dashboard-header">
           <div>

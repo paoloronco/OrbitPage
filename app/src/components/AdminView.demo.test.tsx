@@ -150,6 +150,7 @@ describe('AdminView demo mode', () => {
     expect(mockState.backupProps.at(-1)).toMatchObject({ hosted: true });
     expect(html).toContain('admin-metrics-saas');
     expect(html).not.toContain('admin-dashboard-sidebar');
+    expect(html).not.toContain('data-onboarding="public-page"');
   });
 
   it('marks prospect sessions as read-only while keeping the hosted sections visible', () => {
