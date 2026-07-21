@@ -2390,3 +2390,53 @@
   .menu-publish-tools__grid { grid-template-columns: 1fr; }
   .menu-editor-preview { display: none; }
 }
+
+.subpage-manager { display: grid; grid-template-columns: minmax(13rem,.55fr) minmax(26rem,1.7fr) minmax(19rem,.8fr); gap: 1rem; align-items: start; }
+.subpage-list-panel { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: .45rem; padding: .75rem; border: 1px solid #dbe3ee; border-radius: .5rem; background: #fff; }
+.subpage-list-header,.subpage-details-heading,.subpage-details-footer { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.subpage-list-header>div { display: flex; flex-direction: column; }
+.subpage-list-header span { color: #64748b; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+.subpage-list-header strong { color: #0f172a; font-size: .9rem; }
+.subpage-list-item { display: grid; grid-template-columns: .55rem minmax(0,1fr); gap: .6rem; align-items: center; width: 100%; min-height: 3.35rem; padding: .65rem .7rem; border: 1px solid transparent; border-radius: .4rem; color: #334155; text-align: left; transition: background-color 160ms ease,border-color 160ms ease,color 160ms ease; }
+.subpage-list-item:hover:not(:disabled),.subpage-list-item.is-active { border-color: #b9cdfd; background: #eff5ff; color: #0f172a; }
+.subpage-list-item--main { grid-template-columns: 1rem minmax(0,1fr); background: #f8fafc; opacity: 1; }
+.subpage-list-item span:not(.subpage-status) { min-width: 0; }
+.subpage-list-item strong,.subpage-list-item small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subpage-list-item strong { font-size: .82rem; }
+.subpage-list-item small { margin-top: .12rem; color: #64748b; font-size: .7rem; }
+.subpage-status { width: .48rem; height: .48rem; border-radius: 50%; background: #cbd5e1; }
+.subpage-status.is-live { background: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
+.subpage-upgrade-note { margin-top: .4rem; padding: .8rem; border-radius: .4rem; background: #f8fafc; }
+.subpage-upgrade-note strong,.subpage-upgrade-note p,.subpage-upgrade-note a { display: block; font-size: .72rem; }
+.subpage-upgrade-note p { margin: .3rem 0; color: #64748b; }
+.subpage-upgrade-note a { color: #1d4ed8; font-weight: 700; }
+.subpage-editor-column { display: flex; min-width: 0; flex-direction: column; gap: 1rem; }
+.subpage-details-panel { padding: 1rem; }
+.subpage-details-heading h2 { margin-top: .1rem; color: #0f172a; font-size: 1.2rem; font-weight: 750; }
+.subpage-details-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; margin-top: 1rem; }
+.subpage-details-grid label { display: block; margin-bottom: .35rem; color: #475569; font-size: .74rem; font-weight: 700; }
+.subpage-description-field { grid-column: 1/-1; }
+.subpage-description-field textarea { min-height: 5rem; resize: vertical; }
+.subpage-slug-field { display: flex; align-items: center; overflow: hidden; border: 1px solid #cbd5e1; border-radius: .375rem; background: #f8fafc; }
+.subpage-slug-field span { padding-left: .7rem; color: #64748b; }
+.subpage-slug-field input { border: 0; box-shadow: none; }
+.subpage-details-footer { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid #e2e8f0; }
+.subpage-publish-toggle { display: inline-flex; align-items: center; gap: .45rem; color: #64748b; font-size: .78rem; font-weight: 700; }
+.subpage-publish-toggle>span { width: 1.8rem; height: 1rem; padding: .15rem; border-radius: 1rem; background: #cbd5e1; transition: background-color 160ms ease; }
+.subpage-publish-toggle>span::after { display: block; width: .7rem; height: .7rem; border-radius: 50%; background: white; content: ""; transition: transform 160ms ease; }
+.subpage-publish-toggle.is-active { color: #166534; }
+.subpage-publish-toggle.is-active>span { background: #16a34a; }
+.subpage-publish-toggle.is-active>span::after { transform: translateX(.8rem); }
+.subpage-preview-rail { position: sticky; top: 1rem; }
+@media (max-width:1180px) { .subpage-manager { grid-template-columns: minmax(12rem,.5fr) minmax(0,1.5fr); } .subpage-preview-rail { display: none; } }
+@media (max-width:760px) {
+  .subpage-manager { display: flex; flex-direction: column; }
+  .subpage-list-panel { position: static; width: 100%; overflow-x: auto; flex-direction: row; align-items: stretch; }
+  .subpage-list-header { min-width: 8rem; }
+  .subpage-list-item { min-width: 10.5rem; }
+  .subpage-upgrade-note { min-width: 12rem; margin-top: 0; }
+  .subpage-editor-column { width: 100%; }
+  .subpage-details-grid { grid-template-columns: 1fr; }
+  .subpage-description-field { grid-column: auto; }
+  .subpage-details-heading { align-items: flex-start; }
+}

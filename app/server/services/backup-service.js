@@ -9,6 +9,7 @@ export const BACKUP_TABLES = [
   'links',
   'theme_config',
   'menu_config',
+  'subpages_config',
   'cookie_consent_config',
   'text_files',
   'sitemap_config',
@@ -16,6 +17,7 @@ export const BACKUP_TABLES = [
 export const BACKUP_SECTIONS = [
   'profile',
   'links',
+  'pages',
   'theme',
   'menu',
   'privacy',
@@ -27,6 +29,7 @@ export const BACKUP_SECTIONS = [
 const SECTION_TABLES = {
   profile: ['profile_data'],
   links: ['links'],
+  pages: ['subpages_config'],
   theme: ['theme_config'],
   menu: ['menu_config'],
   privacy: ['cookie_consent_config'],

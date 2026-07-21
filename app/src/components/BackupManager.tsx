@@ -36,6 +36,7 @@ type PendingRestore = {
 const SECTION_COPY: Record<BackupSectionId, { label: string; description: string }> = {
   profile: { label: "Profile & page", description: "Name, bio, social links and page metadata" },
   links: { label: "Blocks & links", description: "Content, order, scheduling and block settings" },
+  pages: { label: "Subpages", description: "Page slugs, descriptions and their blocks" },
   theme: { label: "Theme & appearance", description: "Colors, typography, cards and background" },
   menu: { label: "Venue menu", description: "Menu identity, sections, products and appearance" },
   privacy: { label: "Privacy & consent", description: "Cookie banner and consent preferences" },
@@ -84,6 +85,7 @@ function SectionSelector({
         const translated: Record<BackupSectionId, { label: string; description: string }> = {
           profile: { label: tr("Profile & page", "Profilo e pagina"), description: tr("Name, bio, social links and page metadata", "Nome, bio, link social e metadati della pagina") },
           links: { label: tr("Blocks & links", "Blocchi e link"), description: tr("Content, order, scheduling and block settings", "Contenuti, ordine, programmazione e impostazioni dei blocchi") },
+          pages: { label: tr("Subpages", "Sottopagine"), description: tr("Page slugs, descriptions and their blocks", "Slug, descrizioni e blocchi delle sottopagine") },
           theme: { label: tr("Theme & appearance", "Tema e aspetto"), description: tr("Colors, typography, cards and background", "Colori, tipografia, card e sfondo") },
           menu: { label: tr("Venue menu", "Menu del locale"), description: tr("Menu identity, sections, products and appearance", "Identità, sezioni, prodotti e aspetto del menu") },
           privacy: { label: tr("Privacy & consent", "Privacy e consenso"), description: tr("Cookie banner and consent preferences", "Banner cookie e preferenze del consenso") },

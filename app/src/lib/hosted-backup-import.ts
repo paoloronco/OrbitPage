@@ -5,6 +5,7 @@ const MANAGED_BACKUP_FORMAT = 'orbitpage-managed-page';
 export const BACKUP_SECTION_IDS = [
   'profile',
   'links',
+  'pages',
   'theme',
   'menu',
   'privacy',
@@ -13,7 +14,7 @@ export const BACKUP_SECTION_IDS = [
   'media',
 ] as const;
 const LEGACY_MANAGED_BACKUP_SECTION_IDS = ['profile', 'links', 'theme', 'privacy'] as const;
-export const MANAGED_BACKUP_SECTION_IDS = [...LEGACY_MANAGED_BACKUP_SECTION_IDS, 'menu', 'discovery'] as const;
+export const MANAGED_BACKUP_SECTION_IDS = [...LEGACY_MANAGED_BACKUP_SECTION_IDS, 'pages', 'menu', 'discovery'] as const;
 export type BackupSectionId = typeof BACKUP_SECTION_IDS[number];
 const ALLOWED_MEDIA_TYPES = new Set([
   'image/gif',

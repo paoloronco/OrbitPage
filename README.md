@@ -51,6 +51,9 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 
 ### Page building
 
+- Main page plus organized subpages with a unique slug, title, description and independent block collection
+- Stable editor routes such as `/dashboard/pages` and public subpage routes such as `/services`
+
 - Link cards, text blocks, headings, separators, images, and native video
 - Social rows, contact details, maps, events with timezone-aware countdowns, callouts, and consent-aware embeds
 - Native venue menus with sections, one-level subsections, products, variants, images, and availability controls

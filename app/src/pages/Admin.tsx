@@ -7,7 +7,7 @@ import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, workspaceBootstrapApi } from "@/lib/api-client";
+import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, workspaceBootstrapApi, type SubpageItem } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
@@ -24,6 +24,7 @@ import {
   isAdminSectionMessage,
   type AdminTab,
 } from "@/lib/admin-navigation";
+import type { EditorSubpage } from "@/components/SubpageManager";
 
 interface ProfileData {
   name: string;
@@ -87,6 +88,7 @@ const Admin = () => {
 
   // Start with no links shown until we fetch them from the server
   const [links, setLinks] = useState<LinkData[]>([]);
+  const [subpages, setSubpages] = useState<EditorSubpage[]>([]);
 
   const [theme, setTheme] = useState<ThemeConfig>(defaultTheme);
   const [menu, setMenu] = useState<MenuCatalog>(() => createDefaultMenu());
@@ -196,9 +198,9 @@ const Admin = () => {
     const loadData = async () => {
       try {
         const bootstrap = isSaasMode() ? await workspaceBootstrapApi.get() : null;
-        const [profileData, linksData, themeData, menuData] = bootstrap
-          ? [bootstrap.profile, bootstrap.links, bootstrap.theme, bootstrap.menu]
-          : await Promise.all([profileApi.get(), linksApi.get(), themeApi.get(), menuApi.get()]);
+        const [profileData, linksData, subpagesData, themeData, menuData] = bootstrap
+          ? [bootstrap.profile, bootstrap.links, bootstrap.subpages || [], bootstrap.theme, bootstrap.menu]
+          : await Promise.all([profileApi.get(), linksApi.get(), subpagesApi.get(), themeApi.get(), menuApi.get()]);
 
         if (bootstrap) {
           setSaasPlan(bootstrap.plan || null);
@@ -236,6 +238,10 @@ const Admin = () => {
         if (linksData && linksData.length > 0) {
           setLinks(normalizeLinkDtos(linksData));
         }
+        setSubpages((subpagesData || []).map((page) => ({
+          ...page,
+          links: normalizeLinkDtos(page.links || []),
+        })));
 
         if (themeData) {
           const loadedTheme = normalizeTheme(themeData);
@@ -405,6 +411,22 @@ const Admin = () => {
     }
   };
 
+  const saveSubpages = async (nextSubpages: EditorSubpage[]) => {
+    try {
+      const response = await subpagesApi.update(nextSubpages as SubpageItem[]);
+      const saved = response.data || await subpagesApi.get();
+      setSubpages(saved.map((page) => ({ ...page, links: normalizeLinkDtos(page.links || []) })));
+    } catch (error: any) {
+      if (error?.message === 'AUTH_EXPIRED') setIsLoggedIn(false);
+      toast({
+        title: 'Error saving pages',
+        description: error?.message || 'The page could not be saved. Please try again.',
+        variant: 'destructive',
+      });
+      throw error instanceof Error ? error : new Error('The page could not be saved.');
+    }
+  };
+
   const saveMenu = async (newMenu: MenuCatalog) => {
     try {
       await menuApi.update(newMenu);
@@ -481,6 +503,7 @@ const Admin = () => {
     <AdminView
       profile={profile}
       links={links}
+      subpages={subpages}
       theme={theme}
       menu={menu}
       currentUser={currentUser}
@@ -489,6 +512,7 @@ const Admin = () => {
       saasBilling={saasBilling}
       onProfileUpdate={saveProfile}
       onLinksUpdate={saveLinks}
+      onSubpagesUpdate={saveSubpages}
       onThemeChange={saveTheme}
       onMenuUpdate={saveMenu}
       onLogout={handleLogout}

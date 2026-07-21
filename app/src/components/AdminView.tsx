@@ -20,6 +20,7 @@ import {
   Database,
   ExternalLink,
   FileText,
+  Files,
   Globe2,
   HelpCircle,
   Key,
@@ -59,6 +60,7 @@ import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import { VersionHistory } from "./VersionHistory";
 import { ProfileQrCode } from "./ProfileQrCode";
+import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 
 interface ProfileData {
   name: string;
@@ -94,6 +96,7 @@ interface ProfileData {
 interface AdminViewProps {
   profile: ProfileData;
   links: LinkData[];
+  subpages?: EditorSubpage[];
   theme: ThemeConfig;
   menu?: MenuCatalog;
   currentUser: CurrentUser | null;
@@ -102,6 +105,7 @@ interface AdminViewProps {
   saasBilling?: SaasBillingContext | null;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
+  onSubpagesUpdate?: (pages: EditorSubpage[]) => Promise<void>;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onMenuUpdate: (menu: MenuCatalog) => Promise<void>;
   onLogout: () => void;
@@ -112,6 +116,7 @@ interface AdminViewProps {
 const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "profile", icon: User },
   { value: "links", icon: Link },
+  { value: "pages", icon: Files },
   { value: "theme", icon: Palette },
   { value: "menu", icon: UtensilsCrossed },
   { value: "qr", icon: QrCode },
@@ -134,6 +139,7 @@ const ctaActionLabels: Record<string, string> = {
 export const AdminView = ({
   profile,
   links,
+  subpages = [],
   theme,
   menu = createDefaultMenu(),
   currentUser,
@@ -142,6 +148,7 @@ export const AdminView = ({
   saasBilling,
   onProfileUpdate,
   onLinksUpdate,
+  onSubpagesUpdate = async () => undefined,
   onThemeChange,
   onMenuUpdate,
   onLogout,
@@ -150,7 +157,7 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: tr("Page", "Pagina"), links: "Links", theme: tr("Theme", "Tema"), menu: "Menu", qr: "QR",
+    profile: tr("Page", "Pagina"), links: "Links", pages: tr("Pages", "Pagine"), theme: tr("Theme", "Tema"), menu: "Menu", qr: "QR",
     access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy", txt: "TXT", sitemap: "Sitemap",
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
@@ -208,6 +215,7 @@ export const AdminView = ({
     switch (tab.value) {
       case 'profile':   return canEditProfile;
       case 'links':     return canEditLinks;
+      case 'pages':     return canEditLinks;
       case 'theme':     return canEditTheme;
       case 'menu':      return canEditMenu;
       case 'qr':        return canEditProfile;
@@ -477,6 +485,33 @@ export const AdminView = ({
                 />
               </aside>
             </div>
+          </TabsContent>
+
+          <TabsContent value="pages" className="admin-tab-content">
+            <SubpageManager
+              pages={subpages}
+              theme={theme}
+              publicPageHref={publicPageHref}
+              onPagesUpdate={onSubpagesUpdate}
+              editMode={linkEditMode}
+              maxPages={entitlements?.pages}
+              maxBlocks={entitlements?.maxBlocks}
+              planName={saasPlan?.name}
+              schedulingEnabled={entitlements?.scheduling ?? true}
+              videoUploadsEnabled={entitlements?.videoUploads ?? true}
+              maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
+              managePlanHref={managePlanHref}
+              renderPreview={(page, pageLinks) => (
+                <PreviewPanel
+                  title={tr("Subpage preview", "Anteprima sottopagina")}
+                  profile={{ ...profile, name: page.title, bio: page.description }}
+                  links={pageLinks}
+                  theme={theme}
+                  publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${page.slug}`}
+                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                />
+              )}
+            />
           </TabsContent>
 
           <TabsContent value="theme" className="admin-tab-content">

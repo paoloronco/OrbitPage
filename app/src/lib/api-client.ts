@@ -1,4 +1,4 @@
-import { apiPath } from './base-path';
+import { apiPath, getActiveBasePath } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 
 // --- Secure token storage (AES-GCM via Web Crypto with sessionStorage fallback) ---
@@ -376,9 +376,21 @@ export interface PublicPageResponse {
   };
 }
 
+export interface SubpageItem {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  links: LinkItem[];
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface WorkspaceBootstrapResponse {
   profile: ProfileResponse;
   links: LinkItem[];
+  subpages?: SubpageItem[];
   theme: Record<string, any>;
   menu?: import('./menu').MenuCatalog;
   consentConfig?: Record<string, any>;
@@ -453,7 +465,15 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
 // Public page API
 export const publicPageApi = {
   get: async (): Promise<PublicPageResponse> => {
-    return apiRequest<PublicPageResponse>('/public-page');
+    let endpoint = '/public-page';
+    if (typeof window !== 'undefined' && !window.__ORBITPAGE_STATIC_SNAPSHOT__) {
+      const basePath = getActiveBasePath();
+      const relativePath = window.location.pathname.slice(basePath.length).replace(/^\/+|\/+$/g, '');
+      if (relativePath && !['about', 'cookies', 'privacy', 'menu'].includes(relativePath) && !relativePath.includes('/')) {
+        endpoint += `?subpage=${encodeURIComponent(relativePath)}`;
+      }
+    }
+    return apiRequest<PublicPageResponse>(endpoint);
   },
 };
 
@@ -884,6 +904,16 @@ export const uploadApi = {
     onProgress?: (percentage: number) => void,
   ): Promise<{ filePath: string; fullUrl: string; fileName: string }> => (
     uploadVideoWithDirectFallback(file, slot, 'upload', onProgress)
+  ),
+};
+
+export const subpagesApi = {
+  get: async (): Promise<SubpageItem[]> => apiRequest<SubpageItem[]>('/subpages'),
+  update: async (subpages: SubpageItem[]): Promise<ApiResponse & { data?: SubpageItem[] }> => (
+    apiRequest<ApiResponse & { data?: SubpageItem[] }>('/subpages', {
+      method: 'PUT',
+      body: JSON.stringify(subpages),
+    })
   ),
 };
 

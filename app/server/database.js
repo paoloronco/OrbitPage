@@ -220,6 +220,16 @@ export const initializeDatabase = () => {
         if (err) console.error('Error creating menu_config table:', err);
       });
 
+      db.run(`
+        CREATE TABLE IF NOT EXISTS subpages_config (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          full_config TEXT NOT NULL,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) console.error('Error creating subpages_config table:', err);
+      });
+
       // Theme configuration table
       db.run(`
         CREATE TABLE IF NOT EXISTS theme_config (

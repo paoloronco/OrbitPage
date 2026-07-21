@@ -63,7 +63,7 @@ try {
 const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'cookie_consent_config', 'text_files', 'sitemap_config'];
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'cookie_consent_config', 'text_files', 'sitemap_config'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -73,6 +73,26 @@ const videoUploadLimitBytes = getVideoUploadLimitBytes(process.env);
 
 const getZodErrorMessage = (error) =>
   error instanceof z.ZodError ? (error.issues[0]?.message || 'Invalid request body') : null;
+
+const RESERVED_SUBPAGE_SLUGS = new Set(['admin', 'api', 'assets', 'cookies', 'dashboard', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots.txt', 'sitemap.xml', 'support', 'terms', 'www']);
+const SubpageSchema = z.object({
+  id: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
+  slug: z.string().min(1).max(48).regex(/^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/)
+    .refine((slug) => !RESERVED_SUBPAGE_SLUGS.has(slug), 'This page slug is reserved.'),
+  title: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(240).default(''),
+  links: z.array(LinkSchema).max(150).default([]),
+  enabled: z.boolean().default(true),
+  createdAt: z.string().datetime().optional(),
+  updatedAt: z.string().datetime().optional(),
+}).strict();
+const SubpagesPayloadSchema = z.array(SubpageSchema).max(20).superRefine((pages, context) => {
+  const seen = new Set();
+  pages.forEach((page, index) => {
+    if (seen.has(page.slug)) context.addIssue({ code: z.ZodIssueCode.custom, path: [index, 'slug'], message: 'Page slugs must be unique.' });
+    seen.add(page.slug);
+  });
+});
 
 function safeJsonParse(jsonString, defaultValue = {}) {
   try {
@@ -1821,6 +1841,47 @@ async function getMenuPayload() {
   }
 }
 
+async function getSubpagesPayload() {
+  const row = await dbGet('SELECT full_config FROM subpages_config WHERE id = 1');
+  if (!row?.full_config) return [];
+  try {
+    return SubpagesPayloadSchema.parse(JSON.parse(row.full_config));
+  } catch {
+    return [];
+  }
+}
+
+app.get('/api/subpages', async (_req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    res.json(await getSubpagesPayload());
+  } catch (error) {
+    console.error('Error loading subpages:', error);
+    res.status(500).json({ error: 'Failed to load pages' });
+  }
+});
+
+app.put('/api/subpages', authenticateToken, requirePermission('links:write'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Page changes are disabled in demo mode.' });
+  try {
+    const now = new Date().toISOString();
+    const pages = SubpagesPayloadSchema.parse(req.body).map((page) => ({
+      ...page,
+      createdAt: page.createdAt || now,
+      updatedAt: now,
+    }));
+    await dbRun(
+      `INSERT INTO subpages_config (id, full_config, updated_at)
+       VALUES (1, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(id) DO UPDATE SET full_config = excluded.full_config, updated_at = CURRENT_TIMESTAMP`,
+      [JSON.stringify(pages)]
+    );
+    res.json({ success: true, data: pages });
+  } catch (error) {
+    res.status(400).json({ error: getZodErrorMessage(error) || error.message || 'Invalid pages' });
+  }
+});
+
 app.get('/api/menu', async (_req, res) => {
   try {
     setNoStoreHeaders(res);
@@ -1852,14 +1913,22 @@ app.get('/api/public-page', async (req, res) => {
   try {
     setNoStoreHeaders(res);
 
-    const [profile, links, theme, menu] = await Promise.all([
+    const [profile, links, theme, menu, subpages] = await Promise.all([
       getPublicProfilePayload(),
       getPublicLinksPayload(),
       getPublicThemePayload(),
       getMenuPayload(),
+      getSubpagesPayload(),
     ]);
-
-    res.json({ profile, links, theme, menu });
+    const requestedSubpage = typeof req.query.subpage === 'string' ? req.query.subpage.trim().toLowerCase() : '';
+    const subpage = requestedSubpage ? subpages.find((page) => page.enabled && page.slug === requestedSubpage) : null;
+    if (requestedSubpage && !subpage) return res.status(404).json({ error: 'Page not found' });
+    res.json(subpage ? {
+      profile: { ...profile, name: subpage.title, bio: subpage.description, tab_title: subpage.title, meta_description: subpage.description },
+      links: subpage.links,
+      theme,
+      menu,
+    } : { profile, links, theme, menu });
   } catch (error) {
     console.error('Error loading public page payload:', error);
     res.status(500).json({ error: 'Failed to load public page' });
@@ -3781,9 +3850,18 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, requirePermission(
 });
 
 // Catch-all route for SPA
-app.get('*', spaLimiter, (req, res) => {
+app.get('*', spaLimiter, async (req, res) => {
   console.log(`SPA catch-all serving index.html for: ${req.path}`);
-  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) ? 200 : 404;
+  let isConfiguredSubpage = false;
+  if (/^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path)) {
+    try {
+      const slug = req.path.slice(1);
+      isConfiguredSubpage = (await getSubpagesPayload()).some((page) => page.enabled && page.slug === slug);
+    } catch {
+      isConfiguredSubpage = false;
+    }
+  }
+  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) || isConfiguredSubpage ? 200 : 404;
   serveSpaIndex(req, res, { statusCode });
 });
 

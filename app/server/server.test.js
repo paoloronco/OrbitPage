@@ -137,6 +137,33 @@ describe('API Endpoints', () => {
     });
   });
 
+  it('persists and reloads isolated public subpages', async () => {
+    const page = {
+      id: 'services-page', slug: 'services', title: 'Services', description: 'What we do', links: [], enabled: true,
+      createdAt: '2026-07-21T08:00:00.000Z', updatedAt: '2026-07-21T08:00:00.000Z',
+    };
+    const saved = await request(app).put('/orbitpage/api/subpages').send([page]);
+    expect(saved.status).toBe(200);
+    expect(saved.body.data[0].slug).toBe('services');
+    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('subpages_config'), [expect.any(String)]);
+
+    vi.mocked(dbGet).mockResolvedValueOnce({ full_config: JSON.stringify([page]) });
+    const loaded = await request(app).get('/orbitpage/api/subpages');
+    expect(loaded.status).toBe(200);
+    expect(loaded.body).toEqual([page]);
+  });
+
+  it('rejects duplicate or reserved subpage slugs', async () => {
+    const base = { id: 'one', title: 'Page', description: '', links: [], enabled: true };
+    const reserved = await request(app).put('/orbitpage/api/subpages').send([{ ...base, slug: 'admin' }]);
+    expect(reserved.status).toBe(400);
+    const duplicate = await request(app).put('/orbitpage/api/subpages').send([
+      { ...base, slug: 'events' },
+      { ...base, id: 'two', slug: 'events' },
+    ]);
+    expect(duplicate.status).toBe(400);
+  });
+
   it('GET /api/admin/backup forwards an explicit section selection', async () => {
     vi.mocked(createApplicationBackup).mockResolvedValueOnce({
       schemaVersion: 2,
