@@ -6,7 +6,7 @@ test.describe('OrbitPage Application Flow', () => {
     await openAuthenticatedAdmin(page);
     
     // Selezioniamo esplicitamente la scheda "Page" per gestire stati di inizializzazione transitori
-    const profileTabTrigger = page.getByRole('tab', { name: 'Page', exact: true });
+    const profileTabTrigger = page.getByRole('button', { name: 'Page', exact: true });
     await expect(profileTabTrigger).toBeVisible();
     await profileTabTrigger.click();
     
@@ -25,7 +25,7 @@ test.describe('OrbitPage Application Flow', () => {
     if (await saveProfileButton.isEnabled()) await saveProfileButton.click();
 
     // 3. Spostiamoci sulla scheda "Links" e aggiungiamo un link pubblico
-    const linksTabTrigger = page.getByRole('tab', { name: 'Links' });
+    const linksTabTrigger = page.getByRole('button', { name: 'Links', exact: true });
     await expect(linksTabTrigger).toBeVisible();
     await linksTabTrigger.click();
 

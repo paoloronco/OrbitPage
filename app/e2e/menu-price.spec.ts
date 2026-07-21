@@ -3,7 +3,7 @@ import { openAuthenticatedAdmin } from './helpers';
 
 test('accepts localized menu prices without rewriting the field while typing', async ({ page }) => {
   await openAuthenticatedAdmin(page);
-  await page.getByRole('tab', { name: 'Menu' }).click();
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
 
   const price = page.getByRole('textbox', { name: 'Product price' }).first();
   const addFirstProduct = page.getByRole('button', { name: 'Add the first product' });

@@ -50,7 +50,7 @@ export default defineConfig({
   webServer: {
     // Usiamo cross-env per compatibilità Windows/Linux
     // Impostiamo una porta dedicata (3123) e una cartella dati isolata (e2e-data)
-    command: `npx cross-env PORT=3123 DATA_DIR="${e2eDataDir}" JWT_SECRET=e2e-test-secret-key-9876543210 npm run start`,
+    command: `npx cross-env PORT=3123 DATA_DIR="${e2eDataDir}" JWT_SECRET=e2e-test-secret-key-0123456789abcdef0123456789abcdef npm run start`,
     url: 'http://localhost:3123',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
