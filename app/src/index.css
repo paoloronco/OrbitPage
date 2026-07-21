@@ -324,33 +324,33 @@
   }
 
   .orbitpage-admin {
-    --background: 210 40% 98%;
+    --background: 225 17% 97%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 45%;
+    --primary: 225 71% 49%;
     --primary-foreground: 210 40% 98%;
-    --primary-glow: 200 94% 48%;
-    --secondary: 210 40% 96%;
+    --primary-glow: 220 76% 58%;
+    --secondary: 225 16% 95%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
+    --muted: 225 16% 95%;
     --muted-foreground: 215 16% 47%;
-    --accent: 160 84% 39%;
-    --accent-foreground: 164 100% 10%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 45%;
+    --accent: 225 71% 49%;
+    --accent-foreground: 210 40% 98%;
+    --border: 220 16% 88%;
+    --input: 220 16% 88%;
+    --ring: 225 71% 49%;
     --radius: 8px;
     --glass-bg: rgb(255 255 255 / 0.98);
     --glass-border: 1px solid rgb(216 225 237);
     --card-glow: 0 8px 22px rgb(15 23 42 / 0.06);
-    --gradient-primary: linear-gradient(135deg, #155eef, #0f76d8);
-    --gradient-card: linear-gradient(180deg, #ffffff, #fbfdff);
+    --gradient-primary: linear-gradient(135deg, #2454d6, #3469df);
+    --gradient-card: linear-gradient(180deg, #ffffff, #fcfcfd);
     --card-spacing: 12px;
     color: rgb(15 23 42);
-    background: #f3f6fb;
+    background: #f6f7fa;
     font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
   }
 
@@ -537,7 +537,7 @@
     display: grid;
     grid-template-columns: 260px minmax(0, 1fr);
     min-height: 100vh;
-    background: #f3f6fb;
+    background: #f6f7fa;
     transition: grid-template-columns 180ms ease;
   }
 
@@ -618,7 +618,7 @@
   .admin-dashboard-collapse:hover,
   .admin-dashboard-collapse:focus-visible {
     border-color: rgb(216 225 237);
-    background: #eef2f7;
+    background: #eef0f5;
     color: #0f172a;
     outline: none;
   }
@@ -654,12 +654,12 @@
 
   .admin-dashboard-nav-item:hover,
   .admin-dashboard-nav-item.active {
-    background: #e9eef6;
-    color: #0f172a;
+    background: #edf2ff;
+    color: #1b43b4;
   }
 
   .admin-dashboard-nav-item.active {
-    box-shadow: inset 3px 0 0 #155eef;
+    box-shadow: inset 3px 0 0 #2454d6;
   }
 
   .admin-dashboard-nav-icon {
@@ -668,7 +668,7 @@
   }
 
   .admin-dashboard-nav-item.active .admin-dashboard-nav-icon {
-    color: #155eef;
+    color: #2454d6;
   }
 
   .admin-dashboard-sidebar-footer {
@@ -729,7 +729,7 @@
 
   .admin-dashboard-kicker {
     margin: 0 0 5px;
-    color: #0f766e;
+    color: #1b43b4;
     font-size: 11px;
     font-weight: 850;
     letter-spacing: 0.04em;
@@ -1994,7 +1994,7 @@
     height: 8px;
     right: 28px;
     top: 42px;
-    background: #0f9f8f;
+    background: #2454d6;
   }
 
   .admin-onboarding-orbit span:nth-child(3) {
@@ -2198,7 +2198,7 @@
 
   .admin-onboarding-focus-card li svg {
     margin-top: 2px;
-    color: #0f9f8f;
+    color: #2454d6;
   }
 
   .admin-onboarding-progress {
@@ -2213,7 +2213,7 @@
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #155eef, #0f9f8f);
+    background: #2454d6;
     transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -2298,7 +2298,7 @@
     width: 32px;
     height: 32px;
     border-radius: 999px;
-    background: linear-gradient(135deg, #155eef, #0f9f8f);
+    background: #2454d6;
   }
 
   .admin-onboarding-visual-profile .line,
@@ -2406,7 +2406,7 @@
   }
 
   .admin-onboarding-visual-theme .green {
-    background: #0f9f8f;
+    background: #2454d6;
   }
 
   .admin-onboarding-visual-theme .ink {
@@ -2446,7 +2446,7 @@
     width: 42px;
     height: 2px;
     margin-left: 12px;
-    background: #0f9f8f;
+    background: #2454d6;
   }
 
   .admin-onboarding-visual-public .arrow::after {
@@ -2456,8 +2456,8 @@
     height: 10px;
     margin-left: 32px;
     margin-top: -4px;
-    border-right: 2px solid #0f9f8f;
-    border-top: 2px solid #0f9f8f;
+    border-right: 2px solid #2454d6;
+    border-top: 2px solid #2454d6;
     transform: rotate(45deg);
   }
 
