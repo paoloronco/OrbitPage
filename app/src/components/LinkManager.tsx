@@ -1,7 +1,10 @@
-import { type CSSProperties, useEffect, useRef, useState } from "react";
+import { type ComponentType, type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, Film, Image, Link, List, LockKeyhole, Minus, MapPin, MousePointerClick, Palette, Plus, Share2, Save, Tag, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
+import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, Tag, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
@@ -31,6 +34,25 @@ interface LinkManagerProps {
   availablePages?: Array<{ title: string; url: string }>;
 }
 
+type BlockLibraryCategoryId = "essential" | "structure" | "media" | "engagement";
+
+interface BlockLibraryItem {
+  id: string;
+  title: string;
+  description: string;
+  keywords: string;
+  icon: ComponentType<{ className?: string }>;
+  onSelect: () => void;
+  badge?: string;
+  restricted?: boolean;
+}
+
+const normalizeBlockSearch = (value: string) => value
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .trim()
+  .toLowerCase();
+
 export const LinkManager = ({
   links,
   theme,
@@ -56,6 +78,8 @@ export const LinkManager = ({
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
   const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false);
+  const [blockLibrarySearch, setBlockLibrarySearch] = useState("");
+  const [blockLibraryCategory, setBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [linkHealth, setLinkHealth] = useState<ManagedLinkHealth['results']>([]);
@@ -604,6 +628,82 @@ export const LinkManager = ({
 
   const isFullEdit = editMode === 'full';
   const isViewOnly = editMode === 'view';
+  const hasCompactLinks = workingLinks.some((item) => item.type === "social_row");
+  const blockLibraryCategories: Array<{
+    id: BlockLibraryCategoryId;
+    label: string;
+    description: string;
+    icon: ComponentType<{ className?: string }>;
+    items: BlockLibraryItem[];
+  }> = [
+    {
+      id: "essential",
+      label: tr("Essentials", "Essenziali"),
+      description: tr("The blocks most pages start with.", "I blocchi da cui parte la maggior parte delle pagine."),
+      icon: LayoutGrid,
+      items: [
+        { id: "link", title: "Link", description: tr("A clear card for any destination.", "Una card chiara per qualsiasi destinazione."), keywords: "url website destination sito", icon: Link, onSelect: addNewLink },
+        { id: "compact-links", title: tr("Compact links", "Link compatti"), description: tr("Social profiles and page shortcuts.", "Profili social e collegamenti alle pagine."), keywords: "social icons instagram facebook shortcut icone", icon: Share2, onSelect: addNewSocialRow, badge: hasCompactLinks ? tr("Added", "Aggiunto") : undefined, restricted: hasCompactLinks },
+        { id: "contact", title: tr("Contact", "Contatto"), description: tr("Phone, email and useful contact details.", "Telefono, email e contatti utili."), keywords: "phone email whatsapp telefono contatti", icon: UserCircle2, onSelect: addNewContact },
+        { id: "cta", title: "CTA", description: tr("A prominent action such as booking or buying.", "Un'azione in evidenza, come prenotare o acquistare."), keywords: "action booking buy prenota acquista button", icon: MousePointerClick, onSelect: addNewCta },
+      ],
+    },
+    {
+      id: "structure",
+      label: tr("Writing & structure", "Testo e struttura"),
+      description: tr("Organize information and make it easier to scan.", "Organizza le informazioni e rendile più facili da leggere."),
+      icon: FileText,
+      items: [
+        { id: "heading", title: tr("Heading", "Titolo"), description: tr("Introduce a new section of the page.", "Introduce una nuova sezione della pagina."), keywords: "title section heading titolo", icon: Type, onSelect: addNewHeading },
+        { id: "text", title: tr("Text", "Testo"), description: tr("Add freeform copy and longer descriptions.", "Aggiungi testo libero e descrizioni più lunghe."), keywords: "copy paragraph description testo paragrafo", icon: FileText, onSelect: addNewTextCard },
+        { id: "list", title: tr("List", "Elenco"), description: tr("Group short items into a readable list.", "Raggruppa elementi brevi in un elenco leggibile."), keywords: "list bullets items elenco punti", icon: List, onSelect: addNewBulletedList },
+        { id: "separator", title: tr("Separator", "Separatore"), description: tr("Create visual rhythm between sections.", "Crea ritmo visivo tra le sezioni."), keywords: "divider section label separatore divisore", icon: Minus, onSelect: addNewSeparator },
+      ],
+    },
+    {
+      id: "media",
+      label: tr("Media & embeds", "Media e incorporamenti"),
+      description: tr("Show visual content and external experiences.", "Mostra contenuti visivi ed esperienze esterne."),
+      icon: Image,
+      items: [
+        { id: "image", title: tr("Image", "Immagine"), description: tr("Add a photo or visual feature block.", "Aggiungi una foto o un blocco visivo."), keywords: "photo picture image foto immagine", icon: Image, onSelect: addNewImage },
+        { id: "video", title: "Video", description: videoUploadsEnabled ? "MP4 / WebM" : tr("Available on Pro.", "Disponibile con Pro."), keywords: "movie mp4 webm video", icon: Film, onSelect: addNewVideo, badge: !videoUploadsEnabled ? "Pro" : undefined, restricted: !videoUploadsEnabled },
+        { id: "embed", title: "Embed", description: tr("Video, music, booking and supported widgets.", "Video, musica, prenotazioni e widget supportati."), keywords: "youtube spotify booking widget iframe embed", icon: Code2, onSelect: addNewEmbed },
+        { id: "map", title: tr("Map", "Mappa"), description: tr("Show a place with a reliable map preview.", "Mostra un luogo con un'anteprima mappa affidabile."), keywords: "location maps address luogo indirizzo mappa", icon: MapPin, onSelect: addNewMap },
+      ],
+    },
+    {
+      id: "engagement",
+      label: tr("Engagement", "Coinvolgimento"),
+      description: tr("Promote timely offers, events and menus.", "Promuovi offerte, eventi e menu nel momento giusto."),
+      icon: CalendarClock,
+      items: [
+        { id: "event", title: tr("Event", "Evento"), description: tr("Feature a date, time and countdown.", "Metti in evidenza data, ora e conto alla rovescia."), keywords: "calendar countdown date evento calendario data", icon: CalendarClock, onSelect: addNewEvent },
+        { id: "callout", title: "Callout", description: tr("Highlight a promotion or important update.", "Evidenzia una promozione o un aggiornamento importante."), keywords: "promo offer update announcement offerta avviso", icon: Tag, onSelect: addNewCallout },
+        { id: "menu", title: "Menu", description: nativeMenuEnabled ? tr("Open the native food and drinks menu.", "Apri il menu nativo di cibi e bevande.") : tr("Available from Starter.", "Disponibile da Starter."), keywords: "restaurant bar food drinks ristorante cibo bevande", icon: nativeMenuEnabled ? UtensilsCrossed : LockKeyhole, onSelect: addNativeMenu, badge: !nativeMenuEnabled ? "Starter" : undefined, restricted: !nativeMenuEnabled },
+      ],
+    },
+  ];
+  const normalizedBlockSearch = normalizeBlockSearch(blockLibrarySearch);
+  const visibleBlockLibraryCategories = blockLibraryCategories
+    .filter((category) => blockLibraryCategory === "all" || category.id === blockLibraryCategory)
+    .map((category) => ({
+      ...category,
+      items: category.items.filter((item) => normalizeBlockSearch([
+        item.title,
+        item.description,
+        item.keywords,
+        category.label,
+      ].join(" ")).includes(normalizedBlockSearch)),
+    }))
+    .filter((category) => category.items.length > 0);
+  const visibleBlockCount = visibleBlockLibraryCategories.reduce((total, category) => total + category.items.length, 0);
+
+  const openBlockLibrary = () => {
+    setBlockLibrarySearch("");
+    setBlockLibraryCategory("all");
+    setIsBlockLibraryOpen(true);
+  };
 
   return (
     <div className="admin-link-manager">
@@ -640,7 +740,7 @@ export const LinkManager = ({
         <div className="admin-link-actions">
           {isFullEdit && (
             <Button
-              onClick={() => setIsBlockLibraryOpen((open) => !open)}
+              onClick={openBlockLibrary}
               variant="outline"
               className="admin-action"
               disabled={atBlockLimit}
@@ -648,7 +748,7 @@ export const LinkManager = ({
               aria-controls="admin-block-library"
             >
               <Plus className="h-4 w-4" />
-              {isBlockLibraryOpen ? tr("Close library", "Chiudi libreria") : tr("Add block", "Aggiungi blocco")}
+              {tr("Add content", "Aggiungi contenuto")}
             </Button>
           )}
           {!isViewOnly && (
@@ -676,187 +776,135 @@ export const LinkManager = ({
         </div>
       )}
 
-      {isFullEdit && isBlockLibraryOpen && (
-        <>
-          <button
-            type="button"
-            className="admin-block-library-backdrop"
-            aria-label={tr("Close block library", "Chiudi libreria blocchi")}
-            onClick={() => setIsBlockLibraryOpen(false)}
-          />
-          <section id="admin-block-library" className="admin-block-library" data-onboarding="link-add-grid">
-            <div className="admin-block-library-heading mb-3">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">{tr("Block library", "Libreria blocchi")}</p>
-                <h3 className="mt-1 text-sm font-semibold text-slate-950">{tr("Add content", "Aggiungi contenuto")}</h3>
-                <p className="mt-1 text-xs leading-5 text-slate-500">{tr("Choose a block to append it to the public page.", "Scegli un blocco da aggiungere alla pagina pubblica.")}</p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="admin-block-library-close"
-                onClick={() => setIsBlockLibraryOpen(false)}
-                aria-label={tr("Close block library", "Chiudi libreria blocchi")}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="admin-add-grid">
-          <Button onClick={addNewLink} className="admin-add-card">
-            <span className="admin-add-icon">
-              <Link className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">Link</span>
-              <span className="block text-xs opacity-70">{tr("URL card", "Card URL")}</span>
-            </span>
-          </Button>
-          <Button
-            onClick={addNativeMenu}
-            variant="outline"
-            className="admin-add-card"
-            aria-disabled={!nativeMenuEnabled}
-            title={!nativeMenuEnabled
-              ? tr("Native menus require Starter", "I menu nativi richiedono Starter")
-              : tr("Add a ready-made card for your menu", "Aggiungi una card pronta per il tuo menu")}
+      {isFullEdit && (
+        <Dialog open={isBlockLibraryOpen} onOpenChange={setIsBlockLibraryOpen}>
+          <DialogContent
+            id="admin-block-library"
+            className="admin-block-library-dialog"
+            overlayClassName="admin-block-library-overlay"
+            data-onboarding="link-add-grid"
           >
-            <span className="admin-add-icon">
-              {nativeMenuEnabled ? <UtensilsCrossed className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
-            </span>
-            <span>
-              <span className="block font-semibold">Menu</span>
-              <span className="block text-xs opacity-70">{nativeMenuEnabled ? tr("Native menu card", "Card menu nativa") : tr("Starter feature", "Funzione Starter")}</span>
-            </span>
-          </Button>
-            <Button onClick={addNewCta} variant="outline" className="admin-add-card">
-              <span className="admin-add-icon">
-                <MousePointerClick className="h-4 w-4" />
-              </span>
-              <span>
-                <span className="block font-semibold">CTA</span>
-                <span className="block text-xs opacity-70">{tr("Smart action", "Azione intelligente")}</span>
-              </span>
-            </Button>
-          <Button onClick={addNewHeading} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <Type className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Heading", "Titolo")}</span>
-              <span className="block text-xs opacity-70">{tr("Section title", "Titolo sezione")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewImage} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <Image className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Image", "Immagine")}</span>
-              <span className="block text-xs opacity-70">{tr("Photo block", "Blocco immagine")}</span>
-            </span>
-          </Button>
-          <Button
-            onClick={addNewVideo}
-            variant="outline"
-            className="admin-add-card"
-            aria-disabled={!videoUploadsEnabled}
-            title={!videoUploadsEnabled ? tr("Video blocks require Pro", "I blocchi video richiedono Pro") : tr("Upload an MP4 or WebM video", "Carica un video MP4 o WebM")}
-          >
-            <span className="admin-add-icon">
-              {videoUploadsEnabled ? <Film className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
-            </span>
-            <span>
-              <span className="block font-semibold">Video</span>
-              <span className="block text-xs opacity-70">{videoUploadsEnabled ? "MP4 / WebM" : tr("Pro feature", "Funzione Pro")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewContact} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <UserCircle2 className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Contact", "Contatto")}</span>
-              <span className="block text-xs opacity-70">{tr("Contact details", "Dettagli di contatto")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewSocialRow} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <Share2 className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Compact links", "Link compatti")}</span>
-              <span className="block text-xs opacity-70">{tr("Pages and social icons", "Pagine e icone social")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewCallout} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <Tag className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">Callout</span>
-              <span className="block text-xs opacity-70">{tr("Promo block", "Blocco promozionale")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewMap} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <MapPin className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Map", "Mappa")}</span>
-              <span className="block text-xs opacity-70">{tr("Location block", "Blocco posizione")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewEvent} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <CalendarClock className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Event", "Evento")}</span>
-              <span className="block text-xs opacity-70">{tr("Calendar row", "Riga calendario")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewEmbed} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <Code2 className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">Embed</span>
-              <span className="block text-xs opacity-70">{tr("Video, music, booking...", "Video, musica, prenotazioni...")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewBulletedList} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <List className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("List", "Elenco")}</span>
-              <span className="block text-xs opacity-70">{tr("Grouped items", "Elementi raggruppati")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewTextCard} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <Type className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Text", "Testo")}</span>
-              <span className="block text-xs opacity-70">{tr("Freeform copy", "Testo libero")}</span>
-            </span>
-          </Button>
-          <Button onClick={addNewSeparator} variant="outline" className="admin-add-card">
-            <span className="admin-add-icon">
-              <Minus className="h-4 w-4" />
-            </span>
-            <span>
-              <span className="block font-semibold">{tr("Separator", "Separatore")}</span>
-              <span className="block text-xs opacity-70">{tr("Section label", "Etichetta sezione")}</span>
-            </span>
-          </Button>
-            </div>
-          </section>
-        </>
-      )}
+            <DialogHeader className="admin-block-library-dialog-header">
+              <p className="admin-block-library-kicker">{tr("Block library", "Libreria blocchi")}</p>
+              <DialogTitle>{tr("Add content", "Aggiungi contenuto")}</DialogTitle>
+              <DialogDescription>
+                {tr(
+                  "Find the right block, then add it to your public page.",
+                  "Trova il blocco giusto e aggiungilo alla pagina pubblica."
+                )}
+              </DialogDescription>
+            </DialogHeader>
 
+            <div className="admin-block-library-search">
+              <Search className="h-4 w-4" aria-hidden="true" />
+              <Input
+                autoFocus
+                value={blockLibrarySearch}
+                onChange={(event) => setBlockLibrarySearch(event.target.value)}
+                placeholder={tr("Search blocks", "Cerca blocchi")}
+                aria-label={tr("Search blocks", "Cerca blocchi")}
+              />
+            </div>
+
+            <div className="admin-block-library-body">
+              <nav className="admin-block-library-filters" aria-label={tr("Block categories", "Categorie dei blocchi")}>
+                <button
+                  type="button"
+                  className={blockLibraryCategory === "all" ? "is-active" : ""}
+                  onClick={() => setBlockLibraryCategory("all")}
+                  aria-pressed={blockLibraryCategory === "all"}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span>{tr("All blocks", "Tutti i blocchi")}</span>
+                  <small>{blockLibraryCategories.reduce((total, category) => total + category.items.length, 0)}</small>
+                </button>
+                {blockLibraryCategories.map((category) => {
+                  const CategoryIcon = category.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={category.id}
+                      className={blockLibraryCategory === category.id ? "is-active" : ""}
+                      onClick={() => setBlockLibraryCategory(category.id)}
+                      aria-pressed={blockLibraryCategory === category.id}
+                    >
+                      <CategoryIcon className="h-4 w-4" />
+                      <span>{category.label}</span>
+                      <small>{category.items.length}</small>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <div className="admin-block-library-results">
+                <div className="admin-block-library-results-heading">
+                  <span>{visibleBlockCount} {tr(visibleBlockCount === 1 ? "block" : "blocks", visibleBlockCount === 1 ? "blocco" : "blocchi")}</span>
+                  {normalizedBlockSearch && (
+                    <button type="button" onClick={() => setBlockLibrarySearch("")}>
+                      {tr("Clear search", "Cancella ricerca")}
+                    </button>
+                  )}
+                </div>
+
+                <ScrollArea className="admin-block-library-scroll">
+                  <div className="admin-block-library-sections">
+                    {visibleBlockLibraryCategories.map((category) => {
+                      const CategoryIcon = category.icon;
+                      return (
+                        <section key={category.id} className="admin-block-category">
+                          <div className="admin-block-category-heading">
+                            <span className="admin-block-category-icon"><CategoryIcon className="h-4 w-4" /></span>
+                            <div>
+                              <h3>{category.label}</h3>
+                              <p>{category.description}</p>
+                            </div>
+                          </div>
+                          <div className="admin-block-category-grid">
+                            {category.items.map((item) => {
+                              const ItemIcon = item.icon;
+                              return (
+                                <button
+                                  type="button"
+                                  key={item.id}
+                                  className="admin-block-library-item"
+                                  onClick={item.onSelect}
+                                  aria-disabled={item.restricted || undefined}
+                                >
+                                  <span className="admin-block-library-item-icon">
+                                    <ItemIcon className="h-5 w-5" />
+                                  </span>
+                                  <span className="admin-block-library-item-copy">
+                                    <strong>{item.title}</strong>
+                                    <small>{item.description}</small>
+                                  </span>
+                                  {item.badge && <span className="admin-block-library-item-badge">{item.badge}</span>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      );
+                    })}
+                    {visibleBlockCount === 0 && (
+                      <div className="admin-block-library-empty">
+                        <Search className="h-5 w-5" />
+                        <strong>{tr("No blocks found", "Nessun blocco trovato")}</strong>
+                        <p>{tr("Try a different word or choose another category.", "Prova un'altra parola o scegli una categoria diversa.")}</p>
+                        <button type="button" onClick={() => {
+                          setBlockLibrarySearch("");
+                          setBlockLibraryCategory("all");
+                        }}>
+                          {tr("Show all blocks", "Mostra tutti i blocchi")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
       {workingLinks.length === 0 ? (
         <Card className="admin-empty-state">
             <div className="space-y-4">

@@ -7,7 +7,7 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   let dockCard = page.locator('[data-link-id]').filter({ has: page.locator('.public-compact-links') });
   if (await dockCard.count() === 0) {
-    await page.getByRole('button', { name: 'Add block' }).click();
+    await page.getByRole('button', { name: 'Add content' }).click();
     await page.getByRole('button', { name: /Compact links/ }).click();
     dockCard = page.locator('[data-link-id]').filter({ has: page.locator('.public-compact-links') });
   }

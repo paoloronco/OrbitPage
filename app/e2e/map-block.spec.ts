@@ -16,7 +16,7 @@ test('uses the dedicated Maps URL without asking for a generic card destination'
   await openAuthenticatedAdmin(page);
 
   await page.getByRole('button', { name: 'Content', exact: true }).click();
-  await page.getByRole('button', { name: 'Add block' }).click();
+  await page.getByRole('button', { name: 'Add content' }).click();
   await page.getByRole('button', { name: /^Map/ }).click();
 
   const mapCard = page.locator('[data-link-id]').last();
