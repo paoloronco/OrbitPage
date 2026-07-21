@@ -336,7 +336,7 @@
     --secondary: 225 16% 95%;
     --secondary-foreground: 222 47% 11%;
     --muted: 225 16% 95%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 222 31% 47%;
     --accent: 225 71% 49%;
     --accent-foreground: 210 40% 98%;
     --border: 220 16% 88%;
@@ -349,9 +349,43 @@
     --gradient-primary: linear-gradient(135deg, #2454d6, #3469df);
     --gradient-card: linear-gradient(180deg, #ffffff, #fcfcfd);
     --card-spacing: 12px;
+    --admin-muted-copy: #52699c;
     color: rgb(15 23 42);
     background: #f6f7fa;
     font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  }
+
+  .orbitpage-admin :is(
+    .admin-dashboard-logo-copy small,
+    .admin-dashboard-header > div:first-child > p:last-child,
+    .admin-title span,
+    .admin-subtitle,
+    .admin-metric-label,
+    .admin-metric-detail,
+    .admin-preview-heading > div:first-child > p,
+    .managed-analytics-header p,
+    .managed-analytics-metrics span,
+    .managed-analytics-chart p,
+    .managed-analytics-empty,
+    .managed-analytics-ranking > p,
+    .managed-analytics-rank em,
+    .menu-editor-intro span,
+    .menu-editor-message,
+    .menu-editor-section-title p,
+    .menu-variants-editor__heading span,
+    .menu-variant-price > span,
+    .menu-color-grid label span,
+    .menu-plan-note,
+    .subpage-list-header span,
+    .subpage-list-item small,
+    .subpage-upgrade-note p,
+    .subpage-slug-field span,
+    .subpage-publish-toggle,
+    .content-workspace-header p:last-child,
+    .content-workspace-option small,
+    .content-activation-panel p
+  ) {
+    color: var(--admin-muted-copy);
   }
 
   .public-page-content {
