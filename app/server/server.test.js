@@ -87,6 +87,24 @@ describe('API Endpoints', () => {
     expect(csp).toContain('https://geolocation.onetrust.com');
   });
 
+  it('allows the official origins used by service content players', async () => {
+    const response = await request(app).get('/health');
+    const csp = response.headers['content-security-policy'];
+
+    for (const origin of [
+      'https://www.instagram.com',
+      'https://www.youtube-nocookie.com',
+      'https://open.spotify.com',
+      'https://widget.deezer.com',
+      'https://w.soundcloud.com',
+      'https://player.vimeo.com',
+      'https://www.tiktok.com',
+      'https://giphy.com',
+    ]) {
+      expect(csp).toContain(origin);
+    }
+  });
+
   it('HTTP response: no Strict-Transport-Security header', async () => {
     // supertest connects via plain HTTP so req.protocol === 'http'.
     // HSTS must not be sent on non-HTTPS connections — browsers that honour it

@@ -1,7 +1,7 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.11.12",
+  "version": "4.12.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -68,6 +68,7 @@
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
+    "react-icons": "^5.7.0",
     "react-resizable-panels": "^2.1.3",
     "react-router-dom": "^7.17.0",
     "recharts": "^3.7.0",

@@ -30,10 +30,13 @@ import {
   getContactData,
   getDefaultEmbedConsentCategory,
   getEmbedData,
+  getEmbedProviderDefaultHeight,
   getEmbedProviderLabel,
+  getEmbedProviderPlaceholder,
   getEventData,
   getMapData,
   getSeparatorData,
+  getServiceLinkData,
   getSocialRowDraftData,
   getVideoData,
   resolveEmbedProvider,
@@ -49,6 +52,8 @@ import {
   getMapResolutionSource,
   toMapCoordinates,
 } from "@/lib/map-location";
+import { brandServiceColors, isBrandServiceProvider } from "@/lib/service-brand";
+import { ServiceBrandIcon } from "./ServiceBrandIcon";
 
 export interface LinkData {
   id: string;
@@ -372,6 +377,8 @@ export const LinkCard = ({
   const eventData = getEventData(editLink.content);
   const embedData = getEmbedData(editLink.content);
   const resolvedEmbedProvider = resolveEmbedProvider(embedData.provider, embedData.snippet);
+  const serviceData = getServiceLinkData(editLink.content);
+  const usesDirectEmbedUrl = resolvedEmbedProvider !== 'custom' && resolvedEmbedProvider !== 'newsletter';
   const separatorData = getSeparatorData(editLink.content);
   const videoData = getVideoData(editLink.content);
 
@@ -403,6 +410,7 @@ export const LinkCard = ({
         ...embedData,
         provider,
         consentCategory: getDefaultEmbedConsentCategory(resolvedProvider),
+        height: getEmbedProviderDefaultHeight(resolvedProvider),
       }),
     }));
   };
@@ -819,6 +827,11 @@ export const LinkCard = ({
               CTA
             </span>
           )}
+          {!link.icon && serviceData.service && (
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-white ring-1 ring-black/10" style={{ color: brandServiceColors[serviceData.service] }}>
+              <ServiceBrandIcon provider={serviceData.service} className="h-4 w-4" />
+            </span>
+          )}
           {link.icon && (
             <div className="flex-shrink-0">
               {link.iconType === 'image' || link.iconType === 'svg' ? (
@@ -1006,7 +1019,12 @@ export const LinkCard = ({
                           <Input
                             value={editLink.url}
                             onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
-                            placeholder="https://example.com"
+                            placeholder={serviceData.service === 'whatsapp'
+                              ? 'https://wa.me/391234567890'
+                              : serviceData.service === 'github'
+                                ? 'https://github.com/username'
+                                : 'https://example.com'}
+                            aria-label={serviceData.service ? `${serviceData.service} URL` : 'Destination URL'}
                             className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
                           />
                           <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
@@ -1389,8 +1407,10 @@ export const LinkCard = ({
                 {isEmbed && (
                   <div className="space-y-3 rounded border border-white/5 bg-white/5 p-3">
                     <div className="flex items-center gap-2 text-sm font-medium">
-                      <Code2 className="h-4 w-4" />
-                      Secure embed settings
+                      {isBrandServiceProvider(resolvedEmbedProvider)
+                        ? <ServiceBrandIcon provider={resolvedEmbedProvider} className="h-4 w-4" />
+                        : <Code2 className="h-4 w-4" />}
+                      {getEmbedProviderLabel(resolvedEmbedProvider)} embed settings
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <div className="space-y-1">
@@ -1399,8 +1419,14 @@ export const LinkCard = ({
                           <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="auto">Auto detect</SelectItem>
+                            <SelectItem value="instagram">Instagram</SelectItem>
                             <SelectItem value="youtube">YouTube</SelectItem>
                             <SelectItem value="spotify">Spotify</SelectItem>
+                            <SelectItem value="deezer">Deezer</SelectItem>
+                            <SelectItem value="soundcloud">SoundCloud</SelectItem>
+                            <SelectItem value="vimeo">Vimeo</SelectItem>
+                            <SelectItem value="tiktok">TikTok</SelectItem>
+                            <SelectItem value="giphy">Giphy</SelectItem>
                             <SelectItem value="calendly">Calendly</SelectItem>
                             <SelectItem value="google_maps">Google Maps</SelectItem>
                             <SelectItem value="newsletter">Newsletter</SelectItem>
@@ -1433,16 +1459,34 @@ export const LinkCard = ({
                     </div>
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label className="text-xs">Snippet or HTTPS embed URL</Label>
-                        <span className="text-[11px] font-medium text-muted-foreground">Detected: {getEmbedProviderLabel(resolvedEmbedProvider)}</span>
+                        <Label className="text-xs">{usesDirectEmbedUrl ? `${getEmbedProviderLabel(resolvedEmbedProvider)} URL` : 'Snippet or HTTPS embed URL'}</Label>
+                        <span className="text-[11px] font-medium text-muted-foreground">
+                          {embedData.provider === 'auto' ? `Detected: ${getEmbedProviderLabel(resolvedEmbedProvider)}` : 'Official player'}
+                        </span>
                       </div>
-                      <Textarea
-                        value={embedData.snippet || ''}
-                        onChange={(event) => updateEmbedData('snippet', event.target.value)}
-                        placeholder={'<iframe src="https://..."></iframe>\n\nor paste a provider embed URL'}
-                        maxLength={90000}
-                        className="min-h-40 font-mono text-xs leading-5"
-                      />
+                      {usesDirectEmbedUrl ? (
+                        <Input
+                          value={embedData.snippet || ''}
+                          onChange={(event) => updateEmbedData('snippet', event.target.value)}
+                          placeholder={getEmbedProviderPlaceholder(resolvedEmbedProvider)}
+                          maxLength={2048}
+                          aria-label={`${getEmbedProviderLabel(resolvedEmbedProvider)} URL`}
+                          className="bg-white text-black"
+                        />
+                      ) : (
+                        <Textarea
+                          value={embedData.snippet || ''}
+                          onChange={(event) => updateEmbedData('snippet', event.target.value)}
+                          placeholder={getEmbedProviderPlaceholder(resolvedEmbedProvider)}
+                          maxLength={90000}
+                          className="min-h-40 font-mono text-xs leading-5"
+                        />
+                      )}
+                      {usesDirectEmbedUrl && (
+                        <p className="text-[11px] leading-5 text-muted-foreground">
+                          Paste the public share URL from {getEmbedProviderLabel(resolvedEmbedProvider)}. OrbitPage converts it to the official embedded player and rejects unrelated domains.
+                        </p>
+                      )}
                     </div>
                     <div className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs leading-5 ${embedData.consentCategory === 'necessary' ? 'border-amber-300 bg-amber-50 text-amber-900' : 'border-emerald-200 bg-emerald-50 text-emerald-900'}`}>
                       <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />

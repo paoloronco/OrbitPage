@@ -7,10 +7,13 @@ import { hasStaticPublicSnapshot } from "@/lib/public-runtime";
 import {
   getEmbedData,
   getKnownEmbedUrl,
+  getEmbedProviderPlaceholder,
   getEmbedProviderLabel,
   resolveEmbedProvider,
   type EmbedProvider,
 } from "@/lib/link-blocks";
+import { brandServiceColors, isBrandServiceProvider } from "@/lib/service-brand";
+import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import {
   getPublicAccentStyle,
   getPublicBlockPadding,
@@ -26,6 +29,7 @@ interface PublicEmbedCardProps {
 }
 
 const getProviderIcon = (provider: Exclude<EmbedProvider, 'auto'>) => {
+  if (isBrandServiceProvider(provider)) return <ServiceBrandIcon provider={provider} className="h-5 w-5" />;
   if (provider === 'youtube') return <PlaySquare className="h-5 w-5" />;
   if (provider === 'spotify') return <Music2 className="h-5 w-5" />;
   if (provider === 'calendly') return <CalendarDays className="h-5 w-5" />;
@@ -50,14 +54,18 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   const secondaryStyle = textColor ? { color: textColor, opacity: 0.72 } : undefined;
   const providerLabel = getEmbedProviderLabel(provider);
   const knownProviderUrl = getKnownEmbedUrl(provider, embed.snippet);
-  const staticCustomEmbedUnavailable = !knownProviderUrl && hasStaticPublicSnapshot();
+  const requiresAllowlistedUrl = provider !== 'custom' && provider !== 'newsletter';
+  const invalidProviderUrl = Boolean(embed.snippet) && requiresAllowlistedUrl && !knownProviderUrl;
+  const staticCustomEmbedUnavailable = !requiresAllowlistedUrl && !knownProviderUrl && hasStaticPublicSnapshot();
+  const brandColor = isBrandServiceProvider(provider) ? brandServiceColors[provider] : undefined;
 
   if (!embed.snippet) {
     return (
       <Card className="glass-card p-0" style={getPublicBlockStyle(link)}>
         <div className={getPublicBlockPadding(link.size)}>
           <div className="rounded-xl border border-dashed border-current/25 px-4 py-7 text-center text-sm font-medium opacity-70">
-            Paste an embed snippet from Edit to configure this block.
+            Paste a {providerLabel} URL from Edit to configure this block.
+            <span className="mt-2 block text-xs font-normal">{getEmbedProviderPlaceholder(provider)}</span>
           </div>
         </div>
       </Card>
@@ -67,7 +75,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   return (
     <Card className="glass-card overflow-hidden p-0" style={getPublicBlockStyle(link)}>
       <div className={`flex items-start gap-3 ${getPublicBlockPadding(link.size)}`}>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/15" style={getPublicAccentStyle(link)}>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/15" style={{ ...getPublicAccentStyle(link), ...(!link.icon && brandColor ? { color: brandColor } : {}) }}>
           {getPublicIconContent(link, getProviderIcon(provider))}
         </span>
         <div className="min-w-0 flex-1">
@@ -79,7 +87,17 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
         </div>
       </div>
 
-      {isGranted && staticCustomEmbedUnavailable ? (
+      {invalidProviderUrl ? (
+        <div className={`border-t border-current/10 ${getPublicBlockPadding(link.size)}`}>
+          <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-5 py-7 text-center">
+            {getProviderIcon(provider)}
+            <p className="mt-3 text-sm font-semibold">Invalid {providerLabel} URL</p>
+            <p className="mt-1 max-w-sm text-xs leading-5" style={secondaryStyle}>
+              Paste a public URL from the official {providerLabel} website. Shortened and unrelated domains are not loaded.
+            </p>
+          </div>
+        </div>
+      ) : isGranted && staticCustomEmbedUnavailable ? (
         <div className={`border-t border-current/10 ${getPublicBlockPadding(link.size)}`}>
           <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-current/15 bg-current/[0.04] px-5 py-7 text-center">
             <Code2 className="h-7 w-7 opacity-65" />

@@ -11,10 +11,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { isHostedRuntime, linkHealthApi, linksApi, type ManagedLinkHealth } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
-import { type LinkBlockType, buildBlockContent } from "@/lib/link-blocks";
+import { type EmbedProvider, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight } from "@/lib/link-blocks";
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
+import { SiDeezer, SiGithub, SiGiphy, SiInstagram, SiSoundcloud, SiSpotify, SiTiktok, SiVimeo, SiWhatsapp, SiYoutube } from "react-icons/si";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -34,7 +35,7 @@ interface LinkManagerProps {
   availablePages?: Array<{ title: string; url: string }>;
 }
 
-type BlockLibraryCategoryId = "essential" | "structure" | "media" | "engagement";
+type BlockLibraryCategoryId = "essential" | "services" | "structure" | "media" | "engagement";
 
 interface BlockLibraryItem {
   id: string;
@@ -425,6 +426,42 @@ export const LinkManager = ({
     appendBlock(newEmbed);
   };
 
+  const addServiceEmbed = (
+    provider: Extract<EmbedProvider, "instagram" | "youtube" | "spotify" | "deezer" | "soundcloud" | "vimeo" | "tiktok" | "giphy">,
+    title: string,
+    description: string,
+  ) => {
+    const newEmbed: LinkData = {
+      id: Date.now().toString(),
+      title,
+      description,
+      url: "",
+      type: "embed",
+      content: buildBlockContent({
+        provider,
+        consentCategory: getDefaultEmbedConsentCategory(provider),
+        height: getEmbedProviderDefaultHeight(provider),
+        snippet: "",
+      }),
+      status: "live",
+    };
+    appendBlock(newEmbed);
+  };
+
+  const addServiceLink = (service: ServiceLinkProvider, title: string, description: string) => {
+    const newLink: LinkData = {
+      id: Date.now().toString(),
+      title,
+      description,
+      url: "",
+      hideUrl: true,
+      type: "link",
+      content: buildBlockContent({ service }),
+      status: "live",
+    };
+    appendBlock(newLink);
+  };
+
   const updateLink = (updatedLink: LinkData) => {
     const updatedLinks = workingLinks.map(link => 
       String(link.id) === String(updatedLink.id) ? updatedLink : link
@@ -646,6 +683,24 @@ export const LinkManager = ({
         { id: "compact-links", title: tr("Compact links", "Link compatti"), description: tr("Social profiles and page shortcuts.", "Profili social e collegamenti alle pagine."), keywords: "social icons instagram facebook shortcut icone", icon: Share2, onSelect: addNewSocialRow, badge: hasCompactLinks ? tr("Added", "Aggiunto") : undefined, restricted: hasCompactLinks },
         { id: "contact", title: tr("Contact", "Contatto"), description: tr("Phone, email and useful contact details.", "Telefono, email e contatti utili."), keywords: "phone email whatsapp telefono contatti", icon: UserCircle2, onSelect: addNewContact },
         { id: "cta", title: "CTA", description: tr("A prominent action such as booking or buying.", "Un'azione in evidenza, come prenotare o acquistare."), keywords: "action booking buy prenota acquista button", icon: MousePointerClick, onSelect: addNewCta },
+      ],
+    },
+    {
+      id: "services",
+      label: tr("Connected services", "Servizi collegati"),
+      description: tr("Add branded social content, media players and direct actions.", "Aggiungi contenuti social, player multimediali e azioni dirette con il relativo brand."),
+      icon: Share2,
+      items: [
+        { id: "instagram", title: "Instagram", description: tr("Embed a public post or Reel.", "Incorpora un post pubblico o un Reel."), keywords: "instagram post reel social", icon: SiInstagram, onSelect: () => addServiceEmbed("instagram", "Instagram", tr("Latest from Instagram", "Da Instagram")) },
+        { id: "whatsapp", title: "WhatsApp", description: tr("Open a direct chat or booking conversation.", "Apri una chat diretta o una conversazione per prenotare."), keywords: "whatsapp chat message booking telefono messaggio", icon: SiWhatsapp, onSelect: () => addServiceLink("whatsapp", "WhatsApp", tr("Chat with us", "Scrivici")) },
+        { id: "youtube", title: "YouTube", description: tr("Play a video with the privacy-enhanced player.", "Riproduci un video con il player a privacy avanzata."), keywords: "youtube video player", icon: SiYoutube, onSelect: () => addServiceEmbed("youtube", "YouTube", tr("Watch the video", "Guarda il video")) },
+        { id: "spotify", title: "Spotify", description: tr("Play a track, album, playlist or podcast.", "Riproduci un brano, album, playlist o podcast."), keywords: "spotify song track album playlist podcast music musica", icon: SiSpotify, onSelect: () => addServiceEmbed("spotify", "Spotify", tr("Listen on Spotify", "Ascolta su Spotify")) },
+        { id: "deezer", title: "Deezer", description: tr("Play a track, album or playlist.", "Riproduci un brano, album o playlist."), keywords: "deezer song track album playlist music musica", icon: SiDeezer, onSelect: () => addServiceEmbed("deezer", "Deezer", tr("Listen on Deezer", "Ascolta su Deezer")) },
+        { id: "soundcloud", title: "SoundCloud", description: tr("Play a public track or set.", "Riproduci un brano o set pubblico."), keywords: "soundcloud track set dj audio music musica", icon: SiSoundcloud, onSelect: () => addServiceEmbed("soundcloud", "SoundCloud", tr("Listen on SoundCloud", "Ascolta su SoundCloud")) },
+        { id: "vimeo", title: "Vimeo", description: tr("Show a Vimeo video in an embedded player.", "Mostra un video Vimeo nel player incorporato."), keywords: "vimeo video player", icon: SiVimeo, onSelect: () => addServiceEmbed("vimeo", "Vimeo", tr("Watch the video", "Guarda il video")) },
+        { id: "tiktok", title: "TikTok", description: tr("Embed a public TikTok video.", "Incorpora un video TikTok pubblico."), keywords: "tiktok video social", icon: SiTiktok, onSelect: () => addServiceEmbed("tiktok", "TikTok", tr("Watch on TikTok", "Guarda su TikTok")) },
+        { id: "giphy", title: "Giphy", description: tr("Embed an animated GIF without uploading it.", "Incorpora una GIF animata senza caricarla."), keywords: "giphy gif animation animated", icon: SiGiphy, onSelect: () => addServiceEmbed("giphy", "Giphy", tr("Animated GIF", "GIF animata")) },
+        { id: "github", title: "GitHub", description: tr("Link a repository, profile or release.", "Collega repository, profilo o release."), keywords: "github repository repo code profile release codice", icon: SiGithub, onSelect: () => addServiceLink("github", "GitHub", tr("View on GitHub", "Apri su GitHub")) },
       ],
     },
     {

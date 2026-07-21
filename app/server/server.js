@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.11.12';
+let APP_VERSION = '4.12.0';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -289,8 +289,14 @@ app.use(helmet({
       mediaSrc: ["'self'"],
       frameSrc: [
         "'self'",
+        "https://www.instagram.com",
         "https://www.youtube-nocookie.com",
         "https://open.spotify.com",
+        "https://widget.deezer.com",
+        "https://w.soundcloud.com",
+        "https://player.vimeo.com",
+        "https://www.tiktok.com",
+        "https://giphy.com",
         "https://calendly.com",
         "https://www.calendly.com",
         "https://www.google.com",

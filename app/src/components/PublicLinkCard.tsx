@@ -5,6 +5,9 @@ import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { useAppI18n } from '@/lib/i18n';
+import { getServiceLinkData } from '@/lib/link-blocks';
+import { brandServiceColors } from '@/lib/service-brand';
+import { ServiceBrandIcon } from './ServiceBrandIcon';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   if (!src) return null;
@@ -65,6 +68,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const unavailable = link.availability === 'unavailable';
+  const service = getServiceLinkData(link.content).service;
 
   useEffect(() => {
     if (link.iconType === 'emoji') {
@@ -152,6 +156,17 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
 
   // Determine what to show in the icon area
   const renderIcon = () => {
+    if (service && !link.icon) {
+      return (
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-white ring-1 ring-black/10"
+          style={{ color: brandServiceColors[service] }}
+        >
+          <ServiceBrandIcon provider={service} className="h-5 w-5" />
+        </div>
+      );
+    }
+
     if (link.icon && link.iconType === 'emoji') {
       return (
         <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">

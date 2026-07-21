@@ -71,14 +71,19 @@ export interface EventBlockData {
   notes?: string;
 }
 
-export type EmbedProvider = 'auto' | 'youtube' | 'spotify' | 'calendly' | 'google_maps' | 'newsletter' | 'custom';
+export type EmbedProvider = 'auto' | 'instagram' | 'youtube' | 'spotify' | 'deezer' | 'soundcloud' | 'vimeo' | 'tiktok' | 'giphy' | 'calendly' | 'google_maps' | 'newsletter' | 'custom';
 export type EmbedConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marketing';
+export type ServiceLinkProvider = 'whatsapp' | 'github';
 
 export interface EmbedBlockData {
   snippet?: string;
   provider?: EmbedProvider;
   consentCategory?: EmbedConsentCategory;
   height?: number;
+}
+
+export interface ServiceLinkBlockData {
+  service?: ServiceLinkProvider;
 }
 
 export interface SeparatorBlockData {
@@ -228,13 +233,20 @@ export const getEventData = (content: string | null | undefined): EventBlockData
   };
 };
 
-const embedProviders: EmbedProvider[] = ['auto', 'youtube', 'spotify', 'calendly', 'google_maps', 'newsletter', 'custom'];
+const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'youtube', 'spotify', 'deezer', 'soundcloud', 'vimeo', 'tiktok', 'giphy', 'calendly', 'google_maps', 'newsletter', 'custom'];
 const embedConsentCategories: EmbedConsentCategory[] = ['necessary', 'preferences', 'analytics', 'marketing'];
+const serviceLinkProviders: ServiceLinkProvider[] = ['whatsapp', 'github'];
 
 export const detectEmbedProvider = (snippet?: string): Exclude<EmbedProvider, 'auto'> => {
   const value = (snippet || '').toLowerCase();
+  if (value.includes('instagram.com')) return 'instagram';
   if (value.includes('youtu.be') || value.includes('youtube.com') || value.includes('youtube-nocookie.com')) return 'youtube';
   if (value.includes('spotify.com')) return 'spotify';
+  if (value.includes('deezer.com')) return 'deezer';
+  if (value.includes('soundcloud.com')) return 'soundcloud';
+  if (value.includes('vimeo.com')) return 'vimeo';
+  if (value.includes('tiktok.com')) return 'tiktok';
+  if (value.includes('giphy.com')) return 'giphy';
   if (value.includes('calendly.com')) return 'calendly';
   if (value.includes('google.com/maps') || value.includes('maps.google.')) return 'google_maps';
   if (value.includes('mailchimp') || value.includes('substack') || value.includes('beehiiv') || value.includes('convertkit') || value.includes('<form')) return 'newsletter';
@@ -257,10 +269,15 @@ export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snipp
       if (url.protocol !== 'https:') continue;
       const host = url.hostname.toLowerCase();
 
+      if (provider === 'instagram' && (host === 'instagram.com' || host === 'www.instagram.com')) {
+        const match = url.pathname.match(/^\/(p|reel|tv)\/([a-z0-9_-]+)\/?/i);
+        if (match) return `https://www.instagram.com/${match[1]}/${match[2]}/embed/captioned/`;
+      }
+
       if (provider === 'youtube' && (host === 'youtube.com' || host === 'www.youtube.com' || host === 'youtube-nocookie.com' || host === 'www.youtube-nocookie.com' || host === 'youtu.be')) {
         const videoId = host === 'youtu.be'
           ? url.pathname.split('/').filter(Boolean)[0]
-          : url.searchParams.get('v') || url.pathname.match(/\/embed\/([^/?]+)/)?.[1];
+          : url.searchParams.get('v') || url.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/)?.[1];
         if (videoId && /^[a-z0-9_-]{6,20}$/i.test(videoId)) {
           return `https://www.youtube-nocookie.com/embed/${videoId}`;
         }
@@ -268,7 +285,43 @@ export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snipp
 
       if (provider === 'spotify' && host === 'open.spotify.com') {
         const path = url.pathname.startsWith('/embed/') ? url.pathname : `/embed${url.pathname}`;
-        return `https://open.spotify.com${path}${url.search}`;
+        if (/^\/embed\/(track|album|playlist|episode|show|artist)\/[a-z0-9]+\/?$/i.test(path)) {
+          return `https://open.spotify.com${path}${url.search}`;
+        }
+      }
+
+      if (provider === 'deezer' && (host === 'deezer.com' || host === 'www.deezer.com' || host === 'widget.deezer.com')) {
+        if (host === 'widget.deezer.com' && url.pathname.startsWith('/widget/')) return url.toString();
+        const match = url.pathname.match(/\/(track|album|playlist)\/(\d+)/i);
+        if (match) return `https://widget.deezer.com/widget/auto/${match[1].toLowerCase()}/${match[2]}`;
+      }
+
+      if (provider === 'soundcloud' && (host === 'soundcloud.com' || host === 'www.soundcloud.com' || host === 'm.soundcloud.com')) {
+        return `https://w.soundcloud.com/player/?url=${encodeURIComponent(url.toString())}&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&visual=false`;
+      }
+
+      if (provider === 'soundcloud' && host === 'w.soundcloud.com' && url.pathname === '/player/') {
+        return url.toString();
+      }
+
+      if (provider === 'vimeo' && (host === 'vimeo.com' || host === 'www.vimeo.com' || host === 'player.vimeo.com')) {
+        const videoId = host === 'player.vimeo.com'
+          ? url.pathname.match(/^\/video\/(\d+)/)?.[1]
+          : url.pathname.match(/^\/(\d+)/)?.[1];
+        if (videoId) return `https://player.vimeo.com/video/${videoId}?dnt=1`;
+      }
+
+      if (provider === 'tiktok' && (host === 'tiktok.com' || host === 'www.tiktok.com' || host === 'm.tiktok.com')) {
+        const videoId = url.pathname.match(/\/video\/(\d+)/)?.[1];
+        if (videoId) return `https://www.tiktok.com/player/v1/${videoId}`;
+      }
+
+      if (provider === 'giphy' && (host === 'giphy.com' || host === 'www.giphy.com' || host === 'media.giphy.com')) {
+        const embedId = url.pathname.match(/^\/embed\/([a-z0-9]+)/i)?.[1];
+        const mediaId = url.pathname.match(/^\/media\/([a-z0-9]+)\//i)?.[1];
+        const gifId = url.pathname.match(/-([a-z0-9]+)\/?$/i)?.[1];
+        const id = embedId || mediaId || gifId;
+        if (id) return `https://giphy.com/embed/${id}`;
       }
 
       if (provider === 'calendly' && (host === 'calendly.com' || host === 'www.calendly.com')) {
@@ -290,18 +343,65 @@ export const resolveEmbedProvider = (provider?: EmbedProvider, snippet?: string)
 );
 
 export const getDefaultEmbedConsentCategory = (provider: Exclude<EmbedProvider, 'auto'>): EmbedConsentCategory => {
-  if (provider === 'google_maps' || provider === 'spotify') return 'preferences';
+  if (provider === 'google_maps' || provider === 'spotify' || provider === 'deezer' || provider === 'soundcloud') return 'preferences';
   return 'marketing';
 };
 
 export const getEmbedProviderLabel = (provider: Exclude<EmbedProvider, 'auto'>) => ({
+  instagram: 'Instagram',
   youtube: 'YouTube',
   spotify: 'Spotify',
+  deezer: 'Deezer',
+  soundcloud: 'SoundCloud',
+  vimeo: 'Vimeo',
+  tiktok: 'TikTok',
+  giphy: 'Giphy',
   calendly: 'Calendly',
   google_maps: 'Google Maps',
   newsletter: 'Newsletter',
   custom: 'Custom embed',
 }[provider]);
+
+export const getEmbedProviderPlaceholder = (provider: Exclude<EmbedProvider, 'auto'>): string => ({
+  instagram: 'https://www.instagram.com/p/...',
+  youtube: 'https://www.youtube.com/watch?v=...',
+  spotify: 'https://open.spotify.com/track/...',
+  deezer: 'https://www.deezer.com/track/...',
+  soundcloud: 'https://soundcloud.com/artist/track',
+  vimeo: 'https://vimeo.com/123456789',
+  tiktok: 'https://www.tiktok.com/@creator/video/...',
+  giphy: 'https://giphy.com/gifs/...',
+  calendly: 'https://calendly.com/your-name',
+  google_maps: 'https://www.google.com/maps/embed?...',
+  newsletter: '<form>...</form>',
+  custom: '<iframe src="https://..."></iframe>',
+}[provider]);
+
+export const getEmbedProviderDefaultHeight = (provider: Exclude<EmbedProvider, 'auto'>): number => ({
+  instagram: 560,
+  youtube: 360,
+  spotify: 352,
+  deezer: 300,
+  soundcloud: 180,
+  vimeo: 360,
+  tiktok: 680,
+  giphy: 420,
+  calendly: 680,
+  google_maps: 360,
+  newsletter: 420,
+  custom: 360,
+}[provider]);
+
+export const getServiceLinkData = (content: string | null | undefined): ServiceLinkBlockData => {
+  const parsed = parseBlockContent<ServiceLinkBlockData>(content);
+  if (!isPlainObject(parsed)) return {};
+  const service = (parsed as Record<string, unknown>).service;
+  return {
+    service: typeof service === 'string' && serviceLinkProviders.includes(service as ServiceLinkProvider)
+      ? service as ServiceLinkProvider
+      : undefined,
+  };
+};
 
 export const getEmbedData = (content: string | null | undefined): EmbedBlockData => {
   const parsed = parseBlockContent<EmbedBlockData>(content);
