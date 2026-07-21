@@ -53,6 +53,9 @@ export interface MapBlockData {
   address?: string;
   placeName?: string;
   mapUrl?: string;
+  latitude?: string;
+  longitude?: string;
+  resolvedSource?: string;
 }
 
 export interface EventBlockData {
@@ -196,6 +199,9 @@ export const getMapData = (content: string | null | undefined): MapBlockData => 
     address: toString((parsed as Record<string, unknown>).address),
     placeName: toString((parsed as Record<string, unknown>).placeName),
     mapUrl: toString((parsed as Record<string, unknown>).mapUrl),
+    latitude: toString((parsed as Record<string, unknown>).latitude),
+    longitude: toString((parsed as Record<string, unknown>).longitude),
+    resolvedSource: toString((parsed as Record<string, unknown>).resolvedSource),
   };
 };
 

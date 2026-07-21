@@ -695,6 +695,21 @@ export const linkHealthApi = {
   refresh: async (): Promise<ManagedLinkHealth> => apiRequest<ManagedLinkHealth>('/link-health/refresh', { method: 'POST' }),
 };
 
+export type MapPreviewResolution = {
+  lat: string;
+  lon: string;
+  displayName: string;
+  source: 'coordinates' | 'redirect' | 'geocoding';
+};
+
+export const mapPreviewApi = {
+  resolve: async (query: string, mapUrl?: string): Promise<MapPreviewResolution> => {
+    const params = new URLSearchParams({ query });
+    if (mapUrl) params.set('url', mapUrl);
+    return apiRequest<MapPreviewResolution>(`/map-preview?${params.toString()}`);
+  },
+};
+
 export interface TextFileConfig {
   key: string;
   path: string;

@@ -2,6 +2,17 @@ import { expect, test } from '@playwright/test';
 import { openAuthenticatedAdmin } from './helpers';
 
 test('uses the dedicated Maps URL without asking for a generic card destination', async ({ page }) => {
+  await page.route('**/api/map-preview**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        lat: '45.0703',
+        lon: '7.6869',
+        displayName: 'Torino',
+        source: 'geocoding',
+      }),
+    });
+  });
   await openAuthenticatedAdmin(page);
 
   await page.getByRole('button', { name: 'Content', exact: true }).click();
@@ -20,6 +31,9 @@ test('uses the dedicated Maps URL without asking for a generic card destination'
   const mapsUrl = mapCard.getByLabel('Maps URL');
   await mapsUrl.fill('https://www.google.com/maps?q=Turin');
   await mapCard.getByRole('button', { name: 'Save', exact: true }).click();
+
+  await expect(mapCard.locator('img[src*="tile.openstreetmap.org"]')).toHaveCount(9);
+  await expect(mapCard.getByText('Map preview unavailable')).toHaveCount(0);
 
   await mapCard.hover();
   await mapCard.getByRole('button', { name: 'Edit block' }).click();

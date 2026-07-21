@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.11.9';
+let APP_VERSION = '4.11.10';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -3039,13 +3039,92 @@ app.put('/api/theme', authenticateToken, requirePermission('theme:write'), async
 const MAP_PREVIEW_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const mapPreviewCache = new Map();
 
-app.get('/api/map-preview', apiLimiter, async (req, res) => {
+const mapCoordinatesFromText = (value = '') => {
+  let decoded = String(value);
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {
+    // Keep the original value when decoding fails.
+  }
+  const patterns = [
+    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /[?&](?:q|query|ll)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+  ];
+  for (const pattern of patterns) {
+    const match = decoded.match(pattern);
+    if (!match) continue;
+    const lat = Number.parseFloat(match[1]);
+    const lon = Number.parseFloat(match[2]);
+    if (Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+      return { lat: String(lat), lon: String(lon) };
+    }
+  }
+  return null;
+};
+
+const mapQueryFromUrl = (value = '') => {
+  try {
+    const url = new URL(value);
+    for (const key of ['q', 'query', 'destination', 'daddr', 'address']) {
+      const candidate = url.searchParams.get(key)?.trim();
+      if (candidate && !mapCoordinatesFromText(candidate)) return candidate;
+    }
+    const pathMatch = url.pathname.match(/\/(?:place|search)\/([^/@]+)/i);
+    return pathMatch?.[1] ? decodeURIComponent(pathMatch[1]).replace(/\+/g, ' ').trim() : '';
+  } catch {
+    return '';
+  }
+};
+
+const isSupportedMapRedirect = (value = '') => {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase();
+    return hostname === 'maps.app.goo.gl'
+      || hostname === 'goo.gl'
+      || hostname === 'openstreetmap.org'
+      || hostname.endsWith('.openstreetmap.org')
+      || /(^|\.)google\.[a-z.]{2,12}$/.test(hostname);
+  } catch {
+    return false;
+  }
+};
+
+const resolveMapRedirect = async (mapUrl) => {
+  if (!isSupportedMapRedirect(mapUrl)) return { finalUrl: '', coordinates: null };
+  let currentUrl = mapUrl;
+  for (let hop = 0; hop < 5; hop += 1) {
+    const response = await fetch(currentUrl, {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(6000),
+      headers: {
+        Accept: 'text/html,application/xhtml+xml',
+        'User-Agent': `OrbitPage/${APP_VERSION} (+https://orbitpage.com; contact: contact@orbitpage.com)`,
+      },
+    });
+    const location = response.headers.get('location');
+    await response.body?.cancel().catch(() => undefined);
+    if (!location) {
+      const finalUrl = response.url || currentUrl;
+      return { finalUrl, coordinates: mapCoordinatesFromText(finalUrl) };
+    }
+    const nextUrl = new URL(location, currentUrl).toString();
+    if (!isSupportedMapRedirect(nextUrl)) throw new Error('Map redirect left the supported providers');
+    currentUrl = nextUrl;
+    const coordinates = mapCoordinatesFromText(currentUrl);
+    if (coordinates) return { finalUrl: currentUrl, coordinates };
+  }
+  throw new Error('Map redirect limit exceeded');
+};
+
+app.get('/api/map-preview', apiLimiter, authenticateToken, requirePermission('links:write'), async (req, res) => {
   const query = typeof req.query.query === 'string' ? req.query.query.trim() : '';
-  if (!query || query.length > 300) {
+  const mapUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+  if ((!query && !mapUrl) || query.length > 300 || mapUrl.length > 2000) {
     return res.status(400).json({ error: 'A valid map query is required' });
   }
 
-  const cacheKey = query.toLocaleLowerCase('it');
+  const cacheKey = `${query}|${mapUrl}`.toLocaleLowerCase('it');
   const cached = mapPreviewCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < MAP_PREVIEW_CACHE_TTL_MS) {
     res.set('Cache-Control', 'public, max-age=86400');
@@ -3053,17 +3132,40 @@ app.get('/api/map-preview', apiLimiter, async (req, res) => {
   }
 
   try {
+    const directCoordinates = mapCoordinatesFromText(mapUrl) || mapCoordinatesFromText(query);
+    if (directCoordinates) {
+      const value = { ...directCoordinates, displayName: query || mapUrl, source: 'coordinates' };
+      mapPreviewCache.set(cacheKey, { timestamp: Date.now(), value });
+      res.set('Cache-Control', 'public, max-age=86400');
+      return res.json(value);
+    }
+
+    let finalUrl = mapUrl;
+    if (mapUrl && isSupportedMapRedirect(mapUrl)) {
+      const redirect = await resolveMapRedirect(mapUrl);
+      finalUrl = redirect.finalUrl || mapUrl;
+      if (redirect.coordinates) {
+        const value = { ...redirect.coordinates, displayName: query || mapUrl, source: 'redirect' };
+        mapPreviewCache.set(cacheKey, { timestamp: Date.now(), value });
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.json(value);
+      }
+    }
+
+    const lookupQuery = mapQueryFromUrl(finalUrl) || mapQueryFromUrl(mapUrl) || query;
+    if (!lookupQuery) return res.status(404).json({ error: 'Map location not found' });
+
     const lookupUrl = new URL('https://nominatim.openstreetmap.org/search');
     lookupUrl.searchParams.set('format', 'jsonv2');
     lookupUrl.searchParams.set('limit', '1');
     lookupUrl.searchParams.set('accept-language', 'it');
-    lookupUrl.searchParams.set('q', query);
+    lookupUrl.searchParams.set('q', lookupQuery);
 
     const response = await fetch(lookupUrl, {
       signal: AbortSignal.timeout(8000),
       headers: {
         Accept: 'application/json',
-        'User-Agent': `OrbitPage/${APP_VERSION} (map preview)`,
+        'User-Agent': `OrbitPage/${APP_VERSION} (+https://orbitpage.com; contact: contact@orbitpage.com)`,
       },
     });
     if (!response.ok) {
@@ -3079,7 +3181,8 @@ app.get('/api/map-preview', apiLimiter, async (req, res) => {
     const value = {
       lat: String(result.lat),
       lon: String(result.lon),
-      displayName: typeof result.display_name === 'string' ? result.display_name : query,
+      displayName: typeof result.display_name === 'string' ? result.display_name : lookupQuery,
+      source: 'geocoding',
     };
     mapPreviewCache.set(cacheKey, { timestamp: Date.now(), value });
     res.set('Cache-Control', 'public, max-age=86400');

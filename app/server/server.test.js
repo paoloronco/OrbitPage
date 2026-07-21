@@ -62,6 +62,7 @@ describe('API Endpoints', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('GET /health should return 200 and status ok', async () => {
@@ -123,6 +124,33 @@ describe('API Endpoints', () => {
       expect.objectContaining({ id: 'frontend', ok: true }),
     ]));
     expect(response.headers['cache-control']).toContain('no-store');
+  });
+
+  it('GET /api/map-preview resolves coordinates embedded in a Maps URL without an upstream request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const response = await request(app)
+      .get('/api/map-preview')
+      .query({ url: 'https://www.google.com/maps/place/Turin/@45.0703,7.6869,15z' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ lat: '45.0703', lon: '7.6869', source: 'coordinates' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('GET /api/map-preview geocodes the location encoded in a full Maps URL', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [{ lat: '45.0703', lon: '7.6869', display_name: 'Torino' }],
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const response = await request(app)
+      .get('/api/map-preview')
+      .query({ url: 'https://example.com/?q=Porta+Nuova+Torino' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ lat: '45.0703', lon: '7.6869', source: 'geocoding' });
+    expect(String(fetchMock.mock.calls[0][0])).toContain('q=Porta+Nuova+Torino');
   });
 
   it('POST /api/auth/setup creates the fixed administrator and primary page slug atomically', async () => {

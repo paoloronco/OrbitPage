@@ -1,56 +1,21 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
-import { apiPath } from "@/lib/base-path";
 import { getMapData } from "@/lib/link-blocks";
-import { hasStaticPublicSnapshot, trackPublicLinkClick } from "@/lib/public-runtime";
+import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, MapPinned, Navigation } from "lucide-react";
 import { getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent } from "@/lib/public-block-style";
+import {
+  extractMapCoordinates,
+  getMapQuery,
+  getSafeMapOpenUrl,
+  toMapCoordinates,
+  type MapCoordinates,
+} from "@/lib/map-location";
 
 interface PublicMapCardProps {
   link: LinkData;
 }
-
-const getMapQuery = (placeName?: string, address?: string, fallbackTitle?: string) => (
-  [placeName, address].filter(Boolean).join(", ") || fallbackTitle || ""
-).trim();
-
-interface MapCoordinates {
-  lat: number;
-  lon: number;
-}
-
-const toCoordinate = (lat?: string, lon?: string): MapCoordinates | null => {
-  if (!lat || !lon) return null;
-  const parsedLat = Number.parseFloat(lat);
-  const parsedLon = Number.parseFloat(lon);
-  if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLon)) return null;
-  if (parsedLat < -90 || parsedLat > 90 || parsedLon < -180 || parsedLon > 180) return null;
-  return { lat: parsedLat, lon: parsedLon };
-};
-
-const extractLatLng = (value?: string): MapCoordinates | null => {
-  if (!value) return null;
-  let decoded = value;
-  try {
-    decoded = decodeURIComponent(value);
-  } catch {
-    decoded = value;
-  }
-  const patterns = [
-    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
-    /[?&](?:q|query|ll)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
-    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = decoded.match(pattern);
-    const coordinate = toCoordinate(match?.[1], match?.[2]);
-    if (coordinate) return coordinate;
-  }
-
-  return null;
-};
 
 const TILE_SIZE = 256;
 const DEFAULT_MAP_ZOOM = 14;
@@ -63,12 +28,27 @@ const latToTile = (lat: number, zoom: number) => {
   return ((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * Math.pow(2, zoom);
 };
 
-const getTileUrl = (zoom: number, x: number, y: number) => {
-  const subdomain = ["a", "b", "c"][Math.abs(x + y) % 3];
-  return `https://${subdomain}.tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
-};
+const getTileUrl = (zoom: number, x: number, y: number) =>
+  `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+
+const MapLocationFallback = ({ label }: { label: string }) => (
+  <div className="absolute inset-0 overflow-hidden bg-slate-100 text-slate-600">
+    <div className="absolute -left-10 top-7 h-3 w-[70%] rotate-[-12deg] rounded-full bg-white shadow-sm" />
+    <div className="absolute -right-12 bottom-9 h-4 w-[78%] rotate-[9deg] rounded-full bg-white shadow-sm" />
+    <div className="absolute left-[18%] top-0 h-full w-3 rotate-[18deg] bg-white shadow-sm" />
+    <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center">
+      <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-red-500 text-white shadow-lg ring-4 ring-white">
+        <MapPinned className="h-6 w-6" />
+      </span>
+      <span className="mt-2 block max-w-52 truncate rounded-md bg-white/90 px-2 py-1 text-xs font-semibold shadow-sm">
+        {label || "Map location"}
+      </span>
+    </div>
+  </div>
+);
 
 const RealMapPreview = ({ coordinates, label }: { coordinates: MapCoordinates; label: string }) => {
+  const [tileFailed, setTileFailed] = useState(false);
   const zoom = DEFAULT_MAP_ZOOM;
   const xFloat = lonToTile(coordinates.lon, zoom);
   const yFloat = latToTile(coordinates.lat, zoom);
@@ -85,6 +65,8 @@ const RealMapPreview = ({ coordinates, label }: { coordinates: MapCoordinates; l
       top: (row + 1) * TILE_SIZE,
     }))
   );
+
+  if (tileFailed) return <MapLocationFallback label={label} />;
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-slate-200">
@@ -105,6 +87,7 @@ const RealMapPreview = ({ coordinates, label }: { coordinates: MapCoordinates; l
             loading="lazy"
             decoding="async"
             draggable={false}
+            onError={() => setTileFailed(true)}
             className="absolute select-none"
             style={{
               left: tile.left,
@@ -130,74 +113,20 @@ const RealMapPreview = ({ coordinates, label }: { coordinates: MapCoordinates; l
         className="absolute bottom-1 right-1 rounded bg-white/85 px-1.5 py-0.5 text-[10px] font-medium text-slate-700"
         onClick={(event) => event.stopPropagation()}
       >
-        © OpenStreetMap
+        © OpenStreetMap contributors
       </a>
     </div>
   );
 };
 
 export const PublicMapCard = ({ link }: PublicMapCardProps) => {
-  const { placeName, address, mapUrl } = getMapData(link.content);
-  const mapQuery = getMapQuery(placeName, address, link.title);
-  const [coordinates, setCoordinates] = useState<MapCoordinates | null>(null);
-  const [isResolvingMap, setIsResolvingMap] = useState(false);
-  const resolvedMapUrl = mapUrl || (address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-    : mapQuery
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`
-    : "");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const directCoordinates = extractLatLng(mapUrl) || extractLatLng(address) || extractLatLng(placeName);
-    if (directCoordinates) {
-      setCoordinates(directCoordinates);
-      setIsResolvingMap(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (!mapQuery) {
-      setCoordinates(null);
-      setIsResolvingMap(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (hasStaticPublicSnapshot()) {
-      setCoordinates(null);
-      setIsResolvingMap(false);
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const controller = new AbortController();
-    setIsResolvingMap(true);
-    fetch(apiPath(`/map-preview?query=${encodeURIComponent(mapQuery)}`), {
-      signal: controller.signal,
-    })
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("Map lookup failed")))
-      .then((result: { lat?: string; lon?: string }) => {
-        if (cancelled) return;
-        setCoordinates(toCoordinate(result?.lat, result?.lon));
-        setIsResolvingMap(false);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setCoordinates(null);
-          setIsResolvingMap(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [address, mapQuery, mapUrl, placeName]);
+  const { placeName, address, mapUrl, latitude, longitude } = getMapData(link.content);
+  const mapQuery = getMapQuery(placeName, address, link.title, mapUrl);
+  const coordinates = toMapCoordinates(latitude, longitude)
+    || extractMapCoordinates(mapUrl)
+    || extractMapCoordinates(address)
+    || extractMapCoordinates(placeName);
+  const resolvedMapUrl = getSafeMapOpenUrl(mapUrl, mapQuery);
 
   const handleOpen = () => {
     if (resolvedMapUrl) {
@@ -218,12 +147,7 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
         {coordinates ? (
           <RealMapPreview coordinates={coordinates} label={mapQuery || placeName || address || link.title || "Map"} />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-100 text-slate-500">
-            <MapPinned className="h-8 w-8" />
-            <span className="text-xs font-semibold uppercase tracking-[0.14em]">
-              {isResolvingMap ? "Loading real map" : "Map preview unavailable"}
-            </span>
-          </div>
+          <MapLocationFallback label={mapQuery || placeName || address || link.title || "Map"} />
         )}
         <div className="pointer-events-none absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background/70" style={getPublicButtonStyle(link)}>
           {getPublicIconContent(link, <MapPinned className="h-4 w-4" />)}
