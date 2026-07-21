@@ -3313,10 +3313,94 @@
 .content-activation-panel p { margin: .2rem 0 0; color: #64748b; font-size: .8rem; line-height: 1.45; }
 .content-workspace-error { margin: 0; padding: .65rem .75rem; border: 1px solid #fecaca; border-radius: .5rem; background: #fff1f2; color: #b42318; font-size: .82rem; }
 @media (max-width:760px) {
-  .content-workspace-switcher { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(15.5rem,82vw); overflow-x: auto; padding: .1rem .1rem .5rem; scroll-snap-type: x mandatory; overscroll-behavior-inline: contain; }
-  .content-workspace-option { scroll-snap-align: start; }
+  .content-workspace { gap: .75rem; }
+  .content-workspace-header { padding-inline: .15rem; }
+  .content-workspace-header h2 { margin: .15rem 0 .2rem; font-size: 1.05rem; line-height: 1.25; }
+  .content-workspace-header p:last-child { max-width: 36rem; font-size: .78rem; line-height: 1.45; }
+  .content-workspace-switcher { grid-template-columns: repeat(3,minmax(0,1fr)); gap: .3rem; overflow: visible; border: 1px solid #dbe3ef; border-radius: .55rem; background: #fff; padding: .25rem; }
+  .content-workspace-option { display: flex; min-height: 3.35rem; align-items: center; justify-content: center; gap: .35rem; padding: .45rem .25rem; border-color: transparent; background: transparent; text-align: center; box-shadow: none; }
+  .content-workspace-option:hover { border-color: transparent; box-shadow: none; }
+  .content-workspace-option.active { border-color: #bfd0f5; background: #edf3ff; box-shadow: none; }
+  .content-workspace-option-icon { width: 1.75rem; height: 1.75rem; border-radius: .4rem; background: transparent; }
+  .content-workspace-option-icon svg { width: 1rem; height: 1rem; }
+  .content-workspace-option>span:nth-child(2) { display: block; }
+  .content-workspace-option strong { display: block; font-size: .72rem; line-height: 1.15; }
+  .content-workspace-option small,
+  .content-workspace-option .content-status { display: none; }
   .content-activation-panel { grid-template-columns: 2.65rem minmax(0,1fr); }
-  .content-activation-panel .button { grid-column: 1/-1; width: 100%; }
+  .content-activation-panel .button,
+  .content-activation-panel > button { grid-column: 1/-1; width: 100%; }
+}
+
+/* The mobile editor is a focused workspace, not a scaled-down desktop. */
+@media (max-width:640px) {
+  .admin-dashboard-sidebar { min-height: 56px; padding: 7px 9px; }
+  .admin-dashboard-logo-copy strong { font-size: .82rem; }
+  .admin-dashboard-footer-action,
+  .admin-dashboard-language { width: 38px; height: 38px; min-height: 38px; }
+
+  .admin-dashboard-main { padding: 8px 7px calc(76px + env(safe-area-inset-bottom)); }
+  .admin-dashboard-header { gap: 7px; }
+  .admin-dashboard-kicker { display: none; }
+  .admin-dashboard-heading-row h1 { font-size: 1.3rem; line-height: 1.15; }
+  .admin-dashboard-header-actions { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+  .admin-dashboard-header-actions .admin-action { min-height: 40px; font-size: .76rem; padding-inline: .55rem; }
+
+  .admin-dashboard-shell .admin-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 8px; }
+  .admin-dashboard-shell .admin-metric-card { min-height: 48px; align-items: center; gap: 5px; border-bottom: 1px solid rgb(226 232 240); padding: 6px 8px; }
+  .admin-dashboard-shell .admin-metric-card:nth-child(2) { border-right: 0; }
+  .admin-dashboard-shell .admin-metric-card:nth-child(n+3) { border-bottom: 0; }
+  .admin-dashboard-shell .admin-metric-label { font-size: .52rem; letter-spacing: .02em; }
+  .admin-dashboard-shell .admin-metric-value { margin-top: 1px; font-size: .84rem; }
+
+  .admin-tab-content { margin-top: 8px; }
+  .admin-panel,
+  .admin-side-panel,
+  .admin-preview-copy { padding: 11px; }
+  .admin-link-manager { gap: 9px; }
+  .admin-link-toolbar { gap: 9px; padding: 10px; }
+  .admin-link-toolbar h2 { font-size: 1rem; line-height: 1.25; }
+  .admin-link-toolbar p { font-size: .75rem; line-height: 1.4; }
+  .admin-empty-state { padding: 22px 12px; }
+
+  .content-workspace-header p:first-child { display: none; }
+  .content-activation-panel { gap: .6rem; padding: .7rem; }
+  .content-activation-panel .content-workspace-option-icon { display: none; }
+  .content-activation-panel > div { grid-column: 1/-1; }
+  .content-activation-panel strong { font-size: .84rem; }
+  .content-activation-panel p { font-size: .73rem; }
+
+  .menu-editor-main { gap: .8rem; }
+  .menu-editor-intro { gap: .65rem; }
+  .menu-editor-intro h2 { font-size: 1.05rem; line-height: 1.2; }
+  .menu-editor-intro span { font-size: .7rem; }
+  .menu-editor-section-title { align-items: flex-start; gap: .5rem; }
+  .menu-editor-section-title h3 { font-size: .84rem; line-height: 1.25; }
+  .menu-editor-section-title p { font-size: .68rem; }
+  .menu-section-row { gap: .4rem; padding: .55rem; }
+  .menu-subsection-list { margin-left: 1.15rem; padding-left: .45rem; }
+  .menu-add-subsection { margin-left: 1.6rem; }
+  .menu-product-editor { gap: .75rem; padding: .7rem; }
+  .menu-product-image { width: 3.75rem; }
+  .menu-product-editor__top > div { flex-basis: calc(100% - 4.55rem); }
+  .menu-product-flags { align-items: stretch; gap: .65rem; }
+  .menu-product-flags button { min-height: 40px; margin-left: 0; padding-inline: .35rem; }
+  .menu-variants-editor { padding: .65rem; }
+  .menu-variant-row { grid-template-columns: minmax(0,1fr) minmax(5.5rem,.65fr) 2.5rem; gap: .4rem; }
+  .menu-theme-presets { gap: .45rem; }
+  .menu-color-grid { gap: .55rem; }
+  .menu-publish-tools__grid { gap: .8rem; }
+
+  .admin-dashboard-nav { padding-top: 5px; padding-bottom: calc(5px + env(safe-area-inset-bottom)); }
+  .admin-dashboard-nav-item { flex-basis: 66px; width: 66px; min-height: 52px; font-size: .58rem; }
+}
+
+@media (max-width:360px) {
+  .content-workspace-option { flex-direction: column; gap: .12rem; padding-inline: .1rem; }
+  .content-workspace-option strong { font-size: .66rem; }
+  .menu-variant-row { grid-template-columns: minmax(0,1fr) 2.5rem; }
+  .menu-variant-price { grid-column: 1; grid-row: 2; }
+  .menu-variant-row > button { grid-column: 2; grid-row: 1 / span 2; }
 }
 
 /* First-run public state. Kept independent from user theme variables so an
