@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.17.2';
+let APP_VERSION = '4.17.3';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -1638,9 +1638,13 @@ app.use('/uploads', express.static(uploadsPath, {
 // With `trust proxy: 1` set above, req.ip already contains the correct client IP
 // (extracted from X-Forwarded-For by Express). Avoid reading the header manually here
 // as that would bypass the trust model and allow IP spoofing.
+const configuredApiRateLimitMax = Number.parseInt(process.env.ORBITPAGE_API_RATE_LIMIT_MAX || '', 10);
+const apiRateLimitMax = Number.isSafeInteger(configuredApiRateLimitMax) && configuredApiRateLimitMax > 0
+  ? Math.min(configuredApiRateLimitMax, 10_000)
+  : 300;
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: apiRateLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests. Please try again later.' },

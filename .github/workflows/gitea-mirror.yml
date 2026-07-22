@@ -22,4 +22,17 @@ jobs:
       - name: Push mirror to Gitea
         run: |
           git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/OrbitPage.git
-          git push gitea --mirror
+          for attempt in 1 2 3; do
+            if git push gitea --mirror; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              delay=$((attempt * 20))
+              echo "Gitea mirror attempt $attempt failed; retrying in ${delay}s."
+              sleep "$delay"
+            fi
+          done
+
+          echo "Gitea mirror failed after 3 attempts."
+          exit 1
