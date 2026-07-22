@@ -51,6 +51,10 @@ function orderedSectionTree(sections: MenuSection[]) {
   return sectionSiblings(sections).flatMap((section) => [section, ...sectionSiblings(sections, section.id)]);
 }
 
+function menuFingerprint(menu: MenuCatalog) {
+  return JSON.stringify({ ...menu, updatedAt: undefined });
+}
+
 function moveMenuSection(sections: MenuSection[], sectionId: string, direction: -1 | 1) {
   const selected = sections.find((section) => section.id === sectionId);
   if (!selected) return sections;
@@ -174,6 +178,8 @@ export function MenuEditor({
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
   const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
+  const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
+  const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
 
   useEffect(() => {
     const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
@@ -196,6 +202,7 @@ export function MenuEditor({
   };
 
   const save = async () => {
+    if (!isDirty || saving) return;
     setSaving(true);
     setMessage('');
     try {
@@ -322,7 +329,7 @@ export function MenuEditor({
               <span>{tr("Published", "Pubblicato")}</span>
               <Switch checked={draft.enabled} onCheckedChange={(checked) => update((current) => ({ ...current, enabled: checked }))} />
             </label>
-            <Button onClick={() => void save()} disabled={saving}>
+            <Button onClick={() => void save()} disabled={!isDirty || saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin-slow" /> : <Save className="h-4 w-4" />}
               {saving ? 'Saving' : 'Save menu'}
             </Button>

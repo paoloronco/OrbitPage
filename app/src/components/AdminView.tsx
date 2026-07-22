@@ -28,6 +28,7 @@ import {
   Link,
   LockKeyhole,
   LogOut,
+  Loader2,
   MousePointerClick,
   Palette,
   PanelLeftClose,
@@ -183,6 +184,7 @@ export const AdminView = ({
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
+  const [gaSaving, setGaSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
   const [contentSection, setContentSection] = useState<ContentSection>(() => contentSectionForTab(requestedTab) || "home");
   const [menuActivationBusy, setMenuActivationBusy] = useState(false);
@@ -436,10 +438,18 @@ export const AdminView = ({
     setChecklistSession((current) => ({ ...current, visible: false }));
   };
 
-  const handleSaveIntegrations = () => {
-    void onProfileUpdate({ ...profile, googleAnalyticsId: gaId.trim() || undefined });
-    setGaSaved(true);
-    setTimeout(() => setGaSaved(false), 2500);
+  const gaDirty = gaId.trim() !== (profile.googleAnalyticsId || "");
+
+  const handleSaveIntegrations = async () => {
+    if (!gaDirty || gaSaving) return;
+    setGaSaving(true);
+    try {
+      await onProfileUpdate({ ...profile, googleAnalyticsId: gaId.trim() || undefined });
+      setGaSaved(true);
+      setTimeout(() => setGaSaved(false), 2500);
+    } finally {
+      setGaSaving(false);
+    }
   };
 
   const handleThemeSave = async (nextTheme: ThemeConfig) => {
@@ -479,12 +489,13 @@ export const AdminView = ({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button
-          onClick={handleSaveIntegrations}
+          onClick={() => void handleSaveIntegrations()}
           className="admin-action admin-action-primary"
           size="sm"
-          disabled={!canEditProfile || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
+          disabled={!canEditProfile || !gaDirty || gaSaving || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
         >
-          {gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
+          {gaSaving && <Loader2 className="h-4 w-4 animate-spin-slow" />}
+          {gaSaving ? tr("Saving", "Salvataggio") : gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
         </Button>
         {profile.googleAnalyticsId && (
           <p className="text-xs text-slate-500">

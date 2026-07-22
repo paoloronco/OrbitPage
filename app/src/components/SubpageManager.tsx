@@ -53,6 +53,12 @@ export function SubpageManager({
   const [previewLinks, setPreviewLinks] = useState<LinkData[]>(pages[0]?.links || []);
   const [busy, setBusy] = useState(false);
   const selected = useMemo(() => pages.find((page) => page.id === selectedId) || pages[0] || null, [pages, selectedId]);
+  const detailsDirty = Boolean(draft && selected && (
+    draft.title !== selected.title
+    || draft.slug !== selected.slug
+    || draft.description !== selected.description
+    || draft.enabled !== selected.enabled
+  ));
   const pageLimitReached = maxPages !== undefined && maxPages !== null && pages.length + 1 >= maxPages;
 
   useEffect(() => {
@@ -103,6 +109,7 @@ export function SubpageManager({
     }
     const next = { ...draft, slug, title: draft.title.trim(), description: draft.description.trim(), updatedAt: new Date().toISOString() };
     await persist(pages.map((page) => page.id === next.id ? next : page), "Page details saved");
+    setDraft(next);
   };
 
   const updateLinks = async (links: LinkData[]) => {
@@ -174,7 +181,7 @@ export function SubpageManager({
                 <button type="button" className={`subpage-publish-toggle ${draft.enabled ? "is-active" : ""}`} onClick={() => editMode !== "view" && setDraft({ ...draft, enabled: !draft.enabled })} aria-pressed={draft.enabled}>
                   <span /> {draft.enabled ? "Published" : "Hidden"}
                 </button>
-                <Button onClick={saveDetails} disabled={busy || editMode === "view"}><Save className="h-4 w-4" /> Save details</Button>
+                <Button onClick={saveDetails} disabled={!detailsDirty || busy || editMode === "view"}><Save className="h-4 w-4" /> Save details</Button>
               </div>
             </section>
             <LinkManager

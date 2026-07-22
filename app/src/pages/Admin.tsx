@@ -315,6 +315,7 @@ const Admin = () => {
         description: error?.message || 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
+      throw error instanceof Error ? error : new Error('The page could not be saved.');
     }
   };
 

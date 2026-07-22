@@ -884,6 +884,7 @@ export function PrivacySettings({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
   const [legalConfigLoaded, setLegalConfigLoaded] = useState(false);
   const [showLegalLinks, setShowLegalLinks] = useState(Boolean(privacyPolicyUrl || cookiePolicyUrl));
   const [privacyMethod, setPrivacyMethod] = useState<LegalPolicyMethod>(getPolicyMethod(privacyPolicyUrl, 'privacy'));
@@ -992,8 +993,62 @@ export function PrivacySettings({
     return cookieExternalUrl.trim() || undefined;
   }, [cookieExternalUrl, cookieMethod, showLegalLinks]);
 
+  const normalizedBuilder = useMemo(() => ({
+    ...builder,
+    providerConfig: {
+      ...DEFAULT_BUILDER.providerConfig,
+      ...builder.providerConfig,
+    },
+  }), [builder]);
+  const privacySnapshot = useMemo(() => JSON.stringify({
+    mode,
+    enabled,
+    hardcoded,
+    builder: normalizedBuilder,
+    legalPolicies: {
+      showFooterLinks: showLegalLinks,
+      privacyPolicy: {
+        mode: privacyMethod,
+        externalUrl: privacyMethod === 'external' ? (resolvedPrivacyPolicyUrl || '') : '',
+        hostedText: privacyMethod === 'hosted' ? privacyHostedText.trim() : '',
+        hostedFileName: privacyMethod === 'hosted' ? privacyHostedFileName : '',
+        embeddedCode: privacyMethod === 'embedded' ? privacyProviderConfig.trim() : '',
+      },
+      cookiePolicy: {
+        mode: cookieMethod,
+        externalUrl: cookieMethod === 'external' ? (resolvedCookiePolicyUrl || '') : '',
+        hostedText: cookieMethod === 'hosted' ? cookieHostedText.trim() : '',
+        hostedFileName: cookieMethod === 'hosted' ? cookieHostedFileName : '',
+        embeddedCode: cookieMethod === 'embedded' ? cookieProviderConfig.trim() : '',
+      },
+    },
+  }), [
+    cookieHostedFileName,
+    cookieHostedText,
+    cookieMethod,
+    cookieProviderConfig,
+    enabled,
+    hardcoded,
+    mode,
+    normalizedBuilder,
+    privacyHostedFileName,
+    privacyHostedText,
+    privacyMethod,
+    privacyProviderConfig,
+    resolvedCookiePolicyUrl,
+    resolvedPrivacyPolicyUrl,
+    showLegalLinks,
+  ]);
+  const isDirty = savedSnapshot !== null && savedSnapshot !== privacySnapshot;
+
+  useEffect(() => {
+    if (loading || savedSnapshot !== null) return;
+    const timer = window.setTimeout(() => setSavedSnapshot(privacySnapshot), 0);
+    return () => window.clearTimeout(timer);
+  }, [loading, privacySnapshot, savedSnapshot]);
+
   const handleSave = async () => {
-    if (readOnly) return;
+    if (readOnly || !isDirty || saving) return;
 
     setSaving(true);
     setSaveError('');
@@ -1042,13 +1097,7 @@ export function PrivacySettings({
         cookiePolicyUrl: nextCookiePolicyUrl,
       });
 
-      const nextBuilder = {
-        ...builder,
-        providerConfig: {
-          ...DEFAULT_BUILDER.providerConfig,
-          ...builder.providerConfig,
-        },
-      };
+      const nextBuilder = normalizedBuilder;
       const legalPolicies: NonNullable<ConsentConfigData['legalPolicies']> = {
         showFooterLinks: showLegalLinks,
         privacyPolicy: {
@@ -1072,6 +1121,7 @@ export function PrivacySettings({
         setSaveError((res as { error?: string }).error || 'Save failed.');
       } else {
         setBuilder(nextBuilder);
+        setSavedSnapshot(privacySnapshot);
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 2500);
       }
@@ -1304,7 +1354,7 @@ export function PrivacySettings({
         </div>
         <Button
           onClick={handleSave}
-          disabled={saving || readOnly}
+          disabled={!isDirty || saving || readOnly}
           className="admin-action admin-action-primary"
           size="sm"
         >
