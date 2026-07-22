@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference } from './link-blocks';
+import { detectEmbedProvider, getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference } from './link-blocks';
 
 describe('compact link block data', () => {
   it('keeps legacy social rows compatible', () => {
@@ -102,6 +102,14 @@ describe('official service embeds', () => {
     expect(getKnownEmbedUrl('google_calendar', 'https://calendar.google.com/calendar/u/0/r')).toBeNull();
     expect(getKnownEmbedUrl('typeform', 'https://typeform.com.evil.example/to/moe6aa')).toBeNull();
     expect(getKnownEmbedUrl('typeform', 'https://admin.typeform.com/form/moe6aa/create')).toBeNull();
+  });
+
+  it('detects providers by parsed hostname instead of unsafe substrings', () => {
+    expect(detectEmbedProvider('https://open.spotify.com/track/example')).toBe('spotify');
+    expect(detectEmbedProvider('<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>')).toBe('youtube');
+    expect(detectEmbedProvider('https://open.spotify.com.attacker.example/track/example')).toBe('custom');
+    expect(detectEmbedProvider('https://attacker.example/?next=calendly.com/demo')).toBe('custom');
+    expect(detectEmbedProvider('javascript:youtube.com')).toBe('custom');
   });
 
   it('extracts Typeform IDs and selects the matching data region', () => {

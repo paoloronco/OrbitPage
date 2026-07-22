@@ -53,3 +53,47 @@ export const resolveSafeBrowserHttpUrl = (value: string, currentHref: string): U
     return null;
   }
 };
+
+const getCurrentBrowserHref = (): string =>
+  typeof window !== 'undefined' ? window.location.href : 'https://orbitpage.invalid/';
+
+const hasAsciiControlCharacter = (value: string): boolean =>
+  [...value].some((character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return codePoint < 32 || codePoint === 127;
+  });
+
+export const resolveSafePublicHref = (value?: string | null, currentHref = getCurrentBrowserHref()): string | null => {
+  const candidate = String(value || '').trim();
+  if (!candidate || hasAsciiControlCharacter(candidate)) return null;
+  if (candidate.startsWith('#') || /^\/(?!\/)/.test(candidate)) return candidate;
+
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return resolveSafeBrowserHttpUrl(candidate, currentHref) ? candidate : null;
+    }
+    if ((parsed.protocol === 'mailto:' || parsed.protocol === 'tel:') && !parsed.username && !parsed.password) {
+      return parsed.toString();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+export const resolveSafePublicMediaUrl = (value?: string | null, currentHref = getCurrentBrowserHref()): string | null => {
+  const candidate = String(value || '').trim();
+  if (!candidate) return null;
+  if (/^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(candidate)) return candidate;
+  if (candidate.startsWith('blob:')) {
+    try {
+      const parsed = new URL(candidate);
+      return parsed.protocol === 'blob:' ? parsed.toString() : null;
+    } catch {
+      return null;
+    }
+  }
+  if (/^\/(?!\/)/.test(candidate) || (!candidate.includes(':') && !candidate.startsWith('//'))) return candidate;
+  return resolveSafeBrowserHttpUrl(candidate, currentHref)?.toString() || null;
+};

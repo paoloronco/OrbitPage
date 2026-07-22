@@ -5,6 +5,7 @@ import { BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, Twitt
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
+import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 import type { CardSurfaceEffect } from "@/lib/theme";
 
@@ -40,9 +41,20 @@ interface PublicProfileSectionProps {
 export const PublicProfileSection = ({ profile, fallbackName = "Name or brand", surfaceEffect = "solid" }: PublicProfileSectionProps) => {
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
   const displayName = profile.name?.trim() || fallbackName || "";
-  const hasSocialLinks = Boolean(
-    profile.socialLinks && Object.values(profile.socialLinks).some(link => link)
-  );
+  const socialLinks = {
+    linkedin: resolveSafePublicHref(profile.socialLinks?.linkedin),
+    github: resolveSafePublicHref(profile.socialLinks?.github),
+    instagram: resolveSafePublicHref(profile.socialLinks?.instagram),
+    facebook: resolveSafePublicHref(profile.socialLinks?.facebook),
+    twitter: resolveSafePublicHref(profile.socialLinks?.twitter),
+    youtube: resolveSafePublicHref(profile.socialLinks?.youtube),
+    tiktok: resolveSafePublicHref(profile.socialLinks?.tiktok),
+    discord: resolveSafePublicHref(profile.socialLinks?.discord),
+    telegram: resolveSafePublicHref(profile.socialLinks?.telegram),
+    whatsapp: resolveSafePublicHref(profile.socialLinks?.whatsapp),
+    mastodon: resolveSafePublicHref(profile.socialLinks?.mastodon),
+  };
+  const hasSocialLinks = Object.values(socialLinks).some(Boolean);
   const profileDetails = profile.appearance?.profileDetails;
   const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);
   const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || profile.showAvatar !== false);
@@ -80,134 +92,134 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand", 
         {/* Social Icons */}
         {hasSocialLinks && (
           <div className="profile-card__socials mb-4 flex flex-wrap justify-center gap-3">
-            {profile.socialLinks.linkedin && (
+            {socialLinks.linkedin && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
+                <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile">
                   <Linkedin className="h-4 w-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.github && (
+            {socialLinks.github && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+                <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
                   <Github className="h-4 w-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.instagram && (
+            {socialLinks.instagram && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram profile">
+                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram profile">
                   <Instagram className="h-4 w-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.facebook && (
+            {socialLinks.facebook && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook profile">
+                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook profile">
                   <Facebook className="h-4 w-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.twitter && (
+            {socialLinks.twitter && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.twitter} target="_blank" rel="noopener noreferrer" aria-label="X/Twitter profile">
+                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" aria-label="X/Twitter profile">
                   <Twitter className="h-4 w-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.youtube && (
+            {socialLinks.youtube && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube channel">
+                <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube channel">
                   <Youtube className="w-4 h-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.tiktok && (
+            {socialLinks.tiktok && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok profile">
+                <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok profile">
                   <TikTokIcon className="w-4 h-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.discord && (
+            {socialLinks.discord && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.discord} target="_blank" rel="noopener noreferrer" aria-label="Discord profile">
+                <a href={socialLinks.discord} target="_blank" rel="noopener noreferrer" aria-label="Discord profile">
                   <DiscordIcon className="w-4 h-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.telegram && (
+            {socialLinks.telegram && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.telegram} target="_blank" rel="noopener noreferrer" aria-label="Telegram profile">
+                <a href={socialLinks.telegram} target="_blank" rel="noopener noreferrer" aria-label="Telegram profile">
                   <TelegramIcon className="w-4 h-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.whatsapp && (
+            {socialLinks.whatsapp && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp profile">
+                <a href={socialLinks.whatsapp} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp profile">
                   <WhatsAppIcon className="w-4 h-4" />
                 </a>
               </Button>
             )}
-            {profile.socialLinks.mastodon && (
+            {socialLinks.mastodon && (
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
                 className="profile-card__social h-9 w-9"
               >
-                <a href={profile.socialLinks.mastodon} target="_blank" rel="noopener noreferrer" aria-label="Mastodon profile">
+                <a href={socialLinks.mastodon} target="_blank" rel="noopener noreferrer" aria-label="Mastodon profile">
                   <MastodonIcon className="w-4 h-4" />
                 </a>
               </Button>
@@ -226,7 +238,10 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand", 
 };
 
 function getAvatarUrl(avatar?: string | null) {
-  if (!avatar) return profileAvatar as unknown as string;
-  if (avatar.startsWith('data:') || avatar.startsWith('blob:') || avatar.startsWith('http')) return avatar;
-  return internalAssetPath(avatar) || (profileAvatar as unknown as string);
+  const safeUrl = resolveSafePublicMediaUrl(avatar);
+  if (!safeUrl) return profileAvatar as unknown as string;
+  if (safeUrl.startsWith('/') || (!safeUrl.includes(':') && !safeUrl.startsWith('//'))) {
+    return internalAssetPath(safeUrl) || (profileAvatar as unknown as string);
+  }
+  return safeUrl;
 }

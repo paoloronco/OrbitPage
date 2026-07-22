@@ -5,25 +5,29 @@ import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, ImageOff } from "lucide-react";
 import { getPublicBlockPadding, getPublicBlockStyle } from "@/lib/public-block-style";
+import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 interface PublicImageCardProps {
   link: LinkData;
 }
 
 const resolveImageUrl = (src?: string | null) => {
-  if (!src) return null;
-  if (src.startsWith("data:") || src.startsWith("blob:") || src.startsWith("http")) return src;
-  return internalAssetPath(src);
+  const safeUrl = resolveSafePublicMediaUrl(src);
+  if (!safeUrl) return null;
+  return safeUrl.startsWith("/") || (!safeUrl.includes(":") && !safeUrl.startsWith("//"))
+    ? internalAssetPath(safeUrl)
+    : safeUrl;
 };
 
 export const PublicImageCard = ({ link }: PublicImageCardProps) => {
   const [imageError, setImageError] = useState(false);
   const imageUrl = resolveImageUrl(link.coverImage || link.url);
+  const safeHref = resolveSafePublicHref(link.url);
   const hasCaption = Boolean(link.title || link.description);
   const cardStyle = getPublicBlockStyle(link);
 
   const trackClick = () => {
-    if (!link.url) return;
+    if (!safeHref) return;
     trackPublicLinkClick(link.id);
   };
 
@@ -37,12 +41,12 @@ export const PublicImageCard = ({ link }: PublicImageCardProps) => {
         type="button"
         className="block w-full text-left disabled:cursor-default"
         onClick={() => {
-          if (link.url) {
+          if (safeHref) {
             trackClick();
-            window.open(link.url, "_blank", "noopener,noreferrer");
+            window.open(safeHref, "_blank", "noopener,noreferrer");
           }
         }}
-        disabled={!link.url}
+        disabled={!safeHref}
       >
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted/35">
           {imageError ? (
@@ -60,7 +64,7 @@ export const PublicImageCard = ({ link }: PublicImageCardProps) => {
               decoding="async"
             />
           )}
-          {link.url ? (
+          {safeHref ? (
             <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white opacity-90 ring-1 ring-white/20 backdrop-blur-sm transition-smooth group-hover:bg-primary">
               <ArrowUpRight className="h-4 w-4" />
             </span>

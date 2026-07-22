@@ -2,18 +2,16 @@ import { apiPath, getActiveBasePath } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
 
-// --- Secure token storage (AES-GCM via Web Crypto with sessionStorage fallback) ---
+// --- Secure token storage (AES-GCM via Web Crypto) ---
 //
 // Web Crypto (crypto.subtle) is only available in "secure contexts": HTTPS or localhost.
-// When accessed over plain HTTP via an IP address, crypto.subtle is undefined and we fall
-// back to storing the token unencrypted in sessionStorage (cleared on tab close).
-// The token is always validated server-side on every request, so this is safe in practice.
+// When accessed over plain HTTP via an IP address, crypto.subtle is unavailable and the
+// token remains in memory for the current document rather than being written in cleartext.
 const TOKEN_STORAGE_KEY = 'orbitpage-auth-token';
 const TOKEN_IV_PREFIX = 'orbitpage-auth-iv-';
 const DEVICE_SECRET_KEY = 'orbitpage-device-secret';
-const TOKEN_FALLBACK_KEY = 'orbitpage-auth-token-plain';
-const SAAS_TOKEN_STORAGE_KEY = 'orbitpage-saas-api-token';
-const SAAS_APP_CHECK_STORAGE_KEY = 'orbitpage-saas-app-check-token';
+let capturedSaasApiToken: string | null = null;
+let capturedSaasAppCheckToken: string | null = null;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -50,8 +48,8 @@ const captureSaasCredentials = (): void => {
   const values = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   const apiToken = values.get('apiToken');
   const appCheckToken = values.get('appCheckToken');
-  if (apiToken) sessionStorage.setItem(SAAS_TOKEN_STORAGE_KEY, apiToken);
-  if (appCheckToken) sessionStorage.setItem(SAAS_APP_CHECK_STORAGE_KEY, appCheckToken);
+  if (apiToken) capturedSaasApiToken = apiToken;
+  if (appCheckToken) capturedSaasAppCheckToken = appCheckToken;
   if (apiToken || appCheckToken) {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
   }
@@ -60,13 +58,13 @@ const captureSaasCredentials = (): void => {
 const getSaasAuthToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   captureSaasCredentials();
-  return sessionStorage.getItem(SAAS_TOKEN_STORAGE_KEY);
+  return getHostedSurfaceConfig()?.apiToken || capturedSaasApiToken;
 };
 
 const getSaasAppCheckToken = (): string | null => {
   if (typeof window === 'undefined') return null;
   captureSaasCredentials();
-  return sessionStorage.getItem(SAAS_APP_CHECK_STORAGE_KEY);
+  return getHostedSurfaceConfig()?.appCheckToken || capturedSaasAppCheckToken;
 };
 
 const resolveApiUrl = (endpoint: string): string => {
@@ -164,9 +162,8 @@ const decryptToken = async (ivB64: string, ctB64: string): Promise<string | null
 
 // Get auth token quickly if cached; otherwise null
 const getAuthToken = (): string | null => {
-  // Fallback path: plain sessionStorage (non-secure context)
   if (!isCryptoAvailable()) {
-    return sessionStorage.getItem(TOKEN_FALLBACK_KEY);
+    return ((window as any).__orbitpageTokenCache as { val?: string } | undefined)?.val || null;
   }
 
   const ctB64 = localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -183,14 +180,9 @@ const getAuthToken = (): string | null => {
 };
 
 const hasStoredAuthToken = (): boolean => {
-  try {
-    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(TOKEN_FALLBACK_KEY)) {
-      return true;
-    }
-  } catch {
-    // Storage can be unavailable in restricted browser contexts.
+  if (typeof window !== 'undefined' && ((window as any).__orbitpageTokenCache as { val?: string } | undefined)?.val) {
+    return true;
   }
-
   try {
     if (typeof localStorage === 'undefined') return false;
     return Boolean(
@@ -207,9 +199,8 @@ const getAuthTokenAsync = async (): Promise<string | null> => {
   const saasToken = getSaasAuthToken();
   if (saasToken) return saasToken;
 
-  // Fallback path: plain sessionStorage (non-secure context)
   if (!isCryptoAvailable()) {
-    return sessionStorage.getItem(TOKEN_FALLBACK_KEY);
+    return getAuthToken();
   }
 
   const cached = getAuthToken();
@@ -235,16 +226,14 @@ const getAuthenticatedRequestHeaders = async (): Promise<Record<string, string>>
 
 // Set auth token.
 // In a secure context (HTTPS / localhost): AES-GCM encrypted in localStorage.
-// In a non-secure context (HTTP over IP): stored unencrypted in sessionStorage.
-// The token is always validated server-side, so both paths are functionally safe.
+// In a non-secure context (HTTP over IP): retained only in memory for this document.
 const setAuthToken = (token: string): Promise<void> => {
   if (!isCryptoAvailable()) {
     console.warn(
       'Web Crypto API unavailable (non-secure context). ' +
-      'Token stored in sessionStorage without encryption. ' +
-      'Use HTTPS or access via localhost for encrypted storage.'
+      'The session is kept in memory and will end on reload. ' +
+      'Use HTTPS or access via localhost for persistent encrypted storage.'
     );
-    sessionStorage.setItem(TOKEN_FALLBACK_KEY, token);
     (window as any).__orbitpageTokenCache = { iv: '', ct: '', val: token };
     return Promise.resolve();
   }
@@ -255,20 +244,17 @@ const setAuthToken = (token: string): Promise<void> => {
     (window as any).__orbitpageTokenCache = { iv: ivB64, ct: ctB64, val: token };
   }).catch((err) => {
     // Encryption unexpectedly failed even though crypto.subtle was available.
-    // Fall back to sessionStorage so the user can still log in.
-    console.warn('Token encryption failed, falling back to sessionStorage:', err);
-    sessionStorage.setItem(TOKEN_FALLBACK_KEY, token);
+    console.warn('Token encryption failed; keeping the session in memory only:', err);
     (window as any).__orbitpageTokenCache = { iv: '', ct: '', val: token };
   });
 };
 
-// Remove auth token (both storage paths)
+// Remove auth tokens from encrypted storage and memory.
 const removeAuthToken = (): void => {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
-  sessionStorage.removeItem(TOKEN_FALLBACK_KEY);
-  sessionStorage.removeItem(SAAS_TOKEN_STORAGE_KEY);
-  sessionStorage.removeItem(SAAS_APP_CHECK_STORAGE_KEY);
+  capturedSaasApiToken = null;
+  capturedSaasAppCheckToken = null;
   delete (window as any).__orbitpageTokenCache;
 };
 

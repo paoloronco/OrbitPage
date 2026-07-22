@@ -237,24 +237,6 @@ const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'youtube', 'spotif
 const embedConsentCategories: EmbedConsentCategory[] = ['necessary', 'preferences', 'analytics', 'marketing'];
 const serviceLinkProviders: ServiceLinkProvider[] = ['whatsapp', 'github'];
 
-export const detectEmbedProvider = (snippet?: string): Exclude<EmbedProvider, 'auto'> => {
-  const value = (snippet || '').toLowerCase();
-  if (value.includes('instagram.com')) return 'instagram';
-  if (value.includes('youtu.be') || value.includes('youtube.com') || value.includes('youtube-nocookie.com')) return 'youtube';
-  if (value.includes('spotify.com')) return 'spotify';
-  if (value.includes('deezer.com')) return 'deezer';
-  if (value.includes('soundcloud.com')) return 'soundcloud';
-  if (value.includes('vimeo.com')) return 'vimeo';
-  if (value.includes('tiktok.com')) return 'tiktok';
-  if (value.includes('giphy.com')) return 'giphy';
-  if (value.includes('calendar.google.com/calendar/appointments/schedules/')) return 'google_calendar';
-  if (value.includes('calendly.com')) return 'calendly';
-  if (value.includes('typeform.com/to/') || value.includes('typeform.eu/to/')) return 'typeform';
-  if (value.includes('google.com/maps') || value.includes('maps.google.')) return 'google_maps';
-  if (value.includes('mailchimp') || value.includes('substack') || value.includes('beehiiv') || value.includes('convertkit') || value.includes('<form')) return 'newsletter';
-  return 'custom';
-};
-
 const getEmbedUrlCandidates = (snippet?: string) => {
   const value = (snippet || '').trim();
   const candidates = /^https:\/\/\S+$/i.test(value) ? [value] : [];
@@ -262,6 +244,49 @@ const getEmbedUrlCandidates = (snippet?: string) => {
     if (match[1]) candidates.push(match[1].replaceAll('&amp;', '&'));
   }
   return candidates;
+};
+
+const isHostOrSubdomain = (hostname: string, domain: string) =>
+  hostname === domain || hostname.endsWith(`.${domain}`);
+
+const googleMapsDomains = new Set([
+  'google.com', 'google.it', 'google.co.uk', 'google.fr', 'google.de', 'google.es',
+  'google.pt', 'google.nl', 'google.pl', 'google.ca', 'google.com.au', 'google.co.jp',
+  'google.co.kr', 'google.com.br', 'google.com.mx', 'google.ch', 'google.at',
+  'google.be', 'google.ie',
+]);
+
+export const detectEmbedProvider = (snippet?: string): Exclude<EmbedProvider, 'auto'> => {
+  const value = (snippet || '').trim();
+  for (const candidate of getEmbedUrlCandidates(value)) {
+    try {
+      const url = new URL(candidate);
+      if (url.protocol !== 'https:' || url.username || url.password) continue;
+      const host = url.hostname.toLowerCase().replace(/\.$/, '');
+      if (isHostOrSubdomain(host, 'instagram.com')) return 'instagram';
+      if (isHostOrSubdomain(host, 'youtu.be') || isHostOrSubdomain(host, 'youtube.com') || isHostOrSubdomain(host, 'youtube-nocookie.com')) return 'youtube';
+      if (isHostOrSubdomain(host, 'spotify.com')) return 'spotify';
+      if (isHostOrSubdomain(host, 'deezer.com')) return 'deezer';
+      if (isHostOrSubdomain(host, 'soundcloud.com')) return 'soundcloud';
+      if (isHostOrSubdomain(host, 'vimeo.com')) return 'vimeo';
+      if (isHostOrSubdomain(host, 'tiktok.com')) return 'tiktok';
+      if (isHostOrSubdomain(host, 'giphy.com')) return 'giphy';
+      if (host === 'calendar.google.com' && url.pathname.startsWith('/calendar/appointments/schedules/')) return 'google_calendar';
+      if (isHostOrSubdomain(host, 'calendly.com')) return 'calendly';
+      if ((isHostOrSubdomain(host, 'typeform.com') || isHostOrSubdomain(host, 'typeform.eu')) && url.pathname.includes('/to/')) return 'typeform';
+      const googleBase = [...googleMapsDomains].find((domain) => host === domain || host === `www.${domain}` || host === `maps.${domain}`);
+      if (googleBase && (host.startsWith('maps.') || url.pathname.startsWith('/maps'))) return 'google_maps';
+      if (
+        isHostOrSubdomain(host, 'mailchimp.com') || isHostOrSubdomain(host, 'list-manage.com') ||
+        isHostOrSubdomain(host, 'substack.com') || isHostOrSubdomain(host, 'beehiiv.com') ||
+        isHostOrSubdomain(host, 'convertkit.com') || isHostOrSubdomain(host, 'kit.com')
+      ) return 'newsletter';
+    } catch {
+      // Ignore malformed candidate URLs and continue with the safe fallback.
+    }
+  }
+  if (value.toLowerCase().includes('<form')) return 'newsletter';
+  return 'custom';
 };
 
 export interface TypeformFormReference {

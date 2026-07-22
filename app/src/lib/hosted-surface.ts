@@ -42,6 +42,4 @@ export function configureHostedSurface(root: HTMLElement, config: HostedSurfaceC
   window.__ORBITPAGE_API_BASE__ = config.apiBase;
   root.lang = config.locale;
   localStorage.setItem("orbitpage.locale", config.locale);
-  sessionStorage.setItem("orbitpage-saas-api-token", config.apiToken);
-  if (config.appCheckToken) sessionStorage.setItem("orbitpage-saas-app-check-token", config.appCheckToken);
 }

@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.17.4';
+let APP_VERSION = '4.17.5';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -753,7 +753,22 @@ const escapeHtml = (value = '') => String(value)
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;');
 
-const stripHtml = (value = '') => String(value).replace(/<[^>]*>/g, ' ');
+const stripHtml = (value = '') => {
+  const source = String(value);
+  let result = '';
+  let insideTag = false;
+  for (const character of source) {
+    if (character === '<') {
+      insideTag = true;
+      result += ' ';
+    } else if (character === '>') {
+      insideTag = false;
+    } else if (!insideTag) {
+      result += character;
+    }
+  }
+  return result;
+};
 
 const compactText = (value = '', maxLength = 160) => {
   const compacted = stripHtml(value).replace(/\s+/g, ' ').trim();
@@ -1522,7 +1537,7 @@ const serveBuiltInTextFile = async (req, res) => {
     res.set('Cache-Control', 'public, max-age=300');
     res.type('text/plain; charset=utf-8').send(content);
   } catch (error) {
-    console.error(`Failed to serve ${req.path}:`, error);
+    console.error('Failed to serve text file:', req.path, error);
     res.status(500).type('text/plain').send('Internal server error\n');
   }
 };
@@ -1600,7 +1615,7 @@ app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, re
     res.set('Cache-Control', 'public, max-age=300');
     return res.type('text/plain; charset=utf-8').send(normalizeTextFileContent(file.content));
   } catch (error) {
-    console.error(`Failed to serve custom TXT file ${req.path}:`, error);
+    console.error('Failed to serve custom TXT file:', req.path, error);
     return res.status(500).type('text/plain').send('Internal server error\n');
   }
 });
@@ -3098,24 +3113,50 @@ const mapQueryFromUrl = (value = '') => {
   }
 };
 
-const isSupportedMapRedirect = (value = '') => {
+const SUPPORTED_GOOGLE_MAP_DOMAINS = new Set([
+  'google.com', 'google.it', 'google.co.uk', 'google.fr', 'google.de', 'google.es',
+  'google.pt', 'google.nl', 'google.pl', 'google.ca', 'google.com.au', 'google.co.jp',
+  'google.co.kr', 'google.com.br', 'google.com.mx', 'google.ch', 'google.at',
+  'google.be', 'google.ie',
+]);
+
+const normalizeSupportedMapUrl = (value = '') => {
   try {
-    const hostname = new URL(value).hostname.toLowerCase();
-    return hostname === 'maps.app.goo.gl'
-      || hostname === 'goo.gl'
-      || hostname === 'openstreetmap.org'
-      || hostname.endsWith('.openstreetmap.org')
-      || /(^|\.)google\.[a-z.]{2,12}$/.test(hostname);
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || url.username || url.password || (url.port && url.port !== '443')) return null;
+    const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
+    const isShortener = hostname === 'maps.app.goo.gl' || (hostname === 'goo.gl' && url.pathname.startsWith('/maps'));
+    const isOpenStreetMap = hostname === 'openstreetmap.org' || hostname.endsWith('.openstreetmap.org');
+    const googleDomain = [...SUPPORTED_GOOGLE_MAP_DOMAINS].find((domain) => (
+      hostname === domain || hostname === `www.${domain}` || hostname === `maps.${domain}`
+    ));
+    const isGoogleMaps = Boolean(googleDomain && (hostname.startsWith('maps.') || url.pathname.startsWith('/maps')));
+    return isShortener || isOpenStreetMap || isGoogleMaps ? url : null;
   } catch {
-    return false;
+    return null;
   }
 };
 
+const getMapShortenerFetchUrl = (value = '') => {
+  const parsed = normalizeSupportedMapUrl(value);
+  if (!parsed) return '';
+  if (parsed.hostname === 'maps.app.goo.gl') {
+    return new URL(`${parsed.pathname}${parsed.search}`, 'https://maps.app.goo.gl').toString();
+  }
+  if (parsed.hostname === 'goo.gl' && parsed.pathname.startsWith('/maps')) {
+    return new URL(`${parsed.pathname}${parsed.search}`, 'https://goo.gl').toString();
+  }
+  return '';
+};
+
 const resolveMapRedirect = async (mapUrl) => {
-  if (!isSupportedMapRedirect(mapUrl)) return { finalUrl: '', coordinates: null };
-  let currentUrl = mapUrl;
+  const initialUrl = normalizeSupportedMapUrl(mapUrl);
+  if (!initialUrl) return { finalUrl: '', coordinates: null };
+  let currentUrl = initialUrl.toString();
   for (let hop = 0; hop < 5; hop += 1) {
-    const response = await fetch(currentUrl, {
+    const fetchUrl = getMapShortenerFetchUrl(currentUrl);
+    if (!fetchUrl) return { finalUrl: currentUrl, coordinates: mapCoordinatesFromText(currentUrl) };
+    const response = await fetch(fetchUrl, {
       redirect: 'manual',
       signal: AbortSignal.timeout(6000),
       headers: {
@@ -3126,12 +3167,12 @@ const resolveMapRedirect = async (mapUrl) => {
     const location = response.headers.get('location');
     await response.body?.cancel().catch(() => undefined);
     if (!location) {
-      const finalUrl = response.url || currentUrl;
+      const finalUrl = normalizeSupportedMapUrl(response.url || currentUrl)?.toString() || currentUrl;
       return { finalUrl, coordinates: mapCoordinatesFromText(finalUrl) };
     }
-    const nextUrl = new URL(location, currentUrl).toString();
-    if (!isSupportedMapRedirect(nextUrl)) throw new Error('Map redirect left the supported providers');
-    currentUrl = nextUrl;
+    const nextUrl = normalizeSupportedMapUrl(new URL(location, fetchUrl).toString());
+    if (!nextUrl) throw new Error('Map redirect left the supported providers');
+    currentUrl = nextUrl.toString();
     const coordinates = mapCoordinatesFromText(currentUrl);
     if (coordinates) return { finalUrl: currentUrl, coordinates };
   }
@@ -3162,7 +3203,7 @@ app.get('/api/map-preview', apiLimiter, authenticateToken, requirePermission('li
     }
 
     let finalUrl = mapUrl;
-    if (mapUrl && isSupportedMapRedirect(mapUrl)) {
+    if (mapUrl && normalizeSupportedMapUrl(mapUrl)) {
       const redirect = await resolveMapRedirect(mapUrl);
       finalUrl = redirect.finalUrl || mapUrl;
       if (redirect.coordinates) {
@@ -3863,16 +3904,31 @@ const bgUpload = multer({
   }
 });
 
+const resolveManagedUploadPath = (filename = '') => {
+  const safeFilename = String(filename);
+  if (!safeFilename || path.basename(safeFilename) !== safeFilename || !/^[a-zA-Z0-9._-]+$/.test(safeFilename)) {
+    return null;
+  }
+  const resolvedUploadsDir = path.resolve(uploadsPath);
+  const candidate = path.resolve(resolvedUploadsDir, safeFilename);
+  return path.dirname(candidate) === resolvedUploadsDir ? candidate : null;
+};
+
+const removeManagedUpload = (filename = '') => {
+  const candidate = resolveManagedUploadPath(filename);
+  if (candidate) fs.rmSync(candidate, { force: true });
+};
+
 const handleMediaUpload = async (req, res) => {
-  let resolvedFilePath = null;
+  let uploadedFilename = '';
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    resolvedFilePath = path.resolve(req.file.path);
-    const resolvedUploadsDir = path.resolve(uploadsPath);
-    if (!resolvedFilePath.startsWith(resolvedUploadsDir + path.sep)) {
+    uploadedFilename = req.file.filename;
+    const resolvedFilePath = resolveManagedUploadPath(uploadedFilename);
+    if (!resolvedFilePath) {
       return res.status(500).json({ error: 'File path validation failed' });
     }
 
@@ -3890,6 +3946,7 @@ const handleMediaUpload = async (req, res) => {
       });
     } catch (error) {
       if (error instanceof UploadQuotaExceededError) {
+        removeManagedUpload(uploadedFilename);
         console.warn('Background upload rejected because storage quota was exceeded:', {
           quotaBytes: error.quotaBytes,
           totalBytes: error.totalBytes,
@@ -3911,7 +3968,7 @@ const handleMediaUpload = async (req, res) => {
 
     res.json({ success: true, filePath: fileUrl, fullUrl, fileName: req.file.filename });
   } catch (error) {
-    if (resolvedFilePath) fs.rmSync(resolvedFilePath, { force: true });
+    removeManagedUpload(uploadedFilename);
     console.error('Background upload error:', error);
     res.status(400).json({ error: error.message || 'Failed to upload media' });
   }

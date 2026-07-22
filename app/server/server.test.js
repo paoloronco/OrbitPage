@@ -179,6 +179,36 @@ describe('API Endpoints', () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain('q=Porta+Nuova+Torino');
   });
 
+  it('GET /api/map-preview follows an allowlisted Google Maps short URL only', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      url: 'https://maps.app.goo.gl/torino',
+      headers: new Headers({ location: 'https://www.google.com/maps/place/Turin/@45.0703,7.6869,15z' }),
+      body: { cancel: vi.fn().mockResolvedValue(undefined) },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await request(app)
+      .get('/api/map-preview')
+      .query({ url: 'https://maps.app.goo.gl/torino' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ lat: '45.0703', lon: '7.6869', source: 'redirect' });
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(new URL(String(fetchMock.mock.calls[0][0])).origin).toBe('https://maps.app.goo.gl');
+  });
+
+  it('GET /api/map-preview never requests a Maps lookalike host', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await request(app)
+      .get('/api/map-preview')
+      .query({ url: 'https://maps.app.goo.gl.attacker.example/torino' });
+
+    expect(response.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('POST /api/auth/setup creates the fixed administrator and primary page slug atomically', async () => {
     vi.mocked(dbGet).mockResolvedValue(null);
 

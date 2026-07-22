@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { trackPublicLinkClick } from '@/lib/public-runtime';
 import type { LinkData } from './LinkCard';
 import { useAppI18n } from '@/lib/i18n';
+import { resolveSafePublicHref } from '@/lib/browser-network-policy';
 
 interface PublicMenuCardProps {
   link: LinkData;
@@ -19,6 +20,7 @@ const getPaddingClass = (size?: LinkData['size']) => {
 export const PublicMenuCard = ({ link }: PublicMenuCardProps) => {
   const { tr } = useAppI18n();
   const unavailable = link.availability === 'unavailable';
+  const safeHref = resolveSafePublicHref(link.url);
   const customStyles: CSSProperties = {
     ...(link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
     ...(link.textColor ? { color: link.textColor } : {}),
@@ -32,13 +34,13 @@ export const PublicMenuCard = ({ link }: PublicMenuCardProps) => {
       data-orbitpage-block="menu"
     >
       <a
-        href={unavailable ? undefined : link.url || '#'}
+        href={unavailable ? undefined : safeHref || undefined}
         onClick={(event) => {
           if (unavailable) {
             event.preventDefault();
             return;
           }
-          if (link.url) trackPublicLinkClick(link.id);
+          if (safeHref) trackPublicLinkClick(link.id);
         }}
         aria-disabled={unavailable}
         tabIndex={unavailable ? -1 : undefined}

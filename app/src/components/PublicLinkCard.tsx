@@ -8,11 +8,14 @@ import { useAppI18n } from '@/lib/i18n';
 import { getServiceLinkData } from '@/lib/link-blocks';
 import { brandServiceColors } from '@/lib/service-brand';
 import { ServiceBrandIcon } from './ServiceBrandIcon';
+import { resolveSafePublicHref, resolveSafePublicMediaUrl } from '@/lib/browser-network-policy';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
-  if (!src) return null;
-  if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('http')) return src;
-  return internalAssetPath(src);
+  const safeUrl = resolveSafePublicMediaUrl(src);
+  if (!safeUrl) return null;
+  return safeUrl.startsWith('/') || (!safeUrl.includes(':') && !safeUrl.startsWith('//'))
+    ? internalAssetPath(safeUrl)
+    : safeUrl;
 };
 
 interface PublicLinkCardProps {
@@ -42,25 +45,11 @@ function buildValidatedBlobUrl(blobUrl: string): string {
 }
 
 const getIconUrl = (iconPath?: string | null) => {
-  if (!iconPath) return null;
-  
-  // If it's a data URL or blob URL, return as is
-  if (iconPath.startsWith('data:') || iconPath.startsWith('blob:')) {
-    return iconPath;
-  }
-  
-  // If it's already a full URL, return as is
-  if (iconPath.startsWith('http')) {
-    return iconPath;
-  }
-  
-  // If it's an absolute internal path, prefix the active app base path.
-  if (iconPath.startsWith('/')) {
-    return internalAssetPath(iconPath);
-  }
-  
-  // For relative paths, assume they're in the uploads directory
-  return internalAssetPath(iconPath);
+  const safeUrl = resolveSafePublicMediaUrl(iconPath);
+  if (!safeUrl) return null;
+  return safeUrl.startsWith('/') || (!safeUrl.includes(':') && !safeUrl.startsWith('//'))
+    ? internalAssetPath(safeUrl)
+    : safeUrl;
 };
 
 export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
@@ -68,6 +57,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const unavailable = link.availability === 'unavailable';
+  const safeHref = resolveSafePublicHref(link.url);
   const service = getServiceLinkData(link.content).service;
 
   useEffect(() => {
@@ -108,15 +98,15 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
       event.preventDefault();
       return;
     }
-    if (link.url) {
+    if (safeHref) {
       trackPublicLinkClick(link.id);
     }
   };
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (link.url) {
-      navigator.clipboard.writeText(link.url).then(() => {
+    if (safeHref) {
+      navigator.clipboard.writeText(safeHref).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }).catch(() => {});
@@ -216,7 +206,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
         style={getCustomStyles()}
       >
         <a
-          href={unavailable ? undefined : link.url || '#'}
+          href={unavailable ? undefined : safeHref || undefined}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleLinkClick}
@@ -260,7 +250,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     >
       {hasCoverImage && (
         <a
-          href={unavailable ? undefined : link.url || '#'}
+          href={unavailable ? undefined : safeHref || undefined}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleLinkClick}
@@ -284,7 +274,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
       <div className={hasCoverImage ? getSizeClasses(link.size) : ''}>
         <div className="flex items-center justify-between gap-3">
           <a
-            href={unavailable ? undefined : link.url || '#'}
+            href={unavailable ? undefined : safeHref || undefined}
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleLinkClick}
@@ -324,7 +314,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
                   {link.description}
                 </p>
               )}
-              {link.url && !link.hideUrl && (
+              {safeHref && !link.hideUrl && (
                 <p
                   className="text-xs mt-1 truncate text-muted-foreground"
                   style={link.textColor ? { color: link.textColor, opacity: 0.8 } : undefined}

@@ -39,6 +39,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { DiscordIcon, MastodonIcon, TelegramIcon, TikTokIcon, WhatsAppIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
+import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 import { internalAssetPath } from "@/lib/base-path";
 import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
@@ -218,9 +219,12 @@ export const ProfileSection = ({
   }, [pendingFaviconPreviewUrl, pendingLogoPreviewUrl]);
 
   const getImageUrl = (value?: string | null) => {
-    if (!value) return profileAvatar as unknown as string;
-    if (value.startsWith("data:") || value.startsWith("blob:") || value.startsWith("http")) return value;
-    return internalAssetPath(value) || (profileAvatar as unknown as string);
+    const safeUrl = resolveSafePublicMediaUrl(value);
+    if (!safeUrl) return profileAvatar as unknown as string;
+    if (safeUrl.startsWith("/") || (!safeUrl.includes(":") && !safeUrl.startsWith("//"))) {
+      return internalAssetPath(safeUrl) || (profileAvatar as unknown as string);
+    }
+    return safeUrl;
   };
 
   const updateAppearance = (updates: Partial<ProfileAppearance>) => {

@@ -20,6 +20,7 @@ const storage = () => {
 
 describe('auth token presence', () => {
   afterEach(() => {
+    if (typeof window !== 'undefined') delete (window as any).__orbitpageTokenCache;
     vi.unstubAllGlobals();
   });
 
@@ -40,11 +41,23 @@ describe('auth token presence', () => {
     expect(authApi.hasStoredToken()).toBe(true);
   });
 
-  it('reports a stored token when the plain fallback token is present', () => {
+  it('ignores obsolete plaintext fallback tokens', () => {
     const session = storage();
     session.setItem('orbitpage-auth-token-plain', 'token');
     vi.stubGlobal('localStorage', storage());
     vi.stubGlobal('sessionStorage', session);
+
+    expect(authApi.hasStoredToken()).toBe(false);
+  });
+
+  it('reports an in-memory token in non-secure browser contexts', () => {
+    vi.stubGlobal('localStorage', storage());
+    vi.stubGlobal('sessionStorage', storage());
+    vi.stubGlobal('window', {
+      location: { hash: '', search: '', href: 'http://example.test/', origin: 'http://example.test' },
+      history: { replaceState: vi.fn(), state: null },
+    });
+    (window as any).__orbitpageTokenCache = { iv: '', ct: '', val: 'token' };
 
     expect(authApi.hasStoredToken()).toBe(true);
   });

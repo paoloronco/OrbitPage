@@ -5,11 +5,14 @@ import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { getPublicTextColor } from "@/lib/public-block-style";
+import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
-  if (!src) return null;
-  if (src.startsWith('data:') || src.startsWith('blob:') || src.startsWith('http')) return src;
-  return internalAssetPath(src);
+  const safeUrl = resolveSafePublicMediaUrl(src);
+  if (!safeUrl) return null;
+  return safeUrl.startsWith('/') || (!safeUrl.includes(':') && !safeUrl.startsWith('//'))
+    ? internalAssetPath(safeUrl)
+    : safeUrl;
 };
 
 interface PublicTextCardProps {
@@ -19,17 +22,18 @@ interface PublicTextCardProps {
 export const PublicTextCard = ({ link }: PublicTextCardProps) => {
   const [coverImageError, setCoverImageError] = useState(false);
   useEffect(() => { setCoverImageError(false); }, [link.coverImage]);
+  const safeHref = resolveSafePublicHref(link.url);
 
   const trackClick = () => {
-    if (link.url) {
+    if (safeHref) {
       trackPublicLinkClick(link.id);
     }
   };
 
   const handleClick = () => {
-    if (link.url) {
+    if (safeHref) {
       trackClick();
-      window.open(link.url, '_blank');
+      window.open(safeHref, '_blank', 'noopener,noreferrer');
     }
   };
   const getSizeClasses = (size?: string) => {
@@ -54,8 +58,6 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
 
   const escapeHtml = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-  const isSafeUrl = (url: string) => /^https?:/i.test(url);
 
   const formatContent = (content?: string) => {
     if (!content) return null;
@@ -88,21 +90,25 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
       const label = match[1].trim();
       const rawUrl = match[2].trim();
       const fullUrl = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
-      if (!isSafeUrl(fullUrl)) return text;
-      return `<a href="${escapeHtml(fullUrl)}" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-primary transition-colors">${label} (${rawUrl})</a>`;
+      const safeUrl = resolveSafePublicHref(fullUrl);
+      if (!safeUrl || !/^https?:\/\//i.test(safeUrl)) return text;
+      return `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="hover:underline hover:text-primary transition-colors">${label} (${rawUrl})</a>`;
     }
 
     return text;
   };
 
   const coverUrl = resolveCoverImageUrl(link.coverImage);
+  const iconUrl = link.iconType === 'image' || link.iconType === 'svg'
+    ? resolveCoverImageUrl(link.icon)
+    : null;
   const hasCoverImage = !!(coverUrl && !coverImageError);
   const readableTextColor = getPublicTextColor(link);
 
   return (
     <Card
       className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getSizeClasses(link.size)} transition-smooth ${
-        link.url ? 'hover:glow-effect group cursor-pointer' : ''
+        safeHref ? 'hover:glow-effect group cursor-pointer' : ''
       }`}
       onClick={hasCoverImage ? undefined : handleClick}
       style={getCustomStyles()}
@@ -111,7 +117,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
         <div
           className="relative w-full overflow-hidden"
           style={{ aspectRatio: '16/9' }}
-          onClick={link.url ? handleClick : undefined}
+          onClick={safeHref ? handleClick : undefined}
           aria-hidden="true"
         >
           <img
@@ -119,14 +125,14 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             alt=""
             loading="lazy"
             decoding="async"
-            className={`w-full h-full object-cover transition-transform duration-300${link.url ? ' group-hover:scale-[1.02]' : ''}`}
+            className={`w-full h-full object-cover transition-transform duration-300${safeHref ? ' group-hover:scale-[1.02]' : ''}`}
             onError={() => setCoverImageError(true)}
           />
         </div>
       )}
       <div
         className={hasCoverImage ? getSizeClasses(link.size) : ''}
-        onClick={hasCoverImage && link.url ? handleClick : undefined}
+        onClick={hasCoverImage && safeHref ? handleClick : undefined}
       >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
@@ -134,15 +140,15 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             {link.icon && (
               <div className="flex-shrink-0">
                 {link.iconType === 'image' || link.iconType === 'svg' ? (
-                  <img src={internalAssetPath(link.icon) || ''} alt="" className="w-5 h-5 object-cover rounded" />
+                  iconUrl ? <img src={iconUrl} alt="" className="w-5 h-5 object-cover rounded" /> : null
                 ) : (
                   <span className="text-lg">{link.icon}</span>
                 )}
               </div>
             )}
-            {link.url ? (
+            {safeHref ? (
               <a
-                href={link.url}
+                href={safeHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(event) => {
@@ -162,20 +168,22 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                 {link.title || "Text Card"}
               </h3>
             )}
-            {link.url && <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />}
+            {safeHref && <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />}
           </div>
           {link.textItems && link.textItems.length > 0 && (
             <ul className="text-sm leading-relaxed space-y-2 mb-3" style={readableTextColor ? { color: readableTextColor } : undefined}>
-              {link.textItems.map((item, index) => (
+              {link.textItems.map((item, index) => {
+                const itemHref = resolveSafePublicHref(item.url);
+                return (
                 <li key={index} className="flex">
                   <span className="mr-2" style={{ color: item.textColor || readableTextColor }}>•</span>
                   <div className="flex-1 min-w-0">
                     {/* Label on its own line */}
                     <div style={{ color: item.textColor || readableTextColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || undefined }}>{item.text}</div>
                     {/* URL on second indented line without wrapping */}
-                    {item.url && (
+                    {itemHref && (
                       <a
-                        href={item.url}
+                        href={itemHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
@@ -188,7 +196,8 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                     )}
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
           {link.content && (
