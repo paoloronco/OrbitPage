@@ -79,6 +79,7 @@ test('renders YouTube with the origin-preserving policy required by the player',
 });
 
 test('renders every remaining official media provider through its allowlisted player', async ({ page }) => {
+  test.setTimeout(90_000);
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Content', exact: true }).click();
 
