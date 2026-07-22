@@ -94,6 +94,29 @@ describe('official service embeds', () => {
     expect(result).toContain(encodeURIComponent('https://soundcloud.com/forss/flickermood'));
   });
 
+  it('identifies YouTube embeds without leaking tenant paths or access tokens', () => {
+    const result = getKnownEmbedUrl(
+      'youtube',
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://orbitpage.net/example?demoAccess=secret-token',
+    );
+    const playerUrl = new URL(result || '');
+
+    expect(playerUrl.origin).toBe('https://www.youtube-nocookie.com');
+    expect(playerUrl.searchParams.get('enablejsapi')).toBe('1');
+    expect(playerUrl.searchParams.get('origin')).toBe('https://orbitpage.net');
+    expect(playerUrl.searchParams.get('widget_referrer')).toBe('https://orbitpage.net');
+    expect(result).not.toContain('example');
+    expect(result).not.toContain('secret-token');
+  });
+
+  it('ignores invalid or credential-bearing embedder URLs', () => {
+    expect(getKnownEmbedUrl('youtube', 'https://youtu.be/dQw4w9WgXcQ', 'javascript:alert(1)'))
+      .toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    expect(getKnownEmbedUrl('youtube', 'https://youtu.be/dQw4w9WgXcQ', 'https://user:secret@orbitpage.net/example'))
+      .toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
+  });
+
   it('rejects lookalike and non-HTTPS provider domains', () => {
     expect(getKnownEmbedUrl('spotify', 'https://open.spotify.com.evil.example/track/example')).toBeNull();
     expect(getKnownEmbedUrl('vimeo', 'http://vimeo.com/76979871')).toBeNull();

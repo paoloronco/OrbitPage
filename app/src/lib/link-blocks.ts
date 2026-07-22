@@ -322,7 +322,22 @@ export const getTypeformFormReference = (snippet?: string): TypeformFormReferenc
   return null;
 };
 
-export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snippet?: string): string | null => {
+const normalizeEmbedderOrigin = (value?: string): string | null => {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if ((url.protocol !== 'https:' && url.protocol !== 'http:') || url.username || url.password) return null;
+    return url.origin;
+  } catch {
+    return null;
+  }
+};
+
+export const getKnownEmbedUrl = (
+  provider: Exclude<EmbedProvider, 'auto'>,
+  snippet?: string,
+  embedderUrl?: string,
+): string | null => {
   for (const candidate of getEmbedUrlCandidates(snippet)) {
     try {
       const url = new URL(candidate);
@@ -339,7 +354,17 @@ export const getKnownEmbedUrl = (provider: Exclude<EmbedProvider, 'auto'>, snipp
           ? url.pathname.split('/').filter(Boolean)[0]
           : url.searchParams.get('v') || url.pathname.match(/\/(?:embed|shorts|live)\/([^/?]+)/)?.[1];
         if (videoId && /^[a-z0-9_-]{6,20}$/i.test(videoId)) {
-          return `https://www.youtube-nocookie.com/embed/${videoId}`;
+          const playerUrl = new URL(`https://www.youtube-nocookie.com/embed/${videoId}`);
+          const embedderOrigin = normalizeEmbedderOrigin(embedderUrl);
+          if (embedderOrigin) {
+            // YouTube error 153 is raised when neither a referrer nor equivalent
+            // client identity is available. Only disclose the origin, never the
+            // tenant path, query string, or demo-access token.
+            playerUrl.searchParams.set('enablejsapi', '1');
+            playerUrl.searchParams.set('origin', embedderOrigin);
+            playerUrl.searchParams.set('widget_referrer', embedderOrigin);
+          }
+          return playerUrl.toString();
         }
       }
 

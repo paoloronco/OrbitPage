@@ -56,12 +56,17 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   const textColor = getPublicTextColor(link);
   const secondaryStyle = textColor ? { color: textColor, opacity: 0.72 } : undefined;
   const providerLabel = getEmbedProviderLabel(provider);
-  const knownProviderUrl = getKnownEmbedUrl(provider, embed.snippet);
+  const embedderUrl = typeof window === 'undefined' ? undefined : window.location.href;
+  const knownProviderUrl = getKnownEmbedUrl(provider, embed.snippet, embedderUrl);
   const typeformReference = provider === 'typeform' ? getTypeformFormReference(embed.snippet) : null;
   const requiresAllowlistedUrl = provider !== 'custom' && provider !== 'newsletter';
   const invalidProviderUrl = Boolean(embed.snippet) && requiresAllowlistedUrl && !knownProviderUrl;
   const staticCustomEmbedUnavailable = !requiresAllowlistedUrl && !knownProviderUrl && hasStaticPublicSnapshot();
   const brandColor = isBrandServiceProvider(provider) ? brandServiceColors[provider] : undefined;
+  const usesResponsiveVideoFrame = provider === 'youtube' || provider === 'vimeo';
+  const embedViewportStyle = usesResponsiveVideoFrame
+    ? { aspectRatio: '16 / 9', minHeight: '200px' }
+    : { height: `${embed.height || 360}px` };
 
   if (!embed.snippet) {
     return (
@@ -112,7 +117,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
           </div>
         </div>
       ) : isGranted ? (
-        <div className="relative w-full overflow-hidden border-t border-current/10 bg-slate-950/10" style={{ height: `${embed.height || 360}px` }}>
+        <div className="relative w-full overflow-hidden border-t border-current/10 bg-slate-950/10" style={embedViewportStyle}>
           {typeformReference ? (
             <Suspense fallback={<div className="flex h-full items-center justify-center text-sm font-medium opacity-65">Loading Typeform...</div>}>
               <TypeformWidget
@@ -137,7 +142,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
               title={`${providerLabel}: ${link.title || 'embedded content'}`}
               className="h-full w-full border-0"
               loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
+              referrerPolicy="origin"
               sandbox={knownProviderUrl
                 ? "allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-top-navigation-by-user-activation"
                 : "allow-scripts allow-forms allow-popups allow-presentation"}
