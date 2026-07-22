@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, MailPlus, Phone, ShoppingBag } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, Link2, Mail, MailPlus, MapPin, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
@@ -9,7 +9,9 @@ import { getServiceLinkData } from '@/lib/link-blocks';
 import { brandServiceColors } from '@/lib/service-brand';
 import { ServiceBrandIcon } from './ServiceBrandIcon';
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from '@/lib/browser-network-policy';
-import { resolvePublicImageUrl } from '@/lib/public-asset-readiness';
+import { isPublicImageReference, resolvePublicImageUrl } from '@/lib/public-asset-readiness';
+import { CompactLinkIcon } from './CompactLinkIcon';
+import type { SocialLinkPlatform } from '@/lib/link-blocks';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   const safeUrl = resolveSafePublicMediaUrl(src);
@@ -31,6 +33,24 @@ const ctaActionConfig = {
   buy: { label: 'Buy', Icon: ShoppingBag },
 } as const;
 
+const socialIconNames = new Set<SocialLinkPlatform>([
+  'instagram', 'facebook', 'tiktok', 'x', 'youtube', 'linkedin', 'whatsapp', 'telegram', 'discord', 'github', 'email',
+]);
+
+const semanticIconComponents = {
+  booking: CalendarCheck,
+  calendar: CalendarCheck,
+  contact: Phone,
+  download: Download,
+  external: ExternalLink,
+  link: Link2,
+  location: MapPin,
+  mail: Mail,
+  map: MapPin,
+  menu: UtensilsCrossed,
+  phone: Phone,
+} as const;
+
 function buildValidatedBlobUrl(blobUrl: string): string {
   try {
     const url = new URL(blobUrl);
@@ -47,7 +67,9 @@ function buildValidatedBlobUrl(blobUrl: string): string {
 
 export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const { tr } = useAppI18n();
-  const resolvedIconUrl = resolvePublicImageUrl(link.icon);
+  const iconIsImage = link.iconType === 'image' || link.iconType === 'svg' || (!link.iconType && isPublicImageReference(link.icon));
+  const semanticIconName = iconIsImage ? '' : String(link.icon || '').trim().toLowerCase();
+  const resolvedIconUrl = iconIsImage ? resolvePublicImageUrl(link.icon) : null;
   const [blobIconUrl, setBlobIconUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const unavailable = link.availability === 'unavailable';
@@ -155,6 +177,23 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
       return (
         <div className="public-link-icon-fallback w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
           <span className="text-lg leading-none" aria-hidden="true">{link.icon}</span>
+        </div>
+      );
+    }
+
+    if (semanticIconName && socialIconNames.has(semanticIconName as SocialLinkPlatform)) {
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+          <CompactLinkIcon platform={semanticIconName as SocialLinkPlatform} url={safeHref || ''} className="h-4 w-4" />
+        </div>
+      );
+    }
+
+    const SemanticIcon = semanticIconComponents[semanticIconName as keyof typeof semanticIconComponents];
+    if (SemanticIcon) {
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+          <SemanticIcon className="h-4 w-4" aria-hidden="true" />
         </div>
       );
     }

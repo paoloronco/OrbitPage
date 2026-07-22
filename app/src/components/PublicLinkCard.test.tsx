@@ -20,4 +20,22 @@ describe("PublicLinkCard media", () => {
     expect(html).toContain('src="https://media.example/icon.webp"');
     expect(html).not.toContain('>C</span>');
   });
+
+  it("renders semantic icons without requesting fake upload paths", () => {
+    const html = renderToStaticMarkup(
+      <PublicLinkCard
+        link={{
+          id: "instagram-card",
+          title: "Instagram",
+          description: "",
+          url: "https://instagram.com/example",
+          icon: "instagram",
+        }}
+      />
+    );
+
+    expect(html).toContain("lucide-instagram");
+    expect(html).not.toContain("/uploads/instagram");
+    expect(html).not.toContain('<img');
+  });
 });

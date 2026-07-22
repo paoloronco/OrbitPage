@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { collectCriticalPublicImageUrls, resolvePublicImageUrl, waitForCriticalPublicImages } from "./public-asset-readiness";
+import { collectCriticalPublicImageUrls, isPublicImageReference, resolvePublicImageUrl, waitForCriticalPublicImages } from "./public-asset-readiness";
 
 describe("public asset readiness", () => {
   it("collects unique profile, background and card media without emoji placeholders", () => {
@@ -51,6 +51,21 @@ describe("public asset readiness", () => {
   it("resolves relative public media through the active OrbitPage base path", () => {
     expect(resolvePublicImageUrl("/uploads/avatar.webp")).toContain("/uploads/avatar.webp");
     expect(resolvePublicImageUrl("javascript:alert(1)")).toBeNull();
+  });
+
+  it("does not treat semantic card icons as uploaded images", () => {
+    expect(isPublicImageReference("instagram")).toBe(false);
+    expect(isPublicImageReference("phone")).toBe(false);
+    expect(isPublicImageReference("menu")).toBe(false);
+    expect(isPublicImageReference("/uploads/icon.webp")).toBe(true);
+    expect(isPublicImageReference("https://media.example/icon.svg")).toBe(true);
+
+    expect(collectCriticalPublicImageUrls({
+      links: [
+        { id: "phone", title: "Call", description: "", url: "tel:+39000", icon: "phone" },
+        { id: "social", title: "Instagram", description: "", url: "https://instagram.com/example", icon: "instagram" },
+      ],
+    })).toEqual([]);
   });
 
   it("never holds the page beyond the readiness timeout", async () => {

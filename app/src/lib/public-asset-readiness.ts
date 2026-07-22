@@ -15,6 +15,13 @@ export function resolvePublicImageUrl(value?: string | null) {
   return safeUrl;
 }
 
+export function isPublicImageReference(value?: string | null) {
+  const candidate = String(value || "").trim();
+  if (!candidate) return false;
+  return /^(?:https?:\/\/|data:image\/|blob:|\/)/i.test(candidate) ||
+    /\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(candidate);
+}
+
 export function collectCriticalPublicImageUrls(input: {
   avatar?: string | null;
   showAvatar?: boolean;
@@ -30,7 +37,13 @@ export function collectCriticalPublicImageUrls(input: {
 
   for (const link of input.links) {
     if (link.isActive === false) continue;
-    if (link.iconType !== "emoji") candidates.push(resolvePublicImageUrl(link.icon));
+    if (
+      link.iconType === "image" ||
+      link.iconType === "svg" ||
+      (!link.iconType && isPublicImageReference(link.icon))
+    ) {
+      candidates.push(resolvePublicImageUrl(link.icon));
+    }
     candidates.push(resolvePublicImageUrl(link.coverImage));
     if (link.type === "image") candidates.push(resolvePublicImageUrl(link.coverImage || link.url));
     if (candidates.filter(Boolean).length >= MAX_CRITICAL_IMAGES) break;
