@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { PublicView } from "@/components/PublicView";
 import { CookieBanner } from "@/components/CookieBanner";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
@@ -14,6 +14,7 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
 import { UnderConstruction } from "@/components/UnderConstruction";
+import { collectCriticalPublicImageUrls, waitForCriticalPublicImages } from "@/lib/public-asset-readiness";
 
 interface ProfileData {
   name: string;
@@ -80,6 +81,16 @@ const Index = () => {
   const [showOrbitPageBadge, setShowOrbitPageBadge] = useState(true);
   const [setupRequired, setSetupRequired] = useState(false);
 
+  // Reveal the static page only after React has committed the final snapshot.
+  // This prevents a frame containing avatar initials or placeholder card icons.
+  useLayoutEffect(() => {
+    if (loading) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.body.classList.remove('orbitpage-booting');
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [loading]);
+
   // Load all public page data in one request so the default UI never flashes.
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +116,7 @@ const Index = () => {
         setConsentConfig(cfg as ConsentConfigData);
 
         const loadedTheme = normalizeTheme(pageData.theme);
+        const normalizedLinks = normalizeLinkDtos(pageData.links);
         applyTheme(loadedTheme);
         setTheme(loadedTheme);
         setBackgroundMedia(loadedTheme.backgroundMedia ?? null);
@@ -118,6 +130,7 @@ const Index = () => {
         }
 
         const profileData = pageData.profile;
+        let nextProfile: ProfileData | null = null;
         if (profileData) {
           const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
           const faviconValue = (profileData as any).favicon;
@@ -126,7 +139,7 @@ const Index = () => {
           const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
           const privacyPolicyUrl = getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl);
           const cookiePolicyUrl = (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined;
-          setProfile({
+          nextProfile = {
             name: profileData.name || "",
             bio: profileData.bio || "",
             avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
@@ -144,7 +157,8 @@ const Index = () => {
             googleAnalyticsId,
             privacyPolicyUrl,
             cookiePolicyUrl,
-          });
+          };
+          setProfile(nextProfile);
 
           // ── Google Analytics 4 — Consent Mode v2 ────────────────────────────
           // gtag.js is intentionally NOT loaded at page-load (neither server-side nor
@@ -228,11 +242,17 @@ const Index = () => {
           }
         }
 
-        setLinks(normalizeLinkDtos(pageData.links));
+        setLinks(normalizedLinks);
         if (pageData.setupRequired !== true) trackPublicPageView();
         setShowOrbitPageBadge(pageData.branding?.showOrbitPageBadge !== false);
         if (pageData.setupRequired === true) document.title = "Page under construction | OrbitPage";
-        document.body.classList.remove('orbitpage-booting');
+        await waitForCriticalPublicImages(collectCriticalPublicImageUrls({
+          avatar: nextProfile?.avatar,
+          showAvatar: nextProfile?.showAvatar,
+          links: normalizedLinks,
+          backgroundMedia: loadedTheme.backgroundMedia,
+        }));
+        if (cancelled) return;
         setLoading(false);
       } catch (error) {
         console.error('Error loading data:', error);

@@ -9,6 +9,7 @@ import { getServiceLinkData } from '@/lib/link-blocks';
 import { brandServiceColors } from '@/lib/service-brand';
 import { ServiceBrandIcon } from './ServiceBrandIcon';
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from '@/lib/browser-network-policy';
+import { resolvePublicImageUrl } from '@/lib/public-asset-readiness';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   const safeUrl = resolveSafePublicMediaUrl(src);
@@ -44,54 +45,47 @@ function buildValidatedBlobUrl(blobUrl: string): string {
   }
 }
 
-const getIconUrl = (iconPath?: string | null) => {
-  const safeUrl = resolveSafePublicMediaUrl(iconPath);
-  if (!safeUrl) return null;
-  return safeUrl.startsWith('/') || (!safeUrl.includes(':') && !safeUrl.startsWith('//'))
-    ? internalAssetPath(safeUrl)
-    : safeUrl;
-};
-
 export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const { tr } = useAppI18n();
-  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const resolvedIconUrl = resolvePublicImageUrl(link.icon);
+  const [blobIconUrl, setBlobIconUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const unavailable = link.availability === 'unavailable';
   const safeHref = resolveSafePublicHref(link.url);
   const service = getServiceLinkData(link.content).service;
 
   useEffect(() => {
+    setImageError(false);
     if (link.iconType === 'emoji') {
-      setIconUrl(null);
-      setImageError(false);
+      setBlobIconUrl(null);
+      return;
+    }
+    if (!resolvedIconUrl?.startsWith('blob:')) {
+      setBlobIconUrl(null);
       return;
     }
 
-    const loadIcon = async () => {
+    let cancelled = false;
+    const loadBlobIcon = async () => {
       try {
-        const url = getIconUrl(link.icon);
-        
-        // If it's a blob URL, convert it to a data URL
-        if (url?.startsWith('blob:')) {
-          const validatedUrl = buildValidatedBlobUrl(url);
-          const response = await fetch(validatedUrl);
-          const blob = await response.blob();
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setIconUrl(reader.result as string);
-          };
-          reader.readAsDataURL(blob);
-        } else {
-          setIconUrl(url);
-        }
+        const response = await fetch(buildValidatedBlobUrl(resolvedIconUrl));
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (!cancelled) setBlobIconUrl(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
       } catch (error) {
         console.error('Error loading icon:', error);
-        setIconUrl(null);
+        if (!cancelled) setImageError(true);
       }
     };
 
-    loadIcon();
-  }, [link.icon, link.iconType]);
+    void loadBlobIcon();
+    return () => { cancelled = true; };
+  }, [link.iconType, resolvedIconUrl]);
+
+  const iconUrl = resolvedIconUrl?.startsWith('blob:') ? blobIconUrl : resolvedIconUrl;
   
   const handleLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (unavailable) {
@@ -159,7 +153,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
 
     if (link.icon && link.iconType === 'emoji') {
       return (
-        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+        <div className="public-link-icon-fallback w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
           <span className="text-lg leading-none" aria-hidden="true">{link.icon}</span>
         </div>
       );
@@ -181,9 +175,9 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
         <img
           src={iconUrl}
           alt={link.title || 'Link icon'}
-          loading="lazy"
+          loading="eager"
           decoding="async"
-          className="w-full h-full object-cover rounded-full"
+          className="public-link-icon-image w-full h-full object-cover rounded-full"
           onError={() => {
             console.error('Error loading image:', iconUrl);
             setImageError(true);
