@@ -1,9 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const delayedPng = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZQmcAAAAASUVORK5CYII=',
-  'base64'
-);
+const delayedSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect width="16" height="16" fill="#2563eb"/></svg>';
 
 test('reveals a static public page only after critical images are ready', async ({ page }) => {
   await page.addInitScript(() => {
@@ -12,7 +9,7 @@ test('reveals a static public page only after critical images are ready', async 
         profile: {
           name: 'Ready page',
           bio: 'No placeholder flash',
-          avatar: 'http://localhost:3123/e2e-avatar.png',
+          avatar: 'http://localhost:3123/e2e-avatar.svg',
           showAvatar: true,
         },
         links: [{
@@ -20,7 +17,7 @@ test('reveals a static public page only after critical images are ready', async 
           title: 'Contact',
           description: '',
           url: 'https://example.com',
-          icon: 'http://localhost:3123/e2e-icon.png',
+          icon: 'http://localhost:3123/e2e-icon.svg',
           iconType: 'image',
           isActive: true,
         }],
@@ -31,9 +28,9 @@ test('reveals a static public page only after critical images are ready', async 
     };
   });
 
-  await page.route(/\/e2e-(?:avatar|icon)\.png$/, async (route) => {
+  await page.route(/\/e2e-(?:avatar|icon)\.svg$/, async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 450));
-    await route.fulfill({ body: delayedPng, contentType: 'image/png', status: 200 });
+    await route.fulfill({ body: delayedSvg, contentType: 'image/svg+xml', status: 200 });
   });
 
   await page.goto('/', { waitUntil: 'commit' });

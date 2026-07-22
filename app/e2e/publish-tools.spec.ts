@@ -15,7 +15,7 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
 
   await page.getByRole('tab', { name: /TXT/ }).click();
   await expect(page.getByRole('heading', { name: 'TXT files' })).toBeVisible();
-  await page.reload();
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'TXT files' })).toBeVisible();
   await page.getByRole('tab', { name: /TXT/ }).focus();
   await page.keyboard.press('Home');

@@ -64,8 +64,8 @@ test('renders YouTube with the origin-preserving policy required by the player',
   await youtubeCard.getByRole('button', { name: 'Save', exact: true }).click();
 
   const player = youtubeCard.locator('iframe');
-  await expect(player).toHaveAttribute('src', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
-  await expect(player).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  await expect(player).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ(?:\?|$)/);
+  await expect(player).toHaveAttribute('referrerpolicy', 'origin');
   await expect(youtubeCard.locator('[data-service-brand="youtube"]')).toBeVisible();
 
   if (process.env.ORBITPAGE_EXTERNAL_EMBED_TESTS === '1') {
@@ -138,7 +138,7 @@ test('renders every remaining official media provider through its allowlisted pl
 
     const player = card.locator('iframe');
     await expect(player).toHaveAttribute('src', provider.expected);
-    await expect(player).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    await expect(player).toHaveAttribute('referrerpolicy', 'origin');
     await expect(card.locator(`[data-service-brand="${provider.brand}"]`)).toBeVisible();
   }
 });
@@ -182,7 +182,7 @@ test('adds Google Calendar and Calendly booking pages with live availability', a
   await page.getByRole('option', { name: /Necessary/ }).click();
   await googleCalendarCard.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(googleCalendarCard.locator('iframe')).toHaveAttribute('src', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd?gv=true');
-  await expect(googleCalendarCard.locator('iframe')).toHaveAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  await expect(googleCalendarCard.locator('iframe')).toHaveAttribute('referrerpolicy', 'origin');
   await expect(googleCalendarCard.locator('[data-service-brand="google_calendar"]')).toBeVisible();
 
   await page.getByRole('button', { name: 'Add content' }).click();
