@@ -68,7 +68,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-let APP_VERSION = '4.17.5';
+let APP_VERSION = '4.17.6';
 try {
   const pkg = JSON.parse(fs.readFileSync(join(__dirname, 'package.json'), 'utf8'));
   APP_VERSION = pkg.version || APP_VERSION;
@@ -3141,10 +3141,12 @@ const getMapShortenerFetchUrl = (value = '') => {
   const parsed = normalizeSupportedMapUrl(value);
   if (!parsed) return '';
   if (parsed.hostname === 'maps.app.goo.gl') {
-    return new URL(`${parsed.pathname}${parsed.search}`, 'https://maps.app.goo.gl').toString();
+    const shortCode = parsed.pathname.match(/^\/([a-zA-Z0-9_-]{1,256})$/)?.[1];
+    return shortCode ? `https://maps.app.goo.gl/${encodeURIComponent(shortCode)}` : '';
   }
-  if (parsed.hostname === 'goo.gl' && parsed.pathname.startsWith('/maps')) {
-    return new URL(`${parsed.pathname}${parsed.search}`, 'https://goo.gl').toString();
+  if (parsed.hostname === 'goo.gl') {
+    const shortCode = parsed.pathname.match(/^\/maps\/([a-zA-Z0-9_-]{1,256})$/)?.[1];
+    return shortCode ? `https://goo.gl/maps/${encodeURIComponent(shortCode)}` : '';
   }
   return '';
 };

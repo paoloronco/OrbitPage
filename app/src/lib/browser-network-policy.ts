@@ -63,18 +63,28 @@ const hasAsciiControlCharacter = (value: string): boolean =>
     return codePoint < 32 || codePoint === 127;
   });
 
+const serializeSafeHttpUrl = (url: URL): string => {
+  const scheme = url.protocol === 'https:' ? 'https://' : 'http://';
+  return `${scheme}${url.host}${url.pathname}${url.search}${url.hash}`;
+};
+
 export const resolveSafePublicHref = (value?: string | null, currentHref = getCurrentBrowserHref()): string | null => {
   const candidate = String(value || '').trim();
   if (!candidate || hasAsciiControlCharacter(candidate)) return null;
-  if (candidate.startsWith('#') || /^\/(?!\/)/.test(candidate)) return candidate;
+  if (candidate.startsWith('#')) return `#${candidate.slice(1)}`;
+  if (/^\/(?!\/)/.test(candidate)) return `/${candidate.replace(/^\/+/, '')}`;
 
   try {
     const parsed = new URL(candidate);
     if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return resolveSafeBrowserHttpUrl(candidate, currentHref) ? candidate : null;
+      const safeUrl = resolveSafeBrowserHttpUrl(candidate, currentHref);
+      return safeUrl ? serializeSafeHttpUrl(safeUrl) : null;
     }
-    if ((parsed.protocol === 'mailto:' || parsed.protocol === 'tel:') && !parsed.username && !parsed.password) {
-      return parsed.toString();
+    if (parsed.protocol === 'mailto:' && !parsed.username && !parsed.password) {
+      return `mailto:${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+    if (parsed.protocol === 'tel:' && !parsed.username && !parsed.password) {
+      return `tel:${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
     return null;
   } catch {
@@ -85,15 +95,21 @@ export const resolveSafePublicHref = (value?: string | null, currentHref = getCu
 export const resolveSafePublicMediaUrl = (value?: string | null, currentHref = getCurrentBrowserHref()): string | null => {
   const candidate = String(value || '').trim();
   if (!candidate) return null;
-  if (/^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$/i.test(candidate)) return candidate;
+  const dataImage = candidate.match(/^data:image\/(png|jpe?g|gif|webp);base64,([a-z0-9+/=\s]+)$/i);
+  if (dataImage) {
+    const mediaType = dataImage[1].toLowerCase() === 'jpg' ? 'jpeg' : dataImage[1].toLowerCase();
+    return `data:image/${mediaType};base64,${dataImage[2]}`;
+  }
   if (candidate.startsWith('blob:')) {
     try {
       const parsed = new URL(candidate);
-      return parsed.protocol === 'blob:' ? parsed.toString() : null;
+      return parsed.protocol === 'blob:' ? `blob:${parsed.pathname}${parsed.search}${parsed.hash}` : null;
     } catch {
       return null;
     }
   }
-  if (/^\/(?!\/)/.test(candidate) || (!candidate.includes(':') && !candidate.startsWith('//'))) return candidate;
-  return resolveSafeBrowserHttpUrl(candidate, currentHref)?.toString() || null;
+  if (/^\/(?!\/)/.test(candidate)) return `/${candidate.replace(/^\/+/, '')}`;
+  if (!candidate.includes(':') && !candidate.startsWith('//')) return candidate.replace(/^\/+/, '');
+  const safeUrl = resolveSafeBrowserHttpUrl(candidate, currentHref);
+  return safeUrl ? serializeSafeHttpUrl(safeUrl) : null;
 };
