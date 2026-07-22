@@ -2,7 +2,7 @@ import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { LinkData } from "./LinkCard";
 import { withBasePath } from "@/lib/base-path";
-import { getSocialRowData, getVideoData } from "@/lib/link-blocks";
+import { getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 
@@ -62,7 +62,7 @@ export const PublicView = ({
     if (link.type === 'heading') return link.title.trim() !== '' || link.description.trim() !== '';
     if (link.type === 'image') return (link.url || link.coverImage) !== '';
     if (link.type === 'video') return Boolean(getVideoData(link.content).mediaUrl);
-    if (link.type === 'social_row') {
+    if (link.type === 'social_row' || isSocialRowContent(link.content)) {
       return (getSocialRowData(link.content).items || []).length > 0;
     }
     if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event' || link.type === 'embed') {

@@ -192,6 +192,18 @@ export const getSocialRowData = (content: string | null | undefined): SocialRowB
   };
 };
 
+export const isSocialRowContent = (content: string | null | undefined): boolean => {
+  const parsed = parseBlockContent<Record<string, unknown>>(content);
+  if (!isPlainObject(parsed) || !Array.isArray(parsed.items)) return false;
+  return (
+    'layout' in parsed ||
+    'iconStyle' in parsed ||
+    'showLabels' in parsed ||
+    'showTitle' in parsed ||
+    'boxed' in parsed
+  );
+};
+
 export const getCalloutData = (content: string | null | undefined): CalloutBlockData => {
   const parsed = parseBlockContent<CalloutBlockData>(content);
   if (!isPlainObject(parsed)) return {};

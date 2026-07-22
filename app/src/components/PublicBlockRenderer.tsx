@@ -13,6 +13,7 @@ import { PublicSocialRowCard } from "./PublicSocialRowCard";
 import { PublicTextCard } from "./PublicTextCard";
 import { PublicVideoCard } from "./PublicVideoCard";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
+import { isSocialRowContent } from "@/lib/link-blocks";
 
 interface PublicBlockRendererProps {
   link: LinkData;
@@ -26,7 +27,7 @@ export const PublicBlockRenderer = ({ link }: PublicBlockRendererProps) => {
   if (link.type === "image") return <PublicImageCard link={link} />;
   if (link.type === "video") return <PublicVideoCard link={link} />;
   if (link.type === "contact") return <PublicContactCard link={link} />;
-  if (link.type === "social_row") return <PublicSocialRowCard link={link} />;
+  if (link.type === "social_row" || isSocialRowContent(link.content)) return <PublicSocialRowCard link={link} />;
   if (link.type === "callout") return <PublicCalloutCard link={link} />;
   if (link.type === "map") return <PublicMapCard link={link} />;
   if (link.type === "event") return <PublicEventCard link={link} />;

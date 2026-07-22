@@ -39,11 +39,12 @@ import {
   getServiceLinkData,
   getSocialRowDraftData,
   getVideoData,
+  isSocialRowContent,
   resolveEmbedProvider,
   isPublicActionableBlock,
 } from "@/lib/link-blocks";
 import { CompactLinkIcon } from "./CompactLinkIcon";
-import { compactLinkPlatformOptions, getCompactLinkBrandStyle } from "@/lib/compact-links";
+import { compactLinkPlatformOptions, getCompactLinkBrandStyle, getCompactLinkInputKind } from "@/lib/compact-links";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
 import { useAppI18n } from "@/lib/i18n";
 import {
@@ -233,7 +234,20 @@ export const LinkCard = ({
       };
     }
 
-    const sanitizedLink = normalizedLink.type === 'separator'
+    const sanitizedLink = isSocialRow
+      ? {
+          ...normalizedLink,
+          type: 'social_row' as const,
+          title: '',
+          description: '',
+          url: '',
+          hideUrl: true,
+          icon: undefined,
+          iconType: undefined,
+          coverImage: undefined,
+          coverImageAlt: undefined,
+        }
+      : normalizedLink.type === 'separator'
       ? {
           ...normalizedLink,
           description: '',
@@ -365,7 +379,7 @@ export const LinkCard = ({
   const isImage = link.type === 'image';
   const isVideo = link.type === 'video';
   const isContact = link.type === 'contact';
-  const isSocialRow = link.type === 'social_row';
+  const isSocialRow = link.type === 'social_row' || isSocialRowContent(link.content);
   const isCallout = link.type === 'callout';
   const isMap = link.type === 'map';
   const isEvent = link.type === 'event';
@@ -893,7 +907,7 @@ export const LinkCard = ({
       <div className={canReorder ? "admin-card-edit-body ml-6" : "admin-card-edit-body"}>
         {isEditing ? (
             <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-            {(isFullEdit || canEditStyle) && (
+            {!isSocialRow && (isFullEdit || canEditStyle) && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Content hierarchy</p>
@@ -995,7 +1009,7 @@ export const LinkCard = ({
             )}
             {isFullEdit && (
               <>
-                {!isMap && (!isSeparator || showUrlField) && (
+                {!isSocialRow && !isMap && (!isSeparator || showUrlField) && (
                   <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                     <div className="mb-3">
                       <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Destination</p>
@@ -1222,12 +1236,35 @@ export const LinkCard = ({
                             </div>
                             <div className="admin-compact-link-item-fields">
                               <div>
-                                <Label htmlFor={`compact-link-url-${link.id}-${index}`}>{tr("Destination URL", "URL di destinazione")}</Label>
+                                <Label htmlFor={`compact-link-url-${link.id}-${index}`}>
+                                  {getCompactLinkInputKind(item.platform || 'auto') === 'username'
+                                    ? tr("Username", "Nome utente")
+                                    : getCompactLinkInputKind(item.platform || 'auto') === 'phone'
+                                      ? tr("Phone number", "Numero di telefono")
+                                      : getCompactLinkInputKind(item.platform || 'auto') === 'email'
+                                        ? tr("Email address", "Indirizzo email")
+                                        : tr("Destination URL", "URL di destinazione")}
+                                </Label>
                                 <Input
                                   id={`compact-link-url-${link.id}-${index}`}
                                   value={item.url}
                                   onChange={(e) => updateSocialItem(index, 'url', e.target.value)}
-                                  placeholder="https://… /page, mailto: or tel:"
+                                  inputMode={getCompactLinkInputKind(item.platform || 'auto') === 'phone'
+                                    ? 'tel'
+                                    : getCompactLinkInputKind(item.platform || 'auto') === 'email'
+                                      ? 'email'
+                                      : getCompactLinkInputKind(item.platform || 'auto') === 'url'
+                                        ? 'url'
+                                        : 'text'}
+                                  autoCapitalize="none"
+                                  autoCorrect="off"
+                                  placeholder={getCompactLinkInputKind(item.platform || 'auto') === 'username'
+                                    ? '@username'
+                                    : getCompactLinkInputKind(item.platform || 'auto') === 'phone'
+                                      ? '+39 123 456 7890'
+                                      : getCompactLinkInputKind(item.platform || 'auto') === 'email'
+                                        ? 'name@example.com'
+                                        : 'https://example.com'}
                                 />
                               </div>
                               <div>
@@ -1723,7 +1760,7 @@ export const LinkCard = ({
             )}
 
             {/* Icon Upload */}
-            {canEditImages && !isSeparator && (
+            {canEditImages && !isSeparator && !isSocialRow && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Media</p>

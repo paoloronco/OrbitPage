@@ -73,3 +73,59 @@ export function getSafeCompactLinkHref(url: string): string | null {
     return null;
   }
 }
+
+export type CompactLinkInputKind = 'username' | 'phone' | 'email' | 'url';
+
+export function getCompactLinkInputKind(platform: SocialLinkPlatform): CompactLinkInputKind {
+  if (platform === 'whatsapp') return 'phone';
+  if (platform === 'email') return 'email';
+  if (['instagram', 'facebook', 'tiktok', 'x', 'youtube', 'telegram', 'github'].includes(platform)) {
+    return 'username';
+  }
+  return 'url';
+}
+
+const cleanUsername = (value: string) => value.trim().replace(/^@+/, '').replace(/^\/+|\/+$/g, '');
+
+const buildUsernameHref = (platform: SocialLinkPlatform, rawValue: string): string | null => {
+  const username = cleanUsername(rawValue);
+  if (!username || username.length > 100 || !/^[a-z0-9._-]+$/i.test(username)) return null;
+
+  switch (platform) {
+    case 'instagram': return `https://www.instagram.com/${username}/`;
+    case 'facebook': return `https://www.facebook.com/${username}/`;
+    case 'tiktok': return `https://www.tiktok.com/@${username}`;
+    case 'x': return `https://x.com/${username}`;
+    case 'youtube': return `https://www.youtube.com/@${username}`;
+    case 'telegram': return `https://t.me/${username}`;
+    case 'github': return `https://github.com/${username}`;
+    default: return null;
+  }
+};
+
+/**
+ * Resolves the compact value into a safe public URL. Existing absolute URLs
+ * remain valid, while social presets can store a username, phone or email.
+ */
+export function getCompactLinkHref(platform: SocialLinkPlatform, value: string): string | null {
+  const rawValue = value.trim();
+  if (!rawValue) return null;
+
+  const existingHref = getSafeCompactLinkHref(rawValue);
+  if (existingHref) return existingHref;
+
+  const resolvedPlatform = platform === 'auto' ? detectCompactLinkPlatform(rawValue) : platform;
+  const usernameHref = buildUsernameHref(resolvedPlatform, rawValue);
+  if (usernameHref) return usernameHref;
+
+  if (resolvedPlatform === 'whatsapp') {
+    const phone = rawValue.replace(/[^0-9]/g, '');
+    return phone.length >= 6 && phone.length <= 15 ? `https://wa.me/${phone}` : null;
+  }
+
+  if (resolvedPlatform === 'email') {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawValue) ? `mailto:${rawValue}` : null;
+  }
+
+  return null;
+}

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { detectEmbedProvider, getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference } from './link-blocks';
+import { detectEmbedProvider, getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference, isSocialRowContent } from './link-blocks';
 
 describe('compact link block data', () => {
+  it('recognizes legacy quick-link payloads when their block type was lost', () => {
+    expect(isSocialRowContent(JSON.stringify({
+      items: [{ label: 'Instagram', url: 'orbitpage', platform: 'instagram' }],
+      iconStyle: 'brand',
+      showLabels: false,
+    }))).toBe(true);
+    expect(isSocialRowContent(JSON.stringify({ text: 'not a quick-link row' }))).toBe(false);
+  });
+
   it('keeps legacy social rows compatible', () => {
     const data = getSocialRowData(JSON.stringify({
       items: [
