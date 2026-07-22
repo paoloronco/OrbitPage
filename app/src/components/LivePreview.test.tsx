@@ -69,4 +69,26 @@ describe("LivePreview", () => {
     expect(html).toContain('data-surface-effect="transparent"');
     expect(html).toContain('data-surface-effect="solid"');
   });
+
+  it("keeps intentionally unboxed blocks out of global card surface effects", () => {
+    const theme = normalizeTheme({
+      ...defaultTheme,
+      contentCardEffect: "liquid-glass",
+    });
+
+    const html = renderToStaticMarkup(
+      <LivePreview
+        profile={{ name: "Surface test", bio: "", avatar: "", showAvatar: false }}
+        links={[
+          { id: "heading", type: "heading", title: "Section", description: "", url: "" },
+          { id: "link", type: "link", title: "Normal card", description: "", url: "https://example.com" },
+        ]}
+        theme={theme}
+      />,
+    );
+
+    expect(html).toContain('public-unboxed-block border-none bg-transparent');
+    expect(html).toContain('glass-card p-4');
+    expect(html.match(/data-surface-effect="liquid-glass"/g)).toHaveLength(2);
+  });
 });

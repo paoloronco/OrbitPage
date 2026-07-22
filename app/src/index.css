@@ -318,10 +318,8 @@
     color: var(--content-card-foreground);
   }
 
-  .public-card-stack [data-surface-effect="transparent"] > .glass-card,
-  .public-card-stack [data-surface-effect="transparent"] > .public-cta-card,
-  .public-block-preview[data-surface-effect="transparent"] .glass-card,
-  .public-block-preview[data-surface-effect="transparent"] .public-cta-card {
+  .public-card-stack [data-surface-effect="transparent"] > :not(.public-unboxed-block),
+  .public-block-preview[data-surface-effect="transparent"] > :not(.public-unboxed-block) {
     background: transparent !important;
     border-color: transparent !important;
     box-shadow: none !important;
@@ -329,10 +327,8 @@
     -webkit-backdrop-filter: none !important;
   }
 
-  .public-card-stack [data-surface-effect="liquid-glass"] > .glass-card,
-  .public-card-stack [data-surface-effect="liquid-glass"] > .public-cta-card,
-  .public-block-preview[data-surface-effect="liquid-glass"] .glass-card,
-  .public-block-preview[data-surface-effect="liquid-glass"] .public-cta-card {
+  .public-card-stack [data-surface-effect="liquid-glass"] > :not(.public-unboxed-block),
+  .public-block-preview[data-surface-effect="liquid-glass"] > :not(.public-unboxed-block) {
     background-color: rgb(255 255 255 / 0.14) !important;
     background:
       linear-gradient(145deg, rgb(248 252 255 / 0.32), transparent 42%),
@@ -340,6 +336,7 @@
       rgb(255 255 255 / 0.08) !important;
     border-color: color-mix(in srgb, var(--content-card-foreground) 16%, rgb(244 250 255 / 0.78)) !important;
     box-shadow: 0 14px 38px rgb(15 23 42 / 0.14), inset 0 1px 0 rgb(248 252 255 / 0.56), inset 0 -1px 0 rgb(15 23 42 / 0.1), var(--card-glow, var(--shadow-card)) !important;
+    background-clip: padding-box !important;
     backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
     -webkit-backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
   }

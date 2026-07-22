@@ -20,7 +20,7 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
   const cardStyle = { color: getPublicBlockStyle(link).color } as CSSProperties;
 
   return (
-    <div className="public-compact-links" style={cardStyle}>
+    <div className="public-compact-links public-unboxed-block" style={cardStyle}>
       <div className="public-compact-links__content">
         {items.length > 0 ? (
           <div className="public-compact-links__items public-compact-links__items--icons">

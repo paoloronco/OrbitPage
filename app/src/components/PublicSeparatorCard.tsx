@@ -13,7 +13,7 @@ export const PublicSeparatorCard = ({ link }: { link: LinkData }) => {
 
   return (
     <div
-      className={`${boxed ? `rounded-md border border-current/15 ${getPublicBlockPadding(link.size)}` : "py-1"} flex items-center gap-3`}
+      className={`${boxed ? `rounded-md border border-current/15 ${getPublicBlockPadding(link.size)}` : "public-unboxed-block py-1"} flex items-center gap-3`}
       style={style}
     >
       <div className="h-px flex-1 bg-current opacity-25" />
