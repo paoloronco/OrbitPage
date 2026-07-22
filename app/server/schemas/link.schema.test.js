@@ -44,4 +44,9 @@ describe('link schemas', () => {
     expect(() => LinkSchema.parse({ id: 'invalid', title: 'Invalid', surfaceEffect: 'blurred' }))
       .toThrow();
   });
+
+  it('allows a titleless compact-link dock but keeps titles required elsewhere', () => {
+    expect(LinkSchema.parse({ id: 'quick-links', type: 'social_row', title: '' }).title).toBe('');
+    expect(() => LinkSchema.parse({ id: 'regular-link', type: 'link', title: '' })).toThrow();
+  });
 });

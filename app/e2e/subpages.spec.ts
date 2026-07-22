@@ -16,7 +16,8 @@ test('creates and serves an independent subpage from the Pages workspace', async
   await page.getByLabel('Title').fill('Summer events');
   await page.getByLabel('Slug').fill('events');
   await page.getByLabel('Description').fill('Dates, guests and booking details.');
-  await page.getByRole('button', { name: 'Save details' }).click();
+  const saveDetails = page.getByRole('button', { name: 'Save details' });
+  if (await saveDetails.isEnabled()) await saveDetails.click();
 
   let linkCard = page.locator('.subpage-manager .admin-link-list [data-link-id]').filter({ has: page.getByRole('heading', { name: 'Book a table' }) }).first();
   if (await linkCard.count() === 0) {

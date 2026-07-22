@@ -31,11 +31,11 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
 
   const items = dockCard.locator('.admin-compact-link-item');
   await expect(items).toHaveCount(2);
-  const instagramUrl = items.nth(0).getByLabel('Destination URL');
-  await instagramUrl.click();
-  await instagramUrl.pressSequentially('https://instagram.com/orbitpage');
-  await expect(instagramUrl).toHaveValue('https://instagram.com/orbitpage');
-  await expect(instagramUrl).toBeFocused();
+  const instagramUsername = items.nth(0).getByLabel('Username');
+  await instagramUsername.click();
+  await instagramUsername.pressSequentially('orbitpage');
+  await expect(instagramUsername).toHaveValue('orbitpage');
+  await expect(instagramUsername).toBeFocused();
   await items.nth(1).getByLabel('Destination URL').fill('https://orbitpage.com');
   await items.nth(1).getByRole('button', { name: 'Move left' }).click();
 
@@ -53,7 +53,7 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
   await expect(dock).toHaveCSS('border-top-width', '0px');
   await expect(dock.locator('.public-compact-links__items')).toHaveCSS('justify-content', 'center');
   await expect(dock.locator('a').first()).toHaveAttribute('href', 'https://orbitpage.com/');
-  await expect(dock.getByRole('link', { name: 'Instagram' })).toHaveAttribute('href', 'https://instagram.com/orbitpage');
+  await expect(dock.getByRole('link', { name: 'Instagram' })).toHaveAttribute('href', 'https://www.instagram.com/orbitpage/');
   await expect(dock.locator('.public-compact-link__label')).toHaveCount(0);
   await expect(dock.locator('.public-compact-link__icon').first()).toHaveCSS('border-top-width', '0px');
 });
