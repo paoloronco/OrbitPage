@@ -140,7 +140,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
             <iframe
               src={knownProviderUrl || apiPath(`/embed/${encodeURIComponent(link.id)}`)}
               title={`${providerLabel}: ${link.title || 'embedded content'}`}
-              className="h-full w-full border-0"
+              className={`h-full w-full border-0 ${provider === 'instagram' ? 'mx-auto block max-w-[540px]' : ''}`}
               loading="lazy"
               referrerPolicy="origin"
               sandbox={knownProviderUrl
