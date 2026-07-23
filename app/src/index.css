@@ -4215,6 +4215,7 @@
 .content-status-live { background: #e8f7ef; color: #16794c; }
 .content-status-always { background: #eaf1ff; color: #285ebc; }
 .content-workspace-section { display: grid; gap: .85rem; }
+.hosted-shop-slot { display: block; min-width: 0; }
 .content-activation-panel { display: grid; grid-template-columns: 2.65rem minmax(0,1fr) auto; align-items: center; gap: .85rem; padding: .85rem 1rem; border: 1px solid #bfd0f5; border-radius: .5rem; background: #f7faff; }
 .content-activation-panel strong { color: #14213a; font-size: .92rem; }
 .content-activation-panel p { margin: .2rem 0 0; color: #64748b; font-size: .8rem; line-height: 1.45; }

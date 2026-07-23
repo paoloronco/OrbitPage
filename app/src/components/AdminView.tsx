@@ -51,7 +51,11 @@ import { TwoFactorManager } from "./TwoFactorManager";
 import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview, PreviewDeviceFrame, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
-import { getHostedSurfaceConfig } from "@/lib/hosted-surface";
+import {
+  getHostedSurfaceConfig,
+  HOSTED_CONFIG_CHANGED_EVENT,
+  type HostedSurfaceConfig,
+} from "@/lib/hosted-surface";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
@@ -135,7 +139,7 @@ const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "privacy", icon: Cookie },
 ];
 
-type ContentSection = "home" | "menu" | "pages";
+type ContentSection = "home" | "menu" | "pages" | "shop";
 
 function contentSectionForTab(tab: AdminTab): ContentSection | null {
   if (tab === "links") return "home";
@@ -188,7 +192,12 @@ export const AdminView = ({
   const [gaSaved, setGaSaved] = useState(false);
   const [gaSaving, setGaSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
-  const [contentSection, setContentSection] = useState<ContentSection>(() => contentSectionForTab(requestedTab) || "home");
+  const [contentSection, setContentSection] = useState<ContentSection>(() => (
+    getHostedSurfaceConfig()?.extensions?.shop?.selected
+      ? "shop"
+      : contentSectionForTab(requestedTab) || "home"
+  ));
+  const [hostedSurfaceConfig, setHostedSurfaceConfig] = useState<HostedSurfaceConfig | null>(() => getHostedSurfaceConfig());
   const [menuActivationBusy, setMenuActivationBusy] = useState(false);
   const [menuActivationError, setMenuActivationError] = useState("");
   const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
@@ -213,8 +222,7 @@ export const AdminView = ({
     (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("apiBase"))
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
-  const hostedShop = isIntegratedHostedAdmin ? getHostedSurfaceConfig()?.extensions?.shop : undefined;
-  const openHostedShop = isIntegratedHostedAdmin ? getHostedSurfaceConfig()?.onOpenShop : undefined;
+  const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
   const isProspectReadOnly = currentUser?.readOnly === true;
   const checklistIdentity = currentUser
     ? `${isHostedAdmin ? "hosted" : "self-hosted"}:${currentUser.username}`
@@ -228,6 +236,32 @@ export const AdminView = ({
         )
       : { visible: false, sessionNumber: 1, sessionLimit: 3 }
   ));
+
+  useEffect(() => {
+    if (!isIntegratedHostedAdmin) return;
+    const syncHostedConfig = () => {
+      const nextConfig = getHostedSurfaceConfig();
+      setHostedSurfaceConfig(nextConfig);
+      setContentSection((current) => {
+        if (nextConfig?.extensions?.shop?.selected) return "shop";
+        return current === "shop" ? "home" : current;
+      });
+    };
+    window.addEventListener(HOSTED_CONFIG_CHANGED_EVENT, syncHostedConfig);
+    syncHostedConfig();
+    return () => window.removeEventListener(HOSTED_CONFIG_CHANGED_EVENT, syncHostedConfig);
+  }, [isIntegratedHostedAdmin]);
+
+  const selectContentSection = (section: ContentSection) => {
+    setContentSection(section);
+    if (!isIntegratedHostedAdmin) return;
+    const config = getHostedSurfaceConfig();
+    if (config?.onContentSectionChange) {
+      config.onContentSectionChange(section);
+    } else if (section === "shop") {
+      config?.onOpenShop?.();
+    }
+  };
 
   useEffect(() => {
     if (!checklistIdentity || isProspectReadOnly) {
@@ -772,7 +806,7 @@ export const AdminView = ({
                   aria-current={contentSection === "home" ? "page" : undefined}
                   className={contentSection === "home" ? "content-workspace-option active" : "content-workspace-option"}
                   data-onboarding="links-tab"
-                  onClick={() => setContentSection("home")}
+                  onClick={() => selectContentSection("home")}
                   type="button"
                 >
                   <span className="content-workspace-option-icon"><Link aria-hidden="true" /></span>
@@ -782,15 +816,20 @@ export const AdminView = ({
                 <button
                   aria-current={contentSection === "menu" ? "page" : undefined}
                   className={contentSection === "menu" ? "content-workspace-option active" : "content-workspace-option"}
-                  onClick={() => setContentSection("menu")}
+                  onClick={() => selectContentSection("menu")}
                   type="button"
                 >
                   <span className="content-workspace-option-icon"><UtensilsCrossed aria-hidden="true" /></span>
                   <span><strong>{tr("Menu", "Menu")}</strong><small>{tr("A dedicated food and drinks destination", "Una destinazione dedicata a piatti e bevande")}</small></span>
                   <em className={menu.enabled ? "content-status content-status-live" : "content-status"}>{menu.enabled ? tr("Active", "Attivo") : tr("Optional", "Facoltativo")}</em>
                 </button>
-                {hostedShop && openHostedShop && (
-                  <button className="content-workspace-option" onClick={openHostedShop} type="button">
+                {hostedShop && (
+                  <button
+                    aria-current={contentSection === "shop" ? "page" : undefined}
+                    className={contentSection === "shop" ? "content-workspace-option active" : "content-workspace-option"}
+                    onClick={() => selectContentSection("shop")}
+                    type="button"
+                  >
                     <span className="content-workspace-option-icon"><ShoppingBag aria-hidden="true" /></span>
                     <span><strong>{tr("Shop", "Shop")}</strong><small>{tr("Digital products and services with Stripe checkout", "Prodotti digitali e servizi con checkout Stripe")}</small></span>
                     <em className={hostedShop.enabled ? "content-status content-status-live" : "content-status"}>
@@ -801,7 +840,7 @@ export const AdminView = ({
                 <button
                   aria-current={contentSection === "pages" ? "page" : undefined}
                   className={contentSection === "pages" ? "content-workspace-option active" : "content-workspace-option"}
-                  onClick={() => setContentSection("pages")}
+                  onClick={() => selectContentSection("pages")}
                   type="button"
                 >
                   <span className="content-workspace-option-icon"><Files aria-hidden="true" /></span>
@@ -910,6 +949,10 @@ export const AdminView = ({
                     />
                   )}
                 />
+              )}
+
+              {contentSection === "shop" && (
+                <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
               )}
             </section>
           </TabsContent>

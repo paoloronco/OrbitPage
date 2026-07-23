@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 const mockState = vi.hoisted(() => ({
   backupProps: [] as Array<Record<string, unknown>>,
+  hostedConfig: null as null | Record<string, unknown>,
+  integratedHostedSurface: false,
   privacyProps: [] as Array<Record<string, unknown>>,
   publishProps: [] as Array<Record<string, unknown>>,
   previewProps: [] as Array<Record<string, unknown>>,
@@ -14,7 +16,7 @@ vi.mock('@/lib/config', () => ({
 }));
 
 vi.mock('@/lib/api-client', () => ({
-  isIntegratedHostedSurface: () => false,
+  isIntegratedHostedSurface: () => mockState.integratedHostedSurface,
   isSaasMode: () => false,
   utilityApi: {
     getHealth: vi.fn(),
@@ -41,6 +43,11 @@ vi.mock('./LivePreview', () => ({
     mockState.previewProps.push(props);
     return <div>LivePreview</div>;
   },
+}));
+
+vi.mock('@/lib/hosted-surface', () => ({
+  getHostedSurfaceConfig: () => mockState.hostedConfig,
+  HOSTED_CONFIG_CHANGED_EVENT: 'orbitpage:hosted-config-changed',
 }));
 vi.mock('./ClickAnalyticsChart', () => ({ ClickAnalyticsChart: () => <div>ClickAnalyticsChart</div> }));
 vi.mock('./PasswordManager', () => ({ PasswordManager: () => <div>PasswordManager</div> }));
@@ -177,6 +184,35 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('LinkManager');
     expect(html).not.toContain('>Guide<');
     expect(html).not.toContain('Page checklist');
+  });
+
+  it('keeps the hosted shop inside the unified content workspace', () => {
+    vi.stubGlobal('__APP_VERSION__', '4.18.8');
+    mockState.integratedHostedSurface = true;
+    mockState.hostedConfig = {
+      extensions: { shop: { enabled: true, entitled: true, selected: true } },
+    };
+
+    const html = renderToStaticMarkup(
+      <AdminView
+        profile={{ name: 'Hosted shop', bio: '', avatar: '' }}
+        links={[]}
+        theme={defaultTheme}
+        currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+        saasUsage={{ blocks: 0, storageBytes: 0 }}
+        onProfileUpdate={vi.fn()}
+        onLinksUpdate={vi.fn()}
+        onThemeChange={vi.fn()}
+        onLogout={vi.fn()}
+        requestedTab="content"
+      />
+    );
+
+    expect(html).toContain('data-orbitpage-hosted-shop-slot');
+    expect(html).toContain('aria-current="page"');
+    expect(html).toContain('Digital products and services with Stripe checkout');
+    mockState.hostedConfig = null;
+    mockState.integratedHostedSurface = false;
   });
 });
 

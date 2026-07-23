@@ -8,6 +8,7 @@ import { AppI18nProvider } from "@/lib/i18n";
 import Admin from "@/pages/Admin";
 import {
   configureHostedSurface,
+  HOSTED_CONFIG_CHANGED_EVENT,
   HOSTED_SECTION_NAVIGATE_EVENT,
   type HostedSurfaceConfig,
 } from "@/lib/hosted-surface";
@@ -53,6 +54,7 @@ window.OrbitPageHostedAdmin = {
       update(config) {
         const previous = window.__ORBITPAGE_HOSTED_CONFIG__;
         configureHostedSurface(element, config);
+        window.dispatchEvent(new CustomEvent(HOSTED_CONFIG_CHANGED_EVENT));
         if (previous?.section !== config.section) {
           window.dispatchEvent(new CustomEvent(HOSTED_SECTION_NAVIGATE_EVENT, {
             detail: { section: config.section },

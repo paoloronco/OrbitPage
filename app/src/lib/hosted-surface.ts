@@ -12,8 +12,10 @@ export type HostedSurfaceConfig = {
     shop?: {
       entitled: boolean;
       enabled?: boolean;
+      selected?: boolean;
     };
   };
+  onContentSectionChange?: (section: "home" | "menu" | "pages" | "shop") => void;
   onOpenShop?: () => void;
 };
 
@@ -27,6 +29,7 @@ declare global {
 
 export const HOSTED_SECTION_CHANGED_EVENT = "orbitpage:admin-section-changed";
 export const HOSTED_SECTION_NAVIGATE_EVENT = "orbitpage:admin-section-navigate";
+export const HOSTED_CONFIG_CHANGED_EVENT = "orbitpage:hosted-config-changed";
 
 export function isIntegratedHostedSurface(): boolean {
   return typeof window !== "undefined" && window.__ORBITPAGE_HOSTED_SURFACE__ === true;
