@@ -43,7 +43,27 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
   await expect(switcher).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
 
-  await switcher.getByRole('button', { name: 'Dishes and drinks' }).click();
+  await switcher.getByRole('button', { name: 'Items' }).click();
   await expect(page.getByRole('heading', { name: 'Dishes and drinks' })).toBeVisible();
   await expect(page.locator('.menu-content-pane--sections')).toBeHidden();
+
+  const firstItem = page.locator('.menu-product-editor').first();
+  const emptyState = page.getByRole('button', { name: 'Add the first item in this section' });
+  if (await firstItem.count() === 0) await emptyState.click();
+  await expect(firstItem).toBeVisible();
+
+  const viewportOverflow = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth - window.innerWidth,
+    navigation: (() => {
+      const navigation = document.querySelector<HTMLElement>('.admin-dashboard-nav');
+      return navigation ? navigation.scrollWidth - navigation.clientWidth : 0;
+    })(),
+  }));
+  expect(viewportOverflow.document).toBeLessThanOrEqual(1);
+  expect(viewportOverflow.navigation).toBeLessThanOrEqual(1);
+
+  const itemBounds = await firstItem.boundingBox();
+  expect(itemBounds).not.toBeNull();
+  expect(itemBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(itemBounds!.x + itemBounds!.width).toBeLessThanOrEqual(390);
 });

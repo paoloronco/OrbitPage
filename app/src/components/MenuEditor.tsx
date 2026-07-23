@@ -361,7 +361,7 @@ export function MenuEditor({
           {([
             ['setup', UtensilsCrossed, tr('Setup', 'Impostazioni')],
             ['content', Layers3, tr('Menu content', 'Contenuti menu')],
-            ['appearance', Palette, tr('Appearance & publish', 'Aspetto e pubblicazione')],
+            ['appearance', Palette, tr('Appearance', 'Aspetto')],
           ] as const).map(([panel, Icon, label]) => (
             <button
               key={panel}
@@ -398,7 +398,7 @@ export function MenuEditor({
         {activePanel === 'content' && <section className="menu-content-editor">
           <div className="menu-content-mobile-switch" role="group" aria-label={tr("Menu content view", "Vista contenuti menu")}>
             <button type="button" className={mobileContentPane === 'sections' ? 'active' : ''} onClick={() => setMobileContentPane('sections')}><Layers3 />{tr("Categories", "Categorie")}</button>
-            <button type="button" className={mobileContentPane === 'products' ? 'active' : ''} onClick={() => setMobileContentPane('products')}><ListTree />{tr("Dishes and drinks", "Piatti e bevande")}</button>
+            <button type="button" className={mobileContentPane === 'products' ? 'active' : ''} onClick={() => setMobileContentPane('products')}><ListTree />{tr("Items", "Elementi")}</button>
           </div>
 
           <div className={`admin-panel menu-content-pane menu-content-pane--sections${mobileContentPane === 'sections' ? ' is-mobile-active' : ''}`}>
