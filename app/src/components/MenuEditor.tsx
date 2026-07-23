@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import {
-  ArrowDown, ArrowUp, Check, Copy, ExternalLink, ImagePlus, Layers3, ListTree,
-  Loader2, Palette, Plus, QrCode, Save, Trash2, UtensilsCrossed,
+  ArrowDown, ArrowUp, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff,
+  ImagePlus, Layers3, ListTree, Loader2, Palette, Plus, QrCode, Save, Trash2,
+  UtensilsCrossed,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,7 +73,14 @@ function moveMenuSection(sections: MenuSection[], sectionId: string, direction: 
   return orderedSectionTree(updated).map((section, position) => ({ ...section, position }));
 }
 
-function TagsInput({ value, onChange, placeholder }: { value: string[]; onChange: (value: string[]) => void; placeholder: string }) {
+function TagsInput({
+  value, onChange, placeholder, label,
+}: {
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder: string;
+  label: string;
+}) {
   const [inputValue, setInputValue] = useState(() => value.join(', '));
   const focused = useRef(false);
 
@@ -86,6 +94,7 @@ function TagsInput({ value, onChange, placeholder }: { value: string[]; onChange
 
   return (
     <Input
+      aria-label={label}
       value={inputValue}
       placeholder={placeholder}
       onFocus={() => { focused.current = true; }}
@@ -185,6 +194,9 @@ export function MenuEditor({
   const [productSectionFilter, setProductSectionFilter] = useState(
     () => normalizeMenuCatalog(menu, maxItems ?? 250).sections[0]?.id || 'all',
   );
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(
+    () => normalizeMenuCatalog(menu, maxItems ?? 250).items[0]?.id || null,
+  );
   const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
   const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
   const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
@@ -193,6 +205,14 @@ export function MenuEditor({
       ? draft.items
       : draft.items.filter((item) => item.sectionId === productSectionFilter),
     [draft.items, productSectionFilter],
+  );
+  const selectedSection = useMemo(
+    () => draft.sections.find((section) => section.id === productSectionFilter) || null,
+    [draft.sections, productSectionFilter],
+  );
+  const selectedItem = useMemo(
+    () => visibleProducts.find((item) => item.id === selectedItemId) || null,
+    [selectedItemId, visibleProducts],
   );
 
   useEffect(() => {
@@ -207,6 +227,12 @@ export function MenuEditor({
       setProductSectionFilter('all');
     }
   }, [draft.sections, productSectionFilter]);
+
+  useEffect(() => {
+    if (!visibleProducts.some((item) => item.id === selectedItemId)) {
+      setSelectedItemId(visibleProducts[0]?.id || null);
+    }
+  }, [selectedItemId, visibleProducts]);
 
   const update = (producer: (current: MenuCatalog) => MenuCatalog) => {
     setDraft((current) => {
@@ -277,23 +303,29 @@ export function MenuEditor({
 
   const addSection = () => {
     if (draft.sections.length >= 30) return;
+    const id = makeId('section');
     update((current) => ({
       ...current,
-      sections: [...current.sections, { id: makeId('section'), name: 'New section', visible: true, position: current.sections.length }],
+      sections: [...current.sections, { id, name: 'New section', visible: true, position: current.sections.length }],
     }));
+    setProductSectionFilter(id);
   };
 
   const addSubsection = (parentId: string) => {
     if (draft.sections.length >= 30) return;
+    const id = makeId('subsection');
     update((current) => ({
       ...current,
       sections: [...current.sections, {
-        id: makeId('subsection'), parentId, name: 'New subsection', visible: true, position: current.sections.length,
+        id, parentId, name: 'New subsection', visible: true, position: current.sections.length,
       }],
     }));
+    setProductSectionFilter(id);
   };
 
   const removeSection = (sectionId: string) => {
+    const fallbackSection = sortedSections.find((section) => section.id !== sectionId && section.parentId !== sectionId);
+    setProductSectionFilter(fallbackSection?.id || 'all');
     update((current) => {
       const removedIds = new Set([
         sectionId,
@@ -311,12 +343,27 @@ export function MenuEditor({
 
   const addItem = (sectionId = productSectionFilter !== 'all' ? productSectionFilter : draft.sections[0]?.id) => {
     if (!sectionId || (maxItems !== null && draft.items.length >= maxItems)) return;
+    const id = makeId('item');
     update((current) => ({
       ...current,
       items: [...current.items, {
-        id: makeId('item'), sectionId, name: 'New item', description: '', priceMinor: 0,
+        id, sectionId, name: 'New item', description: '', priceMinor: 0,
         variants: [], allergens: [], dietaryTags: [], available: true, featured: false, position: current.items.length,
       }],
+    }));
+    setProductSectionFilter(sectionId);
+    setSelectedItemId(id);
+    setMobileContentPane('products');
+  };
+
+  const removeItem = (itemId: string) => {
+    const remaining = visibleProducts.filter((candidate) => candidate.id !== itemId);
+    setSelectedItemId(remaining[0]?.id || null);
+    update((current) => ({
+      ...current,
+      items: current.items
+        .filter((candidate) => candidate.id !== itemId)
+        .map((candidate, position) => ({ ...candidate, position })),
     }));
   };
 
@@ -417,43 +464,116 @@ export function MenuEditor({
               <span>{tr("All items", "Tutti gli elementi")}</span>
               <strong>{draft.items.length}</strong>
             </button>
-            <div className="menu-content-pane__scroll menu-section-list">
-              {rootSections.map((section, index) => {
-                const subsections = sectionSiblings(draft.sections, section.id);
-                const renderSection = (candidate: MenuSection, candidateIndex: number, siblings: MenuSection[], nested = false) => (
-                  <div key={candidate.id} className={`menu-section-row${nested ? ' menu-section-row--nested' : ''}${productSectionFilter === candidate.id ? ' active' : ''}`}>
-                    <div className="menu-reorder-actions">
-                      <button type="button" aria-label={tr("Move up", "Sposta su")} title={tr("Move up", "Sposta su")} disabled={candidateIndex === 0} onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, candidate.id, -1) }))}><ArrowUp /></button>
-                      <button type="button" aria-label={tr("Move down", "Sposta giù")} title={tr("Move down", "Sposta giù")} disabled={candidateIndex === siblings.length - 1} onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, candidate.id, 1) }))}><ArrowDown /></button>
-                    </div>
-                    <div className="min-w-0 space-y-2">
-                      {nested && <span className="menu-subsection-label">{tr("Subcategory", "Sottocategoria")}</span>}
-                      <Input value={candidate.name} aria-label={nested ? tr("Subcategory name", "Nome sottocategoria") : tr("Category name", "Nome categoria")} onChange={(e) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, name: e.target.value } : item) }))} />
-                      <Input value={candidate.description || ''} aria-label={nested ? tr("Subcategory description", "Descrizione sottocategoria") : tr("Category description", "Descrizione categoria")} placeholder={tr("Optional description", "Descrizione facoltativa")} onChange={(e) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, description: e.target.value } : item) }))} />
-                      <button
-                        type="button"
-                        className="menu-section-open"
-                        onClick={() => {
-                          setProductSectionFilter(candidate.id);
-                          setMobileContentPane('products');
-                        }}
-                      >
-                        {tr("Show items", "Mostra elementi")}
-                        <strong>{draft.items.filter((item) => item.sectionId === candidate.id).length}</strong>
-                      </button>
-                    </div>
-                    <Switch checked={candidate.visible} aria-label={nested ? tr("Show subcategory", "Mostra sottocategoria") : tr("Show category", "Mostra categoria")} onCheckedChange={(checked) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, visible: checked } : item) }))} />
-                    <Button variant="ghost" size="icon" title={nested ? tr("Delete subcategory", "Elimina sottocategoria") : tr("Delete category", "Elimina categoria")} disabled={!nested && rootSections.length === 1} onClick={() => removeSection(candidate.id)}><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                );
+            <div className="menu-content-pane__scroll menu-category-workspace">
+              <div className="menu-category-picker" aria-label={tr("Menu categories", "Categorie del menu")}>
+                {sortedSections.map((section) => {
+                  const itemCount = draft.items.filter((item) => item.sectionId === section.id).length;
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                      className={`menu-category-picker__item${section.parentId ? ' is-subcategory' : ''}${productSectionFilter === section.id ? ' active' : ''}`}
+                      aria-pressed={productSectionFilter === section.id}
+                      onClick={() => setProductSectionFilter(section.id)}
+                    >
+                      <span>{section.name || tr("Untitled category", "Categoria senza nome")}</span>
+                      <small>{section.visible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}{itemCount}</small>
+                      <ChevronRight aria-hidden="true" />
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedSection && (() => {
+                const siblings = sectionSiblings(draft.sections, selectedSection.parentId);
+                const sectionIndex = siblings.findIndex((section) => section.id === selectedSection.id);
+                const nested = Boolean(selectedSection.parentId);
+                const canDelete = nested || rootSections.length > 1;
                 return (
-                  <div key={section.id} className="menu-section-group">
-                    {renderSection(section, index, rootSections)}
-                    {subsections.length > 0 && <div className="menu-subsection-list">{subsections.map((subsection, subsectionIndex) => renderSection(subsection, subsectionIndex, subsections, true))}</div>}
-                    <button className="menu-add-subsection" disabled={draft.sections.length >= 30} onClick={() => addSubsection(section.id)} type="button"><Plus />{tr("Add subcategory", "Aggiungi sottocategoria")}</button>
-                  </div>
+                  <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
+                    <div className="menu-category-editor__heading">
+                      <div>
+                        <span>{nested ? tr("Subcategory", "Sottocategoria") : tr("Category", "Categoria")}</span>
+                        <strong>{selectedSection.name || tr("Untitled category", "Categoria senza nome")}</strong>
+                      </div>
+                      <label>
+                        <Switch
+                          checked={selectedSection.visible}
+                          aria-label={tr("Show category", "Mostra categoria")}
+                          onCheckedChange={(checked) => update((current) => ({
+                            ...current,
+                            sections: current.sections.map((section) => section.id === selectedSection.id ? { ...section, visible: checked } : section),
+                          }))}
+                        />
+                        <span>{selectedSection.visible ? tr("Visible", "Visibile") : tr("Hidden", "Nascosta")}</span>
+                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="selected-menu-category-name">{tr("Name", "Nome")}</Label>
+                      <Input
+                        id="selected-menu-category-name"
+                        value={selectedSection.name}
+                        onChange={(event) => update((current) => ({
+                          ...current,
+                          sections: current.sections.map((section) => section.id === selectedSection.id ? { ...section, name: event.target.value } : section),
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="selected-menu-category-description">{tr("Optional description", "Descrizione facoltativa")}</Label>
+                      <Textarea
+                        id="selected-menu-category-description"
+                        value={selectedSection.description || ''}
+                        onChange={(event) => update((current) => ({
+                          ...current,
+                          sections: current.sections.map((section) => section.id === selectedSection.id ? { ...section, description: event.target.value } : section),
+                        }))}
+                      />
+                    </div>
+                    <div className="menu-category-editor__actions">
+                      <div className="menu-category-editor__order">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={sectionIndex <= 0}
+                          onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, selectedSection.id, -1) }))}
+                        ><ArrowUp className="h-4 w-4" />{tr("Up", "Su")}</Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={sectionIndex < 0 || sectionIndex >= siblings.length - 1}
+                          onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, selectedSection.id, 1) }))}
+                        ><ArrowDown className="h-4 w-4" />{tr("Down", "Giù")}</Button>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={draft.sections.length >= 30}
+                        onClick={() => addSubsection(selectedSection.parentId || selectedSection.id)}
+                      >
+                        <Plus className="h-4 w-4" />{nested ? tr("Another subcategory", "Altra sottocategoria") : tr("Subcategory", "Sottocategoria")}
+                      </Button>
+                      {canDelete && (
+                        <Button type="button" variant="ghost" size="sm" className="menu-danger-action" onClick={() => removeSection(selectedSection.id)}>
+                          <Trash2 className="h-4 w-4" />{tr("Delete", "Elimina")}
+                        </Button>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      className="menu-category-editor__items"
+                      onClick={() => setMobileContentPane('products')}
+                    >
+                      <ListTree className="h-4 w-4" />
+                      {tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}
+                      <strong>{draft.items.filter((item) => item.sectionId === selectedSection.id).length}</strong>
+                    </Button>
+                  </section>
                 );
-              })}
+              })()}
             </div>
           </div>
 
@@ -473,51 +593,70 @@ export function MenuEditor({
                 ))}
               </select>
             </div>
-            <div className="menu-content-pane__scroll menu-product-list">
-            {visibleProducts.map((item) => (
-              <article key={item.id} className="menu-product-editor">
+            <div className="menu-content-pane__scroll menu-item-workspace">
+            {visibleProducts.length > 0 && (
+              <div className="menu-item-picker" aria-label={tr("Items in selected category", "Elementi nella categoria selezionata")}>
+                {visibleProducts.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`menu-item-picker__item${selectedItemId === item.id ? ' active' : ''}`}
+                    aria-pressed={selectedItemId === item.id}
+                    onClick={() => setSelectedItemId(item.id)}
+                  >
+                    <span className="menu-item-picker__thumb">{item.imageUrl ? <img src={item.imageUrl} alt="" /> : <UtensilsCrossed aria-hidden="true" />}</span>
+                    <span><strong>{item.name || tr("Untitled item", "Elemento senza nome")}</strong><small>{formatMenuPriceInput(item.priceMinor, draft.locale)} {draft.currency}</small></span>
+                    <em className={item.available ? 'available' : ''}>{item.available ? tr("Available", "Disponibile") : tr("Hidden", "Nascosto")}</em>
+                    <ChevronRight aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {selectedItem && (
+              <article key={selectedItem.id} className="menu-product-editor">
                 <div className="menu-product-editor__top">
                   <label className="menu-product-image" title="Upload product image">
-                    {item.imageUrl ? <img src={item.imageUrl} alt="" /> : uploadingItem === item.id ? <Loader2 className="animate-spin-slow" /> : <ImagePlus />}
-                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => void uploadItemImage(item.id, event.target.files?.[0])} />
+                    {selectedItem.imageUrl ? <img src={selectedItem.imageUrl} alt="" /> : uploadingItem === selectedItem.id ? <Loader2 className="animate-spin-slow" /> : <ImagePlus />}
+                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => void uploadItemImage(selectedItem.id, event.target.files?.[0])} />
                   </label>
                   <div className="min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
-                    <div className="space-y-2"><Label>Name</Label><Input value={item.name} onChange={(e) => updateItem(item.id, { name: e.target.value })} /></div>
-                    <div className="space-y-2"><Label>Price</Label><PriceInput value={item.priceMinor} locale={draft.locale} label="Product price" onChange={(priceMinor) => updateItem(item.id, { priceMinor })} /></div>
+                    <div className="space-y-2"><Label htmlFor={`menu-item-name-${selectedItem.id}`}>Name</Label><Input id={`menu-item-name-${selectedItem.id}`} value={selectedItem.name} onChange={(e) => updateItem(selectedItem.id, { name: e.target.value })} /></div>
+                    <div className="space-y-2"><Label>Price</Label><PriceInput value={selectedItem.priceMinor} locale={draft.locale} label="Product price" onChange={(priceMinor) => updateItem(selectedItem.id, { priceMinor })} /></div>
                   </div>
-                  <Button variant="ghost" size="icon" title="Delete product" onClick={() => update((current) => ({ ...current, items: current.items.filter((candidate) => candidate.id !== item.id).map((candidate, position) => ({ ...candidate, position })) }))}><Trash2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Delete product" onClick={() => removeItem(selectedItem.id)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="space-y-2 md:col-span-2"><Label>Description</Label><Textarea value={item.description || ''} onChange={(e) => updateItem(item.id, { description: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>{tr("Section", "Sezione")}</Label><select value={item.sectionId} onChange={(e) => updateItem(item.id, { sectionId: e.target.value })}>{rootSections.map((section) => <optgroup key={section.id} label={section.name}><option value={section.id}>{section.name}</option>{sectionSiblings(sortedSections, section.id).map((subsection) => <option key={subsection.id} value={subsection.id}>↳ {subsection.name}</option>)}</optgroup>)}</select></div>
-                  <div className="space-y-2"><Label>Details</Label><Input placeholder="250 ml, 12% vol, seasonal" value={item.details || ''} onChange={(e) => updateItem(item.id, { details: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>Dietary tags</Label><TagsInput value={item.dietaryTags} onChange={(dietaryTags) => updateItem(item.id, { dietaryTags })} placeholder="Vegan, vegetarian" /></div>
-                  <div className="space-y-2"><Label>Allergens</Label><TagsInput value={item.allergens} onChange={(allergens) => updateItem(item.id, { allergens })} placeholder="Gluten, milk, nuts" /></div>
+                  <div className="space-y-2 md:col-span-2"><Label htmlFor={`menu-item-description-${selectedItem.id}`}>Description</Label><Textarea id={`menu-item-description-${selectedItem.id}`} value={selectedItem.description || ''} onChange={(e) => updateItem(selectedItem.id, { description: e.target.value })} /></div>
+                  <div className="space-y-2"><Label htmlFor={`menu-item-section-${selectedItem.id}`}>{tr("Section", "Sezione")}</Label><select id={`menu-item-section-${selectedItem.id}`} value={selectedItem.sectionId} onChange={(e) => updateItem(selectedItem.id, { sectionId: e.target.value })}>{rootSections.map((section) => <optgroup key={section.id} label={section.name}><option value={section.id}>{section.name}</option>{sectionSiblings(sortedSections, section.id).map((subsection) => <option key={subsection.id} value={subsection.id}>↳ {subsection.name}</option>)}</optgroup>)}</select></div>
+                  <div className="space-y-2"><Label htmlFor={`menu-item-details-${selectedItem.id}`}>Details</Label><Input id={`menu-item-details-${selectedItem.id}`} placeholder="250 ml, 12% vol, seasonal" value={selectedItem.details || ''} onChange={(e) => updateItem(selectedItem.id, { details: e.target.value })} /></div>
+                  <div className="space-y-2"><Label>Dietary tags</Label><TagsInput label="Dietary tags" value={selectedItem.dietaryTags} onChange={(dietaryTags) => updateItem(selectedItem.id, { dietaryTags })} placeholder="Vegan, vegetarian" /></div>
+                  <div className="space-y-2"><Label>Allergens</Label><TagsInput label="Allergens" value={selectedItem.allergens} onChange={(allergens) => updateItem(selectedItem.id, { allergens })} placeholder="Gluten, milk, nuts" /></div>
                 </div>
                 <div className="menu-variants-editor">
                   <div className="menu-variants-editor__heading">
                     <div><strong>Sizes and options</strong><span>Useful for glass/bottle, small/large or tasting portions.</span></div>
-                    <Button type="button" variant="outline" size="sm" disabled={item.variants.length >= 8} onClick={() => addVariant(item)}><Plus className="h-4 w-4" />Option</Button>
+                    <Button type="button" variant="outline" size="sm" disabled={selectedItem.variants.length >= 8} onClick={() => addVariant(selectedItem)}><Plus className="h-4 w-4" />Option</Button>
                   </div>
-                  {item.variants.map((variant) => (
+                  {selectedItem.variants.map((variant) => (
                     <div key={variant.id} className="menu-variant-row">
-                      <Input aria-label="Option name" placeholder="Glass, bottle, large" value={variant.name} onChange={(event) => updateItem(item.id, {
-                        variants: item.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, name: event.target.value } : candidate),
+                      <Input aria-label="Option name" placeholder="Glass, bottle, large" value={variant.name} onChange={(event) => updateItem(selectedItem.id, {
+                        variants: selectedItem.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, name: event.target.value } : candidate),
                       })} />
-                      <div className="menu-variant-price"><span>{draft.currency}</span><PriceInput value={variant.priceMinor} locale={draft.locale} label="Option price" onChange={(priceMinor) => updateItem(item.id, {
-                        variants: item.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, priceMinor } : candidate),
+                      <div className="menu-variant-price"><span>{draft.currency}</span><PriceInput value={variant.priceMinor} locale={draft.locale} label="Option price" onChange={(priceMinor) => updateItem(selectedItem.id, {
+                        variants: selectedItem.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, priceMinor } : candidate),
                       })} /></div>
-                      <Button type="button" variant="ghost" size="icon" title="Delete option" onClick={() => updateItem(item.id, { variants: item.variants.filter((candidate) => candidate.id !== variant.id) })}><Trash2 className="h-4 w-4" /></Button>
+                      <Button type="button" variant="ghost" size="icon" title="Delete option" onClick={() => updateItem(selectedItem.id, { variants: selectedItem.variants.filter((candidate) => candidate.id !== variant.id) })}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   ))}
                 </div>
                 <div className="menu-product-flags">
-                  <label><Switch checked={item.available} onCheckedChange={(available) => updateItem(item.id, { available })} /><span>Available</span></label>
-                  <label><Switch checked={item.featured} onCheckedChange={(featured) => updateItem(item.id, { featured })} /><span>Featured</span></label>
-                  {item.imageUrl && <button type="button" onClick={() => updateItem(item.id, { imageUrl: undefined, imageAlt: undefined })}>Remove image</button>}
+                  <label><Switch checked={selectedItem.available} onCheckedChange={(available) => updateItem(selectedItem.id, { available })} /><span>Available</span></label>
+                  <label><Switch checked={selectedItem.featured} onCheckedChange={(featured) => updateItem(selectedItem.id, { featured })} /><span>Featured</span></label>
+                  {selectedItem.imageUrl && <button type="button" onClick={() => updateItem(selectedItem.id, { imageUrl: undefined, imageAlt: undefined })}>Remove image</button>}
                 </div>
               </article>
-            ))}
+            )}
             {visibleProducts.length === 0 && <button type="button" className="menu-empty-products" onClick={() => addItem()}><Plus /><span>{tr("Add the first item in this section", "Aggiungi il primo elemento in questa sezione")}</span></button>}
             </div>
           </div>

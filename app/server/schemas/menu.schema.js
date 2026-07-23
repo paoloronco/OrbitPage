@@ -12,6 +12,7 @@ const MenuVariantSchema = z.object({
 
 const MenuSectionSchema = z.object({
   id: Id,
+  parentId: Id.optional(),
   name: Text(80).min(1),
   description: Text(240).optional(),
   visible: z.boolean(),
@@ -60,6 +61,18 @@ export const MenuCatalogSchema = z.object({
 }).strict().superRefine((menu, context) => {
   const sectionIds = new Set(menu.sections.map((section) => section.id));
   if (sectionIds.size !== menu.sections.length) context.addIssue({ code: 'custom', path: ['sections'], message: 'Section IDs must be unique' });
+  const sectionById = new Map(menu.sections.map((section) => [section.id, section]));
+  menu.sections.forEach((section, index) => {
+    if (!section.parentId) return;
+    const parent = sectionById.get(section.parentId);
+    if (!parent || parent.id === section.id) {
+      context.addIssue({ code: 'custom', path: ['sections', index, 'parentId'], message: 'Menu subsection references an unknown parent' });
+      return;
+    }
+    if (parent.parentId) {
+      context.addIssue({ code: 'custom', path: ['sections', index, 'parentId'], message: 'Menu subsections support one nesting level' });
+    }
+  });
   if (new Set(menu.items.map((item) => item.id)).size !== menu.items.length) context.addIssue({ code: 'custom', path: ['items'], message: 'Product IDs must be unique' });
   menu.items.forEach((item, index) => {
     if (!sectionIds.has(item.sectionId)) context.addIssue({ code: 'custom', path: ['items', index, 'sectionId'], message: 'Unknown menu section' });

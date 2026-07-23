@@ -67,3 +67,50 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
   expect(itemBounds!.x).toBeGreaterThanOrEqual(0);
   expect(itemBounds!.x + itemBounds!.width).toBeLessThanOrEqual(390);
 });
+
+test('creates, edits, reorders and removes menu content through the visible controls', async ({ page }) => {
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: /^Menu/ }).click();
+
+  await page.getByRole('button', { name: 'Category', exact: true }).click();
+  const categoryName = page.locator('#selected-menu-category-name');
+  await expect(categoryName).toHaveValue('New section');
+  await categoryName.fill('Desserts');
+
+  await page.getByRole('button', { name: 'Subcategory', exact: true }).click();
+  await expect(categoryName).toHaveValue('New subsection');
+  await categoryName.fill('Cakes');
+
+  await page.getByRole('button', { name: 'Another subcategory', exact: true }).click();
+  await expect(categoryName).toHaveValue('New subsection');
+  await categoryName.fill('Seasonal cakes');
+  await page.getByRole('button', { name: 'Up', exact: true }).click();
+
+  await page.getByRole('button', { name: 'Cakes 0', exact: true }).click();
+  await page.getByRole('button', { name: 'Manage items in this category 0' }).click();
+  await page.getByRole('button', { name: 'Item', exact: true }).click();
+
+  const editor = page.locator('.menu-product-editor');
+  await expect(editor).toBeVisible();
+  await editor.getByRole('textbox', { name: 'Name' }).fill('Tiramisu');
+  await editor.getByRole('textbox', { name: 'Product price' }).fill('8,50');
+  await editor.getByRole('button', { name: 'Option', exact: true }).click();
+  await editor.getByRole('textbox', { name: 'Option name' }).fill('Large');
+  await editor.getByRole('textbox', { name: 'Option price' }).fill('11,00');
+
+  await page.getByRole('button', { name: 'Save menu' }).click();
+  await expect(page.getByText('Menu saved and published')).toBeVisible();
+
+  await page.reload();
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: /^Menu/ }).click();
+  await page.getByRole('button', { name: 'Cakes 1', exact: true }).click();
+  await page.getByRole('button', { name: /Tiramisu/ }).click();
+  await expect(page.locator('.menu-product-editor').getByRole('textbox', { name: 'Product price' })).toHaveValue('8.50');
+
+  await page.locator('.menu-product-editor').getByTitle('Delete product').click();
+  await expect(page.getByRole('button', { name: /Tiramisu/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Save menu' }).click();
+  await expect(page.getByText('Menu saved and published')).toBeVisible();
+});

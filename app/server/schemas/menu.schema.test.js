@@ -29,4 +29,32 @@ describe('menu schema', () => {
       }],
     })).toThrow();
   });
+
+  it('accepts one level of menu subsections and rejects invalid parents', () => {
+    const parsed = parseMenuCatalog({
+      ...DEFAULT_MENU_CATALOG,
+      sections: [
+        DEFAULT_MENU_CATALOG.sections[0],
+        { id: 'wine', parentId: 'section-1', name: 'Wine', visible: true, position: 1 },
+      ],
+    });
+    expect(parsed.sections[1].parentId).toBe('section-1');
+
+    expect(() => parseMenuCatalog({
+      ...DEFAULT_MENU_CATALOG,
+      sections: [
+        DEFAULT_MENU_CATALOG.sections[0],
+        { id: 'orphan', parentId: 'missing', name: 'Orphan', visible: true, position: 1 },
+      ],
+    })).toThrow('Menu subsection references an unknown parent');
+
+    expect(() => parseMenuCatalog({
+      ...DEFAULT_MENU_CATALOG,
+      sections: [
+        DEFAULT_MENU_CATALOG.sections[0],
+        { id: 'wine', parentId: 'section-1', name: 'Wine', visible: true, position: 1 },
+        { id: 'red', parentId: 'wine', name: 'Red wine', visible: true, position: 2 },
+      ],
+    })).toThrow('Menu subsections support one nesting level');
+  });
 });

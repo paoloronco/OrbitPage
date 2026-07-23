@@ -198,8 +198,6 @@ export const AdminView = ({
       : contentSectionForTab(requestedTab) || "home"
   ));
   const [hostedSurfaceConfig, setHostedSurfaceConfig] = useState<HostedSurfaceConfig | null>(() => getHostedSurfaceConfig());
-  const [menuActivationBusy, setMenuActivationBusy] = useState(false);
-  const [menuActivationError, setMenuActivationError] = useState("");
   const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
@@ -346,19 +344,6 @@ export const AdminView = ({
     const canonicalTab = canonicalViewTab(tab);
     setActiveTab(canonicalTab);
     onTabChange?.(canonicalTab);
-  };
-
-  const activateMenu = async () => {
-    if (menu.enabled || menuActivationBusy) return;
-    setMenuActivationBusy(true);
-    setMenuActivationError("");
-    try {
-      await onMenuUpdate({ ...menu, enabled: true, updatedAt: new Date().toISOString() });
-    } catch (error) {
-      setMenuActivationError(error instanceof Error ? error.message : tr("The menu could not be activated.", "Non è stato possibile attivare il menu."));
-    } finally {
-      setMenuActivationBusy(false);
-    }
   };
 
   const toggleSidebar = () => {
@@ -888,14 +873,6 @@ export const AdminView = ({
               {contentSection === "menu" && (
                 <div className="admin-content-grid admin-content-grid-wide admin-menu-content-layout">
                   <div className="admin-main-column content-workspace-section">
-                    {(!saasPlan || entitlements?.nativeMenu === true) && !menu.enabled && (
-                      <section className="content-activation-panel">
-                        <span className="content-workspace-option-icon"><UtensilsCrossed aria-hidden="true" /></span>
-                        <div><strong>{tr("Activate the native menu", "Attiva il menu nativo")}</strong><p>{tr("It will be published at /menu. You can configure it before or after activation.", "Sarà pubblicato su /menu. Puoi configurarlo prima o dopo l'attivazione.")}</p></div>
-                        <Button onClick={() => void activateMenu()} disabled={menuActivationBusy || linkEditMode === "view"}>{menuActivationBusy ? tr("Activating…", "Attivazione…") : tr("Activate menu", "Attiva menu")}</Button>
-                      </section>
-                    )}
-                    {menuActivationError && <p className="content-workspace-error" role="alert">{menuActivationError}</p>}
                     <MenuEditor
                       menu={menu}
                       publicPageHref={publicPageHref}
