@@ -12,9 +12,10 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: /^Menu/ }).click();
+  await page.getByRole('button', { name: 'Items' }).click();
 
   const price = page.getByRole('textbox', { name: 'Product price' }).first();
-  const addFirstProduct = page.getByRole('button', { name: 'Add the first product' });
+  const addFirstProduct = page.getByRole('button', { name: 'Add the first item in this section' });
   await expect(price.or(addFirstProduct)).toBeVisible();
   if (await price.count() === 0) await addFirstProduct.click();
   await expect(price).toBeVisible();
@@ -27,5 +28,5 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await expect(page.locator('.admin-menu-live-preview')).toContainText(`€${normalizedPrice}`);
 
   await page.getByRole('button', { name: 'Save menu' }).click();
-  await expect(page.getByText('Menu saved and queued for publication')).toBeVisible();
+  await expect(page.getByText('Menu saved and published')).toBeVisible();
 });

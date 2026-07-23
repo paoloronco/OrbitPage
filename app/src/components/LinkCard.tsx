@@ -1,8 +1,7 @@
-import { type ChangeEvent, type CSSProperties, type DragEvent, useState, useRef } from "react";
+import { type ChangeEvent, type CSSProperties, type DragEvent, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -176,6 +175,10 @@ export const LinkCard = ({
   const [mapLookupError, setMapLookupError] = useState("");
   const compactLinkDragIndexRef = useRef<number | null>(null);
 
+  useEffect(() => {
+    if (!isEditing) setEditLink(link);
+  }, [isEditing, link]);
+
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
   const canEditImages = editMode === 'full' || editMode === 'images';
@@ -342,38 +345,6 @@ export const LinkCard = ({
     }
   };
 
-  const getSizeClasses = (size?: string) => {
-    switch (size) {
-      case 'small': return 'p-3';
-      case 'large': return 'p-6';
-      default: return 'p-4';
-    }
-  };
-
-  const getCustomStyles = () => {
-    const styles: CSSProperties = {};
-    if (link.backgroundColor) {
-      styles.backgroundColor = link.backgroundColor;
-    }
-    if (link.textColor) {
-      styles.color = link.textColor;
-    }
-    if (link.titleFontFamily) {
-      styles.fontFamily = link.titleFontFamily;
-    }
-    // text alignment applies to block-level content inside the card
-    if (link.alignment) {
-      styles.textAlign = link.alignment as 'left' | 'center' | 'right' | 'justify';
-    }
-    return styles;
-  };
-
-  const handleClick = () => {
-    if (!isEditing && isPublicActionableBlock(link.type) && link.url) {
-      window.open(link.url, '_blank');
-    }
-  };
-
   const isHeading = link.type === 'heading';
   const isSeparator = link.type === 'separator';
   const isImage = link.type === 'image';
@@ -386,7 +357,6 @@ export const LinkCard = ({
   const isEmbed = link.type === 'embed';
   const isMenu = isNativeMenuLink(link);
   const isActionable = isPublicActionableBlock(link.type);
-  const isClickable = isActionable && !!link.url;
 
   const contactData = getContactData(editLink.content);
   const socialData = getSocialRowDraftData(editLink.content);
@@ -889,15 +859,24 @@ export const LinkCard = ({
   };
 
   return (
-    <Card
-      className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group cursor-pointer relative ${
-        isClickable ? 'cursor-pointer' : 'cursor-default'
-      } ${
+    <section
+      className={`admin-block-editor-shell group relative ${
         isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
-      } ${isEditing ? 'admin-edit' : ''}`}
-      onClick={handleClick}
-      style={getCustomStyles()}
+      }`}
     >
+      <div className="admin-block-editor-preview">
+        <div>
+          <span>{tr("Card preview", "Anteprima card")}</span>
+          <small>{tr("This uses the same renderer and effective colors as the public page.", "Usa lo stesso renderer e gli stessi colori effettivi della pagina pubblica.")}</small>
+        </div>
+        <div
+          className="public-block-preview pointer-events-none"
+          data-surface-effect={editLink.surfaceEffect && editLink.surfaceEffect !== 'inherit' ? editLink.surfaceEffect : defaultSurfaceEffect}
+          style={publicPreviewStyle}
+        >
+          <PublicBlockRenderer link={editLink} />
+        </div>
+      </div>
       {canReorder && (
         <div className="admin-card-drag-handle absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -1901,7 +1880,10 @@ export const LinkCard = ({
             <div className={`grid gap-2 ${isSeparator && separatorData.boxed !== true ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {(!isSeparator || separatorData.boxed === true) && (
                 <div className="space-y-1">
-                  <Label className="text-xs">{isSeparator ? 'Full Background' : 'Background'}</Label>
+                <Label className="flex items-center justify-between gap-2 text-xs">
+                  <span>{isSeparator ? 'Full Background' : 'Background'}</span>
+                  <span className="font-normal text-slate-500">{editLink.backgroundColor ? 'Card override' : 'Theme color'}</span>
+                </Label>
                   <Input
                     type="color"
                     value={editLink.backgroundColor || inheritedBackgroundColor}
@@ -1911,7 +1893,10 @@ export const LinkCard = ({
                 </div>
               )}
               <div className="space-y-1">
-                <Label className="text-xs">{isSeparator ? 'Line/Text Color' : 'Text Color'}</Label>
+                <Label className="flex items-center justify-between gap-2 text-xs">
+                  <span>{isSeparator ? 'Line/Text Color' : 'Text Color'}</span>
+                  <span className="font-normal text-slate-500">{editLink.textColor ? 'Card override' : 'Theme color'}</span>
+                </Label>
                 <Input
                   type="color"
                   value={editLink.textColor || inheritedTextColor}
@@ -2032,7 +2017,7 @@ export const LinkCard = ({
           </div>
         )}
       </div>
-    </Card>
+    </section>
   );
 };
 

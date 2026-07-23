@@ -1,8 +1,7 @@
-import { type CSSProperties, useState, useRef } from "react";
+import { type CSSProperties, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// removed large Textarea editor to keep the card compact
-import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole, RotateCcw } from "lucide-react";
@@ -35,6 +34,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
   const [imageUploadError, setImageUploadError] = useState("");
+
+  useEffect(() => {
+    if (!isEditing) setEditLink(link);
+  }, [isEditing, link]);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
@@ -96,31 +99,6 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       await uploadBlockImage(file, "cover");
     }
     e.target.value = '';
-  };
-
-  const getSizeClasses = (size?: string) => {
-    switch (size) {
-      case 'small': return 'p-3';
-      case 'large': return 'p-6';
-      default: return 'p-4';
-    }
-  };
-
-  const getCustomStyles = () => {
-    const styles: React.CSSProperties = {};
-    if (link.backgroundColor) {
-      styles.backgroundColor = link.backgroundColor;
-    }
-    if (link.textColor) {
-      styles.color = link.textColor;
-    }
-    return styles;
-  };
-
-  const handleClick = () => {
-    if (!isEditing && link.url) {
-      window.open(link.url, '_blank');
-    }
   };
 
   const addTextItem = () => {
@@ -211,6 +189,8 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
         variant="ghost"
         size="icon"
         className="w-8 h-8"
+        title="Edit block"
+        aria-label="Edit block"
       >
         <Edit className="w-3 h-3" />
       </Button>
@@ -263,13 +243,24 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   }
 
   return (
-    <Card
-      className={`glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group relative ${
+    <section
+      className={`admin-block-editor-shell group relative ${
         isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
-      } ${link.url ? 'cursor-pointer' : ''} ${isEditing ? 'admin-edit' : ''}`}
-      onClick={handleClick}
-      style={getCustomStyles()}
+      }`}
     >
+      <div className="admin-block-editor-preview">
+        <div>
+          <span>Card preview</span>
+          <small>This is the same renderer and effective color set used on the public page.</small>
+        </div>
+        <div
+          className="public-block-preview pointer-events-none"
+          data-surface-effect={editLink.surfaceEffect && editLink.surfaceEffect !== 'inherit' ? editLink.surfaceEffect : defaultSurfaceEffect}
+          style={publicPreviewStyle}
+        >
+          <PublicBlockRenderer link={editLink} />
+        </div>
+      </div>
       {isFullEdit && (
         <div className="admin-card-drag-handle absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -285,6 +276,18 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               placeholder="Text card title"
               className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
             />
+            <div className="space-y-2">
+              <Label htmlFor={`text-card-body-${link.id}`} className="text-sm font-medium">Information text</Label>
+              <Textarea
+                id={`text-card-body-${link.id}`}
+                value={editLink.content || ''}
+                onChange={(event) => setEditLink((previous) => ({ ...previous, content: event.target.value }))}
+                placeholder="Write the information shown inside this card."
+                rows={5}
+                className="resize-y bg-white text-black dark:bg-gray-800 dark:text-white"
+              />
+              <p className="text-xs text-slate-500">Plain text and simple lists are supported. The content is escaped before rendering.</p>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
                 <Label className="text-xs">Title Font</Label>
@@ -668,7 +671,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             {/* Colors */}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Background</Label>
+                <Label className="flex items-center justify-between gap-2 text-xs">
+                  <span>Background</span>
+                  <span className="font-normal text-slate-500">{editLink.backgroundColor ? 'Card override' : 'Theme color'}</span>
+                </Label>
                 <Input
                   type="color"
                   value={editLink.backgroundColor || inheritedBackgroundColor}
@@ -677,7 +683,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Text Color</Label>
+                <Label className="flex items-center justify-between gap-2 text-xs">
+                  <span>Text Color</span>
+                  <span className="font-normal text-slate-500">{editLink.textColor ? 'Card override' : 'Theme color'}</span>
+                </Label>
                 <Input
                   type="color"
                   value={editLink.textColor || inheritedTextColor}
@@ -837,6 +846,6 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
           </div>
         )}
       </div>
-    </Card>
+    </section>
   );
 };

@@ -187,7 +187,7 @@ describe('AdminView demo mode', () => {
   });
 
   it('keeps the hosted shop inside the unified content workspace', () => {
-    vi.stubGlobal('__APP_VERSION__', '4.18.8');
+    vi.stubGlobal('__APP_VERSION__', '4.18.9');
     mockState.integratedHostedSurface = true;
     mockState.hostedConfig = {
       extensions: { shop: { enabled: true, entitled: true, selected: true } },

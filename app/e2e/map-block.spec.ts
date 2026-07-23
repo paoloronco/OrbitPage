@@ -32,7 +32,9 @@ test('uses the dedicated Maps URL without asking for a generic card destination'
   await mapsUrl.fill('https://www.google.com/maps?q=Turin');
   await mapCard.getByRole('button', { name: 'Save', exact: true }).click();
 
-  await expect(mapCard.locator('img[src*="tile.openstreetmap.org"]')).toHaveCount(9);
+  const mapFrame = mapCard.locator('iframe[src*="openstreetmap.org/export/embed.html"]');
+  await expect(mapFrame).toHaveCount(1);
+  await expect(mapFrame).toHaveAttribute('title', /Map preview for/i);
   await expect(mapCard.getByText('Map preview unavailable')).toHaveCount(0);
 
   await mapCard.hover();

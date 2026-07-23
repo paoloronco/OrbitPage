@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import {
-  ArrowDown, ArrowUp, Check, Copy, ExternalLink, ImagePlus, Loader2, Palette,
-  Plus, QrCode, Save, Trash2, UtensilsCrossed,
+  ArrowDown, ArrowUp, Check, Copy, ExternalLink, ImagePlus, Layers3, ListTree,
+  Loader2, Palette, Plus, QrCode, Save, Trash2, UtensilsCrossed,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,8 @@ interface MenuEditorProps {
   onPreview: (menu: MenuCatalog) => void;
   onAddMenuLink: () => Promise<void>;
 }
+
+type MenuEditorPanel = 'setup' | 'sections' | 'products' | 'appearance';
 
 function makeId(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
@@ -177,9 +179,17 @@ export function MenuEditor({
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
+  const [activePanel, setActivePanel] = useState<MenuEditorPanel>('setup');
+  const [productSectionFilter, setProductSectionFilter] = useState('all');
   const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
   const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
   const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
+  const visibleProducts = useMemo(
+    () => productSectionFilter === 'all'
+      ? draft.items
+      : draft.items.filter((item) => item.sectionId === productSectionFilter),
+    [draft.items, productSectionFilter],
+  );
 
   useEffect(() => {
     const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
@@ -187,6 +197,12 @@ export function MenuEditor({
     onPreview(normalized);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menu, maxItems]);
+
+  useEffect(() => {
+    if (productSectionFilter !== 'all' && !draft.sections.some((section) => section.id === productSectionFilter)) {
+      setProductSectionFilter('all');
+    }
+  }, [draft.sections, productSectionFilter]);
 
   const update = (producer: (current: MenuCatalog) => MenuCatalog) => {
     setDraft((current) => {
@@ -210,7 +226,7 @@ export function MenuEditor({
       await onSave(normalized);
       setDraft(normalized);
       onPreview(normalized);
-      setMessage('Menu saved and queued for publication');
+      setMessage(tr('Menu saved and published', 'Menu salvato e pubblicato'));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Menu could not be saved');
     } finally {
@@ -289,7 +305,7 @@ export function MenuEditor({
     });
   };
 
-  const addItem = (sectionId = draft.sections[0]?.id) => {
+  const addItem = (sectionId = productSectionFilter !== 'all' ? productSectionFilter : draft.sections[0]?.id) => {
     if (!sectionId || (maxItems !== null && draft.items.length >= maxItems)) return;
     update((current) => ({
       ...current,
@@ -337,7 +353,27 @@ export function MenuEditor({
           {message && <p className="menu-editor-message" aria-live="polite">{message}</p>}
         </section>
 
-        <section className="admin-panel space-y-5">
+        <nav className="menu-editor-tabs" aria-label={tr('Menu editor sections', 'Sezioni editor menu')}>
+          {([
+            ['setup', UtensilsCrossed, tr('Setup', 'Impostazioni')],
+            ['sections', Layers3, tr('Sections', 'Sezioni')],
+            ['products', ListTree, tr('Items', 'Piatti e bevande')],
+            ['appearance', Palette, tr('Appearance & publish', 'Aspetto e pubblicazione')],
+          ] as const).map(([panel, Icon, label]) => (
+            <button
+              key={panel}
+              type="button"
+              className={activePanel === panel ? 'active' : ''}
+              aria-current={activePanel === panel ? 'page' : undefined}
+              onClick={() => setActivePanel(panel)}
+            >
+              <Icon />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {activePanel === 'setup' && <section className="admin-panel space-y-5">
           <div className="menu-editor-section-title"><UtensilsCrossed /><div><h3>{tr("Menu identity", "Identità del menu")}</h3><p>{tr("Choose the venue type and public heading.", "Scegli il tipo di locale e l'intestazione pubblica.")}</p></div></div>
           <div className="menu-venue-switch" role="group" aria-label={tr("Venue type", "Tipo di locale")}>
             {(['restaurant', 'bar', 'cafe'] as const).map((type) => (
@@ -354,9 +390,9 @@ export function MenuEditor({
             </div>
           </div>
           <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
-        </section>
+        </section>}
 
-        <section className="admin-panel space-y-5">
+        {activePanel === 'sections' && <section className="admin-panel space-y-5">
           <div className="menu-editor-section-title"><div><h3>{tr("Sections and subsections", "Sezioni e sottosezioni")}</h3><p>{tr("Group products, then add one level of detail where it helps people scan the menu.", "Raggruppa i prodotti e aggiungi un livello di dettaglio dove aiuta a consultare il menu.")}</p></div><Button variant="outline" size="sm" onClick={addSection} disabled={draft.sections.length >= 30}><Plus className="h-4 w-4" />{tr("Section", "Sezione")}</Button></div>
           <div className="menu-section-list">
             {rootSections.map((section, index) => {
@@ -385,12 +421,27 @@ export function MenuEditor({
               );
             })}
           </div>
-        </section>
+        </section>}
 
-        <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><div><h3>{tr("Products", "Prodotti")}</h3><p>{tr("Prices are stored in cents to avoid rounding errors.", "I prezzi sono salvati in centesimi per evitare errori di arrotondamento.")}</p></div><Button variant="outline" size="sm" onClick={() => addItem()} disabled={maxItems !== null && draft.items.length >= maxItems}><Plus className="h-4 w-4" />{tr("Product", "Prodotto")}</Button></div>
+        {activePanel === 'products' && <section className="admin-panel space-y-5">
+          <div className="menu-editor-section-title"><div><h3>{tr("Dishes and drinks", "Piatti e bevande")}</h3><p>{tr("Choose a section to keep long menus focused and easy to edit.", "Scegli una sezione per mantenere ordinati e facili da modificare anche i menu lunghi.")}</p></div><Button variant="outline" size="sm" onClick={() => addItem()} disabled={maxItems !== null && draft.items.length >= maxItems}><Plus className="h-4 w-4" />{tr("Item", "Elemento")}</Button></div>
+          <div className="menu-product-filter">
+            <Label htmlFor="menu-product-section">{tr("Show section", "Mostra sezione")}</Label>
+            <select
+              id="menu-product-section"
+              value={productSectionFilter}
+              onChange={(event) => setProductSectionFilter(event.target.value)}
+            >
+              <option value="all">{tr(`All items (${draft.items.length})`, `Tutti gli elementi (${draft.items.length})`)}</option>
+              {sortedSections.map((section) => (
+                <option key={section.id} value={section.id}>
+                  {section.parentId ? '↳ ' : ''}{section.name} ({draft.items.filter((item) => item.sectionId === section.id).length})
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="menu-product-list">
-            {draft.items.map((item) => (
+            {visibleProducts.map((item) => (
               <article key={item.id} className="menu-product-editor">
                 <div className="menu-product-editor__top">
                   <label className="menu-product-image" title="Upload product image">
@@ -434,10 +485,11 @@ export function MenuEditor({
                 </div>
               </article>
             ))}
-            {draft.items.length === 0 && <button type="button" className="menu-empty-products" onClick={() => addItem()}><Plus /><span>{tr("Add the first product", "Aggiungi il primo prodotto")}</span></button>}
+            {visibleProducts.length === 0 && <button type="button" className="menu-empty-products" onClick={() => addItem()}><Plus /><span>{tr("Add the first item in this section", "Aggiungi il primo elemento in questa sezione")}</span></button>}
           </div>
-        </section>
+        </section>}
 
+        {activePanel === 'appearance' && <>
         <section className="admin-panel space-y-5">
           <div className="menu-editor-section-title"><Palette /><div><h3>{tr("Menu appearance", "Aspetto del menu")}</h3><p>{tr("Independent from the main OrbitPage theme.", "Indipendente dal tema principale OrbitPage.")}</p></div></div>
           <div className="menu-theme-presets">
@@ -465,6 +517,7 @@ export function MenuEditor({
             </div>
           </div>
         </section>
+        </>}
       </div>
     </div>
   );

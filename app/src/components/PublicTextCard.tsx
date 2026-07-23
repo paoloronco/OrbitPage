@@ -4,7 +4,7 @@ import { Type, ExternalLink } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
-import { getPublicTextColor } from "@/lib/public-block-style";
+import { getPublicBlockStyle, getPublicTextColor } from "@/lib/public-block-style";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
@@ -42,18 +42,6 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
       case 'large': return 'p-6';
       default: return 'p-4';
     }
-  };
-
-  const getCustomStyles = () => {
-    const styles: React.CSSProperties = {};
-    const readableTextColor = getPublicTextColor(link);
-    if (link.backgroundColor) {
-      styles.backgroundColor = link.backgroundColor;
-    }
-    if (readableTextColor) {
-      styles.color = readableTextColor;
-    }
-    return styles;
   };
 
   const escapeHtml = (s: string) =>
@@ -111,7 +99,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
         safeHref ? 'hover:glow-effect group cursor-pointer' : ''
       }`}
       onClick={hasCoverImage ? undefined : handleClick}
-      style={getCustomStyles()}
+      style={getPublicBlockStyle(link)}
     >
       {hasCoverImage && (
         <div

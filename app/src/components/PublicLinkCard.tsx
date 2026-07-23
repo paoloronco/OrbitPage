@@ -12,6 +12,7 @@ import { resolveSafePublicHref, resolveSafePublicMediaUrl } from '@/lib/browser-
 import { isPublicImageReference, resolvePublicImageUrl } from '@/lib/public-asset-readiness';
 import { CompactLinkIcon } from './CompactLinkIcon';
 import type { SocialLinkPlatform } from '@/lib/link-blocks';
+import { getPublicBlockStyle, getPublicTextColor } from '@/lib/public-block-style';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   const safeUrl = resolveSafePublicMediaUrl(src);
@@ -137,24 +138,6 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     }
   };
 
-  const getCustomStyles = () => {
-    const styles: React.CSSProperties = {};
-    if (link.backgroundColor) {
-      styles.backgroundColor = link.backgroundColor;
-    }
-    if (link.textColor) {
-      styles.color = link.textColor;
-    }
-    if (link.titleFontFamily) {
-      // Apply a card-level font family if provided (title/description may override)
-      styles.fontFamily = link.titleFontFamily;
-    }
-    if (link.alignment) {
-      styles.textAlign = link.alignment as any;
-    }
-    return styles;
-  };
-
   // Add error state for images
   const [imageError, setImageError] = useState(false);
   const [coverImageError, setCoverImageError] = useState(false);
@@ -230,13 +213,15 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const hasCoverImage = !!(coverUrl && !coverImageError);
   const isCta = link.type === 'cta';
   const ctaConfig = ctaActionConfig[link.ctaAction || 'book'];
+  const effectiveTextColor = getPublicTextColor(link);
+  const effectiveTextStyle = effectiveTextColor ? { color: effectiveTextColor } : undefined;
 
   if (isCta) {
     const { Icon } = ctaConfig;
     return (
       <Card
         className={`public-cta-card group overflow-hidden border-primary/20 bg-primary text-primary-foreground shadow-sm transition-smooth ${unavailable ? 'opacity-65' : 'hover:glow-effect'}`}
-        style={getCustomStyles()}
+        style={getPublicBlockStyle(link)}
       >
         <a
           href={unavailable ? undefined : safeHref || undefined}
@@ -257,14 +242,14 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
             </span>
             <span
               className="block line-clamp-2 text-base font-semibold leading-tight"
-              style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
+              style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
             >
               {link.title || ctaConfig.label}
             </span>
             {link.description && (
               <span
                 className="mt-1 block line-clamp-2 text-sm text-white/78"
-                style={{ ...(link.textColor ? { color: link.textColor, opacity: 0.78 } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
+                style={{ ...effectiveTextStyle, ...(effectiveTextColor ? { opacity: 0.78 } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
               >
                 {link.description}
               </span>
@@ -279,7 +264,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   return (
     <Card
       className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getSizeClasses(link.size)} transition-smooth hover:glow-effect group`}
-      style={getCustomStyles()}
+      style={getPublicBlockStyle(link)}
     >
       {hasCoverImage && (
         <a
@@ -323,7 +308,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
               <div className="flex items-center gap-2">
                 <h3
                   className="font-semibold truncate flex-1"
-                  style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
+                  style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
                 >
                   {link.title || "Untitled Link"}
                 </h3>
@@ -342,7 +327,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
               {link.description && (
                 <p
                   className="text-sm line-clamp-2 mt-1"
-                  style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
+                  style={{ ...effectiveTextStyle, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
                 >
                   {link.description}
                 </p>
@@ -350,7 +335,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
               {safeHref && !link.hideUrl && (
                 <p
                   className="text-xs mt-1 truncate text-muted-foreground"
-                  style={link.textColor ? { color: link.textColor, opacity: 0.8 } : undefined}
+                  style={effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : undefined}
                 >
                   {link.url.replace(/^https?:\/\//, '')}
                 </p>
