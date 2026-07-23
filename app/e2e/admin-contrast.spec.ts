@@ -16,6 +16,82 @@ function contrastRatio(foreground: number[], background: number[]) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+async function findLowContrastCopy(page: import('@playwright/test').Page) {
+  return page.locator('.orbitpage-admin *').evaluateAll((elements) => {
+    const parseColor = (value: string) => {
+      const channels = value.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+      return channels.length >= 3
+        ? [channels[0], channels[1], channels[2], channels[3] ?? 1]
+        : null;
+    };
+    const luminance = (channels: number[]) => {
+      const values = channels.slice(0, 3).map((channel) => {
+        const value = channel / 255;
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return (0.2126 * values[0]) + (0.7152 * values[1]) + (0.0722 * values[2]);
+    };
+    const ratio = (foreground: number[], background: number[]) => {
+      const lighter = Math.max(luminance(foreground), luminance(background));
+      const darker = Math.min(luminance(foreground), luminance(background));
+      return (lighter + 0.05) / (darker + 0.05);
+    };
+    const getBackground = (element: Element) => {
+      let current: Element | null = element;
+      while (current) {
+        const style = getComputedStyle(current);
+        const color = parseColor(style.backgroundColor);
+        if (color && color[3] >= 0.75 && style.backgroundImage === 'none') return color;
+        current = current.parentElement;
+      }
+      return [255, 255, 255, 1];
+    };
+
+    return elements.flatMap((element) => {
+      if (
+        element.closest('.public-page-content') ||
+        element.closest('.admin-preview-device__screen') ||
+        element.closest('[disabled], [aria-disabled="true"]')
+      ) return [];
+      const text = Array.from(element.childNodes)
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent?.trim() ?? '')
+        .filter(Boolean)
+        .join(' ');
+      if (!text || /^(?:✓|○)$/.test(text)) return [];
+      const style = getComputedStyle(element);
+      const bounds = element.getBoundingClientRect();
+      if (
+        bounds.width <= 0 ||
+        bounds.height <= 0 ||
+        style.visibility === 'hidden' ||
+        style.display === 'none' ||
+        Number(style.opacity) < 0.8
+      ) return [];
+      const foreground = parseColor(style.color);
+      if (!foreground) return [];
+      const background = getBackground(element);
+      const score = ratio(foreground, background);
+      return score < 4.5 ? [{
+        background: style.backgroundColor,
+        color: style.color,
+        score: Number(score.toFixed(2)),
+        text: text.slice(0, 90),
+      }] : [];
+    });
+  });
+}
+
+async function expectReadableDashboardCopy(
+  page: import('@playwright/test').Page,
+  workspace: string,
+) {
+  expect(
+    await findLowContrastCopy(page),
+    `Low-contrast copy found in the ${workspace} workspace`,
+  ).toEqual([]);
+}
+
 test('keeps secondary dashboard copy readable across the main workspaces', async ({ page }) => {
   await openAuthenticatedAdmin(page);
 
@@ -50,5 +126,15 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
       contrastRatio(sample.channels, [255, 255, 255]),
       `Secondary copy "${sample.text}" does not meet WCAG AA contrast`,
     ).toBeGreaterThanOrEqual(4.5);
+  }
+
+  await expectReadableDashboardCopy(page, 'Content / Menu');
+
+  for (const workspace of ['Page', 'Theme', 'Publish', 'Backup', 'Analytics', 'Privacy']) {
+    const navigationItem = page.getByRole('button', { name: workspace, exact: true }).first();
+    if (await navigationItem.count() === 0) continue;
+    await navigationItem.click();
+    await page.waitForTimeout(80);
+    await expectReadableDashboardCopy(page, workspace);
   }
 });

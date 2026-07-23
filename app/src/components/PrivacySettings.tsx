@@ -173,7 +173,7 @@ function FieldRow({ label, description, children }: {
         {label}
       </Label>
       {children}
-      {description && <p className="text-xs leading-5 text-slate-400">{description}</p>}
+      {description && <p className="text-xs leading-5 text-slate-600">{description}</p>}
     </div>
   );
 }
@@ -1331,10 +1331,10 @@ export function PrivacySettings({
           },
         ].map(({ ok, text }) => (
           <div key={text} className="flex items-start gap-2.5 text-xs text-slate-700">
-            <span className={`mt-0.5 shrink-0 text-base leading-none ${ok ? 'text-green-500' : 'text-slate-300'}`}>
+            <span className={`mt-0.5 shrink-0 text-base leading-none ${ok ? 'text-green-600' : 'text-slate-500'}`}>
               {ok ? '✓' : '○'}
             </span>
-            <span className={ok ? 'text-slate-700' : 'text-slate-400'}>{text}</span>
+            <span className={ok ? 'text-slate-700' : 'text-slate-600'}>{text}</span>
           </div>
         ))}
       </section>

@@ -439,6 +439,8 @@
   }
 
   .orbitpage-admin :is(
+    .text-slate-500,
+    .admin-block-editor-preview > div:first-child small,
     .admin-dashboard-logo-copy small,
     .admin-dashboard-header > div:first-child > p:last-child,
     .admin-title span,
@@ -452,6 +454,10 @@
     .managed-analytics-empty,
     .managed-analytics-ranking > p,
     .managed-analytics-rank em,
+    .publish-tools-tab small,
+    .admin-block-library-filters button small,
+    .admin-block-category-heading p,
+    .admin-block-library-empty,
     .menu-editor-intro span,
     .menu-editor-message,
     .menu-editor-section-title p,
@@ -459,6 +465,8 @@
     .menu-variant-price > span,
     .menu-color-grid label span,
     .menu-plan-note,
+    .menu-upgrade-panel > div:not(.menu-upgrade-panel__icon),
+    .menu-content-mobile-switch button:not(.active),
     .subpage-list-header span,
     .subpage-list-item small,
     .subpage-upgrade-note p,
@@ -466,7 +474,9 @@
     .subpage-publish-toggle,
     .content-workspace-header p:last-child,
     .content-workspace-option small,
-    .content-activation-panel p
+    .content-activation-panel p,
+    .setup-check-loading,
+    .admin-footer
   ) {
     color: var(--admin-muted-copy);
   }
