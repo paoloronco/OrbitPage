@@ -225,26 +225,25 @@
     background: var(--profile-card-background);
     border-color: var(--profile-card-border);
     color: var(--profile-card-foreground);
+    box-shadow: var(--profile-card-shadow, var(--card-glow, var(--shadow-card)));
   }
 
   .profile-card[data-surface-effect="transparent"] {
     background: transparent !important;
-    border-color: transparent !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
 
   .profile-card[data-surface-effect="liquid-glass"] {
-    background-color: rgb(255 255 255 / 0.14) !important;
     background:
-      linear-gradient(145deg, rgb(248 252 255 / 0.34), transparent 42%),
-      linear-gradient(135deg, color-mix(in srgb, var(--profile-card-surface-tint) 38%, transparent), color-mix(in srgb, var(--profile-card-surface-tint) 16%, transparent)),
-      rgb(255 255 255 / 0.08) !important;
-    border-color: color-mix(in srgb, var(--profile-card-foreground) 16%, rgb(244 250 255 / 0.78)) !important;
-    box-shadow: 0 14px 38px rgb(15 23 42 / 0.14), inset 0 1px 0 rgb(248 252 255 / 0.58), inset 0 -1px 0 rgb(15 23 42 / 0.1), var(--card-glow, var(--shadow-card)) !important;
-    backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
-    -webkit-backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
+      linear-gradient(145deg, color-mix(in srgb, rgb(248 252 255) var(--profile-card-glass-highlight-percent, 34%), transparent), transparent 42%),
+      linear-gradient(135deg, color-mix(in srgb, var(--profile-card-surface-tint) var(--profile-card-glass-tint-percent, 38%), transparent), color-mix(in srgb, var(--profile-card-surface-tint) var(--profile-card-glass-tint-soft-percent, 16%), transparent)),
+      color-mix(in srgb, rgb(255 255 255) var(--profile-card-glass-base-percent, 8%), transparent) !important;
+    border-color: var(--profile-card-glass-border, color-mix(in srgb, var(--profile-card-foreground) 16%, rgb(244 250 255 / 0.78))) !important;
+    box-shadow: var(--profile-card-shadow, 0 14px 38px rgb(15 23 42 / 0.14)), inset 0 1px 0 rgb(248 252 255 / 0.58), inset 0 -1px 0 rgb(15 23 42 / 0.1) !important;
+    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
+    -webkit-backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
   }
 
   .profile-card__title {
@@ -1974,9 +1973,9 @@
     background: var(--profile-card-background);
     border-color: var(--profile-card-border);
     color: var(--profile-card-foreground);
-    box-shadow: var(--card-glow, var(--shadow-card));
-    backdrop-filter: blur(var(--blur-intensity, 20px));
-    -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
+    box-shadow: var(--profile-card-shadow, var(--card-glow, var(--shadow-card)));
+    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px)));
+    -webkit-backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px)));
   }
 
   .orbitpage-admin .admin-live-preview .gradient-text {

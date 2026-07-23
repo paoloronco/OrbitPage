@@ -2468,11 +2468,18 @@ app.get('/api/profile', async (req, res) => {
 const SocialLinksSchema = z.record(z.string().max(2048)).optional().default({});
 const ProfileColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const ProfileAppearanceSchema = z.object({
+  surfaceEffect: z.enum(['inherit', 'solid', 'transparent', 'liquid-glass']).optional(),
+  surfaceOpacity: z.number().min(0).max(1).optional(),
+  surfaceBlur: z.number().min(0).max(40).optional(),
   cardBackgroundColor: ProfileColorSchema.optional(),
   cardTextColor: ProfileColorSchema.optional(),
   cardMutedColor: ProfileColorSchema.optional(),
   cardBorderEnabled: z.boolean().optional(),
   cardBorderColor: ProfileColorSchema.optional(),
+  cardBorderWidth: z.number().min(0).max(6).optional(),
+  cardRadius: z.number().min(0).max(40).optional(),
+  cardShadowColor: ProfileColorSchema.optional(),
+  cardShadowOpacity: z.number().min(0).max(0.6).optional(),
   accentColor: ProfileColorSchema.optional(),
   avatarBorderEnabled: z.boolean().optional(),
   avatarBorderColor: ProfileColorSchema.optional(),

@@ -10,9 +10,13 @@ import {
   Loader2,
   LockKeyhole,
   MapPin,
+  Palette,
   Play,
   RotateCcw,
   Save,
+  Sparkles,
+  Square,
+  EyeOff,
   UserRound,
   Linkedin,
   Github,
@@ -33,7 +37,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +46,7 @@ import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 import { internalAssetPath } from "@/lib/base-path";
 import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
-import type { CardSurfaceEffect, ThemeConfig } from "@/lib/theme";
+import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { uploadApi } from "@/lib/api-client";
 import type { SaasSeoAccess } from "@/lib/saas-plan";
@@ -200,6 +203,13 @@ export const ProfileSection = ({
   };
   const activePreset = localPreset(preset);
   const connectedSocials = Object.values(draft.socialLinks || {}).filter(Boolean).length;
+  const selectedSurface = draft.appearance?.surfaceEffect || "inherit";
+  const surfaceOpacity = draft.appearance?.surfaceOpacity ?? theme.profileCardOpacity;
+  const surfaceTransparency = Math.round((1 - surfaceOpacity) * 100);
+  const profileBlur = draft.appearance?.surfaceBlur ?? theme.blurIntensity;
+  const profileRadius = draft.appearance?.cardRadius ?? theme.cardRadius;
+  const profileBorderWidth = draft.appearance?.cardBorderWidth ?? 1;
+  const profileShadowOpacity = draft.appearance?.cardShadowOpacity ?? theme.cardShadow.opacity;
   const isDirty = useMemo(
     () => JSON.stringify(draft) !== JSON.stringify(profile) || Boolean(pendingLogoFile || pendingFaviconFile),
     [draft, pendingFaviconFile, pendingLogoFile, profile],
@@ -310,7 +320,6 @@ export const ProfileSection = ({
       appearance: {
         profilePreset: current.appearance?.profilePreset,
         profileDetails: current.appearance?.profileDetails,
-        cardBorderEnabled: current.appearance?.cardBorderEnabled,
         avatarBorderEnabled: current.appearance?.avatarBorderEnabled,
         avatarBorderColor: current.appearance?.avatarBorderColor,
         avatarShape: current.appearance?.avatarShape,
@@ -382,6 +391,84 @@ export const ProfileSection = ({
               <Switch checked={draft.appearance?.cardBorderEnabled !== false} onCheckedChange={(cardBorderEnabled) => updateAppearance({ cardBorderEnabled })} aria-label={tr("Show profile card border", "Mostra bordo della card profilo")} />
             </div>
           </div>
+
+          <section className="-mx-5 space-y-5 border-y border-slate-200 bg-slate-50/80 px-5 py-5" aria-labelledby="profile-card-appearance-title">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">{tr("Card appearance", "Aspetto card")}</p>
+                <h3 id="profile-card-appearance-title" className="mt-1 text-base font-bold text-slate-950">{tr("Shape the main profile card", "Personalizza la card principale")}</h3>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{tr("Choose the surface, transparency, depth and border independently from the active theme.", "Scegli superficie, trasparenza, profondità e bordo indipendentemente dal tema attivo.")}</p>
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={resetCardAppearance}>
+                <RotateCcw className="h-4 w-4" /> {tr("Use theme style", "Usa stile del tema")}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="group" aria-label={tr("Profile card surface", "Superficie card profilo")}>
+              {([
+                { id: "inherit", label: tr("Theme", "Tema"), description: tr("Follow the active theme", "Segue il tema attivo"), icon: Palette },
+                { id: "solid", label: tr("Solid", "Solida"), description: tr("A clear color surface", "Superficie a colore pieno"), icon: Square },
+                { id: "transparent", label: tr("Transparent", "Trasparente"), description: tr("No background surface", "Nessuno sfondo"), icon: EyeOff },
+                { id: "liquid-glass", label: "Liquid glass", description: tr("Blurred translucent glass", "Vetro traslucido sfocato"), icon: Sparkles },
+              ] as const).map((option) => {
+                const Icon = option.icon;
+                const active = selectedSurface === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => updateAppearance({ surfaceEffect: option.id })}
+                    className={`flex min-h-20 items-start gap-3 rounded-lg border p-3 text-left transition-colors ${active ? "border-blue-500 bg-white shadow-sm" : "border-slate-200 bg-white/60 hover:border-blue-300 hover:bg-white"}`}
+                  >
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon className="h-4 w-4" /></span>
+                    <span className="min-w-0"><strong className="block text-sm text-slate-950">{option.label}</strong><small className="mt-1 block text-xs leading-4 text-slate-600">{option.description}</small></span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-transparency">{tr("Surface transparency", "Trasparenza superficie")}</Label><span className="text-xs font-semibold tabular-nums text-slate-700">{surfaceTransparency}%</span></div>
+                <Slider id="profile-card-transparency" min={0} max={1} step={0.01} value={[1 - surfaceOpacity]} onValueChange={([transparency]) => updateAppearance({ surfaceOpacity: 1 - transparency })} aria-label={tr("Profile card transparency", "Trasparenza card profilo")} />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-radius">{tr("Corner radius", "Arrotondamento")}</Label><span className="text-xs font-semibold tabular-nums text-slate-700">{profileRadius}px</span></div>
+                <Slider id="profile-card-radius" min={0} max={40} step={1} value={[profileRadius]} onValueChange={([cardRadius]) => updateAppearance({ cardRadius })} aria-label={tr("Profile card corner radius", "Arrotondamento card profilo")} />
+              </div>
+              <div className={`space-y-3 ${draft.appearance?.cardBorderEnabled === false ? "opacity-50" : ""}`}>
+                <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-border-width">{tr("Border width", "Spessore bordo")}</Label><span className="text-xs font-semibold tabular-nums text-slate-700">{profileBorderWidth}px</span></div>
+                <Slider id="profile-card-border-width" disabled={draft.appearance?.cardBorderEnabled === false} min={0} max={6} step={1} value={[profileBorderWidth]} onValueChange={([cardBorderWidth]) => updateAppearance({ cardBorderWidth })} aria-label={tr("Profile card border width", "Spessore bordo card profilo")} />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-shadow">{tr("Shadow depth", "Profondità ombra")}</Label><span className="text-xs font-semibold tabular-nums text-slate-700">{Math.round(profileShadowOpacity * 100)}%</span></div>
+                <Slider id="profile-card-shadow" min={0} max={0.6} step={0.01} value={[profileShadowOpacity]} onValueChange={([cardShadowOpacity]) => updateAppearance({ cardShadowOpacity })} aria-label={tr("Profile card shadow depth", "Profondità ombra card profilo")} />
+              </div>
+              {(selectedSurface === "liquid-glass" || (selectedSurface === "inherit" && theme.profileCardEffect === "liquid-glass")) && (
+                <div className="space-y-3 lg:col-span-2">
+                  <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-blur">{tr("Glass blur", "Sfocatura vetro")}</Label><span className="text-xs font-semibold tabular-nums text-slate-700">{profileBlur}px</span></div>
+                  <Slider id="profile-card-blur" min={0} max={40} step={1} value={[profileBlur]} onValueChange={([surfaceBlur]) => updateAppearance({ surfaceBlur })} aria-label={tr("Profile card glass blur", "Sfocatura vetro card profilo")} />
+                </div>
+              )}
+            </div>
+
+            <details className="group rounded-lg border border-slate-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                <span><strong className="block text-sm text-slate-950">{tr("Custom colors", "Colori personalizzati")}</strong><small className="mt-1 block text-xs text-slate-600">{tr("Override only the colors you want to change.", "Sostituisci solo i colori che vuoi modificare.")}</small></span>
+                <span className="text-xs font-semibold text-blue-700 group-open:hidden">{tr("Open", "Apri")}</span>
+                <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
+              </summary>
+              <div className="grid gap-4 border-t border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                <ProfileColorField label={tr("Card background", "Sfondo card")} value={draft.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!draft.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
+                <ProfileColorField label={tr("Main text", "Testo principale")} value={draft.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!draft.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />
+                <ProfileColorField label={tr("Secondary text", "Testo secondario")} value={draft.appearance?.cardMutedColor || theme.profileCard.muted} inherited={!draft.appearance?.cardMutedColor} onChange={(cardMutedColor) => updateAppearance({ cardMutedColor })} onReset={() => updateAppearance({ cardMutedColor: undefined })} />
+                <ProfileColorField label={tr("Card border", "Bordo card")} value={draft.appearance?.cardBorderColor || theme.profileCard.border} inherited={!draft.appearance?.cardBorderColor} onChange={(cardBorderColor) => updateAppearance({ cardBorderColor })} onReset={() => updateAppearance({ cardBorderColor: undefined })} />
+                <ProfileColorField label={tr("Shadow", "Ombra")} value={draft.appearance?.cardShadowColor || theme.cardShadow.color} inherited={!draft.appearance?.cardShadowColor} onChange={(cardShadowColor) => updateAppearance({ cardShadowColor })} onReset={() => updateAppearance({ cardShadowColor: undefined })} />
+                <ProfileColorField label={tr("Social accent", "Accento social")} value={draft.appearance?.accentColor || theme.profileCard.accent} inherited={!draft.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
+              </div>
+            </details>
+          </section>
 
           <div className="grid gap-5 border-t border-slate-200 pt-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
             <div className="space-y-3">
@@ -467,33 +554,15 @@ export const ProfileSection = ({
 
           <details className="group rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4">
-              <span><strong className="block text-sm text-slate-950">{tr("Profile card fine tuning", "Regolazioni card profilo")}</strong><small className="mt-1 block text-xs text-slate-500">{tr("Per-profile colors, typography, border and footer details.", "Colori, tipografia, bordo e footer specifici per questo profilo.")}</small></span>
+              <span><strong className="block text-sm text-slate-950">{tr("More profile settings", "Altre impostazioni profilo")}</strong><small className="mt-1 block text-xs text-slate-600">{tr("Image border, typography, search description and footer.", "Bordo immagine, tipografia, descrizione di ricerca e footer.")}</small></span>
               <span className="text-xs font-semibold text-blue-700">{tr("Open controls", "Apri controlli")}</span>
             </summary>
             <div className="space-y-6 border-t border-slate-200 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 className="text-sm font-semibold text-slate-950">{tr("Profile card colors", "Colori card profilo")}</h3><p className="mt-1 text-xs text-slate-500">{tr("These values override the active theme only for this profile.", "Questi valori sostituiscono il tema attivo solo per questo profilo.")}</p></div><Button type="button" variant="outline" size="sm" onClick={resetCardAppearance}>{tr("Use theme colors", "Usa colori del tema")}</Button></div>
-              <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:grid-cols-[minmax(0,1fr)_15rem] sm:items-center">
-                <div><p className="text-sm font-semibold text-slate-950">{tr("Profile surface", "Superficie profilo")}</p><p className="mt-1 text-xs leading-5 text-slate-500">{tr("Keep the theme style, remove the card completely, or add a blurred liquid-glass surface.", "Mantieni lo stile del tema, rimuovi completamente la card oppure applica una superficie liquid glass sfocata.")}</p></div>
-                <Select value={draft.appearance?.surfaceEffect || "inherit"} onValueChange={(surfaceEffect: CardSurfaceEffect | "inherit") => updateAppearance({ surfaceEffect })}>
-                  <SelectTrigger aria-label={tr("Profile surface", "Superficie profilo")}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="inherit">{tr("Use theme default", "Usa valore del tema")}</SelectItem>
-                    <SelectItem value="solid">{tr("Solid", "Solida")}</SelectItem>
-                    <SelectItem value="transparent">{tr("Transparent", "Trasparente")}</SelectItem>
-                    <SelectItem value="liquid-glass">Liquid glass</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <ProfileColorField label={tr("Card background", "Sfondo card")} value={draft.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!draft.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
-                <ProfileColorField label={tr("Main text", "Testo principale")} value={draft.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!draft.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />
-                <ProfileColorField label={tr("Secondary text", "Testo secondario")} value={draft.appearance?.cardMutedColor || theme.profileCard.muted} inherited={!draft.appearance?.cardMutedColor} onChange={(cardMutedColor) => updateAppearance({ cardMutedColor })} onReset={() => updateAppearance({ cardMutedColor: undefined })} />
-                <ProfileColorField label={tr("Card border", "Bordo card")} value={draft.appearance?.cardBorderColor || theme.profileCard.border} inherited={!draft.appearance?.cardBorderColor} onChange={(cardBorderColor) => updateAppearance({ cardBorderColor })} onReset={() => updateAppearance({ cardBorderColor: undefined })} />
-                <ProfileColorField label={tr("Social accent", "Accento social")} value={draft.appearance?.accentColor || theme.profileCard.accent} inherited={!draft.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
-                <ProfileColorField label={tr("Image border", "Bordo immagine")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!draft.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
-              </div>
               <div className="grid gap-4 border-t border-slate-200 pt-5 sm:grid-cols-2">
-                <div className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-500">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
+                <div className="space-y-4 rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-600">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
+                  <ProfileColorField label={tr("Image border color", "Colore bordo immagine")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!draft.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>
                   <div><Label className="text-xs">{tr("Description size", "Dimensione descrizione")}</Label><Input type="number" min={10} max={48} value={parseInt(draft.bioFontSize || "14", 10)} onChange={(event) => setDraft((current) => ({ ...current, bioFontSize: `${event.target.value}px` }))} /></div>

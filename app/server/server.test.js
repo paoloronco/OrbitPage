@@ -600,6 +600,13 @@ describe('API Endpoints', () => {
           },
           avatarShape: 'rounded',
           cardBorderEnabled: false,
+          surfaceEffect: 'liquid-glass',
+          surfaceOpacity: 0.44,
+          surfaceBlur: 18,
+          cardBorderWidth: 2,
+          cardRadius: 24,
+          cardShadowColor: '#112233',
+          cardShadowOpacity: 0.2,
         },
       });
 
@@ -614,6 +621,13 @@ describe('API Endpoints', () => {
       },
       avatarShape: 'rounded',
       cardBorderEnabled: false,
+      surfaceEffect: 'liquid-glass',
+      surfaceOpacity: 0.44,
+      surfaceBlur: 18,
+      cardBorderWidth: 2,
+      cardRadius: 24,
+      cardShadowColor: '#112233',
+      cardShadowOpacity: 0.2,
     });
   });
 
