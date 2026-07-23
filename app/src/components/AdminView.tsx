@@ -886,7 +886,7 @@ export const AdminView = ({
               )}
 
               {contentSection === "menu" && (
-                <div className="admin-content-grid admin-content-grid-wide">
+                <div className="admin-content-grid admin-content-grid-wide admin-menu-content-layout">
                   <div className="admin-main-column content-workspace-section">
                     {(!saasPlan || entitlements?.nativeMenu === true) && !menu.enabled && (
                       <section className="content-activation-panel">

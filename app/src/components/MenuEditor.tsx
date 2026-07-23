@@ -29,7 +29,8 @@ interface MenuEditorProps {
   onAddMenuLink: () => Promise<void>;
 }
 
-type MenuEditorPanel = 'setup' | 'sections' | 'products' | 'appearance';
+type MenuEditorPanel = 'setup' | 'content' | 'appearance';
+type MenuContentPane = 'sections' | 'products';
 
 function makeId(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
@@ -179,8 +180,11 @@ export function MenuEditor({
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [copied, setCopied] = useState(false);
-  const [activePanel, setActivePanel] = useState<MenuEditorPanel>('setup');
-  const [productSectionFilter, setProductSectionFilter] = useState('all');
+  const [activePanel, setActivePanel] = useState<MenuEditorPanel>('content');
+  const [mobileContentPane, setMobileContentPane] = useState<MenuContentPane>('sections');
+  const [productSectionFilter, setProductSectionFilter] = useState(
+    () => normalizeMenuCatalog(menu, maxItems ?? 250).sections[0]?.id || 'all',
+  );
   const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
   const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
   const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
@@ -356,8 +360,7 @@ export function MenuEditor({
         <nav className="menu-editor-tabs" aria-label={tr('Menu editor sections', 'Sezioni editor menu')}>
           {([
             ['setup', UtensilsCrossed, tr('Setup', 'Impostazioni')],
-            ['sections', Layers3, tr('Sections', 'Sezioni')],
-            ['products', ListTree, tr('Items', 'Piatti e bevande')],
+            ['content', Layers3, tr('Menu content', 'Contenuti menu')],
             ['appearance', Palette, tr('Appearance & publish', 'Aspetto e pubblicazione')],
           ] as const).map(([panel, Icon, label]) => (
             <button
@@ -392,55 +395,85 @@ export function MenuEditor({
           <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
         </section>}
 
-        {activePanel === 'sections' && <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><div><h3>{tr("Sections and subsections", "Sezioni e sottosezioni")}</h3><p>{tr("Group products, then add one level of detail where it helps people scan the menu.", "Raggruppa i prodotti e aggiungi un livello di dettaglio dove aiuta a consultare il menu.")}</p></div><Button variant="outline" size="sm" onClick={addSection} disabled={draft.sections.length >= 30}><Plus className="h-4 w-4" />{tr("Section", "Sezione")}</Button></div>
-          <div className="menu-section-list">
-            {rootSections.map((section, index) => {
-              const subsections = sectionSiblings(draft.sections, section.id);
-              const renderSection = (candidate: MenuSection, candidateIndex: number, siblings: MenuSection[], nested = false) => (
-                <div key={candidate.id} className={`menu-section-row${nested ? ' menu-section-row--nested' : ''}`}>
-                  <div className="menu-reorder-actions">
-                    <button type="button" aria-label={tr("Move up", "Sposta su")} title={tr("Move up", "Sposta su")} disabled={candidateIndex === 0} onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, candidate.id, -1) }))}><ArrowUp /></button>
-                    <button type="button" aria-label={tr("Move down", "Sposta giù")} title={tr("Move down", "Sposta giù")} disabled={candidateIndex === siblings.length - 1} onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, candidate.id, 1) }))}><ArrowDown /></button>
-                  </div>
-                  <div className="min-w-0 space-y-2">
-                    {nested && <span className="menu-subsection-label">{tr("Subsection", "Sottosezione")}</span>}
-                    <Input value={candidate.name} aria-label={nested ? tr("Subsection name", "Nome sottosezione") : tr("Section name", "Nome sezione")} onChange={(e) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, name: e.target.value } : item) }))} />
-                    <Input value={candidate.description || ''} aria-label={nested ? tr("Subsection description", "Descrizione sottosezione") : tr("Section description", "Descrizione sezione")} placeholder={tr("Optional description", "Descrizione facoltativa")} onChange={(e) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, description: e.target.value } : item) }))} />
-                  </div>
-                  <Switch checked={candidate.visible} aria-label={nested ? tr("Show subsection", "Mostra sottosezione") : tr("Show section", "Mostra sezione")} onCheckedChange={(checked) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, visible: checked } : item) }))} />
-                  <Button variant="ghost" size="icon" title={nested ? tr("Delete subsection", "Elimina sottosezione") : tr("Delete section", "Elimina sezione")} disabled={!nested && rootSections.length === 1} onClick={() => removeSection(candidate.id)}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              );
-              return (
-                <div key={section.id} className="menu-section-group">
-                  {renderSection(section, index, rootSections)}
-                  {subsections.length > 0 && <div className="menu-subsection-list">{subsections.map((subsection, subsectionIndex) => renderSection(subsection, subsectionIndex, subsections, true))}</div>}
-                  <button className="menu-add-subsection" disabled={draft.sections.length >= 30} onClick={() => addSubsection(section.id)} type="button"><Plus />{tr("Add subsection", "Aggiungi sottosezione")}</button>
-                </div>
-              );
-            })}
+        {activePanel === 'content' && <section className="menu-content-editor">
+          <div className="menu-content-mobile-switch" role="group" aria-label={tr("Menu content view", "Vista contenuti menu")}>
+            <button type="button" className={mobileContentPane === 'sections' ? 'active' : ''} onClick={() => setMobileContentPane('sections')}><Layers3 />{tr("Categories", "Categorie")}</button>
+            <button type="button" className={mobileContentPane === 'products' ? 'active' : ''} onClick={() => setMobileContentPane('products')}><ListTree />{tr("Dishes and drinks", "Piatti e bevande")}</button>
           </div>
-        </section>}
 
-        {activePanel === 'products' && <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><div><h3>{tr("Dishes and drinks", "Piatti e bevande")}</h3><p>{tr("Choose a section to keep long menus focused and easy to edit.", "Scegli una sezione per mantenere ordinati e facili da modificare anche i menu lunghi.")}</p></div><Button variant="outline" size="sm" onClick={() => addItem()} disabled={maxItems !== null && draft.items.length >= maxItems}><Plus className="h-4 w-4" />{tr("Item", "Elemento")}</Button></div>
-          <div className="menu-product-filter">
-            <Label htmlFor="menu-product-section">{tr("Show section", "Mostra sezione")}</Label>
-            <select
-              id="menu-product-section"
-              value={productSectionFilter}
-              onChange={(event) => setProductSectionFilter(event.target.value)}
+          <div className={`admin-panel menu-content-pane menu-content-pane--sections${mobileContentPane === 'sections' ? ' is-mobile-active' : ''}`}>
+            <div className="menu-content-pane__header">
+              <div className="menu-editor-section-title"><div><h3>{tr("Categories", "Categorie")}</h3><p>{tr("Organize sections and one level of subsections.", "Organizza sezioni e un livello di sottosezioni.")}</p></div></div>
+              <Button variant="outline" size="sm" onClick={addSection} disabled={draft.sections.length >= 30}><Plus className="h-4 w-4" />{tr("Category", "Categoria")}</Button>
+            </div>
+            <button
+              type="button"
+              className={`menu-section-filter${productSectionFilter === 'all' ? ' active' : ''}`}
+              onClick={() => {
+                setProductSectionFilter('all');
+                setMobileContentPane('products');
+              }}
             >
-              <option value="all">{tr(`All items (${draft.items.length})`, `Tutti gli elementi (${draft.items.length})`)}</option>
-              {sortedSections.map((section) => (
-                <option key={section.id} value={section.id}>
-                  {section.parentId ? '↳ ' : ''}{section.name} ({draft.items.filter((item) => item.sectionId === section.id).length})
-                </option>
-              ))}
-            </select>
+              <span>{tr("All items", "Tutti gli elementi")}</span>
+              <strong>{draft.items.length}</strong>
+            </button>
+            <div className="menu-content-pane__scroll menu-section-list">
+              {rootSections.map((section, index) => {
+                const subsections = sectionSiblings(draft.sections, section.id);
+                const renderSection = (candidate: MenuSection, candidateIndex: number, siblings: MenuSection[], nested = false) => (
+                  <div key={candidate.id} className={`menu-section-row${nested ? ' menu-section-row--nested' : ''}${productSectionFilter === candidate.id ? ' active' : ''}`}>
+                    <div className="menu-reorder-actions">
+                      <button type="button" aria-label={tr("Move up", "Sposta su")} title={tr("Move up", "Sposta su")} disabled={candidateIndex === 0} onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, candidate.id, -1) }))}><ArrowUp /></button>
+                      <button type="button" aria-label={tr("Move down", "Sposta giù")} title={tr("Move down", "Sposta giù")} disabled={candidateIndex === siblings.length - 1} onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, candidate.id, 1) }))}><ArrowDown /></button>
+                    </div>
+                    <div className="min-w-0 space-y-2">
+                      {nested && <span className="menu-subsection-label">{tr("Subcategory", "Sottocategoria")}</span>}
+                      <Input value={candidate.name} aria-label={nested ? tr("Subcategory name", "Nome sottocategoria") : tr("Category name", "Nome categoria")} onChange={(e) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, name: e.target.value } : item) }))} />
+                      <Input value={candidate.description || ''} aria-label={nested ? tr("Subcategory description", "Descrizione sottocategoria") : tr("Category description", "Descrizione categoria")} placeholder={tr("Optional description", "Descrizione facoltativa")} onChange={(e) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, description: e.target.value } : item) }))} />
+                      <button
+                        type="button"
+                        className="menu-section-open"
+                        onClick={() => {
+                          setProductSectionFilter(candidate.id);
+                          setMobileContentPane('products');
+                        }}
+                      >
+                        {tr("Show items", "Mostra elementi")}
+                        <strong>{draft.items.filter((item) => item.sectionId === candidate.id).length}</strong>
+                      </button>
+                    </div>
+                    <Switch checked={candidate.visible} aria-label={nested ? tr("Show subcategory", "Mostra sottocategoria") : tr("Show category", "Mostra categoria")} onCheckedChange={(checked) => update((current) => ({ ...current, sections: current.sections.map((item) => item.id === candidate.id ? { ...item, visible: checked } : item) }))} />
+                    <Button variant="ghost" size="icon" title={nested ? tr("Delete subcategory", "Elimina sottocategoria") : tr("Delete category", "Elimina categoria")} disabled={!nested && rootSections.length === 1} onClick={() => removeSection(candidate.id)}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                );
+                return (
+                  <div key={section.id} className="menu-section-group">
+                    {renderSection(section, index, rootSections)}
+                    {subsections.length > 0 && <div className="menu-subsection-list">{subsections.map((subsection, subsectionIndex) => renderSection(subsection, subsectionIndex, subsections, true))}</div>}
+                    <button className="menu-add-subsection" disabled={draft.sections.length >= 30} onClick={() => addSubsection(section.id)} type="button"><Plus />{tr("Add subcategory", "Aggiungi sottocategoria")}</button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="menu-product-list">
+
+          <div className={`admin-panel menu-content-pane menu-content-pane--products${mobileContentPane === 'products' ? ' is-mobile-active' : ''}`}>
+            <div className="menu-content-pane__header">
+              <div className="menu-editor-section-title"><div><h3>{tr("Dishes and drinks", "Piatti e bevande")}</h3><p>{tr("Edit only the selected category, without lengthening the page.", "Modifica solo la categoria selezionata, senza allungare la pagina.")}</p></div></div>
+              <Button variant="outline" size="sm" onClick={() => addItem()} disabled={maxItems !== null && draft.items.length >= maxItems}><Plus className="h-4 w-4" />{tr("Item", "Elemento")}</Button>
+            </div>
+            <div className="menu-product-filter">
+              <Label htmlFor="menu-product-section">{tr("Category", "Categoria")}</Label>
+              <select id="menu-product-section" value={productSectionFilter} onChange={(event) => setProductSectionFilter(event.target.value)}>
+                <option value="all">{tr(`All items (${draft.items.length})`, `Tutti gli elementi (${draft.items.length})`)}</option>
+                {sortedSections.map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {section.parentId ? '↳ ' : ''}{section.name} ({draft.items.filter((item) => item.sectionId === section.id).length})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="menu-content-pane__scroll menu-product-list">
             {visibleProducts.map((item) => (
               <article key={item.id} className="menu-product-editor">
                 <div className="menu-product-editor__top">
@@ -486,6 +519,7 @@ export function MenuEditor({
               </article>
             ))}
             {visibleProducts.length === 0 && <button type="button" className="menu-empty-products" onClick={() => addItem()}><Plus /><span>{tr("Add the first item in this section", "Aggiungi il primo elemento in questa sezione")}</span></button>}
+            </div>
           </div>
         </section>}
 
