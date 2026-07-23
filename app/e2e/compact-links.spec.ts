@@ -44,9 +44,25 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
   await dockCard.getByRole('button', { name: 'Save', exact: true }).click();
-  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
+  const workspaceSave = page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true });
+  await expect(workspaceSave).toBeEnabled();
+  const saveResponsePromise = page.waitForResponse((response) =>
+    response.request().method() === 'PUT' &&
+    new URL(response.url()).pathname.endsWith('/api/links')
+  );
+  await workspaceSave.click();
+  const saveResponse = await saveResponsePromise;
+  expect(saveResponse.ok()).toBeTruthy();
+  await expect(workspaceSave).toBeDisabled();
 
-  await page.goto('/');
+  await expect.poll(async () => {
+    const response = await page.request.get('/api/public-page');
+    if (!response.ok()) return false;
+    const payload = await response.json();
+    return payload.links?.some((link: { type?: string }) => link.type === 'social_row') ?? false;
+  }).toBe(true);
+
+  await page.goto(`/?e2e=${Date.now()}`);
   const dock = page.locator('.public-compact-links');
   await expect(dock).toBeVisible();
   await expect(dock).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');

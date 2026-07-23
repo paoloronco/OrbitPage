@@ -88,18 +88,51 @@ jobs:
           docker rm -f orbitpage-ci-smoke
           exit 1
 
-      - name: Install Playwright browsers and system dependencies
-        run: npx playwright install --with-deps
+  e2e:
+    name: E2E (${{ matrix.browser }})
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
 
-      - name: Run Playwright E2E tests
-        run: npm run test:e2e:ci
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            app/package-lock.json
+            app/server/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: npm run install:server
+
+      - name: Install Playwright browser and system dependencies
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Run isolated Playwright E2E tests
+        run: npm run test:e2e:${{ matrix.browser }}
         timeout-minutes: 12
 
       - name: Upload Playwright test report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.browser }}
           path: app/playwright-report/
           retention-days: 30
         continue-on-error: true
