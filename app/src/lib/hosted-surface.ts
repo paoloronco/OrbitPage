@@ -11,7 +11,7 @@ export type HostedSurfaceConfig = {
   extensions?: {
     shop?: {
       entitled: boolean;
-      enabled: boolean;
+      enabled?: boolean;
     };
   };
   onOpenShop?: () => void;

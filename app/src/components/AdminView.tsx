@@ -794,7 +794,7 @@ export const AdminView = ({
                     <span className="content-workspace-option-icon"><ShoppingBag aria-hidden="true" /></span>
                     <span><strong>{tr("Shop", "Shop")}</strong><small>{tr("Digital products and services with Stripe checkout", "Prodotti digitali e servizi con checkout Stripe")}</small></span>
                     <em className={hostedShop.enabled ? "content-status content-status-live" : "content-status"}>
-                      {hostedShop.enabled ? tr("Active", "Attivo") : hostedShop.entitled ? tr("Optional", "Facoltativo") : "Pro"}
+                      {hostedShop.enabled ? tr("Active", "Attivo") : hostedShop.entitled ? tr("Manage", "Gestisci") : "Pro"}
                     </em>
                   </button>
                 )}
