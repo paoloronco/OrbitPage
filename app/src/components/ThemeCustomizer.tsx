@@ -48,6 +48,7 @@ interface ThemeCustomizerProps {
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onThemePreview?: (theme: ThemeConfig) => void;
   renderPreview?: (theme: ThemeConfig, device: PreviewDevice) => ReactNode;
+  showEmbeddedPreview?: boolean;
   accessLevel?: SaasThemeAccess;
   videoUploadsEnabled?: boolean;
   maxUploadBytes?: number | null;
@@ -254,6 +255,7 @@ export const ThemeCustomizer = ({
   onThemeChange,
   onThemePreview,
   renderPreview,
+  showEmbeddedPreview = true,
   accessLevel,
   videoUploadsEnabled = true,
   maxUploadBytes,
@@ -499,7 +501,7 @@ export const ThemeCustomizer = ({
         ) : null}
       </section>
 
-      <div className="admin-theme-layout">
+      <div className={showEmbeddedPreview ? "admin-theme-layout" : "admin-theme-layout admin-theme-layout--without-preview"}>
         <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
           <div className="relative mb-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
             <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
@@ -553,7 +555,7 @@ export const ThemeCustomizer = ({
             </>
           )}
         </section>
-        {livePreviewPanel}
+        {showEmbeddedPreview && livePreviewPanel}
       </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">

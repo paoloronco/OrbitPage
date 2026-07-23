@@ -161,6 +161,7 @@ const ctaActionLabels: Record<string, string> = {
 };
 
 const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
+const EMBEDDED_PREVIEW_MEDIA_QUERY = "(min-width: 1121px)";
 
 export const AdminView = ({
   profile,
@@ -204,6 +205,10 @@ export const AdminView = ({
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
   const [previewMenu, setPreviewMenu] = useState(menu);
+  const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
+    return window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY).matches;
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
@@ -234,6 +239,15 @@ export const AdminView = ({
         )
       : { visible: false, sessionNumber: 1, sessionLimit: 3 }
   ));
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mediaQuery = window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY);
+    const syncPreviewVisibility = () => setShowEmbeddedPreview(mediaQuery.matches);
+    syncPreviewVisibility();
+    mediaQuery.addEventListener("change", syncPreviewVisibility);
+    return () => mediaQuery.removeEventListener("change", syncPreviewVisibility);
+  }, []);
 
   useEffect(() => {
     if (!isIntegratedHostedAdmin) return;
@@ -733,15 +747,15 @@ export const AdminView = ({
                   }}
                 />
               </div>
-              <aside className="admin-workbench-rail">
-                <PreviewPanel
-                  title={tr("Profile and identity", "Profilo e identità")}
-                  profile={previewProfile}
-                  links={links}
-                  theme={theme}
-                  publicPageHref={publicPageHref}
-                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
-                />
+              {(showEmbeddedPreview || (checklistSession.visible && !isProspectReadOnly)) && <aside className="admin-workbench-rail">
+                {showEmbeddedPreview && <PreviewPanel
+                    title={tr("Profile and identity", "Profilo e identità")}
+                    profile={previewProfile}
+                    links={links}
+                    theme={theme}
+                    publicPageHref={publicPageHref}
+                    showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                  />}
                 {checklistSession.visible && !isProspectReadOnly && (
                   <section className="admin-side-panel admin-checklist-panel" aria-label={tr("Page checklist", "Verifica pagina")}>
                     <div className="admin-checklist-heading">
@@ -770,7 +784,7 @@ export const AdminView = ({
                     <p className="admin-checklist-expiry">{tr("This panel disappears automatically after your first three login sessions.", "Questo pannello scompare automaticamente dopo le prime tre sessioni di accesso.")}</p>
                   </section>
                 )}
-              </aside>
+              </aside>}
             </div>
           </TabsContent>
 
@@ -857,7 +871,7 @@ export const AdminView = ({
                       }))}
                     />
                   </div>
-                  <aside className="admin-workbench-rail">
+                  {showEmbeddedPreview && <aside className="admin-workbench-rail">
                     <PreviewPanel
                       title={tr("Home blocks and composition", "Blocchi e composizione della home")}
                       profile={profile}
@@ -866,7 +880,7 @@ export const AdminView = ({
                       publicPageHref={publicPageHref}
                       showOrbitPageBadge={entitlements?.badgeRequired ?? true}
                     />
-                  </aside>
+                  </aside>}
                 </div>
               )}
 
@@ -892,12 +906,12 @@ export const AdminView = ({
                       }}
                     />
                   </div>
-                  <aside className="admin-workbench-rail">
+                  {showEmbeddedPreview && <aside className="admin-workbench-rail">
                     <MenuPreviewPanel
                       menu={previewMenu}
                       publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}
                     />
-                  </aside>
+                  </aside>}
                 </div>
               )}
 
@@ -915,7 +929,7 @@ export const AdminView = ({
                   videoUploadsEnabled={entitlements?.videoUploads ?? true}
                   maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
-                  renderPreview={(page, pageLinks) => (
+                  renderPreview={showEmbeddedPreview ? ((page, pageLinks) => (
                     <PreviewPanel
                       title={tr("Subpage preview", "Anteprima sottopagina")}
                       profile={{ ...profile, name: page.title, bio: page.description }}
@@ -924,7 +938,7 @@ export const AdminView = ({
                       publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${page.slug}`}
                       showOrbitPageBadge={entitlements?.badgeRequired ?? true}
                     />
-                  )}
+                  )) : undefined}
                 />
               )}
 
@@ -954,6 +968,7 @@ export const AdminView = ({
               maxUploadBytes={entitlements?.maxUploadBytes}
               maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
               managePlanHref={managePlanHref}
+              showEmbeddedPreview={showEmbeddedPreview}
             />
           </TabsContent>
 

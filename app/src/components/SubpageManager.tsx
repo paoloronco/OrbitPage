@@ -19,7 +19,7 @@ type Props = {
   theme: ThemeConfig;
   publicPageHref: string;
   onPagesUpdate: (pages: EditorSubpage[]) => Promise<void>;
-  renderPreview: (page: EditorSubpage, links: LinkData[]) => ReactNode;
+  renderPreview?: (page: EditorSubpage, links: LinkData[]) => ReactNode;
   editMode: LinkEditMode;
   maxPages?: number | null;
   maxBlocks?: number | null;
@@ -203,7 +203,7 @@ export function SubpageManager({
           </>
         )}
       </div>
-      {draft && <aside className="admin-workbench-rail subpage-preview-rail">{renderPreview(draft, previewLinks)}</aside>}
+      {draft && renderPreview && <aside className="admin-workbench-rail subpage-preview-rail">{renderPreview(draft, previewLinks)}</aside>}
     </div>
   );
 }
