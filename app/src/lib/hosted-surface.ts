@@ -8,6 +8,13 @@ export type HostedSurfaceConfig = {
   appCheckToken?: string | null;
   section: AdminTab;
   locale: string;
+  extensions?: {
+    shop?: {
+      entitled: boolean;
+      enabled: boolean;
+    };
+  };
+  onOpenShop?: () => void;
 };
 
 declare global {

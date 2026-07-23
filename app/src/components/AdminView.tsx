@@ -34,6 +34,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Share2,
+  ShoppingBag,
   UtensilsCrossed,
   ShieldCheck,
   User,
@@ -50,6 +51,7 @@ import { TwoFactorManager } from "./TwoFactorManager";
 import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview, PreviewDeviceFrame, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
+import { getHostedSurfaceConfig } from "@/lib/hosted-surface";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
@@ -211,6 +213,8 @@ export const AdminView = ({
     (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("apiBase"))
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
+  const hostedShop = isIntegratedHostedAdmin ? getHostedSurfaceConfig()?.extensions?.shop : undefined;
+  const openHostedShop = isIntegratedHostedAdmin ? getHostedSurfaceConfig()?.onOpenShop : undefined;
   const isProspectReadOnly = currentUser?.readOnly === true;
   const checklistIdentity = currentUser
     ? `${isHostedAdmin ? "hosted" : "self-hosted"}:${currentUser.username}`
@@ -757,11 +761,13 @@ export const AdminView = ({
                 <div>
                   <p className="admin-dashboard-kicker">{tr("Page structure", "Struttura pagina")}</p>
                   <h2 id="content-workspace-title">{tr("Choose what your OrbitPage contains", "Scegli cosa contiene la tua OrbitPage")}</h2>
-                  <p>{tr("The home is always available. Add a native menu or focused pages only when they are useful.", "La home è sempre disponibile. Aggiungi un menu nativo o pagine dedicate solo quando servono.")}</p>
+                  <p>{hostedShop
+                    ? tr("The home is always available. Add a menu, shop or focused pages only when they are useful.", "La home è sempre disponibile. Aggiungi menu, shop o pagine dedicate solo quando servono.")
+                    : tr("The home is always available. Add a native menu or focused pages only when they are useful.", "La home è sempre disponibile. Aggiungi un menu nativo o pagine dedicate solo quando servono.")}</p>
                 </div>
               </header>
 
-              <nav className="content-workspace-switcher" aria-label={tr("Content destinations", "Destinazioni contenuto")}>
+              <nav className={hostedShop ? "content-workspace-switcher with-shop" : "content-workspace-switcher"} aria-label={tr("Content destinations", "Destinazioni contenuto")}>
                 <button
                   aria-current={contentSection === "home" ? "page" : undefined}
                   className={contentSection === "home" ? "content-workspace-option active" : "content-workspace-option"}
@@ -783,6 +789,15 @@ export const AdminView = ({
                   <span><strong>{tr("Menu", "Menu")}</strong><small>{tr("A dedicated food and drinks destination", "Una destinazione dedicata a piatti e bevande")}</small></span>
                   <em className={menu.enabled ? "content-status content-status-live" : "content-status"}>{menu.enabled ? tr("Active", "Attivo") : tr("Optional", "Facoltativo")}</em>
                 </button>
+                {hostedShop && openHostedShop && (
+                  <button className="content-workspace-option" onClick={openHostedShop} type="button">
+                    <span className="content-workspace-option-icon"><ShoppingBag aria-hidden="true" /></span>
+                    <span><strong>{tr("Shop", "Shop")}</strong><small>{tr("Digital products and services with Stripe checkout", "Prodotti digitali e servizi con checkout Stripe")}</small></span>
+                    <em className={hostedShop.enabled ? "content-status content-status-live" : "content-status"}>
+                      {hostedShop.enabled ? tr("Active", "Attivo") : hostedShop.entitled ? tr("Optional", "Facoltativo") : "Pro"}
+                    </em>
+                  </button>
+                )}
                 <button
                   aria-current={contentSection === "pages" ? "page" : undefined}
                   className={contentSection === "pages" ? "content-workspace-option active" : "content-workspace-option"}
