@@ -188,6 +188,22 @@ export const AdminView = ({
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
     access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
+  const tabDescription = (tab: AdminTab) => ({
+    profile: tr("Shape the identity people see first.", "Definisci l'identità che le persone vedono per prima."),
+    content: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
+    links: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
+    pages: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
+    menu: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
+    theme: tr("Tune the visual system without losing readability.", "Perfeziona il sistema visivo senza perdere leggibilità."),
+    publish: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
+    qr: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
+    txt: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
+    sitemap: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
+    access: tr("Protect this private installation and its editors.", "Proteggi questa installazione privata e i suoi editor."),
+    backup: tr("Keep portable copies and restore with confidence.", "Mantieni copie portabili e ripristina in sicurezza."),
+    analytics: tr("Read the signals behind visits and interactions.", "Leggi i segnali dietro visite e interazioni."),
+    privacy: tr("Manage consent, policies and visitor choices.", "Gestisci consenso, informative e scelte dei visitatori."),
+  })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
@@ -573,6 +589,7 @@ export const AdminView = ({
             </button>
           </div>
 
+          <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}</div>
           <nav ref={standaloneNavRef} className="admin-dashboard-nav" aria-label={tr("Dashboard sections", "Sezioni dashboard")}>
             {visibleTabs.map(({ value, icon: Icon }) => (
               <button
@@ -656,7 +673,7 @@ export const AdminView = ({
               <h1>{tabLabel(activeTab)}</h1>
               {appVersion && <span className="admin-version" title={tr("OrbitPage OSS version", "Versione OrbitPage OSS")}>v{appVersion}</span>}
             </div>
-            <p>{tr("Manage the page from your private OrbitPage installation.", "Gestisci la pagina dalla tua installazione privata di OrbitPage.")}</p>
+            <p>{tabDescription(activeTab)}</p>
           </div>
           <div className="admin-dashboard-header-actions">
             {!isProspectReadOnly && (

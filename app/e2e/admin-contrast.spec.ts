@@ -107,24 +107,39 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
     '.content-workspace-option small',
     '.menu-editor-intro span',
     '.menu-editor-section-title p',
-  ].join(',')).evaluateAll((elements) => elements
-    .filter((element) => {
-      const rect = element.getBoundingClientRect();
-      const style = getComputedStyle(element);
-      return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden';
-    })
-    .map((element) => {
-      const color = getComputedStyle(element).color;
-      const channels = color.match(/\d+(?:\.\d+)?/g)?.slice(0, 3).map(Number) ?? [];
-      return { channels, text: element.textContent?.trim() ?? '' };
-    }));
+  ].join(',')).evaluateAll((elements) => {
+    const colorChannels = (value: string) => value.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+    const backgroundFor = (element: Element) => {
+      let current: Element | null = element;
+      while (current) {
+        const style = getComputedStyle(current);
+        const channels = colorChannels(style.backgroundColor);
+        if (channels.length >= 3 && (channels[3] ?? 1) >= 0.75 && style.backgroundImage === 'none') {
+          return channels.slice(0, 3);
+        }
+        current = current.parentElement;
+      }
+      return [255, 255, 255];
+    };
+
+    return elements
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden';
+      })
+      .map((element) => {
+        const channels = colorChannels(getComputedStyle(element).color).slice(0, 3);
+        return { background: backgroundFor(element), channels, text: element.textContent?.trim() ?? '' };
+      });
+  });
 
   expect(samples.length).toBeGreaterThan(4);
   for (const sample of samples) {
     expect(sample.channels, `Could not parse the color for "${sample.text}"`).toHaveLength(3);
     expect(
-      contrastRatio(sample.channels, [255, 255, 255]),
-      `Secondary copy "${sample.text}" does not meet WCAG AA contrast`,
+      contrastRatio(sample.channels, sample.background),
+      `Secondary copy "${sample.text}" does not meet WCAG AA contrast (${JSON.stringify(sample)})`,
     ).toBeGreaterThanOrEqual(4.5);
   }
 
