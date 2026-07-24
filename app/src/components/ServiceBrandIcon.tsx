@@ -13,7 +13,7 @@ import {
   SiCalendly,
   SiTypeform,
 } from "react-icons/si";
-import type { BrandServiceProvider } from "@/lib/service-brand";
+import { brandServiceColors, type BrandServiceProvider } from "@/lib/service-brand";
 
 const brandIcons = {
   instagram: SiInstagram,
@@ -39,7 +39,12 @@ interface ServiceBrandIconProps {
 export const ServiceBrandIcon = ({ provider, className }: ServiceBrandIconProps) => {
   const Icon = brandIcons[provider];
   return (
-    <span className={className} data-service-brand={provider} aria-hidden="true">
+    <span
+      className={className}
+      data-service-brand={provider}
+      style={{ color: brandServiceColors[provider] }}
+      aria-hidden="true"
+    >
       <Icon className="h-full w-full" />
     </span>
   );

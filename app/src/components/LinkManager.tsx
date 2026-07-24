@@ -15,7 +15,8 @@ import { type EmbedProvider, type LinkBlockType, type ServiceLinkProvider, build
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
-import { SiCalendly, SiDeezer, SiGithub, SiGiphy, SiGooglecalendar, SiInstagram, SiSoundcloud, SiSpotify, SiTiktok, SiTypeform, SiVimeo, SiWhatsapp, SiYoutube } from "react-icons/si";
+import { ServiceBrandIcon } from "./ServiceBrandIcon";
+import type { BrandServiceProvider } from "@/lib/service-brand";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -42,7 +43,8 @@ interface BlockLibraryItem {
   title: string;
   description: string;
   keywords: string;
-  icon: ComponentType<{ className?: string }>;
+  icon?: ComponentType<{ className?: string }>;
+  brand?: BrandServiceProvider;
   onSelect: () => void;
   badge?: string;
   restricted?: boolean;
@@ -682,19 +684,19 @@ export const LinkManager = ({
       description: tr("Add branded social content, media players and direct actions.", "Aggiungi contenuti social, player multimediali e azioni dirette con il relativo brand."),
       icon: Share2,
       items: [
-        { id: "instagram", title: "Instagram", description: tr("Embed a public post or Reel.", "Incorpora un post pubblico o un Reel."), keywords: "instagram post reel social", icon: SiInstagram, onSelect: () => addServiceEmbed("instagram", "Instagram", tr("Latest from Instagram", "Da Instagram")) },
-        { id: "whatsapp", title: "WhatsApp", description: tr("Open a direct chat or booking conversation.", "Apri una chat diretta o una conversazione per prenotare."), keywords: "whatsapp chat message booking telefono messaggio", icon: SiWhatsapp, onSelect: () => addServiceLink("whatsapp", "WhatsApp", tr("Chat with us", "Scrivici")) },
-        { id: "youtube", title: "YouTube", description: tr("Play a video with the privacy-enhanced player.", "Riproduci un video con il player a privacy avanzata."), keywords: "youtube video player", icon: SiYoutube, onSelect: () => addServiceEmbed("youtube", "YouTube", tr("Watch the video", "Guarda il video")) },
-        { id: "spotify", title: "Spotify", description: tr("Play a track, album, playlist or podcast.", "Riproduci un brano, album, playlist o podcast."), keywords: "spotify song track album playlist podcast music musica", icon: SiSpotify, onSelect: () => addServiceEmbed("spotify", "Spotify", tr("Listen on Spotify", "Ascolta su Spotify")) },
-        { id: "deezer", title: "Deezer", description: tr("Play a track, album or playlist.", "Riproduci un brano, album o playlist."), keywords: "deezer song track album playlist music musica", icon: SiDeezer, onSelect: () => addServiceEmbed("deezer", "Deezer", tr("Listen on Deezer", "Ascolta su Deezer")) },
-        { id: "soundcloud", title: "SoundCloud", description: tr("Play a public track or set.", "Riproduci un brano o set pubblico."), keywords: "soundcloud track set dj audio music musica", icon: SiSoundcloud, onSelect: () => addServiceEmbed("soundcloud", "SoundCloud", tr("Listen on SoundCloud", "Ascolta su SoundCloud")) },
-        { id: "vimeo", title: "Vimeo", description: tr("Show a Vimeo video in an embedded player.", "Mostra un video Vimeo nel player incorporato."), keywords: "vimeo video player", icon: SiVimeo, onSelect: () => addServiceEmbed("vimeo", "Vimeo", tr("Watch the video", "Guarda il video")) },
-        { id: "tiktok", title: "TikTok", description: tr("Embed a public TikTok video.", "Incorpora un video TikTok pubblico."), keywords: "tiktok video social", icon: SiTiktok, onSelect: () => addServiceEmbed("tiktok", "TikTok", tr("Watch on TikTok", "Guarda su TikTok")) },
-        { id: "giphy", title: "Giphy", description: tr("Embed an animated GIF without uploading it.", "Incorpora una GIF animata senza caricarla."), keywords: "giphy gif animation animated", icon: SiGiphy, onSelect: () => addServiceEmbed("giphy", "Giphy", tr("Animated GIF", "GIF animata")) },
-        { id: "google-calendar", title: "Google Calendar", description: tr("Show live appointment availability and accept bookings.", "Mostra gli slot liberi e accetta prenotazioni."), keywords: "google calendar appointment schedule booking call availability appuntamenti prenotazioni disponibilita", icon: schedulingEnabled ? SiGooglecalendar : LockKeyhole, onSelect: () => addServiceEmbed("google_calendar", tr("Book an appointment", "Prenota un appuntamento"), tr("Choose an available time in Google Calendar", "Scegli un orario disponibile su Google Calendar")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
-        { id: "calendly", title: "Calendly", description: tr("Let visitors choose an available call or meeting slot.", "Permetti di scegliere uno slot libero per call o incontri."), keywords: "calendly calendar booking meeting call availability prenotazioni disponibilita", icon: schedulingEnabled ? SiCalendly : LockKeyhole, onSelect: () => addServiceEmbed("calendly", tr("Book a call", "Prenota una call"), tr("Choose a time that works for you", "Scegli l'orario piu comodo")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
-        { id: "typeform", title: "Typeform", description: tr("Collect responses with an interactive embedded form.", "Raccogli risposte con un modulo interattivo incorporato."), keywords: "typeform form survey questionnaire lead contact modulo sondaggio questionario contatti", icon: SiTypeform, onSelect: () => addServiceEmbed("typeform", tr("Tell us what you need", "Raccontaci cosa ti serve"), tr("Complete the form without leaving this page", "Compila il modulo senza lasciare questa pagina")) },
-        { id: "github", title: "GitHub", description: tr("Link a repository, profile or release.", "Collega repository, profilo o release."), keywords: "github repository repo code profile release codice", icon: SiGithub, onSelect: () => addServiceLink("github", "GitHub", tr("View on GitHub", "Apri su GitHub")) },
+        { id: "instagram", title: "Instagram", description: tr("Embed a public post or Reel.", "Incorpora un post pubblico o un Reel."), keywords: "instagram post reel social", brand: "instagram", onSelect: () => addServiceEmbed("instagram", "Instagram", tr("Latest from Instagram", "Da Instagram")) },
+        { id: "whatsapp", title: "WhatsApp", description: tr("Open a direct chat or booking conversation.", "Apri una chat diretta o una conversazione per prenotare."), keywords: "whatsapp chat message booking telefono messaggio", brand: "whatsapp", onSelect: () => addServiceLink("whatsapp", "WhatsApp", tr("Chat with us", "Scrivici")) },
+        { id: "youtube", title: "YouTube", description: tr("Play a video with the privacy-enhanced player.", "Riproduci un video con il player a privacy avanzata."), keywords: "youtube video player", brand: "youtube", onSelect: () => addServiceEmbed("youtube", "YouTube", tr("Watch the video", "Guarda il video")) },
+        { id: "spotify", title: "Spotify", description: tr("Play a track, album, playlist or podcast.", "Riproduci un brano, album, playlist o podcast."), keywords: "spotify song track album playlist podcast music musica", brand: "spotify", onSelect: () => addServiceEmbed("spotify", "Spotify", tr("Listen on Spotify", "Ascolta su Spotify")) },
+        { id: "deezer", title: "Deezer", description: tr("Play a track, album or playlist.", "Riproduci un brano, album o playlist."), keywords: "deezer song track album playlist music musica", brand: "deezer", onSelect: () => addServiceEmbed("deezer", "Deezer", tr("Listen on Deezer", "Ascolta su Deezer")) },
+        { id: "soundcloud", title: "SoundCloud", description: tr("Play a public track or set.", "Riproduci un brano o set pubblico."), keywords: "soundcloud track set dj audio music musica", brand: "soundcloud", onSelect: () => addServiceEmbed("soundcloud", "SoundCloud", tr("Listen on SoundCloud", "Ascolta su SoundCloud")) },
+        { id: "vimeo", title: "Vimeo", description: tr("Show a Vimeo video in an embedded player.", "Mostra un video Vimeo nel player incorporato."), keywords: "vimeo video player", brand: "vimeo", onSelect: () => addServiceEmbed("vimeo", "Vimeo", tr("Watch the video", "Guarda il video")) },
+        { id: "tiktok", title: "TikTok", description: tr("Embed a public TikTok video.", "Incorpora un video TikTok pubblico."), keywords: "tiktok video social", brand: "tiktok", onSelect: () => addServiceEmbed("tiktok", "TikTok", tr("Watch on TikTok", "Guarda su TikTok")) },
+        { id: "giphy", title: "Giphy", description: tr("Embed an animated GIF without uploading it.", "Incorpora una GIF animata senza caricarla."), keywords: "giphy gif animation animated", brand: "giphy", onSelect: () => addServiceEmbed("giphy", "Giphy", tr("Animated GIF", "GIF animata")) },
+        { id: "google-calendar", title: "Google Calendar", description: tr("Show live appointment availability and accept bookings.", "Mostra gli slot liberi e accetta prenotazioni."), keywords: "google calendar appointment schedule booking call availability appuntamenti prenotazioni disponibilita", brand: "google_calendar", onSelect: () => addServiceEmbed("google_calendar", tr("Book an appointment", "Prenota un appuntamento"), tr("Choose an available time in Google Calendar", "Scegli un orario disponibile su Google Calendar")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
+        { id: "calendly", title: "Calendly", description: tr("Let visitors choose an available call or meeting slot.", "Permetti di scegliere uno slot libero per call o incontri."), keywords: "calendly calendar booking meeting call availability prenotazioni disponibilita", brand: "calendly", onSelect: () => addServiceEmbed("calendly", tr("Book a call", "Prenota una call"), tr("Choose a time that works for you", "Scegli l'orario piu comodo")), badge: !schedulingEnabled ? "Pro" : undefined, restricted: !schedulingEnabled },
+        { id: "typeform", title: "Typeform", description: tr("Collect responses with an interactive embedded form.", "Raccogli risposte con un modulo interattivo incorporato."), keywords: "typeform form survey questionnaire lead contact modulo sondaggio questionario contatti", brand: "typeform", onSelect: () => addServiceEmbed("typeform", tr("Tell us what you need", "Raccontaci cosa ti serve"), tr("Complete the form without leaving this page", "Compila il modulo senza lasciare questa pagina")) },
+        { id: "github", title: "GitHub", description: tr("Link a repository, profile or release.", "Collega repository, profilo o release."), keywords: "github repository repo code profile release codice", brand: "github", onSelect: () => addServiceLink("github", "GitHub", tr("View on GitHub", "Apri su GitHub")) },
       ],
     },
     {
@@ -919,8 +921,10 @@ export const LinkManager = ({
                                   onClick={item.onSelect}
                                   aria-disabled={item.restricted || undefined}
                                 >
-                                  <span className="admin-block-library-item-icon">
-                                    <ItemIcon className="h-5 w-5" />
+                                  <span className="admin-block-library-item-icon" data-service-brand-tile={item.brand || undefined}>
+                                    {item.brand
+                                      ? <ServiceBrandIcon provider={item.brand} className="h-5 w-5" />
+                                      : ItemIcon && <ItemIcon className="h-5 w-5" />}
                                   </span>
                                   <span className="admin-block-library-item-copy">
                                     <strong>{item.title}</strong>

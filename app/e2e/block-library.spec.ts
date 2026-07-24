@@ -15,6 +15,12 @@ test('opens a searchable block library grouped by category', async ({ page }) =>
   await expect(dialog.getByRole('button', { name: /Media & embeds/ })).toBeVisible();
   await expect(dialog.getByRole('button', { name: /Engagement/ })).toBeVisible();
 
+  await dialog.getByRole('button', { name: /Connected services/ }).click();
+  const instagram = dialog.getByRole('button', { name: /Instagram/ });
+  await expect(instagram.locator('[data-service-brand="instagram"]')).toBeVisible();
+  await expect(instagram.locator('[data-service-brand-tile="instagram"]')).toBeVisible();
+
+  await dialog.getByRole('button', { name: /All blocks/ }).click();
   await dialog.getByRole('textbox', { name: 'Search blocks' }).fill('map');
   await expect(dialog.getByRole('button', { name: /Map/ })).toBeVisible();
   await expect(dialog.getByRole('button', { name: /Link/ })).toHaveCount(0);

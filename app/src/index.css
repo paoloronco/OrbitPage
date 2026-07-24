@@ -3572,6 +3572,12 @@
     color: #2458d7;
   }
 
+  .admin-block-library-item-icon[data-service-brand-tile] {
+    border: 1px solid #dfe5ed;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
+  }
+
   .admin-block-library-item-copy {
     display: block;
     min-width: 0;
