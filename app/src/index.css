@@ -186,7 +186,7 @@
 .privacy-status-summary svg {
   width: 16px;
   height: 16px;
-  color: #71829a;
+  color: #53667f;
 }
 
 .privacy-status-summary .is-ready svg {
@@ -199,7 +199,7 @@
 }
 
 .privacy-status-summary small {
-  color: #71829a;
+  color: #53667f;
   font-size: .63rem;
   font-weight: 700;
   letter-spacing: .04em;
@@ -286,7 +286,7 @@
 }
 
 .privacy-section-number {
-  color: #8493a8;
+  color: #5a6d86;
   font-size: .63rem;
   font-weight: 800;
   letter-spacing: .05em;
@@ -295,7 +295,7 @@
 .privacy-section-icon {
   width: 16px;
   height: 16px;
-  color: #71829a;
+  color: #53667f;
 }
 
 .privacy-section-nav > button.is-active .privacy-section-icon {
@@ -316,7 +316,7 @@
 
 .privacy-section-copy small {
   overflow: hidden;
-  color: #71829a;
+  color: #53667f;
   font-size: .66rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -539,7 +539,7 @@
 }
 
 .privacy-review-score span {
-  color: #71829a;
+  color: #53667f;
   font-size: .85rem;
 }
 
@@ -649,7 +649,7 @@
 }
 
 .privacy-review-actions small {
-  color: #71829a;
+  color: #53667f;
   font-size: .66rem;
 }
 

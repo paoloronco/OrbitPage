@@ -73,7 +73,7 @@ async function findLowContrastCopy(page: import('@playwright/test').Page) {
       const background = getBackground(element);
       const score = ratio(foreground, background);
       return score < 4.5 ? [{
-        background: style.backgroundColor,
+        background: `rgb(${background.slice(0, 3).join(', ')})`,
         color: style.color,
         score: Number(score.toFixed(2)),
         text: text.slice(0, 90),

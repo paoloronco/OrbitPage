@@ -10,6 +10,7 @@ const e2eDataDir = path.resolve(__dirname, 'e2e-data');
 
 export default defineConfig({
   testDir: './e2e',
+  timeout: process.env.CI ? 45 * 1000 : 30 * 1000,
   /* Esegui i test in parallelo */
   fullyParallel: true,
   /* Fallisci la build su CI se hai lasciato accidentalmente test.only nel codice */
@@ -30,6 +31,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
     video: 'on-first-retry',
     screenshot: 'only-on-failure',
+    /* Stable interactions across Chromium, Firefox and WebKit in CI. */
+    reducedMotion: process.env.CI ? 'reduce' : 'no-preference',
   },
 
   /* Configura i progetti per i diversi browser */

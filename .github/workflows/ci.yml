@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -16,7 +17,7 @@ permissions:
 jobs:
   test:
     name: Quality Gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     defaults:
@@ -48,10 +49,10 @@ jobs:
             app/server/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Install backend dependencies
-        run: npm run install:server
+        run: npm --prefix server ci --prefer-offline --no-audit
 
       - name: Audit frontend dependencies
         run: npm audit --audit-level=high
@@ -73,26 +74,30 @@ jobs:
 
       - name: Smoke test Docker image
         run: |
+          set -Eeuo pipefail
+          cleanup() {
+            docker rm -f orbitpage-ci-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
           docker run -d --name orbitpage-ci-smoke \
             -p 3001:8080 \
             -e JWT_SECRET=ci-smoke-secret-ci-smoke-secret-123456 \
             orbitpage-ci-smoke
-          for attempt in {1..30}; do
-            if curl --fail http://127.0.0.1:3001/health; then
-              docker rm -f orbitpage-ci-smoke
+          for attempt in {1..45}; do
+            if curl --fail http://127.0.0.1:3001/health --silent --show-error >/dev/null; then
+              echo "Docker health check passed on attempt ${attempt}."
               exit 0
             fi
             sleep 1
           done
           docker logs orbitpage-ci-smoke
-          docker rm -f orbitpage-ci-smoke
           exit 1
 
   e2e:
     name: E2E (${{ matrix.browser }})
     needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 18
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
     strategy:
       fail-fast: false
       matrix:
@@ -116,21 +121,21 @@ jobs:
             app/server/package-lock.json
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
 
       - name: Install backend dependencies
-        run: npm run install:server
+        run: npm --prefix server ci --prefer-offline --no-audit
 
       - name: Install Playwright browser and system dependencies
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Run isolated Playwright E2E tests
         run: npm run test:e2e:${{ matrix.browser }}
-        timeout-minutes: 12
+        timeout-minutes: 16
 
       - name: Upload Playwright test report
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ failure() }}
         with:
           name: playwright-report-${{ matrix.browser }}
           path: app/playwright-report/
