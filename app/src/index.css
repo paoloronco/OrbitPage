@@ -113,6 +113,705 @@
   }
 }
 
+/* Privacy workspace */
+.privacy-workspace {
+  --privacy-ink: #10213b;
+  --privacy-copy: #52647d;
+  --privacy-line: #d8e1ed;
+  --privacy-soft: #f4f7fb;
+  --privacy-blue: #2f62e8;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  color: var(--privacy-ink);
+}
+
+.privacy-workspace-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 36px;
+  align-items: end;
+  padding: 5px 2px 24px;
+  border-bottom: 1px solid var(--privacy-line);
+}
+
+.privacy-workspace-eyebrow,
+.privacy-stage-heading > div > span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--privacy-blue);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.privacy-workspace-heading h2 {
+  margin: 0;
+  color: var(--privacy-ink);
+  font-size: 1.8rem;
+  font-weight: 740;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+
+.privacy-workspace-heading p {
+  max-width: 650px;
+  margin: 8px 0 0;
+  color: var(--privacy-copy);
+  font-size: .86rem;
+  line-height: 1.55;
+}
+
+.privacy-status-summary {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--privacy-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.privacy-status-summary > div {
+  display: grid;
+  min-width: 150px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  padding: 11px 13px;
+}
+
+.privacy-status-summary > div + div {
+  border-left: 1px solid var(--privacy-line);
+}
+
+.privacy-status-summary svg {
+  width: 16px;
+  height: 16px;
+  color: #71829a;
+}
+
+.privacy-status-summary .is-ready svg {
+  color: #16865b;
+}
+
+.privacy-status-summary span {
+  display: grid;
+  gap: 1px;
+}
+
+.privacy-status-summary small {
+  color: #71829a;
+  font-size: .63rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.privacy-status-summary strong {
+  overflow: hidden;
+  color: var(--privacy-ink);
+  font-size: .75rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.privacy-readonly-notice {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  margin-top: 16px;
+  border: 1px solid #f2cf78;
+  border-radius: 7px;
+  background: #fff8e8;
+  padding: 10px 12px;
+  color: #774a09;
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.privacy-section-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 18px 0;
+  overflow: hidden;
+  border: 1px solid var(--privacy-line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.privacy-section-nav > button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 28px 24px minmax(0, 1fr) 18px;
+  gap: 9px;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  padding: 13px 14px;
+  color: var(--privacy-copy);
+  text-align: left;
+  cursor: pointer;
+}
+
+.privacy-section-nav > button + button {
+  border-left: 1px solid var(--privacy-line);
+}
+
+.privacy-section-nav > button::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--privacy-blue);
+  content: "";
+  opacity: 0;
+  transform: scaleX(.55);
+  transition: opacity 180ms ease, transform 240ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.privacy-section-nav > button:hover {
+  background: #f8faff;
+}
+
+.privacy-section-nav > button.is-active {
+  background: #f2f6ff;
+  color: var(--privacy-ink);
+}
+
+.privacy-section-nav > button.is-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.privacy-section-number {
+  color: #8493a8;
+  font-size: .63rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+}
+
+.privacy-section-icon {
+  width: 16px;
+  height: 16px;
+  color: #71829a;
+}
+
+.privacy-section-nav > button.is-active .privacy-section-icon {
+  color: var(--privacy-blue);
+}
+
+.privacy-section-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.privacy-section-copy strong {
+  color: currentColor;
+  font-size: .78rem;
+  font-weight: 760;
+}
+
+.privacy-section-copy small {
+  overflow: hidden;
+  color: #71829a;
+  font-size: .66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.privacy-section-state {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+}
+
+.privacy-section-state > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c0cad8;
+}
+
+.privacy-section-state svg {
+  width: 15px;
+  height: 15px;
+  color: #16865b;
+}
+
+.privacy-workspace-fields {
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.privacy-workspace-fields.is-readonly {
+  opacity: .76;
+}
+
+.privacy-stage {
+  border: 1px solid var(--privacy-line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 24px;
+  box-shadow: 0 8px 26px rgb(18 31 51 / 4%);
+  animation: privacy-stage-enter 280ms cubic-bezier(.22, 1, .36, 1) both;
+}
+
+@keyframes privacy-stage-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.privacy-stage-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 22px;
+  padding-bottom: 19px;
+  border-bottom: 1px solid var(--privacy-line);
+}
+
+.privacy-stage-heading h3 {
+  margin: 0;
+  color: var(--privacy-ink);
+  font-size: 1.12rem;
+  font-weight: 740;
+  letter-spacing: 0;
+}
+
+.privacy-stage-heading p {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--privacy-copy);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.privacy-stage-heading > svg {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #dbe5ff;
+  border-radius: 8px;
+  background: #f1f5ff;
+  padding: 11px;
+  color: var(--privacy-blue);
+}
+
+.privacy-master-toggle {
+  border-color: var(--privacy-line) !important;
+  background: var(--privacy-soft) !important;
+}
+
+.privacy-policy-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.privacy-policy-configurator {
+  min-width: 0;
+  border-color: var(--privacy-line) !important;
+  background: #fff !important;
+}
+
+.privacy-method-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.privacy-method-button {
+  min-width: 0;
+  padding: 10px !important;
+}
+
+.privacy-method-button > div {
+  display: grid;
+  gap: 7px;
+}
+
+.privacy-method-button p {
+  overflow-wrap: anywhere;
+}
+
+.privacy-stage-navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--privacy-line);
+}
+
+.privacy-stage-navigation > span {
+  color: var(--privacy-copy);
+  font-size: .72rem;
+}
+
+.privacy-stage-navigation button {
+  gap: 7px;
+}
+
+.privacy-consent-switch {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 14px;
+  border: 1px solid var(--privacy-line);
+  border-radius: 8px;
+  background: var(--privacy-soft);
+  padding: 14px 16px;
+}
+
+.privacy-consent-switch.is-enabled {
+  border-color: #a8dec8;
+  background: #f0fbf6;
+}
+
+.privacy-consent-switch > span {
+  display: grid;
+  gap: 3px;
+}
+
+.privacy-consent-switch strong {
+  color: var(--privacy-ink);
+  font-size: .82rem;
+}
+
+.privacy-consent-switch small {
+  color: var(--privacy-copy);
+  font-size: .7rem;
+}
+
+.privacy-consent-switch > div {
+  display: flex;
+  flex: none;
+  gap: 9px;
+  align-items: center;
+  color: var(--privacy-copy);
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.privacy-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.privacy-mode-grid > button {
+  border-radius: 8px;
+}
+
+.privacy-config-surface {
+  margin-top: 18px;
+  border-top: 1px solid var(--privacy-line);
+  padding-top: 20px;
+}
+
+.privacy-review-summary {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--privacy-line);
+  padding: 0 2px 20px;
+}
+
+.privacy-review-score {
+  display: flex;
+  align-items: baseline;
+  color: var(--privacy-blue);
+}
+
+.privacy-review-score strong {
+  font-size: 2.2rem;
+  font-weight: 780;
+  line-height: 1;
+}
+
+.privacy-review-score span {
+  color: #71829a;
+  font-size: .85rem;
+}
+
+.privacy-review-summary h4 {
+  margin: 0;
+  color: var(--privacy-ink);
+  font-size: .9rem;
+}
+
+.privacy-review-summary p {
+  margin: 4px 0 0;
+  color: var(--privacy-copy);
+  font-size: .74rem;
+}
+
+.privacy-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--privacy-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.privacy-checklist > div {
+  display: grid;
+  min-height: 48px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  padding: 10px 12px;
+  color: #5b6e87;
+  font-size: .72rem;
+  line-height: 1.4;
+}
+
+.privacy-checklist > div:nth-child(even) {
+  border-left: 1px solid var(--privacy-line);
+}
+
+.privacy-checklist > div:nth-child(n + 3) {
+  border-top: 1px solid var(--privacy-line);
+}
+
+.privacy-checklist > div > span:first-child {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #b6c1d0;
+  border-radius: 50%;
+}
+
+.privacy-checklist svg {
+  width: 16px;
+  height: 16px;
+  color: #16865b;
+}
+
+.privacy-checklist .is-complete {
+  color: #29433a;
+  background: #fbfefc;
+}
+
+.privacy-review-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.privacy-review-actions button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 18px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--privacy-line);
+  border-radius: 7px;
+  background: #fff;
+  padding: 11px 12px;
+  color: var(--privacy-copy);
+  text-align: left;
+  cursor: pointer;
+}
+
+.privacy-review-actions button:hover {
+  border-color: #afc4ef;
+  background: #f8faff;
+}
+
+.privacy-review-actions button > svg:first-child {
+  width: 17px;
+  height: 17px;
+  color: var(--privacy-blue);
+}
+
+.privacy-review-actions button > svg:last-child {
+  width: 15px;
+  height: 15px;
+}
+
+.privacy-review-actions button > span {
+  display: grid;
+  gap: 2px;
+}
+
+.privacy-review-actions strong {
+  color: var(--privacy-ink);
+  font-size: .75rem;
+}
+
+.privacy-review-actions small {
+  color: #71829a;
+  font-size: .66rem;
+}
+
+.privacy-save-bar {
+  position: sticky;
+  z-index: 12;
+  bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin-top: 14px;
+  border: 1px solid var(--privacy-line);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 96%);
+  padding: 11px 13px;
+  box-shadow: 0 12px 32px rgb(18 31 51 / 12%);
+  backdrop-filter: blur(12px);
+}
+
+.privacy-save-bar > div {
+  display: grid;
+  gap: 2px;
+}
+
+.privacy-save-bar strong {
+  color: var(--privacy-ink);
+  font-size: .73rem;
+}
+
+.privacy-save-bar p {
+  margin: 0;
+  color: var(--privacy-copy);
+  font-size: .66rem;
+}
+
+.privacy-save-bar .privacy-save-error {
+  color: #b42318;
+}
+
+.privacy-save-bar .privacy-save-success {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: #16865b;
+}
+
+.privacy-save-success svg {
+  width: 13px;
+  height: 13px;
+}
+
+@media (max-width: 1100px) {
+  .privacy-policy-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .privacy-workspace-header {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: start;
+    padding-bottom: 17px;
+  }
+
+  .privacy-workspace-heading h2 {
+    font-size: 1.38rem;
+  }
+
+  .privacy-status-summary {
+    width: 100%;
+  }
+
+  .privacy-status-summary > div {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .privacy-section-nav > button {
+    grid-template-columns: 22px minmax(0, 1fr) 16px;
+    gap: 5px;
+    padding: 10px 7px;
+  }
+
+  .privacy-section-icon,
+  .privacy-section-copy small {
+    display: none;
+  }
+
+  .privacy-section-copy strong {
+    font-size: .69rem;
+  }
+
+  .privacy-stage {
+    padding: 16px 13px;
+  }
+
+  .privacy-stage-heading {
+    grid-template-columns: minmax(0, 1fr) 34px;
+    gap: 10px;
+  }
+
+  .privacy-stage-heading > svg {
+    width: 34px;
+    height: 34px;
+    padding: 8px;
+  }
+
+  .privacy-method-grid,
+  .privacy-mode-grid,
+  .privacy-checklist,
+  .privacy-review-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .privacy-checklist > div:nth-child(even) {
+    border-left: 0;
+  }
+
+  .privacy-checklist > div:nth-child(n + 2) {
+    border-top: 1px solid var(--privacy-line);
+  }
+
+  .privacy-consent-switch {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .privacy-consent-switch > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .privacy-stage-navigation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .privacy-stage-navigation > span {
+    order: 2;
+  }
+
+  .privacy-stage-navigation button {
+    justify-content: center;
+  }
+
+  .privacy-save-bar {
+    bottom: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .privacy-stage {
+    animation: none;
+  }
+
+  .privacy-section-nav > button::after {
+    transition: none;
+  }
+}
+
 
 /* One calm loading language across the OSS editor and the embedded SaaS app. */
 .animate-spin {
