@@ -4536,10 +4536,31 @@
 }
 .menu-category-picker {
   gap: .2rem;
-  max-height: 20rem;
+  max-height: none;
   padding: 0;
+  overflow: visible;
   border: 0;
   scrollbar-gutter: auto;
+}
+.menu-category-accordion {
+  display: grid;
+  min-width: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.menu-category-accordion.is-subcategory {
+  margin-left: .9rem;
+  width: calc(100% - .9rem);
+}
+.menu-category-accordion.is-expanded {
+  overflow: hidden;
+  border-color: #b8caf0;
+  background: #fff;
+  box-shadow: 0 4px 14px rgb(23 63 145 / .07);
 }
 .menu-category-picker__item {
   min-height: 2.7rem;
@@ -4551,21 +4572,47 @@
   background: #edf2f8;
 }
 .menu-category-picker__item.active {
-  border-color: #b8caf0;
-  background: #fff;
+  border-color: transparent;
+  border-radius: 0;
+  background: #edf3ff;
   color: #173f91;
-  box-shadow: inset 3px 0 #2d60d4, 0 1px 2px rgb(20 40 75 / .04);
+  box-shadow: none;
 }
-.menu-category-picker__item.is-subcategory {
-  margin-left: .9rem;
-  width: calc(100% - .9rem);
+.menu-category-picker__item > svg {
+  transition: transform 220ms cubic-bezier(.22, 1, .36, 1);
+}
+.menu-category-picker__item[aria-expanded="true"] > svg {
+  transform: rotate(90deg);
+}
+.menu-category-accordion__body {
+  display: grid;
+  grid-template-rows: 1fr;
+  min-width: 0;
+  animation: menu-category-expand 260ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.menu-category-accordion__body-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+@keyframes menu-category-expand {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transform: translateY(-.35rem);
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .menu-category-editor {
   gap: .8rem;
-  padding: 1rem;
+  padding: .9rem;
   border: 0;
+  border-top: 1px solid #dfe7f2;
   border-radius: 0;
-  background: #f8fafc;
+  background: #fff;
 }
 .menu-category-editor__heading {
   padding-bottom: .65rem;
@@ -4850,6 +4897,12 @@
   .menu-content-pane--sections {
     border-right: 1px solid #d7e0ec;
   }
+  .menu-category-picker {
+    max-height: none;
+    padding-right: 0;
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
 }
 
 @media (max-width: 760px) {
@@ -4960,6 +5013,15 @@
     grid-column: 1;
     justify-self: stretch;
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-category-accordion,
+  .menu-category-picker__item > svg,
+  .menu-category-accordion__body {
+    animation: none;
+    transition: none;
   }
 }
 

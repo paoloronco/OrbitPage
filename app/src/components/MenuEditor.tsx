@@ -382,6 +382,102 @@ export function MenuEditor({
   const rootSections = useMemo(() => sectionSiblings(draft.sections), [draft.sections]);
   const sortedSections = useMemo(() => orderedSectionTree(draft.sections), [draft.sections]);
 
+  const renderCategoryEditor = (section: MenuSection) => {
+    const siblings = sectionSiblings(draft.sections, section.parentId);
+    const sectionIndex = siblings.findIndex((candidate) => candidate.id === section.id);
+    const nested = Boolean(section.parentId);
+    const canDelete = nested || rootSections.length > 1;
+    return (
+      <div className="menu-category-accordion__body">
+        <div className="menu-category-accordion__body-inner">
+          <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
+            <div className="menu-category-editor__heading">
+              <div>
+                <span>{nested ? tr("Edit subcategory", "Modifica sottocategoria") : tr("Edit category", "Modifica categoria")}</span>
+                <strong>{section.name || tr("Untitled category", "Categoria senza nome")}</strong>
+              </div>
+              <label>
+                <Switch
+                  checked={section.visible}
+                  aria-label={tr("Show category", "Mostra categoria")}
+                  onCheckedChange={(checked) => update((current) => ({
+                    ...current,
+                    sections: current.sections.map((candidate) => candidate.id === section.id ? { ...candidate, visible: checked } : candidate),
+                  }))}
+                />
+                <span>{section.visible ? tr("Visible", "Visibile") : tr("Hidden", "Nascosta")}</span>
+              </label>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="selected-menu-category-name">{tr("Name", "Nome")}</Label>
+              <Input
+                id="selected-menu-category-name"
+                value={section.name}
+                onChange={(event) => update((current) => ({
+                  ...current,
+                  sections: current.sections.map((candidate) => candidate.id === section.id ? { ...candidate, name: event.target.value } : candidate),
+                }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="selected-menu-category-description">{tr("Optional description", "Descrizione facoltativa")}</Label>
+              <Textarea
+                id="selected-menu-category-description"
+                value={section.description || ''}
+                onChange={(event) => update((current) => ({
+                  ...current,
+                  sections: current.sections.map((candidate) => candidate.id === section.id ? { ...candidate, description: event.target.value } : candidate),
+                }))}
+              />
+            </div>
+            <div className="menu-category-editor__actions">
+              <div className="menu-category-editor__order">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={sectionIndex <= 0}
+                  onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, section.id, -1) }))}
+                ><ArrowUp className="h-4 w-4" />{tr("Up", "Su")}</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={sectionIndex < 0 || sectionIndex >= siblings.length - 1}
+                  onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, section.id, 1) }))}
+                ><ArrowDown className="h-4 w-4" />{tr("Down", "Giù")}</Button>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={draft.sections.length >= 30}
+                onClick={() => addSubsection(section.parentId || section.id)}
+              >
+                <Plus className="h-4 w-4" />{nested ? tr("Another subcategory", "Altra sottocategoria") : tr("Subcategory", "Sottocategoria")}
+              </Button>
+              {canDelete && (
+                <Button type="button" variant="ghost" size="sm" className="menu-danger-action" onClick={() => removeSection(section.id)}>
+                  <Trash2 className="h-4 w-4" />{tr("Delete", "Elimina")}
+                </Button>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="menu-category-editor__items"
+              onClick={() => setMobileContentPane('products')}
+            >
+              <ListTree className="h-4 w-4" />
+              {tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}
+              <strong>{draft.items.filter((item) => item.sectionId === section.id).length}</strong>
+            </Button>
+          </section>
+        </div>
+      </div>
+    );
+  };
+
   if (!enabled) {
     return (
       <section className="admin-panel menu-upgrade-panel">
@@ -485,114 +581,33 @@ export function MenuEditor({
                 <div className="menu-category-picker" aria-label={tr("Menu categories", "Categorie del menu")}>
                   {sortedSections.map((section) => {
                     const itemCount = draft.items.filter((item) => item.sectionId === section.id).length;
+                    const expanded = productSectionFilter === section.id;
                     return (
-                      <button
+                      <div
                         key={section.id}
-                        type="button"
-                        className={`menu-category-picker__item${section.parentId ? ' is-subcategory' : ''}${productSectionFilter === section.id ? ' active' : ''}`}
-                        aria-pressed={productSectionFilter === section.id}
-                        onClick={() => setProductSectionFilter(section.id)}
+                        className={`menu-category-accordion${section.parentId ? ' is-subcategory' : ''}${expanded ? ' is-expanded' : ''}`}
                       >
-                        <span>{section.name || tr("Untitled category", "Categoria senza nome")}</span>
-                        <small>{section.visible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}{itemCount}</small>
-                        <ChevronRight aria-hidden="true" />
-                      </button>
+                        <button
+                          type="button"
+                          className={`menu-category-picker__item${expanded ? ' active' : ''}`}
+                          aria-expanded={expanded}
+                          aria-controls={`menu-category-editor-${section.id}`}
+                          onClick={() => setProductSectionFilter(section.id)}
+                        >
+                          <span>{section.name || tr("Untitled category", "Categoria senza nome")}</span>
+                          <small>{section.visible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}{itemCount}</small>
+                          <ChevronRight aria-hidden="true" />
+                        </button>
+                        {expanded && (
+                          <div id={`menu-category-editor-${section.id}`}>
+                            {renderCategoryEditor(section)}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
               </div>
-
-              {selectedSection && (() => {
-                const siblings = sectionSiblings(draft.sections, selectedSection.parentId);
-                const sectionIndex = siblings.findIndex((section) => section.id === selectedSection.id);
-                const nested = Boolean(selectedSection.parentId);
-                const canDelete = nested || rootSections.length > 1;
-                return (
-                  <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
-                    <div className="menu-category-editor__heading">
-                      <div>
-                        <span>{nested ? tr("Edit subcategory", "Modifica sottocategoria") : tr("Edit category", "Modifica categoria")}</span>
-                        <strong>{selectedSection.name || tr("Untitled category", "Categoria senza nome")}</strong>
-                      </div>
-                      <label>
-                        <Switch
-                          checked={selectedSection.visible}
-                          aria-label={tr("Show category", "Mostra categoria")}
-                          onCheckedChange={(checked) => update((current) => ({
-                            ...current,
-                            sections: current.sections.map((section) => section.id === selectedSection.id ? { ...section, visible: checked } : section),
-                          }))}
-                        />
-                        <span>{selectedSection.visible ? tr("Visible", "Visibile") : tr("Hidden", "Nascosta")}</span>
-                      </label>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="selected-menu-category-name">{tr("Name", "Nome")}</Label>
-                      <Input
-                        id="selected-menu-category-name"
-                        value={selectedSection.name}
-                        onChange={(event) => update((current) => ({
-                          ...current,
-                          sections: current.sections.map((section) => section.id === selectedSection.id ? { ...section, name: event.target.value } : section),
-                        }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="selected-menu-category-description">{tr("Optional description", "Descrizione facoltativa")}</Label>
-                      <Textarea
-                        id="selected-menu-category-description"
-                        value={selectedSection.description || ''}
-                        onChange={(event) => update((current) => ({
-                          ...current,
-                          sections: current.sections.map((section) => section.id === selectedSection.id ? { ...section, description: event.target.value } : section),
-                        }))}
-                      />
-                    </div>
-                    <div className="menu-category-editor__actions">
-                      <div className="menu-category-editor__order">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={sectionIndex <= 0}
-                          onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, selectedSection.id, -1) }))}
-                        ><ArrowUp className="h-4 w-4" />{tr("Up", "Su")}</Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={sectionIndex < 0 || sectionIndex >= siblings.length - 1}
-                          onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, selectedSection.id, 1) }))}
-                        ><ArrowDown className="h-4 w-4" />{tr("Down", "Giù")}</Button>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={draft.sections.length >= 30}
-                        onClick={() => addSubsection(selectedSection.parentId || selectedSection.id)}
-                      >
-                        <Plus className="h-4 w-4" />{nested ? tr("Another subcategory", "Altra sottocategoria") : tr("Subcategory", "Sottocategoria")}
-                      </Button>
-                      {canDelete && (
-                        <Button type="button" variant="ghost" size="sm" className="menu-danger-action" onClick={() => removeSection(selectedSection.id)}>
-                          <Trash2 className="h-4 w-4" />{tr("Delete", "Elimina")}
-                        </Button>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="menu-category-editor__items"
-                      onClick={() => setMobileContentPane('products')}
-                    >
-                      <ListTree className="h-4 w-4" />
-                      {tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}
-                      <strong>{draft.items.filter((item) => item.sectionId === selectedSection.id).length}</strong>
-                    </Button>
-                  </section>
-                );
-              })()}
             </div>
           </div>
 
