@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
-import { isHostedRuntime, linkHealthApi, linksApi, type ManagedLinkHealth } from "@/lib/api-client";
+import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
 import { type EmbedProvider, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight } from "@/lib/link-blocks";
@@ -83,7 +83,6 @@ export const LinkManager = ({
   const [blockLibraryCategory, setBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [linkHealth, setLinkHealth] = useState<ManagedLinkHealth['results']>([]);
   const publicPreviewStyle = (index: number) => ({
     ...getThemeCssVariables(theme),
     ...getContentCardVariantCssVariables(theme, index),
@@ -131,26 +130,6 @@ export const LinkManager = ({
   useEffect(() => {
     onLinksPreview?.(workingLinks);
   }, [onLinksPreview, workingLinks]);
-
-  useEffect(() => {
-    if (!isHostedRuntime() || editMode === 'view') return;
-    let active = true;
-    const load = async () => {
-      try {
-        const initial = await linkHealthApi.get();
-        if (!active) return;
-        setLinkHealth(initial.results);
-        if (initial.stale) {
-          const refreshed = await linkHealthApi.refresh();
-          if (active) setLinkHealth(refreshed.results);
-        }
-      } catch {
-        // Link editing remains available when the background health check is unavailable.
-      }
-    };
-    void load();
-    return () => { active = false; };
-  }, [editMode, links]);
 
   const addNewLink = () => {
     const newLink: LinkData = {
@@ -1059,7 +1038,6 @@ export const LinkManager = ({
                   inheritedTextColor={getContentCardVariant(theme, index).foreground}
                   schedulingEnabled={schedulingEnabled}
                   managePlanHref={managePlanHref}
-                  health={linkHealth.find((item) => item.id === link.id)}
                   availablePages={availablePages}
                 />
               )}

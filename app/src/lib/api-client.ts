@@ -666,22 +666,6 @@ export const versionHistoryApi = {
   }),
 };
 
-export type ManagedLinkHealth = {
-  stale: boolean;
-  results: Array<{
-    id: string;
-    status: 'healthy' | 'unreachable' | 'checking';
-    httpStatus: number | null;
-    checkedAt: string | null;
-    message: string;
-  }>;
-};
-
-export const linkHealthApi = {
-  get: async (): Promise<ManagedLinkHealth> => apiRequest<ManagedLinkHealth>('/link-health'),
-  refresh: async (): Promise<ManagedLinkHealth> => apiRequest<ManagedLinkHealth>('/link-health/refresh', { method: 'POST' }),
-};
-
 export type MapPreviewResolution = {
   lat: string;
   lon: string;
