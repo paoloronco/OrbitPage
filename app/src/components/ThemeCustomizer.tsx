@@ -1,4 +1,4 @@
-import { type ChangeEvent, type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  FileDown,
   ImagePlay,
   Layout,
   Layers3,
@@ -22,9 +21,7 @@ import {
   LockKeyhole,
   Palette,
   RotateCcw,
-  Sparkles,
   Type,
-  Upload,
 } from "lucide-react";
 import {
   type CardShadowConfig,
@@ -33,12 +30,11 @@ import {
   defaultTheme,
   getCardSurfaceGradient,
   getCardShadowCss,
-  normalizeTheme,
 } from "@/lib/theme";
 import { themePresets, type ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
-import { commitPendingTheme, parseImportedTheme, prepareThemeExport } from "./theme-save-state";
+import { commitPendingTheme } from "./theme-save-state";
 import type { SaasThemeAccess } from "@/lib/saas-plan";
 import { PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { useAppI18n } from "@/lib/i18n";
@@ -376,42 +372,6 @@ export const ThemeCustomizer = ({
     }
   };
 
-  const exportTheme = () => {
-    const dataBlob = new Blob([prepareThemeExport(pendingTheme)], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "orbitpage-theme.json";
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
-  };
-
-  const importTheme = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      try {
-        const result = parseImportedTheme(loadEvent.target?.result as string, normalizeTheme);
-        const importedTheme = result.theme as EditableTheme;
-        importedTheme.orbitPageAccess = { mode: "custom", presetId: null, cardPresetId: null };
-        setPendingTheme(importedTheme);
-        setSelectedPresetId(findMatchingPreset(importedTheme));
-        setSelectedCardPresetId(findMatchingCardPreset(importedTheme));
-        setIsDirty(result.isDirty);
-        setSaveError(result.error);
-        setSaveState("idle");
-        onThemePreview?.(importedTheme);
-      } catch (error) {
-        console.error("Failed to import theme:", error);
-        setSaveError("Theme import failed. Choose a valid JSON theme file.");
-        setSaveState("error");
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = "";
-  };
-
   const resetTheme = () => {
     previewTheme({
       ...defaultTheme,
@@ -459,59 +419,29 @@ export const ThemeCustomizer = ({
 
   return (
     <div className="space-y-6" data-onboarding="theme-customizer">
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 text-white shadow-[0_24px_70px_rgb(15_23_42_/_0.18)]">
-        <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <div className="max-w-2xl">
-            <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-300">
-              <Sparkles className="h-4 w-4" />
-              {tr("Theme Studio", "Studio temi")}
+      <div className={showEmbeddedPreview ? "admin-theme-layout" : "admin-theme-layout admin-theme-layout--without-preview"}>
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative grid min-w-0 flex-1 grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
+              <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
+              <button type="button" onClick={() => setPresetScope("page")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "page" ? "text-blue-700" : "text-slate-600"}`}>
+                <Palette className="h-4 w-4" /> {tr("Page themes", "Temi pagina")}
+              </button>
+              <button type="button" disabled={!premiumThemesEnabled} onClick={() => premiumThemesEnabled && setPresetScope("cards")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "cards" ? "text-blue-700" : "text-slate-600"} ${!premiumThemesEnabled ? "cursor-not-allowed opacity-60" : ""}`}>
+                {premiumThemesEnabled ? <Layers3 className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />} {tr("Card styles", "Stili card")}
+              </button>
             </div>
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{tr("Choose a complete look. Then make it yours.", "Scegli uno stile completo. Poi rendilo tuo.")}</h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">
-              {tr("Presets style the public background, profile, cards, type and effects together. Every value remains available in Fine tuning.", "I preset coordinano sfondo pubblico, profilo, card, caratteri ed effetti. Ogni valore resta modificabile nelle regolazioni fini.")}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button aria-busy={saveState === "saving"} type="button" onClick={saveTheme} disabled={!isDirty || saveState === "saving"} className="bg-blue-500 text-white hover:bg-blue-400">
+            <Button aria-busy={saveState === "saving"} type="button" onClick={saveTheme} disabled={!isDirty || saveState === "saving"} className="min-h-12 shrink-0 bg-blue-600 px-5 text-white hover:bg-blue-700">
               {saveState === "saving" && <Loader2 className="h-4 w-4 animate-spin" />}
               {saveState === "saving" ? tr("Saving theme", "Salvataggio tema") : saveState === "saved" ? tr("Saved", "Salvato") : tr("Save theme", "Salva tema")}
             </Button>
-            <Button type="button" variant="outline" onClick={exportTheme} className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
-              <FileDown className="mr-2 h-4 w-4" /> {tr("Export", "Esporta")}
-            </Button>
-            {advancedCustomizationEnabled ? (
-              <Button type="button" variant="outline" asChild className="border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800 hover:text-white">
-                <label className="cursor-pointer">
-                  <Upload className="mr-2 h-4 w-4" /> {tr("Import", "Importa")}
-                  <input type="file" accept=".json" onChange={importTheme} className="hidden" />
-                </label>
-              </Button>
-            ) : (
-              <Button type="button" variant="outline" disabled className="border-slate-700 bg-transparent text-slate-400">
-                <LockKeyhole className="mr-2 h-4 w-4" /> {tr("Import", "Importa")}
-              </Button>
-            )}
           </div>
-        </div>
-        {(isDirty || saveState === "saved" || saveState === "error") ? (
-          <div className={`flex items-center gap-2 border-t px-5 py-3 text-sm sm:px-7 ${saveState === "error" ? "border-red-900/60 bg-red-950/60 text-red-200" : saveState === "saved" ? "border-emerald-900/60 bg-emerald-950/50 text-emerald-200" : "border-amber-900/50 bg-amber-950/35 text-amber-100"}`} role={saveState === "error" ? "alert" : "status"}>
-            {saveState === "error" ? <AlertTriangle className="h-4 w-4" /> : saveState === "saved" ? <CheckCircle className="h-4 w-4" /> : <span className="h-2 w-2 rounded-full bg-amber-400" />}
-            <span>{saveState === "error" ? saveError || tr("Theme could not be saved.", "Non è stato possibile salvare il tema.") : saveState === "saved" ? tr("Theme saved successfully.", "Tema salvato correttamente.") : tr("Preview active. Save when you are ready to publish it.", "Anteprima attiva. Salva quando sei pronto a pubblicarla.")}</span>
-          </div>
-        ) : null}
-      </section>
-
-      <div className={showEmbeddedPreview ? "admin-theme-layout" : "admin-theme-layout admin-theme-layout--without-preview"}>
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
-          <div className="relative mb-6 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
-            <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
-            <button type="button" onClick={() => setPresetScope("page")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "page" ? "text-blue-700" : "text-slate-600"}`}>
-              <Palette className="h-4 w-4" /> {tr("Page themes", "Temi pagina")}
-            </button>
-            <button type="button" disabled={!premiumThemesEnabled} onClick={() => premiumThemesEnabled && setPresetScope("cards")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "cards" ? "text-blue-700" : "text-slate-600"} ${!premiumThemesEnabled ? "cursor-not-allowed opacity-60" : ""}`}>
-              {premiumThemesEnabled ? <Layers3 className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />} {tr("Card styles", "Stili card")}
-            </button>
-          </div>
+          {(isDirty || saveState === "saved" || saveState === "error") ? (
+            <div className={`mb-5 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${saveState === "error" ? "border-red-200 bg-red-50 text-red-700" : saveState === "saved" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800"}`} role={saveState === "error" ? "alert" : "status"}>
+              {saveState === "error" ? <AlertTriangle className="h-4 w-4 shrink-0" /> : saveState === "saved" ? <CheckCircle className="h-4 w-4 shrink-0" /> : <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500" />}
+              <span>{saveState === "error" ? saveError || tr("Theme could not be saved.", "Non è stato possibile salvare il tema.") : saveState === "saved" ? tr("Theme saved successfully.", "Tema salvato correttamente.") : tr("Preview active. Save when you are ready to publish it.", "Anteprima attiva. Salva quando sei pronto a pubblicarla.")}</span>
+            </div>
+          ) : null}
           {presetScope === "page" ? (
             <>
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
