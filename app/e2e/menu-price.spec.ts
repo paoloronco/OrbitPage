@@ -14,7 +14,7 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await page.getByRole('button', { name: /^Menu/ }).click();
   await page.getByRole('button', { name: 'Menu content' }).click();
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Dishes and drinks' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Items', exact: true })).toBeVisible();
 
   const price = page.getByRole('textbox', { name: 'Product price' }).first();
   const addFirstProduct = page.getByRole('button', { name: 'Add the first item in this section' });
@@ -44,7 +44,7 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
 
   await switcher.getByRole('button', { name: 'Items' }).click();
-  await expect(page.getByRole('heading', { name: 'Dishes and drinks' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Items', exact: true })).toBeVisible();
   await expect(page.locator('.menu-content-pane--sections')).toBeHidden();
 
   const firstItem = page.locator('.menu-product-editor').first();
@@ -79,7 +79,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: /^Menu/ }).click();
 
-  await page.getByRole('button', { name: 'Category', exact: true }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
   const categoryName = page.locator('#selected-menu-category-name');
   await expect(categoryName).toHaveValue('New section');
   await categoryName.fill(categoryLabel);
@@ -95,7 +95,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
 
   await page.getByRole('button', { name: `${subsectionLabel} 0`, exact: true }).click();
   await page.getByRole('button', { name: 'Manage items in this category 0' }).click();
-  await page.getByRole('button', { name: 'Item', exact: true }).click();
+  await page.getByRole('button', { name: 'New item', exact: true }).click();
 
   const editor = page.locator('.menu-product-editor');
   await expect(editor).toBeVisible();
@@ -115,7 +115,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.getByRole('button', { name: itemLabel }).click();
   await expect(page.locator('.menu-product-editor').getByRole('textbox', { name: 'Product price' })).toHaveValue('8.50');
 
-  await page.locator('.menu-product-editor').getByTitle('Delete product').click();
+  await page.locator('.menu-product-editor').getByTitle('Delete item').click();
   await expect(page.getByRole('button', { name: itemLabel })).toHaveCount(0);
   await page.getByRole('button', { name: 'Save menu' }).click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
