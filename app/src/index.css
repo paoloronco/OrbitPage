@@ -1633,22 +1633,34 @@
   .managed-analytics-notice, .managed-analytics-error, .managed-analytics-locked { display: flex; align-items: center; gap: 12px; border: 1px solid #f3c77b; border-radius: 7px; background: #fff9ed; padding: 13px 15px; color: #92400e; }
   .managed-analytics-notice span { display: grid; gap: 2px; } .managed-analytics-notice small { color: #9a5b18; }
   .managed-analytics-error { border-color: #fecaca; background: #fff1f2; color: #b42318; }
-  .managed-analytics-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid #d8e1ed; border-radius: 8px; overflow: hidden; background: #fff; }
-  .managed-analytics-metrics > div { display: flex; min-width: 0; gap: 11px; padding: 17px; border-right: 1px solid #e5eaf1; color: #155eef; }
-  .managed-analytics-metrics > div:last-child { border-right: 0; }
-  .managed-analytics-metrics span { display: grid; gap: 3px; color: #64748b; font-size: 11px; font-weight: 650; text-transform: uppercase; }
+  .managed-analytics-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .managed-analytics-metrics > div { display: flex; min-width: 0; gap: 11px; min-height: 94px; padding: 17px; border: 1px solid #d8e1ed; border-radius: 8px; background: #fff; color: #155eef; }
+  .managed-analytics-metrics span { display: grid; align-content: start; gap: 4px; color: #52647d; font-size: 11px; font-weight: 700; text-transform: uppercase; }
   .managed-analytics-metrics strong { color: #0f172a; font-size: 25px; font-weight: 760; line-height: 1; }
+  .managed-analytics-change { display: inline-flex; align-items: center; width: max-content; gap: 3px; margin-top: 2px; color: #52647d; font-size: 10px; font-weight: 750; letter-spacing: 0; text-transform: none; }
+  .managed-analytics-change.is-up { color: #087a55; }
+  .managed-analytics-change.is-down { color: #b42318; }
+  .managed-analytics-change.is-new { color: #155eef; }
   .managed-analytics-chart { border: 1px solid #d8e1ed; border-radius: 8px; background: #fff; padding: 17px; }
   .managed-analytics-chart h3, .managed-analytics-ranking h3 { margin: 0; color: #0f172a; font-size: 14px; font-weight: 730; }
   .managed-analytics-chart p { margin: 3px 0 12px; color: #64748b; font-size: 12px; }
   .managed-analytics-empty { display: grid; min-height: 180px; place-items: center; color: #64748b; font-size: 13px; }
-  .managed-analytics-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .managed-analytics-highlights { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid #cfdbea; border-radius: 8px; overflow: hidden; background: #f8fbff; }
+  .managed-analytics-highlights > div { display: flex; min-width: 0; gap: 10px; padding: 14px; border-right: 1px solid #d8e1ed; color: #155eef; }
+  .managed-analytics-highlights > div:last-child { border-right: 0; }
+  .managed-analytics-highlights span { display: grid; min-width: 0; gap: 2px; color: #52647d; font-size: 10px; font-weight: 750; text-transform: uppercase; }
+  .managed-analytics-highlights strong { overflow: hidden; color: #15233b; font-size: 12px; font-weight: 730; text-overflow: ellipsis; text-transform: none; white-space: nowrap; }
+  .managed-analytics-breakdown { display: grid; gap: 11px; padding-top: 4px; }
+  .managed-analytics-section-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 1px solid #d8e1ed; padding-bottom: 9px; }
+  .managed-analytics-section-heading > span { color: #155eef; font-size: 11px; font-weight: 780; letter-spacing: .07em; text-transform: uppercase; }
+  .managed-analytics-section-heading p { margin: 0; color: #52647d; font-size: 11px; text-align: right; }
+  .managed-analytics-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .managed-analytics-ranking { min-width: 0; border: 1px solid #d8e1ed; border-radius: 8px; background: #fff; padding: 15px; }
   .managed-analytics-ranking > div { display: grid; gap: 11px; margin-top: 13px; }
-  .managed-analytics-ranking > p { margin: 22px 0 8px; color: #64748b; font-size: 12px; }
+  .managed-analytics-ranking > p { margin: 22px 0 8px; color: #52647d; font-size: 12px; }
   .managed-analytics-rank { display: grid; gap: 5px; }
   .managed-analytics-rank > span { display: flex; justify-content: space-between; gap: 12px; color: #334155; font-size: 12px; }
-  .managed-analytics-rank b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .managed-analytics-rank em { color: #64748b; font-style: normal; }
+  .managed-analytics-rank b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .managed-analytics-rank em { flex: none; color: #52647d; font-style: normal; }
   .managed-analytics-rank > i { height: 4px; overflow: hidden; border-radius: 2px; background: #edf1f6; } .managed-analytics-rank > i span { display: block; height: 100%; border-radius: inherit; background: #2563eb; }
   .managed-analytics-locked { justify-content: space-between; color: #92400e; font-size: 12px; }
 
@@ -1663,7 +1675,12 @@
     .managed-analytics-header { align-items: stretch; flex-direction: column; gap: 12px; }
     .managed-analytics-actions { justify-content: space-between; }
     .managed-analytics-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .managed-analytics-metrics > div:nth-child(2) { border-right: 0; } .managed-analytics-metrics > div:nth-child(-n+2) { border-bottom: 1px solid #e5eaf1; }
+    .managed-analytics-metrics > div { min-height: 88px; padding: 14px; }
+    .managed-analytics-highlights { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .managed-analytics-highlights > div:nth-child(2) { border-right: 0; }
+    .managed-analytics-highlights > div:nth-child(-n+2) { border-bottom: 1px solid #d8e1ed; }
+    .managed-analytics-section-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
+    .managed-analytics-section-heading p { text-align: left; }
     .managed-analytics-details { grid-template-columns: 1fr; }
     .managed-analytics-locked { align-items: flex-start; flex-direction: column; }
   }

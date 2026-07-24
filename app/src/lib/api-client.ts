@@ -630,13 +630,27 @@ export type ManagedAnalyticsReport = {
   detailed: boolean;
   periodDays: number;
   maxPeriodDays: number;
-  summary: { visits: number; visitors: number; clicks: number; ctr: number };
+  summary: {
+    visits: number;
+    visitors: number;
+    clicks: number;
+    ctr: number;
+    visitsPerVisitor: number;
+    clicksPerVisitor: number;
+  };
+  comparison: {
+    previous: { visits: number; visitors: number; clicks: number; ctr: number };
+    changes: { visits: number | null; visitors: number | null; clicks: number | null; ctr: number | null };
+  };
   trend: Array<{ date: string; visits: number; visitors: number; clicks: number }>;
   sources: ManagedAnalyticsDimension[];
   devices: ManagedAnalyticsDimension[];
   countries: ManagedAnalyticsDimension[];
+  utmSources: ManagedAnalyticsDimension[];
+  utmMediums: ManagedAnalyticsDimension[];
   campaigns: ManagedAnalyticsDimension[];
   links: ManagedAnalyticsDimension[];
+  paths: ManagedAnalyticsDimension[];
 };
 
 export const managedAnalyticsApi = {
