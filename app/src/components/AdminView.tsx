@@ -3,7 +3,6 @@ import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { MenuEditor } from "./MenuEditor";
-import { MenuView } from "./MenuView";
 import { LinkData } from "./LinkCard";
 import { ClickAnalyticsChart } from "./ClickAnalyticsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,7 +48,7 @@ import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
 import { AdminOnboarding } from "./AdminOnboarding";
-import { LivePreview, PreviewDeviceFrame, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
+import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
 import {
   getHostedSurfaceConfig,
@@ -220,7 +219,6 @@ export const AdminView = ({
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
-  const [previewMenu, setPreviewMenu] = useState(menu);
   const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
     return window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY).matches;
@@ -326,10 +324,6 @@ export const AdminView = ({
   useEffect(() => {
     setPreviewLinks(links);
   }, [links]);
-
-  useEffect(() => {
-    setPreviewMenu(menu);
-  }, [menu]);
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
@@ -902,7 +896,7 @@ export const AdminView = ({
               )}
 
               {contentSection === "menu" && (
-                <div className="admin-content-grid admin-content-grid-wide admin-menu-content-layout">
+                <div className="admin-menu-content-layout">
                   <div className="admin-main-column content-workspace-section">
                     <MenuEditor
                       menu={menu}
@@ -912,7 +906,6 @@ export const AdminView = ({
                       planName={saasPlan?.name}
                       advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
                       onSave={onMenuUpdate}
-                      onPreview={setPreviewMenu}
                       onAddMenuLink={async () => {
                         const menuLink = createNativeMenuLink(publicPageHref, {
                           title: tr('View menu', 'Vedi il menu'),
@@ -923,12 +916,6 @@ export const AdminView = ({
                       }}
                     />
                   </div>
-                  {showEmbeddedPreview && <aside className="admin-workbench-rail">
-                    <MenuPreviewPanel
-                      menu={previewMenu}
-                      publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}
-                    />
-                  </aside>}
                 </div>
               )}
 
@@ -1202,45 +1189,6 @@ function PreviewPanel({
         device={device}
         showOrbitPageBadge={showOrbitPageBadge}
       />
-    </section>
-  );
-}
-
-function MenuPreviewPanel({
-  menu,
-  publicPageHref,
-}: {
-  menu: MenuCatalog;
-  publicPageHref: string;
-}) {
-  const { tr } = useAppI18n();
-  const [device, setDevice] = useState<PreviewDevice>("mobile");
-
-  return (
-    <section className="admin-preview-panel">
-      <div className="admin-preview-heading">
-        <div>
-          <h2>{tr("Menu preview", "Anteprima menu")}</h2>
-          <p>{tr("Updates as you edit, before saving", "Si aggiorna durante le modifiche, prima del salvataggio")}</p>
-        </div>
-        <div className="admin-preview-heading-actions">
-          <PreviewDeviceToggle value={device} onChange={setDevice} />
-          <a
-            href={publicPageHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={tr("Open published menu", "Apri il menu pubblicato")}
-            title={tr("Open published menu", "Apri il menu pubblicato")}
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        </div>
-      </div>
-      <PreviewDeviceFrame device={device} publicPageHref={publicPageHref}>
-        <div className={`admin-menu-live-preview admin-menu-live-preview--${device}`}>
-          <MenuView menu={menu} embedded pageHref={publicPageHref.replace(/\/menu\/?$/, "")} />
-        </div>
-      </PreviewDeviceFrame>
     </section>
   );
 }

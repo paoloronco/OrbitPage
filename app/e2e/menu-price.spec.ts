@@ -14,6 +14,10 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await page.getByRole('button', { name: /^Menu/ }).click();
   await page.getByRole('button', { name: 'Menu content' }).click();
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
+  const contentSwitcher = page.locator('.menu-content-mobile-switch');
+  if (await contentSwitcher.isVisible()) {
+    await contentSwitcher.getByRole('button', { name: 'Items' }).click();
+  }
   await expect(page.getByRole('heading', { name: 'Items', exact: true })).toBeVisible();
 
   const price = page.getByRole('textbox', { name: 'Product price' }).first();
@@ -27,10 +31,38 @@ test('accepts localized menu prices without rewriting the field while typing', a
 
   await price.press('Enter');
   await expect(price).toHaveValue(normalizedPrice);
-  await expect(page.locator('.admin-menu-live-preview')).toContainText(`€${normalizedPrice}`);
+  await expect(page.locator('.admin-menu-live-preview')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Save menu' }).click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
+});
+
+test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: /^Menu/ }).click();
+
+  const editor = page.locator('.menu-editor-stack');
+  const switcher = page.locator('.menu-content-mobile-switch');
+  await expect(editor).toBeVisible();
+  await expect(switcher).toBeVisible();
+  await expect(page.locator('.admin-menu-live-preview')).toHaveCount(0);
+
+  const overflow = await page.evaluate(() => ({
+    document: document.documentElement.scrollWidth - window.innerWidth,
+    editor: (() => {
+      const element = document.querySelector<HTMLElement>('.menu-editor-stack');
+      return element ? element.scrollWidth - element.clientWidth : 0;
+    })(),
+  }));
+  expect(overflow.document).toBeLessThanOrEqual(1);
+  expect(overflow.editor).toBeLessThanOrEqual(1);
+
+  const bounds = await editor.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(1366);
 });
 
 test('keeps menu categories and items usable on mobile', async ({ page }) => {
@@ -69,7 +101,7 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
 });
 
 test('creates, edits, reorders and removes menu content through the visible controls', async ({ page }, testInfo) => {
-  const testSuffix = `${testInfo.project.name}-${testInfo.retry}`;
+  const testSuffix = `${testInfo.project.name}-${testInfo.retry}-${Date.now()}`;
   const categoryLabel = `Desserts ${testSuffix}`;
   const subsectionLabel = `Cakes ${testSuffix}`;
   const seasonalLabel = `Seasonal cakes ${testSuffix}`;
@@ -115,6 +147,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: /^Menu/ }).click();
   await page.getByRole('button', { name: `${subsectionLabel} 1`, exact: true }).click();
+  await page.getByRole('button', { name: 'Manage items in this category 1' }).click();
   await page.getByRole('button', { name: itemLabel }).click();
   await expect(page.locator('.menu-product-editor').getByRole('textbox', { name: 'Product price' })).toHaveValue('8.50');
 

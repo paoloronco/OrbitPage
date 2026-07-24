@@ -26,7 +26,6 @@ interface MenuEditorProps {
   planName?: string;
   advancedTheme: boolean;
   onSave: (menu: MenuCatalog) => Promise<void>;
-  onPreview: (menu: MenuCatalog) => void;
   onAddMenuLink: () => Promise<void>;
 }
 
@@ -181,7 +180,7 @@ function MenuQr({ url, color }: { url: string; color: string }) {
 
 export function MenuEditor({
   menu, publicPageHref, enabled, maxItems, planName, advancedTheme,
-  onSave, onPreview, onAddMenuLink,
+  onSave, onAddMenuLink,
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
@@ -230,8 +229,6 @@ export function MenuEditor({
   useEffect(() => {
     const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
     setDraft(normalized);
-    onPreview(normalized);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menu, maxItems]);
 
   useEffect(() => {
@@ -253,7 +250,6 @@ export function MenuEditor({
         maxItems ?? 250,
         { preserveTextEdges: true },
       );
-      onPreview(next);
       return next;
     });
     setMessage(tr('Unsaved changes', 'Modifiche non salvate'));
@@ -267,7 +263,6 @@ export function MenuEditor({
       const normalized = normalizeMenuCatalog(draft, maxItems ?? 250);
       await onSave(normalized);
       setDraft(normalized);
-      onPreview(normalized);
       setMessage(tr('Menu saved and published', 'Menu salvato e pubblicato'));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Menu could not be saved');
