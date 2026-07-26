@@ -20,10 +20,11 @@ jobs:
           fetch-depth: 0
 
       - name: Push mirror to Gitea
+        if: github.event_name == 'push'
         run: |
           git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/OrbitPage.git
           for attempt in 1 2 3; do
-            if git push gitea --mirror; then
+            if git push gitea "${GITHUB_REF}:${GITHUB_REF}" --force-with-lease; then
               exit 0
             fi
 
@@ -36,3 +37,15 @@ jobs:
 
           echo "Gitea mirror failed after 3 attempts."
           exit 1
+
+      - name: Delete mirrored branch from Gitea
+        if: github.event_name == 'delete'
+        env:
+          DELETED_BRANCH: ${{ github.event.ref }}
+        run: |
+          git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/OrbitPage.git
+          if git ls-remote --exit-code --heads gitea "refs/heads/${DELETED_BRANCH}" >/dev/null; then
+            git push gitea --delete "refs/heads/${DELETED_BRANCH}"
+          else
+            echo "Branch ${DELETED_BRANCH} is already absent from Gitea."
+          fi
