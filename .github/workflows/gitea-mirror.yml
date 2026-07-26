@@ -24,7 +24,7 @@ jobs:
         run: |
           git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/OrbitPage.git
           for attempt in 1 2 3; do
-            if git push gitea "${GITHUB_REF}:${GITHUB_REF}" --force-with-lease; then
+            if git push gitea "${GITHUB_REF}:${GITHUB_REF}"; then
               exit 0
             fi
 
