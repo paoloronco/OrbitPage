@@ -1,8 +1,12 @@
 import {
   SiDeezer,
+  SiFacebook,
   SiGithub,
   SiGiphy,
   SiInstagram,
+  SiApplemusic,
+  SiLoom,
+  SiMixcloud,
   SiSoundcloud,
   SiSpotify,
   SiTiktok,
@@ -10,6 +14,7 @@ import {
   SiWhatsapp,
   SiYoutube,
   SiGooglecalendar,
+  SiGoogleforms,
   SiCalendly,
   SiTypeform,
 } from "react-icons/si";
@@ -17,17 +22,22 @@ import { brandServiceColors, type BrandServiceProvider } from "@/lib/service-bra
 
 const brandIcons = {
   instagram: SiInstagram,
+  facebook: SiFacebook,
   whatsapp: SiWhatsapp,
   youtube: SiYoutube,
   spotify: SiSpotify,
+  apple_music: SiApplemusic,
   deezer: SiDeezer,
   soundcloud: SiSoundcloud,
+  mixcloud: SiMixcloud,
   vimeo: SiVimeo,
+  loom: SiLoom,
   tiktok: SiTiktok,
   giphy: SiGiphy,
   google_calendar: SiGooglecalendar,
   calendly: SiCalendly,
   typeform: SiTypeform,
+  google_forms: SiGoogleforms,
   github: SiGithub,
 } satisfies Record<BrandServiceProvider, typeof SiInstagram>;
 

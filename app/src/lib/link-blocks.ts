@@ -71,7 +71,7 @@ export interface EventBlockData {
   notes?: string;
 }
 
-export type EmbedProvider = 'auto' | 'instagram' | 'youtube' | 'spotify' | 'deezer' | 'soundcloud' | 'vimeo' | 'tiktok' | 'giphy' | 'google_calendar' | 'calendly' | 'typeform' | 'google_maps' | 'newsletter' | 'custom';
+export type EmbedProvider = 'auto' | 'instagram' | 'facebook' | 'youtube' | 'spotify' | 'apple_music' | 'deezer' | 'soundcloud' | 'mixcloud' | 'vimeo' | 'loom' | 'tiktok' | 'giphy' | 'google_calendar' | 'calendly' | 'typeform' | 'google_forms' | 'google_maps' | 'newsletter' | 'custom';
 export type EmbedConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marketing';
 export type ServiceLinkProvider = 'whatsapp' | 'github';
 
@@ -245,7 +245,7 @@ export const getEventData = (content: string | null | undefined): EventBlockData
   };
 };
 
-const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'youtube', 'spotify', 'deezer', 'soundcloud', 'vimeo', 'tiktok', 'giphy', 'google_calendar', 'calendly', 'typeform', 'google_maps', 'newsletter', 'custom'];
+const embedProviders: EmbedProvider[] = ['auto', 'instagram', 'facebook', 'youtube', 'spotify', 'apple_music', 'deezer', 'soundcloud', 'mixcloud', 'vimeo', 'loom', 'tiktok', 'giphy', 'google_calendar', 'calendly', 'typeform', 'google_forms', 'google_maps', 'newsletter', 'custom'];
 const embedConsentCategories: EmbedConsentCategory[] = ['necessary', 'preferences', 'analytics', 'marketing'];
 const serviceLinkProviders: ServiceLinkProvider[] = ['whatsapp', 'github'];
 
@@ -276,16 +276,21 @@ export const detectEmbedProvider = (snippet?: string): Exclude<EmbedProvider, 'a
       if (url.protocol !== 'https:' || url.username || url.password) continue;
       const host = url.hostname.toLowerCase().replace(/\.$/, '');
       if (isHostOrSubdomain(host, 'instagram.com')) return 'instagram';
+      if (isHostOrSubdomain(host, 'facebook.com')) return 'facebook';
       if (isHostOrSubdomain(host, 'youtu.be') || isHostOrSubdomain(host, 'youtube.com') || isHostOrSubdomain(host, 'youtube-nocookie.com')) return 'youtube';
       if (isHostOrSubdomain(host, 'spotify.com')) return 'spotify';
+      if (isHostOrSubdomain(host, 'music.apple.com')) return 'apple_music';
       if (isHostOrSubdomain(host, 'deezer.com')) return 'deezer';
       if (isHostOrSubdomain(host, 'soundcloud.com')) return 'soundcloud';
+      if (isHostOrSubdomain(host, 'mixcloud.com')) return 'mixcloud';
       if (isHostOrSubdomain(host, 'vimeo.com')) return 'vimeo';
+      if (isHostOrSubdomain(host, 'loom.com')) return 'loom';
       if (isHostOrSubdomain(host, 'tiktok.com')) return 'tiktok';
       if (isHostOrSubdomain(host, 'giphy.com')) return 'giphy';
       if (host === 'calendar.google.com' && url.pathname.startsWith('/calendar/appointments/schedules/')) return 'google_calendar';
       if (isHostOrSubdomain(host, 'calendly.com')) return 'calendly';
       if ((isHostOrSubdomain(host, 'typeform.com') || isHostOrSubdomain(host, 'typeform.eu')) && url.pathname.includes('/to/')) return 'typeform';
+      if (host === 'docs.google.com' && url.pathname.startsWith('/forms/')) return 'google_forms';
       const googleBase = [...googleMapsDomains].find((domain) => host === domain || host === `www.${domain}` || host === `maps.${domain}`);
       if (googleBase && (host.startsWith('maps.') || url.pathname.startsWith('/maps'))) return 'google_maps';
       if (
@@ -361,6 +366,17 @@ export const getKnownEmbedUrl = (
         if (match) return `https://www.instagram.com/${match[1]}/${match[2]}/embed/captioned/`;
       }
 
+      if (provider === 'facebook' && (host === 'facebook.com' || host === 'www.facebook.com' || host === 'm.facebook.com')) {
+        const isPublicContent = /\/(posts|videos|reel|photos|watch)(\/|$)/i.test(url.pathname) || url.pathname === '/watch/';
+        if (isPublicContent) {
+          const playerUrl = new URL('https://www.facebook.com/plugins/post.php');
+          playerUrl.searchParams.set('href', url.toString());
+          playerUrl.searchParams.set('show_text', 'true');
+          playerUrl.searchParams.set('width', '500');
+          return playerUrl.toString();
+        }
+      }
+
       if (provider === 'youtube' && (host === 'youtube.com' || host === 'www.youtube.com' || host === 'youtube-nocookie.com' || host === 'www.youtube-nocookie.com' || host === 'youtu.be')) {
         const videoId = host === 'youtu.be'
           ? url.pathname.split('/').filter(Boolean)[0]
@@ -387,6 +403,12 @@ export const getKnownEmbedUrl = (
         }
       }
 
+      if (provider === 'apple_music' && (host === 'music.apple.com' || host === 'embed.music.apple.com')) {
+        if (/^\/[a-z]{2}\/(album|artist|music-video|playlist|song|station)\//i.test(url.pathname)) {
+          return `https://embed.music.apple.com${url.pathname}${url.search}`;
+        }
+      }
+
       if (provider === 'deezer' && (host === 'deezer.com' || host === 'www.deezer.com' || host === 'widget.deezer.com')) {
         if (host === 'widget.deezer.com' && url.pathname.startsWith('/widget/')) return url.toString();
         const match = url.pathname.match(/\/(track|album|playlist)\/(\d+)/i);
@@ -401,11 +423,27 @@ export const getKnownEmbedUrl = (
         return url.toString();
       }
 
+      if (provider === 'mixcloud' && (host === 'mixcloud.com' || host === 'www.mixcloud.com')) {
+        const pathParts = url.pathname.split('/').filter(Boolean);
+        if (pathParts.length >= 2) {
+          const playerUrl = new URL('https://www.mixcloud.com/widget/iframe/');
+          playerUrl.searchParams.set('hide_cover', '1');
+          playerUrl.searchParams.set('light', '1');
+          playerUrl.searchParams.set('feed', `/${pathParts.join('/')}/`);
+          return playerUrl.toString();
+        }
+      }
+
       if (provider === 'vimeo' && (host === 'vimeo.com' || host === 'www.vimeo.com' || host === 'player.vimeo.com')) {
         const videoId = host === 'player.vimeo.com'
           ? url.pathname.match(/^\/video\/(\d+)/)?.[1]
           : url.pathname.match(/^\/(\d+)/)?.[1];
         if (videoId) return `https://player.vimeo.com/video/${videoId}?dnt=1`;
+      }
+
+      if (provider === 'loom' && (host === 'loom.com' || host === 'www.loom.com')) {
+        const videoId = url.pathname.match(/^\/(?:share|embed)\/([a-z0-9-]{20,80})\/?$/i)?.[1];
+        if (videoId) return `https://www.loom.com/embed/${videoId}`;
       }
 
       if (provider === 'tiktok' && (host === 'tiktok.com' || host === 'www.tiktok.com' || host === 'm.tiktok.com')) {
@@ -439,6 +477,15 @@ export const getKnownEmbedUrl = (
         if (reference) return reference.publicUrl;
       }
 
+      if (provider === 'google_forms' && host === 'docs.google.com') {
+        const formPath = url.pathname.match(/^\/forms\/d\/(e\/)?([a-z0-9_-]{20,300})\/viewform\/?$/i);
+        if (formPath) {
+          const formUrl = new URL(`https://docs.google.com/forms/d/${formPath[1] || ''}${formPath[2]}/viewform`);
+          formUrl.searchParams.set('embedded', 'true');
+          return formUrl.toString();
+        }
+      }
+
       if (provider === 'google_maps' && (host === 'www.google.com' || host === 'maps.google.com')) {
         if (url.pathname.includes('/maps/embed') || url.searchParams.get('output') === 'embed') return url.toString();
       }
@@ -454,22 +501,27 @@ export const resolveEmbedProvider = (provider?: EmbedProvider, snippet?: string)
 );
 
 export const getDefaultEmbedConsentCategory = (provider: Exclude<EmbedProvider, 'auto'>): EmbedConsentCategory => {
-  if (provider === 'google_maps' || provider === 'google_calendar' || provider === 'calendly' || provider === 'spotify' || provider === 'deezer' || provider === 'soundcloud') return 'preferences';
+  if (provider === 'google_maps' || provider === 'google_calendar' || provider === 'calendly' || provider === 'google_forms' || provider === 'spotify' || provider === 'apple_music' || provider === 'deezer' || provider === 'soundcloud' || provider === 'mixcloud') return 'preferences';
   return 'marketing';
 };
 
 export const getEmbedProviderLabel = (provider: Exclude<EmbedProvider, 'auto'>) => ({
   instagram: 'Instagram',
+  facebook: 'Facebook',
   youtube: 'YouTube',
   spotify: 'Spotify',
+  apple_music: 'Apple Music',
   deezer: 'Deezer',
   soundcloud: 'SoundCloud',
+  mixcloud: 'Mixcloud',
   vimeo: 'Vimeo',
+  loom: 'Loom',
   tiktok: 'TikTok',
   giphy: 'Giphy',
   google_calendar: 'Google Calendar',
   calendly: 'Calendly',
   typeform: 'Typeform',
+  google_forms: 'Google Forms',
   google_maps: 'Google Maps',
   newsletter: 'Newsletter',
   custom: 'Custom embed',
@@ -477,16 +529,21 @@ export const getEmbedProviderLabel = (provider: Exclude<EmbedProvider, 'auto'>) 
 
 export const getEmbedProviderPlaceholder = (provider: Exclude<EmbedProvider, 'auto'>): string => ({
   instagram: 'https://www.instagram.com/p/...',
+  facebook: 'https://www.facebook.com/.../posts/...',
   youtube: 'https://www.youtube.com/watch?v=...',
   spotify: 'https://open.spotify.com/track/...',
+  apple_music: 'https://music.apple.com/it/album/...',
   deezer: 'https://www.deezer.com/track/...',
   soundcloud: 'https://soundcloud.com/artist/track',
+  mixcloud: 'https://www.mixcloud.com/creator/show/',
   vimeo: 'https://vimeo.com/123456789',
+  loom: 'https://www.loom.com/share/...',
   tiktok: 'https://www.tiktok.com/@creator/video/...',
   giphy: 'https://giphy.com/gifs/...',
   google_calendar: 'https://calendar.google.com/calendar/appointments/schedules/...',
   calendly: 'https://calendly.com/your-name',
   typeform: 'https://form.typeform.com/to/your-form-id',
+  google_forms: 'https://docs.google.com/forms/d/e/.../viewform',
   google_maps: 'https://www.google.com/maps/embed?...',
   newsletter: '<form>...</form>',
   custom: '<iframe src="https://..."></iframe>',
@@ -494,16 +551,21 @@ export const getEmbedProviderPlaceholder = (provider: Exclude<EmbedProvider, 'au
 
 export const getEmbedProviderDefaultHeight = (provider: Exclude<EmbedProvider, 'auto'>): number => ({
   instagram: 560,
+  facebook: 620,
   youtube: 360,
   spotify: 352,
+  apple_music: 450,
   deezer: 300,
   soundcloud: 180,
+  mixcloud: 180,
   vimeo: 360,
+  loom: 360,
   tiktok: 680,
   giphy: 420,
   google_calendar: 680,
   calendly: 680,
   typeform: 620,
+  google_forms: 720,
   google_maps: 360,
   newsletter: 420,
   custom: 360,

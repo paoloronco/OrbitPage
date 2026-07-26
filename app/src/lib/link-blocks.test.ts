@@ -82,17 +82,22 @@ describe('compact link block data', () => {
 describe('official service embeds', () => {
   it.each([
     ['instagram', 'https://www.instagram.com/reel/ABC_123/', 'https://www.instagram.com/reel/ABC_123/embed/captioned/'],
+    ['facebook', 'https://www.facebook.com/orbitpage/posts/123456789012345', 'https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Forbitpage%2Fposts%2F123456789012345&show_text=true&width=500'],
     ['youtube', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ'],
     ['youtube', 'https://www.youtube.com/shorts/dQw4w9WgXcQ', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ'],
     ['youtube', 'https://www.youtube.com/live/dQw4w9WgXcQ', 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ'],
     ['spotify', 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT', 'https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT'],
+    ['apple_music', 'https://music.apple.com/it/album/example/123456789', 'https://embed.music.apple.com/it/album/example/123456789'],
     ['deezer', 'https://www.deezer.com/track/3135556', 'https://widget.deezer.com/widget/auto/track/3135556'],
+    ['mixcloud', 'https://www.mixcloud.com/orbitpage/demo-show/', 'https://www.mixcloud.com/widget/iframe/?hide_cover=1&light=1&feed=%2Forbitpage%2Fdemo-show%2F'],
     ['vimeo', 'https://vimeo.com/76979871', 'https://player.vimeo.com/video/76979871?dnt=1'],
+    ['loom', 'https://www.loom.com/share/12345678-1234-1234-1234-123456789abc', 'https://www.loom.com/embed/12345678-1234-1234-1234-123456789abc'],
     ['tiktok', 'https://www.tiktok.com/@scout2015/video/6718335390845095173', 'https://www.tiktok.com/player/v1/6718335390845095173'],
     ['giphy', 'https://giphy.com/gifs/reaction-example-3o7aD2saalBwwftBIY', 'https://giphy.com/embed/3o7aD2saalBwwftBIY'],
     ['google_calendar', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd?gv=true'],
     ['calendly', 'https://calendly.com/orbitpage-demo/30min', 'https://calendly.com/orbitpage-demo/30min'],
     ['typeform', 'https://orbitpage.typeform.com/to/moe6aa?typeform-source=example.com', 'https://form.typeform.com/to/moe6aa'],
+    ['google_forms', 'https://docs.google.com/forms/d/e/1FAIpQLSc1234567890abcdefghijklmnop/viewform', 'https://docs.google.com/forms/d/e/1FAIpQLSc1234567890abcdefghijklmnop/viewform?embedded=true'],
   ] as const)('creates an allowlisted %s player URL', (provider, source, expected) => {
     expect(getKnownEmbedUrl(provider, source)).toBe(expected);
   });
@@ -134,10 +139,17 @@ describe('official service embeds', () => {
     expect(getKnownEmbedUrl('google_calendar', 'https://calendar.google.com/calendar/u/0/r')).toBeNull();
     expect(getKnownEmbedUrl('typeform', 'https://typeform.com.evil.example/to/moe6aa')).toBeNull();
     expect(getKnownEmbedUrl('typeform', 'https://admin.typeform.com/form/moe6aa/create')).toBeNull();
+    expect(getKnownEmbedUrl('facebook', 'https://facebook.com.evil.example/orbitpage/posts/123')).toBeNull();
+    expect(getKnownEmbedUrl('apple_music', 'https://music.apple.com.evil.example/it/album/example/123')).toBeNull();
+    expect(getKnownEmbedUrl('mixcloud', 'https://mixcloud.com.evil.example/orbitpage/show/')).toBeNull();
+    expect(getKnownEmbedUrl('loom', 'https://loom.com.evil.example/share/12345678-1234-1234-1234-123456789abc')).toBeNull();
+    expect(getKnownEmbedUrl('google_forms', 'https://docs.google.com/forms/d/e/example/edit')).toBeNull();
   });
 
   it('detects providers by parsed hostname instead of unsafe substrings', () => {
     expect(detectEmbedProvider('https://open.spotify.com/track/example')).toBe('spotify');
+    expect(detectEmbedProvider('https://music.apple.com/it/album/example/123456789')).toBe('apple_music');
+    expect(detectEmbedProvider('https://www.loom.com/share/12345678-1234-1234-1234-123456789abc')).toBe('loom');
     expect(detectEmbedProvider('<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>')).toBe('youtube');
     expect(detectEmbedProvider('https://open.spotify.com.attacker.example/track/example')).toBe('custom');
     expect(detectEmbedProvider('https://attacker.example/?next=calendly.com/demo')).toBe('custom');

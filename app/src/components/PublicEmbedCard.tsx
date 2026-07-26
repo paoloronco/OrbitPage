@@ -63,7 +63,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   const invalidProviderUrl = Boolean(embed.snippet) && requiresAllowlistedUrl && !knownProviderUrl;
   const staticCustomEmbedUnavailable = !requiresAllowlistedUrl && !knownProviderUrl && hasStaticPublicSnapshot();
   const brandColor = isBrandServiceProvider(provider) ? brandServiceColors[provider] : undefined;
-  const usesResponsiveVideoFrame = provider === 'youtube' || provider === 'vimeo';
+  const usesResponsiveVideoFrame = provider === 'youtube' || provider === 'vimeo' || provider === 'loom';
   const embedViewportStyle = usesResponsiveVideoFrame
     ? { aspectRatio: '16 / 9', minHeight: '200px' }
     : { height: `${embed.height || 360}px` };
@@ -140,7 +140,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
             <iframe
               src={knownProviderUrl || apiPath(`/embed/${encodeURIComponent(link.id)}`)}
               title={`${providerLabel}: ${link.title || 'embedded content'}`}
-              className={`h-full w-full border-0 ${provider === 'instagram' ? 'mx-auto block max-w-[540px]' : ''}`}
+              className={`h-full w-full border-0 ${provider === 'instagram' || provider === 'facebook' ? 'mx-auto block max-w-[540px]' : ''}`}
               loading="lazy"
               referrerPolicy="origin"
               sandbox={knownProviderUrl
