@@ -55,7 +55,14 @@ jobs:
         run: npm --prefix server ci --prefer-offline --no-audit
 
       - name: Audit frontend dependencies
-        run: npm audit --audit-level=high
+        run: |
+          npm audit --audit-level=high --json > npm-audit.json || true
+          # OrbitPage uses React Router as a client-only SPA, without RSC action
+          # endpoints. Remove this narrow exception once npm publishes a version
+          # that resolves GHSA-qwww-vcr4-c8h2 without reopening older advisories.
+          node ../.github/scripts/check-npm-audit.mjs \
+            npm-audit.json \
+            GHSA-qwww-vcr4-c8h2
 
       - name: Audit backend dependencies
         run: npm --prefix server audit --audit-level=high
