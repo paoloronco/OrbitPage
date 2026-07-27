@@ -1,4 +1,5 @@
 import { apiPath, withBasePath } from './base-path';
+import { consentManager } from './consent-manager';
 
 export const hasStaticPublicSnapshot = () =>
   typeof window !== 'undefined' && Boolean(
@@ -8,6 +9,7 @@ export const hasStaticPublicSnapshot = () =>
 export const trackPublicLinkClick = (id: string) => {
   if (!id) return;
   if (hasStaticPublicSnapshot()) {
+    if (!consentManager.isGranted('analytics')) return;
     sendManagedAnalyticsEvent('click', id);
     return;
   }
@@ -58,6 +60,7 @@ function sendManagedAnalyticsEvent(event: ManagedAnalyticsEvent, linkId?: string
 
 export function trackPublicPageView() {
   if (typeof window === 'undefined' || !hasStaticPublicSnapshot()) return;
+  if (!consentManager.isGranted('analytics')) return;
   const sessionKey = `${VIEW_SESSION_PREFIX}${window.location.pathname}${window.location.search}`;
   try {
     if (window.sessionStorage.getItem(sessionKey)) return;

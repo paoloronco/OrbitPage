@@ -1,4 +1,4 @@
-import { apiPath, getActiveBasePath } from './base-path';
+import { apiPath, getActiveBasePath, getConsentScope } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
 
@@ -1089,6 +1089,14 @@ async function uploadVideoWithDirectFallback(
 export interface ConsentConfigData {
   mode: 'disabled' | 'hardcoded' | 'builder';
   enabled: boolean;
+  /** Public tenant namespace. Keeps consent isolated between orbitpage.net/slug pages. */
+  scope?: string;
+  controller?: {
+    name: string;
+    email: string;
+    country?: string;
+    address?: string;
+  };
   legalPolicies?: {
     showFooterLinks: boolean;
     privacyPolicy: {
@@ -1153,7 +1161,9 @@ export interface ConsentConfigData {
 /** Public (unauthenticated) consent config API — called from the public page */
 export const consentConfigPublicApi = {
   get: async (): Promise<{ success: boolean; data?: ConsentConfigData }> => {
-    return apiRequest<{ success: boolean; data?: ConsentConfigData }>('/consent-config/public');
+    const scope = getConsentScope();
+    const query = scope ? `?slug=${encodeURIComponent(scope)}` : '';
+    return apiRequest<{ success: boolean; data?: ConsentConfigData }>(`/consent-config/public${query}`);
   },
 };
 

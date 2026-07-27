@@ -69,9 +69,17 @@ export const BuilderConfigSchema = z.object({
   reopenSelector: z.string().max(200).default(''),
 });
 
+export const ConsentControllerSchema = z.object({
+  name: z.string().max(200),
+  email: z.string().email().max(254),
+  country: z.string().max(100).default(''),
+  address: z.string().max(500).default(''),
+});
+
 export const ConsentConfigBodySchema = z.object({
   mode: z.enum(['disabled', 'hardcoded', 'builder']),
   enabled: z.boolean(),
+  controller: ConsentControllerSchema.optional(),
   legalPolicies: LegalPoliciesSchema.optional().default({}),
   hardcoded: HardcodedConfigSchema.optional().default({}),
   builder: BuilderConfigSchema.optional().default({}),

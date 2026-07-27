@@ -9,12 +9,13 @@ import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
-import { internalAssetPath, withBasePath } from "@/lib/base-path";
+import { internalAssetPath, withBasePath, withTenantBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { collectCriticalPublicImageUrls, waitForCriticalPublicImages } from "@/lib/public-asset-readiness";
+import { getEmbedData } from "@/lib/link-blocks";
 
 interface ProfileData {
   name: string;
@@ -109,14 +110,41 @@ const Index = () => {
             ]);
         if (cancelled) return;
 
-        // Initialise consent manager with backend config.
-        // Must happen early so registerConsentDependentScript() below works correctly.
-        const cfg = consentRes?.data ?? { mode: 'disabled' as const, enabled: false };
-        consentManager.init(cfg as ConsentConfigData);
-        setConsentConfig(cfg as ConsentConfigData);
-
         const loadedTheme = normalizeTheme(pageData.theme);
         const normalizedLinks = normalizeLinkDtos(pageData.links);
+        const baseConfig = consentRes?.data ?? { mode: 'disabled' as const, enabled: false };
+        const requiredCategories = new Set<'preferences' | 'analytics' | 'marketing'>(['analytics']);
+        normalizedLinks.forEach((link) => {
+          if (link.type === 'map') requiredCategories.add('preferences');
+          if (link.type === 'embed') requiredCategories.add(getEmbedData(link.content).consentCategory || 'marketing');
+        });
+        const cfg: ConsentConfigData = baseConfig.mode === 'hardcoded' && baseConfig.hardcoded
+          ? {
+              ...baseConfig,
+              hardcoded: {
+                ...baseConfig.hardcoded,
+                categories: {
+                  preferences: {
+                    ...baseConfig.hardcoded.categories.preferences,
+                    enabled: baseConfig.hardcoded.categories.preferences.enabled || requiredCategories.has('preferences'),
+                  },
+                  analytics: {
+                    ...baseConfig.hardcoded.categories.analytics,
+                    enabled: baseConfig.hardcoded.categories.analytics.enabled || requiredCategories.has('analytics'),
+                  },
+                  marketing: {
+                    ...baseConfig.hardcoded.categories.marketing,
+                    enabled: baseConfig.hardcoded.categories.marketing.enabled || requiredCategories.has('marketing'),
+                  },
+                },
+              },
+            }
+          : baseConfig;
+
+        // Initialise consent before any optional network request or tracker can run.
+        consentManager.init(cfg);
+        setConsentConfig(cfg);
+
         applyTheme(loadedTheme);
         setTheme(loadedTheme);
         setBackgroundMedia(loadedTheme.backgroundMedia ?? null);
@@ -243,7 +271,9 @@ const Index = () => {
         }
 
         setLinks(normalizedLinks);
-        if (pageData.setupRequired !== true) trackPublicPageView();
+        if (pageData.setupRequired !== true) {
+          consentManager.registerConsentDependentScript('analytics', trackPublicPageView);
+        }
         setShowOrbitPageBadge(pageData.branding?.showOrbitPageBadge !== false);
         if (pageData.setupRequired === true) document.title = "Page under construction | OrbitPage";
         await waitForCriticalPublicImages(collectCriticalPublicImageUrls({
@@ -281,8 +311,8 @@ const Index = () => {
         hardcoded: {
           ...consentConfig.hardcoded,
           urls: {
-            privacyPolicy: profile.privacyPolicyUrl ? withBasePath(profile.privacyPolicyUrl) : '',
-            cookiePolicy: profile.cookiePolicyUrl ? withBasePath(profile.cookiePolicyUrl) : '',
+            privacyPolicy: profile.privacyPolicyUrl ? withTenantBasePath(profile.privacyPolicyUrl) : '',
+            cookiePolicy: profile.cookiePolicyUrl ? withTenantBasePath(profile.cookiePolicyUrl) : '',
           },
         },
       }

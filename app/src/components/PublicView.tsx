@@ -1,7 +1,7 @@
 import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { LinkData } from "./LinkCard";
-import { withBasePath } from "@/lib/base-path";
+import { withTenantBasePath } from "@/lib/base-path";
 import { getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
@@ -39,8 +39,8 @@ export const PublicView = ({
   showOrbitPageBadge = true,
   embedded = false,
 }: PublicViewProps) => {
-  const privacyHref = privacyPolicyUrl?.trim() ? withBasePath(privacyPolicyUrl.trim()) : undefined;
-  const cookieHref = cookiePolicyUrl?.trim() ? withBasePath(cookiePolicyUrl.trim()) : undefined;
+  const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
+  const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
   const hasCustomAvatar = Boolean(
     profile.showAvatar !== false &&
     profile.avatar &&

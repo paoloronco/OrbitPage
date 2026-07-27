@@ -1054,6 +1054,8 @@ export const AdminView = ({
           <TabsContent value="privacy" className="admin-tab-content">
             <div data-onboarding="privacy-section">
               <PrivacySettings
+                pageName={profile.name}
+                cmpSiteUrl={publicPageHref}
                 privacyPolicyUrl={profile.privacyPolicyUrl}
                 cookiePolicyUrl={profile.cookiePolicyUrl}
                 readOnly={DEMO_MODE}

@@ -25,6 +25,8 @@
  *   — call from custom CMP snippets to signal consent to OrbitPage
  */
 
+import { apiPath, getConsentScope } from './base-path';
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type ConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marketing';
@@ -33,6 +35,10 @@ export type ConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marke
 export interface ConsentRecord {
   /** Schema version — bump when the shape changes to invalidate old records */
   version: number;
+  /** Opaque receipt identifier also recorded by the managed backend. */
+  receiptId: string;
+  /** Tenant namespace used to isolate pages sharing orbitpage.net. */
+  scope: string;
   /** Policy version string from hardcoded config at time of consent */
   policyVersion: string;
   /** ISO timestamp of when consent was given */
@@ -94,17 +100,18 @@ export interface BuilderConfig {
 export interface ConsentConfig {
   mode: 'disabled' | 'hardcoded' | 'builder';
   enabled: boolean;
+  scope?: string;
   hardcoded?: HardcodedBannerConfig;
   builder?: BuilderConfig;
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-/** localStorage key for the user's consent record */
-const STORAGE_KEY = 'orbitpage_consent_v1';
+/** Prefix for tenant-scoped consent records. */
+const STORAGE_PREFIX = 'orbitpage_consent_v2:';
 
 /** Current schema version — increment to invalidate stored records on breaking changes */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /** Categories that are always active and cannot be opted out of */
 const ALWAYS_ACTIVE: ConsentCategory[] = ['necessary'];
@@ -128,6 +135,7 @@ class ConsentManager {
   private config: ConsentConfig | null = null;
   private consent: ConsentRecord | null = null;
   private initialized = false;
+  private scope = '';
   private listeners: Set<ConsentChangeListener> = new Set();
   private externalConsent: Partial<Record<ConsentCategory, boolean>> | null = null;
   private externalConsentExplicit = false;
@@ -149,6 +157,7 @@ class ConsentManager {
    */
   init(config: ConsentConfig): void {
     this.config = config;
+    this.scope = this._normalizeScope(config.scope || getConsentScope());
     this.consent = this._loadFromStorage();
     this.externalConsent = null;
     this.externalConsentExplicit = false;
@@ -425,6 +434,8 @@ class ConsentManager {
     const policyVersion = this.config?.hardcoded?.policyVersion ?? '1.0';
     const record: ConsentRecord = {
       version:       SCHEMA_VERSION,
+      receiptId:     this._receiptId(),
+      scope:         this.scope,
       policyVersion,
       timestamp:     new Date().toISOString(),
       source:        opts.source,
@@ -432,24 +443,62 @@ class ConsentManager {
     };
     this.consent = record;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
+      localStorage.setItem(this._storageKey(), JSON.stringify(record));
     } catch (e) {
       console.warn('[OrbitPageConsent] Could not persist consent to localStorage:', e);
     }
     this._notifyListeners();
+    this._recordReceipt(record);
   }
 
   private _loadFromStorage(): ConsentRecord | null {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(this._storageKey());
       if (!raw) return null;
       const parsed: ConsentRecord = JSON.parse(raw);
       // Reject records written by an incompatible schema version
-      if (parsed?.version !== SCHEMA_VERSION) return null;
+      if (parsed?.version !== SCHEMA_VERSION || parsed.scope !== this.scope || !parsed.receiptId) return null;
       return parsed;
     } catch {
       return null;
     }
+  }
+
+  private _normalizeScope(value: string): string {
+    return value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 80) || 'default';
+  }
+
+  private _storageKey(): string {
+    return `${STORAGE_PREFIX}${this.scope}`;
+  }
+
+  private _receiptId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+      const random = Math.floor(Math.random() * 16);
+      return (char === 'x' ? random : (random & 0x3) | 0x8).toString(16);
+    });
+  }
+
+  private _recordReceipt(record: ConsentRecord): void {
+    if (!this.scope || typeof window === 'undefined' || !(window as any).__ORBITPAGE_STATIC_SNAPSHOT__) return;
+    fetch(apiPath('/consent/receipt'), {
+      method: 'POST',
+      mode: 'no-cors',
+      credentials: 'omit',
+      keepalive: true,
+      headers: { 'content-type': 'text/plain;charset=UTF-8' },
+      body: JSON.stringify({
+        receiptId: record.receiptId,
+        slug: this.scope,
+        policyVersion: record.policyVersion,
+        timestamp: record.timestamp,
+        source: record.source,
+        categories: record.categories,
+      }),
+    }).catch(() => {
+      // Consent remains valid locally even when the optional evidence endpoint is unavailable.
+    });
   }
 
   private _isConsentFresh(): boolean {
