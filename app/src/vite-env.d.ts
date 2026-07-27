@@ -12,3 +12,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Window {
+  __ORBITPAGE_BOOT_READY__?: () => void;
+  __ORBITPAGE_BOOT_FAIL__?: (reason?: string, autoRetry?: boolean) => void;
+  __ORBITPAGE_BOOT_REPORT__?: (reason?: string) => void;
+}

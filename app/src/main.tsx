@@ -7,7 +7,11 @@ const activeBasePath = getActiveBasePath();
 const activeHomePath = activeBasePath || '/';
 
 if (window.location.pathname !== activeHomePath) {
-  document.body.classList.remove('orbitpage-booting');
+  if (window.__ORBITPAGE_BOOT_READY__) {
+    window.__ORBITPAGE_BOOT_READY__();
+  } else {
+    document.body.classList.remove('orbitpage-booting');
+  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

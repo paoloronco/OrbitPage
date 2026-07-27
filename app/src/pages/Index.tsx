@@ -87,10 +87,16 @@ const Index = () => {
   useLayoutEffect(() => {
     if (loading) return;
     const frame = window.requestAnimationFrame(() => {
-      document.body.classList.remove('orbitpage-booting');
+      if (loadFailed) {
+        window.__ORBITPAGE_BOOT_FAIL__?.('data-load', false);
+      } else if (window.__ORBITPAGE_BOOT_READY__) {
+        window.__ORBITPAGE_BOOT_READY__();
+      } else {
+        document.body.classList.remove('orbitpage-booting');
+      }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [loading]);
+  }, [loadFailed, loading]);
 
   // Load all public page data in one request so the default UI never flashes.
   useEffect(() => {
@@ -287,6 +293,7 @@ const Index = () => {
       } catch (error) {
         console.error('Error loading data:', error);
         if (!cancelled) {
+          window.__ORBITPAGE_BOOT_REPORT__?.('data-load');
           setLoadFailed(true);
           setLoading(false);
         }
@@ -300,7 +307,47 @@ const Index = () => {
     };
   }, []);
 
-  if (loading || loadFailed) return null;
+  if (loading) return null;
+  if (loadFailed) {
+    return (
+      <main
+        role="alert"
+        style={{
+          minHeight: '100dvh',
+          display: 'grid',
+          placeItems: 'center',
+          padding: '24px',
+          background: '#f8fafc',
+          color: '#0f172a',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        <div style={{ maxWidth: '420px', textAlign: 'center' }}>
+          <h1 style={{ margin: 0, fontSize: '1.25rem' }}>Impossibile caricare la pagina</h1>
+          <p style={{ margin: '10px 0 20px', color: '#64748b' }}>
+            Controlla la connessione e riprova.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={{
+              minHeight: '42px',
+              border: 0,
+              borderRadius: '10px',
+              padding: '10px 18px',
+              background: '#2563eb',
+              color: '#fff',
+              font: 'inherit',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Riprova
+          </button>
+        </div>
+      </main>
+    );
+  }
   if (setupRequired) return <UnderConstruction />;
 
   // Merge profile-level policy URLs into the consent config so the banner and footer
