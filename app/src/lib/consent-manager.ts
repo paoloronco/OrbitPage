@@ -651,8 +651,14 @@ class ConsentManager {
   // ── Builder Provider Injectors ─────────────────────────────────────────────
 
   private _injectIubenda(cfg: BuilderConfig['providerConfig']): void {
+    if (cfg.headSnippet?.trim()) {
+      this._wireIubendaConsentEvents();
+      this._injectHtmlSnippet(document.head, cfg.headSnippet, 'orbitpage-cmp-script');
+      return;
+    }
+
     if (!cfg.siteId || !cfg.cookiePolicyId) {
-      console.warn('[OrbitPageConsent] Iubenda: missing siteId or cookiePolicyId');
+      console.warn('[OrbitPageConsent] Iubenda: missing installation snippet');
       return;
     }
     this._wireIubendaConsentEvents();
