@@ -44,6 +44,7 @@ import {
 import { useAppI18n } from '@/lib/i18n';
 import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
+import { normalizePrivacyController } from '@/lib/privacy-controller';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1018,7 +1019,8 @@ export function PrivacySettings({
   const [cookieHostedFileName, setCookieHostedFileName] = useState('');
   const [privacyProviderConfig, setPrivacyProviderConfig] = useState('');
   const [cookieProviderConfig, setCookieProviderConfig] = useState('');
-  const [controller, setController] = useState({ name: pageName || '', email: '', country: '', address: '' });
+  // The page name remains a placeholder only: controller details are optional.
+  const [controller, setController] = useState({ name: '', email: '', country: '', address: '' });
 
   const [mode, setMode] = useState<ConsentMode>('disabled');
   const [enabled, setEnabled] = useState(false);
@@ -1181,8 +1183,12 @@ export function PrivacySettings({
     try {
       const nextPrivacyPolicyUrl = resolvedPrivacyPolicyUrl;
       const nextCookiePolicyUrl = resolvedCookiePolicyUrl;
-      if ((controller.name.trim() || controller.email.trim()) && (!controller.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(controller.email.trim()))) {
-        setSaveError('Add a valid controller name and privacy email, or leave both fields empty.');
+      const normalizedController = normalizePrivacyController(controller);
+      if (normalizedController.error) {
+        setSaveError(tr(
+          'Add both the controller name and a valid privacy email, or leave both fields empty.',
+          'Inserisci sia il nome del titolare sia un’email privacy valida, oppure lascia entrambi i campi vuoti.',
+        ));
         return;
       }
 
@@ -1245,10 +1251,14 @@ export function PrivacySettings({
         },
       };
 
-      const normalizedController = controller.name.trim() && controller.email.trim()
-        ? { name: controller.name.trim(), email: controller.email.trim(), country: controller.country.trim(), address: controller.address.trim() }
-        : undefined;
-      const res = await consentConfigApi.update({ mode, enabled, controller: normalizedController, legalPolicies, hardcoded, builder: nextBuilder });
+      const res = await consentConfigApi.update({
+        mode,
+        enabled,
+        controller: normalizedController.controller,
+        legalPolicies,
+        hardcoded,
+        builder: nextBuilder,
+      });
       if (!res.success) {
         setSaveError((res as { error?: string }).error || 'Save failed.');
       } else {
@@ -1464,14 +1474,15 @@ export function PrivacySettings({
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    if (!controller.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(controller.email.trim())) {
+                    const normalizedController = normalizePrivacyController(controller);
+                    if (!normalizedController.controller) {
                       setSaveError(tr('Add the controller name and a valid privacy email first.', 'Inserisci prima il nome del titolare e un’email privacy valida.'));
                       return;
                     }
                     const policyVersion = new Date().toISOString().slice(0, 10);
                     const docs = generatedPolicies({
                       language: document.documentElement.lang.toLowerCase().startsWith('it') ? 'it' : 'en',
-                      controller: { ...controller, name: controller.name.trim(), email: controller.email.trim() },
+                      controller: normalizedController.controller,
                       policyVersion,
                       categories: hardcoded.categories,
                     });
