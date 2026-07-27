@@ -153,6 +153,20 @@ describe('consentManager Google Consent Mode v2', () => {
     expect(consentManager.isGranted('analytics')).toBe(false);
   });
 
+  it('injects the complete iubenda installation snippet without requiring separate IDs', async () => {
+    vi.useFakeTimers();
+    const snippet = '<script src="https://embeds.iubenda.com/widgets/site-code.js"></script>';
+    const { consentManager } = await import('./consent-manager');
+    const injectSnippet = vi
+      .spyOn(consentManager as any, '_injectHtmlSnippet')
+      .mockReturnValue(true);
+
+    consentManager.init(builderConfig('iubenda', { headSnippet: snippet }) as any);
+    (consentManager as any)._injectIubenda({ headSnippet: snippet });
+
+    expect(injectSnippet).toHaveBeenCalledWith(document.head, snippet, 'orbitpage-cmp-script');
+  });
+
   it('preserves granular GCM v2 advertising signals from an external CMP update', async () => {
     const win = window as any;
     win.dataLayer.push(['consent', 'update', {
