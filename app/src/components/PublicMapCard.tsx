@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import type { LinkData } from "./LinkCard";
 import { getMapData } from "@/lib/link-blocks";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
-import { ArrowUpRight, MapPinned, Navigation } from "lucide-react";
+import { ArrowUpRight, MapPinned, Navigation, ShieldCheck } from "lucide-react";
+import { consentManager } from "@/lib/consent-manager";
 import { getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent } from "@/lib/public-block-style";
 import {
   extractMapCoordinates,
@@ -62,6 +64,12 @@ const RealMapPreview = ({ coordinates, label }: { coordinates: MapCoordinates; l
 );
 
 export const PublicMapCard = ({ link }: PublicMapCardProps) => {
+  const [mapConsent, setMapConsent] = useState(() => consentManager.isGranted("preferences"));
+  useEffect(() => {
+    const syncConsent = () => setMapConsent(consentManager.isGranted("preferences"));
+    syncConsent();
+    return consentManager.onConsentChange(syncConsent);
+  }, []);
   const { placeName, address, mapUrl, latitude, longitude } = getMapData(link.content);
   const mapQuery = getMapQuery(placeName, address, link.title, mapUrl);
   const coordinates = toMapCoordinates(latitude, longitude)
@@ -86,11 +94,25 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
       <div className={`relative overflow-hidden bg-muted/30 ${link.size === "small" ? "h-32" : link.size === "large" ? "h-52" : "h-40"}`}>
-        {coordinates ? (
+        {coordinates && mapConsent ? (
           <RealMapPreview coordinates={coordinates} label={mapQuery || placeName || address || link.title || "Map"} />
         ) : (
           <MapLocationFallback label={mapQuery || placeName || address || link.title || "Map"} />
         )}
+        {coordinates && !mapConsent ? (
+          <button
+            type="button"
+            onClick={() => {
+              consentManager.showBanner();
+              consentManager.openPreferences();
+            }}
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/70 px-5 text-center text-white"
+          >
+            <ShieldCheck className="h-6 w-6" />
+            <strong className="mt-2 text-sm">Map blocked until consent</strong>
+            <span className="mt-1 text-xs text-white/75">Open cookie preferences to load OpenStreetMap.</span>
+          </button>
+        ) : null}
         <div className="pointer-events-none absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background/70" style={getPublicButtonStyle(link)}>
           {getPublicIconContent(link, <MapPinned className="h-4 w-4" />)}
         </div>

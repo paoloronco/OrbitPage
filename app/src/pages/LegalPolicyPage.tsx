@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
-import { withBasePath } from "@/lib/base-path";
+import { withBasePath, withTenantBasePath } from "@/lib/base-path";
 
 type PolicyKind = "privacy" | "cookie";
 type PolicyState = NonNullable<ConsentConfigData["legalPolicies"]>["privacyPolicy"];
@@ -66,7 +66,10 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
 
     const load = async () => {
       try {
-        const res = await consentConfigPublicApi.get();
+        const staticConfig = window.__ORBITPAGE_STATIC_SNAPSHOT__?.consentConfig;
+        const res = staticConfig
+          ? { success: true, data: staticConfig }
+          : await consentConfigPublicApi.get();
         if (cancelled) return;
         const nextPolicy = getPolicy(res.data, kind);
         setPolicy(nextPolicy);
@@ -110,7 +113,7 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
   return (
     <main className="min-h-screen bg-white px-4 py-10 text-slate-950" style={{ colorScheme: "light" }}>
       <div className="mx-auto w-full max-w-3xl">
-        <a className="text-sm text-slate-600 underline hover:text-blue-700" href={withBasePath('/')}>
+        <a className="text-sm text-slate-600 underline hover:text-blue-700" href={withTenantBasePath('/')}>
           Back to home
         </a>
 

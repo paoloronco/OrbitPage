@@ -444,7 +444,7 @@ function BannerBody({ cfg, colors, onAcceptAll, onRejectAll, onOpenPrefs, hasOpt
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', flexShrink: 0 }}>
         {rejectFirst ? (
           <>
-            <Btn colors={colors} onClick={onRejectAll}>{cfg.texts.rejectAll}</Btn>
+            <Btn colors={colors} onClick={onRejectAll} primary>{cfg.texts.rejectAll}</Btn>
             {hasOptionalCats && (
               <Btn colors={colors} onClick={onOpenPrefs}>{cfg.texts.managePreferences}</Btn>
             )}
@@ -455,7 +455,7 @@ function BannerBody({ cfg, colors, onAcceptAll, onRejectAll, onOpenPrefs, hasOpt
             {hasOptionalCats && (
               <Btn colors={colors} onClick={onOpenPrefs}>{cfg.texts.managePreferences}</Btn>
             )}
-            <Btn colors={colors} onClick={onRejectAll}>{cfg.texts.rejectAll}</Btn>
+            <Btn colors={colors} onClick={onRejectAll} primary>{cfg.texts.rejectAll}</Btn>
             <Btn colors={colors} onClick={onAcceptAll} primary>{cfg.texts.acceptAll}</Btn>
           </>
         )}
