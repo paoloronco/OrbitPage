@@ -150,6 +150,116 @@ const EMPTY_POLICY_CONFIG = {
   embeddedCode: '',
 };
 
+function generatedPolicies(input: {
+  language: 'it' | 'en';
+  controller: { name: string; email: string; country?: string; address?: string };
+  policyVersion: string;
+  categories: NonNullable<ConsentConfigData['hardcoded']>['categories'];
+}) {
+  const { controller, language, policyVersion, categories } = input;
+  const identity = [controller.name, controller.address, controller.country].filter(Boolean).join(', ');
+  const enabled = Object.entries(categories)
+    .filter(([, category]) => category.enabled)
+    .map(([, category]) => `- ${category.title}: ${category.description}`)
+    .join('\n');
+  if (language === 'it') {
+    return {
+      privacy: `PRIVACY POLICY
+Versione ${policyVersion}
+
+1. Titolare del trattamento
+${identity}
+Contatto privacy: ${controller.email}
+
+2. Dati trattati
+Questa pagina può trattare dati tecnici strettamente necessari alla sicurezza e al funzionamento del servizio. Se il titolare attiva moduli, newsletter, Shop o prenotazioni, vengono inoltre trattati i dati inviati volontariamente dall’utente e quelli necessari a gestire la richiesta, il pagamento, la consegna o l’appuntamento.
+
+3. Finalità e basi giuridiche
+I dati necessari vengono trattati per erogare il servizio richiesto, adempiere obblighi di legge e proteggere la pagina. Analytics, personalizzazione e contenuti di terze parti vengono attivati solo in base alle scelte espresse nel banner, quando richiesto.
+
+4. Fornitori e trasferimenti
+OrbitPage fornisce l’infrastruttura della pagina. Eventuali servizi esterni scelti dal titolare (ad esempio analytics, video, mappe, calendario o moduli) ricevono dati soltanto dopo il consenso previsto e applicano le proprie informative. Alcuni fornitori possono trattare dati fuori dallo SEE usando le garanzie previste dalla normativa applicabile.
+
+5. Conservazione
+I dati sono conservati per il tempo necessario alle finalità indicate e agli obblighi legali. Le scelte cookie sono conservate per il periodo indicato nella Cookie Policy; la prova tecnica del consenso è conservata per un massimo di 24 mesi.
+
+6. Diritti
+L’interessato può chiedere accesso, rettifica, cancellazione, limitazione, portabilità e opposizione, nonché revocare il consenso in qualsiasi momento dal comando “Preferenze cookie”. Le richieste possono essere inviate a ${controller.email}. Resta possibile proporre reclamo all’autorità di controllo competente.
+
+7. Aggiornamenti
+Il titolare può aggiornare questa informativa. La versione pubblicata su questa pagina è quella vigente.`,
+      cookie: `COOKIE POLICY
+Versione ${policyVersion}
+
+1. Titolare
+${identity}
+Contatto privacy: ${controller.email}
+
+2. Cosa utilizza la pagina
+OrbitPage usa storage strettamente necessario per ricordare le scelte privacy, proteggere il servizio e mantenere le funzioni richieste dall’utente. Gli strumenti opzionali restano bloccati fino alla scelta del visitatore.
+
+3. Categorie opzionali configurate
+${enabled || '- Nessuna categoria opzionale attiva.'}
+
+4. Servizi di terze parti
+Video, mappe, calendari, moduli, social embed e strumenti analytics possono comunicare con i rispettivi fornitori soltanto dopo il consenso della categoria associata. Prima del consenso viene mostrato un segnaposto e non viene inviata alcuna richiesta al provider.
+
+5. Durata e prova del consenso
+Le preferenze vengono conservate in modo separato per questa specifica pagina per il periodo configurato dal titolare. OrbitPage registra una ricevuta tecnica delle scelte, senza IP o email del visitatore, per un massimo di 24 mesi.
+
+6. Gestione e revoca
+Il visitatore può accettare, rifiutare o scegliere singole categorie. La scelta può essere modificata o revocata in qualsiasi momento tramite “Preferenze cookie”, sempre disponibile sulla pagina.`,
+    };
+  }
+  return {
+    privacy: `PRIVACY POLICY
+Version ${policyVersion}
+
+1. Data controller
+${identity}
+Privacy contact: ${controller.email}
+
+2. Data processed
+This page may process technical data strictly necessary for security and operation. If the controller enables forms, newsletters, Shop or booking, it also processes data voluntarily submitted by the visitor and data needed to handle the request, payment, delivery or appointment.
+
+3. Purposes and legal bases
+Necessary data is processed to provide requested services, comply with law and protect the page. Analytics, personalisation and third-party content are enabled according to the choices made in the consent banner where consent is required.
+
+4. Providers and transfers
+OrbitPage provides the page infrastructure. External services selected by the controller receive data only after the required consent and apply their own notices. Some providers may process data outside the EEA using safeguards required by applicable law.
+
+5. Retention
+Data is retained only as long as needed for the stated purposes and legal obligations. Cookie choices follow the Cookie Policy; technical consent evidence is kept for up to 24 months.
+
+6. Rights
+Visitors may request access, correction, deletion, restriction, portability or objection and may withdraw consent at any time through “Cookie preferences”. Requests can be sent to ${controller.email}; complaints may be filed with the competent supervisory authority.
+
+7. Updates
+The controller may update this notice. The version published on this page is the current version.`,
+    cookie: `COOKIE POLICY
+Version ${policyVersion}
+
+1. Controller
+${identity}
+Privacy contact: ${controller.email}
+
+2. What this page uses
+OrbitPage uses strictly necessary storage to remember privacy choices, protect the service and maintain functions requested by the visitor. Optional tools remain blocked until the visitor makes a choice.
+
+3. Configured optional categories
+${enabled || '- No optional category is active.'}
+
+4. Third-party services
+Video, maps, calendars, forms, social embeds and analytics may contact their providers only after consent for the associated category. Before consent, a placeholder is shown and no provider request is made.
+
+5. Duration and consent evidence
+Preferences are stored separately for this specific page for the period configured by the controller. OrbitPage records technical evidence of the choices, without the visitor’s IP or email, for up to 24 months.
+
+6. Management and withdrawal
+Visitors can accept, reject or select individual categories. Choices can be changed or withdrawn at any time through “Cookie preferences”, which remains available on the page.`,
+  };
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function SectionHeader({ icon: Icon, title, description }: {
@@ -875,11 +985,15 @@ function ModeCard({
 // ── Root Component ────────────────────────────────────────────────────────────
 
 export function PrivacySettings({
+  pageName,
+  cmpSiteUrl,
   privacyPolicyUrl,
   cookiePolicyUrl,
   onLegalPolicyUpdate,
   readOnly = false,
 }: {
+  pageName?: string;
+  cmpSiteUrl?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
   onLegalPolicyUpdate?: (links: { privacyPolicyUrl?: string; cookiePolicyUrl?: string }) => void | Promise<void>;
@@ -904,6 +1018,7 @@ export function PrivacySettings({
   const [cookieHostedFileName, setCookieHostedFileName] = useState('');
   const [privacyProviderConfig, setPrivacyProviderConfig] = useState('');
   const [cookieProviderConfig, setCookieProviderConfig] = useState('');
+  const [controller, setController] = useState({ name: pageName || '', email: '', country: '', address: '' });
 
   const [mode, setMode] = useState<ConsentMode>('disabled');
   const [enabled, setEnabled] = useState(false);
@@ -918,9 +1033,10 @@ export function PrivacySettings({
       try {
         const res = await consentConfigApi.get();
         if (res?.data) {
-          const { mode: m, enabled: e, legalPolicies: lp, hardcoded: h, builder: b } = res.data;
+          const { mode: m, enabled: e, controller: savedController, legalPolicies: lp, hardcoded: h, builder: b } = res.data;
           setMode(m === 'builder' ? 'builder' : 'hardcoded');
           setEnabled(e ?? false);
+          if (savedController) setController({ name: savedController.name, email: savedController.email, country: savedController.country || '', address: savedController.address || '' });
           if (lp) {
             const privacyPolicy = { ...EMPTY_POLICY_CONFIG, ...lp.privacyPolicy };
             const cookiePolicy = { ...EMPTY_POLICY_CONFIG, ...lp.cookiePolicy };
@@ -1010,6 +1126,7 @@ export function PrivacySettings({
   const privacySnapshot = useMemo(() => JSON.stringify({
     mode,
     enabled,
+    controller,
     hardcoded,
     builder: normalizedBuilder,
     legalPolicies: {
@@ -1035,6 +1152,7 @@ export function PrivacySettings({
     cookieMethod,
     cookieProviderConfig,
     enabled,
+    controller,
     hardcoded,
     mode,
     normalizedBuilder,
@@ -1063,6 +1181,10 @@ export function PrivacySettings({
     try {
       const nextPrivacyPolicyUrl = resolvedPrivacyPolicyUrl;
       const nextCookiePolicyUrl = resolvedCookiePolicyUrl;
+      if ((controller.name.trim() || controller.email.trim()) && (!controller.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(controller.email.trim()))) {
+        setSaveError('Add a valid controller name and privacy email, or leave both fields empty.');
+        return;
+      }
 
       if (mode === 'hardcoded' && enabled && !nextPrivacyPolicyUrl && !nextCookiePolicyUrl) {
         setSaveError('Add at least one legal policy link before enabling the native banner.');
@@ -1123,7 +1245,10 @@ export function PrivacySettings({
         },
       };
 
-      const res = await consentConfigApi.update({ mode, enabled, legalPolicies, hardcoded, builder: nextBuilder });
+      const normalizedController = controller.name.trim() && controller.email.trim()
+        ? { name: controller.name.trim(), email: controller.email.trim(), country: controller.country.trim(), address: controller.address.trim() }
+        : undefined;
+      const res = await consentConfigApi.update({ mode, enabled, controller: normalizedController, legalPolicies, hardcoded, builder: nextBuilder });
       if (!res.success) {
         setSaveError((res as { error?: string }).error || 'Save failed.');
       } else {
@@ -1316,6 +1441,56 @@ export function PrivacySettings({
               </div>
               <Globe2 />
             </div>
+            <div className="mb-6 border-y border-slate-200 bg-slate-50/70 px-4 py-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FieldRow label={tr('Data controller name', 'Nome del titolare')}>
+                  <Input className="admin-input" value={controller.name} onChange={(event) => setController((current) => ({ ...current, name: event.target.value }))} maxLength={200} placeholder={pageName || 'Business or professional name'} />
+                </FieldRow>
+                <FieldRow label={tr('Privacy email', 'Email privacy')}>
+                  <Input className="admin-input" type="email" value={controller.email} onChange={(event) => setController((current) => ({ ...current, email: event.target.value }))} maxLength={254} placeholder="privacy@example.com" />
+                </FieldRow>
+                <FieldRow label={tr('Country', 'Paese')}>
+                  <Input className="admin-input" value={controller.country} onChange={(event) => setController((current) => ({ ...current, country: event.target.value }))} maxLength={100} placeholder="Italy" />
+                </FieldRow>
+                <FieldRow label={tr('Address (optional)', 'Indirizzo (opzionale)')}>
+                  <Input className="admin-input" value={controller.address} onChange={(event) => setController((current) => ({ ...current, address: event.target.value }))} maxLength={500} />
+                </FieldRow>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                <p className="max-w-xl text-xs leading-5 text-slate-600">
+                  {tr('Generate editable starter documents from these details and the active consent categories. Review them for your specific activity before publishing.', 'Genera documenti iniziali modificabili da questi dati e dalle categorie attive. Verificali rispetto alla tua attività prima di pubblicare.')}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (!controller.name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(controller.email.trim())) {
+                      setSaveError(tr('Add the controller name and a valid privacy email first.', 'Inserisci prima il nome del titolare e un’email privacy valida.'));
+                      return;
+                    }
+                    const policyVersion = new Date().toISOString().slice(0, 10);
+                    const docs = generatedPolicies({
+                      language: document.documentElement.lang.toLowerCase().startsWith('it') ? 'it' : 'en',
+                      controller: { ...controller, name: controller.name.trim(), email: controller.email.trim() },
+                      policyVersion,
+                      categories: hardcoded.categories,
+                    });
+                    setHardcoded((current) => ({ ...current, policyVersion }));
+                    setShowLegalLinks(true);
+                    setPrivacyMethod('hosted');
+                    setCookieMethod('hosted');
+                    setPrivacyHostedText(docs.privacy);
+                    setCookieHostedText(docs.cookie);
+                    setPrivacyHostedFileName('privacy-policy.txt');
+                    setCookieHostedFileName('cookie-policy.txt');
+                    setSaveError('');
+                  }}
+                >
+                  <FileText className="h-4 w-4" />
+                  {tr('Generate starter policies', 'Genera policy iniziali')}
+                </Button>
+              </div>
+            </div>
             <LegalPoliciesForm
               showLegalLinks={showLegalLinks}
               onShowLegalLinksChange={setShowLegalLinks}
@@ -1426,6 +1601,26 @@ export function PrivacySettings({
                   title={tr('External CMP', 'CMP esterna')}
                   description={tr('Configure the provider that will display the consent interface.', 'Configura il provider che mostrerà l’interfaccia di consenso.')}
                 />
+                {cmpSiteUrl ? (
+                  <div className="mb-5 border-y border-blue-200 bg-blue-50/70 px-4 py-4">
+                    <Label className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-800">
+                      {tr('Site URL to register with the CMP', 'URL del sito da registrare nella CMP')}
+                    </Label>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <Input className="admin-input font-mono text-xs" readOnly value={cmpSiteUrl} />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void navigator.clipboard?.writeText(cmpSiteUrl)}
+                      >
+                        {tr('Copy URL', 'Copia URL')}
+                      </Button>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-blue-900/70">
+                      {tr('Use this exact public page URL, including the slug. Do not enter the OrbitPage dashboard URL.', 'Usa esattamente questo URL pubblico, slug incluso. Non inserire l’URL della dashboard OrbitPage.')}
+                    </p>
+                  </div>
+                ) : null}
                 <BuilderForm
                   cfg={builder}
                   onChange={(updates) => setBuilder((previous) => ({ ...previous, ...updates }))}

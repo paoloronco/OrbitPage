@@ -4,6 +4,7 @@ declare global {
   interface Window {
     __ORBITPAGE_BASE_PATH__?: string;
     __ORBITPAGE_API_BASE__?: string;
+    __ORBITPAGE_CONSENT_SCOPE__?: string;
   }
 }
 
@@ -30,6 +31,13 @@ export const getActiveBasePath = (): string => {
   return pathname === basePath || pathname.startsWith(`${basePath}/`) ? basePath : '';
 };
 
+export const getConsentScope = (): string => {
+  if (typeof window === 'undefined') return '';
+  const configured = window.__ORBITPAGE_CONSENT_SCOPE__?.trim();
+  if (configured) return configured;
+  return getActiveBasePath().split('/').filter(Boolean)[0] || '';
+};
+
 export const withBasePath = (path = '/'): string => {
   if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;
 
@@ -39,6 +47,20 @@ export const withBasePath = (path = '/'): string => {
     return normalizedPath;
   }
   return `${basePath}${normalizedPath}` || '/';
+};
+
+/** Resolve legal and consent routes against the root page, not an optional subpage. */
+export const withTenantBasePath = (path = '/'): string => {
+  if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const activeBase = getActiveBasePath();
+  const scope = getConsentScope();
+  if (!activeBase || !scope) return normalizedPath;
+  const tenantBase = activeBase === `/${scope}` || activeBase.startsWith(`/${scope}/`)
+    ? `/${scope}`
+    : activeBase;
+  if (normalizedPath === tenantBase || normalizedPath.startsWith(`${tenantBase}/`)) return normalizedPath;
+  return `${tenantBase}${normalizedPath}`;
 };
 
 export const apiPath = (path = ''): string => {

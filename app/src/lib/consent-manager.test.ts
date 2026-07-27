@@ -110,6 +110,21 @@ describe('consentManager Google Consent Mode v2', () => {
     });
   });
 
+  it('isolates consent records between pages that share orbitpage.net', async () => {
+    const { consentManager } = await import('./consent-manager');
+
+    consentManager.init({ ...hardcodedConfig, scope: 'first-page' } as any);
+    consentManager.acceptAll('banner');
+    expect(consentManager.isGranted('analytics')).toBe(true);
+
+    consentManager.init({ ...hardcodedConfig, scope: 'second-page' } as any);
+    expect(consentManager.getConsent()).toBeNull();
+    expect(consentManager.isGranted('analytics')).toBe(false);
+
+    consentManager.init({ ...hardcodedConfig, scope: 'first-page' } as any);
+    expect(consentManager.isGranted('analytics')).toBe(true);
+  });
+
   it('uses a persisted CookieYes decision immediately on returning visits', async () => {
     const win = window as any;
     win.getCkyConsent = () => ({ categories: { accepted: ['functional', 'analytics'] } });
