@@ -115,7 +115,9 @@ const DEFAULT_BUILDER: NonNullable<ConsentConfigData['builder']> = {
 
 function isBuilderProviderConfigured(builder: NonNullable<ConsentConfigData['builder']>) {
   const cfg = builder.providerConfig;
-  if (builder.provider === 'iubenda') return !!cfg.siteId?.trim() && !!cfg.cookiePolicyId?.trim();
+  if (builder.provider === 'iubenda') {
+    return !!cfg.headSnippet?.trim() || (!!cfg.siteId?.trim() && !!cfg.cookiePolicyId?.trim());
+  }
   if (builder.provider === 'cookiebot' || builder.provider === 'cookieyes') return !!cfg.scriptId?.trim();
   if (builder.provider === 'onetrust') return !!cfg.siteId?.trim();
   return !!cfg.headSnippet?.trim();
@@ -851,6 +853,7 @@ function BuilderForm({
   cfg: NonNullable<ConsentConfigData['builder']>;
   onChange: (updates: Partial<NonNullable<ConsentConfigData['builder']>>) => void;
 }) {
+  const { tr } = useAppI18n();
   const updateCfg = (updates: Partial<typeof cfg.providerConfig>) =>
     onChange({ providerConfig: { ...cfg.providerConfig, ...updates } });
 
@@ -879,14 +882,22 @@ function BuilderForm({
       </FieldRow>
 
       {cfg.provider === 'iubenda' && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FieldRow label="Site ID" description="The site ID from your iubenda project.">
-            <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.siteId ?? ''} onChange={(e) => updateCfg({ siteId: e.target.value })} />
-          </FieldRow>
-          <FieldRow label="Cookie Policy ID" description="The Cookie Policy ID linked to the CMP.">
-            <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.cookiePolicyId ?? ''} onChange={(e) => updateCfg({ cookiePolicyId: e.target.value })} />
-          </FieldRow>
-        </div>
+        <FieldRow
+          label={tr('iubenda installation script', 'Script di installazione iubenda')}
+          description={tr(
+            'In iubenda, open Manage and Embed and paste the complete Privacy Controls and Cookie Solution snippet.',
+            'In iubenda apri Gestisci e incorpora e incolla lo snippet completo di Privacy Controls and Cookie Solution.',
+          )}
+        >
+          <Textarea
+            className="admin-input min-h-[180px] resize-y font-mono text-xs"
+            value={cfg.providerConfig.headSnippet ?? ''}
+            onChange={(event) => updateCfg({ headSnippet: event.target.value, bodySnippet: '' })}
+            placeholder={'<script src="https://embeds.iubenda.com/widgets/…"></script>'}
+            maxLength={10000}
+            spellCheck={false}
+          />
+        </FieldRow>
       )}
 
       {(cfg.provider === 'cookiebot' || cfg.provider === 'cookieyes') && (
