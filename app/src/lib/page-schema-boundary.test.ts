@@ -100,6 +100,61 @@ describe('canonical page schema boundary', () => {
     }])).toThrow(/unrecognized|invalid video/i);
   });
 
+  it('canonicalizes legitimate editor URL shortcuts before persistence', () => {
+    const [website, contact, social] = parseOrbitPageBlocks([
+      {
+        id: 'website',
+        type: 'link',
+        title: 'Website',
+        url: 'orbitpage.com/docs',
+      },
+      {
+        id: 'contact',
+        type: 'contact',
+        title: 'Contact',
+        content: JSON.stringify({
+          website: 'orbitpage.com',
+        }),
+      },
+      {
+        id: 'social',
+        type: 'social_row',
+        title: '',
+        content: JSON.stringify({
+          items: [
+            { label: 'Instagram', platform: 'instagram', url: '@orbitpage' },
+            { label: 'WhatsApp', platform: 'whatsapp', url: '+39 123 456 7890' },
+            { label: 'Email', platform: 'email', url: 'hello@orbitpage.com' },
+          ],
+        }),
+      },
+    ]);
+
+    expect(website.url).toBe('https://orbitpage.com/docs');
+    expect(JSON.parse(contact.content || '{}')).toMatchObject({
+      website: 'https://orbitpage.com/',
+    });
+    expect(JSON.parse(social.content || '{}').items).toEqual([
+      expect.objectContaining({ platform: 'instagram', url: 'https://www.instagram.com/orbitpage/' }),
+      expect.objectContaining({ platform: 'whatsapp', url: 'https://wa.me/391234567890' }),
+      expect.objectContaining({ platform: 'email', url: 'mailto:hello@orbitpage.com' }),
+    ]);
+
+    expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      privacyPolicyUrl: 'orbitpage.com/privacy',
+      socialLinks: {
+        instagram: '@orbitpage',
+        whatsapp: '+39 123 456 7890',
+      },
+    })).toMatchObject({
+      privacy_policy_url: 'https://orbitpage.com/privacy',
+      social_links: {
+        instagram: 'https://www.instagram.com/orbitpage',
+        whatsapp: 'https://wa.me/391234567890',
+      },
+    });
+  });
+
   it('migrates legacy documents by dropping unknown fields and canonicalizing aliases', () => {
     const legacy = {
       ...pageDocument(),

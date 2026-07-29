@@ -75,8 +75,45 @@ export function isSafePublicHref(value: string) {
   }
 }
 
+/**
+ * Converts a human-entered public destination into the canonical href stored by
+ * OrbitPage. The editor historically accepted bare public hostnames such as
+ * `example.com`; keeping that convenience at the input boundary avoids making
+ * legacy data or ordinary form input fail a full-page save.
+ */
+export function normalizeOrbitPagePublicHref(value: string): string | null {
+  const candidate = value.trim();
+  if (!candidate) return "";
+  if (isSafePublicHref(candidate)) return candidate;
+  if (hasControlCharacter(candidate) || /\s/.test(candidate) || candidate.startsWith("//")) return null;
+
+  const authority = candidate.split(/[/?#]/, 1)[0] ?? "";
+  const publicHostnameWithOptionalPort =
+    /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?::\d{1,5})?$/i;
+  if (!publicHostnameWithOptionalPort.test(authority)) return null;
+
+  try {
+    const parsed = new URL(`https://${candidate}`);
+    return isSafePublicHref(parsed.toString()) ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export const OrbitPagePublicHrefSchema = z.string().max(2_048)
   .refine(isSafePublicHref, "Use a public HTTP(S), mailto, tel, anchor, or relative-path URL.");
+
+export const OrbitPagePublicHrefInputSchema = z.string().max(2_048)
+  .refine(
+    (value) => normalizeOrbitPagePublicHref(value) !== null,
+    "Use a public HTTP(S), mailto, tel, anchor, relative-path URL, or public hostname."
+  );
+
+export const OrbitPageHrefCandidateSchema = z.string().max(2_048)
+  .refine(
+    (value) => !hasControlCharacter(value) && !/^\s*(?:javascript|data|vbscript|file|blob):/i.test(value),
+    "Use a safe public destination."
+  );
 
 export function parseJsonObject(value: unknown, label: string): Record<string, unknown> {
   if (isPlainObject(value)) return value;

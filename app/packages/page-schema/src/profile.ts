@@ -1,8 +1,11 @@
 import { z } from "zod";
 import {
+  OrbitPageHrefCandidateSchema,
   OrbitPageHexColorSchema,
+  OrbitPagePublicHrefInputSchema,
   OrbitPagePublicHrefSchema,
   boundedString,
+  normalizeOrbitPagePublicHref,
   parseOrThrow
 } from "./primitives";
 
@@ -57,6 +60,68 @@ export const OrbitPageSocialLinksSchema = z.object(
   ) as Record<typeof ORBITPAGE_SOCIAL_PLATFORMS[number], z.ZodOptional<z.ZodNullable<typeof OrbitPagePublicHrefSchema>>>
 ).strict();
 
+const OrbitPageSocialLinksInputSchema = z.object(
+  Object.fromEntries(
+    ORBITPAGE_SOCIAL_PLATFORMS.map((platform) => [
+      platform,
+      OrbitPageHrefCandidateSchema.nullable().optional()
+    ])
+  ) as Record<
+    typeof ORBITPAGE_SOCIAL_PLATFORMS[number],
+    z.ZodOptional<z.ZodNullable<typeof OrbitPageHrefCandidateSchema>>
+  >
+).strict();
+
+const PROFILE_SOCIAL_USERNAME_BASES: Partial<Record<typeof ORBITPAGE_SOCIAL_PLATFORMS[number], string>> = {
+  linkedin: "https://www.linkedin.com/in/",
+  github: "https://github.com/",
+  instagram: "https://www.instagram.com/",
+  facebook: "https://www.facebook.com/",
+  twitter: "https://x.com/",
+  youtube: "https://www.youtube.com/@",
+  tiktok: "https://www.tiktok.com/@",
+  discord: "https://discord.gg/",
+  telegram: "https://t.me/"
+};
+
+function normalizeProfileSocialHref(
+  platform: typeof ORBITPAGE_SOCIAL_PLATFORMS[number],
+  value: string
+) {
+  const candidate = value.trim();
+  const existingHref = normalizeOrbitPagePublicHref(candidate);
+  if (existingHref !== null) return existingHref;
+
+  const base = PROFILE_SOCIAL_USERNAME_BASES[platform];
+  if (base) {
+    const username = candidate.replace(/^@+/, "").replace(/^\/+|\/+$/g, "");
+    if (/^[a-z0-9._-]{1,100}$/i.test(username)) return `${base}${username}`;
+  }
+
+  if (platform === "whatsapp" && /^[+\d\s().-]+$/.test(candidate)) {
+    const phone = candidate.replace(/\D/g, "");
+    return phone.length >= 6 && phone.length <= 15 ? `https://wa.me/${phone}` : null;
+  }
+
+  return null;
+}
+
+function canonicalSocialLinks(value: unknown) {
+  const input = parseOrThrow(
+    OrbitPageSocialLinksInputSchema,
+    value,
+    "The profile social links contain invalid or unsupported data."
+  );
+  return parseOrThrow(OrbitPageSocialLinksSchema, Object.fromEntries(
+    Object.entries(input).map(([platform, candidate]) => [
+      platform,
+      candidate === null || candidate === undefined
+        ? candidate
+        : normalizeProfileSocialHref(platform as typeof ORBITPAGE_SOCIAL_PLATFORMS[number], candidate) ?? candidate
+    ])
+  ), "The profile social links contain invalid or unsupported data.");
+}
+
 const NumericBooleanSchema = z.union([z.boolean(), z.literal(0), z.literal(1)])
   .transform((value) => value === true || value === 1 ? 1 as const : 0 as const);
 
@@ -94,8 +159,8 @@ const ProfileInputShape = {
   name: boundedString(120).optional(),
   bio: boundedString(2_000).optional(),
   avatar: boundedString(2_048).optional(),
-  social_links: OrbitPageSocialLinksSchema.optional(),
-  socialLinks: OrbitPageSocialLinksSchema.optional(),
+  social_links: OrbitPageSocialLinksInputSchema.optional(),
+  socialLinks: OrbitPageSocialLinksInputSchema.optional(),
   show_avatar: NumericBooleanSchema.optional(),
   showAvatar: NumericBooleanSchema.optional(),
   name_font_size: boundedString(40).nullable().optional(),
@@ -111,10 +176,10 @@ const ProfileInputShape = {
   favicon: boundedString(2_048).nullable().optional(),
   google_analytics_id: boundedString(40).regex(/^G-[A-Z0-9]{4,32}$/i).nullable().optional(),
   googleAnalyticsId: boundedString(40).regex(/^G-[A-Z0-9]{4,32}$/i).nullable().optional(),
-  privacy_policy_url: OrbitPagePublicHrefSchema.nullable().optional(),
-  privacyPolicyUrl: OrbitPagePublicHrefSchema.nullable().optional(),
-  cookie_policy_url: OrbitPagePublicHrefSchema.nullable().optional(),
-  cookiePolicyUrl: OrbitPagePublicHrefSchema.nullable().optional(),
+  privacy_policy_url: OrbitPagePublicHrefInputSchema.nullable().optional(),
+  privacyPolicyUrl: OrbitPagePublicHrefInputSchema.nullable().optional(),
+  cookie_policy_url: OrbitPagePublicHrefInputSchema.nullable().optional(),
+  cookiePolicyUrl: OrbitPagePublicHrefInputSchema.nullable().optional(),
   admin_onboarding_enabled: NumericBooleanSchema.optional(),
   adminOnboardingEnabled: NumericBooleanSchema.optional(),
   appearance: OrbitPageProfileAppearanceSchema.nullable().optional()
@@ -137,10 +202,15 @@ function canonicalProfilePatch(value: unknown, strict: boolean): Partial<OrbitPa
   const assign = <K extends keyof OrbitPageProfile>(key: K, candidate: OrbitPageProfile[K] | undefined) => {
     if (candidate !== undefined) patch[key] = candidate;
   };
+  const socialLinks = firstDefined(input, "social_links", "socialLinks");
+  const privacyPolicyUrl = firstDefined(input, "privacy_policy_url", "privacyPolicyUrl");
+  const cookiePolicyUrl = firstDefined(input, "cookie_policy_url", "cookiePolicyUrl");
   assign("name", input.name as OrbitPageProfile["name"] | undefined);
   assign("bio", input.bio as OrbitPageProfile["bio"] | undefined);
   assign("avatar", input.avatar as OrbitPageProfile["avatar"] | undefined);
-  assign("social_links", firstDefined(input, "social_links", "socialLinks") as OrbitPageProfile["social_links"] | undefined);
+  assign("social_links", socialLinks === undefined
+    ? undefined
+    : canonicalSocialLinks(socialLinks));
   assign("show_avatar", firstDefined(input, "show_avatar", "showAvatar") as OrbitPageProfile["show_avatar"] | undefined);
   assign("name_font_size", firstDefined(input, "name_font_size", "nameFontSize") as OrbitPageProfile["name_font_size"] | undefined);
   assign("bio_font_size", firstDefined(input, "bio_font_size", "bioFontSize") as OrbitPageProfile["bio_font_size"] | undefined);
@@ -149,8 +219,12 @@ function canonicalProfilePatch(value: unknown, strict: boolean): Partial<OrbitPa
   assign("footer_text", firstDefined(input, "footer_text", "footerText") as OrbitPageProfile["footer_text"] | undefined);
   assign("favicon", input.favicon as OrbitPageProfile["favicon"] | undefined);
   assign("google_analytics_id", firstDefined(input, "google_analytics_id", "googleAnalyticsId") as OrbitPageProfile["google_analytics_id"] | undefined);
-  assign("privacy_policy_url", firstDefined(input, "privacy_policy_url", "privacyPolicyUrl") as OrbitPageProfile["privacy_policy_url"] | undefined);
-  assign("cookie_policy_url", firstDefined(input, "cookie_policy_url", "cookiePolicyUrl") as OrbitPageProfile["cookie_policy_url"] | undefined);
+  assign("privacy_policy_url", privacyPolicyUrl === undefined || privacyPolicyUrl === null
+    ? privacyPolicyUrl as undefined | null
+    : normalizeOrbitPagePublicHref(String(privacyPolicyUrl)) ?? String(privacyPolicyUrl));
+  assign("cookie_policy_url", cookiePolicyUrl === undefined || cookiePolicyUrl === null
+    ? cookiePolicyUrl as undefined | null
+    : normalizeOrbitPagePublicHref(String(cookiePolicyUrl)) ?? String(cookiePolicyUrl));
   assign("admin_onboarding_enabled", firstDefined(input, "admin_onboarding_enabled", "adminOnboardingEnabled") as OrbitPageProfile["admin_onboarding_enabled"] | undefined);
   assign("appearance", input.appearance as OrbitPageProfile["appearance"] | undefined);
   return patch;
