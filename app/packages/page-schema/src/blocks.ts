@@ -2,11 +2,14 @@ import { z } from "zod";
 import {
   ORBITPAGE_MAX_BLOCKS,
   OrbitPageBlockIdSchema,
+  OrbitPageHrefCandidateSchema,
   OrbitPageHexColorSchema,
+  OrbitPagePublicHrefInputSchema,
   OrbitPagePublicHrefSchema,
   boundedString,
   generatedId,
   isPlainObject,
+  normalizeOrbitPagePublicHref,
   parseJsonObject,
   parseOrThrow,
   stableJsonObject
@@ -45,11 +48,20 @@ const TextItemSchema = z.object({
   fontFamily: NullableString(200)
 }).strict();
 
+const TextItemInputSchema = z.object({
+  text: boundedString(500),
+  url: OrbitPagePublicHrefInputSchema.nullable().optional(),
+  textColor: NullableHex,
+  surfaceEffect: SurfaceEffectSchema,
+  fontSize: NullableString(40),
+  fontFamily: NullableString(200)
+}).strict();
+
 const CommonBlockShape = {
   id: z.union([OrbitPageBlockIdSchema, z.number().int().nonnegative()]).optional(),
   title: boundedString(200).optional(),
   description: boundedString(2_000).nullable().optional(),
-  url: OrbitPagePublicHrefSchema.nullable().optional(),
+  url: OrbitPageHrefCandidateSchema.nullable().optional(),
   hideUrl: z.boolean().nullable().optional(),
   type: z.union([OrbitPageBlockTypeSchema, boundedString(40)]).optional(),
   icon: NullableString(2_048),
@@ -78,7 +90,7 @@ const CommonBlockShape = {
   endTime: NullableString(20),
   timezone: NullableString(100),
   availability: z.enum(["available", "unavailable"]).nullable().optional(),
-  textItems: z.array(TextItemSchema).max(50).nullable().optional(),
+  textItems: z.array(TextItemInputSchema).max(50).nullable().optional(),
   coverImage: NullableString(2_048),
   coverImageAlt: NullableString(300),
   systemKey: z.enum(["shop"]).optional(),
@@ -123,16 +135,76 @@ export const OrbitPageContactContentSchema = z.object({
   telegram: boundedString(100).optional().default("")
 }).strict();
 
+const OrbitPageContactContentInputSchema = OrbitPageContactContentSchema.extend({
+  website: OrbitPagePublicHrefInputSchema.optional().default("")
+}).strict();
+
+const SocialRowPlatformSchema = z.enum([
+  "auto", "page", "link", "website", "instagram", "facebook", "tiktok", "x", "youtube",
+  "linkedin", "whatsapp", "telegram", "discord", "github", "email"
+]);
+type SocialRowPlatform = z.infer<typeof SocialRowPlatformSchema>;
+
 const SocialRowItemSchema = z.object({
   id: OrbitPageBlockIdSchema.optional(),
   label: boundedString(120),
   url: OrbitPagePublicHrefSchema,
-  platform: z.enum([
-    "auto", "page", "link", "website", "instagram", "facebook", "tiktok", "x", "youtube",
-    "linkedin", "whatsapp", "telegram", "discord", "github", "email"
-  ]).optional().default("auto"),
+  platform: SocialRowPlatformSchema.optional().default("auto"),
   icon: boundedString(24).optional().default("")
 }).strict();
+
+const SOCIAL_USERNAME_BASES: Partial<Record<SocialRowPlatform, string>> = {
+  instagram: "https://www.instagram.com/",
+  facebook: "https://www.facebook.com/",
+  tiktok: "https://www.tiktok.com/@",
+  x: "https://x.com/",
+  youtube: "https://www.youtube.com/@",
+  telegram: "https://t.me/",
+  github: "https://github.com/"
+};
+
+export function normalizeOrbitPageSocialHref(platform: SocialRowPlatform, value: string): string | null {
+  const candidate = value.trim();
+  if (!candidate) return "";
+
+  const existingHref = normalizeOrbitPagePublicHref(candidate);
+  if (existingHref !== null) return existingHref;
+
+  const base = SOCIAL_USERNAME_BASES[platform];
+  if (base) {
+    const username = candidate.replace(/^@+/, "").replace(/^\/+|\/+$/g, "");
+    if (/^[a-z0-9._-]{1,100}$/i.test(username)) {
+      return `${base}${username}${platform === "instagram" || platform === "facebook" ? "/" : ""}`;
+    }
+  }
+
+  if (platform === "whatsapp" && /^[+\d\s().-]+$/.test(candidate)) {
+    const phone = candidate.replace(/\D/g, "");
+    return phone.length >= 6 && phone.length <= 15 ? `https://wa.me/${phone}` : null;
+  }
+
+  if (platform === "email" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) {
+    return `mailto:${candidate}`;
+  }
+
+  return null;
+}
+
+const SocialRowItemInputSchema = z.object({
+  id: OrbitPageBlockIdSchema.optional(),
+  label: boundedString(120),
+  url: boundedString(2_048),
+  platform: SocialRowPlatformSchema.optional().default("auto"),
+  icon: boundedString(24).optional().default("")
+}).strict().superRefine((item, context) => {
+  if (normalizeOrbitPageSocialHref(item.platform, item.url) === null) {
+    context.addIssue({
+      code: "custom",
+      path: ["url"],
+      message: "Use a public URL or a valid username, phone number, or email for the selected service."
+    });
+  }
+});
 
 export const OrbitPageSocialRowContentSchema = z.object({
   items: z.array(SocialRowItemSchema).max(16).optional().default([]),
@@ -142,6 +214,10 @@ export const OrbitPageSocialRowContentSchema = z.object({
   boxed: z.boolean().optional().default(false),
   showTitle: z.boolean().optional().default(false),
   showLabels: z.boolean().optional().default(false)
+}).strict();
+
+const OrbitPageSocialRowContentInputSchema = OrbitPageSocialRowContentSchema.extend({
+  items: z.array(SocialRowItemInputSchema).max(16).optional().default([])
 }).strict();
 
 export const OrbitPageCalloutContentSchema = z.object({
@@ -156,6 +232,10 @@ export const OrbitPageMapContentSchema = z.object({
   latitude: boundedString(40).optional().default(""),
   longitude: boundedString(40).optional().default(""),
   resolvedSource: boundedString(40).optional().default("")
+}).strict();
+
+const OrbitPageMapContentInputSchema = OrbitPageMapContentSchema.extend({
+  mapUrl: OrbitPagePublicHrefInputSchema.optional().default("")
 }).strict();
 
 export const OrbitPageEventContentSchema = z.object({
@@ -206,21 +286,71 @@ function structuredContent(
   const input = parseJsonObject(content, type);
   let parsed: Record<string, unknown>;
   if (type === "video") parsed = parseOrThrow(OrbitPageVideoContentSchema, input, "Invalid video block content.");
-  else if (type === "contact") parsed = parseOrThrow(OrbitPageContactContentSchema, input, "Invalid contact block content.");
-  else if (type === "social_row") parsed = parseOrThrow(OrbitPageSocialRowContentSchema, input, "Invalid social-row block content.");
+  else if (type === "contact") {
+    const contact = parseOrThrow(OrbitPageContactContentInputSchema, input, "Invalid contact block content.");
+    parsed = parseOrThrow(OrbitPageContactContentSchema, {
+      ...contact,
+      website: normalizeOrbitPagePublicHref(contact.website) ?? contact.website
+    }, "Invalid contact block content.");
+  }
+  else if (type === "social_row") {
+    const socialRow = parseOrThrow(OrbitPageSocialRowContentInputSchema, input, "Invalid social-row block content.");
+    parsed = parseOrThrow(OrbitPageSocialRowContentSchema, {
+      ...socialRow,
+      items: socialRow.items.map((item) => ({
+        ...item,
+        url: normalizeOrbitPageSocialHref(item.platform, item.url) ?? item.url
+      }))
+    }, "Invalid social-row block content.");
+  }
   else if (type === "callout") parsed = parseOrThrow(OrbitPageCalloutContentSchema, input, "Invalid callout block content.");
-  else if (type === "map") parsed = parseOrThrow(OrbitPageMapContentSchema, input, "Invalid map block content.");
+  else if (type === "map") {
+    const map = parseOrThrow(OrbitPageMapContentInputSchema, input, "Invalid map block content.");
+    parsed = parseOrThrow(OrbitPageMapContentSchema, {
+      ...map,
+      mapUrl: normalizeOrbitPagePublicHref(map.mapUrl) ?? map.mapUrl
+    }, "Invalid map block content.");
+  }
   else if (type === "event") parsed = parseOrThrow(OrbitPageEventContentSchema, input, "Invalid event block content.");
   else if (type === "embed") parsed = parseOrThrow(OrbitPageEmbedContentSchema, input, "Invalid embed block content.");
   else if (type === "separator") parsed = parseOrThrow(OrbitPageSeparatorContentSchema, input, "Invalid separator block content.");
   else if (type === "link") {
-    parsed = "items" in input
-      ? parseOrThrow(OrbitPageSocialRowContentSchema, input, "Invalid legacy social-row block content.")
-      : parseOrThrow(OrbitPageServiceLinkContentSchema, input, "Invalid service-link block content.");
+    if ("items" in input) {
+      const socialRow = parseOrThrow(
+        OrbitPageSocialRowContentInputSchema,
+        input,
+        "Invalid legacy social-row block content."
+      );
+      parsed = parseOrThrow(OrbitPageSocialRowContentSchema, {
+        ...socialRow,
+        items: socialRow.items.map((item) => ({
+          ...item,
+          url: normalizeOrbitPageSocialHref(item.platform, item.url) ?? item.url
+        }))
+      }, "Invalid legacy social-row block content.");
+    } else {
+      parsed = parseOrThrow(OrbitPageServiceLinkContentSchema, input, "Invalid service-link block content.");
+    }
   } else {
     throw new Error(`Unsupported block type: ${type}`);
   }
   return stableJsonObject(parsed);
+}
+
+function canonicalBlockHref(type: OrbitPageBlockType, content: string | undefined, value: string | null | undefined) {
+  const candidate = value ?? "";
+  const normalized = normalizeOrbitPagePublicHref(candidate);
+  if (normalized !== null) return normalized;
+
+  if (type === "link" && content) {
+    const serviceResult = OrbitPageServiceLinkContentSchema.safeParse(parseJsonObject(content, "link"));
+    if (serviceResult.success) {
+      const serviceHref = normalizeOrbitPageSocialHref(serviceResult.data.service, candidate);
+      if (serviceHref !== null) return serviceHref;
+    }
+  }
+
+  return candidate;
 }
 
 export const OrbitPageBlockSchema = z.object({
@@ -278,12 +408,18 @@ function canonicalBlock(value: unknown, position: number, strict: boolean): Orbi
   const requestedId = String(input.id ?? "");
   const id = OrbitPageBlockIdSchema.safeParse(requestedId).success ? requestedId : generatedId();
   const content = structuredContent(type, input.content);
+  const textItems = input.textItems?.map((item) => ({
+    ...item,
+    ...(item.url !== undefined && item.url !== null
+      ? { url: normalizeOrbitPagePublicHref(item.url) ?? item.url }
+      : {})
+  }));
 
   return parseOrThrow(OrbitPageBlockSchema, {
     id,
     title: input.title ?? "",
     description: input.description ?? "",
-    url: input.url ?? "",
+    url: canonicalBlockHref(type, content, input.url),
     ...(input.hideUrl !== undefined && input.hideUrl !== null ? { hideUrl: input.hideUrl } : {}),
     type,
     ...(input.icon !== undefined ? { icon: input.icon } : {}),
@@ -314,7 +450,7 @@ function canonicalBlock(value: unknown, position: number, strict: boolean): Orbi
     ...(input.endTime !== undefined ? { endTime: input.endTime } : {}),
     ...(input.timezone !== undefined ? { timezone: input.timezone } : {}),
     availability: input.availability ?? "available",
-    ...(type === "text" && input.textItems !== undefined ? { textItems: input.textItems } : {}),
+    ...(type === "text" && textItems !== undefined ? { textItems } : {}),
     ...(input.coverImage !== undefined ? { coverImage: input.coverImage } : {}),
     ...(input.coverImageAlt !== undefined ? { coverImageAlt: input.coverImageAlt } : {}),
     ...(input.systemKey !== undefined || input.orbitPageSystemLink === "orbitpage-shop"

@@ -9,6 +9,7 @@ import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/the
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
 import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, isIntegratedHostedSurface, workspaceBootstrapApi, type SubpageItem } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
+import { parseOrbitPageBlocks } from "@orbitpage/page-schema";
 import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { Permission } from "@/lib/permissions";
@@ -328,7 +329,7 @@ const Admin = () => {
 
       if (canFullWrite) {
         // Full bulk replace (existing behaviour)
-        const formattedLinks = newLinks.map(link => ({
+        const formattedLinks = parseOrbitPageBlocks(newLinks.map(link => ({
           ...link,
           id: String(link.id),
           type: link.type || 'link',
@@ -341,7 +342,7 @@ const Admin = () => {
           endDate: link.endDate || undefined,
           endTime: link.endTime || undefined,
           timezone: link.timezone || undefined,
-        }));
+        })));
         await linksApi.update(formattedLinks);
       } else if (canStyle || canImages) {
         // Per-link PATCH for only the permitted fields
