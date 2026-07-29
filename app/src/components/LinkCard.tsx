@@ -99,6 +99,7 @@ export interface LinkData {
   }>; // For clickable list items
   coverImage?: string;    // Optional header/cover image URL or data URL
   coverImageAlt?: string; // Alt text for the cover image
+  systemKey?: 'shop';     // Managed block identity preserved across editor saves
 }
 
 interface LinkCardProps {

@@ -12,6 +12,7 @@ const TOKEN_IV_PREFIX = 'orbitpage-auth-iv-';
 const DEVICE_SECRET_KEY = 'orbitpage-device-secret';
 let capturedSaasApiToken: string | null = null;
 let capturedSaasAppCheckToken: string | null = null;
+let capturedPageRevision: number | null = null;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -48,7 +49,10 @@ const captureSaasCredentials = (): void => {
   const values = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   const apiToken = values.get('apiToken');
   const appCheckToken = values.get('appCheckToken');
-  if (apiToken) capturedSaasApiToken = apiToken;
+  if (apiToken) {
+    if (capturedSaasApiToken && capturedSaasApiToken !== apiToken) capturedPageRevision = null;
+    capturedSaasApiToken = apiToken;
+  }
   if (appCheckToken) capturedSaasAppCheckToken = appCheckToken;
   if (apiToken || appCheckToken) {
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
@@ -228,6 +232,7 @@ const getAuthenticatedRequestHeaders = async (): Promise<Record<string, string>>
 // In a secure context (HTTPS / localhost): AES-GCM encrypted in localStorage.
 // In a non-secure context (HTTP over IP): retained only in memory for this document.
 const setAuthToken = (token: string): Promise<void> => {
+  capturedPageRevision = null;
   if (!isCryptoAvailable()) {
     console.warn(
       'Web Crypto API unavailable (non-secure context). ' +
@@ -255,6 +260,7 @@ const removeAuthToken = (): void => {
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   capturedSaasApiToken = null;
   capturedSaasAppCheckToken = null;
+  capturedPageRevision = null;
   delete (window as any).__orbitpageTokenCache;
 };
 
@@ -265,6 +271,7 @@ export interface ApiResponse<T = any> {
   error?: string;
   data?: T;
   token?: string;
+  revision?: number;
 }
 
 // Auth specific types
@@ -399,6 +406,8 @@ export interface SubpageItem {
 }
 
 export interface WorkspaceBootstrapResponse {
+  schemaVersion?: number;
+  revision?: number;
   profile: ProfileResponse;
   links: LinkItem[];
   subpages?: SubpageItem[];
@@ -414,14 +423,17 @@ export interface WorkspaceBootstrapResponse {
 // API request helper with auth
 const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   const authHeaders = await getAuthenticatedRequestHeaders();
+  const method = (options.method || 'GET').toUpperCase();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...authHeaders,
+    ...(method !== 'GET' && capturedPageRevision !== null
+      ? { 'If-Match': String(capturedPageRevision) }
+      : {}),
     ...options.headers,
   };
 
   // Prevent any caching of API responses and bust caches for GETs
-  const method = (options.method || 'GET').toUpperCase();
   let url = resolveApiUrl(endpoint);
   if (method === 'GET') {
     const sep = url.includes('?') ? '&' : '?';
@@ -465,6 +477,16 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
       }
       throw new Error(errorMessage);
     }
+
+    const bodyRevision = typeof data?.revision === 'number' ? data.revision : Number.NaN;
+    const rawHeaderRevision = response.headers.get('x-orbitpage-revision');
+    const headerRevision = rawHeaderRevision === null ? Number.NaN : Number(rawHeaderRevision);
+    const revision = Number.isSafeInteger(bodyRevision) && bodyRevision >= 0
+      ? bodyRevision
+      : Number.isSafeInteger(headerRevision) && headerRevision >= 0
+        ? headerRevision
+        : null;
+    if (revision !== null) capturedPageRevision = revision;
 
     return data as T;
   } catch (error: any) {

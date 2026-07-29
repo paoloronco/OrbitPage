@@ -345,7 +345,7 @@ const Admin = () => {
         await linksApi.update(formattedLinks);
       } else if (canStyle || canImages) {
         // Per-link PATCH for only the permitted fields
-        await Promise.all(newLinks.map(async (newLink) => {
+        for (const newLink of newLinks) {
           const id = String(newLink.id);
           if (canStyle) {
             await linksApi.patchStyle(id, {
@@ -368,7 +368,7 @@ const Admin = () => {
               coverImageAlt: newLink.coverImageAlt ?? null,
             });
           }
-        }));
+        }
       }
       // Re-fetch from backend to guarantee public and admin are in sync
       const reloaded = await linksApi.get();
