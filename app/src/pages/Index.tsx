@@ -64,22 +64,68 @@ function faviconHref(value: string) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
+function normalizePublicProfile(profileData: PublicPageResponse["profile"] | null | undefined): ProfileData {
+  if (!profileData) {
+    return {
+      name: "",
+      bio: "",
+      avatar: profileAvatar,
+      showAvatar: false,
+    };
+  }
+
+  const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
+  const faviconValue = (profileData as any).favicon;
+  const favicon = isBundledProfileAvatar(faviconValue) ? undefined : (faviconValue || undefined);
+  const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
+  const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
+  const privacyPolicyUrl = getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl);
+  const cookiePolicyUrl = (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined;
+
+  return {
+    name: profileData.name || "",
+    bio: profileData.bio || "",
+    avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
+      ? profileData.avatar
+      : (profileAvatar as string),
+    showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
+      ? (profileData as any).show_avatar !== 0
+      : ((profileData as any).showAvatar ?? true),
+    nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
+    bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
+    appearance: (profileData as any).appearance || {},
+    socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
+    footerText,
+    favicon,
+    googleAnalyticsId,
+    privacyPolicyUrl,
+    cookiePolicyUrl,
+  };
+}
+
 const Index = () => {
-  const [loading, setLoading] = useState(true);
+  const [staticPage] = useState(() => window.__ORBITPAGE_STATIC_SNAPSHOT__?.page);
+  const [initialTheme] = useState(() => normalizeTheme(staticPage?.theme));
+  const [loading, setLoading] = useState(!staticPage);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>({
-    name: "",
-    bio: "",
-    avatar: profileAvatar,
-    showAvatar: false,
-  });
-  const [links, setLinks] = useState<LinkData[]>([]);
-  const [backgroundMedia, setBackgroundMedia] = useState<BackgroundMediaConfig | null>(null);
-  const [theme, setTheme] = useState<ThemeConfig>(() => normalizeTheme(null));
+  const [profile, setProfile] = useState<ProfileData>(() => normalizePublicProfile(staticPage?.profile));
+  const [links, setLinks] = useState<LinkData[]>(() => normalizeLinkDtos(staticPage?.links || []));
+  const [backgroundMedia, setBackgroundMedia] = useState<BackgroundMediaConfig | null>(
+    () => initialTheme.backgroundMedia ?? null
+  );
+  const [theme, setTheme] = useState<ThemeConfig>(initialTheme);
   // Consent config drives whether CookieBanner is rendered
   const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
-  const [showOrbitPageBadge, setShowOrbitPageBadge] = useState(true);
-  const [setupRequired, setSetupRequired] = useState(false);
+  const [showOrbitPageBadge, setShowOrbitPageBadge] = useState(
+    staticPage?.branding?.showOrbitPageBadge !== false
+  );
+  const [setupRequired, setSetupRequired] = useState(staticPage?.setupRequired === true);
+
+  // Static snapshots are available before React starts. Apply their theme during
+  // the first commit so the server-rendered shell transitions without a white frame.
+  useLayoutEffect(() => {
+    if (staticPage) applyTheme(initialTheme);
+  }, [initialTheme, staticPage]);
 
   // Reveal the static page only after React has committed the final snapshot.
   // This prevents a frame containing avatar initials or placeholder card icons.
@@ -103,11 +149,11 @@ const Index = () => {
 
     const loadData = async () => {
       try {
-        const staticSnapshot = window.__ORBITPAGE_STATIC_SNAPSHOT__;
-        const [pageData, consentRes] = staticSnapshot
+        const currentStaticSnapshot = window.__ORBITPAGE_STATIC_SNAPSHOT__;
+        const [pageData, consentRes] = currentStaticSnapshot
           ? [
-              staticSnapshot.page,
-              { data: staticSnapshot.consentConfig || { mode: 'disabled' as const, enabled: false } },
+              currentStaticSnapshot.page,
+              { data: currentStaticSnapshot.consentConfig || { mode: 'disabled' as const, enabled: false } },
             ]
           : await Promise.all([
               publicPageApi.get(),
@@ -165,32 +211,8 @@ const Index = () => {
         const profileData = pageData.profile;
         let nextProfile: ProfileData | null = null;
         if (profileData) {
-          const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
-          const faviconValue = (profileData as any).favicon;
-          const favicon = isBundledProfileAvatar(faviconValue) ? undefined : (faviconValue || undefined);
-          const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
-          const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
-          const privacyPolicyUrl = getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl);
-          const cookiePolicyUrl = (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined;
-          nextProfile = {
-            name: profileData.name || "",
-            bio: profileData.bio || "",
-            avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
-              ? profileData.avatar
-              : (profileAvatar as string),
-            showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
-              ? (profileData as any).show_avatar !== 0
-              : ((profileData as any).showAvatar ?? true),
-            nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
-            bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
-            appearance: (profileData as any).appearance || {},
-            socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
-            footerText,
-            favicon,
-            googleAnalyticsId,
-            privacyPolicyUrl,
-            cookiePolicyUrl,
-          };
+          nextProfile = normalizePublicProfile(profileData);
+          const { favicon, googleAnalyticsId } = nextProfile;
           setProfile(nextProfile);
 
           // ── Google Analytics 4 — Consent Mode v2 ────────────────────────────
