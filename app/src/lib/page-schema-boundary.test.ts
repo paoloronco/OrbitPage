@@ -163,6 +163,12 @@ describe('canonical page schema boundary', () => {
         name: 'Legacy',
         showAvatar: false,
         unknownProfileField: 'drop-me',
+        appearance: {
+          avatarShape: 'circle',
+          avatarSize: 20,
+          cardBorderEnabled: true,
+          unknownAppearanceField: 'drop-me',
+        },
       },
       links: [{
         id: 42,
@@ -180,11 +186,27 @@ describe('canonical page schema boundary', () => {
     const migrated = normalizeStoredOrbitPageDocument(legacy);
 
     expect(migrated.profile).toMatchObject({ name: 'Legacy', show_avatar: 0 });
+    expect(migrated.profile.appearance).toEqual({
+      avatarShape: 'round',
+      cardBorderEnabled: true,
+    });
     expect(migrated.links[0]).toMatchObject({ id: '42', iconType: 'emoji', position: 0 });
     expect(migrated.theme.primary).toBe('#123456');
     expect(migrated).not.toHaveProperty('unknownTopLevelField');
     expect(migrated.profile).not.toHaveProperty('unknownProfileField');
     expect(migrated.links[0]).not.toHaveProperty('unknownBlockField');
+  });
+
+  it('canonicalizes the legacy circle avatar shape at the profile patch boundary', () => {
+    expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      appearance: {
+        avatarShape: 'circle',
+      },
+    })).toMatchObject({
+      appearance: {
+        avatarShape: 'round',
+      },
+    });
   });
 
   it('binds non-advanced plan metadata to real preset values', () => {
