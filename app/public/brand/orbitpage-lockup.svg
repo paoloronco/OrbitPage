@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 306 64" role="img" aria-labelledby="title desc">
   <title id="title">OrbitPage</title>
-  <desc id="desc">OrbitPage orbital page monogram and wordmark.</desc>
-  <rect x="2" y="2" width="60" height="60" rx="15" fill="#0C1628"/>
-  <path d="M47.2 16.8A21.5 21.5 0 1 0 52 40.2" fill="none" stroke="#4C7DFF" stroke-linecap="round" stroke-width="5.5"/>
-  <path d="M22 47V17.5h12.5c8 0 13 4.5 13 11.25S42.5 40 34.5 40H22" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
-  <circle cx="50.4" cy="15" r="3.2" fill="#FFFFFF"/>
-  <text x="82" y="43" fill="#101828" font-family="Inter, Geist, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="35" font-weight="760" letter-spacing="0">OrbitPage</text>
+  <desc id="desc">OrbitPage orbital page icon and typographic wordmark.</desc>
+  <image href="orbitpage-mark-512.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/>
+  <text x="78" y="43" fill="#101828" font-family="Inter, Geist, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="35" letter-spacing="-1.5">
+    <tspan font-weight="830">Orbit</tspan><tspan font-weight="520">Page</tspan>
+  </text>
 </svg>
