@@ -1,5 +1,6 @@
 import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
+import { OrbitPageBrand } from "./OrbitPageBrand";
 import type { LinkData } from "./LinkCard";
 import { withTenantBasePath } from "@/lib/base-path";
 import { getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
@@ -137,15 +138,16 @@ export const PublicView = ({
             </p>
           )}
           {showOrbitPageBadge && (
-            <p className="text-xs text-muted-foreground opacity-60">
-              Powered by{" "}
+            <p className="flex items-center justify-center gap-2 pt-2 text-xs text-muted-foreground opacity-70">
+              <span>Powered by</span>
               <a
-                href="https://github.com/paoloronco/OrbitPage"
+                aria-label="OrbitPage"
+                href="https://orbitpage.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline hover:text-primary"
+                className="inline-flex rounded-md text-current no-underline transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
-                OrbitPage
+                <OrbitPageBrand className="gap-1.5" size="xs" />
               </a>
             </p>
           )}
