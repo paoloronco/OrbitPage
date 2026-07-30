@@ -17,6 +17,7 @@ export type HostedSurfaceConfig = {
   };
   onContentSectionChange?: (section: "home" | "menu" | "pages" | "shop") => void;
   onOpenShop?: () => void;
+  onReady?: () => void;
 };
 
 declare global {

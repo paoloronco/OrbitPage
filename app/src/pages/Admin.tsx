@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AdminView } from "@/components/AdminView";
 import { LoginForm } from "@/components/LoginForm";
@@ -7,7 +7,7 @@ import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, isIntegratedHostedSurface, workspaceBootstrapApi, type SubpageItem } from "@/lib/api-client";
+import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, isIntegratedHostedSurface, workspaceBootstrapApi, type SubpageItem, type WorkspaceBootstrapResponse } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { parseOrbitPageBlocks } from "@orbitpage/page-schema";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +26,7 @@ import {
   type AdminTab,
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
-import { HOSTED_SECTION_CHANGED_EVENT, HOSTED_SECTION_NAVIGATE_EVENT } from "@/lib/hosted-surface";
+import { getHostedSurfaceConfig, HOSTED_SECTION_CHANGED_EVENT, HOSTED_SECTION_NAVIGATE_EVENT } from "@/lib/hosted-surface";
 
 interface ProfileData {
   name: string;
@@ -99,6 +99,7 @@ const Admin = () => {
   const [saasPlan, setSaasPlan] = useState<SaasPlanDefinition | null>(null);
   const [saasUsage, setSaasUsage] = useState<SaasWorkspaceUsage | null>(null);
   const [saasBilling, setSaasBilling] = useState<SaasBillingContext | null>(null);
+  const hostedBootstrapRef = useRef<Promise<WorkspaceBootstrapResponse> | null>(null);
 
   const requestedTab = hostedSurface ? hostedTab : locationTab;
 
@@ -172,6 +173,13 @@ const Admin = () => {
           return;
         }
 
+        const bootstrapPromise = workspaceBootstrapApi.get();
+        // The editor data and token verification are independent authenticated
+        // reads. Start them together so the hosted dashboard does not pay for
+        // two sequential network round trips.
+        void bootstrapPromise.catch(() => undefined);
+        hostedBootstrapRef.current = bootstrapPromise;
+
         try {
           const result = await authApi.verify();
           setIsLoggedIn(result.valid);
@@ -184,7 +192,9 @@ const Admin = () => {
               readOnly: result.user.readOnly === true,
             });
           }
+          if (!result.valid) hostedBootstrapRef.current = null;
         } catch {
+          hostedBootstrapRef.current = null;
           setIsLoggedIn(false);
           setHostedAccessDenied(true);
         }
@@ -214,8 +224,11 @@ const Admin = () => {
   // Load data from database and apply theme
   useEffect(() => {
     const loadData = async () => {
+      const pendingHostedBootstrap = hostedBootstrapRef.current;
       try {
-        const bootstrap = isSaasMode() ? await workspaceBootstrapApi.get() : null;
+        const bootstrap = isSaasMode()
+          ? await (pendingHostedBootstrap || workspaceBootstrapApi.get())
+          : null;
         const [profileData, linksData, subpagesData, themeData, menuData] = bootstrap
           ? [bootstrap.profile, bootstrap.links, bootstrap.subpages || [], bootstrap.theme, bootstrap.menu]
           : await Promise.all([profileApi.get(), linksApi.get(), subpagesApi.get(), themeApi.get(), menuApi.get()]);
@@ -274,6 +287,7 @@ const Admin = () => {
         console.error('Error loading data:', error);
         applyTheme(defaultTheme);
       } finally {
+        if (hostedBootstrapRef.current === pendingHostedBootstrap) hostedBootstrapRef.current = null;
         setWorkspaceLoaded(true);
       }
     };
@@ -282,6 +296,11 @@ const Admin = () => {
       loadData();
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!integratedHostedSurface || isLoading || !isLoggedIn || !workspaceLoaded) return;
+    getHostedSurfaceConfig()?.onReady?.();
+  }, [integratedHostedSurface, isLoading, isLoggedIn, workspaceLoaded]);
 
 
   // Save data changes to database
