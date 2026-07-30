@@ -6,6 +6,7 @@ const mockState = vi.hoisted(() => ({
   backupProps: [] as Array<Record<string, unknown>>,
   hostedConfig: null as null | Record<string, unknown>,
   integratedHostedSurface: false,
+  profileProps: [] as Array<Record<string, unknown>>,
   privacyProps: [] as Array<Record<string, unknown>>,
   publishProps: [] as Array<Record<string, unknown>>,
   previewProps: [] as Array<Record<string, unknown>>,
@@ -34,7 +35,12 @@ vi.mock('@/components/ui/tabs', () => ({
   TabsContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock('./ProfileSection', () => ({ ProfileSection: () => <div>ProfileSection</div> }));
+vi.mock('./ProfileSection', () => ({
+  ProfileSection: (props: Record<string, unknown>) => {
+    mockState.profileProps.push(props);
+    return <div>ProfileSection</div>;
+  },
+}));
 vi.mock('./LinkManager', () => ({ LinkManager: () => <div>LinkManager</div> }));
 vi.mock('./ThemeCustomizer', () => ({ ThemeCustomizer: () => <div>ThemeCustomizer</div> }));
 vi.mock('./LivePreview', () => ({
@@ -184,6 +190,69 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('LinkManager');
     expect(html).not.toContain('>Guide<');
     expect(html).not.toContain('Page checklist');
+  });
+
+  it('locks the OrbitPage badge on Starter and keeps it hidden by default on Pro', () => {
+    vi.stubGlobal('__APP_VERSION__', '4.7.0');
+    const basePlan = {
+      name: 'Plan',
+      priceMonthlyEur: 0,
+      description: '',
+      entitlements: {
+        personalizedUrl: false,
+        maxBlocks: 10,
+        storageBytes: 1,
+        maxUploadBytes: 1,
+        maxVideoUploadBytes: 0,
+        themes: 'essential',
+        analytics: 'basic-clicks',
+        scheduling: false,
+        seo: 'none',
+        pages: 1,
+        collaborators: false,
+        videoUploads: false,
+        nativeMenu: false,
+        maxMenuItems: 0,
+        maxMenuCatalogs: 0,
+        menuLanguages: 0,
+        menuScheduling: false,
+        available: true,
+      },
+    };
+
+    renderToStaticMarkup(
+      <AdminView
+        profile={{ name: 'Starter', bio: '', avatar: '', showOrbitPageBadge: false }}
+        links={[]}
+        theme={defaultTheme}
+        currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+        saasPlan={{ ...basePlan, id: 'starter', entitlements: { ...basePlan.entitlements, badgeRequired: true } } as any}
+        onProfileUpdate={vi.fn()}
+        onLinksUpdate={vi.fn()}
+        onThemeChange={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(mockState.profileProps.at(-1)).toMatchObject({ orbitPageBadgeEditable: false });
+    expect(mockState.previewProps.at(-1)).toMatchObject({ showOrbitPageBadge: true });
+
+    renderToStaticMarkup(
+      <AdminView
+        profile={{ name: 'Pro', bio: '', avatar: '' }}
+        links={[]}
+        theme={defaultTheme}
+        currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+        saasPlan={{ ...basePlan, id: 'pro', entitlements: { ...basePlan.entitlements, badgeRequired: false } } as any}
+        onProfileUpdate={vi.fn()}
+        onLinksUpdate={vi.fn()}
+        onThemeChange={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(mockState.profileProps.at(-1)).toMatchObject({ orbitPageBadgeEditable: true });
+    expect(mockState.previewProps.at(-1)).toMatchObject({ showOrbitPageBadge: false });
   });
 
   it('keeps the hosted shop inside the unified content workspace', () => {

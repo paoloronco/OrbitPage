@@ -64,6 +64,7 @@ interface ProfileData {
   tabTitle?: string;
   metaDescription?: string;
   footerText?: string;
+  showOrbitPageBadge?: boolean;
   favicon?: string;
   adminOnboardingEnabled?: boolean;
 }
@@ -77,6 +78,7 @@ interface ProfileSectionProps {
   onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
   seoAccess?: SaasSeoAccess;
   managePlanHref?: string;
+  orbitPageBadgeEditable?: boolean;
 }
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
@@ -177,6 +179,7 @@ export const ProfileSection = ({
   onAdminOnboardingEnabledChange,
   seoAccess,
   managePlanHref = "/dashboard/billing",
+  orbitPageBadgeEditable = true,
 }: ProfileSectionProps) => {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(profile);
@@ -575,6 +578,22 @@ export const ProfileSection = ({
               <div className="space-y-2">
                 <Label htmlFor="profile-footer">{tr("Footer text", "Testo del footer")}</Label>
                 <Textarea id="profile-footer" value={draft.footerText || ""} onChange={(event) => setDraft((current) => ({ ...current, footerText: event.target.value }))} placeholder={tr("(c) Your name. All rights reserved.", "(c) Il tuo nome. Tutti i diritti riservati.")} rows={2} maxLength={300} />
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{tr("Powered by", "Realizzato con")} OrbitPage</p>
+                  <p className="text-xs leading-5 text-slate-500">
+                    {orbitPageBadgeEditable
+                      ? tr("Public page", "Pagina pubblica")
+                      : tr("Available on Pro.", "Disponibile con Pro.")}
+                  </p>
+                </div>
+                <Switch
+                  aria-label={`${tr("Powered by", "Realizzato con")} OrbitPage`}
+                  checked={orbitPageBadgeEditable ? draft.showOrbitPageBadge !== false : true}
+                  disabled={!orbitPageBadgeEditable}
+                  onCheckedChange={(showOrbitPageBadge) => setDraft((current) => ({ ...current, showOrbitPageBadge }))}
+                />
               </div>
             </div>
           </details>

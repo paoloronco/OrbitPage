@@ -1,4 +1,4 @@
-export type SaasPlanId = 'free' | 'starter' | 'pro' | 'agency';
+export type SaasPlanId = 'free' | 'starter' | 'pro' | 'partner' | 'agency';
 export type SaasThemeAccess = 'essential' | 'premium' | 'advanced';
 export type SaasAnalyticsAccess = 'basic-clicks' | 'standard' | 'advanced-ga4';
 export type SaasSeoAccess = 'none' | 'basic' | 'advanced';
