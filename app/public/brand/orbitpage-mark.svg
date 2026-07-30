@@ -1,5 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
   <title id="title">OrbitPage</title>
   <desc id="desc">A deep-blue page crossed by a bright blue orbit.</desc>
-  <image href="orbitpage-mark-512.png" width="64" height="64" preserveAspectRatio="xMidYMid meet"/>
+  <defs>
+    <linearGradient id="page" x1="18" y1="15" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#223B70"/>
+      <stop offset=".58" stop-color="#101828"/>
+      <stop offset="1" stop-color="#2456D8"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="22" y1="16" x2="42" y2="46" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7BA2FF" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#2456D8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="12" y1="48" x2="57" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2456D8"/>
+      <stop offset=".55" stop-color="#3568F4"/>
+      <stop offset="1" stop-color="#7BA2FF"/>
+    </linearGradient>
+    <clipPath id="page-clip"><rect x="18" y="15" width="32" height="37" rx="5"/></clipPath>
+  </defs>
+  <path d="M35 14c11-5 21-2 21 8 0 9-7 20-16 26" fill="none" stroke="url(#orbit)" stroke-linecap="round" stroke-width="6"/>
+  <rect x="18" y="15" width="32" height="37" rx="5" fill="url(#page)"/>
+  <path d="M18 15h32L18 52Z" fill="url(#fold)" clip-path="url(#page-clip)"/>
+  <path d="M56 22c1 12-9 24-20 30-12 7-23 4-24-4-1-5 1-10 4-14" fill="none" stroke="url(#orbit)" stroke-linecap="round" stroke-width="6.5"/>
+  <path d="M55 20c1 9-5 19-12 26" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-width="1.3"/>
+  <path d="M34 14c8-5 16-4 20 1" fill="none" stroke="#3568F4" stroke-linecap="round" stroke-width="3"/>
 </svg>
