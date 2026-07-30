@@ -283,8 +283,72 @@ export const initializeDatabase = () => {
               `);
             }
           });
-          resolve();
         }
+      });
+
+      // Provider credentials are kept out of application backups. Only an
+      // authenticated administrator can write this singleton row, and the API
+      // key itself is encrypted before it reaches SQLite.
+      db.run(`
+        CREATE TABLE IF NOT EXISTS ai_settings (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          provider TEXT NOT NULL DEFAULT 'openai',
+          encrypted_api_key TEXT,
+          key_last_four TEXT,
+          model TEXT NOT NULL,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      // AI proposals are short-lived, single-use and bound to the editor that
+      // created them. The raw confirmation token is never persisted.
+      db.run(`
+        CREATE TABLE IF NOT EXISTS ai_page_previews (
+          token_hash TEXT PRIMARY KEY,
+          username TEXT NOT NULL,
+          expected_revision INTEGER NOT NULL,
+          changes TEXT NOT NULL,
+          summary TEXT NOT NULL,
+          operation_summaries TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          used_at TEXT,
+          committed_revision INTEGER
+        )
+      `);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_ai_page_previews_expiry ON ai_page_previews(expires_at)`);
+
+      // Every persisted profile, block or theme mutation advances this revision,
+      // including edits made outside the AI. It gives proposal confirmation a
+      // deterministic conflict boundary instead of relying on timestamps.
+      db.run(`
+        CREATE TABLE IF NOT EXISTS page_state (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          revision INTEGER NOT NULL DEFAULT 0,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      db.run(`INSERT OR IGNORE INTO page_state (id, revision) VALUES (1, 0)`);
+      for (const table of ['profile_data', 'links', 'theme_config']) {
+        for (const action of ['INSERT', 'UPDATE', 'DELETE']) {
+          const triggerName = `advance_page_revision_${table}_${action.toLowerCase()}`;
+          db.run(`
+            CREATE TRIGGER IF NOT EXISTS ${triggerName}
+            AFTER ${action} ON ${table}
+            BEGIN
+              UPDATE page_state
+              SET revision = revision + 1, updated_at = CURRENT_TIMESTAMP
+              WHERE id = 1;
+            END
+          `);
+        }
+      }
+
+      // This is the final schema statement queued by serialize(), so resolving
+      // here guarantees that the AI tables and revision triggers are available.
+      db.run(`DELETE FROM ai_page_previews WHERE expires_at <= datetime('now')`, (err) => {
+        if (err) reject(err);
+        else resolve();
       });
     });
   });
@@ -342,6 +406,49 @@ export const withTransaction = async (callback) => {
   } catch (error) {
     await dbRun('ROLLBACK');
     throw error;
+  }
+};
+
+// AI confirmation needs a transaction on its own SQLite connection. BEGIN
+// IMMEDIATE prevents ordinary writes on the shared connection from interleaving
+// between the revision check and the final page update.
+export const withImmediateTransaction = async (callback) => {
+  const transactionDb = new sqlite3.Database(
+    dbPath,
+    sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE | sqlite3.OPEN_FULLMUTEX
+  );
+  const run = (sql, params = []) => new Promise((resolve, reject) => {
+    transactionDb.run(sql, params, function(error) {
+      if (error) reject(error);
+      else resolve(this);
+    });
+  });
+  const get = (sql, params = []) => new Promise((resolve, reject) => {
+    transactionDb.get(sql, params, (error, row) => {
+      if (error) reject(error);
+      else resolve(row);
+    });
+  });
+  const all = (sql, params = []) => new Promise((resolve, reject) => {
+    transactionDb.all(sql, params, (error, rows) => {
+      if (error) reject(error);
+      else resolve(rows);
+    });
+  });
+  const close = () => new Promise((resolve) => transactionDb.close(() => resolve()));
+
+  try {
+    await run('PRAGMA foreign_keys = ON');
+    await run('PRAGMA busy_timeout = 10000');
+    await run('BEGIN IMMEDIATE');
+    const result = await callback({ run, get, all });
+    await run('COMMIT');
+    return result;
+  } catch (error) {
+    await run('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    await close();
   }
 };
 

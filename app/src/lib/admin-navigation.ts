@@ -1,6 +1,7 @@
 export const ADMIN_TAB_IDS = [
   "profile",
   "content",
+  "ai",
   // Legacy section ids stay valid for older bookmarks and hosted runtimes.
   "links",
   "pages",

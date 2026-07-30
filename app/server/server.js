@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import path, { dirname, join } from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
-import { initializeDatabase, dbGet, dbAll, dbRun, withTransaction } from './database.js';
+import { initializeDatabase, dbGet, dbAll, dbRun, withTransaction, withImmediateTransaction } from './database.js';
 import {
   isFirstTimeSetup,
   setupInitialCredentials,
@@ -64,6 +64,15 @@ import {
   regenerateRecoveryCodes,
   verifySecondFactor,
 } from './services/two-factor-service.js';
+import {
+  AiPageAgentError,
+  aiPageAgentHttpError,
+  createPreviewToken,
+  getAiSettings,
+  planAiPageChanges,
+  previewTokenHash,
+  saveAiSettings,
+} from './services/ai-page-agent.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -734,7 +743,7 @@ const getPublicThemePayload = async () => {
 };
 
 const PUBLIC_SPA_ROUTES = new Set(['/', '/privacy', '/cookies']);
-const ADMIN_SPA_SECTIONS = new Set(['profile', 'links', 'theme', 'menu', 'qr', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
+const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const isAdminSpaRoute = (pathName) => {
   const segments = String(pathName || '').split('/').filter(Boolean);
   if (segments.length === 1 && (segments[0] === 'admin' || segments[0] === 'dashboard')) return true;
@@ -1689,6 +1698,19 @@ const resetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 2,
   message: { success: false, error: 'Too many reset attempts. Please try again in 1 hour.' },
+});
+
+const aiAgentLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.username || req.ip,
+  message: {
+    success: false,
+    error: 'Too many AI requests. Wait before asking the assistant again.',
+    code: 'AI_RATE_LIMITED',
+  },
 });
 
 // Apply rate limiting
@@ -2989,6 +3011,11 @@ const ThemeSurfaceSchema = z.object({
 });
 
 const ThemeSchema = z.object({
+  orbitPageAccess: z.object({
+    mode: z.enum(['preset', 'custom']),
+    presetId: z.string().max(80).nullable().optional(),
+    cardPresetId: z.string().max(80).nullable().optional(),
+  }).optional(),
   primary: z.string().max(100).optional(),
   primaryGlow: z.string().max(100).optional(),
   background: z.string().max(100).optional(),
@@ -3012,12 +3039,25 @@ const ThemeSchema = z.object({
   contentCard: ThemeSurfaceSchema.optional(),
   contentCardMode: z.enum(['mono', 'multi']).optional(),
   contentCardVariants: z.array(ThemeSurfaceSchema).max(8).optional(),
+  profileCardOpacity: z.number().min(0).max(1).optional(),
+  contentCardOpacity: z.number().min(0).max(1).optional(),
+  profileCardEffect: z.enum(['solid', 'transparent', 'liquid-glass']).optional(),
+  contentCardEffect: z.enum(['solid', 'transparent', 'liquid-glass']).optional(),
   fontFamily: z.string().max(300).optional(),
   cardRadius: z.number().optional(),
   cardSpacing: z.number().optional(),
   maxWidth: z.string().max(50).optional(),
   glowIntensity: z.number().optional(),
   blurIntensity: z.number().optional(),
+  cardBlurTint: z.string().max(100).nullable().optional(),
+  cardShadow: z.object({
+    color: z.string().max(100),
+    offsetX: z.number().min(-32).max(32),
+    offsetY: z.number().min(-32).max(48),
+    blur: z.number().min(0).max(96),
+    spread: z.number().min(-32).max(48),
+    opacity: z.number().min(0).max(1),
+  }).optional(),
   content: z.object({
     profileName: z.string().max(200).optional(),
     profileBio: z.string().max(200).optional(),
@@ -3078,6 +3118,336 @@ app.put('/api/theme', authenticateToken, requirePermission('theme:write'), async
     res.status(500).json({ error: 'Failed to save theme' });
   }
 });
+
+const AI_PREVIEW_TTL_MS = 10 * 60 * 1000;
+const AI_PREVIEW_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
+const getAiPageSnapshot = async () => {
+  const [profile, linkRows, theme, state] = await Promise.all([
+    getPublicProfilePayload(),
+    dbAll('SELECT * FROM links ORDER BY sort_order'),
+    getPublicThemePayload(),
+    dbGet('SELECT revision FROM page_state WHERE id = 1'),
+  ]);
+  return {
+    page: {
+      profile,
+      links: linkRows.map(formatLinkPayload),
+      theme,
+    },
+    revision: Number.isSafeInteger(state?.revision) && state.revision >= 0 ? state.revision : 0,
+  };
+};
+
+const persistAiProfile = async (transaction, profile) => {
+  const parsed = ProfileSchema.parse(profile);
+  const socialLinks = { ...(parsed.social_links || {}), ...(parsed.socialLinks || {}) };
+  const existing = await transaction.get(
+    'SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1',
+  );
+  const showAvatarRaw = parsed.showAvatar ?? parsed.show_avatar;
+  const showAvatar = typeof showAvatarRaw === 'number' ? showAvatarRaw !== 0 : Boolean(showAvatarRaw);
+  const onboardingRaw = parsed.adminOnboardingEnabled ?? parsed.admin_onboarding_enabled;
+  const onboardingEnabled = typeof onboardingRaw === 'number'
+    ? onboardingRaw !== 0
+    : typeof onboardingRaw === 'boolean'
+      ? onboardingRaw
+      : existing?.admin_onboarding_enabled !== 0;
+  const appearance = parsed.appearance ?? safeJsonParse(existing?.appearance, {});
+  const values = [
+    parsed.name || '',
+    parsed.bio || '',
+    parsed.avatar || '',
+    JSON.stringify(socialLinks),
+    showAvatar ? 1 : 0,
+    parsed.nameFontSize ?? parsed.name_font_size ?? null,
+    parsed.bioFontSize ?? parsed.bio_font_size ?? null,
+    parsed.tabTitle ?? parsed.tab_title ?? null,
+    parsed.metaDescription ?? parsed.meta_description ?? null,
+    parsed.footerText ?? parsed.footer_text ?? null,
+    parsed.favicon ?? null,
+    parsed.googleAnalyticsId ?? parsed.google_analytics_id ?? null,
+    existing?.privacy_policy_url || null,
+    existing?.cookie_policy_url || null,
+    onboardingEnabled ? 1 : 0,
+    JSON.stringify(appearance),
+  ];
+  if (existing) {
+    await transaction.run(
+      'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, admin_onboarding_enabled = ?, appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [...values, existing.id],
+    );
+  } else {
+    await transaction.run(
+      'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      values,
+    );
+  }
+};
+
+const persistAiLinks = async (transaction, input) => {
+  const links = LinksPayloadSchema.parse(input);
+  const existingRows = await transaction.all('SELECT id, click_count, cta_click_count FROM links');
+  const savedClicks = new Map(existingRows.map((row) => [String(row.id), row.click_count || 0]));
+  const savedCtaClicks = new Map(existingRows.map((row) => [String(row.id), row.cta_click_count || 0]));
+  await transaction.run('DELETE FROM links');
+
+  for (const [index, link] of links.entries()) {
+    const linkId = String(link.id);
+    const textItems = Array.isArray(link.textItems)
+      ? JSON.stringify(link.textItems.map((item) => typeof item === 'string'
+        ? { text: item }
+        : {
+            text: item.text,
+            url: item.url || '',
+            textColor: item.textColor || null,
+            fontSize: item.fontSize || null,
+            fontFamily: item.fontFamily || null,
+          }))
+      : null;
+    const clickCount = savedClicks.has(linkId) ? savedClicks.get(linkId) : (link.clickCount || 0);
+    const ctaClicks = savedCtaClicks.has(linkId) ? savedCtaClicks.get(linkId) : (link.ctaClicks || 0);
+    await transaction.run(
+      'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, surface_effect, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        linkId,
+        link.title,
+        link.description || '',
+        link.url || '',
+        link.hideUrl ? 1 : 0,
+        link.icon || null,
+        link.type || 'link',
+        textItems,
+        index,
+        link.isActive !== false ? 1 : 0,
+        link.backgroundColor || null,
+        link.textColor || null,
+        normalizeCardSurfaceEffect(link.surfaceEffect),
+        link.size || null,
+        link.iconType || (link.icon ? 'image' : null),
+        link.content || null,
+        link.titleFontFamily || null,
+        link.descriptionFontFamily || null,
+        link.alignment || null,
+        link.titleFontSize || null,
+        link.descriptionFontSize || null,
+        clickCount,
+        link.ctaAction || null,
+        ctaClicks,
+        normalizeLinkStatus(link.status),
+        link.campaignName || null,
+        link.startDate || null,
+        link.startTime || null,
+        link.endDate || null,
+        link.endTime || null,
+        link.timezone || null,
+        link.coverImage || null,
+        link.coverImageAlt || null,
+        link.availability === 'unavailable' ? 'unavailable' : 'available',
+      ],
+    );
+  }
+};
+
+const persistAiTheme = async (transaction, input) => {
+  const theme = ThemeSchema.parse(input);
+  const existing = await transaction.get('SELECT id FROM theme_config LIMIT 1');
+  const primary = String(theme.primary || '#007bff');
+  const background = String(theme.background || '#ffffff');
+  const foreground = String(theme.foreground || '#000000');
+  if (existing) {
+    await transaction.run(
+      'UPDATE theme_config SET primary_color = ?, background_color = ?, text_color = ?, full_config = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [primary, background, foreground, JSON.stringify(theme), existing.id],
+    );
+  } else {
+    await transaction.run(
+      'INSERT INTO theme_config (primary_color, background_color, text_color, full_config) VALUES (?, ?, ?, ?)',
+      [primary, background, foreground, JSON.stringify(theme)],
+    );
+  }
+};
+
+const sendAiError = (res, error) => {
+  const normalized = aiPageAgentHttpError(error);
+  if (normalized) {
+    if (normalized.headers) res.set(normalized.headers);
+    return res.status(normalized.status).json(normalized.body);
+  }
+  console.error('OrbitPage AI request failed:', error?.message || error);
+  return res.status(500).json({
+    error: 'The AI request could not be completed safely.',
+    code: 'AI_INTERNAL_ERROR',
+  });
+};
+
+app.get(
+  '/api/ai/settings',
+  authenticateToken,
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
+  async (req, res) => {
+    try {
+      setNoStoreHeaders(res);
+      res.json(await getAiSettings());
+    } catch (error) {
+      sendAiError(res, error);
+    }
+  },
+);
+
+app.put(
+  '/api/ai/settings',
+  authenticateToken,
+  requirePermission('users:manage'),
+  async (req, res) => {
+    if (DEMO_MODE) return res.status(403).json({ error: 'AI settings are read-only in demo mode.' });
+    try {
+      setNoStoreHeaders(res);
+      res.json(await saveAiSettings(req.body || {}));
+    } catch (error) {
+      sendAiError(res, error);
+    }
+  },
+);
+
+app.post(
+  '/api/ai/page/plan',
+  authenticateToken,
+  aiAgentLimiter,
+  requireAnyPermission('profile:write', 'links:write', 'theme:write'),
+  async (req, res) => {
+    if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
+    try {
+      setNoStoreHeaders(res);
+      const snapshot = await getAiPageSnapshot();
+      const result = await planAiPageChanges({
+        username: req.user.username,
+        permissions: req.user.permissions || [],
+        rawRequest: req.body || {},
+        page: snapshot.page,
+        revision: snapshot.revision,
+      });
+      if (!result.proposal) return res.json({ reply: result.reply, proposal: null });
+
+      const previewToken = createPreviewToken();
+      const createdAt = new Date().toISOString();
+      const expiresAt = new Date(Date.now() + AI_PREVIEW_TTL_MS).toISOString();
+      await dbRun(
+        `INSERT INTO ai_page_previews
+          (token_hash, username, expected_revision, changes, summary, operation_summaries, created_at, expires_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          previewTokenHash(previewToken),
+          req.user.username,
+          snapshot.revision,
+          JSON.stringify(result.proposal.changes),
+          result.proposal.summary,
+          JSON.stringify(result.proposal.operationSummaries),
+          createdAt,
+          expiresAt,
+        ],
+      );
+      await dbRun(
+        `DELETE FROM ai_page_previews
+         WHERE expires_at <= ? OR (used_at IS NOT NULL AND used_at <= ?)`,
+        [createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()],
+      ).catch(() => undefined);
+      res.json({
+        reply: result.reply,
+        proposal: {
+          previewToken,
+          summary: result.proposal.summary,
+          changes: result.proposal.operationSummaries,
+          expectedRevision: snapshot.revision,
+          expiresAt,
+        },
+      });
+    } catch (error) {
+      sendAiError(res, error);
+    }
+  },
+);
+
+app.post(
+  '/api/ai/page/commit',
+  authenticateToken,
+  requireAnyPermission('profile:write', 'links:write', 'theme:write'),
+  async (req, res) => {
+    if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
+    const previewToken = String(req.body?.previewToken || '');
+    if (!AI_PREVIEW_TOKEN_PATTERN.test(previewToken)) {
+      return res.status(400).json({ error: 'The AI proposal token is invalid.', code: 'AI_REQUEST_INVALID' });
+    }
+    try {
+      setNoStoreHeaders(res);
+      const committed = await withImmediateTransaction(async (transaction) => {
+        const preview = await transaction.get(
+          'SELECT * FROM ai_page_previews WHERE token_hash = ?',
+          [previewTokenHash(previewToken)],
+        );
+        if (!preview || preview.username !== req.user.username) {
+          throw new AiPageAgentError(404, 'AI_PREVIEW_NOT_FOUND', 'This AI proposal is unavailable or belongs to another editor.');
+        }
+        if (preview.used_at && Number.isSafeInteger(preview.committed_revision)) {
+          return { revision: preview.committed_revision, alreadyApplied: true };
+        }
+        if (Date.parse(preview.expires_at) <= Date.now()) {
+          throw new AiPageAgentError(410, 'AI_PREVIEW_EXPIRED', 'This AI proposal expired. Ask the assistant to prepare it again.');
+        }
+
+        const state = await transaction.get('SELECT revision FROM page_state WHERE id = 1');
+        const currentRevision = Number.isSafeInteger(state?.revision) ? state.revision : 0;
+        if (currentRevision !== preview.expected_revision) {
+          throw new AiPageAgentError(
+            409,
+            'AI_REVISION_CONFLICT',
+            'The page changed after this proposal was created. Ask the assistant to prepare it again.',
+          );
+        }
+
+        let changes;
+        try {
+          changes = JSON.parse(preview.changes);
+        } catch {
+          throw new AiPageAgentError(422, 'AI_PREVIEW_INVALID', 'This AI proposal can no longer be validated.');
+        }
+        if (changes.profile !== undefined) {
+          if (!(req.user.permissions || []).includes('profile:write')) {
+            throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot apply profile changes.');
+          }
+          await persistAiProfile(transaction, changes.profile);
+        }
+        if (changes.links !== undefined) {
+          if (!(req.user.permissions || []).includes('links:write')) {
+            throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot apply content changes.');
+          }
+          await persistAiLinks(transaction, changes.links);
+        }
+        if (changes.theme !== undefined) {
+          if (!(req.user.permissions || []).includes('theme:write')) {
+            throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot apply theme changes.');
+          }
+          await persistAiTheme(transaction, changes.theme);
+        }
+        const nextState = await transaction.get('SELECT revision FROM page_state WHERE id = 1');
+        const committedRevision = Number.isSafeInteger(nextState?.revision)
+          ? nextState.revision
+          : currentRevision + 1;
+        const usedAt = new Date().toISOString();
+        await transaction.run(
+          `UPDATE ai_page_previews
+           SET used_at = ?, committed_revision = ?, changes = '{}'
+           WHERE token_hash = ? AND used_at IS NULL`,
+          [usedAt, committedRevision, preview.token_hash],
+        );
+        return { revision: committedRevision, alreadyApplied: false };
+      });
+      res.json({ success: true, ...committed });
+    } catch (error) {
+      sendAiError(res, error);
+    }
+  },
+);
 
 const MAP_PREVIEW_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const mapPreviewCache = new Map();

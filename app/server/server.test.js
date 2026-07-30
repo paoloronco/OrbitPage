@@ -11,7 +11,8 @@ vi.mock('./database.js', () => ({
   dbGet: vi.fn(),
   dbAll: vi.fn(),
   dbRun: vi.fn(),
-  withTransaction: vi.fn(cb => cb())
+  withTransaction: vi.fn(cb => cb()),
+  withImmediateTransaction: vi.fn(),
 }));
 
 // Mock auth.js
@@ -22,7 +23,15 @@ vi.mock('./auth.js', () => ({
   generateToken: vi.fn(() => 'mock-token'),
   verifyToken: vi.fn(),
   authenticateToken: (req, res, next) => {
-    req.user = { username: 'admin' };
+    req.user = {
+      username: 'admin',
+      permissions: [
+        'profile:write',
+        'links:write',
+        'theme:write',
+        'users:manage',
+      ],
+    };
     next();
   },
   requirePermission: vi.fn(() => (req, res, next) => next()),
@@ -39,7 +48,7 @@ vi.mock('./services/backup-service.js', () => ({
 // Now import app
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
 import { isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
-import { dbAll, dbGet, dbRun, withTransaction } from './database.js';
+import { dbAll, dbGet, dbRun, withImmediateTransaction, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
 
 describe('API Endpoints', () => {
@@ -49,6 +58,7 @@ describe('API Endpoints', () => {
     vi.mocked(dbAll).mockResolvedValue([]);
     vi.mocked(dbRun).mockResolvedValue({ changes: 1 });
     vi.mocked(withTransaction).mockImplementation(cb => cb());
+    vi.mocked(withImmediateTransaction).mockReset();
     vi.mocked(isFirstTimeSetup).mockResolvedValue(false);
     vi.mocked(createApplicationBackup).mockResolvedValue({
       schemaVersion: 1,
@@ -62,6 +72,7 @@ describe('API Endpoints', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
 
@@ -235,6 +246,150 @@ describe('API Endpoints', () => {
     expect(reserved.status).toBe(400);
     expect(ambiguous.status).toBe(400);
     expect(setupInitialCredentials).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/ai/page/plan stores a reviewable proposal without mutating the page', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-proj-server-test-key-123456789');
+    vi.mocked(dbGet).mockImplementation(async (sql) => {
+      const query = String(sql);
+      if (query.includes('FROM ai_settings')) return null;
+      if (query.includes('FROM profile_data')) {
+        return {
+          id: 1,
+          name: 'Orbit Studio',
+          bio: 'Original bio',
+          avatar: '',
+          social_links: '{}',
+          show_avatar: 1,
+          appearance: '{}',
+        };
+      }
+      if (query.includes('FROM theme_config')) {
+        return {
+          id: 1,
+          primary_color: '#2563eb',
+          background_color: '#ffffff',
+          text_color: '#0f172a',
+          full_config: '{"primary":"#2563eb","background":"#ffffff","foreground":"#0f172a"}',
+        };
+      }
+      if (query.includes('FROM page_state')) return { revision: 9 };
+      return null;
+    });
+    vi.mocked(dbAll).mockResolvedValue([]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers({ 'x-request-id': 'req_server_test' }),
+      json: async () => ({
+        status: 'completed',
+        output: [{
+          type: 'message',
+          content: [{
+            type: 'output_text',
+            text: JSON.stringify({
+              intent: 'propose_changes',
+              answer: 'I prepared a shorter bio.',
+              summary: 'Shorten the profile introduction.',
+              operations: [{
+                kind: 'profile.set',
+                targetId: null,
+                field: 'bio',
+                value: 'A short, direct bio.',
+                blockType: null,
+                title: null,
+                description: null,
+                url: null,
+                content: null,
+                index: null,
+              }],
+            }),
+          }],
+        }],
+      }),
+    }));
+
+    const response = await request(app)
+      .post('/orbitpage/api/ai/page/plan')
+      .send({ message: 'Shorten the bio', history: [] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.reply).toBe('I prepared a shorter bio.');
+    expect(response.body.proposal).toMatchObject({
+      summary: 'Shorten the profile introduction.',
+      expectedRevision: 9,
+      changes: ['Update profile field bio.'],
+    });
+    expect(response.body.proposal.previewToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO ai_page_previews'),
+      expect.arrayContaining(['admin', 9]),
+    );
+    expect(dbRun).not.toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE profile_data'),
+      expect.anything(),
+    );
+  });
+
+  it('POST /api/ai/page/commit checks the revision and applies a single-use preview transactionally', async () => {
+    const token = 'A'.repeat(43);
+    let pageStateReads = 0;
+    const transaction = {
+      get: vi.fn(async (sql) => {
+        const query = String(sql);
+        if (query.includes('FROM ai_page_previews')) {
+          return {
+            token_hash: 'stored-hash',
+            username: 'admin',
+            expected_revision: 4,
+            changes: JSON.stringify({
+              profile: {
+                name: 'Orbit Studio',
+                bio: 'Approved bio',
+                avatar: '',
+                social_links: {},
+                show_avatar: 1,
+              },
+            }),
+            expires_at: new Date(Date.now() + 60_000).toISOString(),
+            used_at: null,
+            committed_revision: null,
+          };
+        }
+        if (query.includes('FROM page_state')) {
+          pageStateReads += 1;
+          return { revision: pageStateReads === 1 ? 4 : 5 };
+        }
+        if (query.includes('FROM profile_data')) {
+          return {
+            id: 1,
+            privacy_policy_url: '/privacy',
+            cookie_policy_url: '/cookies',
+            admin_onboarding_enabled: 1,
+            appearance: '{}',
+          };
+        }
+        return null;
+      }),
+      all: vi.fn(async () => []),
+      run: vi.fn(async () => ({ changes: 1 })),
+    };
+    vi.mocked(withImmediateTransaction).mockImplementation(async (callback) => callback(transaction));
+
+    const response = await request(app)
+      .post('/orbitpage/api/ai/page/commit')
+      .send({ previewToken: token });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ success: true, revision: 5, alreadyApplied: false });
+    expect(transaction.run).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE profile_data SET'),
+      expect.arrayContaining(['Orbit Studio', 'Approved bio']),
+    );
+    expect(transaction.run).toHaveBeenCalledWith(
+      expect.stringContaining("changes = '{}'"),
+      expect.arrayContaining([5, 'stored-hash']),
+    );
   });
 
   it('GET /api/admin/backup downloads a complete backup payload', async () => {
