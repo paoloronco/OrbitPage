@@ -14,7 +14,6 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
 import { UnderConstruction } from "@/components/UnderConstruction";
-import { collectCriticalPublicImageUrls, waitForCriticalPublicImages } from "@/lib/public-asset-readiness";
 import { getEmbedData } from "@/lib/link-blocks";
 
 interface ProfileData {
@@ -282,12 +281,6 @@ const Index = () => {
         }
         setShowOrbitPageBadge(pageData.branding?.showOrbitPageBadge !== false);
         if (pageData.setupRequired === true) document.title = "Page under construction | OrbitPage";
-        await waitForCriticalPublicImages(collectCriticalPublicImageUrls({
-          avatar: nextProfile?.avatar,
-          showAvatar: nextProfile?.showAvatar,
-          links: normalizedLinks,
-          backgroundMedia: loadedTheme.backgroundMedia,
-        }));
         if (cancelled) return;
         setLoading(false);
       } catch (error) {
