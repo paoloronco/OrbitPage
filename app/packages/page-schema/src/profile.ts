@@ -51,6 +51,32 @@ export const OrbitPageProfileAppearanceSchema = z.object({
   }).strict().nullable().optional()
 }).strict();
 
+function migrateProfileAppearanceInput(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const appearance = value as Record<string, unknown>;
+  return appearance.avatarShape === "circle"
+    ? { ...appearance, avatarShape: "round" }
+    : value;
+}
+
+const OrbitPageProfileAppearanceInputSchema = z.preprocess(
+  migrateProfileAppearanceInput,
+  OrbitPageProfileAppearanceSchema
+);
+
+function normalizeStoredProfileAppearance(value: unknown) {
+  if (value === undefined || value === null) return value;
+  const migrated = migrateProfileAppearanceInput(value);
+  if (!migrated || typeof migrated !== "object" || Array.isArray(migrated)) return {};
+
+  const normalized: Record<string, unknown> = {};
+  for (const [key, candidate] of Object.entries(migrated)) {
+    const result = OrbitPageProfileAppearanceSchema.safeParse({ [key]: candidate });
+    if (result.success) Object.assign(normalized, result.data);
+  }
+  return normalized;
+}
+
 export const OrbitPageSocialLinksSchema = z.object(
   Object.fromEntries(
     ORBITPAGE_SOCIAL_PLATFORMS.map((platform) => [
@@ -182,11 +208,14 @@ const ProfileInputShape = {
   cookiePolicyUrl: OrbitPagePublicHrefInputSchema.nullable().optional(),
   admin_onboarding_enabled: NumericBooleanSchema.optional(),
   adminOnboardingEnabled: NumericBooleanSchema.optional(),
-  appearance: OrbitPageProfileAppearanceSchema.nullable().optional()
+  appearance: OrbitPageProfileAppearanceInputSchema.nullable().optional()
 };
 
 const StrictProfileInputSchema = z.object(ProfileInputShape).strict();
-const LegacyProfileInputSchema = z.object(ProfileInputShape);
+const LegacyProfileInputSchema = z.object({
+  ...ProfileInputShape,
+  appearance: z.unknown().optional()
+});
 
 function firstDefined(record: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
@@ -226,7 +255,9 @@ function canonicalProfilePatch(value: unknown, strict: boolean): Partial<OrbitPa
     ? cookiePolicyUrl as undefined | null
     : normalizeOrbitPagePublicHref(String(cookiePolicyUrl)) ?? String(cookiePolicyUrl));
   assign("admin_onboarding_enabled", firstDefined(input, "admin_onboarding_enabled", "adminOnboardingEnabled") as OrbitPageProfile["admin_onboarding_enabled"] | undefined);
-  assign("appearance", input.appearance as OrbitPageProfile["appearance"] | undefined);
+  assign("appearance", (
+    strict ? input.appearance : normalizeStoredProfileAppearance(input.appearance)
+  ) as OrbitPageProfile["appearance"] | undefined);
   return patch;
 }
 
