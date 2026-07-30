@@ -99,6 +99,7 @@ const Admin = () => {
   const [saasPlan, setSaasPlan] = useState<SaasPlanDefinition | null>(null);
   const [saasUsage, setSaasUsage] = useState<SaasWorkspaceUsage | null>(null);
   const [saasBilling, setSaasBilling] = useState<SaasBillingContext | null>(null);
+  const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
   const hostedBootstrapRef = useRef<Promise<WorkspaceBootstrapResponse> | null>(null);
 
   const requestedTab = hostedSurface ? hostedTab : locationTab;
@@ -295,7 +296,7 @@ const Admin = () => {
     if (isLoggedIn) {
       loadData();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, workspaceRefreshKey]);
 
   useEffect(() => {
     if (!integratedHostedSurface || isLoading || !isLoggedIn || !workspaceLoaded) return;
@@ -563,6 +564,7 @@ const Admin = () => {
       onSubpagesUpdate={saveSubpages}
       onThemeChange={saveTheme}
       onMenuUpdate={saveMenu}
+      onAiApplied={() => setWorkspaceRefreshKey((current) => current + 1)}
       onLogout={handleLogout}
       requestedTab={requestedTab}
       onTabChange={handleTabChange}

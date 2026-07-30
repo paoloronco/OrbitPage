@@ -593,6 +593,53 @@ export const authApi = {
   },
 };
 
+export type AiSettings = {
+  configured: boolean;
+  source: 'stored' | 'environment' | null;
+  keyHint: string | null;
+  model: string;
+  canStoreSecurely: boolean;
+  updatedAt: string | null;
+  supportedModels: string[];
+};
+
+export type AiConversationMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+export type AiPageProposal = {
+  previewToken: string;
+  summary: string;
+  changes: string[];
+  expectedRevision: number;
+  expiresAt: string;
+};
+
+export type AiPagePlanResponse = {
+  reply: string;
+  proposal: AiPageProposal | null;
+};
+
+export const aiPageAgentApi = {
+  settings: (): Promise<AiSettings> => apiRequest<AiSettings>('/ai/settings'),
+  saveSettings: (input: { apiKey?: string; model?: string; removeStoredKey?: boolean }): Promise<AiSettings> =>
+    apiRequest<AiSettings>('/ai/settings', {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    }),
+  plan: (message: string, history: AiConversationMessage[]): Promise<AiPagePlanResponse> =>
+    apiRequest<AiPagePlanResponse>('/ai/page/plan', {
+      method: 'POST',
+      body: JSON.stringify({ message, history }),
+    }),
+  commit: (previewToken: string): Promise<{ success: boolean; revision: number; alreadyApplied: boolean }> =>
+    apiRequest<{ success: boolean; revision: number; alreadyApplied: boolean }>('/ai/page/commit', {
+      method: 'POST',
+      body: JSON.stringify({ previewToken }),
+    }),
+};
+
 export const backupApi = {
   download: async (sections?: readonly string[]): Promise<Blob> => {
     const authHeaders = await getAuthenticatedRequestHeaders();

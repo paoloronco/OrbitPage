@@ -65,6 +65,7 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 ### Design
 
 - Ready-made page themes and card-style presets
+- OrbitPage AI page editing with current-page context, structured proposals, explicit confirmation, and a self-hosted OpenAI API key
 - Live preview while editing profile, links, content, and themes
 - Colors, typography, spacing, radius, borders, shadows, blur, and glow
 - Solid, fully transparent, and liquid-glass surfaces, configurable globally and per profile or content card
@@ -282,8 +283,17 @@ The essential server configuration is deliberately small.
 | `MEDIA_CLEANUP_GRACE_HOURS` | No | `24` | Minimum age before an unused upload can be removed. |
 | `RESET_TOKEN` | No | Disabled | Enables protected credential recovery. Use at least 32 characters. |
 | `BASE_PATH` | No | Empty | Serves OrbitPage from a subpath such as `/links`. |
+| `OPENAI_API_KEY` | No | Dashboard setting | Optional environment-based key for OrbitPage AI. Administrators can instead save their key under **Dashboard > OrbitPage AI**. |
+| `OPENAI_PAGE_AGENT_MODEL` | No | `gpt-5.6-terra` | Default OpenAI model when no model has been selected in the dashboard. |
+| `ORBITPAGE_SECRET_ENCRYPTION_KEY` | No | `JWT_SECRET` | Optional separate 32+ character secret used to encrypt the saved OpenAI key. |
 
 See [Configuration](./docs/wiki/Configuration.md) for the complete reference, including HTTPS, reverse proxies, legal pages, and optional integrations.
+
+### Self-hosted OrbitPage AI
+
+Open **Dashboard > OrbitPage AI**, paste an OpenAI API key, choose a supported model, and save. The key is encrypted with AES-256-GCM before it is stored in SQLite, is never returned to the browser, and is excluded from JSON backups. A stable `JWT_SECRET` of at least 32 characters is required unless a separate `ORBITPAGE_SECRET_ENCRYPTION_KEY` is configured.
+
+The assistant receives a bounded representation of the authenticated editor's current profile, content blocks, and theme. It can only propose operations allowed by that editor's permissions. Nothing is written during generation: OrbitPage validates the structured operations, shows an exact proposal, and applies it only after explicit confirmation. Proposals expire after ten minutes and are rejected if the page changed in the meantime.
 
 ## Persistent Data and Backups
 

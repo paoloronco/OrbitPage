@@ -34,6 +34,7 @@ import {
   PanelLeftOpen,
   Share2,
   ShoppingBag,
+  Sparkles,
   UtensilsCrossed,
   ShieldCheck,
   User,
@@ -75,6 +76,7 @@ import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import { VersionHistory } from "./VersionHistory";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 import { PublishTools } from "./PublishTools";
+import { SelfHostedAiPanel } from "./SelfHostedAiPanel";
 
 interface ProfileData {
   name: string;
@@ -122,6 +124,7 @@ interface AdminViewProps {
   onSubpagesUpdate?: (pages: EditorSubpage[]) => Promise<void>;
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onMenuUpdate: (menu: MenuCatalog) => Promise<void>;
+  onAiApplied?: () => void;
   onLogout: () => void;
   requestedTab?: AdminTab;
   onTabChange?: (tab: AdminTab) => void;
@@ -130,6 +133,7 @@ interface AdminViewProps {
 const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "profile", icon: User },
   { value: "content", icon: Files },
+  { value: "ai", icon: Sparkles },
   { value: "theme", icon: Palette },
   { value: "publish", icon: Share2 },
   { value: "access", icon: Key },
@@ -177,13 +181,14 @@ export const AdminView = ({
   onSubpagesUpdate = async () => undefined,
   onThemeChange,
   onMenuUpdate,
+  onAiApplied,
   onLogout,
   requestedTab = "profile",
   onTabChange,
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
+    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), ai: "OrbitPage AI", theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
     access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
@@ -193,6 +198,7 @@ export const AdminView = ({
     links: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
     pages: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
     menu: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
+    ai: tr("Ask for a change, review the proposal, then apply it.", "Chiedi una modifica, controlla la proposta e poi applicala."),
     theme: tr("Tune the visual system without losing readability.", "Perfeziona il sistema visivo senza perdere leggibilità."),
     publish: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     qr: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
@@ -352,6 +358,7 @@ export const AdminView = ({
     switch (tab.value) {
       case 'profile':   return canEditProfile;
       case 'content':   return canEditLinks || canEditMenu;
+      case 'ai':        return !isHostedAdmin && (canEditProfile || canEditLinks || canEditTheme);
       case 'theme':     return canEditTheme;
       case 'publish':   return canEditProfile || canEditCompliance;
       case 'access':    return !isHostedAdmin;
@@ -954,6 +961,15 @@ export const AdminView = ({
               )}
             </section>
           </TabsContent>
+
+          {!isHostedAdmin && (
+            <TabsContent value="ai" className="admin-tab-content">
+              <SelfHostedAiPanel
+                canManageSettings={canManageUsers}
+                onApplied={onAiApplied}
+              />
+            </TabsContent>
+          )}
 
           <TabsContent value="theme" className="admin-tab-content">
             <ThemeCustomizer
