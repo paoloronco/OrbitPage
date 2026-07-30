@@ -560,7 +560,10 @@ export const AdminView = ({
   );
 
   return (
-    <div className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : isIntegratedHostedAdmin ? " admin-integrated-surface" : ""}`}>
+    <div
+      className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : isIntegratedHostedAdmin ? " admin-integrated-surface" : ""}`}
+      data-orbitpage-workspace-ready={isIntegratedHostedAdmin ? "true" : undefined}
+    >
       {!isHostedAdmin && (
         <aside className="admin-dashboard-sidebar">
           <div className="admin-dashboard-logo-row">
