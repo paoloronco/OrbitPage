@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
-import { Component, lazy, Suspense, type ErrorInfo, type ReactNode } from "react";
+import { Component, lazy, Suspense, useLayoutEffect, useRef, type ErrorInfo, type ReactNode } from "react";
 import { getActiveBasePath } from "@/lib/base-path";
 import { AppI18nProvider } from "@/lib/i18n";
 
@@ -17,6 +17,18 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const routerBaseName = getActiveBasePath();
 
 const queryClient = new QueryClient();
+
+function RouteLoadingFallback() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const shell = (window as Window & { __ORBITPAGE_BOOT_SHELL_NODE__?: Element })
+      .__ORBITPAGE_BOOT_SHELL_NODE__;
+    if (containerRef.current && shell) {
+      containerRef.current.replaceChildren(shell.cloneNode(true));
+    }
+  }, []);
+  return <div ref={containerRef} data-orbitpage-react-shell />;
+}
 
 class ApplicationErrorBoundary extends Component<
   { children: ReactNode },
@@ -83,7 +95,7 @@ function RoutedApplication() {
   const isEditorRoute = /^\/(?:admin|dashboard)(?:\/|$)/.test(location.pathname);
   return (
     <AppI18nProvider mode={isEditorRoute ? "editor" : "public"}>
-      <Suspense fallback={null}>
+      <Suspense fallback={<RouteLoadingFallback />}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/privacy" element={<Privacy />} />
