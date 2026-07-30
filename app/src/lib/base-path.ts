@@ -49,6 +49,19 @@ export const withBasePath = (path = '/'): string => {
   return `${basePath}${normalizedPath}` || '/';
 };
 
+/**
+ * Hosted public snapshots use the tenant slug as their navigation base, while
+ * the shared application and brand files live under `/orbitpage-runtime`.
+ */
+export const withRuntimeAssetPath = (path = '/'): string => {
+  if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window !== 'undefined' && '__ORBITPAGE_STATIC_SNAPSHOT__' in window) {
+    return `/orbitpage-runtime${normalizedPath}`;
+  }
+  return withBasePath(normalizedPath);
+};
+
 /** Resolve legal and consent routes against the root page, not an optional subpage. */
 export const withTenantBasePath = (path = '/'): string => {
   if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;

@@ -9,7 +9,7 @@ import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
-import { internalAssetPath, withBasePath, withTenantBasePath } from "@/lib/base-path";
+import { internalAssetPath, withRuntimeAssetPath, withTenantBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
@@ -58,7 +58,7 @@ declare global {
 function faviconHref(value: string) {
   if (/^(?:https?:|data:image\/|blob:)/i.test(value)) return value;
   if (value.startsWith('/') || /\.(?:png|jpe?g|gif|webp|ico|svg)(?:\?.*)?$/i.test(value)) {
-    return internalAssetPath(value) || withBasePath('/brand/orbitpage-favicon-48.png');
+    return internalAssetPath(value) || withRuntimeAssetPath('/brand/orbitpage-favicon-48.png');
   }
   const escapedValue = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${escapedValue}</text></svg>`;

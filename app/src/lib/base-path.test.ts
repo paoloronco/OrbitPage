@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getConsentScope, withTenantBasePath } from './base-path';
+import { getConsentScope, withRuntimeAssetPath, withTenantBasePath } from './base-path';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -22,5 +22,24 @@ describe('tenant public paths', () => {
     });
     expect(getConsentScope()).toBe('studio');
     expect(withTenantBasePath('/cookies')).toBe('/cookies');
+  });
+
+  it('loads shared brand files from the hosted runtime instead of the tenant slug', () => {
+    vi.stubGlobal('window', {
+      __ORBITPAGE_BASE_PATH__: '/studio',
+      __ORBITPAGE_STATIC_SNAPSHOT__: {},
+      location: { pathname: '/studio' },
+    });
+    expect(withRuntimeAssetPath('/brand/orbitpage-mark-192.png'))
+      .toBe('/orbitpage-runtime/brand/orbitpage-mark-192.png');
+  });
+
+  it('retains the configured mount path for self-hosted brand files', () => {
+    vi.stubGlobal('window', {
+      __ORBITPAGE_BASE_PATH__: '/orbitpage',
+      location: { pathname: '/orbitpage/admin' },
+    });
+    expect(withRuntimeAssetPath('/brand/orbitpage-mark-192.png'))
+      .toBe('/orbitpage/brand/orbitpage-mark-192.png');
   });
 });
