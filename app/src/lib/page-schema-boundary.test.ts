@@ -142,12 +142,14 @@ describe('canonical page schema boundary', () => {
 
     expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       privacyPolicyUrl: 'orbitpage.com/privacy',
+      showOrbitPageBadge: false,
       socialLinks: {
         instagram: '@orbitpage',
         whatsapp: '+39 123 456 7890',
       },
     })).toMatchObject({
       privacy_policy_url: 'https://orbitpage.com/privacy',
+      show_orbitpage_badge: false,
       social_links: {
         instagram: 'https://www.instagram.com/orbitpage',
         whatsapp: 'https://wa.me/391234567890',

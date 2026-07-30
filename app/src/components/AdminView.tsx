@@ -102,6 +102,7 @@ interface ProfileData {
   tabTitle?: string;
   metaDescription?: string;
   footerText?: string;
+  showOrbitPageBadge?: boolean;
   favicon?: string;
   googleAnalyticsId?: string;
   privacyPolicyUrl?: string;
@@ -247,6 +248,10 @@ export const AdminView = ({
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
   const isProspectReadOnly = currentUser?.readOnly === true;
+  const orbitPageBadgeEditable = entitlements?.badgeRequired !== true && !isProspectReadOnly;
+  const resolveOrbitPageBadgeVisibility = (preference: boolean | undefined) => (
+    orbitPageBadgeEditable ? (preference ?? !saasPlan) : true
+  );
   const checklistIdentity = currentUser
     ? `${isHostedAdmin ? "hosted" : "self-hosted"}:${currentUser.username}`
     : "";
@@ -762,6 +767,7 @@ export const AdminView = ({
                   onProfilePreview={setPreviewProfile}
                   seoAccess={entitlements?.seo}
                   managePlanHref={managePlanHref}
+                  orbitPageBadgeEditable={orbitPageBadgeEditable}
                   onStartOnboarding={() => setOnboardingReplayKey(key => key + 1)}
                   onAdminOnboardingEnabledChange={(enabled) => {
                     void onProfileUpdate({ ...profile, adminOnboardingEnabled: enabled });
@@ -775,7 +781,7 @@ export const AdminView = ({
                     links={links}
                     theme={theme}
                     publicPageHref={publicPageHref}
-                    showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                    showOrbitPageBadge={resolveOrbitPageBadgeVisibility(previewProfile.showOrbitPageBadge)}
                   />}
                 {checklistSession.visible && !isProspectReadOnly && (
                   <section className="admin-side-panel admin-checklist-panel" aria-label={tr("Page checklist", "Verifica pagina")}>
@@ -899,7 +905,7 @@ export const AdminView = ({
                       links={previewLinks}
                       theme={theme}
                       publicPageHref={publicPageHref}
-                      showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                      showOrbitPageBadge={resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)}
                     />
                   </aside>}
                 </div>
@@ -950,7 +956,7 @@ export const AdminView = ({
                       links={pageLinks}
                       theme={theme}
                       publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${page.slug}`}
-                      showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                      showOrbitPageBadge={resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)}
                     />
                   )) : undefined}
                 />
@@ -983,7 +989,7 @@ export const AdminView = ({
                   theme={previewTheme}
                   publicPageHref={publicPageHref}
                   device={device}
-                  showOrbitPageBadge={entitlements?.badgeRequired ?? true}
+                  showOrbitPageBadge={resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)}
                 />
               )}
               accessLevel={entitlements?.themes}

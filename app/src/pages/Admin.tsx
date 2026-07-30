@@ -52,6 +52,7 @@ interface ProfileData {
   tabTitle?: string;
   metaDescription?: string;
   footerText?: string;
+  showOrbitPageBadge?: boolean;
   favicon?: string;
   googleAnalyticsId?: string;
   privacyPolicyUrl?: string;
@@ -87,6 +88,7 @@ const Admin = () => {
     bio: "",
     avatar: profileAvatar,
     showAvatar: true,
+    showOrbitPageBadge: true,
     adminOnboardingEnabled: false,
   });
 
@@ -257,6 +259,9 @@ const Admin = () => {
             tabTitle: (profileData as any).tab_title || (profileData as any).tabTitle || undefined,
             metaDescription: (profileData as any).meta_description || (profileData as any).metaDescription || undefined,
             footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
+            showOrbitPageBadge: bootstrap?.plan?.entitlements.badgeRequired === true
+              ? true
+              : ((profileData as any).show_orbitpage_badge ?? (profileData as any).showOrbitPageBadge ?? !bootstrap),
             favicon: isBundledProfileAvatar((profileData as any).favicon) ? undefined : ((profileData as any).favicon || undefined),
             googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
             privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
@@ -319,6 +324,7 @@ const Admin = () => {
         tabTitle: newProfile.tabTitle,
         metaDescription: newProfile.metaDescription,
         footerText: newProfile.footerText,
+        showOrbitPageBadge: newProfile.showOrbitPageBadge,
         favicon: persistedProfileAvatar(newProfile.favicon) || undefined,
         googleAnalyticsId: newProfile.googleAnalyticsId,
         privacyPolicyUrl: newProfile.privacyPolicyUrl,

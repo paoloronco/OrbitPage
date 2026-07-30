@@ -162,6 +162,7 @@ export const OrbitPageProfileSchema = z.object({
   tab_title: boundedString(80).nullable().optional(),
   meta_description: boundedString(180).nullable().optional(),
   footer_text: boundedString(500).nullable().optional(),
+  show_orbitpage_badge: z.boolean().optional(),
   favicon: boundedString(2_048).nullable().optional(),
   google_analytics_id: boundedString(40).regex(/^G-[A-Z0-9]{4,32}$/i).nullable().optional(),
   privacy_policy_url: OrbitPagePublicHrefSchema.nullable().optional(),
@@ -199,6 +200,8 @@ const ProfileInputShape = {
   metaDescription: boundedString(180).nullable().optional(),
   footer_text: boundedString(500).nullable().optional(),
   footerText: boundedString(500).nullable().optional(),
+  show_orbitpage_badge: z.boolean().optional(),
+  showOrbitPageBadge: z.boolean().optional(),
   favicon: boundedString(2_048).nullable().optional(),
   google_analytics_id: boundedString(40).regex(/^G-[A-Z0-9]{4,32}$/i).nullable().optional(),
   googleAnalyticsId: boundedString(40).regex(/^G-[A-Z0-9]{4,32}$/i).nullable().optional(),
@@ -246,6 +249,7 @@ function canonicalProfilePatch(value: unknown, strict: boolean): Partial<OrbitPa
   assign("tab_title", firstDefined(input, "tab_title", "tabTitle") as OrbitPageProfile["tab_title"] | undefined);
   assign("meta_description", firstDefined(input, "meta_description", "metaDescription") as OrbitPageProfile["meta_description"] | undefined);
   assign("footer_text", firstDefined(input, "footer_text", "footerText") as OrbitPageProfile["footer_text"] | undefined);
+  assign("show_orbitpage_badge", firstDefined(input, "show_orbitpage_badge", "showOrbitPageBadge") as OrbitPageProfile["show_orbitpage_badge"] | undefined);
   assign("favicon", input.favicon as OrbitPageProfile["favicon"] | undefined);
   assign("google_analytics_id", firstDefined(input, "google_analytics_id", "googleAnalyticsId") as OrbitPageProfile["google_analytics_id"] | undefined);
   assign("privacy_policy_url", privacyPolicyUrl === undefined || privacyPolicyUrl === null
