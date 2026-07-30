@@ -58,7 +58,7 @@ declare global {
 function faviconHref(value: string) {
   if (/^(?:https?:|data:image\/|blob:)/i.test(value)) return value;
   if (value.startsWith('/') || /\.(?:png|jpe?g|gif|webp|ico|svg)(?:\?.*)?$/i.test(value)) {
-    return internalAssetPath(value) || withBasePath('/brand/orbitpage-mark.svg');
+    return internalAssetPath(value) || withBasePath('/brand/orbitpage-favicon-48.png');
   }
   const escapedValue = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">${escapedValue}</text></svg>`;

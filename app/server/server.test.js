@@ -787,7 +787,7 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('href="https://github.com/example"');
     expect(response.text).toContain('src="/assets/');
     expect(response.text).toContain('href="/assets/');
-    expect(response.text).toContain('href="/brand/orbitpage-mark.svg"');
+    expect(response.text).toContain('href="/brand/orbitpage-favicon-48.png"');
     expect(response.text).not.toContain('src="./assets/');
     expect(response.text).not.toContain('href="./brand/');
   });
@@ -815,7 +815,7 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/orbitpage/"');
     expect(response.text).toContain('src="/orbitpage/assets/');
     expect(response.text).toContain('href="/orbitpage/assets/');
-    expect(response.text).toContain('href="/orbitpage/brand/orbitpage-mark.svg"');
+    expect(response.text).toContain('href="/orbitpage/brand/orbitpage-favicon-48.png"');
     expect(response.text).not.toContain('src="/assets/');
     expect(response.text).not.toContain('href="/assets/');
     expect(response.text).not.toContain('href="./brand/');
