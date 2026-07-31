@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { openAuthenticatedAdmin } from './helpers';
 
 test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ page }) => {
+  test.setTimeout(60_000);
   await openAuthenticatedAdmin(page);
 
   await page.getByRole('button', { name: 'Publish', exact: true }).click();

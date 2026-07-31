@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test('adds official service blocks and renders an allowlisted Spotify player', async ({ page }) => {
   await openAuthenticatedAdmin(page);
@@ -201,7 +201,7 @@ test('adds Google Calendar and Calendly booking pages with live availability', a
 test('keeps connected service blocks selectable on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await openAdminSection(page, 'Content');
   await page.getByRole('button', { name: 'Add content' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Add content' });

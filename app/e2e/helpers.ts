@@ -49,3 +49,16 @@ export async function openAuthenticatedAdmin(page: Page) {
   await expect(page.locator('.admin-dashboard-logo-copy strong')).toHaveText('OrbitPage');
   await dismissOnboarding(page);
 }
+
+export async function openAdminSection(page: Page, name: string) {
+  const openNavigation = page.getByRole('button', { name: 'Open navigation' });
+
+  if (await openNavigation.isVisible()) {
+    await openNavigation.click();
+    await expect(page.getByRole('button', { name: 'Close navigation' }).first()).toBeVisible();
+  }
+
+  const sectionButton = page.getByRole('button', { name, exact: true });
+  await expect(sectionButton).toBeVisible();
+  await sectionButton.click();
+}
