@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
@@ -15,7 +15,9 @@ import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/
 import {
   AlertTriangle,
   BarChart2,
+  BadgeCheck,
   CheckCircle2,
+  ChevronDown,
   Cookie,
   Database,
   ExternalLink,
@@ -28,6 +30,7 @@ import {
   LockKeyhole,
   LogOut,
   Loader2,
+  Menu as MenuIcon,
   MousePointerClick,
   Palette,
   PanelLeftClose,
@@ -38,6 +41,7 @@ import {
   UtensilsCrossed,
   ShieldCheck,
   User,
+  UsersRound,
   X,
 } from "lucide-react";
 import { logout } from "@/lib/auth";
@@ -77,6 +81,7 @@ import { VersionHistory } from "./VersionHistory";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 import { PublishTools } from "./PublishTools";
 import { SelfHostedAiPanel } from "./SelfHostedAiPanel";
+import { OpenSourcePlan } from "./OpenSourcePlan";
 
 interface ProfileData {
   name: string;
@@ -131,17 +136,24 @@ interface AdminViewProps {
   onTabChange?: (tab: AdminTab) => void;
 }
 
-const tabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
+const pageTabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
   { value: "profile", icon: User },
   { value: "content", icon: Files },
   { value: "ai", icon: Sparkles },
   { value: "theme", icon: Palette },
   { value: "publish", icon: Share2 },
-  { value: "access", icon: Key },
   { value: "backup", icon: Database },
   { value: "analytics", icon: BarChart2 },
   { value: "privacy", icon: Cookie },
 ];
+
+const workspaceTabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
+  { value: "team", icon: UsersRound },
+  { value: "account", icon: Key },
+  { value: "plan", icon: BadgeCheck },
+];
+
+const tabs = [...pageTabs, ...workspaceTabs];
 
 type ContentSection = "home" | "menu" | "pages" | "shop";
 
@@ -191,7 +203,7 @@ export const AdminView = ({
   const tabLabel = (tab: AdminTab) => ({
     profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), ai: "OrbitPage AI", theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
-    access: tr("Access", "Accesso"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
+    team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Plan", "Piano"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
   const tabDescription = (tab: AdminTab) => ({
     profile: tr("Shape the identity people see first.", "Definisci l'identità che le persone vedono per prima."),
@@ -205,7 +217,10 @@ export const AdminView = ({
     qr: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     txt: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     sitemap: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
-    access: tr("Protect this private installation and its editors.", "Proteggi questa installazione privata e i suoi editor."),
+    team: tr("Manage the people and roles in this installation.", "Gestisci persone e ruoli di questa installazione."),
+    account: tr("Protect your credentials and sign-in security.", "Proteggi credenziali e sicurezza di accesso."),
+    plan: tr("Review what is included in this open-source edition.", "Scopri cosa include questa edizione open source."),
+    access: tr("Protect your credentials and sign-in security.", "Proteggi credenziali e sicurezza di accesso."),
     backup: tr("Keep portable copies and restore with confidence.", "Mantieni copie portabili e ripristina in sicurezza."),
     analytics: tr("Read the signals behind visits and interactions.", "Leggi i segnali dietro visite e interazioni."),
     privacy: tr("Manage consent, policies and visitor choices.", "Gestisci consenso, informative e scelte dei visitatori."),
@@ -234,7 +249,7 @@ export const AdminView = ({
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
   });
-  const standaloneNavRef = useRef<HTMLElement>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const publicUrlOverride = getPublicUrlOverride();
   const [publicPageHref, setPublicPageHref] = useState(publicUrlOverride || withBasePath('/'));
   const entitlements = saasPlan?.entitlements;
@@ -359,26 +374,32 @@ export const AdminView = ({
   }, []);
 
   const visibleTabs = tabs.filter(tab => {
-    if (isProspectReadOnly) return tab.value !== "access";
+    if (isProspectReadOnly && !isHostedAdmin) return tab.value === "plan";
     switch (tab.value) {
       case 'profile':   return canEditProfile;
       case 'content':   return canEditLinks || canEditMenu;
       case 'ai':        return !isHostedAdmin && (canEditProfile || canEditLinks || canEditTheme);
       case 'theme':     return canEditTheme;
       case 'publish':   return canEditProfile || canEditCompliance;
-      case 'access':    return !isHostedAdmin;
-      case 'backup':    return isHostedAdmin && canManageUsers;
+      case 'team':      return !isHostedAdmin && canManageUsers;
+      case 'account':   return !isHostedAdmin;
+      case 'plan':      return !isHostedAdmin;
+      case 'access':    return false;
+      case 'backup':    return canManageUsers;
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
       default:          return false;
     }
   });
+  const visiblePageTabs = visibleTabs.filter((tab) => pageTabs.some((pageTab) => pageTab.value === tab.value));
+  const visibleWorkspaceTabs = visibleTabs.filter((tab) => workspaceTabs.some((workspaceTab) => workspaceTab.value === tab.value));
 
   const selectTab = (tab: AdminTab) => {
     const requestedContentSection = contentSectionForTab(tab);
     if (requestedContentSection) setContentSection(requestedContentSection);
     const canonicalTab = canonicalViewTab(tab);
     setActiveTab(canonicalTab);
+    setMobileNavOpen(false);
     onTabChange?.(canonicalTab);
   };
 
@@ -424,29 +445,13 @@ export const AdminView = ({
   }, [requestedTab, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
 
   useEffect(() => {
-    if (isHostedAdmin) return;
-
-    const centerActiveItem = () => {
-      const navigation = standaloneNavRef.current;
-      const activeItem = navigation?.querySelector<HTMLElement>('[aria-current="page"]');
-      if (!navigation || !activeItem) return;
-
-      navigation.scrollTo({
-        behavior: "smooth",
-        left: Math.max(0, activeItem.offsetLeft - ((navigation.clientWidth - activeItem.offsetWidth) / 2)),
-      });
+    if (isHostedAdmin || !mobileNavOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileNavOpen(false);
     };
-
-    const animationFrame = window.requestAnimationFrame(centerActiveItem);
-    const settledLayoutTimer = window.setTimeout(centerActiveItem, 350);
-    window.addEventListener("resize", centerActiveItem);
-
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-      window.clearTimeout(settledLayoutTimer);
-      window.removeEventListener("resize", centerActiveItem);
-    };
-  }, [activeTab, isHostedAdmin]);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isHostedAdmin, mobileNavOpen]);
 
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
@@ -596,42 +601,88 @@ export const AdminView = ({
             >
               {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" aria-hidden="true" /> : <PanelLeftClose className="h-4 w-4" aria-hidden="true" />}
             </button>
+            <button
+              aria-controls="admin-dashboard-primary-navigation"
+              aria-expanded={mobileNavOpen}
+              aria-label={mobileNavOpen ? tr("Close navigation", "Chiudi navigazione") : tr("Open navigation", "Apri navigazione")}
+              className={`admin-dashboard-mobile-nav-button${mobileNavOpen ? " open" : ""}`}
+              onClick={() => setMobileNavOpen((current) => !current)}
+              type="button"
+            >
+              {mobileNavOpen ? <X aria-hidden="true" className="h-[19px] w-[19px]" /> : <MenuIcon aria-hidden="true" className="h-[19px] w-[19px]" />}
+              <span className="admin-dashboard-mobile-nav-copy">
+                <span>{tr("Menu", "Menu")}</span>
+                <strong>{tabLabel(activeTab)}</strong>
+              </span>
+              <ChevronDown className="admin-dashboard-mobile-nav-chevron h-4 w-4" aria-hidden="true" />
+            </button>
           </div>
 
-          <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}</div>
-          <nav ref={standaloneNavRef} className="admin-dashboard-nav" aria-label={tr("Dashboard sections", "Sezioni dashboard")}>
-            {visibleTabs.map(({ value, icon: Icon }) => (
-              <button
-                aria-current={activeTab === value ? "page" : undefined}
-                className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
-                data-onboarding={`${value}-tab`}
-                key={value}
-                onClick={() => selectTab(value)}
-                title={tabLabel(value)}
-                type="button"
-              >
-                <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" aria-hidden="true" />
-                <span>{tabLabel(value)}</span>
-              </button>
-            ))}
-          </nav>
+          <button
+            aria-hidden={!mobileNavOpen}
+            aria-label={tr("Close navigation", "Chiudi navigazione")}
+            className={`admin-dashboard-mobile-nav-backdrop${mobileNavOpen ? " open" : ""}`}
+            onClick={() => setMobileNavOpen(false)}
+            tabIndex={mobileNavOpen ? 0 : -1}
+            type="button"
+          />
 
-          <div className="admin-dashboard-sidebar-footer">
-            <label className="admin-dashboard-language" title={tr("Language", "Lingua")}>
-              <Languages className="h-4 w-4" aria-hidden="true" />
-              <span>{tr("Language", "Lingua")}</span>
-              <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>
-                {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
-              </select>
-            </label>
-            <a className="admin-dashboard-footer-action" href={publicPageHref} target="_blank" rel="noopener noreferrer" title={tr("Public page", "Pagina pubblica")}>
-              <Globe2 className="h-4 w-4" aria-hidden="true" />
-              <span>{tr("Public page", "Pagina pubblica")}</span>
-            </a>
-            <button className="admin-dashboard-footer-action" onClick={handleLogout} title={tr("Logout", "Esci")} type="button">
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              <span>{tr("Logout", "Esci")}</span>
-            </button>
+          <div className={`admin-dashboard-nav-stack${mobileNavOpen ? " open" : ""}`} id="admin-dashboard-primary-navigation">
+            <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}</div>
+            <nav className="admin-dashboard-nav admin-dashboard-nav-page" aria-label={tr("Page tools", "Strumenti pagina")}>
+              {visiblePageTabs.map(({ value, icon: Icon }) => (
+                <button
+                  aria-current={activeTab === value ? "page" : undefined}
+                  className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
+                  data-onboarding={`${value}-tab`}
+                  key={value}
+                  onClick={() => selectTab(value)}
+                  title={tabLabel(value)}
+                  type="button"
+                >
+                  <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" aria-hidden="true" />
+                  <span>{tabLabel(value)}</span>
+                </button>
+              ))}
+            </nav>
+
+            {visibleWorkspaceTabs.length > 0 && (
+              <nav className="admin-dashboard-nav admin-dashboard-nav-workspace" aria-label={tr("Workspace tools", "Strumenti workspace")}>
+                <span className="admin-dashboard-nav-heading admin-dashboard-nav-heading-workspace">Open Source</span>
+                {visibleWorkspaceTabs.map(({ value, icon: Icon }) => (
+                  <button
+                    aria-current={activeTab === value ? "page" : undefined}
+                    className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
+                    data-onboarding={`${value}-tab`}
+                    key={value}
+                    onClick={() => selectTab(value)}
+                    title={tabLabel(value)}
+                    type="button"
+                  >
+                    <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" aria-hidden="true" />
+                    <span>{tabLabel(value)}</span>
+                  </button>
+                ))}
+              </nav>
+            )}
+
+            <div className="admin-dashboard-sidebar-footer">
+              <label className="admin-dashboard-language" title={tr("Language", "Lingua")}>
+                <Languages className="h-4 w-4" aria-hidden="true" />
+                <span>{tr("Language", "Lingua")}</span>
+                <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>
+                  {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
+                </select>
+              </label>
+              <a className="admin-dashboard-footer-action" href={publicPageHref} target="_blank" rel="noopener noreferrer" title={tr("Public page", "Pagina pubblica")}>
+                <Globe2 className="h-4 w-4" aria-hidden="true" />
+                <span>{tr("Public page", "Pagina pubblica")}</span>
+              </a>
+              <button className="admin-dashboard-footer-action" onClick={handleLogout} title={tr("Logout", "Esci")} type="button">
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                <span>{tr("Logout", "Esci")}</span>
+              </button>
+            </div>
           </div>
         </aside>
       )}
@@ -1010,23 +1061,35 @@ export const AdminView = ({
             />
           </TabsContent>
 
+          {!isHostedAdmin && canManageUsers && (
+            <TabsContent value="team" className="admin-tab-content">
+              <div className="admin-single-column space-y-6" data-onboarding="team-section">
+                <UserManager />
+              </div>
+            </TabsContent>
+          )}
+
           {!isHostedAdmin && (
-            <TabsContent value="access" className="admin-tab-content">
-              <div className="admin-single-column space-y-6" data-onboarding="access-section">
-                {canManageUsers && <UserManager />}
-                {canManageUsers && <BackupManager />}
-                {canManageUsers && <TwoFactorManager />}
+            <TabsContent value="account" className="admin-tab-content">
+              <div className="admin-single-column space-y-6" data-onboarding="account-section">
+                <TwoFactorManager />
                 <PasswordManager />
               </div>
             </TabsContent>
           )}
 
-          {isHostedAdmin && canManageUsers && (
+          {canManageUsers && (
             <TabsContent value="backup" className="admin-tab-content">
               <div className="admin-single-column space-y-6" data-onboarding="backup-section">
-                <VersionHistory />
-                <BackupManager hosted />
+                {isHostedAdmin && <VersionHistory />}
+                <BackupManager hosted={isHostedAdmin} />
               </div>
+            </TabsContent>
+          )}
+
+          {!isHostedAdmin && (
+            <TabsContent value="plan" className="admin-tab-content">
+              <OpenSourcePlan />
             </TabsContent>
           )}
 

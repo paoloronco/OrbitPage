@@ -9,7 +9,7 @@ describe('AdminOnboarding', () => {
     const html = renderToStaticMarkup(
       <AdminOnboarding
         activeTab="profile"
-        visibleTabs={['profile', 'content', 'theme', 'analytics', 'access', 'privacy', 'txt']}
+        visibleTabs={['profile', 'content', 'theme', 'analytics', 'team', 'account', 'privacy', 'txt']}
         onSelectTab={() => undefined}
         forceOpen
         repeatEnabled
@@ -25,7 +25,8 @@ describe('AdminOnboarding', () => {
     expect(html).toContain('First card');
     expect(html).toContain('Theme save');
     expect(html).toContain('Analytics');
-    expect(html).toContain('Access');
+    expect(html).toContain('Team');
+    expect(html).toContain('Account');
     expect(html).toContain('Privacy');
     expect(html).toContain('TXT');
     expect(html).toContain('Public check');

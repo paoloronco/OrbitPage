@@ -199,7 +199,7 @@ Open:
 
 Before setup, the public URL shows a deliberate **Under construction** welcome screen with links to this repository and the managed OrbitPage service. Open `/dashboard/profile` to start the installation wizard. OrbitPage checks the Node.js runtime, SQLite schema, persistent storage, frontend build, and session-secret configuration before it accepts any credentials.
 
-The first username is always `admin` and cannot be changed. Choose its password and the primary public-page slug in the wizard. OrbitPage creates the administrator, page address, and starter profile together; it then opens the real dashboard and offers the guided product tutorial. Each workspace area has a stable URL, such as `/dashboard/links` and `/dashboard/theme`; the legacy `/admin` URL redirects to the profile section.
+The first username is always `admin` and cannot be changed. Choose its password and the primary public-page slug in the wizard. OrbitPage creates the administrator, page address, and starter profile together; it then opens the real dashboard and offers the guided product tutorial. Page tools stay grouped at the top of the dashboard, while Team, Account and the Open Source plan summary stay with the installation controls at the bottom. Each workspace area has a stable URL, such as `/dashboard/content`, `/dashboard/theme`, `/dashboard/team`, `/dashboard/account` and `/dashboard/plan`; the legacy `/admin` URL redirects to the profile section and `/dashboard/access` remains a compatible alias for Account.
 
 The Docker image is published to both registries:
 
