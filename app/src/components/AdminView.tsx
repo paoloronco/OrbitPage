@@ -676,7 +676,7 @@ export const AdminView = ({
             <div className="admin-dashboard-sidebar-footer">
               <label className="admin-dashboard-language" title={tr("Language", "Lingua")}>
                 <Languages className="h-4 w-4" aria-hidden="true" />
-                <span>{tr("Language", "Lingua")}</span>
+                <span className="sr-only">{tr("Language", "Lingua")}</span>
                 <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>
                   {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
                 </select>
@@ -685,7 +685,7 @@ export const AdminView = ({
                 <LogOut className="h-4 w-4" aria-hidden="true" />
                 <span>{tr("Sign out", "Esci")}</span>
               </button>
-              <a className="admin-dashboard-footer-action" href={publicPageHref} target="_blank" rel="noopener noreferrer" title={tr("Back to site", "Torna al sito")}>
+              <a aria-label={tr("Back to site", "Torna al sito")} className="admin-dashboard-footer-action" href={publicPageHref} title={tr("Back to site", "Torna al sito")}>
                 <Globe2 className="h-4 w-4" aria-hidden="true" />
                 <span>{tr("Back to site", "Torna al sito")}</span>
               </a>
@@ -745,11 +745,9 @@ export const AdminView = ({
             </div>
           </div>
           <div className="admin-dashboard-header-actions">
-            <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
-              <Button className="admin-action" variant="outline" size="sm">
-                <ExternalLink className="h-4 w-4" />
-                {tr("Public page", "Pagina pubblica")}
-              </Button>
+            <a className="admin-dashboard-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
+              <ExternalLink aria-hidden="true" size={17} />
+              {tr("Public page", "Pagina pubblica")}
             </a>
           </div>
         </header> : null}

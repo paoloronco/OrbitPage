@@ -7411,6 +7411,7 @@
   color: #fff;
   box-shadow: inset 3px 0 0 #5d8aff;
 }
+.admin-dashboard-nav-icon { color: inherit; }
 .admin-dashboard-nav-item.active .admin-dashboard-nav-icon { color: #83a5ff; }
 
 .admin-dashboard-sidebar-footer {
@@ -7421,10 +7422,24 @@
   padding-top: 16px;
   border-top: 1px solid rgb(255 255 255 / 9%);
 }
-.admin-dashboard-language { grid-column: 1 / -1; }
+.admin-dashboard-language {
+  grid-column: 1 / -1;
+  min-height: 34px;
+  height: 34px;
+  gap: 5px;
+  padding: 0 8px;
+}
+.admin-dashboard-footer-action {
+  min-height: 38px;
+  height: 38px;
+  gap: 8px;
+  padding: 9px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
 .admin-dashboard-footer-action,
 .admin-dashboard-language {
-  min-height: 38px;
   border-color: transparent;
   background: transparent;
   color: #b5c1d2;
@@ -7435,9 +7450,47 @@
   background: rgb(255 255 255 / 5%);
   color: #fff;
 }
-.admin-dashboard-language select { color: inherit; color-scheme: dark; }
+.admin-dashboard-language select {
+  appearance: none;
+  color: inherit;
+  color-scheme: dark;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 15px 0 0;
+}
+html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .admin-dashboard-language option { background: var(--admin-sidebar-soft); color: #f4f7fc; }
 .admin-dashboard-language option:checked { background: var(--admin-accent-strong); color: #fff; }
+
+.admin-dashboard-public-page {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #e7edf5;
+  color: var(--admin-ink);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.admin-dashboard-public-page:hover,
+.admin-dashboard-public-page:focus-visible {
+  background: #dbe4ef;
+  color: var(--admin-ink);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.admin-dashboard-public-page:focus-visible {
+  box-shadow: 0 0 0 3px rgb(49 103 239 / 20%);
+}
 
 .admin-dashboard-main {
   width: 100%;
@@ -7627,7 +7680,8 @@
   .admin-dashboard-context-row { flex-wrap: wrap; gap: 5px; margin-top: 7px; font-size: 9px; }
   .admin-dashboard-context-row > span { min-height: 19px; padding: 1px 6px; }
   .admin-dashboard-header-actions { width: auto; align-self: flex-start; }
-  .admin-dashboard-header-actions .admin-action { width: 40px; min-width: 40px; padding: 0; font-size: 0; }
+  .admin-dashboard-header-actions .admin-action,
+  .admin-dashboard-public-page { width: 40px; min-width: 40px; min-height: 40px; padding: 0; font-size: 0; }
   .oss-hosted-feature { grid-template-columns: auto minmax(0, 1fr); padding: 20px 17px; }
   .oss-hosted-feature > a { grid-column: 1 / -1; justify-content: center; }
   .oss-account-layout { grid-template-columns: 1fr; }
@@ -8182,8 +8236,7 @@
   }
 
   .admin-dashboard-nav-stack .admin-dashboard-sidebar-footer {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
     gap: 6px;
     width: 100%;
     margin-top: 12px;
@@ -8191,37 +8244,37 @@
     border-top: 1px solid rgb(255 255 255 / 9%);
   }
 
-  .admin-dashboard-nav-stack .admin-dashboard-language {
-    grid-column: 1 / -1;
-  }
-
   .admin-dashboard-nav-stack .admin-dashboard-footer-action,
   .admin-dashboard-nav-stack .admin-dashboard-language {
     display: flex;
-    width: 100%;
-    min-height: 40px;
-    justify-content: flex-start;
-    gap: 9px;
-    padding: 8px 10px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    justify-content: center;
+    gap: 0;
+    padding: 0;
     border-color: transparent;
+    overflow: hidden;
   }
 
   .admin-dashboard-nav-stack .admin-dashboard-sidebar-footer span {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
-    white-space: normal;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
+  .admin-dashboard-nav-stack .admin-dashboard-language { position: relative; }
   .admin-dashboard-nav-stack .admin-dashboard-language select {
-    position: static;
-    inset: auto;
-    width: auto;
-    flex: 1;
+    position: absolute;
+    inset: 0;
+    width: 100%;
     cursor: pointer;
-    opacity: 1;
+    opacity: 0;
+    padding: 0;
     color-scheme: dark;
   }
 

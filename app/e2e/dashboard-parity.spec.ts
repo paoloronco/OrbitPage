@@ -39,13 +39,33 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   expect(secondaryLabels.map((label) => label.trim())).toEqual(secondaryNavigation);
 
   for (const [label, icon] of Object.entries(navigationIcons)) {
-    await expect(page.getByRole('button', { name: label, exact: true }).locator(`[data-dashboard-icon="${icon}"]`)).toBeVisible();
+    const navButton = page.getByRole('button', { name: label, exact: true });
+    const navIcon = navButton.locator(`[data-dashboard-icon="${icon}"]`);
+    await expect(navIcon).toBeVisible();
+    const expectedColor = label === 'Page'
+      ? 'rgb(131, 165, 255)'
+      : await navButton.evaluate((element) => getComputedStyle(element).color);
+    await expect(navIcon).toHaveCSS('color', expectedColor);
   }
 
   const shell = page.locator('.admin-dashboard-shell');
   await expect(shell).toHaveCSS('font-family', /Aptos|Avenir Next|Segoe UI Variable/);
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('width', '36px');
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('height', '36px');
+
+  const language = page.locator('.admin-dashboard-language');
+  await expect(language).toHaveCSS('height', '34px');
+  await expect(page.getByLabel('Language')).toHaveCSS('font-weight', '800');
+
+  const backToSite = page.getByRole('link', { name: 'Back to site' });
+  await expect(backToSite).toHaveCSS('height', '38px');
+  await expect(backToSite).toHaveCSS('font-weight', '800');
+  await expect(backToSite).not.toHaveAttribute('target', '_blank');
+
+  const publicPage = page.getByRole('link', { name: 'Public page' });
+  await expect(publicPage).toHaveCSS('min-height', '40px');
+  await expect(publicPage).toHaveCSS('font-size', '16px');
+  await expect(publicPage.locator('button')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   const lockedShop = page.locator('.content-workspace-option-locked');
@@ -73,6 +93,8 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(page.getByRole('button', { name: 'AI Agent', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Plan', exact: true })).toBeVisible();
+  await expect(page.locator('.admin-dashboard-language')).toHaveCSS('width', '44px');
+  await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCSS('width', '44px');
 
   await page.getByRole('button', { name: 'Close navigation' }).first().click();
   await page.getByRole('button', { name: 'Edit with AI' }).click();
