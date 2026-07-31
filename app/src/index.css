@@ -7297,26 +7297,626 @@
   }
 }
 
+/* Self-hosted dashboard navigation follows the hosted workspace shell. */
+.admin-dashboard-sidebar {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.admin-dashboard-nav-stack {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-color: rgb(255 255 255 / 18%) transparent;
+  scrollbar-width: thin;
+}
+
+.admin-dashboard-nav-stack .admin-dashboard-nav {
+  margin: 0;
+  overflow: visible;
+  padding: 0 6px;
+}
+
+.admin-dashboard-nav-workspace {
+  margin-top: auto !important;
+  border-top: 1px solid rgb(255 255 255 / 9%);
+  padding-top: 0 !important;
+}
+
+.admin-dashboard-nav-heading-workspace {
+  display: block;
+  margin: 15px 4px 7px;
+}
+
+.admin-dashboard-nav-stack .admin-dashboard-sidebar-footer {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding-top: 10px;
+}
+
+.admin-dashboard-mobile-nav-button,
+.admin-dashboard-mobile-nav-copy,
+.admin-dashboard-mobile-nav-chevron,
+.admin-dashboard-mobile-nav-backdrop {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .admin-dashboard-collapsed .admin-dashboard-nav-heading {
+    display: none;
+  }
+}
+
+/* OSS edition and managed SaaS comparison. */
+.oss-plan-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .55fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.oss-plan-panel,
+.oss-saas-promo {
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+}
+
+.oss-plan-panel {
+  overflow: hidden;
+  background: #fff;
+}
+
+.oss-plan-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 28px;
+  padding: clamp(22px, 3vw, 34px);
+  border-bottom: 1px solid var(--admin-soft-line);
+  background:
+    linear-gradient(135deg, rgb(49 103 239 / 7%), transparent 46%),
+    #fff;
+}
+
+.oss-plan-eyebrow,
+.oss-saas-promo-heading > span {
+  margin: 0 0 8px;
+  color: var(--admin-accent-strong);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.oss-plan-hero h2,
+.oss-saas-promo h2 {
+  margin: 0;
+  color: var(--admin-ink);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-weight: 820;
+  letter-spacing: -.025em;
+  line-height: 1.1;
+}
+
+.oss-plan-hero > div:first-child > p:last-child,
+.oss-saas-promo > p {
+  max-width: 62ch;
+  margin: 12px 0 0;
+  color: var(--admin-muted-copy);
+  font-size: .88rem;
+  line-height: 1.65;
+}
+
+.oss-plan-status {
+  display: grid;
+  min-width: 172px;
+  gap: 4px;
+  padding: 13px 15px;
+  border: 1px solid #b9e6ce;
+  border-radius: 7px;
+  background: #f0fbf5;
+  color: #155f3c;
+}
+
+.oss-plan-status > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.oss-plan-status strong {
+  color: #103f2b;
+  font-size: 1rem;
+}
+
+.oss-plan-status small {
+  color: #397359;
+  font-size: .72rem;
+}
+
+.oss-plan-feature-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.oss-plan-feature {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 138px;
+  padding: 22px;
+  border-right: 1px solid var(--admin-soft-line);
+  border-bottom: 1px solid var(--admin-soft-line);
+}
+
+.oss-plan-feature:nth-child(2n) {
+  border-right: 0;
+}
+
+.oss-plan-feature:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.oss-plan-feature > svg {
+  margin-top: 1px;
+  color: var(--admin-accent);
+}
+
+.oss-plan-feature-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.oss-plan-feature h3 {
+  margin: 0;
+  color: var(--admin-ink);
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.oss-plan-feature-title span {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--admin-accent-soft);
+  color: var(--admin-accent-strong);
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.oss-plan-feature p,
+.oss-plan-operations p {
+  margin: 6px 0 0;
+  color: var(--admin-muted-copy);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.oss-plan-operations {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  padding: 18px 22px;
+  border-top: 1px solid #ead9a9;
+  background: #fffbec;
+  color: #805b12;
+}
+
+.oss-plan-operations strong {
+  color: #60430c;
+  font-size: .82rem;
+}
+
+.oss-plan-operations p {
+  color: #785e2a;
+}
+
+.oss-saas-promo {
+  position: sticky;
+  top: 132px;
+  overflow: hidden;
+  padding: clamp(22px, 3vw, 30px);
+  border-color: #203354;
+  background:
+    radial-gradient(circle at 100% 0, rgb(87 132 255 / 22%), transparent 40%),
+    #0d1728;
+  color: #dce6f5;
+  box-shadow: 0 18px 38px rgb(13 23 40 / 12%);
+}
+
+.oss-saas-promo-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.oss-saas-promo-heading > span {
+  margin: 0;
+  color: #8daeff;
+}
+
+.oss-saas-promo-heading > svg {
+  color: #8daeff;
+}
+
+.oss-saas-promo h2 {
+  margin-top: 18px;
+  color: #fff;
+}
+
+.oss-saas-promo > p {
+  color: #b7c5d8;
+}
+
+.oss-saas-promo ul {
+  display: grid;
+  gap: 11px;
+  margin: 23px 0 0;
+  padding: 18px 0 0;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+  list-style: none;
+}
+
+.oss-saas-promo li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 7px;
+  color: #dbe5f4;
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.oss-saas-promo li svg {
+  margin-top: 2px;
+  color: #86a8ff;
+}
+
+.oss-saas-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.oss-saas-primary,
+.oss-saas-secondary {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: .78rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 170ms cubic-bezier(.22, 1, .36, 1), border-color 170ms ease, background-color 170ms ease;
+}
+
+.oss-saas-primary {
+  background: #fff;
+  color: #152440;
+}
+
+.oss-saas-secondary {
+  border-color: rgb(255 255 255 / 16%);
+  color: #e8effa;
+}
+
+.oss-saas-primary:hover,
+.oss-saas-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.oss-saas-secondary:hover {
+  border-color: rgb(255 255 255 / 30%);
+  background: rgb(255 255 255 / 6%);
+}
+
+.oss-saas-promo > small {
+  display: block;
+  margin-top: 12px;
+  color: #8696ae;
+  font-size: .65rem;
+  text-align: center;
+}
+
+@media (max-width: 1080px) {
+  .oss-plan-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .oss-saas-promo {
+    position: static;
+  }
+}
+
 @media (max-width: 767px) {
-  .admin-dashboard-nav {
-    justify-content: flex-start;
-    gap: 2px;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scroll-snap-type: x proximity;
+  .admin-dashboard-sidebar {
+    position: sticky;
+    z-index: 45;
+    top: 0;
+    display: flex;
+    width: 100%;
+    min-height: 60px;
+    max-height: none;
+    align-items: center;
+    overflow: visible;
   }
 
-  .admin-dashboard-nav-item {
-    flex: 0 0 70px;
-    width: 70px;
-    min-width: 70px;
-    scroll-snap-align: center;
+  .admin-dashboard-logo-row {
+    width: 100%;
   }
 
-  .admin-dashboard-nav-item span {
-    max-width: 100%;
+  .admin-dashboard-logo-copy small,
+  .admin-dashboard-collapse {
+    display: none;
+  }
+
+  .admin-dashboard-mobile-nav-button {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    width: auto;
+    min-width: 148px;
+    height: 44px;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    border: 1px solid rgb(118 150 207 / 32%);
+    border-radius: 7px;
+    background: #192841;
+    color: #f7faff;
+    text-align: left;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+  }
+
+  .admin-dashboard-mobile-nav-button:hover,
+  .admin-dashboard-mobile-nav-button:focus-visible,
+  .admin-dashboard-mobile-nav-button.open {
+    border-color: rgb(111 151 255 / 68%);
+    background: #203454;
+    color: #fff;
+    outline: none;
+  }
+
+  .admin-dashboard-mobile-nav-copy {
+    display: grid;
+    min-width: 0;
     line-height: 1.05;
-    overflow-wrap: anywhere;
+  }
+
+  .admin-dashboard-mobile-nav-copy > span {
+    color: #9fb1cb;
+    font-size: .56rem;
+    font-weight: 850;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+  }
+
+  .admin-dashboard-mobile-nav-copy > strong {
+    margin-top: 4px;
+    overflow: hidden;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-dashboard-mobile-nav-chevron {
+    display: block;
+    color: #9fb1cb;
+    transition: transform 180ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .admin-dashboard-mobile-nav-button.open .admin-dashboard-mobile-nav-chevron {
+    transform: rotate(180deg);
+  }
+
+  .admin-dashboard-mobile-nav-backdrop {
+    position: fixed;
+    z-index: 50;
+    inset: 60px 0 0;
+    display: block;
+    width: 100%;
+    border: 0;
+    background: rgb(7 13 24 / 48%);
+    cursor: default;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+  }
+
+  .admin-dashboard-mobile-nav-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .admin-dashboard-nav-stack {
+    position: fixed;
+    z-index: 60;
+    top: 59px;
+    right: 8px;
+    left: 8px;
+    display: flex;
+    max-height: calc(100dvh - 70px);
+    margin: 0;
+    padding: 8px;
+    overflow-y: auto;
+    border: 1px solid #24344d;
+    border-radius: 8px;
+    background: #111d31;
+    box-shadow: 0 18px 45px rgb(7 13 24 / 32%);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px) scale(.985);
+    transform-origin: top right;
+    transition: opacity 180ms ease, transform 180ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .admin-dashboard-nav-stack.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-nav-heading {
+    display: block;
+    margin: 6px 9px;
+    color: #9fb1cb;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-nav {
+    position: static;
+    display: grid;
+    width: 100%;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    scroll-snap-type: none;
+  }
+
+  .admin-dashboard-nav-workspace {
+    margin-top: 12px !important;
+    padding-top: 8px !important;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-nav-item {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 9px 11px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    color: #bdc8d9;
+    font-size: .84rem;
+    text-align: left;
+    scroll-snap-align: none;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-nav-item:hover {
+    border-color: rgb(255 255 255 / 7%);
+    background: rgb(255 255 255 / 5%);
+    color: #f3f7ff;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-nav-item.active {
+    border-color: rgb(83 130 255 / 30%);
+    background: linear-gradient(90deg, rgb(49 103 239 / 28%), rgb(49 103 239 / 12%));
+    color: #fff;
+    box-shadow: inset 3px 0 0 #5d8aff;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-nav-item span {
+    max-width: none;
+    line-height: 1.2;
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-sidebar-footer {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 0 0;
+    border-top: 1px solid rgb(255 255 255 / 9%);
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-language {
+    grid-column: 1 / -1;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-footer-action,
+  .admin-dashboard-nav-stack .admin-dashboard-language {
+    display: flex;
+    width: 100%;
+    min-height: 40px;
+    justify-content: flex-start;
+    gap: 9px;
+    padding: 8px 10px;
+    border-color: transparent;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-sidebar-footer span {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
     white-space: normal;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-language select {
+    position: static;
+    inset: auto;
+    width: auto;
+    flex: 1;
+    cursor: pointer;
+    opacity: 1;
+    color-scheme: dark;
+  }
+
+  .admin-dashboard-main {
+    padding-bottom: 38px;
+  }
+
+  .oss-plan-layout {
+    gap: 10px;
+  }
+
+  .oss-plan-hero {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 20px 17px;
+  }
+
+  .oss-plan-status {
+    min-width: 0;
+  }
+
+  .oss-plan-feature-list {
+    grid-template-columns: 1fr;
+  }
+
+  .oss-plan-feature,
+  .oss-plan-feature:nth-child(2n),
+  .oss-plan-feature:nth-last-child(-n + 2) {
+    min-height: 0;
+    padding: 17px;
+    border-right: 0;
+    border-bottom: 1px solid var(--admin-soft-line);
+  }
+
+  .oss-plan-feature:last-child {
+    border-bottom: 0;
+  }
+
+  .oss-plan-operations {
+    padding: 17px;
+  }
+
+  .oss-saas-promo {
+    padding: 22px 18px;
   }
 }

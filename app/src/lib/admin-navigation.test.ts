@@ -17,6 +17,10 @@ describe("admin navigation", () => {
     expect(adminTabFromLocation("/dashboard/qr")).toBe("publish");
     expect(adminTabFromLocation("/dashboard/sitemap")).toBe("publish");
     expect(adminTabFromLocation("/dashboard/txt")).toBe("publish");
+    expect(adminTabFromLocation("/dashboard/access")).toBe("account");
+    expect(adminTabFromLocation("/dashboard/team")).toBe("team");
+    expect(adminTabFromLocation("/dashboard/account")).toBe("account");
+    expect(adminTabFromLocation("/dashboard/plan")).toBe("plan");
   });
 
   it("keeps the hosted surface and legacy admin route compatible", () => {
@@ -27,6 +31,10 @@ describe("admin navigation", () => {
 
   it("builds only known dashboard destinations", () => {
     expect(adminDashboardPath("backup")).toBe("/dashboard/backup");
+    expect(adminDashboardPath("access")).toBe("/dashboard/account");
+    expect(adminDashboardPath("team")).toBe("/dashboard/team");
+    expect(adminDashboardPath("account")).toBe("/dashboard/account");
+    expect(adminDashboardPath("plan")).toBe("/dashboard/plan");
     expect(isAdminTab("txt")).toBe(true);
     expect(adminDashboardPath("sitemap")).toBe("/dashboard/publish");
     expect(isAdminTab("sitemap")).toBe(true);

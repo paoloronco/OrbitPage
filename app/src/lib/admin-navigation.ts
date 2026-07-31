@@ -10,6 +10,9 @@ export const ADMIN_TAB_IDS = [
   "publish",
   // Legacy publishing ids stay valid for older bookmarks and hosted runtimes.
   "qr",
+  "team",
+  "account",
+  "plan",
   "access",
   "backup",
   "analytics",
@@ -23,6 +26,7 @@ export type AdminTab = (typeof ADMIN_TAB_IDS)[number];
 export function canonicalAdminTab(tab: AdminTab): AdminTab {
   if (tab === "links" || tab === "pages" || tab === "menu") return "content";
   if (tab === "qr" || tab === "txt" || tab === "sitemap") return "publish";
+  if (tab === "access") return "account";
   return tab;
 }
 

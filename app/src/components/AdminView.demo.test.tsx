@@ -128,6 +128,15 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('admin-dashboard-shell');
     expect(html).toContain('admin-dashboard-sidebar');
     expect(html).toContain('Self-hosted workspace');
+    expect(html).toContain('Page tools');
+    expect(html).toContain('Open Source');
+    expect(html).toContain('Team');
+    expect(html).toContain('Account');
+    expect(html).toContain('Plan');
+    expect(html).toContain('Everything included in the OSS edition is unlocked.');
+    expect(html).toContain('Explore OrbitPage SaaS');
+    expect(html).toContain('/en-US/pricing');
+    expect(html).toContain('admin-dashboard-mobile-nav-button');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('Page checklist');
     expect(html).toContain('Getting started · login 1 of 3');
@@ -154,6 +163,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Admin access');
     expect(html).not.toContain('Encrypted session token');
     expect(html).not.toContain('PasswordManager');
+    expect(html).not.toContain('Everything included in the OSS edition is unlocked.');
     expect(html).not.toContain('Logout');
     expect(html).toContain('Backup');
     expect(mockState.backupProps.at(-1)).toMatchObject({ hosted: true });

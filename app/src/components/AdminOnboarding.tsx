@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ElementType } from "react";
+import type { AdminTab } from "@/lib/admin-navigation";
 import { Button } from "@/components/ui/button";
 import {
   ADMIN_ONBOARDING_FORCE_STORAGE_KEY,
@@ -23,10 +24,11 @@ import {
   Play,
   ShieldCheck,
   User,
+  UsersRound,
   X,
 } from "lucide-react";
 
-type AdminOnboardingTab = "profile" | "content" | "theme" | "publish" | "access" | "backup" | "analytics" | "privacy";
+type AdminOnboardingTab = AdminTab;
 type OnboardingMode = "hidden" | "welcome" | "tour" | "minimized";
 
 interface AdminOnboardingProfile {
@@ -145,23 +147,35 @@ const tourSteps: TourStep[] = [
     checklist: ["Check Total clicks", "Check CTA clicks", "Add GA4 only if available"],
   },
   {
-    id: "access",
-    tab: "access",
-    target: "[data-onboarding='access-section']",
+    id: "team",
+    tab: "team",
+    target: "[data-onboarding='team-section']",
+    icon: UsersRound,
+    eyebrow: "7. Team",
+    title: "Review local editors and roles",
+    body: "Team keeps the administrators and editors of this self-hosted installation separate from personal account security.",
+    action: "Confirm who can access this installation and which role each person needs.",
+    doneLabel: "Team reviewed",
+    checklist: ["Review existing users", "Keep administrator access limited", "Give every editor only the permissions they need"],
+  },
+  {
+    id: "account",
+    tab: "account",
+    target: "[data-onboarding='account-section']",
     icon: Key,
-    eyebrow: "7. Access",
-    title: "Review users, backups, and password tools",
-    body: "Access is where admins manage users, export backups, restore data, and change the admin password. This is the operational safety area.",
-    action: "Confirm who can access the admin and where backups are handled.",
-    doneLabel: "Access reviewed",
-    checklist: ["Review existing users", "Know where backups live", "Change password only when needed"],
+    eyebrow: "8. Account",
+    title: "Protect the current account",
+    body: "Account contains password and two-factor authentication controls for the signed-in self-hosted user.",
+    action: "Review two-factor authentication and change the password only when needed.",
+    doneLabel: "Account security reviewed",
+    checklist: ["Use a unique password", "Enable an authenticator app", "Store recovery codes outside this server"],
   },
   {
     id: "backup",
     tab: "backup",
     target: "[data-onboarding='backup-section']",
     icon: Database,
-    eyebrow: "7. Backup",
+    eyebrow: "9. Backup",
     title: "Keep a portable copy of the managed page",
     body: "Download the current profile, blocks, theme, privacy settings, and managed media references. Restoring affects only this signed-in workspace; account and billing data stay untouched.",
     action: "Download a backup now and keep it somewhere you control.",
@@ -173,7 +187,7 @@ const tourSteps: TourStep[] = [
     tab: "privacy",
     target: "[data-onboarding='privacy-section']",
     icon: ShieldCheck,
-    eyebrow: "8. Privacy",
+    eyebrow: "10. Privacy",
     title: "Set legal links and consent behavior",
     body: "Privacy controls decide which policy links appear publicly and whether consent management is active. This should match the customer legal setup.",
     action: "Add Privacy/Cookie links or configure hosted policies if required.",
@@ -368,7 +382,8 @@ export const AdminOnboarding = ({
           <span>First card</span>
           <span>Theme save</span>
           <span>Analytics</span>
-          {visibleTabs.includes("access") && <span>Access</span>}
+          {visibleTabs.includes("team") && <span>Team</span>}
+          {visibleTabs.includes("account") && <span>Account</span>}
           {visibleTabs.includes("backup") && <span>Backup</span>}
           <span>Privacy</span>
           <span>TXT</span>
