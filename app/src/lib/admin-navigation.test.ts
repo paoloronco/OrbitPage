@@ -19,6 +19,7 @@ describe("admin navigation", () => {
     expect(adminTabFromLocation("/dashboard/txt")).toBe("publish");
     expect(adminTabFromLocation("/dashboard/access")).toBe("account");
     expect(adminTabFromLocation("/dashboard/team")).toBe("team");
+    expect(adminTabFromLocation("/dashboard/newsletter")).toBe("newsletter");
     expect(adminTabFromLocation("/dashboard/account")).toBe("account");
     expect(adminTabFromLocation("/dashboard/plan")).toBe("plan");
   });

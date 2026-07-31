@@ -124,12 +124,13 @@ describe('AdminView demo mode', () => {
     expect(mockState.publishProps[0]).toMatchObject({ readOnly: true, canUseQr: true, canUseDiscovery: true });
     expect(mockState.previewProps).toHaveLength(2);
     expect(mockState.previewProps[0]).toMatchObject({ publicPageHref: '/' });
-    expect(html).toContain('Admin access');
+    expect(html).not.toContain('Admin access');
     expect(html).toContain('admin-dashboard-shell');
     expect(html).toContain('admin-dashboard-sidebar');
-    expect(html).toContain('Self-hosted workspace');
+    expect(html).toContain('Open Source plan');
     expect(html).toContain('Page tools');
     expect(html).toContain('Open Source');
+    expect(html).toContain('Newsletter');
     expect(html).toContain('Team');
     expect(html).toContain('Account');
     expect(html).toContain('Plan');
@@ -137,6 +138,8 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Explore OrbitPage SaaS');
     expect(html).toContain('/en-US/pricing');
     expect(html).toContain('admin-dashboard-mobile-nav-button');
+    expect(html).toContain('content-workspace-option-locked');
+    expect(html).toContain('Edit with AI');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('Page checklist');
     expect(html).toContain('Getting started · login 1 of 3');

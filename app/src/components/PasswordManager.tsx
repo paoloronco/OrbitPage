@@ -194,9 +194,9 @@ export const PasswordManager = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-md mx-auto">
+    <div className="oss-account-password-group">
       {/* Security Status */}
-      <Card className="glass-card p-6 space-y-4">
+      <Card className="glass-card p-6 space-y-4 oss-account-identity-card">
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <Shield className="w-8 h-8 text-primary" />
@@ -228,7 +228,7 @@ export const PasswordManager = () => {
       </Card>
 
       {/* Password Change Form */}
-      <Card className={`glass-card p-6 space-y-6 ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
+      <Card className={`glass-card p-6 space-y-6 oss-account-password-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <Key className="w-8 h-8 text-primary" />
@@ -386,7 +386,7 @@ export const PasswordManager = () => {
         </div>
       </Card>
       {/* Forgot password — token-based reset */}
-      <Card className={`glass-card p-6 space-y-4 ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
+      <Card className={`glass-card p-6 space-y-4 oss-account-recovery-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <button
           type="button"
           className="w-full text-left flex items-center justify-between"

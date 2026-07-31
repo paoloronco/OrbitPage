@@ -11,6 +11,7 @@ export const ADMIN_TAB_IDS = [
   // Legacy publishing ids stay valid for older bookmarks and hosted runtimes.
   "qr",
   "team",
+  "newsletter",
   "account",
   "plan",
   "access",
