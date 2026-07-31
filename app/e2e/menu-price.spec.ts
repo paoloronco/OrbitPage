@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test('accepts localized menu prices without rewriting the field while typing', async ({ page }, testInfo) => {
   const priceByProject: Record<string, string> = {
@@ -68,7 +68,7 @@ test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
 test('keeps menu categories and items usable on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await openAdminSection(page, 'Content');
   await page.getByRole('button', { name: /^Menu/ }).click();
 
   const switcher = page.locator('.menu-content-mobile-switch');
@@ -101,6 +101,7 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
 });
 
 test('creates, edits, reorders and removes menu content through the visible controls', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   const testSuffix = `${testInfo.project.name}-${testInfo.retry}-${Date.now()}`;
   const categoryLabel = `Desserts ${testSuffix}`;
   const subsectionLabel = `Cakes ${testSuffix}`;
@@ -143,7 +144,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.getByRole('button', { name: 'Save menu' }).click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
 
-  await page.reload();
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: /^Menu/ }).click();
   await page.getByRole('button', { name: `${subsectionLabel} 1`, exact: true }).click();

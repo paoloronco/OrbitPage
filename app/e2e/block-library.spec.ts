@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test('opens a searchable block library grouped by category', async ({ page }) => {
   await openAuthenticatedAdmin(page);
@@ -33,7 +33,7 @@ test('opens a searchable block library grouped by category', async ({ page }) =>
 test('keeps the block library usable on a mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await openAdminSection(page, 'Content');
   await page.getByRole('button', { name: 'Add content' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Add content' });
