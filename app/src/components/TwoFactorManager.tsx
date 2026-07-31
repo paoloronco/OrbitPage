@@ -57,7 +57,7 @@ export function TwoFactorManager() {
     await refresh();
   });
 
-  return <Card className={`glass-card p-6 space-y-5 ${DEMO_MODE ? 'opacity-60 pointer-events-none' : ''}`}>
+  return <Card className={`glass-card p-6 space-y-5 oss-account-mfa-card ${DEMO_MODE ? 'opacity-60 pointer-events-none' : ''}`}>
     <div className="flex items-start justify-between gap-4">
       <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Two-step verification</p><h2 className="mt-1 text-xl font-semibold">Authenticator app</h2><p className="mt-1 text-sm text-muted-foreground">Require a rotating code after the password for this administrator.</p></div>
       {status?.enabled ? <ShieldCheck className="h-6 w-6 text-emerald-600" /> : <KeyRound className="h-6 w-6 text-primary" />}

@@ -30,6 +30,7 @@ import {
   LockKeyhole,
   LogOut,
   Loader2,
+  Mail,
   Menu as MenuIcon,
   MousePointerClick,
   Palette,
@@ -81,6 +82,7 @@ import { VersionHistory } from "./VersionHistory";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 import { PublishTools } from "./PublishTools";
 import { SelfHostedAiPanel } from "./SelfHostedAiPanel";
+import { SelfHostedAiAgent } from "./SelfHostedAiAgent";
 import { OpenSourcePlan } from "./OpenSourcePlan";
 
 interface ProfileData {
@@ -148,6 +150,7 @@ const pageTabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
 ];
 
 const workspaceTabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
+  { value: "newsletter", icon: Mail },
   { value: "team", icon: UsersRound },
   { value: "account", icon: Key },
   { value: "plan", icon: BadgeCheck },
@@ -201,9 +204,9 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), ai: "OrbitPage AI", theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
+    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), ai: tr("AI Agent", "Agente AI"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
-    team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Plan", "Piano"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
+    newsletter: "Newsletter", team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Plan", "Piano"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
   const tabDescription = (tab: AdminTab) => ({
     profile: tr("Shape the identity people see first.", "Definisci l'identità che le persone vedono per prima."),
@@ -217,6 +220,7 @@ export const AdminView = ({
     qr: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     txt: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     sitemap: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
+    newsletter: tr("Create, schedule and review campaigns in one place.", "Crea, programma e controlla le campagne in un unico posto."),
     team: tr("Manage the people and roles in this installation.", "Gestisci persone e ruoli di questa installazione."),
     account: tr("Protect your credentials and sign-in security.", "Proteggi credenziali e sicurezza di accesso."),
     plan: tr("Review what is included in this open-source edition.", "Scopri cosa include questa edizione open source."),
@@ -382,6 +386,7 @@ export const AdminView = ({
       case 'theme':     return canEditTheme;
       case 'publish':   return canEditProfile || canEditCompliance;
       case 'team':      return !isHostedAdmin && canManageUsers;
+      case 'newsletter': return !isHostedAdmin;
       case 'account':   return !isHostedAdmin;
       case 'plan':      return !isHostedAdmin;
       case 'access':    return false;
@@ -588,7 +593,7 @@ export const AdminView = ({
               <OrbitPageBrand showName={false} size="md" />
               <div className="admin-dashboard-logo-copy">
                 <strong>OrbitPage</strong>
-                <small>{tr("Self-hosted workspace", "Workspace self-hosted")}</small>
+                <small>/{currentUser?.username || "admin"}</small>
               </div>
             </div>
             <button
@@ -648,7 +653,7 @@ export const AdminView = ({
 
             {visibleWorkspaceTabs.length > 0 && (
               <nav className="admin-dashboard-nav admin-dashboard-nav-workspace" aria-label={tr("Workspace tools", "Strumenti workspace")}>
-                <span className="admin-dashboard-nav-heading admin-dashboard-nav-heading-workspace">Open Source</span>
+                <span className="admin-dashboard-nav-heading admin-dashboard-nav-heading-workspace">{tr("Workspace Open Source", "Workspace Open Source")}</span>
                 {visibleWorkspaceTabs.map(({ value, icon: Icon }) => (
                   <button
                     aria-current={activeTab === value ? "page" : undefined}
@@ -674,14 +679,14 @@ export const AdminView = ({
                   {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
                 </select>
               </label>
-              <a className="admin-dashboard-footer-action" href={publicPageHref} target="_blank" rel="noopener noreferrer" title={tr("Public page", "Pagina pubblica")}>
-                <Globe2 className="h-4 w-4" aria-hidden="true" />
-                <span>{tr("Public page", "Pagina pubblica")}</span>
-              </a>
-              <button className="admin-dashboard-footer-action" onClick={handleLogout} title={tr("Logout", "Esci")} type="button">
+              <button className="admin-dashboard-footer-action" onClick={handleLogout} title={tr("Sign out", "Esci")} type="button">
                 <LogOut className="h-4 w-4" aria-hidden="true" />
-                <span>{tr("Logout", "Esci")}</span>
+                <span>{tr("Sign out", "Esci")}</span>
               </button>
+              <a className="admin-dashboard-footer-action" href={publicPageHref} target="_blank" rel="noopener noreferrer" title={tr("Back to site", "Torna al sito")}>
+                <Globe2 className="h-4 w-4" aria-hidden="true" />
+                <span>{tr("Back to site", "Torna al sito")}</span>
+              </a>
             </div>
           </div>
         </aside>
@@ -727,23 +732,19 @@ export const AdminView = ({
             )}
           </div>
         </header> : !isHostedAdmin ? <header className="admin-dashboard-header">
-          <div>
-            <p className="admin-dashboard-kicker">{tr("Self-hosted workspace", "Workspace self-hosted")}</p>
-            <div className="admin-dashboard-heading-row">
-              <h1>{tabLabel(activeTab)}</h1>
-              {appVersion && <span className="admin-version" title={tr("OrbitPage OSS version", "Versione OrbitPage OSS")}>v{appVersion}</span>}
+          <div className="admin-dashboard-header-copy">
+            <p className="admin-dashboard-kicker">{tr("Open Source plan", "Piano Open Source")}</p>
+            <div className="admin-dashboard-heading-row"><h1>{tabLabel(activeTab)}</h1></div>
+            <p className="admin-dashboard-section-description">{tabDescription(activeTab)}</p>
+            <div className="admin-dashboard-context-row" aria-label={tr("Workspace context", "Contesto workspace")}>
+              <span className="admin-dashboard-context-slug">/{currentUser?.username || "admin"}</span>
+              <span>{tr("Owner", "Proprietario")}</span>
+              <span className="admin-dashboard-page-state"><i aria-hidden="true" />{tr("Self-hosted", "Self-hosted")}</span>
             </div>
-            <p>{tabDescription(activeTab)}</p>
           </div>
           <div className="admin-dashboard-header-actions">
-            {!isProspectReadOnly && (
-              <Button className="admin-action" variant="outline" size="sm" onClick={() => setOnboardingReplayKey(key => key + 1)}>
-                <HelpCircle className="h-4 w-4" />
-                {tr("Guide", "Guida")}
-              </Button>
-            )}
             <a href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
-              <Button className="admin-action admin-action-primary" size="sm">
+              <Button className="admin-action" variant="outline" size="sm">
                 <ExternalLink className="h-4 w-4" />
                 {tr("Public page", "Pagina pubblica")}
               </Button>
@@ -761,7 +762,7 @@ export const AdminView = ({
           </section>
         )}
 
-        <section className={`admin-metrics${isHostedAdmin ? " admin-metrics-saas" : ""}`} aria-label={tr("Workspace status", "Stato del workspace")}>
+        <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
           <MetricCard
             icon={Globe2}
             label={tr("Visible links", "Link visibili")}
@@ -782,14 +783,6 @@ export const AdminView = ({
             value={metrics.profileReady ? tr("Ready", "Pronta") : tr("Draft", "Bozza")}
             detail={`${metrics.socialCount} ${tr("social links", "link social")}`}
           />
-          {!isHostedAdmin && (
-            <MetricCard
-              icon={ShieldCheck}
-              label={tr("Admin access", "Accesso amministratore")}
-              value={tr("Protected", "Protetto")}
-              detail={tr("Encrypted session token", "Token di sessione crittografato")}
-            />
-          )}
         </section>
 
         <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin && !isIntegratedHostedAdmin ? "mt-5 flex-1" : isIntegratedHostedAdmin ? "admin-integrated-tabs flex-1" : "admin-dashboard-tabs flex-1"}>
@@ -872,13 +865,11 @@ export const AdminView = ({
                 <div>
                   <p className="admin-dashboard-kicker">{tr("Page structure", "Struttura pagina")}</p>
                   <h2 id="content-workspace-title">{tr("Choose what your OrbitPage contains", "Scegli cosa contiene la tua OrbitPage")}</h2>
-                  <p>{hostedShop
-                    ? tr("The home is always available. Add a menu, shop or focused pages only when they are useful.", "La home è sempre disponibile. Aggiungi menu, shop o pagine dedicate solo quando servono.")
-                    : tr("The home is always available. Add a native menu or focused pages only when they are useful.", "La home è sempre disponibile. Aggiungi un menu nativo o pagine dedicate solo quando servono.")}</p>
+                  <p>{tr("The home is always available. Add a menu, shop or focused pages only when they are useful.", "La home è sempre disponibile. Aggiungi menu, shop o pagine dedicate solo quando servono.")}</p>
                 </div>
               </header>
 
-              <nav className={hostedShop ? "content-workspace-switcher with-shop" : "content-workspace-switcher"} aria-label={tr("Content destinations", "Destinazioni contenuto")}>
+              <nav className="content-workspace-switcher with-shop" aria-label={tr("Content destinations", "Destinazioni contenuto")}>
                 <button
                   aria-current={contentSection === "home" ? "page" : undefined}
                   className={contentSection === "home" ? "content-workspace-option active" : "content-workspace-option"}
@@ -912,6 +903,13 @@ export const AdminView = ({
                     <em className={hostedShop.enabled ? "content-status content-status-live" : "content-status"}>
                       {hostedShop.enabled ? tr("Active", "Attivo") : hostedShop.entitled ? tr("Manage", "Gestisci") : "Pro"}
                     </em>
+                  </button>
+                )}
+                {!hostedShop && (
+                  <button aria-disabled="true" className="content-workspace-option content-workspace-option-locked" disabled type="button">
+                    <span className="content-workspace-option-icon"><ShoppingBag aria-hidden="true" /></span>
+                    <span><strong>{tr("Shop", "Shop")}</strong><small>{tr("Digital products and services with Stripe checkout", "Prodotti digitali e servizi con checkout Stripe")}</small></span>
+                    <em className="content-status"><LockKeyhole aria-hidden="true" />SaaS</em>
                   </button>
                 )}
                 <button
@@ -1070,10 +1068,24 @@ export const AdminView = ({
           )}
 
           {!isHostedAdmin && (
+            <TabsContent value="newsletter" className="admin-tab-content">
+              <section className="oss-hosted-feature" aria-labelledby="oss-newsletter-title">
+                <span className="oss-hosted-feature-mark"><Mail aria-hidden="true" /></span>
+                <div>
+                  <p className="admin-dashboard-kicker">Newsletter</p>
+                  <h2 id="oss-newsletter-title">{tr("Managed campaigns in OrbitPage SaaS", "Campagne gestite in OrbitPage SaaS")}</h2>
+                  <p>{tr("The navigation stays identical across editions. Managed delivery, subscribers and scheduling are available in the hosted service.", "La navigazione resta identica tra le edizioni. Invio gestito, iscritti e programmazione sono disponibili nel servizio hosted.")}</p>
+                </div>
+                <a href="https://orbitpage.com/pricing" target="_blank" rel="noopener noreferrer">{tr("View SaaS plans", "Vedi i piani SaaS")}<ExternalLink aria-hidden="true" /></a>
+              </section>
+            </TabsContent>
+          )}
+
+          {!isHostedAdmin && (
             <TabsContent value="account" className="admin-tab-content">
-              <div className="admin-single-column space-y-6" data-onboarding="account-section">
-                <TwoFactorManager />
+              <div className="oss-account-layout" data-onboarding="account-section">
                 <PasswordManager />
+                <TwoFactorManager />
               </div>
             </TabsContent>
           )}
@@ -1204,6 +1216,7 @@ export const AdminView = ({
           </p>
         </footer>
       </div>
+      {!isHostedAdmin && !isProspectReadOnly && <SelfHostedAiAgent onApplied={onAiApplied} />}
     </div>
   );
 };
