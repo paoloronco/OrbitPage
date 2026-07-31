@@ -7299,7 +7299,14 @@
 
 /* SaaS/OSS dashboard parity contract. Keep these values aligned with the hosted shell. */
 .admin-dashboard-shell {
-  grid-template-columns: 248px minmax(0, 1fr);
+  --orbitpage-dashboard-sidebar-width: 248px;
+  --orbitpage-dashboard-collapsed-width: 76px;
+  --orbitpage-dashboard-sidebar-padding: 20px;
+  --orbitpage-dashboard-brand-size: 36px;
+  --orbitpage-dashboard-nav-height: 42px;
+  --orbitpage-dashboard-header-height: 112px;
+  grid-template-columns: var(--orbitpage-dashboard-sidebar-width) minmax(0, 1fr);
+  font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
   background:
     linear-gradient(90deg, rgb(255 255 255 / 55%) 1px, transparent 1px) 0 0 / 48px 48px,
     var(--admin-canvas);
@@ -7311,7 +7318,7 @@
   height: 100vh;
   max-height: 100vh;
   flex-direction: column;
-  padding: 20px;
+  padding: var(--orbitpage-dashboard-sidebar-padding);
   border-right: 1px solid rgb(255 255 255 / 8%);
   background: var(--admin-sidebar);
   color: #dce5f4;
@@ -7324,8 +7331,35 @@
   border-bottom: 1px solid rgb(255 255 255 / 9%);
 }
 
-.admin-dashboard-logo-copy strong { color: #fff; font-size: 15px; }
-.orbitpage-admin .admin-dashboard-logo-copy small { color: #afbdd0; }
+.admin-dashboard-logo {
+  gap: 12px;
+}
+
+.orbitpage-dashboard-brand {
+  width: var(--orbitpage-dashboard-brand-size);
+  height: var(--orbitpage-dashboard-brand-size);
+  flex: 0 0 var(--orbitpage-dashboard-brand-size);
+  gap: 0;
+}
+
+.orbitpage-dashboard-brand img {
+  width: var(--orbitpage-dashboard-brand-size);
+  height: var(--orbitpage-dashboard-brand-size);
+}
+
+.admin-dashboard-logo-copy strong {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+}
+.orbitpage-admin .admin-dashboard-logo-copy small {
+  color: #afbdd0;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.2;
+}
 
 .admin-dashboard-collapse {
   border-color: rgb(255 255 255 / 10%);
@@ -7340,7 +7374,7 @@
   color: #fff;
 }
 
-.admin-dashboard-nav-stack { gap: 3px; }
+.admin-dashboard-nav-stack { gap: 3px; margin-top: 0; }
 .admin-dashboard-nav-heading {
   margin: 19px 10px 7px;
   padding: 0;
@@ -7358,7 +7392,7 @@
 
 .admin-dashboard-nav-item {
   position: relative;
-  min-height: 42px;
+  min-height: var(--orbitpage-dashboard-nav-height);
   padding: 10px 12px;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -7414,7 +7448,7 @@
   position: sticky;
   z-index: 30;
   top: 0;
-  min-height: 112px;
+  min-height: var(--orbitpage-dashboard-header-height);
   align-items: flex-start;
   margin: 0 calc(clamp(20px, 2.8vw, 42px) * -1) 16px;
   padding: 19px clamp(20px, 2.8vw, 42px) 14px;
@@ -7429,8 +7463,16 @@
   font-size: clamp(25px, 2.5vw, 32px);
   line-height: 1.08;
   letter-spacing: 0;
+  font-weight: 800;
 }
-.admin-dashboard-kicker { color: var(--admin-accent-strong); font-size: 10px; letter-spacing: .09em; }
+.admin-dashboard-kicker {
+  margin: 0 0 5px;
+  color: var(--admin-accent-strong);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
 .admin-dashboard-section-description {
   margin: 5px 0 0;
   color: var(--admin-muted-copy);
@@ -7566,8 +7608,8 @@
 @keyframes ai-page-agent-spin { to { transform: rotate(360deg); } }
 
 @media (min-width: 768px) {
-  .admin-dashboard-shell.admin-dashboard-collapsed { grid-template-columns: 76px minmax(0, 1fr); }
-  .admin-dashboard-collapsed .admin-dashboard-sidebar { width: 76px; padding-inline: 12px; }
+  .admin-dashboard-shell.admin-dashboard-collapsed { grid-template-columns: var(--orbitpage-dashboard-collapsed-width) minmax(0, 1fr); }
+  .admin-dashboard-collapsed .admin-dashboard-sidebar { width: var(--orbitpage-dashboard-collapsed-width); padding-inline: 12px; }
 }
 
 @media (max-width: 767px) {
@@ -7621,7 +7663,7 @@
 .admin-dashboard-nav-stack .admin-dashboard-nav {
   margin: 0;
   overflow: visible;
-  padding: 0 6px;
+  padding: 0;
 }
 
 .admin-dashboard-nav-workspace {

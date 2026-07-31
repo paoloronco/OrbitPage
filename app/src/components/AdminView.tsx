@@ -15,16 +15,17 @@ import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/
 import {
   AlertTriangle,
   BarChart2,
-  BadgeCheck,
+  BarChart3,
   CheckCircle2,
   ChevronDown,
+  CircleUserRound,
   Cookie,
+  CreditCard,
   Database,
   ExternalLink,
   Files,
   Globe2,
   HelpCircle,
-  Key,
   Languages,
   Link,
   LockKeyhole,
@@ -42,6 +43,7 @@ import {
   UtensilsCrossed,
   ShieldCheck,
   User,
+  UserRound,
   UsersRound,
   X,
 } from "lucide-react";
@@ -138,22 +140,22 @@ interface AdminViewProps {
   onTabChange?: (tab: AdminTab) => void;
 }
 
-const pageTabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
-  { value: "profile", icon: User },
-  { value: "content", icon: Files },
-  { value: "ai", icon: Sparkles },
-  { value: "theme", icon: Palette },
-  { value: "publish", icon: Share2 },
-  { value: "backup", icon: Database },
-  { value: "analytics", icon: BarChart2 },
-  { value: "privacy", icon: Cookie },
+const pageTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName: string }> = [
+  { value: "profile", icon: UserRound, iconName: "user-round" },
+  { value: "content", icon: Files, iconName: "files" },
+  { value: "ai", icon: Sparkles, iconName: "sparkles" },
+  { value: "theme", icon: Palette, iconName: "palette" },
+  { value: "publish", icon: Share2, iconName: "share-2" },
+  { value: "backup", icon: Database, iconName: "database" },
+  { value: "analytics", icon: BarChart3, iconName: "bar-chart-3" },
+  { value: "privacy", icon: Cookie, iconName: "cookie" },
 ];
 
-const workspaceTabs: Array<{ value: AdminTab; icon: React.ElementType }> = [
-  { value: "newsletter", icon: Mail },
-  { value: "team", icon: UsersRound },
-  { value: "account", icon: Key },
-  { value: "plan", icon: BadgeCheck },
+const workspaceTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName: string }> = [
+  { value: "newsletter", icon: Mail, iconName: "mail" },
+  { value: "team", icon: UsersRound, iconName: "users-round" },
+  { value: "account", icon: CircleUserRound, iconName: "circle-user-round" },
+  { value: "plan", icon: CreditCard, iconName: "credit-card" },
 ];
 
 const tabs = [...pageTabs, ...workspaceTabs];
@@ -204,7 +206,7 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), ai: tr("AI Agent", "Agente AI"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
+    profile: "Page", content: "Content", links: "Content", pages: "Content", ai: tr("AI Agent", "Agente AI"), theme: "Theme", menu: "Content",
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
     newsletter: "Newsletter", team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Plan", "Piano"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
@@ -221,10 +223,10 @@ export const AdminView = ({
     txt: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     sitemap: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     newsletter: tr("Create, schedule and review campaigns in one place.", "Crea, programma e controlla le campagne in un unico posto."),
-    team: tr("Manage the people and roles in this installation.", "Gestisci persone e ruoli di questa installazione."),
-    account: tr("Protect your credentials and sign-in security.", "Proteggi credenziali e sicurezza di accesso."),
+    team: tr("Give each collaborator the access they actually need.", "Assegna a ogni collaboratore solo l'accesso necessario."),
+    account: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
     plan: tr("Review what is included in this open-source edition.", "Scopri cosa include questa edizione open source."),
-    access: tr("Protect your credentials and sign-in security.", "Proteggi credenziali e sicurezza di accesso."),
+    access: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
     backup: tr("Keep portable copies and restore with confidence.", "Mantieni copie portabili e ripristina in sicurezza."),
     analytics: tr("Read the signals behind visits and interactions.", "Leggi i segnali dietro visite e interazioni."),
     privacy: tr("Manage consent, policies and visitor choices.", "Gestisci consenso, informative e scelte dei visitatori."),
@@ -590,8 +592,8 @@ export const AdminView = ({
         <aside className="admin-dashboard-sidebar">
           <div className="admin-dashboard-logo-row">
             <div className="admin-dashboard-logo">
-              <OrbitPageBrand showName={false} size="md" />
-              <div className="admin-dashboard-logo-copy">
+              <OrbitPageBrand className="orbitpage-dashboard-brand" showName={false} size="md" />
+              <div className="admin-dashboard-logo-copy orbitpage-dashboard-brand-copy">
                 <strong>OrbitPage</strong>
                 <small>/{currentUser?.username || "admin"}</small>
               </div>
@@ -635,7 +637,7 @@ export const AdminView = ({
           <div className={`admin-dashboard-nav-stack${mobileNavOpen ? " open" : ""}`} id="admin-dashboard-primary-navigation">
             <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}</div>
             <nav className="admin-dashboard-nav admin-dashboard-nav-page" aria-label={tr("Page tools", "Strumenti pagina")}>
-              {visiblePageTabs.map(({ value, icon: Icon }) => (
+              {visiblePageTabs.map(({ value, icon: Icon, iconName }) => (
                 <button
                   aria-current={activeTab === value ? "page" : undefined}
                   className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
@@ -645,7 +647,7 @@ export const AdminView = ({
                   title={tabLabel(value)}
                   type="button"
                 >
-                  <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" aria-hidden="true" />
+                  <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" />
                   <span>{tabLabel(value)}</span>
                 </button>
               ))}
@@ -654,7 +656,7 @@ export const AdminView = ({
             {visibleWorkspaceTabs.length > 0 && (
               <nav className="admin-dashboard-nav admin-dashboard-nav-workspace" aria-label={tr("Workspace tools", "Strumenti workspace")}>
                 <span className="admin-dashboard-nav-heading admin-dashboard-nav-heading-workspace">{tr("Workspace Open Source", "Workspace Open Source")}</span>
-                {visibleWorkspaceTabs.map(({ value, icon: Icon }) => (
+                {visibleWorkspaceTabs.map(({ value, icon: Icon, iconName }) => (
                   <button
                     aria-current={activeTab === value ? "page" : undefined}
                     className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
@@ -664,7 +666,7 @@ export const AdminView = ({
                     title={tabLabel(value)}
                     type="button"
                   >
-                    <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" aria-hidden="true" />
+                    <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" />
                     <span>{tabLabel(value)}</span>
                   </button>
                 ))}
