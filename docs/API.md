@@ -1,10 +1,18 @@
-# OrbitPage APIs and automation
+# OrbitPage Automation REST API
 
-OrbitPage has two different API surfaces. Choose the one that matches where your page is hosted.
+This page documents the app-integrated API that people use with personal tokens to automate managed OrbitPage pages. It does not document OrbitPage AI endpoints or the OpenAI provider key used by the self-hosted assistant.
 
-## Managed OrbitPage API
+OrbitPage has three distinct technical boundaries. Do not interchange their credentials:
 
-The supported public automation API belongs to the managed service at [orbitpage.com](https://orbitpage.com). It uses revocable personal API tokens that are separate from the dashboard session and bound to one workspace.
+| Boundary | Credential | Purpose |
+| --- | --- | --- |
+| Managed Automation REST API | Personal token with the `op_pat_` prefix | Supported external scripts, server backends and CI that read or update page blocks |
+| OrbitPage AI | Authenticated dashboard session; an OpenAI provider key on OSS | Interactive, reviewed page-edit proposals inside the app; not a public personal-token API |
+| Dashboard application API | Firebase session on SaaS; admin session on OSS | Private browser-to-app traffic; not a stable external integration contract |
+
+## Managed Automation REST API
+
+The supported Automation REST API belongs to the managed service at [orbitpage.com](https://orbitpage.com). It uses revocable personal API tokens that are separate from the dashboard session and bound to one workspace.
 
 Use it when a script, deployment workflow, or CI job needs to read or update the blocks on a managed OrbitPage.
 
@@ -22,11 +30,11 @@ curl https://orbitpage.com/api/v1/links \
   --header "Authorization: Bearer $ORBITPAGE_TOKEN"
 ```
 
-The current public API covers the managed workspace's link and content-block collection. It does not expose the OrbitPage AI endpoints, billing, Shop administration, account management, or the private dashboard API.
+The current Automation REST API covers the managed workspace's link and content-block collection. It does not expose OrbitPage AI, billing, Shop administration, account management, or the private dashboard API. An `op_pat_...` token works only with `https://orbitpage.com/api/v1`; an OpenAI API key never belongs in a request to that URL.
 
 ## Self-hosted application API
 
-The Express API in this repository powers the bundled React dashboard. Its routes use the self-hosted admin session and are an internal application boundary, not the versioned personal-token contract described above.
+The Express API in this repository powers the bundled React dashboard. Its routes use the self-hosted admin session and are an internal application boundary, not the versioned personal-token Automation REST API described above.
 
 That distinction matters:
 
