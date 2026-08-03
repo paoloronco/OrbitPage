@@ -100,6 +100,40 @@ export function normalizeOrbitPagePublicHref(value: string): string | null {
   }
 }
 
+/**
+ * Removes the optional decorations accepted around a social username without
+ * running a backtracking regular expression over user-controlled input.
+ */
+export function stripSocialUsernameDecorators(value: string) {
+  let start = 0;
+  let end = value.length;
+
+  while (start < end && value[start] === "@") start += 1;
+  while (start < end && value[start] === "/") start += 1;
+  while (end > start && value[end - 1] === "/") end -= 1;
+
+  return value.slice(start, end);
+}
+
+/**
+ * Performs the same lightweight email validation used by social blocks in
+ * linear time. Full mailbox verification remains the destination provider's
+ * responsibility.
+ */
+export function isSimpleEmailAddress(value: string) {
+  const at = value.indexOf("@");
+  if (at <= 0 || at !== value.lastIndexOf("@")) return false;
+
+  const lastDot = value.lastIndexOf(".");
+  if (lastDot <= at + 1 || lastDot === value.length - 1) return false;
+
+  for (const character of value) {
+    if (character.trim() === "") return false;
+  }
+
+  return true;
+}
+
 export const OrbitPagePublicHrefSchema = z.string().max(2_048)
   .refine(isSafePublicHref, "Use a public HTTP(S), mailto, tel, anchor, or relative-path URL.");
 

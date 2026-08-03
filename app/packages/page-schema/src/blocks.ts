@@ -8,11 +8,13 @@ import {
   OrbitPagePublicHrefSchema,
   boundedString,
   generatedId,
+  isSimpleEmailAddress,
   isPlainObject,
   normalizeOrbitPagePublicHref,
   parseJsonObject,
   parseOrThrow,
-  stableJsonObject
+  stableJsonObject,
+  stripSocialUsernameDecorators
 } from "./primitives";
 
 export const ORBITPAGE_BLOCK_TYPES = [
@@ -172,7 +174,7 @@ export function normalizeOrbitPageSocialHref(platform: SocialRowPlatform, value:
 
   const base = SOCIAL_USERNAME_BASES[platform];
   if (base) {
-    const username = candidate.replace(/^@+/, "").replace(/^\/+|\/+$/g, "");
+    const username = stripSocialUsernameDecorators(candidate);
     if (/^[a-z0-9._-]{1,100}$/i.test(username)) {
       return `${base}${username}${platform === "instagram" || platform === "facebook" ? "/" : ""}`;
     }
@@ -183,7 +185,7 @@ export function normalizeOrbitPageSocialHref(platform: SocialRowPlatform, value:
     return phone.length >= 6 && phone.length <= 15 ? `https://wa.me/${phone}` : null;
   }
 
-  if (platform === "email" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) {
+  if (platform === "email" && isSimpleEmailAddress(candidate)) {
     return `mailto:${candidate}`;
   }
 

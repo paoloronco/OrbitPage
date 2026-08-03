@@ -5,6 +5,7 @@ import {
   OrbitPagePublicHrefInputSchema,
   OrbitPagePublicHrefSchema,
   boundedString,
+  stripSocialUsernameDecorators,
   normalizeOrbitPagePublicHref,
   parseOrThrow
 } from "./primitives";
@@ -120,7 +121,7 @@ function normalizeProfileSocialHref(
 
   const base = PROFILE_SOCIAL_USERNAME_BASES[platform];
   if (base) {
-    const username = candidate.replace(/^@+/, "").replace(/^\/+|\/+$/g, "");
+    const username = stripSocialUsernameDecorators(candidate);
     if (/^[a-z0-9._-]{1,100}$/i.test(username)) return `${base}${username}`;
   }
 
