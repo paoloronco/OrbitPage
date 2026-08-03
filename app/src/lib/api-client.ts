@@ -2,11 +2,13 @@ import { apiPath, getActiveBasePath, getConsentScope } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
 
-// --- Secure token storage (AES-GCM via Web Crypto) ---
+// --- Session-scoped token storage (AES-GCM via Web Crypto) ---
 //
 // Web Crypto (crypto.subtle) is only available in "secure contexts": HTTPS or localhost.
 // When accessed over plain HTTP via an IP address, crypto.subtle is unavailable and the
 // token remains in memory for the current document rather than being written in cleartext.
+// The ciphertext and its device secret live in sessionStorage, not localStorage, so an
+// admin session is not retained after the browser session closes.
 const TOKEN_STORAGE_KEY = 'orbitpage-auth-token';
 const TOKEN_IV_PREFIX = 'orbitpage-auth-iv-';
 const DEVICE_SECRET_KEY = 'orbitpage-device-secret';
@@ -94,14 +96,14 @@ const getCryptoOrThrow = (): Crypto => {
 };
 
 const getOrCreateDeviceSecret = (): Uint8Array => {
-  const existing = localStorage.getItem(DEVICE_SECRET_KEY);
+  const existing = sessionStorage.getItem(DEVICE_SECRET_KEY);
   if (existing) {
     return Uint8Array.from(atob(existing), c => c.charCodeAt(0));
   }
   const buf = new Uint8Array(32);
   getCryptoOrThrow().getRandomValues(buf);
   const b64 = btoa(String.fromCharCode(...buf));
-  localStorage.setItem(DEVICE_SECRET_KEY, b64);
+  sessionStorage.setItem(DEVICE_SECRET_KEY, b64);
   return buf;
 };
 
@@ -170,8 +172,8 @@ const getAuthToken = (): string | null => {
     return ((window as any).__orbitpageTokenCache as { val?: string } | undefined)?.val || null;
   }
 
-  const ctB64 = localStorage.getItem(TOKEN_STORAGE_KEY);
-  const ivB64 = localStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
+  const ctB64 = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  const ivB64 = sessionStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   if (!ctB64 || !ivB64) return null;
   // Synchronous callers expect a string; we cannot block on async here.
   // For simplicity, decrypt synchronously via microtask by caching the last token.
@@ -188,10 +190,10 @@ const hasStoredAuthToken = (): boolean => {
     return true;
   }
   try {
-    if (typeof localStorage === 'undefined') return false;
+    if (typeof sessionStorage === 'undefined') return false;
     return Boolean(
-      localStorage.getItem(TOKEN_STORAGE_KEY) &&
-      localStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY)
+      sessionStorage.getItem(TOKEN_STORAGE_KEY) &&
+      sessionStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY)
     );
   } catch {
     return false;
@@ -209,8 +211,8 @@ const getAuthTokenAsync = async (): Promise<string | null> => {
 
   const cached = getAuthToken();
   if (cached) return cached;
-  const ctB64 = localStorage.getItem(TOKEN_STORAGE_KEY);
-  const ivB64 = localStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
+  const ctB64 = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  const ivB64 = sessionStorage.getItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   if (!ctB64 || !ivB64) return null;
   const val = await decryptToken(ivB64, ctB64);
   if (val) {
@@ -229,7 +231,7 @@ const getAuthenticatedRequestHeaders = async (): Promise<Record<string, string>>
 };
 
 // Set auth token.
-// In a secure context (HTTPS / localhost): AES-GCM encrypted in localStorage.
+// In a secure context (HTTPS / localhost): AES-GCM encrypted in sessionStorage.
 // In a non-secure context (HTTP over IP): retained only in memory for this document.
 const setAuthToken = (token: string): Promise<void> => {
   capturedPageRevision = null;
@@ -244,8 +246,12 @@ const setAuthToken = (token: string): Promise<void> => {
   }
 
   return encryptToken(token).then(({ ivB64, ctB64 }) => {
-    localStorage.setItem(TOKEN_STORAGE_KEY, ctB64);
-    localStorage.setItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY, ivB64);
+    sessionStorage.setItem(TOKEN_STORAGE_KEY, ctB64);
+    sessionStorage.setItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY, ivB64);
+    // Remove pre-hardening persistent credentials. Users with an old session must log in once.
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
+    localStorage.removeItem(DEVICE_SECRET_KEY);
     (window as any).__orbitpageTokenCache = { iv: ivB64, ct: ctB64, val: token };
   }).catch((err) => {
     // Encryption unexpectedly failed even though crypto.subtle was available.
@@ -256,8 +262,12 @@ const setAuthToken = (token: string): Promise<void> => {
 
 // Remove auth tokens from encrypted storage and memory.
 const removeAuthToken = (): void => {
+  sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+  sessionStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
+  sessionStorage.removeItem(DEVICE_SECRET_KEY);
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
+  localStorage.removeItem(DEVICE_SECRET_KEY);
   capturedSaasApiToken = null;
   capturedSaasAppCheckToken = null;
   capturedPageRevision = null;

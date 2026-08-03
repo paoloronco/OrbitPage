@@ -31,14 +31,24 @@ describe('auth token presence', () => {
     expect(authApi.hasStoredToken()).toBe(false);
   });
 
-  it('reports a stored token when the encrypted token and IV are present', () => {
+  it('reports a stored token when the session-scoped ciphertext and IV are present', () => {
+    const session = storage();
+    session.setItem('orbitpage-auth-token', 'ciphertext');
+    session.setItem('orbitpage-auth-iv-orbitpage-auth-token', 'iv');
+    vi.stubGlobal('localStorage', storage());
+    vi.stubGlobal('sessionStorage', session);
+
+    expect(authApi.hasStoredToken()).toBe(true);
+  });
+
+  it('ignores encrypted tokens left in persistent legacy storage', () => {
     const local = storage();
     local.setItem('orbitpage-auth-token', 'ciphertext');
     local.setItem('orbitpage-auth-iv-orbitpage-auth-token', 'iv');
     vi.stubGlobal('localStorage', local);
     vi.stubGlobal('sessionStorage', storage());
 
-    expect(authApi.hasStoredToken()).toBe(true);
+    expect(authApi.hasStoredToken()).toBe(false);
   });
 
   it('ignores obsolete plaintext fallback tokens', () => {

@@ -3,6 +3,7 @@ import request from 'supertest';
 
 vi.hoisted(() => {
   process.env.BASE_PATH = '/orbitpage';
+  process.env.ORBITPAGE_ALLOWED_ORIGINS = 'https://trusted.example';
 });
 
 // Mock database.js before importing server.js
@@ -80,6 +81,29 @@ describe('API Endpoints', () => {
     const response = await request(app).get('/health');
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('ok');
+  });
+
+  it('does not grant CORS access to arbitrary production origins', async () => {
+    const response = await request(app)
+      .get('/health')
+      .set('Origin', 'https://attacker.example');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
+  });
+
+  it('grants non-credentialed CORS only to an explicitly trusted origin', async () => {
+    const response = await request(app)
+      .options('/api/ai/settings')
+      .set('Origin', 'https://trusted.example')
+      .set('Access-Control-Request-Method', 'GET')
+      .set('Access-Control-Request-Headers', 'authorization');
+
+    expect(response.status).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe('https://trusted.example');
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
+    expect(response.headers['access-control-allow-headers']).toContain('Authorization');
   });
 
   it('sets CSP sources needed by embedded legal policy providers', async () => {

@@ -30,6 +30,8 @@ Each self-hosted administrator can enable time-based one-time passwords under **
 
 - The password is always verified before setup, recovery-code rotation or disabling 2FA.
 - The TOTP secret is encrypted at rest with AES-256-GCM using a key derived from the stable `JWT_SECRET`.
+- Browser admin credentials are retained only for the current browser session. The encrypted JWT is stored in `sessionStorage`, not persistent `localStorage`, and is removed on logout.
+- Cross-origin browser access is denied by default. Use `ORBITPAGE_ALLOWED_ORIGINS` only for explicitly trusted separate frontends.
 - Ten single-use recovery codes are generated at enrollment and displayed once. Only salted scrypt hashes are stored.
 - A successful recovery-code login consumes that code atomically.
 - Disabling 2FA, changing a password or using the operator reset increments the account authentication version and invalidates older sessions.

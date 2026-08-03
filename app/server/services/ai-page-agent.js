@@ -17,6 +17,26 @@ const MAX_CONTEXT_BYTES = 72_000;
 const MAX_PROVIDER_INPUT_BYTES = 96_000;
 const MAX_OUTPUT_TOKENS = 2_400;
 
+export function resolveOpenAiResponsesUrl() {
+  const testUrl = String(process.env.ORBITPAGE_TEST_OPENAI_RESPONSES_URL || '').trim();
+  if (process.env.NODE_ENV !== 'test' || !testUrl) return OPENAI_RESPONSES_URL;
+
+  try {
+    const parsed = new URL(testUrl);
+    const isLoopback = parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost';
+    if (parsed.protocol !== 'http:' || !isLoopback || parsed.username || parsed.password) {
+      throw new Error('The test provider must be an unauthenticated loopback HTTP URL.');
+    }
+    return parsed.toString();
+  } catch (error) {
+    throw new AiPageAgentError(
+      503,
+      'AI_TEST_PROVIDER_INVALID',
+      error instanceof Error ? error.message : 'The test provider URL is invalid.',
+    );
+  }
+}
+
 const PROFILE_FIELDS = [
   'name',
   'bio',
@@ -1014,7 +1034,7 @@ async function requestOpenAiPlan({ username, context, request, apiKey, model }) 
   const timeout = setTimeout(() => controller.abort(), 35_000);
   let response;
   try {
-    response = await fetch(OPENAI_RESPONSES_URL, {
+    response = await fetch(resolveOpenAiResponsesUrl(), {
       method: 'POST',
       headers: {
         authorization: `Bearer ${apiKey}`,

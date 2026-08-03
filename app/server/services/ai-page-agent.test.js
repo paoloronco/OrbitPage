@@ -6,6 +6,7 @@ import {
   decryptApiKey,
   encryptApiKey,
   planAiPageChanges,
+  resolveOpenAiResponsesUrl,
 } from './ai-page-agent.js';
 import { dbGet } from '../database.js';
 
@@ -74,6 +75,18 @@ describe('self-hosted AI page agent', () => {
     expect(encrypted).not.toContain(apiKey);
     expect(encrypted.split('.')).toHaveLength(3);
     expect(decryptApiKey(encrypted)).toBe(apiKey);
+  });
+
+  it('keeps the provider endpoint fixed in production and limits test overrides to loopback', () => {
+    vi.stubEnv('ORBITPAGE_TEST_OPENAI_RESPONSES_URL', 'https://attacker.example/v1/responses');
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(resolveOpenAiResponsesUrl()).toBe('https://api.openai.com/v1/responses');
+
+    vi.stubEnv('NODE_ENV', 'test');
+    expect(() => resolveOpenAiResponsesUrl()).toThrow('loopback');
+
+    vi.stubEnv('ORBITPAGE_TEST_OPENAI_RESPONSES_URL', 'http://127.0.0.1:3124/v1/responses');
+    expect(resolveOpenAiResponsesUrl()).toBe('http://127.0.0.1:3124/v1/responses');
   });
 
   it('applies a coordinated card-theme edit and removes block overrides', () => {
