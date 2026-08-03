@@ -2418,8 +2418,8 @@
 
   .admin-theme-layout {
     display: grid;
-    grid-template-columns: minmax(560px, 1fr) minmax(360px, 440px);
-    gap: 16px;
+    grid-template-columns: minmax(500px, 1fr) minmax(300px, 380px);
+    gap: 12px;
     align-items: start;
   }
 
@@ -2538,13 +2538,13 @@
   }
 
   .admin-preview-device--mobile {
-    min-height: 600px;
-    padding: 16px;
+    min-height: 488px;
+    padding: 12px;
   }
 
   .admin-preview-device--desktop {
-    min-height: 420px;
-    padding: 24px 16px 52px;
+    min-height: 340px;
+    padding: 16px 12px 42px;
   }
 
   .admin-preview-device__hardware {
@@ -2558,10 +2558,10 @@
 
   .admin-preview-device--mobile .admin-preview-device__hardware {
     border: 1px solid #020617;
-    border-radius: 34px;
-    height: 568px;
-    max-width: 286px;
-    padding: 8px;
+    border-radius: 28px;
+    height: 456px;
+    max-width: 230px;
+    padding: 7px;
     width: 100%;
   }
 
@@ -2569,7 +2569,7 @@
     aspect-ratio: 16 / 10;
     border: 1px solid #020617;
     border-radius: 14px;
-    max-width: 640px;
+    max-width: 540px;
     padding: 32px 8px 10px;
     width: 100%;
   }
@@ -2583,7 +2583,7 @@
   }
 
   .admin-preview-device--mobile .admin-preview-device__screen {
-    border-radius: 27px;
+    border-radius: 22px;
   }
 
   .admin-preview-device--desktop .admin-preview-device__screen {
@@ -2595,14 +2595,14 @@
     background: #030712;
     border-radius: 999px;
     display: flex;
-    height: 20px;
+    height: 17px;
     justify-content: flex-end;
     left: 50%;
     padding-right: 6px;
     position: absolute;
-    top: 14px;
+    top: 12px;
     transform: translateX(-50%);
-    width: 68px;
+    width: 58px;
     z-index: 5;
   }
 
@@ -2623,8 +2623,8 @@
     width: 4px;
   }
 
-  .admin-preview-device__side-button--one { top: 100px; }
-  .admin-preview-device__side-button--two { top: 148px; }
+  .admin-preview-device__side-button--one { top: 82px; }
+  .admin-preview-device__side-button--two { top: 124px; }
 
   .admin-preview-device__browser-bar {
     align-items: center;
@@ -7139,13 +7139,13 @@
 
 /* Dynamic device classes need an unlayered contract so hosted and OSS builds keep them. */
 .admin-preview-device--mobile {
-  min-height: 600px;
-  padding: 16px;
+  min-height: 488px;
+  padding: 12px;
 }
 
 .admin-preview-device--desktop {
-  min-height: 420px;
-  padding: 24px 16px 52px;
+  min-height: 340px;
+  padding: 16px 12px 42px;
 }
 
 .admin-preview-heading {
@@ -7288,7 +7288,7 @@
 @media (min-width: 1280px) {
   .admin-content-grid,
   .admin-preview-grid {
-    grid-template-columns: minmax(560px, 1fr) minmax(360px, 460px);
+    grid-template-columns: minmax(500px, 1fr) minmax(300px, 380px);
   }
 }
 
@@ -7467,12 +7467,12 @@
 
 /* SaaS/OSS dashboard parity contract. Keep these values aligned with the hosted shell. */
 .admin-dashboard-shell {
-  --orbitpage-dashboard-sidebar-width: 248px;
-  --orbitpage-dashboard-collapsed-width: 76px;
-  --orbitpage-dashboard-sidebar-padding: 20px;
-  --orbitpage-dashboard-brand-size: 36px;
-  --orbitpage-dashboard-nav-height: 42px;
-  --orbitpage-dashboard-header-height: 96px;
+  --orbitpage-dashboard-sidebar-width: 228px;
+  --orbitpage-dashboard-collapsed-width: 72px;
+  --orbitpage-dashboard-sidebar-padding: 16px;
+  --orbitpage-dashboard-brand-size: 32px;
+  --orbitpage-dashboard-nav-height: 38px;
+  --orbitpage-dashboard-header-height: 84px;
   grid-template-columns: var(--orbitpage-dashboard-sidebar-width) minmax(0, 1fr);
   font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
   background:
@@ -7494,13 +7494,13 @@
 }
 
 .admin-dashboard-logo-row {
-  min-height: 54px;
-  padding-bottom: 16px;
+  min-height: 48px;
+  padding-bottom: 12px;
   border-bottom: 1px solid rgb(255 255 255 / 9%);
 }
 
 .admin-dashboard-logo {
-  gap: 12px;
+  gap: 8px;
 }
 
 .orbitpage-dashboard-brand {
@@ -7544,7 +7544,7 @@
 
 .admin-dashboard-nav-stack { gap: 3px; margin-top: 0; }
 .admin-dashboard-nav-heading {
-  margin: 19px 10px 7px;
+  margin: 16px 8px 4px;
   padding: 0;
   color: #9baac0;
   font-size: 10px;
@@ -7561,11 +7561,11 @@
 .admin-dashboard-nav-item {
   position: relative;
   min-height: var(--orbitpage-dashboard-nav-height);
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid transparent;
   border-radius: 6px;
   color: #bdc8d9;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 680;
 }
 .admin-dashboard-nav-item:hover {
@@ -7585,21 +7585,21 @@
 .admin-dashboard-sidebar-footer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 16px;
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid rgb(255 255 255 / 9%);
 }
 .admin-dashboard-language {
   grid-column: 1 / -1;
-  min-height: 34px;
-  height: 34px;
+  min-height: 32px;
+  height: 32px;
   gap: 5px;
   padding: 0 8px;
 }
 .admin-dashboard-footer-action {
-  min-height: 38px;
-  height: 38px;
+  min-height: 34px;
+  height: 34px;
   gap: 8px;
   padding: 9px 8px;
   border-radius: 8px;
@@ -7632,16 +7632,16 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .admin-dashboard-public-page {
   display: inline-flex;
-  min-height: 40px;
+  min-height: 36px;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border: 0;
   border-radius: 6px;
   background: #e7edf5;
   color: var(--admin-ink);
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1.5;
   text-decoration: none;
@@ -7663,7 +7663,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .admin-dashboard-main {
   width: 100%;
   min-width: 0;
-  padding: 0 clamp(20px, 2.8vw, 42px) 52px;
+  padding: 0 clamp(16px, 2vw, 28px) 32px;
 }
 .admin-dashboard-header {
   position: sticky;
@@ -7671,8 +7671,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   top: 0;
   min-height: var(--orbitpage-dashboard-header-height);
   align-items: flex-start;
-  margin: 0 calc(clamp(20px, 2.8vw, 42px) * -1) 12px;
-  padding: 12px clamp(20px, 2.8vw, 42px);
+  margin: 0 calc(clamp(16px, 2vw, 28px) * -1) 8px;
+  padding: 10px clamp(16px, 2vw, 28px);
   border-bottom: 1px solid var(--admin-line);
   background: rgb(248 250 252 / 92%);
   backdrop-filter: blur(15px);
@@ -7681,7 +7681,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .admin-dashboard-heading-row h1 {
   margin: 2px 0 0;
   color: var(--admin-ink);
-  font-size: clamp(24px, 2.2vw, 28px);
+  font-size: clamp(22px, 2vw, 26px);
   line-height: 1.08;
   letter-spacing: 0;
   font-weight: 800;
@@ -7697,7 +7697,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .admin-dashboard-section-description {
   margin: 4px 0 0;
   color: var(--admin-muted-copy);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.42;
 }
 .admin-dashboard-context-row {
@@ -7728,7 +7728,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   box-shadow: 0 0 0 3px rgb(34 168 121 / 12%);
 }
 .admin-dashboard-header-actions { align-self: center; }
-.admin-dashboard-header-actions .admin-action { min-height: 40px; border-radius: 6px; box-shadow: none; }
+.admin-dashboard-header-actions .admin-action { min-height: 36px; padding: 7px 12px; border-radius: 6px; font-size: 12px; box-shadow: none; }
 
 .content-workspace-option-locked {
   cursor: not-allowed;
@@ -8488,4 +8488,166 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .oss-saas-promo {
     padding: 22px 18px;
   }
+}
+
+/* Laptop density contract: preserve the complete workbench without oversized controls. */
+@media (min-width: 1024px) and (pointer: fine) {
+  .admin-dashboard-logo-copy strong { font-size: 14px; }
+  .admin-dashboard-logo-copy small { font-size: 10px; }
+  .admin-dashboard-nav-stack { gap: 2px; }
+  .admin-dashboard-nav-heading-workspace { margin: 16px 8px 4px; }
+
+  .admin-dashboard-main .admin-metrics,
+  .admin-integrated-surface .admin-metrics { margin-bottom: 8px; }
+  .admin-dashboard-shell .admin-metric-card,
+  .admin-integrated-surface .admin-metric-card { min-height: 52px; padding: 6px 10px; }
+  .admin-dashboard-shell .admin-metric-icon,
+  .admin-integrated-surface .admin-metric-icon { width: 26px; height: 26px; }
+  .admin-metric-value { font-size: .9rem; }
+  .admin-metric-detail { font-size: .64rem; }
+
+  .orbitpage-admin .admin-panel,
+  .orbitpage-admin .admin-side-panel,
+  .orbitpage-admin .admin-preview-copy { padding: 12px; }
+  .orbitpage-admin .admin-panel h2,
+  .orbitpage-admin .admin-side-panel h2 { font-size: .95rem; }
+  .orbitpage-admin .text-3xl { font-size: 1.625rem; line-height: 1.12; }
+  .orbitpage-admin .text-2xl { font-size: 1.375rem; line-height: 1.16; }
+  .orbitpage-admin .text-xl { font-size: 1.125rem; line-height: 1.2; }
+  .orbitpage-admin .text-lg { font-size: 1rem; line-height: 1.25; }
+  .orbitpage-admin .text-base { font-size: .875rem; line-height: 1.4; }
+
+  .orbitpage-admin .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 16px; }
+  .orbitpage-admin .space-y-5 > :not([hidden]) ~ :not([hidden]),
+  .orbitpage-admin .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 12px; }
+  .orbitpage-admin .gap-6 { gap: 16px; }
+  .orbitpage-admin .gap-5,
+  .orbitpage-admin .gap-4 { gap: 12px; }
+
+  .orbitpage-admin input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  .orbitpage-admin select,
+  .orbitpage-admin [data-radix-select-trigger] {
+    height: 36px;
+    min-height: 36px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    font-size: 13px;
+  }
+  .orbitpage-admin textarea { padding: 8px 10px; font-size: 13px; }
+  .orbitpage-admin button.h-10,
+  .orbitpage-admin [role="button"].h-10 { height: 36px; min-height: 36px; }
+  .orbitpage-admin button.h-11,
+  .orbitpage-admin [role="button"].h-11 { height: 38px; min-height: 38px; }
+  .orbitpage-admin button.h-10.w-10 { width: 36px; }
+  .orbitpage-admin button.h-11.w-11 { width: 38px; }
+  .orbitpage-admin .admin-action { min-height: 36px; padding: 7px 12px; font-size: 12px; }
+
+  .admin-range-control { min-height: 24px; }
+  .admin-range-track { height: 4px; }
+  .admin-range-thumb { width: 16px; height: 16px; border-width: 1px; }
+  .orbitpage-admin input[type="range"] {
+    appearance: none;
+    height: 24px;
+    min-height: 24px;
+    padding: 0;
+    background: transparent;
+  }
+  .orbitpage-admin input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 999px; background: #dce4ef; }
+  .orbitpage-admin input[type="range"]::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -6px; appearance: none; border: 1px solid var(--admin-accent); border-radius: 50%; background: #fff; }
+  .orbitpage-admin input[type="range"]::-moz-range-track { height: 4px; border-radius: 999px; background: #dce4ef; }
+  .orbitpage-admin input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; border: 1px solid var(--admin-accent); border-radius: 50%; background: #fff; }
+
+  .admin-preview-panel { top: 12px; padding: 8px; }
+  .admin-preview-heading { gap: 8px; padding: 0 0 6px; }
+  .admin-preview-heading h2 { font-size: 13px; }
+  .admin-preview-heading > div:first-child > p { font-size: 10px; }
+  .admin-preview-device-toggle button { width: 28px; height: 28px; }
+  .admin-preview-heading a { width: 30px; height: 30px; }
+  .content-workspace { gap: 8px; }
+  .content-workspace-header h2 { font-size: 1.05rem; }
+  .content-workspace-header p:last-child { font-size: .75rem; }
+  .content-workspace-option { min-height: 46px; padding: 6px 8px; }
+  .content-workspace-option-icon { width: 28px; height: 28px; }
+  .ai-page-agent-launcher { min-height: 40px; padding-inline: 14px; font-size: 12px; }
+}
+
+@media (min-width: 1024px) and (max-height: 800px) and (pointer: fine) {
+  .admin-dashboard-shell {
+    --orbitpage-dashboard-sidebar-width: 220px;
+    --orbitpage-dashboard-sidebar-padding: 12px;
+    --orbitpage-dashboard-brand-size: 30px;
+    --orbitpage-dashboard-nav-height: 34px;
+    --orbitpage-dashboard-header-height: 74px;
+  }
+  .admin-dashboard-logo-row { min-height: 42px; padding-bottom: 8px; }
+  .admin-dashboard-nav-heading,
+  .admin-dashboard-nav-heading-workspace { margin: 10px 6px 3px; }
+  .admin-dashboard-nav-item { padding: 6px 8px; font-size: 11px; }
+  .admin-dashboard-sidebar-footer { margin-top: 8px; padding-top: 8px; }
+  .admin-dashboard-language { height: 30px; min-height: 30px; }
+  .admin-dashboard-footer-action { height: 32px; min-height: 32px; padding: 6px; font-size: 11px; }
+  .admin-dashboard-main { padding-right: 16px; padding-bottom: 24px; padding-left: 16px; }
+  .admin-dashboard-header { margin-right: -16px; margin-left: -16px; padding: 6px 16px; }
+  .admin-dashboard-heading-row h1 { font-size: clamp(21px, 1.8vw, 23px); line-height: 1.03; }
+  .admin-dashboard-kicker { margin-bottom: 2px; font-size: 9px; line-height: 1.1; }
+  .admin-dashboard-section-description { margin-top: 2px; font-size: 10px; line-height: 1.2; }
+  .admin-dashboard-context-row { gap: 4px; margin-top: 4px; font-size: 9px; }
+  .admin-dashboard-context-row > span { min-height: 16px; padding: 0 5px; }
+  .admin-dashboard-public-page,
+  .admin-dashboard-header-actions .admin-action { min-height: 34px; }
+  .orbitpage-admin .admin-panel,
+  .orbitpage-admin .admin-side-panel,
+  .orbitpage-admin .admin-preview-copy { padding: 10px; }
+  .admin-preview-panel { max-height: calc(100vh - 86px); }
+  .admin-preview-device--mobile { min-height: 424px; padding: 8px; }
+  .admin-preview-device--mobile .admin-preview-device__hardware { width: 202px; height: 400px; }
+  .admin-preview-device--mobile .admin-preview-device__island { width: 52px; }
+  .admin-preview-device--desktop { min-height: 292px; padding: 12px 8px 38px; }
+  .admin-preview-device--desktop .admin-preview-device__hardware { max-width: 480px; }
+  .admin-preview-device__stand { bottom: 14px; height: 34px; }
+  .content-workspace-option { min-height: 42px; }
+  .ai-page-agent { right: 16px; bottom: 16px; }
+}
+
+@media (min-width: 1024px) and (max-height: 740px) and (pointer: fine) {
+  .admin-dashboard-shell {
+    --orbitpage-dashboard-header-height: 68px;
+    --orbitpage-dashboard-nav-height: 32px;
+  }
+  .admin-dashboard-nav-heading,
+  .admin-dashboard-nav-heading-workspace { margin-top: 8px; }
+  .admin-dashboard-nav-item { padding-block: 5px; }
+  .admin-dashboard-main .admin-metrics,
+  .admin-integrated-surface .admin-metrics { margin-bottom: 6px; }
+  .admin-dashboard-shell .admin-metric-card,
+  .admin-integrated-surface .admin-metric-card { min-height: 46px; padding-block: 4px; }
+  .admin-dashboard-header { padding-top: 5px; padding-bottom: 5px; }
+  .admin-dashboard-heading-row h1 { font-size: 20px; }
+  .admin-dashboard-public-page,
+  .admin-dashboard-header-actions .admin-action { min-height: 32px; }
+  .content-workspace-header h2 { margin: 0 0 2px; font-size: .95rem; }
+  .content-workspace-header p:last-child { font-size: .68rem; line-height: 1.2; }
+  .content-workspace-option { min-height: 38px; padding-block: 4px; }
+  .content-workspace-option-icon { width: 26px; height: 26px; }
+  .admin-preview-device--mobile { min-height: 344px; }
+  .admin-preview-device--mobile .admin-preview-device__hardware { width: 162px; height: 320px; border-radius: 24px; padding: 6px; }
+  .admin-preview-device--mobile .admin-preview-device__screen { border-radius: 18px; }
+  .admin-preview-device--mobile .admin-live-preview__page { width: 125%; min-height: 125%; transform: scale(.8); transform-origin: top left; }
+  .admin-preview-device--mobile .admin-preview-device__island { top: 10px; width: 44px; height: 14px; }
+  .admin-preview-device__side-button--one { top: 66px; }
+  .admin-preview-device__side-button--two { top: 98px; }
+  .admin-preview-device--desktop { min-height: 240px; padding: 10px 8px 34px; }
+  .admin-preview-device--desktop .admin-preview-device__hardware { max-width: 420px; }
+  .admin-preview-device__stand { bottom: 12px; height: 30px; }
+}
+
+@media (min-width: 1024px) and (pointer: coarse) {
+  .orbitpage-admin .admin-action,
+  .orbitpage-admin button.h-10,
+  .orbitpage-admin button.h-11,
+  .orbitpage-admin [role="button"].h-10,
+  .orbitpage-admin [role="button"].h-11 { min-height: 44px; }
+  .admin-range-control,
+  .orbitpage-admin input[type="range"] { min-height: 44px; }
+  .admin-range-thumb { width: 20px; height: 20px; }
 }
