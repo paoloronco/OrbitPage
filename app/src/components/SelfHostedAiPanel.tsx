@@ -205,8 +205,39 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
     : Object.keys(MODEL_LABELS);
 
   return (
-    <div className="oss-ai-layout">
-      <section className="oss-ai-workspace" aria-labelledby="oss-ai-heading">
+    <div className="ai-assistant-page" data-ai-assistant-edition="oss">
+      <section className="ai-assistant-overview" aria-labelledby="oss-ai-usage-title">
+        <div className="ai-assistant-overview-copy">
+          <p className="ai-assistant-kicker">{tr("Self-hosted assistant", "Assistente self-hosted")}</p>
+          <h2 id="oss-ai-usage-title">{tr("Usage and working session", "Uso e sessione di lavoro")}</h2>
+          <p>{tr(
+            "OrbitPage does not add a request limit. Usage and billing follow the API provider connected to this server.",
+            "OrbitPage non aggiunge un limite di richieste. Utilizzo e costi seguono il provider API collegato a questo server.",
+          )}</p>
+        </div>
+        <div className="ai-assistant-usage">
+          <div>
+            <span>{tr("OrbitPage usage", "Utilizzo OrbitPage")}</span>
+            <strong>{tr("Unmetered", "Senza limite")}</strong>
+          </div>
+          <div>
+            <span>{tr("Remaining allowance", "Utilizzo rimanente")}</span>
+            <strong>{tr("Provider-managed", "Gestito dal provider")}</strong>
+          </div>
+          <div>
+            <span>{tr("Active model", "Modello attivo")}</span>
+            <strong>{MODEL_LABELS[selectedModel]?.name || selectedModel}</strong>
+          </div>
+        </div>
+        <div className="ai-assistant-progress is-unmetered"><span /></div>
+        <p className="ai-assistant-reset">{tr(
+          "API costs and provider quotas remain in your OpenAI account.",
+          "Costi API e quote del provider restano nel tuo account OpenAI.",
+        )}</p>
+      </section>
+
+      <div className="oss-ai-layout ai-assistant-layout">
+      <section className="oss-ai-workspace ai-assistant-chat" aria-labelledby="oss-ai-heading">
         <header className="oss-ai-workspace-header">
           <div className="oss-ai-mark" aria-hidden="true">
             <Sparkles />
@@ -325,7 +356,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
         </form>
       </section>
 
-      <aside className="oss-ai-settings" aria-labelledby="oss-ai-settings-heading">
+      <aside className="oss-ai-settings ai-assistant-aside" aria-labelledby="oss-ai-settings-heading">
         <div className="oss-ai-settings-title">
           <span><KeyRound aria-hidden="true" /></span>
           <div>
@@ -457,6 +488,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
           </p>
         </footer>
       </aside>
+      </div>
     </div>
   );
 }

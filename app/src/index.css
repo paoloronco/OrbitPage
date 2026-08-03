@@ -4827,11 +4827,157 @@
   .orbitpage-menu-item__title-row > svg { display: none; }
 }
 
+/* Shared AI assistant page ------------------------------------------------ */
+.ai-assistant-page {
+  --ai-assistant-border: #d9e2ee;
+  --ai-assistant-ink: #10223a;
+  --ai-assistant-copy: #66758b;
+  --ai-assistant-accent: #174ea6;
+  --ai-assistant-soft: #f5f8fc;
+  display: grid;
+  width: 100%;
+  gap: 12px;
+  color: var(--ai-assistant-ink);
+}
+
+.ai-assistant-overview {
+  display: grid;
+  grid-template-columns: minmax(260px, .78fr) minmax(480px, 1.22fr);
+  gap: 8px 28px;
+  align-items: center;
+  padding: 18px 20px;
+  border: 1px solid var(--ai-assistant-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ai-assistant-overview-copy h2 {
+  margin: 2px 0 5px;
+  color: var(--ai-assistant-ink);
+  font-size: 1.18rem;
+  line-height: 1.2;
+}
+
+.ai-assistant-overview-copy > p:last-child,
+.ai-assistant-aside-copy {
+  margin: 0;
+  color: var(--ai-assistant-copy);
+  font-size: .76rem;
+  line-height: 1.5;
+}
+
+.ai-assistant-kicker {
+  margin: 0;
+  color: var(--ai-assistant-accent);
+  font-size: .62rem;
+  font-weight: 850;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.ai-assistant-usage {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.ai-assistant-usage > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 4px 16px;
+  border-left: 1px solid #e4eaf2;
+}
+
+.ai-assistant-usage span {
+  overflow: hidden;
+  color: #718096;
+  font-size: .61rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ai-assistant-usage strong {
+  overflow: hidden;
+  color: #152a47;
+  font-size: 1rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-assistant-progress {
+  grid-column: 2;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9eef5;
+}
+
+.ai-assistant-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ai-assistant-accent);
+  transition: width .24s cubic-bezier(.16, 1, .3, 1);
+}
+
+.ai-assistant-progress.is-unmetered > span {
+  width: 100%;
+  background: #2f9c66;
+}
+
+.ai-assistant-reset {
+  grid-column: 2;
+  margin: 0;
+  color: #7a8799;
+  font-size: .64rem;
+}
+
+.ai-assistant-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, .65fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.ai-assistant-chat,
+.ai-assistant-aside {
+  border-color: var(--ai-assistant-border);
+  border-radius: 12px;
+}
+
+@media (max-width: 1040px) {
+  .ai-assistant-overview { grid-template-columns: 1fr; }
+  .ai-assistant-progress,
+  .ai-assistant-reset { grid-column: 1; }
+  .ai-assistant-usage > div:first-child { border-left: 0; padding-left: 0; }
+}
+
+@media (max-width: 900px) {
+  .ai-assistant-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .ai-assistant-overview { padding: 16px; }
+  .ai-assistant-usage { grid-template-columns: 1fr; }
+  .ai-assistant-usage > div,
+  .ai-assistant-usage > div:first-child {
+    padding: 9px 0;
+    border-top: 1px solid #e4eaf2;
+    border-left: 0;
+  }
+  .ai-assistant-usage strong { white-space: normal; }
+}
+
 /* Self-hosted OrbitPage AI ------------------------------------------------- */
 .oss-ai-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(280px, .75fr);
-  gap: clamp(16px, 2vw, 28px);
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, .65fr);
+  gap: 16px;
   align-items: start;
 }
 
@@ -4841,7 +4987,7 @@
   grid-template-rows: auto minmax(260px, 1fr) auto;
   overflow: hidden;
   border: 1px solid #dbe4f0;
-  border-radius: 22px;
+  border-radius: 12px;
   background:
     linear-gradient(180deg, rgba(247, 250, 255, .96), rgba(255, 255, 255, 1) 28%),
     #fff;
@@ -5204,7 +5350,7 @@
   top: 18px;
   overflow: hidden;
   border: 1px solid #d9e2ee;
-  border-radius: 20px;
+  border-radius: 12px;
   color: #22344d;
   background: #fff;
 }
