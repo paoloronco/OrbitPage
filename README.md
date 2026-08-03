@@ -101,12 +101,12 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 - Rate limits, file-type checks, upload-size limits, and path validation
 - Admin, API, health, and unknown application routes excluded from indexing
 
-### APIs and automation
+### Automation REST API
 
-- The managed service provides a versioned personal-token API for scripts and CI that read or update page blocks
+- The managed service provides a versioned Automation REST API for scripts and CI that read or update page blocks
 - Personal tokens are workspace-bound, revocable, scoped, and separate from the authenticated dashboard session
 - The self-hosted Express API powers the bundled dashboard and is not the same public automation contract
-- See [APIs and automation](./docs/API.md) for the edition boundary, a first request, the complete hosted guide, and the OpenAPI contract
+- See [Automation REST API](./docs/API.md) for credential boundaries, a first request, the complete hosted guide, and the OpenAPI contract
 
 ## How It Works
 
