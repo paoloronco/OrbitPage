@@ -38,8 +38,8 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
     launch: tr("Edit with AI", "Modifica con AI"),
     close: tr("Close AI assistant", "Chiudi assistente AI"),
     welcome: tr(
-      "Tell me what you want to change. I know the open page and prepare a safe proposal before applying it.",
-      "Dimmi cosa vuoi cambiare. Conosco la pagina aperta e preparo una proposta sicura prima di applicarla.",
+      "Tell me what you want to change on the open page. I will show you the edits to review before you apply them.",
+      "Dimmi cosa vuoi cambiare nella pagina aperta. Ti mostrerò le modifiche da controllare prima di applicarle.",
     ),
     configure: tr(
       "Connect an OpenAI API key from the AI Agent section to start editing.",

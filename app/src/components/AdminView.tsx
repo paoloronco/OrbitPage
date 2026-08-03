@@ -228,7 +228,7 @@ export const AdminView = ({
     plan: tr("Review what is included in this open-source edition.", "Scopri cosa include questa edizione open source."),
     access: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
     backup: tr("Keep portable copies and restore with confidence.", "Mantieni copie portabili e ripristina in sicurezza."),
-    analytics: tr("Read the signals behind visits and interactions.", "Leggi i segnali dietro visite e interazioni."),
+    analytics: tr("See visits, clicks and traffic sources.", "Controlla visite, clic e sorgenti di traffico."),
     privacy: tr("Manage consent, policies and visitor choices.", "Gestisci consenso, informative e scelte dei visitatori."),
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
