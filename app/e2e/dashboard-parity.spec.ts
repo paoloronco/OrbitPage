@@ -30,6 +30,7 @@ const navigationIcons = {
 } as const;
 
 test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
 
   const primaryLabels = await page.locator('.admin-dashboard-nav-page button').allTextContents();
@@ -50,21 +51,22 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
 
   const shell = page.locator('.admin-dashboard-shell');
   await expect(shell).toHaveCSS('font-family', /Aptos|Avenir Next|Segoe UI Variable/);
-  await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('width', '36px');
-  await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('height', '36px');
+  await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('width', '30px');
+  await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('height', '30px');
+  await expect(page.locator('.admin-dashboard-header')).toHaveCSS('min-height', '74px');
 
   const language = page.locator('.admin-dashboard-language');
-  await expect(language).toHaveCSS('height', '34px');
+  await expect(language).toHaveCSS('height', '30px');
   await expect(page.getByLabel('Language')).toHaveCSS('font-weight', '800');
 
   const backToSite = page.getByRole('link', { name: 'Back to site' });
-  await expect(backToSite).toHaveCSS('height', '38px');
+  await expect(backToSite).toHaveCSS('height', '32px');
   await expect(backToSite).toHaveCSS('font-weight', '800');
   await expect(backToSite).not.toHaveAttribute('target', '_blank');
 
   const publicPage = page.getByRole('link', { name: 'Public page' });
-  await expect(publicPage).toHaveCSS('min-height', '40px');
-  await expect(publicPage).toHaveCSS('font-size', '16px');
+  await expect(publicPage).toHaveCSS('min-height', '34px');
+  await expect(publicPage).toHaveCSS('font-size', '13px');
   await expect(publicPage.locator('button')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Content', exact: true }).click();
@@ -73,13 +75,16 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(lockedShop).toBeDisabled();
 
   const mobilePreview = page.locator('.admin-preview-device--mobile');
-  await expect(mobilePreview).toHaveCSS('min-height', '600px');
-  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('height', '568px');
+  await expect(mobilePreview).toHaveCSS('min-height', '424px');
+  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('height', '400px');
 
   await page.getByRole('button', { name: 'Desktop preview' }).click();
   const desktopPreview = page.locator('.admin-preview-device--desktop');
-  await expect(desktopPreview).toHaveCSS('min-height', '420px');
-  await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '640px');
+  await expect(desktopPreview).toHaveCSS('min-height', '292px');
+  await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '480px');
+
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
 
   const launcher = page.getByRole('button', { name: 'Edit with AI' });
   await expect(launcher).toBeVisible();
@@ -118,6 +123,23 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
   expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(844);
+});
+
+test('fits the content preview inside a 720p laptop viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+
+  const preview = page.locator('.admin-preview-panel');
+  const hardware = preview.locator('.admin-preview-device__hardware');
+  await expect(hardware).toHaveCSS('width', '162px');
+  await expect(hardware).toHaveCSS('height', '320px');
+
+  const previewBounds = await preview.boundingBox();
+  expect(previewBounds).not.toBeNull();
+  expect(previewBounds!.y + previewBounds!.height).toBeLessThanOrEqual(720);
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
 });
 
 test('keeps product labels shared with SaaS while localizing section descriptions', async ({ page }) => {
