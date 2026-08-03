@@ -206,7 +206,7 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: "Page", content: "Content", links: "Content", pages: "Content", ai: tr("AI Agent", "Agente AI"), theme: "Theme", menu: "Content",
+    profile: "Page", content: "Content", links: "Content", pages: "Content", ai: tr("AI Assistant", "Assistente AI"), theme: "Theme", menu: "Content",
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
     newsletter: "Newsletter", team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Plan", "Piano"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];

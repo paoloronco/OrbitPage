@@ -4,7 +4,7 @@ import { openAuthenticatedAdmin } from './helpers';
 const primaryNavigation = [
   'Page',
   'Content',
-  'AI Agent',
+  'AI Assistant',
   'Theme',
   'Publish',
   'Backup',
@@ -17,7 +17,7 @@ const secondaryNavigation = ['Newsletter', 'Team', 'Account', 'Plan'];
 const navigationIcons = {
   Page: 'user-round',
   Content: 'files',
-  'AI Agent': 'sparkles',
+  'AI Assistant': 'sparkles',
   Theme: 'palette',
   Publish: 'share-2',
   Backup: 'database',
@@ -87,8 +87,11 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(page.getByRole('dialog', { name: 'OrbitPage AI' })).toBeVisible();
   await page.getByRole('button', { name: 'Close AI assistant' }).click();
 
-  await page.getByRole('button', { name: 'AI Agent', exact: true }).click();
+  await page.getByRole('button', { name: 'AI Assistant', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Usage and working session' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Edit by asking' })).toBeVisible();
+  await expect(page.getByText('Unmetered', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'OpenAI API' })).toBeVisible();
   await expect(launcher).toBeVisible();
 });
 
@@ -100,7 +103,7 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await expect(page.getByRole('button', { name: 'Edit with AI' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Open navigation' }).click();
-  await expect(page.getByRole('button', { name: 'AI Agent', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'AI Assistant', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Plan', exact: true })).toBeVisible();
   await expect(page.locator('.admin-dashboard-language')).toHaveCSS('width', '44px');
   await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCSS('width', '44px');
