@@ -155,6 +155,21 @@ const BASE_PATH = normalizeBasePath(process.env.BASE_PATH || process.env.PUBLIC_
 // In development, use explicit localhost URL for CORS/CSP
 const IS_PRODUCTION = !process.env.FRONTEND_URL;
 const FRONTEND_URL = process.env.FRONTEND_URL || `http://localhost:${PORT}`;
+const normalizeCorsOrigin = (value) => {
+  try {
+    const parsed = new URL(String(value || '').trim());
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    if (parsed.username || parsed.password || parsed.pathname !== '/' || parsed.search || parsed.hash) return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+};
+const ALLOWED_CORS_ORIGINS = new Set([
+  ...String(process.env.ORBITPAGE_ALLOWED_ORIGINS || '').split(','),
+  PUBLIC_SITE_URL,
+  ...(IS_PRODUCTION ? [] : [FRONTEND_URL]),
+].map(normalizeCorsOrigin).filter(Boolean));
 // Ensure correct client IP detection when behind a proxy/load balancer
 // This is important so express-rate-limit keys by the real client IP
 app.set('trust proxy', 1);
@@ -201,36 +216,19 @@ const LEGAL_EMBED_CSP_SOURCES = [
 ];
 
 // Middleware
-app.use(cors({
-  origin: (origin, callback) => {
-    // Log the origin for debugging
-    console.log(`CORS request from origin: ${origin || 'no-origin'}, IS_PRODUCTION: ${IS_PRODUCTION}`);
-    
-    // Allow requests with no origin (like mobile apps, Postman, or direct server requests)
-    if (!origin) return callback(null, true);
-    
-    // In production (Docker), allow same-origin and common development origins
-    if (IS_PRODUCTION) {
-      // Allow localhost origins for development/debugging
-      if (origin.startsWith('http://localhost:') || origin.startsWith('https://localhost:')) {
-        console.log(`CORS: Allowing localhost origin in production: ${origin}`);
-        return callback(null, true);
-      }
-      // Allow the request origin (handles reverse proxy scenarios)
-      console.log(`CORS: Allowing request origin in production: ${origin}`);
-      return callback(null, origin);
-    }
-    
-    // In development, only allow the configured FRONTEND_URL
-    if (origin === FRONTEND_URL) {
-      console.log(`CORS: Allowing configured FRONTEND_URL in development: ${origin}`);
-      return callback(null, true);
-    }
-    
-    console.log(`CORS: Rejecting origin: ${origin}`);
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true
+app.use(cors((req, callback) => {
+  const origin = normalizeCorsOrigin(req.get('origin'));
+  const allowed = Boolean(origin && ALLOWED_CORS_ORIGINS.has(origin));
+  callback(null, {
+    // Same-origin requests do not need CORS. Cross-origin browser access is opt-in
+    // through FRONTEND_URL or ORBITPAGE_ALLOWED_ORIGINS and never reflects arbitrary origins.
+    origin: allowed ? origin : false,
+    credentials: false,
+    allowedHeaders: ['Authorization', 'Content-Type', 'If-Match'],
+    exposedHeaders: ['Retry-After', 'X-OrbitPage-Revision'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    maxAge: 600,
+  });
 }));
 app.use(helmet({
   contentSecurityPolicy: {

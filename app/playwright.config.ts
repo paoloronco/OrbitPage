@@ -52,12 +52,20 @@ export default defineConfig({
   ],
 
   /* Avvia automaticamente il server dell'applicazione prima di eseguire i test */
-  webServer: {
-    // Usiamo cross-env per compatibilità Windows/Linux
-    // Impostiamo una porta dedicata (3123) e una cartella dati isolata (e2e-data)
-    command: `npx cross-env PORT=3123 DATA_DIR="${e2eDataDir}" JWT_SECRET=e2e-test-secret-key-0123456789abcdef0123456789abcdef ORBITPAGE_API_RATE_LIMIT_MAX=5000 npm run start`,
-    url: 'http://localhost:3123',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  webServer: [
+    {
+      command: 'node e2e/support/openai-fixture-server.mjs',
+      url: 'http://127.0.0.1:3124/health',
+      reuseExistingServer: !process.env.CI,
+      timeout: 30 * 1000,
+    },
+    {
+      // Usiamo un provider locale deterministico: il test attraversa le vere API
+      // OrbitPage senza inviare dati o consumare credito OpenAI.
+      command: `npx cross-env NODE_ENV=test PORT=3123 DATA_DIR="${e2eDataDir}" JWT_SECRET=e2e-test-secret-key-0123456789abcdef0123456789abcdef OPENAI_API_KEY=sk-proj-orbitpage-e2e-only-123456789 ORBITPAGE_TEST_OPENAI_RESPONSES_URL=http://127.0.0.1:3124/v1/responses ORBITPAGE_API_RATE_LIMIT_MAX=5000 npm run start`,
+      url: 'http://localhost:3123',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 });

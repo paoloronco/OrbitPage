@@ -26,6 +26,7 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 | `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
 | `VIDEO_UPLOAD_LIMIT_MB` | Per-file limit for uploaded video/background media. Content is also validated by MIME, extension, and binary signature. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |
+| `ORBITPAGE_ALLOWED_ORIGINS` | Optional comma-separated allowlist for trusted cross-origin browser clients. Same-origin deployments should leave it unset. |
 | `DEMO_MODE` | Disables destructive mutations and resets demo data. Not for normal production. |
 | `ENABLE_HTTPS` | Enables a self-signed HTTPS listener. Usually unnecessary behind real HTTPS proxies. |
 | `SSL_PORT` | HTTPS listener port when `ENABLE_HTTPS=true`. |

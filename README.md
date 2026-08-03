@@ -286,6 +286,7 @@ The essential server configuration is deliberately small.
 | `OPENAI_API_KEY` | No | Dashboard setting | Optional environment-based key for OrbitPage AI. Administrators can instead save their key under **Dashboard > OrbitPage AI**. |
 | `OPENAI_PAGE_AGENT_MODEL` | No | `gpt-5.6-terra` | Default OpenAI model when no model has been selected in the dashboard. |
 | `ORBITPAGE_SECRET_ENCRYPTION_KEY` | No | `JWT_SECRET` | Optional separate 32+ character secret used to encrypt the saved OpenAI key. |
+| `ORBITPAGE_ALLOWED_ORIGINS` | No | Same-origin only | Comma-separated allowlist for trusted cross-origin browser clients. Leave unset for the standard same-origin deployment. |
 
 See [Configuration](./docs/wiki/Configuration.md) for the complete reference, including HTTPS, reverse proxies, legal pages, and optional integrations.
 
