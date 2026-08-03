@@ -43,4 +43,3 @@ Developers changing the self-hosted dashboard API should start with:
 - [Security](./wiki/Security.md) for authentication and deployment constraints.
 
 If a stable public automation API is added to the self-hosted edition in the future, it should be versioned, documented separately, and use credentials that are independent from the interactive admin session.
-
