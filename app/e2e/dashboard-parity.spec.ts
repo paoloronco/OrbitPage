@@ -72,6 +72,15 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(lockedShop).toContainText('Shop');
   await expect(lockedShop).toBeDisabled();
 
+  const mobilePreview = page.locator('.admin-preview-device--mobile');
+  await expect(mobilePreview).toHaveCSS('min-height', '600px');
+  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('height', '568px');
+
+  await page.getByRole('button', { name: 'Desktop preview' }).click();
+  const desktopPreview = page.locator('.admin-preview-device--desktop');
+  await expect(desktopPreview).toHaveCSS('min-height', '420px');
+  await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '640px');
+
   const launcher = page.getByRole('button', { name: 'Edit with AI' });
   await expect(launcher).toBeVisible();
   await launcher.click();
