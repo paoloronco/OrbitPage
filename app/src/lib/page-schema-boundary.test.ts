@@ -10,6 +10,7 @@ import {
   OrbitPageDocumentJsonSchema,
   applyOrbitPageProfilePatch,
   normalizeStoredOrbitPageDocument,
+  normalizeOrbitPageSocialHref,
   parseOrbitPageBlockStylePatch,
   parseOrbitPageBlocks,
   parseOrbitPageDocument,
@@ -155,6 +156,22 @@ describe('canonical page schema boundary', () => {
         whatsapp: 'https://wa.me/391234567890',
       },
     });
+  });
+
+  it('normalizes social shortcuts in linear time without changing accepted values', () => {
+    expect(normalizeOrbitPageSocialHref('instagram', '@///orbitpage///'))
+      .toBe('https://www.instagram.com/orbitpage/');
+    expect(normalizeOrbitPageSocialHref('email', 'hello@orbitpage.com'))
+      .toBe('mailto:hello@orbitpage.com');
+    expect(normalizeOrbitPageSocialHref('email', 'hello @orbitpage.com')).toBeNull();
+
+    const repeatedSlashes = `@${'/'.repeat(100_000)}invalid`;
+    const repeatedEmailSegments = `!@!.${'!.'.repeat(100_000)}`;
+    const startedAt = performance.now();
+    expect(normalizeOrbitPageSocialHref('instagram', repeatedSlashes))
+      .toBe('https://www.instagram.com/invalid/');
+    expect(normalizeOrbitPageSocialHref('email', repeatedEmailSegments)).toBeNull();
+    expect(performance.now() - startedAt).toBeLessThan(250);
   });
 
   it('migrates legacy documents by dropping unknown fields and canonicalizing aliases', () => {
