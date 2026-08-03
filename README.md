@@ -21,7 +21,8 @@
   <a href="https://orbitpage.com/open-source">Open source</a> ·
   <a href="https://orbitpage.com/hosting">Managed hosting</a> ·
   <a href="https://orbitpage.com/pricing">Pricing</a> ·
-  <a href="./docs/wiki/Home.md">Documentation</a>
+  <a href="./docs/wiki/Home.md">Documentation</a> ·
+  <a href="./docs/API.md">APIs</a>
 </p>
 
 OrbitPage is a public-page builder with a real editing workspace, not only a list of buttons. It supports links, rich content blocks, media, social profiles, maps, events, contact information, themes, analytics, SEO controls, consent settings, and responsive public rendering.
@@ -99,6 +100,13 @@ Managed newsletters are also a hosted-platform feature rather than part of this 
 - Multi-user access controls and scoped editing permissions
 - Rate limits, file-type checks, upload-size limits, and path validation
 - Admin, API, health, and unknown application routes excluded from indexing
+
+### APIs and automation
+
+- The managed service provides a versioned personal-token API for scripts and CI that read or update page blocks
+- Personal tokens are workspace-bound, revocable, scoped, and separate from the authenticated dashboard session
+- The self-hosted Express API powers the bundled dashboard and is not the same public automation contract
+- See [APIs and automation](./docs/API.md) for the edition boundary, a first request, the complete hosted guide, and the OpenAPI contract
 
 ## How It Works
 
