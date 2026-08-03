@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Monitor, Smartphone } from "lucide-react";
 import { BackgroundLayer } from "./BackgroundLayer";
 import { PublicView } from "./PublicView";
@@ -52,6 +52,33 @@ export function PreviewDeviceFrame({
   publicPageHref?: string;
   children: ReactNode;
 }) {
+  const screenRef = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState<{
+    device: PreviewDevice;
+    height: number;
+    scale: number;
+  } | null>(null);
+  const sourceWidth = device === "mobile" ? 390 : 1280;
+  const measuredViewport = viewport?.device === device ? viewport : null;
+
+  useEffect(() => {
+    const screen = screenRef.current;
+    if (!screen) return;
+
+    const updateViewport = () => {
+      const { width, height } = screen.getBoundingClientRect();
+      if (width <= 0 || height <= 0) return;
+      const scale = width / sourceWidth;
+      setViewport({ device, height: height / scale, scale });
+    };
+
+    updateViewport();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(updateViewport);
+    observer.observe(screen);
+    return () => observer.disconnect();
+  }, [device, sourceWidth]);
+
   return (
     <div className={`admin-preview-device admin-preview-device--${device}`} data-preview-device={device}>
       <div className="admin-preview-device__hardware">
@@ -67,7 +94,20 @@ export function PreviewDeviceFrame({
             <b>{publicPageHref.replace(/^https?:\/\//, "").replace(/\/$/, "") || "Public preview"}</b>
           </div>
         )}
-        <div className="admin-preview-device__screen">{children}</div>
+        <div className="admin-preview-device__screen" ref={screenRef}>
+          <div
+            className="admin-preview-device__viewport"
+            data-preview-source-width={sourceWidth}
+            data-preview-viewport-ready={measuredViewport ? "true" : "false"}
+            style={{
+              height: measuredViewport ? `${measuredViewport.height}px` : undefined,
+              transform: measuredViewport ? `scale(${measuredViewport.scale})` : undefined,
+              width: `${sourceWidth}px`,
+            }}
+          >
+            {children}
+          </div>
+        </div>
       </div>
       {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
     </div>

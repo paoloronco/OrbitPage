@@ -37,6 +37,7 @@ describe("LivePreview", () => {
     );
 
     expect(html).toContain('data-background-layer-mode="container"');
+    expect(html).toContain('data-preview-source-width="390"');
     expect(html).toContain('/media/prospect-background.mp4');
     expect(html).toContain('Prospect preview');
     expect(html).toContain('Book now');
@@ -44,6 +45,21 @@ describe("LivePreview", () => {
     expect(html).toContain('Privacy Policy');
     expect(html).toContain('Cookie Policy');
     expect(html).not.toContain('Powered by');
+  });
+
+  it("uses real mobile and desktop layout widths inside the scaled device frame", () => {
+    const props = {
+      profile: { name: "Responsive page", bio: "", avatar: "", showAvatar: false },
+      links: [],
+      theme: defaultTheme,
+    };
+
+    const mobile = renderToStaticMarkup(<LivePreview {...props} device="mobile" />);
+    const desktop = renderToStaticMarkup(<LivePreview {...props} device="desktop" />);
+
+    expect(mobile).toContain('data-preview-source-width="390"');
+    expect(desktop).toContain('data-preview-source-width="1280"');
+    expect(mobile).toContain('data-preview-viewport-ready="false"');
   });
 
   it("renders global and per-card surface effects through the real public renderer", () => {

@@ -334,7 +334,7 @@ export const ProfileSection = ({
   const faviconValue = draft.favicon || draft.avatar;
 
   return (
-    <div className="space-y-5" data-onboarding="profile-card">
+    <div className="admin-profile-section space-y-5" data-onboarding="profile-card">
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_4px_14px_rgb(15_23_42_/_0.04)]">
         <header className="flex flex-col gap-4 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -473,7 +473,7 @@ export const ProfileSection = ({
             </details>
           </section>
 
-          <div className="grid gap-5 border-t border-slate-200 pt-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
+          <div className="admin-profile-identity-fields grid gap-5 border-t border-slate-200 pt-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
             <div className="space-y-3">
               <button type="button" onClick={() => logoInputRef.current?.click()} className="group relative flex aspect-square w-full max-w-56 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                 <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
