@@ -264,11 +264,14 @@ export const ThemeCustomizer = ({
   const [pendingTheme, setPendingTheme] = useState<EditableTheme>(theme);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(() => findMatchingPreset(theme));
   const [selectedCardPresetId, setSelectedCardPresetId] = useState<string | null>(() => findMatchingCardPreset(theme));
+  const themePresetRailRef = useRef<HTMLDivElement>(null);
   const cardPresetRailRef = useRef<HTMLDivElement>(null);
+  const [manualControlsOpen, setManualControlsOpen] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("mobile");
+  const [previewOpen, setPreviewOpen] = useState(() => typeof window === "undefined" || window.matchMedia("(min-width: 1121px)").matches);
   const advancedCustomizationEnabled = !accessLevel || accessLevel === "advanced";
   const premiumThemesEnabled = !accessLevel || accessLevel === "premium" || accessLevel === "advanced";
   const availableThemePresets = accessLevel === "essential" ? themePresets.slice(0, 3) : themePresets;
@@ -285,6 +288,14 @@ export const ThemeCustomizer = ({
   useEffect(() => {
     if (!premiumThemesEnabled && presetScope === "cards") setPresetScope("page");
   }, [premiumThemesEnabled, presetScope]);
+
+  useEffect(() => {
+    const wideWorkspace = window.matchMedia("(min-width: 1121px)");
+    const syncPreviewDisclosure = (event: MediaQueryListEvent) => setPreviewOpen(event.matches);
+    setPreviewOpen(wideWorkspace.matches);
+    wideWorkspace.addEventListener("change", syncPreviewDisclosure);
+    return () => wideWorkspace.removeEventListener("change", syncPreviewDisclosure);
+  }, []);
 
   const previewTheme = (nextTheme: EditableTheme, presetId: string | null) => {
     setPendingTheme(nextTheme);
@@ -399,7 +410,7 @@ export const ThemeCustomizer = ({
 
   const livePreviewPanel = (
     <aside className="admin-theme-preview-rail">
-      <details className="admin-theme-preview-disclosure">
+      <details className="admin-theme-preview-disclosure" open={previewOpen} onToggle={(event) => setPreviewOpen(event.currentTarget.open)}>
         <summary className="admin-theme-preview-summary">
           <span className="admin-theme-preview-summary-identity">
             <span className="admin-theme-preview-summary-icon" aria-hidden="true"><Eye /></span>
@@ -474,14 +485,20 @@ export const ThemeCustomizer = ({
           ) : null}
           {presetScope === "page" ? (
             <>
-              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div className="admin-theme-preset-heading mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{availableThemePresets.length} {tr("page themes", "temi pagina")}</p>
                   <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Page identity and background", "Identità e sfondo della pagina")}</h3>
                 </div>
-                <p className="text-sm text-slate-500">{premiumThemesEnabled ? tr("Page themes leave your selected card style untouched.", "I temi pagina non modificano lo stile card selezionato.") : tr("Essential themes style the complete page.", "I temi essenziali definiscono l'intera pagina.")}</p>
+                <div className="admin-theme-preset-heading-actions">
+                  <p className="text-sm text-slate-500">{premiumThemesEnabled ? tr("Page themes leave your selected card style untouched.", "I temi pagina non modificano lo stile card selezionato.") : tr("Essential themes style the complete page.", "I temi essenziali definiscono l'intera pagina.")}</p>
+                  <div className="flex shrink-0 gap-2">
+                    <Button type="button" variant="outline" size="icon" aria-label={tr("Previous page themes", "Temi pagina precedenti")} onClick={() => themePresetRailRef.current?.scrollBy({ left: -280, behavior: "smooth" })}><ChevronLeft className="h-4 w-4" /></Button>
+                    <Button type="button" variant="outline" size="icon" aria-label={tr("Next page themes", "Temi pagina successivi")} onClick={() => themePresetRailRef.current?.scrollBy({ left: 280, behavior: "smooth" })}><ChevronRight className="h-4 w-4" /></Button>
+                  </div>
+                </div>
               </div>
-              <div className="admin-theme-preset-grid grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div ref={themePresetRailRef} className="admin-theme-preset-rail" aria-label={tr("Page theme catalog", "Catalogo temi pagina")}>
                 {availableThemePresets.map((preset) => (
                   <PresetCard key={preset.id} preset={preset} active={selectedPresetId === preset.id} onApply={() => applyPreset(preset)} />
                 ))}
@@ -518,19 +535,34 @@ export const ThemeCustomizer = ({
         {showEmbeddedPreview && livePreviewPanel}
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <section className="admin-theme-fine-tuning rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+            <div className={`flex flex-wrap items-center justify-between gap-3${manualControlsOpen ? " mb-5" : ""}`}>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{tr("Manual controls", "Controlli manuali")}</p>
                 <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Fine tuning", "Regolazioni fini")}</h3>
                 <p className="mt-1 text-sm text-slate-500">{tr("Adjust colors, type, layout and background after choosing a starting theme.", "Regola colori, caratteri, layout e sfondo dopo aver scelto il tema di partenza.")}</p>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={resetTheme} disabled={!advancedCustomizationEnabled}>
-                <RotateCcw className="mr-2 h-4 w-4" /> {tr("Reset defaults", "Ripristina valori iniziali")}
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                {manualControlsOpen && (
+                  <Button type="button" variant="outline" size="sm" onClick={resetTheme} disabled={!advancedCustomizationEnabled}>
+                    <RotateCcw className="mr-2 h-4 w-4" /> {tr("Reset defaults", "Ripristina valori iniziali")}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant={manualControlsOpen ? "default" : "outline"}
+                  size="sm"
+                  aria-expanded={manualControlsOpen}
+                  aria-controls="admin-theme-manual-controls"
+                  onClick={() => setManualControlsOpen((current) => !current)}
+                >
+                  {manualControlsOpen ? tr("Close controls", "Chiudi controlli") : tr("Open controls", "Apri controlli")}
+                  <ChevronRight className={`ml-2 h-4 w-4 transition-transform ${manualControlsOpen ? "rotate-90" : ""}`} />
+                </Button>
+              </div>
             </div>
 
-            {!advancedCustomizationEnabled ? (
+            {manualControlsOpen && <div id="admin-theme-manual-controls" className="admin-theme-fine-tuning-body">{!advancedCustomizationEnabled ? (
               <div className="admin-inline-plan-lock">
                 <LockKeyhole className="h-4 w-4" />
                 <span>{tr("Fine tuning is available on Pro. Your preset and card-style controls remain available above.", "Le regolazioni fini sono disponibili con Pro. I controlli di preset e stile card restano disponibili qui sopra.")}</span>
@@ -853,7 +885,7 @@ export const ThemeCustomizer = ({
                 />
               </TabsContent>
             </Tabs>
-            )}
+            )}</div>}
       </section>
     </div>
   );

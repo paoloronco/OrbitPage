@@ -378,7 +378,7 @@ export const ProfileSection = ({
               title={tr("Choose the page role", "Scegli il ruolo della pagina")}
               description={tr("Start from the structure that best describes this page.", "Parti dalla struttura che descrive meglio questa pagina.")}
             />
-            <div className="grid gap-3 sm:grid-cols-3" aria-label={tr("Profile type", "Tipo di profilo")}>
+            <div className="admin-profile-role-grid grid gap-3 sm:grid-cols-3" aria-label={tr("Profile type", "Tipo di profilo")}>
             {PROFILE_PRESETS.map((item) => {
               const Icon = item.icon;
               const active = item.id === preset.id;
@@ -389,7 +389,7 @@ export const ProfileSection = ({
                   type="button"
                   aria-pressed={active}
                   onClick={() => updateAppearance({ profilePreset: item.id })}
-                  className={`relative flex min-h-28 items-start gap-3 rounded-lg border p-4 text-left transition-colors ${active ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                  className={`admin-profile-role-option relative flex min-h-28 items-start gap-3 rounded-lg border p-4 text-left transition-colors ${active ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
                 >
                   <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon className="h-4 w-4" /></span>
                   <span className="min-w-0">
@@ -519,12 +519,12 @@ export const ProfileSection = ({
             />
             <div className="admin-profile-identity-fields grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)]">
             <div className="space-y-3">
-              <button type="button" onClick={() => logoInputRef.current?.click()} className="group relative flex aspect-square w-full max-w-56 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+              <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-56 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                 <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
                 <span className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-2 rounded-md bg-slate-950/85 px-3 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-4 w-4" /> {tr("Replace image", "Sostituisci immagine")}</span>
               </button>
               <input ref={logoInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "logo"); event.target.value = ""; }} />
-              <p className="text-xs leading-5 text-slate-500">{tr("PNG, JPG, GIF or WebP. Images are optimized before upload.", "PNG, JPG, GIF o WebP. Le immagini vengono ottimizzate prima del caricamento.")}</p>
+              <p className="admin-profile-image-help text-xs leading-5 text-slate-500">{tr("PNG, JPG, GIF or WebP. Images are optimized before upload.", "PNG, JPG, GIF o WebP. Le immagini vengono ottimizzate prima del caricamento.")}</p>
             </div>
 
             <div className="space-y-5">

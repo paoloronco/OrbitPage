@@ -11,7 +11,7 @@ import { DEMO_MODE } from '@/lib/config';
 type Status = { enabled: boolean; recoveryCodesRemaining: number };
 type Setup = { qrDataUrl: string; secretKey: string; expiresAt: string };
 
-export function TwoFactorManager() {
+export function TwoFactorManager({ username = "admin" }: { username?: string }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [code, setCode] = useState('');
@@ -68,11 +68,12 @@ export function TwoFactorManager() {
       <div className="grid"><strong className="text-sm">{status?.enabled ? '2FA active' : '2FA off'}</strong><span className="text-xs opacity-75">{status?.enabled ? `${status.recoveryCodesRemaining} recovery codes remaining` : 'Compatible with standard TOTP authenticator apps'}</span></div>
     </div>
 
-    {!setup && <div className="grid gap-3">
+    {!setup && <form className="grid gap-3" onSubmit={(event) => { event.preventDefault(); if (!status?.enabled) void startSetup(); }}>
+      <input className="sr-only" type="text" name="username" autoComplete="username" value={username} readOnly tabIndex={-1} aria-hidden="true" />
       <Label htmlFor="two-factor-password">Current password</Label><Input id="two-factor-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} />
       {status?.enabled && <><Label htmlFor="two-factor-manage-code">Authentication or recovery code</Label><Input id="two-factor-manage-code" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} /></>}
-      {!status?.enabled ? <Button variant="gradient" disabled={busy !== null || !currentPassword || status === null} onClick={startSetup}><QrCode className="h-4 w-4" />{busy === 'setup' ? 'Preparing…' : 'Set up authenticator'}</Button> : <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={regenerate}><RefreshCw className="h-4 w-4" />Replace recovery codes</Button><Button variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={disable}><ShieldOff className="h-4 w-4" />Disable 2FA</Button></div>}
-    </div>}
+      {!status?.enabled ? <Button type="submit" variant="gradient" disabled={busy !== null || !currentPassword || status === null}><QrCode className="h-4 w-4" />{busy === 'setup' ? 'Preparing…' : 'Set up authenticator'}</Button> : <div className="flex flex-wrap gap-2"><Button type="button" variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={regenerate}><RefreshCw className="h-4 w-4" />Replace recovery codes</Button><Button type="button" variant="outline" disabled={busy !== null || !currentPassword || !code} onClick={disable}><ShieldOff className="h-4 w-4" />Disable 2FA</Button></div>}
+    </form>}
 
     {setup && <div className="grid gap-5 md:grid-cols-[240px_1fr]">
       <img className="w-full max-w-[240px] border bg-white p-2" alt="QR code for authenticator setup" src={setup.qrDataUrl} />

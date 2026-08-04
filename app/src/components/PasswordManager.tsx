@@ -246,6 +246,7 @@ export const PasswordManager = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+            <input className="sr-only" type="text" name="username" autoComplete="username" value={username} readOnly tabIndex={-1} aria-hidden="true" />
             <div className="space-y-2">
               <Label htmlFor="current-password">Current Password</Label>
               <div className="relative">
@@ -256,6 +257,7 @@ export const PasswordManager = () => {
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="glass-card border-primary/20 pr-10"
                   placeholder="Enter current password"
+                  autoComplete="current-password"
                   required
                   disabled={passwordControlsDisabled}
                 />
@@ -266,6 +268,7 @@ export const PasswordManager = () => {
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   disabled={passwordControlsDisabled}
+                  aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
                 >
                   {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -282,6 +285,7 @@ export const PasswordManager = () => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   className="glass-card border-primary/20 pr-10"
                   placeholder="Enter new password"
+                  autoComplete="new-password"
                   required
                   disabled={passwordControlsDisabled}
                 />
@@ -292,6 +296,7 @@ export const PasswordManager = () => {
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   disabled={passwordControlsDisabled}
+                  aria-label={showNewPassword ? "Hide new password" : "Show new password"}
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -318,6 +323,7 @@ export const PasswordManager = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="glass-card border-primary/20 pr-10"
                   placeholder="Confirm new password"
+                  autoComplete="new-password"
                   required
                   disabled={passwordControlsDisabled}
                 />
@@ -328,6 +334,7 @@ export const PasswordManager = () => {
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={passwordControlsDisabled}
+                  aria-label={showConfirmPassword ? "Hide password confirmation" : "Show password confirmation"}
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
@@ -398,6 +405,7 @@ export const PasswordManager = () => {
         </button>
         {showTokenReset && (
           <form onSubmit={handleTokenReset} className="space-y-4 pt-2 border-t border-primary/10">
+            <input className="sr-only" type="text" name="username" autoComplete="username" value={username} readOnly tabIndex={-1} aria-hidden="true" />
             <p className="text-xs text-muted-foreground">
               If you have set a <code className="bg-primary/10 px-1 rounded">RESET_TOKEN</code> environment variable on the server, enter it below along with your new password.
             </p>
@@ -414,6 +422,7 @@ export const PasswordManager = () => {
                 value={resetToken}
                 onChange={(e) => setResetToken(e.target.value)}
                 placeholder="Enter RESET_TOKEN value"
+                autoComplete="off"
                 className="glass-card border-primary/20"
                 required
                 disabled={tokenResetControlsDisabled}
@@ -427,6 +436,7 @@ export const PasswordManager = () => {
                 value={resetNewPassword}
                 onChange={(e) => setResetNewPassword(e.target.value)}
                 placeholder="Enter new password"
+                autoComplete="new-password"
                 className="glass-card border-primary/20"
                 required
                 disabled={tokenResetControlsDisabled}
