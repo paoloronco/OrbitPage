@@ -9919,7 +9919,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   border-radius: 999px;
   background: #eef2f7;
   padding: 4px 8px;
-  color: #64748b;
+  color: #526078;
   font-size: 10px;
   font-weight: 750;
 }
@@ -9958,7 +9958,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .managed-analytics-integration-field small {
-  color: #7b8798;
+  color: #64748b;
   font-size: 10px;
 }
 
