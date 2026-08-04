@@ -170,6 +170,24 @@ const ProfileColorField = ({
   </div>
 );
 
+const ProfileChapterHeading = ({
+  number,
+  title,
+  description,
+}: {
+  number: string;
+  title: string;
+  description: string;
+}) => (
+  <header className="admin-profile-chapter-heading">
+    <span aria-hidden="true">{number}</span>
+    <div>
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </div>
+  </header>
+);
+
 export const ProfileSection = ({
   profile,
   theme,
@@ -353,8 +371,14 @@ export const ProfileSection = ({
           </div>
         </header>
 
-        <div className="space-y-6 p-5">
-          <div className="grid gap-3 sm:grid-cols-3" aria-label={tr("Profile type", "Tipo di profilo")}>
+        <div className="admin-profile-flow p-5">
+          <section className="admin-profile-chapter">
+            <ProfileChapterHeading
+              number="01"
+              title={tr("Choose the page role", "Scegli il ruolo della pagina")}
+              description={tr("Start from the structure that best describes this page.", "Parti dalla struttura che descrive meglio questa pagina.")}
+            />
+            <div className="admin-profile-role-grid grid gap-3 sm:grid-cols-3" aria-label={tr("Profile type", "Tipo di profilo")}>
             {PROFILE_PRESETS.map((item) => {
               const Icon = item.icon;
               const active = item.id === preset.id;
@@ -365,7 +389,7 @@ export const ProfileSection = ({
                   type="button"
                   aria-pressed={active}
                   onClick={() => updateAppearance({ profilePreset: item.id })}
-                  className={`relative flex min-h-28 items-start gap-3 rounded-lg border p-4 text-left transition-colors ${active ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                  className={`admin-profile-role-option relative flex min-h-28 items-start gap-3 rounded-lg border p-4 text-left transition-colors ${active ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
                 >
                   <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon className="h-4 w-4" /></span>
                   <span className="min-w-0">
@@ -376,9 +400,9 @@ export const ProfileSection = ({
                 </button>
               );
             })}
-          </div>
+            </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
               <div className="flex min-w-0 items-center gap-3">
                 <ImageIcon className="h-4 w-4 shrink-0 text-slate-500" />
@@ -393,19 +417,32 @@ export const ProfileSection = ({
               </div>
               <Switch checked={draft.appearance?.cardBorderEnabled !== false} onCheckedChange={(cardBorderEnabled) => updateAppearance({ cardBorderEnabled })} aria-label={tr("Show profile card border", "Mostra bordo della card profilo")} />
             </div>
-          </div>
-
-          <section className="-mx-5 space-y-5 border-y border-slate-200 bg-slate-50/80 px-5 py-5" aria-labelledby="profile-card-appearance-title">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">{tr("Card appearance", "Aspetto card")}</p>
-                <h3 id="profile-card-appearance-title" className="mt-1 text-base font-bold text-slate-950">{tr("Shape the main profile card", "Personalizza la card principale")}</h3>
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{tr("Choose the surface, transparency, depth and border independently from the active theme.", "Scegli superficie, trasparenza, profondità e bordo indipendentemente dal tema attivo.")}</p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={resetCardAppearance}>
-                <RotateCcw className="h-4 w-4" /> {tr("Use theme style", "Usa stile del tema")}
-              </Button>
             </div>
+          </section>
+
+          <details className="admin-profile-appearance-details group -mx-5 border-y border-slate-200 bg-slate-50/80">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-3">
+              <span className="min-w-0">
+                <strong className="block text-sm text-slate-950">{tr("Advanced card style", "Stile avanzato della card")}</strong>
+                <small className="mt-1 block text-xs text-slate-600">{tr("Surface, border, transparency and depth.", "Superficie, bordo, trasparenza e profondità.")}</small>
+              </span>
+              <span className="admin-profile-appearance-action text-xs font-semibold text-blue-700">
+                <span className="group-open:hidden">{tr("Customize", "Personalizza")}</span>
+                <span className="hidden group-open:inline">{tr("Close", "Chiudi")}</span>
+              </span>
+            </summary>
+
+            <div className="space-y-5 border-t border-slate-200 px-5 py-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">{tr("Card appearance", "Aspetto card")}</p>
+                  <h3 className="mt-1 text-base font-bold text-slate-950">{tr("Shape the main profile card", "Personalizza la card principale")}</h3>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{tr("Choose the surface, transparency, depth and border independently from the active theme.", "Scegli superficie, trasparenza, profondità e bordo indipendentemente dal tema attivo.")}</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={resetCardAppearance}>
+                  <RotateCcw className="h-4 w-4" /> {tr("Use theme style", "Usa stile del tema")}
+                </Button>
+              </div>
 
             <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="group" aria-label={tr("Profile card surface", "Superficie card profilo")}>
               {([
@@ -456,31 +493,38 @@ export const ProfileSection = ({
               )}
             </div>
 
-            <details className="group rounded-lg border border-slate-200 bg-white">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-                <span><strong className="block text-sm text-slate-950">{tr("Custom colors", "Colori personalizzati")}</strong><small className="mt-1 block text-xs text-slate-600">{tr("Override only the colors you want to change.", "Sostituisci solo i colori che vuoi modificare.")}</small></span>
-                <span className="text-xs font-semibold text-blue-700 group-open:hidden">{tr("Open", "Apri")}</span>
-                <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
-              </summary>
-              <div className="grid gap-4 border-t border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
-                <ProfileColorField label={tr("Card background", "Sfondo card")} value={draft.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!draft.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
-                <ProfileColorField label={tr("Main text", "Testo principale")} value={draft.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!draft.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />
-                <ProfileColorField label={tr("Secondary text", "Testo secondario")} value={draft.appearance?.cardMutedColor || theme.profileCard.muted} inherited={!draft.appearance?.cardMutedColor} onChange={(cardMutedColor) => updateAppearance({ cardMutedColor })} onReset={() => updateAppearance({ cardMutedColor: undefined })} />
-                <ProfileColorField label={tr("Card border", "Bordo card")} value={draft.appearance?.cardBorderColor || theme.profileCard.border} inherited={!draft.appearance?.cardBorderColor} onChange={(cardBorderColor) => updateAppearance({ cardBorderColor })} onReset={() => updateAppearance({ cardBorderColor: undefined })} />
-                <ProfileColorField label={tr("Shadow", "Ombra")} value={draft.appearance?.cardShadowColor || theme.cardShadow.color} inherited={!draft.appearance?.cardShadowColor} onChange={(cardShadowColor) => updateAppearance({ cardShadowColor })} onReset={() => updateAppearance({ cardShadowColor: undefined })} />
-                <ProfileColorField label={tr("Social accent", "Accento social")} value={draft.appearance?.accentColor || theme.profileCard.accent} inherited={!draft.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
-              </div>
-            </details>
-          </section>
+              <details className="group rounded-lg border border-slate-200 bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
+                  <span><strong className="block text-sm text-slate-950">{tr("Custom colors", "Colori personalizzati")}</strong><small className="mt-1 block text-xs text-slate-600">{tr("Override only the colors you want to change.", "Sostituisci solo i colori che vuoi modificare.")}</small></span>
+                  <span className="text-xs font-semibold text-blue-700 group-open:hidden">{tr("Open", "Apri")}</span>
+                  <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
+                </summary>
+                <div className="grid gap-4 border-t border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <ProfileColorField label={tr("Card background", "Sfondo card")} value={draft.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!draft.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
+                  <ProfileColorField label={tr("Main text", "Testo principale")} value={draft.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!draft.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />
+                  <ProfileColorField label={tr("Secondary text", "Testo secondario")} value={draft.appearance?.cardMutedColor || theme.profileCard.muted} inherited={!draft.appearance?.cardMutedColor} onChange={(cardMutedColor) => updateAppearance({ cardMutedColor })} onReset={() => updateAppearance({ cardMutedColor: undefined })} />
+                  <ProfileColorField label={tr("Card border", "Bordo card")} value={draft.appearance?.cardBorderColor || theme.profileCard.border} inherited={!draft.appearance?.cardBorderColor} onChange={(cardBorderColor) => updateAppearance({ cardBorderColor })} onReset={() => updateAppearance({ cardBorderColor: undefined })} />
+                  <ProfileColorField label={tr("Shadow", "Ombra")} value={draft.appearance?.cardShadowColor || theme.cardShadow.color} inherited={!draft.appearance?.cardShadowColor} onChange={(cardShadowColor) => updateAppearance({ cardShadowColor })} onReset={() => updateAppearance({ cardShadowColor: undefined })} />
+                  <ProfileColorField label={tr("Social accent", "Accento social")} value={draft.appearance?.accentColor || theme.profileCard.accent} inherited={!draft.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
+                </div>
+              </details>
+            </div>
+          </details>
 
-          <div className="admin-profile-identity-fields grid gap-5 border-t border-slate-200 pt-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
+          <section className="admin-profile-chapter">
+            <ProfileChapterHeading
+              number="02"
+              title={tr("Build the identity", "Costruisci l’identità")}
+              description={tr("Add the image, name and essential details shown first.", "Aggiungi immagine, nome e dettagli essenziali mostrati per primi.")}
+            />
+            <div className="admin-profile-identity-fields grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)]">
             <div className="space-y-3">
-              <button type="button" onClick={() => logoInputRef.current?.click()} className="group relative flex aspect-square w-full max-w-56 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+              <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-56 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
                 <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
                 <span className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-2 rounded-md bg-slate-950/85 px-3 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-4 w-4" /> {tr("Replace image", "Sostituisci immagine")}</span>
               </button>
               <input ref={logoInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "logo"); event.target.value = ""; }} />
-              <p className="text-xs leading-5 text-slate-500">{tr("PNG, JPG, GIF or WebP. Images are optimized before upload.", "PNG, JPG, GIF o WebP. Le immagini vengono ottimizzate prima del caricamento.")}</p>
+              <p className="admin-profile-image-help text-xs leading-5 text-slate-500">{tr("PNG, JPG, GIF or WebP. Images are optimized before upload.", "PNG, JPG, GIF o WebP. Le immagini vengono ottimizzate prima del caricamento.")}</p>
             </div>
 
             <div className="space-y-5">
@@ -492,20 +536,27 @@ export const ProfileSection = ({
                 <Label htmlFor="profile-bio">{tr("Description", "Descrizione")}</Label>
                 <Textarea id="profile-bio" value={draft.bio} onChange={(event) => setDraft((current) => ({ ...current, bio: event.target.value }))} placeholder={tr("A short, useful introduction to this page.", "Una presentazione breve e utile della pagina.")} rows={3} maxLength={2000} />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="admin-profile-detail-grid grid gap-4 sm:grid-cols-2">
+                <div className="admin-profile-detail-field space-y-2">
                   <Label htmlFor="profile-primary-detail">{activePreset.primaryLabel}</Label>
-                  <div className="relative"><BriefcaseBusiness className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input id="profile-primary-detail" className="pl-9" value={draft.appearance?.profileDetails?.primary || ""} onChange={(event) => updateProfileDetail("primary", event.target.value)} placeholder={activePreset.primaryPlaceholder} maxLength={160} /></div>
+                  <div className="admin-profile-detail-control"><BriefcaseBusiness aria-hidden="true" /><Input id="profile-primary-detail" className="admin-profile-detail-input" value={draft.appearance?.profileDetails?.primary || ""} onChange={(event) => updateProfileDetail("primary", event.target.value)} placeholder={activePreset.primaryPlaceholder} maxLength={160} /></div>
                 </div>
-                <div className="space-y-2">
+                <div className="admin-profile-detail-field space-y-2">
                   <Label htmlFor="profile-secondary-detail">{activePreset.secondaryLabel}</Label>
-                  <div className="relative"><MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input id="profile-secondary-detail" className="pl-9" value={draft.appearance?.profileDetails?.secondary || ""} onChange={(event) => updateProfileDetail("secondary", event.target.value)} placeholder={activePreset.secondaryPlaceholder} maxLength={240} /></div>
+                  <div className="admin-profile-detail-control"><MapPin aria-hidden="true" /><Input id="profile-secondary-detail" className="admin-profile-detail-input" value={draft.appearance?.profileDetails?.secondary || ""} onChange={(event) => updateProfileDetail("secondary", event.target.value)} placeholder={activePreset.secondaryPlaceholder} maxLength={240} /></div>
                 </div>
               </div>
             </div>
-          </div>
+            </div>
+          </section>
 
-          <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+          <section className="admin-profile-chapter">
+            <ProfileChapterHeading
+              number="03"
+              title={tr("Frame the profile image", "Definisci l’immagine profilo")}
+              description={tr("Set its shape and scale without changing the uploaded file.", "Imposta forma e scala senza modificare il file caricato.")}
+            />
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-end">
               <div>
                 <Label className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{tr("Image shape", "Forma immagine")}</Label>
@@ -520,23 +571,30 @@ export const ProfileSection = ({
                 <Slider id="profile-avatar-size" className="mt-4" min={56} max={192} step={4} value={[draft.appearance?.avatarSize ?? 112]} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
               </div>
             </div>
+            </div>
           </section>
 
-          <section className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
+          <section className="admin-profile-chapter">
+            <ProfileChapterHeading
+              number="04"
+              title={tr("Help people find and follow you", "Aiuta le persone a trovarti e seguirti")}
+              description={tr("Complete browser identity and connect only useful channels.", "Completa l’identità nel browser e collega solo i canali utili.")}
+            />
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-lg border border-slate-200 bg-white p-4">
               <div className="mb-3 flex items-center gap-2"><Globe2 className="h-4 w-4 text-blue-700" /><h3 className="text-sm font-semibold text-slate-950">{tr("Browser title", "Titolo browser")}</h3></div>
               {seoLocked && <div className="admin-inline-plan-lock mb-3"><LockKeyhole className="h-4 w-4" /><span>{tr("Available on Starter.", "Disponibile con Starter.")}</span><a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a></div>}
               <Input disabled={seoLocked} value={draft.tabTitle || ""} onChange={(event) => setDraft((current) => ({ ...current, tabTitle: event.target.value }))} placeholder={draft.name ? `${draft.name} | OrbitPage` : tr("Title shown in the browser tab", "Titolo mostrato nella scheda del browser")} maxLength={200} />
-            </div>
-            <button type="button" onClick={() => setFaviconDialogOpen(true)} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40">
+              </div>
+              <button type="button" onClick={() => setFaviconDialogOpen(true)} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
                 {faviconValue && /^(?:https?:|data:image\/|blob:|\/)/i.test(faviconValue) ? <img className="h-full w-full object-contain p-1" src={getImageUrl(faviconValue)} alt={tr("Favicon preview", "Anteprima favicon")} /> : <ImageIcon className="h-5 w-5 text-slate-400" />}
               </span>
               <span><strong className="block text-sm text-slate-950">Favicon</strong><small className="mt-1 block text-xs leading-5 text-slate-500">{tr("Click to upload a browser icon independent from the profile image.", "Clicca per caricare un'icona del browser distinta dall'immagine profilo.")}</small></span>
-            </button>
-          </section>
+              </button>
+            </div>
 
-          <details className="group rounded-lg border border-slate-200 bg-white">
+            <details className="group mt-3 rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4">
               <span><strong className="block text-sm text-slate-950">{tr("Social links", "Link social")}</strong><small className="mt-1 block text-xs text-slate-500">{connectedSocials} {tr(connectedSocials === 1 ? "connected channel" : "connected channels", connectedSocials === 1 ? "canale collegato" : "canali collegati")}. {tr("Add only profiles you actively use.", "Aggiungi solo i profili che utilizzi davvero.")}</small></span>
               <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{tr("Manage", "Gestisci")}</span>
@@ -553,9 +611,10 @@ export const ProfileSection = ({
                 );
               })}
             </div>
-          </details>
+            </details>
+          </section>
 
-          <details className="group rounded-lg border border-slate-200 bg-white">
+          <details className="admin-profile-advanced-details group rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4">
               <span><strong className="block text-sm text-slate-950">{tr("More profile settings", "Altre impostazioni profilo")}</strong><small className="mt-1 block text-xs text-slate-600">{tr("Image border, typography, search description and footer.", "Bordo immagine, tipografia, descrizione di ricerca e footer.")}</small></span>
               <span className="text-xs font-semibold text-blue-700">{tr("Open controls", "Apri controlli")}</span>

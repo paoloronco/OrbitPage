@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, LoaderCircle, Send, ShieldCheck, Sparkles, X } from "lucide-react";
 import {
   aiPageAgentApi,
@@ -33,6 +34,8 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [sending, setSending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const labels = useMemo(() => ({
     tagline: tr("Edit your page with confirmation", "Modifica la pagina con conferma"),
     launch: tr("Edit with AI", "Modifica con AI"),
@@ -84,6 +87,22 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
 
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        launcherRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const focusFrame = window.requestAnimationFrame(() => closeRef.current?.focus());
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const prompt = draft.trim();
@@ -133,14 +152,12 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
     }
   };
 
-  return (
-    <div className={`ai-page-agent${open ? " is-open" : ""}`}>
-      {open && (
+  const panel = open && typeof document !== "undefined" ? createPortal(
         <section aria-label="OrbitPage AI" className="ai-page-agent-panel" role="dialog">
           <header className="ai-page-agent-header">
             <span className="ai-page-agent-mark" aria-hidden="true"><Sparkles size={18} /></span>
             <div><strong>OrbitPage AI</strong><small>{labels.tagline}</small></div>
-            <button aria-label={labels.close} onClick={() => setOpen(false)} type="button"><X size={18} /></button>
+            <button ref={closeRef} aria-label={labels.close} onClick={() => { setOpen(false); launcherRef.current?.focus(); }} type="button"><X size={18} /></button>
           </header>
 
           <div aria-live="polite" className="ai-page-agent-messages" ref={listRef}>
@@ -182,10 +199,14 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
             <button aria-label={tr("Send", "Invia")} disabled={sending || settings?.configured !== true || !draft.trim()} type="submit"><Send size={17} /></button>
           </form>
           <p className="ai-page-agent-safety"><ShieldCheck aria-hidden="true" size={13} /><span>{labels.safety}</span></p>
-        </section>
-      )}
+        </section>,
+        document.body,
+      ) : null;
 
-      <button aria-expanded={open} aria-label={labels.launch} className="ai-page-agent-launcher" onClick={() => setOpen((current) => !current)} type="button">
+  return (
+    <div className={`ai-page-agent${open ? " is-open" : ""}`}>
+      {panel}
+      <button ref={launcherRef} aria-expanded={open} aria-label={labels.launch} className="ai-page-agent-launcher" onClick={() => setOpen((current) => !current)} type="button">
         <Sparkles aria-hidden="true" size={19} /><span>{labels.launch}</span>
       </button>
     </div>

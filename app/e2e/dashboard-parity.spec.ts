@@ -75,13 +75,21 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(lockedShop).toBeDisabled();
 
   const mobilePreview = page.locator('.admin-preview-device--mobile');
-  await expect(mobilePreview).toHaveCSS('min-height', '424px');
-  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('height', '400px');
+  await expect(mobilePreview).toHaveCSS('min-height', '420px');
+  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('width', '186px');
+  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('aspect-ratio', '6 / 13');
+
+  const addLink = page.getByRole('button', { name: 'Add link', exact: true });
+  if (await addLink.isVisible()) await addLink.click();
+  const contentList = page.locator('.admin-link-list');
+  await expect(contentList).toBeVisible();
+  await expect(contentList).toHaveCSS('width', '416px');
+  await expect(contentList.locator('.public-block-preview h3')).toHaveCSS('font-size', '13px');
 
   await page.getByRole('button', { name: 'Desktop preview' }).click();
   const desktopPreview = page.locator('.admin-preview-device--desktop');
-  await expect(desktopPreview).toHaveCSS('min-height', '292px');
-  await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '480px');
+  await expect(desktopPreview).toHaveCSS('min-height', '276px');
+  await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '450px');
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
@@ -105,7 +113,16 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await openAuthenticatedAdmin(page);
 
   await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Edit with AI' })).toBeVisible();
+  const launcher = page.getByRole('button', { name: 'Edit with AI' });
+  await expect(launcher).toBeVisible();
+  await expect(page.locator('.ai-page-agent')).toHaveCSS('position', 'relative');
+  const roleOptions = page.locator('.admin-profile-role-option');
+  await expect(roleOptions).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) {
+    const roleBounds = await roleOptions.nth(index).boundingBox();
+    expect(roleBounds).not.toBeNull();
+    expect(roleBounds!.height).toBeLessThanOrEqual(72);
+  }
 
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(page.getByRole('button', { name: 'AI Assistant', exact: true })).toBeVisible();
@@ -114,15 +131,91 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCSS('width', '44px');
 
   await page.getByRole('button', { name: 'Close navigation' }).first().click();
-  await page.getByRole('button', { name: 'Edit with AI' }).click();
+  await launcher.click();
   const dialog = page.getByRole('dialog', { name: 'OrbitPage AI' });
   await expect(dialog).toBeVisible();
-  await expect(page.locator('.ai-page-agent')).toHaveCSS('position', 'fixed');
+  await expect(dialog).toHaveCSS('position', 'fixed');
   const bounds = await dialog.boundingBox();
   expect(bounds).not.toBeNull();
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
   expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(844);
+});
+
+test('keeps the menu workflow clear on mobile without truncated guidance', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAuthenticatedAdmin(page);
+
+  await page.getByRole('button', { name: 'Open navigation' }).click();
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: /^Menu/ }).click();
+
+  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
+  const steps = workflow.getByRole('button');
+  const descriptions = workflow.locator('.menu-editor-tab-copy small');
+  await expect(steps).toHaveCount(4);
+  await expect(descriptions).toHaveCount(4);
+  for (let index = 0; index < 4; index += 1) {
+    await expect(steps.nth(index)).toHaveCSS('min-height', '48px');
+    await expect(descriptions.nth(index)).toHaveCSS('display', 'none');
+  }
+
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+});
+
+test('keeps the real theme preview available without crowding tablet and mobile layouts', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+
+  const disclosure = page.locator('.admin-theme-preview-disclosure');
+  const summary = disclosure.locator('.admin-theme-preview-summary');
+  const previewBody = disclosure.locator('.admin-theme-preview-body');
+  const mobileHardware = disclosure.locator('.admin-preview-device--mobile .admin-preview-device__hardware');
+
+  await expect(summary).toBeVisible();
+  await expect(summary).toHaveCSS('min-height', '52px');
+  await expect(previewBody).toBeHidden();
+  await summary.click();
+  await expect(previewBody).toBeVisible();
+  await expect(mobileHardware).toHaveCSS('width', '132px');
+  await expect(mobileHardware).toHaveCSS('aspect-ratio', '6 / 13');
+
+  let horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
+  await summary.click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(previewBody).toBeHidden();
+  await summary.click();
+  await expect(previewBody).toBeVisible();
+  await expect(mobileHardware).toHaveCSS('width', '128px');
+  await expect(mobileHardware).toHaveCSS('aspect-ratio', '6 / 13');
+
+  const previewBounds = await disclosure.boundingBox();
+  expect(previewBounds).not.toBeNull();
+  expect(previewBounds!.width).toBeLessThanOrEqual(390);
+  horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
+  const themeRail = page.locator('.admin-theme-preset-rail');
+  const railDimensions = await themeRail.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
+  expect(railDimensions.scrollWidth).toBeGreaterThan(railDimensions.clientWidth);
+  const firstTheme = page.locator('.admin-theme-preset-card').nth(0);
+  const secondTheme = page.locator('.admin-theme-preset-card').nth(1);
+  const firstThemeBounds = await firstTheme.boundingBox();
+  const secondThemeBounds = await secondTheme.boundingBox();
+  expect(firstThemeBounds).not.toBeNull();
+  expect(secondThemeBounds).not.toBeNull();
+  expect(Math.abs(firstThemeBounds!.y - secondThemeBounds!.y)).toBeLessThanOrEqual(1);
+  expect(secondThemeBounds!.x).toBeGreaterThan(firstThemeBounds!.x);
+  await summary.click();
+  await expect(previewBody).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Open controls' })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#admin-theme-manual-controls')).toHaveCount(0);
+  const compactThemeHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+  expect(compactThemeHeight).toBeLessThan(1600);
 });
 
 test('fits the content preview inside a 720p laptop viewport', async ({ page }) => {
@@ -132,14 +225,57 @@ test('fits the content preview inside a 720p laptop viewport', async ({ page }) 
 
   const preview = page.locator('.admin-preview-panel');
   const hardware = preview.locator('.admin-preview-device__hardware');
-  await expect(hardware).toHaveCSS('width', '162px');
-  await expect(hardware).toHaveCSS('height', '320px');
+  await expect(hardware).toHaveCSS('width', '164px');
+  await expect(hardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   const previewBounds = await preview.boundingBox();
   expect(previewBounds).not.toBeNull();
   expect(previewBounds!.y + previewBounds!.height).toBeLessThanOrEqual(720);
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
+});
+
+test('keeps the dense editors compact and organized by task', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openAuthenticatedAdmin(page);
+
+  await expect(page.getByRole('heading', { name: 'Choose the page role' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Build the identity' })).toBeVisible();
+  await expect(page.getByText('Advanced card style', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Role or focus')).toHaveCSS('padding-left', '36px');
+  await expect(page.getByLabel('Location')).toHaveCSS('padding-left', '36px');
+
+  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  const compactThemePreview = page.locator('.admin-theme-mockup--compact').first();
+  await expect(compactThemePreview).toHaveCSS('height', '112px');
+  await expect(page.locator('.admin-theme-preview-disclosure')).toHaveAttribute('open', '');
+  await expect(page.locator('.admin-theme-live-preview')).toBeVisible();
+  await expect(page.locator('.admin-theme-live-preview .admin-preview-device__hardware')).toHaveCSS('width', '155px');
+  await expect(page.locator('.admin-theme-live-preview .admin-preview-device__hardware')).toHaveCSS('aspect-ratio', '6 / 13');
+
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: /^Menu/ }).click();
+  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
+  await expect(workflow.getByRole('button')).toHaveCount(4);
+  await expect(workflow.getByText('Identity', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Categories', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Items', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Publish', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Menu content view' })).toHaveCount(0);
+  await workflow.getByRole('button', { name: /Identity/ }).click();
+  const localeSelect = page.getByLabel('Locale', { exact: true });
+  await expect(localeSelect).toHaveJSProperty('tagName', 'SELECT');
+  await expect(localeSelect.locator('option')).toHaveCount(19);
+  await localeSelect.selectOption('it-IT');
+  await expect(localeSelect).toHaveValue('it-IT');
+
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await expect(page.locator('#current-password')).toHaveAttribute('autocomplete', 'current-password');
+  await expect(page.locator('#new-password')).toHaveAttribute('autocomplete', 'new-password');
+  await expect(page.locator('#confirm-password')).toHaveAttribute('autocomplete', 'new-password');
+  await expect(page.locator('#two-factor-password')).toHaveAttribute('autocomplete', 'current-password');
+  const passwordForms = await page.locator('.oss-account-layout input[type="password"]').evaluateAll((inputs) => inputs.map((input) => Boolean((input as HTMLInputElement).form)));
+  expect(passwordForms.every(Boolean)).toBe(true);
 });
 
 test('keeps product labels shared with SaaS while localizing section descriptions', async ({ page }) => {

@@ -408,6 +408,10 @@ export const AdminView = ({
     setActiveTab(canonicalTab);
     setMobileNavOpen(false);
     onTabChange?.(canonicalTab);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.querySelector<HTMLElement>(".admin-dashboard-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
   };
 
   const toggleSidebar = () => {
@@ -749,6 +753,7 @@ export const AdminView = ({
               <ExternalLink aria-hidden="true" size={17} />
               {tr("Public page", "Pagina pubblica")}
             </a>
+            {!isProspectReadOnly && <SelfHostedAiAgent onApplied={onAiApplied} />}
           </div>
         </header> : null}
 
@@ -1046,7 +1051,7 @@ export const AdminView = ({
               maxUploadBytes={entitlements?.maxUploadBytes}
               maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
               managePlanHref={managePlanHref}
-              showEmbeddedPreview={showEmbeddedPreview}
+              showEmbeddedPreview
             />
           </TabsContent>
 
@@ -1085,7 +1090,7 @@ export const AdminView = ({
             <TabsContent value="account" className="admin-tab-content">
               <div className="oss-account-layout" data-onboarding="account-section">
                 <PasswordManager />
-                <TwoFactorManager />
+                <TwoFactorManager username={currentUser?.username} />
               </div>
             </TabsContent>
           )}
@@ -1216,7 +1221,6 @@ export const AdminView = ({
           </p>
         </footer>
       </div>
-      {!isHostedAdmin && !isProspectReadOnly && <SelfHostedAiAgent onApplied={onAiApplied} />}
     </div>
   );
 };

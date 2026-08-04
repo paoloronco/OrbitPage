@@ -32,6 +32,28 @@ interface MenuEditorProps {
 type MenuEditorPanel = 'setup' | 'content' | 'appearance';
 type MenuContentPane = 'sections' | 'products';
 
+const MENU_LOCALE_OPTIONS = [
+  { value: 'en-GB', label: 'English (United Kingdom)', labelIt: 'Inglese (Regno Unito)' },
+  { value: 'en-US', label: 'English (United States)', labelIt: 'Inglese (Stati Uniti)' },
+  { value: 'it-IT', label: 'Italian (Italy)', labelIt: 'Italiano (Italia)' },
+  { value: 'es-ES', label: 'Spanish (Spain)', labelIt: 'Spagnolo (Spagna)' },
+  { value: 'es-MX', label: 'Spanish (Mexico)', labelIt: 'Spagnolo (Messico)' },
+  { value: 'fr-FR', label: 'French (France)', labelIt: 'Francese (Francia)' },
+  { value: 'fr-CA', label: 'French (Canada)', labelIt: 'Francese (Canada)' },
+  { value: 'de-DE', label: 'German (Germany)', labelIt: 'Tedesco (Germania)' },
+  { value: 'de-CH', label: 'German (Switzerland)', labelIt: 'Tedesco (Svizzera)' },
+  { value: 'pt-PT', label: 'Portuguese (Portugal)', labelIt: 'Portoghese (Portogallo)' },
+  { value: 'pt-BR', label: 'Portuguese (Brazil)', labelIt: 'Portoghese (Brasile)' },
+  { value: 'nl-NL', label: 'Dutch (Netherlands)', labelIt: 'Olandese (Paesi Bassi)' },
+  { value: 'pl-PL', label: 'Polish (Poland)', labelIt: 'Polacco (Polonia)' },
+  { value: 'tr-TR', label: 'Turkish (Türkiye)', labelIt: 'Turco (Turchia)' },
+  { value: 'ru-RU', label: 'Russian (Russia)', labelIt: 'Russo (Russia)' },
+  { value: 'ar-SA', label: 'Arabic (Saudi Arabia)', labelIt: 'Arabo (Arabia Saudita)' },
+  { value: 'zh-CN', label: 'Chinese (China)', labelIt: 'Cinese (Cina)' },
+  { value: 'ja-JP', label: 'Japanese (Japan)', labelIt: 'Giapponese (Giappone)' },
+  { value: 'ko-KR', label: 'Korean (South Korea)', labelIt: 'Coreano (Corea del Sud)' },
+] as const;
+
 function makeId(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
@@ -511,23 +533,47 @@ export function MenuEditor({
           {message && <p className={`menu-editor-message${isDirty ? ' is-pending' : ' is-saved'}`} aria-live="polite">{message}</p>}
         </section>
 
-        <nav className="menu-editor-tabs" aria-label={tr('Menu editor sections', 'Sezioni editor menu')}>
-          {([
-            ['setup', UtensilsCrossed, tr('Setup', 'Impostazioni')],
-            ['content', Layers3, tr('Menu content', 'Contenuti menu')],
-            ['appearance', Palette, tr('Appearance', 'Aspetto')],
-          ] as const).map(([panel, Icon, label]) => (
-            <button
-              key={panel}
-              type="button"
-              className={activePanel === panel ? 'active' : ''}
-              aria-current={activePanel === panel ? 'page' : undefined}
-              onClick={() => setActivePanel(panel)}
-            >
-              <Icon />
-              <span>{label}</span>
-            </button>
-          ))}
+        <nav className="menu-editor-tabs" aria-label={tr('Menu setup workflow', 'Percorso di configurazione menu')}>
+          <button
+            type="button"
+            className={activePanel === 'setup' ? 'active' : ''}
+            aria-current={activePanel === 'setup' ? 'step' : undefined}
+            onClick={() => setActivePanel('setup')}
+          >
+            <span className="menu-editor-tab-index">01</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Identity', 'Identità')}</strong><small>{tr('Name, venue and language', 'Nome, locale e lingua')}</small></span>
+            <UtensilsCrossed aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={activePanel === 'content' && mobileContentPane === 'sections' ? 'active' : ''}
+            aria-current={activePanel === 'content' && mobileContentPane === 'sections' ? 'step' : undefined}
+            onClick={() => { setActivePanel('content'); setMobileContentPane('sections'); }}
+          >
+            <span className="menu-editor-tab-index">02</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Categories', 'Categorie')}</strong><small>{tr('Build the browsing order', 'Crea l’ordine di navigazione')}</small></span>
+            <Layers3 aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={activePanel === 'content' && mobileContentPane === 'products' ? 'active' : ''}
+            aria-current={activePanel === 'content' && mobileContentPane === 'products' ? 'step' : undefined}
+            onClick={() => { setActivePanel('content'); setMobileContentPane('products'); }}
+          >
+            <span className="menu-editor-tab-index">03</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Items', 'Elementi')}</strong><small>{tr('Add names, prices and details', 'Aggiungi nomi, prezzi e dettagli')}</small></span>
+            <ListTree aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={activePanel === 'appearance' ? 'active' : ''}
+            aria-current={activePanel === 'appearance' ? 'step' : undefined}
+            onClick={() => setActivePanel('appearance')}
+          >
+            <span className="menu-editor-tab-index">04</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Publish', 'Pubblica')}</strong><small>{tr('Style, URL and QR code', 'Stile, URL e codice QR')}</small></span>
+            <Palette aria-hidden="true" />
+          </button>
         </nav>
 
         {activePanel === 'setup' && <section className="admin-panel space-y-5">
@@ -541,20 +587,26 @@ export function MenuEditor({
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2"><Label htmlFor="menu-name">{tr("Menu name", "Nome menu")}</Label><Input id="menu-name" value={draft.name} onChange={(e) => update((current) => ({ ...current, name: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label htmlFor="menu-currency">Currency</Label><Input id="menu-currency" maxLength={3} value={draft.currency} onChange={(e) => update((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} /></div>
-              <div className="space-y-2"><Label htmlFor="menu-locale">Locale</Label><Input id="menu-locale" value={draft.locale} onChange={(e) => update((current) => ({ ...current, locale: e.target.value }))} /></div>
+            <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3">
+              <div className="space-y-2"><Label htmlFor="menu-currency">{tr("Currency", "Valuta")}</Label><Input id="menu-currency" maxLength={3} value={draft.currency} onChange={(e) => update((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} /></div>
+              <div className="min-w-0 space-y-2">
+                <Label htmlFor="menu-locale">Locale</Label>
+                <select
+                  id="menu-locale"
+                  className="menu-locale-select block h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={draft.locale}
+                  onChange={(event) => update((current) => ({ ...current, locale: event.target.value }))}
+                >
+                  {!MENU_LOCALE_OPTIONS.some((option) => option.value === draft.locale) && <option value={draft.locale}>{draft.locale}</option>}
+                  {MENU_LOCALE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{tr(option.label, option.labelIt)} · {option.value}</option>)}
+                </select>
+              </div>
             </div>
           </div>
           <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
         </section>}
 
         {activePanel === 'content' && <section className="menu-content-editor">
-          <div className="menu-content-mobile-switch" role="group" aria-label={tr("Menu content view", "Vista contenuti menu")}>
-            <button type="button" className={mobileContentPane === 'sections' ? 'active' : ''} onClick={() => setMobileContentPane('sections')}><Layers3 />{tr("Categories", "Categorie")}</button>
-            <button type="button" className={mobileContentPane === 'products' ? 'active' : ''} onClick={() => setMobileContentPane('products')}><ListTree />{tr("Items", "Elementi")}</button>
-          </div>
-
           <div className={`admin-panel menu-content-pane menu-content-pane--sections${mobileContentPane === 'sections' ? ' is-mobile-active' : ''}`}>
             <div className="menu-content-pane__header">
               <div className="menu-editor-section-title"><span>01</span><div><h3>{tr("Categories", "Categorie")}</h3><p>{tr("Build the structure visitors browse.", "Definisci la struttura che vedranno i visitatori.")}</p></div></div>

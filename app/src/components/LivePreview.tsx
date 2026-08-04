@@ -189,6 +189,7 @@ export const LivePreview = ({
                 cookiePolicyUrl={profile.cookiePolicyUrl || "/cookies"}
                 showOrbitPageBadge={showOrbitPageBadge}
                 embedded
+                embeddedViewport={device}
               />
             </div>
           </div>
