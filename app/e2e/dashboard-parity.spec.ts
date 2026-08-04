@@ -239,9 +239,14 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
 
-  await expect(page.getByRole('heading', { name: 'Choose the page role' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Build the identity' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Page type', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Identity', exact: true })).toBeVisible();
   await expect(page.getByText('Advanced card style', { exact: true })).toBeVisible();
+  await expect(page.locator('.admin-profile-toolbar')).toHaveCSS('position', 'sticky');
+  const avatarSizeSlider = page.getByLabel('Profile image size');
+  const avatarSizeBounds = await avatarSizeSlider.boundingBox();
+  expect(avatarSizeBounds).not.toBeNull();
+  expect(avatarSizeBounds!.width).toBeLessThanOrEqual(176);
   await expect(page.getByLabel('Role or focus')).toHaveCSS('padding-left', '36px');
   await expect(page.getByLabel('Location')).toHaveCSS('padding-left', '36px');
 

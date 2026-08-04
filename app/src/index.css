@@ -9839,3 +9839,527 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     max-width: 8rem;
   }
 }
+
+/* Analytics stays insight-led; integrations are secondary and expand on demand. */
+.orbitpage-admin .admin-analytics-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.managed-analytics-integration {
+  overflow: hidden;
+  border: 1px solid #d8e1ed;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.managed-analytics-integration > summary {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 13px;
+  color: #25334a;
+  cursor: pointer;
+  list-style: none;
+}
+
+.managed-analytics-integration > summary::-webkit-details-marker {
+  display: none;
+}
+
+.managed-analytics-integration > summary::after {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-right: 1.5px solid #6b7b91;
+  border-bottom: 1.5px solid #6b7b91;
+  content: "";
+  transform: rotate(45deg);
+  transition: transform 150ms ease;
+}
+
+.managed-analytics-integration[open] > summary::after {
+  transform: rotate(225deg);
+}
+
+.managed-analytics-integration-title {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+}
+
+.managed-analytics-integration-title > svg {
+  flex: none;
+  color: #245ec5;
+}
+
+.managed-analytics-integration-title > span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.managed-analytics-integration-title strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.managed-analytics-integration-title small {
+  color: #68778c;
+  font-size: 11px;
+}
+
+.managed-analytics-integration > summary > span:last-of-type:not(.managed-analytics-integration-title) {
+  flex: none;
+  margin-left: auto;
+  border-radius: 999px;
+  background: #eef2f7;
+  padding: 4px 8px;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.managed-analytics-integration > summary > span.is-active:last-of-type {
+  background: #e8f7ef;
+  color: #087a55;
+}
+
+.managed-analytics-integration-body {
+  display: grid;
+  max-width: 640px;
+  gap: 13px;
+  border-top: 1px solid #e2e8f0;
+  padding: 14px;
+}
+
+.managed-analytics-integration-body > p,
+.managed-analytics-integration-actions p {
+  margin: 0;
+  color: #617087;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.managed-analytics-integration-field {
+  display: grid;
+  max-width: 420px;
+  gap: 6px;
+}
+
+.managed-analytics-integration-field label {
+  color: #526078;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.managed-analytics-integration-field small {
+  color: #7b8798;
+  font-size: 10px;
+}
+
+.managed-analytics-integration-error {
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff1f2;
+  padding: 8px 10px;
+  color: #b42318 !important;
+}
+
+.managed-analytics-integration-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.managed-analytics-integration-actions p span {
+  color: #245ec5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .managed-analytics-integration > summary::after {
+    transition: none;
+  }
+}
+
+/* Compact analytics hierarchy: key numbers first, detail only when requested. */
+.managed-analytics {
+  gap: 12px;
+}
+
+.managed-analytics-header {
+  align-items: center;
+  padding: 0 0 11px;
+}
+
+.managed-analytics-header > div:first-child > span {
+  font-size: 10px;
+}
+
+.managed-analytics-header h2 {
+  margin-top: 2px;
+  font-size: 17px;
+}
+
+.managed-analytics-header p {
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.managed-analytics-primary-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.managed-analytics-primary-kpis > .managed-analytics-kpi {
+  min-height: 72px;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px;
+}
+
+.managed-analytics-kpi > svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.managed-analytics-primary-kpis .managed-analytics-kpi > span {
+  gap: 3px;
+  font-size: 10px;
+}
+
+.managed-analytics-primary-kpis .managed-analytics-kpi strong {
+  font-size: 21px;
+}
+
+.managed-analytics-trend {
+  padding: 14px;
+}
+
+.managed-analytics-trend > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.managed-analytics-trend > div:first-child p {
+  margin: 0 0 8px;
+  text-align: right;
+}
+
+.managed-analytics-trend .recharts-legend-wrapper {
+  font-size: 11px;
+}
+
+.managed-analytics-quick-insights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.managed-analytics-insight {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #d8e1ed;
+  border-radius: 8px;
+  background: #fff;
+  padding: 11px 13px;
+}
+
+.managed-analytics-insight > header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #245ec5;
+}
+
+.managed-analytics-insight h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.managed-analytics-insight dl {
+  display: grid;
+  gap: 0;
+  margin: 8px 0 0;
+}
+
+.managed-analytics-insight dl > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  border-top: 1px solid #edf1f6;
+  padding: 6px 0;
+}
+
+.managed-analytics-insight dt {
+  flex: none;
+  color: #68778c;
+  font-size: 10px;
+}
+
+.managed-analytics-insight dd {
+  min-width: 0;
+  overflow: hidden;
+  margin: 0;
+  color: #27364c;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.managed-analytics-breakdown--priority {
+  gap: 9px;
+  padding-top: 2px;
+}
+
+.managed-analytics-breakdown--priority .managed-analytics-section-heading {
+  align-items: center;
+  padding-bottom: 7px;
+}
+
+.managed-analytics-disclosure {
+  overflow: hidden;
+  border: 1px solid #d8e1ed;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.managed-analytics-disclosure-summary {
+  display: grid;
+  min-height: 52px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.managed-analytics-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.managed-analytics-disclosure-summary::after {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid #718096;
+  border-bottom: 1.5px solid #718096;
+  content: "";
+  transform: rotate(45deg);
+  transition: transform 150ms ease;
+}
+
+.managed-analytics-disclosure[open] .managed-analytics-disclosure-summary::after {
+  transform: rotate(225deg);
+}
+
+.managed-analytics-disclosure-summary > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.managed-analytics-disclosure-summary strong {
+  color: #172033;
+  font-size: 12px;
+}
+
+.managed-analytics-disclosure-summary small {
+  overflow: hidden;
+  color: #68778c;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.managed-analytics-disclosure-summary em {
+  border-radius: 999px;
+  background: #eef3f9;
+  padding: 4px 7px;
+  color: #607087;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.managed-analytics-disclosure-body {
+  border-top: 1px solid #e4e9f0;
+  padding: 11px;
+}
+
+.managed-analytics-section-empty {
+  margin: 0;
+  border: 1px dashed #cdd8e6;
+  border-radius: 7px;
+  background: #f8fafc;
+  padding: 14px;
+  color: #68778c;
+  font-size: 11px;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .managed-analytics-header {
+    gap: 9px;
+  }
+
+  .managed-analytics-primary-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .managed-analytics-primary-kpis > .managed-analytics-kpi {
+    min-height: 68px;
+    padding: 10px;
+  }
+
+  .managed-analytics-trend {
+    padding: 11px;
+  }
+
+  .managed-analytics-trend > div:first-child {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .managed-analytics-trend > div:first-child p {
+    margin-bottom: 6px;
+    text-align: left;
+  }
+
+  .managed-analytics-quick-insights {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .managed-analytics-disclosure-summary {
+    gap: 8px;
+  }
+
+  .managed-analytics-disclosure-summary small {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .managed-analytics-disclosure-summary::after {
+    transition: none;
+  }
+}
+
+/* Page editor: compact sections, clear ordering and reachable save actions. */
+.admin-profile-toolbar {
+  position: sticky;
+  z-index: 12;
+  top: 0;
+  background: rgb(255 255 255 / 97%);
+  backdrop-filter: blur(8px);
+}
+
+.admin-profile-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-profile-section-heading::before {
+  width: 3px;
+  height: 15px;
+  flex: none;
+  border-radius: 2px;
+  background: #2f66df;
+  content: "";
+}
+
+.admin-profile-section-heading h3 {
+  margin: 0;
+  font-size: .82rem;
+  line-height: 1.25;
+}
+
+.admin-profile-section .admin-profile-chapter {
+  padding: 16px 0;
+}
+
+.admin-profile-role-grid {
+  gap: 8px;
+}
+
+.admin-profile-role-option {
+  min-height: 48px;
+}
+
+.admin-profile-avatar-editor {
+  align-content: start;
+}
+
+.admin-profile-slider-field,
+.admin-profile-compact-slider {
+  width: 100%;
+  max-width: 11rem;
+}
+
+.admin-profile-advanced-details,
+.admin-profile-appearance-details {
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.admin-profile-advanced-details > summary,
+.admin-profile-appearance-details > summary {
+  min-height: 48px;
+}
+
+.admin-profile-advanced-details > div > div:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+@media (max-width: 639px) {
+  .admin-profile-toolbar {
+    padding: 11px 13px;
+  }
+
+  .admin-profile-section .admin-profile-flow {
+    padding: 13px;
+  }
+
+  .admin-profile-section .admin-profile-chapter {
+    padding: 14px 0;
+  }
+
+  .admin-profile-role-option {
+    min-height: 46px;
+  }
+
+  .admin-profile-slider-field,
+  .admin-profile-compact-slider {
+    max-width: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-dashboard-mobile-nav-backdrop:not(.open),
+  .admin-dashboard-nav-stack:not(.open) {
+    visibility: hidden;
+  }
+
+  .admin-dashboard-mobile-nav-backdrop.open,
+  .admin-dashboard-nav-stack.open {
+    visibility: visible;
+  }
+}
