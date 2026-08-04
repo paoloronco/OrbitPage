@@ -536,14 +536,14 @@ export const ProfileSection = ({
                 <Label htmlFor="profile-bio">{tr("Description", "Descrizione")}</Label>
                 <Textarea id="profile-bio" value={draft.bio} onChange={(event) => setDraft((current) => ({ ...current, bio: event.target.value }))} placeholder={tr("A short, useful introduction to this page.", "Una presentazione breve e utile della pagina.")} rows={3} maxLength={2000} />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="admin-profile-detail-grid grid gap-4 sm:grid-cols-2">
+                <div className="admin-profile-detail-field space-y-2">
                   <Label htmlFor="profile-primary-detail">{activePreset.primaryLabel}</Label>
-                  <div className="relative"><BriefcaseBusiness className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input id="profile-primary-detail" className="pl-9" value={draft.appearance?.profileDetails?.primary || ""} onChange={(event) => updateProfileDetail("primary", event.target.value)} placeholder={activePreset.primaryPlaceholder} maxLength={160} /></div>
+                  <div className="admin-profile-detail-control"><BriefcaseBusiness aria-hidden="true" /><Input id="profile-primary-detail" className="admin-profile-detail-input" value={draft.appearance?.profileDetails?.primary || ""} onChange={(event) => updateProfileDetail("primary", event.target.value)} placeholder={activePreset.primaryPlaceholder} maxLength={160} /></div>
                 </div>
-                <div className="space-y-2">
+                <div className="admin-profile-detail-field space-y-2">
                   <Label htmlFor="profile-secondary-detail">{activePreset.secondaryLabel}</Label>
-                  <div className="relative"><MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input id="profile-secondary-detail" className="pl-9" value={draft.appearance?.profileDetails?.secondary || ""} onChange={(event) => updateProfileDetail("secondary", event.target.value)} placeholder={activePreset.secondaryPlaceholder} maxLength={240} /></div>
+                  <div className="admin-profile-detail-control"><MapPin aria-hidden="true" /><Input id="profile-secondary-detail" className="admin-profile-detail-input" value={draft.appearance?.profileDetails?.secondary || ""} onChange={(event) => updateProfileDetail("secondary", event.target.value)} placeholder={activePreset.secondaryPlaceholder} maxLength={240} /></div>
                 </div>
               </div>
             </div>

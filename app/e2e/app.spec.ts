@@ -64,6 +64,7 @@ test.describe('OrbitPage Application Flow', () => {
     await expect(page.getByText('Unsaved changes')).not.toBeVisible();
 
     // 4. Verifichiamo il rendering corretto sulla Pagina Pubblica
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/');
 
     // Il nome, la bio e il link devono essere visibili pubblicamente
@@ -73,6 +74,19 @@ test.describe('OrbitPage Application Flow', () => {
     const publicLink = page.getByRole('link', { name: 'Mio Sito Web' }).first();
     await expect(publicLink).toBeVisible();
     await expect(publicLink).toHaveAttribute('href', 'https://mariorossi.dev');
+
+    const publicRoot = page.locator('.public-page-root--standalone');
+    const publicContent = publicRoot.locator('.public-page-content');
+    const publicProfile = publicRoot.locator('.profile-card');
+    const publicTitle = publicRoot.locator('.profile-card__title');
+    await expect(publicContent).toHaveCSS('max-width', '416px');
+    await expect(publicProfile).toHaveCSS('padding', '24px');
+    await expect(publicTitle).toHaveCSS('font-size', '30px');
+    await expect(publicTitle).toHaveCSS('line-height', '36px');
+
+    const desktopProfileBounds = await publicProfile.boundingBox();
+    expect(desktopProfileBounds).not.toBeNull();
+    expect(desktopProfileBounds!.height).toBeLessThan(380);
 
     const liquidGlassCard = page.locator('[data-surface-effect="liquid-glass"]').filter({ has: publicLink }).locator('.glass-card');
     await expect(liquidGlassCard).toBeVisible();
@@ -89,5 +103,9 @@ test.describe('OrbitPage Application Flow', () => {
     expect(liquidGlassStyle.backgroundImage).not.toBe('none');
     expect(liquidGlassStyle.borderColor).not.toBe('rgba(0, 0, 0, 0)');
     expect(liquidGlassStyle.boxShadow).not.toBe('none');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(publicProfile).toHaveCSS('padding', '32px');
+    await expect(publicTitle).toHaveCSS('font-size', '32px');
   });
 });

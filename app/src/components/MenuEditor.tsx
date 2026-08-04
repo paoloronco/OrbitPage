@@ -32,6 +32,28 @@ interface MenuEditorProps {
 type MenuEditorPanel = 'setup' | 'content' | 'appearance';
 type MenuContentPane = 'sections' | 'products';
 
+const MENU_LOCALE_OPTIONS = [
+  { value: 'en-GB', label: 'English (United Kingdom)', labelIt: 'Inglese (Regno Unito)' },
+  { value: 'en-US', label: 'English (United States)', labelIt: 'Inglese (Stati Uniti)' },
+  { value: 'it-IT', label: 'Italian (Italy)', labelIt: 'Italiano (Italia)' },
+  { value: 'es-ES', label: 'Spanish (Spain)', labelIt: 'Spagnolo (Spagna)' },
+  { value: 'es-MX', label: 'Spanish (Mexico)', labelIt: 'Spagnolo (Messico)' },
+  { value: 'fr-FR', label: 'French (France)', labelIt: 'Francese (Francia)' },
+  { value: 'fr-CA', label: 'French (Canada)', labelIt: 'Francese (Canada)' },
+  { value: 'de-DE', label: 'German (Germany)', labelIt: 'Tedesco (Germania)' },
+  { value: 'de-CH', label: 'German (Switzerland)', labelIt: 'Tedesco (Svizzera)' },
+  { value: 'pt-PT', label: 'Portuguese (Portugal)', labelIt: 'Portoghese (Portogallo)' },
+  { value: 'pt-BR', label: 'Portuguese (Brazil)', labelIt: 'Portoghese (Brasile)' },
+  { value: 'nl-NL', label: 'Dutch (Netherlands)', labelIt: 'Olandese (Paesi Bassi)' },
+  { value: 'pl-PL', label: 'Polish (Poland)', labelIt: 'Polacco (Polonia)' },
+  { value: 'tr-TR', label: 'Turkish (Türkiye)', labelIt: 'Turco (Turchia)' },
+  { value: 'ru-RU', label: 'Russian (Russia)', labelIt: 'Russo (Russia)' },
+  { value: 'ar-SA', label: 'Arabic (Saudi Arabia)', labelIt: 'Arabo (Arabia Saudita)' },
+  { value: 'zh-CN', label: 'Chinese (China)', labelIt: 'Cinese (Cina)' },
+  { value: 'ja-JP', label: 'Japanese (Japan)', labelIt: 'Giapponese (Giappone)' },
+  { value: 'ko-KR', label: 'Korean (South Korea)', labelIt: 'Coreano (Corea del Sud)' },
+] as const;
+
 function makeId(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
@@ -565,9 +587,20 @@ export function MenuEditor({
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2"><Label htmlFor="menu-name">{tr("Menu name", "Nome menu")}</Label><Input id="menu-name" value={draft.name} onChange={(e) => update((current) => ({ ...current, name: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2"><Label htmlFor="menu-currency">Currency</Label><Input id="menu-currency" maxLength={3} value={draft.currency} onChange={(e) => update((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} /></div>
-              <div className="space-y-2"><Label htmlFor="menu-locale">Locale</Label><Input id="menu-locale" value={draft.locale} onChange={(e) => update((current) => ({ ...current, locale: e.target.value }))} /></div>
+            <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3">
+              <div className="space-y-2"><Label htmlFor="menu-currency">{tr("Currency", "Valuta")}</Label><Input id="menu-currency" maxLength={3} value={draft.currency} onChange={(e) => update((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} /></div>
+              <div className="min-w-0 space-y-2">
+                <Label htmlFor="menu-locale">Locale</Label>
+                <select
+                  id="menu-locale"
+                  className="menu-locale-select block h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  value={draft.locale}
+                  onChange={(event) => update((current) => ({ ...current, locale: event.target.value }))}
+                >
+                  {!MENU_LOCALE_OPTIONS.some((option) => option.value === draft.locale) && <option value={draft.locale}>{draft.locale}</option>}
+                  {MENU_LOCALE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{tr(option.label, option.labelIt)} · {option.value}</option>)}
+                </select>
+              </div>
             </div>
           </div>
           <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>

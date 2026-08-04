@@ -77,7 +77,10 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand", 
       )}
       <div className="space-y-4">
         {displayName && (
-          <h1 className="profile-card__title mb-2 font-bold" style={{ ...(profile.nameFontSize ? { fontSize: profile.nameFontSize } : { fontSize: '2rem' }) }}>
+          <h1
+            className="profile-card__title mb-2 font-bold"
+            style={{ "--profile-name-font-size": profile.nameFontSize || "2rem" } as CSSProperties}
+          >
             {displayName}
           </h1>
         )}
@@ -228,7 +231,10 @@ export const PublicProfileSection = ({ profile, fallbackName = "Name or brand", 
         )}
         
         {hasBio && (
-          <p className="profile-card__bio whitespace-pre-line leading-relaxed" style={{ ...(profile.bioFontSize ? { fontSize: profile.bioFontSize } : {}) }}>
+          <p
+            className="profile-card__bio whitespace-pre-line leading-relaxed"
+            style={{ "--profile-bio-font-size": profile.bioFontSize || "1rem" } as CSSProperties}
+          >
             {profile.bio}
           </p>
         )}
