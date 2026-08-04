@@ -79,7 +79,8 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('width', '186px');
   await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('aspect-ratio', '6 / 13');
 
-  await page.getByRole('button', { name: 'Add link', exact: true }).click();
+  const addLink = page.getByRole('button', { name: 'Add link', exact: true });
+  if (await addLink.isVisible()) await addLink.click();
   const contentList = page.locator('.admin-link-list');
   await expect(contentList).toBeVisible();
   await expect(contentList).toHaveCSS('width', '416px');

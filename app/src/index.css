@@ -9550,6 +9550,13 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   box-shadow: 0 18px 38px rgb(15 23 42 / 20%);
 }
 
+.admin-theme-live-preview .admin-preview-device--mobile .admin-preview-device__hardware {
+  width: min(100%, var(--admin-preview-phone-width));
+  max-width: none;
+  height: auto;
+  aspect-ratio: 6 / 13;
+}
+
 .admin-preview-device--mobile .admin-preview-device__screen {
   border-radius: 22px;
 }
