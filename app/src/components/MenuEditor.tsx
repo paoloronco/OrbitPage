@@ -511,23 +511,47 @@ export function MenuEditor({
           {message && <p className={`menu-editor-message${isDirty ? ' is-pending' : ' is-saved'}`} aria-live="polite">{message}</p>}
         </section>
 
-        <nav className="menu-editor-tabs" aria-label={tr('Menu editor sections', 'Sezioni editor menu')}>
-          {([
-            ['setup', UtensilsCrossed, tr('Setup', 'Impostazioni')],
-            ['content', Layers3, tr('Menu content', 'Contenuti menu')],
-            ['appearance', Palette, tr('Appearance', 'Aspetto')],
-          ] as const).map(([panel, Icon, label]) => (
-            <button
-              key={panel}
-              type="button"
-              className={activePanel === panel ? 'active' : ''}
-              aria-current={activePanel === panel ? 'page' : undefined}
-              onClick={() => setActivePanel(panel)}
-            >
-              <Icon />
-              <span>{label}</span>
-            </button>
-          ))}
+        <nav className="menu-editor-tabs" aria-label={tr('Menu setup workflow', 'Percorso di configurazione menu')}>
+          <button
+            type="button"
+            className={activePanel === 'setup' ? 'active' : ''}
+            aria-current={activePanel === 'setup' ? 'step' : undefined}
+            onClick={() => setActivePanel('setup')}
+          >
+            <span className="menu-editor-tab-index">01</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Identity', 'Identità')}</strong><small>{tr('Name, venue and language', 'Nome, locale e lingua')}</small></span>
+            <UtensilsCrossed aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={activePanel === 'content' && mobileContentPane === 'sections' ? 'active' : ''}
+            aria-current={activePanel === 'content' && mobileContentPane === 'sections' ? 'step' : undefined}
+            onClick={() => { setActivePanel('content'); setMobileContentPane('sections'); }}
+          >
+            <span className="menu-editor-tab-index">02</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Categories', 'Categorie')}</strong><small>{tr('Build the browsing order', 'Crea l’ordine di navigazione')}</small></span>
+            <Layers3 aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={activePanel === 'content' && mobileContentPane === 'products' ? 'active' : ''}
+            aria-current={activePanel === 'content' && mobileContentPane === 'products' ? 'step' : undefined}
+            onClick={() => { setActivePanel('content'); setMobileContentPane('products'); }}
+          >
+            <span className="menu-editor-tab-index">03</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Items', 'Elementi')}</strong><small>{tr('Add names, prices and details', 'Aggiungi nomi, prezzi e dettagli')}</small></span>
+            <ListTree aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={activePanel === 'appearance' ? 'active' : ''}
+            aria-current={activePanel === 'appearance' ? 'step' : undefined}
+            onClick={() => setActivePanel('appearance')}
+          >
+            <span className="menu-editor-tab-index">04</span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Publish', 'Pubblica')}</strong><small>{tr('Style, URL and QR code', 'Stile, URL e codice QR')}</small></span>
+            <Palette aria-hidden="true" />
+          </button>
         </nav>
 
         {activePanel === 'setup' && <section className="admin-panel space-y-5">
@@ -550,11 +574,6 @@ export function MenuEditor({
         </section>}
 
         {activePanel === 'content' && <section className="menu-content-editor">
-          <div className="menu-content-mobile-switch" role="group" aria-label={tr("Menu content view", "Vista contenuti menu")}>
-            <button type="button" className={mobileContentPane === 'sections' ? 'active' : ''} onClick={() => setMobileContentPane('sections')}><Layers3 />{tr("Categories", "Categorie")}</button>
-            <button type="button" className={mobileContentPane === 'products' ? 'active' : ''} onClick={() => setMobileContentPane('products')}><ListTree />{tr("Items", "Elementi")}</button>
-          </div>
-
           <div className={`admin-panel menu-content-pane menu-content-pane--sections${mobileContentPane === 'sections' ? ' is-mobile-active' : ''}`}>
             <div className="menu-content-pane__header">
               <div className="menu-editor-section-title"><span>01</span><div><h3>{tr("Categories", "Categorie")}</h3><p>{tr("Build the structure visitors browse.", "Definisci la struttura che vedranno i visitatori.")}</p></div></div>

@@ -75,13 +75,19 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(lockedShop).toBeDisabled();
 
   const mobilePreview = page.locator('.admin-preview-device--mobile');
-  await expect(mobilePreview).toHaveCSS('min-height', '424px');
-  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('height', '400px');
+  await expect(mobilePreview).toHaveCSS('min-height', '420px');
+  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('height', '402px');
+
+  await page.getByRole('button', { name: 'Add link', exact: true }).click();
+  const contentList = page.locator('.admin-link-list');
+  await expect(contentList).toBeVisible();
+  await expect(contentList).toHaveCSS('width', '416px');
+  await expect(contentList.locator('.public-block-preview h3')).toHaveCSS('font-size', '13px');
 
   await page.getByRole('button', { name: 'Desktop preview' }).click();
   const desktopPreview = page.locator('.admin-preview-device--desktop');
-  await expect(desktopPreview).toHaveCSS('min-height', '292px');
-  await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '480px');
+  await expect(desktopPreview).toHaveCSS('min-height', '276px');
+  await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '450px');
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
@@ -132,14 +138,38 @@ test('fits the content preview inside a 720p laptop viewport', async ({ page }) 
 
   const preview = page.locator('.admin-preview-panel');
   const hardware = preview.locator('.admin-preview-device__hardware');
-  await expect(hardware).toHaveCSS('width', '162px');
-  await expect(hardware).toHaveCSS('height', '320px');
+  await expect(hardware).toHaveCSS('width', '214px');
+  await expect(hardware).toHaveCSS('height', '356px');
 
   const previewBounds = await preview.boundingBox();
   expect(previewBounds).not.toBeNull();
   expect(previewBounds!.y + previewBounds!.height).toBeLessThanOrEqual(720);
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
+});
+
+test('keeps the dense editors compact and organized by task', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openAuthenticatedAdmin(page);
+
+  await expect(page.getByRole('heading', { name: 'Choose the page role' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Build the identity' })).toBeVisible();
+  await expect(page.getByText('Advanced card style', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  const compactThemePreview = page.locator('.admin-theme-mockup--compact').first();
+  await expect(compactThemePreview).toHaveCSS('height', '112px');
+  await expect(page.locator('.admin-theme-live-preview .admin-preview-device__hardware')).toHaveCSS('height', '336px');
+
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.getByRole('button', { name: /^Menu/ }).click();
+  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
+  await expect(workflow.getByRole('button')).toHaveCount(4);
+  await expect(workflow.getByText('Identity', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Categories', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Items', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Publish', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Menu content view' })).toHaveCount(0);
 });
 
 test('keeps product labels shared with SaaS while localizing section descriptions', async ({ page }) => {
