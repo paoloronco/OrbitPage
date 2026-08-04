@@ -20,7 +20,7 @@ import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 
 const githubUrl = "https://github.com/paoloronco/OrbitPage";
 const dockerUrl = "https://hub.docker.com/r/paueron/orbitpage";
-const publicPageScreenshotUrl = "https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/screenshots/01-public-page.png";
+const publicPageScreenshotUrl = "https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/screenshots/orbitpage-public-page.png";
 
 const coreFeatures = [
   {

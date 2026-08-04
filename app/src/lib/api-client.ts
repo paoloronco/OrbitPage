@@ -1,6 +1,7 @@
 import { apiPath, getActiveBasePath, getConsentScope } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
+import { isHostedRuntime } from './runtime-mode';
 
 // --- Session-scoped token storage (AES-GCM via Web Crypto) ---
 //
@@ -12,65 +13,43 @@ import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surf
 const TOKEN_STORAGE_KEY = 'orbitpage-auth-token';
 const TOKEN_IV_PREFIX = 'orbitpage-auth-iv-';
 const DEVICE_SECRET_KEY = 'orbitpage-device-secret';
-let capturedSaasApiToken: string | null = null;
-let capturedSaasAppCheckToken: string | null = null;
 let capturedPageRevision: number | null = null;
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-export const isHostedRuntime = (): boolean =>
-  import.meta.env.VITE_ORBITPAGE_HOSTED_MODE === 'true' ||
-  import.meta.env.VITE_ORBITPAGE_HOSTED_MODE === '1';
+export { isHostedRuntime };
 
 export const getSaasApiBase = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  const value = getHostedSurfaceConfig()?.apiBase || new URLSearchParams(window.location.search).get('apiBase');
+  if (!isHostedRuntime() || typeof window === 'undefined') return null;
+  const value = getHostedSurfaceConfig()?.apiBase;
   if (!value) return null;
   const resolved = resolveSafeBrowserHttpUrl(value, window.location.href);
   if (!resolved) return null;
 
-  // The hosted build may only send Firebase credentials back to its own origin.
-  // This prevents a crafted apiBase query parameter from becoming a token sink.
-  if (isHostedRuntime() && resolved.origin !== window.location.origin) return null;
+  // The hosted build may only send credentials back to its own origin.
+  if (resolved.origin !== window.location.origin) return null;
   return resolved.toString().replace(/\/$/, '');
 };
 
-export const isSaasMode = (): boolean => isHostedRuntime() || Boolean(getSaasApiBase());
+export const isSaasMode = (): boolean => isHostedRuntime();
 
 export { isIntegratedHostedSurface };
 
 const getSaasPublicSlug = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  const value = getHostedSurfaceConfig()?.publicSlug || new URLSearchParams(window.location.search).get('publicSlug');
+  if (!isHostedRuntime() || typeof window === 'undefined') return null;
+  const value = getHostedSurfaceConfig()?.publicSlug;
   return value ? value.trim() : null;
 };
 
-const captureSaasCredentials = (): void => {
-  if (typeof window === 'undefined') return;
-  const values = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-  const apiToken = values.get('apiToken');
-  const appCheckToken = values.get('appCheckToken');
-  if (apiToken) {
-    if (capturedSaasApiToken && capturedSaasApiToken !== apiToken) capturedPageRevision = null;
-    capturedSaasApiToken = apiToken;
-  }
-  if (appCheckToken) capturedSaasAppCheckToken = appCheckToken;
-  if (apiToken || appCheckToken) {
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
-  }
-};
-
 const getSaasAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  captureSaasCredentials();
-  return getHostedSurfaceConfig()?.apiToken || capturedSaasApiToken;
+  if (!isHostedRuntime() || typeof window === 'undefined') return null;
+  return getHostedSurfaceConfig()?.apiToken || null;
 };
 
 const getSaasAppCheckToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  captureSaasCredentials();
-  return getHostedSurfaceConfig()?.appCheckToken || capturedSaasAppCheckToken;
+  if (!isHostedRuntime() || typeof window === 'undefined') return null;
+  return getHostedSurfaceConfig()?.appCheckToken || null;
 };
 
 const resolveApiUrl = (endpoint: string): string => {
@@ -84,6 +63,21 @@ const resolveApiUrl = (endpoint: string): string => {
     if (slug) url.searchParams.set('slug', slug);
   }
   return url.toString();
+};
+
+const resolveAuthenticatedApiUrl = (
+  endpoint: string,
+  headers: Record<string, string>,
+): string => {
+  const url = resolveApiUrl(endpoint);
+  const carriesCredentials = Boolean(headers.Authorization || headers['X-Firebase-AppCheck']);
+  if (!carriesCredentials || typeof window === 'undefined') return url;
+
+  const resolved = new URL(url, window.location.href);
+  if (resolved.origin !== window.location.origin) {
+    throw new Error('Authenticated API requests must use the current browser origin.');
+  }
+  return url;
 };
 
 /** Returns true when the Web Crypto subtle API is usable (secure context). */
@@ -268,8 +262,6 @@ const removeAuthToken = (): void => {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   localStorage.removeItem(DEVICE_SECRET_KEY);
-  capturedSaasApiToken = null;
-  capturedSaasAppCheckToken = null;
   capturedPageRevision = null;
   delete (window as any).__orbitpageTokenCache;
 };
@@ -427,9 +419,9 @@ export interface WorkspaceBootstrapResponse {
   menu?: import('./menu').MenuCatalog;
   consentConfig?: Record<string, any>;
   publicUrl?: string;
-  plan?: import('./saas-plan').SaasPlanDefinition;
-  usage?: import('./saas-plan').SaasWorkspaceUsage;
-  billing?: import('./saas-plan').SaasBillingContext;
+  plan?: import('./hosted-editor-contract').HostedEditorPlan;
+  usage?: import('./hosted-editor-contract').HostedEditorUsage;
+  billing?: import('./hosted-editor-contract').HostedEditorBilling;
 }
 
 // API request helper with auth
@@ -446,7 +438,7 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
   };
 
   // Prevent any caching of API responses and bust caches for GETs
-  let url = resolveApiUrl(endpoint);
+  let url = resolveAuthenticatedApiUrl(endpoint, authHeaders);
   if (method === 'GET') {
     const sep = url.includes('?') ? '&' : '?';
     url = `${url}${sep}_ts=${Date.now()}`;
@@ -656,7 +648,7 @@ export const backupApi = {
   download: async (sections?: readonly string[]): Promise<Blob> => {
     const authHeaders = await getAuthenticatedRequestHeaders();
     const query = sections?.length ? `?sections=${encodeURIComponent(sections.join(','))}` : '';
-    const response = await fetch(resolveApiUrl(`/admin/backup${query}`), {
+    const response = await fetch(resolveAuthenticatedApiUrl(`/admin/backup${query}`, authHeaders), {
       headers: authHeaders,
     });
 
@@ -929,7 +921,7 @@ export const linksApi = {
   export: async (): Promise<Blob> => {
     try {
       const authHeaders = await getAuthenticatedRequestHeaders();
-      const resp = await fetch(resolveApiUrl('/links/export'), {
+      const resp = await fetch(resolveAuthenticatedApiUrl('/links/export', authHeaders), {
         headers: authHeaders,
       });
       
@@ -1011,7 +1003,7 @@ export const uploadApi = {
     formData.append('file', file);
     if (slot) formData.append('slot', slot);
     const authHeaders = await getAuthenticatedRequestHeaders();
-    const response = await fetch(resolveApiUrl('/upload'), {
+    const response = await fetch(resolveAuthenticatedApiUrl('/upload', authHeaders), {
       method: 'POST',
       headers: authHeaders,
       body: formData,
@@ -1031,7 +1023,7 @@ export const uploadApi = {
     formData.append('file', file);
     formData.append('slot', slot);
     const authHeaders = await getAuthenticatedRequestHeaders();
-    const response = await fetch(resolveApiUrl('/upload/background'), {
+    const response = await fetch(resolveAuthenticatedApiUrl('/upload/background', authHeaders), {
       method: 'POST',
       headers: authHeaders,
       body: formData,
@@ -1105,7 +1097,7 @@ async function uploadVideoWithDirectFallback(
   onProgress?: (percentage: number) => void,
 ): Promise<{ filePath: string; fullUrl: string; fileName: string }> {
   const authHeaders = await getAuthenticatedRequestHeaders();
-  const reserveResponse = await fetch(resolveApiUrl('/upload/direct/reserve'), {
+  const reserveResponse = await fetch(resolveAuthenticatedApiUrl('/upload/direct/reserve', authHeaders), {
     method: 'POST',
     headers: { ...authHeaders, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -1126,7 +1118,7 @@ async function uploadVideoWithDirectFallback(
         reservation.headers || { 'Content-Type': file.type },
         onProgress,
       );
-      const finalizeResponse = await fetch(resolveApiUrl('/upload/direct/finalize'), {
+      const finalizeResponse = await fetch(resolveAuthenticatedApiUrl('/upload/direct/finalize', authHeaders), {
         method: 'POST',
         headers: { ...authHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ uploadToken: reservation.uploadToken, slot: reservation.slot }),
@@ -1136,7 +1128,7 @@ async function uploadVideoWithDirectFallback(
       onProgress?.(100);
       return result as { filePath: string; fullUrl: string; fileName: string };
     } catch (error) {
-      await fetch(resolveApiUrl('/upload/direct/abort'), {
+      await fetch(resolveAuthenticatedApiUrl('/upload/direct/abort', authHeaders), {
         method: 'POST',
         headers: { ...authHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({ uploadToken: reservation.uploadToken, slot: reservation.slot }),
@@ -1154,7 +1146,10 @@ async function uploadVideoWithDirectFallback(
   const formData = new FormData();
   formData.append('file', file);
   formData.append('slot', slot);
-  const response = await fetch(resolveApiUrl(purpose === 'background' ? '/upload/background' : '/upload/video'), {
+  const response = await fetch(resolveAuthenticatedApiUrl(
+    purpose === 'background' ? '/upload/background' : '/upload/video',
+    authHeaders,
+  ), {
     method: 'POST',
     headers: authHeaders,
     body: formData,

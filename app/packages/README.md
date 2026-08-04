@@ -4,7 +4,7 @@ This directory contains packages shared across OrbitPage application boundaries.
 
 ## `page-schema`
 
-`@orbitpage/page-schema` defines the canonical structures for page data, content blocks, menus, subpages, discovery settings, profiles, and themes. The application consumes it through the local dependency declared in `app/package.json`.
+`@orbitpage/page-schema` defines the canonical public content structures for blocks, menus, subpages, discovery settings, profiles, and themes. It intentionally excludes hosted tenant, owner, billing, provider and persistence metadata. The application consumes it through the local dependency declared in `app/package.json`.
 
 When changing the schema:
 

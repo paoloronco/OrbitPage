@@ -1,17 +1,18 @@
-# OrbitPage
+# OrbitPage - Open-source, self-hosted link-in-bio and public page builder
 
 <p align="center">
-  <img src="./app/public/brand/orbitpage-lockup.svg" alt="OrbitPage" width="420" />
+  <img src="./app/public/brand/orbitpage-lockup.svg" alt="OrbitPage open-source self-hosted public page builder" width="420" />
 </p>
 
 <p align="center">
-  Build and self-host one polished public destination for a person, brand, venue, event, or small business.
+  Create a link-in-bio, digital business card, portfolio, venue page, or small-business microsite - and self-host it with Docker.
 </p>
 
 <p align="center">
+  <a href="https://github.com/paoloronco/OrbitPage/actions/workflows/ci.yml"><img src="https://github.com/paoloronco/OrbitPage/actions/workflows/ci.yml/badge.svg?branch=main" alt="OrbitPage continuous integration status" /></a>
   <a href="https://github.com/paoloronco/OrbitPage/releases"><img src="https://img.shields.io/github/v/release/paoloronco/OrbitPage?label=version&amp;color=2563EB" alt="Latest OrbitPage version" /></a>
   <a href="./LICENSE.txt"><img src="https://img.shields.io/badge/license-MIT-111827" alt="MIT License" /></a>
-  <a href="https://hub.docker.com/r/paueron/orbitpage"><img src="https://img.shields.io/badge/Docker_Hub-paueron%2Forbitpage-2496ED?logo=docker&logoColor=white" alt="Docker Hub" /></a>
+  <a href="https://hub.docker.com/r/paueron/orbitpage"><img src="https://img.shields.io/docker/pulls/paueron/orbitpage?logo=docker&amp;label=Docker%20pulls" alt="OrbitPage Docker Hub pulls" /></a>
   <a href="https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage"><img src="https://img.shields.io/badge/GHCR-orbitpage-181717?logo=github&logoColor=white" alt="GitHub Container Registry" /></a>
 </p>
 
@@ -23,12 +24,24 @@
   <a href="./SECURITY.md">Security</a>
 </p>
 
-OrbitPage is an open-source public-page builder with a real editing dashboard, responsive public rendering, an Express API for the bundled application, SQLite persistence, and local file storage. No external database is required.
+OrbitPage is a free, MIT-licensed Linktree alternative for building link-in-bio pages, digital business cards, portfolios, creator profiles, venue menus, event pages, and small-business websites. It combines a visual editing dashboard with responsive public rendering, built-in SEO and analytics, an Express backend, SQLite, and local file storage. No external database is required.
 
 This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
 
+<p align="center">
+  <img src="./docs/screenshots/orbitpage-public-page.png" alt="Example self-hosted OrbitPage link-in-bio profile with portfolio, writing, and contact links" width="960" />
+</p>
+
+## Why OrbitPage
+
+- **Own the stack and the data.** Run one Docker container with SQLite and local storage, on your server or homelab.
+- **Edit visually.** Manage content, design, menus, subpages, privacy, analytics, and publishing from the responsive dashboard.
+- **Publish more than a list of links.** Combine profiles, media, contact details, events, maps, menus, calls to action, and focused subpages.
+- **Ship a discoverable public page.** Configure canonical URLs, Open Graph and Twitter cards, Schema.org data, sitemaps, robots directives, QR codes, and consent-aware analytics.
+
 ## Contents
 
+- [Why OrbitPage](#why-orbitpage)
 - [Quick start](#quick-start)
 - [What you can build](#what-you-can-build)
 - [Dashboard workspaces](#dashboard-workspaces)
@@ -43,7 +56,43 @@ This repository is the self-hosted edition. The optional managed service is avai
 
 ## Quick start
 
-Docker is the recommended production path.
+### Docker image (recommended)
+
+OrbitPage publishes a ready-to-run Linux amd64 image on Docker Hub and GitHub Container Registry. The commands below use Docker Hub:
+
+~~~bash
+sudo install -d -m 0700 /etc/orbitpage
+sudo install -d -m 0750 /var/lib/orbitpage
+printf 'NODE_ENV=production\nPORT=8080\nDATA_DIR=/app/data\nJWT_SECRET=%s\n' \
+  "$(openssl rand -hex 32)" | sudo tee /etc/orbitpage/orbitpage.env >/dev/null
+sudo chmod 0600 /etc/orbitpage/orbitpage.env
+
+sudo docker pull paueron/orbitpage:latest
+sudo docker run -d --name orbitpage \
+  --restart unless-stopped \
+  --env-file /etc/orbitpage/orbitpage.env \
+  -p 8080:8080 \
+  -v /var/lib/orbitpage:/app/data \
+  --security-opt no-new-privileges:true \
+  paueron/orbitpage:latest
+~~~
+
+Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>.
+
+The same image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. For production, replace <code>latest</code> with an immutable tag from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
+
+See the complete [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended) for image selection, Compose, verification, updates, backups, and rollback.
+
+### Docker Compose (local evaluation)
+
+1. Clone the repository.
+2. Start the local evaluation service:
+
+~~~bash
+docker compose up -d
+~~~
+
+The tracked Compose file contains a public placeholder secret and is only for local evaluation on a trusted machine. Do not expose it to a network. For production, use the [protected env-file Compose procedure](./docs/wiki/Deployment.md#docker-image-recommended); never commit a real secret or put it in a <code>docker run -e</code> argument.
 
 ### One-command Linux install
 
@@ -53,7 +102,7 @@ On a clean x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC:
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | sudo bash
 ~~~
 
-The installer configures Docker from its official repository, generates a private JWT secret, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command.
+The installer automates the same Docker deployment, generates a private JWT secret, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command.
 
 For a Proxmox VE 8+ host, use the dedicated host-to-LXC installer instead:
 
@@ -62,24 +111,6 @@ curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-p
 ~~~
 
 Do not run the Linux guest installer directly on a Proxmox host. See [Deployment](./docs/wiki/Deployment.md) for supported options, static networking, image pinning, backups, updates, and removal.
-
-### Docker Compose
-
-1. Clone the repository.
-2. Replace the sample <code>JWT_SECRET</code> in [docker-compose.yml](./docker-compose.yml).
-3. Start the service:
-
-~~~bash
-docker compose up -d
-~~~
-
-Open:
-
-- Public page: <http://localhost:8080>
-- Dashboard: <http://localhost:8080/dashboard/profile>
-- Health check: <http://localhost:8080/health>
-
-The same image is published as <code>paueron/orbitpage:latest</code> and <code>ghcr.io/paoloronco/orbitpage:latest</code>. Versioned tags are listed in [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases).
 
 ### Run from source
 
@@ -106,8 +137,8 @@ The production-style source run is available at <http://localhost:3001>.
 ### Public pages and content
 
 - A main public page plus focused subpages with independent slugs, titles, descriptions, and blocks.
-- Link, text, heading, separator, image, native video, social, contact, map, event, callout, calendar, booking, form, and consent-aware embed blocks.
-- Venue menus with locale, sections, one-level subsections, products, variants, images, prices, scheduling, and availability.
+- Link, text, heading, separator, image, native video, social, contact, map, event, callout, and consent-aware embed blocks, with presets for media, scheduling, and forms.
+- Venue menus with locale, sections, one-level subsections, products, variants, images, prices, and availability.
 - Per-block visibility, ordering, scheduling, icons, cover media, calls to action, and layout controls.
 - Responsive public rendering for mobile, laptop, and desktop layouts.
 
@@ -226,17 +257,17 @@ uploads/
 
 Persist <code>/app/data</code> in Docker. Back up the database and uploads together before upgrades or restores. Never commit a database, database backup or sidecar, uploads, logs, environment file, or real user content.
 
-The dashboard can create complete or selective JSON exports. Keep occasional infrastructure-level backups as well; a selective export does not replace a consistent copy of the complete data directory.
+The dashboard can create complete or selective JSON exports. A selective export does not replace a consistent infrastructure backup. Follow the [verified backup and restore runbook](./docs/wiki/Deployment.md#create-and-verify-an-infrastructure-backup), copy recovery archives off-host, and test a restore periodically.
 
 ## Production checklist
 
-1. Use a stable, long, random <code>JWT_SECRET</code>.
+1. Keep a stable, long, random <code>JWT_SECRET</code> in a protected env file or secret store.
 2. Persist <code>DATA_DIR</code> or <code>/app/data</code>.
 3. Put OrbitPage behind trusted HTTPS.
 4. Set <code>PUBLIC_SITE_URL</code> to the final public origin.
 5. Enable TOTP for privileged users under **Dashboard > Account**.
-6. Back up SQLite and uploads before upgrades.
-7. Verify <code>/health</code> after deployment.
+6. Create a verified off-host backup and complete a restore drill before relying on it.
+7. Verify <code>/health</code> and the public, dashboard, login, edit, and upload paths after deployment.
 8. Set <code>SEO_INDEXING=false</code> on staging and private instances.
 
 Read [Deployment](./docs/wiki/Deployment.md) before configuring a reverse proxy, base path, cloud platform, update, or rollback.
@@ -277,18 +308,20 @@ Start from the task-oriented [documentation index](./docs/README.md).
 | Install or evaluate | [Getting started](./docs/wiki/Getting-started.md) |
 | Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
 | Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
-| Use the editor | [Dashboard guide](./docs/user-guide/dashboard.md) |
+| Navigate the editor | [Dashboard guide](./docs/user-guide/dashboard.md) |
+| Build content, menus, subpages, and themes | [Content and design](./docs/user-guide/content-and-design.md) |
+| Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/user-guide/backups-and-demo-mode.md) |
 | Configure AI safely | [AI assistant](./docs/user-guide/ai-assistant.md) |
 | Configure analytics and consent | [Analytics and privacy](./docs/user-guide/analytics-and-privacy.md) |
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 
-The self-hosted Express API is the internal application boundary used by the bundled dashboard. The managed, versioned Automation REST API is a separate service; [API boundaries](./docs/API.md) explains the credential and support distinction.
+The self-hosted Express API is an internal boundary used by the bundled dashboard, not a stable external SDK. Read the [self-hosted API boundary](./docs/API.md). The separate [OrbitPage community node for n8n](https://github.com/paoloronco/n8n-nodes-orbitpage) connects to the managed Automation API; it does not expose the bundled self-hosted API as a public contract.
 
 ## Security and contributing
 
 Report suspected vulnerabilities privately through a [GitHub Security Advisory](https://github.com/paoloronco/OrbitPage/security/advisories/new) or the contact in [SECURITY.md](./SECURITY.md). Do not open a public issue for an unpatched vulnerability.
 
-Issues and focused pull requests are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, checks, compatibility expectations, and the contribution workflow.
+Issues and focused pull requests are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, checks, compatibility expectations, and the contribution workflow. Participation follows the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 OrbitPage's open-source edition is available under the [MIT License](./LICENSE.txt).

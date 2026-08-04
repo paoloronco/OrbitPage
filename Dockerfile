@@ -3,8 +3,11 @@ FROM node:22-alpine AS builder
 
 LABEL org.opencontainers.image.version="4.19.9"
 LABEL org.opencontainers.image.title="OrbitPage"
-LABEL org.opencontainers.image.description="Self-hosted public page manager"
+LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
+LABEL org.opencontainers.image.url="https://orbitpage.com/en-US/open-source"
+LABEL org.opencontainers.image.documentation="https://github.com/paoloronco/OrbitPage/blob/main/docs/README.md"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # Tool necessari per dipendenze native (es. sqlite3)
 RUN apk add --no-cache python3 make g++
@@ -42,8 +45,11 @@ FROM node:22-alpine
 
 LABEL org.opencontainers.image.version="4.19.9"
 LABEL org.opencontainers.image.title="OrbitPage"
-LABEL org.opencontainers.image.description="Self-hosted public page manager"
+LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
+LABEL org.opencontainers.image.url="https://orbitpage.com/en-US/open-source"
+LABEL org.opencontainers.image.documentation="https://github.com/paoloronco/OrbitPage/blob/main/docs/README.md"
+LABEL org.opencontainers.image.licenses="MIT"
 
 # sqlite runtime
 RUN apk add --no-cache sqlite

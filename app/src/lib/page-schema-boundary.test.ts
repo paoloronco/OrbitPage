@@ -1,63 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_ORBITPAGE_CONSENT_CONFIG,
-  DEFAULT_ORBITPAGE_MENU,
   DEFAULT_ORBITPAGE_PROFILE,
   DEFAULT_ORBITPAGE_THEME,
-  ORBITPAGE_PAGE_SCHEMA_VERSION,
   ORBITPAGE_CARD_PRESETS,
   ORBITPAGE_THEME_PRESETS,
-  OrbitPageDocumentJsonSchema,
   applyOrbitPageProfilePatch,
-  normalizeStoredOrbitPageDocument,
   normalizeOrbitPageSocialHref,
   parseOrbitPageBlockStylePatch,
   parseOrbitPageBlocks,
-  parseOrbitPageDocument,
   parseOrbitPageTheme,
   isOrbitPageThemePresetConfiguration,
 } from '@orbitpage/page-schema';
 import { themePresets } from './theme-presets';
 import { cardThemePresets } from './card-theme-presets';
 
-const timestamp = '2026-07-29T12:00:00.000Z';
-
-function pageDocument() {
-  return {
-    schemaVersion: ORBITPAGE_PAGE_SCHEMA_VERSION,
-    pageId: 'page-1',
-    tenantId: 'tenant-1',
-    ownerUid: 'owner-1',
-    profile: DEFAULT_ORBITPAGE_PROFILE,
-    links: parseOrbitPageBlocks([{
-      id: 'website',
-      type: 'link',
-      title: 'Website',
-      url: 'https://example.com',
-    }]),
-    theme: DEFAULT_ORBITPAGE_THEME,
-    menu: DEFAULT_ORBITPAGE_MENU,
-    consentConfig: DEFAULT_ORBITPAGE_CONSENT_CONFIG,
-    textFiles: [],
-    subpages: [],
-    revision: 4,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-}
-
 describe('canonical page schema boundary', () => {
-  it('accepts and serializes a current canonical document', () => {
-    const parsed = parseOrbitPageDocument(pageDocument());
-
-    expect(parsed.schemaVersion).toBe(1);
-    expect(JSON.parse(JSON.stringify(parsed))).toEqual(parsed);
-    expect(OrbitPageDocumentJsonSchema).toMatchObject({
-      type: 'object',
-      additionalProperties: false,
-    });
-  });
-
   it('rejects arbitrary agent fields at profile, theme, block and patch boundaries', () => {
     expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       bio: 'Valid update',
@@ -172,48 +129,6 @@ describe('canonical page schema boundary', () => {
       .toBe('https://www.instagram.com/invalid/');
     expect(normalizeOrbitPageSocialHref('email', repeatedEmailSegments)).toBeNull();
     expect(performance.now() - startedAt).toBeLessThan(250);
-  });
-
-  it('migrates legacy documents by dropping unknown fields and canonicalizing aliases', () => {
-    const legacy = {
-      ...pageDocument(),
-      schemaVersion: undefined,
-      profile: {
-        name: 'Legacy',
-        showAvatar: false,
-        unknownProfileField: 'drop-me',
-        appearance: {
-          avatarShape: 'circle',
-          avatarSize: 20,
-          cardBorderEnabled: true,
-          unknownAppearanceField: 'drop-me',
-        },
-      },
-      links: [{
-        id: 42,
-        title: 'Legacy link',
-        icon_type: 'emoji',
-        unknownBlockField: 'drop-me',
-      }],
-      theme: {
-        primaryColor: '#123456',
-        unknownThemeField: 'drop-me',
-      },
-      unknownTopLevelField: 'drop-me',
-    };
-
-    const migrated = normalizeStoredOrbitPageDocument(legacy);
-
-    expect(migrated.profile).toMatchObject({ name: 'Legacy', show_avatar: 0 });
-    expect(migrated.profile.appearance).toEqual({
-      avatarShape: 'round',
-      cardBorderEnabled: true,
-    });
-    expect(migrated.links[0]).toMatchObject({ id: '42', iconType: 'emoji', position: 0 });
-    expect(migrated.theme.primary).toBe('#123456');
-    expect(migrated).not.toHaveProperty('unknownTopLevelField');
-    expect(migrated.profile).not.toHaveProperty('unknownProfileField');
-    expect(migrated.links[0]).not.toHaveProperty('unknownBlockField');
   });
 
   it('canonicalizes the legacy circle avatar shape at the profile patch boundary', () => {

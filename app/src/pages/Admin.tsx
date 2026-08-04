@@ -14,15 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { Permission } from "@/lib/permissions";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
+import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
 import { isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
 import { createDefaultMenu, normalizeMenuCatalog, type MenuCatalog } from "@/lib/menu";
 import {
-  ADMIN_SECTION_CHANGED_MESSAGE,
-  ADMIN_SECTION_NAVIGATE_MESSAGE,
   adminDashboardPath,
   adminTabFromLocation,
-  isAdminSectionMessage,
+  isAdminTab,
   type AdminTab,
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
@@ -72,7 +70,7 @@ const Admin = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const integratedHostedSurface = isIntegratedHostedSurface();
-  const hostedSurface = typeof window !== "undefined" && isSaasMode() && (window.self !== window.top || integratedHostedSurface);
+  const hostedSurface = integratedHostedSurface;
   const locationTab = adminTabFromLocation(location.pathname, location.search);
   const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -98,9 +96,9 @@ const Admin = () => {
 
   const [theme, setTheme] = useState<ThemeConfig>(defaultTheme);
   const [menu, setMenu] = useState<MenuCatalog>(() => createDefaultMenu());
-  const [saasPlan, setSaasPlan] = useState<SaasPlanDefinition | null>(null);
-  const [saasUsage, setSaasUsage] = useState<SaasWorkspaceUsage | null>(null);
-  const [saasBilling, setSaasBilling] = useState<SaasBillingContext | null>(null);
+  const [saasPlan, setSaasPlan] = useState<HostedEditorPlan | null>(null);
+  const [saasUsage, setSaasUsage] = useState<HostedEditorUsage | null>(null);
+  const [saasBilling, setSaasBilling] = useState<HostedEditorBilling | null>(null);
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
   const hostedBootstrapRef = useRef<Promise<WorkspaceBootstrapResponse> | null>(null);
 
@@ -114,37 +112,18 @@ const Admin = () => {
 
   useEffect(() => {
     if (!hostedSurface) return;
-    if (integratedHostedSurface) {
-      const receiveNavigation = (event: Event) => {
-        const detail = (event as CustomEvent<{ section?: unknown }>).detail;
-        if (isAdminSectionMessage({ type: ADMIN_SECTION_NAVIGATE_MESSAGE, section: detail?.section }, ADMIN_SECTION_NAVIGATE_MESSAGE)) {
-          setHostedTab(detail.section as AdminTab);
-        }
-      };
-      window.addEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
-      return () => window.removeEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
-    }
-    const receiveNavigation = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin || event.source !== window.parent) return;
-      if (isAdminSectionMessage(event.data, ADMIN_SECTION_NAVIGATE_MESSAGE)) {
-        setHostedTab(event.data.section);
-      }
+    const receiveNavigation = (event: Event) => {
+      const section = (event as CustomEvent<{ section?: unknown }>).detail?.section;
+      if (isAdminTab(section)) setHostedTab(section);
     };
-    window.addEventListener("message", receiveNavigation);
-    return () => window.removeEventListener("message", receiveNavigation);
-  }, [hostedSurface, integratedHostedSurface]);
+    window.addEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
+    return () => window.removeEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
+  }, [hostedSurface]);
 
   const handleTabChange = (tab: AdminTab) => {
     if (hostedSurface) {
       setHostedTab(tab);
-      if (integratedHostedSurface) {
-        window.dispatchEvent(new CustomEvent(HOSTED_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
-        return;
-      }
-      window.parent.postMessage(
-        { type: ADMIN_SECTION_CHANGED_MESSAGE, section: tab },
-        window.location.origin,
-      );
+      window.dispatchEvent(new CustomEvent(HOSTED_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
       return;
     }
     navigate(adminDashboardPath(tab));
@@ -161,7 +140,7 @@ const Admin = () => {
 
       // The SaaS editor is an authenticated dashboard surface, never a second
       // login destination. Standalone visits return to the Firebase dashboard.
-      if (isHostedRuntime() && window.self === window.top && !integratedHostedSurface) {
+      if (isHostedRuntime() && !integratedHostedSurface) {
         window.location.replace('/dashboard/profile');
         return;
       }

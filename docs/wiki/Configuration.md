@@ -37,13 +37,117 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 | `SITE_URL` | Backward-compatible alias for `PUBLIC_SITE_URL`. Prefer `PUBLIC_SITE_URL` in new deployments. |
 | `PUBLIC_SITE_NAME` | Site name used in generated metadata. |
 | `SEO_INDEXING` | `false`, `0`, `no`, or `off` disables indexing. |
-| `RESET_TOKEN` | Enables token-protected reset endpoints. Use at least 32 characters. |
+| `RESET_TOKEN` | Optional emergency recovery secret. Leave unset normally; when configured it protects both account recovery and a separate destructive full-reset endpoint. Use a random value of at least 32 characters. |
 | `MEDIA_CLEANUP_ENABLED` | Set to `false` to disable the automatic unused-upload scan. Defaults to enabled outside tests and demo mode. |
 | `MEDIA_CLEANUP_GRACE_HOURS` | Minimum age of an unreferenced upload before deletion. Defaults to `24` and accepts values from 1 to 720 hours. |
 | `TZ` | Fallback IANA timezone for scheduled content that does not define one. Defaults to `UTC`. |
 | `OPENAI_API_KEY` | Optional environment-based OpenAI key for OrbitPage AI. A key saved in the dashboard takes precedence. |
 | `OPENAI_PAGE_AGENT_MODEL` | Optional default model. The dashboard defaults to `gpt-5.6-terra` and only accepts its supported model list. |
 | `ORBITPAGE_SECRET_ENCRYPTION_KEY` | Optional separate stable secret (32+ characters) for encrypting a dashboard-saved OpenAI key. Falls back to `JWT_SECRET`. |
+
+## RESET_TOKEN lifecycle
+
+`RESET_TOKEN` is an emergency operator secret, not a user password and not a replacement for `JWT_SECRET`. Leave it unset until account recovery is needed. The same secret is accepted by two different endpoints:
+
+- `/api/auth/reset-via-token` changes the fixed `admin` password, removes its TOTP configuration and recovery codes, and revokes that account's existing sessions;
+- `/api/auth/force-reset` deletes application data and returns the instance to first-run state.
+
+Use only `reset-via-token` for an administrator lockout. The destructive endpoint is not a password-recovery shortcut. Create a verified backup before enabling the token. The complete request and verification procedure is in [Security](./Security.md#recover-the-admin-account-safely).
+
+### Configure or rotate it on an installer-managed host
+
+The installer stores runtime secrets in `/etc/orbitpage/orbitpage.env`. The following script replaces any prior `RESET_TOKEN` with a new 256-bit value without printing it or placing it in process arguments:
+
+```bash
+sudo bash <<'EOF'
+set -euo pipefail
+env_file=/etc/orbitpage/orbitpage.env
+test -f "$env_file"
+umask 077
+tmp="$(mktemp "${env_file}.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+line=''
+
+while IFS= read -r line || test -n "$line"; do
+  case "$line" in
+    RESET_TOKEN=*) continue ;;
+  esac
+  printf '%s\n' "$line" >> "$tmp"
+done < "$env_file"
+
+printf 'RESET_TOKEN=%s\n' "$(openssl rand -hex 32)" >> "$tmp"
+chmod 0600 "$tmp"
+chown root:root "$tmp"
+mv "$tmp" "$env_file"
+trap - EXIT
+EOF
+```
+
+Recreate the container so it receives the changed environment, then wait for health:
+
+```bash
+sudo docker compose \
+  --project-name orbitpage \
+  --project-directory /opt/orbitpage \
+  --file /opt/orbitpage/compose.yaml \
+  up -d --force-recreate
+sudo orbitpage start
+```
+
+`orbitpage restart` and `docker restart` reuse the old container environment; they do not load an edited env file. A recreation or platform redeploy is required.
+
+### Other deployment models
+
+- **Manual Docker or Compose:** keep `RESET_TOKEN` in the same root-owned `0600` env file as the other runtime settings, recreate the container with `--env-file` or Compose `env_file`, and never pass the value with `-e` on the command line.
+- **Managed container platform:** create a secret in the platform secret store, map it to `RESET_TOKEN`, and deploy a new revision with exactly one OrbitPage replica.
+- **Source/service deployment:** use the service manager's credential or environment-file support. Restrict the file to the service account and restart the service through that manager.
+
+Users with root or Docker-daemon access can inspect container environment variables. Restrict that access even when a protected env file or secret store is used.
+
+### Remove it after recovery
+
+Unless an incident policy requires a continuously available recovery secret, remove it immediately after the new password and TOTP enrollment are verified:
+
+```bash
+sudo bash <<'EOF'
+set -euo pipefail
+env_file=/etc/orbitpage/orbitpage.env
+test -f "$env_file"
+umask 077
+tmp="$(mktemp "${env_file}.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+line=''
+
+while IFS= read -r line || test -n "$line"; do
+  case "$line" in
+    RESET_TOKEN=*) continue ;;
+  esac
+  printf '%s\n' "$line" >> "$tmp"
+done < "$env_file"
+
+chmod 0600 "$tmp"
+chown root:root "$tmp"
+mv "$tmp" "$env_file"
+trap - EXIT
+EOF
+
+sudo docker compose \
+  --project-name orbitpage \
+  --project-directory /opt/orbitpage \
+  --file /opt/orbitpage/compose.yaml \
+  up -d --force-recreate
+sudo orbitpage start
+```
+
+Verify that the new container no longer has the variable without displaying any environment values:
+
+```bash
+CONTAINER="$(sudo awk -F= '$1 == "ORBITPAGE_CONTAINER_NAME" { print substr($0, index($0, "=") + 1) }' /opt/orbitpage/.env)"
+test -n "$CONTAINER"
+sudo docker exec "$CONTAINER" node -e 'process.exit(process.env.RESET_TOKEN ? 1 : 0)'
+```
+
+Exit status `0` confirms removal. To keep recovery enabled, rotate it with the configuration procedure instead, recreate the container, and invalidate the old secret in the external secret manager or password vault.
 
 ## OrbitPage AI
 
@@ -65,6 +169,8 @@ OrbitPage AI uses the OpenAI Responses API with storage disabled and strict stru
 | `VITE_DEFAULT_PRIVACY_POLICY_URL` | Default public Privacy Policy URL. |
 
 ## Example Production Environment
+
+Store these values in a protected environment file or the platform secret store. The `JWT_SECRET` line below is a placeholder, not a value to pass on a command line or commit.
 
 ```bash
 NODE_ENV=production

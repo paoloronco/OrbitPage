@@ -1041,17 +1041,19 @@ describe('API Endpoints', () => {
     const structuredData = buildStructuredData({
       profile: { name: 'OrbitPage', social_links: {} },
       links: [],
-      origin: 'https://orbitpage-demo.paoloronco.it',
-      canonicalUrl: 'https://orbitpage-demo.paoloronco.it/about',
+      origin: 'https://orbitpage-demo.example',
+      canonicalUrl: 'https://orbitpage-demo.example/about',
       pageKind: 'about',
     });
 
     const tags = renderSeoTags({
       title: 'OrbitPage | Self-hosted Public Page Manager',
       description: 'OrbitPage is an open-source, self-hosted public page manager for people, brands, venues, events, and teams that want one place for links, content, analytics, privacy controls, and backups.',
-      canonicalUrl: 'https://orbitpage-demo.paoloronco.it/about',
-      imageUrl: 'https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/screenshots/01-public-page.png',
+      canonicalUrl: 'https://orbitpage-demo.example/about',
+      imageUrl: 'https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/screenshots/orbitpage-public-page.png',
       imageAlt: 'Screenshot of an OrbitPage public page',
+      imageWidth: 1280,
+      imageHeight: 720,
       keywords: 'self-hosted public page, open-source landing page, Docker link page, privacy-friendly page manager, OrbitPage',
       robots: 'index, follow, max-image-preview:large',
       structuredData,
@@ -1059,21 +1061,38 @@ describe('API Endpoints', () => {
     });
 
     expect(tags).toContain('<title>OrbitPage | Self-hosted Public Page Manager</title>');
-    expect(tags).toContain('<link rel="canonical" href="https://orbitpage-demo.paoloronco.it/about"');
+    expect(tags).toContain('<link rel="canonical" href="https://orbitpage-demo.example/about"');
     expect(tags).toContain('<meta name="keywords" content="self-hosted public page');
     expect(tags).toContain('<meta property="og:image:alt" content="Screenshot of an OrbitPage public page"');
-    expect(tags).toContain('<meta property="og:image:width" content="1919"');
+    expect(tags).toContain('<meta property="og:image:width" content="1280"');
+    expect(tags).toContain('<meta property="og:image:height" content="720"');
     expect(tags).toContain('<meta name="twitter:image:alt" content="Screenshot of an OrbitPage public page"');
     expect(tags).toContain('"@type":"SoftwareApplication"');
     expect(tags).toContain('"codeRepository":"https://github.com/paoloronco/OrbitPage"');
+  });
+
+  it('omits Open Graph dimensions when the image size is unknown', () => {
+    const tags = renderSeoTags({
+      title: 'Public profile',
+      description: 'A public OrbitPage profile.',
+      canonicalUrl: 'https://links.example.test/profile',
+      imageUrl: 'https://cdn.example.test/user-upload.jpg',
+      imageAlt: 'Profile cover',
+      robots: 'index, follow',
+      basePath: '',
+    });
+
+    expect(tags).toContain('<meta property="og:image" content="https://cdn.example.test/user-upload.jpg"');
+    expect(tags).not.toContain('og:image:width');
+    expect(tags).not.toContain('og:image:height');
   });
 
   it('builds about-page structured data with product and breadcrumb entities', () => {
     const data = buildStructuredData({
       profile: { name: 'OrbitPage', social_links: {} },
       links: [],
-      origin: 'https://orbitpage-demo.paoloronco.it',
-      canonicalUrl: 'https://orbitpage-demo.paoloronco.it/about',
+      origin: 'https://orbitpage-demo.example',
+      canonicalUrl: 'https://orbitpage-demo.example/about',
       pageKind: 'about',
     });
 

@@ -1,82 +1,21 @@
-# OrbitPage AI Agent Instructions
+# OrbitPage Copilot instructions
 
-## Project Overview
-OrbitPage is a self-hosted public page manager built with React, Express, and SQLite. The application lets people, brands, venues, events, and teams publish one customizable page for links, content, social destinations, and public information.
+Read and follow [`AGENTS.md`](../AGENTS.md) before changing this repository. It
+is the canonical source for repository boundaries, engineering rules, required
+checks, documentation ownership, data safety, and release policy. Do not copy
+or reinterpret those rules here.
 
-## Architecture
+Useful starting points:
 
-### Frontend (`app/src`)
-- React + Vite application using TypeScript
-- Tailwind CSS for styling with a custom design system (`app/src/index.css`)
-- Component structure:
-  - `app/src/components` - UI components including admin and public views
-  - `app/src/hooks` - Custom React hooks
-  - `app/src/lib` - Core utilities and API client
-  - `app/src/pages` - Main route components (Admin, Index, NotFound)
-  - `app/packages/page-schema` - Shared page and block schemas
+- [`app/README.md`](../app/README.md) for the application layout.
+- [`app/packages/README.md`](../app/packages/README.md) for the shared page
+  schema and block contracts.
+- [`app/server/README.md`](../app/server/README.md) for the Express boundary.
+- [`docs/README.md`](../docs/README.md) for user and operator documentation.
+- [`CONTRIBUTING.md`](../CONTRIBUTING.md) for the contribution workflow and
+  verification commands.
 
-### Backend (`app/server`)
-- Express.js server with SQLite database
-- Key modules:
-  - `app/server/server.js` - Main Express application
-  - `app/server/auth.js` - Authentication logic (JWT + bcrypt)
-  - `app/server/database.js` - SQLite operations
-  - `app/server/uploads/` - User uploaded assets
-
-## Critical Workflows
-
-### Development
-1. Start development:
-   ```bash
-   cd app
-   npm ci
-   npm run install:server
-   # Terminal 1 - Frontend
-   npm run dev
-   # Terminal 2 - Backend
-   npm run server:dev
-   ```
-
-2. Build for production:
-   ```bash
-   npm run build
-   npm run install:server
-   npm run start
-   ```
-
-### Authentication
-- JWT tokens with 12-hour expiry
-- Secure contexts keep the AES-GCM-encrypted token in session-scoped `sessionStorage`; non-secure contexts keep it in memory only
-- First setup creates the initial admin password. The initial username is `admin`.
-
-## Project Conventions
-
-### State Management
-- API calls centralized in `app/src/lib/api-client.ts`
-- Authentication state handled via `auth.ts`
-- Theme customization through CSS variables in `index.css`
-
-### Security Patterns
-- Rate limiting on authentication endpoints
-- Parameterized SQLite queries for DB operations
-- Bearer-token handling through the centralized API client
-- Password strength validation in `auth.js`
-
-### Integration Points
-1. Theme System
-   - Theme variables in `:root` and `.dark` in `index.css`
-   - Components consume CSS variables for consistent styling
-
-2. File Uploads
-   - Handled in `server.js` via multer
-   - Stored in `DATA_DIR/uploads/` (`app/server/uploads/` is only the local fallback)
-
-## Common Tasks
-1. Adding new link types:
-   - Extend `LinkCard.tsx` component
-   - Update schema in `server.js`
-   - Add validation in frontend forms
-
-2. Theme customization:
-   - Modify CSS variables in `index.css`
-   - Update `ThemeCustomizer.tsx` for new options
+For a new or changed block, update the shared `app/packages/page-schema`
+contract first, then the editor, public renderer, server validation, tests, and
+user documentation. Never introduce a second schema inside a component or the
+main server file.

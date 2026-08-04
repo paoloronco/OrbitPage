@@ -1,4 +1,5 @@
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
+import { isHostedRuntime } from './runtime-mode';
 
 declare global {
   interface Window {
@@ -79,7 +80,11 @@ export const withTenantBasePath = (path = '/'): string => {
 export const apiPath = (path = ''): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   if (typeof window !== 'undefined') {
-    const apiBase = window.__ORBITPAGE_API_BASE__ || new URLSearchParams(window.location.search).get('apiBase');
+    const hosted = isHostedRuntime();
+    const staticSnapshot = Boolean(window.__ORBITPAGE_STATIC_SNAPSHOT__);
+    const apiBase = hosted || staticSnapshot
+      ? window.__ORBITPAGE_API_BASE__
+      : null;
     if (apiBase) {
       const url = resolveSafeBrowserHttpUrl(apiBase, window.location.href);
       if (url) return `${url.toString().replace(/\/$/, '')}${normalizedPath}`;

@@ -109,6 +109,7 @@ describe('AdminView demo mode', () => {
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
         onThemeChange={vi.fn()}
         onLogout={vi.fn()}
       />
@@ -155,9 +156,10 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasUsage={{ blocks: 0, storageBytes: 0 }}
+        saasUsage={{ blocks: 0 }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
         onThemeChange={vi.fn()}
         onLogout={vi.fn()}
       />
@@ -187,9 +189,10 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'demo', role: 'admin', permissions: [...allPermissions], readOnly: true }}
-        saasUsage={{ blocks: 0, storageBytes: 0 }}
+        saasUsage={{ blocks: 0 }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
         onThemeChange={vi.fn()}
         onLogout={vi.fn()}
       />
@@ -209,12 +212,8 @@ describe('AdminView demo mode', () => {
     vi.stubGlobal('__APP_VERSION__', '4.7.0');
     const basePlan = {
       name: 'Plan',
-      priceMonthlyEur: 0,
-      description: '',
       entitlements: {
-        personalizedUrl: false,
         maxBlocks: 10,
-        storageBytes: 1,
         maxUploadBytes: 1,
         maxVideoUploadBytes: 0,
         themes: 'essential',
@@ -222,14 +221,9 @@ describe('AdminView demo mode', () => {
         scheduling: false,
         seo: 'none',
         pages: 1,
-        collaborators: false,
         videoUploads: false,
         nativeMenu: false,
         maxMenuItems: 0,
-        maxMenuCatalogs: 0,
-        menuLanguages: 0,
-        menuScheduling: false,
-        available: true,
       },
     };
 
@@ -239,9 +233,10 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasPlan={{ ...basePlan, id: 'starter', entitlements: { ...basePlan.entitlements, badgeRequired: true } } as any}
+        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: true } } as any}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
         onThemeChange={vi.fn()}
         onLogout={vi.fn()}
       />
@@ -256,9 +251,10 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasPlan={{ ...basePlan, id: 'pro', entitlements: { ...basePlan.entitlements, badgeRequired: false } } as any}
+        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: false } } as any}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
         onThemeChange={vi.fn()}
         onLogout={vi.fn()}
       />
@@ -281,9 +277,10 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasUsage={{ blocks: 0, storageBytes: 0 }}
+        saasUsage={{ blocks: 0 }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
         onThemeChange={vi.fn()}
         onLogout={vi.fn()}
         requestedTab="content"

@@ -67,7 +67,7 @@ import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import type { SaasBillingContext, SaasPlanDefinition, SaasWorkspaceUsage } from "@/lib/saas-plan";
+import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
 import { canonicalAdminTab, type AdminTab } from "@/lib/admin-navigation";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
@@ -126,9 +126,9 @@ interface AdminViewProps {
   theme: ThemeConfig;
   menu?: MenuCatalog;
   currentUser: CurrentUser | null;
-  saasPlan?: SaasPlanDefinition | null;
-  saasUsage?: SaasWorkspaceUsage | null;
-  saasBilling?: SaasBillingContext | null;
+  saasPlan?: HostedEditorPlan | null;
+  saasUsage?: HostedEditorUsage | null;
+  saasBilling?: HostedEditorBilling | null;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
   onSubpagesUpdate?: (pages: EditorSubpage[]) => Promise<void>;
@@ -263,8 +263,7 @@ export const AdminView = ({
   const isHostedAdmin = isSaasMode() || Boolean(
     saasPlan ||
     saasUsage ||
-    saasBilling ||
-    (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("apiBase"))
+    saasBilling
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;

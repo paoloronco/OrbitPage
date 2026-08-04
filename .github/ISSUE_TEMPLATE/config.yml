@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/paoloronco/OrbitPage/security/advisories/new
+    about: Report an unpatched vulnerability privately.
+  - name: Documentation
+    url: https://github.com/paoloronco/OrbitPage/blob/main/docs/README.md
+    about: Check installation, configuration, dashboard, and troubleshooting guides first.

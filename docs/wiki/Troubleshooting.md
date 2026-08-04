@@ -8,11 +8,15 @@ Check whether `JWT_SECRET` is set. Docker production startup requires it.
 docker logs orbitpage
 ```
 
-Fix:
+For an installer-managed deployment, confirm that the protected environment file exists and repair the installation without replacing its secret:
 
 ```bash
-docker run -e JWT_SECRET="$(openssl rand -hex 32)" ...
+sudo test -s /etc/orbitpage/orbitpage.env
+test "$(sudo stat -c '%a' /etc/orbitpage/orbitpage.env)" = '600'
+sudo orbitpage install
 ```
+
+For a manual deployment, create the root-owned `0600` environment file described in [Deployment](./Deployment.md#docker-image-recommended), then recreate the container with `--env-file`. Do not put `JWT_SECRET` in a `docker run -e` argument, tracked Compose file, or shell history.
 
 ## Data Disappeared After Updating
 
@@ -30,11 +34,9 @@ For Compose, keep the `./orbitpage-data:/app/data` mount or migrate the old data
 
 If `JWT_SECRET` changes between restarts, existing JWTs become invalid. This is expected.
 
-Fix:
+If the change was accidental, restore the previous `JWT_SECRET` from the protected configuration backup, recreate the container, and log in again. Do not rotate this secret merely to recover a login: it also protects encrypted TOTP and dashboard-saved provider secrets.
 
-- set a stable `JWT_SECRET`
-- restart the container
-- log in again
+A changed environment file requires container recreation; `docker restart` does not reload it. See [Configuration](./Configuration.md) and the [restore runbook](./Deployment.md#restore-an-infrastructure-backup).
 
 ## Public Page Works but Admin/API Fails Behind a Proxy
 
@@ -88,11 +90,11 @@ docker pull paueron/orbitpage:latest
 docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
-Versioned examples:
+Immutable version examples:
 
 ```bash
-docker pull paueron/orbitpage:4.3
-docker pull ghcr.io/paoloronco/orbitpage:4.3
+docker pull paueron/orbitpage:v4.19.9
+docker pull ghcr.io/paoloronco/orbitpage:v4.19.9
 ```
 
 ## Local Development Ports
