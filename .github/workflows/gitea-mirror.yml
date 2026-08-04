@@ -12,6 +12,10 @@ permissions:
 
 jobs:
   mirror:
+    # GitHub withholds Actions secrets from Dependabot-triggered runs. Those
+    # temporary branches do not need mirroring; their merged changes are
+    # mirrored by the subsequent push to the target branch.
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/dependabot/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full history

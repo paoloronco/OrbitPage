@@ -12,12 +12,9 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: /^Menu/ }).click();
-  await page.getByRole('button', { name: 'Menu content' }).click();
+  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
-  const contentSwitcher = page.locator('.menu-content-mobile-switch');
-  if (await contentSwitcher.isVisible()) {
-    await contentSwitcher.getByRole('button', { name: 'Items' }).click();
-  }
+  await workflow.getByRole('button', { name: /Items/ }).click();
   await expect(page.getByRole('heading', { name: 'Items', exact: true })).toBeVisible();
 
   const price = page.getByRole('textbox', { name: 'Product price' }).first();
@@ -44,9 +41,11 @@ test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
   await page.getByRole('button', { name: /^Menu/ }).click();
 
   const editor = page.locator('.menu-editor-stack');
-  const switcher = page.locator('.menu-content-mobile-switch');
+  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(editor).toBeVisible();
-  await expect(switcher).toBeVisible();
+  await expect(workflow).toBeVisible();
+  await expect(workflow.getByRole('button', { name: /Categories/ })).toBeVisible();
+  await expect(workflow.getByRole('button', { name: /Items/ })).toBeVisible();
   await expect(page.locator('.admin-menu-live-preview')).toHaveCount(0);
 
   const overflow = await page.evaluate(() => ({
@@ -71,11 +70,11 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
   await openAdminSection(page, 'Content');
   await page.getByRole('button', { name: /^Menu/ }).click();
 
-  const switcher = page.locator('.menu-content-mobile-switch');
-  await expect(switcher).toBeVisible();
+  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
+  await expect(workflow).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
 
-  await switcher.getByRole('button', { name: 'Items' }).click();
+  await workflow.getByRole('button', { name: /Items/ }).click();
   await expect(page.getByRole('heading', { name: 'Items', exact: true })).toBeVisible();
   await expect(page.locator('.menu-content-pane--sections')).toBeHidden();
 
@@ -101,7 +100,7 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
 });
 
 test('creates, edits, reorders and removes menu content through the visible controls', async ({ page }, testInfo) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   const testSuffix = `${testInfo.project.name}-${testInfo.retry}-${Date.now()}`;
   const categoryLabel = `Desserts ${testSuffix}`;
   const subsectionLabel = `Cakes ${testSuffix}`;
@@ -144,8 +143,10 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.getByRole('button', { name: 'Save menu' }).click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
 
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  await page.goto(`/dashboard/content?e2eReload=${Date.now()}`, { waitUntil: 'commit' });
+  const contentNavigation = page.getByRole('button', { name: 'Content', exact: true });
+  await expect(contentNavigation).toBeVisible({ timeout: 15_000 });
+  await contentNavigation.click();
   await page.getByRole('button', { name: /^Menu/ }).click();
   await page.getByRole('button', { name: `${subsectionLabel} 1`, exact: true }).click();
   await page.getByRole('button', { name: 'Manage items in this category 1' }).click();

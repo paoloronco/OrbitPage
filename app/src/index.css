@@ -9029,7 +9029,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   border: 1px solid #d2dce9;
   border-radius: 5px;
   background: #f5f7fa;
-  color: #66758b;
+  color: #526078;
   font-size: 9px;
   font-weight: 850;
 }
@@ -9057,7 +9057,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .menu-editor-tab-copy small {
   overflow: hidden;
-  color: #637188;
+  color: #526078;
   font-size: .58rem;
   font-weight: 600;
   line-height: 1.25;
