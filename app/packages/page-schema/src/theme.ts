@@ -243,7 +243,7 @@ const ThemeInputShape = {
   cardBlurTint: OrbitPageHexColorSchema.nullable().optional()
 };
 
-const StrictThemeInputSchema = z.object(ThemeInputShape).strict();
+export const OrbitPageThemeInputSchema = z.object(ThemeInputShape).strict();
 const LegacyThemeInputSchema = z.object(ThemeInputShape);
 
 function mergeObject<T extends Record<string, unknown>>(base: T, value: unknown): T {
@@ -263,7 +263,7 @@ function readableForeground(background: string, fallback: string) {
 
 export function normalizeOrbitPageTheme(value: unknown, strict = false): OrbitPageTheme {
   const input = parseOrThrow(
-    strict ? StrictThemeInputSchema : LegacyThemeInputSchema,
+    strict ? OrbitPageThemeInputSchema : LegacyThemeInputSchema,
     value ?? {},
     "The theme contains invalid or unsupported data."
   );

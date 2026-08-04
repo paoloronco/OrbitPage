@@ -1,9 +1,10 @@
 import { getHostedSurfaceConfig } from "./hosted-surface";
+import { isHostedRuntime } from "./runtime-mode";
 
 export const getPublicUrlOverride = (): string | null => {
-  if (typeof window === "undefined") return null;
+  if (!isHostedRuntime() || typeof window === "undefined") return null;
 
-  const value = getHostedSurfaceConfig()?.publicUrl || new URLSearchParams(window.location.search).get("publicUrl");
+  const value = getHostedSurfaceConfig()?.publicUrl;
   if (!value) return null;
 
   try {

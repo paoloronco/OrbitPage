@@ -1,38 +1,49 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+about: Report a reproducible problem in self-hosted OrbitPage
+title: "[Bug] "
+labels: bug
 assignees: ''
-
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+Before reporting a security vulnerability, use a private
+[GitHub Security Advisory](https://github.com/paoloronco/OrbitPage/security/advisories/new)
+instead of a public issue.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+## What happened?
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+Describe the problem and its impact.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+## How can we reproduce it?
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+1. Go to …
+2. Configure …
+3. Select …
+4. Observe …
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+Include the smallest sample configuration or content needed to reproduce the
+problem.
 
-**Additional context**
-Add any other context about the problem here.
+## What did you expect?
+
+Describe the expected result.
+
+## Environment
+
+- OrbitPage version or Git commit:
+- Deployment method: Docker Compose / Linux installer / Proxmox LXC / source / other
+- Container image and tag or digest, if applicable:
+- Host operating system and architecture:
+- Browser and version:
+- Reverse proxy and base path, if applicable:
+
+## Logs and screenshots
+
+Attach only the relevant excerpt. Remove tokens, passwords, environment-file
+contents, cookies, database contents, private URLs, and real user or customer
+data before posting. Do not upload an OrbitPage database or backup.
+
+## Additional context
+
+List recent upgrades, configuration changes, or workarounds that may be
+relevant.

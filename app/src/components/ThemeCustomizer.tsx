@@ -35,7 +35,7 @@ import { themePresets, type ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
 import { commitPendingTheme } from "./theme-save-state";
-import type { SaasThemeAccess } from "@/lib/saas-plan";
+import type { HostedThemeAccess } from "@/lib/hosted-editor-contract";
 import { PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { useAppI18n } from "@/lib/i18n";
 
@@ -45,7 +45,7 @@ interface ThemeCustomizerProps {
   onThemePreview?: (theme: ThemeConfig) => void;
   renderPreview?: (theme: ThemeConfig, device: PreviewDevice) => ReactNode;
   showEmbeddedPreview?: boolean;
-  accessLevel?: SaasThemeAccess;
+  accessLevel?: HostedThemeAccess;
   videoUploadsEnabled?: boolean;
   maxUploadBytes?: number | null;
   maxVideoUploadBytes?: number | null;

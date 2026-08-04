@@ -138,7 +138,7 @@ const PUBLIC_SITE_URL = String(process.env.PUBLIC_SITE_URL || process.env.SITE_U
 const PUBLIC_SITE_NAME = String(process.env.PUBLIC_SITE_NAME || 'OrbitPage').trim() || 'OrbitPage';
 const ABOUT_PAGE_TITLE = 'OrbitPage | Self-hosted Public Page Manager';
 const ABOUT_PAGE_DESCRIPTION = 'OrbitPage is an open-source, self-hosted public page manager for people, brands, venues, events, and teams that want one place for links, content, analytics, privacy controls, and backups.';
-const ABOUT_PAGE_IMAGE_URL = 'https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/screenshots/01-public-page.png';
+const ABOUT_PAGE_IMAGE_URL = 'https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/screenshots/orbitpage-public-page.png';
 const ABOUT_PAGE_IMAGE_ALT = 'Screenshot of an OrbitPage public page';
 const ABOUT_PAGE_KEYWORDS = 'self-hosted public page, open-source landing page, Docker link page, privacy-friendly page manager, OrbitPage';
 const SEO_INDEXING = !['0', 'false', 'no', 'off'].includes(
@@ -1015,8 +1015,25 @@ const withBasePathForStructuredData = (targetPath, canonicalUrl) => {
   return `${pathPrefix}${normalizedTarget}`.replace(/\/{2,}/g, '/') || '/';
 };
 
-const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, imageAlt, keywords, robots, structuredData, basePath }) => {
+const renderSeoTags = ({
+  title,
+  description,
+  canonicalUrl,
+  imageUrl,
+  imageAlt,
+  imageWidth,
+  imageHeight,
+  keywords,
+  robots,
+  structuredData,
+  basePath,
+}) => {
   const cardType = imageUrl ? 'summary_large_image' : 'summary';
+  const hasImageDimensions = imageUrl
+    && Number.isInteger(imageWidth)
+    && imageWidth > 0
+    && Number.isInteger(imageHeight)
+    && imageHeight > 0;
   return [
     `<script>window.__ORBITPAGE_BASE_PATH__=${safeJsonForHtml(basePath || '')};</script>`,
     `<title>${escapeHtml(title)}</title>`,
@@ -1034,8 +1051,8 @@ const renderSeoTags = ({ title, description, canonicalUrl, imageUrl, imageAlt, k
     `<meta property="og:locale" content="en_US" />`,
     imageUrl ? `<meta property="og:image" content="${escapeHtml(imageUrl)}" />` : '',
     imageUrl ? `<meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />` : '',
-    imageUrl ? `<meta property="og:image:width" content="1919" />` : '',
-    imageUrl ? `<meta property="og:image:height" content="1019" />` : '',
+    hasImageDimensions ? `<meta property="og:image:width" content="${imageWidth}" />` : '',
+    hasImageDimensions ? `<meta property="og:image:height" content="${imageHeight}" />` : '',
     imageUrl && imageAlt ? `<meta property="og:image:alt" content="${escapeHtml(imageAlt)}" />` : '',
     `<meta name="twitter:card" content="${cardType}" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
@@ -1215,6 +1232,9 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
     : getSeoDescription(profile, pageKind);
   const imageUrl = setupRequired ? null : getSeoImageUrl(profile, pageKind, origin);
   const imageAlt = getSeoImageAlt(profile, pageKind);
+  const imageDimensions = pageKind === 'about' && imageUrl === ABOUT_PAGE_IMAGE_URL
+    ? { width: 1280, height: 720 }
+    : null;
   const keywords = getSeoKeywords(pageKind);
   const shouldIndex = SEO_INDEXING && statusCode < 400 && pageKind !== 'admin' && !setupRequired;
   const robots = shouldIndex ? 'index, follow, max-image-preview:large' : 'noindex, nofollow, noarchive';
@@ -1222,7 +1242,19 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const setupNoScript = '<noscript><main><h1>This page is under construction.</h1><p>Welcome to OrbitPage. Complete the private workspace setup to publish this page.</p></main></noscript>';
 
   return {
-    seoTags: renderSeoTags({ title, description, canonicalUrl, imageUrl, imageAlt, keywords, robots, structuredData, basePath: BASE_PATH }),
+    seoTags: renderSeoTags({
+      title,
+      description,
+      canonicalUrl,
+      imageUrl,
+      imageAlt,
+      imageWidth: imageDimensions?.width,
+      imageHeight: imageDimensions?.height,
+      keywords,
+      robots,
+      structuredData,
+      basePath: BASE_PATH,
+    }),
     noScriptContent: setupRequired ? setupNoScript : pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
     robots,
   };

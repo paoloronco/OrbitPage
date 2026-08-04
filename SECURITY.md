@@ -9,7 +9,7 @@ Please do not open a public issue for an unpatched vulnerability.
 Preferred reporting channels:
 
 - GitHub Security Advisory: <https://github.com/paoloronco/OrbitPage/security/advisories/new>
-- Email: `info@paoloronco.it`
+- Email: `contact@orbitpage.com`
 
 Include as much of this information as possible:
 

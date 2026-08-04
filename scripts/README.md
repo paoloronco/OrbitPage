@@ -13,6 +13,12 @@ These scripts support installation, updates, Git hooks, and installer verificati
 
 The public installers themselves live at repository root as `install.sh` and `install-pve.sh` because users invoke them directly from raw GitHub URLs.
 
+Run the documentation link check from the repository root:
+
+```bash
+node scripts/check-markdown-links.mjs
+```
+
 ## Safety rules
 
 - Keep installer changes idempotent and preserve existing data, secrets, image pins, and operator configuration.

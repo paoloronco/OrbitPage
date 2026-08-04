@@ -7,11 +7,11 @@ The README provides the product overview and fastest installation path. This wik
 ## Start Here
 
 - [Getting started](./Getting-started.md): try OrbitPage locally, understand the public/admin split, and create the first admin account.
-- [Deployment](./Deployment.md): production Docker, generic cloud deployment, persistence, upgrades, and reverse proxies.
-- [Configuration](./Configuration.md): environment variables and recommended values.
+- [Deployment](./Deployment.md): production Docker and Proxmox, verified backup and restore, updates, rollback, removal, and reverse proxies.
+- [Configuration](./Configuration.md): environment variables, protected secret handling, and the emergency reset-token lifecycle.
 - [Development](./Development.md): local development workflow, tests, and repository layout.
 - [SEO and indexing](./SEO-and-indexing.md): canonical URLs, sitemap, robots, social previews, and staging noindex mode.
-- [Security](./Security.md): security model, deployment hardening, and reporting policy.
+- [Security](./Security.md): security model, emergency administrator recovery, deployment hardening, and reporting policy.
 - [Troubleshooting](./Troubleshooting.md): common startup, Docker, login, database, and indexing issues.
 - [Dashboard guide](../user-guide/dashboard.md): Page, Content, Theme, Publish, Backup, Analytics, Privacy, Team, and Account.
 - [AI assistant](../user-guide/ai-assistant.md): provider configuration and the plan-review-confirm workflow.
@@ -20,7 +20,7 @@ The README provides the product overview and fastest installation path. This wik
 ## Useful Links
 
 - Official website and managed SaaS: <https://orbitpage.com>
-- Open-source product page: <https://orbitpage.com/open-source>
+- Open-source product page: <https://orbitpage.com/en-US/open-source>
 - Repository: <https://github.com/paoloronco/OrbitPage>
 - Docker Hub: <https://hub.docker.com/r/paueron/orbitpage>
 - GitHub Container Registry: <https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage>

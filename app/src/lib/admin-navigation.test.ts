@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  ADMIN_SECTION_CHANGED_MESSAGE,
   adminDashboardPath,
   adminTabFromLocation,
-  isAdminSectionMessage,
   isAdminTab,
 } from "./admin-navigation";
 
@@ -48,16 +46,5 @@ describe("admin navigation", () => {
     expect(adminDashboardPath("publish")).toBe("/dashboard/publish");
     expect(isAdminTab("publish")).toBe(true);
     expect(isAdminTab("billing")).toBe(false);
-  });
-
-  it("validates hosted navigation messages", () => {
-    expect(isAdminSectionMessage(
-      { type: ADMIN_SECTION_CHANGED_MESSAGE, section: "links" },
-      ADMIN_SECTION_CHANGED_MESSAGE,
-    )).toBe(true);
-    expect(isAdminSectionMessage(
-      { type: ADMIN_SECTION_CHANGED_MESSAGE, section: "billing" },
-      ADMIN_SECTION_CHANGED_MESSAGE,
-    )).toBe(false);
   });
 });

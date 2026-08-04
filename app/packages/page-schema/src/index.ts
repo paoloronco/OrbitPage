@@ -7,4 +7,3 @@ export * from "./menu";
 export * from "./consent";
 export * from "./subpages";
 export * from "./discovery";
-export * from "./page";

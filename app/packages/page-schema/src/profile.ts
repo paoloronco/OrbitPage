@@ -215,7 +215,7 @@ const ProfileInputShape = {
   appearance: OrbitPageProfileAppearanceInputSchema.nullable().optional()
 };
 
-const StrictProfileInputSchema = z.object(ProfileInputShape).strict();
+export const OrbitPageProfilePatchSchema = z.object(ProfileInputShape).strict();
 const LegacyProfileInputSchema = z.object({
   ...ProfileInputShape,
   appearance: z.unknown().optional()
@@ -229,7 +229,7 @@ function firstDefined(record: Record<string, unknown>, ...keys: string[]) {
 }
 
 function canonicalProfilePatch(value: unknown, strict: boolean): Partial<OrbitPageProfile> {
-  const schema = strict ? StrictProfileInputSchema : LegacyProfileInputSchema;
+  const schema = strict ? OrbitPageProfilePatchSchema : LegacyProfileInputSchema;
   const input = parseOrThrow(schema, value, "The profile contains invalid or unsupported data.") as Record<string, unknown>;
   const patch: Partial<OrbitPageProfile> = {};
   const assign = <K extends keyof OrbitPageProfile>(key: K, candidate: OrbitPageProfile[K] | undefined) => {

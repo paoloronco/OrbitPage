@@ -1,20 +1,30 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
+about: Propose an improvement for self-hosted OrbitPage
+title: "[Feature] "
+labels: enhancement
 assignees: ''
-
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Problem to solve
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+Describe the self-hosted use case and the outcome you cannot achieve today.
+Avoid including private URLs, credentials, or real user and customer data.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed experience
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+Explain how the feature should work from setup through normal use. Include the
+relevant dashboard or public-page area.
+
+## Alternatives considered
+
+Describe current workarounds or simpler alternatives.
+
+## Compatibility and operations
+
+Note any expected effect on existing public URLs, SQLite data, backups,
+configuration, Docker deployment, privacy, accessibility, or security.
+
+## Additional context
+
+Add sanitized mockups, examples, or references that clarify the request.

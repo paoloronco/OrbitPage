@@ -1,4 +1,5 @@
 import type { AdminTab } from "./admin-navigation";
+import { isHostedRuntime } from "./runtime-mode";
 
 export type HostedSurfaceConfig = {
   apiBase: string;
@@ -33,20 +34,25 @@ export const HOSTED_SECTION_NAVIGATE_EVENT = "orbitpage:admin-section-navigate";
 export const HOSTED_CONFIG_CHANGED_EVENT = "orbitpage:hosted-config-changed";
 
 export function isIntegratedHostedSurface(): boolean {
-  return typeof window !== "undefined" && window.__ORBITPAGE_HOSTED_SURFACE__ === true;
+  return isHostedRuntime() && typeof window !== "undefined" && window.__ORBITPAGE_HOSTED_SURFACE__ === true;
 }
 
 export function getHostedSurfaceConfig(): HostedSurfaceConfig | null {
-  return typeof window !== "undefined" ? window.__ORBITPAGE_HOSTED_CONFIG__ || null : null;
+  return isHostedRuntime() && typeof window !== "undefined"
+    ? window.__ORBITPAGE_HOSTED_CONFIG__ || null
+    : null;
 }
 
 export function getHostedThemeRoot(): HTMLElement {
-  return typeof window !== "undefined" && window.__ORBITPAGE_HOSTED_THEME_ROOT__
+  return isHostedRuntime() && typeof window !== "undefined" && window.__ORBITPAGE_HOSTED_THEME_ROOT__
     ? window.__ORBITPAGE_HOSTED_THEME_ROOT__
     : document.documentElement;
 }
 
 export function configureHostedSurface(root: HTMLElement, config: HostedSurfaceConfig): void {
+  if (!isHostedRuntime()) {
+    throw new Error("The hosted editor surface is unavailable in the self-hosted build.");
+  }
   window.__ORBITPAGE_HOSTED_SURFACE__ = true;
   window.__ORBITPAGE_HOSTED_CONFIG__ = config;
   window.__ORBITPAGE_HOSTED_THEME_ROOT__ = root;

@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use OrbitPage in your work, please cite the software using this metadata."
+title: "OrbitPage"
+type: software
+authors:
+  - family-names: "Ronco"
+    given-names: "Paolo"
+abstract: >-
+  Open-source, self-hosted software for building link-in-bio pages, digital
+  business cards, public profiles, venue menus, event pages, and small-business
+  websites with a visual dashboard.
+keywords:
+  - link-in-bio
+  - self-hosted
+  - public-page-builder
+  - digital-business-card
+  - personal-website
+  - Docker
+  - SQLite
+license: MIT
+repository-code: "https://github.com/paoloronco/OrbitPage"
+url: "https://orbitpage.com/en-US/open-source"

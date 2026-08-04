@@ -49,7 +49,7 @@ import { optimizeImageForUpload } from "@/lib/image-upload";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { uploadApi } from "@/lib/api-client";
-import type { SaasSeoAccess } from "@/lib/saas-plan";
+import type { HostedSeoAccess } from "@/lib/hosted-editor-contract";
 import { useAppI18n } from "@/lib/i18n";
 
 interface ProfileData {
@@ -76,7 +76,7 @@ interface ProfileSectionProps {
   onProfilePreview?: (profile: ProfileData) => void;
   onStartOnboarding?: () => void;
   onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
-  seoAccess?: SaasSeoAccess;
+  seoAccess?: HostedSeoAccess;
   managePlanHref?: string;
   orbitPageBadgeEditable?: boolean;
 }

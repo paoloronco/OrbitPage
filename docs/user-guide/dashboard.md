@@ -1,41 +1,56 @@
 # Dashboard guide
 
-The self-hosted dashboard is available at `/dashboard/profile` after initial setup. Each main workspace has a stable URL, so a refresh or bookmark returns to the same area.
+The self-hosted dashboard opens at `/dashboard/profile` after initial setup. Each main workspace has a stable URL, so refreshing or bookmarking it returns to the same area.
+
+## A reliable editing workflow
+
+Use this sequence to avoid leaving related changes half-finished:
+
+1. Complete the profile and browser identity in **Page**.
+2. Build the main-page order in **Content > Home**.
+3. Add the menu or subpages only when they need a distinct destination.
+4. Set shared colors, typography, spacing, cards, and background in **Theme**.
+5. Configure consent before enabling GA4 or third-party embeds.
+6. Review sharing and crawler files in **Publish**.
+7. Create a backup, then open **Public page** and test the result as a visitor.
+
+Page, Home blocks, subpage details, each subpage's blocks, Menu, Theme, Privacy, and Publish use their own save action. A save in one workspace does not commit an unsaved draft in another.
+
+## First-login guidance
+
+After the initial system, administrator, and public-URL setup, OrbitPage opens a guided tour of the available workspaces. From **Page > Guided setup** you can replay the tour or choose whether it opens at every login.
+
+Page also shows a small checklist for the first three login sessions in that browser. It checks the name, description, first social link, and browser title. You can dismiss it permanently from the panel. The checklist and tour only guide the editor; they do not publish content themselves.
+
+See [Getting started](../wiki/Getting-started.md) for the fresh-install sequence.
 
 ## Page tools
 
 ### Page
 
-Use **Page** to define the identity visitors see first:
+Use **Page** to define the identity visitors see first: profile type, image, name, description, role or activity, location, social links, browser metadata, footer, and optional profile-card overrides.
 
-- choose a creator, company, or studio page type;
-- upload and show or hide the profile image;
-- set image shape and size;
-- edit the page name, description, role or activity, and location;
-- add browser title, favicon, and social profiles;
-- open advanced typography, SEO, footer, and profile-card overrides only when needed.
-
-Profile-card overrides take precedence over the active theme. Use **Use theme style** to return the card to inherited theme values.
+Profile-card overrides take precedence over the active theme. Use **Use theme** to return an individual value to the shared design. See [Content and design](./content-and-design.md#page-identity) for the field hierarchy and save behavior.
 
 ### Content
 
-**Content** groups destinations that were previously separate dashboard sections:
+**Content** groups three destinations:
 
-- **Home links** contains the blocks on the main public page.
-- **Menu** creates a venue menu with sections, one-level subsections, products, variants, images, prices, locale, and availability.
-- **Pages** creates focused public subpages with their own slug, title, description, and blocks.
+- **Home** contains the ordered blocks on the primary public page.
+- **Menu** creates the native venue menu at `/menu`.
+- **Pages** creates focused public subpages with their own slug, title, description, publication state, and blocks.
 
-The main home is always available. Add a menu or subpage only when it gives visitors a clearer destination. Legacy dashboard URLs such as `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` continue to resolve to Content.
+Legacy URLs such as `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` continue to resolve to Content. The complete block, menu, subpage, scheduling, embed, and media workflows are in [Content and design](./content-and-design.md).
 
 ### AI Assistant
 
-The assistant proposes changes to the current page and never applies generated operations immediately. See [AI assistant](./ai-assistant.md) for provider setup, review, and confirmation.
+The self-hosted assistant proposes profile, content, and theme operations from the current page state. Generation never applies changes immediately; review and confirm the proposal first. See [AI assistant](./ai-assistant.md) for provider setup, data sent to the provider, and failure handling.
 
 ### Theme
 
-Use **Theme** for the page-wide visual system: preset, background, typography, surfaces, borders, radius, shadow, blur, and spacing. The live preview uses the same public renderer and is intended to show the effect before saving.
+Use **Theme** for the page-wide visual system: presets, colors, typography, card surfaces, borders, radius, shadow, blur, spacing, width, and background. The live preview uses the public renderer.
 
-Prefer theme-level changes for consistency. Use per-card overrides only for a deliberate exception.
+Prefer theme-level changes for consistency. Keep individual profile or block overrides for deliberate exceptions.
 
 ### Publish
 
@@ -44,30 +59,46 @@ Prefer theme-level changes for consistency. Use per-card overrides only for a de
 - generate a QR code for the current public URL;
 - choose screen or print presets and download PNG or SVG;
 - generate and inspect `sitemap.xml`;
-- edit standard discovery files such as `robots.txt`, `llms.txt`, `humans.txt`, `ai.txt`, and `security.txt`;
+- edit `robots.txt`, `llms.txt`, `humans.txt`, `ai.txt`, and `security.txt`;
 - create safe custom `.txt` and `/.well-known/*.txt` endpoints.
 
-Set `PUBLIC_SITE_URL` before generating or distributing QR codes and canonical discovery links behind a proxy or custom domain. See [SEO and indexing](../wiki/SEO-and-indexing.md).
+Set `PUBLIC_SITE_URL` before distributing QR codes or canonical discovery links behind a proxy or custom domain. See [SEO and indexing](../wiki/SEO-and-indexing.md).
 
 ### Backup
 
-Use **Backup** to export or restore application data and to preview or clean unused uploaded media. Complete backups preserve the established schema-v1 format; selective backups declare their included sections explicitly.
+Use **Backup** to export or restore selected application sections and to inspect or remove unused uploads. JSON exports are portable, but they do not replace a consistent backup of the SQLite database and uploads.
 
-Keep an external backup of both the SQLite database and uploads before upgrades or restores. A JSON export is useful for portability but does not replace an infrastructure-level backup of `DATA_DIR`.
+Restoring replaces only the selected sections. Restoring Media replaces the uploads directory, and restoring Admin accounts can invalidate the active session. Read [Backups, media, and demo mode](./backups-and-demo-mode.md) before the first restore or cleanup.
 
 ### Analytics and Privacy
 
-**Analytics** shows available page and content performance. **Privacy** controls consent behavior, policy links, and optional external consent integration. See [Analytics and privacy](./analytics-and-privacy.md) before enabling GA4.
+Self-hosted **Analytics** shows built-in click and CTA counters and can configure optional GA4. **Privacy** controls policy links, the consent banner, consent categories, and optional external consent integration. See [Analytics and privacy](./analytics-and-privacy.md) before enabling third-party tracking.
 
 ## Workspace tools
 
-- **Team** manages additional self-hosted users and their permissions.
-- **Account** contains password and time-based one-time-password controls.
-- **Plan** explains the open-source edition and the optional managed alternative.
+- **Team** manages additional local users and their roles.
+- **Account** contains the signed-in user's password, TOTP authenticator, recovery codes, and protected recovery actions.
+
+The first `admin` account always has full access. Every signed-in user can manage their own Account; the additional roles below control access to page and installation tools:
+
+| Role | Access |
+| --- | --- |
+| Admin | Full access, including users, backups, and recovery tools |
+| Editor | Profile, Home blocks, menu, and built-in analytics |
+| Link Editor | Full Home-block editing and built-in analytics |
+| Style Editor | Card colors, fonts, and size only |
+| Image Editor | Card icons and cover images only |
+| Theme Editor | Shared theme and background only |
+| Compliance | Privacy, consent, and discovery settings only |
+| Viewer | Read-only analytics |
+
+Assign the narrowest role that fits the person's task. Account security is per user; Team permissions do not replace unique passwords or two-factor authentication.
 
 The legacy `/dashboard/access` path remains an alias for Account.
 
 ## Canonical dashboard routes
+
+Only routes allowed by the signed-in user's permissions appear in navigation.
 
 | Area | Route |
 | --- | --- |
@@ -81,6 +112,5 @@ The legacy `/dashboard/access` path remains an alias for Account.
 | Privacy | `/dashboard/privacy` |
 | Team | `/dashboard/team` |
 | Account | `/dashboard/account` |
-| Plan | `/dashboard/plan` |
 
 `/admin` remains a compatibility entry point and redirects to the dashboard.

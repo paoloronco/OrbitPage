@@ -31,9 +31,6 @@ export function canonicalAdminTab(tab: AdminTab): AdminTab {
   return tab;
 }
 
-export const ADMIN_SECTION_CHANGED_MESSAGE = "orbitpage:admin-section-changed";
-export const ADMIN_SECTION_NAVIGATE_MESSAGE = "orbitpage:admin-section-navigate";
-
 export function isAdminTab(value: unknown): value is AdminTab {
   return typeof value === "string" && ADMIN_TAB_IDS.includes(value as AdminTab);
 }
@@ -50,10 +47,4 @@ export function adminTabFromLocation(pathname: string, search = "") {
   const routeIndex = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");
   const pathTab = routeIndex >= 0 ? segments[routeIndex + 1] : null;
   return isAdminTab(pathTab) ? canonicalAdminTab(pathTab) : "profile";
-}
-
-export function isAdminSectionMessage(data: unknown, type: string): data is { type: string; section: AdminTab } {
-  if (!data || typeof data !== "object") return false;
-  const candidate = data as { type?: unknown; section?: unknown };
-  return candidate.type === type && isAdminTab(candidate.section);
 }

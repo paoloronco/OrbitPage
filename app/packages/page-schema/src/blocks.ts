@@ -100,7 +100,7 @@ const CommonBlockShape = {
   position: z.number().int().nonnegative().max(ORBITPAGE_MAX_BLOCKS - 1).optional()
 };
 
-const StrictBlockInputSchema = z.object(CommonBlockShape).strict();
+export const OrbitPageBlockInputSchema = z.object(CommonBlockShape).strict();
 const LegacyBlockInputSchema = z.object(CommonBlockShape);
 
 function legacyBlockCandidate(value: unknown) {
@@ -397,7 +397,7 @@ export type OrbitPageBlock = z.infer<typeof OrbitPageBlockSchema>;
 
 function canonicalBlock(value: unknown, position: number, strict: boolean): OrbitPageBlock {
   const input = parseOrThrow(
-    strict ? StrictBlockInputSchema : LegacyBlockInputSchema,
+    strict ? OrbitPageBlockInputSchema : LegacyBlockInputSchema,
     strict ? value : legacyBlockCandidate(value),
     "A page block contains invalid or unsupported data."
   );

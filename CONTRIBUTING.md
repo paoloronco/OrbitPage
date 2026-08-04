@@ -1,6 +1,6 @@
 # Contributing to OrbitPage
 
-Thanks for helping improve OrbitPage. This guide keeps the local setup, checks, and contribution flow aligned with the current repository structure.
+Thanks for helping improve OrbitPage. This guide keeps the local setup, checks, and contribution flow aligned with the current repository structure. By participating, you agree to follow the project [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Project Layout
 

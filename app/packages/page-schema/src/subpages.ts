@@ -69,7 +69,7 @@ const SubpageInputShape = {
   updatedAt: OrbitPageIsoDateSchema.optional()
 };
 
-const StrictSubpageInputSchema = z.object(SubpageInputShape).strict();
+export const OrbitPageSubpageInputSchema = z.object(SubpageInputShape).strict();
 const LegacySubpageInputSchema = z.object(SubpageInputShape);
 
 function normalizeSubpages(value: unknown, strict: boolean) {
@@ -85,7 +85,7 @@ function normalizeSubpages(value: unknown, strict: boolean) {
   const slugs = new Set<string>();
   const pages = value.map((candidate) => {
     const input = parseOrThrow(
-      strict ? StrictSubpageInputSchema : LegacySubpageInputSchema,
+      strict ? OrbitPageSubpageInputSchema : LegacySubpageInputSchema,
       candidate,
       "One of the pages contains invalid or unsupported data."
     );
