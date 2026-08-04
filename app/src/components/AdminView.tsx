@@ -1050,7 +1050,7 @@ export const AdminView = ({
               maxUploadBytes={entitlements?.maxUploadBytes}
               maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
               managePlanHref={managePlanHref}
-              showEmbeddedPreview={showEmbeddedPreview}
+              showEmbeddedPreview
             />
           </TabsContent>
 

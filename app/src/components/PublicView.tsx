@@ -28,6 +28,7 @@ interface PublicViewProps {
   ccpaPolicyUrl?: string;
   showOrbitPageBadge?: boolean;
   embedded?: boolean;
+  embeddedViewport?: "mobile" | "desktop";
 }
 
 export const PublicView = ({
@@ -39,6 +40,7 @@ export const PublicView = ({
   cookiePolicyUrl,
   showOrbitPageBadge = true,
   embedded = false,
+  embeddedViewport = "mobile",
 }: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
@@ -86,9 +88,16 @@ export const PublicView = ({
     return link.title.trim() !== '' && link.url.trim() !== '';
   });
 
+  const viewportClass = embedded
+    ? `public-page-root--preview-${embeddedViewport}`
+    : "public-page-root--standalone";
+
   return (
-    <main className={`${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}>
-      <div className="public-page-content mx-auto space-y-6" style={{ maxWidth: theme.maxWidth || "28rem" }}>
+    <main className={`public-page-root ${viewportClass} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}>
+      <div
+        className="public-page-content mx-auto space-y-6"
+        style={{ "--public-page-max-width": theme.maxWidth || "28rem" } as CSSProperties}
+      >
         {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} surfaceEffect={theme.profileCardEffect} />}
 
         {visibleLinks.length > 0 && (
