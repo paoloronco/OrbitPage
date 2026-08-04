@@ -408,6 +408,10 @@ export const AdminView = ({
     setActiveTab(canonicalTab);
     setMobileNavOpen(false);
     onTabChange?.(canonicalTab);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.querySelector<HTMLElement>(".admin-dashboard-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
   };
 
   const toggleSidebar = () => {

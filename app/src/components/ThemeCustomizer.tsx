@@ -152,13 +152,13 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
 
   return (
     <div
-      className={`relative overflow-hidden ${compact ? "h-44" : "h-72"}`}
+      className={`admin-theme-mockup relative overflow-hidden ${compact ? "admin-theme-mockup--compact h-44" : "h-72"}`}
       style={{ background: getPreviewBackground(theme), fontFamily: theme.fontFamily }}
       aria-hidden="true"
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(255,255,255,0.18),transparent_38%)]" />
-      <div className={`relative mx-auto flex h-full max-w-[15rem] flex-col ${compact ? "px-4 py-4" : "px-5 py-6"}`}>
-        <div className="mb-4 flex flex-col items-center border px-3 py-3 text-center" style={profileStyle}>
+      <div className={`admin-theme-mockup__inner relative mx-auto flex h-full max-w-[15rem] flex-col ${compact ? "px-4 py-4" : "px-5 py-6"}`}>
+        <div className="admin-theme-mockup__profile mb-4 flex flex-col items-center border px-3 py-3 text-center" style={profileStyle}>
           <div
             className={`${compact ? "h-9 w-9" : "h-12 w-12"} rounded-full border-2 shadow-sm`}
             style={{ backgroundColor: theme.profileCard.accent, borderColor: theme.profileCard.border }}
@@ -166,7 +166,7 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
           <div className="mt-2 h-2.5 w-20 rounded-full" style={{ backgroundColor: theme.profileCard.foreground }} />
           <div className="mt-1.5 h-1.5 w-28 rounded-full opacity-75" style={{ backgroundColor: theme.profileCard.muted }} />
         </div>
-        <div className="flex flex-col" style={{ gap: `${Math.max(6, theme.cardSpacing * 0.58)}px` }}>
+        <div className="admin-theme-mockup__cards flex flex-col" style={{ gap: `${Math.max(6, theme.cardSpacing * 0.58)}px` }}>
           <div className="flex items-center gap-2 border px-3 py-2.5" style={cardStyle}>
             <div className="h-5 w-5 rounded-md" style={{ backgroundColor: theme.primary }} />
             <div className="h-1.5 flex-1 rounded-full opacity-90" style={{ backgroundColor: theme.contentCard.foreground }} />
@@ -193,9 +193,9 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
 
 const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: boolean; onApply: () => void }) => {
   const { tr } = useAppI18n();
-  return <article className={`group overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
+  return <article className={`admin-theme-preset-card group overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
     <ThemeMockup theme={preset.theme} compact />
-    <div className="space-y-4 p-4">
+    <div className="admin-theme-preset-copy space-y-4 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="min-h-10 text-base font-bold leading-5 text-slate-950">{preset.name}</p>
@@ -218,8 +218,8 @@ const PresetCard = ({ preset, active, onApply }: { preset: ThemePreset; active: 
 
 const CardPresetCard = ({ preset, active, onApply }: { preset: CardThemePreset; active: boolean; onApply: () => void }) => {
   const { tr } = useAppI18n();
-  return <article className={`w-[17rem] shrink-0 overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
-    <div className="flex h-44 flex-col gap-2 bg-slate-100 p-4" aria-hidden="true">
+  return <article className={`admin-theme-card-preset w-[17rem] shrink-0 overflow-hidden rounded-2xl border bg-white transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-xl ${active ? "border-blue-500 shadow-[0_0_0_3px_rgb(59_130_246_/_0.12)]" : "border-slate-200"}`}>
+    <div className="admin-theme-card-preset__preview flex h-44 flex-col gap-2 bg-slate-100 p-4" aria-hidden="true">
       {(preset.mode === 'multi' ? preset.variants.slice(0, 3) : [preset.card, preset.card]).map((variant, index) => (
         <div
           key={`${preset.id}-${index}`}
@@ -393,7 +393,7 @@ export const ThemeCustomizer = ({
   );
 
   const livePreviewPanel = (
-    <aside className="sticky top-5 min-w-0 space-y-3">
+    <aside className="admin-theme-preview-rail sticky top-5 min-w-0 space-y-3">
       <div className="flex items-end justify-between gap-3 px-1">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">Page preview</p>
@@ -408,20 +408,22 @@ export const ThemeCustomizer = ({
           <span key={`${color}-${index}`} className="h-5 w-5 rounded-md border border-slate-200" style={{ backgroundColor: color }} title={color} />
         ))}
       </div>
-      {renderPreview ? renderPreview(pendingTheme, previewDevice) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <ThemeMockup theme={pendingTheme} />
-        </div>
-      )}
+      <div className="admin-theme-live-preview">
+        {renderPreview ? renderPreview(pendingTheme, previewDevice) : (
+          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+            <ThemeMockup theme={pendingTheme} />
+          </div>
+        )}
+      </div>
       <p className="px-1 text-xs leading-5 text-slate-500">{tr("This is the same renderer used by the public page. Changes remain a preview until you save the theme.", "È lo stesso renderer usato dalla pagina pubblica. Le modifiche restano in anteprima finché non salvi il tema.")}</p>
     </aside>
   );
 
   return (
-    <div className="space-y-6" data-onboarding="theme-customizer">
+    <div className="admin-theme-customizer space-y-6" data-onboarding="theme-customizer">
       <div className={showEmbeddedPreview ? "admin-theme-layout" : "admin-theme-layout admin-theme-layout--without-preview"}>
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <section className="admin-theme-catalog rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
+          <div className="admin-theme-toolbar mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative grid min-w-0 flex-1 grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100 p-1.5">
               <span className={`pointer-events-none absolute inset-y-1.5 left-1.5 w-[calc(50%-0.375rem)] rounded-xl bg-white shadow-sm transition-transform duration-300 ease-out ${presetScope === "cards" ? "translate-x-full" : "translate-x-0"}`} />
               <button type="button" onClick={() => setPresetScope("page")} className={`relative z-10 flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition-colors ${presetScope === "page" ? "text-blue-700" : "text-slate-600"}`}>
@@ -451,7 +453,7 @@ export const ThemeCustomizer = ({
                 </div>
                 <p className="text-sm text-slate-500">{premiumThemesEnabled ? tr("Page themes leave your selected card style untouched.", "I temi pagina non modificano lo stile card selezionato.") : tr("Essential themes style the complete page.", "I temi essenziali definiscono l'intera pagina.")}</p>
               </div>
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="admin-theme-preset-grid grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {availableThemePresets.map((preset) => (
                   <PresetCard key={preset.id} preset={preset} active={selectedPresetId === preset.id} onApply={() => applyPreset(preset)} />
                 ))}
