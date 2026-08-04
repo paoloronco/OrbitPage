@@ -13,6 +13,7 @@ OrbitPage is a self-hosted public page manager built with React, Express, and SQ
   - `app/src/hooks` - Custom React hooks
   - `app/src/lib` - Core utilities and API client
   - `app/src/pages` - Main route components (Admin, Index, NotFound)
+  - `app/packages/page-schema` - Shared page and block schemas
 
 ### Backend (`app/server`)
 - Express.js server with SQLite database
@@ -28,25 +29,24 @@ OrbitPage is a self-hosted public page manager built with React, Express, and SQ
 1. Start development:
    ```bash
    cd app
-   npm install
+   npm ci
+   npm run install:server
    # Terminal 1 - Frontend
    npm run dev
    # Terminal 2 - Backend
-   cd server
-   npm install
-   npm run dev
+   npm run server:dev
    ```
 
 2. Build for production:
    ```bash
    npm run build
-   cd server
-   npm install
-   npm start
+   npm run install:server
+   npm run start
    ```
 
 ### Authentication
-- JWT tokens with 7-day expiry
+- JWT tokens with 12-hour expiry
+- Secure contexts keep the AES-GCM-encrypted token in session-scoped `sessionStorage`; non-secure contexts keep it in memory only
 - First setup creates the initial admin password. The initial username is `admin`.
 
 ## Project Conventions
@@ -59,7 +59,7 @@ OrbitPage is a self-hosted public page manager built with React, Express, and SQ
 ### Security Patterns
 - Rate limiting on authentication endpoints
 - Parameterized SQLite queries for DB operations
-- Secure cookie handling with HttpOnly flags
+- Bearer-token handling through the centralized API client
 - Password strength validation in `auth.js`
 
 ### Integration Points
@@ -69,7 +69,7 @@ OrbitPage is a self-hosted public page manager built with React, Express, and SQ
 
 2. File Uploads
    - Handled in `server.js` via multer
-   - Stored in `app/server/uploads/`
+   - Stored in `DATA_DIR/uploads/` (`app/server/uploads/` is only the local fallback)
 
 ## Common Tasks
 1. Adding new link types:

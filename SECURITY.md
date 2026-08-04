@@ -63,8 +63,8 @@ These are targets, not contractual guarantees.
 
 - Passwords are hashed with `bcryptjs` using 12 salt rounds.
 - Admin sessions use signed JWTs with a 12-hour expiry.
-- In secure browser contexts, the frontend stores the JWT encrypted with AES-GCM in `localStorage`.
-- On non-secure HTTP contexts where Web Crypto is unavailable, the frontend falls back to `sessionStorage`.
+- In secure browser contexts, the frontend stores the JWT encrypted with AES-GCM in session-scoped `sessionStorage` and removes legacy persistent copies.
+- On non-secure HTTP contexts where Web Crypto is unavailable, the frontend keeps the JWT in memory for the current document instead of writing a plaintext fallback.
 - SQLite queries use parameterized statements through server-side helpers.
 - Auth, reset, API, and SPA routes are rate-limited.
 - Docker startup requires `JWT_SECRET`; production Node deployments should also set it explicitly.
@@ -76,6 +76,7 @@ These are targets, not contractual guarantees.
 - Run behind HTTPS in production.
 - Set a long random `JWT_SECRET` and keep it stable across restarts.
 - Persist and back up `DATA_DIR`; it contains the SQLite database and uploads.
+- Never bake databases, database backups or sidecars, uploads, logs, or environment files into an image or source archive.
 - Keep Docker images, Node.js, npm dependencies, and host packages updated.
 - Limit admin access to trusted users.
 - Disable indexing on staging/private deployments with `SEO_INDEXING=false`.

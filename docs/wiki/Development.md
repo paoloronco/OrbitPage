@@ -6,10 +6,12 @@ This page describes the local development workflow for OrbitPage.
 
 ```text
 app/
-  src/           React frontend
-  server/        Express backend
-  public/        Static public files
-  dist/          Generated frontend build
+  src/                  React frontend
+  server/               Express backend
+  packages/page-schema/ Shared page and block schemas
+  e2e/                  Playwright browser tests
+  public/               Static public files
+  dist/                 Generated frontend build
 ```
 
 Important files:
@@ -18,6 +20,7 @@ Important files:
 - `app/src/pages/Admin.tsx`: admin shell
 - `app/src/lib/api-client.ts`: frontend API client and token storage
 - `app/src/lib/theme.ts`: theme configuration and CSS variable application
+- `app/packages/page-schema`: canonical schemas shared at page-data boundaries
 - `app/server/server.js`: Express app and API routes
 - `app/server/database.js`: SQLite helpers and migrations
 - `app/server/auth.js`: authentication, JWTs, password helpers, permissions
@@ -25,7 +28,7 @@ Important files:
 ## Install Dependencies
 
 ```bash
-cd OrbitPage
+cd OrbitPage/app
 npm ci
 npm run install:server
 ```
@@ -35,14 +38,14 @@ npm run install:server
 Terminal 1:
 
 ```bash
-cd OrbitPage
+cd OrbitPage/app
 npm run server:dev
 ```
 
 Terminal 2:
 
 ```bash
-cd OrbitPage
+cd OrbitPage/app
 npm run dev
 ```
 
@@ -55,7 +58,7 @@ Open:
 ## Run Production-Style Locally
 
 ```bash
-cd OrbitPage
+cd OrbitPage/app
 npm run start
 ```
 
@@ -64,7 +67,7 @@ This builds the frontend and starts the backend server.
 ## Checks
 
 ```bash
-cd OrbitPage
+cd OrbitPage/app
 npm run lint
 npm run test:unit
 npm run build

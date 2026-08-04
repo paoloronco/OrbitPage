@@ -11,7 +11,7 @@ OrbitPage has two surfaces:
 | Public page | The public page visitors see | None |
 | Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
 
-Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` first checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, choose the admin password and primary public-page slug. OrbitPage then opens the dashboard tutorial. Dashboard sections keep their own URL, so refreshing `/dashboard/links` or `/dashboard/theme` preserves the current workspace area. `/admin` remains a compatibility alias.
+Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` first checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, choose the admin password and primary public-page slug. OrbitPage then opens the dashboard tutorial. Dashboard sections keep their own URL, so refreshing `/dashboard/content` or `/dashboard/theme` preserves the current workspace area. `/admin`, `/dashboard/links`, `/dashboard/pages`, and `/dashboard/menu` remain compatibility aliases and resolve to their current workspace sections.
 
 ## Requirements
 
@@ -34,7 +34,7 @@ npm run start
 Open:
 
 - Public page: <http://localhost:3001>
-- Admin panel: <http://localhost:3001/dashboard/profile>
+- Dashboard: <http://localhost:3001/dashboard/profile>
 - Health check: <http://localhost:3001/health>
 
 `npm run start` builds the Vite frontend and starts the Express server, which serves both the frontend and API.

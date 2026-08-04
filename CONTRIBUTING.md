@@ -8,10 +8,12 @@ Application code lives under `app/`.
 
 ```text
 app/
-  src/      React frontend (Vite + TypeScript)
-  server/   Express backend (Node.js + SQLite)
-  public/   Static assets copied into the frontend build
-  dist/     Generated frontend build output
+  src/                  React frontend (Vite + TypeScript)
+  server/               Express backend (Node.js + SQLite)
+  packages/page-schema/ Shared page and block schemas
+  e2e/                  Playwright browser tests
+  public/               Static assets copied into the frontend build
+  dist/                 Generated frontend build output
 ```
 
 Repository-level files contain Docker, CI, release, and documentation configuration.
@@ -41,7 +43,7 @@ npm run start
 Open:
 
 - Public page: http://localhost:3001
-- Admin panel: http://localhost:3001/admin
+- Admin panel: http://localhost:3001/dashboard/profile
 - Health check: http://localhost:3001/health
 
 The first admin visit asks you to create credentials. The initial username is `admin`.
@@ -67,7 +69,7 @@ npm run dev
 Open:
 
 - Frontend: http://localhost:8080
-- Admin panel: http://localhost:8080/admin
+- Admin panel: http://localhost:8080/dashboard/profile
 - Backend health check: http://localhost:3001/health
 
 ## Checks
@@ -142,6 +144,7 @@ ci(release): publish versioned github releases
 - Use TypeScript types for new frontend code.
 - Avoid `any` unless a boundary genuinely cannot be typed.
 - Keep React components functional and hook-based.
+- Reuse `app/packages/page-schema` for page-boundary types and validation instead of creating parallel contracts.
 - Use existing shadcn/ui and local UI patterns.
 - Keep public links as real `<a href="...">` elements where possible.
 - Validate input on the server, even when the frontend already validates it.
@@ -160,6 +163,7 @@ OrbitPage uses SQLite through `app/server/database.js`.
 ## Security Guidelines
 
 - Never commit secrets, tokens, private keys, or real production data.
+- Never commit SQLite databases, backups or sidecars, uploaded files, logs, or real user content.
 - Do not expose sensitive values to frontend code.
 - Keep `JWT_SECRET` stable and private in production.
 - Use `RESET_TOKEN` only when recovery endpoints are needed.
@@ -177,7 +181,13 @@ OrbitPage uses SQLite through `app/server/database.js`.
 
 ## Release Notes
 
-Maintainers handle version bumps, tags, GitHub releases, and published Docker images. Pull requests should describe user-visible changes clearly so release notes can be written without archaeology.
+Maintainers handle version bumps, tags, GitHub releases, and published Docker
+images. A normal `main` commit never republishes a versioned image or release.
+After the matching `main` CI is fully green, a maintainer may create the exact
+`vX.Y.Z` tag matching both application package versions; the tag-only release
+workflow verifies CI, smoke-tests the image, publishes Docker Hub/GHCR tags, and
+then creates the GitHub release. Pull requests should describe user-visible
+changes clearly so release notes can be written without archaeology.
 
 ## License
 

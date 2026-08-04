@@ -27,22 +27,27 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 | `VIDEO_UPLOAD_LIMIT_MB` | Per-file limit for uploaded video/background media. Content is also validated by MIME, extension, and binary signature. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |
 | `ORBITPAGE_ALLOWED_ORIGINS` | Optional comma-separated allowlist for trusted cross-origin browser clients. Same-origin deployments should leave it unset. |
+| `ORBITPAGE_API_RATE_LIMIT_MAX` | Maximum requests per IP in the general 15-minute API window. Defaults to `300` and is capped at `10000`; sensitive authentication routes keep stricter limits. |
 | `DEMO_MODE` | Disables destructive mutations and resets demo data. Not for normal production. |
 | `ENABLE_HTTPS` | Enables a self-signed HTTPS listener. Usually unnecessary behind real HTTPS proxies. |
 | `SSL_PORT` | HTTPS listener port when `ENABLE_HTTPS=true`. |
 | `BASE_PATH` | Optional mount path, for example `/orbitpage`. |
 | `PUBLIC_BASE_PATH` | Backward-compatible alias for `BASE_PATH`. |
 | `PUBLIC_SITE_URL` | Canonical public URL used for metadata, sitemap, and social previews. |
+| `SITE_URL` | Backward-compatible alias for `PUBLIC_SITE_URL`. Prefer `PUBLIC_SITE_URL` in new deployments. |
 | `PUBLIC_SITE_NAME` | Site name used in generated metadata. |
 | `SEO_INDEXING` | `false`, `0`, `no`, or `off` disables indexing. |
 | `RESET_TOKEN` | Enables token-protected reset endpoints. Use at least 32 characters. |
+| `MEDIA_CLEANUP_ENABLED` | Set to `false` to disable the automatic unused-upload scan. Defaults to enabled outside tests and demo mode. |
+| `MEDIA_CLEANUP_GRACE_HOURS` | Minimum age of an unreferenced upload before deletion. Defaults to `24` and accepts values from 1 to 720 hours. |
+| `TZ` | Fallback IANA timezone for scheduled content that does not define one. Defaults to `UTC`. |
 | `OPENAI_API_KEY` | Optional environment-based OpenAI key for OrbitPage AI. A key saved in the dashboard takes precedence. |
 | `OPENAI_PAGE_AGENT_MODEL` | Optional default model. The dashboard defaults to `gpt-5.6-terra` and only accepts its supported model list. |
 | `ORBITPAGE_SECRET_ENCRYPTION_KEY` | Optional separate stable secret (32+ characters) for encrypting a dashboard-saved OpenAI key. Falls back to `JWT_SECRET`. |
 
 ## OrbitPage AI
 
-Administrators can configure OrbitPage AI from **Dashboard > OrbitPage AI** without adding an environment variable. The saved key is encrypted at rest, never returned by the settings API, and excluded from application backups. Keep `JWT_SECRET` stable across restarts, or set a separate stable `ORBITPAGE_SECRET_ENCRYPTION_KEY`.
+Administrators can configure OrbitPage AI from **Dashboard > AI Assistant** without adding an environment variable. The saved key is encrypted at rest, never returned by the settings API, and excluded from application backups. Keep `JWT_SECRET` stable across restarts, or set a separate stable `ORBITPAGE_SECRET_ENCRYPTION_KEY`.
 
 For secret-manager or immutable-container deployments, set `OPENAI_API_KEY` instead. The dashboard reports that the key comes from `ENV`; it does not expose its value. A key stored from the dashboard takes precedence over the environment key until it is removed.
 
@@ -97,7 +102,7 @@ BASE_PATH=/orbitpage
 With that setting, OrbitPage serves the app from both root and the base path:
 
 - `/` and `/orbitpage`
-- `/dashboard/<section>` and `/orbitpage/dashboard/<section>` (for example `profile`, `links`, or `theme`)
+- `/dashboard/<section>` and `/orbitpage/dashboard/<section>` (for example `profile`, `content`, or `theme`)
 - `/admin` and `/orbitpage/admin` remain compatibility aliases
 - `/api/...` and `/orbitpage/api/...`
 - `/uploads/...` and `/orbitpage/uploads/...`

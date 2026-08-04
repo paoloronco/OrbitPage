@@ -28,6 +28,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      - name: Check Markdown links
+        working-directory: .
+        run: node scripts/check-markdown-links.mjs
+
       - name: Validate one-command installer
         working-directory: .
         run: |
