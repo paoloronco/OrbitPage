@@ -10,6 +10,9 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
   await expect(page.getByRole('heading', { name: 'Share your page and make it discoverable.' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Publishing tools' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Page QR codes' })).toBeVisible();
+  const desktopQrBounds = await page.getByRole('img', { name: 'Generated QR preview' }).boundingBox();
+  expect(desktopQrBounds).not.toBeNull();
+  expect(desktopQrBounds!.width).toBeLessThanOrEqual(220);
 
   await page.getByRole('tab', { name: /Sitemap/ }).click();
   await expect(page.getByRole('heading', { name: 'Sitemap', exact: true })).toBeVisible();
@@ -26,6 +29,11 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('tablist', { name: 'Publishing tools' })).toBeVisible();
+  await page.getByRole('tab', { name: /QR/ }).click();
+  const mobileQrBounds = await page.getByRole('img', { name: 'Generated QR preview' }).boundingBox();
+  expect(mobileQrBounds).not.toBeNull();
+  expect(mobileQrBounds!.width).toBeLessThanOrEqual(190);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   await page.screenshot({ path: 'test-results/publish-tools-mobile.png', fullPage: true });
 });
 

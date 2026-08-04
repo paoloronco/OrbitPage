@@ -66,12 +66,10 @@ export function PublishTools({
 
   return (
     <section className="publish-tools" data-onboarding="publish-section">
-      <header className="publish-tools-header">
-        <span className="publish-tools-header-icon"><Share2 className="h-5 w-5" /></span>
+      <header className="publish-tools-header !items-center !gap-2 !p-0">
+        <span className="publish-tools-header-icon !h-8 !w-8" aria-hidden="true"><Share2 className="h-4 w-4" /></span>
         <div>
-          <p>{tr("Publish tools", "Strumenti di pubblicazione")}</p>
-          <h2>{tr("Share your page and make it discoverable.", "Condividi la pagina e rendila facile da trovare.")}</h2>
-          <span>{tr("QR, search discovery and public text files live together in one place.", "QR, indicizzazione e file testuali pubblici riuniti in un unico spazio.")}</span>
+          <h2 className="!text-base !font-semibold">{tr("Share your page and make it discoverable.", "Condividi la pagina e rendila facile da trovare.")}</h2>
         </div>
       </header>
 

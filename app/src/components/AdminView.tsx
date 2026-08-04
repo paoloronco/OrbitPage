@@ -533,52 +533,64 @@ export const AdminView = ({
   };
 
   const googleAnalyticsPanel = (!saasPlan || entitlements?.analytics === "advanced-ga4") ? (
-    <Card className="admin-panel space-y-5" data-testid="google-analytics-settings">
-      <PanelHeader icon={Globe2} title="Google Analytics 4" />
-      <p className="text-sm leading-6 text-slate-600">
-        {tr("Tracking runs on the public page only. Admin activity stays out of analytics.", "Il monitoraggio viene eseguito solo sulla pagina pubblica. L'attività nell'Admin resta esclusa dalle analytics.")}
-      </p>
-
-      <div className="space-y-2">
-        <Label htmlFor="ga-id" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-          {tr("Measurement ID", "ID di misurazione")}
-        </Label>
-        <Input
-          id="ga-id"
-          value={gaId}
-          onChange={(event) => setGaId(event.target.value)}
-          placeholder="G-XXXXXXXXXX"
-          className="admin-input font-mono text-sm"
-          spellCheck={false}
-        />
-        <p className="text-xs leading-5 text-slate-500">
-          {tr("Find it in Google Analytics, Admin, Data streams, Measurement ID.", "Lo trovi in Google Analytics, Amministrazione, Stream di dati, ID misurazione.")}
+    <details className="managed-analytics-integration" data-testid="google-analytics-settings">
+      <summary>
+        <span className="managed-analytics-integration-title">
+          <Globe2 aria-hidden="true" size={17} />
+          <span>
+            <strong>Google Analytics 4</strong>
+          </span>
+        </span>
+        <span className={profile.googleAnalyticsId ? "is-active" : ""}>
+          {profile.googleAnalyticsId ? tr("Active", "Attivo") : tr("Manage", "Gestisci")}
+        </span>
+      </summary>
+      <div className="managed-analytics-integration-body">
+        <p>
+          {tr("Tracking runs on the public page only. Admin activity stays out of analytics.", "Il monitoraggio viene eseguito solo sulla pagina pubblica. L'attività nell'Admin resta esclusa dalle analytics.")}
         </p>
-      </div>
 
-      {gaId && !gaId.match(/^G-[A-Z0-9]+$/i) && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-          {tr("The ID must start with G- and use only letters and numbers.", "L'ID deve iniziare con G- e contenere solo lettere e numeri.")}
-        </p>
-      )}
+        <div className="managed-analytics-integration-field">
+          <Label htmlFor="ga-id">
+            {tr("Measurement ID", "ID di misurazione")}
+          </Label>
+          <Input
+            id="ga-id"
+            value={gaId}
+            onChange={(event) => setGaId(event.target.value)}
+            placeholder="G-XXXXXXXXXX"
+            className="admin-input font-mono text-sm"
+            spellCheck={false}
+          />
+          <small>
+            {tr("Find it in Google Analytics, Admin, Data streams, Measurement ID.", "Lo trovi in Google Analytics, Amministrazione, Stream di dati, ID misurazione.")}
+          </small>
+        </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          onClick={() => void handleSaveIntegrations()}
-          className="admin-action admin-action-primary"
-          size="sm"
-          disabled={!canEditProfile || !gaDirty || gaSaving || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
-        >
-          {gaSaving && <Loader2 className="h-4 w-4 animate-spin-slow" />}
-          {gaSaving ? tr("Saving", "Salvataggio") : gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
-        </Button>
-        {profile.googleAnalyticsId && (
-          <p className="text-xs text-slate-500">
-            {tr("Active", "Attivo")}: <span className="font-mono text-blue-700">{profile.googleAnalyticsId}</span>
+        {gaId && !gaId.match(/^G-[A-Z0-9]+$/i) && (
+          <p className="managed-analytics-integration-error">
+            {tr("The ID must start with G- and use only letters and numbers.", "L'ID deve iniziare con G- e contenere solo lettere e numeri.")}
           </p>
         )}
+
+        <div className="managed-analytics-integration-actions">
+          <Button
+            onClick={() => void handleSaveIntegrations()}
+            className="admin-action admin-action-primary"
+            size="sm"
+            disabled={!canEditProfile || !gaDirty || gaSaving || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
+          >
+            {gaSaving && <Loader2 className="h-4 w-4 animate-spin-slow" />}
+            {gaSaving ? tr("Saving", "Salvataggio") : gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
+          </Button>
+          {profile.googleAnalyticsId && (
+            <p>
+              {tr("Active", "Attivo")}: <span>{profile.googleAnalyticsId}</span>
+            </p>
+          )}
+        </div>
       </div>
-    </Card>
+    </details>
   ) : (
     <PlanLockedFeature
       title="Google Analytics 4"

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { Download, ExternalLink, QrCode } from "lucide-react";
+import { ChevronDown, Download, ExternalLink, QrCode, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -70,6 +70,7 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
     ? tr("Increase the contrast between the QR colors before downloading.", "Aumenta il contrasto tra i colori del QR prima di scaricarlo.")
     : "";
   const error = qrTarget.error || contrastError || renderError;
+  const previewReady = Boolean(qrTarget.url && !contrastError && !renderError);
 
   useEffect(() => {
     let cancelled = false;
@@ -168,40 +169,59 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
 
   return (
     <Card className="overflow-hidden border-slate-200 bg-white p-0 text-left shadow-sm">
-      <header className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="admin-panel-icon"><QrCode className="h-4 w-4" /></span>
+      <header className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="admin-panel-icon !h-8 !w-8" aria-hidden="true"><QrCode className="h-4 w-4" /></span>
           <div>
-            <h2 className="text-base font-semibold text-slate-950">{tr("Page QR codes", "QR delle pagine")}</h2>
-            <p className="mt-0.5 text-xs leading-5 text-slate-500">{tr("Create print-ready QR codes for this page and its menu.", "Crea QR pronti per la stampa per questa pagina e il suo menu.")}</p>
+            <h2 className="text-sm font-semibold text-slate-950">{tr("Page QR codes", "QR delle pagine")}</h2>
+            <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{tr("Choose a destination, test it and download.", "Scegli la destinazione, provala e scarica il QR.")}</p>
           </div>
         </div>
         {qrTarget.url && !error && (
-          <a href={qrTarget.url} target="_blank" rel="noopener noreferrer">
-            <Button type="button" variant="outline" size="sm"><ExternalLink className="h-4 w-4" />{tr("Test target", "Prova destinazione")}</Button>
-          </a>
+          <Button asChild variant="outline" size="sm">
+            <a href={qrTarget.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr("Test target", "Prova destinazione")}</a>
+          </Button>
         )}
       </header>
 
-      <div className="grid gap-0 lg:grid-cols-[minmax(300px,0.8fr)_minmax(360px,1.2fr)]">
-        <div className="flex min-h-[390px] items-center justify-center bg-slate-50 p-6 sm:p-8">
-          <div className="w-full max-w-[340px] rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <canvas ref={canvasRef} width={settings.size} height={settings.size} className="block h-auto w-full" aria-label={tr("Generated QR preview", "Anteprima QR generato")} />
-            <p className="mt-4 truncate text-center font-mono text-[10px] text-slate-500" title={qrTarget.url}>{qrTarget.url || tr("Loading public URL", "Caricamento URL pubblico")}</p>
-          </div>
+      <div className="grid gap-0 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="flex items-center justify-center border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
+          <figure className="flex w-full flex-col items-center">
+            <div className="relative grid w-full max-w-[190px] place-items-center sm:max-w-[220px]">
+              <canvas
+                ref={canvasRef}
+                width={settings.size}
+                height={settings.size}
+                className={`block h-auto w-full rounded-sm ring-1 ring-slate-200 ${previewReady ? "opacity-100" : "opacity-0"}`}
+                aria-describedby="qr-preview-url"
+                aria-label={tr("Generated QR preview", "Anteprima QR generato")}
+                role="img"
+              >
+                {tr("Generated QR code", "Codice QR generato")}
+              </canvas>
+              {!previewReady && (
+                <div className="absolute inset-0 grid place-items-center rounded-sm border border-dashed border-slate-300 bg-white px-4 text-center text-xs text-slate-500" role="status">
+                  {error ? tr("QR preview unavailable", "Anteprima QR non disponibile") : tr("Loading QR preview", "Caricamento anteprima QR")}
+                </div>
+              )}
+            </div>
+            <figcaption id="qr-preview-url" className="mt-2.5 w-full max-w-[220px] truncate text-center text-[10px] text-slate-500" title={qrTarget.url}>
+              {qrTarget.url || tr("Loading public URL", "Caricamento URL pubblico")}
+            </figcaption>
+          </figure>
         </div>
 
-        <div className="min-w-0 space-y-6 border-t border-slate-200 p-5 lg:border-l lg:border-t-0 sm:p-6">
+        <div className="min-w-0 space-y-4 p-4 sm:p-5">
           <section className="space-y-3">
             <div>
-              <Label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Destination", "Destinazione")}</Label>
+              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Destination", "Destinazione")}</h3>
               <p className="mt-1 text-xs text-slate-500">{source === "configured" ? tr("Uses your configured public domain.", "Usa il dominio pubblico configurato.") : tr("Uses this installation's public URL.", "Usa l'URL pubblico di questa installazione.")}</p>
             </div>
             <div className="grid grid-cols-3 overflow-hidden rounded-md border border-slate-200" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
               {(["page", "menu", "custom"] as const).map((destination) => {
                 const disabled = destination === "menu" && !menuEnabled;
                 const label = destination === "page" ? tr("Page", "Pagina") : destination === "menu" ? "Menu" : tr("Path", "Percorso");
-                return <button key={destination} type="button" disabled={disabled} onClick={() => update("destination", destination)} className={`min-h-10 border-r border-slate-200 px-2 text-xs font-semibold last:border-r-0 ${settings.destination === destination ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-40`}>{label}</button>;
+                return <button aria-pressed={settings.destination === destination} key={destination} type="button" disabled={disabled} onClick={() => update("destination", destination)} className={`min-h-10 border-r border-slate-200 px-2 text-xs font-semibold last:border-r-0 ${settings.destination === destination ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-40`}>{label}</button>;
               })}
             </div>
             {settings.destination === "custom" && (
@@ -212,22 +232,50 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
             )}
           </section>
 
-          <section className="space-y-3">
-            <Label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Style", "Stile")}</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {QR_PRESETS.map((preset) => <button key={preset.name} type="button" onClick={() => setSettings((current) => ({ ...current, foreground: preset.foreground, background: preset.background }))} className="flex min-h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 hover:border-blue-300"><span className="h-5 w-5 rounded-sm border border-black/10" style={{ background: `linear-gradient(135deg, ${preset.foreground} 50%, ${preset.background} 50%)` }} />{preset.name}</button>)}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5"><Label className="text-xs">{tr("Foreground", "Primo piano")}</Label><Input type="color" value={settings.foreground} onChange={(event) => update("foreground", event.target.value)} className="h-10 w-full p-1" /></div>
-              <div className="space-y-1.5"><Label className="text-xs">{tr("Background", "Sfondo")}</Label><Input type="color" value={settings.background} onChange={(event) => update("background", event.target.value)} className="h-10 w-full p-1" /></div>
-            </div>
-          </section>
+          <details className="group overflow-hidden rounded-md border border-slate-200 bg-slate-50/60">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 marker:content-none [&::-webkit-details-marker]:hidden">
+              <SlidersHorizontal className="h-4 w-4 text-blue-600" aria-hidden="true" />
+              <span className="min-w-0 flex-1">
+                <span className="block">{tr("Style and export quality", "Stile e qualità di esportazione")}</span>
+                <span className="mt-0.5 block text-[10px] font-normal text-slate-500">{settings.size}px · {settings.correction}</span>
+              </span>
+              <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+            </summary>
 
-          <section className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-size" className="text-xs">{tr("Output size", "Dimensione output")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.size}px</span></div><Input id="qr-size" type="range" min={160} max={1024} step={32} value={settings.size} onChange={(event) => update("size", Number(event.target.value))} /></div>
-            <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-margin" className="text-xs">{tr("Quiet margin", "Margine libero")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.margin}</span></div><Input id="qr-margin" type="range" min={1} max={12} value={settings.margin} onChange={(event) => update("margin", Number(event.target.value))} /></div>
-            <div className="space-y-1.5 sm:col-span-2"><Label className="text-xs">{tr("Damage tolerance", "Tolleranza ai danni")}</Label><Select value={settings.correction} onValueChange={(value: QrErrorCorrection) => update("correction", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="M">{tr("Standard", "Standard")}</SelectItem><SelectItem value="Q">{tr("High", "Alta")}</SelectItem><SelectItem value="H">{tr("Maximum", "Massima")}</SelectItem></SelectContent></Select></div>
-          </section>
+            <div className="space-y-4 border-t border-slate-200 bg-white p-3">
+              <section className="space-y-3" aria-labelledby="qr-style-heading">
+                <h3 id="qr-style-heading" className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Style", "Stile")}</h3>
+                <div className="grid grid-cols-3 gap-2" role="group" aria-label={tr("QR color preset", "Preset colori QR")}>
+                  {QR_PRESETS.map((preset) => {
+                    const selected = settings.foreground.toLowerCase() === preset.foreground.toLowerCase()
+                      && settings.background.toLowerCase() === preset.background.toLowerCase();
+                    return (
+                      <button
+                        aria-pressed={selected}
+                        key={preset.name}
+                        type="button"
+                        onClick={() => setSettings((current) => ({ ...current, foreground: preset.foreground, background: preset.background }))}
+                        className={`flex min-h-10 items-center gap-2 rounded-md border px-2 text-xs font-semibold ${selected ? "border-blue-400 bg-blue-50 text-blue-800" : "border-slate-200 bg-white text-slate-700 hover:border-blue-300"}`}
+                      >
+                        <span className="h-5 w-5 rounded-sm border border-black/10" aria-hidden="true" style={{ background: `linear-gradient(135deg, ${preset.foreground} 50%, ${preset.background} 50%)` }} />
+                        {preset.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5"><Label htmlFor="qr-foreground" className="text-xs">{tr("Foreground", "Primo piano")}</Label><Input id="qr-foreground" type="color" value={settings.foreground} onChange={(event) => update("foreground", event.target.value)} className="h-10 w-full p-1" /></div>
+                  <div className="space-y-1.5"><Label htmlFor="qr-background" className="text-xs">{tr("Background", "Sfondo")}</Label><Input id="qr-background" type="color" value={settings.background} onChange={(event) => update("background", event.target.value)} className="h-10 w-full p-1" /></div>
+                </div>
+              </section>
+
+              <section className="grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2" aria-label={tr("Export quality", "Qualità di esportazione")}>
+                <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-size" className="text-xs">{tr("Output size", "Dimensione output")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.size}px</span></div><Input id="qr-size" type="range" min={160} max={1024} step={32} value={settings.size} onChange={(event) => update("size", Number(event.target.value))} /></div>
+                <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-margin" className="text-xs">{tr("Quiet margin", "Margine libero")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.margin}</span></div><Input id="qr-margin" type="range" min={1} max={12} value={settings.margin} onChange={(event) => update("margin", Number(event.target.value))} /></div>
+                <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="qr-correction" className="text-xs">{tr("Damage tolerance", "Tolleranza ai danni")}</Label><Select value={settings.correction} onValueChange={(value: QrErrorCorrection) => update("correction", value)}><SelectTrigger id="qr-correction"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="M">{tr("Standard", "Standard")}</SelectItem><SelectItem value="Q">{tr("High", "Alta")}</SelectItem><SelectItem value="H">{tr("Maximum", "Massima")}</SelectItem></SelectContent></Select></div>
+              </section>
+            </div>
+          </details>
 
           {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium leading-5 text-red-700">{error}</p>}
           <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4">
