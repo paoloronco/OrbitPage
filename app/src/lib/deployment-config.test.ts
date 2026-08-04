@@ -43,18 +43,22 @@ describe('deployment configuration', () => {
     expect(rootDockerfile).toContain('COPY app/server/services ./services');
   });
 
-  it('creates GitHub releases from the package version tag on main pushes', () => {
+  it('creates releases only from an exact version tag after the main CI succeeds', () => {
     const workflow = read('.github/workflows/release.yml');
 
-    expect(workflow).toContain('branches: [ "main" ]');
+    expect(workflow).toContain('tags: ["v*.*.*"]');
+    expect(workflow).not.toContain('branches: [ "main" ]');
     expect(workflow).toContain("require('./app/package.json').version");
     expect(workflow).toContain("require('./app/server/package.json').version");
-    expect(workflow).toContain('TAG="v${VERSION}"');
+    expect(workflow).toContain('EXPECTED_TAG="v${VERSION}"');
+    expect(workflow).toContain('git merge-base --is-ancestor "$GITHUB_SHA" origin/main');
+    expect(workflow).toContain('"E2E (webkit)"');
     expect(workflow).toContain('gh release create "$TAG"');
+    expect(workflow).not.toContain('git push origin "$TAG"');
   });
 
   it('publishes Docker images to both Docker Hub and GitHub Container Registry', () => {
-    const workflow = read('.github/workflows/docker-publish.yml');
+    const workflow = read('.github/workflows/release.yml');
 
     expect(workflow).toContain('DOCKERHUB_IMAGE: docker.io/paueron/orbitpage');
     expect(workflow).toContain('GHCR_IMAGE: ghcr.io/paoloronco/orbitpage');
@@ -66,17 +70,14 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('${{ env.GHCR_IMAGE }}');
   });
 
-  it('publishes package-version Docker tags on main pushes without relying on tag-triggered workflows', () => {
-    const workflow = read('.github/workflows/docker-publish.yml');
+  it('publishes immutable package-version Docker tags only from the verified release tag', () => {
+    const workflow = read('.github/workflows/release.yml');
 
-    expect(workflow).toContain('id: version');
-    expect(workflow).toContain("require('./app/package.json').version");
-    expect(workflow).toContain("version.split('.').slice(0, 2).join('.')");
-    expect(workflow).not.toContain('`${v[0]}.${v[1]}`');
-    expect(workflow).toContain('major_minor=');
-    expect(workflow).toContain('type=raw,value=${{ steps.version.outputs.version }}');
-    expect(workflow).toContain('type=raw,value=v${{ steps.version.outputs.version }}');
-    expect(workflow).toContain('type=raw,value=${{ steps.version.outputs.major_minor }}');
+    expect(workflow).toContain('needs: verify');
+    expect(workflow).toContain('type=semver,pattern={{version}}');
+    expect(workflow).toContain('type=semver,pattern=v{{version}}');
+    expect(workflow).toContain('type=semver,pattern={{major}}.{{minor}}');
+    expect(workflow).toContain('push: true');
   });
 
   it('runs a blocking CI quality gate for pull requests and main pushes', () => {

@@ -1,8 +1,6 @@
-name: Deploy to Cloud Run from Source
+name: Legacy manual Cloud Run deploy
 
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
 
 concurrency:

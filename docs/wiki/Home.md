@@ -1,6 +1,6 @@
 # OrbitPage Wiki
 
-Welcome to the operational documentation for OrbitPage.
+Welcome to the operational documentation for OrbitPage. The task-oriented repository index is available at [docs/README.md](../README.md); this page remains as a stable compatibility entry point.
 
 The README provides the product overview and fastest installation path. This wiki contains the longer guides for installation, production deployment, configuration, development, indexing, and troubleshooting.
 
@@ -13,6 +13,9 @@ The README provides the product overview and fastest installation path. This wik
 - [SEO and indexing](./SEO-and-indexing.md): canonical URLs, sitemap, robots, social previews, and staging noindex mode.
 - [Security](./Security.md): security model, deployment hardening, and reporting policy.
 - [Troubleshooting](./Troubleshooting.md): common startup, Docker, login, database, and indexing issues.
+- [Dashboard guide](../user-guide/dashboard.md): Page, Content, Theme, Publish, Backup, Analytics, Privacy, Team, and Account.
+- [AI assistant](../user-guide/ai-assistant.md): provider configuration and the plan-review-confirm workflow.
+- [Analytics and privacy](../user-guide/analytics-and-privacy.md): built-in counters, GA4, consent, and policy setup.
 
 ## Useful Links
 

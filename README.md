@@ -5,8 +5,7 @@
 </p>
 
 <p align="center">
-  Build a flexible public page for a person, brand, venue, event, or small business.<br />
-  Self-host the open-source edition or use the managed service at <a href="https://orbitpage.com">orbitpage.com</a>.
+  Build and self-host one polished public destination for a person, brand, venue, event, or small business.
 </p>
 
 <p align="center">
@@ -17,230 +16,80 @@
 </p>
 
 <p align="center">
-  <a href="https://orbitpage.com/product">Product</a> ·
-  <a href="https://orbitpage.com/open-source">Open source</a> ·
-  <a href="https://orbitpage.com/hosting">Managed hosting</a> ·
-  <a href="https://orbitpage.com/pricing">Pricing</a> ·
-  <a href="./docs/wiki/Home.md">Documentation</a> ·
-  <a href="./docs/API.md">APIs</a>
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#what-you-can-build">Features</a> ·
+  <a href="./docs/README.md">Documentation</a> ·
+  <a href="./CONTRIBUTING.md">Contributing</a> ·
+  <a href="./SECURITY.md">Security</a>
 </p>
 
-OrbitPage is a public-page builder with a real editing workspace, not only a list of buttons. It supports links, rich content blocks, media, social profiles, maps, events, contact information, themes, analytics, SEO controls, consent settings, and responsive public rendering.
+OrbitPage is an open-source public-page builder with a real editing dashboard, responsive public rendering, an Express API for the bundled application, SQLite persistence, and local file storage. No external database is required.
 
-This repository contains the **open-source, self-hosted edition**. It runs as one Node.js application with a React admin interface, an Express API, SQLite persistence, and local file storage. No external database is required.
+This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
 
-## Choose Your Edition
+## Contents
 
-OrbitPage is available in two forms built around the same page builder and public-page experience.
+- [Quick start](#quick-start)
+- [What you can build](#what-you-can-build)
+- [Dashboard workspaces](#dashboard-workspaces)
+- [How it runs](#how-it-runs)
+- [First run](#first-run)
+- [Configuration](#configuration)
+- [Data and backups](#data-and-backups)
+- [Production checklist](#production-checklist)
+- [Development](#development)
+- [Documentation](#documentation)
+- [Security and contributing](#security-and-contributing)
 
-| | Open-source edition | Managed SaaS |
-| --- | --- | --- |
-| Best for | Self-hosters, homelabs, developers, and teams that want infrastructure control | People and businesses that want OrbitPage without operating a server |
-| Where it runs | Your Docker host, VM, or Node.js platform | Managed at [orbitpage.com](https://orbitpage.com) |
-| Source | This public repository, MIT licensed | Hosted platform and managed control plane |
-| Data | SQLite database and uploads on your persistent volume | Managed accounts, storage, publishing, and backups |
-| Public URL | Your own deployment URL | Hosted username URL, with custom domains on eligible plans |
-| Newsletters | Not included; connect an external newsletter tool if needed | Tenant SMTP, double opt-in subscribers, scheduled campaigns, and delivery reports on eligible paid plans |
-| Operations | You handle deployment, TLS, updates, backups, and availability | OrbitPage handles the hosting workflow |
-| Cost | Software is free; you pay for your infrastructure | Free and paid plans are listed on the [pricing page](https://orbitpage.com/pricing) |
-
-The managed control plane, billing system, and hosting infrastructure are not included in this repository. Improvements to the shared OrbitPage application can be released in both editions.
-
-Managed newsletters are also a hosted-platform feature rather than part of this repository. Eligible paid workspaces can connect their own SMTP server, collect confirmed subscribers, create and schedule branded campaigns, and review SMTP acceptance, opens, clicks, rejections, and unsubscribes. The customer remains responsible for consent, sender-domain authentication, provider charges, and mailing-list compliance. See the [managed service](https://orbitpage.com/hosting) and [pricing](https://orbitpage.com/pricing) for current availability and limits.
-
-## Features
-
-### Page building
-
-- Main page plus organized subpages with a unique slug, title, description and independent block collection
-- Stable editor routes such as `/dashboard/pages` and public subpage routes such as `/services`
-
-- Link cards, text blocks, headings, separators, images, and native video
-- Social rows, contact details, maps, events with timezone-aware countdowns, callouts, Google Calendar and Calendly bookings, Typeform forms, and consent-aware embeds
-- Native venue menus with sections, one-level subsections, products, variants, images, and availability controls
-- Scheduled menu cards plus visible unavailable states for links, tickets, menus, and dishes
-- Per-block visibility, ordering, scheduling, icons, cover media, and layout controls
-- Link-health indicators supplied by the managed platform without exposing browser-side probes
-- Responsive rendering for desktop and mobile pages
-
-### Design
-
-- Ready-made page themes and card-style presets
-- OrbitPage AI page editing with current-page context, structured proposals, explicit confirmation, and a self-hosted OpenAI API key
-- Live preview while editing profile, links, content, and themes
-- Colors, typography, spacing, radius, borders, shadows, blur, and glow
-- Solid, fully transparent, and liquid-glass surfaces, configurable globally and per profile or content card
-- A live setup checklist for the first three login sessions that then retires automatically
-- Profile-card, avatar/logo, background image, video, and favicon controls
-- Explicit editor localization in 14 languages with Arabic RTL layout; public pages preserve the author's published content
-- Optional advanced CSS customization
-
-### Publishing and discovery
-
-- Editable title, description, canonical URL, and social-preview metadata
-- Open Graph, Twitter Card, and Schema.org output
-- Unified **Publish** workspace for customizable PNG/SVG QR codes, generated `sitemap.xml`, and editable discovery files
-- Editable `robots.txt`, canonical `llms.txt` (`llm.txt` alias), `humans.txt`, `ai.txt`, and `security.txt`
-- Safe custom `/name.txt` and `/.well-known/name.txt` endpoints
-- Optional `noindex` mode for private, staging, or preview deployments
-
-### Privacy and operations
-
-- Basic self-hosted click analytics with privacy and consent controls
-- Google Consent Mode and external CMP integration options
-- Privacy Policy and Cookie Policy links or hosted content
-- Selective, backward-compatible JSON backup and restore
-- Storage quotas and validated image/video uploads
-- Health endpoint, Docker health support, and persistent application data
-
-### Administration and security
-
-- First-run admin setup and bcrypt password hashing
-- Signed JWT sessions and protected password recovery
-- Multi-user access controls and scoped editing permissions
-- Rate limits, file-type checks, upload-size limits, and path validation
-- Admin, API, health, and unknown application routes excluded from indexing
-
-### Automation REST API
-
-- The managed service provides a versioned Automation REST API for scripts and CI that read or update page blocks
-- Personal tokens are workspace-bound, revocable, scoped, and separate from the authenticated dashboard session
-- The self-hosted Express API powers the bundled dashboard and is not the same public automation contract
-- See [Automation REST API](./docs/API.md) for credential boundaries, a first request, the complete hosted guide, and the OpenAPI contract
-
-## How It Works
-
-The self-hosted edition is intentionally compact:
-
-```text
-Browser
-  ├─ Public OrbitPage
-  └─ /dashboard/profile React workspace
-           │
-           ▼
-      Express API
-       ├─ SQLite database
-       └─ Local uploads
-```
-
-Repository layout:
-
-```text
-app/
-  src/          React + TypeScript frontend
-  server/       Express API, authentication, SQLite, and uploads
-  public/       Static and brand assets
-docs/
-  wiki/         Installation and operations guides
-.github/        CI, release, and container workflows
-Dockerfile      Production multi-stage image
-docker-compose.yml
-```
-
-## Quick Start With Docker
+## Quick start
 
 Docker is the recommended production path.
 
 ### One-command Linux install
 
-On a clean x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC, run:
+On a clean x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC:
 
-```bash
+~~~bash
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | sudo bash
-```
+~~~
 
-The installer uses Docker's official apt repository, creates a persistent data directory, generates a private JWT secret, starts OrbitPage, and waits for its health check. It is idempotent: running it again preserves the existing secret and data.
+The installer configures Docker from its official repository, generates a private JWT secret, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command.
 
-Do not run this guest installer directly on a Proxmox VE host. Use the dedicated host installer below instead.
+For a Proxmox VE 8+ host, use the dedicated host-to-LXC installer instead:
 
-### One-command Proxmox VE install
-
-On an x86-64 Proxmox VE 8 or newer host, run as `root`:
-
-```bash
+~~~bash
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | bash
-```
+~~~
 
-It downloads the latest Debian 12 template when needed, creates an unprivileged LXC with Docker-compatible `nesting` and `keyctl`, enables DHCP and the Proxmox firewall on `vmbr0`, installs OrbitPage inside the guest, and prints the public and first-setup URLs. Docker is never installed on the PVE host.
+Do not run the Linux guest installer directly on a Proxmox host. See [Deployment](./docs/wiki/Deployment.md) for supported options, static networking, image pinning, backups, updates, and removal.
 
-Defaults are 2 cores, 2 GB RAM, 12 GB disk, CT ID from the cluster, and port `8080`. Every value can be overridden without editing the script:
+### Docker Compose
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | \
-  ORBITPAGE_PVE_CTID=250 \
-  ORBITPAGE_PVE_HOSTNAME=orbitpage \
-  ORBITPAGE_PVE_BRIDGE=vmbr0 \
-  ORBITPAGE_PVE_MEMORY=4096 \
-  bash
-```
+1. Clone the repository.
+2. Replace the sample <code>JWT_SECRET</code> in [docker-compose.yml](./docker-compose.yml).
+3. Start the service:
 
-After installation:
-
-```bash
-orbitpage status
-orbitpage logs
-orbitpage update
-orbitpage backup
-```
-
-See [Deployment](./docs/wiki/Deployment.md) for Linux and Proxmox options, static networking, image pinning, backups, updates, and removal.
-
-### Docker run
-
-```bash
-docker run -d \
-  --name orbitpage \
-  --restart unless-stopped \
-  -p 8080:8080 \
-  -e NODE_ENV=production \
-  -e PORT=8080 \
-  -e JWT_SECRET="$(openssl rand -hex 32)" \
-  -v orbitpage_data:/app/data \
-  paueron/orbitpage:latest
-```
+~~~bash
+docker compose up -d
+~~~
 
 Open:
 
 - Public page: <http://localhost:8080>
-- Admin workspace: <http://localhost:8080/dashboard/profile>
+- Dashboard: <http://localhost:8080/dashboard/profile>
 - Health check: <http://localhost:8080/health>
 
-Before setup, the public URL shows a deliberate **Under construction** welcome screen with links to this repository and the managed OrbitPage service. Open `/dashboard/profile` to start the installation wizard. OrbitPage checks the Node.js runtime, SQLite schema, persistent storage, frontend build, and session-secret configuration before it accepts any credentials.
+The same image is published as <code>paueron/orbitpage:latest</code> and <code>ghcr.io/paoloronco/orbitpage:latest</code>. Versioned tags are listed in [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases).
 
-The first username is always `admin` and cannot be changed. Choose its password and the primary public-page slug in the wizard. OrbitPage creates the administrator, page address, and starter profile together; it then opens the real dashboard and offers the guided product tutorial. Page tools stay grouped at the top of the dashboard, while Team, Account and the Open Source plan summary stay with the installation controls at the bottom. Each workspace area has a stable URL, such as `/dashboard/content`, `/dashboard/theme`, `/dashboard/team`, `/dashboard/account` and `/dashboard/plan`; the legacy `/admin` URL redirects to the profile section and `/dashboard/access` remains a compatible alias for Account.
-
-The Docker image is published to both registries:
-
-```text
-paueron/orbitpage:latest
-ghcr.io/paoloronco/orbitpage:latest
-```
-
-Versioned image tags are available from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases).
-
-## Docker Compose
-
-1. Review [docker-compose.yml](./docker-compose.yml).
-2. Replace the sample `JWT_SECRET` with a long random value.
-3. Start the service:
-
-```bash
-docker compose up -d
-```
-
-The included Compose file stores persistent data in `./orbitpage-data`. Keep this directory when recreating or upgrading the container.
-
-## Run From Source
+### Run from source
 
 Requirements:
 
-- Node.js `^20.19.0` or `>=22.12.0`
+- Node.js <code>^20.19.0</code> or <code>>=22.12.0</code>
 - npm
 - Git
 
-Install and start:
-
-```bash
+~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage/app
 npm ci
@@ -248,153 +97,198 @@ npm run install:server
 export JWT_SECRET="$(openssl rand -hex 32)"
 export DATA_DIR="$PWD/.orbitpage-data"
 npm run start
-```
+~~~
 
-On Windows PowerShell, set the same stable values before `npm run start`:
+The production-style source run is available at <http://localhost:3001>.
 
-```powershell
-$env:JWT_SECRET = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLower()
-$env:DATA_DIR = "$PWD\.orbitpage-data"
-npm run start
-```
+## What you can build
 
-The production-style source installation runs on <http://localhost:3001> by default.
+### Public pages and content
 
-## First-Run Flow
+- A main public page plus focused subpages with independent slugs, titles, descriptions, and blocks.
+- Link, text, heading, separator, image, native video, social, contact, map, event, callout, calendar, booking, form, and consent-aware embed blocks.
+- Venue menus with locale, sections, one-level subsections, products, variants, images, prices, scheduling, and availability.
+- Per-block visibility, ordering, scheduling, icons, cover media, calls to action, and layout controls.
+- Responsive public rendering for mobile, laptop, and desktop layouts.
 
-The same onboarding is used by Docker, the one-command installer, and source installations:
+### Identity and design
 
-1. Open the public URL to confirm that OrbitPage is running. A fresh instance displays **Under construction** and is automatically excluded from indexing and analytics.
-2. Open `/dashboard/profile`.
-3. Review the live dependency checks. Failed checks block setup and include a short corrective message.
-4. Keep the fixed `admin` username and create a strong password.
-5. Choose the primary page slug, for example `my-brand` for `/my-brand`.
-6. Complete setup. The administrator, slug, and empty starter profile are committed atomically, then the dashboard tutorial starts.
+- Creator, company, and studio profile structures.
+- Profile image or logo, shape and size, favicon, social profiles, browser title, SEO description, and footer.
+- Ready-made themes plus colors, typography, spacing, surfaces, borders, radius, shadow, blur, and per-card overrides.
+- Live preview using the same public renderer.
+- Dashboard localization in 14 languages with Arabic RTL layout.
 
-The public URL, canonical metadata, sitemap, QR tools, and dashboard **Public page** action use the chosen slug. Existing installations created before this flow remain backward compatible and continue serving their main page at `/` until a slug exists.
+### Publishing and discovery
+
+- A unified Publish workspace for QR codes, sitemap state, and discovery files.
+- Screen and print QR presets with PNG and SVG downloads.
+- Canonical URL, Open Graph, Twitter Card, Schema.org, and <code>noindex</code> controls.
+- Generated <code>sitemap.xml</code>.
+- Editable <code>robots.txt</code>, <code>llms.txt</code>, <code>humans.txt</code>, <code>ai.txt</code>, <code>security.txt</code>, and safe custom text endpoints.
+
+### Operations, privacy, and security
+
+- Built-in self-hosted click and CTA counters, plus optional GA4 integration on the public page.
+- Consent controls, policy links, Google Consent Mode, and optional external CMP integration.
+- Complete or selective JSON backup and restore.
+- Upload quotas, validated image and video uploads, and unused-media cleanup.
+- Multiple dashboard users, scoped permissions, password management, and TOTP two-factor authentication.
+- Health checks, persistent local data, Docker support, and additive SQLite migrations.
+
+## Dashboard workspaces
+
+The current dashboard keeps related work together:
+
+| Workspace | Purpose |
+| --- | --- |
+| **Page** | Identity, profile image, role, browser presence, and profile-card settings |
+| **Content** | Home blocks, venue menu, and public subpages |
+| **AI Assistant** | Propose profile, content, and theme changes for explicit review and confirmation |
+| **Theme** | Page-wide visual system and responsive live preview |
+| **Publish** | QR downloads, sitemap, robots, and discovery text files |
+| **Backup** | Portable exports, selective restore, and unused-media tools |
+| **Analytics** | Built-in performance and optional GA4 settings |
+| **Privacy** | Consent behavior, legal policies, and external CMP settings |
+| **Team** | Additional users and permissions |
+| **Account** | Password and two-factor authentication |
+
+Dashboard routes are stable, including <code>/dashboard/profile</code>, <code>/dashboard/content</code>, <code>/dashboard/ai</code>, <code>/dashboard/theme</code>, and <code>/dashboard/publish</code>. Legacy routes such as <code>/admin</code> and the old Links, Pages, Menu, and Access paths remain compatibility aliases.
+
+Read the [dashboard guide](./docs/user-guide/dashboard.md) for the complete route map and editing workflow.
+
+## How it runs
+
+~~~text
+Browser
+  ├─ public OrbitPage
+  └─ /dashboard/* React workspace
+           │
+           ▼
+      Express application
+       ├─ internal dashboard API
+       ├─ SQLite database
+       └─ local uploads
+~~~
+
+Repository layout:
+
+~~~text
+app/
+  src/                  React + TypeScript frontend
+  server/               Express backend and SQLite
+  packages/page-schema/ Shared page-data schemas
+  e2e/                  Playwright browser tests
+docs/                   User and operations guides
+scripts/                Installer and repository helpers
+.github/                CI, release, and image workflows
+Dockerfile              Canonical production image
+~~~
+
+See [app/README.md](./app/README.md) for application development boundaries.
+
+## First run
+
+1. Open the public URL. A fresh instance shows **Under construction** and is excluded from indexing and analytics.
+2. Open <code>/dashboard/profile</code>.
+3. Review the runtime, SQLite, storage, frontend, and session checks.
+4. Create the password for the fixed first username, <code>admin</code>.
+5. Choose the primary public-page slug.
+6. Complete setup and follow the dashboard guide.
+
+The administrator, slug, and starter profile are created atomically. Existing installations created before slug-based setup remain backward compatible.
 
 ## Configuration
 
-The essential server configuration is deliberately small.
+The essential production settings are:
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `JWT_SECRET` | Production | Random at runtime | Signs admin sessions. Use a stable, long random value in production. |
-| `PORT` | No | `3001` (`8080` in Docker) | HTTP listening port. |
-| `DATA_DIR` | Recommended | Server directory (`/app/data` in Docker) | Stores `orbitpage.db` and uploaded media. |
-| `PUBLIC_SITE_URL` | Recommended | Request origin | Canonical public URL used for SEO, sharing, sitemap, and QR codes. |
-| `PUBLIC_SITE_NAME` | No | `OrbitPage` | Site name used in generated metadata. |
-| `SEO_INDEXING` | No | `true` | Set to `false` for private or staging deployments. |
-| `UPLOAD_STORAGE_QUOTA_MB` | No | `1024` | Total upload quota for the installation. |
-| `VIDEO_UPLOAD_LIMIT_MB` | No | `100` | Per-file MP4/WebM upload limit. |
-| `MEDIA_CLEANUP_ENABLED` | No | `true` | Automatically remove uploads no longer referenced by page data. |
-| `MEDIA_CLEANUP_GRACE_HOURS` | No | `24` | Minimum age before an unused upload can be removed. |
-| `RESET_TOKEN` | No | Disabled | Enables protected credential recovery. Use at least 32 characters. |
-| `BASE_PATH` | No | Empty | Serves OrbitPage from a subpath such as `/links`. |
-| `OPENAI_API_KEY` | No | Dashboard setting | Optional environment-based key for OrbitPage AI. Administrators can instead save their key under **Dashboard > OrbitPage AI**. |
-| `OPENAI_PAGE_AGENT_MODEL` | No | `gpt-5.6-terra` | Default OpenAI model when no model has been selected in the dashboard. |
-| `ORBITPAGE_SECRET_ENCRYPTION_KEY` | No | `JWT_SECRET` | Optional separate 32+ character secret used to encrypt the saved OpenAI key. |
-| `ORBITPAGE_ALLOWED_ORIGINS` | No | Same-origin only | Comma-separated allowlist for trusted cross-origin browser clients. Leave unset for the standard same-origin deployment. |
+| <code>JWT_SECRET</code> | Production | Random outside production | Signs sessions and protects encrypted server-side secrets |
+| <code>DATA_DIR</code> | Recommended | Server directory; <code>/app/data</code> in Docker | Stores SQLite and uploads |
+| <code>PORT</code> | No | <code>3001</code>; <code>8080</code> in Docker | HTTP listener |
+| <code>PUBLIC_SITE_URL</code> | Recommended | Request origin | Canonical public URL for sharing, QR, sitemap, and metadata |
+| <code>PUBLIC_SITE_NAME</code> | No | <code>OrbitPage</code> | Site name in generated metadata |
+| <code>SEO_INDEXING</code> | No | <code>true</code> | Set to <code>false</code> for staging or private deployments |
+| <code>UPLOAD_STORAGE_QUOTA_MB</code> | No | <code>1024</code> | Total upload quota |
+| <code>VIDEO_UPLOAD_LIMIT_MB</code> | No | <code>100</code> | Per-file video limit |
 
-See [Configuration](./docs/wiki/Configuration.md) for the complete reference, including HTTPS, reverse proxies, legal pages, and optional integrations.
+For AI provider settings, cleanup controls, rate limiting, HTTPS, base paths, CORS, reset recovery, and build-time variables, use the complete [Configuration reference](./docs/wiki/Configuration.md).
 
-### Self-hosted OrbitPage AI
+## Data and backups
 
-Open **Dashboard > OrbitPage AI**, paste an OpenAI API key, choose a supported model, and save. The key is encrypted with AES-256-GCM before it is stored in SQLite, is never returned to the browser, and is excluded from JSON backups. A stable `JWT_SECRET` of at least 32 characters is required unless a separate `ORBITPAGE_SECRET_ENCRYPTION_KEY` is configured.
+Everything that must survive a restart belongs under <code>DATA_DIR</code>:
 
-The assistant receives a bounded representation of the authenticated editor's current profile, content blocks, and theme. It can only propose operations allowed by that editor's permissions. Nothing is written during generation: OrbitPage validates the structured operations, shows an exact proposal, and applies it only after explicit confirmation. Proposals expire after ten minutes and are rejected if the page changed in the meantime.
-
-## Persistent Data and Backups
-
-Everything that must survive a restart lives under `DATA_DIR`:
-
-```text
+~~~text
 orbitpage.db
 uploads/
-```
+~~~
 
-For Docker, persist `/app/data`. Back up both the database and uploads together, or use the JSON backup/restore controls in the Admin workspace. Export and restore can be limited to profile data, blocks, appearance, privacy, discovery files, administrator accounts, or uploaded media. Unselected restore sections are left unchanged.
+Persist <code>/app/data</code> in Docker. Back up the database and uploads together before upgrades or restores. Never commit a database, database backup or sidecar, uploads, logs, environment file, or real user content.
 
-Complete exports retain the historical schema-v1 format. Selective exports use schema v2 and declare their included sections explicitly; current versions accept both formats. Keep an occasional complete backup even when selective backups are convenient, and never recreate a production container without its existing volume or bind mount.
+The dashboard can create complete or selective JSON exports. Keep occasional infrastructure-level backups as well; a selective export does not replace a consistent copy of the complete data directory.
 
-OrbitPage checks unused media automatically every six hours. The cleanup scans all page data before deleting anything and protects recent uploads for at least 24 hours by default. Administrators can preview reclaimable space or run the cleanup immediately from **Backup & Restore**. Set `MEDIA_CLEANUP_ENABLED=false` to disable the scheduled job or increase `MEDIA_CLEANUP_GRACE_HOURS` for a longer safety window.
+## Production checklist
 
-## Deploying in Production
+1. Use a stable, long, random <code>JWT_SECRET</code>.
+2. Persist <code>DATA_DIR</code> or <code>/app/data</code>.
+3. Put OrbitPage behind trusted HTTPS.
+4. Set <code>PUBLIC_SITE_URL</code> to the final public origin.
+5. Enable TOTP for privileged users under **Dashboard > Account**.
+6. Back up SQLite and uploads before upgrades.
+7. Verify <code>/health</code> after deployment.
+8. Set <code>SEO_INDEXING=false</code> on staging and private instances.
 
-OrbitPage can run anywhere that supports a persistent Docker container or Node.js service, including a VM, home server, Cloud Run, Render, Fly.io, DigitalOcean, Azure App Service, Coolify, CapRover, Dokku, and similar platforms.
-
-For a production deployment:
-
-1. Set a stable `JWT_SECRET`.
-2. Enable TOTP two-factor authentication for every privileged user under **Dashboard > Access**, then store the one-time recovery codes outside OrbitPage.
-2. Persist `DATA_DIR` or `/app/data`.
-3. Put the service behind HTTPS using your platform or reverse proxy.
-4. Set `PUBLIC_SITE_URL` to the final public origin.
-5. Back up the database and uploads before upgrades.
-6. Check `/health` after each deployment.
-
-Read [Deployment](./docs/wiki/Deployment.md) for reverse-proxy headers, subpath hosting, upgrades, and rollback guidance.
+Read [Deployment](./docs/wiki/Deployment.md) before configuring a reverse proxy, base path, cloud platform, update, or rollback.
 
 ## Development
 
-Install dependencies:
+From <code>app/</code>:
 
-```bash
-cd app
+~~~bash
 npm ci
 npm run install:server
-```
+~~~
 
-Run the API and Vite frontend in separate terminals:
+Run the API and frontend in separate terminals:
 
-```bash
-# Terminal 1
+~~~bash
 npm run server:dev
-
-# Terminal 2
 npm run dev
-```
-
-Development endpoints:
-
-- Frontend: <http://localhost:8080>
-- Admin workspace: <http://localhost:8080/dashboard/profile>
-- API and health endpoint: <http://localhost:3001>
+~~~
 
 Quality checks:
 
-```bash
+~~~bash
 npm run lint
 npm run test:unit
 npm run build
-```
+npm run test:e2e:chromium
+~~~
 
-Browser tests are available through `npm run test:e2e`.
+See [Development](./docs/wiki/Development.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
 
 ## Documentation
 
-- [Getting started](./docs/wiki/Getting-started.md)
-- [Deployment](./docs/wiki/Deployment.md)
-- [Configuration](./docs/wiki/Configuration.md)
-- [Development](./docs/wiki/Development.md)
-- [SEO and indexing](./docs/wiki/SEO-and-indexing.md)
-- [Security](./docs/wiki/Security.md)
-- [Troubleshooting](./docs/wiki/Troubleshooting.md)
-- [Brand assets](./docs/brand/README.md)
-- [Release history](https://github.com/paoloronco/OrbitPage/releases)
+Start from the task-oriented [documentation index](./docs/README.md).
 
-## Security
+| Task | Guide |
+| --- | --- |
+| Install or evaluate | [Getting started](./docs/wiki/Getting-started.md) |
+| Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
+| Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
+| Use the editor | [Dashboard guide](./docs/user-guide/dashboard.md) |
+| Configure AI safely | [AI assistant](./docs/user-guide/ai-assistant.md) |
+| Configure analytics and consent | [Analytics and privacy](./docs/user-guide/analytics-and-privacy.md) |
+| Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
+| Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 
-Do not report unpatched vulnerabilities through a public issue. Use a private [GitHub Security Advisory](https://github.com/paoloronco/OrbitPage/security/advisories/new) or email `info@paoloronco.it`.
+The self-hosted Express API is the internal application boundary used by the bundled dashboard. The managed, versioned Automation REST API is a separate service; [API boundaries](./docs/API.md) explains the credential and support distinction.
 
-Deployment hardening and supported-version information are in [SECURITY.md](./SECURITY.md).
+## Security and contributing
 
-## Contributing
+Report suspected vulnerabilities privately through a [GitHub Security Advisory](https://github.com/paoloronco/OrbitPage/security/advisories/new) or the contact in [SECURITY.md](./SECURITY.md). Do not open a public issue for an unpatched vulnerability.
 
-Issues and pull requests for the open-source application are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, testing, coding conventions, and the contribution workflow.
+Issues and focused pull requests are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, checks, compatibility expectations, and the contribution workflow.
 
-Please keep reports for the hosted service separate from reproducible issues in the self-hosted application. Product and managed-hosting questions can be directed through [orbitpage.com](https://orbitpage.com).
-
-## License
-
-OrbitPage's open-source edition is released under the [MIT License](./LICENSE.txt).
+OrbitPage's open-source edition is available under the [MIT License](./LICENSE.txt).

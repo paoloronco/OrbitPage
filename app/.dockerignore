@@ -5,3 +5,25 @@ npm-debug.log
 Dockerfile
 docker-compose*.yml
 .env
+
+# Local application state must never enter an image context.
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.db.bak
+*.db.bak-shm
+*.db.bak-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal
+uploads/
+e2e-data*/
+playwright-report/
+test-results/
+.playwright-cli/

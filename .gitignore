@@ -1,7 +1,6 @@
 # Claude Code local directory
 .claude/
 CLAUDE.md
-AGENTS.md
 
 # Dependencies
 node_modules/
@@ -22,6 +21,18 @@ build/
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
+*.db.bak
+*.db.bak-shm
+*.db.bak-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal
 
 # Logs
 logs/
@@ -41,6 +52,8 @@ Thumbs.db
 
 # Upload directory (created at runtime)
 uploads/
+orbitpage-data/
+**/.orbitpage-data/
 
 # Testing
 coverage/
@@ -51,6 +64,8 @@ app/test-results/
 app/e2e-data/
 app/lint-report.json
 scripts/*
+!scripts/README.md
+!scripts/check-markdown-links.mjs
 !scripts/test-installer.sh
 !scripts/test-pve-installer.sh
 docs/superpowers/

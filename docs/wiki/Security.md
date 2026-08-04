@@ -8,13 +8,13 @@ This page summarizes how OrbitPage handles security-sensitive behavior. For vuln
 - Passwords are hashed with `bcryptjs` using 12 salt rounds.
 - Sessions use signed JWTs with a 12-hour expiry.
 - The first username is `admin`.
-- Additional users can be managed from the admin access area.
+- Additional users can be managed from **Dashboard > Team**.
 
 ## Browser Token Storage
 
-In secure browser contexts, OrbitPage stores the JWT encrypted with AES-GCM in `localStorage`.
+In secure browser contexts, OrbitPage stores the JWT encrypted with AES-GCM in session-scoped `sessionStorage`. Persistent legacy token entries are ignored and removed.
 
-When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage falls back to `sessionStorage`, which is cleared when the tab/session ends.
+When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage keeps the JWT in memory for the current document instead of writing a plaintext fallback. Use HTTPS in production.
 
 ## Backend Protections
 
@@ -26,7 +26,7 @@ When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage falls back
 
 ### Two-factor authentication
 
-Each self-hosted administrator can enable time-based one-time passwords under **Dashboard > Access**. OrbitPage uses the standard TOTP format supported by Google Authenticator, Microsoft Authenticator, 1Password and compatible password managers.
+Each self-hosted administrator can enable time-based one-time passwords under **Dashboard > Account**. OrbitPage uses the standard TOTP format supported by Google Authenticator, Microsoft Authenticator, 1Password and compatible password managers.
 
 - The password is always verified before setup, recovery-code rotation or disabling 2FA.
 - The TOTP secret is encrypted at rest with AES-256-GCM using a key derived from the stable `JWT_SECRET`.
@@ -49,6 +49,7 @@ Recommended production practices:
 - persist and back up `DATA_DIR`
 - restrict admin access to trusted users
 - keep the Docker image and host packages updated
+- keep databases, database backups and sidecars, uploads, logs, and environment files out of source control and container images
 - set `SEO_INDEXING=false` for staging/private instances
 - do not use public demo credentials in production
 

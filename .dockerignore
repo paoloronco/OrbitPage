@@ -15,6 +15,18 @@ build/
 *.db
 *.db-shm
 *.db-wal
+*.db-journal
+*.db.bak
+*.db.bak-shm
+*.db.bak-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite-journal
+*.sqlite3-shm
+*.sqlite3-wal
+*.sqlite3-journal
 
 # Environment
 .env
@@ -38,7 +50,15 @@ Thumbs.db
 
 # Uploads (will be created at runtime)
 uploads/
+orbitpage-data/
+**/.orbitpage-data/
 
 # Logs
 logs/
 *.log
+
+# Local browser and integration-test runtime data
+.playwright-cli/
+**/playwright-report/
+**/test-results/
+**/e2e-data*/

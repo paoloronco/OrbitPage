@@ -1,24 +1,35 @@
-name: Create GitHub Release
+name: Publish versioned release
 
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
-
-permissions:
-  contents: write
+    tags: ["v*.*.*"]
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
+env:
+  DOCKERHUB_IMAGE: docker.io/paueron/orbitpage
+  GHCR_IMAGE: ghcr.io/paoloronco/orbitpage
+
 jobs:
-  release:
+  verify:
+    name: Verify tag and release input
     if: ${{ github.server_url == 'https://github.com' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout tagged commit
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -29,67 +40,154 @@ jobs:
           node-version: 22
 
       - id: version
-        name: Resolve release version
-        env:
-          GH_TOKEN: ${{ github.token }}
+        name: Validate tag, package versions and main ancestry
         run: |
-          set -euo pipefail
-
+          set -Eeuo pipefail
           VERSION="$(node -p "require('./app/package.json').version")"
           SERVER_VERSION="$(node -p "require('./app/server/package.json').version")"
+          EXPECTED_TAG="v${VERSION}"
 
           if [ "$VERSION" != "$SERVER_VERSION" ]; then
             echo "::error::Frontend version ($VERSION) and backend version ($SERVER_VERSION) must match."
             exit 1
           fi
-
           if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error::Version must use X.X.X SemVer format, got: $VERSION"
+            echo "::error::Package version must use X.Y.Z SemVer, got: $VERSION"
+            exit 1
+          fi
+          if [ "$GITHUB_REF_NAME" != "$EXPECTED_TAG" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package version $EXPECTED_TAG."
             exit 1
           fi
 
-          TAG="v${VERSION}"
-          git fetch --tags origin
-
-          TAG_EXISTS=false
-          RELEASE_EXISTS=false
-
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            TAG_EXISTS=true
-          fi
-
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            RELEASE_EXISTS=true
-          fi
-
-          if [ "$RELEASE_EXISTS" = "true" ]; then
-            echo "::notice::Release $TAG already exists. Skipping release creation."
-          elif [ "$TAG_EXISTS" = "true" ]; then
-            echo "::notice::Tag $TAG already exists. Reusing it to create the missing release."
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::The tagged commit is not contained in origin/main."
+            exit 1
           fi
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "tag_exists=$TAG_EXISTS" >> "$GITHUB_OUTPUT"
-          echo "release_exists=$RELEASE_EXISTS" >> "$GITHUB_OUTPUT"
+          echo "tag=$EXPECTED_TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Create tag
-        if: ${{ steps.version.outputs.tag_exists != 'true' }}
-        run: |
-          set -euo pipefail
-          TAG="${{ steps.version.outputs.tag }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
-
-      - name: Create GitHub release
-        if: ${{ steps.version.outputs.release_exists != 'true' }}
+      - name: Require the complete main CI for this commit
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          TAG="${{ steps.version.outputs.tag }}"
+          set -Eeuo pipefail
+          for CHECK_NAME in \
+            "Quality Gate" \
+            "E2E (chromium)" \
+            "E2E (firefox)" \
+            "E2E (webkit)"; do
+            CONCLUSION="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?per_page=100" \
+              --jq "[.check_runs[] | select(.name == \"${CHECK_NAME}\")] | sort_by(.completed_at) | last | .conclusion // \"missing\"" \
+            )"
+            if [ "$CONCLUSION" != "success" ]; then
+              echo "::error::Required check '${CHECK_NAME}' is ${CONCLUSION}; release stopped."
+              exit 1
+            fi
+          done
+
+      - name: Build release image for smoke test
+        run: docker build -t orbitpage-release-smoke .
+
+      - name: Smoke test release image
+        run: |
+          set -Eeuo pipefail
+          cleanup() {
+            docker rm -f orbitpage-release-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker run -d --name orbitpage-release-smoke \
+            -p 3001:8080 \
+            -e JWT_SECRET=release-smoke-secret-release-smoke-123456 \
+            orbitpage-release-smoke
+          for attempt in {1..45}; do
+            if curl --fail http://127.0.0.1:3001/health --silent --show-error >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs orbitpage-release-smoke
+          exit 1
+
+  images:
+    name: Publish Docker images
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short,prefix=sha-
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and publish immutable version tags
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            NODE_ENV=production
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  github-release:
+    name: Create GitHub release
+    needs: [verify, images]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create release for the existing tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.verify.outputs.tag }}
+        run: |
+          set -Eeuo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists."
+            exit 0
+          fi
           gh release create "$TAG" \
             --repo "$GITHUB_REPOSITORY" \
             --title "$TAG" \
