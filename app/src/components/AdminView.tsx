@@ -753,6 +753,7 @@ export const AdminView = ({
               <ExternalLink aria-hidden="true" size={17} />
               {tr("Public page", "Pagina pubblica")}
             </a>
+            {!isProspectReadOnly && <SelfHostedAiAgent onApplied={onAiApplied} />}
           </div>
         </header> : null}
 
@@ -1089,7 +1090,7 @@ export const AdminView = ({
             <TabsContent value="account" className="admin-tab-content">
               <div className="oss-account-layout" data-onboarding="account-section">
                 <PasswordManager />
-                <TwoFactorManager />
+                <TwoFactorManager username={currentUser?.username} />
               </div>
             </TabsContent>
           )}
@@ -1220,7 +1221,6 @@ export const AdminView = ({
           </p>
         </footer>
       </div>
-      {!isHostedAdmin && !isProspectReadOnly && <SelfHostedAiAgent onApplied={onAiApplied} />}
     </div>
   );
 };

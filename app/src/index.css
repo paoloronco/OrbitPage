@@ -9642,3 +9642,200 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     --admin-preview-phone-width: 128px;
   }
 }
+
+/* Compact catalogs and responsive editing controls. */
+.admin-theme-preset-heading-actions {
+  display: flex;
+  max-width: 31rem;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.admin-theme-catalog {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.admin-theme-preset-heading-actions > p {
+  margin: 0;
+  text-align: right;
+}
+
+.admin-theme-preset-rail {
+  display: grid;
+  grid-auto-columns: 14rem;
+  grid-auto-flow: column;
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 2px 2px 9px;
+  scroll-padding-inline: 2px;
+  scroll-snap-type: inline mandatory;
+  scrollbar-color: #aebbd0 transparent;
+  scrollbar-width: thin;
+}
+
+.admin-theme-preset-rail > article {
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.admin-theme-fine-tuning {
+  border-radius: 10px;
+}
+
+.admin-theme-fine-tuning-body {
+  border-top: 1px solid #e1e7ef;
+  padding-top: 14px;
+}
+
+/* The launcher belongs to the header; only the intentionally opened panel overlays the viewport. */
+.ai-page-agent {
+  position: relative;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  display: flex;
+  align-items: center;
+  justify-items: normal;
+  gap: 0;
+}
+
+.admin-dashboard-header-actions .ai-page-agent-launcher {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #cbd6e5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: none;
+  color: #243b78;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-dashboard-header-actions .ai-page-agent-launcher:hover,
+.admin-dashboard-header-actions .ai-page-agent-launcher:focus-visible {
+  background: #edf3ff;
+  box-shadow: 0 0 0 3px rgb(49 103 239 / 14%);
+  color: #173f9f;
+  transform: none;
+}
+
+.ai-page-agent-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 100;
+}
+
+.ai-page-agent-panel .spin {
+  animation: ai-page-agent-spin 850ms linear infinite;
+}
+
+@media (max-width: 767px) {
+  .admin-theme-preset-heading-actions {
+    width: 100%;
+    max-width: none;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .admin-theme-preset-heading-actions > p {
+    max-width: 29ch;
+    text-align: left;
+  }
+
+  .admin-theme-preset-rail {
+    grid-auto-columns: min(14rem, 82vw);
+  }
+
+  .admin-theme-fine-tuning > div:first-child {
+    align-items: flex-end;
+  }
+
+  .admin-dashboard-header-actions .ai-page-agent {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .admin-dashboard-header-actions .ai-page-agent-launcher {
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .admin-dashboard-header-actions .ai-page-agent-launcher span {
+    display: none;
+  }
+
+  .ai-page-agent-panel {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .admin-profile-role-grid {
+    gap: 7px;
+  }
+
+  .admin-profile-role-option {
+    min-height: 66px;
+    gap: 9px;
+    padding: 9px 10px;
+  }
+
+  .admin-profile-role-option > span:first-of-type {
+    width: 29px;
+    height: 29px;
+  }
+
+  .admin-profile-role-option small {
+    display: -webkit-box;
+    margin-top: 2px;
+    overflow: hidden;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .admin-profile-identity-fields {
+    grid-template-columns: 7rem minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+  }
+
+  .admin-profile-image-picker {
+    max-width: 7rem;
+  }
+
+  .admin-profile-image-picker > span {
+    inset-inline: 6px;
+    bottom: 6px;
+    gap: 4px;
+    padding: 5px;
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .admin-profile-image-picker > span svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .admin-profile-image-help {
+    font-size: 9px;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 359px) {
+  .admin-profile-identity-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-profile-image-picker {
+    max-width: 8rem;
+  }
+}

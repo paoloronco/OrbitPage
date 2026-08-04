@@ -113,7 +113,16 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await openAuthenticatedAdmin(page);
 
   await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Edit with AI' })).toBeVisible();
+  const launcher = page.getByRole('button', { name: 'Edit with AI' });
+  await expect(launcher).toBeVisible();
+  await expect(page.locator('.ai-page-agent')).toHaveCSS('position', 'relative');
+  const roleOptions = page.locator('.admin-profile-role-option');
+  await expect(roleOptions).toHaveCount(3);
+  for (let index = 0; index < 3; index += 1) {
+    const roleBounds = await roleOptions.nth(index).boundingBox();
+    expect(roleBounds).not.toBeNull();
+    expect(roleBounds!.height).toBeLessThanOrEqual(72);
+  }
 
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(page.getByRole('button', { name: 'AI Assistant', exact: true })).toBeVisible();
@@ -122,10 +131,10 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCSS('width', '44px');
 
   await page.getByRole('button', { name: 'Close navigation' }).first().click();
-  await page.getByRole('button', { name: 'Edit with AI' }).click();
+  await launcher.click();
   const dialog = page.getByRole('dialog', { name: 'OrbitPage AI' });
   await expect(dialog).toBeVisible();
-  await expect(page.locator('.ai-page-agent')).toHaveCSS('position', 'fixed');
+  await expect(dialog).toHaveCSS('position', 'fixed');
   const bounds = await dialog.boundingBox();
   expect(bounds).not.toBeNull();
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
@@ -189,6 +198,24 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   expect(previewBounds!.width).toBeLessThanOrEqual(390);
   horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
+  const themeRail = page.locator('.admin-theme-preset-rail');
+  const railDimensions = await themeRail.evaluate((element) => ({ clientWidth: element.clientWidth, scrollWidth: element.scrollWidth }));
+  expect(railDimensions.scrollWidth).toBeGreaterThan(railDimensions.clientWidth);
+  const firstTheme = page.locator('.admin-theme-preset-card').nth(0);
+  const secondTheme = page.locator('.admin-theme-preset-card').nth(1);
+  const firstThemeBounds = await firstTheme.boundingBox();
+  const secondThemeBounds = await secondTheme.boundingBox();
+  expect(firstThemeBounds).not.toBeNull();
+  expect(secondThemeBounds).not.toBeNull();
+  expect(Math.abs(firstThemeBounds!.y - secondThemeBounds!.y)).toBeLessThanOrEqual(1);
+  expect(secondThemeBounds!.x).toBeGreaterThan(firstThemeBounds!.x);
+  await summary.click();
+  await expect(previewBody).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Open controls' })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#admin-theme-manual-controls')).toHaveCount(0);
+  const compactThemeHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+  expect(compactThemeHeight).toBeLessThan(1600);
 });
 
 test('fits the content preview inside a 720p laptop viewport', async ({ page }) => {
@@ -221,6 +248,8 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await page.getByRole('button', { name: 'Theme', exact: true }).click();
   const compactThemePreview = page.locator('.admin-theme-mockup--compact').first();
   await expect(compactThemePreview).toHaveCSS('height', '112px');
+  await expect(page.locator('.admin-theme-preview-disclosure')).toHaveAttribute('open', '');
+  await expect(page.locator('.admin-theme-live-preview')).toBeVisible();
   await expect(page.locator('.admin-theme-live-preview .admin-preview-device__hardware')).toHaveCSS('width', '155px');
   await expect(page.locator('.admin-theme-live-preview .admin-preview-device__hardware')).toHaveCSS('aspect-ratio', '6 / 13');
 
@@ -239,6 +268,14 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(localeSelect.locator('option')).toHaveCount(19);
   await localeSelect.selectOption('it-IT');
   await expect(localeSelect).toHaveValue('it-IT');
+
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await expect(page.locator('#current-password')).toHaveAttribute('autocomplete', 'current-password');
+  await expect(page.locator('#new-password')).toHaveAttribute('autocomplete', 'new-password');
+  await expect(page.locator('#confirm-password')).toHaveAttribute('autocomplete', 'new-password');
+  await expect(page.locator('#two-factor-password')).toHaveAttribute('autocomplete', 'current-password');
+  const passwordForms = await page.locator('.oss-account-layout input[type="password"]').evaluateAll((inputs) => inputs.map((input) => Boolean((input as HTMLInputElement).form)));
+  expect(passwordForms.every(Boolean)).toBe(true);
 });
 
 test('keeps product labels shared with SaaS while localizing section descriptions', async ({ page }) => {
