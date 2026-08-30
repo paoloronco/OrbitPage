@@ -6,7 +6,6 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-  Loader2,
   Send,
   ShieldCheck,
   Sparkles,
@@ -15,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 import {
   aiPageAgentApi,
   type AiConversationMessage,
@@ -274,7 +274,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
 
           {planning && (
             <div className="oss-ai-thinking" role="status">
-              <span><i /><i /><i /></span>
+              <OrbitLoader size={20} state="solving" />
               {tr("Reading the page and validating a safe plan…", "Leggo la pagina e verifico un piano sicuro…")}
             </div>
           )}
@@ -303,7 +303,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
                   onClick={() => void applyProposal()}
                   type="button"
                 >
-                  {applying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  {applying ? <OrbitLoader size={16} state="weaving" /> : <Check className="h-4 w-4" />}
                   {applying ? tr("Applying…", "Applicazione…") : tr("Apply approved changes", "Applica modifiche approvate")}
                 </Button>
                 <Button
@@ -347,7 +347,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
             disabled={!configured || planning || !prompt.trim()}
             type="submit"
           >
-            {planning ? <Loader2 className="animate-spin" /> : <Send />}
+            {planning ? <OrbitLoader size={18} state="solving" /> : <Send />}
           </button>
           <p>
             <ShieldCheck aria-hidden="true" />
@@ -370,7 +370,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
         )}</p>
 
         {settings === null && !settingsError ? (
-          <div className="oss-ai-settings-loading"><Loader2 className="animate-spin" />{tr("Checking configuration…", "Verifica configurazione…")}</div>
+          <div className="oss-ai-settings-loading"><OrbitLoader size={18} state="connecting" />{tr("Checking configuration…", "Verifica configurazione…")}</div>
         ) : (
           <>
             <div className="oss-ai-key-state">
@@ -454,7 +454,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
                     disabled={savingSettings || !settings?.canStoreSecurely || (!apiKey.trim() && selectedModel === settings?.model)}
                     type="submit"
                   >
-                    {savingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : settingsSaved ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    {savingSettings ? <OrbitLoader size={16} state="connecting" /> : settingsSaved ? <Check className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     {savingSettings ? tr("Saving…", "Salvataggio…") : settingsSaved ? tr("Saved", "Salvato") : tr("Save configuration", "Salva configurazione")}
                   </Button>
                   {settings?.source === "stored" && (

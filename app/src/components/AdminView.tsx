@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { CurrentUser } from "@/pages/Admin";
 import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/lib/permissions";
 import {
@@ -30,7 +31,6 @@ import {
   Link,
   LockKeyhole,
   LogOut,
-  Loader2,
   Mail,
   Menu as MenuIcon,
   MousePointerClick,
@@ -579,7 +579,7 @@ export const AdminView = ({
             size="sm"
             disabled={!canEditProfile || !gaDirty || gaSaving || (!!gaId && !gaId.match(/^G-[A-Z0-9]+$/i))}
           >
-            {gaSaving && <Loader2 className="h-4 w-4 animate-spin-slow" />}
+            {gaSaving && <OrbitLoader size={16} state="connecting" />}
             {gaSaving ? tr("Saving", "Salvataggio") : gaSaved ? tr("Saved", "Salvato") : tr("Save", "Salva")}
           </Button>
           {profile.googleAnalyticsId && (

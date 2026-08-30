@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, Download, Loader2, Sparkles, Trash2, Upload, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database, Download, Sparkles, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { Checkbox } from "@/components/ui/checkbox";
 import { backupApi, mediaCleanupApi, uploadApi, type MediaCleanupReport } from "@/lib/api-client";
 import { DEMO_MODE } from "@/lib/config";
@@ -342,7 +343,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           {state === "error"
             ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             : state === "restoring" || state === "exporting"
-              ? <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin [animation-duration:1.2s]" />
+              ? <OrbitLoader className="mt-0.5 shrink-0" size={16} state={state === "restoring" ? "weaving" : "composing"} />
               : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
           <span>{message}</span>
         </div>
@@ -367,7 +368,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           disabled={busy || exportSections.length === 0}
           aria-busy={state === "exporting"}
         >
-          {state === "exporting" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Download className="h-4 w-4" />}
+          {state === "exporting" ? <OrbitLoader size={16} state="composing" /> : <Download className="h-4 w-4" />}
           {state === "exporting" ? tr("Exporting", "Esportazione") : tr("Download selected", "Scarica selezione")}
         </Button>
       </section>
@@ -406,7 +407,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
             )}
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="button" className="admin-action admin-action-primary" onClick={() => void restoreBackup()} disabled={busy || pendingRestore.selectedSections.length === 0}>
-                {state === "restoring" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Upload className="h-4 w-4" />}
+                {state === "restoring" ? <OrbitLoader size={16} state="weaving" /> : <Upload className="h-4 w-4" />}
                 {state === "restoring" ? tr("Restoring", "Ripristino") : tr("Restore selected", "Ripristina selezione")}
               </Button>
               <Button type="button" variant="outline" className="admin-action" onClick={cancelRestore} disabled={busy}>{tr("Cancel", "Annulla")}</Button>
@@ -456,11 +457,11 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         )}
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button type="button" variant="outline" className="admin-action" onClick={() => void inspectUnusedMedia()} disabled={Boolean(cleanupBusy)}>
-            {cleanupBusy === "preview" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Sparkles className="h-4 w-4" />}
+            {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : <Sparkles className="h-4 w-4" />}
             {tr("Check unused media", "Controlla media inutilizzati")}
           </Button>
           <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !cleanupReport?.unused}>
-            {cleanupBusy === "clean" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Trash2 className="h-4 w-4" />}
+            {cleanupBusy === "clean" ? <OrbitLoader size={16} state="working" /> : <Trash2 className="h-4 w-4" />}
             {tr("Clean now", "Pulisci ora")}
           </Button>
         </div>

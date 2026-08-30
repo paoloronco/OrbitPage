@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, CheckCircle2, Copy, ExternalLink, Loader2, Map, RefreshCw } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Copy, ExternalLink, Map, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { SitemapStatus, sitemapApi } from "@/lib/api-client";
 import { useAppI18n, type AppLocale } from "@/lib/i18n";
 
@@ -150,7 +151,7 @@ export function SitemapManager({ readOnly = false }: SitemapManagerProps) {
           disabled={busy || readOnly}
         >
           {state === "generating"
-            ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" />
+            ? <OrbitLoader size={16} state="shaping" />
             : <RefreshCw className="h-4 w-4" />}
           {state === "generating" ? tr("Generating sitemap", "Generazione sitemap") : sitemap?.generated ? tr("Regenerate sitemap", "Rigenera sitemap") : tr("Generate sitemap", "Genera sitemap")}
         </Button>

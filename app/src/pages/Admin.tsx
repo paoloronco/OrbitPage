@@ -4,6 +4,7 @@ import { AdminView } from "@/components/AdminView";
 import { LoginForm } from "@/components/LoginForm";
 import { InitialSetup } from "@/components/InitialSetup";
 import { OrbitPageBrand } from "@/components/OrbitPageBrand";
+import { OrbitLoadingState } from "@/components/ui/orbit-loader";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
@@ -25,6 +26,7 @@ import {
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
 import { getHostedSurfaceConfig, HOSTED_SECTION_CHANGED_EVENT, HOSTED_SECTION_NAVIGATE_EVENT } from "@/lib/hosted-surface";
+import { useAppI18n } from "@/lib/i18n";
 
 interface ProfileData {
   name: string;
@@ -67,6 +69,7 @@ export interface CurrentUser {
 
 const Admin = () => {
   const { toast } = useToast();
+  const { tr } = useAppI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const integratedHostedSurface = isIntegratedHostedSurface();
@@ -500,9 +503,13 @@ const Admin = () => {
 
   if (isLoading || (isLoggedIn && !workspaceLoaded)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <main className="orbit-loading-screen">
+        <OrbitLoadingState
+          description={tr("Loading profile, content and theme.", "Caricamento di profilo, contenuti e tema.")}
+          state={integratedHostedSurface ? "connecting" : "weaving"}
+          title={tr("Preparing your workspace", "Preparazione del workspace")}
+        />
+      </main>
     );
   }
 

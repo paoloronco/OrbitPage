@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ExternalLink, FilePlus2, FileText, Loader2, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ExternalLink, FilePlus2, FileText, Plus, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { Textarea } from "@/components/ui/textarea";
 import { TextFileConfig, textFilesApi } from "@/lib/api-client";
 import { withBasePath } from "@/lib/base-path";
@@ -207,7 +208,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
               onClick={() => void createFile()}
               disabled={busy || !newPath.trim()}
             >
-              {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Plus className="h-4 w-4" />}
+              {state === "saving" ? <OrbitLoader size={16} state="composing" /> : <Plus className="h-4 w-4" />}
               {tr("Create file", "Crea file")}
             </Button>
           </div>
@@ -316,7 +317,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
                 onClick={save}
                 disabled={busy || readOnly || !dirty}
               >
-                {state === "saving" ? <Loader2 className="h-4 w-4 animate-spin [animation-duration:1.2s]" /> : <Save className="h-4 w-4" />}
+                {state === "saving" ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
                 {state === "saving" ? tr("Saving file", "Salvataggio file") : tr("Save", "Salva")}
               </Button>
             </div>

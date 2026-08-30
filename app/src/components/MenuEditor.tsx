@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import {
   ArrowDown, ArrowUp, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff,
-  ImagePlus, Layers3, ListTree, Loader2, Palette, Plus, QrCode, Save, Trash2,
+  ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, Save, Trash2,
   Search, UtensilsCrossed,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { OrbitLoader } from '@/components/ui/orbit-loader';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -526,7 +527,7 @@ export function MenuEditor({
               <Switch checked={draft.enabled} onCheckedChange={(checked) => update((current) => ({ ...current, enabled: checked }))} />
             </label>
             <Button onClick={() => void save()} disabled={!isDirty || saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin-slow" /> : <Save className="h-4 w-4" />}
+              {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
               {saving ? tr('Saving', 'Salvataggio') : tr('Save menu', 'Salva menu')}
             </Button>
           </div>
@@ -729,7 +730,7 @@ export function MenuEditor({
                     </div>
                 <div className="menu-product-editor__top">
                   <label className="menu-product-image" title="Upload product image">
-                    {selectedItem.imageUrl ? <img src={selectedItem.imageUrl} alt="" /> : uploadingItem === selectedItem.id ? <Loader2 className="animate-spin-slow" /> : <ImagePlus />}
+                    {selectedItem.imageUrl ? <img src={selectedItem.imageUrl} alt="" /> : uploadingItem === selectedItem.id ? <OrbitLoader size={20} state="composing" /> : <ImagePlus />}
                     <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => void uploadItemImage(selectedItem.id, event.target.files?.[0])} />
                   </label>
                   <div className="min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
