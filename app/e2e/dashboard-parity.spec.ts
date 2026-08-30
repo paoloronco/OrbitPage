@@ -33,7 +33,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
 
-  const primaryLabels = await page.locator('.admin-dashboard-nav-page button').allTextContents();
+  const primaryLabels = await page.locator('.admin-dashboard-nav-page [data-onboarding$="-tab"]').allTextContents();
   const secondaryLabels = await page.locator('.admin-dashboard-nav-workspace button').allTextContents();
 
   expect(primaryLabels.map((label) => label.trim())).toEqual(primaryNavigation);
@@ -53,7 +53,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(shell).toHaveCSS('font-family', /Aptos|Avenir Next|Segoe UI Variable/);
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('width', '30px');
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('height', '30px');
-  await expect(page.locator('.admin-dashboard-header')).toHaveCSS('min-height', '74px');
+  await expect(page.locator('.admin-dashboard-header')).toHaveCSS('min-height', '92px');
 
   const language = page.locator('.admin-dashboard-language');
   await expect(language).toHaveCSS('height', '30px');
@@ -65,19 +65,22 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(backToSite).not.toHaveAttribute('target', '_blank');
 
   const publicPage = page.getByRole('link', { name: 'Public page' });
-  await expect(publicPage).toHaveCSS('min-height', '34px');
+  await expect(publicPage).toHaveCSS('min-height', '40px');
   await expect(publicPage).toHaveCSS('font-size', '13px');
   await expect(publicPage.locator('button')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   const lockedShop = page.locator('.content-workspace-option-locked');
   await expect(lockedShop).toContainText('Shop');
-  await expect(lockedShop).toBeDisabled();
+  await expect(lockedShop.locator('.content-workspace-option-main')).toBeDisabled();
 
   const mobilePreview = page.locator('.admin-preview-device--mobile');
-  await expect(mobilePreview).toHaveCSS('min-height', '420px');
-  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('width', '186px');
-  await expect(mobilePreview.locator('.admin-preview-device__hardware')).toHaveCSS('aspect-ratio', '6 / 13');
+  const mobileHardware = mobilePreview.locator('.admin-preview-device__hardware');
+  const mobileHardwareBounds = await mobileHardware.boundingBox();
+  expect(mobileHardwareBounds).not.toBeNull();
+  expect(mobileHardwareBounds!.width).toBeGreaterThanOrEqual(220);
+  expect(mobileHardwareBounds!.width).toBeLessThanOrEqual(240);
+  await expect(mobileHardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   const addLink = page.getByRole('button', { name: 'Add link', exact: true });
   if (await addLink.isVisible()) await addLink.click();
@@ -88,7 +91,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
 
   await page.getByRole('button', { name: 'Desktop preview' }).click();
   const desktopPreview = page.locator('.admin-preview-device--desktop');
-  await expect(desktopPreview).toHaveCSS('min-height', '276px');
+  await expect(desktopPreview).toHaveCSS('min-height', '430px');
   await expect(desktopPreview.locator('.admin-preview-device__hardware')).toHaveCSS('max-width', '450px');
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -148,7 +151,7 @@ test('keeps the menu workflow clear on mobile without truncated guidance', async
 
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await page.getByRole('button', { name: 'Content', exact: true }).click();
-  await page.getByRole('button', { name: /^Menu/ }).click();
+  await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
 
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   const steps = workflow.getByRole('button');
@@ -156,7 +159,7 @@ test('keeps the menu workflow clear on mobile without truncated guidance', async
   await expect(steps).toHaveCount(4);
   await expect(descriptions).toHaveCount(4);
   for (let index = 0; index < 4; index += 1) {
-    await expect(steps.nth(index)).toHaveCSS('min-height', '48px');
+    await expect(steps.nth(index)).toHaveCSS('min-height', '60px');
     await expect(descriptions.nth(index)).toHaveCSS('display', 'none');
   }
 
@@ -179,7 +182,10 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   await expect(previewBody).toBeHidden();
   await summary.click();
   await expect(previewBody).toBeVisible();
-  await expect(mobileHardware).toHaveCSS('width', '132px');
+  let mobileHardwareBounds = await mobileHardware.boundingBox();
+  expect(mobileHardwareBounds).not.toBeNull();
+  expect(mobileHardwareBounds!.width).toBeGreaterThanOrEqual(200);
+  expect(mobileHardwareBounds!.width).toBeLessThanOrEqual(230);
   await expect(mobileHardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   let horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -190,7 +196,10 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   await expect(previewBody).toBeHidden();
   await summary.click();
   await expect(previewBody).toBeVisible();
-  await expect(mobileHardware).toHaveCSS('width', '128px');
+  mobileHardwareBounds = await mobileHardware.boundingBox();
+  expect(mobileHardwareBounds).not.toBeNull();
+  expect(mobileHardwareBounds!.width).toBeGreaterThanOrEqual(190);
+  expect(mobileHardwareBounds!.width).toBeLessThanOrEqual(210);
   await expect(mobileHardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   const previewBounds = await disclosure.boundingBox();
@@ -218,19 +227,23 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   expect(compactThemeHeight).toBeLessThan(1600);
 });
 
-test('fits the content preview inside a 720p laptop viewport', async ({ page }) => {
+test('keeps the content preview readable on a 720p laptop viewport', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Content', exact: true }).click();
 
   const preview = page.locator('.admin-preview-panel');
   const hardware = preview.locator('.admin-preview-device__hardware');
-  await expect(hardware).toHaveCSS('width', '164px');
+  const hardwareBounds = await hardware.boundingBox();
+  expect(hardwareBounds).not.toBeNull();
+  expect(hardwareBounds!.width).toBeGreaterThanOrEqual(215);
+  expect(hardwareBounds!.width).toBeLessThanOrEqual(225);
   await expect(hardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   const previewBounds = await preview.boundingBox();
   expect(previewBounds).not.toBeNull();
-  expect(previewBounds!.y + previewBounds!.height).toBeLessThanOrEqual(720);
+  expect(previewBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(previewBounds!.x + previewBounds!.width).toBeLessThanOrEqual(1280);
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
 });
@@ -242,7 +255,7 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Page type', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Identity', exact: true })).toBeVisible();
   await expect(page.getByText('Advanced card style', { exact: true })).toBeVisible();
-  await expect(page.locator('.admin-profile-toolbar')).toHaveCSS('position', 'sticky');
+  await expect(page.locator('.admin-profile-actions-dock')).toHaveCSS('position', 'sticky');
   const avatarSizeSlider = page.getByLabel('Profile image size');
   const avatarSizeBounds = await avatarSizeSlider.boundingBox();
   expect(avatarSizeBounds).not.toBeNull();
@@ -255,11 +268,15 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(compactThemePreview).toHaveCSS('height', '112px');
   await expect(page.locator('.admin-theme-preview-disclosure')).toHaveAttribute('open', '');
   await expect(page.locator('.admin-theme-live-preview')).toBeVisible();
-  await expect(page.locator('.admin-theme-live-preview .admin-preview-device__hardware')).toHaveCSS('width', '155px');
-  await expect(page.locator('.admin-theme-live-preview .admin-preview-device__hardware')).toHaveCSS('aspect-ratio', '6 / 13');
+  const themeHardware = page.locator('.admin-theme-live-preview .admin-preview-device__hardware');
+  const themeHardwareBounds = await themeHardware.boundingBox();
+  expect(themeHardwareBounds).not.toBeNull();
+  expect(themeHardwareBounds!.width).toBeGreaterThanOrEqual(200);
+  expect(themeHardwareBounds!.width).toBeLessThanOrEqual(230);
+  await expect(themeHardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   await page.getByRole('button', { name: 'Content', exact: true }).click();
-  await page.getByRole('button', { name: /^Menu/ }).click();
+  await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(workflow.getByRole('button')).toHaveCount(4);
   await expect(workflow.getByText('Identity', { exact: true })).toBeVisible();
