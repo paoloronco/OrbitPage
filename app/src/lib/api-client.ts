@@ -506,7 +506,7 @@ export const publicPageApi = {
     if (typeof window !== 'undefined' && !window.__ORBITPAGE_STATIC_SNAPSHOT__) {
       const basePath = getActiveBasePath();
       const relativePath = window.location.pathname.slice(basePath.length).replace(/^\/+|\/+$/g, '');
-      if (relativePath && !['about', 'cookies', 'privacy', 'menu'].includes(relativePath) && !relativePath.includes('/')) {
+      if (relativePath && !['about', 'cookies', 'privacy', 'links', 'menu'].includes(relativePath) && !relativePath.includes('/')) {
         endpoint += `?subpage=${encodeURIComponent(relativePath)}`;
       }
     }

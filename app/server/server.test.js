@@ -456,8 +456,10 @@ describe('API Endpoints', () => {
 
   it('rejects duplicate or reserved subpage slugs', async () => {
     const base = { id: 'one', title: 'Page', description: '', links: [], enabled: true };
-    const reserved = await request(app).put('/orbitpage/api/subpages').send([{ ...base, slug: 'admin' }]);
-    expect(reserved.status).toBe(400);
+    for (const slug of ['admin', 'links']) {
+      const reserved = await request(app).put('/orbitpage/api/subpages').send([{ ...base, slug }]);
+      expect(reserved.status).toBe(400);
+    }
     const duplicate = await request(app).put('/orbitpage/api/subpages').send([
       { ...base, slug: 'events' },
       { ...base, id: 'two', slug: 'events' },
@@ -1504,10 +1506,16 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
   });
 
-  it.each(['menu', 'qr', 'sitemap'])('GET /orbitpage/dashboard/%s supports direct section refreshes', async (section) => {
+  it.each(['menu', 'qr', 'sitemap', 'content/link', 'content/menu', 'content/shop', 'content/pages'])('GET /orbitpage/dashboard/%s supports direct section refreshes', async (section) => {
     const response = await request(app).get(`/orbitpage/dashboard/${section}`);
     expect(response.status).toBe(200);
     expect(response.headers['x-robots-tag']).toContain('noindex');
+  });
+
+  it.each(['links', 'menu'])('GET /orbitpage/%s serves a canonical public destination', async (destination) => {
+    const response = await request(app).get(`/orbitpage/${destination}`);
+    expect(response.status).toBe(200);
+    expect(response.text).toMatch(new RegExp(`href="http://127\\.0\\.0\\.1:\\d+/orbitpage/${destination}"`));
   });
 
   it('PUT /api/links persists the public URL visibility preference', async () => {

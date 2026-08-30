@@ -7,14 +7,14 @@ The self-hosted dashboard opens at `/dashboard/profile` after initial setup. Eac
 Use this sequence to avoid leaving related changes half-finished:
 
 1. Complete the profile and browser identity in **Page**.
-2. Build the main-page order in **Content > Home**.
+2. Build the main-page order in **Content > Link**.
 3. Add the menu or subpages only when they need a distinct destination.
 4. Set shared colors, typography, spacing, cards, and background in **Theme**.
 5. Configure consent before enabling GA4 or third-party embeds.
 6. Review sharing and crawler files in **Publish**.
 7. Create a backup, then open **Public page** and test the result as a visitor.
 
-Page, Home blocks, subpage details, each subpage's blocks, Menu, Theme, Privacy, and Publish use their own save action. A save in one workspace does not commit an unsaved draft in another.
+Page, Link blocks, subpage details, each subpage's blocks, Menu, Theme, Privacy, and Publish use their own save action. A save in one workspace does not commit an unsaved draft in another.
 
 ## First-login guidance
 
@@ -34,11 +34,14 @@ Profile-card overrides take precedence over the active theme. Use **Use theme** 
 
 ### Content
 
-**Content** groups three destinations:
+**Content** groups four destinations:
 
-- **Home** contains the ordered blocks on the primary public page.
+- **Link** contains the profile and ordered content blocks.
 - **Menu** creates the native venue menu at `/menu`.
+- **Shop** publishes the Stripe-powered product and service catalog at `/shop` on OrbitPage SaaS.
 - **Pages** creates focused public subpages with their own slug, title, description, publication state, and blocks.
+
+One active destination is always selected as the homepage. Choose a different homepage before deactivating the current one. Deactivation requires confirmation and keeps the destination's content saved for later reactivation.
 
 Legacy URLs such as `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` continue to resolve to Content. The complete block, menu, subpage, scheduling, embed, and media workflows are in [Content and design](./content-and-design.md).
 
@@ -84,8 +87,8 @@ The first `admin` account always has full access. Every signed-in user can manag
 | Role | Access |
 | --- | --- |
 | Admin | Full access, including users, backups, and recovery tools |
-| Editor | Profile, Home blocks, menu, and built-in analytics |
-| Link Editor | Full Home-block editing and built-in analytics |
+| Editor | Profile, Link blocks, menu, and built-in analytics |
+| Link Editor | Full Link-block editing and built-in analytics |
 | Style Editor | Card colors, fonts, and size only |
 | Image Editor | Card icons and cover images only |
 | Theme Editor | Shared theme and background only |
@@ -103,7 +106,10 @@ Only routes allowed by the signed-in user's permissions appear in navigation.
 | Area | Route |
 | --- | --- |
 | Page | `/dashboard/profile` |
-| Content | `/dashboard/content` |
+| Content · Link | `/dashboard/content/link` |
+| Content · Menu | `/dashboard/content/menu` |
+| Content · Shop | `/dashboard/content/shop` |
+| Content · Additional pages | `/dashboard/content/pages` |
 | AI Assistant | `/dashboard/ai` |
 | Theme | `/dashboard/theme` |
 | Publish | `/dashboard/publish` |

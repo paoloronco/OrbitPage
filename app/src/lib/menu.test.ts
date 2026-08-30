@@ -78,6 +78,17 @@ describe('menu catalog normalization', () => {
     expect(persisted.items[0].name).toBe('Pasta al pomodoro');
     expect(persisted.items[0].description).toBe('Tomato, basil and olive oil');
   });
+
+  it('defaults legacy catalogs and preserves explicit content routing', () => {
+    const menu = createDefaultMenu();
+    const { routing: _routing, ...legacyMenu } = menu;
+
+    expect(normalizeMenuCatalog(legacyMenu).routing).toEqual({ homepage: 'link', linkEnabled: true });
+    expect(normalizeMenuCatalog({
+      ...menu,
+      routing: { homepage: 'pages', homepagePageSlug: 'summer-menu', linkEnabled: false },
+    }).routing).toEqual({ homepage: 'pages', homepagePageSlug: 'summer-menu', linkEnabled: false });
+  });
 });
 
 describe('menu price input', () => {

@@ -20,7 +20,7 @@ const RequiredPasswordSchema = z.string({ required_error: 'Password is required'
 
 const RESERVED_PAGE_SLUGS = new Set([
   'about', 'admin', 'ai', 'api', 'assets', 'cookies', 'dashboard', 'health', 'humans',
-  'llm', 'llms', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots',
+  'links', 'llm', 'llms', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots',
   'security', 'sitemap', 'support', 'terms', 'uploads', 'www',
 ]);
 

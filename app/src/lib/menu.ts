@@ -1,5 +1,13 @@
+import {
+  DEFAULT_ORBITPAGE_CONTENT_ROUTING,
+  type OrbitPageContentRouting,
+} from '@orbitpage/page-schema';
+
 export type MenuVenueType = 'restaurant' | 'bar' | 'cafe';
 export type MenuThemePreset = 'editorial' | 'bistro' | 'espresso' | 'coastal';
+export type ContentRouting = OrbitPageContentRouting;
+export type ContentDestination = ContentRouting['homepage'];
+export const DEFAULT_CONTENT_ROUTING: ContentRouting = DEFAULT_ORBITPAGE_CONTENT_ROUTING;
 
 export interface MenuVariant {
   id: string;
@@ -56,6 +64,7 @@ export interface MenuCatalog {
   sections: MenuSection[];
   items: MenuItem[];
   theme: MenuTheme;
+  routing: ContentRouting;
   updatedAt?: string;
 }
 
@@ -149,6 +158,7 @@ export function createDefaultMenu(venueType: MenuVenueType = 'restaurant'): Menu
     sections,
     items: [],
     theme: { ...MENU_THEME_PRESETS[preset] },
+    routing: { ...DEFAULT_CONTENT_ROUTING },
   };
 }
 
@@ -226,6 +236,15 @@ export function normalizeMenuCatalog(
   const preset = Object.prototype.hasOwnProperty.call(MENU_THEME_PRESETS, rawTheme.preset)
     ? rawTheme.preset as MenuThemePreset : fallback.theme.preset;
   const presetTheme = MENU_THEME_PRESETS[preset];
+  const rawRouting = input.routing && typeof input.routing === 'object' && !Array.isArray(input.routing)
+    ? input.routing as Record<string, unknown>
+    : {};
+  const homepage: ContentDestination = rawRouting.homepage === 'menu'
+    || rawRouting.homepage === 'shop'
+    || rawRouting.homepage === 'pages'
+    ? rawRouting.homepage
+    : 'link';
+  const homepagePageSlug = text(rawRouting.homepagePageSlug, 80);
   return {
     version: 1,
     enabled: input.enabled === true,
@@ -246,6 +265,11 @@ export function normalizeMenuCatalog(
       border: color(rawTheme.border, presetTheme.border),
       radius: Math.max(0, Math.min(28, Number.isFinite(Number(rawTheme.radius)) ? Math.round(Number(rawTheme.radius)) : presetTheme.radius)),
       imageLayout: rawTheme.imageLayout === 'cover' ? 'cover' : 'compact',
+    },
+    routing: {
+      homepage,
+      linkEnabled: rawRouting.linkEnabled !== false,
+      ...(homepagePageSlug ? { homepagePageSlug } : {}),
     },
     updatedAt: text(input.updatedAt, 40) || undefined,
   };

@@ -15,7 +15,7 @@ import {
 
 const SUBPAGE_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/;
 const RESERVED_SUBPAGE_SLUGS = new Set([
-  "admin", "api", "assets", "cookies", "dashboard", "favicon.ico", "login", "media", "menu",
+  "admin", "api", "assets", "cookies", "dashboard", "favicon.ico", "links", "login", "media", "menu",
   "orbitpage-runtime", "privacy", "robots.txt", "shop", "sitemap.xml", "support", "terms", "www"
 ]);
 

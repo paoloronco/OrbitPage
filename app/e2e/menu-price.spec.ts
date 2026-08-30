@@ -143,7 +143,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.getByRole('button', { name: 'Save menu' }).click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
 
-  await page.goto(`/dashboard/content?e2eReload=${Date.now()}`, { waitUntil: 'commit' });
+  await page.goto(`/dashboard/content/menu?e2eReload=${Date.now()}`, { waitUntil: 'commit' });
   const contentNavigation = page.getByRole('button', { name: 'Content', exact: true });
   await expect(contentNavigation).toBeVisible({ timeout: 15_000 });
   await contentNavigation.click();
