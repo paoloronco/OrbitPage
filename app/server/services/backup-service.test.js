@@ -11,6 +11,10 @@ import {
 } from './backup-service.js';
 
 const makeTempUploadsDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'orbitpage-backup-'));
+const pngBytes = (suffix = '') => Buffer.concat([
+  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+  Buffer.from(suffix),
+]);
 
 describe('backup service', () => {
   it('exports all application tables and upload files', async () => {
@@ -58,7 +62,7 @@ describe('backup service', () => {
           cookie_consent_config: [],
         },
         uploads: [
-          { path: 'avatar.png', data: Buffer.from('restored').toString('base64') },
+          { path: 'avatar.png', data: pngBytes('restored').toString('base64') },
         ],
       },
       dbRun,
@@ -71,7 +75,7 @@ describe('backup service', () => {
       [1, 'Restored'],
     );
     expect(fs.existsSync(path.join(uploadsPath, 'stale.png'))).toBe(false);
-    expect(fs.readFileSync(path.join(uploadsPath, 'avatar.png'), 'utf8')).toBe('restored');
+    expect(fs.readFileSync(path.join(uploadsPath, 'avatar.png'))).toEqual(pngBytes('restored'));
 
     fs.rmSync(uploadsPath, { recursive: true, force: true });
   });
@@ -154,6 +158,46 @@ describe('backup service', () => {
       }),
     ).rejects.toThrow('Unsafe backup upload path');
     expect(fs.existsSync(path.join(uploadsPath, 'keep.png'))).toBe(true);
+
+    fs.rmSync(uploadsPath, { recursive: true, force: true });
+  });
+
+  it.each([
+    ['active HTML', { path: 'payload.html', data: Buffer.from('<script>alert(1)</script>').toString('base64') }, 'Unsupported backup media type'],
+    ['mismatched content', { path: 'photo.png', data: Buffer.from('<svg/>').toString('base64') }, 'does not match its extension'],
+    ['malformed base64', { path: 'photo.png', data: 'not-base64!' }, 'Invalid base64 backup media'],
+  ])('rejects %s without replacing live uploads', async (_label, upload, expectedError) => {
+    const uploadsPath = makeTempUploadsDir();
+    fs.writeFileSync(path.join(uploadsPath, 'keep.png'), pngBytes('keep'));
+
+    await expect(restoreApplicationBackup({
+      backup: { schemaVersion: BACKUP_SCHEMA_VERSION, tables: {}, uploads: [upload] },
+      dbRun: vi.fn().mockResolvedValue({ changes: 1 }),
+      uploadsPath,
+    })).rejects.toThrow(expectedError);
+    expect(fs.readFileSync(path.join(uploadsPath, 'keep.png'))).toEqual(pngBytes('keep'));
+
+    fs.rmSync(uploadsPath, { recursive: true, force: true });
+  });
+
+  it('keeps the previous upload directory when a deferred restore is rolled back', async () => {
+    const uploadsPath = makeTempUploadsDir();
+    fs.writeFileSync(path.join(uploadsPath, 'keep.png'), pngBytes('keep'));
+    const result = await restoreApplicationBackup({
+      backup: {
+        schemaVersion: BACKUP_SCHEMA_VERSION,
+        tables: {},
+        uploads: [{ path: 'new.png', data: pngBytes('new').toString('base64') }],
+      },
+      dbRun: vi.fn().mockResolvedValue({ changes: 1 }),
+      uploadsPath,
+      deferMediaCommit: true,
+    });
+
+    result.mediaRestore.activate();
+    result.mediaRestore.rollback();
+    expect(fs.existsSync(path.join(uploadsPath, 'new.png'))).toBe(false);
+    expect(fs.readFileSync(path.join(uploadsPath, 'keep.png'))).toEqual(pngBytes('keep'));
 
     fs.rmSync(uploadsPath, { recursive: true, force: true });
   });

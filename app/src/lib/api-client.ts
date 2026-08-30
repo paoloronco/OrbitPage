@@ -581,8 +581,11 @@ export const authApi = {
     return !!getAuthToken();
   },
 
-  reset: async (): Promise<ApiResponse> => {
-    return apiRequest<ApiResponse>('/auth/reset', { method: 'POST' });
+  reset: async (currentPassword: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>('/auth/reset', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword }),
+    });
   },
 
   changePassword: async (currentPassword: string, newPassword: string): Promise<ChangePasswordResponse> => {

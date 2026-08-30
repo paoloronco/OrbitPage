@@ -21,8 +21,13 @@ When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage keeps the 
 - SQLite queries use parameterized helpers.
 - Auth, reset, API, and SPA routes are rate-limited.
 - API routes validate input with server-side logic and schemas where applicable.
-- Docker requires `JWT_SECRET` before startup.
+- Every production runtime requires a stable `JWT_SECRET` of at least 32 characters and rejects known placeholders.
 - Optional `RESET_TOKEN` protects an administrator-recovery endpoint and a separate destructive full-reset endpoint. Leave it unset outside a controlled recovery window.
+- Destructive in-dashboard instance reset requires `users:manage` and re-authentication with the current password.
+- Forwarded client/protocol headers are ignored unless the socket peer is explicitly trusted with `ORBITPAGE_TRUST_PROXY`.
+- Public content APIs return only enabled content and omit editing, scheduling, campaign, and analytics metadata.
+
+Privacy editors can configure consent categories, legal text, and structured identifiers for supported CMP providers. Adding or activating raw CMP snippets or embedded policy code requires the administrator-level `users:manage` permission because that content executes in the public page origin.
 
 ### Two-factor authentication
 
@@ -134,6 +139,7 @@ Recommended production practices:
 - keep `JWT_SECRET` stable across restarts
 - leave `RESET_TOKEN` unset outside a controlled recovery window
 - persist and back up `DATA_DIR`
+- keep `ORBITPAGE_TRUST_PROXY` unset unless OrbitPage is directly behind a known proxy; then list only that proxy's IP/CIDR
 - restrict admin access to trusted users
 - keep the Docker image and host packages updated
 - keep databases, database backups and sidecars, uploads, logs, and environment files out of source control and container images
@@ -145,6 +151,8 @@ Recommended production practices:
 Uploads are stored in `DATA_DIR/uploads` and served from `/uploads`.
 
 Only expose upload storage that is intended to be public on the public page. Do not place private files in the upload directory.
+
+Application backup restore validates paths, strict base64, supported extensions and binary media signatures before changing live uploads. The replacement is staged and rolled back together with the database transaction if restoration fails. Keep `ORBITPAGE_BACKUP_MEDIA_LIMIT_MB` conservative for the host's available memory.
 
 ## Security Reporting
 

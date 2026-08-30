@@ -2,10 +2,10 @@ services:
   orbitpage:
     image: paueron/orbitpage:latest   # or ghcr.io/paoloronco/orbitpage:latest
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       # REQUIRED: set a long, random secret (e.g. openssl rand -hex 32)
-      JWT_SECRET: "change-me-to-a-long-random-string"
+      JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET to a stable random value with at least 32 characters}"
       PORT: "8080"
       # DATA_DIR is already set to /app/data in the image; override only if needed
       # DATA_DIR: "/app/data"

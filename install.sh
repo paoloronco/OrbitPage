@@ -193,7 +193,8 @@ write_configuration() {
   local env_tmp
   local compose_tmp
 
-  install -d -m 0755 "$INSTALL_DIR" "$DATA_DIR" "$BACKUP_DIR"
+  install -d -m 0755 "$INSTALL_DIR"
+  install -d -m 0700 "$DATA_DIR" "$BACKUP_DIR"
   install -d -m 0700 "$CONFIG_DIR"
 
   if [[ ! -f "$APP_ENV_FILE" ]]; then

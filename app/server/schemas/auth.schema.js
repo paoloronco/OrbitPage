@@ -76,6 +76,10 @@ export const ChangePasswordBodySchema = z.object({
 });
 
 export const ResetViaTokenBodySchema = z.object({
-  token: z.string({ required_error: 'Reset token is required' }).min(1, 'Reset token is required'),
+  token: z.string({ required_error: 'Reset token is required' }).min(32, 'Reset token must contain at least 32 characters'),
   newPassword: z.string({ required_error: 'New password is required' }).min(1),
+});
+
+export const ResetApplicationBodySchema = z.object({
+  currentPassword: RequiredPasswordSchema,
 });
