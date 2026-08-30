@@ -184,7 +184,7 @@ The current dashboard keeps related work together:
 | **Team** | Additional users and permissions |
 | **Account** | Password and two-factor authentication |
 
-Dashboard routes are stable, including <code>/dashboard/profile</code>, <code>/dashboard/content</code>, <code>/dashboard/ai</code>, <code>/dashboard/theme</code>, and <code>/dashboard/publish</code>. Legacy routes such as <code>/admin</code> and the old Links, Pages, Menu, and Access paths remain compatibility aliases.
+Dashboard routes are stable, including <code>/dashboard/profile</code>, the Content destinations <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>, plus <code>/dashboard/ai</code>, <code>/dashboard/theme</code>, and <code>/dashboard/publish</code>. Legacy routes such as <code>/admin</code>, <code>/dashboard/content</code>, and the old Links, Pages, Menu, and Access paths remain compatibility aliases.
 
 Read the [dashboard guide](./docs/user-guide/dashboard.md) for the complete route map and editing workflow.
 

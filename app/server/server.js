@@ -97,7 +97,7 @@ const videoUploadLimitBytes = getVideoUploadLimitBytes(process.env);
 const getZodErrorMessage = (error) =>
   error instanceof z.ZodError ? (error.issues[0]?.message || 'Invalid request body') : null;
 
-const RESERVED_SUBPAGE_SLUGS = new Set(['admin', 'api', 'assets', 'cookies', 'dashboard', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots.txt', 'sitemap.xml', 'support', 'terms', 'www']);
+const RESERVED_SUBPAGE_SLUGS = new Set(['admin', 'api', 'assets', 'cookies', 'dashboard', 'links', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots.txt', 'shop', 'sitemap.xml', 'support', 'terms', 'www']);
 const SubpageSchema = z.object({
   id: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   slug: z.string().min(1).max(48).regex(/^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/)
@@ -742,14 +742,19 @@ const getPublicThemePayload = async () => {
   };
 };
 
-const PUBLIC_SPA_ROUTES = new Set(['/', '/privacy', '/cookies']);
+const PUBLIC_SPA_ROUTES = new Set(['/', '/links', '/menu', '/privacy', '/cookies']);
 const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'team', 'account', 'plan', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
+const ADMIN_CONTENT_SECTIONS = new Set(['link', 'menu', 'shop', 'pages']);
 const isAdminSpaRoute = (pathName) => {
   const segments = String(pathName || '').split('/').filter(Boolean);
   if (segments.length === 1 && (segments[0] === 'admin' || segments[0] === 'dashboard')) return true;
-  return segments.length === 2
+  if (segments.length === 2
     && (segments[0] === 'admin' || segments[0] === 'dashboard')
-    && ADMIN_SPA_SECTIONS.has(segments[1]);
+    && ADMIN_SPA_SECTIONS.has(segments[1])) return true;
+  return segments.length === 3
+    && (segments[0] === 'admin' || segments[0] === 'dashboard')
+    && segments[1] === 'content'
+    && ADMIN_CONTENT_SECTIONS.has(segments[2]);
 };
 if (DEMO_MODE) {
   PUBLIC_SPA_ROUTES.add('/about');
@@ -833,7 +838,7 @@ const toAbsoluteHttpUrl = (value, origin) => {
 
 const canonicalPathForRequest = (req) => {
   const pathOnly = req.path || '/';
-  if (pathOnly === '/privacy' || pathOnly === '/cookies' || isAdminSpaRoute(pathOnly) || (DEMO_MODE && pathOnly === '/about')) return pathOnly;
+  if (pathOnly === '/links' || pathOnly === '/menu' || pathOnly === '/privacy' || pathOnly === '/cookies' || isAdminSpaRoute(pathOnly) || (DEMO_MODE && pathOnly === '/about')) return pathOnly;
   return '/';
 };
 

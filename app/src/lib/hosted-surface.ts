@@ -1,4 +1,5 @@
 import type { AdminTab } from "./admin-navigation";
+import type { ContentDestination, ContentRouting } from "./menu";
 import { isHostedRuntime } from "./runtime-mode";
 
 export type HostedSurfaceConfig = {
@@ -13,10 +14,14 @@ export type HostedSurfaceConfig = {
     shop?: {
       entitled: boolean;
       enabled?: boolean;
+      homepage?: boolean;
       selected?: boolean;
     };
   };
-  onContentSectionChange?: (section: "home" | "menu" | "pages" | "shop") => void;
+  contentSection?: ContentDestination;
+  onContentRoutingChange?: (routing: ContentRouting) => void;
+  onContentSectionChange?: (section: ContentDestination) => void;
+  onShopStatusChange?: (enabled: boolean) => Promise<void>;
   onOpenShop?: () => void;
   onReady?: () => void;
 };

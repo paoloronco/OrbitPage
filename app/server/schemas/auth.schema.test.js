@@ -29,6 +29,7 @@ describe('auth schemas', () => {
     expect(PageSlugSchema.parse(' My-Page ')).toBe('my-page');
     expect(SetupBodySchema.parse({ password: 'Secret123!', slug: 'my-page' }).slug).toBe('my-page');
     expect(() => PageSlugSchema.parse('admin')).toThrow();
+    expect(() => PageSlugSchema.parse('links')).toThrow();
     expect(() => PageSlugSchema.parse('../page')).toThrow();
   });
 

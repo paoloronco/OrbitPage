@@ -832,6 +832,7 @@
   }
 }
 
+
 /* OrbitPage loading states: a small branded planet inline, a composed orbit for longer waits. */
 .orbit-loader {
   --orbit-loader-size: 20px;
@@ -12358,5 +12359,285 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .menu-item-picker__item:hover,
   .menu-category-picker__item:hover {
     transform: none;
+  }
+}
+
+/* Keep the destination cards composed as a card + action footer after legacy dashboard rules. */
+.content-workspace-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: stretch;
+  gap: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+}
+
+.content-workspace-option-main {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  gap: 7px 12px;
+  min-width: 0;
+  min-height: 94px;
+  padding: 14px;
+}
+
+.content-workspace-option-main .content-workspace-option-icon {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.content-workspace-option-main .content-workspace-option-copy,
+.content-workspace-option-main .content-status {
+  grid-column: 2;
+}
+
+.content-workspace-option-main .content-status {
+  display: inline-flex;
+}
+
+@media (max-width: 767px) {
+  .content-workspace-option {
+    display: grid;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    padding: 0;
+  }
+
+  .content-workspace-option-main {
+    grid-template-columns: 36px minmax(0, 1fr);
+    min-height: 88px;
+    gap: 5px 9px;
+    padding: 11px;
+  }
+
+  .content-workspace-option-main .content-workspace-option-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .content-workspace-option-main .content-workspace-option-copy {
+    display: grid;
+  }
+
+  .content-workspace-option-main .content-workspace-option-copy small {
+    display: none;
+  }
+}
+
+.content-workspace-option-main {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.content-workspace-option-main:disabled,
+.content-workspace-option-actions button:disabled,
+.admin-dashboard-content-subnav button:disabled {
+  cursor: not-allowed;
+}
+
+.content-workspace-option-copy {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.content-workspace-option-main .content-status {
+  margin: 0;
+}
+
+.content-status > i {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: .7;
+}
+
+.content-status-offline {
+  background: #eef1f5;
+  color: #59697f;
+}
+
+.content-workspace-option-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 9px;
+  border-top: 1px solid #e4eaf2;
+  background: #fbfcfe;
+}
+
+.content-workspace-option-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 7px 8px;
+  border: 1px solid #d7e0eb;
+  border-radius: 7px;
+  background: #fff;
+  color: #3c4d65;
+  font: inherit;
+  font-size: .6875rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.content-workspace-option-actions button:hover:not(:disabled) {
+  border-color: #9eb7e8;
+  color: #245bc8;
+}
+
+.content-workspace-option-actions button:disabled,
+.admin-dashboard-content-subnav button:disabled {
+  opacity: .52;
+}
+
+.content-workspace-option-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+.content-homepage-action.is-homepage {
+  border-color: #b8cdf8;
+  background: #edf4ff;
+  color: #245bc8;
+}
+
+.admin-dashboard-content-nav,
+.admin-dashboard-content-nav-row {
+  min-width: 0;
+}
+
+.admin-dashboard-content-nav-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  gap: 3px;
+}
+
+.admin-dashboard-content-nav-row .admin-dashboard-nav-item {
+  width: 100%;
+}
+
+.admin-dashboard-content-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--orbitpage-dashboard-nav-height);
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #8ea0ba;
+  cursor: pointer;
+}
+
+.admin-dashboard-content-nav-toggle:hover,
+.admin-dashboard-content-nav-toggle:focus-visible {
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+}
+
+.admin-dashboard-content-nav-toggle svg {
+  width: 15px;
+  height: 15px;
+  transition: transform 180ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.admin-dashboard-content-nav-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.admin-dashboard-content-subnav {
+  display: none;
+  padding: 4px 0 6px 31px;
+}
+
+.admin-dashboard-content-subnav.open {
+  display: grid;
+}
+
+.admin-dashboard-content-subnav button {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 0;
+  border-left: 1px solid rgb(159 177 203 / 24%);
+  background: transparent;
+  color: #9fb1cb;
+  font: inherit;
+  font-size: .72rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-dashboard-content-subnav button:hover,
+.admin-dashboard-content-subnav button.active {
+  border-left-color: #79a0ff;
+  background: rgb(108 147 238 / 10%);
+  color: #f4f7fc;
+}
+
+.admin-dashboard-content-subnav svg {
+  width: 15px;
+  height: 15px;
+}
+
+.admin-dashboard-content-subnav small {
+  font-size: .58rem;
+  font-weight: 760;
+  letter-spacing: .06em;
+}
+
+@media (min-width: 768px) {
+  .admin-dashboard-collapsed .admin-dashboard-content-nav-row {
+    display: block;
+  }
+
+  .admin-dashboard-collapsed .admin-dashboard-content-nav-toggle,
+  .admin-dashboard-collapsed .admin-dashboard-content-subnav {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .content-workspace-option-actions {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    padding: 8px;
+  }
+
+  .content-workspace-option-actions button,
+  .admin-dashboard-content-nav-toggle,
+  .admin-dashboard-content-subnav button {
+    min-height: 44px;
+  }
+
+  .admin-dashboard-content-subnav {
+    padding-left: 22px;
+  }
+
+  .admin-dashboard-content-subnav button {
+    font-size: .8125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dashboard-content-nav-toggle svg {
+    transition: none;
   }
 }

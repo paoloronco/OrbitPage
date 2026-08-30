@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  adminContentSectionFromLocation,
   adminDashboardPath,
   adminTabFromLocation,
   isAdminTab,
@@ -37,8 +38,9 @@ describe("admin navigation", () => {
     expect(isAdminTab("txt")).toBe(true);
     expect(adminDashboardPath("sitemap")).toBe("/dashboard/publish");
     expect(isAdminTab("sitemap")).toBe(true);
-    expect(adminDashboardPath("content")).toBe("/dashboard/content");
-    expect(adminDashboardPath("menu")).toBe("/dashboard/content");
+    expect(adminDashboardPath("content")).toBe("/dashboard/content/link");
+    expect(adminDashboardPath("content", "menu")).toBe("/dashboard/content/menu");
+    expect(adminDashboardPath("menu")).toBe("/dashboard/content/link");
     expect(isAdminTab("content")).toBe(true);
     expect(isAdminTab("menu")).toBe(true);
     expect(adminDashboardPath("qr")).toBe("/dashboard/publish");
@@ -46,5 +48,12 @@ describe("admin navigation", () => {
     expect(adminDashboardPath("publish")).toBe("/dashboard/publish");
     expect(isAdminTab("publish")).toBe(true);
     expect(isAdminTab("billing")).toBe(false);
+  });
+
+  it("resolves nested Content destinations", () => {
+    expect(adminContentSectionFromLocation("/dashboard/content/link")).toBe("link");
+    expect(adminContentSectionFromLocation("/dashboard/content/menu")).toBe("menu");
+    expect(adminContentSectionFromLocation("/dashboard/content/shop")).toBe("shop");
+    expect(adminContentSectionFromLocation("/dashboard/content/pages")).toBe("pages");
   });
 });

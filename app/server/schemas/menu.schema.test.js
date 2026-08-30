@@ -16,6 +16,19 @@ describe('menu schema', () => {
     expect(parsed.items[0].variants[0].name).toBe('Glass');
   });
 
+  it('keeps legacy menus compatible and validates content routing', () => {
+    const { routing: _routing, ...legacyMenu } = DEFAULT_MENU_CATALOG;
+    expect(parseMenuCatalog(legacyMenu).routing).toEqual({ homepage: 'link', linkEnabled: true });
+    expect(parseMenuCatalog({
+      ...DEFAULT_MENU_CATALOG,
+      routing: { homepage: 'pages', homepagePageSlug: 'summer-menu', linkEnabled: false },
+    }).routing).toEqual({ homepage: 'pages', homepagePageSlug: 'summer-menu', linkEnabled: false });
+    expect(() => parseMenuCatalog({
+      ...DEFAULT_MENU_CATALOG,
+      routing: { homepage: 'unknown', linkEnabled: true },
+    })).toThrow();
+  });
+
   it('rejects duplicate IDs and unknown sections', () => {
     expect(() => parseMenuCatalog({
       ...DEFAULT_MENU_CATALOG,

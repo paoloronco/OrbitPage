@@ -9,7 +9,7 @@ import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import profileAvatar from "@/assets/profile-avatar.jpg";
-import { internalAssetPath, withRuntimeAssetPath, withTenantBasePath } from "@/lib/base-path";
+import { getActiveBasePath, internalAssetPath, withRuntimeAssetPath, withTenantBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
@@ -160,6 +160,39 @@ const Index = () => {
               consentConfigPublicApi.get().catch(() => ({ data: { mode: 'disabled' as const, enabled: false } })),
             ]);
         if (cancelled) return;
+
+        if (!currentStaticSnapshot) {
+          const basePath = getActiveBasePath();
+          const relativePath = window.location.pathname.slice(basePath.length).replace(/^\/+|\/+$/g, '');
+          const routing = pageData.menu?.routing;
+          if (relativePath === 'links' && routing?.linkEnabled === false) {
+            window.location.replace(withTenantBasePath('/'));
+            return;
+          }
+          const isPrimaryPagePath = !relativePath || relativePath === pageData.pageSlug;
+          if (isPrimaryPagePath && routing) {
+            const enabledHomepagePage = pageData.subpages?.find((page) => (
+              page.enabled && page.slug === routing.homepagePageSlug
+            )) || pageData.subpages?.find((page) => page.enabled);
+            const requestedTarget = routing.homepage === 'menu' && pageData.menu?.enabled
+              ? '/menu'
+              : routing.homepage === 'pages' && enabledHomepagePage
+                ? `/${enabledHomepagePage.slug}`
+                : routing.homepage === 'link' && routing.linkEnabled
+                  ? '/'
+                  : null;
+            const fallbackTarget = routing.linkEnabled
+              ? '/'
+              : pageData.menu?.enabled
+                ? '/menu'
+                : enabledHomepagePage
+                  ? `/${enabledHomepagePage.slug}`
+                  : '/';
+            const target = requestedTarget || fallbackTarget;
+            if (target !== '/') window.location.replace(withTenantBasePath(target));
+            if (target !== '/') return;
+          }
+        }
 
         const loadedTheme = normalizeTheme(pageData.theme);
         const normalizedLinks = normalizeLinkDtos(pageData.links);

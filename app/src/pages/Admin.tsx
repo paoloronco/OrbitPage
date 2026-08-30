@@ -19,9 +19,11 @@ import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@
 import { isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
 import { createDefaultMenu, normalizeMenuCatalog, type MenuCatalog } from "@/lib/menu";
 import {
+  adminContentSectionFromLocation,
   adminDashboardPath,
   adminTabFromLocation,
   isAdminTab,
+  type AdminContentSection,
   type AdminTab,
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
@@ -75,6 +77,7 @@ const Admin = () => {
   const integratedHostedSurface = isIntegratedHostedSurface();
   const hostedSurface = integratedHostedSurface;
   const locationTab = adminTabFromLocation(location.pathname, location.search);
+  const locationContentSection = adminContentSectionFromLocation(location.pathname);
   const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,12 +109,15 @@ const Admin = () => {
   const hostedBootstrapRef = useRef<Promise<WorkspaceBootstrapResponse> | null>(null);
 
   const requestedTab = hostedSurface ? hostedTab : locationTab;
+  const requestedContentSection = hostedSurface
+    ? getHostedSurfaceConfig()?.contentSection || "link"
+    : locationContentSection;
 
   useEffect(() => {
     if (hostedSurface) return;
-    const expectedPath = adminDashboardPath(locationTab);
+    const expectedPath = adminDashboardPath(locationTab, locationContentSection);
     if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
-  }, [hostedSurface, location.pathname, locationTab, navigate]);
+  }, [hostedSurface, location.pathname, locationTab, locationContentSection, navigate]);
 
   useEffect(() => {
     if (!hostedSurface) return;
@@ -129,7 +135,12 @@ const Admin = () => {
       window.dispatchEvent(new CustomEvent(HOSTED_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
       return;
     }
-    navigate(adminDashboardPath(tab));
+    navigate(adminDashboardPath(tab, locationContentSection));
+  };
+
+  const handleContentSectionChange = (section: AdminContentSection) => {
+    if (hostedSurface) return;
+    navigate(adminDashboardPath("content", section));
   };
 
   // Check authentication status and setup status on mount.
@@ -559,7 +570,9 @@ const Admin = () => {
       onAiApplied={() => setWorkspaceRefreshKey((current) => current + 1)}
       onLogout={handleLogout}
       requestedTab={requestedTab}
+      requestedContentSection={requestedContentSection}
       onTabChange={handleTabChange}
+      onContentSectionChange={handleContentSectionChange}
     />
   );
 };

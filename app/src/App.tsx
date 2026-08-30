@@ -102,8 +102,11 @@ function RoutedApplication() {
           <Route path="/cookies" element={<Cookies />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/:section" element={<Admin />} />
+          <Route path="/admin/content/:contentSection" element={<Admin />} />
           <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
           <Route path="/dashboard/:section" element={<Admin />} />
+          <Route path="/dashboard/content/:contentSection" element={<Admin />} />
+          <Route path="/links" element={<Index />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/about" element={<About />} />
           <Route path="/:subpage" element={<Index />} />

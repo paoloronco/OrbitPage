@@ -50,6 +50,21 @@ export const OrbitPageMenuThemeSchema = z.object({
   imageLayout: z.enum(["compact", "cover"])
 }).strict();
 
+export const ORBITPAGE_CONTENT_DESTINATIONS = ["link", "menu", "shop", "pages"] as const;
+
+export const OrbitPageContentRoutingSchema = z.object({
+  homepage: z.enum(ORBITPAGE_CONTENT_DESTINATIONS),
+  homepagePageSlug: boundedString(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
+  linkEnabled: z.boolean()
+}).strict();
+
+export type OrbitPageContentRouting = z.infer<typeof OrbitPageContentRoutingSchema>;
+
+export const DEFAULT_ORBITPAGE_CONTENT_ROUTING: OrbitPageContentRouting = {
+  homepage: "link",
+  linkEnabled: true
+};
+
 export const OrbitPageMenuSchema = z.object({
   version: z.literal(1),
   enabled: z.boolean(),
@@ -61,6 +76,7 @@ export const OrbitPageMenuSchema = z.object({
   sections: z.array(MenuSectionSchema).min(1).max(30),
   items: z.array(MenuItemSchema).max(250),
   theme: OrbitPageMenuThemeSchema,
+  routing: OrbitPageContentRoutingSchema.default(DEFAULT_ORBITPAGE_CONTENT_ROUTING),
   updatedAt: z.string().datetime().optional()
 }).strict().superRefine((menu, context) => {
   const sectionIds = new Set(menu.sections.map((section) => section.id));
@@ -114,7 +130,8 @@ export const DEFAULT_ORBITPAGE_MENU: OrbitPageMenu = {
     border: "#d7d4cc",
     radius: 8,
     imageLayout: "compact"
-  }
+  },
+  routing: DEFAULT_ORBITPAGE_CONTENT_ROUTING
 };
 
 export function parseOrbitPageMenu(value: unknown) {

@@ -36,6 +36,17 @@ const MenuItemSchema = z.object({
   position: z.number().int().min(0).max(249),
 }).strict();
 
+const ContentRoutingSchema = z.object({
+  homepage: z.enum(['link', 'menu', 'shop', 'pages']),
+  homepagePageSlug: Text(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).optional(),
+  linkEnabled: z.boolean(),
+}).strict();
+
+const DEFAULT_CONTENT_ROUTING = {
+  homepage: 'link',
+  linkEnabled: true,
+};
+
 export const MenuCatalogSchema = z.object({
   version: z.literal(1),
   enabled: z.boolean(),
@@ -57,6 +68,7 @@ export const MenuCatalogSchema = z.object({
     radius: z.number().int().min(0).max(28),
     imageLayout: z.enum(['compact', 'cover']),
   }).strict(),
+  routing: ContentRoutingSchema.default(DEFAULT_CONTENT_ROUTING),
   updatedAt: z.string().datetime().optional(),
 }).strict().superRefine((menu, context) => {
   const sectionIds = new Set(menu.sections.map((section) => section.id));
@@ -94,6 +106,7 @@ export const DEFAULT_MENU_CATALOG = {
   ],
   items: [],
   theme: { preset: 'editorial', background: '#f4f1eb', surface: '#fffdf8', text: '#17201d', muted: '#66706b', accent: '#1f5b47', border: '#d7d4cc', radius: 8, imageLayout: 'compact' },
+  routing: DEFAULT_CONTENT_ROUTING,
 };
 
 export function parseMenuCatalog(value) {
