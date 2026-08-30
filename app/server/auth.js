@@ -3,10 +3,27 @@ import jwt from 'jsonwebtoken';
 import { dbGet, dbRun } from './database.js';
 import { randomBytes, randomInt } from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || randomBytes(32).toString('hex');
-if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  console.warn('JWT_SECRET is not set. A random key was generated at runtime; tokens will be invalidated on restart. Set JWT_SECRET in production.');
+const KNOWN_INSECURE_JWT_SECRETS = new Set([
+  'change-me',
+  'change-me-to-a-long-random-string',
+  'secret',
+  'your-secret-key',
+]);
+
+export const isStrongJwtSecret = (value) => {
+  const secret = typeof value === 'string' ? value.trim() : '';
+  return secret.length >= 32 && !KNOWN_INSECURE_JWT_SECRETS.has(secret.toLowerCase());
+};
+
+const configuredJwtSecret = process.env.JWT_SECRET;
+const allowsEphemeralDevelopmentSecret = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
+if (!allowsEphemeralDevelopmentSecret && !isStrongJwtSecret(configuredJwtSecret)) {
+  throw new Error('JWT_SECRET must be at least 32 characters and must not use a known placeholder.');
 }
+
+const JWT_SECRET = isStrongJwtSecret(configuredJwtSecret)
+  ? configuredJwtSecret.trim()
+  : randomBytes(32).toString('hex');
 const SALT_ROUNDS = 12;
 
 // --- Role-Based Access Control ---

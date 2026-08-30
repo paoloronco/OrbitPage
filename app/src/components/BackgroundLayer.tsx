@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, CSSProperties } from "react";
 import { BackgroundMediaConfig } from "@/lib/theme";
+import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 interface BackgroundLayerProps {
   config: BackgroundMediaConfig;
@@ -9,6 +10,7 @@ interface BackgroundLayerProps {
 export const BackgroundLayer = ({ config, mode = "viewport" }: BackgroundLayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const mediaUrl = resolveSafePublicMediaUrl(config.mediaUrl);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -46,10 +48,10 @@ export const BackgroundLayer = ({ config, mode = "viewport" }: BackgroundLayerPr
       window.removeEventListener("pageshow", play);
       document.removeEventListener("visibilitychange", play);
     };
-  }, [config.mediaUrl, config.type]);
+  }, [mediaUrl, config.type]);
 
   if (config.type !== "video" && config.type !== "gif") return null;
-  if (!config.mediaUrl) return null;
+  if (!mediaUrl) return null;
 
   // Build CSS filter string
   const filters: string[] = [];
@@ -91,7 +93,7 @@ export const BackgroundLayer = ({ config, mode = "viewport" }: BackgroundLayerPr
       {config.type === "video" ? (
         <video
           ref={videoRef}
-          src={config.mediaUrl}
+          src={mediaUrl}
           autoPlay
           muted
           loop
@@ -102,7 +104,7 @@ export const BackgroundLayer = ({ config, mode = "viewport" }: BackgroundLayerPr
       ) : (
         // GIF — hidden when user prefers reduced motion
         <img
-          src={config.mediaUrl}
+          src={mediaUrl}
           alt=""
           role="presentation"
           style={{

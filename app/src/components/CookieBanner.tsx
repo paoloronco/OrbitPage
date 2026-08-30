@@ -22,6 +22,7 @@ import {
   type ConsentConfig,
   type HardcodedBannerConfig,
 } from '@/lib/consent-manager';
+import { resolveSafePublicHref } from '@/lib/browser-network-policy';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -196,6 +197,8 @@ function PreferencesModal({
   const optionalCats = (
     ['preferences', 'analytics', 'marketing'] as ConsentCategory[]
   ).filter((c) => cfg.categories[c as keyof typeof cfg.categories]?.enabled);
+  const privacyPolicyUrl = resolveSafePublicHref(cfg.urls.privacyPolicy);
+  const cookiePolicyUrl = resolveSafePublicHref(cfg.urls.cookiePolicy);
 
   return (
     <div
@@ -295,7 +298,7 @@ function PreferencesModal({
         </div>
 
         {/* Legal links */}
-        {(cfg.urls.privacyPolicy || cfg.urls.cookiePolicy || cfg.legalFooterText) && (
+        {(privacyPolicyUrl || cookiePolicyUrl || cfg.legalFooterText) && (
           <div style={{
             padding: '0 1.5rem 1rem',
             fontSize: '0.75rem',
@@ -306,15 +309,15 @@ function PreferencesModal({
           }}>
             {cfg.legalFooterText && <p style={{ margin: '0 0 0.375rem' }}>{cfg.legalFooterText}</p>}
             <span>
-              {cfg.urls.privacyPolicy && (
-                <a href={cfg.urls.privacyPolicy} target="_blank" rel="noopener noreferrer"
+              {privacyPolicyUrl && (
+                <a href={privacyPolicyUrl} target="_blank" rel="noopener noreferrer"
                   style={{ color: colors.accent, textDecoration: 'none' }}>
                   {cfg.texts.privacyPolicyLinkText || 'Privacy policy'}
                 </a>
               )}
-              {cfg.urls.privacyPolicy && cfg.urls.cookiePolicy && <span> · </span>}
-              {cfg.urls.cookiePolicy && (
-                <a href={cfg.urls.cookiePolicy} target="_blank" rel="noopener noreferrer"
+              {privacyPolicyUrl && cookiePolicyUrl && <span> · </span>}
+              {cookiePolicyUrl && (
+                <a href={cookiePolicyUrl} target="_blank" rel="noopener noreferrer"
                   style={{ color: colors.accent, textDecoration: 'none' }}>
                   {cfg.texts.cookiePolicyLinkText || 'Cookie policy'}
                 </a>
@@ -411,6 +414,8 @@ interface BannerBodyProps {
 
 function BannerBody({ cfg, colors, onAcceptAll, onRejectAll, onOpenPrefs, hasOptionalCats }: BannerBodyProps) {
   const rejectFirst = cfg.buttonPriority === 'reject-first';
+  const privacyPolicyUrl = resolveSafePublicHref(cfg.urls.privacyPolicy);
+  const cookiePolicyUrl = resolveSafePublicHref(cfg.urls.cookiePolicy);
   return (
     <>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -419,18 +424,18 @@ function BannerBody({ cfg, colors, onAcceptAll, onRejectAll, onOpenPrefs, hasOpt
         </p>
         <p style={{ margin: '0.375rem 0 0', fontSize: '0.8125rem', color: colors.muted, lineHeight: 1.6 }}>
           {cfg.texts.description}
-          {(cfg.urls.privacyPolicy || cfg.urls.cookiePolicy) && (
+          {(privacyPolicyUrl || cookiePolicyUrl) && (
             <>
               {' '}
-              {cfg.urls.privacyPolicy && (
-                <a href={cfg.urls.privacyPolicy} target="_blank" rel="noopener noreferrer"
+              {privacyPolicyUrl && (
+                <a href={privacyPolicyUrl} target="_blank" rel="noopener noreferrer"
                   style={{ color: colors.accent, textDecoration: 'underline' }}>
                   {cfg.texts.privacyPolicyLinkText || 'Privacy policy'}
                 </a>
               )}
-              {cfg.urls.privacyPolicy && cfg.urls.cookiePolicy && <span> · </span>}
-              {cfg.urls.cookiePolicy && (
-                <a href={cfg.urls.cookiePolicy} target="_blank" rel="noopener noreferrer"
+              {privacyPolicyUrl && cookiePolicyUrl && <span> · </span>}
+              {cookiePolicyUrl && (
+                <a href={cookiePolicyUrl} target="_blank" rel="noopener noreferrer"
                   style={{ color: colors.accent, textDecoration: 'underline' }}>
                   {cfg.texts.cookiePolicyLinkText || 'Cookie policy'}
                 </a>

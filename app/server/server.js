@@ -13,7 +13,6 @@ import {
   generateToken,
   generateTwoFactorChallenge,
   verifyTwoFactorChallenge,
-  verifyToken,
   authenticateToken,
   isPasswordStrong,
   generateSecurePassword,
@@ -34,6 +33,7 @@ import {
   ChangePasswordBodySchema,
   CreateUserBodySchema,
   LoginBodySchema,
+  ResetApplicationBodySchema,
   ResetViaTokenBodySchema,
   SetupBodySchema,
   UpdateRoleBodySchema,
@@ -170,9 +170,31 @@ const ALLOWED_CORS_ORIGINS = new Set([
   PUBLIC_SITE_URL,
   ...(IS_PRODUCTION ? [] : [FRONTEND_URL]),
 ].map(normalizeCorsOrigin).filter(Boolean));
-// Ensure correct client IP detection when behind a proxy/load balancer
-// This is important so express-rate-limit keys by the real client IP
-app.set('trust proxy', 1);
+const TRUST_PROXY_NAMES = new Set(['loopback', 'linklocal', 'uniquelocal']);
+const parseTrustProxySetting = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw || raw === '0' || raw.toLowerCase() === 'false') return false;
+  if (raw.toLowerCase() === 'true' || /^\d+$/.test(raw)) {
+    console.warn('ORBITPAGE_TRUST_PROXY must list trusted proxy IPs, CIDRs, or named ranges; boolean and hop-count trust is rejected.');
+    return false;
+  }
+  const entries = raw.split(',').map((entry) => entry.trim()).filter(Boolean);
+  const valid = entries.length > 0 && entries.every((entry) => (
+    TRUST_PROXY_NAMES.has(entry.toLowerCase()) || /^[0-9a-f:.]+(?:\/\d{1,3})?$/i.test(entry)
+  ));
+  if (!valid) {
+    console.warn('ORBITPAGE_TRUST_PROXY contains an invalid proxy address or range; proxy trust is disabled.');
+    return false;
+  }
+  return entries.join(', ');
+};
+const TRUST_PROXY_SETTING = parseTrustProxySetting(process.env.ORBITPAGE_TRUST_PROXY);
+app.set('trust proxy', TRUST_PROXY_SETTING);
+
+const optionalAuthenticateToken = (req, res, next) => {
+  if (!req.headers.authorization) return next();
+  return authenticateToken(req, res, next);
+};
 
 app.use((req, res, next) => {
   req.orbitpageBasePath = '';
@@ -331,9 +353,8 @@ app.use(helmet({
 }));
 
 // HTTPS-only security headers.
-// req.protocol is already normalised by Express: with `trust proxy: 1` it reads
-// X-Forwarded-Proto from the nearest trusted proxy, so Cloud Run / Nginx setups
-// that terminate TLS upstream are handled correctly.
+// req.protocol reads X-Forwarded-Proto only when the socket peer matches the
+// explicit ORBITPAGE_TRUST_PROXY policy.
 app.use((req, res, next) => {
   if (req.protocol === 'https') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
@@ -628,7 +649,8 @@ const getDatePartsForTimezone = (date, timezone) => {
 };
 
 const isLinkPubliclyVisible = (link, now = new Date()) => {
-  if (link.is_active === 0) return false;
+  const activeValue = link.is_active ?? link.isActive;
+  if (activeValue === 0 || activeValue === false) return false;
 
   const status = normalizeLinkStatus(link.status);
   if (status !== 'live') return false;
@@ -637,10 +659,10 @@ const isLinkPubliclyVisible = (link, now = new Date()) => {
     now,
     link.timezone || process.env.TZ || 'UTC'
   );
-  const startDate = link.start_date || null;
-  const endDate = link.end_date || null;
-  const startMinutes = parseTimeToMinutes(link.start_time);
-  const endMinutes = parseTimeToMinutes(link.end_time);
+  const startDate = link.start_date ?? link.startDate ?? null;
+  const endDate = link.end_date ?? link.endDate ?? null;
+  const startMinutes = parseTimeToMinutes(link.start_time ?? link.startTime);
+  const endMinutes = parseTimeToMinutes(link.end_time ?? link.endTime);
 
   if (startDate && startDate > currentDate) return false;
   if (endDate && endDate < currentDate) return false;
@@ -695,10 +717,29 @@ const formatLinkPayload = (link) => {
   };
 };
 
+const stripPrivateLinkMetadata = (link) => {
+  const {
+    clickCount: _clickCount,
+    ctaClicks: _ctaClicks,
+    campaignName: _campaignName,
+    startDate: _startDate,
+    startTime: _startTime,
+    endDate: _endDate,
+    endTime: _endTime,
+    timezone: _timezone,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    ...publicLink
+  } = link;
+  return publicLink;
+};
+
+const formatPublicLinkPayload = (link) => stripPrivateLinkMetadata(formatLinkPayload(link));
+
 const getPublicLinksPayload = async () => {
   const links = await dbAll('SELECT * FROM links WHERE is_active = 1 ORDER BY sort_order');
 
-  return links.filter((link) => isLinkPubliclyVisible(link)).map(formatLinkPayload);
+  return links.filter((link) => isLinkPubliclyVisible(link)).map(formatPublicLinkPayload);
 };
 
 const DEFAULT_THEME_PAYLOAD = {
@@ -810,10 +851,8 @@ const getRequestOrigin = (req) => {
   const configuredOrigin = normalizeOrigin(PUBLIC_SITE_URL);
   if (configuredOrigin) return configuredOrigin;
 
-  const forwardedProto = req.get('x-forwarded-proto')?.split(',')[0]?.trim();
-  const forwardedHost = req.get('x-forwarded-host')?.split(',')[0]?.trim();
-  const protocol = forwardedProto || req.protocol || 'http';
-  const host = forwardedHost || req.get('host') || `localhost:${PORT}`;
+  const protocol = req.protocol || 'http';
+  const host = req.get('host') || `localhost:${PORT}`;
   return `${protocol}://${host}`.replace(/\/$/, '');
 };
 
@@ -1696,9 +1735,8 @@ app.use('/uploads', express.static(uploadsPath, {
   }
 }));
 // Rate limiting
-// With `trust proxy: 1` set above, req.ip already contains the correct client IP
-// (extracted from X-Forwarded-For by Express). Avoid reading the header manually here
-// as that would bypass the trust model and allow IP spoofing.
+// Express derives req.ip from the socket by default, or from forwarded headers only
+// when ORBITPAGE_TRUST_PROXY explicitly names the trusted proxy addresses/ranges.
 const configuredApiRateLimitMax = Number.parseInt(process.env.ORBITPAGE_API_RATE_LIMIT_MAX || '', 10);
 const apiRateLimitMax = Number.isSafeInteger(configuredApiRateLimitMax) && configuredApiRateLimitMax > 0
   ? Math.min(configuredApiRateLimitMax, 10_000)
@@ -2181,6 +2219,27 @@ async function getMenuPayload() {
   }
 }
 
+function getPublicMenuPayload(menu) {
+  if (!menu?.enabled) {
+    return { ...DEFAULT_MENU_CATALOG, enabled: false, sections: [], items: [] };
+  }
+  const allSections = menu.sections || [];
+  const publicRootIds = new Set(
+    allSections
+      .filter((section) => section.visible && !section.parentId)
+      .map((section) => section.id)
+  );
+  const sections = allSections.filter((section) => (
+    section.visible && (!section.parentId || publicRootIds.has(section.parentId))
+  ));
+  const sectionIds = new Set(sections.map((section) => section.id));
+  return {
+    ...menu,
+    sections,
+    items: (menu.items || []).filter((item) => sectionIds.has(item.sectionId)),
+  };
+}
+
 async function getSubpagesPayload() {
   const row = await dbGet('SELECT full_config FROM subpages_config WHERE id = 1');
   if (!row?.full_config) return [];
@@ -2191,10 +2250,23 @@ async function getSubpagesPayload() {
   }
 }
 
-app.get('/api/subpages', async (_req, res) => {
+function getPublicSubpagesPayload(pages) {
+  return pages
+    .filter((page) => page.enabled)
+    .map((page) => ({
+      ...page,
+      links: (page.links || [])
+        .filter((link) => isLinkPubliclyVisible(link))
+        .map(stripPrivateLinkMetadata),
+    }));
+}
+
+app.get('/api/subpages', optionalAuthenticateToken, async (req, res) => {
   try {
     setNoStoreHeaders(res);
-    res.json(await getSubpagesPayload());
+    const pages = await getSubpagesPayload();
+    const canManagePages = (req.user?.permissions || []).includes('links:write');
+    res.json(canManagePages ? pages : getPublicSubpagesPayload(pages));
   } catch (error) {
     console.error('Error loading subpages:', error);
     res.status(500).json({ error: 'Failed to load pages' });
@@ -2222,10 +2294,12 @@ app.put('/api/subpages', authenticateToken, requirePermission('links:write'), as
   }
 });
 
-app.get('/api/menu', async (_req, res) => {
+app.get('/api/menu', optionalAuthenticateToken, async (req, res) => {
   try {
     setNoStoreHeaders(res);
-    res.json(await getMenuPayload());
+    const menu = await getMenuPayload();
+    const canManageMenu = (req.user?.permissions || []).includes('menu:write');
+    res.json(canManageMenu ? menu : getPublicMenuPayload(menu));
   } catch (error) {
     console.error('Error loading menu:', error);
     res.status(500).json({ error: 'Failed to load menu' });
@@ -2253,7 +2327,7 @@ app.get('/api/public-page', async (req, res) => {
   try {
     setNoStoreHeaders(res);
 
-    const [profile, links, theme, menu, subpages, pageSlug, setupRequired] = await Promise.all([
+    const [profile, links, theme, storedMenu, subpages, pageSlug, setupRequired] = await Promise.all([
       getPublicProfilePayload(),
       getPublicLinksPayload(),
       getPublicThemePayload(),
@@ -2262,6 +2336,7 @@ app.get('/api/public-page', async (req, res) => {
       getInstancePageSlug(),
       isFirstTimeSetup(),
     ]);
+    const menu = getPublicMenuPayload(storedMenu);
     const requestedSubpage = typeof req.query.subpage === 'string' ? req.query.subpage.trim().toLowerCase() : '';
     const requestedPrimaryPage = Boolean(requestedSubpage && pageSlug && requestedSubpage === pageSlug);
     const subpage = requestedSubpage && !requestedPrimaryPage
@@ -2271,9 +2346,10 @@ app.get('/api/public-page', async (req, res) => {
     const branding = {
       showOrbitPageBadge: profile.show_orbitpage_badge !== false,
     };
-    res.json(subpage ? {
-      profile: { ...profile, name: subpage.title, bio: subpage.description, tab_title: subpage.title, meta_description: subpage.description },
-      links: subpage.links,
+    const publicSubpage = subpage ? getPublicSubpagesPayload([subpage])[0] : null;
+    res.json(publicSubpage ? {
+      profile: { ...profile, name: publicSubpage.title, bio: publicSubpage.description, tab_title: publicSubpage.title, meta_description: publicSubpage.description },
+      links: publicSubpage.links,
       theme,
       menu,
       branding,
@@ -2450,7 +2526,7 @@ app.delete('/api/text-files/:key', authenticateToken, requirePermission('complia
 });
 
 // Page/Profile routes
-app.get('/api/profile', async (req, res) => {
+app.get('/api/profile', optionalAuthenticateToken, async (req, res) => {
   try {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
@@ -2502,7 +2578,7 @@ app.get('/api/profile', async (req, res) => {
         google_analytics_id: undefined,
         privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : undefined,
         cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : undefined,
-        admin_onboarding_enabled: 1,
+        ...((req.user?.permissions || []).includes('profile:write') ? { admin_onboarding_enabled: 1 } : {}),
       });
     }
 
@@ -2523,7 +2599,9 @@ app.get('/api/profile', async (req, res) => {
       google_analytics_id: profile.google_analytics_id || undefined,
       privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : (profile.privacy_policy_url || undefined),
       cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : (profile.cookie_policy_url || undefined),
-      admin_onboarding_enabled: profile.admin_onboarding_enabled === 0 ? 0 : 1,
+      ...((req.user?.permissions || []).includes('profile:write')
+        ? { admin_onboarding_enabled: profile.admin_onboarding_enabled === 0 ? 0 : 1 }
+        : {}),
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to load profile' });
@@ -2674,7 +2752,7 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 });
 
 // Links Routes
-app.get('/api/links', async (req, res) => {
+app.get('/api/links', optionalAuthenticateToken, async (req, res) => {
   try {
     // Prevent all caching
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
@@ -2684,20 +2762,18 @@ app.get('/api/links', async (req, res) => {
     res.set('Vary', '*');
     res.set('Last-Modified', new Date().toUTCString());
     
-    // Authenticated admin requests receive all links (including hidden ones)
-    const authHeader = req.headers['authorization'];
-    const rawToken = authHeader?.split(' ')[1];
-    const isAdmin = rawToken ? !!verifyToken(rawToken) : false;
+    const canManageLinks = ['links:write', 'links:style', 'links:images']
+      .some((permission) => (req.user?.permissions || []).includes(permission));
 
     let links;
-    if (isAdmin) {
+    if (canManageLinks) {
       links = await dbAll('SELECT * FROM links ORDER BY sort_order');
     } else {
       const rows = await dbAll('SELECT * FROM links WHERE is_active = 1 ORDER BY sort_order');
       links = rows.filter((link) => isLinkPubliclyVisible(link));
     }
 
-    const formattedLinks = links.map(formatLinkPayload);
+    const formattedLinks = links.map(canManageLinks ? formatLinkPayload : formatPublicLinkPayload);
 
     res.json(formattedLinks);
   } catch (error) {
@@ -3501,7 +3577,20 @@ app.post(
 );
 
 const MAP_PREVIEW_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const MAP_PREVIEW_CACHE_MAX_ENTRIES = 500;
 const mapPreviewCache = new Map();
+
+const cacheMapPreview = (key, value) => {
+  const now = Date.now();
+  for (const [cachedKey, entry] of mapPreviewCache) {
+    if (now - entry.timestamp >= MAP_PREVIEW_CACHE_TTL_MS) mapPreviewCache.delete(cachedKey);
+  }
+  if (mapPreviewCache.has(key)) mapPreviewCache.delete(key);
+  while (mapPreviewCache.size >= MAP_PREVIEW_CACHE_MAX_ENTRIES) {
+    mapPreviewCache.delete(mapPreviewCache.keys().next().value);
+  }
+  mapPreviewCache.set(key, { timestamp: now, value });
+};
 
 const mapCoordinatesFromText = (value = '') => {
   let decoded = String(value);
@@ -3627,7 +3716,7 @@ app.get('/api/map-preview', apiLimiter, authenticateToken, requirePermission('li
     const directCoordinates = mapCoordinatesFromText(mapUrl) || mapCoordinatesFromText(query);
     if (directCoordinates) {
       const value = { ...directCoordinates, displayName: query || mapUrl, source: 'coordinates' };
-      mapPreviewCache.set(cacheKey, { timestamp: Date.now(), value });
+      cacheMapPreview(cacheKey, value);
       res.set('Cache-Control', 'public, max-age=86400');
       return res.json(value);
     }
@@ -3638,7 +3727,7 @@ app.get('/api/map-preview', apiLimiter, authenticateToken, requirePermission('li
       finalUrl = redirect.finalUrl || mapUrl;
       if (redirect.coordinates) {
         const value = { ...redirect.coordinates, displayName: query || mapUrl, source: 'redirect' };
-        mapPreviewCache.set(cacheKey, { timestamp: Date.now(), value });
+        cacheMapPreview(cacheKey, value);
         res.set('Cache-Control', 'public, max-age=86400');
         return res.json(value);
       }
@@ -3676,7 +3765,7 @@ app.get('/api/map-preview', apiLimiter, authenticateToken, requirePermission('li
       displayName: typeof result.display_name === 'string' ? result.display_name : lookupQuery,
       source: 'geocoding',
     };
-    mapPreviewCache.set(cacheKey, { timestamp: Date.now(), value });
+    cacheMapPreview(cacheKey, value);
     res.set('Cache-Control', 'public, max-age=86400');
     return res.json(value);
   } catch (error) {
@@ -3729,17 +3818,11 @@ app.post('/api/users', authenticateToken, requirePermission('users:manage'), asy
   }
 });
 
-app.put('/api/users/:username', authenticateToken, async (req, res) => {
+app.put('/api/users/:username', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
   try {
     const { username } = req.params;
     const { password } = UpdateUserPasswordBodySchema.parse(req.body || {});
-    // Only allow users to change their own password, or users with users:manage permission
-    const isSelf = req.user.username === username;
-    const canManage = (req.user.permissions || []).includes('users:manage');
-    if (!isSelf && !canManage) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
-    }
     if (!isPasswordStrong(password)) {
       return res.status(400).json({ error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' });
     }
@@ -3748,7 +3831,7 @@ app.put('/api/users/:username', authenticateToken, async (req, res) => {
     const salt = await bcrypt.genSalt(12);
     const passwordHash = await bcrypt.hash(password, salt);
     await dbRun('UPDATE admin_users SET password_hash = ?, salt = ?, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ?', [passwordHash, salt, username]);
-    // Issue a fresh token if the user is changing their own password
+    // Issue a fresh token if an administrator explicitly resets their own account.
     const updatedUser = await dbGet('SELECT auth_version FROM admin_users WHERE username = ?', [username]);
     const newToken = req.user.username === username ? generateToken(username, Number(updatedUser?.auth_version || 0)) : undefined;
     res.json({ success: true, ...(newToken ? { token: newToken } : {}) });
@@ -3916,6 +3999,17 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req
   }
 });
 
+const KNOWN_INSECURE_RESET_TOKENS = new Set([
+  'change-me',
+  'change-me-to-a-long-random-string',
+  'reset-token',
+]);
+const isStrongResetToken = (value) => typeof value === 'string'
+  && value === value.trim()
+  && value.length >= 32
+  && /\S/.test(value)
+  && !KNOWN_INSECURE_RESET_TOKENS.has(value.toLowerCase());
+
 // Password reset via RESET_TOKEN env var
 app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
   if (DEMO_MODE) {
@@ -3926,8 +4020,8 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
     const { token, newPassword } = ResetViaTokenBodySchema.parse(req.body || {});
     const resetToken = process.env.RESET_TOKEN;
 
-    if (!resetToken) {
-      return res.status(400).json({ success: false, error: 'RESET_TOKEN is not configured on this server. Set the RESET_TOKEN environment variable to enable token-based password reset.' });
+    if (!isStrongResetToken(resetToken)) {
+      return res.status(403).json({ success: false, error: 'RESET_TOKEN recovery is disabled until a strong token of at least 32 characters is configured.' });
     }
 
     // Constant-time comparison to prevent timing attacks
@@ -4051,13 +4145,17 @@ const resetApplicationData = async () => {
   }
 };
 
-// Reset authentication - clear ALL data and reset to initial state (requires authentication)
-app.post('/api/auth/reset', authenticateToken, resetLimiter, async (req, res) => {
+// Reset authentication - clear ALL data and reset to initial state.
+app.post('/api/auth/reset', authenticateToken, requirePermission('users:manage'), resetLimiter, async (req, res) => {
   if (DEMO_MODE) {
     return res.status(403).json({ success: false, error: 'Application reset is disabled in demo mode.' });
   }
 
   try {
+    const { currentPassword } = ResetApplicationBodySchema.parse(req.body || {});
+    if (!(await authenticateUser(currentPassword, req.user.username))) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect.' });
+    }
     console.log('Authenticated reset endpoint called by user:', req.user?.username || 'unknown');
 
     const result = await resetApplicationData();
@@ -4071,6 +4169,8 @@ app.post('/api/auth/reset', authenticateToken, resetLimiter, async (req, res) =>
       message: 'Application reset successful. You will be redirected to the setup page.'
     });
   } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ success: false, error: validationMessage });
     console.error('Error in authenticated reset:', error);
     res.status(500).json({ 
       success: false, 
@@ -4092,7 +4192,7 @@ app.post('/api/auth/force-reset', resetLimiter, async (req, res) => {
     const resetToken = process.env.RESET_TOKEN;
     const providedToken = req.headers['x-reset-token'];
 
-    if (!resetToken || typeof resetToken !== 'string' || resetToken.length < 32) {
+    if (!isStrongResetToken(resetToken)) {
       console.warn('Force reset disabled: strong RESET_TOKEN env var not set');
       return res.status(403).json({ success: false, error: 'Unauthorized: Reset disabled' });
     }
@@ -4157,6 +4257,7 @@ app.post('/api/admin/restore', authenticateToken, requirePermission('users:manag
     return res.status(403).json({ success: false, error: 'Backup restore is disabled in demo mode.' });
   }
 
+  let mediaRestore = null;
   try {
     const isSelectiveRequest = req.body && typeof req.body === 'object' && !Array.isArray(req.body) &&
       Object.prototype.hasOwnProperty.call(req.body, 'backup');
@@ -4167,13 +4268,26 @@ app.post('/api/admin/restore', authenticateToken, requirePermission('users:manag
         backup,
         dbRun,
         uploadsPath,
+        deferMediaCommit: true,
       };
       if (requestedSections !== undefined) restoreOptions.sections = requestedSections;
-      await restoreApplicationBackup(restoreOptions);
+      const restoreResult = await restoreApplicationBackup(restoreOptions);
+      mediaRestore = restoreResult?.mediaRestore || null;
+      mediaRestore?.activate();
     });
+    try {
+      mediaRestore?.finalize();
+    } catch (cleanupError) {
+      console.warn('Backup restore cleanup warning:', cleanupError?.message || cleanupError);
+    }
 
     res.json({ success: true, message: 'Backup restored successfully.' });
   } catch (error) {
+    try {
+      mediaRestore?.rollback();
+    } catch (rollbackError) {
+      console.error('Backup media rollback error:', rollbackError);
+    }
     console.error('Backup restore error:', error);
     res.status(400).json({
       success: false,
@@ -4570,13 +4684,56 @@ const validateConsentConfigDomain = (config, legalUrls = {}) => {
   }
 
   if (config.mode === 'builder' && config.enabled) {
-    const { providerConfig = {} } = config.builder || {};
-    if (!providerConfig.headSnippet?.trim()) {
-      errors.push('Paste your external CMP script before enabling external consent management.');
-    }
+    const { provider = 'custom', providerConfig = {} } = config.builder || {};
+    const hasProviderConfig = provider === 'iubenda'
+      ? Boolean(providerConfig.headSnippet?.trim() || (providerConfig.siteId?.trim() && providerConfig.cookiePolicyId?.trim()))
+      : provider === 'cookiebot' || provider === 'cookieyes'
+        ? Boolean(providerConfig.scriptId?.trim())
+        : provider === 'onetrust'
+          ? Boolean(providerConfig.siteId?.trim())
+          : Boolean(providerConfig.headSnippet?.trim() || providerConfig.bodySnippet?.trim());
+    if (!hasProviderConfig) errors.push('Complete the selected CMP provider configuration before enabling external consent management.');
   }
 
   return errors;
+};
+
+const getExecutableConsentState = (config = {}) => {
+  const builderHead = String(config.builder?.providerConfig?.headSnippet || '').trim();
+  const builderBody = String(config.builder?.providerConfig?.bodySnippet || '').trim();
+  const privacyCode = String(config.legalPolicies?.privacyPolicy?.embeddedCode || '').trim();
+  const cookieCode = String(config.legalPolicies?.cookiePolicy?.embeddedCode || '').trim();
+  return {
+    builderHead,
+    builderBody,
+    privacyCode,
+    cookieCode,
+    builderActive: Boolean(config.enabled && config.mode === 'builder' && (builderHead || builderBody)),
+    privacyActive: Boolean(config.legalPolicies?.privacyPolicy?.mode === 'embedded' && privacyCode),
+    cookieActive: Boolean(config.legalPolicies?.cookiePolicy?.mode === 'embedded' && cookieCode),
+  };
+};
+
+const canUpdateExecutableConsent = (existingConfig, nextConfig) => {
+  const previous = getExecutableConsentState(existingConfig);
+  const next = getExecutableConsentState(nextConfig);
+  const codeKeys = ['builderHead', 'builderBody', 'privacyCode', 'cookieCode'];
+  const activationKeys = ['builderActive', 'privacyActive', 'cookieActive'];
+  const writesExecutableCode = codeKeys.some((key) => next[key] && next[key] !== previous[key]);
+  const activatesExecutableCode = activationKeys.some((key) => next[key] && !previous[key]);
+  return !writesExecutableCode && !activatesExecutableCode;
+};
+
+const getPublicConsentConfig = (config, mode, enabled, legalUrls) => {
+  const safeConfig = applyProfileLegalUrlsToConsentConfig(config, legalUrls);
+  const publicConfig = {
+    legalPolicies: safeConfig.legalPolicies,
+    hardcoded: safeConfig.hardcoded,
+    mode: enabled ? mode : 'disabled',
+    enabled: Boolean(enabled),
+  };
+  if (enabled && mode === 'builder') publicConfig.builder = safeConfig.builder;
+  return publicConfig;
 };
 
 // GET /api/consent-config/public — unauthenticated, used by the public page at runtime
@@ -4602,21 +4759,13 @@ app.get('/api/consent-config/public', apiLimiter, async (req, res) => {
       const config = row ? safeJsonParse(row.full_config, {}) : DEFAULT_CONSENT_CONFIG;
       return res.json({
         success: true,
-        data: {
-          mode: 'disabled',
-          enabled: false,
-          ...applyProfileLegalUrlsToConsentConfig(config, legalUrls),
-        },
+        data: getPublicConsentConfig(config, 'disabled', false, legalUrls),
       });
     }
     const config = safeJsonParse(row.full_config, {});
     return res.json({
       success: true,
-      data: {
-        mode: row.mode,
-        enabled: true,
-        ...applyProfileLegalUrlsToConsentConfig(config, legalUrls),
-      },
+      data: getPublicConsentConfig(config, row.mode, true, legalUrls),
     });
   } catch (err) {
     console.error('Error fetching public consent config:', err);
@@ -4625,7 +4774,7 @@ app.get('/api/consent-config/public', apiLimiter, async (req, res) => {
 });
 
 // GET /api/consent-config — admin, returns full config including timestamps
-app.get('/api/consent-config', authenticateToken, apiLimiter, async (req, res) => {
+app.get('/api/consent-config', authenticateToken, apiLimiter, requireAnyPermission('compliance:write', 'users:manage'), async (req, res) => {
   try {
     if (DEMO_MODE) {
       return res.json({
@@ -4676,7 +4825,7 @@ app.get('/api/consent-config', authenticateToken, apiLimiter, async (req, res) =
 });
 
 // PUT /api/consent-config — requires compliance:write
-app.put('/api/consent-config', authenticateToken, apiLimiter, requirePermission('compliance:write'), async (req, res) => {
+app.put('/api/consent-config', authenticateToken, apiLimiter, requireAnyPermission('compliance:write', 'users:manage'), async (req, res) => {
   if (DEMO_MODE) {
     return res.status(403).json({ success: false, error: 'Config changes are disabled in demo mode.' });
   }
@@ -4690,6 +4839,20 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, requirePermission(
   const { mode, enabled, legalPolicies, hardcoded, builder } = parsed.data;
 
   try {
+    const existing = await dbGet(
+      'SELECT id, mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
+    );
+    const existingConfig = existing
+      ? { ...safeJsonParse(existing.full_config, {}), mode: existing.mode, enabled: Boolean(existing.enabled) }
+      : DEFAULT_CONSENT_CONFIG;
+    const canManageUsers = (req.user?.permissions || []).includes('users:manage');
+    if (!canManageUsers && !canUpdateExecutableConsent(existingConfig, parsed.data)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only an administrator can add or activate executable CMP or embedded policy code.',
+      });
+    }
+
     const legalUrls = await getProfileLegalUrls();
     const domainErrors = validateConsentConfigDomain(parsed.data, legalUrls);
     if (domainErrors.length > 0) {
@@ -4697,9 +4860,6 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, requirePermission(
     }
 
     const fullConfig = JSON.stringify(stripDuplicateLegalUrlsFromConsentConfig({ legalPolicies, hardcoded, builder }));
-    const existing = await dbGet(
-      'SELECT id FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
-    );
     if (existing) {
       await dbRun(
         'UPDATE cookie_consent_config SET mode = ?, enabled = ?, full_config = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',

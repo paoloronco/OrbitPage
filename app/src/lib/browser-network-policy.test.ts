@@ -7,7 +7,11 @@ import {
 } from './browser-network-policy';
 
 describe('browser network policy', () => {
-  it.each(['localhost', 'preview.localhost', '127.0.0.1', '10.0.0.8', '172.16.0.1', '192.168.1.20', 'router.local'])(
+  it.each([
+    'localhost', 'preview.localhost', '127.0.0.1', '10.0.0.8', '172.16.0.1', '192.168.1.20',
+    'router', 'nas', 'router.local', '198.18.0.1', '224.0.0.1', '::ffff:127.0.0.1', '::ffff:7f00:1',
+    'fc00::1', 'fe80::1', 'ff02::1', '2001:db8::1',
+  ])(
     'recognizes %s as a private destination',
     (hostname) => expect(isPrivateBrowserHostname(hostname)).toBe(true),
   );
@@ -15,6 +19,8 @@ describe('browser network policy', () => {
   it('blocks loopback and LAN endpoints from a public page', () => {
     expect(resolveSafeBrowserHttpUrl('http://localhost:3000/api', 'https://orbitpage.com/dashboard')).toBeNull();
     expect(resolveSafeBrowserHttpUrl('https://192.168.1.20/media', 'https://orbitpage.com/dashboard')).toBeNull();
+    expect(resolveSafeBrowserHttpUrl('http://[::ffff:7f00:1]/admin', 'https://orbitpage.com/dashboard')).toBeNull();
+    expect(resolveSafeBrowserHttpUrl('http://router/admin', 'https://orbitpage.com/dashboard')).toBeNull();
   });
 
   it('allows public HTTPS endpoints and relative same-origin paths', () => {

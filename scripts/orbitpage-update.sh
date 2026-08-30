@@ -13,6 +13,7 @@
 #   orbitpage-update --logs
 
 set -Eeuo pipefail
+umask 077
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 IMAGE="paueron/orbitpage:latest"
@@ -32,9 +33,27 @@ DEMO_BASE_PATH="/orbitpage-demo"
 
 BACKUP_DIR="/root/docker-run-backups"
 INSTALL_PATH="/usr/local/bin/orbitpage-update"
+SECRET_ENV_FILES=()
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 log() { printf '[%s] %s\n' "$(date -u +'%Y-%m-%d %H:%M:%S UTC')" "$*"; }
+
+cleanup_secret_env_files() {
+  local file
+  for file in "${SECRET_ENV_FILES[@]:-}"; do
+    [[ -n "$file" ]] && rm -f -- "$file"
+  done
+}
+trap cleanup_secret_env_files EXIT
+
+create_secret_env_file() {
+  local output_variable="$1" secret="$2" file
+  file="$(mktemp)"
+  chmod 0600 "$file"
+  printf 'JWT_SECRET=%s\n' "$secret" > "$file"
+  SECRET_ENV_FILES+=("$file")
+  printf -v "$output_variable" '%s' "$file"
+}
 
 container_exists() { docker inspect "$1" >/dev/null 2>&1; }
 
@@ -50,7 +69,7 @@ get_or_create_secret() {
   if container_exists "$container"; then
     secret="$(get_env "$container" JWT_SECRET || true)"
   fi
-  if [[ -z "$secret" || "$secret" == "***" ]]; then
+  if [[ ${#secret} -lt 32 || "$secret" == "***" || "$secret" == "change-me" || "$secret" == "change-me-to-a-long-random-string" ]]; then
     secret="$(openssl rand -hex 32)"
   fi
   printf '%s' "$secret"
@@ -89,7 +108,7 @@ self_update() {
 
 # ── Container definitions ─────────────────────────────────────────────────────
 recreate_prod() {
-  local secret="$1"
+  local secret_env_file="$1"
   log "Recreate PROD container: $PROD_NAME"
   docker rm -f "$PROD_NAME" >/dev/null 2>&1 || true
   docker run -d \
@@ -97,7 +116,7 @@ recreate_prod() {
     --restart always \
     -p ${PROD_HTTP_PORT}:8080 \
     -p ${PROD_HTTPS_PORT}:8443 \
-    -e JWT_SECRET="$secret" \
+    --env-file "$secret_env_file" \
     -e ENABLE_HTTPS=true \
     -e SSL_PORT=8443 \
     -e PORT=8080 \
@@ -108,14 +127,14 @@ recreate_prod() {
 }
 
 recreate_demo() {
-  local secret="$1"
+  local secret_env_file="$1"
   log "Recreate DEMO container: $DEMO_NAME"
   docker rm -f "$DEMO_NAME" >/dev/null 2>&1 || true
   docker run -d \
     --name "$DEMO_NAME" \
     --restart always \
     -p ${DEMO_HTTP_PORT}:8080 \
-    -e JWT_SECRET="$secret" \
+    --env-file "$secret_env_file" \
     -e DEMO_MODE=true \
     -e PORT=8080 \
     -e DATA_DIR=/app/data \
@@ -156,13 +175,19 @@ if [[ "$skip_self_update" == false && -w "$INSTALL_PATH" ]]; then
   self_update "$@"
 fi
 
+# Create credential files only after self-update. An exec-based restart does not
+# run EXIT traps, so creating them earlier could leave JWT material in /tmp.
+create_secret_env_file PROD_SECRET_ENV_FILE "$PROD_SECRET"
+create_secret_env_file DEMO_SECRET_ENV_FILE "$DEMO_SECRET"
+unset PROD_SECRET DEMO_SECRET
+
 LATEST_IMAGE_ID="$(docker image inspect "$IMAGE" --format '{{.Id}}')"
 LATEST_DIGEST="$(docker image inspect "$IMAGE" --format '{{index .RepoDigests 0}}' 2>/dev/null || true)"
 log "Latest image id: $LATEST_IMAGE_ID"
 [[ -n "$LATEST_DIGEST" ]] && log "Latest digest: $LATEST_DIGEST"
 
-recreate_prod "$PROD_SECRET"
-recreate_demo "$DEMO_SECRET"
+recreate_prod "$PROD_SECRET_ENV_FILE"
+recreate_demo "$DEMO_SECRET_ENV_FILE"
 
 # Verify containers
 log "Verifying containers"

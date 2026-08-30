@@ -5,11 +5,13 @@ import { internalAssetPath } from "@/lib/base-path";
 import { getVideoData } from "@/lib/link-blocks";
 import { getPublicBlockPadding, getPublicBlockStyle } from "@/lib/public-block-style";
 import { VideoOff } from "lucide-react";
+import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 const resolveMediaUrl = (value?: string) => {
-  if (!value) return undefined;
-  if (/^(https?:|blob:)/i.test(value)) return value;
-  return internalAssetPath(value);
+  const safeUrl = resolveSafePublicMediaUrl(value);
+  if (!safeUrl) return undefined;
+  if (/^(https?:|blob:|data:)/i.test(safeUrl)) return safeUrl;
+  return internalAssetPath(safeUrl);
 };
 
 export const PublicVideoCard = ({ link }: { link: LinkData }) => {

@@ -8,6 +8,27 @@ const parseIpv4 = (hostname: string): number[] | null => {
   return values.every((value) => value >= 0 && value <= 255) ? values : null;
 };
 
+const parseIpv4FromIpv6 = (hostname: string): number[] | null => {
+  const dottedMatch = hostname.match(/^::(?:ffff:)?(\d{1,3}(?:\.\d{1,3}){3})$/i);
+  if (dottedMatch) return parseIpv4(dottedMatch[1]);
+  const hexadecimalMatch = hostname.match(/^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+  if (!hexadecimalMatch) return null;
+  const high = Number.parseInt(hexadecimalMatch[1], 16);
+  const low = Number.parseInt(hexadecimalMatch[2], 16);
+  return [high >> 8, high & 0xff, low >> 8, low & 0xff];
+};
+
+const isPrivateIpv4 = ([first, second, third]: number[]) => first === 0 ||
+  first === 10 ||
+  first === 127 ||
+  (first === 100 && second >= 64 && second <= 127) ||
+  (first === 169 && second === 254) ||
+  (first === 172 && second >= 16 && second <= 31) ||
+  (first === 192 && ((second === 0 && (third === 0 || third === 2)) || second === 168)) ||
+  (first === 198 && (second === 18 || second === 19 || (second === 51 && third === 100))) ||
+  (first === 203 && second === 0 && third === 113) ||
+  first >= 224;
+
 export const isPrivateBrowserHostname = (hostname: string): boolean => {
   const normalized = normalizeHostname(hostname);
   if (
@@ -21,20 +42,25 @@ export const isPrivateBrowserHostname = (hostname: string): boolean => {
   }
 
   const ipv4 = parseIpv4(normalized);
-  if (ipv4) {
-    const [first, second] = ipv4;
-    return first === 0 ||
-      first === 10 ||
-      first === 127 ||
-      (first === 100 && second >= 64 && second <= 127) ||
-      (first === 169 && second === 254) ||
-      (first === 172 && second >= 16 && second <= 31) ||
-      (first === 192 && second === 168);
-  }
+  if (ipv4) return isPrivateIpv4(ipv4);
+
+  const embeddedIpv4 = parseIpv4FromIpv6(normalized);
+  if (embeddedIpv4) return isPrivateIpv4(embeddedIpv4);
+
+  // Single-label DNS names resolve through local search domains and commonly
+  // identify intranet devices such as `router`, `nas`, or `printer`.
+  if (!normalized.includes('.') && !normalized.includes(':')) return true;
 
   if (normalized === '::' || normalized === '::1') return true;
   if (/^(?:fc|fd)[0-9a-f]{2}:/i.test(normalized)) return true;
-  return /^fe[89ab][0-9a-f]:/i.test(normalized);
+  if (/^ff[0-9a-f]{2}:/i.test(normalized)) return true;
+  if (/^fe[89ab][0-9a-f]:/i.test(normalized)) return true;
+  if (/^(?:100|2001:db8):/i.test(normalized)) return true;
+  if (normalized.includes(':')) {
+    const firstHextet = Number.parseInt(normalized.split(':', 1)[0], 16);
+    return !Number.isFinite(firstHextet) || firstHextet < 0x2000 || firstHextet > 0x3fff;
+  }
+  return false;
 };
 
 /**

@@ -6,12 +6,13 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 
 | Variable | Default | Recommendation |
 | --- | --- | --- |
-| `JWT_SECRET` | random outside Docker | Required for Docker and production. Use a long random stable value. |
+| `JWT_SECRET` | ephemeral only in development/test | Required for every production runtime. Use a stable random value of at least 32 characters. Known placeholders are rejected. |
 | `NODE_ENV` | unset | Set to `production` in production. |
 | `PORT` | `3001` local, `8080` Docker | Set to the port your platform expects. |
 | `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production. |
 | `UPLOAD_STORAGE_QUOTA_MB` | `1024` | Keep local uploads bounded. Raise this only when the data volume is sized accordingly. |
 | `VIDEO_UPLOAD_LIMIT_MB` | `100` | Maximum size for one uploaded MP4/WebM/GIF media file. |
+| `ORBITPAGE_BACKUP_MEDIA_LIMIT_MB` | `128` | Maximum decoded media size in one backup export or restore. |
 | `PUBLIC_SITE_URL` | derived from request | Set to the canonical public URL behind proxies or cloud platforms. |
 | `PUBLIC_SITE_NAME` | `OrbitPage` | Set to your name, brand, or site label. |
 | `SEO_INDEXING` | `true` | Set to `false` for staging/private deployments. |
@@ -20,13 +21,14 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 
 | Variable | Notes |
 | --- | --- |
-| `JWT_SECRET` | Signs admin JWT sessions. Docker startup aborts when missing. |
+| `JWT_SECRET` | Signs admin JWT sessions. Production and Docker startup abort when it is missing, shorter than 32 characters, or a known placeholder. |
 | `PORT` | HTTP listener port. |
 | `DATA_DIR` | Stores `orbitpage.db` and uploads. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
 | `VIDEO_UPLOAD_LIMIT_MB` | Per-file limit for uploaded video/background media. Content is also validated by MIME, extension, and binary signature. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |
 | `ORBITPAGE_ALLOWED_ORIGINS` | Optional comma-separated allowlist for trusted cross-origin browser clients. Same-origin deployments should leave it unset. |
+| `ORBITPAGE_TRUST_PROXY` | Optional comma-separated trusted proxy IPs/CIDRs or Express named ranges (`loopback`, `linklocal`, `uniquelocal`). Defaults to disabled. Boolean values and hop counts are rejected because they can trust client-supplied forwarding headers. |
 | `ORBITPAGE_API_RATE_LIMIT_MAX` | Maximum requests per IP in the general 15-minute API window. Defaults to `300` and is capped at `10000`; sensitive authentication routes keep stricter limits. |
 | `DEMO_MODE` | Disables destructive mutations and resets demo data. Not for normal production. |
 | `ENABLE_HTTPS` | Enables a self-signed HTTPS listener. Usually unnecessary behind real HTTPS proxies. |
@@ -38,6 +40,7 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 | `PUBLIC_SITE_NAME` | Site name used in generated metadata. |
 | `SEO_INDEXING` | `false`, `0`, `no`, or `off` disables indexing. |
 | `RESET_TOKEN` | Optional emergency recovery secret. Leave unset normally; when configured it protects both account recovery and a separate destructive full-reset endpoint. Use a random value of at least 32 characters. |
+| `ORBITPAGE_BACKUP_MEDIA_LIMIT_MB` | Maximum total decoded media in a backup export or restore. Defaults to `128`; restored media is restricted to supported image/video signatures. |
 | `MEDIA_CLEANUP_ENABLED` | Set to `false` to disable the automatic unused-upload scan. Defaults to enabled outside tests and demo mode. |
 | `MEDIA_CLEANUP_GRACE_HOURS` | Minimum age of an unreferenced upload before deletion. Defaults to `24` and accepts values from 1 to 720 hours. |
 | `TZ` | Fallback IANA timezone for scheduled content that does not define one. Defaults to `UTC`. |

@@ -7,6 +7,7 @@ import { ArrowUpRight, CalendarDays, Clock3, MapPin, Ticket } from "lucide-react
 import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent } from "@/lib/public-block-style";
 import { countdownParts, eventDateTime } from "@/lib/event-countdown";
 import { useAppI18n } from "@/lib/i18n";
+import { resolveSafePublicHref } from "@/lib/browser-network-policy";
 
 interface PublicEventCardProps {
   link: LinkData;
@@ -20,6 +21,7 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
   const timeLabel = [eventData.time, eventData.endTime ? `- ${eventData.endTime}` : ""].filter(Boolean).join(" ");
   const cardStyle = getPublicBlockStyle(link);
   const unavailable = link.availability === 'unavailable';
+  const safeUrl = resolveSafePublicHref(link.url);
   const eventInstant = useMemo(
     () => eventData.date
       ? eventDateTime(eventData.date, eventData.time || '00:00', eventData.timezone || link.timezone || 'UTC')
@@ -36,9 +38,9 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
   }, [eventData.showCountdown, eventInstant]);
 
   const handleOpen = () => {
-    if (link.url && !unavailable) {
+    if (safeUrl && !unavailable) {
       trackPublicLinkClick(link.id);
-      window.open(link.url, "_blank", "noopener,noreferrer");
+      window.open(safeUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -113,7 +115,7 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
               <p className="text-sm leading-relaxed text-muted-foreground">{eventData.notes}</p>
             ) : null}
           </div>
-        {link.url ? (
+        {safeUrl ? (
           <button
             type="button"
             onClick={handleOpen}

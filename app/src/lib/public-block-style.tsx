@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { LinkData } from "@/components/LinkCard";
+import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 const parseHexColor = (color?: string) => {
   if (!color) return null;
@@ -58,7 +59,10 @@ export const getPublicIconSize = (size?: LinkData["size"]) => {
 export const getPublicIconContent = (link: LinkData, fallback: ReactNode) => {
   if (!link.icon) return fallback;
   if (link.iconType === "image" || link.iconType === "svg") {
-    return <img src={link.icon} alt="" className="h-full w-full rounded-lg object-cover" loading="lazy" decoding="async" />;
+    const safeIcon = resolveSafePublicMediaUrl(link.icon);
+    return safeIcon
+      ? <img src={safeIcon} alt="" className="h-full w-full rounded-lg object-cover" loading="lazy" decoding="async" />
+      : fallback;
   }
   return <span className="text-xl leading-none">{link.icon}</span>;
 };

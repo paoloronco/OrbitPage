@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { ArrowLeft, ChevronDown, Leaf, Search, Sparkles, X } from 'lucide-react';
 import { formatMenuPrice, type MenuCatalog } from '@/lib/menu';
 import { withBasePath } from '@/lib/base-path';
+import { resolveSafePublicMediaUrl } from '@/lib/browser-network-policy';
 
 interface MenuViewProps {
   menu: MenuCatalog;
@@ -73,9 +74,9 @@ export function MenuView({ menu, embedded = false, pageHref = withBasePath('/') 
           key={item.id}
           className={`orbitpage-menu-item${item.featured ? ' orbitpage-menu-item--featured' : ''}${!item.available ? ' orbitpage-menu-item--unavailable' : ''}`}
         >
-          {item.imageUrl && (
+          {resolveSafePublicMediaUrl(item.imageUrl) && (
             <img
-              src={item.imageUrl}
+              src={resolveSafePublicMediaUrl(item.imageUrl) || undefined}
               alt={item.imageAlt || ''}
               loading="lazy"
               className={`orbitpage-menu-item__image orbitpage-menu-item__image--${menu.theme.imageLayout}`}

@@ -4,6 +4,7 @@ import { getCalloutData } from "@/lib/link-blocks";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, Sparkles } from "lucide-react";
 import { getPublicAccentStyle, getPublicBlockGap, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
+import { resolveSafePublicHref } from "@/lib/browser-network-policy";
 
 interface PublicCalloutCardProps {
   link: LinkData;
@@ -12,11 +13,12 @@ interface PublicCalloutCardProps {
 export const PublicCalloutCard = ({ link }: PublicCalloutCardProps) => {
   const { badge, buttonLabel } = getCalloutData(link.content);
   const cardStyle = getPublicBlockStyle(link);
+  const safeUrl = resolveSafePublicHref(link.url);
 
   const handleOpen = () => {
-    if (link.url) {
+    if (safeUrl) {
       trackPublicLinkClick(link.id);
-      window.open(link.url, "_blank", "noopener,noreferrer");
+      window.open(safeUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -63,7 +65,7 @@ export const PublicCalloutCard = ({ link }: PublicCalloutCardProps) => {
               {link.description}
             </p>
           )}
-        {link.url ? (
+        {safeUrl ? (
           <button
             type="button"
             onClick={handleOpen}

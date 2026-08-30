@@ -4,22 +4,24 @@ import { getContactData } from "@/lib/link-blocks";
 import { Card } from "@/components/ui/card";
 import { Globe, Mail, MapPin, MessageCircle, Phone, Send, UserRound } from "lucide-react";
 import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize, getPublicTextColor } from "@/lib/public-block-style";
+import { resolveSafePublicHref } from "@/lib/browser-network-policy";
 
 interface PublicContactCardProps {
   link: LinkData;
 }
 
 const buildLink = (href?: string, text?: string, style?: CSSProperties) => {
-  if (!href) return null;
+  const safeHref = resolveSafePublicHref(href);
+  if (!safeHref) return null;
   return (
     <a
-      href={href}
+      href={safeHref}
       target="_blank"
       rel="noopener noreferrer"
       className="text-sm font-medium break-all hover:text-primary hover:underline"
       style={style}
     >
-      {text || href}
+      {text || safeHref}
     </a>
   );
 };
@@ -34,7 +36,9 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
     { key: "WhatsApp", value: contact.whatsapp, href: contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/\D/g, '')}` : undefined, Icon: MessageCircle },
     { key: "Telegram", value: contact.telegram, href: contact.telegram ? (contact.telegram.includes("http") ? contact.telegram : `https://t.me/${contact.telegram.replace(/^@/, '')}`) : undefined, Icon: Send },
   ];
-  const primaryAction = items.find((item) => item.href && (item.key === "Phone" || item.key === "Email" || item.key === "WhatsApp"));
+  const primaryAction = items
+    .map((item) => ({ ...item, safeHref: resolveSafePublicHref(item.href) }))
+    .find((item) => item.safeHref && (item.key === "Phone" || item.key === "Email" || item.key === "WhatsApp"));
   const cardStyle = getPublicBlockStyle(link);
   const textColor = getPublicTextColor(link);
   const textStyle = textColor ? { color: textColor } : undefined;
@@ -98,7 +102,7 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
         </div>
         {primaryAction ? (
           <a
-            href={primaryAction.href}
+            href={primaryAction.safeHref}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-smooth hover:bg-primary/90"

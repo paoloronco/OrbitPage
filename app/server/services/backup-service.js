@@ -39,6 +39,41 @@ const SECTION_TABLES = {
 };
 
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const DEFAULT_BACKUP_MEDIA_LIMIT_BYTES = 128 * 1024 * 1024;
+const ALLOWED_MEDIA_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.mp4', '.webm']);
+
+const backupMediaLimitBytes = () => {
+  const configuredMb = Number(process.env.ORBITPAGE_BACKUP_MEDIA_LIMIT_MB);
+  return Number.isFinite(configuredMb) && configuredMb > 0
+    ? Math.floor(configuredMb * 1024 * 1024)
+    : DEFAULT_BACKUP_MEDIA_LIMIT_BYTES;
+};
+
+const isAllowedMediaSignature = (extension, buffer) => {
+  if (extension === '.png') return buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (extension === '.jpg' || extension === '.jpeg') return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  if (extension === '.gif') return ['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString('ascii'));
+  if (extension === '.webp') return buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+  if (extension === '.mp4') return buffer.subarray(4, 8).toString('ascii') === 'ftyp';
+  if (extension === '.webm') return buffer.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
+  return false;
+};
+
+const decodeBackupMedia = (upload) => {
+  const extension = path.posix.extname(upload.path).toLowerCase();
+  if (!ALLOWED_MEDIA_EXTENSIONS.has(extension)) {
+    throw new Error(`Unsupported backup media type: ${upload.path}`);
+  }
+  const encoded = String(upload.data || '');
+  if (!encoded || encoded.length % 4 !== 0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded)) {
+    throw new Error(`Invalid base64 backup media: ${upload.path}`);
+  }
+  const buffer = Buffer.from(encoded, 'base64');
+  if (!isAllowedMediaSignature(extension, buffer)) {
+    throw new Error(`Backup media content does not match its extension: ${upload.path}`);
+  }
+  return buffer;
+};
 
 function assertSafeIdentifier(identifier) {
   if (!IDENTIFIER_PATTERN.test(identifier)) {
@@ -46,7 +81,7 @@ function assertSafeIdentifier(identifier) {
   }
 }
 
-function readUploadFiles(uploadsPath, currentPath = uploadsPath) {
+function readUploadFiles(uploadsPath, currentPath = uploadsPath, state = { bytes: 0 }) {
   if (!fs.existsSync(currentPath)) {
     return [];
   }
@@ -58,7 +93,7 @@ function readUploadFiles(uploadsPath, currentPath = uploadsPath) {
     const fullPath = path.join(currentPath, entry.name);
 
     if (entry.isDirectory()) {
-      uploads.push(...readUploadFiles(uploadsPath, fullPath));
+      uploads.push(...readUploadFiles(uploadsPath, fullPath, state));
       continue;
     }
 
@@ -67,6 +102,10 @@ function readUploadFiles(uploadsPath, currentPath = uploadsPath) {
     }
 
     const relativePath = path.relative(uploadsPath, fullPath).split(path.sep).join('/');
+    state.bytes += fs.statSync(fullPath).size;
+    if (state.bytes > backupMediaLimitBytes()) {
+      throw new Error('Backup media exceeds the configured size limit');
+    }
     uploads.push({
       path: relativePath,
       data: fs.readFileSync(fullPath).toString('base64'),
@@ -136,14 +175,18 @@ function normalizeBackupPayload(backup) {
     }
   }
 
-  return {
-    tables,
-    uploads: uploads.map((entry) => ({
-      path: normalizeBackupUploadPath(entry?.path),
-      data: String(entry?.data || ''),
-    })),
-    availableSections,
-  };
+  const normalizedUploads = uploads.map((entry) => ({
+    path: normalizeBackupUploadPath(entry?.path),
+    data: String(entry?.data || ''),
+  }));
+  const uploadPaths = new Set();
+  for (const upload of normalizedUploads) {
+    const collisionKey = upload.path.toLowerCase();
+    if (uploadPaths.has(collisionKey)) throw new Error(`Duplicate backup upload path: ${upload.path}`);
+    uploadPaths.add(collisionKey);
+  }
+
+  return { tables, uploads: normalizedUploads, availableSections };
 }
 
 async function insertRows({ dbRun, tableName, rows }) {
@@ -163,21 +206,66 @@ async function insertRows({ dbRun, tableName, rows }) {
   }
 }
 
-function replaceUploads({ uploadsPath, uploads }) {
-  fs.rmSync(uploadsPath, { recursive: true, force: true });
-  fs.mkdirSync(uploadsPath, { recursive: true });
+function stageUploads({ uploadsPath, uploads }) {
+  const resolvedUploadsPath = path.resolve(uploadsPath);
+  const parentPath = path.dirname(resolvedUploadsPath);
+  fs.mkdirSync(parentPath, { recursive: true });
+  const stagingPath = fs.mkdtempSync(path.join(parentPath, `.${path.basename(resolvedUploadsPath)}-restore-`));
+  let previousPath = null;
+  let activated = false;
+  let totalBytes = 0;
 
-  for (const upload of uploads) {
-    const destination = path.resolve(uploadsPath, ...upload.path.split('/'));
-    const uploadsRoot = path.resolve(uploadsPath);
+  try {
+    for (const upload of uploads) {
+      const encodedLength = String(upload.data || '').length;
+      const estimatedBytes = Math.floor((encodedLength * 3) / 4);
+      if (totalBytes + estimatedBytes > backupMediaLimitBytes()) {
+        throw new Error('Backup media exceeds the configured size limit');
+      }
+      const buffer = decodeBackupMedia(upload);
+      totalBytes += buffer.length;
+      if (totalBytes > backupMediaLimitBytes()) throw new Error('Backup media exceeds the configured size limit');
+      const destination = path.resolve(stagingPath, ...upload.path.split('/'));
 
-    if (!destination.startsWith(`${uploadsRoot}${path.sep}`)) {
-      throw new Error('Unsafe backup upload path');
+      if (!destination.startsWith(`${stagingPath}${path.sep}`)) throw new Error('Unsafe backup upload path');
+
+      fs.mkdirSync(path.dirname(destination), { recursive: true });
+      fs.writeFileSync(destination, buffer, { mode: 0o600 });
     }
-
-    fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.writeFileSync(destination, Buffer.from(upload.data, 'base64'));
+  } catch (error) {
+    fs.rmSync(stagingPath, { recursive: true, force: true });
+    throw error;
   }
+
+  return {
+    activate() {
+      if (activated) return;
+      if (fs.existsSync(resolvedUploadsPath)) {
+        previousPath = `${stagingPath}-previous`;
+        fs.renameSync(resolvedUploadsPath, previousPath);
+      }
+      try {
+        fs.renameSync(stagingPath, resolvedUploadsPath);
+        activated = true;
+      } catch (error) {
+        if (previousPath && fs.existsSync(previousPath)) fs.renameSync(previousPath, resolvedUploadsPath);
+        previousPath = null;
+        throw error;
+      }
+    },
+    rollback() {
+      if (activated && fs.existsSync(resolvedUploadsPath)) fs.rmSync(resolvedUploadsPath, { recursive: true, force: true });
+      if (previousPath && fs.existsSync(previousPath)) fs.renameSync(previousPath, resolvedUploadsPath);
+      if (fs.existsSync(stagingPath)) fs.rmSync(stagingPath, { recursive: true, force: true });
+      activated = false;
+      previousPath = null;
+    },
+    finalize() {
+      if (previousPath && fs.existsSync(previousPath)) fs.rmSync(previousPath, { recursive: true, force: true });
+      if (fs.existsSync(stagingPath)) fs.rmSync(stagingPath, { recursive: true, force: true });
+      previousPath = null;
+    },
+  };
 }
 
 export async function createApplicationBackup({ appVersion, dbAll, uploadsPath, sections: requestedSections }) {
@@ -202,15 +290,20 @@ export async function createApplicationBackup({ appVersion, dbAll, uploadsPath, 
   };
 }
 
-export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sections: requestedSections }) {
+export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sections: requestedSections, deferMediaCommit = false }) {
   const normalizedBackup = normalizeBackupPayload(backup);
   const sections = normalizeBackupSections(requestedSections, normalizedBackup.availableSections);
   const unavailable = sections.find((section) => !normalizedBackup.availableSections.includes(section));
   if (unavailable) throw new Error(`Backup does not contain section: ${unavailable}`);
   const includedTables = tablesForSections(sections);
+  let mediaRestore = null;
 
-  await dbRun('PRAGMA foreign_keys = OFF');
+  if (sections.includes('media')) {
+    mediaRestore = stageUploads({ uploadsPath, uploads: normalizedBackup.uploads });
+  }
+
   try {
+    await dbRun('PRAGMA foreign_keys = OFF');
     for (const tableName of BACKUP_TABLES) {
       if (includedTables.has(tableName)) await dbRun(`DELETE FROM ${tableName}`);
     }
@@ -224,10 +317,19 @@ export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sec
       await insertRows({ dbRun, tableName, rows });
     }
 
-    if (sections.includes('media')) {
-      replaceUploads({ uploadsPath, uploads: normalizedBackup.uploads });
+    if (mediaRestore && !deferMediaCommit) {
+      mediaRestore.activate();
     }
-  } finally {
     await dbRun('PRAGMA foreign_keys = ON');
+    if (mediaRestore && !deferMediaCommit) mediaRestore.finalize();
+    return { mediaRestore: deferMediaCommit ? mediaRestore : null };
+  } catch (error) {
+    mediaRestore?.rollback();
+    try {
+      await dbRun('PRAGMA foreign_keys = ON');
+    } catch {
+      // Preserve the original restore error.
+    }
+    throw error;
   }
 }

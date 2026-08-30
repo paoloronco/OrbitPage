@@ -15,6 +15,7 @@ import { isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { getEmbedData } from "@/lib/link-blocks";
+import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 interface ProfileData {
   name: string;
@@ -55,7 +56,9 @@ declare global {
 }
 
 function faviconHref(value: string) {
-  if (/^(?:https?:|data:image\/|blob:)/i.test(value)) return value;
+  if (/^(?:https?:|data:image\/|blob:)/i.test(value)) {
+    return resolveSafePublicMediaUrl(value) || withRuntimeAssetPath('/brand/orbitpage-favicon-48.png');
+  }
   if (value.startsWith('/') || /\.(?:png|jpe?g|gif|webp|ico|svg)(?:\?.*)?$/i.test(value)) {
     return internalAssetPath(value) || withRuntimeAssetPath('/brand/orbitpage-favicon-48.png');
   }
@@ -79,8 +82,8 @@ function normalizePublicProfile(profileData: PublicPageResponse["profile"] | nul
   const favicon = isBundledProfileAvatar(faviconValue) ? undefined : (faviconValue || undefined);
   const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
   const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
-  const privacyPolicyUrl = getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl);
-  const cookiePolicyUrl = (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined;
+  const privacyPolicyUrl = resolveSafePublicHref(getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl)) || undefined;
+  const cookiePolicyUrl = resolveSafePublicHref((profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl) || undefined;
 
   return {
     name: profileData.name || "",

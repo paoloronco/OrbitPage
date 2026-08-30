@@ -3,6 +3,7 @@ import request from 'supertest';
 
 vi.hoisted(() => {
   process.env.BASE_PATH = '/orbitpage';
+  process.env.ORBITPAGE_TRUST_PROXY = 'loopback';
   delete process.env.PUBLIC_SITE_URL;
   delete process.env.SITE_URL;
 });

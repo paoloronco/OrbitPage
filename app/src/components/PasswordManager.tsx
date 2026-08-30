@@ -11,10 +11,14 @@ import { apiPath, withBasePath } from "@/lib/base-path";
 
 const useCurrentUsername = () => {
   const [username, setUsername] = useState('admin');
+  const [canManageUsers, setCanManageUsers] = useState(false);
   useEffect(() => {
-    authApi.verify().then((r) => { if (r.valid && r.user?.username) setUsername(r.user.username); }).catch(() => {});
+    authApi.verify().then((r) => {
+      if (r.valid && r.user?.username) setUsername(r.user.username);
+      setCanManageUsers(Boolean(r.valid && r.user?.permissions?.includes('users:manage')));
+    }).catch(() => {});
   }, []);
-  return username;
+  return { username, canManageUsers };
 };
 
 type MessageType = 'success' | 'error' | 'info' | 'warning';
@@ -40,7 +44,7 @@ export const PasswordManager = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
-  const username = useCurrentUsername();
+  const { username, canManageUsers } = useCurrentUsername();
 
   // Token-based password reset state
   const [showTokenReset, setShowTokenReset] = useState(false);
@@ -168,6 +172,11 @@ export const PasswordManager = () => {
       return;
     }
 
+    if (!currentPassword) {
+      setMessage({ type: 'error', text: 'Enter your current password before resetting the application.' });
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to reset the application? This will delete all data and cannot be undone.')) {
       return;
     }
@@ -176,7 +185,7 @@ export const PasswordManager = () => {
     setMessage(null);
 
     try {
-      const result = await authApi.reset();
+      const result = await authApi.reset(currentPassword);
       if (result.success) {
         handleResetSuccess();
       } else {
@@ -366,7 +375,7 @@ export const PasswordManager = () => {
             </Button>
           </form>
 
-        <div className="pt-4 border-t border-primary/20">
+        {canManageUsers && <div className="pt-4 border-t border-primary/20">
           <div className={`bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-3 ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
             <div className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-4 h-4" />
@@ -390,7 +399,7 @@ export const PasswordManager = () => {
               Clear Auth Data & Reset
             </Button>
           </div>
-        </div>
+        </div>}
       </Card>
       {/* Forgot password — token-based reset */}
       <Card className={`glass-card p-6 space-y-4 oss-account-recovery-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>

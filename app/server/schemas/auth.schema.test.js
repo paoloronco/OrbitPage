@@ -4,6 +4,7 @@ import {
   CreateUserBodySchema,
   LoginBodySchema,
   PageSlugSchema,
+  ResetApplicationBodySchema,
   ResetViaTokenBodySchema,
   SetupBodySchema,
   UpdateRoleBodySchema,
@@ -23,6 +24,11 @@ describe('auth schemas', () => {
     expect(() => ChangePasswordBodySchema.parse({ currentPassword: 'old' })).toThrow();
     expect(() => UpdateUserPasswordBodySchema.parse({})).toThrow();
     expect(() => ResetViaTokenBodySchema.parse({ token: 'reset-token' })).toThrow();
+    expect(() => ResetApplicationBodySchema.parse({})).toThrow();
+    expect(ResetViaTokenBodySchema.parse({
+      token: '12345678901234567890123456789012',
+      newPassword: 'Secret123!',
+    }).token).toHaveLength(32);
   });
 
   it('normalizes and validates the first public page slug', () => {

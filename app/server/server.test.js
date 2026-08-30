@@ -4,7 +4,16 @@ import request from 'supertest';
 vi.hoisted(() => {
   process.env.BASE_PATH = '/orbitpage';
   process.env.ORBITPAGE_ALLOWED_ORIGINS = 'https://trusted.example';
+  process.env.ORBITPAGE_TRUST_PROXY = 'loopback';
 });
+
+const authMockState = vi.hoisted(() => ({
+  username: 'admin',
+  permissions: [
+    'links:write', 'links:style', 'links:images', 'theme:write', 'profile:write',
+    'menu:write', 'analytics:read', 'compliance:write', 'users:manage',
+  ],
+}));
 
 // Mock database.js before importing server.js
 vi.mock('./database.js', () => ({
@@ -25,18 +34,21 @@ vi.mock('./auth.js', () => ({
   verifyToken: vi.fn(),
   authenticateToken: (req, res, next) => {
     req.user = {
-      username: 'admin',
-      permissions: [
-        'profile:write',
-        'links:write',
-        'theme:write',
-        'users:manage',
-      ],
+      username: authMockState.username,
+      permissions: [...authMockState.permissions],
     };
     next();
   },
-  requirePermission: vi.fn(() => (req, res, next) => next()),
-  requireAnyPermission: vi.fn(() => (req, res, next) => next()),
+  requirePermission: vi.fn((permission) => (req, res, next) => (
+    req.user?.permissions?.includes(permission)
+      ? next()
+      : res.status(403).json({ error: 'Insufficient permissions' })
+  )),
+  requireAnyPermission: vi.fn((...permissions) => (req, res, next) => (
+    permissions.some((permission) => req.user?.permissions?.includes(permission))
+      ? next()
+      : res.status(403).json({ error: 'Insufficient permissions' })
+  )),
   isPasswordStrong: vi.fn(() => true),
   generateSecurePassword: vi.fn(() => 'SecurePass123!')
 }));
@@ -48,19 +60,25 @@ vi.mock('./services/backup-service.js', () => ({
 
 // Now import app
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
-import { isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
+import { authenticateUser, isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withImmediateTransaction, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
 
 describe('API Endpoints', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authMockState.username = 'admin';
+    authMockState.permissions = [
+      'links:write', 'links:style', 'links:images', 'theme:write', 'profile:write',
+      'menu:write', 'analytics:read', 'compliance:write', 'users:manage',
+    ];
     vi.mocked(dbGet).mockResolvedValue(null);
     vi.mocked(dbAll).mockResolvedValue([]);
     vi.mocked(dbRun).mockResolvedValue({ changes: 1 });
     vi.mocked(withTransaction).mockImplementation(cb => cb());
     vi.mocked(withImmediateTransaction).mockReset();
     vi.mocked(isFirstTimeSetup).mockResolvedValue(false);
+    vi.mocked(authenticateUser).mockResolvedValue(true);
     vi.mocked(createApplicationBackup).mockResolvedValue({
       schemaVersion: 1,
       appVersion: 'test',
@@ -68,7 +86,7 @@ describe('API Endpoints', () => {
       tables: {},
       uploads: [],
     });
-    vi.mocked(restoreApplicationBackup).mockResolvedValue(undefined);
+    vi.mocked(restoreApplicationBackup).mockResolvedValue({ mediaRestore: null });
   });
 
   afterEach(() => {
@@ -185,6 +203,58 @@ describe('API Endpoints', () => {
       expect.objectContaining({ id: 'frontend', ok: true }),
     ]));
     expect(response.headers['cache-control']).toContain('no-store');
+  });
+
+  it('POST /api/auth/reset rejects users without user-management permission', async () => {
+    authMockState.username = 'viewer';
+    authMockState.permissions = ['analytics:read'];
+
+    const response = await request(app)
+      .post('/api/auth/reset')
+      .set('Authorization', 'Bearer viewer-token')
+      .send({ currentPassword: 'Viewer123!' });
+
+    expect(response.status).toBe(403);
+    expect(authenticateUser).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/auth/reset re-authenticates the administrator before deleting data', async () => {
+    vi.mocked(authenticateUser).mockResolvedValueOnce(false);
+
+    const response = await request(app)
+      .post('/api/auth/reset')
+      .set('Authorization', 'Bearer admin-token')
+      .send({ currentPassword: 'Wrong123!' });
+
+    expect(response.status).toBe(401);
+    expect(authenticateUser).toHaveBeenCalledWith('Wrong123!', 'admin');
+    expect(dbRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/auth/reset-via-token rejects whitespace-only reset credentials', async () => {
+    const whitespaceToken = ' '.repeat(32);
+    vi.stubEnv('RESET_TOKEN', whitespaceToken);
+
+    const response = await request(app)
+      .post('/api/auth/reset-via-token')
+      .set('X-Forwarded-For', '203.0.113.10')
+      .send({ token: whitespaceToken, newPassword: 'SecurePass123!' });
+
+    expect(response.status).toBe(403);
+    expect(dbRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/auth/force-reset rejects whitespace-only reset credentials', async () => {
+    const whitespaceToken = ' '.repeat(32);
+    vi.stubEnv('RESET_TOKEN', whitespaceToken);
+
+    const response = await request(app)
+      .post('/api/auth/force-reset')
+      .set('X-Forwarded-For', '203.0.113.11')
+      .send({ token: whitespaceToken, newPassword: 'SecurePass123!' });
+
+    expect(response.status).toBe(403);
+    expect(dbRun).not.toHaveBeenCalled();
   });
 
   it('GET /api/map-preview resolves coordinates embedded in a Maps URL without an upstream request', async () => {
@@ -504,6 +574,7 @@ describe('API Endpoints', () => {
       backup,
       dbRun,
       uploadsPath: expect.any(String),
+      deferMediaCommit: true,
     });
   });
 
@@ -524,6 +595,7 @@ describe('API Endpoints', () => {
       sections: ['profile'],
       dbRun,
       uploadsPath: expect.any(String),
+      deferMediaCommit: true,
     });
   });
 
@@ -569,6 +641,38 @@ describe('API Endpoints', () => {
     expect(response.body.branding.showOrbitPageBadge).toBe(false);
     expect(response.body.links).toHaveLength(1);
     expect(response.body.theme.primary).toBe('#111111');
+  });
+
+  it('GET /api/menu removes subsections and products beneath hidden parents', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({
+      full_config: JSON.stringify({
+        version: 1,
+        enabled: true,
+        venueType: 'restaurant',
+        name: 'Test menu',
+        description: '',
+        currency: 'EUR',
+        locale: 'en-GB',
+        sections: [
+          { id: 'hidden-root', name: 'Hidden', visible: false, position: 0 },
+          { id: 'hidden-child', parentId: 'hidden-root', name: 'Leaked child', visible: true, position: 1 },
+          { id: 'public-root', name: 'Public', visible: true, position: 2 },
+          { id: 'public-child', parentId: 'public-root', name: 'Public child', visible: true, position: 3 },
+        ],
+        items: [
+          { id: 'hidden-item', sectionId: 'hidden-child', name: 'Hidden item', priceMinor: 100, variants: [], allergens: [], dietaryTags: [], available: true, featured: false, position: 0 },
+          { id: 'public-item', sectionId: 'public-child', name: 'Public item', priceMinor: 200, variants: [], allergens: [], dietaryTags: [], available: true, featured: false, position: 1 },
+        ],
+        theme: { preset: 'editorial', background: '#ffffff', surface: '#ffffff', text: '#111111', muted: '#666666', accent: '#225544', border: '#dddddd', radius: 8, imageLayout: 'compact' },
+        routing: { homepage: 'link', linkEnabled: true },
+      }),
+    });
+
+    const response = await request(app).get('/api/menu');
+
+    expect(response.status).toBe(200);
+    expect(response.body.sections.map((section) => section.id)).toEqual(['public-root', 'public-child']);
+    expect(response.body.items.map((item) => item.id)).toEqual(['public-item']);
   });
 
   it('GET /api/public-page hides draft, expired, and out-of-window links', async () => {
@@ -655,11 +759,9 @@ describe('API Endpoints', () => {
     expect(response.body.links.map((link) => link.id)).toEqual(['current-link', 'legacy-live-link']);
     expect(response.body.links[0]).toMatchObject({
       status: 'live',
-      startDate: '2026-07-10',
-      startTime: '09:00',
-      endDate: '2026-07-10',
-      endTime: '12:00',
     });
+    expect(response.body.links[0]).not.toHaveProperty('startDate');
+    expect(response.body.links[0]).not.toHaveProperty('endDate');
     expect(response.body.links[1].status).toBe('live');
   });
 
@@ -914,6 +1016,7 @@ describe('API Endpoints', () => {
             privacyPolicy: { mode: 'hosted', hostedText: 'Current privacy text' },
             cookiePolicy: { mode: 'embedded', embeddedCode: '<div>Cookie policy</div>' },
           },
+          builder: { provider: 'custom', providerConfig: { headSnippet: '<script>secret()</script>' } },
         }),
       })
       .mockResolvedValueOnce({
@@ -930,6 +1033,89 @@ describe('API Endpoints', () => {
     expect(response.body.data.legalPolicies.privacyPolicy.hostedText).toBe('Current privacy text');
     expect(response.body.data.legalPolicies.cookiePolicy.mode).toBe('embedded');
     expect(response.body.data.legalPolicies.cookiePolicy.embeddedCode).toBe('<div>Cookie policy</div>');
+    expect(response.body.data).not.toHaveProperty('builder');
+  });
+
+  it('GET /api/links omits analytics and campaign metadata for public callers', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([{
+      id: 'public-link',
+      title: 'Public Link',
+      url: 'https://example.com',
+      type: 'link',
+      is_active: 1,
+      status: 'live',
+      click_count: 42,
+      cta_click_count: 7,
+      campaign_name: 'Private campaign',
+      created_at: '2026-07-01T00:00:00.000Z',
+      updated_at: '2026-07-02T00:00:00.000Z',
+    }]);
+
+    const response = await request(app).get('/api/links');
+
+    expect(response.status).toBe(200);
+    expect(response.body[0]).toMatchObject({ id: 'public-link', title: 'Public Link' });
+    for (const field of ['clickCount', 'ctaClicks', 'campaignName', 'createdAt', 'updatedAt']) {
+      expect(response.body[0]).not.toHaveProperty(field);
+    }
+  });
+
+  it('GET /api/profile keeps dashboard onboarding state private', async () => {
+    const profile = {
+      name: 'Paolo',
+      bio: '',
+      avatar: '',
+      social_links: '{}',
+      admin_onboarding_enabled: 1,
+    };
+    vi.mocked(dbGet).mockResolvedValue(profile);
+
+    const publicResponse = await request(app).get('/api/profile');
+    const adminResponse = await request(app)
+      .get('/api/profile')
+      .set('Authorization', 'Bearer admin-token');
+
+    expect(publicResponse.body).not.toHaveProperty('admin_onboarding_enabled');
+    expect(adminResponse.body.admin_onboarding_enabled).toBe(1);
+  });
+
+  it('PUT /api/consent-config prevents compliance editors from adding executable snippets', async () => {
+    authMockState.username = 'privacy-editor';
+    authMockState.permissions = ['compliance:write'];
+    vi.mocked(dbGet).mockResolvedValueOnce(null);
+
+    const response = await request(app)
+      .put('/api/consent-config')
+      .set('Authorization', 'Bearer compliance-token')
+      .send({
+        mode: 'builder',
+        enabled: true,
+        builder: { provider: 'custom', providerConfig: { headSnippet: '<script>attack()</script>' } },
+      });
+
+    expect(response.status).toBe(403);
+    expect(dbRun).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/consent-config allows compliance editors to use structured CMP identifiers', async () => {
+    authMockState.username = 'privacy-editor';
+    authMockState.permissions = ['compliance:write'];
+    vi.mocked(dbGet).mockResolvedValue(null);
+
+    const response = await request(app)
+      .put('/api/consent-config')
+      .set('Authorization', 'Bearer compliance-token')
+      .send({
+        mode: 'builder',
+        enabled: true,
+        builder: { provider: 'cookieyes', providerConfig: { scriptId: 'site-123' } },
+      });
+
+    expect(response.status).toBe(200);
+    expect(dbRun).toHaveBeenCalledWith(
+      'INSERT INTO cookie_consent_config (mode, enabled, full_config) VALUES (?, ?, ?)',
+      expect.arrayContaining(['builder', 1]),
+    );
   });
 
   it('GET /api/consent-config/public infers hosted legal policy mode from legacy local URLs', async () => {
