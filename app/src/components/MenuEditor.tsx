@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import {
-  ArrowDown, ArrowUp, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff,
+  ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff,
   ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, Save, Trash2,
   Search, UtensilsCrossed,
 } from 'lucide-react';
@@ -213,6 +213,7 @@ export function MenuEditor({
   const [copied, setCopied] = useState(false);
   const [activePanel, setActivePanel] = useState<MenuEditorPanel>('content');
   const [mobileContentPane, setMobileContentPane] = useState<MenuContentPane>('sections');
+  const [mobileEditingItem, setMobileEditingItem] = useState(false);
   const [itemQuery, setItemQuery] = useState('');
   const [productSectionFilter, setProductSectionFilter] = useState(
     () => normalizeMenuCatalog(menu, maxItems ?? 250).sections[0]?.id || 'all',
@@ -384,11 +385,13 @@ export function MenuEditor({
     setProductSectionFilter(sectionId);
     setSelectedItemId(id);
     setMobileContentPane('products');
+    setMobileEditingItem(true);
   };
 
   const removeItem = (itemId: string) => {
     const remaining = visibleProducts.filter((candidate) => candidate.id !== itemId);
     setSelectedItemId(remaining[0]?.id || null);
+    setMobileEditingItem(false);
     update((current) => ({
       ...current,
       items: current.items
@@ -484,10 +487,10 @@ export function MenuEditor({
               type="button"
               variant="outline"
               className="menu-category-editor__items"
-              onClick={() => setMobileContentPane('products')}
+              onClick={() => { setMobileContentPane('products'); setMobileEditingItem(false); }}
             >
               <ListTree className="h-4 w-4" />
-              {tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}
+              <span>{tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}</span>
               <strong>{draft.items.filter((item) => item.sectionId === section.id).length}</strong>
             </Button>
           </section>
@@ -549,7 +552,7 @@ export function MenuEditor({
             type="button"
             className={activePanel === 'content' && mobileContentPane === 'sections' ? 'active' : ''}
             aria-current={activePanel === 'content' && mobileContentPane === 'sections' ? 'step' : undefined}
-            onClick={() => { setActivePanel('content'); setMobileContentPane('sections'); }}
+            onClick={() => { setActivePanel('content'); setMobileContentPane('sections'); setMobileEditingItem(false); }}
           >
             <span className="menu-editor-tab-index">02</span>
             <span className="menu-editor-tab-copy"><strong>{tr('Categories', 'Categorie')}</strong><small>{tr('Build the browsing order', 'Crea l’ordine di navigazione')}</small></span>
@@ -559,7 +562,7 @@ export function MenuEditor({
             type="button"
             className={activePanel === 'content' && mobileContentPane === 'products' ? 'active' : ''}
             aria-current={activePanel === 'content' && mobileContentPane === 'products' ? 'step' : undefined}
-            onClick={() => { setActivePanel('content'); setMobileContentPane('products'); }}
+              onClick={() => { setActivePanel('content'); setMobileContentPane('products'); setMobileEditingItem(false); }}
           >
             <span className="menu-editor-tab-index">03</span>
             <span className="menu-editor-tab-copy"><strong>{tr('Items', 'Elementi')}</strong><small>{tr('Add names, prices and details', 'Aggiungi nomi, prezzi e dettagli')}</small></span>
@@ -667,7 +670,7 @@ export function MenuEditor({
             <div className="menu-product-toolbar">
               <div className="menu-product-filter">
                 <Label htmlFor="menu-product-section">{tr("Category", "Categoria")}</Label>
-                <select id="menu-product-section" value={productSectionFilter} onChange={(event) => setProductSectionFilter(event.target.value)}>
+                <select id="menu-product-section" value={productSectionFilter} onChange={(event) => { setProductSectionFilter(event.target.value); setMobileEditingItem(false); }}>
                   <option value="all">{tr(`All items (${draft.items.length})`, `Tutti gli elementi (${draft.items.length})`)}</option>
                   {sortedSections.map((section) => (
                     <option key={section.id} value={section.id}>
@@ -688,7 +691,7 @@ export function MenuEditor({
               </label>
             </div>
             <div className="menu-content-pane__scroll menu-item-workspace">
-              <div className="menu-items-workspace-grid">
+              <div className={`menu-items-workspace-grid${mobileEditingItem ? ' is-mobile-editing' : ''}`}>
                 <div className="menu-item-list-column">
                   <div className="menu-item-list-heading">
                     <strong>{visibleProducts.length}</strong>
@@ -702,7 +705,7 @@ export function MenuEditor({
                           type="button"
                           className={`menu-item-picker__item${selectedItemId === item.id ? ' active' : ''}`}
                           aria-pressed={selectedItemId === item.id}
-                          onClick={() => setSelectedItemId(item.id)}
+                          onClick={() => { setSelectedItemId(item.id); setMobileEditingItem(true); }}
                         >
                           <span className="menu-item-picker__thumb">{item.imageUrl ? <img src={item.imageUrl} alt="" /> : <UtensilsCrossed aria-hidden="true" />}</span>
                           <span><strong>{item.name || tr("Untitled item", "Elemento senza nome")}</strong><small>{formatMenuPriceInput(item.priceMinor, draft.locale)} {draft.currency}</small></span>
@@ -723,10 +726,17 @@ export function MenuEditor({
                   <article key={selectedItem.id} className="menu-product-editor">
                     <div className="menu-product-editor__heading">
                       <div>
+                        <button type="button" className="menu-product-editor__back" onClick={() => setMobileEditingItem(false)}><ArrowLeft aria-hidden="true" />{tr("Back to items", "Torna agli elementi")}</button>
                         <span>{tr("Selected item", "Elemento selezionato")}</span>
                         <strong>{selectedItem.name || tr("Untitled item", "Elemento senza nome")}</strong>
                       </div>
-                      <Button variant="ghost" size="icon" title={tr("Delete item", "Elimina elemento")} onClick={() => removeItem(selectedItem.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <div className="menu-product-editor__actions">
+                        <Button variant="outline" size="sm" onClick={() => void save()} disabled={!isDirty || saving}>
+                          {saving ? <OrbitLoader size={15} state="composing" /> : <Save className="h-4 w-4" />}
+                          {saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}
+                        </Button>
+                        <Button variant="ghost" size="icon" title={tr("Delete item", "Elimina elemento")} onClick={() => removeItem(selectedItem.id)}><Trash2 className="h-4 w-4" /></Button>
+                      </div>
                     </div>
                 <div className="menu-product-editor__top">
                   <label className="menu-product-image" title="Upload product image">

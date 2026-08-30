@@ -341,25 +341,8 @@ export const ProfileSection = ({
 
   return (
     <div className="admin-profile-section space-y-5" data-onboarding="profile-card">
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_4px_14px_rgb(15_23_42_/_0.04)]">
-        <header className="admin-profile-toolbar flex flex-col gap-3 border-b border-slate-200 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-base font-bold text-slate-950">{tr("Page identity", "Identità pagina")}</h2>
-            <p className="mt-0.5 text-xs leading-5 text-slate-500">{tr("The essentials people see first.", "Le informazioni essenziali mostrate per prime.")}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2" data-onboarding="profile-actions">
-            {isDirty && <span className="hidden text-xs font-medium text-amber-700 md:inline">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
-            <Button type="button" variant="outline" size="sm" onClick={resetDraft} disabled={!isDirty || isSaving}>
-              <RotateCcw className="h-4 w-4" /> {tr("Reset", "Ripristina")}
-            </Button>
-            <Button type="button" size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
-              {isSaving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
-              {isSaving ? tr("Saving", "Salvataggio") : tr("Save page", "Salva pagina")}
-            </Button>
-          </div>
-        </header>
-
-        <div className="admin-profile-flow p-5">
+      <div className="admin-profile-workspace">
+        <div className="admin-profile-flow">
           <section className="admin-profile-chapter">
             <ProfileSectionHeading title={tr("Page type", "Tipo di pagina")} />
             <div className="admin-profile-role-grid grid gap-3 sm:grid-cols-3" aria-label={tr("Profile type", "Tipo di profilo")}>
@@ -388,31 +371,47 @@ export const ProfileSection = ({
           <section className="admin-profile-chapter admin-profile-identity">
             <ProfileSectionHeading title={tr("Identity", "Identità")} />
             <div className="admin-profile-identity-fields grid gap-5 lg:grid-cols-[11rem_minmax(0,1fr)]">
-              <div className="admin-profile-avatar-editor space-y-3">
+              <div className="admin-profile-avatar-editor">
                 <div className="flex items-center justify-between gap-3">
                   <Label className="text-xs font-semibold">{tr("Profile image", "Immagine profilo")}</Label>
                   <Switch checked={draft.showAvatar !== false} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
                 </div>
-                <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-44 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-                  <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
-                  <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 rounded-md bg-slate-950/85 px-2 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-3.5 w-3.5" /> {tr("Replace", "Sostituisci")}</span>
-                </button>
-                <input ref={logoInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "logo"); event.target.value = ""; }} />
+                <div className="admin-profile-avatar-layout">
+                  <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-44 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                    <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
+                    <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 rounded-md bg-slate-950/85 px-2 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-3.5 w-3.5" /> {tr("Replace", "Sostituisci")}</span>
+                  </button>
+                  <input ref={logoInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "logo"); event.target.value = ""; }} />
 
-                <div className="admin-profile-avatar-shape max-w-44">
-                  <Label className="text-xs text-slate-600">{tr("Shape", "Forma")}</Label>
-                  <div className="mt-1.5 grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1" role="group" aria-label={tr("Profile image shape", "Forma immagine profilo")}>
-                    {(["round", "rounded", "square"] as AvatarShape[]).map((shape) => (
-                      <button key={shape} type="button" onClick={() => updateAppearance({ avatarShape: shape })} aria-pressed={(draft.appearance?.avatarShape || "round") === shape} className={`rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors ${(draft.appearance?.avatarShape || "round") === shape ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}>{shape === "round" ? tr("Circle", "Cerchio") : shape === "rounded" ? tr("Soft", "Morbida") : tr("Square", "Quadrata")}</button>
-                    ))}
+                  <div className="admin-profile-avatar-controls">
+                    <div className="admin-profile-avatar-shape">
+                      <Label className="text-xs text-slate-600">{tr("Shape", "Forma")}</Label>
+                      <div className="admin-profile-avatar-shape-options" role="group" aria-label={tr("Profile image shape", "Forma immagine profilo")}>
+                        {(["round", "rounded", "square"] as AvatarShape[]).map((shape) => {
+                          const active = (draft.appearance?.avatarShape || "round") === shape;
+                          return (
+                            <button
+                              key={shape}
+                              type="button"
+                              onClick={() => updateAppearance({ avatarShape: shape })}
+                              aria-pressed={active}
+                              className={`admin-profile-avatar-shape-option${active ? " active" : ""}`}
+                            >
+                              <span className={`admin-profile-avatar-shape-preview is-${shape}`} aria-hidden="true" />
+                              <span>{shape === "round" ? tr("Circle", "Cerchio") : shape === "rounded" ? tr("Soft", "Morbida") : tr("Square", "Quadrata")}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="admin-profile-slider-field max-w-full md:max-w-44">
+                      <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-avatar-size" className="text-xs text-slate-600">{tr("Size", "Dimensione")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{draft.appearance?.avatarSize ?? 112}px</span></div>
+                      <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} value={[draft.appearance?.avatarSize ?? 112]} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
+                    </div>
+                    <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF or WebP.", "PNG, JPG, GIF o WebP.")}</p>
                   </div>
                 </div>
-
-                <div className="admin-profile-slider-field max-w-full md:max-w-44">
-                  <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-avatar-size" className="text-xs text-slate-600">{tr("Size", "Dimensione")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{draft.appearance?.avatarSize ?? 112}px</span></div>
-                  <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} value={[draft.appearance?.avatarSize ?? 112]} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
-                </div>
-                <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF or WebP.", "PNG, JPG, GIF o WebP.")}</p>
               </div>
 
               <div className="space-y-4">
@@ -614,8 +613,27 @@ export const ProfileSection = ({
           </details>
 
           {uploadError && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{uploadError}</p>}
+
+          <footer className={`admin-profile-actions-dock${isDirty ? " is-dirty" : ""}`} data-onboarding="profile-actions">
+            <div className="admin-profile-save-state" aria-live="polite">
+              <span aria-hidden="true" />
+              <div>
+                <strong>{isDirty ? tr("Changes ready to save", "Modifiche pronte da salvare") : tr("Page up to date", "Pagina aggiornata")}</strong>
+                <small>{isDirty ? tr("Review them in the preview, then publish the update.", "Controllale nell’anteprima, poi pubblica l’aggiornamento.") : tr("Your latest changes are already saved.", "Le ultime modifiche sono già salvate.")}</small>
+              </div>
+            </div>
+            <div className="admin-profile-action-group">
+              <Button type="button" variant="outline" size="sm" onClick={resetDraft} disabled={!isDirty || isSaving}>
+                <RotateCcw className="h-4 w-4" /> {tr("Reset", "Ripristina")}
+              </Button>
+              <Button type="button" size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
+                {isSaving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+                {isSaving ? tr("Saving", "Salvataggio") : tr("Save page", "Salva pagina")}
+              </Button>
+            </div>
+          </footer>
         </div>
-      </section>
+      </div>
 
       <Dialog open={faviconDialogOpen} onOpenChange={setFaviconDialogOpen}>
         <DialogContent>
