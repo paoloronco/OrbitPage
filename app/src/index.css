@@ -10363,3 +10363,983 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     visibility: visible;
   }
 }
+
+/* Dashboard balance pass: one readable, space-aware contract across every workbench. */
+.orbitpage-admin {
+  --admin-text-meta: .75rem;
+  --admin-text-small: .8125rem;
+  --admin-text-body: .875rem;
+  --admin-text-lead: 1rem;
+  --admin-text-section: 1.25rem;
+  --admin-space-1: 4px;
+  --admin-space-2: 8px;
+  --admin-space-3: 12px;
+  --admin-space-4: 16px;
+  --admin-space-5: 20px;
+  --admin-space-6: 24px;
+  --admin-space-8: 32px;
+  --admin-control-height: 40px;
+  --admin-card-radius: 10px;
+  font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-size: var(--admin-text-body);
+  line-height: 1.5;
+}
+
+.admin-dashboard-shell {
+  --orbitpage-dashboard-sidebar-width: 240px;
+  --orbitpage-dashboard-nav-height: 42px;
+  --orbitpage-dashboard-header-height: 104px;
+}
+
+.admin-dashboard-main {
+  padding-right: clamp(20px, 2.5vw, 36px);
+  padding-bottom: 40px;
+  padding-left: clamp(20px, 2.5vw, 36px);
+}
+
+.admin-dashboard-header {
+  min-height: var(--orbitpage-dashboard-header-height);
+  margin-right: calc(clamp(20px, 2.5vw, 36px) * -1);
+  margin-bottom: 16px;
+  margin-left: calc(clamp(20px, 2.5vw, 36px) * -1);
+  padding: 15px clamp(20px, 2.5vw, 36px);
+}
+
+.admin-dashboard-heading-row h1 {
+  margin-top: 2px;
+  font-size: clamp(1.625rem, 2vw, 1.875rem);
+  line-height: 1.12;
+  letter-spacing: -.02em;
+}
+
+.admin-dashboard-kicker {
+  margin-bottom: 4px;
+  font-size: var(--admin-text-meta);
+  line-height: 1.2;
+  letter-spacing: .075em;
+}
+
+.admin-dashboard-section-description {
+  max-width: 62ch;
+  margin-top: 5px;
+  color: #52647d;
+  font-size: var(--admin-text-small);
+  line-height: 1.45;
+}
+
+.admin-dashboard-context-row {
+  gap: 6px;
+  margin-top: 8px;
+  font-size: .6875rem;
+}
+
+.admin-dashboard-context-row > span {
+  min-height: 22px;
+  padding-inline: 8px;
+}
+
+.admin-dashboard-nav-heading,
+.admin-dashboard-nav-heading-workspace {
+  font-size: .6875rem;
+}
+
+.admin-dashboard-nav-item {
+  min-height: var(--orbitpage-dashboard-nav-height);
+  padding: 9px 11px;
+  font-size: var(--admin-text-small);
+}
+
+.admin-dashboard-public-page,
+.admin-dashboard-header-actions .admin-action,
+.admin-dashboard-header-actions .ai-page-agent-launcher {
+  min-height: var(--admin-control-height);
+  padding: 8px 13px;
+  font-size: var(--admin-text-small);
+}
+
+.admin-dashboard-shell .admin-metrics,
+.admin-integrated-surface .admin-metrics {
+  margin-bottom: 16px;
+  border-radius: var(--admin-card-radius);
+}
+
+.admin-dashboard-shell .admin-metric-card,
+.admin-integrated-surface .admin-metric-card {
+  min-height: 68px;
+  gap: 12px;
+  padding: 11px 16px;
+}
+
+.admin-dashboard-shell .admin-metric-icon,
+.admin-integrated-surface .admin-metric-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.admin-metric-label {
+  font-size: .6875rem;
+  line-height: 1.25;
+  letter-spacing: .055em;
+}
+
+.admin-metric-value {
+  margin-top: 1px;
+  font-size: 1.125rem;
+  line-height: 1.15;
+}
+
+.admin-metric-detail {
+  margin-top: 2px;
+  color: #607189;
+  font-size: .6875rem;
+  line-height: 1.3;
+}
+
+.admin-integrated-surface .admin-integrated-tabs {
+  margin-top: 0;
+}
+
+.admin-integrated-surface .admin-tab-stage {
+  padding-bottom: 32px;
+}
+
+.orbitpage-admin .admin-panel,
+.orbitpage-admin .admin-side-panel,
+.orbitpage-admin .admin-preview-copy {
+  border-radius: var(--admin-card-radius);
+  padding: clamp(18px, 1.7vw, 24px);
+}
+
+.orbitpage-admin .admin-panel h2,
+.orbitpage-admin .admin-side-panel h2 {
+  font-size: var(--admin-text-lead);
+  line-height: 1.3;
+}
+
+.orbitpage-admin .text-3xl:not(.admin-live-preview *) {
+  font-size: 1.75rem;
+  line-height: 1.15;
+}
+
+.orbitpage-admin .text-2xl:not(.admin-live-preview *) {
+  font-size: 1.5rem;
+  line-height: 1.18;
+}
+
+.orbitpage-admin .text-xl:not(.admin-live-preview *) {
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.orbitpage-admin .text-lg:not(.admin-live-preview *) {
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+.orbitpage-admin .text-base:not(.admin-live-preview *) {
+  font-size: var(--admin-text-lead);
+  line-height: 1.45;
+}
+
+.orbitpage-admin .text-sm:not(.admin-live-preview *) {
+  font-size: var(--admin-text-small);
+  line-height: 1.5;
+}
+
+.orbitpage-admin .text-xs:not(.admin-live-preview *) {
+  font-size: var(--admin-text-meta);
+  line-height: 1.45;
+}
+
+.orbitpage-admin :where(input, textarea, select):not(.admin-live-preview *) {
+  font-size: var(--admin-text-small);
+}
+
+.orbitpage-admin :where(.admin-input, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]), select):not(.admin-live-preview *) {
+  min-height: var(--admin-control-height);
+}
+
+.orbitpage-admin .admin-action {
+  min-height: var(--admin-control-height);
+  padding: 8px 13px;
+  font-size: var(--admin-text-small);
+}
+
+.admin-tab-stage {
+  container: admin-workbench / inline-size;
+}
+
+.admin-content-grid,
+.admin-preview-grid {
+  gap: var(--admin-space-5);
+}
+
+@container admin-workbench (min-width: 960px) {
+  .admin-content-grid:has(> .admin-workbench-rail),
+  .admin-preview-grid:has(> .admin-workbench-rail) {
+    grid-template-columns: minmax(0, 1.18fr) minmax(380px, .82fr);
+  }
+}
+
+.admin-workbench-rail {
+  min-width: 0;
+}
+
+.admin-preview-panel {
+  top: 20px;
+  display: flex;
+  min-height: clamp(560px, calc(100dvh - 210px), 720px);
+  max-height: none;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--admin-card-radius);
+}
+
+.admin-preview-heading {
+  min-height: 66px;
+  padding: 13px 16px;
+}
+
+.admin-preview-heading h2 {
+  font-size: var(--admin-text-lead);
+  line-height: 1.3;
+}
+
+.admin-preview-heading p {
+  margin-top: 3px;
+  color: #5d6e86;
+  font-size: var(--admin-text-meta);
+  line-height: 1.35;
+}
+
+.admin-preview-device-toggle button,
+.admin-preview-heading-actions > a {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.admin-preview-panel > .admin-preview-device {
+  flex: 1 1 auto;
+}
+
+.admin-preview-device--mobile {
+  --admin-preview-phone-width: clamp(220px, min(28vw, calc(46.15dvh - 125px)), 292px);
+  min-height: 0;
+  padding: 20px 16px 24px;
+}
+
+.admin-preview-device--desktop {
+  min-height: 430px;
+  padding: 24px 20px 54px;
+}
+
+.content-workspace {
+  gap: var(--admin-space-5);
+}
+
+.content-workspace-header {
+  padding-inline: 2px;
+}
+
+.content-workspace-header h2 {
+  margin: 4px 0 6px;
+  font-size: var(--admin-text-section);
+  line-height: 1.25;
+}
+
+.content-workspace-header p:last-child {
+  max-width: 68ch;
+  color: #52647d;
+  font-size: var(--admin-text-small);
+  line-height: 1.5;
+}
+
+.content-workspace-switcher,
+.content-workspace-switcher.with-shop {
+  border-radius: var(--admin-card-radius);
+}
+
+.content-workspace-option {
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  min-height: 76px;
+  gap: 10px;
+  padding: 11px 12px;
+}
+
+.content-workspace-option-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.content-workspace-option strong {
+  font-size: var(--admin-text-small);
+  line-height: 1.3;
+}
+
+.content-workspace-option small {
+  display: -webkit-box;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #66778e;
+  font-size: .6875rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.content-workspace-option .content-status {
+  font-size: .625rem;
+}
+
+.admin-theme-layout {
+  gap: var(--admin-space-5);
+}
+
+.admin-theme-catalog,
+.admin-theme-fine-tuning {
+  border-radius: var(--admin-card-radius);
+  padding: clamp(18px, 1.7vw, 24px);
+}
+
+.admin-theme-catalog h3,
+.admin-theme-fine-tuning h3 {
+  font-size: var(--admin-text-lead);
+  line-height: 1.3;
+}
+
+.admin-theme-catalog h3 + p,
+.admin-theme-catalog h3 ~ p,
+.admin-theme-fine-tuning p,
+.admin-theme-preview-context > p {
+  font-size: var(--admin-text-small);
+  line-height: 1.5;
+}
+
+.admin-theme-live-preview .admin-preview-device--mobile {
+  --admin-preview-phone-width: clamp(220px, min(23vw, calc(46.15dvh - 134px)), 270px);
+  min-height: 520px;
+  padding: 16px 12px 20px;
+}
+
+.admin-theme-preview-context .admin-preview-device-toggle button {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.admin-profile-section .admin-profile-chapter {
+  padding-block: 20px;
+}
+
+.admin-profile-chapter-heading h3,
+.admin-profile-section-heading h3 {
+  font-size: var(--admin-text-lead);
+}
+
+.admin-profile-chapter-heading p,
+.admin-profile-role-option small,
+.admin-profile-image-help {
+  color: #5c6e86;
+  font-size: var(--admin-text-meta);
+  line-height: 1.45;
+}
+
+/* Publish uses a stable tool rail so the active workspace can use the full desktop canvas. */
+.publish-tools {
+  display: grid;
+  width: 100%;
+  max-width: none;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+  gap: 0 var(--admin-space-5);
+  align-items: start;
+}
+
+.publish-tools-header {
+  grid-column: 1 / -1;
+  margin-bottom: var(--admin-space-4);
+}
+
+.publish-tools-header h2 {
+  font-size: var(--admin-text-section) !important;
+  line-height: 1.3;
+}
+
+.publish-tools-tabs {
+  position: sticky;
+  top: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--admin-space-2);
+  padding: var(--admin-space-2);
+  border: 1px solid var(--admin-line);
+  border-radius: var(--admin-card-radius);
+  background: #f7f9fc;
+}
+
+.publish-tools-tab {
+  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  min-height: 76px;
+  gap: 2px 10px;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.publish-tools-tab > span {
+  grid-row: 1 / span 2;
+  width: 36px;
+  height: 36px;
+}
+
+.publish-tools-tab strong {
+  align-self: end;
+  font-size: var(--admin-text-small);
+}
+
+.publish-tools-tab small {
+  display: block;
+  color: #65768d;
+  font-size: var(--admin-text-meta);
+  line-height: 1.4;
+}
+
+.publish-tools-tab.active {
+  border-color: #b8cdf6;
+  background: #fff;
+  box-shadow: 0 5px 16px rgb(27 54 94 / 7%);
+}
+
+.publish-tools-panel {
+  min-width: 0;
+  min-height: clamp(520px, calc(100dvh - 250px), 720px);
+  border-radius: var(--admin-card-radius);
+  padding: clamp(20px, 2vw, 28px);
+}
+
+/* Backup separates chronology from portability instead of stacking both in a narrow column. */
+.admin-backup-workspace {
+  display: grid;
+  width: 100%;
+  gap: var(--admin-space-5);
+  align-items: start;
+}
+
+.admin-backup-workspace--managed {
+  grid-template-columns: minmax(360px, .9fr) minmax(520px, 1.1fr);
+}
+
+.admin-version-history,
+.admin-backup-manager {
+  min-width: 0;
+  margin: 0;
+  border-color: var(--admin-line);
+  border-radius: var(--admin-card-radius);
+  background: #fff;
+  box-shadow: 0 8px 26px rgb(18 31 51 / 4%);
+}
+
+.admin-version-history > div:first-child h3,
+.admin-backup-manager > div:first-child h3 {
+  font-size: var(--admin-text-section);
+  line-height: 1.3;
+}
+
+.admin-version-history > div:first-child p,
+.admin-backup-manager > div:first-child p {
+  margin-top: 4px;
+  color: #5b6d85;
+  font-size: var(--admin-text-small);
+  line-height: 1.55;
+}
+
+.admin-backup-section h4 {
+  font-size: var(--admin-text-lead);
+}
+
+.admin-backup-section p,
+.admin-backup-section label span span:last-child {
+  font-size: var(--admin-text-meta);
+  line-height: 1.45;
+}
+
+/* Analytics keeps metrics prominent and supporting insights comfortably readable. */
+.managed-analytics {
+  width: 100%;
+  max-width: none;
+  gap: var(--admin-space-5);
+}
+
+.managed-analytics-header {
+  padding-bottom: var(--admin-space-4);
+}
+
+.managed-analytics-header > div:first-child > span {
+  font-size: var(--admin-text-meta);
+}
+
+.managed-analytics-header h2 {
+  margin-top: 3px;
+  font-size: var(--admin-text-section);
+  line-height: 1.25;
+}
+
+.managed-analytics-header p,
+.managed-analytics-trend > div:first-child p {
+  color: #5b6d85;
+  font-size: var(--admin-text-small);
+  line-height: 1.5;
+}
+
+.managed-analytics-primary-kpis {
+  gap: var(--admin-space-3);
+}
+
+.managed-analytics-primary-kpis > .managed-analytics-kpi {
+  min-height: 96px;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--admin-card-radius);
+}
+
+.managed-analytics-primary-kpis .managed-analytics-kpi > span {
+  gap: 4px;
+  font-size: var(--admin-text-meta);
+}
+
+.managed-analytics-primary-kpis .managed-analytics-kpi strong {
+  font-size: 1.625rem;
+  line-height: 1.1;
+}
+
+.managed-analytics-trend {
+  min-height: 330px;
+  padding: 20px;
+  border-radius: var(--admin-card-radius);
+}
+
+.managed-analytics-quick-insights {
+  gap: var(--admin-space-3);
+}
+
+.managed-analytics-insight {
+  border-radius: var(--admin-card-radius);
+  padding: 16px;
+}
+
+.managed-analytics-insight h3,
+.managed-analytics-disclosure-summary strong,
+.managed-analytics-ranking h3 {
+  font-size: var(--admin-text-small);
+}
+
+.managed-analytics-insight dt,
+.managed-analytics-insight dd,
+.managed-analytics-disclosure-summary small,
+.managed-analytics-disclosure-summary em,
+.managed-analytics-section-empty,
+.managed-analytics-ranking,
+.managed-analytics-integration-body > p,
+.managed-analytics-integration-actions p {
+  font-size: var(--admin-text-meta);
+  line-height: 1.45;
+}
+
+.managed-analytics-disclosure-summary,
+.managed-analytics-integration > summary {
+  min-height: 64px;
+  padding: 12px 16px;
+}
+
+.managed-analytics-integration-title strong {
+  font-size: var(--admin-text-small);
+}
+
+.managed-analytics-integration-body {
+  max-width: 760px;
+  gap: var(--admin-space-4);
+  padding: 18px;
+}
+
+/* Privacy remains progressive, while each stage gets enough measure and separation. */
+.privacy-workspace {
+  width: 100%;
+  max-width: none;
+}
+
+.privacy-workspace-header {
+  gap: var(--admin-space-8);
+  padding: 6px 2px var(--admin-space-6);
+}
+
+.privacy-workspace-eyebrow,
+.privacy-stage-heading > div > span {
+  font-size: var(--admin-text-meta);
+}
+
+.privacy-workspace-heading h2 {
+  font-size: clamp(1.75rem, 2.4vw, 2.125rem);
+  line-height: 1.12;
+  letter-spacing: -.025em;
+}
+
+.privacy-workspace-heading p {
+  max-width: 68ch;
+  font-size: var(--admin-text-body);
+  line-height: 1.6;
+}
+
+.privacy-status-summary {
+  border-radius: var(--admin-card-radius);
+}
+
+.privacy-status-summary > div {
+  min-width: 180px;
+  padding: 14px 16px;
+}
+
+.privacy-status-summary small,
+.privacy-section-copy small {
+  font-size: .6875rem;
+  line-height: 1.35;
+}
+
+.privacy-status-summary strong,
+.privacy-section-copy strong,
+.privacy-stage-navigation,
+.privacy-consent-switch small,
+.privacy-review-summary p,
+.privacy-checklist,
+.privacy-save-bar p {
+  font-size: var(--admin-text-small);
+  line-height: 1.5;
+}
+
+.privacy-section-nav {
+  margin-block: var(--admin-space-5);
+  border-radius: var(--admin-card-radius);
+}
+
+.privacy-section-nav > button {
+  min-height: 76px;
+  padding: 14px 16px;
+}
+
+.privacy-stage {
+  border-radius: var(--admin-card-radius);
+  padding: clamp(20px, 2vw, 28px);
+}
+
+.privacy-stage-heading {
+  gap: var(--admin-space-6);
+}
+
+.privacy-stage-heading h3 {
+  font-size: var(--admin-text-section);
+  line-height: 1.3;
+}
+
+.privacy-stage-heading p,
+.privacy-readonly-notice,
+.privacy-consent-switch strong,
+.privacy-mode-grid > button,
+.privacy-config-surface,
+.privacy-review-summary h4,
+.privacy-review-actions,
+.privacy-save-bar strong {
+  font-size: var(--admin-text-small);
+  line-height: 1.5;
+}
+
+.privacy-consent-switch,
+.privacy-config-surface,
+.privacy-review-summary,
+.privacy-save-bar {
+  border-radius: var(--admin-card-radius);
+}
+
+.privacy-save-bar {
+  padding: 15px 18px;
+}
+
+/* AI workspaces grow with the monitor and keep the active conversation dominant. */
+.ai-assistant-page {
+  width: 100%;
+  max-width: none;
+  gap: var(--admin-space-5);
+}
+
+.ai-assistant-overview {
+  grid-template-columns: minmax(260px, .65fr) minmax(520px, 1.35fr);
+  gap: 8px 24px;
+  padding: 16px 20px;
+  border-radius: var(--admin-card-radius);
+}
+
+.ai-assistant-overview-copy h2 {
+  font-size: var(--admin-text-lead);
+}
+
+.ai-assistant-overview-copy > p:last-child,
+.ai-assistant-reset,
+.ai-assistant-usage span {
+  font-size: var(--admin-text-meta);
+  line-height: 1.45;
+}
+
+.ai-assistant-usage strong {
+  font-size: var(--admin-text-lead);
+}
+
+.ai-assistant-layout,
+.oss-ai-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+  gap: var(--admin-space-5);
+}
+
+.oss-ai-workspace,
+.oss-ai-settings {
+  border-radius: var(--admin-card-radius);
+}
+
+.oss-ai-workspace {
+  min-height: clamp(560px, calc(100dvh - 300px), 760px);
+}
+
+.oss-ai-workspace-header {
+  padding: 18px 20px;
+}
+
+.oss-ai-workspace-header h2,
+.oss-ai-settings-title h2 {
+  font-size: var(--admin-text-section);
+}
+
+.oss-ai-workspace-header > div:nth-child(2) > p:last-child,
+.oss-ai-message p,
+.oss-ai-settings-copy,
+.oss-ai-key-state strong,
+.oss-ai-key-state small,
+.oss-ai-settings-form label,
+.oss-ai-settings > footer strong,
+.oss-ai-settings > footer span {
+  font-size: var(--admin-text-small);
+  line-height: 1.5;
+}
+
+.oss-ai-conversation {
+  min-height: 340px;
+  padding: 20px;
+}
+
+.oss-ai-composer {
+  margin: 0 20px 20px;
+}
+
+.oss-ai-settings {
+  padding: 20px;
+}
+
+@media (max-width: 1180px) {
+  .admin-backup-workspace--managed {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .publish-tools {
+    grid-template-columns: minmax(220px, 250px) minmax(0, 1fr);
+  }
+
+  .ai-assistant-layout,
+  .oss-ai-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(270px, 310px);
+  }
+}
+
+@media (max-width: 959px) {
+  .admin-content-grid:has(> .admin-workbench-rail),
+  .admin-preview-grid:has(> .admin-workbench-rail),
+  .admin-theme-layout,
+  .publish-tools,
+  .ai-assistant-layout,
+  .oss-ai-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .publish-tools-tabs {
+    position: static;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .publish-tools-panel {
+    min-height: 0;
+  }
+
+  .ai-assistant-overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-theme-live-preview .admin-preview-device--mobile {
+    --admin-preview-phone-width: clamp(200px, 32vw, 250px);
+    min-height: 480px;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-dashboard-main {
+    padding-right: 12px;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    padding-left: 12px;
+  }
+
+  .admin-dashboard-header {
+    min-height: 0;
+    margin-right: -12px;
+    margin-left: -12px;
+    padding: 15px 13px;
+  }
+
+  .admin-dashboard-section-description {
+    font-size: var(--admin-text-meta);
+  }
+
+  .admin-dashboard-shell .admin-metrics,
+  .admin-integrated-surface .admin-metrics {
+    margin-bottom: 12px;
+  }
+
+  .admin-dashboard-shell .admin-metric-card,
+  .admin-integrated-surface .admin-metric-card {
+    min-height: 62px;
+    padding: 10px 12px;
+  }
+
+  .admin-preview-panel {
+    min-height: 0;
+  }
+
+  .admin-preview-device--mobile {
+    --admin-preview-phone-width: clamp(190px, 68vw, 240px);
+    min-height: 460px;
+  }
+
+  .content-workspace-switcher,
+  .content-workspace-switcher.with-shop {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+  }
+
+  .content-workspace-option {
+    min-height: 68px;
+    border-bottom: 1px solid var(--admin-soft-line);
+  }
+
+  .content-workspace-option small,
+  .content-workspace-option .content-status {
+    display: none;
+  }
+
+  .publish-tools-tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .publish-tools-tab {
+    min-height: 64px;
+  }
+
+  .admin-version-history,
+  .admin-backup-manager,
+  .privacy-stage {
+    padding: 18px;
+  }
+
+  .privacy-workspace-header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .privacy-status-summary > div {
+    min-width: 0;
+  }
+
+  .privacy-section-nav > button {
+    min-height: 64px;
+    padding: 10px 12px;
+  }
+
+  .oss-ai-workspace {
+    min-height: 520px;
+  }
+
+  .oss-ai-conversation {
+    padding: 16px;
+  }
+
+  .oss-ai-composer {
+    margin: 0 16px 16px;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 800px) {
+  .admin-dashboard-shell {
+    --orbitpage-dashboard-nav-height: 38px;
+    --orbitpage-dashboard-header-height: 92px;
+  }
+
+  .admin-dashboard-nav-item,
+  .admin-dashboard-footer-action {
+    font-size: .75rem;
+  }
+
+  .admin-dashboard-header {
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+
+  .admin-dashboard-heading-row h1 {
+    font-size: 1.5rem;
+  }
+
+  .admin-dashboard-section-description {
+    font-size: .75rem;
+    line-height: 1.35;
+  }
+
+  .admin-dashboard-shell .admin-metric-card,
+  .admin-integrated-surface .admin-metric-card {
+    min-height: 62px;
+    padding-block: 9px;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 740px) {
+  .admin-dashboard-shell {
+    --orbitpage-dashboard-header-height: 86px;
+  }
+
+  .admin-dashboard-kicker,
+  .admin-dashboard-context-row,
+  .admin-metric-label,
+  .admin-metric-detail {
+    font-size: .6875rem;
+  }
+
+  .content-workspace-header h2 {
+    font-size: 1.125rem;
+  }
+
+  .content-workspace-header p:last-child {
+    font-size: .75rem;
+    line-height: 1.4;
+  }
+
+  .content-workspace-option {
+    min-height: 64px;
+    padding-block: 9px;
+  }
+}
+
+@media (pointer: coarse) {
+  .orbitpage-admin {
+    --admin-control-height: 44px;
+  }
+}

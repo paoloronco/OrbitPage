@@ -44,7 +44,7 @@ export function VersionHistory() {
     }
   };
 
-  return <Card className="glass-card space-y-5 p-6">
+  return <Card className="admin-version-history glass-card space-y-5 p-6">
     <div className="flex items-start gap-3">
       <span className="rounded-xl bg-primary/10 p-2 text-primary"><History className="h-5 w-5" /></span>
       <div className="min-w-0">

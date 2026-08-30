@@ -1108,7 +1108,7 @@ export const AdminView = ({
 
           {canManageUsers && (
             <TabsContent value="backup" className="admin-tab-content">
-              <div className="admin-single-column space-y-6" data-onboarding="backup-section">
+              <div className={`admin-backup-workspace${isHostedAdmin ? " admin-backup-workspace--managed" : ""}`} data-onboarding="backup-section">
                 {isHostedAdmin && <VersionHistory />}
                 <BackupManager hosted={isHostedAdmin} />
               </div>
