@@ -316,7 +316,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
   };
 
   return (
-    <Card className={`glass-card space-y-6 p-6 ${DEMO_MODE ? "opacity-70" : ""}`}>
+    <Card className={`admin-backup-manager glass-card space-y-6 p-6 ${DEMO_MODE ? "opacity-70" : ""}`}>
       <div className="flex items-start gap-3">
         <span className="rounded-xl bg-primary/10 p-2 text-primary">
           <Database className="h-5 w-5" />
@@ -348,7 +348,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         </div>
       )}
 
-      <section className="space-y-4" aria-labelledby="backup-export-heading">
+      <section className="admin-backup-section admin-backup-section--export space-y-4" aria-labelledby="backup-export-heading">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 id="backup-export-heading" className="text-sm font-semibold">Export</h4>
@@ -372,7 +372,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         </Button>
       </section>
 
-      <section className="space-y-4 border-t border-border/70 pt-5" aria-labelledby="backup-import-heading">
+      <section className="admin-backup-section admin-backup-section--restore space-y-4 border-t border-border/70 pt-5" aria-labelledby="backup-import-heading">
         <div>
           <h4 id="backup-import-heading" className="text-sm font-semibold">{tr("Restore", "Ripristina")}</h4>
           <p className="text-xs leading-5 text-muted-foreground">{tr("Open a backup first, then choose which of its available sections to apply.", "Apri prima un backup, poi scegli quali sezioni disponibili applicare.")}</p>
@@ -434,7 +434,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         />
       </section>
 
-      <section className="space-y-4 border-t border-border/70 pt-5" aria-labelledby="media-cleanup-heading">
+      <section className="admin-backup-section admin-backup-section--media space-y-4 border-t border-border/70 pt-5" aria-labelledby="media-cleanup-heading">
         <div className="flex items-start gap-3">
           <span className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-4 w-4" /></span>
           <div>
