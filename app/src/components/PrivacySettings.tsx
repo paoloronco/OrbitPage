@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { OrbitLoadingState } from '@/components/ui/orbit-loader';
 import {
   AlertTriangle,
   ArrowRight,
@@ -1291,9 +1292,12 @@ export function PrivacySettings({
 
   if (loading) {
     return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
+      <OrbitLoadingState
+        compact
+        description={tr('Checking policies, consent and review status.', 'Verifica di informative, consenso e stato della revisione.')}
+        state="searching"
+        title={tr('Loading privacy workspace', 'Caricamento area privacy')}
+      />
     );
   }
 

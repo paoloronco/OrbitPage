@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 import {
   AlertTriangle,
   Check,
@@ -17,7 +18,6 @@ import {
   ImagePlay,
   Layout,
   Layers3,
-  Loader2,
   LockKeyhole,
   Palette,
   RotateCcw,
@@ -473,7 +473,7 @@ export const ThemeCustomizer = ({
               </button>
             </div>
             <Button aria-busy={saveState === "saving"} type="button" onClick={saveTheme} disabled={!isDirty || saveState === "saving"} className="min-h-12 shrink-0 bg-blue-600 px-5 text-white hover:bg-blue-700">
-              {saveState === "saving" && <Loader2 className="h-4 w-4 animate-spin" />}
+              {saveState === "saving" && <OrbitLoader size={16} state="shaping" />}
               {saveState === "saving" ? tr("Saving theme", "Salvataggio tema") : saveState === "saved" ? tr("Saved", "Salvato") : tr("Save theme", "Salva tema")}
             </Button>
           </div>

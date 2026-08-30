@@ -7,7 +7,6 @@ import {
   Globe2,
   Image as ImageIcon,
   ImageUp,
-  Loader2,
   LockKeyhole,
   MapPin,
   Palette,
@@ -26,6 +25,7 @@ import {
   Youtube,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { Card } from "@/components/ui/card";
 import {
   Dialog,
@@ -353,7 +353,7 @@ export const ProfileSection = ({
               <RotateCcw className="h-4 w-4" /> {tr("Reset", "Ripristina")}
             </Button>
             <Button type="button" size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isSaving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
               {isSaving ? tr("Saving", "Salvataggio") : tr("Save page", "Salva pagina")}
             </Button>
           </div>
@@ -630,7 +630,7 @@ export const ProfileSection = ({
           <input ref={faviconInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "favicon"); event.target.value = ""; }} />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setFaviconDialogOpen(false)}>{tr("Close", "Chiudi")}</Button>
-            <Button type="button" onClick={handleSave} disabled={!isDirty || isSaving}>{isSaving && <Loader2 className="h-4 w-4 animate-spin" />}{isSaving ? tr("Saving", "Salvataggio") : tr("Save favicon", "Salva favicon")}</Button>
+            <Button type="button" onClick={handleSave} disabled={!isDirty || isSaving}>{isSaving && <OrbitLoader size={16} state="composing" />}{isSaving ? tr("Saving", "Salvataggio") : tr("Save favicon", "Salva favicon")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

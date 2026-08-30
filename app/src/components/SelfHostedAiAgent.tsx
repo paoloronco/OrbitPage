@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, LoaderCircle, Send, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Check, Send, ShieldCheck, Sparkles, X } from "lucide-react";
 import {
   aiPageAgentApi,
   type AiConversationMessage,
@@ -8,6 +8,7 @@ import {
   type AiSettings,
 } from "@/lib/api-client";
 import { useAppI18n } from "@/lib/i18n";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
 
 type AgentMessage = AiConversationMessage & {
   id: string;
@@ -174,7 +175,7 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
                     <small>{tr("Review every item before applying.", "Controlla ogni voce prima di applicare.")}</small>
                     <button disabled={item.applying || item.applied} onClick={() => void applyProposal(item.id, item.proposal!)} type="button">
                       {item.applying
-                        ? <><LoaderCircle className="spin" aria-hidden="true" size={16} />{labels.applying}</>
+                        ? <><OrbitLoader size={16} state="weaving" />{labels.applying}</>
                         : item.applied
                           ? <><Check aria-hidden="true" size={16} />{labels.applied}</>
                           : <><Sparkles aria-hidden="true" size={16} />{labels.apply}</>}
@@ -183,7 +184,7 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
                 )}
               </div>
             ))}
-            {sending && <div className="ai-page-agent-thinking" role="status"><LoaderCircle className="spin" size={15} />{labels.thinking}</div>}
+            {sending && <div className="ai-page-agent-thinking" role="status"><OrbitLoader size={16} state="solving" />{labels.thinking}</div>}
           </div>
 
           <form className="ai-page-agent-composer" onSubmit={submit}>
