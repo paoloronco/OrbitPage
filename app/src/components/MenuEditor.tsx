@@ -6,6 +6,7 @@ import {
   Search, UtensilsCrossed,
 } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
+import { ColorPicker } from '@/components/ui/color-picker';
 import { OrbitLoader } from '@/components/ui/orbit-loader';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -801,7 +802,16 @@ export function MenuEditor({
           </div>
           {advancedTheme ? (
             <div className="menu-color-grid">
-              {(['background', 'surface', 'text', 'muted', 'accent', 'border'] as const).map((key) => <label key={key}><span>{key}</span><Input type="color" value={draft.theme[key]} onChange={(e) => update((current) => ({ ...current, theme: { ...current.theme, [key]: e.target.value } }))} /></label>)}
+              {(['background', 'surface', 'text', 'muted', 'accent', 'border'] as const).map((key) => (
+                <div className="menu-color-field" key={key}>
+                  <span>{key}</span>
+                  <ColorPicker
+                    label={`${key} color`}
+                    value={draft.theme[key]}
+                    onChange={(value) => update((current) => ({ ...current, theme: { ...current.theme, [key]: value } }))}
+                  />
+                </div>
+              ))}
               <label><span>Corner radius</span><Input type="number" min="0" max="28" value={draft.theme.radius} onChange={(e) => update((current) => ({ ...current, theme: { ...current.theme, radius: Number(e.target.value) } }))} /></label>
             </div>
           ) : <p className="menu-plan-note">Starter includes curated menu themes. Fine-tuned colors and layout unlock on Pro.</p>}

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { HexColorPicker } from "react-colorful";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -56,7 +56,6 @@ export const BackgroundMediaCustomizer = ({
   maxUploadBytes,
   maxVideoUploadBytes,
 }: BackgroundMediaCustomizerProps) => {
-  const [overlayPickerOpen, setOverlayPickerOpen] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [uploadError, setUploadError] = useState<string>("");
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -269,31 +268,11 @@ export const BackgroundMediaCustomizer = ({
 
             <div className="space-y-2">
               <Label className="text-xs text-muted-foreground">Overlay Color</Label>
-              <div className="relative flex items-center gap-2">
-                <button
-                  type="button"
-                  className="h-8 w-8 rounded border-2 border-border transition-all hover:scale-110"
-                  style={{ backgroundColor: config.overlayColor }}
-                  onClick={() => setOverlayPickerOpen((o) => !o)}
-                />
-                <Input
-                  value={config.overlayColor}
-                  onChange={(e) => update({ overlayColor: e.target.value })}
-                  className="font-mono text-xs"
-                  placeholder="#000000"
-                />
-                {overlayPickerOpen && (
-                  <div className="absolute left-0 top-10 z-50">
-                    <div className="fixed inset-0" onClick={() => setOverlayPickerOpen(false)} />
-                    <div className="relative bg-card border border-border rounded-lg p-4 shadow-xl">
-                      <HexColorPicker
-                        color={config.overlayColor}
-                        onChange={(c) => update({ overlayColor: c })}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+              <ColorPicker
+                label="Overlay color"
+                value={config.overlayColor}
+                onChange={(overlayColor) => update({ overlayColor })}
+              />
             </div>
 
             <SliderRow

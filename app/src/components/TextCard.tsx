@@ -1,5 +1,6 @@
 import { type CSSProperties, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -388,17 +389,16 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                     />
                   </div>
                   <div className="flex items-center gap-2 mt-2">
-                    <Input
-                      type="color"
+                    <ColorPicker
+                      className="min-w-[9.5rem]"
+                      label="Text color"
                       value={item.textColor || '#000000'}
-                      onChange={(e) => {
-                        const v = e.target.value;
+                      onChange={(value) => {
                         setEditLink(prev => ({
                           ...prev,
-                          textItems: prev.textItems?.map((it, i) => i === index ? { ...it, textColor: v } : it) || []
+                          textItems: prev.textItems?.map((it, i) => i === index ? { ...it, textColor: value } : it) || []
                         }));
                       }}
-                      className="w-10 h-8 p-0 rounded-md"
                     />
                     <div className="w-20">
                       <Input
@@ -675,11 +675,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   <span>Background</span>
                   <span className="font-normal text-slate-500">{editLink.backgroundColor ? 'Card override' : 'Theme color'}</span>
                 </Label>
-                <Input
-                  type="color"
+                <ColorPicker
+                  label="Background color"
                   value={editLink.backgroundColor || inheritedBackgroundColor}
-                  onChange={(e) => setEditLink(prev => ({ ...prev, backgroundColor: e.target.value }))}
-                  className="h-8 w-full"
+                  onChange={(backgroundColor) => setEditLink(prev => ({ ...prev, backgroundColor }))}
                 />
               </div>
               <div className="space-y-1">
@@ -687,11 +686,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   <span>Text Color</span>
                   <span className="font-normal text-slate-500">{editLink.textColor ? 'Card override' : 'Theme color'}</span>
                 </Label>
-                <Input
-                  type="color"
+                <ColorPicker
+                  label="Text color"
                   value={editLink.textColor || inheritedTextColor}
-                  onChange={(e) => setEditLink(prev => ({ ...prev, textColor: e.target.value }))}
-                  className="h-8 w-full"
+                  onChange={(textColor) => setEditLink(prev => ({ ...prev, textColor }))}
                 />
               </div>
             </div>

@@ -4,6 +4,7 @@ import { ChevronDown, Download, ExternalLink, QrCode, SlidersHorizontal } from "
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -265,8 +266,8 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
                   })}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5"><Label htmlFor="qr-foreground" className="text-xs">{tr("Foreground", "Primo piano")}</Label><Input id="qr-foreground" type="color" value={settings.foreground} onChange={(event) => update("foreground", event.target.value)} className="h-10 w-full p-1" /></div>
-                  <div className="space-y-1.5"><Label htmlFor="qr-background" className="text-xs">{tr("Background", "Sfondo")}</Label><Input id="qr-background" type="color" value={settings.background} onChange={(event) => update("background", event.target.value)} className="h-10 w-full p-1" /></div>
+                  <div className="space-y-1.5"><Label htmlFor="qr-foreground" className="text-xs">{tr("Foreground", "Primo piano")}</Label><ColorPicker id="qr-foreground" label={tr("Foreground", "Primo piano")} value={settings.foreground} onChange={(value) => update("foreground", value)} /></div>
+                  <div className="space-y-1.5"><Label htmlFor="qr-background" className="text-xs">{tr("Background", "Sfondo")}</Label><ColorPicker id="qr-background" label={tr("Background", "Sfondo")} value={settings.background} onChange={(value) => update("background", value)} /></div>
                 </div>
               </section>
 
