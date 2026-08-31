@@ -46,15 +46,30 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const inspector = page.locator(".visual-site-editor__inspector");
   await inspector.getByLabel("Page name").fill(`Visual editor profile ${browserName} ${Date.now()}`);
   await page.getByRole("button", { name: "Save page" }).click();
-  await expect(page.locator('[data-public-editor-target="profile"]')).toBeVisible();
-  await page.locator('[data-public-editor-target="profile"]').click();
+  const profileTarget = page.locator('[data-public-editor-target="profile"]');
+  await expect(profileTarget).toBeVisible();
+  await profileTarget.click();
+  await expect(profileTarget).toHaveClass(/is-selected/);
+  expect(await profileTarget.evaluate((element) => getComputedStyle(element, "::before").animationName))
+    .toBe("visual-editor-selection-pulse");
   await expect(inspector.getByRole("heading", { name: "Profile and identity" })).toBeVisible();
   await expect(inspector.getByLabel("Page name")).toBeVisible();
 
-  await page.locator(`[data-public-editor-link-id="${linkId}"]`).click();
+  const selectedLinkTarget = page.locator(`[data-public-editor-link-id="${linkId}"]`);
+  await selectedLinkTarget.click();
+  await expect(selectedLinkTarget).toHaveClass(/is-selected/);
+  await expect(profileTarget).not.toHaveClass(/is-selected/);
   await expect(inspector.getByRole("heading", { name: "Visual editor card", exact: true }).first()).toBeVisible();
   await expect(inspector.getByPlaceholder("Link title")).toHaveValue("Visual editor card");
   await expect(inspector.getByPlaceholder("https://example.com", { exact: true })).toHaveValue("https://example.com/visual-editor");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const reducedMotionIndicator = await selectedLinkTarget.evaluate((element) => {
+    const style = getComputedStyle(element, "::before");
+    return { animationName: style.animationName, opacity: style.opacity };
+  });
+  expect(reducedMotionIndicator.animationName).toBe("none");
+  expect(Number(reducedMotionIndicator.opacity)).toBeGreaterThan(0);
 
   await page.locator(".public-page-root--editor").dispatchEvent("click");
   await expect(inspector.getByRole("heading", { name: "Page style" })).toBeVisible();
