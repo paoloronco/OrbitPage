@@ -38,9 +38,9 @@ const browserWindow = (href: string) => {
   return { location, history: { replaceState, state: null } };
 };
 
-const jsonResponse = (body: unknown) => ({
-  ok: true,
-  status: 200,
+const jsonResponse = (body: unknown, status = 200) => ({
+  ok: status >= 200 && status < 300,
+  status,
   headers: { get: (name: string) => name.toLowerCase() === 'content-type' ? 'application/json' : null },
   json: vi.fn(async () => body),
   text: vi.fn(async () => JSON.stringify(body)),
@@ -140,6 +140,49 @@ describe('hosted runtime boundary', () => {
       'X-Firebase-AppCheck': 'hosted-app-check',
     });
     expect(currentWindow.history.replaceState).not.toHaveBeenCalled();
+  });
+
+  it('refreshes hosted Firebase credentials and retries one failed authenticated request', async () => {
+    vi.stubEnv('VITE_ORBITPAGE_HOSTED_MODE', 'true');
+    const refreshCredentials = vi.fn(async () => ({
+      apiToken: 'refreshed-hosted-token',
+      appCheckToken: 'refreshed-app-check',
+    }));
+    const currentWindow = browserWindow('https://orbitpage.com/dashboard/profile');
+    Object.assign(currentWindow, {
+      __ORBITPAGE_HOSTED_SURFACE__: true,
+      __ORBITPAGE_HOSTED_CONFIG__: {
+        apiBase: 'https://orbitpage.com/api/orbitpage',
+        publicSlug: 'alice',
+        publicUrl: 'https://orbitpage.net/alice',
+        apiToken: 'expired-hosted-token',
+        appCheckToken: 'expired-app-check',
+        refreshCredentials,
+        section: 'profile',
+        locale: 'en',
+      },
+    });
+    vi.stubGlobal('window', currentWindow);
+    vi.stubGlobal('localStorage', storage());
+    vi.stubGlobal('sessionStorage', storage());
+    vi.stubGlobal('crypto', {});
+    const request = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({ error: 'Invalid or expired token' }, 401))
+      .mockResolvedValueOnce(jsonResponse({ valid: true }));
+    vi.stubGlobal('fetch', request);
+
+    await expect(authApi.verify()).resolves.toMatchObject({ valid: true });
+
+    expect(refreshCredentials).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request.mock.calls[0][1]?.headers).toMatchObject({
+      Authorization: 'Bearer expired-hosted-token',
+      'X-Firebase-AppCheck': 'expired-app-check',
+    });
+    expect(request.mock.calls[1][1]?.headers).toMatchObject({
+      Authorization: 'Bearer refreshed-hosted-token',
+      'X-Firebase-AppCheck': 'refreshed-app-check',
+    });
   });
 
   it('blocks a hosted credential from reaching a cross-origin API base', async () => {
