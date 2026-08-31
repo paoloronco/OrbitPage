@@ -761,15 +761,15 @@ export const ThemeCustomizer = ({
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div className="space-y-3">
                     <Label>Card radius <span className="text-slate-500">{pendingTheme.cardRadius}px</span></Label>
-                    <Slider value={[pendingTheme.cardRadius]} onValueChange={([cardRadius]) => updatePendingTheme({ cardRadius })} max={28} min={0} step={1} />
+                    <Slider aria-label="Card radius" value={[pendingTheme.cardRadius]} valueLabelFormat={(cardRadius) => `${cardRadius}px`} onValueChange={([cardRadius]) => updatePendingTheme({ cardRadius })} max={28} min={0} step={1} />
                   </div>
                   <div className="space-y-3">
                     <Label>Card spacing <span className="text-slate-500">{pendingTheme.cardSpacing}px</span></Label>
-                    <Slider value={[pendingTheme.cardSpacing]} onValueChange={([cardSpacing]) => updatePendingTheme({ cardSpacing })} max={32} min={4} step={1} />
+                    <Slider aria-label="Card spacing" value={[pendingTheme.cardSpacing]} valueLabelFormat={(cardSpacing) => `${cardSpacing}px`} onValueChange={([cardSpacing]) => updatePendingTheme({ cardSpacing })} max={32} min={4} step={1} />
                   </div>
                   <div className="space-y-3">
                     <Label>Surface blur <span className="text-slate-500">{pendingTheme.blurIntensity}px</span></Label>
-                    <Slider value={[pendingTheme.blurIntensity]} onValueChange={([blurIntensity]) => updatePendingTheme({ blurIntensity })} max={50} min={0} step={1} />
+                    <Slider aria-label="Surface blur" value={[pendingTheme.blurIntensity]} valueLabelFormat={(blurIntensity) => `${blurIntensity}px`} onValueChange={([blurIntensity]) => updatePendingTheme({ blurIntensity })} max={50} min={0} step={1} />
                   </div>
                 </div>
 
@@ -799,6 +799,7 @@ export const ThemeCustomizer = ({
                         id="content-card-transparency"
                         aria-label="Content card transparency"
                         value={[1 - pendingTheme.contentCardOpacity]}
+                        valueLabelFormat={(transparency) => `${Math.round(transparency * 100)}%`}
                         onValueChange={([transparency]) => updatePendingTheme({ contentCardOpacity: 1 - transparency })}
                         max={1}
                         min={0}
@@ -823,6 +824,7 @@ export const ThemeCustomizer = ({
                         id="profile-card-transparency"
                         aria-label="Profile card transparency"
                         value={[1 - pendingTheme.profileCardOpacity]}
+                        valueLabelFormat={(transparency) => `${Math.round(transparency * 100)}%`}
                         onValueChange={([transparency]) => updatePendingTheme({ profileCardOpacity: 1 - transparency })}
                         max={1}
                         min={0}
@@ -860,23 +862,23 @@ export const ThemeCustomizer = ({
                       {colorControl('cardShadowColor', 'Shadow color', pendingTheme.cardShadow.color, (color) => updateCardShadow({ color }))}
                       <div className="space-y-3">
                         <Label>Opacity <span className="text-slate-500">{Math.round(pendingTheme.cardShadow.opacity * 100)}%</span></Label>
-                        <Slider value={[pendingTheme.cardShadow.opacity]} onValueChange={([opacity]) => updateCardShadow({ opacity })} max={1} min={0} step={0.01} />
+                        <Slider aria-label="Card shadow opacity" value={[pendingTheme.cardShadow.opacity]} valueLabelFormat={(opacity) => `${Math.round(opacity * 100)}%`} onValueChange={([opacity]) => updateCardShadow({ opacity })} max={1} min={0} step={0.01} />
                       </div>
                       <div className="space-y-3">
                         <Label>Horizontal offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetX}px</span></Label>
-                        <Slider value={[pendingTheme.cardShadow.offsetX]} onValueChange={([offsetX]) => updateCardShadow({ offsetX })} max={32} min={-32} step={1} />
+                        <Slider aria-label="Card shadow horizontal offset" value={[pendingTheme.cardShadow.offsetX]} valueLabelFormat={(offsetX) => `${offsetX}px`} onValueChange={([offsetX]) => updateCardShadow({ offsetX })} max={32} min={-32} step={1} />
                       </div>
                       <div className="space-y-3">
                         <Label>Vertical offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetY}px</span></Label>
-                        <Slider value={[pendingTheme.cardShadow.offsetY]} onValueChange={([offsetY]) => updateCardShadow({ offsetY })} max={48} min={-32} step={1} />
+                        <Slider aria-label="Card shadow vertical offset" value={[pendingTheme.cardShadow.offsetY]} valueLabelFormat={(offsetY) => `${offsetY}px`} onValueChange={([offsetY]) => updateCardShadow({ offsetY })} max={48} min={-32} step={1} />
                       </div>
                       <div className="space-y-3">
                         <Label>Softness <span className="text-slate-500">{pendingTheme.cardShadow.blur}px</span></Label>
-                        <Slider value={[pendingTheme.cardShadow.blur]} onValueChange={([blur]) => updateCardShadow({ blur })} max={96} min={0} step={1} />
+                        <Slider aria-label="Card shadow softness" value={[pendingTheme.cardShadow.blur]} valueLabelFormat={(blur) => `${blur}px`} onValueChange={([blur]) => updateCardShadow({ blur })} max={96} min={0} step={1} />
                       </div>
                       <div className="space-y-3">
                         <Label>Spread <span className="text-slate-500">{pendingTheme.cardShadow.spread}px</span></Label>
-                        <Slider value={[pendingTheme.cardShadow.spread]} onValueChange={([spread]) => updateCardShadow({ spread })} max={48} min={-32} step={1} />
+                        <Slider aria-label="Card shadow spread" value={[pendingTheme.cardShadow.spread]} valueLabelFormat={(spread) => `${spread}px`} onValueChange={([spread]) => updateCardShadow({ spread })} max={48} min={-32} step={1} />
                       </div>
                     </div>
 
