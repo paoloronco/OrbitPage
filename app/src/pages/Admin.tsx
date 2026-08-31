@@ -59,7 +59,6 @@ interface ProfileData {
   googleAnalyticsId?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
-  adminOnboardingEnabled?: boolean;
 }
 
 export interface CurrentUser {
@@ -93,7 +92,6 @@ const Admin = () => {
     avatar: profileAvatar,
     showAvatar: true,
     showOrbitPageBadge: true,
-    adminOnboardingEnabled: false,
   });
 
   // Start with no links shown until we fetch them from the server
@@ -259,9 +257,6 @@ const Admin = () => {
             googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
             privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
             cookiePolicyUrl: (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined,
-            adminOnboardingEnabled: typeof (profileData as any).admin_onboarding_enabled !== 'undefined'
-              ? (profileData as any).admin_onboarding_enabled !== 0
-              : ((profileData as any).adminOnboardingEnabled ?? true),
           });
         }
 
@@ -322,7 +317,6 @@ const Admin = () => {
         googleAnalyticsId: newProfile.googleAnalyticsId,
         privacyPolicyUrl: newProfile.privacyPolicyUrl,
         cookiePolicyUrl: newProfile.cookiePolicyUrl,
-        adminOnboardingEnabled: typeof newProfile.adminOnboardingEnabled === 'boolean' ? newProfile.adminOnboardingEnabled : true,
       });
       setProfile(newProfile);
     } catch (error: any) {

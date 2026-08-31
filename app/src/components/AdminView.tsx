@@ -45,7 +45,6 @@ import {
   Sparkles,
   UtensilsCrossed,
   ShieldCheck,
-  User,
   UserRound,
   UsersRound,
   X,
@@ -58,7 +57,6 @@ import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
-import { AdminOnboarding } from "./AdminOnboarding";
 import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
 import {
@@ -75,13 +73,6 @@ import { canonicalAdminTab, type AdminContentSection, type AdminTab } from "@/li
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
-import {
-  beginOnboardingChecklistSession,
-  dismissOnboardingChecklist,
-  endOnboardingChecklistSession,
-  readOnboardingChecklistSession,
-  type OnboardingChecklistSession,
-} from "@/lib/onboarding-checklist-storage";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import { VersionHistory } from "./VersionHistory";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
@@ -120,7 +111,6 @@ interface ProfileData {
   googleAnalyticsId?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
-  adminOnboardingEnabled?: boolean;
 }
 
 interface AdminViewProps {
@@ -251,9 +241,7 @@ export const AdminView = ({
       || "link"
   ));
   const [hostedSurfaceConfig, setHostedSurfaceConfig] = useState<HostedSurfaceConfig | null>(() => getHostedSurfaceConfig());
-  const [onboardingReplayKey, setOnboardingReplayKey] = useState(0);
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
-  const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
   const [previewTheme, setPreviewTheme] = useState(theme);
@@ -298,19 +286,6 @@ export const AdminView = ({
   const resolveOrbitPageBadgeVisibility = (preference: boolean | undefined) => (
     orbitPageBadgeEditable ? (preference ?? !saasPlan) : true
   );
-  const checklistIdentity = currentUser
-    ? `${isHostedAdmin ? "hosted" : "self-hosted"}:${currentUser.username}`
-    : "";
-  const [checklistSession, setChecklistSession] = useState<OnboardingChecklistSession>(() => (
-    checklistIdentity
-      ? readOnboardingChecklistSession(
-          checklistIdentity,
-          typeof window === "undefined" ? undefined : window.localStorage,
-          typeof window === "undefined" ? undefined : window.sessionStorage,
-        )
-      : { visible: false, sessionNumber: 1, sessionLimit: 3 }
-  ));
-
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
     const mediaQuery = window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY);
@@ -349,14 +324,6 @@ export const AdminView = ({
       config?.onOpenShop?.();
     }
   };
-
-  useEffect(() => {
-    if (!checklistIdentity || isProspectReadOnly) {
-      setChecklistSession((current) => ({ ...current, visible: false }));
-      return;
-    }
-    setChecklistSession(beginOnboardingChecklistSession(checklistIdentity, window.localStorage, window.sessionStorage));
-  }, [checklistIdentity, isProspectReadOnly]);
 
   useEffect(() => {
     if (publicUrlOverride) {
@@ -694,23 +661,9 @@ export const AdminView = ({
     };
   }, [links, profile]);
 
-  const pageChecklistItems = [
-    { checked: Boolean(profile.name?.trim()), label: tr("Name or brand is set", "Nome o brand impostato") },
-    { checked: Boolean(profile.bio?.trim()), label: tr("Description is set", "Descrizione impostata") },
-    { checked: metrics.socialCount > 0, label: tr("At least one social link", "Almeno un link social") },
-    { checked: Boolean(profile.tabTitle?.trim()), label: tr("Browser title customized", "Titolo del browser personalizzato") },
-  ];
-  const completedChecklistItems = pageChecklistItems.filter((item) => item.checked).length;
-
   const handleLogout = () => {
-    if (checklistIdentity) endOnboardingChecklistSession(checklistIdentity, window.sessionStorage);
     logout();
     onLogout();
-  };
-
-  const dismissPageChecklist = () => {
-    if (checklistIdentity) dismissOnboardingChecklist(checklistIdentity, window.localStorage, window.sessionStorage);
-    setChecklistSession((current) => ({ ...current, visible: false }));
   };
 
   const gaDirty = gaId.trim() !== (profile.googleAnalyticsId || "");
@@ -725,11 +678,6 @@ export const AdminView = ({
     } finally {
       setGaSaving(false);
     }
-  };
-
-  const handleThemeSave = async (nextTheme: ThemeConfig) => {
-    await onThemeChange(nextTheme);
-    setOnboardingThemeSaved(true);
   };
 
   const googleAnalyticsPanel = (!saasPlan || entitlements?.analytics === "advanced-ga4") ? (
@@ -836,10 +784,6 @@ export const AdminView = ({
       seoAccess={entitlements?.seo}
       managePlanHref={managePlanHref}
       orbitPageBadgeEditable={orbitPageBadgeEditable}
-      onStartOnboarding={() => setOnboardingReplayKey((key) => key + 1)}
-      onAdminOnboardingEnabledChange={(enabled) => {
-        void onProfileUpdate({ ...profile, adminOnboardingEnabled: enabled });
-      }}
     />
   ) : visualSection === "links" ? (
     <LinkManager
@@ -908,7 +852,7 @@ export const AdminView = ({
   ) : (
     <ThemeCustomizer
       theme={theme}
-      onThemeChange={handleThemeSave}
+      onThemeChange={onThemeChange}
       onThemePreview={(nextTheme) => {
         setPreviewTheme(nextTheme);
         applyTheme(nextTheme);
@@ -1228,50 +1172,20 @@ export const AdminView = ({
                   seoAccess={entitlements?.seo}
                   managePlanHref={managePlanHref}
                   orbitPageBadgeEditable={orbitPageBadgeEditable}
-                  onStartOnboarding={() => setOnboardingReplayKey(key => key + 1)}
-                  onAdminOnboardingEnabledChange={(enabled) => {
-                    void onProfileUpdate({ ...profile, adminOnboardingEnabled: enabled });
-                  }}
                 />
               </div>
-              {(showEmbeddedPreview || (checklistSession.visible && !isProspectReadOnly)) && <aside className="admin-workbench-rail">
-                {showEmbeddedPreview && <PreviewPanel
+              {showEmbeddedPreview && (
+                <aside className="admin-workbench-rail">
+                  <PreviewPanel
                     title={tr("Profile and identity", "Profilo e identità")}
                     profile={previewProfile}
                     links={links}
                     theme={theme}
                     publicPageHref={publicPageHref}
                     showOrbitPageBadge={resolveOrbitPageBadgeVisibility(previewProfile.showOrbitPageBadge)}
-                  />}
-                {checklistSession.visible && !isProspectReadOnly && (
-                  <section className="admin-side-panel admin-checklist-panel" aria-label={tr("Page checklist", "Verifica pagina")}>
-                    <div className="admin-checklist-heading">
-                      <span className="admin-panel-icon"><User className="h-4 w-4" /></span>
-                      <div>
-                        <h2>{tr("Page checklist", "Verifica pagina")}</h2>
-                        <p>{tr(
-                          `Getting started · login ${checklistSession.sessionNumber} of ${checklistSession.sessionLimit}`,
-                          `Primi passi · accesso ${checklistSession.sessionNumber} di ${checklistSession.sessionLimit}`,
-                        )}</p>
-                      </div>
-                      <button type="button" onClick={dismissPageChecklist} aria-label={tr("Hide onboarding checklist", "Nascondi checklist iniziale")} title={tr("Do not show again", "Non mostrare più")}>
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="admin-checklist-progress-copy">
-                      <span>{tr("Setup progress", "Avanzamento configurazione")}</span>
-                      <strong>{completedChecklistItems}/{pageChecklistItems.length}</strong>
-                    </div>
-                    <div className="admin-checklist-progress" role="progressbar" aria-valuemin={0} aria-valuemax={pageChecklistItems.length} aria-valuenow={completedChecklistItems}>
-                      <span style={{ width: `${(completedChecklistItems / pageChecklistItems.length) * 100}%` }} />
-                    </div>
-                    <div className="admin-checklist-items">
-                      {pageChecklistItems.map((item) => <ChecklistItem key={item.label} {...item} />)}
-                    </div>
-                    <p className="admin-checklist-expiry">{tr("This panel disappears automatically after your first three login sessions.", "Questo pannello scompare automaticamente dopo le prime tre sessioni di accesso.")}</p>
-                  </section>
-                )}
-              </aside>}
+                  />
+                </aside>
+              )}
             </div>
             )}
           </TabsContent>
@@ -1450,7 +1364,7 @@ export const AdminView = ({
           <TabsContent value="theme" className="admin-tab-content">
             <ThemeCustomizer
               theme={theme}
-              onThemeChange={handleThemeSave}
+              onThemeChange={onThemeChange}
               onThemePreview={(nextTheme) => applyTheme(nextTheme)}
               renderPreview={(previewTheme, device) => (
                 <LivePreview
@@ -1590,24 +1504,6 @@ export const AdminView = ({
           </div>
         </Tabs>
 
-        {!isProspectReadOnly && <AdminOnboarding
-          key={onboardingReplayKey}
-          activeTab={activeTab}
-          visibleTabs={visibleTabs.map(tab => tab.value)}
-          onSelectTab={selectTab}
-          forceOpen={onboardingReplayKey > 0}
-          repeatEnabled={profile.adminOnboardingEnabled !== false}
-          profile={{
-            name: profile.name,
-            bio: profile.bio,
-            googleAnalyticsId: profile.googleAnalyticsId,
-            privacyPolicyUrl: profile.privacyPolicyUrl,
-            cookiePolicyUrl: profile.cookiePolicyUrl,
-          }}
-          savedLinkCount={links.length}
-          themeSaved={onboardingThemeSaved}
-        />}
-
         <footer className="admin-footer">
           {DEMO_MODE && (
             <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs leading-5 text-amber-900">
@@ -1723,15 +1619,6 @@ function PanelHeader({ icon: Icon, title }: { icon: React.ElementType; title: st
         <Icon className="h-4 w-4" />
       </span>
       <h2 className="text-base font-semibold text-slate-950">{title}</h2>
-    </div>
-  );
-}
-
-function ChecklistItem({ checked, label }: { checked: boolean; label: string }) {
-  return (
-    <div className={checked ? "admin-checklist-item admin-checklist-item-complete" : "admin-checklist-item"}>
-      <span className={checked ? "admin-check admin-check-active" : "admin-check"} />
-      <span>{label}</span>
     </div>
   );
 }

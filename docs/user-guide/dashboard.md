@@ -16,11 +16,9 @@ Use this sequence to avoid leaving related changes half-finished:
 
 Page, Link blocks, subpage details, each subpage's blocks, Menu, Theme, Privacy, and Publish use their own save action. A save in one workspace does not commit an unsaved draft in another.
 
-## First-login guidance
+## First login
 
-After the initial system, administrator, and public-URL setup, OrbitPage opens a guided tour of the available workspaces. From **Page > Guided setup** you can replay the tour or choose whether it opens at every login.
-
-Page also shows a small checklist for the first three login sessions in that browser. It checks the name, description, first social link, and browser title. You can dismiss it permanently from the panel. The checklist and tour only guide the editor; they do not publish content themselves.
+After the initial system, administrator, and public-URL setup, OrbitPage opens the dashboard directly. Use this guide as a reference for the available workspaces and their save boundaries.
 
 See [Getting started](../wiki/Getting-started.md) for the fresh-install sequence.
 
