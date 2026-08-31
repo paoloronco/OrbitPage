@@ -123,3 +123,42 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
   const compactOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(compactOverflow).toBeLessThanOrEqual(1);
 });
+
+test("New UI gives Menu a focused inspector without clipped labels", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));
+  await openAuthenticatedAdmin(page);
+
+  await page.getByRole("navigation", { name: "Site sections" }).getByRole("button", { name: "Menu", exact: true }).click();
+
+  const inspector = page.locator(".visual-site-editor__inspector");
+  const editor = inspector.locator(".menu-editor-stack--visual");
+  const workflow = editor.getByRole("navigation", { name: "Menu setup workflow" });
+  await expect(editor).toBeVisible();
+  await expect(workflow).toBeVisible();
+  await expect(workflow.getByRole("button")).toHaveCount(4);
+  await expect(editor.locator(".menu-visual-context")).toContainText("Organize categories");
+  await expect(editor.locator(".menu-content-pane--sections")).toBeVisible();
+  await expect(editor.locator(".menu-content-pane--products")).toBeHidden();
+
+  const clippedDesktopLabels = await workflow.locator("button").evaluateAll((buttons) => buttons.filter((button) => {
+    const label = button.querySelector<HTMLElement>(".menu-editor-tab-copy strong");
+    if (!label) return true;
+    const buttonBounds = button.getBoundingClientRect();
+    const labelBounds = label.getBoundingClientRect();
+    return labelBounds.left < buttonBounds.left || labelBounds.right > buttonBounds.right
+      || label.scrollWidth > label.clientWidth + 1;
+  }).length);
+  expect(clippedDesktopLabels).toBe(0);
+
+  await workflow.getByRole("button", { name: /Items/ }).click();
+  await expect(editor.locator(".menu-visual-context")).toContainText("Manage menu items");
+  await expect(editor.locator(".menu-content-pane--sections")).toBeHidden();
+  await expect(editor.locator(".menu-content-pane--products")).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(workflow.getByRole("button", { name: /Identity/ })).toBeVisible();
+  await expect(workflow.getByRole("button", { name: /Publish/ })).toBeVisible();
+  const mobileOverflow = await editor.evaluate((element) => element.scrollWidth - element.clientWidth);
+  expect(mobileOverflow).toBeLessThanOrEqual(1);
+});

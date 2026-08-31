@@ -19,6 +19,7 @@ import {
   type MenuCatalog, type MenuItem, type MenuSection, type MenuThemePreset, type MenuVenueType,
 } from '@/lib/menu';
 import { useAppI18n } from '@/lib/i18n';
+import './menu-editor-redesign.css';
 
 interface MenuEditorProps {
   menu: MenuCatalog;
@@ -29,6 +30,7 @@ interface MenuEditorProps {
   advancedTheme: boolean;
   onSave: (menu: MenuCatalog) => Promise<void>;
   onAddMenuLink: () => Promise<void>;
+  presentation?: 'classic' | 'visual';
 }
 
 type MenuEditorPanel = 'setup' | 'content' | 'appearance';
@@ -204,7 +206,7 @@ function MenuQr({ url, color }: { url: string; color: string }) {
 
 export function MenuEditor({
   menu, publicPageHref, enabled, maxItems, planName, advancedTheme,
-  onSave, onAddMenuLink,
+  onSave, onAddMenuLink, presentation = 'classic',
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
@@ -513,7 +515,7 @@ export function MenuEditor({
   }
 
   return (
-    <div className="menu-editor-stack">
+    <div className={`menu-editor-stack menu-editor-stack--${presentation}`}>
       <div className="menu-editor-main space-y-5">
         <section className="admin-panel menu-editor-intro">
           <div className="menu-editor-intro__identity">
@@ -611,7 +613,36 @@ export function MenuEditor({
           <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
         </section>}
 
-        {activePanel === 'content' && <section className="menu-content-editor">
+        {activePanel === 'content' && <section className="menu-content-shell">
+          {presentation === 'classic' ? (
+            <header className="menu-classic-content-map">
+              <div className="menu-classic-content-map__intro">
+                <p className="admin-eyebrow">{tr('Menu architecture', 'Architettura del menu')}</p>
+                <h3>{tr('Build the path your customers follow.', 'Costruisci il percorso che seguiranno i clienti.')}</h3>
+                <p>{tr(
+                  'Categories group the offer, subcategories add detail, and items contain what can be ordered.',
+                  'Le categorie raggruppano l’offerta, le sottocategorie aggiungono dettaglio e gli elementi contengono ciò che si può ordinare.',
+                )}</p>
+              </div>
+              <ol className="menu-classic-content-map__steps">
+                <li><span>01</span><div><strong>{tr('Category', 'Categoria')}</strong><small>{tr('Main navigation', 'Navigazione principale')}</small></div></li>
+                <li><span>02</span><div><strong>{tr('Subcategory', 'Sottocategoria')}</strong><small>{tr('Optional grouping', 'Raggruppamento facoltativo')}</small></div></li>
+                <li><span>03</span><div><strong>{tr('Item', 'Elemento')}</strong><small>{tr('Name, price and availability', 'Nome, prezzo e disponibilità')}</small></div></li>
+              </ol>
+            </header>
+          ) : (
+            <header className="menu-visual-context" aria-live="polite">
+              <span>{mobileContentPane === 'sections' ? tr('Structure', 'Struttura') : tr('Catalog', 'Catalogo')}</span>
+              <div>
+                <strong>{mobileContentPane === 'sections' ? tr('Organize categories', 'Organizza le categorie') : tr('Manage menu items', 'Gestisci gli elementi')}</strong>
+                <small>{mobileContentPane === 'sections'
+                  ? tr('Select a category to rename it, nest a subcategory or open its items.', 'Seleziona una categoria per rinominarla, aggiungere una sottocategoria o aprirne gli elementi.')
+                  : tr('Filter the catalog, then select one item to edit its details.', 'Filtra il catalogo, poi seleziona un elemento per modificarne i dettagli.')}</small>
+              </div>
+            </header>
+          )}
+
+          <div className="menu-content-editor">
           <div className={`admin-panel menu-content-pane menu-content-pane--sections${mobileContentPane === 'sections' ? ' is-mobile-active' : ''}`}>
             <div className="menu-content-pane__header">
               <div className="menu-editor-section-title"><span>01</span><div><h3>{tr("Categories", "Categorie")}</h3><p>{tr("Build the structure visitors browse.", "Definisci la struttura che vedranno i visitatori.")}</p></div></div>
@@ -642,12 +673,20 @@ export function MenuEditor({
                         <button
                           type="button"
                           className={`menu-category-picker__item${expanded ? ' active' : ''}`}
+                          aria-label={`${section.name || tr("Untitled category", "Categoria senza nome")} ${itemCount}`}
                           aria-expanded={expanded}
                           aria-controls={`menu-category-editor-${section.id}`}
                           onClick={() => setProductSectionFilter(section.id)}
                         >
-                          <span>{section.name || tr("Untitled category", "Categoria senza nome")}</span>
-                          <small>{section.visible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}{itemCount}</small>
+                          <span className="menu-category-picker__copy">
+                            <small>{section.parentId ? tr('Subcategory', 'Sottocategoria') : tr('Category', 'Categoria')}</small>
+                            <strong>{section.name || tr("Untitled category", "Categoria senza nome")}</strong>
+                          </span>
+                          <small className="menu-category-picker__meta">
+                            {section.visible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+                            <strong>{itemCount}</strong>
+                            <span>{itemCount === 1 ? tr('item', 'elemento') : tr('items', 'elementi')}</span>
+                          </small>
                           <ChevronRight aria-hidden="true" />
                         </button>
                         {expanded && (
@@ -788,6 +827,7 @@ export function MenuEditor({
                 )}
               </div>
             </div>
+          </div>
           </div>
         </section>}
 
