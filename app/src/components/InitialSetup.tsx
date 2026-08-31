@@ -231,7 +231,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
               </div>
               <div className="initial-setup-summary">
                 <CheckCircle2 aria-hidden="true" size={22} />
-                <div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong><span>{tr("The administrator account and public page address will be created together.", "L’account amministratore e l’indirizzo pubblico della pagina verranno creati insieme.")}</span></div>
+                <div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong></div>
               </div>
             </div>
           )}
