@@ -116,7 +116,7 @@ export const resolveSafePublicHref = (value?: string | null, currentHref = getCu
 export const resolveSafePublicMediaUrl = (value?: string | null, currentHref = getCurrentBrowserHref()): string | null => {
   const candidate = String(value || '').trim();
   if (!candidate) return null;
-  const dataImage = candidate.match(/^data:image\/(png|jpe?g|gif|webp);base64,([a-z0-9+/=\s]+)$/i);
+  const dataImage = candidate.match(/^data:image\/(png|jpe?g|gif|webp|avif);base64,([a-z0-9+/=\s]+)$/i);
   if (dataImage) {
     const mediaType = dataImage[1].toLowerCase() === 'jpg' ? 'jpeg' : dataImage[1].toLowerCase();
     return encodeURI(`data:image/${mediaType};base64,${dataImage[2].replace(/\s+/g, '')}`);

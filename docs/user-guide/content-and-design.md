@@ -133,6 +133,6 @@ If cards become visually inconsistent, reset individual overrides first and then
 
 ## Media lifecycle
 
-Images, video, GIFs, icons, and covers uploaded through the editor are stored under `DATA_DIR/uploads`. The server validates media type, per-file limits, and the installation-wide upload quota. See [Configuration](../wiki/Configuration.md) for the current controls.
+Images, video, GIFs, icons, and covers uploaded through the editor are stored under `DATA_DIR/uploads`. Raster uploads accept PNG, JPEG, GIF, WebP, and AVIF; non-animated images are optimized to AVIF when the browser supports encoding it and otherwise to WebP. The server validates media type, per-file limits, and the installation-wide upload quota. See [Configuration](../wiki/Configuration.md) for the current controls.
 
 Removing media from a block or theme removes the reference, not necessarily the stored file. Use **Backup > Check unused media** before cleanup, and keep a backup before selecting **Clean now**. The [backups and demo-mode guide](./backups-and-demo-mode.md) explains the complete workflow.

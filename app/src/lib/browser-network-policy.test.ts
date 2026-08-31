@@ -49,6 +49,7 @@ describe('browser network policy', () => {
     const publicPage = 'https://orbitpage.net/example';
     expect(resolveSafePublicMediaUrl('/uploads/photo.webp', publicPage)).toBe('/uploads/photo.webp');
     expect(resolveSafePublicMediaUrl('data:image/png;base64,aGVsbG8=', publicPage)).toContain('data:image/png');
+    expect(resolveSafePublicMediaUrl('data:image/avif;base64,aGVsbG8=', publicPage)).toContain('data:image/avif');
     expect(resolveSafePublicMediaUrl('data:image/svg+xml,<svg onload=alert(1)>', publicPage)).toBeNull();
     expect(resolveSafePublicMediaUrl('javascript:alert(1)', publicPage)).toBeNull();
   });

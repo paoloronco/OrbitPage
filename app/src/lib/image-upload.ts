@@ -20,7 +20,7 @@ export function formatFileSize(bytes: number) {
 }
 
 export function imageSourceValidationError(file: ImageFileLike): string | null {
-  if (!isAllowedRasterImageFile(file)) return "Unsupported image type. Use PNG, JPG, GIF, or WebP.";
+  if (!isAllowedRasterImageFile(file)) return "Unsupported image type. Use PNG, JPG, GIF, WebP, or AVIF.";
   if (file.size <= 0) return "The selected image is empty.";
   if (file.size > MAX_SOURCE_IMAGE_BYTES) {
     return `This image is ${formatFileSize(file.size)}. Choose a file up to ${formatFileSize(MAX_SOURCE_IMAGE_BYTES)}; OrbitPage optimizes it automatically.`;
@@ -29,11 +29,14 @@ export function imageSourceValidationError(file: ImageFileLike): string | null {
 }
 
 function canvasBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) resolve(blob);
-      else reject(new Error("This browser could not optimize the selected image."));
-    }, type, quality);
+  return new Promise<Blob | null>((resolve) => {
+    try {
+      canvas.toBlob((blob) => {
+        resolve(blob?.type === type ? blob : null);
+      }, type, quality);
+    } catch {
+      resolve(null);
+    }
   });
 }
 
@@ -50,9 +53,9 @@ function loadImage(file: File) {
   });
 }
 
-function outputName(filename: string) {
+function outputName(filename: string, type: "image/avif" | "image/webp") {
   const base = filename.replace(/\.[^.]+$/, "").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "") || "image";
-  return `${base.slice(0, 80)}.webp`;
+  return `${base.slice(0, 80)}.${type === "image/avif" ? "avif" : "webp"}`;
 }
 
 export async function optimizeImageForUpload(file: File, variant: ImageUploadVariant): Promise<File> {
@@ -90,9 +93,11 @@ export async function optimizeImageForUpload(file: File, variant: ImageUploadVar
       const context = canvas.getContext("2d");
       if (!context) throw new Error("This browser cannot optimize images.");
       context.drawImage(image, 0, 0, width, height);
-      const blob = await canvasBlob(canvas, "image/webp", attempt.quality);
-      if (blob.size <= limits.maxOutputBytes) {
-        return new File([blob], outputName(file.name), { type: blob.type || "image/webp" });
+      for (const type of ["image/avif", "image/webp"] as const) {
+        const blob = await canvasBlob(canvas, type, attempt.quality);
+        if (blob && blob.size <= limits.maxOutputBytes) {
+          return new File([blob], outputName(file.name, type), { type });
+        }
       }
     }
 
