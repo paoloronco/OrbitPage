@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import { FileText, Map, QrCode, Share2 } from "lucide-react";
+import { FileText, Map, QrCode, Share2 } from "@/components/ui/material-icons";
 import { useAppI18n } from "@/lib/i18n";
 import { ProfileQrCode } from "./ProfileQrCode";
 import { SitemapManager } from "./SitemapManager";

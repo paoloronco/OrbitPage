@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Database, Download, Sparkles, Trash2, Upload, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Database, Download, Sparkles, Trash2, Upload, X } from "@/components/ui/material-icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { OrbitLoader } from "@/components/ui/orbit-loader";

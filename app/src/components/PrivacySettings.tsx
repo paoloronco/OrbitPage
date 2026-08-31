@@ -41,7 +41,7 @@ import {
   ShieldCheck,
   Sliders,
   Type,
-} from 'lucide-react';
+} from '@/components/ui/material-icons';
 import { useAppI18n } from '@/lib/i18n';
 import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';

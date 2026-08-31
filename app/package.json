@@ -28,7 +28,11 @@
     "install:server": "cd server && npm install"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^3.9.0",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/material": "^9.4.0",
     "@orbitpage/page-schema": "file:packages/page-schema",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",

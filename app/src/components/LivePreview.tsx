@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Monitor, Smartphone } from "lucide-react";
+import { Monitor, Smartphone } from "@/components/ui/material-icons";
 import { BackgroundLayer } from "./BackgroundLayer";
 import { PublicView } from "./PublicView";
 import type { LinkData } from "./LinkCard";

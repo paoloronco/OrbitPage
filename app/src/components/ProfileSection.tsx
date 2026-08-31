@@ -17,13 +17,8 @@ import {
   Square,
   EyeOff,
   UserRound,
-  Linkedin,
-  Github,
-  Instagram,
-  Facebook,
-  Twitter,
-  Youtube,
-} from "lucide-react";
+} from "@/components/ui/material-icons";
+import { Facebook, Github, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { Card } from "@/components/ui/card";

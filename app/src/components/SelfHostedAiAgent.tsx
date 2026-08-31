@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Send, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Check, Send, ShieldCheck, Sparkles, X } from "@/components/ui/material-icons";
 import {
   aiPageAgentApi,
   type AiConversationMessage,
