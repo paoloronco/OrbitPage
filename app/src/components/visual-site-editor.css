@@ -395,22 +395,58 @@
   }
 
   .visual-site-editor__toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+    padding: 11px 12px;
+  }
+
+  .visual-site-editor__intro {
     align-items: flex-start;
   }
 
-  .visual-site-editor__intro small,
+  .visual-site-editor__intro small {
+    display: block;
+    max-width: 27rem;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
   .visual-site-editor__canvas-note span {
     display: none;
   }
 
+  .visual-site-editor__sections {
+    gap: 6px;
+    padding: 6px;
+    scroll-padding-inline: 6px;
+    scroll-snap-type: x proximity;
+    scrollbar-color: #c8d5e8 transparent;
+    scrollbar-width: thin;
+  }
+
   .visual-site-editor__sections button {
-    min-width: 39px;
-    justify-content: center;
-    padding: 0 10px;
+    min-width: max-content;
+    min-height: 48px;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0 13px;
+    border-color: #e1e7f0;
+    background: #fbfcfe;
+    font-size: 12px;
+    scroll-snap-align: start;
   }
 
   .visual-site-editor__sections button span {
-    display: none;
+    display: inline;
+    white-space: nowrap;
+  }
+
+  .visual-site-editor__sections button svg {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
   }
 
   .visual-site-editor__canvas {

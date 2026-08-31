@@ -44,7 +44,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(page.locator(".visual-site-editor")).toBeVisible();
 
   const inspector = page.locator(".visual-site-editor__inspector");
-  await inspector.getByLabel("Page name").fill(`Visual editor profile ${browserName}`);
+  await inspector.getByLabel("Page name").fill(`Visual editor profile ${browserName} ${Date.now()}`);
   await inspector.getByRole("button", { name: "Save page" }).click();
   await expect(page.locator('[data-public-editor-target="profile"]')).toBeVisible();
   await page.locator('[data-public-editor-target="profile"]').click();
@@ -62,4 +62,49 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await page.getByRole("switch", { name: "Enable New UI beta" }).click();
   await expect(page.locator(".visual-site-editor")).toBeHidden();
   await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toBeVisible();
+});
+
+test("New UI keeps mobile navigation and editor destinations explicit", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));
+  await openAuthenticatedAdmin(page);
+
+  const topbarPublicPage = page.locator(".admin-dashboard-mobile-public-page");
+  await expect(topbarPublicPage).toBeVisible();
+  await expect(topbarPublicPage).toHaveAccessibleName("Open public page");
+  const topbarPublicPageBounds = await topbarPublicPage.boundingBox();
+  expect(topbarPublicPageBounds).not.toBeNull();
+  expect(topbarPublicPageBounds!.height).toBeGreaterThanOrEqual(44);
+
+  await expect(page.locator(".admin-dashboard-header .admin-new-ui-toggle")).toBeHidden();
+  await expect(page.locator(".admin-dashboard-header-public-page")).toBeHidden();
+  await page.getByRole("button", { name: "Open navigation" }).click();
+
+  const mobileMode = page.locator(".admin-dashboard-mobile-editor-mode");
+  await expect(mobileMode).toBeVisible();
+  await expect(mobileMode).toContainText("Site editor");
+  await expect(mobileMode).toContainText("Beta");
+  await expect(mobileMode).toHaveRole("switch");
+  await expect(mobileMode).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("button", { name: "Close navigation" }).first().click();
+
+  const destinations = page.getByRole("navigation", { name: "Site sections" }).getByRole("button");
+  await expect(destinations).toHaveCount(6);
+  for (const label of ["Page", "Content", "Menu", "Shop", "Pages", "Style"]) {
+    const destination = destinations.filter({ hasText: label }).first();
+    await expect(destination).toBeVisible();
+    await expect(destination.locator("span")).not.toHaveCSS("display", "none");
+    const bounds = await destination.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.height).toBeGreaterThanOrEqual(48);
+  }
+
+  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+
+  await page.setViewportSize({ width: 320, height: 740 });
+  await expect(topbarPublicPage).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
+  const compactOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(compactOverflow).toBeLessThanOrEqual(1);
 });
