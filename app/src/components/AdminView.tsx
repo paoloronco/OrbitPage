@@ -892,12 +892,12 @@ export const AdminView = ({
               {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" aria-hidden="true" /> : <PanelLeftClose className="h-4 w-4" aria-hidden="true" />}
             </button>
             <a
-              aria-label={tr("Open public page", "Apri pagina pubblica")}
+              aria-label={tr("Public page", "Pagina pubblica")}
               className="admin-dashboard-mobile-public-page"
               href={publicPageHref}
               rel="noopener noreferrer"
               target="_blank"
-              title={tr("Open public page", "Apri pagina pubblica")}
+              title={tr("Public page", "Pagina pubblica")}
             >
               <ExternalLink aria-hidden="true" size={16} />
               <span>{tr("Open", "Apri")}</span>
