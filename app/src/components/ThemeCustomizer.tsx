@@ -38,6 +38,7 @@ import { commitPendingTheme } from "./theme-save-state";
 import type { HostedThemeAccess } from "@/lib/hosted-editor-contract";
 import { PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { useAppI18n } from "@/lib/i18n";
+import { Comparison, ComparisonHandle, ComparisonItem } from "@/components/ui/comparison";
 
 interface ThemeCustomizerProps {
   theme: ThemeConfig;
@@ -272,6 +273,7 @@ export const ThemeCustomizer = ({
   const [saveError, setSaveError] = useState("");
   const [previewDevice, setPreviewDevice] = useState<PreviewDevice>("mobile");
   const [previewOpen, setPreviewOpen] = useState(() => typeof window === "undefined" || window.matchMedia("(min-width: 1121px)").matches);
+  const [comparisonPosition, setComparisonPosition] = useState(50);
   const advancedCustomizationEnabled = !accessLevel || accessLevel === "advanced";
   const premiumThemesEnabled = !accessLevel || accessLevel === "premium" || accessLevel === "advanced";
   const availableThemePresets = accessLevel === "essential" ? themePresets.slice(0, 3) : themePresets;
@@ -301,6 +303,8 @@ export const ThemeCustomizer = ({
     setPendingTheme(nextTheme);
     setSelectedPresetId(presetId);
     setIsDirty(true);
+    setPreviewOpen(true);
+    setComparisonPosition(50);
     setSaveError("");
     setSaveState("idle");
     onThemePreview?.(nextTheme);
@@ -444,10 +448,42 @@ export const ThemeCustomizer = ({
                 <span key={`${color}-${index}`} className="h-5 w-5 rounded-md border border-slate-200" style={{ backgroundColor: color }} title={color} />
               ))}
             </div>
-            <p className="px-1 text-xs leading-5 text-slate-500">{tr("This is the same renderer used by the public page. Changes remain a preview until you save the theme.", "È lo stesso renderer usato dalla pagina pubblica. Le modifiche restano in anteprima finché non salvi il tema.")}</p>
+            <p className="px-1 text-xs leading-5 text-slate-500">{isDirty
+              ? tr("Drag the divider to compare the saved theme with your draft before saving.", "Trascina il divisore per confrontare il tema salvato con la bozza prima di salvare.")
+              : tr("This is the same renderer used by the public page. Changes remain a preview until you save the theme.", "È lo stesso renderer usato dalla pagina pubblica. Le modifiche restano in anteprima finché non salvi il tema.")}</p>
           </div>
           <div className="admin-theme-live-preview">
-            {renderPreview ? renderPreview(pendingTheme, previewDevice) : (
+            {isDirty ? (
+              <div className="space-y-2" data-theme-comparison="">
+                <div className="flex items-center justify-between gap-3 px-1 text-[11px] font-bold uppercase tracking-[0.12em]">
+                  <span className="inline-flex items-center gap-1.5 text-slate-600">
+                    <i className="h-2 w-2 rounded-full bg-slate-400" aria-hidden="true" />
+                    {tr("Before · saved", "Prima · salvato")}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-blue-700">
+                    {tr("After · draft", "Dopo · bozza")}
+                    <i className="h-2 w-2 rounded-full bg-blue-600" aria-hidden="true" />
+                  </span>
+                </div>
+                <Comparison
+                  value={comparisonPosition}
+                  onValueChange={setComparisonPosition}
+                  className="rounded-xl border border-slate-200 bg-slate-100 shadow-inner"
+                >
+                  <ComparisonItem position="left">
+                    {renderPreview ? renderPreview(theme, previewDevice) : <ThemeMockup theme={theme} />}
+                  </ComparisonItem>
+                  <ComparisonItem position="right">
+                    {renderPreview ? renderPreview(pendingTheme, previewDevice) : <ThemeMockup theme={pendingTheme} />}
+                  </ComparisonItem>
+                  <ComparisonHandle
+                    label={tr("Compare saved theme and draft", "Confronta tema salvato e bozza")}
+                    beforeLabel={tr("Saved", "Salvato")}
+                    afterLabel={tr("Draft", "Bozza")}
+                  />
+                </Comparison>
+              </div>
+            ) : renderPreview ? renderPreview(pendingTheme, previewDevice) : (
               <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
                 <ThemeMockup theme={pendingTheme} />
               </div>
