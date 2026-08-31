@@ -50,8 +50,20 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(profileTarget).toBeVisible();
   await profileTarget.click();
   await expect(profileTarget).toHaveClass(/is-selected/);
-  expect(await profileTarget.evaluate((element) => getComputedStyle(element, "::before").animationName))
-    .toBe("visual-editor-selection-pulse");
+  const profileSelectionIndicator = await profileTarget.evaluate((element) => ({
+    outlineAnimation: getComputedStyle(element).animationName,
+    outlineWidth: getComputedStyle(element).outlineWidth,
+    pulseAnimation: getComputedStyle(element, "::before").animationName,
+    pulseBorderWidth: getComputedStyle(element, "::before").borderTopWidth,
+    pulseInset: getComputedStyle(element, "::before").inset,
+  }));
+  expect(profileSelectionIndicator).toEqual({
+    outlineAnimation: "visual-editor-selection-outline",
+    outlineWidth: "3px",
+    pulseAnimation: "visual-editor-selection-pulse",
+    pulseBorderWidth: "3px",
+    pulseInset: "0px",
+  });
   await expect(inspector.getByRole("heading", { name: "Profile and identity" })).toBeVisible();
   await expect(inspector.getByLabel("Page name")).toBeVisible();
 
@@ -65,11 +77,33 @@ test("New UI edits the real page through selectable elements and keeps the prefe
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   const reducedMotionIndicator = await selectedLinkTarget.evaluate((element) => {
-    const style = getComputedStyle(element, "::before");
-    return { animationName: style.animationName, opacity: style.opacity };
+    const outlineStyle = getComputedStyle(element);
+    const pulseStyle = getComputedStyle(element, "::before");
+    const pulseAnimation = element.getAnimations({ subtree: true })
+      .find((animation) => animation instanceof CSSAnimation
+        && animation.animationName === "visual-editor-selection-pulse");
+    const pulseOpacities = pulseAnimation?.effect instanceof KeyframeEffect
+      ? pulseAnimation.effect.getKeyframes()
+        .map((frame) => Number(frame.opacity))
+        .filter(Number.isFinite)
+      : [];
+    return {
+      outlineAnimation: outlineStyle.animationName,
+      outlineIterations: outlineStyle.animationIterationCount,
+      pulseAnimation: pulseStyle.animationName,
+      pulseIterations: pulseStyle.animationIterationCount,
+      pulseOpacityRange: pulseOpacities.length > 1
+        ? Math.max(...pulseOpacities) - Math.min(...pulseOpacities)
+        : 0,
+    };
   });
-  expect(reducedMotionIndicator.animationName).toBe("none");
-  expect(Number(reducedMotionIndicator.opacity)).toBeGreaterThan(0);
+  expect(reducedMotionIndicator).toMatchObject({
+    outlineAnimation: "visual-editor-selection-outline",
+    outlineIterations: "infinite",
+    pulseAnimation: "visual-editor-selection-pulse",
+    pulseIterations: "infinite",
+  });
+  expect(reducedMotionIndicator.pulseOpacityRange).toBeGreaterThanOrEqual(.8);
 
   await page.locator(".public-page-root--editor").dispatchEvent("click");
   await expect(inspector.getByRole("heading", { name: "Page style" })).toBeVisible();
