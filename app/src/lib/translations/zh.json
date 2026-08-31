@@ -895,5 +895,9 @@
   "Version": "Version",
   "Publish your page to create the first restorable version.": "Publish your page to create the first restorable version.",
   "Loading profile, content and theme.": "正在加载个人资料、内容和主题。",
-  "Preparing your workspace": "准备工作区"
+  "Preparing your workspace": "准备工作区",
+  "Drag the divider to compare the saved theme with your draft before saving.": "拖动分隔线，在保存前比较已保存的主题和当前草稿。",
+  "Before · saved": "之前 · 已保存",
+  "After · draft": "之后 · 草稿",
+  "Compare saved theme and draft": "比较已保存的主题和草稿"
 }

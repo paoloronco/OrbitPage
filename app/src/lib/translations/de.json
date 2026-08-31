@@ -895,5 +895,9 @@
   "Version": "Version",
   "Publish your page to create the first restorable version.": "Publish your page to create the first restorable version.",
   "Loading profile, content and theme.": "Profil, Inhalt und Thema werden geladen.",
-  "Preparing your workspace": "Vorbereiten Ihres Arbeitsbereichs"
+  "Preparing your workspace": "Vorbereiten Ihres Arbeitsbereichs",
+  "Drag the divider to compare the saved theme with your draft before saving.": "Ziehen Sie den Trenner, um das gespeicherte Theme vor dem Speichern mit Ihrem Entwurf zu vergleichen.",
+  "Before · saved": "Vorher · gespeichert",
+  "After · draft": "Nachher · Entwurf",
+  "Compare saved theme and draft": "Gespeichertes Theme und Entwurf vergleichen"
 }
