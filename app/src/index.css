@@ -9612,7 +9612,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   --public-page-block-padding: 1.5rem;
   --public-page-section-gap: 1rem;
   --public-profile-avatar-gap: 1rem;
-  --public-profile-avatar-max: 6rem;
+  --public-profile-avatar-max: 12rem;
   --public-profile-card-padding: 1.5rem;
   --public-profile-content-gap: .75rem;
   --public-profile-title-cap: 1.875rem;
@@ -9662,7 +9662,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     --public-page-block-padding: 1.5rem;
     --public-page-section-gap: 1rem;
     --public-profile-avatar-gap: 1rem;
-    --public-profile-avatar-max: 6rem;
+    --public-profile-avatar-max: 12rem;
     --public-profile-card-padding: 1.5rem;
     --public-profile-content-gap: .75rem;
     --public-profile-title-cap: 1.875rem;
