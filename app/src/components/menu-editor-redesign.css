@@ -85,6 +85,13 @@
   line-height: 1.25;
 }
 
+/* Keep the summary readable even when the compact admin typography utilities
+   are loaded after this component stylesheet. */
+.orbitpage-admin .menu-editor-stack--classic .menu-editor-main .menu-editor-intro.admin-panel .menu-editor-summary > span,
+.orbitpage-admin .menu-editor-stack--classic .menu-editor-main .menu-editor-intro.admin-panel .menu-publish-toggle > span {
+  color: #d5e0f5;
+}
+
 .menu-editor-stack--classic .menu-editor-summary strong {
   color: #fff;
   font-size: 1rem;
@@ -184,7 +191,7 @@
 }
 
 .menu-editor-stack--classic .menu-editor-tab-copy small {
-  color: #617189;
+  color: #56677e;
   font-size: .68rem;
   line-height: 1.35;
 }
@@ -328,7 +335,7 @@
 
 .menu-editor-stack--classic .menu-category-picker__copy small,
 .menu-editor-stack--visual .menu-category-picker__copy small {
-  color: #718198;
+  color: #56677e;
   font-size: .58rem;
   font-weight: 850;
   letter-spacing: .07em;
@@ -351,7 +358,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: #63738a;
+  color: #56677e;
   font-size: .64rem;
   white-space: nowrap;
 }

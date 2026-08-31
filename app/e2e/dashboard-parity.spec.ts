@@ -159,8 +159,26 @@ test('keeps the menu workflow clear on mobile without truncated guidance', async
   await expect(steps).toHaveCount(4);
   await expect(descriptions).toHaveCount(4);
   for (let index = 0; index < 4; index += 1) {
-    await expect(steps.nth(index)).toHaveCSS('min-height', '60px');
-    await expect(descriptions.nth(index)).toHaveCSS('display', 'none');
+    const step = steps.nth(index);
+    const description = descriptions.nth(index);
+    await expect(step).toBeVisible();
+    await expect(description).toBeVisible();
+
+    const bounds = await step.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.height).toBeGreaterThanOrEqual(68);
+
+    const hasClippedCopy = await step.evaluate((button) => {
+      const buttonBounds = button.getBoundingClientRect();
+      return Array.from(button.querySelectorAll<HTMLElement>('.menu-editor-tab-copy strong, .menu-editor-tab-copy small'))
+        .some((element) => {
+          const elementBounds = element.getBoundingClientRect();
+          return element.scrollWidth > element.clientWidth + 1
+            || elementBounds.left < buttonBounds.left - 1
+            || elementBounds.right > buttonBounds.right + 1;
+        });
+    });
+    expect(hasClippedCopy).toBe(false);
   }
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
