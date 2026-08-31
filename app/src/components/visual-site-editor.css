@@ -312,14 +312,15 @@
 .public-page-root--editor .public-editor-target::before {
   position: absolute;
   z-index: 29;
-  inset: 0;
+  inset: -2px;
   border: 3px solid #2f65ee;
   border-radius: inherit;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 82%);
+  box-shadow: 0 10px 28px rgb(47 101 238 / 18%);
   content: "";
   opacity: 0;
   pointer-events: none;
-  transform: scale(.992);
+  transform: scale(.997);
+  transform-origin: center;
 }
 
 .public-page-root--editor .public-editor-target::after {
@@ -352,17 +353,15 @@
 
 .public-page-root--editor .public-editor-target.is-selected {
   z-index: 1;
-  outline: 3px solid #2f65ee;
-  outline-offset: 4px;
-  animation: visual-editor-selection-outline 1.15s cubic-bezier(.22, 1, .36, 1) infinite;
+  outline: none;
   filter: saturate(1.06);
   isolation: isolate;
-  will-change: outline-color;
 }
 
 .public-page-root--editor .public-editor-target.is-selected::before {
-  animation: visual-editor-selection-pulse 1.15s cubic-bezier(.22, 1, .36, 1) infinite;
-  will-change: opacity, transform;
+  animation: visual-editor-selection-breathe 2.8s cubic-bezier(.25, 1, .5, 1) infinite alternate;
+  opacity: 1;
+  will-change: transform;
 }
 
 .public-page-root--editor .public-editor-target:hover::after,
@@ -376,44 +375,20 @@
   outline-width: 3px;
 }
 
-@keyframes visual-editor-selection-pulse {
-  0%, 100% {
-    opacity: .28;
-    transform: scale(.992);
+@keyframes visual-editor-selection-breathe {
+  from {
+    transform: scale(.997);
   }
 
-  22% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  48% {
-    opacity: .16;
-    transform: scale(.996);
-  }
-
-  66% {
-    opacity: .96;
-    transform: scale(1);
-  }
-
-  84% {
-    opacity: .2;
-    transform: scale(.994);
+  to {
+    transform: scale(1.004);
   }
 }
 
-@keyframes visual-editor-selection-outline {
-  0%, 100% {
-    outline-color: rgb(47 101 238 / 100%);
-  }
-
-  48% {
-    outline-color: rgb(47 101 238 / 26%);
-  }
-
-  66% {
-    outline-color: rgb(98 143 255 / 100%);
+@media (prefers-reduced-motion: reduce) {
+  .public-page-root--editor .public-editor-target.is-selected::before {
+    animation: none;
+    transform: none;
   }
 }
 
