@@ -255,7 +255,7 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(page.getByRole('heading', { name: 'Page type', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Identity', exact: true })).toBeVisible();
   await expect(page.getByText('Advanced card style', { exact: true })).toBeVisible();
-  await expect(page.locator('.admin-profile-actions-dock')).toHaveCSS('position', 'sticky');
+  await expect(page.locator('.admin-profile-save-layer')).toHaveCount(0);
   const avatarSizeSlider = page.getByLabel('Profile image size');
   const avatarSizeBounds = await avatarSizeSlider.boundingBox();
   expect(avatarSizeBounds).not.toBeNull();
