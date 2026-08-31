@@ -891,6 +891,17 @@ export const AdminView = ({
             >
               {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" aria-hidden="true" /> : <PanelLeftClose className="h-4 w-4" aria-hidden="true" />}
             </button>
+            <a
+              aria-label={tr("Open public page", "Apri pagina pubblica")}
+              className="admin-dashboard-mobile-public-page"
+              href={publicPageHref}
+              rel="noopener noreferrer"
+              target="_blank"
+              title={tr("Open public page", "Apri pagina pubblica")}
+            >
+              <ExternalLink aria-hidden="true" size={16} />
+              <span>{tr("Open", "Apri")}</span>
+            </a>
             <button
               aria-controls="admin-dashboard-primary-navigation"
               aria-expanded={mobileNavOpen}
@@ -980,6 +991,25 @@ export const AdminView = ({
                 </button>
               ))}
             </nav>
+
+            <button
+              aria-checked={newUiEnabled}
+              aria-label={tr("Enable New UI beta", "Attiva New UI beta")}
+              className="admin-dashboard-mobile-editor-mode"
+              onClick={() => setNewUiPreference(!newUiEnabled)}
+              role="switch"
+              title={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}
+              type="button"
+            >
+              <span className="admin-dashboard-mobile-editor-mode__copy">
+                <Sparkles aria-hidden="true" size={18} />
+                <span>
+                  <strong>{tr("Site editor", "Editor sito")} <small>Beta</small></strong>
+                  <span>New UI</span>
+                </span>
+              </span>
+              <span className="admin-dashboard-mobile-editor-mode__switch" aria-hidden="true"><i /></span>
+            </button>
 
             {visibleWorkspaceTabs.length > 0 && (
               <nav className="admin-dashboard-nav admin-dashboard-nav-workspace" aria-label={tr("Workspace tools", "Strumenti workspace")}>
@@ -1086,7 +1116,7 @@ export const AdminView = ({
                 size="small"
               />
             </label>
-            <a className="admin-dashboard-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
+            <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <ExternalLink aria-hidden="true" size={17} />
               {tr("Public page", "Pagina pubblica")}
             </a>
