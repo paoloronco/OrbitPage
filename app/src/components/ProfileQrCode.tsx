@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { publicUrlApi } from "@/lib/api-client";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import { useAppI18n } from "@/lib/i18n";
@@ -270,8 +271,8 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
               </section>
 
               <section className="grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2" aria-label={tr("Export quality", "Qualità di esportazione")}>
-                <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-size" className="text-xs">{tr("Output size", "Dimensione output")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.size}px</span></div><Input id="qr-size" type="range" min={160} max={1024} step={32} value={settings.size} onChange={(event) => update("size", Number(event.target.value))} /></div>
-                <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-margin" className="text-xs">{tr("Quiet margin", "Margine libero")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.margin}</span></div><Input id="qr-margin" type="range" min={1} max={12} value={settings.margin} onChange={(event) => update("margin", Number(event.target.value))} /></div>
+                <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-size" className="text-xs">{tr("Output size", "Dimensione output")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.size}px</span></div><Slider aria-label={tr("Output size", "Dimensione output")} id="qr-size" max={1024} min={160} onValueChange={([size]) => update("size", size)} size="small" step={32} value={[settings.size]} valueLabelFormat={(size) => `${size}px`} /></div>
+                <div className="space-y-2"><div className="flex justify-between gap-2"><Label htmlFor="qr-margin" className="text-xs">{tr("Quiet margin", "Margine libero")}</Label><span className="text-xs tabular-nums text-slate-500">{settings.margin}</span></div><Slider aria-label={tr("Quiet margin", "Margine libero")} id="qr-margin" max={12} min={1} onValueChange={([margin]) => update("margin", margin)} size="small" value={[settings.margin]} /></div>
                 <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="qr-correction" className="text-xs">{tr("Damage tolerance", "Tolleranza ai danni")}</Label><Select value={settings.correction} onValueChange={(value: QrErrorCorrection) => update("correction", value)}><SelectTrigger id="qr-correction"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="M">{tr("Standard", "Standard")}</SelectItem><SelectItem value="Q">{tr("High", "Alta")}</SelectItem><SelectItem value="H">{tr("Maximum", "Massima")}</SelectItem></SelectContent></Select></div>
               </section>
             </div>

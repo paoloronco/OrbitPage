@@ -407,7 +407,7 @@ export const ProfileSection = ({
 
                     <div className="admin-profile-slider-field max-w-full md:max-w-44">
                       <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-avatar-size" className="text-xs text-slate-600">{tr("Size", "Dimensione")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{draft.appearance?.avatarSize ?? 112}px</span></div>
-                      <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} value={[draft.appearance?.avatarSize ?? 112]} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
+                      <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} size="small" value={[draft.appearance?.avatarSize ?? 112]} valueLabelFormat={(avatarSize) => `${avatarSize}px`} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
                     </div>
                     <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF or WebP.", "PNG, JPG, GIF o WebP.")}</p>
                   </div>
@@ -572,24 +572,24 @@ export const ProfileSection = ({
               <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-transparency" className="text-xs">{tr("Transparency", "Trasparenza")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{surfaceTransparency}%</span></div>
-                  <Slider id="profile-card-transparency" className="admin-profile-compact-slider" min={0} max={1} step={0.01} value={[1 - surfaceOpacity]} onValueChange={([transparency]) => updateAppearance({ surfaceOpacity: 1 - transparency })} aria-label={tr("Profile card transparency", "Trasparenza card profilo")} />
+                  <Slider id="profile-card-transparency" className="admin-profile-compact-slider" min={0} max={1} step={0.01} size="small" value={[1 - surfaceOpacity]} valueLabelFormat={(transparency) => `${Math.round(transparency * 100)}%`} onValueChange={([transparency]) => updateAppearance({ surfaceOpacity: 1 - transparency })} aria-label={tr("Profile card transparency", "Trasparenza card profilo")} />
                 </div>
                 <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-radius" className="text-xs">{tr("Corners", "Angoli")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{profileRadius}px</span></div>
-                  <Slider id="profile-card-radius" className="admin-profile-compact-slider" min={0} max={40} step={1} value={[profileRadius]} onValueChange={([cardRadius]) => updateAppearance({ cardRadius })} aria-label={tr("Profile card corner radius", "Arrotondamento card profilo")} />
+                  <Slider id="profile-card-radius" className="admin-profile-compact-slider" min={0} max={40} step={1} size="small" value={[profileRadius]} valueLabelFormat={(cardRadius) => `${cardRadius}px`} onValueChange={([cardRadius]) => updateAppearance({ cardRadius })} aria-label={tr("Profile card corner radius", "Arrotondamento card profilo")} />
                 </div>
                 <div className={`admin-profile-slider-field space-y-2 md:max-w-44 ${draft.appearance?.cardBorderEnabled === false ? "opacity-50" : ""}`}>
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-border-width" className="text-xs">{tr("Border width", "Spessore bordo")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{profileBorderWidth}px</span></div>
-                  <Slider id="profile-card-border-width" className="admin-profile-compact-slider" disabled={draft.appearance?.cardBorderEnabled === false} min={0} max={6} step={1} value={[profileBorderWidth]} onValueChange={([cardBorderWidth]) => updateAppearance({ cardBorderWidth })} aria-label={tr("Profile card border width", "Spessore bordo card profilo")} />
+                  <Slider id="profile-card-border-width" className="admin-profile-compact-slider" disabled={draft.appearance?.cardBorderEnabled === false} min={0} max={6} step={1} size="small" value={[profileBorderWidth]} valueLabelFormat={(cardBorderWidth) => `${cardBorderWidth}px`} onValueChange={([cardBorderWidth]) => updateAppearance({ cardBorderWidth })} aria-label={tr("Profile card border width", "Spessore bordo card profilo")} />
                 </div>
                 <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-shadow" className="text-xs">{tr("Shadow", "Ombra")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{Math.round(profileShadowOpacity * 100)}%</span></div>
-                  <Slider id="profile-card-shadow" className="admin-profile-compact-slider" min={0} max={0.6} step={0.01} value={[profileShadowOpacity]} onValueChange={([cardShadowOpacity]) => updateAppearance({ cardShadowOpacity })} aria-label={tr("Profile card shadow depth", "Profondità ombra card profilo")} />
+                  <Slider id="profile-card-shadow" className="admin-profile-compact-slider" min={0} max={0.6} step={0.01} size="small" value={[profileShadowOpacity]} valueLabelFormat={(shadowOpacity) => `${Math.round(shadowOpacity * 100)}%`} onValueChange={([cardShadowOpacity]) => updateAppearance({ cardShadowOpacity })} aria-label={tr("Profile card shadow depth", "Profondità ombra card profilo")} />
                 </div>
                 {(selectedSurface === "liquid-glass" || (selectedSurface === "inherit" && theme.profileCardEffect === "liquid-glass")) && (
                   <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                     <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-blur" className="text-xs">{tr("Glass blur", "Sfocatura vetro")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{profileBlur}px</span></div>
-                    <Slider id="profile-card-blur" className="admin-profile-compact-slider" min={0} max={40} step={1} value={[profileBlur]} onValueChange={([surfaceBlur]) => updateAppearance({ surfaceBlur })} aria-label={tr("Profile card glass blur", "Sfocatura vetro card profilo")} />
+                    <Slider id="profile-card-blur" className="admin-profile-compact-slider" min={0} max={40} step={1} size="small" value={[profileBlur]} valueLabelFormat={(surfaceBlur) => `${surfaceBlur}px`} onValueChange={([surfaceBlur]) => updateAppearance({ surfaceBlur })} aria-label={tr("Profile card glass blur", "Sfocatura vetro card profilo")} />
                   </div>
                 )}
               </div>

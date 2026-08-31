@@ -410,7 +410,9 @@ const SliderRow = ({
       <span className="font-mono text-xs text-foreground tabular-nums">{display}</span>
     </div>
     <Slider
+      aria-label={label}
       value={[value]}
+      valueLabelFormat={() => display}
       onValueChange={([v]) => onChange(v)}
       min={min}
       max={max}
