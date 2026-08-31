@@ -71,7 +71,7 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
 
   const topbarPublicPage = page.locator(".admin-dashboard-mobile-public-page");
   await expect(topbarPublicPage).toBeVisible();
-  await expect(topbarPublicPage).toHaveAccessibleName("Open public page");
+  await expect(topbarPublicPage).toHaveAccessibleName("Public page");
   const topbarPublicPageBounds = await topbarPublicPage.boundingBox();
   expect(topbarPublicPageBounds).not.toBeNull();
   expect(topbarPublicPageBounds!.height).toBeGreaterThanOrEqual(44);
