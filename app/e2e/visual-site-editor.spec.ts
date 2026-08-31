@@ -45,7 +45,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
 
   const inspector = page.locator(".visual-site-editor__inspector");
   await inspector.getByLabel("Page name").fill(`Visual editor profile ${browserName} ${Date.now()}`);
-  await inspector.getByRole("button", { name: "Save page" }).click();
+  await page.getByRole("button", { name: "Save page" }).click();
   await expect(page.locator('[data-public-editor-target="profile"]')).toBeVisible();
   await page.locator('[data-public-editor-target="profile"]').click();
   await expect(inspector.getByRole("heading", { name: "Profile and identity" })).toBeVisible();

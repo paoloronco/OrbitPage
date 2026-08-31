@@ -26,7 +26,7 @@ test("persists the profile image size and renders it exactly on the public page"
   const save = page.getByRole("button", { name: "Save page" });
   await expect(save).toBeEnabled();
   await save.click();
-  await expect(save).toBeDisabled();
+  await expect(save).toBeHidden();
 
   await page.goto("/", { waitUntil: "load" });
   const publicAvatar = page.locator(".public-page-root--standalone .profile-card__avatar");

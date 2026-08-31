@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { createPortal } from "react-dom";
 import {
   BriefcaseBusiness,
   Building2,
@@ -44,6 +45,7 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { uploadApi } from "@/lib/api-client";
 import type { HostedSeoAccess } from "@/lib/hosted-editor-contract";
 import { useAppI18n } from "@/lib/i18n";
+import "./profile-save-overlay.css";
 
 interface ProfileData {
   name: string;
@@ -73,6 +75,15 @@ interface ProfileSectionProps {
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
 type AvatarShape = NonNullable<ProfileAppearance["avatarShape"]>;
+
+type SavedProfileNotice = {
+  id: number;
+  previousProfile: ProfileData;
+};
+
+const PROFILE_SAVE_NOTICE_DURATION_MS = 8_000;
+
+const cloneProfile = (value: ProfileData): ProfileData => JSON.parse(JSON.stringify(value)) as ProfileData;
 
 const PROFILE_PRESETS: Array<{
   id: ProfilePreset;
@@ -180,9 +191,12 @@ export const ProfileSection = ({
   const [pendingFaviconPreviewUrl, setPendingFaviconPreviewUrl] = useState<string | null>(null);
   const [faviconDialogOpen, setFaviconDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
+  const [savedNotice, setSavedNotice] = useState<SavedProfileNotice | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
+  const savedNoticeTimerRef = useRef<number | null>(null);
   const seoLocked = seoAccess === "none";
   const preset = PROFILE_PRESETS.find((item) => item.id === (draft.appearance?.profilePreset || "creator")) || PROFILE_PRESETS[0];
   const localPreset = (item: typeof PROFILE_PRESETS[number]) => item.id === "creator" ? {
@@ -221,6 +235,25 @@ export const ProfileSection = ({
     if (pendingLogoPreviewUrl) URL.revokeObjectURL(pendingLogoPreviewUrl);
     if (pendingFaviconPreviewUrl) URL.revokeObjectURL(pendingFaviconPreviewUrl);
   }, [pendingFaviconPreviewUrl, pendingLogoPreviewUrl]);
+
+  useEffect(() => () => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+  }, []);
+
+  const dismissSavedNotice = () => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+    savedNoticeTimerRef.current = null;
+    setSavedNotice(null);
+  };
+
+  const showSavedNotice = (previousProfile: ProfileData) => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+    setSavedNotice({ id: Date.now(), previousProfile });
+    savedNoticeTimerRef.current = window.setTimeout(() => {
+      savedNoticeTimerRef.current = null;
+      setSavedNotice(null);
+    }, PROFILE_SAVE_NOTICE_DURATION_MS);
+  };
 
   const getImageUrl = (value?: string | null) => {
     const safeUrl = resolveSafePublicMediaUrl(value);
@@ -267,6 +300,8 @@ export const ProfileSection = ({
   };
 
   const handleSave = async () => {
+    if (!isDirty || isSaving) return;
+    const previousProfile = cloneProfile(profile);
     setUploadError(null);
     setIsSaving(true);
     try {
@@ -292,10 +327,31 @@ export const ProfileSection = ({
       setPendingLogoPreviewUrl(null);
       setPendingFaviconPreviewUrl(null);
       setFaviconDialogOpen(false);
+      showSavedNotice(previousProfile);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "The page profile could not be saved.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleRevertSavedProfile = async () => {
+    if (!savedNotice || isReverting) return;
+    const previousProfile = cloneProfile(savedNotice.previousProfile);
+    setUploadError(null);
+    setIsReverting(true);
+    try {
+      await onProfileUpdate(previousProfile);
+      setDraft(previousProfile);
+      setPendingLogoFile(null);
+      setPendingFaviconFile(null);
+      setPendingLogoPreviewUrl(null);
+      setPendingFaviconPreviewUrl(null);
+      dismissSavedNotice();
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "The previous page version could not be restored.");
+    } finally {
+      setIsReverting(false);
     }
   };
 
@@ -599,26 +655,43 @@ export const ProfileSection = ({
 
           {uploadError && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{uploadError}</p>}
 
-          <footer className={`admin-profile-actions-dock${isDirty ? " is-dirty" : ""}`} data-onboarding="profile-actions">
-            <div className="admin-profile-save-state" aria-live="polite">
-              <span aria-hidden="true" />
-              <div>
-                <strong>{isDirty ? tr("Changes ready to save", "Modifiche pronte da salvare") : tr("Page up to date", "Pagina aggiornata")}</strong>
-                <small>{isDirty ? tr("Review them in the preview, then publish the update.", "Controllale nell’anteprima, poi pubblica l’aggiornamento.") : tr("Your latest changes are already saved.", "Le ultime modifiche sono già salvate.")}</small>
-              </div>
-            </div>
-            <div className="admin-profile-action-group">
-              <Button type="button" variant="outline" size="sm" onClick={resetDraft} disabled={!isDirty || isSaving}>
+        </div>
+      </div>
+
+      {typeof document !== "undefined" && (isDirty || isSaving || savedNotice) ? createPortal(
+        <div className="admin-profile-save-layer">
+          {(isDirty || isSaving) && (
+            <div className="admin-profile-save-float" data-onboarding="profile-actions">
+              <Button type="button" variant="outline" size="sm" onClick={resetDraft} disabled={isSaving}>
                 <RotateCcw className="h-4 w-4" /> {tr("Reset", "Ripristina")}
               </Button>
-              <Button type="button" size="sm" onClick={handleSave} disabled={!isDirty || isSaving}>
+              <Button type="button" size="sm" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
                 {isSaving ? tr("Saving", "Salvataggio") : tr("Save page", "Salva pagina")}
               </Button>
             </div>
-          </footer>
-        </div>
-      </div>
+          )}
+          {savedNotice && (
+            <aside className="admin-profile-saved-notice">
+              <div className="admin-profile-saved-notice__content">
+                <span className="admin-profile-saved-notice__icon" aria-hidden="true"><Check className="h-4 w-4" /></span>
+                <div role="status" aria-live="polite">
+                  <strong>{tr("Saved", "Salvato")}</strong>
+                  <small>{tr("It will be visible on the public page in about 10 seconds.", "Sarà visibile entro circa 10 secondi sulla pagina pubblica.")}</small>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleRevertSavedProfile} disabled={isReverting}>
+                  {isReverting && <OrbitLoader size={14} state="composing" />}
+                  {isReverting ? tr("Reverting", "Ripristino") : tr("Revert", "Ripristina")}
+                </Button>
+              </div>
+              <span className="admin-profile-saved-notice__progress" aria-hidden="true">
+                <i key={savedNotice.id} />
+              </span>
+            </aside>
+          )}
+        </div>,
+        document.body,
+      ) : null}
 
       <Dialog open={faviconDialogOpen} onOpenChange={setFaviconDialogOpen}>
         <DialogContent>
