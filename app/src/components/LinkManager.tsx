@@ -34,6 +34,9 @@ interface LinkManagerProps {
   nativeMenuEnabled?: boolean;
   publicPageHref?: string;
   availablePages?: Array<{ title: string; url: string }>;
+  visualMode?: boolean;
+  visualFocusLinkId?: string | null;
+  visualEditRequest?: number;
 }
 
 type BlockLibraryCategoryId = "essential" | "services" | "structure" | "media" | "engagement";
@@ -71,6 +74,9 @@ export const LinkManager = ({
   nativeMenuEnabled = true,
   publicPageHref = "/",
   availablePages = [],
+  visualMode = false,
+  visualFocusLinkId = null,
+  visualEditRequest,
 }: LinkManagerProps) => {
   const { tr } = useAppI18n();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -90,6 +96,12 @@ export const LinkManager = ({
     ...getContentCardVariantCssVariables(theme, index),
   }) as CSSProperties;
   const atBlockLimit = maxBlocks !== undefined && maxBlocks !== null && workingLinks.length >= maxBlocks;
+  const focusedLink = visualFocusLinkId
+    ? workingLinks.find((link) => String(link.id) === String(visualFocusLinkId)) || null
+    : null;
+  const renderedLinks = focusedLink
+    ? [{ link: focusedLink, index: workingLinks.findIndex((link) => String(link.id) === String(focusedLink.id)) }]
+    : workingLinks.map((link, index) => ({ link, index }));
 
   const appendBlock = (block: LinkData) => {
     if (atBlockLimit) {
@@ -762,7 +774,7 @@ export const LinkManager = ({
   };
 
   return (
-    <div className="admin-link-manager">
+    <div className={`admin-link-manager${visualMode ? " admin-link-manager--visual" : ""}`}>
       {!isFullEdit && (
         <div className={`mb-4 flex items-center gap-2 rounded-lg border px-4 py-3 text-sm ${
           isViewOnly
@@ -778,11 +790,17 @@ export const LinkManager = ({
       <div className="admin-link-toolbar" data-onboarding="links-toolbar">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-950">{tr("Content cards", "Card dei contenuti")}</h2>
+            <h2 className="text-lg font-semibold text-slate-950">
+              {focusedLink
+                ? focusedLink.title || tr("Selected content block", "Blocco contenuto selezionato")
+                : tr("Content cards", "Card dei contenuti")}
+            </h2>
             {isDirty && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
           </div>
           <p className="mt-1 text-sm text-slate-600">
-            {workingLinks.length === 0
+            {focusedLink
+              ? tr("Edit this block, then save the content changes.", "Modifica questo blocco, poi salva le modifiche ai contenuti.")
+              : workingLinks.length === 0
               ? tr("Start with a block, then arrange your public page.", "Inizia con un blocco, poi organizza la pagina pubblica.")
               : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` ${tr("of", "di")} ${maxBlocks}` : ""} ${tr("blocks in your public page order.", "blocchi nell'ordine della pagina pubblica.")}`}
           </p>
@@ -794,7 +812,7 @@ export const LinkManager = ({
         </div>
 
         <div className="admin-link-actions">
-          {isFullEdit && (
+          {isFullEdit && !focusedLink && (
             <Button
               onClick={openBlockLibrary}
               variant="outline"
@@ -813,10 +831,10 @@ export const LinkManager = ({
               {tr("Save", "Salva")}
             </Button>
           )}
-          <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Export links", "Esporta link")} title={tr("Export links", "Esporta link")}>
+          {!visualMode && <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Export links", "Esporta link")} title={tr("Export links", "Esporta link")}>
             <Download className="h-4 w-4" />
-          </Button>
-          {isFullEdit && (
+          </Button>}
+          {isFullEdit && !visualMode && (
             <Button onClick={handleImportFile} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Import links", "Importa link")} title={tr("Import links", "Importa link")}>
               <Upload className="h-4 w-4" />
             </Button>
@@ -999,7 +1017,7 @@ export const LinkManager = ({
         </Card>
       ) : (
         <div className="admin-link-list">
-          {workingLinks.map((link, index) => (
+          {renderedLinks.map(({ link, index }) => (
             <div
               key={link.id}
               data-link-id={link.id}
@@ -1031,6 +1049,7 @@ export const LinkManager = ({
                   videoUploadsEnabled={videoUploadsEnabled}
                   maxVideoUploadBytes={maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
+                  editRequest={focusedLink ? visualEditRequest : undefined}
                 />
               ) : (
                 <LinkCard
@@ -1048,6 +1067,7 @@ export const LinkManager = ({
                   schedulingEnabled={schedulingEnabled}
                   managePlanHref={managePlanHref}
                   availablePages={availablePages}
+                  editRequest={focusedLink ? visualEditRequest : undefined}
                 />
               )}
             </div>

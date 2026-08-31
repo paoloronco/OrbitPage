@@ -120,6 +120,7 @@ interface LinkCardProps {
   maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
   availablePages?: Array<{ title: string; url: string }>;
+  editRequest?: number;
 }
 
 const compactSocialPresets: Array<{ platform: SocialLinkPlatform; label: string }> = [
@@ -155,6 +156,7 @@ export const LinkCard = ({
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
   availablePages = [],
+  editRequest,
 }: LinkCardProps) => {
   const { tr } = useAppI18n();
   const compactPlatformLabel = (platform: SocialLinkPlatform, fallback: string) => {
@@ -174,10 +176,18 @@ export const LinkCard = ({
   const [resolvingMap, setResolvingMap] = useState(false);
   const [mapLookupError, setMapLookupError] = useState("");
   const compactLinkDragIndexRef = useRef<number | null>(null);
+  const lastEditRequestRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!isEditing) setEditLink(link);
   }, [isEditing, link]);
+
+  useEffect(() => {
+    if (editRequest === undefined || editMode === "view" || lastEditRequestRef.current === editRequest) return;
+    lastEditRequestRef.current = editRequest;
+    setEditLink(link);
+    setIsEditing(true);
+  }, [editMode, editRequest, link]);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';

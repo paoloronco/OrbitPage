@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { CurrentUser } from "@/pages/Admin";
 import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/lib/permissions";
@@ -88,6 +89,7 @@ import { PublishTools } from "./PublishTools";
 import { SelfHostedAiPanel } from "./SelfHostedAiPanel";
 import { SelfHostedAiAgent } from "./SelfHostedAiAgent";
 import { OpenSourcePlan } from "./OpenSourcePlan";
+import { VisualSiteEditor, type VisualSiteEditorSection } from "./VisualSiteEditor";
 
 interface ProfileData {
   name: string;
@@ -184,6 +186,7 @@ const ctaActionLabels: Record<string, string> = {
 };
 
 const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
+const NEW_UI_STORAGE_KEY = "orbitpage.admin.new-ui";
 const EMBEDDED_PREVIEW_MEDIA_QUERY = "(min-width: 1121px)";
 
 export const AdminView = ({
@@ -253,6 +256,20 @@ export const AdminView = ({
   const [onboardingThemeSaved, setOnboardingThemeSaved] = useState(false);
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
+  const [previewTheme, setPreviewTheme] = useState(theme);
+  const [newUiEnabled, setNewUiEnabled] = useState(() => {
+    const hostedPreference = getHostedSurfaceConfig()?.newUiEnabled;
+    if (hostedPreference !== undefined) return hostedPreference;
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(NEW_UI_STORAGE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>("profile");
+  const [visualLinkId, setVisualLinkId] = useState<string | null>(null);
+  const [visualEditRequest, setVisualEditRequest] = useState(0);
   const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
     return window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY).matches;
@@ -308,6 +325,7 @@ export const AdminView = ({
     const syncHostedConfig = () => {
       const nextConfig = getHostedSurfaceConfig();
       setHostedSurfaceConfig(nextConfig);
+      if (nextConfig?.newUiEnabled !== undefined) setNewUiEnabled(nextConfig.newUiEnabled);
       setContentSection((current) => {
         if (nextConfig?.contentSection) return nextConfig.contentSection;
         if (nextConfig?.extensions?.shop?.selected) return "shop";
@@ -367,6 +385,15 @@ export const AdminView = ({
   useEffect(() => {
     setPreviewLinks(links);
   }, [links]);
+
+  useEffect(() => {
+    setPreviewTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (!visualLinkId || links.some((link) => String(link.id) === String(visualLinkId))) return;
+    setVisualLinkId(null);
+  }, [links, visualLinkId]);
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
@@ -520,13 +547,30 @@ export const AdminView = ({
       default:          return false;
     }
   });
-  const visiblePageTabs = visibleTabs.filter((tab) => pageTabs.some((pageTab) => pageTab.value === tab.value));
+  const visiblePageTabs = visibleTabs.filter((tab) => (
+    pageTabs.some((pageTab) => pageTab.value === tab.value)
+    && (!newUiEnabled || tab.value !== "content")
+  ));
+  const visibleNavigationTabs = newUiEnabled
+    ? visibleTabs.filter((tab) => tab.value !== "content")
+    : visibleTabs;
   const visibleWorkspaceTabs = visibleTabs.filter((tab) => workspaceTabs.some((workspaceTab) => workspaceTab.value === tab.value));
+  const displayedTabLabel = (tab: AdminTab) => (
+    newUiEnabled && tab === "profile"
+      ? tr("Site editor", "Editor sito")
+      : tabLabel(tab)
+  );
+  const displayedTabDescription = (tab: AdminTab) => (
+    newUiEnabled && tab === "profile"
+      ? tr("Edit identity and content directly on your real page.", "Modifica identità e contenuti direttamente sulla pagina reale.")
+      : tabDescription(tab)
+  );
 
   const selectTab = (tab: AdminTab) => {
     const requestedContentSection = contentSectionForTab(tab);
     if (requestedContentSection) setContentSection(requestedContentSection);
-    const canonicalTab = canonicalViewTab(tab);
+    const requestedCanonicalTab = canonicalViewTab(tab);
+    const canonicalTab = newUiEnabled && requestedCanonicalTab === "content" ? "profile" : requestedCanonicalTab;
     if (canonicalTab === "content") setContentNavOpen(true);
     setActiveTab(canonicalTab);
     setMobileNavOpen(false);
@@ -535,6 +579,37 @@ export const AdminView = ({
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       document.querySelector<HTMLElement>(".admin-dashboard-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
+  };
+
+  const setNewUiPreference = (enabled: boolean) => {
+    setNewUiEnabled(enabled);
+    if (!isIntegratedHostedAdmin) {
+      try {
+        window.localStorage.setItem(NEW_UI_STORAGE_KEY, String(enabled));
+      } catch {
+        // Keep the preference in memory when storage is unavailable.
+      }
+    }
+    if (enabled) {
+      setVisualSection("profile");
+      setVisualLinkId(null);
+      setActiveTab("profile");
+      setMobileNavOpen(false);
+      onTabChange?.("profile");
+    } else {
+      setPreviewTheme(theme);
+      applyTheme(theme);
+    }
+  };
+
+  const selectVisualSection = (section: VisualSiteEditorSection, linkId?: string) => {
+    setVisualSection(section);
+    if (section === "links") {
+      setVisualLinkId(linkId || null);
+      if (linkId) setVisualEditRequest((request) => request + 1);
+    } else {
+      setVisualLinkId(null);
+    }
   };
 
   const toggleSidebar = () => {
@@ -552,7 +627,8 @@ export const AdminView = ({
     if (currentUser && !didPickInitialTab) {
       const legacyContentSection = contentSectionForTab(requestedTab);
       if (canonicalViewTab(requestedTab) === "content") setContentSection(requestedContentSection || legacyContentSection || "link");
-      const canonicalRequestedTab = canonicalViewTab(requestedTab);
+      const rawCanonicalRequestedTab = canonicalViewTab(requestedTab);
+      const canonicalRequestedTab = newUiEnabled && rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
       const preferred = visibleTabs.find(tab => tab.value === canonicalRequestedTab)
         || visibleTabs.find(tab => tab.value === "profile")
         || visibleTabs[0];
@@ -566,17 +642,18 @@ export const AdminView = ({
       selectTab(visibleTabs[0].value);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, didPickInitialTab, requestedTab, requestedContentSection]);
+  }, [currentUser, didPickInitialTab, requestedTab, requestedContentSection, newUiEnabled]);
 
   useEffect(() => {
     const legacyContentSection = contentSectionForTab(requestedTab);
     if (canonicalViewTab(requestedTab) === "content") setContentSection(requestedContentSection || legacyContentSection || "link");
-    const canonicalRequestedTab = canonicalViewTab(requestedTab);
+    const rawCanonicalRequestedTab = canonicalViewTab(requestedTab);
+    const canonicalRequestedTab = newUiEnabled && rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
     if (!didPickInitialTab || !visibleTabs.some((tab) => tab.value === canonicalRequestedTab)) return;
     setActiveTab((current) => current === canonicalRequestedTab ? current : canonicalRequestedTab);
   // Permission booleans are included so a deep link is applied as soon as its tab becomes available.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestedTab, requestedContentSection, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
+  }, [requestedTab, requestedContentSection, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance, newUiEnabled]);
 
   useEffect(() => {
     if (isHostedAdmin || !mobileNavOpen) return;
@@ -722,9 +799,132 @@ export const AdminView = ({
     />
   );
 
+  const selectedVisualLink = visualLinkId
+    ? links.find((link) => String(link.id) === String(visualLinkId)) || null
+    : null;
+  const visualInspectorTitle = visualSection === "profile"
+    ? tr("Profile and identity", "Profilo e identità")
+    : visualSection === "links"
+      ? selectedVisualLink?.title || tr("Content blocks", "Blocchi contenuto")
+      : visualSection === "menu"
+        ? tr("Menu", "Menu")
+        : visualSection === "shop"
+          ? tr("Shop", "Shop")
+          : visualSection === "pages"
+            ? tr("Additional pages", "Pagine aggiuntive")
+            : tr("Page style", "Stile pagina");
+  const visualInspectorDescription = visualSection === "profile"
+    ? tr("Name, image, bio, social presence and page details.", "Nome, immagine, bio, presenza social e dettagli della pagina.")
+    : visualSection === "links"
+      ? selectedVisualLink
+        ? tr("The selected card is open and ready to edit.", "La card selezionata è aperta e pronta da modificare.")
+        : tr("Add, reorder and manage every block on the homepage.", "Aggiungi, riordina e gestisci tutti i blocchi della homepage.")
+      : visualSection === "menu"
+        ? tr("Manage navigation, categories and menu items.", "Gestisci navigazione, categorie ed elementi del menu.")
+        : visualSection === "shop"
+          ? tr("Manage the storefront shown from your OrbitPage.", "Gestisci lo shop mostrato dalla tua OrbitPage.")
+          : visualSection === "pages"
+            ? tr("Create and edit the other pages in your site.", "Crea e modifica le altre pagine del sito.")
+            : tr("Colors, typography, cards and page background.", "Colori, tipografia, card e sfondo della pagina.");
+
+  const visualInspector = visualSection === "profile" ? (
+    <ProfileSection
+      profile={profile}
+      theme={previewTheme}
+      onProfileUpdate={onProfileUpdate}
+      onProfilePreview={setPreviewProfile}
+      seoAccess={entitlements?.seo}
+      managePlanHref={managePlanHref}
+      orbitPageBadgeEditable={orbitPageBadgeEditable}
+      onStartOnboarding={() => setOnboardingReplayKey((key) => key + 1)}
+      onAdminOnboardingEnabledChange={(enabled) => {
+        void onProfileUpdate({ ...profile, adminOnboardingEnabled: enabled });
+      }}
+    />
+  ) : visualSection === "links" ? (
+    <LinkManager
+      links={links}
+      theme={previewTheme}
+      onLinksUpdate={onLinksUpdate}
+      onLinksPreview={setPreviewLinks}
+      editMode={linkEditMode}
+      maxBlocks={entitlements?.maxBlocks}
+      planName={saasPlan?.name}
+      schedulingEnabled={entitlements?.scheduling ?? true}
+      videoUploadsEnabled={entitlements?.videoUploads ?? true}
+      maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
+      managePlanHref={managePlanHref}
+      nativeMenuEnabled={!saasPlan || entitlements?.nativeMenu === true}
+      publicPageHref={publicPageHref}
+      availablePages={subpages.filter((page) => page.enabled).map((page) => ({
+        title: page.title || page.slug,
+        url: `${publicPageHref.replace(/\/$/, "")}/${page.slug}`,
+      }))}
+      visualMode
+      visualFocusLinkId={visualLinkId}
+      visualEditRequest={visualEditRequest}
+    />
+  ) : visualSection === "menu" ? (
+    <MenuEditor
+      menu={menu}
+      publicPageHref={publicPageHref}
+      enabled={!saasPlan || entitlements?.nativeMenu === true}
+      maxItems={entitlements?.maxMenuItems ?? null}
+      planName={saasPlan?.name}
+      advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
+      onSave={onMenuUpdate}
+      onAddMenuLink={async () => {
+        const menuLink = createNativeMenuLink(publicPageHref, {
+          title: tr("View menu", "Vedi il menu"),
+          description: tr("Browse food and drinks", "Scopri piatti e bevande"),
+        });
+        const exists = links.some(isNativeMenuLink);
+        await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? "append" : "prepend"));
+      }}
+    />
+  ) : visualSection === "pages" ? (
+    <SubpageManager
+      pages={subpages}
+      theme={previewTheme}
+      publicPageHref={publicPageHref}
+      onPagesUpdate={onSubpagesUpdate}
+      editMode={linkEditMode}
+      maxPages={entitlements?.pages}
+      maxBlocks={entitlements?.maxBlocks}
+      planName={saasPlan?.name}
+      schedulingEnabled={entitlements?.scheduling ?? true}
+      videoUploadsEnabled={entitlements?.videoUploads ?? true}
+      maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
+      managePlanHref={managePlanHref}
+    />
+  ) : visualSection === "shop" ? (
+    isIntegratedHostedAdmin && hostedShop?.entitled
+      ? <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
+      : <PlanLockedFeature
+          title={tr("Shop is available on OrbitPage SaaS", "Shop è disponibile su OrbitPage SaaS")}
+          description={tr("Connect Stripe and manage products from a hosted workspace.", "Collega Stripe e gestisci i prodotti da un workspace hosted.")}
+          managePlanHref={managePlanHref}
+        />
+  ) : (
+    <ThemeCustomizer
+      theme={theme}
+      onThemeChange={handleThemeSave}
+      onThemePreview={(nextTheme) => {
+        setPreviewTheme(nextTheme);
+        applyTheme(nextTheme);
+      }}
+      accessLevel={entitlements?.themes}
+      videoUploadsEnabled={entitlements?.videoUploads ?? true}
+      maxUploadBytes={entitlements?.maxUploadBytes}
+      maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
+      managePlanHref={managePlanHref}
+      showEmbeddedPreview={false}
+    />
+  );
+
   return (
     <div
-      className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : isIntegratedHostedAdmin ? " admin-integrated-surface" : ""}`}
+      className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : isIntegratedHostedAdmin ? " admin-integrated-surface" : ""}${newUiEnabled ? " admin-new-ui-enabled" : ""}`}
       data-orbitpage-workspace-ready={isIntegratedHostedAdmin ? "true" : undefined}
     >
       {!isHostedAdmin && (
@@ -758,7 +958,7 @@ export const AdminView = ({
               {mobileNavOpen ? <X aria-hidden="true" className="h-[19px] w-[19px]" /> : <MenuIcon aria-hidden="true" className="h-[19px] w-[19px]" />}
               <span className="admin-dashboard-mobile-nav-copy">
                 <span>{tr("Menu", "Menu")}</span>
-                <strong>{tabLabel(activeTab)}</strong>
+                <strong>{displayedTabLabel(activeTab)}</strong>
               </span>
               <ChevronDown className="admin-dashboard-mobile-nav-chevron h-4 w-4" aria-hidden="true" />
             </button>
@@ -784,11 +984,11 @@ export const AdminView = ({
                       className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
                       data-onboarding={`${value}-tab`}
                       onClick={() => selectTab(value)}
-                      title={tabLabel(value)}
+                      title={displayedTabLabel(value)}
                       type="button"
                     >
                       <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
-                      <span>{tabLabel(value)}</span>
+                      <span>{displayedTabLabel(value)}</span>
                     </button>
                     <button
                       aria-expanded={contentNavOpen}
@@ -828,11 +1028,11 @@ export const AdminView = ({
                   data-onboarding={`${value}-tab`}
                   key={value}
                   onClick={() => selectTab(value)}
-                  title={tabLabel(value)}
+                  title={displayedTabLabel(value)}
                   type="button"
                 >
                   <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
-                  <span>{tabLabel(value)}</span>
+                  <span>{displayedTabLabel(value)}</span>
                 </button>
               ))}
             </nav>
@@ -847,11 +1047,11 @@ export const AdminView = ({
                     data-onboarding={`${value}-tab`}
                     key={value}
                     onClick={() => selectTab(value)}
-                    title={tabLabel(value)}
+                    title={displayedTabLabel(value)}
                     type="button"
                   >
                     <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
-                    <span>{tabLabel(value)}</span>
+                    <span>{displayedTabLabel(value)}</span>
                   </button>
                 ))}
               </nav>
@@ -920,8 +1120,8 @@ export const AdminView = ({
         </header> : !isHostedAdmin ? <header className="admin-dashboard-header">
           <div className="admin-dashboard-header-copy">
             <p className="admin-dashboard-kicker">{tr("Open Source plan", "Piano Open Source")}</p>
-            <div className="admin-dashboard-heading-row"><h1>{tabLabel(activeTab)}</h1></div>
-            <p className="admin-dashboard-section-description">{tabDescription(activeTab)}</p>
+            <div className="admin-dashboard-heading-row"><h1>{displayedTabLabel(activeTab)}</h1></div>
+            <p className="admin-dashboard-section-description">{displayedTabDescription(activeTab)}</p>
             <div className="admin-dashboard-context-row" aria-label={tr("Workspace context", "Contesto workspace")}>
               <span className="admin-dashboard-context-slug">/{currentUser?.username || "admin"}</span>
               <span>{tr("Owner", "Proprietario")}</span>
@@ -929,6 +1129,19 @@ export const AdminView = ({
             </div>
           </div>
           <div className="admin-dashboard-header-actions">
+            <label className="admin-new-ui-toggle" title={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}>
+              <span className="admin-new-ui-toggle__copy">
+                <Sparkles aria-hidden="true" size={15} />
+                <strong>New UI</strong>
+                <small>Beta</small>
+              </span>
+              <Switch
+                aria-label={tr("Enable New UI beta", "Attiva New UI beta")}
+                checked={newUiEnabled}
+                onCheckedChange={setNewUiPreference}
+                size="small"
+              />
+            </label>
             <a className="admin-dashboard-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <ExternalLink aria-hidden="true" size={17} />
               {tr("Public page", "Pagina pubblica")}
@@ -947,7 +1160,7 @@ export const AdminView = ({
           </section>
         )}
 
-        <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
+        {!(newUiEnabled && activeTab === "profile") && <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
           <MetricCard
             icon={Globe2}
             label={tr("Visible links", "Link visibili")}
@@ -968,15 +1181,15 @@ export const AdminView = ({
             value={metrics.profileReady ? tr("Ready", "Pronta") : tr("Draft", "Bozza")}
             detail={`${metrics.socialCount} ${tr("social links", "link social")}`}
           />
-        </section>
+        </section>}
 
         <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin && !isIntegratedHostedAdmin ? "mt-5 flex-1" : isIntegratedHostedAdmin ? "admin-integrated-tabs flex-1" : "admin-dashboard-tabs flex-1"}>
           {isHostedAdmin && !isIntegratedHostedAdmin && <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
-              {visibleTabs.map(({ value, icon: Icon }) => (
+              {visibleNavigationTabs.map(({ value, icon: Icon }) => (
                 <TabsTrigger key={value} value={value} className="admin-tab" data-onboarding={`${value}-tab`}>
                   <Icon className="h-4 w-4" />
-                  <span>{tabLabel(value)}</span>
+                  <span>{displayedTabLabel(value)}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -987,6 +1200,24 @@ export const AdminView = ({
             inert={isProspectReadOnly && activeTab !== "analytics" ? "" : undefined}
           >
           <TabsContent value="profile" className="admin-tab-content">
+            {newUiEnabled ? (
+              <VisualSiteEditor
+                profile={previewProfile}
+                links={previewLinks}
+                theme={previewTheme}
+                publicPageHref={publicPageHref}
+                showOrbitPageBadge={resolveOrbitPageBadgeVisibility(previewProfile.showOrbitPageBadge)}
+                section={visualSection}
+                selectedLinkId={visualLinkId}
+                inspectorTitle={visualInspectorTitle}
+                inspectorDescription={visualInspectorDescription}
+                inspector={visualInspector}
+                menuStatus={menu.enabled ? "active" : "inactive"}
+                shopStatus={!isIntegratedHostedAdmin || !hostedShop?.entitled ? "locked" : hostedShop.enabled ? "active" : "inactive"}
+                pagesStatus={firstEnabledSubpage ? "active" : "inactive"}
+                onSelect={selectVisualSection}
+              />
+            ) : (
             <div className="admin-content-grid admin-content-grid-editor">
               <div className="admin-main-column">
                 <ProfileSection
@@ -1042,6 +1273,7 @@ export const AdminView = ({
                 )}
               </aside>}
             </div>
+            )}
           </TabsContent>
 
           <TabsContent value="content" className="admin-tab-content">

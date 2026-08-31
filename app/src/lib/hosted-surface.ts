@@ -14,6 +14,7 @@ export type HostedSurfaceConfig = {
   }>;
   section: AdminTab;
   locale: string;
+  newUiEnabled?: boolean;
   extensions?: {
     shop?: {
       entitled: boolean;
