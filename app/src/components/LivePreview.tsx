@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Monitor, Smartphone } from "@/components/ui/material-icons";
 import { BackgroundLayer } from "./BackgroundLayer";
-import { PublicView } from "./PublicView";
+import { PublicView, type PublicEditorTarget } from "./PublicView";
 import type { LinkData } from "./LinkCard";
 import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
@@ -39,6 +39,8 @@ interface LivePreviewProps {
   publicPageHref?: string;
   device?: PreviewDevice;
   showOrbitPageBadge?: boolean;
+  editorSelection?: PublicEditorTarget | null;
+  onEditorSelect?: (target: PublicEditorTarget) => void;
 }
 
 export type PreviewDevice = "mobile" | "desktop";
@@ -156,6 +158,8 @@ export const LivePreview = ({
   publicPageHref = "/",
   device = "mobile",
   showOrbitPageBadge = true,
+  editorSelection,
+  onEditorSelect,
 }: LivePreviewProps) => {
   const bgType = theme.backgroundMedia?.type;
   const previewBackground = (bgType === "color" || bgType === "video" || bgType === "gif")
@@ -190,6 +194,8 @@ export const LivePreview = ({
                 showOrbitPageBadge={showOrbitPageBadge}
                 embedded
                 embeddedViewport={device}
+                editorSelection={editorSelection}
+                onEditorSelect={onEditorSelect}
               />
             </div>
           </div>

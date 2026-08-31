@@ -28,17 +28,26 @@ interface TextCardProps {
   inheritedTextColor?: string;
   schedulingEnabled?: boolean;
   managePlanHref?: string;
+  editRequest?: number;
 }
 
-export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing" }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
   const [imageUploadError, setImageUploadError] = useState("");
+  const lastEditRequestRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!isEditing) setEditLink(link);
   }, [isEditing, link]);
+
+  useEffect(() => {
+    if (editRequest === undefined || editMode === "view" || lastEditRequestRef.current === editRequest) return;
+    lastEditRequestRef.current = editRequest;
+    setEditLink(link);
+    setIsEditing(true);
+  }, [editMode, editRequest, link]);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';

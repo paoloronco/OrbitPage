@@ -29,7 +29,14 @@ interface PublicViewProps {
   showOrbitPageBadge?: boolean;
   embedded?: boolean;
   embeddedViewport?: "mobile" | "desktop";
+  editorSelection?: PublicEditorTarget | null;
+  onEditorSelect?: (target: PublicEditorTarget) => void;
 }
+
+export type PublicEditorTarget =
+  | { kind: "page" }
+  | { kind: "profile" }
+  | { kind: "link"; id: string };
 
 export const PublicView = ({
   profile,
@@ -41,6 +48,8 @@ export const PublicView = ({
   showOrbitPageBadge = true,
   embedded = false,
   embeddedViewport = "mobile",
+  editorSelection = null,
+  onEditorSelect,
 }: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
@@ -93,21 +102,59 @@ export const PublicView = ({
     : "public-page-root--standalone";
 
   return (
-    <main className={`public-page-root ${viewportClass} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}>
+    <main
+      className={`public-page-root ${viewportClass} ${onEditorSelect ? "public-page-root--editor" : ""} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}
+      onClick={onEditorSelect ? () => onEditorSelect({ kind: "page" }) : undefined}
+    >
       <div
         className="public-page-content mx-auto space-y-6"
         style={{ "--public-page-max-width": theme.maxWidth || "28rem" } as CSSProperties}
       >
-        {hasProfileContent && <PublicProfileSection profile={profile} fallbackName={null} surfaceEffect={theme.profileCardEffect} />}
+        {hasProfileContent && (
+          <div
+            aria-label={onEditorSelect ? "Edit profile and page identity" : undefined}
+            className={`public-editor-target public-editor-target--profile${editorSelection?.kind === "profile" ? " is-selected" : ""}`}
+            data-public-editor-target={onEditorSelect ? "profile" : undefined}
+            onClickCapture={onEditorSelect ? (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onEditorSelect({ kind: "profile" });
+            } : undefined}
+            onKeyDown={onEditorSelect ? (event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              onEditorSelect({ kind: "profile" });
+            } : undefined}
+            role={onEditorSelect ? "button" : undefined}
+            tabIndex={onEditorSelect ? 0 : undefined}
+          >
+            <PublicProfileSection profile={profile} fallbackName={null} surfaceEffect={theme.profileCardEffect} />
+          </div>
+        )}
 
         {visibleLinks.length > 0 && (
           <div className="public-card-stack flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
             {visibleLinks.map((link, index) => (
               <div
                 key={link.id}
-                className={`content-card-variant-${index % 6}`}
+                aria-label={onEditorSelect ? `Edit ${link.title || "content block"}` : undefined}
+                className={`content-card-variant-${index % 6} public-editor-target public-editor-target--link${editorSelection?.kind === "link" && editorSelection.id === link.id ? " is-selected" : ""}`}
+                data-public-editor-link-id={onEditorSelect ? link.id : undefined}
+                data-public-editor-target={onEditorSelect ? "link" : undefined}
                 data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}
+                onClickCapture={onEditorSelect ? (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onEditorSelect({ kind: "link", id: link.id });
+                } : undefined}
+                onKeyDown={onEditorSelect ? (event) => {
+                  if (event.key !== "Enter" && event.key !== " ") return;
+                  event.preventDefault();
+                  onEditorSelect({ kind: "link", id: link.id });
+                } : undefined}
+                role={onEditorSelect ? "button" : undefined}
                 style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
+                tabIndex={onEditorSelect ? 0 : undefined}
               >
                 <PublicBlockRenderer link={link} />
               </div>
