@@ -40,7 +40,7 @@ const SECTION_TABLES = {
 
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const DEFAULT_BACKUP_MEDIA_LIMIT_BYTES = 128 * 1024 * 1024;
-const ALLOWED_MEDIA_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.mp4', '.webm']);
+const ALLOWED_MEDIA_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif', '.mp4', '.webm']);
 
 const backupMediaLimitBytes = () => {
   const configuredMb = Number(process.env.ORBITPAGE_BACKUP_MEDIA_LIMIT_MB);
@@ -54,6 +54,9 @@ const isAllowedMediaSignature = (extension, buffer) => {
   if (extension === '.jpg' || extension === '.jpeg') return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
   if (extension === '.gif') return ['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString('ascii'));
   if (extension === '.webp') return buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+  if (extension === '.avif') return buffer.subarray(4, 8).toString('ascii') === 'ftyp'
+    && [buffer.subarray(8, 12), ...Array.from({ length: Math.floor((buffer.length - 16) / 4) }, (_, index) => buffer.subarray(16 + index * 4, 20 + index * 4))]
+      .some((brand) => ['avif', 'avis'].includes(brand.toString('ascii')));
   if (extension === '.mp4') return buffer.subarray(4, 8).toString('ascii') === 'ftyp';
   if (extension === '.webm') return buffer.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]));
   return false;

@@ -15,6 +15,7 @@ const pngBytes = (suffix = '') => Buffer.concat([
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   Buffer.from(suffix),
 ]);
+const avifBytes = () => Buffer.from([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66]);
 
 describe('backup service', () => {
   it('exports all application tables and upload files', async () => {
@@ -77,6 +78,20 @@ describe('backup service', () => {
     expect(fs.existsSync(path.join(uploadsPath, 'stale.png'))).toBe(false);
     expect(fs.readFileSync(path.join(uploadsPath, 'avatar.png'))).toEqual(pngBytes('restored'));
 
+    fs.rmSync(uploadsPath, { recursive: true, force: true });
+  });
+
+  it('restores an AVIF file only when its container brand is valid', async () => {
+    const uploadsPath = makeTempUploadsDir();
+    const dbRun = vi.fn().mockResolvedValue({ changes: 1 });
+    const backup = {
+      schemaVersion: BACKUP_SCHEMA_VERSION,
+      tables: { admin_users: [], profile_data: [], links: [], theme_config: [], cookie_consent_config: [] },
+      uploads: [{ path: 'avatar.avif', data: avifBytes().toString('base64') }],
+    };
+
+    await restoreApplicationBackup({ backup, dbRun, uploadsPath });
+    expect(fs.readFileSync(path.join(uploadsPath, 'avatar.avif'))).toEqual(avifBytes());
     fs.rmSync(uploadsPath, { recursive: true, force: true });
   });
 
@@ -165,6 +180,7 @@ describe('backup service', () => {
   it.each([
     ['active HTML', { path: 'payload.html', data: Buffer.from('<script>alert(1)</script>').toString('base64') }, 'Unsupported backup media type'],
     ['mismatched content', { path: 'photo.png', data: Buffer.from('<svg/>').toString('base64') }, 'does not match its extension'],
+    ['invalid AVIF brand', { path: 'photo.avif', data: Buffer.from('00000018667479706d69663161766966', 'hex').toString('base64') }, 'does not match its extension'],
     ['malformed base64', { path: 'photo.png', data: 'not-base64!' }, 'Invalid base64 backup media'],
   ])('rejects %s without replacing live uploads', async (_label, upload, expectedError) => {
     const uploadsPath = makeTempUploadsDir();

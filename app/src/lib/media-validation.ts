@@ -1,4 +1,4 @@
-export const RASTER_IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp';
+export const RASTER_IMAGE_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,image/avif';
 export const VIDEO_ACCEPT = 'video/mp4,video/webm';
 export const DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 
@@ -7,6 +7,7 @@ const ALLOWED_RASTER_IMAGE_TYPES = new Set([
   'image/jpeg',
   'image/gif',
   'image/webp',
+  'image/avif',
 ]);
 
 const ALLOWED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm']);

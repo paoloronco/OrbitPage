@@ -4319,11 +4319,11 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     // Accept raster images only — SVG is excluded because it can carry embedded scripts (XSS)
-    const allowedExtensions = /\.(jpg|jpeg|png|gif|webp)$/i;
-    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedExtensions = /\.(jpg|jpeg|png|gif|webp|avif)$/i;
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
 
     if (!allowedExtensions.test(file.originalname) || !allowedMimeTypes.includes(file.mimetype)) {
-      return cb(new Error('Only raster image files (jpg, png, gif, webp) are allowed'), false);
+      return cb(new Error('Only raster image files (jpg, png, gif, webp, avif) are allowed'), false);
     }
     cb(null, true);
   }

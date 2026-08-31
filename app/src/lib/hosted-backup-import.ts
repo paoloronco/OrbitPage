@@ -17,6 +17,7 @@ const LEGACY_MANAGED_BACKUP_SECTION_IDS = ['profile', 'links', 'theme', 'privacy
 export const MANAGED_BACKUP_SECTION_IDS = [...LEGACY_MANAGED_BACKUP_SECTION_IDS, 'pages', 'menu', 'discovery'] as const;
 export type BackupSectionId = typeof BACKUP_SECTION_IDS[number];
 const ALLOWED_MEDIA_TYPES = new Set([
+  'image/avif',
   'image/gif',
   'image/jpeg',
   'image/png',
@@ -225,6 +226,7 @@ function normalizeUploadPath(value: string) {
 
 function mimeTypeForPath(path: string) {
   const extension = path.toLowerCase().split('.').pop();
+  if (extension === 'avif') return 'image/avif';
   if (extension === 'gif') return 'image/gif';
   if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
   if (extension === 'png') return 'image/png';
@@ -235,6 +237,7 @@ function mimeTypeForPath(path: string) {
 }
 
 function extensionForMimeType(mimeType: string) {
+  if (mimeType === 'image/avif') return 'avif';
   if (mimeType === 'image/gif') return 'gif';
   if (mimeType === 'image/jpeg') return 'jpg';
   if (mimeType === 'image/png') return 'png';

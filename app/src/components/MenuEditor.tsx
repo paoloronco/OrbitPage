@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { optimizeImageForUpload } from '@/lib/image-upload';
+import { RASTER_IMAGE_ACCEPT } from '@/lib/media-validation';
 import { uploadApi } from '@/lib/api-client';
 import {
   MENU_THEME_PRESETS, createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
@@ -781,7 +782,7 @@ export function MenuEditor({
                 <div className="menu-product-editor__top">
                   <label className="menu-product-image" title="Upload product image">
                     {selectedItem.imageUrl ? <img src={selectedItem.imageUrl} alt="" /> : uploadingItem === selectedItem.id ? <OrbitLoader size={20} state="composing" /> : <ImagePlus />}
-                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(event) => void uploadItemImage(selectedItem.id, event.target.files?.[0])} />
+                    <input type="file" accept={RASTER_IMAGE_ACCEPT} onChange={(event) => void uploadItemImage(selectedItem.id, event.target.files?.[0])} />
                   </label>
                   <div className="min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
                     <div className="space-y-2"><Label htmlFor={`menu-item-name-${selectedItem.id}`}>{tr("Name", "Nome")}</Label><Input id={`menu-item-name-${selectedItem.id}`} value={selectedItem.name} onChange={(e) => updateItem(selectedItem.id, { name: e.target.value })} /></div>

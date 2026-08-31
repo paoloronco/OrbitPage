@@ -59,7 +59,7 @@ function faviconHref(value: string) {
   if (/^(?:https?:|data:image\/|blob:)/i.test(value)) {
     return resolveSafePublicMediaUrl(value) || withRuntimeAssetPath('/brand/orbitpage-favicon-48.png');
   }
-  if (value.startsWith('/') || /\.(?:png|jpe?g|gif|webp|ico|svg)(?:\?.*)?$/i.test(value)) {
+  if (value.startsWith('/') || /\.(?:avif|png|jpe?g|gif|webp|ico|svg)(?:\?.*)?$/i.test(value)) {
     return internalAssetPath(value) || withRuntimeAssetPath('/brand/orbitpage-favicon-48.png');
   }
   const escapedValue = value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

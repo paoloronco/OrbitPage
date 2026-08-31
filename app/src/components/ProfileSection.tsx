@@ -450,7 +450,7 @@ export const ProfileSection = ({
                       <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-avatar-size" className="text-xs text-slate-600">{tr("Size", "Dimensione")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{draft.appearance?.avatarSize ?? 112}px</span></div>
                       <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} size="small" value={[draft.appearance?.avatarSize ?? 112]} valueLabelFormat={(avatarSize) => `${avatarSize}px`} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
                     </div>
-                    <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF or WebP.", "PNG, JPG, GIF o WebP.")}</p>
+                    <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</p>
                   </div>
                 </div>
               </div>
@@ -701,7 +701,7 @@ export const ProfileSection = ({
           </DialogHeader>
           <button type="button" onClick={() => faviconInputRef.current?.click()} className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center hover:border-blue-400 hover:bg-blue-50/50">
             {faviconValue ? <img src={getImageUrl(faviconValue)} alt={tr("Selected favicon", "Favicon selezionata")} className="h-16 w-16 rounded-lg border border-slate-200 bg-white object-contain p-1" /> : <ImageUp className="h-8 w-8 text-slate-400" />}
-            <span><strong className="block text-sm text-slate-950">{tr("Choose favicon image", "Scegli immagine favicon")}</strong><small className="mt-1 block text-xs text-slate-500">PNG, JPG, GIF o WebP</small></span>
+            <span><strong className="block text-sm text-slate-950">{tr("Choose favicon image", "Scegli immagine favicon")}</strong><small className="mt-1 block text-xs text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</small></span>
           </button>
           <input ref={faviconInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "favicon"); event.target.value = ""; }} />
           <DialogFooter>
