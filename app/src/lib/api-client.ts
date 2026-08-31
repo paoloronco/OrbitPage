@@ -866,7 +866,7 @@ export const profileApi = {
     });
   },
 
-  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string; footerText?: string; showOrbitPageBadge?: boolean; favicon?: string; googleAnalyticsId?: string; privacyPolicyUrl?: string; cookiePolicyUrl?: string; adminOnboardingEnabled?: boolean; appearance?: import('./profile-appearance').ProfileAppearance }): Promise<ApiResponse> => {
+  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string; footerText?: string; showOrbitPageBadge?: boolean; favicon?: string; googleAnalyticsId?: string; privacyPolicyUrl?: string; cookiePolicyUrl?: string; appearance?: import('./profile-appearance').ProfileAppearance }): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>('/profile', {
       method: 'PUT',
       body: JSON.stringify({
@@ -886,7 +886,6 @@ export const profileApi = {
         google_analytics_id: profile.googleAnalyticsId ?? undefined,
         privacy_policy_url: profile.privacyPolicyUrl ?? undefined,
         cookie_policy_url: profile.cookiePolicyUrl ?? undefined,
-        admin_onboarding_enabled: typeof profile.adminOnboardingEnabled === 'boolean' ? (profile.adminOnboardingEnabled ? 1 : 0) : undefined,
         appearance: profile.appearance,
       }),
     });

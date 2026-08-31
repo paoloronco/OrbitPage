@@ -16,7 +16,7 @@ This documentation covers the open-source, self-hosted OrbitPage application. Fo
 
 | Goal | Guide |
 | --- | --- |
-| Navigate the dashboard, onboarding, roles, and save boundaries | [Dashboard guide](./user-guide/dashboard.md) |
+| Navigate the dashboard, roles, and save boundaries | [Dashboard guide](./user-guide/dashboard.md) |
 | Build Home blocks, menus, subpages, themes, and backgrounds | [Content and design](./user-guide/content-and-design.md) |
 | Export or restore data, clean media, and understand demo mode | [Backups, media, and demo mode](./user-guide/backups-and-demo-mode.md) |
 | Configure the self-hosted AI assistant and review changes safely | [AI assistant](./user-guide/ai-assistant.md) |

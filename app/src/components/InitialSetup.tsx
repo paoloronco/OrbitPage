@@ -25,7 +25,6 @@ import { authApi, type SetupDependency, type SetupStatus } from "@/lib/api-clien
 import { generateSecurePassword, isPasswordStrong, setupInitialCredentials } from "@/lib/auth";
 import { withBasePath } from "@/lib/base-path";
 import { useAppI18n } from "@/lib/i18n";
-import { resetAdminOnboardingProgress } from "@/lib/admin-onboarding-storage";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 
 interface InitialSetupProps {
@@ -113,7 +112,6 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
         throw new Error(tr("Please meet all password requirements before continuing.", "Soddisfa tutti i requisiti della password prima di continuare."));
       }
       await setupInitialCredentials(password, slug);
-      resetAdminOnboardingProgress();
       await onSetupComplete();
     } catch (setupError) {
       setError(setupError instanceof Error ? setupError.message : tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
@@ -233,7 +231,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
               </div>
               <div className="initial-setup-summary">
                 <CheckCircle2 aria-hidden="true" size={22} />
-                <div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong><span>{tr("The administrator, page address and starter tutorial will be enabled together.", "Amministratore, indirizzo pagina e tutorial iniziale verranno abilitati insieme.")}</span></div>
+                <div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong><span>{tr("The administrator account and public page address will be created together.", "L’account amministratore e l’indirizzo pubblico della pagina verranno creati insieme.")}</span></div>
               </div>
             </div>
           )}

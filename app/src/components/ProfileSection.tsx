@@ -3,14 +3,12 @@ import {
   BriefcaseBusiness,
   Building2,
   Check,
-  Compass,
   Globe2,
   Image as ImageIcon,
   ImageUp,
   LockKeyhole,
   MapPin,
   Palette,
-  Play,
   RotateCcw,
   Save,
   Sparkles,
@@ -22,7 +20,6 @@ import { Facebook, Github, Instagram, Linkedin, Twitter, Youtube } from "lucide-
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
-import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -62,7 +59,6 @@ interface ProfileData {
   footerText?: string;
   showOrbitPageBadge?: boolean;
   favicon?: string;
-  adminOnboardingEnabled?: boolean;
 }
 
 interface ProfileSectionProps {
@@ -70,8 +66,6 @@ interface ProfileSectionProps {
   theme: ThemeConfig;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onProfilePreview?: (profile: ProfileData) => void;
-  onStartOnboarding?: () => void;
-  onAdminOnboardingEnabledChange?: (enabled: boolean) => void;
   seoAccess?: HostedSeoAccess;
   managePlanHref?: string;
   orbitPageBadgeEditable?: boolean;
@@ -174,8 +168,6 @@ export const ProfileSection = ({
   theme,
   onProfileUpdate,
   onProfilePreview,
-  onStartOnboarding,
-  onAdminOnboardingEnabledChange,
   seoAccess,
   managePlanHref = "/dashboard/billing",
   orbitPageBadgeEditable = true,
@@ -646,23 +638,6 @@ export const ProfileSection = ({
         </DialogContent>
       </Dialog>
 
-      {(onStartOnboarding || onAdminOnboardingEnabledChange) && (
-        <Card className="p-5" data-onboarding="onboarding-settings">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <div className="mb-2 flex items-center gap-2"><span className="admin-panel-icon"><Compass className="h-4 w-4" /></span><h2 className="text-base font-semibold text-slate-950">{tr("Guided setup", "Configurazione guidata")}</h2></div>
-              <p className="text-sm leading-6 text-slate-600">{tr("Keep the setup guide available while the page is being prepared.", "Mantieni disponibile la guida mentre prepari la pagina.")}</p>
-            </div>
-            {onStartOnboarding && <Button onClick={onStartOnboarding} className="admin-action admin-action-primary shrink-0" size="sm"><Play className="h-4 w-4" />{tr("Start guide", "Avvia guida")}</Button>}
-          </div>
-          {onAdminOnboardingEnabledChange && (
-            <div className="mt-4 flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3 py-3">
-              <div><p className="text-sm font-semibold text-slate-950">{tr("Show at every login", "Mostra a ogni accesso")}</p><p className="text-xs leading-5 text-slate-500">{tr("Useful during initial setup.", "Utile durante la configurazione iniziale.")}</p></div>
-              <Switch checked={profile.adminOnboardingEnabled !== false} onCheckedChange={onAdminOnboardingEnabledChange} />
-            </div>
-          )}
-        </Card>
-      )}
     </div>
   );
 };

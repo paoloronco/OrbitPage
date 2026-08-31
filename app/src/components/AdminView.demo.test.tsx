@@ -142,9 +142,9 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('content-workspace-option-locked');
     expect(html).toContain('Edit with AI');
     expect(html).toContain('aria-current="page"');
-    expect(html).toContain('Page checklist');
-    expect(html).toContain('Getting started · login 1 of 3');
-    expect(html).toContain('role="progressbar"');
+    expect(html).not.toContain('Page checklist');
+    expect(html).not.toContain('Guided setup');
+    expect(html).not.toContain('OrbitPage onboarding guide');
   });
 
   it('hides standalone session details in the hosted SaaS admin', () => {

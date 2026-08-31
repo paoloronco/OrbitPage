@@ -11,7 +11,7 @@ OrbitPage has two surfaces:
 | Public page | The public page visitors see | None |
 | Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
 
-Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` first checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, choose the admin password and primary public-page slug. OrbitPage then opens the dashboard tutorial. Dashboard sections keep their own URL, and Content uses `/dashboard/content/link`, `/dashboard/content/menu`, `/dashboard/content/shop`, or `/dashboard/content/pages`, so refreshing preserves the selected destination. `/admin`, `/dashboard/content`, `/dashboard/links`, `/dashboard/pages`, and `/dashboard/menu` remain compatibility aliases and resolve to their current workspace sections.
+Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` first checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, choose the admin password and primary public-page slug. OrbitPage then opens the dashboard directly. Dashboard sections keep their own URL, and Content uses `/dashboard/content/link`, `/dashboard/content/menu`, `/dashboard/content/shop`, or `/dashboard/content/pages`, so refreshing preserves the selected destination. `/admin`, `/dashboard/content`, `/dashboard/links`, `/dashboard/pages`, and `/dashboard/menu` remain compatibility aliases and resolve to their current workspace sections.
 
 ## Requirements
 
@@ -54,7 +54,7 @@ npm run start
 3. Wait for every dependency row to show a green check. Correct any failed row and use **Run again**.
 4. Create the password for the fixed `admin` account.
 5. Choose a lowercase slug such as `my-page`.
-6. Select **Complete setup** and follow the in-dashboard guide.
+6. Select **Complete setup** to open the dashboard.
 
 No partially configured account is kept if setup fails. Before completion, the placeholder page is noindexed, excluded from analytics, and omitted from `sitemap.xml`.
 
