@@ -636,9 +636,9 @@ export const ThemeCustomizer = ({
                     {colorControl("profileAccent", "Logo & social accent", pendingTheme.profileCard.accent, (accent) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, accent } }))}
                   </div>
                   <div className="mt-4 max-w-sm space-y-2">
-                    <Label>Profile gradient direction</Label>
+                    <Label htmlFor="theme-profile-gradient-direction">Profile gradient direction</Label>
                     <Select value={pendingTheme.profileCard.direction} onValueChange={(direction) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, direction } })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="theme-profile-gradient-direction"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="0deg">Top to bottom</SelectItem>
                         <SelectItem value="90deg">Left to right</SelectItem>
@@ -660,9 +660,9 @@ export const ThemeCustomizer = ({
                       {colorControl("bgGradientTo", "End", pendingTheme.backgroundGradient.to, (to) => updatePendingTheme({ backgroundGradient: { ...pendingTheme.backgroundGradient, to } }))}
                     </div>
                     <div className="mt-4 space-y-2">
-                      <Label>Direction</Label>
+                      <Label htmlFor="theme-background-gradient-direction">Direction</Label>
                       <Select value={pendingTheme.backgroundGradient.direction} onValueChange={(direction) => updatePendingTheme({ backgroundGradient: { ...pendingTheme.backgroundGradient, direction } })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="theme-background-gradient-direction"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="0deg">Top to bottom</SelectItem>
                           <SelectItem value="90deg">Left to right</SelectItem>
@@ -681,9 +681,9 @@ export const ThemeCustomizer = ({
                       {colorControl("cardGradientTo", "End", pendingTheme.contentCard.backgroundSecondary, (to) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, to }, contentCard: { ...pendingTheme.contentCard, backgroundSecondary: to } }))}
                     </div>
                     <div className="mt-4 space-y-2">
-                      <Label>Direction</Label>
+                      <Label htmlFor="theme-card-gradient-direction">Direction</Label>
                       <Select value={pendingTheme.contentCard.direction} onValueChange={(direction) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, direction }, contentCard: { ...pendingTheme.contentCard, direction } })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="theme-card-gradient-direction"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="0deg">Top to bottom</SelectItem>
                           <SelectItem value="90deg">Left to right</SelectItem>
@@ -703,9 +703,9 @@ export const ThemeCustomizer = ({
                   <p className="mt-1 text-sm text-slate-500">Applied to profile, cards, labels and calls to action.</p>
                 </div>
                 <div className="max-w-xl space-y-2">
-                  <Label>Font family</Label>
+                  <Label htmlFor="theme-font-family">Font family</Label>
                   <Select value={pendingTheme.fontFamily} onValueChange={(fontFamily) => updatePendingTheme({ fontFamily })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="theme-font-family"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Inter, system-ui, sans-serif">Inter</SelectItem>
                       <SelectItem value="Poppins, system-ui, sans-serif">Poppins</SelectItem>
@@ -726,15 +726,15 @@ export const ThemeCustomizer = ({
               <TabsContent value="layout" className="mt-6 space-y-7">
                 <div className="grid gap-6 sm:grid-cols-2">
                   <div className="space-y-3">
-                    <Label>Card radius <span className="text-slate-500">{pendingTheme.cardRadius}px</span></Label>
+                    <p>Card radius <span className="text-slate-500">{pendingTheme.cardRadius}px</span></p>
                     <Slider aria-label="Card radius" value={[pendingTheme.cardRadius]} valueLabelFormat={(cardRadius) => `${cardRadius}px`} onValueChange={([cardRadius]) => updatePendingTheme({ cardRadius })} max={28} min={0} step={1} />
                   </div>
                   <div className="space-y-3">
-                    <Label>Card spacing <span className="text-slate-500">{pendingTheme.cardSpacing}px</span></Label>
+                    <p>Card spacing <span className="text-slate-500">{pendingTheme.cardSpacing}px</span></p>
                     <Slider aria-label="Card spacing" value={[pendingTheme.cardSpacing]} valueLabelFormat={(cardSpacing) => `${cardSpacing}px`} onValueChange={([cardSpacing]) => updatePendingTheme({ cardSpacing })} max={32} min={4} step={1} />
                   </div>
                   <div className="space-y-3">
-                    <Label>Surface blur <span className="text-slate-500">{pendingTheme.blurIntensity}px</span></Label>
+                    <p>Surface blur <span className="text-slate-500">{pendingTheme.blurIntensity}px</span></p>
                     <Slider aria-label="Surface blur" value={[pendingTheme.blurIntensity]} valueLabelFormat={(blurIntensity) => `${blurIntensity}px`} onValueChange={([blurIntensity]) => updatePendingTheme({ blurIntensity })} max={50} min={0} step={1} />
                   </div>
                 </div>
@@ -827,23 +827,23 @@ export const ThemeCustomizer = ({
                     <div className="grid gap-6 sm:grid-cols-2">
                       {colorControl('cardShadowColor', 'Shadow color', pendingTheme.cardShadow.color, (color) => updateCardShadow({ color }))}
                       <div className="space-y-3">
-                        <Label>Opacity <span className="text-slate-500">{Math.round(pendingTheme.cardShadow.opacity * 100)}%</span></Label>
+                        <p>Opacity <span className="text-slate-500">{Math.round(pendingTheme.cardShadow.opacity * 100)}%</span></p>
                         <Slider aria-label="Card shadow opacity" value={[pendingTheme.cardShadow.opacity]} valueLabelFormat={(opacity) => `${Math.round(opacity * 100)}%`} onValueChange={([opacity]) => updateCardShadow({ opacity })} max={1} min={0} step={0.01} />
                       </div>
                       <div className="space-y-3">
-                        <Label>Horizontal offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetX}px</span></Label>
+                        <p>Horizontal offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetX}px</span></p>
                         <Slider aria-label="Card shadow horizontal offset" value={[pendingTheme.cardShadow.offsetX]} valueLabelFormat={(offsetX) => `${offsetX}px`} onValueChange={([offsetX]) => updateCardShadow({ offsetX })} max={32} min={-32} step={1} />
                       </div>
                       <div className="space-y-3">
-                        <Label>Vertical offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetY}px</span></Label>
+                        <p>Vertical offset <span className="text-slate-500">{pendingTheme.cardShadow.offsetY}px</span></p>
                         <Slider aria-label="Card shadow vertical offset" value={[pendingTheme.cardShadow.offsetY]} valueLabelFormat={(offsetY) => `${offsetY}px`} onValueChange={([offsetY]) => updateCardShadow({ offsetY })} max={48} min={-32} step={1} />
                       </div>
                       <div className="space-y-3">
-                        <Label>Softness <span className="text-slate-500">{pendingTheme.cardShadow.blur}px</span></Label>
+                        <p>Softness <span className="text-slate-500">{pendingTheme.cardShadow.blur}px</span></p>
                         <Slider aria-label="Card shadow softness" value={[pendingTheme.cardShadow.blur]} valueLabelFormat={(blur) => `${blur}px`} onValueChange={([blur]) => updateCardShadow({ blur })} max={96} min={0} step={1} />
                       </div>
                       <div className="space-y-3">
-                        <Label>Spread <span className="text-slate-500">{pendingTheme.cardShadow.spread}px</span></Label>
+                        <p>Spread <span className="text-slate-500">{pendingTheme.cardShadow.spread}px</span></p>
                         <Slider aria-label="Card shadow spread" value={[pendingTheme.cardShadow.spread]} valueLabelFormat={(spread) => `${spread}px`} onValueChange={([spread]) => updateCardShadow({ spread })} max={48} min={-32} step={1} />
                       </div>
                     </div>
@@ -864,9 +864,9 @@ export const ThemeCustomizer = ({
                 </div>
 
                 <div className="max-w-xl space-y-2">
-                  <Label>Public page width</Label>
+                  <Label htmlFor="theme-public-page-width">Public page width</Label>
                   <Select value={pendingTheme.maxWidth} onValueChange={(maxWidth) => updatePendingTheme({ maxWidth })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="theme-public-page-width"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="20rem">Small · 320px</SelectItem>
                       <SelectItem value="24rem">Medium · 384px</SelectItem>

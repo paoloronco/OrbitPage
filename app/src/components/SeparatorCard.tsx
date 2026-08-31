@@ -62,8 +62,8 @@ export const SeparatorCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, 
             {isVisible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3 text-muted-foreground" />}
           </Button>
         )}
-        {isFullEdit && <Button onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="w-7 h-7"><Edit className="w-3 h-3" /></Button>}
-        {isFullEdit && <Button onClick={() => onDelete(link.id)} variant="ghost" size="icon" className="w-7 h-7 text-destructive"><Trash2 className="w-3 h-3" /></Button>}
+        {isFullEdit && <Button aria-label="Edit section" onClick={() => setIsEditing(true)} variant="ghost" size="icon" className="w-7 h-7"><Edit aria-hidden="true" className="w-3 h-3" /></Button>}
+        {isFullEdit && <Button aria-label="Delete section" onClick={() => onDelete(link.id)} variant="ghost" size="icon" className="w-7 h-7 text-destructive"><Trash2 aria-hidden="true" className="w-3 h-3" /></Button>}
       </div>
       )}
     </div>

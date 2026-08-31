@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { APP_LOCALES, normalizeAppLocale, resolveInitialAppLocale } from "./i18n";
+import { APP_LOCALES, normalizeAppLocale, resolveApplicationErrorLocale, resolveInitialAppLocale } from "./i18n";
 
 describe("editor i18n", () => {
   it("supports the same locale families as the managed site", () => {
@@ -15,5 +15,11 @@ describe("editor i18n", () => {
     expect(resolveInitialAppLocale("editor", "", "de")).toBe("de");
     expect(resolveInitialAppLocale("editor", "", null)).toBe("en");
     expect(resolveInitialAppLocale("public", "?locale=ar", "ja")).toBe("en");
+  });
+
+  it("keeps the emergency fallback in the active interface language", () => {
+    expect(resolveApplicationErrorLocale("editor", "?locale=fr", "de", "it-IT")).toBe("fr");
+    expect(resolveApplicationErrorLocale("editor", "", "de", "it-IT")).toBe("de");
+    expect(resolveApplicationErrorLocale("public", "?locale=fr", "de", "ar-SA")).toBe("ar");
   });
 });

@@ -63,8 +63,8 @@ export const withRuntimeAssetPath = (path = '/'): string => {
   return withBasePath(normalizedPath);
 };
 
-/** Resolve legal and consent routes against the root page, not an optional subpage. */
-export const withTenantBasePath = (path = '/'): string => {
+/** Resolve an OrbitPage-owned destination against the root page, not the current optional subpage. */
+export const withPageRootPath = (path = '/'): string => {
   if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const activeBase = getActiveBasePath();
@@ -76,6 +76,9 @@ export const withTenantBasePath = (path = '/'): string => {
   if (normalizedPath === tenantBase || normalizedPath.startsWith(`${tenantBase}/`)) return normalizedPath;
   return `${tenantBase}${normalizedPath}`;
 };
+
+/** Resolve legal and consent routes against the root page, not an optional subpage. */
+export const withTenantBasePath = withPageRootPath;
 
 export const apiPath = (path = ''): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;

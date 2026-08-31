@@ -71,6 +71,7 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
 import { canonicalAdminTab, type AdminContentSection, type AdminTab } from "@/lib/admin-navigation";
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
+import type { InternalDestinationOption } from "@/lib/link-blocks";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
@@ -482,6 +483,36 @@ export const AdminView = ({
       enabled: contentDestinationEnabled.pages,
     },
   ];
+  const internalDestinations: InternalDestinationOption[] = [
+    ...(contentRouting.linkEnabled ? [{
+      id: "link",
+      kind: "link" as const,
+      path: "/links",
+      title: tr("Links", "Link"),
+      description: tr("Profile, links and content blocks", "Profilo, link e blocchi di contenuto"),
+    }] : []),
+    ...(menu.enabled ? [{
+      id: "menu",
+      kind: "menu" as const,
+      path: "/menu",
+      title: tr("Menu", "Menu"),
+      description: menu.description || tr("Browse food and drinks", "Scopri piatti e bevande"),
+    }] : []),
+    ...(hostedShop?.enabled ? [{
+      id: "shop",
+      kind: "shop" as const,
+      path: "/shop",
+      title: tr("Shop", "Shop"),
+      description: tr("Products, services and secure checkout", "Prodotti, servizi e checkout sicuro"),
+    }] : []),
+    ...subpages.filter((page) => page.enabled).map((page) => ({
+      id: `page:${page.id}`,
+      kind: "page" as const,
+      path: `/${page.slug}`,
+      title: page.title || page.slug,
+      description: page.description || tr("Additional page", "Pagina aggiuntiva"),
+    })),
+  ];
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -804,6 +835,7 @@ export const AdminView = ({
         title: page.title || page.slug,
         url: `${publicPageHref.replace(/\/$/, "")}/${page.slug}`,
       }))}
+      internalDestinations={internalDestinations.filter((destination) => destination.path !== "/links")}
       visualMode
       visualFocusLinkId={visualLinkId}
       visualEditRequest={visualEditRequest}
@@ -841,6 +873,7 @@ export const AdminView = ({
       videoUploadsEnabled={entitlements?.videoUploads ?? true}
       maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
       managePlanHref={managePlanHref}
+      internalDestinations={internalDestinations}
     />
   ) : visualSection === "shop" ? (
     isIntegratedHostedAdmin && hostedShop?.entitled
@@ -1311,6 +1344,7 @@ export const AdminView = ({
                         title: page.title || page.slug,
                         url: `${publicPageHref.replace(/\/$/, "")}/${page.slug}`,
                       }))}
+                      internalDestinations={internalDestinations.filter((destination) => destination.path !== "/links")}
                     />
                   </div>
                   {showEmbeddedPreview && <aside className="admin-workbench-rail">
@@ -1365,6 +1399,7 @@ export const AdminView = ({
                   videoUploadsEnabled={entitlements?.videoUploads ?? true}
                   maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
+                  internalDestinations={internalDestinations}
                   renderPreview={showEmbeddedPreview ? ((page, pageLinks) => (
                     <PreviewPanel
                       title={tr("Subpage preview", "Anteprima sottopagina")}

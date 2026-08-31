@@ -5,6 +5,7 @@ import { PublicEventCard } from "./PublicEventCard";
 import { PublicEmbedCard } from "./PublicEmbedCard";
 import { PublicHeadingCard } from "./PublicHeadingCard";
 import { PublicImageCard } from "./PublicImageCard";
+import { PublicInternalLinksCard } from "./PublicInternalLinksCard";
 import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicMapCard } from "./PublicMapCard";
 import { PublicMenuCard } from "./PublicMenuCard";
@@ -27,6 +28,7 @@ export const PublicBlockRenderer = ({ link }: PublicBlockRendererProps) => {
   if (link.type === "image") return <PublicImageCard link={link} />;
   if (link.type === "video") return <PublicVideoCard link={link} />;
   if (link.type === "contact") return <PublicContactCard link={link} />;
+  if (link.type === "internal_links") return <PublicInternalLinksCard link={link} />;
   if (link.type === "social_row" || isSocialRowContent(link.content)) return <PublicSocialRowCard link={link} />;
   if (link.type === "callout") return <PublicCalloutCard link={link} />;
   if (link.type === "map") return <PublicMapCard link={link} />;

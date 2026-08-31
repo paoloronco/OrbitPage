@@ -3,7 +3,7 @@
 This guide covers the self-hosted Page, Content, and Theme workspaces. Use them in this order when building a new page:
 
 1. Set the public identity in **Page**.
-2. Add and arrange the main-page blocks in **Content > Home**.
+2. Add and arrange the main-page blocks in **Content > Link**.
 3. Add a venue menu or focused subpages only when they make navigation clearer.
 4. Set the shared visual system in **Theme**.
 5. Save each workspace, then open **Public page** and check the result at mobile and desktop widths.
@@ -29,17 +29,25 @@ Changes in Page remain a draft in the browser until you select **Save** in the P
 
 ## Main-page blocks
 
-Open **Content > Home**, then select **Add content**. The library groups the available blocks by purpose:
+Open **Content > Link**, then select **Add content**. The library groups the available blocks by purpose:
 
 | Group | Blocks and presets |
 | --- | --- |
-| Essentials | Link, compact links, contact, and CTA |
+| Essentials | Link, internal page navigation, compact links, contact, and CTA |
 | Connected services | Social posts, media players, scheduling, forms, WhatsApp, and GitHub presets |
 | Writing and structure | Heading, text, list, and separator |
 | Media and embeds | Image, uploaded video, generic embed, and map |
 | Engagement | Event, callout, and the native venue-menu card |
 
 A list is a preconfigured text block. Connected-service entries create either a link or a consent-aware embed with provider-specific defaults. The page supports one compact-links row; edit the existing row to add, remove, or reorder its destinations.
+
+### Internal page navigation
+
+Use **Internal page navigation** to connect the current block-based page to any other active destination without copying its public URL. The picker includes Link, Menu, Shop on OrbitPage SaaS, and published additional pages. It is available both in Content > Link and inside every additional page.
+
+Each navigation block can contain up to 12 destinations. Choose full-width cards, two or three side-by-side cards, or small wrapping buttons. Labels, supporting descriptions and symbols are editable; descriptions and icons can be hidden, while filled, outline and minimal appearances inherit the active theme and any block-level color overrides.
+
+Internal paths are resolved from the OrbitPage root, so navigation remains correct on custom domains, hosted username routes and self-hosted subfolder installations. If an additional-page slug changes, reopen any navigation block that points to it and select the renamed destination again.
 
 ### Edit and arrange blocks
 
@@ -54,7 +62,7 @@ Each block has its own edit panel. The available fields depend on the block type
 
 Drag blocks to change their public order, or use the move controls when dragging is inconvenient. Block edits and reordering remain local until **Save** is selected in the Content toolbar. The **Unsaved changes** badge identifies this state.
 
-The toolbar can also export only the Home blocks to `links-export.json`. Importing that format validates the file and replaces the current Home block list. Create a full backup before importing if the existing list may be needed later.
+The toolbar can also export only the Link blocks to `links-export.json`. Importing that format validates the file and replaces the current Link block list. Create a full backup before importing if the existing list may be needed later.
 
 ### Visibility and scheduling
 
@@ -85,7 +93,7 @@ The self-hosted venue menu has its own public route and visual theme. Build it i
 
 Use the category filter and item search to keep large menus manageable. Products can be moved between a category and one of its subsections. Deleting a category also removes its subsections and all items inside them, so export a backup first if the content may be needed.
 
-Enable the menu and select **Save** to publish it at `/menu` under the configured public page URL. The menu editor has no second publish step. Use **Add menu link to main page** to create or refresh the native menu card on Home, then save the Home blocks as well.
+Enable the menu and select **Save** to publish it at `/menu` under the configured public page URL. The menu editor has no second publish step. Use **Add menu link to main page** to create or refresh the native menu card in Link, then save the Link blocks as well.
 
 ## Focused subpages
 
@@ -100,7 +108,7 @@ The main page is permanent and is not part of this list. Subpages reuse the inst
 
 Page details and page blocks have separate save actions. Select **Save details** after changing the slug, title, description, or publication state. Select **Save** in the block toolbar after editing or reordering that page's blocks. Deleting a subpage removes its public URL.
 
-When linking to a subpage from Home, use **Your OrbitPage pages** in the compact-links editor instead of typing a second copy of the URL. After changing a slug, check every external bookmark or QR code that used the old path.
+When linking to a subpage, prefer **Internal page navigation** instead of typing a second copy of the URL. Compact links can still provide icon-only shortcuts. After changing a slug, check every navigation block, external bookmark or QR code that used the old path.
 
 ## Theme and background
 

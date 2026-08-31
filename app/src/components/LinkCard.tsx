@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ArrowRight, CalendarClock, Code2, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, Code2, FileText, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";
@@ -18,6 +18,11 @@ import {
   type EmbedConsentCategory,
   type EmbedProvider,
   type EventBlockData,
+  type InternalDestinationOption,
+  type InternalLinkItemData,
+  type InternalLinksBlockData,
+  type InternalLinksItemStyle,
+  type InternalLinksLayout,
   type LinkBlockType,
   type MapBlockData,
   type SocialLinkPlatform,
@@ -34,6 +39,7 @@ import {
   getEmbedProviderLabel,
   getEmbedProviderPlaceholder,
   getEventData,
+  getInternalLinksData,
   getMapData,
   getSeparatorData,
   getServiceLinkData,
@@ -120,6 +126,7 @@ interface LinkCardProps {
   maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
   availablePages?: Array<{ title: string; url: string }>;
+  internalDestinations?: InternalDestinationOption[];
   editRequest?: number;
 }
 
@@ -156,6 +163,7 @@ export const LinkCard = ({
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
   availablePages = [],
+  internalDestinations = [],
   editRequest,
 }: LinkCardProps) => {
   const { tr } = useAppI18n();
@@ -260,6 +268,18 @@ export const LinkCard = ({
           coverImage: undefined,
           coverImageAlt: undefined,
         }
+      : isInternalLinks
+      ? {
+          ...normalizedLink,
+          type: 'internal_links' as const,
+          url: '',
+          hideUrl: true,
+          icon: undefined,
+          iconType: undefined,
+          coverImage: undefined,
+          coverImageAlt: undefined,
+          content: buildBlockContent(getInternalLinksData(normalizedLink.content)),
+        }
       : normalizedLink.type === 'separator'
       ? {
           ...normalizedLink,
@@ -360,7 +380,8 @@ export const LinkCard = ({
   const isImage = link.type === 'image';
   const isVideo = link.type === 'video';
   const isContact = link.type === 'contact';
-  const isSocialRow = link.type === 'social_row' || isSocialRowContent(link.content);
+  const isInternalLinks = link.type === 'internal_links';
+  const isSocialRow = link.type === 'social_row' || (!isInternalLinks && isSocialRowContent(link.content));
   const isCallout = link.type === 'callout';
   const isMap = link.type === 'map';
   const isEvent = link.type === 'event';
@@ -370,6 +391,7 @@ export const LinkCard = ({
 
   const contactData = getContactData(editLink.content);
   const socialData = getSocialRowDraftData(editLink.content);
+  const internalLinksData = getInternalLinksData(editLink.content);
   const calloutData = getCalloutData(editLink.content);
   const mapData = getMapData(editLink.content);
   const eventData = getEventData(editLink.content);
@@ -429,6 +451,64 @@ export const LinkCard = ({
       ...prev,
       content: buildBlockContent({ ...getSocialRowDraftData(prev.content), [field]: value }),
     }));
+  };
+
+  const updateInternalLinksData = <K extends keyof InternalLinksBlockData>(field: K, value: InternalLinksBlockData[K]) => {
+    setEditLink((previous) => ({
+      ...previous,
+      content: buildBlockContent({ ...getInternalLinksData(previous.content), [field]: value }),
+    }));
+  };
+
+  const addInternalDestination = (destination: InternalDestinationOption) => {
+    setEditLink((previous) => {
+      const current = getInternalLinksData(previous.content);
+      if (current.items.length >= 12 || current.items.some((item) => item.path === destination.path)) return previous;
+      const id = typeof globalThis.crypto?.randomUUID === 'function'
+        ? globalThis.crypto.randomUUID()
+        : `internal-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      return {
+        ...previous,
+        content: buildBlockContent({
+          ...current,
+          items: [...current.items, {
+            id,
+            kind: destination.kind,
+            path: destination.path,
+            label: destination.title,
+            description: destination.description,
+            icon: destination.icon || '',
+          }],
+        }),
+      };
+    });
+  };
+
+  const updateInternalItem = (index: number, patch: Partial<InternalLinkItemData>) => {
+    setEditLink((previous) => {
+      const current = getInternalLinksData(previous.content);
+      return {
+        ...previous,
+        content: buildBlockContent({
+          ...current,
+          items: current.items.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item),
+        }),
+      };
+    });
+  };
+
+  const removeInternalItem = (index: number) => updateInternalLinksData(
+    'items',
+    internalLinksData.items.filter((_, itemIndex) => itemIndex !== index),
+  );
+
+  const moveInternalItem = (index: number, offset: -1 | 1) => {
+    const nextIndex = index + offset;
+    if (nextIndex < 0 || nextIndex >= internalLinksData.items.length) return;
+    const items = [...internalLinksData.items];
+    const [item] = items.splice(index, 1);
+    items.splice(nextIndex, 0, item);
+    updateInternalLinksData('items', items);
   };
 
   const addSocialItem = (item: SocialRowItemData = { label: "", url: "", platform: "auto", icon: "" }) => {
@@ -514,8 +594,10 @@ export const LinkCard = ({
             ? 'Map title'
             : isEvent
               ? 'Event title'
-              : isEmbed
+          : isEmbed
                 ? 'Embed title'
+                : isInternalLinks
+                  ? tr('Navigation title', 'Titolo navigazione')
                 : isMenu
                   ? 'Menu title'
                   : 'Link title';
@@ -897,6 +979,7 @@ export const LinkCard = ({
               <div className="space-y-3">
               {isFullEdit && (
                 <Input
+                  aria-label={titlePlaceholder}
                   value={editLink.title}
                   onChange={(e) => setEditLink(prev => ({ ...prev, title: e.target.value }))}
                   placeholder={titlePlaceholder}
@@ -906,8 +989,9 @@ export const LinkCard = ({
               {canEditStyle && (
               <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Title Font Size (px)</Label>
+                <Label htmlFor={`link-card-title-size-${link.id}`} className="text-xs">Title Font Size (px)</Label>
                 <Input
+                  id={`link-card-title-size-${link.id}`}
                   type="number"
                   value={parseInt(editLink.titleFontSize || '16', 10)}
                   onChange={(e) => setEditLink(prev => ({ ...prev, titleFontSize: `${e.target.value}px` }))}
@@ -915,8 +999,9 @@ export const LinkCard = ({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Description Font Size (px)</Label>
+                <Label htmlFor={`link-card-description-size-${link.id}`} className="text-xs">Description Font Size (px)</Label>
                 <Input
+                  id={`link-card-description-size-${link.id}`}
                   type="number"
                   value={parseInt(editLink.descriptionFontSize || '14', 10)}
                   onChange={(e) => setEditLink(prev => ({ ...prev, descriptionFontSize: `${e.target.value}px` }))}
@@ -928,12 +1013,12 @@ export const LinkCard = ({
               {canEditStyle && (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <div className="space-y-1">
-                <Label className="text-xs">Title Font</Label>
+                <Label htmlFor={`link-card-title-font-${link.id}`} className="text-xs">Title Font</Label>
                 <Select
                   value={editLink.titleFontFamily || 'Inter, system-ui, sans-serif'}
                   onValueChange={(value: string) => setEditLink(prev => ({ ...prev, titleFontFamily: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`link-card-title-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -948,12 +1033,12 @@ export const LinkCard = ({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Description Font</Label>
+                <Label htmlFor={`link-card-description-font-${link.id}`} className="text-xs">Description Font</Label>
                 <Select
                   value={editLink.descriptionFontFamily || 'Inter, system-ui, sans-serif'}
                   onValueChange={(value: string) => setEditLink(prev => ({ ...prev, descriptionFontFamily: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`link-card-description-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -968,12 +1053,12 @@ export const LinkCard = ({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Alignment</Label>
+                <Label htmlFor={`link-card-alignment-${link.id}`} className="text-xs">Alignment</Label>
                 <Select
                   value={editLink.alignment || 'left'}
                   onValueChange={(value: 'left' | 'center' | 'right') => setEditLink(prev => ({ ...prev, alignment: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`link-card-alignment-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -993,12 +1078,13 @@ export const LinkCard = ({
                 {!isSocialRow && !isMap && (!isSeparator || showUrlField) && (
                   <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                     <div className="mb-3">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Destination</p>
-                      <p className="text-sm font-semibold text-slate-900">Description &amp; link</p>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{isInternalLinks ? tr("Introduction", "Introduzione") : tr("Destination", "Destinazione")}</p>
+                      <p className="text-sm font-semibold text-slate-900">{isInternalLinks ? tr("Section description", "Descrizione della sezione") : tr("Description & link", "Descrizione e link")}</p>
                     </div>
                     <div className="space-y-3">
                       {!isSeparator && (
                         <Textarea
+                          aria-label="Block description"
                           value={editLink.description}
                           onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
                           placeholder="Block description"
@@ -1054,56 +1140,66 @@ export const LinkCard = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Input
+                        aria-label="Contact name"
                         value={contactData.name || ''}
                         onChange={(e) => updateContactData('name', e.target.value)}
                         placeholder="Name"
                       />
                       <Input
+                        aria-label="Contact title"
                         value={contactData.title || ''}
                         onChange={(e) => updateContactData('title', e.target.value)}
                         placeholder="Title"
                       />
                     </div>
                     <Input
+                      aria-label="Contact role"
                       value={contactData.role || ''}
                       onChange={(e) => updateContactData('role', e.target.value)}
                       placeholder="Role"
                     />
                     <div className="grid grid-cols-2 gap-2">
                       <Input
+                        aria-label="Contact phone"
                         value={contactData.phone || ''}
                         onChange={(e) => updateContactData('phone', e.target.value)}
                         placeholder="Phone"
                       />
                       <Input
+                        aria-label="Contact WhatsApp number"
                         value={contactData.whatsapp || ''}
                         onChange={(e) => updateContactData('whatsapp', e.target.value)}
                         placeholder="WhatsApp (number)"
                       />
                     </div>
                     <Input
+                      aria-label="Contact email"
                       value={contactData.email || ''}
                       onChange={(e) => updateContactData('email', e.target.value)}
                       placeholder="Email"
                     />
                     <div className="grid grid-cols-2 gap-2">
                       <Input
+                        aria-label="Contact website"
                         value={contactData.website || ''}
                         onChange={(e) => updateContactData('website', e.target.value)}
                         placeholder="Website"
                       />
                       <Input
+                        aria-label="Contact Telegram username"
                         value={contactData.telegram || ''}
                         onChange={(e) => updateContactData('telegram', e.target.value)}
                         placeholder="Telegram (@username)"
                       />
                     </div>
                     <Input
+                      aria-label="Contact address"
                       value={contactData.address || ''}
                       onChange={(e) => updateContactData('address', e.target.value)}
                       placeholder="Address"
                     />
                     <Input
+                      aria-label="Contact note"
                       value={contactData.note || ''}
                       onChange={(e) => updateContactData('note', e.target.value)}
                       placeholder="Note"
@@ -1113,12 +1209,12 @@ export const LinkCard = ({
                 {isSeparator && (
                   <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">Separator background</Label>
+                      <Label htmlFor={`link-card-separator-background-${link.id}`} className="text-xs">Separator background</Label>
                       <Select
                         value={separatorData.boxed === true ? 'full' : 'transparent'}
                         onValueChange={(value: 'transparent' | 'full') => updateSeparatorData('boxed', value === 'full')}
                       >
-                        <SelectTrigger className="h-8 bg-white text-black">
+                        <SelectTrigger id={`link-card-separator-background-${link.id}`} className="h-8 bg-white text-black">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1131,6 +1227,140 @@ export const LinkCard = ({
                       </p>
                     </div>
                   </div>
+                )}
+                {isInternalLinks && (
+                  <section className="admin-internal-links-editor">
+                    <div className="admin-internal-links-editor__heading">
+                      <span className="admin-internal-links-editor__mark"><ExternalLink className="h-4 w-4" /></span>
+                      <span>
+                        <strong>{tr("Internal page navigation", "Navigazione interna")}</strong>
+                        <small>{tr("Guide visitors between your active destinations without sending them outside the site.", "Guida i visitatori tra le destinazioni attive senza farli uscire dal sito.")}</small>
+                      </span>
+                    </div>
+
+                    <div className="admin-internal-links-layout" role="group" aria-label={tr("Navigation layout", "Layout navigazione")}>
+                      {([
+                        ["stacked", tr("Cards", "Card"), tr("Full-width navigation cards", "Card di navigazione a tutta larghezza")],
+                        ["grid", tr("Side by side", "Affiancate"), tr("Two or three cards per row", "Due o tre card per riga")],
+                        ["buttons", tr("Small buttons", "Pulsanti piccoli"), tr("Compact wrapping actions", "Azioni compatte su più righe")],
+                      ] as Array<[InternalLinksLayout, string, string]>).map(([value, label, description]) => (
+                        <button
+                          aria-pressed={internalLinksData.layout === value}
+                          className={internalLinksData.layout === value ? "is-active" : ""}
+                          key={value}
+                          onClick={() => updateInternalLinksData('layout', value)}
+                          type="button"
+                        >
+                          <span aria-hidden="true"><i /><i /><i /></span>
+                          <strong>{label}</strong>
+                          <small>{description}</small>
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="admin-internal-links-options">
+                      <label>
+                        <span>{tr("Item appearance", "Aspetto elementi")}</span>
+                        <Select value={internalLinksData.itemStyle} onValueChange={(value: InternalLinksItemStyle) => updateInternalLinksData('itemStyle', value)}>
+                          <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="filled">{tr("Filled", "Pieno")}</SelectItem>
+                            <SelectItem value="outline">{tr("Outline", "Contorno")}</SelectItem>
+                            <SelectItem value="minimal">{tr("Minimal", "Minimale")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </label>
+                      {internalLinksData.layout === 'grid' && (
+                        <label>
+                          <span>{tr("Cards per row", "Card per riga")}</span>
+                          <Select value={String(internalLinksData.columns)} onValueChange={(value) => updateInternalLinksData('columns', value === '3' ? 3 : 2)}>
+                            <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="2">2</SelectItem>
+                              <SelectItem value="3">3</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </label>
+                      )}
+                      <label className="admin-internal-links-switch">
+                        <span><strong>{tr("Icons", "Icone")}</strong><small>{tr("Show a symbol for every destination", "Mostra un simbolo per ogni destinazione")}</small></span>
+                        <Switch checked={internalLinksData.showIcons} onCheckedChange={(checked) => updateInternalLinksData('showIcons', checked)} />
+                      </label>
+                      <label className="admin-internal-links-switch">
+                        <span><strong>{tr("Descriptions", "Descrizioni")}</strong><small>{tr("Add context below each label", "Aggiungi contesto sotto ogni etichetta")}</small></span>
+                        <Switch checked={internalLinksData.showDescriptions} disabled={internalLinksData.layout === 'buttons'} onCheckedChange={(checked) => updateInternalLinksData('showDescriptions', checked)} />
+                      </label>
+                    </div>
+
+                    <div className="admin-internal-links-add">
+                      <div>
+                        <strong>{tr("Add destination", "Aggiungi destinazione")}</strong>
+                        <small>{tr("Only active internal destinations are shown.", "Sono mostrate solo le destinazioni interne attive.")}</small>
+                      </div>
+                      <div>
+                        {internalDestinations.filter((destination) => !internalLinksData.items.some((item) => item.path === destination.path)).map((destination) => (
+                          <Button key={destination.id} type="button" variant="outline" size="sm" disabled={internalLinksData.items.length >= 12} onClick={() => addInternalDestination(destination)}>
+                            {destination.kind === 'menu' ? <UtensilsCrossed className="h-3.5 w-3.5" /> : destination.kind === 'shop' ? <ShoppingBag className="h-3.5 w-3.5" /> : destination.kind === 'page' ? <FileText className="h-3.5 w-3.5" /> : <ExternalLink className="h-3.5 w-3.5" />}
+                            {destination.title}
+                          </Button>
+                        ))}
+                        {internalDestinations.every((destination) => internalLinksData.items.some((item) => item.path === destination.path)) && (
+                          <span>{tr("All available destinations are already included.", "Tutte le destinazioni disponibili sono già incluse.")}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="admin-internal-links-list">
+                      {internalLinksData.items.map((item, index) => {
+                        const currentDestination = internalDestinations.find((destination) => destination.path === item.path);
+                        const selectableDestinations = internalDestinations.filter((destination) => (
+                          destination.path === item.path || !internalLinksData.items.some((candidate, candidateIndex) => candidateIndex !== index && candidate.path === destination.path)
+                        ));
+                        return (
+                          <article className="admin-internal-link-item" key={item.id}>
+                            <header>
+                              <span><strong>{item.label || currentDestination?.title || tr("Internal destination", "Destinazione interna")}</strong><small>{item.path}</small></span>
+                              <span>
+                                <Button type="button" variant="ghost" size="icon" disabled={index === 0} onClick={() => moveInternalItem(index, -1)} aria-label={tr("Move up", "Sposta su")} title={tr("Move up", "Sposta su")}><ArrowLeft className="h-3.5 w-3.5 rotate-90" /></Button>
+                                <Button type="button" variant="ghost" size="icon" disabled={index === internalLinksData.items.length - 1} onClick={() => moveInternalItem(index, 1)} aria-label={tr("Move down", "Sposta giù")} title={tr("Move down", "Sposta giù")}><ArrowRight className="h-3.5 w-3.5 rotate-90" /></Button>
+                                <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => removeInternalItem(index)} aria-label={tr("Remove destination", "Rimuovi destinazione")} title={tr("Remove destination", "Rimuovi destinazione")}><X className="h-3.5 w-3.5" /></Button>
+                              </span>
+                            </header>
+                            <div className="admin-internal-link-item__fields">
+                              <label>
+                                <span>{tr("Destination", "Destinazione")}</span>
+                                <Select value={item.path} onValueChange={(path) => {
+                                  const destination = internalDestinations.find((candidate) => candidate.path === path);
+                                  if (destination) updateInternalItem(index, { kind: destination.kind, path: destination.path, label: destination.title, description: destination.description, icon: destination.icon || '' });
+                                }}>
+                                  <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    {!currentDestination && <SelectItem value={item.path}>{tr("Unavailable", "Non disponibile")} · {item.path}</SelectItem>}
+                                    {selectableDestinations.map((destination) => <SelectItem key={destination.id} value={destination.path}>{destination.title}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </label>
+                              <label>
+                                <span>{tr("Label", "Etichetta")}</span>
+                                <Input value={item.label || ''} maxLength={120} onChange={(event) => updateInternalItem(index, { label: event.target.value })} placeholder={currentDestination?.title || tr("Open page", "Apri pagina")} />
+                              </label>
+                              <label className="admin-internal-link-item__description">
+                                <span>{tr("Description", "Descrizione")}</span>
+                                <Input value={item.description || ''} maxLength={300} onChange={(event) => updateInternalItem(index, { description: event.target.value })} placeholder={tr("Optional supporting text", "Testo di supporto facoltativo")} />
+                              </label>
+                              <label>
+                                <span>{tr("Symbol", "Simbolo")}</span>
+                                <Input value={item.icon || ''} maxLength={4} onChange={(event) => updateInternalItem(index, { icon: event.target.value })} placeholder="↗" />
+                              </label>
+                            </div>
+                          </article>
+                        );
+                      })}
+                      {internalLinksData.items.length === 0 && (
+                        <div className="admin-internal-links-empty"><ExternalLink className="h-5 w-5" /><span><strong>{tr("Add the first destination", "Aggiungi la prima destinazione")}</strong><small>{tr("Choose an active page above to make this block visible.", "Scegli una pagina attiva qui sopra per rendere visibile il blocco.")}</small></span></div>
+                      )}
+                    </div>
+                  </section>
                 )}
                 {isSocialRow && (
                   <div className="admin-compact-link-editor">
@@ -1177,7 +1407,7 @@ export const LinkCard = ({
 
                     {availablePages.length > 0 && (
                       <div className="admin-compact-link-pages">
-                        <Label>{tr("Your OrbitPage pages", "Le tue pagine OrbitPage")}</Label>
+                        <p>{tr("Your OrbitPage pages", "Le tue pagine OrbitPage")}</p>
                         <div>
                           {availablePages.map((page) => (
                             <Button key={page.url} type="button" variant="outline" size="sm" disabled={socialData.items.length >= 16} onClick={() => addSocialItem({ label: page.title, url: page.url, platform: 'page', icon: '' })}>
@@ -1302,11 +1532,13 @@ export const LinkCard = ({
                       Callout settings
                     </div>
                     <Input
+                      aria-label="Callout badge"
                       value={calloutData.badge || ''}
                       onChange={(e) => updateCalloutData('badge', e.target.value)}
                       placeholder="Badge (optional)"
                     />
                     <Input
+                      aria-label="Callout button label"
                       value={calloutData.buttonLabel || ''}
                       onChange={(e) => updateCalloutData('buttonLabel', e.target.value)}
                       placeholder="Button label"
@@ -1368,24 +1600,28 @@ export const LinkCard = ({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Input
+                        aria-label="Event date"
                         type="date"
                         value={eventData.date || ''}
                         onChange={(e) => updateEventData('date', e.target.value)}
                         placeholder="Date (YYYY-MM-DD)"
                       />
                       <Input
+                        aria-label="Event start time"
                         type="time"
                         value={eventData.time || ''}
                         onChange={(e) => updateEventData('time', e.target.value)}
                         placeholder="Start time"
                       />
                       <Input
+                        aria-label="Event end date"
                         type="date"
                         value={eventData.endDate || ''}
                         onChange={(e) => updateEventData('endDate', e.target.value)}
                         placeholder="End date"
                       />
                       <Input
+                        aria-label="Event end time"
                         type="time"
                         value={eventData.endTime || ''}
                         onChange={(e) => updateEventData('endTime', e.target.value)}
@@ -1393,24 +1629,28 @@ export const LinkCard = ({
                       />
                     </div>
                     <Input
+                      aria-label="Event location"
                       value={eventData.location || ''}
                       onChange={(e) => updateEventData('location', e.target.value)}
                       placeholder="Location"
                     />
                     <Input
+                      aria-label="Event button label"
                       value={eventData.ticketLabel || ''}
                       onChange={(e) => updateEventData('ticketLabel', e.target.value)}
                       placeholder="Button label"
                     />
                     <Input
+                      aria-label="Event notes"
                       value={eventData.notes || ''}
                       onChange={(e) => updateEventData('notes', e.target.value)}
                       placeholder="Notes"
                     />
                     <div className="grid gap-2 sm:grid-cols-[1fr,auto] sm:items-end">
                       <div className="space-y-1">
-                        <Label className="text-xs">{tr('Event timezone', 'Fuso orario evento')}</Label>
+                        <Label htmlFor={`link-card-event-timezone-${link.id}`} className="text-xs">{tr('Event timezone', 'Fuso orario evento')}</Label>
                         <Input
+                          id={`link-card-event-timezone-${link.id}`}
                           value={eventData.timezone || ''}
                           onChange={(e) => updateEventData('timezone', e.target.value)}
                           onFocus={() => {
@@ -1440,9 +1680,9 @@ export const LinkCard = ({
                     </div>
                     <div className="grid gap-2 sm:grid-cols-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">Provider</Label>
+                        <Label htmlFor={`link-card-embed-provider-${link.id}`} className="text-xs">Provider</Label>
                         <Select value={embedData.provider || 'auto'} onValueChange={(value: EmbedProvider) => updateEmbedProvider(value)}>
-                          <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
+                          <SelectTrigger id={`link-card-embed-provider-${link.id}`} className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="auto">Auto detect</SelectItem>
                             <SelectItem value="instagram">Instagram</SelectItem>
@@ -1468,9 +1708,9 @@ export const LinkCard = ({
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Consent category</Label>
+                        <Label htmlFor={`link-card-consent-category-${link.id}`} className="text-xs">Consent category</Label>
                         <Select value={embedData.consentCategory || 'marketing'} onValueChange={(value: EmbedConsentCategory) => updateEmbedData('consentCategory', value)}>
-                          <SelectTrigger className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
+                          <SelectTrigger id={`link-card-consent-category-${link.id}`} className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="necessary">Necessary · load immediately</SelectItem>
                             <SelectItem value="preferences">Preferences</SelectItem>
@@ -1481,8 +1721,9 @@ export const LinkCard = ({
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Embed height</Label>
+                      <Label htmlFor={`link-card-embed-height-${link.id}`} className="text-xs">Embed height</Label>
                       <Input
+                        id={`link-card-embed-height-${link.id}`}
                         type="number"
                         min={180}
                         max={900}
@@ -1492,13 +1733,14 @@ export const LinkCard = ({
                     </div>
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label className="text-xs">{usesDirectEmbedUrl ? `${getEmbedProviderLabel(resolvedEmbedProvider)} URL` : 'Snippet or HTTPS embed URL'}</Label>
+                        <Label htmlFor={`link-card-embed-source-${link.id}`} className="text-xs">{usesDirectEmbedUrl ? `${getEmbedProviderLabel(resolvedEmbedProvider)} URL` : 'Snippet or HTTPS embed URL'}</Label>
                         <span className="text-[11px] font-medium text-muted-foreground">
                           {embedData.provider === 'auto' ? `Detected: ${getEmbedProviderLabel(resolvedEmbedProvider)}` : 'Official player'}
                         </span>
                       </div>
                       {usesDirectEmbedUrl ? (
                         <Input
+                          id={`link-card-embed-source-${link.id}`}
                           value={embedData.snippet || ''}
                           onChange={(event) => updateEmbedData('snippet', event.target.value)}
                           placeholder={getEmbedProviderPlaceholder(resolvedEmbedProvider)}
@@ -1508,6 +1750,7 @@ export const LinkCard = ({
                         />
                       ) : (
                         <Textarea
+                          id={`link-card-embed-source-${link.id}`}
                           value={embedData.snippet || ''}
                           onChange={(event) => updateEmbedData('snippet', event.target.value)}
                           placeholder={getEmbedProviderPlaceholder(resolvedEmbedProvider)}
@@ -1551,14 +1794,14 @@ export const LinkCard = ({
                 )}
                 {editLink.type === 'cta' && (
                   <div className="space-y-1">
-                    <Label className="text-xs">CTA action</Label>
+                     <Label htmlFor={`link-card-cta-action-${link.id}`} className="text-xs">CTA action</Label>
                     <Select
                       value={editLink.ctaAction || 'book'}
                       onValueChange={(value: 'book' | 'contact' | 'download' | 'subscribe' | 'buy') =>
                         setEditLink(prev => ({ ...prev, ctaAction: value }))
                       }
                     >
-                      <SelectTrigger className="h-8 bg-white text-black">
+                       <SelectTrigger id={`link-card-cta-action-${link.id}`} className="h-8 bg-white text-black">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1600,12 +1843,12 @@ export const LinkCard = ({
                 </div>
               )}
               <div className="space-y-1">
-                <Label className="text-xs">Status</Label>
+                <Label htmlFor={`link-card-status-${link.id}`} className="text-xs">Status</Label>
                 <Select
                   value={editLink.status || 'live'}
                   onValueChange={(value: 'draft' | 'live' | 'expired') => setEditLink(prev => ({ ...prev, status: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`link-card-status-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1616,8 +1859,9 @@ export const LinkCard = ({
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Campaign</Label>
+                <Label htmlFor={`link-card-campaign-${link.id}`} className="text-xs">Campaign</Label>
                 <Input
+                  id={`link-card-campaign-${link.id}`}
                   disabled={!schedulingEnabled}
                   value={editLink.campaignName || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, campaignName: e.target.value || undefined }))}
@@ -1626,8 +1870,9 @@ export const LinkCard = ({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Show from date</Label>
+                <Label htmlFor={`link-card-start-date-${link.id}`} className="text-xs">Show from date</Label>
                 <Input
+                  id={`link-card-start-date-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.startDate || ''}
@@ -1636,8 +1881,9 @@ export const LinkCard = ({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Show from time</Label>
+                <Label htmlFor={`link-card-start-time-${link.id}`} className="text-xs">Show from time</Label>
                 <Input
+                  id={`link-card-start-time-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.startTime || ''}
@@ -1646,8 +1892,9 @@ export const LinkCard = ({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Hide after date</Label>
+                <Label htmlFor={`link-card-end-date-${link.id}`} className="text-xs">Hide after date</Label>
                 <Input
+                  id={`link-card-end-date-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.endDate || ''}
@@ -1656,8 +1903,9 @@ export const LinkCard = ({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Hide after time</Label>
+                <Label htmlFor={`link-card-end-time-${link.id}`} className="text-xs">Hide after time</Label>
                 <Input
+                  id={`link-card-end-time-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.endTime || ''}
@@ -1666,8 +1914,9 @@ export const LinkCard = ({
                 />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs">Timezone</Label>
+                <Label htmlFor={`link-card-timezone-${link.id}`} className="text-xs">Timezone</Label>
                 <Input
+                  id={`link-card-timezone-${link.id}`}
                   disabled={!schedulingEnabled}
                   value={editLink.timezone || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, timezone: e.target.value || undefined }))}
@@ -1696,6 +1945,7 @@ export const LinkCard = ({
                     <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
                       <video src={videoData.mediaUrl} preload="metadata" muted playsInline className="h-full w-full object-cover" />
                       <Button
+                        aria-label="Remove video"
                         type="button"
                         size="icon"
                         variant="secondary"
@@ -1709,12 +1959,14 @@ export const LinkCard = ({
                   ) : null}
                   <div className="flex items-center gap-2">
                     <Input
+                      aria-label="Video URL"
                       value={videoData.mediaUrl || ''}
                       onChange={(event) => updateVideoData('mediaUrl', event.target.value)}
                       placeholder="https://example.com/video.mp4"
                       className="glass-card border-primary/20 flex-1"
                     />
                     <Button
+                      aria-label={videoUploadsEnabled ? "Upload video" : "Video uploads require Pro"}
                       type="button"
                       variant="outline"
                       size="sm"
@@ -1733,9 +1985,9 @@ export const LinkCard = ({
                     <ToggleSetting label="Autoplay muted" checked={videoData.autoplay === true} onCheckedChange={(value) => updateVideoData('autoplay', value)} />
                     <ToggleSetting label="Loop" checked={videoData.loop === true} onCheckedChange={(value) => updateVideoData('loop', value)} />
                     <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5">
-                      <Label className="text-sm font-medium text-slate-900">Fit</Label>
+                      <Label htmlFor={`link-card-video-fit-${link.id}`} className="text-sm font-medium text-slate-900">Fit</Label>
                       <Select value={videoData.objectFit || 'cover'} onValueChange={(value: 'cover' | 'contain') => updateVideoData('objectFit', value)}>
-                        <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
+                        <SelectTrigger id={`link-card-video-fit-${link.id}`} className="h-8 w-28"><SelectValue /></SelectTrigger>
                         <SelectContent><SelectItem value="cover">Cover</SelectItem><SelectItem value="contain">Contain</SelectItem></SelectContent>
                       </Select>
                     </div>
@@ -1746,7 +1998,7 @@ export const LinkCard = ({
             )}
 
             {/* Icon Upload */}
-            {canEditImages && !isSeparator && !isSocialRow && (
+            {canEditImages && !isSeparator && !isSocialRow && !isInternalLinks && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Media</p>
@@ -1754,15 +2006,17 @@ export const LinkCard = ({
               </div>
               <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Icon</Label>
+              <Label htmlFor={`link-card-icon-${link.id}`} className="text-sm font-medium">Icon</Label>
               <div className="flex items-center gap-2">
                 <Input
+                  id={`link-card-icon-${link.id}`}
                   value={editLink.icon || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, icon: e.target.value, iconType: 'emoji' }))}
                   placeholder="🔗 or emoji"
                   className="glass-card border-primary/20 flex-1"
                 />
                 <Button
+                  aria-label="Upload and optimize icon"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -1782,7 +2036,7 @@ export const LinkCard = ({
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-1">
+              <Label htmlFor={`link-card-cover-url-${link.id}`} className="text-sm font-medium flex items-center gap-1">
                 <Image className="w-3.5 h-3.5" />
                 Cover Image
               </Label>
@@ -1794,6 +2048,7 @@ export const LinkCard = ({
                     className="w-full h-full object-cover"
                   />
                   <button
+                    aria-label="Remove cover image"
                     type="button"
                     onClick={() => setEditLink(prev => ({ ...prev, coverImage: undefined, coverImageAlt: undefined }))}
                     className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 transition-colors"
@@ -1805,12 +2060,14 @@ export const LinkCard = ({
               )}
               <div className="flex items-center gap-2">
                 <Input
+                  id={`link-card-cover-url-${link.id}`}
                   value={editLink.coverImage && !editLink.coverImage.startsWith('data:') ? editLink.coverImage : ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, coverImage: e.target.value || undefined }))}
                   placeholder="https://example.com/image.jpg"
                   className="glass-card border-primary/20 flex-1"
                 />
                 <Button
+                  aria-label="Upload cover image"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -1829,6 +2086,7 @@ export const LinkCard = ({
                 />
               </div>
               <Input
+                aria-label="Cover image alternative text"
                 value={editLink.coverImageAlt || ''}
                 onChange={(e) => setEditLink(prev => ({ ...prev, coverImageAlt: e.target.value || undefined }))}
                 placeholder="Image description (alt text, optional)"
@@ -1849,12 +2107,12 @@ export const LinkCard = ({
               </div>
               <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Card surface</Label>
+              <Label htmlFor={`link-card-surface-${link.id}`} className="text-sm font-medium">Card surface</Label>
               <Select
                 value={editLink.surfaceEffect || 'inherit'}
                 onValueChange={(surfaceEffect: CardSurfaceEffect | 'inherit') => setEditLink(prev => ({ ...prev, surfaceEffect }))}
               >
-                <SelectTrigger className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
+                <SelectTrigger id={`link-card-surface-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1867,14 +2125,14 @@ export const LinkCard = ({
               <p className="text-xs leading-5 text-slate-500">Transparent removes the surface. Liquid glass keeps the background visible with blur and a subtle rim.</p>
             </div>
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Size</Label>
+              <Label htmlFor={`link-card-size-${link.id}`} className="text-sm font-medium">Size</Label>
               <Select
                 value={editLink.size || 'medium'}
                 onValueChange={(value: 'small' | 'medium' | 'large') =>
                   setEditLink(prev => ({ ...prev, size: value }))
                 }
               >
-                <SelectTrigger className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
+                <SelectTrigger id={`link-card-size-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1887,10 +2145,10 @@ export const LinkCard = ({
             <div className={`grid gap-2 ${isSeparator && separatorData.boxed !== true ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {(!isSeparator || separatorData.boxed === true) && (
                 <div className="space-y-1">
-                <Label className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center justify-between gap-2 text-xs">
                   <span>{isSeparator ? 'Full Background' : 'Background'}</span>
                   <span className="font-normal text-slate-500">{editLink.backgroundColor ? 'Card override' : 'Theme color'}</span>
-                </Label>
+                </div>
                   <ColorPicker
                     label={isSeparator ? 'Full background color' : 'Background color'}
                     value={editLink.backgroundColor || inheritedBackgroundColor}
@@ -1899,10 +2157,10 @@ export const LinkCard = ({
                 </div>
               )}
               <div className="space-y-1">
-                <Label className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center justify-between gap-2 text-xs">
                   <span>{isSeparator ? 'Line/Text Color' : 'Text Color'}</span>
                   <span className="font-normal text-slate-500">{editLink.textColor ? 'Card override' : 'Theme color'}</span>
-                </Label>
+                </div>
                 <ColorPicker
                   label={isSeparator ? 'Line or text color' : 'Text color'}
                   value={editLink.textColor || inheritedTextColor}
@@ -2036,7 +2294,7 @@ const ToggleSetting = ({
   onCheckedChange: (checked: boolean) => void;
 }) => (
   <div className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
-    <Label className="text-sm font-medium text-slate-900">{label}</Label>
-    <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    <span className="text-sm font-medium text-slate-900">{label}</span>
+    <Switch aria-label={label} checked={checked} onCheckedChange={onCheckedChange} />
   </div>
 );

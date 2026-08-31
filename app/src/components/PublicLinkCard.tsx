@@ -196,7 +196,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
       <div className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full overflow-hidden">
         <img
           src={iconUrl}
-          alt={link.title || 'Link icon'}
+          alt=""
           loading="eager"
           decoding="async"
           className="public-link-icon-image w-full h-full object-cover rounded-full"
@@ -312,17 +312,10 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
                 >
                   {link.title || "Untitled Link"}
                 </h3>
-                <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />
+                <ExternalLink aria-hidden="true" className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />
                 {unavailable ? (
                   <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{tr('Unavailable', 'Non disponibile')}</span>
                 ) : null}
-                {!unavailable && <button
-                  onClick={handleCopy}
-                  className="opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
-                  title="Copy link"
-                >
-                  {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
-                </button>}
               </div>
               {link.description && (
                 <p
@@ -342,6 +335,15 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
               )}
             </div>
           </a>
+          {!unavailable && <button
+            aria-label={copied ? "Link copied" : "Copy link"}
+            onClick={handleCopy}
+            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
+            title={copied ? "Link copied" : "Copy link"}
+            type="button"
+          >
+            {copied ? <Check aria-hidden="true" className="w-3 h-3 text-green-500" /> : <Copy aria-hidden="true" className="w-3 h-3 text-muted-foreground" />}
+          </button>}
         </div>
       </div>
     </Card>

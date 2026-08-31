@@ -206,6 +206,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       </Button>
       {isFullEdit && (
         <Button
+          aria-label="Delete block"
           onClick={() => onDelete(link.id)}
           variant="ghost"
           size="icon"
@@ -281,6 +282,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
         {isEditing ? (
           <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             <Input
+              aria-label="Text card title"
               value={editLink.title}
               onChange={(e) => setEditLink(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Text card title"
@@ -300,12 +302,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Title Font</Label>
+                <Label htmlFor={`text-card-title-font-${link.id}`} className="text-xs">Title Font</Label>
                 <Select
                   value={editLink.titleFontFamily || 'Inter, system-ui, sans-serif'}
                   onValueChange={(value: string) => setEditLink(prev => ({ ...prev, titleFontFamily: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`text-card-title-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -319,12 +321,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Description Font</Label>
+                <Label htmlFor={`text-card-description-font-${link.id}`} className="text-xs">Description Font</Label>
                 <Select
                   value={editLink.descriptionFontFamily || 'Inter, system-ui, sans-serif'}
                   onValueChange={(value: string) => setEditLink(prev => ({ ...prev, descriptionFontFamily: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`text-card-description-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -338,12 +340,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Alignment</Label>
+                <Label htmlFor={`text-card-alignment-${link.id}`} className="text-xs">Alignment</Label>
                 <Select
                   value={editLink.alignment || 'left'}
                   onValueChange={(value: 'left' | 'center' | 'right') => setEditLink(prev => ({ ...prev, alignment: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`text-card-alignment-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -358,7 +360,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             {/* Clickable List Items */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Clickable List Items</Label>
+                <h3 className="text-sm font-medium">Clickable List Items</h3>
                 <Button
                   type="button"
                   variant="outline"
@@ -373,12 +375,14 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 <div key={index} className="bg-white/5 dark:bg-white/3 rounded-lg p-3 mb-3 border border-white/5">
                   <div className="flex items-center justify-between gap-2">
                     <Input
+                      aria-label={`List item ${index + 1} text`}
                       value={item.text}
                       onChange={(e) => updateTextItem(index, 'text', e.target.value)}
                       placeholder="List item text"
                       className="bg-white text-black dark:bg-gray-800 dark:text-white flex-1 rounded-md"
                     />
                     <Button
+                      aria-label="Remove item"
                       type="button"
                       variant="ghost"
                       size="icon"
@@ -391,6 +395,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   </div>
                   <div className="mt-2">
                     <Input
+                      aria-label={`List item ${index + 1} URL`}
                       value={item.url || ''}
                       onChange={(e) => updateTextItem(index, 'url', e.target.value)}
                       placeholder="https://example.com"
@@ -411,6 +416,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                     />
                     <div className="w-20">
                       <Input
+                        aria-label={`List item ${index + 1} font size`}
                         type="number"
                         value={parseInt(item.fontSize || '14', 10)}
                         onChange={(e) => {
@@ -433,7 +439,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                           }));
                         }}
                       >
-                        <SelectTrigger className="h-8 w-full bg-white text-black rounded-md">
+                        <SelectTrigger aria-label={`List item ${index + 1} font family`} className="h-8 w-full bg-white text-black rounded-md">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -453,6 +459,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             
             {/* Removed large free-text editor to keep UI compact; use clickable list items instead */}
             <Input
+              aria-label="Text card URL"
               value={editLink.url}
               onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
               placeholder="https://example.com (optional - makes the entire card clickable)"
@@ -469,12 +476,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             )}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Status</Label>
+                <Label htmlFor={`text-card-status-${link.id}`} className="text-xs">Status</Label>
                 <Select
                   value={editLink.status || 'live'}
                   onValueChange={(value: 'draft' | 'live' | 'expired') => setEditLink(prev => ({ ...prev, status: value }))}
                 >
-                  <SelectTrigger className="h-8 bg-white text-black">
+                  <SelectTrigger id={`text-card-status-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -485,8 +492,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Campaign</Label>
+                <Label htmlFor={`text-card-campaign-${link.id}`} className="text-xs">Campaign</Label>
                 <Input
+                  id={`text-card-campaign-${link.id}`}
                   disabled={!schedulingEnabled}
                   value={editLink.campaignName || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, campaignName: e.target.value || undefined }))}
@@ -495,8 +503,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Show from date</Label>
+                <Label htmlFor={`text-card-start-date-${link.id}`} className="text-xs">Show from date</Label>
                 <Input
+                  id={`text-card-start-date-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.startDate || ''}
@@ -505,8 +514,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Show from time</Label>
+                <Label htmlFor={`text-card-start-time-${link.id}`} className="text-xs">Show from time</Label>
                 <Input
+                  id={`text-card-start-time-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.startTime || ''}
@@ -515,8 +525,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Hide after date</Label>
+                <Label htmlFor={`text-card-end-date-${link.id}`} className="text-xs">Hide after date</Label>
                 <Input
+                  id={`text-card-end-date-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="date"
                   value={editLink.endDate || ''}
@@ -525,8 +536,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Hide after time</Label>
+                <Label htmlFor={`text-card-end-time-${link.id}`} className="text-xs">Hide after time</Label>
                 <Input
+                  id={`text-card-end-time-${link.id}`}
                   disabled={!schedulingEnabled}
                   type="time"
                   value={editLink.endTime || ''}
@@ -535,8 +547,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="col-span-2 space-y-1">
-                <Label className="text-xs">Timezone</Label>
+                <Label htmlFor={`text-card-timezone-${link.id}`} className="text-xs">Timezone</Label>
                 <Input
+                  id={`text-card-timezone-${link.id}`}
                   disabled={!schedulingEnabled}
                   value={editLink.timezone || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, timezone: e.target.value || undefined }))}
@@ -553,15 +566,17 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
             {/* Icon Upload */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Icon</Label>
+              <Label htmlFor={`text-card-icon-${link.id}`} className="text-sm font-medium">Icon</Label>
               <div className="flex items-center gap-2">
                 <Input
+                  id={`text-card-icon-${link.id}`}
                   value={editLink.icon || ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, icon: e.target.value, iconType: 'emoji' }))}
                   placeholder="📝 or emoji"
                   className="glass-card border-primary/20 flex-1"
                 />
                 <Button
+                  aria-label="Upload icon"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -582,7 +597,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
             {/* Cover Image */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-1">
+              <Label htmlFor={`text-card-cover-url-${link.id}`} className="text-sm font-medium flex items-center gap-1">
                 <Image className="w-3.5 h-3.5" />
                 Cover Image
               </Label>
@@ -594,6 +609,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                     className="w-full h-full object-cover"
                   />
                   <button
+                    aria-label="Remove cover image"
                     type="button"
                     onClick={() => setEditLink(prev => ({ ...prev, coverImage: undefined, coverImageAlt: undefined }))}
                     className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full p-0.5 transition-colors"
@@ -605,12 +621,14 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               )}
               <div className="flex items-center gap-2">
                 <Input
+                  id={`text-card-cover-url-${link.id}`}
                   value={editLink.coverImage && !editLink.coverImage.startsWith('data:') ? editLink.coverImage : ''}
                   onChange={(e) => setEditLink(prev => ({ ...prev, coverImage: e.target.value || undefined }))}
                   placeholder="https://example.com/image.jpg"
                   className="glass-card border-primary/20 flex-1"
                 />
                 <Button
+                  aria-label="Upload cover image"
                   type="button"
                   variant="outline"
                   size="sm"
@@ -629,6 +647,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <Input
+                aria-label="Cover image alternative text"
                 value={editLink.coverImageAlt || ''}
                 onChange={(e) => setEditLink(prev => ({ ...prev, coverImageAlt: e.target.value || undefined }))}
                 placeholder="Image description (alt text, optional)"
@@ -640,12 +659,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
 
             {/* Size Selection */}
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Card surface</Label>
+              <Label htmlFor={`text-card-surface-${link.id}`} className="text-sm font-medium">Card surface</Label>
               <Select
                 value={editLink.surfaceEffect || 'inherit'}
                 onValueChange={(surfaceEffect: CardSurfaceEffect | 'inherit') => setEditLink(prev => ({ ...prev, surfaceEffect }))}
               >
-                <SelectTrigger className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
+                <SelectTrigger id={`text-card-surface-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -659,14 +678,14 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Size</Label>
+              <Label htmlFor={`text-card-size-${link.id}`} className="text-sm font-medium">Size</Label>
               <Select
                 value={editLink.size || 'medium'}
                 onValueChange={(value: 'small' | 'medium' | 'large') => 
                   setEditLink(prev => ({ ...prev, size: value }))
                 }
               >
-                <SelectTrigger className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
+                <SelectTrigger id={`text-card-size-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -680,10 +699,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             {/* Colors */}
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center justify-between gap-2 text-xs">
                   <span>Background</span>
                   <span className="font-normal text-slate-500">{editLink.backgroundColor ? 'Card override' : 'Theme color'}</span>
-                </Label>
+                </div>
                 <ColorPicker
                   label="Background color"
                   value={editLink.backgroundColor || inheritedBackgroundColor}
@@ -691,10 +710,10 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
               <div className="space-y-1">
-                <Label className="flex items-center justify-between gap-2 text-xs">
+                <div className="flex items-center justify-between gap-2 text-xs">
                   <span>Text Color</span>
                   <span className="font-normal text-slate-500">{editLink.textColor ? 'Card override' : 'Theme color'}</span>
-                </Label>
+                </div>
                 <ColorPicker
                   label="Text color"
                   value={editLink.textColor || inheritedTextColor}
@@ -831,6 +850,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </Button>
               )}
               <Button
+                aria-label="Edit card"
                 onClick={() => setIsEditing(true)}
                 variant="ghost"
                 size="icon"
@@ -840,6 +860,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               </Button>
               {isFullEdit && (
                 <Button
+                  aria-label="Delete card"
                   onClick={() => onDelete(link.id)}
                   variant="ghost"
                   size="icon"

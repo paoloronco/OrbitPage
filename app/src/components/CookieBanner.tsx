@@ -15,7 +15,7 @@
  */
 
 import { createPortal } from 'react-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   consentManager,
   type ConsentCategory,
@@ -24,6 +24,7 @@ import {
 } from '@/lib/consent-manager';
 import { resolveSafePublicHref } from '@/lib/browser-network-policy';
 import { Switch } from '@/components/ui/switch';
+import { useDialogAccessibility } from '@/lib/use-dialog-accessibility';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -157,18 +158,7 @@ function PreferencesModal({
   const toggle = (cat: ConsentCategory) =>
     setSelected((prev) => ({ ...prev, [cat]: !prev[cat] }));
 
-  // Focus trap
-  const modalRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = modalRef.current;
-    if (!el) return;
-    el.focus();
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [onClose]);
+  const modalRef = useDialogAccessibility<HTMLDivElement>(true, onClose);
 
   const optionalCats = (
     ['preferences', 'analytics', 'marketing'] as ConsentCategory[]
@@ -452,6 +442,10 @@ export function CookieBanner({ config }: CookieBannerProps) {
   const [prefsOpen, setPrefsOpen] = useState(false);
 
   const cfg = config.hardcoded;
+  const centeredDialogRef = useDialogAccessibility<HTMLDivElement>(
+    Boolean(cfg && bannerVisible && !prefsOpen && cfg.layout === 'centered-modal'),
+    () => setBannerVisible(false),
+  );
 
   // Register UI callbacks with the manager so external code can open the banner/prefs
   useEffect(() => {
@@ -529,6 +523,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
 
   const renderCenteredModal = () => (
     <div
+      ref={centeredDialogRef}
       style={{
         position: 'fixed',
         inset: 0,
@@ -542,6 +537,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
       role="dialog"
       aria-label="Cookie consent"
       aria-modal="true"
+      tabIndex={-1}
     >
       <div style={{
         background: colors.bg,

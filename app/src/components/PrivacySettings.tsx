@@ -286,13 +286,13 @@ function FieldRow({ label, description, children }: {
   label: string; description?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+    <Label className="block space-y-1.5">
+      <span className="block text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
         {label}
-      </Label>
+      </span>
       {children}
-      {description && <p className="text-xs leading-5 text-slate-600">{description}</p>}
-    </div>
+      {description && <span className="block text-xs font-normal leading-5 text-slate-600">{description}</span>}
+    </Label>
   );
 }
 
@@ -529,7 +529,7 @@ function LegalPoliciesForm({
             When enabled, visitors can open these links from the public footer and consent banner.
           </p>
         </div>
-        <Switch checked={showLegalLinks} onCheckedChange={onShowLegalLinksChange} />
+        <Switch aria-label="Show legal links in footer" checked={showLegalLinks} onCheckedChange={onShowLegalLinksChange} />
       </div>
 
       {showLegalLinks && (
@@ -574,6 +574,7 @@ function CategorySection({
           </p>
         </div>
         <Switch
+          aria-label={label}
           checked={catCfg.enabled}
           onCheckedChange={(v) => onChange({ enabled: v })}
         />
@@ -831,6 +832,7 @@ function HardcodedForm({
             </p>
           </div>
           <Switch
+            aria-label="Re-show banner on policy update"
             checked={cfg.reshowOnVersionChange}
             onCheckedChange={(v) => onChange({ reshowOnVersionChange: v })}
           />
@@ -1629,11 +1631,11 @@ export function PrivacySettings({
                 />
                 {cmpSiteUrl ? (
                   <div className="mb-5 border-y border-blue-200 bg-blue-50/70 px-4 py-4">
-                    <Label className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-800">
+                    <Label htmlFor="privacy-cmp-site-url" className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-800">
                       {tr('Site URL to register with the CMP', 'URL del sito da registrare nella CMP')}
                     </Label>
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                      <Input className="admin-input font-mono text-xs" readOnly value={cmpSiteUrl} />
+                      <Input id="privacy-cmp-site-url" className="admin-input font-mono text-xs" readOnly value={cmpSiteUrl} />
                       <Button
                         type="button"
                         variant="outline"

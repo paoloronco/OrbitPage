@@ -51,9 +51,10 @@ const PasswordFields = ({
   const [show, setShow] = useState(false);
   return (
     <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
+      <p className="text-xs">{label}</p>
       <div className="relative">
         <Input
+          aria-label={label}
           type={show ? 'text' : 'password'}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -63,6 +64,7 @@ const PasswordFields = ({
           disabled={disabled}
         />
         <Button
+          aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
           type="button"
           variant="ghost"
           size="icon"
@@ -91,7 +93,7 @@ const RoleSelect = ({
   const roleList = excludeAdmin ? ROLES.filter(r => r !== 'admin') : ROLES;
   return (
     <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger className="glass-card border-primary/20 text-sm h-9">
+      <SelectTrigger aria-label="Role" className="glass-card border-primary/20 text-sm h-9">
         <SelectValue placeholder="Select role" />
       </SelectTrigger>
       <SelectContent>
@@ -301,8 +303,9 @@ export const UserManager = () => {
         >
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">New user</p>
           <div className="space-y-1">
-            <Label className="text-xs">Username</Label>
+            <Label htmlFor="new-user-username" className="text-xs">Username</Label>
             <Input
+              id="new-user-username"
               type="text"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
@@ -315,7 +318,7 @@ export const UserManager = () => {
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Role</Label>
+            <p className="text-xs">Role</p>
             <RoleSelect value={newRole} onChange={setNewRole} disabled={addLoading} excludeAdmin />
           </div>
           <PasswordFields label="Password" value={newPassword} onChange={setNewPassword} disabled={addLoading} />
@@ -368,6 +371,7 @@ export const UserManager = () => {
                     <div className="flex items-center gap-1 shrink-0 ml-2">
                       {!isAdmin && (
                         <Button
+                          aria-label="Change role"
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
@@ -384,6 +388,7 @@ export const UserManager = () => {
                         </Button>
                       )}
                       <Button
+                        aria-label="Change password"
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
@@ -403,6 +408,7 @@ export const UserManager = () => {
                         )}
                       </Button>
                       <Button
+                        aria-label={isAdmin ? 'The admin user cannot be deleted' : 'Delete user'}
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7 text-destructive hover:text-destructive"
@@ -460,7 +466,7 @@ export const UserManager = () => {
                   >
                     <p className="text-xs text-muted-foreground font-medium">Change role for "{u.username}"</p>
                     <div className="space-y-1">
-                      <Label className="text-xs">Role</Label>
+                      <p className="text-xs">Role</p>
                       <RoleSelect value={editRole} onChange={setEditRole} disabled={editLoading} excludeAdmin />
                     </div>
                     {editMsg && (

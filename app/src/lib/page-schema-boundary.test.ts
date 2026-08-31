@@ -56,6 +56,46 @@ describe('canonical page schema boundary', () => {
         executable: 'not-supported',
       }),
     }])).toThrow(/unrecognized|invalid video/i);
+
+    expect(() => parseOrbitPageBlocks([{
+      id: 'unsafe-navigation',
+      type: 'internal_links',
+      title: 'Explore',
+      content: JSON.stringify({
+        items: [{ id: 'outside', kind: 'page', path: '//attacker.test', label: 'Leave' }],
+      }),
+    }])).toThrow(/invalid internal-links|items\.0\.path|must match pattern/i);
+  });
+
+  it('preserves customizable internal OrbitPage navigation blocks', () => {
+    const [navigation] = parseOrbitPageBlocks([{
+      id: 'navigation',
+      type: 'internal_links',
+      title: 'Explore',
+      description: 'Choose a destination',
+      content: JSON.stringify({
+        items: [
+          { id: 'menu-link', kind: 'menu', path: '/menu', label: 'Menu', description: 'Food and drinks', icon: '🍽️' },
+          { id: 'shop-link', kind: 'shop', path: '/shop', label: 'Shop', description: 'Products and services' },
+        ],
+        layout: 'grid',
+        columns: 2,
+        itemStyle: 'outline',
+        showDescriptions: true,
+        showIcons: true,
+      }),
+    }]);
+
+    expect(navigation).toMatchObject({ type: 'internal_links', url: '' });
+    expect(JSON.parse(navigation.content || '{}')).toMatchObject({
+      layout: 'grid',
+      columns: 2,
+      itemStyle: 'outline',
+      items: [
+        expect.objectContaining({ kind: 'menu', path: '/menu' }),
+        expect.objectContaining({ kind: 'shop', path: '/shop' }),
+      ],
+    });
   });
 
   it('canonicalizes legitimate editor URL shortcuts before persistence', () => {

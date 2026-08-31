@@ -3,7 +3,7 @@ import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 import type { LinkData } from "./LinkCard";
 import { withTenantBasePath } from "@/lib/base-path";
-import { getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
+import { getInternalLinksData, getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 
@@ -77,6 +77,7 @@ export const PublicView = ({
     if (link.type === 'social_row' || isSocialRowContent(link.content)) {
       return (getSocialRowData(link.content).items || []).length > 0;
     }
+    if (link.type === 'internal_links') return getInternalLinksData(link.content).items.length > 0;
     if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event' || link.type === 'embed') {
       return (
         link.title.trim() !== '' ||

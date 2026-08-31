@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, CSSProperties } from "react";
+import { useEffect, useRef, CSSProperties } from "react";
 import { BackgroundMediaConfig } from "@/lib/theme";
 import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
@@ -9,19 +9,7 @@ interface BackgroundLayerProps {
 
 export const BackgroundLayer = ({ config, mode = "viewport" }: BackgroundLayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const mediaUrl = resolveSafePublicMediaUrl(config.mediaUrl);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  // Background video is author-selected page content, so keep it playing even when
-  // reduced motion is enabled. Decorative GIFs still honor that preference below.
   useEffect(() => {
     const v = videoRef.current;
     if (!v || config.type !== "video") return;
@@ -102,15 +90,11 @@ export const BackgroundLayer = ({ config, mode = "viewport" }: BackgroundLayerPr
           style={mediaStyle}
         />
       ) : (
-        // GIF — hidden when user prefers reduced motion
         <img
           src={mediaUrl}
           alt=""
           role="presentation"
-          style={{
-            ...mediaStyle,
-            display: prefersReducedMotion ? "none" : undefined,
-          }}
+          style={mediaStyle}
         />
       )}
 

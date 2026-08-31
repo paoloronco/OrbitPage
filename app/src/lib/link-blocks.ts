@@ -1,4 +1,4 @@
-export type LinkBlockType = 'link' | 'menu' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'video' | 'contact' | 'social_row' | 'callout' | 'map' | 'event' | 'embed';
+export type LinkBlockType = 'link' | 'menu' | 'text' | 'separator' | 'cta' | 'heading' | 'image' | 'video' | 'contact' | 'social_row' | 'internal_links' | 'callout' | 'map' | 'event' | 'embed';
 
 export interface VideoBlockData {
   mediaUrl?: string;
@@ -43,6 +43,37 @@ export interface SocialRowBlockData {
   boxed?: boolean;
   showTitle?: boolean;
   showLabels?: boolean;
+}
+
+export type InternalLinkKind = 'link' | 'menu' | 'shop' | 'page';
+export type InternalLinksLayout = 'stacked' | 'grid' | 'buttons';
+export type InternalLinksItemStyle = 'filled' | 'outline' | 'minimal';
+
+export interface InternalLinkItemData {
+  id: string;
+  kind: InternalLinkKind;
+  path: string;
+  label?: string;
+  description?: string;
+  icon?: string;
+}
+
+export interface InternalLinksBlockData {
+  items: InternalLinkItemData[];
+  layout: InternalLinksLayout;
+  columns: 2 | 3;
+  itemStyle: InternalLinksItemStyle;
+  showDescriptions: boolean;
+  showIcons: boolean;
+}
+
+export interface InternalDestinationOption {
+  id: string;
+  kind: InternalLinkKind;
+  path: string;
+  title: string;
+  description: string;
+  icon?: string;
 }
 
 export interface CalloutBlockData {
@@ -109,6 +140,10 @@ const toString = (value: unknown): string => {
 const socialRowLayouts: SocialRowLayout[] = ['icons', 'pills', 'grid'];
 const socialRowIconStyles: SocialRowIconStyle[] = ['brand', 'theme', 'outline'];
 const socialLinkPlatforms: SocialLinkPlatform[] = ['auto', 'page', 'link', 'website', 'instagram', 'facebook', 'tiktok', 'x', 'youtube', 'linkedin', 'whatsapp', 'telegram', 'discord', 'github', 'email'];
+const internalLinkKinds: InternalLinkKind[] = ['link', 'menu', 'shop', 'page'];
+const internalLinksLayouts: InternalLinksLayout[] = ['stacked', 'grid', 'buttons'];
+const internalLinksItemStyles: InternalLinksItemStyle[] = ['filled', 'outline', 'minimal'];
+const internalLinkPathPattern = /^\/(?:links|menu|shop|[a-z0-9]+(?:-[a-z0-9]+)*)$/;
 
 export const parseBlockContent = <T>(content: string | null | undefined): T | undefined => {
   const parsed = parseJson(content);
@@ -195,6 +230,7 @@ export const getSocialRowData = (content: string | null | undefined): SocialRowB
 export const isSocialRowContent = (content: string | null | undefined): boolean => {
   const parsed = parseBlockContent<Record<string, unknown>>(content);
   if (!isPlainObject(parsed) || !Array.isArray(parsed.items)) return false;
+  if ('itemStyle' in parsed || 'showDescriptions' in parsed || 'showIcons' in parsed) return false;
   return (
     'layout' in parsed ||
     'iconStyle' in parsed ||
@@ -202,6 +238,43 @@ export const isSocialRowContent = (content: string | null | undefined): boolean 
     'showTitle' in parsed ||
     'boxed' in parsed
   );
+};
+
+export const getInternalLinksData = (content: string | null | undefined): InternalLinksBlockData => {
+  const parsed = parseBlockContent<InternalLinksBlockData>(content);
+  if (!isPlainObject(parsed)) {
+    return { items: [], layout: 'stacked', columns: 2, itemStyle: 'filled', showDescriptions: true, showIcons: true };
+  }
+
+  const record = parsed as Record<string, unknown>;
+  const rawItems = Array.isArray(record.items) ? record.items : [];
+  const items = rawItems
+    .map((entry): InternalLinkItemData | null => {
+      if (!isPlainObject(entry)) return null;
+      const kind = internalLinkKinds.includes(entry.kind as InternalLinkKind) ? entry.kind as InternalLinkKind : 'page';
+      const path = toString(entry.path).slice(0, 100);
+      if (!internalLinkPathPattern.test(path)) return null;
+      const id = toString(entry.id).slice(0, 80);
+      return {
+        id: id || `internal-${kind}-${path.replace(/[^a-z0-9]+/gi, '-')}`,
+        kind,
+        path,
+        label: toString(entry.label).slice(0, 120),
+        description: toString(entry.description).slice(0, 300),
+        icon: toString(entry.icon).slice(0, 24),
+      };
+    })
+    .filter((item): item is InternalLinkItemData => item !== null)
+    .slice(0, 12);
+
+  return {
+    items,
+    layout: internalLinksLayouts.includes(record.layout as InternalLinksLayout) ? record.layout as InternalLinksLayout : 'stacked',
+    columns: record.columns === 3 ? 3 : 2,
+    itemStyle: internalLinksItemStyles.includes(record.itemStyle as InternalLinksItemStyle) ? record.itemStyle as InternalLinksItemStyle : 'filled',
+    showDescriptions: record.showDescriptions !== false,
+    showIcons: record.showIcons !== false,
+  };
 };
 
 export const getCalloutData = (content: string | null | undefined): CalloutBlockData => {
@@ -628,8 +701,8 @@ export const getVideoData = (content: string | null | undefined): VideoBlockData
 export const isBlockType = (type: string | undefined): type is LinkBlockType => (
   type === 'link' || type === 'menu' || type === 'text' || type === 'separator' || type === 'cta' ||
   type === 'heading' || type === 'image' || type === 'video' || type === 'contact' || type === 'social_row' ||
-  type === 'callout' || type === 'map' || type === 'event' || type === 'embed'
+  type === 'internal_links' || type === 'callout' || type === 'map' || type === 'event' || type === 'embed'
 );
 
 export const isPublicActionableBlock = (type?: LinkBlockType | string) =>
-  type !== 'separator' && type !== 'heading' && type !== 'embed' && type !== 'video';
+  type !== 'separator' && type !== 'heading' && type !== 'embed' && type !== 'video' && type !== 'internal_links';

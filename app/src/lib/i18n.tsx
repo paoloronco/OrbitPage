@@ -79,6 +79,21 @@ export function resolveInitialAppLocale(mode: AppI18nMode, search: string, store
   return "en";
 }
 
+export function resolveApplicationErrorLocale(
+  mode: AppI18nMode,
+  search: string,
+  storedLocale: string | null,
+  documentLocale: string | null,
+): AppLocale {
+  if (mode === "editor") {
+    return normalizeAppLocale(new URLSearchParams(search).get("locale"))
+      || normalizeAppLocale(storedLocale)
+      || normalizeAppLocale(documentLocale)
+      || "en";
+  }
+  return normalizeAppLocale(documentLocale) || "en";
+}
+
 function initialLocale(mode: AppI18nMode): AppLocale {
   if (typeof window === "undefined") return "en";
   return resolveInitialAppLocale(mode, window.location.search, window.localStorage.getItem(STORAGE_KEY));
