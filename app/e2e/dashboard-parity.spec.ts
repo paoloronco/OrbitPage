@@ -15,18 +15,18 @@ const primaryNavigation = [
 const secondaryNavigation = ['Newsletter', 'Team', 'Account', 'Plan'];
 
 const navigationIcons = {
-  Page: 'user-round',
-  Content: 'files',
-  'AI Assistant': 'sparkles',
-  Theme: 'palette',
-  Publish: 'share-2',
-  Backup: 'database',
-  Analytics: 'bar-chart-3',
-  Privacy: 'cookie',
-  Newsletter: 'mail',
-  Team: 'users-round',
-  Account: 'circle-user-round',
-  Plan: 'credit-card',
+  Page: 'person-outline',
+  Content: 'folder-copy-outlined',
+  'AI Assistant': 'auto-awesome-outlined',
+  Theme: 'palette-outlined',
+  Publish: 'share-outlined',
+  Backup: 'storage-outlined',
+  Analytics: 'bar-chart-outlined',
+  Privacy: 'cookie-outlined',
+  Newsletter: 'mail-outline',
+  Team: 'group-outlined',
+  Account: 'account-circle-outlined',
+  Plan: 'credit-card-outlined',
 } as const;
 
 test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit', async ({ page }) => {
