@@ -17,6 +17,8 @@ describe("Comparison", () => {
     expect(html).toContain('data-comparison-value="36"');
     expect(html).toContain('type="range"');
     expect(html).toContain('value="36"');
+    expect(html).toContain('data-comparison-handle=""');
+    expect(html).toContain("!h-full !min-h-full");
     expect(html).toContain('aria-label="Compare saved and draft themes"');
     expect(html).toContain('aria-valuetext="Saved 36%, Draft 64%"');
     expect(html.match(/inert=""/g)).toHaveLength(2);

@@ -94,14 +94,33 @@ const ComparisonHandle = React.forwardRef<HTMLInputElement, ComparisonHandleProp
   afterLabel = "After",
   beforeLabel = "Before",
   className,
+  disabled,
   label = "Compare before and after",
+  onPointerCancel,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
   ...props
 }, ref) => {
   const context = React.useContext(ComparisonContext);
+  const activePointerRef = React.useRef<number | null>(null);
   if (!context) throw new Error("ComparisonHandle must be used inside Comparison");
 
   const beforeAmount = Math.round(context.position);
   const afterAmount = 100 - beforeAmount;
+  const setPositionFromPointer = React.useCallback((event: React.PointerEvent<HTMLInputElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (bounds.width <= 0) return;
+    context.setPosition(Math.round(((event.clientX - bounds.left) / bounds.width) * 100));
+  }, [context]);
+
+  const releasePointerInteraction = React.useCallback((event: React.PointerEvent<HTMLInputElement>) => {
+    if (activePointerRef.current !== event.pointerId) return;
+    activePointerRef.current = null;
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }, []);
 
   return (
     <>
@@ -115,10 +134,33 @@ const ComparisonHandle = React.forwardRef<HTMLInputElement, ComparisonHandleProp
         aria-label={label}
         aria-valuetext={`${beforeLabel} ${beforeAmount}%, ${afterLabel} ${afterAmount}%`}
         className={cn(
-          "peer absolute inset-0 z-20 h-full w-full cursor-ew-resize touch-pan-y appearance-none opacity-0",
+          "peer absolute inset-0 z-20 !m-0 !h-full !min-h-full w-full cursor-ew-resize touch-pan-y appearance-none !p-0 opacity-0",
           className,
         )}
+        data-comparison-handle=""
+        disabled={disabled}
         onChange={(event) => context.setPosition(event.currentTarget.valueAsNumber)}
+        onPointerCancel={(event) => {
+          releasePointerInteraction(event);
+          onPointerCancel?.(event);
+        }}
+        onPointerDown={(event) => {
+          onPointerDown?.(event);
+          if (disabled || event.defaultPrevented) return;
+          activePointerRef.current = event.pointerId;
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          event.currentTarget.focus({ preventScroll: true });
+          setPositionFromPointer(event);
+        }}
+        onPointerMove={(event) => {
+          if (activePointerRef.current === event.pointerId) setPositionFromPointer(event);
+          onPointerMove?.(event);
+        }}
+        onPointerUp={(event) => {
+          if (!disabled && activePointerRef.current === event.pointerId) setPositionFromPointer(event);
+          releasePointerInteraction(event);
+          onPointerUp?.(event);
+        }}
         {...props}
       />
       <span
