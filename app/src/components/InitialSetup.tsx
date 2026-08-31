@@ -181,7 +181,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
 
               <div className="setup-form-grid">
                 <div className="setup-field setup-field-full">
-                  <Label>{tr("Username", "Nome utente")}</Label>
+                  <p>{tr("Username", "Nome utente")}</p>
                   <div className="setup-locked-field"><LockKeyhole aria-hidden="true" size={17} /><strong>admin</strong><span>{tr("Fixed", "Fisso")}</span></div>
                 </div>
                 <div className="setup-field">

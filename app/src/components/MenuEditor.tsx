@@ -509,7 +509,7 @@ export function MenuEditor({
         <p>OrbitPage Menu</p>
         <h2>{tr("Turn the page into a complete venue destination.", "Trasforma la pagina in una destinazione completa per il tuo locale.")}</h2>
         <div>{tr("Free can link an external menu. Starter adds a native, editable menu with categories, products, themes and a QR-ready public URL.", "Free può collegare un menu esterno. Starter aggiunge un menu nativo modificabile con categorie, prodotti, temi e un URL pubblico pronto per il QR.")}</div>
-        <a href="/dashboard/billing" target="_top"><Button>{tr("View Starter and Pro", "Vedi Starter e Pro")}</Button></a>
+        <Button asChild><a href="/dashboard/billing" target="_top">{tr("View Starter and Pro", "Vedi Starter e Pro")}</a></Button>
       </section>
     );
   }
@@ -775,7 +775,7 @@ export function MenuEditor({
                           {saving ? <OrbitLoader size={15} state="composing" /> : <Save className="h-4 w-4" />}
                           {saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}
                         </Button>
-                        <Button variant="ghost" size="icon" title={tr("Delete item", "Elimina elemento")} onClick={() => removeItem(selectedItem.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <Button aria-label={tr("Delete item", "Elimina elemento")} variant="ghost" size="icon" title={tr("Delete item", "Elimina elemento")} onClick={() => removeItem(selectedItem.id)}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
                       </div>
                     </div>
                 <div className="menu-product-editor__top">
@@ -785,15 +785,15 @@ export function MenuEditor({
                   </label>
                   <div className="min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
                     <div className="space-y-2"><Label htmlFor={`menu-item-name-${selectedItem.id}`}>{tr("Name", "Nome")}</Label><Input id={`menu-item-name-${selectedItem.id}`} value={selectedItem.name} onChange={(e) => updateItem(selectedItem.id, { name: e.target.value })} /></div>
-                    <div className="space-y-2"><Label>{tr("Price", "Prezzo")}</Label><PriceInput value={selectedItem.priceMinor} locale={draft.locale} label="Product price" onChange={(priceMinor) => updateItem(selectedItem.id, { priceMinor })} /></div>
+                    <div className="space-y-2"><p>{tr("Price", "Prezzo")}</p><PriceInput value={selectedItem.priceMinor} locale={draft.locale} label="Product price" onChange={(priceMinor) => updateItem(selectedItem.id, { priceMinor })} /></div>
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-2 md:col-span-2"><Label htmlFor={`menu-item-description-${selectedItem.id}`}>{tr("Description", "Descrizione")}</Label><Textarea id={`menu-item-description-${selectedItem.id}`} value={selectedItem.description || ''} onChange={(e) => updateItem(selectedItem.id, { description: e.target.value })} /></div>
                   <div className="space-y-2"><Label htmlFor={`menu-item-section-${selectedItem.id}`}>{tr("Section", "Sezione")}</Label><select id={`menu-item-section-${selectedItem.id}`} value={selectedItem.sectionId} onChange={(e) => updateItem(selectedItem.id, { sectionId: e.target.value })}>{rootSections.map((section) => <optgroup key={section.id} label={section.name}><option value={section.id}>{section.name}</option>{sectionSiblings(sortedSections, section.id).map((subsection) => <option key={subsection.id} value={subsection.id}>↳ {subsection.name}</option>)}</optgroup>)}</select></div>
                   <div className="space-y-2"><Label htmlFor={`menu-item-details-${selectedItem.id}`}>{tr("Details", "Dettagli")}</Label><Input id={`menu-item-details-${selectedItem.id}`} placeholder="250 ml, 12% vol, seasonal" value={selectedItem.details || ''} onChange={(e) => updateItem(selectedItem.id, { details: e.target.value })} /></div>
-                  <div className="space-y-2"><Label>{tr("Dietary tags", "Indicazioni alimentari")}</Label><TagsInput label="Dietary tags" value={selectedItem.dietaryTags} onChange={(dietaryTags) => updateItem(selectedItem.id, { dietaryTags })} placeholder="Vegan, vegetarian" /></div>
-                  <div className="space-y-2"><Label>{tr("Allergens", "Allergeni")}</Label><TagsInput label="Allergens" value={selectedItem.allergens} onChange={(allergens) => updateItem(selectedItem.id, { allergens })} placeholder="Gluten, milk, nuts" /></div>
+                  <div className="space-y-2"><p>{tr("Dietary tags", "Indicazioni alimentari")}</p><TagsInput label="Dietary tags" value={selectedItem.dietaryTags} onChange={(dietaryTags) => updateItem(selectedItem.id, { dietaryTags })} placeholder="Vegan, vegetarian" /></div>
+                  <div className="space-y-2"><p>{tr("Allergens", "Allergeni")}</p><TagsInput label="Allergens" value={selectedItem.allergens} onChange={(allergens) => updateItem(selectedItem.id, { allergens })} placeholder="Gluten, milk, nuts" /></div>
                 </div>
                 <div className="menu-variants-editor">
                   <div className="menu-variants-editor__heading">
@@ -808,7 +808,7 @@ export function MenuEditor({
                       <div className="menu-variant-price"><span>{draft.currency}</span><PriceInput value={variant.priceMinor} locale={draft.locale} label="Option price" onChange={(priceMinor) => updateItem(selectedItem.id, {
                         variants: selectedItem.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, priceMinor } : candidate),
                       })} /></div>
-                      <Button type="button" variant="ghost" size="icon" title="Delete option" onClick={() => updateItem(selectedItem.id, { variants: selectedItem.variants.filter((candidate) => candidate.id !== variant.id) })}><Trash2 className="h-4 w-4" /></Button>
+                      <Button aria-label="Delete option" type="button" variant="ghost" size="icon" title="Delete option" onClick={() => updateItem(selectedItem.id, { variants: selectedItem.variants.filter((candidate) => candidate.id !== variant.id) })}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
                     </div>
                   ))}
                 </div>
@@ -862,8 +862,8 @@ export function MenuEditor({
           <div className="menu-publish-tools__grid">
             <MenuQr url={menuUrl} color={draft.theme.text} />
             <div>
-              <Label>URL menu</Label>
-              <div className="menu-url-row"><Input value={menuUrl} readOnly /><Button variant="outline" size="icon" title="Copy URL" onClick={() => { void navigator.clipboard.writeText(menuUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}>{copied ? <Check /> : <Copy />}</Button><a href={menuUrl} target="_blank" rel="noopener noreferrer"><Button variant="outline" size="icon" title="Open menu"><ExternalLink /></Button></a></div>
+              <Label htmlFor="menu-public-url">URL menu</Label>
+              <div className="menu-url-row"><Input id="menu-public-url" value={menuUrl} readOnly /><Button aria-label="Copy URL" variant="outline" size="icon" title="Copy URL" onClick={() => { void navigator.clipboard.writeText(menuUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}</Button><Button asChild variant="outline" size="icon"><a aria-label="Open menu" href={menuUrl} target="_blank" rel="noopener noreferrer" title="Open menu"><ExternalLink aria-hidden="true" /></a></Button></div>
               <Button className="mt-4" variant="outline" onClick={() => void onAddMenuLink()}>{tr("Add menu link to main page", "Aggiungi il link al menu nella pagina principale")}</Button>
             </div>
           </div>

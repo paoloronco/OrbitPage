@@ -137,7 +137,7 @@ The production-style source run is available at <http://localhost:3001>.
 ### Public pages and content
 
 - A main public page plus focused subpages with independent slugs, titles, descriptions, and blocks.
-- Link, text, heading, separator, image, native video, social, contact, map, event, callout, and consent-aware embed blocks, with presets for media, scheduling, and forms.
+- Link, internal OrbitPage navigation, text, heading, separator, image, native video, social, contact, map, event, callout, and consent-aware embed blocks, with presets for media, scheduling, and forms.
 - Venue menus with locale, sections, one-level subsections, products, variants, images, prices, and availability.
 - Per-block visibility, ordering, scheduling, icons, cover media, calls to action, and layout controls.
 - Responsive public rendering for mobile, laptop, and desktop layouts.

@@ -28,6 +28,7 @@ export const ORBITPAGE_BLOCK_TYPES = [
   "video",
   "contact",
   "social_row",
+  "internal_links",
   "callout",
   "map",
   "event",
@@ -267,6 +268,24 @@ export const OrbitPageSeparatorContentSchema = z.object({
   boxed: z.boolean().optional().default(false)
 }).strict();
 
+export const OrbitPageInternalLinkItemSchema = z.object({
+  id: OrbitPageBlockIdSchema,
+  kind: z.enum(["link", "menu", "shop", "page"]),
+  path: boundedString(100).regex(/^\/(?:links|menu|shop|[a-z0-9]+(?:-[a-z0-9]+)*)$/),
+  label: boundedString(120).optional().default(""),
+  description: boundedString(300).optional().default(""),
+  icon: boundedString(24).optional().default("")
+}).strict();
+
+export const OrbitPageInternalLinksContentSchema = z.object({
+  items: z.array(OrbitPageInternalLinkItemSchema).max(12).optional().default([]),
+  layout: z.enum(["stacked", "grid", "buttons"]).optional().default("stacked"),
+  columns: z.union([z.literal(2), z.literal(3)]).optional().default(2),
+  itemStyle: z.enum(["filled", "outline", "minimal"]).optional().default("filled"),
+  showDescriptions: z.boolean().optional().default(true),
+  showIcons: z.boolean().optional().default(true)
+}).strict();
+
 export const OrbitPageServiceLinkContentSchema = z.object({
   service: z.enum(["whatsapp", "github"])
 }).strict();
@@ -316,6 +335,7 @@ function structuredContent(
   else if (type === "event") parsed = parseOrThrow(OrbitPageEventContentSchema, input, "Invalid event block content.");
   else if (type === "embed") parsed = parseOrThrow(OrbitPageEmbedContentSchema, input, "Invalid embed block content.");
   else if (type === "separator") parsed = parseOrThrow(OrbitPageSeparatorContentSchema, input, "Invalid separator block content.");
+  else if (type === "internal_links") parsed = parseOrThrow(OrbitPageInternalLinksContentSchema, input, "Invalid internal-links block content.");
   else if (type === "link") {
     if ("items" in input) {
       const socialRow = parseOrThrow(
@@ -552,6 +572,7 @@ export const ORBITPAGE_BLOCK_CAPABILITIES = [
   { type: "video", contentKind: "structured", contentSchema: "video", supportsUrl: false },
   { type: "contact", contentKind: "structured", contentSchema: "contact", supportsUrl: true },
   { type: "social_row", contentKind: "structured", contentSchema: "socialRow", supportsUrl: false },
+  { type: "internal_links", contentKind: "structured", contentSchema: "internalLinks", supportsUrl: false },
   { type: "callout", contentKind: "structured", contentSchema: "callout", supportsUrl: true },
   { type: "map", contentKind: "structured", contentSchema: "map", supportsUrl: true },
   { type: "event", contentKind: "structured", contentSchema: "event", supportsUrl: true },
@@ -563,6 +584,7 @@ export const OrbitPageStructuredBlockContentJsonSchemas = {
   video: z.toJSONSchema(OrbitPageVideoContentSchema, { target: "draft-2020-12" }),
   contact: z.toJSONSchema(OrbitPageContactContentSchema, { target: "draft-2020-12" }),
   socialRow: z.toJSONSchema(OrbitPageSocialRowContentSchema, { target: "draft-2020-12" }),
+  internalLinks: z.toJSONSchema(OrbitPageInternalLinksContentSchema, { target: "draft-2020-12" }),
   callout: z.toJSONSchema(OrbitPageCalloutContentSchema, { target: "draft-2020-12" }),
   map: z.toJSONSchema(OrbitPageMapContentSchema, { target: "draft-2020-12" }),
   event: z.toJSONSchema(OrbitPageEventContentSchema, { target: "draft-2020-12" }),

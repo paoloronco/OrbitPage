@@ -1,7 +1,26 @@
 import { describe, expect, it } from 'vitest';
-import { detectEmbedProvider, getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference, isSocialRowContent } from './link-blocks';
+import { detectEmbedProvider, getInternalLinksData, getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference, isSocialRowContent } from './link-blocks';
 
 describe('compact link block data', () => {
+  it('normalizes internal navigation layouts and removes unsafe stored paths', () => {
+    expect(getInternalLinksData(JSON.stringify({
+      items: [
+        { id: 'menu', kind: 'menu', path: '/menu', label: 'Menu' },
+        { id: 'unsafe', kind: 'page', path: '//attacker.test', label: 'Unsafe' },
+      ],
+      layout: 'grid',
+      columns: 3,
+      itemStyle: 'minimal',
+      showDescriptions: false,
+      showIcons: true,
+    }))).toMatchObject({
+      layout: 'grid',
+      columns: 3,
+      itemStyle: 'minimal',
+      showDescriptions: false,
+      items: [{ id: 'menu', kind: 'menu', path: '/menu', label: 'Menu' }],
+    });
+  });
   it('recognizes legacy quick-link payloads when their block type was lost', () => {
     expect(isSocialRowContent(JSON.stringify({
       items: [{ label: 'Instagram', url: 'orbitpage', platform: 'instagram' }],
@@ -9,6 +28,13 @@ describe('compact link block data', () => {
       showLabels: false,
     }))).toBe(true);
     expect(isSocialRowContent(JSON.stringify({ text: 'not a quick-link row' }))).toBe(false);
+    expect(isSocialRowContent(JSON.stringify({
+      items: [{ id: 'menu', kind: 'menu', path: '/menu', label: 'Menu' }],
+      layout: 'grid',
+      itemStyle: 'outline',
+      showDescriptions: true,
+      showIcons: true,
+    }))).toBe(false);
   });
 
   it('keeps legacy social rows compatible', () => {

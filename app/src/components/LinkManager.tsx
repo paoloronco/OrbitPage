@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
-import { type EmbedProvider, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight } from "@/lib/link-blocks";
+import { type EmbedProvider, type InternalDestinationOption, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight } from "@/lib/link-blocks";
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
@@ -34,6 +34,7 @@ interface LinkManagerProps {
   nativeMenuEnabled?: boolean;
   publicPageHref?: string;
   availablePages?: Array<{ title: string; url: string }>;
+  internalDestinations?: InternalDestinationOption[];
   visualMode?: boolean;
   visualFocusLinkId?: string | null;
   visualEditRequest?: number;
@@ -74,6 +75,7 @@ export const LinkManager = ({
   nativeMenuEnabled = true,
   publicPageHref = "/",
   availablePages = [],
+  internalDestinations = [],
   visualMode = false,
   visualFocusLinkId = null,
   visualEditRequest,
@@ -155,6 +157,40 @@ export const LinkManager = ({
       status: "live",
     };
     appendBlock(newLink);
+  };
+
+  const addInternalLinks = () => {
+    if (internalDestinations.length === 0) {
+      toast({
+        title: tr("No other active destinations", "Nessun'altra destinazione attiva"),
+        description: tr("Activate Menu, Shop or an additional page first.", "Attiva prima Menu, Shop o una pagina aggiuntiva."),
+      });
+      return;
+    }
+    appendBlock({
+      id: Date.now().toString(),
+      title: tr("Explore", "Esplora"),
+      description: tr("Continue through this page", "Continua a esplorare questa pagina"),
+      url: "",
+      type: "internal_links",
+      content: buildBlockContent({
+        items: internalDestinations.slice(0, 3).map((destination) => ({
+          id: crypto.randomUUID(),
+          kind: destination.kind,
+          path: destination.path,
+          label: destination.title,
+          description: destination.description,
+          icon: destination.icon || "",
+        })),
+        layout: "stacked",
+        columns: 2,
+        itemStyle: "filled",
+        showDescriptions: true,
+        showIcons: true,
+      }),
+      status: "live",
+      size: "medium",
+    });
   };
 
   const addNativeMenu = () => {
@@ -685,6 +721,7 @@ export const LinkManager = ({
       icon: LayoutGrid,
       items: [
         { id: "link", title: "Link", description: tr("A clear card for any destination.", "Una card chiara per qualsiasi destinazione."), keywords: "url website destination sito", icon: Link, onSelect: addNewLink },
+        { id: "internal-links", title: tr("Internal page navigation", "Navigazione interna"), description: tr("Link Menu, Shop and pages with cards or compact buttons.", "Collega Menu, Shop e pagine con card o pulsanti compatti."), keywords: "internal navigation pages shop menu cards buttons navigazione pagine pulsanti", icon: LayoutGrid, onSelect: addInternalLinks, badge: internalDestinations.length === 0 ? tr("No destinations", "Nessuna destinazione") : undefined, restricted: internalDestinations.length === 0 },
         { id: "compact-links", title: tr("Compact links", "Link compatti"), description: tr("Social profiles and page shortcuts.", "Profili social e collegamenti alle pagine."), keywords: "social icons instagram facebook shortcut icone", icon: Share2, onSelect: addNewSocialRow, badge: hasCompactLinks ? tr("Added", "Aggiunto") : undefined, restricted: hasCompactLinks },
         { id: "contact", title: tr("Contact", "Contatto"), description: tr("Phone, email and useful contact details.", "Telefono, email e contatti utili."), keywords: "phone email whatsapp telefono contatti", icon: UserCircle2, onSelect: addNewContact },
         { id: "cta", title: "CTA", description: tr("A prominent action such as booking or buying.", "Un'azione in evidenza, come prenotare o acquistare."), keywords: "action booking buy prenota acquista button", icon: MousePointerClick, onSelect: addNewCta },
@@ -1067,6 +1104,7 @@ export const LinkManager = ({
                   schedulingEnabled={schedulingEnabled}
                   managePlanHref={managePlanHref}
                   availablePages={availablePages}
+                  internalDestinations={internalDestinations}
                   editRequest={focusedLink ? visualEditRequest : undefined}
                 />
               )}

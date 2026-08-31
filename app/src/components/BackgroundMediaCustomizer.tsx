@@ -120,8 +120,8 @@ export const BackgroundMediaCustomizer = ({
     <div className="space-y-6">
       {/* ── Type selector ─────────────────────────────────────── */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Background Type</Label>
-        <div className="grid grid-cols-4 gap-2">
+        <p className="text-sm font-medium">Background Type</p>
+        <div className="grid grid-cols-4 gap-2" role="group" aria-label="Background type">
           {TYPE_OPTIONS.map(({ type, label, icon: Icon, description }) => (
             <button
               key={type}
@@ -163,9 +163,9 @@ export const BackgroundMediaCustomizer = ({
       {isMedia && (
         <div className="space-y-3">
           <Separator />
-          <Label className="text-sm font-medium">
+          <p className="text-sm font-medium">
             {config.type === "video" ? "Video File" : "GIF File"}
-          </Label>
+          </p>
 
           {config.mediaUrl ? (
             <div className="flex items-center gap-3 rounded-lg border border-border bg-card/50 px-3 py-2">
@@ -176,6 +176,7 @@ export const BackgroundMediaCustomizer = ({
                 </p>
               </div>
               <button
+                aria-label="Remove media"
                 type="button"
                 onClick={clearMedia}
                 className="shrink-0 rounded p-1 text-muted-foreground hover:text-foreground hover:bg-destructive/10 transition-colors"
@@ -231,8 +232,7 @@ export const BackgroundMediaCustomizer = ({
 
           {config.type === "video" && (
             <p className="text-xs text-muted-foreground">
-              Video autoplays muted on loop. Animations pause when the visitor has
-              reduced-motion enabled.
+              Video autoplays muted on loop.
             </p>
           )}
         </div>
@@ -243,7 +243,7 @@ export const BackgroundMediaCustomizer = ({
         <>
           <Separator />
           <div className="space-y-4">
-            <Label className="text-sm font-medium">Visual Effects</Label>
+            <h3 className="text-sm font-medium">Visual Effects</h3>
 
             <SliderRow
               label="Opacity"
@@ -264,10 +264,10 @@ export const BackgroundMediaCustomizer = ({
           <Separator />
 
           <div className="space-y-4">
-            <Label className="text-sm font-medium">Overlay</Label>
+            <h3 className="text-sm font-medium">Overlay</h3>
 
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground">Overlay Color</Label>
+              <p className="text-xs text-muted-foreground">Overlay Color</p>
               <ColorPicker
                 label="Overlay color"
                 value={config.overlayColor}
@@ -287,7 +287,7 @@ export const BackgroundMediaCustomizer = ({
           <Separator />
 
           <div className="space-y-4">
-            <Label className="text-sm font-medium">Adjustments</Label>
+            <h3 className="text-sm font-medium">Adjustments</h3>
 
             <SliderRow
               label="Brightness"
@@ -320,12 +320,12 @@ export const BackgroundMediaCustomizer = ({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Object Fit</Label>
+            <Label htmlFor="background-media-object-fit" className="text-xs text-muted-foreground">Object Fit</Label>
             <Select
               value={config.objectFit}
               onValueChange={(v: "cover" | "contain" | "fill") => update({ objectFit: v })}
             >
-              <SelectTrigger>
+              <SelectTrigger id="background-media-object-fit">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -346,6 +346,7 @@ export const BackgroundMediaCustomizer = ({
               </p>
             </div>
             <Switch
+              aria-label="Glassmorphism on cards"
               checked={config.glassmorphism}
               onCheckedChange={(v) => update({ glassmorphism: v })}
             />
@@ -385,7 +386,7 @@ const SliderRow = ({
 }) => (
   <div className="space-y-1.5">
     <div className="flex items-center justify-between">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <span className="font-mono text-xs text-foreground tabular-nums">{display}</span>
     </div>
     <Slider

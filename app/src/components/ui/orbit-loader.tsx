@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { ThinkingOrb, type OrbState } from "thinking-orbs";
+import type { OrbState } from "thinking-orbs";
 import { cn } from "@/lib/utils";
 
 type OrbitLoaderProps = {
@@ -27,8 +27,6 @@ export function OrbitLoader({
   size = 20,
   state = "working",
 }: OrbitLoaderProps) {
-  const preset = size > 32 ? 64 : 20;
-
   return (
     <span
       aria-hidden="true"
@@ -36,14 +34,14 @@ export function OrbitLoader({
       data-orbit-state={state}
       style={{ "--orbit-loader-size": `${size}px` } as LoaderStyle}
     >
-      <ThinkingOrb
+      <svg
         aria-hidden="true"
         className="orbit-loader__canvas"
-        size={preset}
-        state={state}
-        style={{ height: "100%", width: "100%" }}
-        theme="dark"
-      />
+        viewBox="0 0 24 24"
+      >
+        <circle className="orbit-loader__track" cx="12" cy="12" fill="none" r="8" strokeWidth="3" />
+        <circle className="orbit-loader__arc" cx="12" cy="12" fill="none" pathLength="100" r="8" strokeDasharray="28 72" strokeLinecap="round" strokeWidth="3" />
+      </svg>
     </span>
   );
 }

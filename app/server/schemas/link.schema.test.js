@@ -49,4 +49,23 @@ describe('link schemas', () => {
     expect(LinkSchema.parse({ id: 'quick-links', type: 'social_row', title: '' }).title).toBe('');
     expect(() => LinkSchema.parse({ id: 'regular-link', type: 'link', title: '' })).toThrow();
   });
+
+  it('validates structured internal OrbitPage destinations', () => {
+    const content = JSON.stringify({
+      items: [{ id: 'shop-link', kind: 'shop', path: '/shop', label: 'Shop' }],
+      layout: 'buttons',
+      columns: 2,
+      itemStyle: 'outline',
+      showDescriptions: false,
+      showIcons: true,
+    });
+    expect(LinkSchema.parse({ id: 'internal', type: 'internal_links', title: '', content }).type)
+      .toBe('internal_links');
+    expect(() => LinkSchema.parse({
+      id: 'unsafe-internal',
+      type: 'internal_links',
+      title: 'Unsafe',
+      content: JSON.stringify({ items: [{ id: 'bad', kind: 'page', path: '//attacker.test' }] }),
+    })).toThrow(/unsafe destinations/i);
+  });
 });

@@ -3,7 +3,6 @@ import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AppI18nProvider } from "@/lib/i18n";
 import Admin from "@/pages/Admin";
 import {
@@ -32,7 +31,6 @@ function renderAdmin(root: Root, config: HostedSurfaceConfig) {
     <QueryClientProvider client={new QueryClient()}>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
         <MemoryRouter initialEntries={[`/dashboard/${config.section}`]}>
           <AppI18nProvider mode="editor">
             <Admin />

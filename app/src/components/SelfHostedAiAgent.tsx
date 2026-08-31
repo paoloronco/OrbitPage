@@ -9,6 +9,7 @@ import {
 } from "@/lib/api-client";
 import { useAppI18n } from "@/lib/i18n";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
+import { useDialogAccessibility } from "@/lib/use-dialog-accessibility";
 
 type AgentMessage = AiConversationMessage & {
   id: string;
@@ -37,6 +38,7 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
   const listRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useDialogAccessibility<HTMLElement>(open, () => setOpen(false), closeRef);
   const labels = useMemo(() => ({
     tagline: tr("Edit your page with confirmation", "Modifica la pagina con conferma"),
     launch: tr("Edit with AI", "Modifica con AI"),
@@ -88,22 +90,6 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-        launcherRef.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    const focusFrame = window.requestAnimationFrame(() => closeRef.current?.focus());
-    return () => {
-      window.cancelAnimationFrame(focusFrame);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const prompt = draft.trim();
@@ -154,7 +140,7 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
   };
 
   const panel = open && typeof document !== "undefined" ? createPortal(
-        <section aria-label="OrbitPage AI" className="ai-page-agent-panel" role="dialog">
+        <section aria-label="OrbitPage AI" aria-modal="true" className="ai-page-agent-panel" ref={panelRef} role="dialog" tabIndex={-1}>
           <header className="ai-page-agent-header">
             <span className="ai-page-agent-mark" aria-hidden="true"><Sparkles size={18} /></span>
             <div><strong>OrbitPage AI</strong><small>{labels.tagline}</small></div>

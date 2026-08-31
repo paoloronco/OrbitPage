@@ -161,7 +161,7 @@ const ProfileColorField = ({
 }) => (
   <div className="space-y-1.5">
     <div className="flex items-center justify-between gap-2">
-      <Label className="text-xs">{label}</Label>
+      <span className="text-xs">{label}</span>
       {!inherited && <button type="button" onClick={onReset} className="text-[11px] font-semibold text-blue-700 hover:underline">Use theme</button>}
     </div>
     <ColorPicker label={label} value={value} onChange={onChange} />
@@ -414,7 +414,7 @@ export const ProfileSection = ({
             <div className="admin-profile-identity-fields grid gap-5 lg:grid-cols-[11rem_minmax(0,1fr)]">
               <div className="admin-profile-avatar-editor">
                 <div className="flex items-center justify-between gap-3">
-                  <Label className="text-xs font-semibold">{tr("Profile image", "Immagine profilo")}</Label>
+                  <p className="text-xs font-semibold">{tr("Profile image", "Immagine profilo")}</p>
                   <Switch checked={draft.showAvatar !== false} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
                 </div>
                 <div className="admin-profile-avatar-layout">
@@ -426,7 +426,7 @@ export const ProfileSection = ({
 
                   <div className="admin-profile-avatar-controls">
                     <div className="admin-profile-avatar-shape">
-                      <Label className="text-xs text-slate-600">{tr("Shape", "Forma")}</Label>
+                      <p className="text-xs text-slate-600">{tr("Shape", "Forma")}</p>
                       <div className="admin-profile-avatar-shape-options" role="group" aria-label={tr("Profile image shape", "Forma immagine profilo")}>
                         {(["round", "rounded", "square"] as AvatarShape[]).map((shape) => {
                           const active = (draft.appearance?.avatarShape || "round") === shape;
@@ -484,7 +484,7 @@ export const ProfileSection = ({
               <div className="rounded-lg border border-slate-200 bg-white p-4">
               <div className="mb-3 flex items-center gap-2"><Globe2 className="h-4 w-4 text-blue-700" /><h3 className="text-sm font-semibold text-slate-950">{tr("Browser title", "Titolo browser")}</h3></div>
               {seoLocked && <div className="admin-inline-plan-lock mb-3"><LockKeyhole className="h-4 w-4" /><span>{tr("Available on Starter.", "Disponibile con Starter.")}</span><a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a></div>}
-              <Input disabled={seoLocked} value={draft.tabTitle || ""} onChange={(event) => setDraft((current) => ({ ...current, tabTitle: event.target.value }))} placeholder={draft.name ? `${draft.name} | OrbitPage` : tr("Title shown in the browser tab", "Titolo mostrato nella scheda del browser")} maxLength={200} />
+              <Input aria-label={tr("Browser title", "Titolo browser")} disabled={seoLocked} value={draft.tabTitle || ""} onChange={(event) => setDraft((current) => ({ ...current, tabTitle: event.target.value }))} placeholder={draft.name ? `${draft.name} | OrbitPage` : tr("Title shown in the browser tab", "Titolo mostrato nella scheda del browser")} maxLength={200} />
               </div>
               <button type="button" onClick={() => setFaviconDialogOpen(true)} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
@@ -523,14 +523,14 @@ export const ProfileSection = ({
             <div className="space-y-5 border-t border-slate-200 p-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-4 rounded-lg border border-slate-200 p-3">
-                  <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-600">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
+                  <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-600">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
                   <ProfileColorField label={tr("Image border color", "Colore bordo immagine")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!draft.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
                 </div>
                 <div className="rounded-lg border border-slate-200 p-3">
                   <p className="mb-3 text-sm font-semibold text-slate-950">{tr("Typography", "Tipografia")}</p>
                   <div className="grid grid-cols-2 gap-3">
-                  <div><Label className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>
-                  <div><Label className="text-xs">{tr("Description size", "Dimensione descrizione")}</Label><Input type="number" min={10} max={48} value={parseInt(draft.bioFontSize || "14", 10)} onChange={(event) => setDraft((current) => ({ ...current, bioFontSize: `${event.target.value}px` }))} /></div>
+                  <div><Label htmlFor="profile-name-size" className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input id="profile-name-size" type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>
+                  <div><Label htmlFor="profile-description-size" className="text-xs">{tr("Description size", "Dimensione descrizione")}</Label><Input id="profile-description-size" type="number" min={10} max={48} value={parseInt(draft.bioFontSize || "14", 10)} onChange={(event) => setDraft((current) => ({ ...current, bioFontSize: `${event.target.value}px` }))} /></div>
                   </div>
                 </div>
               </div>

@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import type { SubpageItem } from "@/lib/api-client";
 import type { LinkEditMode } from "@/lib/permissions";
 import type { ThemeConfig } from "@/lib/theme";
+import type { InternalDestinationOption } from "@/lib/link-blocks";
 import type { LinkData } from "./LinkCard";
 import { LinkManager } from "./LinkManager";
 
@@ -28,6 +29,7 @@ type Props = {
   videoUploadsEnabled?: boolean;
   maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
+  internalDestinations?: InternalDestinationOption[];
 };
 
 function slugify(value: string) {
@@ -46,6 +48,7 @@ function newPage(): EditorSubpage {
 export function SubpageManager({
   pages, theme, publicPageHref, onPagesUpdate, renderPreview, editMode, maxPages, maxBlocks, planName,
   schedulingEnabled, videoUploadsEnabled, maxVideoUploadBytes, managePlanHref,
+  internalDestinations = [],
 }: Props) {
   const { toast } = useToast();
   const [selectedId, setSelectedId] = useState(pages[0]?.id || "");
@@ -131,7 +134,7 @@ export function SubpageManager({
       <aside className="subpage-list-panel">
         <div className="subpage-list-header">
           <div><span>Pages</span><strong>{pages.length + 1}{maxPages ? ` / ${maxPages}` : ""}</strong></div>
-          <Button type="button" size="icon" onClick={addPage} disabled={busy || pageLimitReached || editMode === "view"} title="Create page">
+          <Button aria-label="Create page" type="button" size="icon" onClick={addPage} disabled={busy || pageLimitReached || editMode === "view"} title="Create page">
             <FilePlus2 className="h-4 w-4" />
           </Button>
         </div>
@@ -167,9 +170,9 @@ export function SubpageManager({
               <div className="subpage-details-heading">
                 <div><span className="admin-kicker">Page details</span><h2>{draft.title}</h2></div>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" size="icon" onClick={() => navigator.clipboard.writeText(pageUrl)} title="Copy public URL"><Copy className="h-4 w-4" /></Button>
-                  <Button asChild variant="outline" size="icon"><a href={pageUrl} target="_blank" rel="noreferrer" title="Open public page"><ExternalLink className="h-4 w-4" /></a></Button>
-                  <Button type="button" variant="destructive" size="icon" onClick={removePage} disabled={busy || editMode === "view"} title="Delete page"><Trash2 className="h-4 w-4" /></Button>
+                  <Button aria-label="Copy public URL" type="button" variant="outline" size="icon" onClick={() => navigator.clipboard.writeText(pageUrl)} title="Copy public URL"><Copy className="h-4 w-4" /></Button>
+                  <Button asChild variant="outline" size="icon"><a aria-label="Open public page" href={pageUrl} target="_blank" rel="noreferrer" title="Open public page"><ExternalLink className="h-4 w-4" /></a></Button>
+                  <Button aria-label="Delete page" type="button" variant="destructive" size="icon" onClick={removePage} disabled={busy || editMode === "view"} title="Delete page"><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>
               <div className="subpage-details-grid">
@@ -199,6 +202,13 @@ export function SubpageManager({
               managePlanHref={managePlanHref}
               nativeMenuEnabled={false}
               publicPageHref={pageUrl}
+              availablePages={internalDestinations
+                .filter((destination) => destination.kind === "page" && destination.path !== `/${draft.slug}`)
+                .map((destination) => ({
+                  title: destination.title,
+                  url: `${publicPageHref.replace(/\/$/, "")}${destination.path}`,
+                }))}
+              internalDestinations={internalDestinations.filter((destination) => destination.path !== `/${draft.slug}`)}
             />
           </>
         )}
