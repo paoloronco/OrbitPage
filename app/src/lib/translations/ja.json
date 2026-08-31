@@ -895,5 +895,9 @@
   "Version": "Version",
   "Publish your page to create the first restorable version.": "Publish your page to create the first restorable version.",
   "Loading profile, content and theme.": "プロフィール、コンテンツ、テーマを読み込み中。",
-  "Preparing your workspace": "ワークスペースの準備"
+  "Preparing your workspace": "ワークスペースの準備",
+  "Drag the divider to compare the saved theme with your draft before saving.": "区切り線をドラッグして、保存前に保存済みのテーマと下書きを比較します。",
+  "Before · saved": "変更前 · 保存済み",
+  "After · draft": "変更後 · 下書き",
+  "Compare saved theme and draft": "保存済みのテーマと下書きを比較"
 }

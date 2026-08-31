@@ -895,5 +895,9 @@
   "Version": "Version",
   "Publish your page to create the first restorable version.": "Publish your page to create the first restorable version.",
   "Loading profile, content and theme.": "Profiel, inhoud en thema laden.",
-  "Preparing your workspace": "Uw werkruimte voorbereiden"
+  "Preparing your workspace": "Uw werkruimte voorbereiden",
+  "Drag the divider to compare the saved theme with your draft before saving.": "Sleep de scheidingslijn om het opgeslagen thema vóór het opslaan met uw concept te vergelijken.",
+  "Before · saved": "Voor · opgeslagen",
+  "After · draft": "Na · concept",
+  "Compare saved theme and draft": "Opgeslagen thema en concept vergelijken"
 }

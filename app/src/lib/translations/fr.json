@@ -895,5 +895,9 @@
   "Version": "Version",
   "Publish your page to create the first restorable version.": "Publish your page to create the first restorable version.",
   "Loading profile, content and theme.": "Chargement du profil, du contenu et du thème.",
-  "Preparing your workspace": "Préparation de votre espace de travail"
+  "Preparing your workspace": "Préparation de votre espace de travail",
+  "Drag the divider to compare the saved theme with your draft before saving.": "Faites glisser le séparateur pour comparer le thème enregistré à votre brouillon avant d’enregistrer.",
+  "Before · saved": "Avant · enregistré",
+  "After · draft": "Après · brouillon",
+  "Compare saved theme and draft": "Comparer le thème enregistré et le brouillon"
 }

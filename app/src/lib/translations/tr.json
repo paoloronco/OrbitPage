@@ -895,5 +895,9 @@
   "Version": "Version",
   "Publish your page to create the first restorable version.": "Publish your page to create the first restorable version.",
   "Loading profile, content and theme.": "Profil, içerik ve tema yükleniyor.",
-  "Preparing your workspace": "Çalışma alanınız hazırlanıyor"
+  "Preparing your workspace": "Çalışma alanınız hazırlanıyor",
+  "Drag the divider to compare the saved theme with your draft before saving.": "Kaydetmeden önce kaydedilmiş temayı taslağınızla karşılaştırmak için ayırıcıyı sürükleyin.",
+  "Before · saved": "Önce · kaydedildi",
+  "After · draft": "Sonra · taslak",
+  "Compare saved theme and draft": "Kaydedilmiş tema ile taslağı karşılaştır"
 }

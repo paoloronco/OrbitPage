@@ -895,5 +895,9 @@
   "Version": "Version",
   "Publish your page to create the first restorable version.": "Publish your page to create the first restorable version.",
   "Loading profile, content and theme.": "تحميل الملف الشخصي والمحتوى والموضوع.",
-  "Preparing your workspace": "تجهيز مساحة العمل الخاصة بك"
+  "Preparing your workspace": "تجهيز مساحة العمل الخاصة بك",
+  "Drag the divider to compare the saved theme with your draft before saving.": "اسحب الفاصل لمقارنة السمة المحفوظة بالمسودة قبل الحفظ.",
+  "Before · saved": "قبل · محفوظ",
+  "After · draft": "بعد · مسودة",
+  "Compare saved theme and draft": "مقارنة السمة المحفوظة بالمسودة"
 }
