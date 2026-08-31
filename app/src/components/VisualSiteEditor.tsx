@@ -4,7 +4,6 @@ import {
   Layout,
   Menu as MenuIcon,
   MousePointerClick,
-  Palette,
   ShoppingBag,
   UserRound,
 } from "@/components/ui/material-icons";
@@ -30,7 +29,7 @@ type VisualProfile = {
   cookiePolicyUrl?: string;
 };
 
-export type VisualSiteEditorSection = "profile" | "links" | "menu" | "shop" | "pages" | "theme";
+export type VisualSiteEditorSection = "profile" | "links" | "menu" | "shop" | "pages";
 
 type VisualSectionItem = {
   id: VisualSiteEditorSection;
@@ -54,6 +53,7 @@ interface VisualSiteEditorProps {
   shopStatus?: VisualSectionItem["status"];
   pagesStatus?: VisualSectionItem["status"];
   onSelect: (section: VisualSiteEditorSection, linkId?: string) => void;
+  onOpenTheme?: () => void;
 }
 
 export function VisualSiteEditor({
@@ -71,6 +71,7 @@ export function VisualSiteEditor({
   shopStatus = "inactive",
   pagesStatus = "inactive",
   onSelect,
+  onOpenTheme,
 }: VisualSiteEditorProps) {
   const { tr } = useAppI18n();
   const [device, setDevice] = useState<PreviewDevice>("mobile");
@@ -80,15 +81,12 @@ export function VisualSiteEditor({
     { id: "menu", label: tr("Menu", "Menu"), icon: MenuIcon, status: menuStatus },
     { id: "shop", label: tr("Shop", "Shop"), icon: ShoppingBag, status: shopStatus },
     { id: "pages", label: tr("Pages", "Pagine"), icon: Files, status: pagesStatus },
-    { id: "theme", label: tr("Style", "Stile"), icon: Palette, status: "active" },
   ];
   const editorSelection: PublicEditorTarget | null = section === "profile"
     ? { kind: "profile" }
     : section === "links" && selectedLinkId
       ? { kind: "link", id: selectedLinkId }
-      : section === "theme"
-        ? { kind: "page" }
-        : null;
+      : null;
 
   const selectFromPreview = (target: PublicEditorTarget) => {
     if (target.kind === "profile") {
@@ -99,7 +97,7 @@ export function VisualSiteEditor({
       onSelect("links", target.id);
       return;
     }
-    onSelect("theme");
+    onOpenTheme?.();
   };
 
   return (
