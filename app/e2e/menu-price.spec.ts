@@ -43,10 +43,24 @@ test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
   const editor = page.locator('.menu-editor-stack');
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(editor).toBeVisible();
+  await expect(editor).toHaveClass(/menu-editor-stack--classic/);
+  await expect(page.getByRole('heading', { name: 'Build the path your customers follow.' })).toBeVisible();
   await expect(workflow).toBeVisible();
   await expect(workflow.getByRole('button', { name: /Categories/ })).toBeVisible();
   await expect(workflow.getByRole('button', { name: /Items/ })).toBeVisible();
+  await expect(page.locator('.menu-content-pane--sections')).toBeVisible();
+  await expect(page.locator('.menu-content-pane--products')).toBeVisible();
   await expect(page.locator('.admin-menu-live-preview')).toHaveCount(0);
+
+  const clippedWorkflowLabels = await workflow.locator('button').evaluateAll((buttons) => buttons.filter((button) => {
+    const label = button.querySelector<HTMLElement>('.menu-editor-tab-copy strong');
+    if (!label) return true;
+    const buttonBounds = button.getBoundingClientRect();
+    const labelBounds = label.getBoundingClientRect();
+    return labelBounds.left < buttonBounds.left || labelBounds.right > buttonBounds.right
+      || label.scrollWidth > label.clientWidth + 1;
+  }).length);
+  expect(clippedWorkflowLabels).toBe(0);
 
   const overflow = await page.evaluate(() => ({
     document: document.documentElement.scrollWidth - window.innerWidth,

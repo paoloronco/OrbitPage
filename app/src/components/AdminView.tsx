@@ -811,6 +811,7 @@ export const AdminView = ({
   ) : visualSection === "menu" ? (
     <MenuEditor
       menu={menu}
+      presentation="visual"
       publicPageHref={publicPageHref}
       enabled={!saasPlan || entitlements?.nativeMenu === true}
       maxItems={entitlements?.maxMenuItems ?? null}
@@ -1330,6 +1331,7 @@ export const AdminView = ({
                   <div className="admin-main-column content-workspace-section">
                     <MenuEditor
                       menu={menu}
+                      presentation="classic"
                       publicPageHref={publicPageHref}
                       enabled={!saasPlan || entitlements?.nativeMenu === true}
                       maxItems={entitlements?.maxMenuItems ?? null}
