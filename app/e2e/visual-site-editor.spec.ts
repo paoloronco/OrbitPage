@@ -118,7 +118,8 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   });
 
   await page.locator(".public-page-root--editor").dispatchEvent("click");
-  await expect(inspector.getByRole("heading", { name: "Page style" })).toBeVisible();
+  await expect(page.locator(".visual-site-editor")).toBeHidden();
+  await expect(page.locator(".admin-theme-customizer")).toBeVisible();
 
   await page.getByRole("switch", { name: "Enable New UI beta" }).click();
   await expect(page.locator(".visual-site-editor")).toBeHidden();
@@ -150,8 +151,8 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
   await page.getByRole("button", { name: "Close navigation" }).first().click();
 
   const destinations = page.getByRole("navigation", { name: "Site sections" }).getByRole("button");
-  await expect(destinations).toHaveCount(6);
-  for (const label of ["Page", "Content", "Menu", "Shop", "Pages", "Style"]) {
+  await expect(destinations).toHaveCount(5);
+  for (const label of ["Page", "Content", "Menu", "Shop", "Pages"]) {
     const destination = destinations.filter({ hasText: label }).first();
     await expect(destination).toBeVisible();
     await expect(destination.locator("span")).not.toHaveCSS("display", "none");
