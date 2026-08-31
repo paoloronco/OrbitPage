@@ -8,6 +8,10 @@ export type HostedSurfaceConfig = {
   publicUrl: string;
   apiToken: string;
   appCheckToken?: string | null;
+  refreshCredentials?: () => Promise<{
+    apiToken: string;
+    appCheckToken?: string | null;
+  }>;
   section: AdminTab;
   locale: string;
   extensions?: {

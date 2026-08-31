@@ -426,30 +426,53 @@ export interface WorkspaceBootstrapResponse {
 
 // API request helper with auth
 const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
-  const authHeaders = await getAuthenticatedRequestHeaders();
   const method = (options.method || 'GET').toUpperCase();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...authHeaders,
-    ...(method !== 'GET' && capturedPageRevision !== null
-      ? { 'If-Match': String(capturedPageRevision) }
-      : {}),
-    ...options.headers,
-  };
+  const performRequest = async (authHeaders: Record<string, string>) => {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...authHeaders,
+      ...(method !== 'GET' && capturedPageRevision !== null
+        ? { 'If-Match': String(capturedPageRevision) }
+        : {}),
+      ...options.headers,
+    };
 
-  // Prevent any caching of API responses and bust caches for GETs
-  let url = resolveAuthenticatedApiUrl(endpoint, authHeaders);
-  if (method === 'GET') {
-    const sep = url.includes('?') ? '&' : '?';
-    url = `${url}${sep}_ts=${Date.now()}`;
-  }
+    // Prevent any caching of API responses and bust caches for GETs.
+    let url = resolveAuthenticatedApiUrl(endpoint, authHeaders);
+    if (method === 'GET') {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}_ts=${Date.now()}`;
+    }
 
-  try {
-    const response = await fetch(url, {
+    return fetch(url, {
       ...options,
       headers,
       cache: 'no-store',
     });
+  };
+
+  try {
+    let response = await performRequest(await getAuthenticatedRequestHeaders());
+
+    // Firebase ID tokens rotate while the dashboard can stay open for hours.
+    // The hosted shell owns that session, so ask it for fresh credentials and
+    // retry the untouched request once instead of ejecting the user from the editor.
+    if (response.status === 401 && isIntegratedHostedSurface()) {
+      const refreshCredentials = getHostedSurfaceConfig()?.refreshCredentials;
+      if (refreshCredentials) {
+        try {
+          const refreshed = await refreshCredentials();
+          if (refreshed.apiToken) {
+            response = await performRequest({
+              Authorization: `Bearer ${refreshed.apiToken}`,
+              ...(refreshed.appCheckToken ? { 'X-Firebase-AppCheck': refreshed.appCheckToken } : {}),
+            });
+          }
+        } catch {
+          // Parse and surface the original authentication response below.
+        }
+      }
+    }
 
     // Safely parse JSON — proxies (Cloudflare, nginx) and rate limiters may return
     // plain text (e.g. "Too many requests"), which would throw on response.json().
