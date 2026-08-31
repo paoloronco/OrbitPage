@@ -23,6 +23,7 @@ import {
   type HardcodedBannerConfig,
 } from '@/lib/consent-manager';
 import { resolveSafePublicHref } from '@/lib/browser-network-policy';
+import { Switch } from '@/components/ui/switch';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -118,42 +119,17 @@ interface ToggleProps {
 }
 function Toggle({ id, checked, disabled, onChange, colors }: ToggleProps) {
   return (
-    <button
+    <Switch
       id={id}
-      type="button"
-      role="switch"
-      aria-checked={checked}
+      checked={checked}
       disabled={disabled}
-      onClick={() => !disabled && onChange(!checked)}
+      onCheckedChange={onChange}
+      size="small"
       style={{
-        position: 'relative',
-        display: 'inline-block',
-        width: 40,
-        height: 22,
-        borderRadius: 11,
-        border: 'none',
-        padding: 0,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        background: checked ? colors.accent : colors.border,
-        transition: 'background 0.2s',
-        flexShrink: 0,
-        opacity: disabled ? 0.6 : 1,
-      }}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          top: 3,
-          left: checked ? 21 : 3,
-          width: 16,
-          height: 16,
-          borderRadius: '50%',
-          background: '#fff',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-          transition: 'left 0.2s',
-        }}
-      />
-    </button>
+        '--switch-accent': colors.accent,
+        '--switch-track': colors.border,
+      } as React.CSSProperties}
+    />
   );
 }
 
