@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "点击个人资料、卡片或背景进行编辑",
   "Selected element": "所选元素",
   "Loading profile, content and theme.": "正在加载个人资料、内容和主题。",
-  "Preparing your workspace": "准备工作区"
+  "Preparing your workspace": "准备工作区",
+  "Menu architecture": "菜单架构",
+  "Build the path your customers follow.": "构建您的客户遵循的路径。",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "类别对报价进行分组，子类别添加详细信息，项目包含可以订购的内容。",
+  "Main navigation": "主导航",
+  "Optional grouping": "可选分组",
+  "Item": "项目",
+  "Name, price and availability": "名称、价格和供货情况",
+  "Structure": "结构",
+  "Catalog": "目录",
+  "Organize categories": "组织类别",
+  "Manage menu items": "管理菜单项",
+  "Select a category to rename it, nest a subcategory or open its items.": "选择一个类别以对其进行重命名、嵌套子类别或打开其项目。",
+  "Filter the catalog, then select one item to edit its details.": "筛选目录，然后选择一项以编辑其详细信息。"
 }

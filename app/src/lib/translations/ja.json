@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "プロフィール、カード、または背景をクリックして編集します",
   "Selected element": "選択された要素",
   "Loading profile, content and theme.": "プロフィール、コンテンツ、テーマを読み込み中。",
-  "Preparing your workspace": "ワークスペースの準備"
+  "Preparing your workspace": "ワークスペースの準備",
+  "Menu architecture": "メニューのアーキテクチャ",
+  "Build the path your customers follow.": "顧客がたどる道を構築します。",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "カテゴリはオファーをグループ化し、サブカテゴリは詳細を追加し、アイテムには注文できるものが含まれます。",
+  "Main navigation": "メインナビゲーション",
+  "Optional grouping": "オプションのグループ化",
+  "Item": "アイテム",
+  "Name, price and availability": "名前、価格、在庫状況",
+  "Structure": "構造",
+  "Catalog": "カタログ",
+  "Organize categories": "カテゴリを整理する",
+  "Manage menu items": "メニュー項目の管理",
+  "Select a category to rename it, nest a subcategory or open its items.": "カテゴリを選択して名前を変更したり、サブカテゴリをネストしたり、そのアイテムを開きます。",
+  "Filter the catalog, then select one item to edit its details.": "カタログをフィルターし、項目を 1 つ選択して詳細を編集します。"
 }
