@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "Düzenlemek için profile, kartlara veya arka plana tıklayın",
   "Selected element": "Seçilen öğe",
   "Loading profile, content and theme.": "Profil, içerik ve tema yükleniyor.",
-  "Preparing your workspace": "Çalışma alanınız hazırlanıyor"
+  "Preparing your workspace": "Çalışma alanınız hazırlanıyor",
+  "Menu architecture": "Menü mimarisi",
+  "Build the path your customers follow.": "Müşterilerinizin takip edeceği yolu oluşturun.",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "Kategoriler teklifi gruplandırır, alt kategoriler ayrıntı ekler ve öğeler sipariş edilebilecek ürünleri içerir.",
+  "Main navigation": "Ana gezinme",
+  "Optional grouping": "İsteğe bağlı gruplama",
+  "Item": "Öğe",
+  "Name, price and availability": "Ad, fiyat ve stok durumu",
+  "Structure": "Yapı",
+  "Catalog": "Katalog",
+  "Organize categories": "Kategorileri düzenleyin",
+  "Manage menu items": "Menü öğelerini yönet",
+  "Select a category to rename it, nest a subcategory or open its items.": "Yeniden adlandırmak, bir alt kategoriyi iç içe geçirmek veya öğelerini açmak için bir kategori seçin.",
+  "Filter the catalog, then select one item to edit its details.": "Kataloğu filtreleyin, ardından ayrıntılarını düzenlemek için bir öğe seçin."
 }

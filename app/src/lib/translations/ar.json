@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "انقر على الملف الشخصي أو البطاقات أو الخلفية لتحريرها",
   "Selected element": "العنصر المحدد",
   "Loading profile, content and theme.": "تحميل الملف الشخصي والمحتوى والموضوع.",
-  "Preparing your workspace": "تجهيز مساحة العمل الخاصة بك"
+  "Preparing your workspace": "تجهيز مساحة العمل الخاصة بك",
+  "Menu architecture": "بنية القائمة",
+  "Build the path your customers follow.": "قم ببناء المسار الذي يتبعه عملاؤك.",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "تقوم الفئات بتجميع العرض، وتضيف الفئات الفرعية التفاصيل، وتحتوي العناصر على ما يمكن طلبه.",
+  "Main navigation": "التنقل الرئيسي",
+  "Optional grouping": "التجميع الاختياري",
+  "Item": "العنصر",
+  "Name, price and availability": "الاسم والسعر والتوفر",
+  "Structure": "الهيكل",
+  "Catalog": "الكتالوج",
+  "Organize categories": "تنظيم الفئات",
+  "Manage menu items": "إدارة عناصر القائمة",
+  "Select a category to rename it, nest a subcategory or open its items.": "حدد فئة لإعادة تسميتها أو دمج فئة فرعية أو فتح عناصرها.",
+  "Filter the catalog, then select one item to edit its details.": "قم بتصفية الكتالوج، ثم حدد عنصرًا واحدًا لتعديل تفاصيله."
 }

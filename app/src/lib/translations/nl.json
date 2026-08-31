@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "Klik op profiel, kaarten of achtergrond om te bewerken",
   "Selected element": "Geselecteerd element",
   "Loading profile, content and theme.": "Profiel, inhoud en thema laden.",
-  "Preparing your workspace": "Uw werkruimte voorbereiden"
+  "Preparing your workspace": "Uw werkruimte voorbereiden",
+  "Menu architecture": "Menuarchitectuur",
+  "Build the path your customers follow.": "Bouw het pad dat uw klanten volgen.",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "Categorieën groeperen de aanbieding, subcategorieën voegen details toe en items bevatten wat er besteld kan worden.",
+  "Main navigation": "Hoofdnavigatie",
+  "Optional grouping": "Optionele groepering",
+  "Item": "Artikel",
+  "Name, price and availability": "Naam, prijs en beschikbaarheid",
+  "Structure": "Structuur",
+  "Catalog": "Catalogus",
+  "Organize categories": "Categorieën organiseren",
+  "Manage menu items": "Beheer menu-items",
+  "Select a category to rename it, nest a subcategory or open its items.": "Selecteer een categorie om deze te hernoemen, nest een subcategorie of open de items ervan.",
+  "Filter the catalog, then select one item to edit its details.": "Filter de catalogus en selecteer vervolgens één item om de details ervan te bewerken."
 }

@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "Clique no perfil, nos cartões ou no plano de fundo para editar",
   "Selected element": "Elemento selecionado",
   "Loading profile, content and theme.": "Carregando perfil, conteúdo e tema.",
-  "Preparing your workspace": "Preparando seu espaço de trabalho"
+  "Preparing your workspace": "Preparando seu espaço de trabalho",
+  "Menu architecture": "Arquitetura de menu",
+  "Build the path your customers follow.": "Construa o caminho que seus clientes seguem.",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "As categorias agrupam a oferta, as subcategorias adicionam detalhes e os itens contêm o que pode ser pedido.",
+  "Main navigation": "Navegação principal",
+  "Optional grouping": "Agrupamento opcional",
+  "Item": "Item",
+  "Name, price and availability": "Nome, preço e disponibilidade",
+  "Structure": "Estrutura",
+  "Catalog": "Catálogo",
+  "Organize categories": "Organizar categorias",
+  "Manage menu items": "Gerenciar itens de menu",
+  "Select a category to rename it, nest a subcategory or open its items.": "Selecione uma categoria para renomeá-la, aninhar uma subcategoria ou abrir seus itens.",
+  "Filter the catalog, then select one item to edit its details.": "Filtre o catálogo e selecione um item para editar seus detalhes."
 }

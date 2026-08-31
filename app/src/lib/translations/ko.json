@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "수정하려면 프로필, 카드, 배경을 클릭하세요.",
   "Selected element": "선택한 요소",
   "Loading profile, content and theme.": "프로필, 콘텐츠, 테마를 로드하는 중입니다.",
-  "Preparing your workspace": "작업공간 준비"
+  "Preparing your workspace": "작업공간 준비",
+  "Menu architecture": "메뉴 아키텍처",
+  "Build the path your customers follow.": "고객이 따르는 경로를 구축하세요.",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "카테고리는 제안을 그룹화하고 하위 카테고리는 세부정보를 추가하며 항목에는 주문할 수 있는 항목이 포함됩니다.",
+  "Main navigation": "기본 탐색",
+  "Optional grouping": "선택적 그룹화",
+  "Item": "아이템",
+  "Name, price and availability": "이름, 가격 및 가용성",
+  "Structure": "구조",
+  "Catalog": "카탈로그",
+  "Organize categories": "카테고리 정리",
+  "Manage menu items": "메뉴 항목 관리",
+  "Select a category to rename it, nest a subcategory or open its items.": "카테고리를 선택하여 이름을 바꾸거나 하위 카테고리를 중첩하거나 해당 항목을 엽니다.",
+  "Filter the catalog, then select one item to edit its details.": "카탈로그를 필터링한 다음 항목 하나를 선택하여 세부정보를 편집하세요."
 }

@@ -908,5 +908,18 @@
   "Click profile, cards or background to edit": "Нажмите профиль, карточки или фон для редактирования.",
   "Selected element": "Выбранный элемент",
   "Loading profile, content and theme.": "Загрузка профиля, контента и темы.",
-  "Preparing your workspace": "Подготовка рабочего места"
+  "Preparing your workspace": "Подготовка рабочего места",
+  "Menu architecture": "Архитектура меню",
+  "Build the path your customers follow.": "Создайте путь, по которому будут следовать ваши клиенты.",
+  "Categories group the offer, subcategories add detail, and items contain what can be ordered.": "Категории группируют предложения, подкатегории добавляют детали, а товары содержат то, что можно заказать.",
+  "Main navigation": "Основная навигация",
+  "Optional grouping": "Необязательная группировка",
+  "Item": "Элемент",
+  "Name, price and availability": "Название, цена и наличие",
+  "Structure": "Структура",
+  "Catalog": "Каталог",
+  "Organize categories": "Организация категорий",
+  "Manage menu items": "Управление пунктами меню",
+  "Select a category to rename it, nest a subcategory or open its items.": "Выберите категорию, чтобы переименовать ее, вложить подкатегорию или открыть ее элементы.",
+  "Filter the catalog, then select one item to edit its details.": "Отфильтруйте каталог, затем выберите один элемент, чтобы изменить его сведения."
 }
