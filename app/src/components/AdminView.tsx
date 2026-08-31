@@ -789,9 +789,7 @@ export const AdminView = ({
         ? tr("Menu", "Menu")
         : visualSection === "shop"
           ? tr("Shop", "Shop")
-          : visualSection === "pages"
-            ? tr("Additional pages", "Pagine aggiuntive")
-            : tr("Page style", "Stile pagina");
+          : tr("Additional pages", "Pagine aggiuntive");
   const visualInspectorDescription = visualSection === "profile"
     ? tr("Name, image, bio, social presence and page details.", "Nome, immagine, bio, presenza social e dettagli della pagina.")
     : visualSection === "links"
@@ -802,9 +800,7 @@ export const AdminView = ({
         ? tr("Manage navigation, categories and menu items.", "Gestisci navigazione, categorie ed elementi del menu.")
         : visualSection === "shop"
           ? tr("Manage the storefront shown from your OrbitPage.", "Gestisci lo shop mostrato dalla tua OrbitPage.")
-          : visualSection === "pages"
-            ? tr("Create and edit the other pages in your site.", "Crea e modifica le altre pagine del sito.")
-            : tr("Colors, typography, cards and page background.", "Colori, tipografia, card e sfondo della pagina.");
+          : tr("Create and edit the other pages in your site.", "Crea e modifica le altre pagine del sito.");
 
   const visualInspector = visualSection === "profile" ? (
     <ProfileSection
@@ -875,7 +871,7 @@ export const AdminView = ({
       managePlanHref={managePlanHref}
       internalDestinations={internalDestinations}
     />
-  ) : visualSection === "shop" ? (
+  ) : (
     isIntegratedHostedAdmin && hostedShop?.entitled
       ? <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
       : <PlanLockedFeature
@@ -883,21 +879,6 @@ export const AdminView = ({
           description={tr("Connect Stripe and manage products from a hosted workspace.", "Collega Stripe e gestisci i prodotti da un workspace hosted.")}
           managePlanHref={managePlanHref}
         />
-  ) : (
-    <ThemeCustomizer
-      theme={theme}
-      onThemeChange={onThemeChange}
-      onThemePreview={(nextTheme) => {
-        setPreviewTheme(nextTheme);
-        applyTheme(nextTheme);
-      }}
-      accessLevel={entitlements?.themes}
-      videoUploadsEnabled={entitlements?.videoUploads ?? true}
-      maxUploadBytes={entitlements?.maxUploadBytes}
-      maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
-      managePlanHref={managePlanHref}
-      showEmbeddedPreview={false}
-    />
   );
 
   return (
@@ -1224,6 +1205,7 @@ export const AdminView = ({
                 shopStatus={!isIntegratedHostedAdmin || !hostedShop?.entitled ? "locked" : hostedShop.enabled ? "active" : "inactive"}
                 pagesStatus={firstEnabledSubpage ? "active" : "inactive"}
                 onSelect={selectVisualSection}
+                onOpenTheme={canEditTheme ? () => selectTab("theme") : undefined}
               />
             ) : (
             <div className="admin-content-grid admin-content-grid-editor">
