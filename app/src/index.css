@@ -833,7 +833,7 @@
 }
 
 
-/* OrbitPage loading states: a small branded planet inline, a composed orbit for longer waits. */
+/* OrbitPage loading states: compact inline feedback and a clear progress ring for longer waits. */
 .orbit-loader {
   --orbit-loader-size: 20px;
   align-items: center;
@@ -874,42 +874,31 @@
   padding: 28px;
 }
 
-.orbit-loading-state__orb {
-  align-items: center;
-  background: #0d1a2f;
-  border: 1px solid #294d84;
-  border-radius: 999px;
-  box-shadow: 0 18px 42px rgb(17 39 76 / 18%);
-  display: inline-grid;
+.orbit-progress-ring {
+  display: inline-block;
   flex: 0 0 auto;
-  height: 88px;
-  justify-content: center;
-  place-items: center;
-  position: relative;
-  width: 88px;
+  height: var(--orbit-progress-size, 48px);
+  line-height: 0;
+  width: var(--orbit-progress-size, 48px);
 }
 
-.orbit-loading-state__orb::before {
-  border: 1px solid rgb(47 109 246 / 42%);
-  border-radius: inherit;
-  content: "";
-  inset: -8px;
-  position: absolute;
+.orbit-progress-ring__visual {
+  animation: orbit-progress-ring-turn .86s linear infinite;
+  display: block;
+  filter: drop-shadow(0 5px 8px rgb(47 109 246 / 18%));
+  height: 100%;
+  overflow: visible;
+  transform-origin: center;
+  width: 100%;
+  will-change: transform;
 }
 
-.orbit-loading-state__orb::after {
-  animation: orbit-loader-satellite 2.8s linear infinite;
-  background: #2f6df6;
-  border: 2px solid #f5f8fd;
-  border-radius: 999px;
-  box-shadow: 0 2px 9px rgb(47 109 246 / 34%);
-  content: "";
-  height: 9px;
-  left: calc(50% - 4.5px);
-  position: absolute;
-  top: -12px;
-  transform-origin: 4.5px 56px;
-  width: 9px;
+.orbit-progress-ring__track {
+  stroke: #dce6f5;
+}
+
+.orbit-progress-ring__arc {
+  stroke: #2f6df6;
 }
 
 .orbit-loading-state__copy {
@@ -937,19 +926,6 @@
   padding: 20px;
 }
 
-.orbit-loading-state--compact .orbit-loading-state__orb {
-  height: 58px;
-  width: 58px;
-}
-
-.orbit-loading-state--compact .orbit-loading-state__orb::after {
-  height: 7px;
-  left: calc(50% - 3.5px);
-  top: -10px;
-  transform-origin: 3.5px 39px;
-  width: 7px;
-}
-
 .orbit-loading-screen {
   background: #f4f7fb;
   color: #0d1728;
@@ -963,7 +939,7 @@
   min-height: 0;
 }
 
-@keyframes orbit-loader-satellite {
+@keyframes orbit-progress-ring-turn {
   to { transform: rotate(360deg); }
 }
 
@@ -975,8 +951,25 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .orbit-loading-state__orb::after {
+  .orbit-progress-ring__visual {
     animation: none !important;
+    transform: rotate(24deg);
+    will-change: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  .orbit-progress-ring__visual {
+    filter: none;
+  }
+
+  .orbit-progress-ring__track {
+    opacity: .3;
+    stroke: CanvasText;
+  }
+
+  .orbit-progress-ring__arc {
+    stroke: Highlight;
   }
 }
 

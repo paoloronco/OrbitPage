@@ -18,6 +18,7 @@ type OrbitLoadingStateProps = {
 };
 
 type LoaderStyle = CSSProperties & { "--orbit-loader-size": string };
+type ProgressRingStyle = CSSProperties & { "--orbit-progress-size": string };
 
 /** OrbitPage's branded wrapper around the MIT-licensed thinking-orbs canvas. */
 export function OrbitLoader({
@@ -47,6 +48,36 @@ export function OrbitLoader({
   );
 }
 
+export function OrbitProgressRing({
+  className,
+  size = 48,
+  state = "working",
+}: Pick<OrbitLoaderProps, "className" | "size" | "state">) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn("orbit-progress-ring", className)}
+      data-orbit-state={state}
+      style={{ "--orbit-progress-size": `${size}px` } as ProgressRingStyle}
+    >
+      <svg className="orbit-progress-ring__visual" viewBox="0 0 48 48">
+        <circle className="orbit-progress-ring__track" cx="24" cy="24" fill="none" r="20" strokeWidth="4" />
+        <circle
+          className="orbit-progress-ring__arc"
+          cx="24"
+          cy="24"
+          fill="none"
+          pathLength="100"
+          r="20"
+          strokeDasharray="72 100"
+          strokeLinecap="round"
+          strokeWidth="4"
+        />
+      </svg>
+    </span>
+  );
+}
+
 export function OrbitLoadingState({
   className,
   compact = false,
@@ -60,9 +91,7 @@ export function OrbitLoadingState({
       className={cn("orbit-loading-state", compact && "orbit-loading-state--compact", className)}
       role="status"
     >
-      <span className="orbit-loading-state__orb" aria-hidden="true">
-        <OrbitLoader bare size={compact ? 40 : 64} state={state} />
-      </span>
+      <OrbitProgressRing className="orbit-loading-state__spinner" size={compact ? 44 : 64} state={state} />
       <span className="orbit-loading-state__copy">
         <strong>{title}</strong>
         {description && <span>{description}</span>}
