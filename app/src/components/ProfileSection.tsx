@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/material-icons";
 import { Facebook, Github, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { Card } from "@/components/ui/card";
 import {
@@ -158,10 +159,7 @@ const ProfileColorField = ({
       <Label className="text-xs">{label}</Label>
       {!inherited && <button type="button" onClick={onReset} className="text-[11px] font-semibold text-blue-700 hover:underline">Use theme</button>}
     </div>
-    <div className="flex items-center gap-2">
-      <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="h-9 w-11 cursor-pointer rounded-md border border-slate-200 bg-transparent p-1" />
-      <Input value={value} onChange={(event) => onChange(event.target.value)} className="h-9 font-mono text-xs uppercase" maxLength={7} />
-    </div>
+    <ColorPicker label={label} value={value} onChange={onChange} />
   </div>
 );
 

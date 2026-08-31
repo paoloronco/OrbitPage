@@ -1,6 +1,6 @@
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
-import { HexColorPicker } from "react-colorful";
 import { Button } from "@/components/ui/button";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -60,9 +60,6 @@ interface ThemeColorControlProps {
   id: string;
   label: string;
   value: string;
-  active: boolean;
-  onToggle: () => void;
-  onClose: () => void;
   onChange: (color: string) => void;
 }
 
@@ -99,40 +96,13 @@ const ThemeColorControl = ({
   id,
   label,
   value,
-  active,
-  onToggle,
-  onClose,
   onChange,
 }: ThemeColorControlProps) => (
-  <div className="relative space-y-2">
+  <div className="space-y-2">
     <Label htmlFor={`theme-${id}`} className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
       {label}
     </Label>
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        aria-label={`Choose ${label}`}
-        aria-expanded={active}
-        onClick={onToggle}
-        className="h-10 w-10 shrink-0 rounded-lg border-2 border-white shadow-[0_0_0_1px_rgb(203_213_225)] transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-        style={{ backgroundColor: value }}
-      />
-      <Input
-        id={`theme-${id}`}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 font-mono text-xs uppercase"
-        placeholder="#000000"
-      />
-    </div>
-    {active ? (
-      <div className="absolute left-0 top-full z-50 mt-2">
-        <button type="button" className="fixed inset-0 cursor-default" aria-label="Close color picker" onClick={onClose} />
-        <div className="relative rounded-xl border border-slate-200 bg-white p-3 shadow-2xl">
-          <HexColorPicker color={value} onChange={onChange} />
-        </div>
-      </div>
-    ) : null}
+    <ColorPicker id={`theme-${id}`} label={label} value={value} onChange={onChange} />
   </div>
 );
 
@@ -261,7 +231,6 @@ export const ThemeCustomizer = ({
 }: ThemeCustomizerProps) => {
   const { tr } = useAppI18n();
   const [presetScope, setPresetScope] = useState<PresetScope>("page");
-  const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
   const [pendingTheme, setPendingTheme] = useState<EditableTheme>(theme);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(() => findMatchingPreset(theme));
   const [selectedCardPresetId, setSelectedCardPresetId] = useState<string | null>(() => findMatchingCardPreset(theme));
@@ -400,9 +369,6 @@ export const ThemeCustomizer = ({
       id={id}
       label={label}
       value={value}
-      active={activeColorPicker === id}
-      onToggle={() => setActiveColorPicker(activeColorPicker === id ? null : id)}
-      onClose={() => setActiveColorPicker(null)}
       onChange={onChange}
     />
   );

@@ -1309,7 +1309,7 @@
     .menu-editor-section-title p,
     .menu-variants-editor__heading span,
     .menu-variant-price > span,
-    .menu-color-grid label span,
+    .menu-color-grid .menu-color-field > span,
     .menu-plan-note,
     .menu-upgrade-panel > div:not(.menu-upgrade-panel__icon),
     .menu-content-mobile-switch button:not(.active),
@@ -5915,9 +5915,8 @@
 .menu-theme-presets i span { position: absolute; inset: 1.05rem .4rem .4rem; }
 .menu-theme-presets strong { padding: 0 .15rem; overflow: hidden; font-size: .68rem; text-transform: capitalize; text-overflow: ellipsis; }
 .menu-color-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
-.menu-color-grid label { display: grid; gap: .35rem; }
-.menu-color-grid label span { color: var(--admin-secondary-copy); font-size: .66rem; font-weight: 700; text-transform: capitalize; }
-.menu-color-grid input[type="color"] { padding: .25rem; }
+.menu-color-grid .menu-color-field { display: grid; gap: .35rem; }
+.menu-color-grid .menu-color-field > span { color: var(--admin-secondary-copy); font-size: .66rem; font-weight: 700; text-transform: capitalize; }
 .menu-plan-note { margin: 0; padding: .8rem; border: 1px solid #dbe3ee; border-radius: 6px; background: #f8fafc; color: var(--admin-secondary-copy); font-size: .75rem; line-height: 1.5; }
 .menu-publish-tools__grid { display: grid; grid-template-columns: 11.5rem minmax(0, 1fr); gap: 1.25rem; align-items: center; }
 .menu-publish-tools canvas { padding: .5rem; border: 1px solid #dbe3ee; border-radius: 6px; background: white; }
@@ -12638,6 +12637,228 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 @media (prefers-reduced-motion: reduce) {
   .admin-dashboard-content-nav-toggle svg {
+    transition: none;
+  }
+}
+/* Kibo-inspired dashboard color picker */
+.orbit-color-picker {
+  min-width: 0;
+  position: relative;
+  width: 100%;
+}
+
+.orbit-color-picker__trigger {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #172033;
+  cursor: pointer;
+  display: flex;
+  gap: 9px;
+  min-height: 40px;
+  padding: 5px 8px;
+  text-align: left;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  width: 100%;
+}
+
+.orbit-color-picker__trigger:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.orbit-color-picker__trigger:focus-visible {
+  border-color: #3568f4;
+  box-shadow: 0 0 0 3px rgb(53 104 244 / 16%);
+  outline: none;
+}
+
+.orbit-color-picker__trigger:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.orbit-color-picker__trigger code {
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.orbit-color-picker__trigger svg {
+  color: #64748b;
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.orbit-color-picker__trigger svg.is-open {
+  transform: rotate(180deg);
+}
+
+.orbit-color-picker__swatch {
+  border: 2px solid #fff;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  flex: 0 0 auto;
+  height: 27px;
+  width: 27px;
+}
+
+.orbit-color-picker__popover {
+  background: #fff;
+  border: 1px solid #d5deeb;
+  border-radius: 12px;
+  box-shadow: 0 22px 55px rgb(15 23 42 / 22%), 0 3px 12px rgb(15 23 42 / 10%);
+  color: #172033;
+  display: grid;
+  gap: 13px;
+  padding: 13px;
+  position: fixed;
+  z-index: 10050;
+}
+
+.orbit-color-picker__popover .react-colorful {
+  height: 196px;
+  width: 100%;
+}
+
+.orbit-color-picker__popover .react-colorful__saturation {
+  border-bottom: 0;
+  border-radius: 8px;
+}
+
+.orbit-color-picker__popover .react-colorful__hue {
+  border-radius: 999px;
+  height: 13px;
+  margin-top: 11px;
+}
+
+.orbit-color-picker__popover :where(.react-colorful__saturation-pointer, .react-colorful__hue-pointer) {
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgb(15 23 42 / 48%), 0 2px 7px rgb(15 23 42 / 24%);
+  height: 18px;
+  width: 18px;
+}
+
+.orbit-color-picker__tools {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.orbit-color-picker__eyedropper {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  padding: 0;
+  width: 38px;
+}
+
+.orbit-color-picker__eyedropper:hover:not(:disabled) {
+  background: #eff4ff;
+  border-color: #9bb5fb;
+  color: #2456d8;
+}
+
+.orbit-color-picker__eyedropper:focus-visible {
+  box-shadow: 0 0 0 3px rgb(53 104 244 / 16%);
+  outline: 1px solid #3568f4;
+}
+
+.orbit-color-picker__eyedropper:disabled {
+  cursor: not-allowed;
+  opacity: .38;
+}
+
+.orbit-color-picker__current {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  font-size: 12px;
+  font-weight: 650;
+  gap: 8px;
+}
+
+.orbit-color-picker__current i {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  height: 18px;
+  width: 18px;
+}
+
+.orbit-color-picker__output {
+  align-items: stretch;
+  display: flex;
+}
+
+.orbit-color-picker__output > span {
+  align-items: center;
+  background: #eef2f7;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px 0 0 8px;
+  color: #526078;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 800;
+  justify-content: center;
+  letter-spacing: .08em;
+  padding: 0 10px;
+}
+
+.orbit-color-picker__output input {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  color: #172033;
+  flex: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  height: 38px;
+  min-width: 0;
+  padding: 0 11px;
+  text-transform: uppercase;
+}
+
+.orbit-color-picker__output input:focus {
+  border-color: #3568f4;
+  box-shadow: 0 0 0 3px rgb(53 104 244 / 13%);
+  outline: none;
+}
+
+.orbit-color-picker__hint {
+  color: #718096;
+  font-size: 10px;
+  line-height: 1.45;
+  margin: -3px 0 0;
+}
+
+@media (max-width: 480px) {
+  .orbit-color-picker__popover .react-colorful {
+    height: 180px;
+  }
+}
+
+@media (forced-colors: active) {
+  .orbit-color-picker__swatch,
+  .orbit-color-picker__current i,
+  .orbit-color-picker__popover .react-colorful {
+    forced-color-adjust: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-color-picker__trigger,
+  .orbit-color-picker__trigger svg {
     transition: none;
   }
 }
