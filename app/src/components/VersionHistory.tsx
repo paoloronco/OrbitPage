@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, Clock3, History, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Clock3, History, RotateCcw } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { OrbitLoader, OrbitLoadingState } from '@/components/ui/orbit-loader';

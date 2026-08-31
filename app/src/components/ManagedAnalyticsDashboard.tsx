@@ -10,7 +10,7 @@ import {
   TrendingDown,
   TrendingUp,
   UsersRound,
-} from 'lucide-react';
+} from '@/components/ui/material-icons';
 import { managedAnalyticsApi, type ManagedAnalyticsDimension, type ManagedAnalyticsReport } from '@/lib/api-client';
 import { useAppI18n } from '@/lib/i18n';
 import { OrbitLoader } from '@/components/ui/orbit-loader';

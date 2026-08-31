@@ -22,7 +22,7 @@ import {
   Palette,
   RotateCcw,
   Type,
-} from "lucide-react";
+} from "@/components/ui/material-icons";
 import {
   type CardShadowConfig,
   type CardSurfaceEffect,

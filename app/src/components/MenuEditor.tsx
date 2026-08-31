@@ -4,7 +4,7 @@ import {
   ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff,
   ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, Save, Trash2,
   Search, UtensilsCrossed,
-} from 'lucide-react';
+} from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { OrbitLoader } from '@/components/ui/orbit-loader';
 import { Input } from '@/components/ui/input';

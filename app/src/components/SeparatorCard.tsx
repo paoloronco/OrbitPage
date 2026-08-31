@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit, Trash2, Eye, EyeOff, GripVertical } from "lucide-react";
+import { Edit, Trash2, Eye, EyeOff, GripVertical } from "@/components/ui/material-icons";
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
 

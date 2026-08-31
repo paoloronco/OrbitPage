@@ -48,7 +48,7 @@ import {
   UserRound,
   UsersRound,
   X,
-} from "lucide-react";
+} from "@/components/ui/material-icons";
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
@@ -145,21 +145,21 @@ interface AdminViewProps {
 }
 
 const pageTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName: string }> = [
-  { value: "profile", icon: UserRound, iconName: "user-round" },
-  { value: "content", icon: Files, iconName: "files" },
-  { value: "ai", icon: Sparkles, iconName: "sparkles" },
-  { value: "theme", icon: Palette, iconName: "palette" },
-  { value: "publish", icon: Share2, iconName: "share-2" },
-  { value: "backup", icon: Database, iconName: "database" },
-  { value: "analytics", icon: BarChart3, iconName: "bar-chart-3" },
-  { value: "privacy", icon: Cookie, iconName: "cookie" },
+  { value: "profile", icon: UserRound, iconName: "person-outline" },
+  { value: "content", icon: Files, iconName: "folder-copy-outlined" },
+  { value: "ai", icon: Sparkles, iconName: "auto-awesome-outlined" },
+  { value: "theme", icon: Palette, iconName: "palette-outlined" },
+  { value: "publish", icon: Share2, iconName: "share-outlined" },
+  { value: "backup", icon: Database, iconName: "storage-outlined" },
+  { value: "analytics", icon: BarChart3, iconName: "bar-chart-outlined" },
+  { value: "privacy", icon: Cookie, iconName: "cookie-outlined" },
 ];
 
 const workspaceTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName: string }> = [
-  { value: "newsletter", icon: Mail, iconName: "mail" },
-  { value: "team", icon: UsersRound, iconName: "users-round" },
-  { value: "account", icon: CircleUserRound, iconName: "circle-user-round" },
-  { value: "plan", icon: CreditCard, iconName: "credit-card" },
+  { value: "newsletter", icon: Mail, iconName: "mail-outline" },
+  { value: "team", icon: UsersRound, iconName: "group-outlined" },
+  { value: "account", icon: CircleUserRound, iconName: "account-circle-outlined" },
+  { value: "plan", icon: CreditCard, iconName: "credit-card-outlined" },
 ];
 
 const tabs = [...pageTabs, ...workspaceTabs];
@@ -787,7 +787,7 @@ export const AdminView = ({
                       title={tabLabel(value)}
                       type="button"
                     >
-                      <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" />
+                      <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
                       <span>{tabLabel(value)}</span>
                     </button>
                     <button
@@ -831,7 +831,7 @@ export const AdminView = ({
                   title={tabLabel(value)}
                   type="button"
                 >
-                  <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" />
+                  <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
                   <span>{tabLabel(value)}</span>
                 </button>
               ))}
@@ -850,7 +850,7 @@ export const AdminView = ({
                     title={tabLabel(value)}
                     type="button"
                   >
-                    <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" />
+                    <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
                     <span>{tabLabel(value)}</span>
                   </button>
                 ))}
