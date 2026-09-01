@@ -867,7 +867,6 @@ export const AdminView = ({
       publicPageHref={publicPageHref}
       enabled={!saasPlan || entitlements?.nativeMenu === true}
       maxItems={entitlements?.maxMenuItems ?? null}
-      planName={saasPlan?.name}
       advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
       onSave={onMenuUpdate}
       onAddMenuLink={async () => {
@@ -1391,7 +1390,6 @@ export const AdminView = ({
                       publicPageHref={publicPageHref}
                       enabled={!saasPlan || entitlements?.nativeMenu === true}
                       maxItems={entitlements?.maxMenuItems ?? null}
-                      planName={saasPlan?.name}
                       advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
                       onSave={onMenuUpdate}
                       onAddMenuLink={async () => {

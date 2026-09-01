@@ -117,6 +117,11 @@ test("New UI edits the real page through selectable elements and keeps the prefe
     selectionTransform: "none",
   });
 
+  await inspector.getByRole("button", { name: "Delete card" }).click();
+  await expect(selectedLinkTarget).toHaveCount(0);
+  await inspector.locator(".admin-link-manager--visual > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Unsaved changes")).toBeHidden();
+
   await page.locator(".public-page-root--editor").dispatchEvent("click");
   await expect(page.locator(".visual-site-editor")).toBeHidden();
   await expect(page.locator(".admin-theme-customizer")).toBeVisible();
@@ -187,7 +192,9 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(canvas.locator(".admin-live-preview")).toHaveCount(0);
   await expect(workflow).toBeVisible();
   await expect(workflow.getByRole("button")).toHaveCount(4);
-  await expect(editor.locator(".menu-visual-context")).toContainText("Organize categories");
+  await expect(editor.getByText("Pro menu", { exact: true })).toHaveCount(0);
+  await expect(inspector.getByText("Selected element", { exact: true })).toHaveCount(0);
+  await expect(editor.locator(".menu-visual-context")).toHaveCount(0);
   await expect(editor.locator(".menu-content-pane--sections")).toBeVisible();
   await expect(editor.locator(".menu-content-pane--products")).toBeHidden();
   await expect(editor.locator(".menu-category-accordion")).toHaveCount(0);
@@ -204,13 +211,13 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   expect(clippedDesktopLabels).toBe(0);
 
   await workflow.getByRole("button", { name: /Items/ }).click();
-  await expect(editor.locator(".menu-visual-context")).toContainText("Manage menu items");
   await expect(editor.locator(".menu-content-pane--sections")).toBeHidden();
   await expect(editor.locator(".menu-content-pane--products")).toBeVisible();
+  await expect(editor.getByText("Selected item", { exact: true })).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(workflow.getByRole("button", { name: /Identity/ })).toBeVisible();
-  await expect(workflow.getByRole("button", { name: /Publish/ })).toBeVisible();
+  await expect(workflow.getByRole("button", { name: /Design/ })).toBeVisible();
   const mobileOverflow = await editor.evaluate((element) => element.scrollWidth - element.clientWidth);
   expect(mobileOverflow).toBeLessThanOrEqual(1);
   const pageOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

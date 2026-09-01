@@ -300,7 +300,7 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(workflow.getByText('Identity', { exact: true })).toBeVisible();
   await expect(workflow.getByText('Categories', { exact: true })).toBeVisible();
   await expect(workflow.getByText('Items', { exact: true })).toBeVisible();
-  await expect(workflow.getByText('Publish', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Design', { exact: true })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Menu content view' })).toHaveCount(0);
   await workflow.getByRole('button', { name: /Identity/ }).click();
   const localeSelect = page.getByLabel('Locale', { exact: true });

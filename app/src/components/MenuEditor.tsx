@@ -27,7 +27,6 @@ interface MenuEditorProps {
   publicPageHref: string;
   enabled: boolean;
   maxItems: number | null;
-  planName?: string;
   advancedTheme: boolean;
   onSave: (menu: MenuCatalog) => Promise<void>;
   onAddMenuLink: () => Promise<void>;
@@ -207,7 +206,7 @@ function MenuQr({ url, color }: { url: string; color: string }) {
 }
 
 export function MenuEditor({
-  menu, publicPageHref, enabled, maxItems, planName, advancedTheme,
+  menu, publicPageHref, enabled, maxItems, advancedTheme,
   onSave, onAddMenuLink, onPreview, presentation = 'classic',
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
@@ -521,7 +520,6 @@ export function MenuEditor({
       <div className="menu-editor-main space-y-5">
         <section className="admin-panel menu-editor-intro">
           <div className="menu-editor-intro__identity">
-            <p className="admin-eyebrow">{planName || 'Self-hosted'} menu</p>
             <h2>{tr("Venue menu", "Menu del locale")}</h2>
             <div className="menu-editor-summary" aria-label={tr("Menu summary", "Riepilogo menu")}>
               <span><strong>{draft.sections.length}</strong>{tr("categories", "categorie")}</span>
@@ -580,7 +578,7 @@ export function MenuEditor({
             onClick={() => setActivePanel('appearance')}
           >
             <span className="menu-editor-tab-index">04</span>
-            <span className="menu-editor-tab-copy"><strong>{tr('Publish', 'Pubblica')}</strong><small>{tr('Style, URL and QR code', 'Stile, URL e codice QR')}</small></span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Design', 'Design')}</strong><small>{tr('Style, URL and QR code', 'Stile, URL e codice QR')}</small></span>
             <Palette aria-hidden="true" />
           </button>
         </nav>
@@ -616,7 +614,7 @@ export function MenuEditor({
         </section>}
 
         {activePanel === 'content' && <section className="menu-content-shell">
-          {presentation === 'classic' ? (
+          {presentation === 'classic' && (
             <header className="menu-classic-content-map">
               <div className="menu-classic-content-map__intro">
                 <p className="admin-eyebrow">{tr('Menu architecture', 'Architettura del menu')}</p>
@@ -631,16 +629,6 @@ export function MenuEditor({
                 <li><span>02</span><div><strong>{tr('Subcategory', 'Sottocategoria')}</strong><small>{tr('Optional grouping', 'Raggruppamento facoltativo')}</small></div></li>
                 <li><span>03</span><div><strong>{tr('Item', 'Elemento')}</strong><small>{tr('Name, price and availability', 'Nome, prezzo e disponibilità')}</small></div></li>
               </ol>
-            </header>
-          ) : (
-            <header className="menu-visual-context" aria-live="polite">
-              <span>{mobileContentPane === 'sections' ? tr('Structure', 'Struttura') : tr('Catalog', 'Catalogo')}</span>
-              <div>
-                <strong>{mobileContentPane === 'sections' ? tr('Organize categories', 'Organizza le categorie') : tr('Manage menu items', 'Gestisci gli elementi')}</strong>
-                <small>{mobileContentPane === 'sections'
-                  ? tr('Select a category to rename it, nest a subcategory or open its items.', 'Seleziona una categoria per rinominarla, aggiungere una sottocategoria o aprirne gli elementi.')
-                  : tr('Filter the catalog, then select one item to edit its details.', 'Filtra il catalogo, poi seleziona un elemento per modificarne i dettagli.')}</small>
-              </div>
             </header>
           )}
 
@@ -759,7 +747,6 @@ export function MenuEditor({
                     <div className="menu-product-editor__heading">
                       <div>
                         <button type="button" className="menu-product-editor__back" onClick={() => setMobileEditingItem(false)}><ArrowLeft aria-hidden="true" />{tr("Back to items", "Torna agli elementi")}</button>
-                        <span>{tr("Selected item", "Elemento selezionato")}</span>
                         <strong>{selectedItem.name || tr("Untitled item", "Elemento senza nome")}</strong>
                       </div>
                       <div className="menu-product-editor__actions">
