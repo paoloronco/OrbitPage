@@ -7987,6 +7987,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
+  overflow-x: hidden;
   overflow-y: auto;
   scrollbar-color: rgb(255 255 255 / 18%) transparent;
   scrollbar-width: thin;
@@ -8025,6 +8026,14 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 @media (min-width: 768px) {
+  .admin-dashboard-nav-stack {
+    scrollbar-width: none;
+  }
+
+  .admin-dashboard-nav-stack::-webkit-scrollbar {
+    display: none;
+  }
+
   .admin-dashboard-collapsed .admin-dashboard-nav-heading {
     display: none;
   }
