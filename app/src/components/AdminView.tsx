@@ -1611,13 +1611,15 @@ export const AdminView = ({
               {profile.footerText}
             </p>
           )}
-          <p>
-            {tr("Powered by", "Realizzato con")}{" "}
-            <a href="https://github.com/paoloronco/OrbitPage" target="_blank" rel="noopener noreferrer">
-              OrbitPage
-            </a>
-            {appVersion && <span> OSS v{appVersion}</span>}
-          </p>
+          {!isHostedAdmin && (
+            <p>
+              {tr("Powered by", "Realizzato con")}{" "}
+              <a href="https://github.com/paoloronco/OrbitPage" target="_blank" rel="noopener noreferrer">
+                OrbitPage
+              </a>
+              {appVersion && <span> OSS v{appVersion}</span>}
+            </p>
+          )}
         </footer>
       </div>
     </div>

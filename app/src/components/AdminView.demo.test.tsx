@@ -146,6 +146,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Page checklist');
     expect(html).not.toContain('Guided setup');
     expect(html).not.toContain('OrbitPage onboarding guide');
+    expect(html).toContain('https://github.com/paoloronco/OrbitPage');
   });
 
   it('hides standalone session details in the hosted SaaS admin', () => {
@@ -179,6 +180,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('data-testid="managed-analytics"');
     expect(html).toContain('data-testid="google-analytics-settings"');
     expect(html).toContain('id="ga-id"');
+    expect(html).not.toContain('https://github.com/paoloronco/OrbitPage');
   });
 
   it('marks prospect sessions as read-only while keeping the hosted sections visible', () => {
