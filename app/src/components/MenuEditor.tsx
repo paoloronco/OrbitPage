@@ -31,6 +31,7 @@ interface MenuEditorProps {
   advancedTheme: boolean;
   onSave: (menu: MenuCatalog) => Promise<void>;
   onAddMenuLink: () => Promise<void>;
+  onPreview?: (menu: MenuCatalog) => void;
   presentation?: 'classic' | 'visual';
 }
 
@@ -207,7 +208,7 @@ function MenuQr({ url, color }: { url: string; color: string }) {
 
 export function MenuEditor({
   menu, publicPageHref, enabled, maxItems, planName, advancedTheme,
-  onSave, onAddMenuLink, presentation = 'classic',
+  onSave, onAddMenuLink, onPreview, presentation = 'classic',
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
@@ -258,6 +259,10 @@ export function MenuEditor({
     const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
     setDraft(normalized);
   }, [menu, maxItems]);
+
+  useEffect(() => {
+    onPreview?.(draft);
+  }, [draft, onPreview]);
 
   useEffect(() => {
     if (productSectionFilter !== 'all' && !draft.sections.some((section) => section.id === productSectionFilter)) {
@@ -413,9 +418,7 @@ export function MenuEditor({
     const nested = Boolean(section.parentId);
     const canDelete = nested || rootSections.length > 1;
     return (
-      <div className="menu-category-accordion__body">
-        <div className="menu-category-accordion__body-inner">
-          <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
+      <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
             <div className="menu-category-editor__heading">
               <div>
                 <span>{nested ? tr("Edit subcategory", "Modifica sottocategoria") : tr("Edit category", "Modifica categoria")}</span>
@@ -497,9 +500,7 @@ export function MenuEditor({
               <span>{tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}</span>
               <strong>{draft.items.filter((item) => item.sectionId === section.id).length}</strong>
             </Button>
-          </section>
-        </div>
-      </div>
+      </section>
     );
   };
 
@@ -665,40 +666,30 @@ export function MenuEditor({
                 <div className="menu-category-picker" aria-label={tr("Menu categories", "Categorie del menu")}>
                   {sortedSections.map((section) => {
                     const itemCount = draft.items.filter((item) => item.sectionId === section.id).length;
-                    const expanded = productSectionFilter === section.id;
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={section.id}
-                        className={`menu-category-accordion${section.parentId ? ' is-subcategory' : ''}${expanded ? ' is-expanded' : ''}`}
+                        className={`menu-category-picker__item${section.parentId ? ' is-subcategory' : ''}${productSectionFilter === section.id ? ' active' : ''}`}
+                        aria-current={productSectionFilter === section.id ? 'true' : undefined}
+                        aria-label={`${section.name || tr("Untitled category", "Categoria senza nome")} ${itemCount}`}
+                        onClick={() => setProductSectionFilter(section.id)}
                       >
-                        <button
-                          type="button"
-                          className={`menu-category-picker__item${expanded ? ' active' : ''}`}
-                          aria-label={`${section.name || tr("Untitled category", "Categoria senza nome")} ${itemCount}`}
-                          aria-expanded={expanded}
-                          aria-controls={`menu-category-editor-${section.id}`}
-                          onClick={() => setProductSectionFilter(section.id)}
-                        >
-                          <span className="menu-category-picker__copy">
-                            <small>{section.parentId ? tr('Subcategory', 'Sottocategoria') : tr('Category', 'Categoria')}</small>
-                            <strong>{section.name || tr("Untitled category", "Categoria senza nome")}</strong>
-                          </span>
-                          <small className="menu-category-picker__meta">
-                            {section.visible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
-                            <strong>{itemCount}</strong>
-                            <span>{itemCount === 1 ? tr('item', 'elemento') : tr('items', 'elementi')}</span>
-                          </small>
-                          <ChevronRight aria-hidden="true" />
-                        </button>
-                        {expanded && (
-                          <div id={`menu-category-editor-${section.id}`}>
-                            {renderCategoryEditor(section)}
-                          </div>
-                        )}
-                      </div>
+                        <span className="menu-category-picker__copy">
+                          <small>{section.parentId ? tr('Subcategory', 'Sottocategoria') : tr('Category', 'Categoria')}</small>
+                          <strong>{section.name || tr("Untitled category", "Categoria senza nome")}</strong>
+                        </span>
+                        <small className="menu-category-picker__meta">
+                          {section.visible ? <Eye aria-hidden="true" /> : <EyeOff aria-hidden="true" />}
+                          <strong>{itemCount}</strong>
+                          <span>{itemCount === 1 ? tr('item', 'elemento') : tr('items', 'elementi')}</span>
+                        </small>
+                        <ChevronRight aria-hidden="true" />
+                      </button>
                     );
                   })}
                 </div>
+                {selectedSection && renderCategoryEditor(selectedSection)}
               </div>
             </div>
           </div>

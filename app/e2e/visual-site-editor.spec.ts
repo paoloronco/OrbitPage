@@ -181,12 +181,17 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   const inspector = page.locator(".visual-site-editor__inspector");
   const editor = inspector.locator(".menu-editor-stack--visual");
   const workflow = editor.getByRole("navigation", { name: "Menu setup workflow" });
+  const canvas = page.locator(".visual-site-editor__canvas");
   await expect(editor).toBeVisible();
+  await expect(canvas.locator(".admin-menu-live-preview .orbitpage-menu--embedded")).toBeVisible();
+  await expect(canvas.locator(".admin-live-preview")).toHaveCount(0);
   await expect(workflow).toBeVisible();
   await expect(workflow.getByRole("button")).toHaveCount(4);
   await expect(editor.locator(".menu-visual-context")).toContainText("Organize categories");
   await expect(editor.locator(".menu-content-pane--sections")).toBeVisible();
   await expect(editor.locator(".menu-content-pane--products")).toBeHidden();
+  await expect(editor.locator(".menu-category-accordion")).toHaveCount(0);
+  await expect(editor.locator(".menu-category-editor")).toHaveCount(1);
 
   const clippedDesktopLabels = await workflow.locator("button").evaluateAll((buttons) => buttons.filter((button) => {
     const label = button.querySelector<HTMLElement>(".menu-editor-tab-copy strong");
@@ -208,4 +213,6 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(workflow.getByRole("button", { name: /Publish/ })).toBeVisible();
   const mobileOverflow = await editor.evaluate((element) => element.scrollWidth - element.clientWidth);
   expect(mobileOverflow).toBeLessThanOrEqual(1);
+  const pageOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(pageOverflow).toBeLessThanOrEqual(1);
 });

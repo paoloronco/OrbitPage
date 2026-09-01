@@ -44,6 +44,7 @@ vi.mock('./ProfileSection', () => ({
 vi.mock('./LinkManager', () => ({ LinkManager: () => <div>LinkManager</div> }));
 vi.mock('./ThemeCustomizer', () => ({ ThemeCustomizer: () => <div>ThemeCustomizer</div> }));
 vi.mock('./LivePreview', () => ({
+  PreviewDeviceFrame: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   PreviewDeviceToggle: () => <div>PreviewDeviceToggle</div>,
   LivePreview: (props: Record<string, unknown>) => {
     mockState.previewProps.push(props);
