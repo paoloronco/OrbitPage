@@ -128,10 +128,9 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
 
   await page.getByRole('button', { name: 'Add', exact: true }).click();
-  const categoryName = page.locator('#selected-menu-category-name');
-  const expandedCategory = page.locator('.menu-category-accordion.is-expanded');
-  await expect(expandedCategory).toHaveCount(1);
-  await expect(expandedCategory.locator('#selected-menu-category-name')).toBeVisible();
+  const selectedCategory = page.getByRole('region', { name: 'Selected category' });
+  const categoryName = selectedCategory.locator('#selected-menu-category-name');
+  await expect(selectedCategory).toBeVisible();
   await expect(categoryName).toHaveValue('New section');
   await categoryName.fill(categoryLabel);
 
