@@ -47,11 +47,11 @@ describe('deployment configuration', () => {
     const workflow = read('.github/workflows/release.yml');
 
     expect(workflow).toContain('tags: ["v*.*.*"]');
-    expect(workflow).not.toContain('branches: [ "main" ]');
+    expect(workflow).not.toContain('branches: ["main"]');
     expect(workflow).toContain("require('./app/package.json').version");
     expect(workflow).toContain("require('./app/server/package.json').version");
     expect(workflow).toContain('EXPECTED_TAG="v${VERSION}"');
-    expect(workflow).toContain('git merge-base --is-ancestor "$GITHUB_SHA" origin/main');
+    expect(workflow).toContain('git merge-base --is-ancestor "${GITHUB_SHA}" origin/main');
     expect(workflow).toContain('"E2E (webkit)"');
     expect(workflow).toContain('gh release create "$TAG"');
     expect(workflow).not.toContain('git push origin "$TAG"');
@@ -73,7 +73,7 @@ describe('deployment configuration', () => {
   it('publishes immutable package-version Docker tags only from the verified release tag', () => {
     const workflow = read('.github/workflows/release.yml');
 
-    expect(workflow).toContain('needs: verify');
+    expect(workflow).toContain('needs: [validate, smoke-test]');
     expect(workflow).toContain('type=semver,pattern={{version}}');
     expect(workflow).toContain('type=semver,pattern=v{{version}}');
     expect(workflow).toContain('type=semver,pattern={{major}}.{{minor}}');
@@ -92,6 +92,19 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('npm run build');
     expect(workflow).toContain('docker build -t orbitpage-ci-smoke ..');
     expect(workflow).toContain('curl --fail http://127.0.0.1:3001/health');
+  });
+
+  it('publishes rolling Docker tags only after every main CI job succeeds', () => {
+    const workflow = read('.github/workflows/ci.yml');
+
+    expect(workflow).toContain("github.event_name == 'push' && github.ref == 'refs/heads/main'");
+    expect(workflow).toContain('needs: [test, e2e]');
+    expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}');
+    expect(workflow).toContain('${{ env.GHCR_IMAGE }}');
+    expect(workflow).toContain('type=raw,value=latest');
+    expect(workflow).toContain('type=raw,value=main');
+    expect(workflow).toContain('type=sha,format=short,prefix=sha-');
+    expect(workflow).toContain('Build and publish rolling tags');
   });
 
   it('builds the frontend before server tests that exercise SPA rendering', () => {

@@ -29,7 +29,7 @@ sudo docker pull paueron/orbitpage:latest
 # Or: sudo docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
-Both registries receive the same release. Immutable version tags are published with [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). Use a complete `vX.Y.Z` tag when updates and rollback must be deterministic; use `latest` only when the deployment intentionally follows the newest release.
+Both registries receive the same image after the complete `main` CI passes. The `latest` and `main` tags follow that build, while `sha-<commit>` pins it. Immutable version tags are published with [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). Use a complete `vX.Y.Z` tag when updates and rollback must be deterministic; use `latest` only when the deployment intentionally follows the newest green `main` build.
 
 ### Prepare the secret and persistent data
 
