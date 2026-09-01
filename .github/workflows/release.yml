@@ -1,10 +1,8 @@
-name: Release and container publish
+name: Publish versioned release
 
 on:
   push:
-    branches: ["main"]
     tags: ["v*.*.*"]
-  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
@@ -12,7 +10,6 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write
 
 env:
   GHCR_IMAGE: ghcr.io/paoloronco/orbitpage
@@ -20,9 +17,12 @@ env:
 
 jobs:
   validate:
-    name: Validate release inputs
+    name: Validate tag and release inputs
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    permissions:
+      contents: read
+      checks: read
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
@@ -56,31 +56,43 @@ jobs:
             exit 1
           fi
 
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            EXPECTED_TAG="v${VERSION}"
+          EXPECTED_TAG="v${VERSION}"
+          if [[ "${GITHUB_REF_NAME}" != "${EXPECTED_TAG}" ]]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package version ${EXPECTED_TAG}."
+            exit 1
+          fi
 
-            if [[ "${GITHUB_REF_NAME}" != "${EXPECTED_TAG}" ]]; then
-              echo "::error::Tag ${GITHUB_REF_NAME} does not match package version ${EXPECTED_TAG}."
-              exit 1
-            fi
-
-            git fetch origin main --no-tags
-            if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
-              echo "::error::The tagged commit is not contained in origin/main."
-              exit 1
-            fi
-
-            echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-            echo "tag=${EXPECTED_TAG}" >> "${GITHUB_OUTPUT}"
-            exit 0
+          git fetch origin main --no-tags
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "::error::The tagged commit is not contained in origin/main."
+            exit 1
           fi
 
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "tag=" >> "${GITHUB_OUTPUT}"
+          echo "tag=${EXPECTED_TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Require the complete main CI for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          for CHECK_NAME in \
+            "Quality Gate" \
+            "E2E (chromium)" \
+            "E2E (firefox)" \
+            "E2E (webkit)"; do
+            CONCLUSION="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?per_page=100" \
+              --jq "[.check_runs[] | select(.name == \"${CHECK_NAME}\")] | sort_by(.completed_at) | last | .conclusion // \"missing\"" \
+            )"
+            if [[ "${CONCLUSION}" != "success" ]]; then
+              echo "::error::Required check '${CHECK_NAME}' is ${CONCLUSION}; release stopped."
+              exit 1
+            fi
+          done
 
   smoke-test:
     name: Smoke test image build
-    if: ${{ github.event_name != 'pull_request' }}
     needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -115,7 +127,6 @@ jobs:
 
   publish-images:
     name: Publish Docker images
-    if: ${{ github.event_name != 'pull_request' }}
     needs: [validate, smoke-test]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -127,11 +138,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Resolve image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
+          tags: |
+            type=sha,format=short,prefix=sha-
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -140,73 +168,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Resolve GHCR metadata
-        id: ghcr_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.GHCR_IMAGE }}
-          tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha,format=short,prefix=sha-
-            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=semver,pattern=v{{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-
-      - name: Build and push GHCR image
+      - name: Build and publish immutable version tags
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
-          tags: ${{ steps.ghcr_meta.outputs.tags }}
-          labels: ${{ steps.ghcr_meta.outputs.labels }}
-          build-args: |
-            NODE_ENV=production
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Resolve Docker Hub metadata
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        id: dockerhub_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKERHUB_IMAGE }}
-          tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha,format=short,prefix=sha-
-            type=semver,pattern={{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=semver,pattern=v{{version}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-            type=semver,pattern={{major}}.{{minor}},enable=${{ startsWith(github.ref, 'refs/tags/v') }}
-
-      - name: Build and push Docker Hub image
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.dockerhub_meta.outputs.tags }}
-          labels: ${{ steps.dockerhub_meta.outputs.labels }}
-          build-args: |
-            NODE_ENV=production
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   github-release:
     name: Create GitHub release
-    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: [validate, smoke-test, publish-images]
     runs-on: ubuntu-24.04
     permissions:

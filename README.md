@@ -79,7 +79,7 @@ sudo docker run -d --name orbitpage \
 
 Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>.
 
-The same image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. For production, replace <code>latest</code> with an immutable tag from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
+The same image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. The <code>latest</code> and <code>main</code> tags follow the newest commit whose complete CI passed; <code>sha-&lt;commit&gt;</code> pins that build. For production, use an immutable version tag from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
 
 See the complete [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended) for image selection, Compose, verification, updates, backups, and rollback.
 

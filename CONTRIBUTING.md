@@ -181,13 +181,12 @@ OrbitPage uses SQLite through `app/server/database.js`.
 
 ## Release Notes
 
-Maintainers handle version bumps, tags, GitHub releases, and published Docker
-images. A normal `main` commit never republishes a versioned image or release.
-After the matching `main` CI is fully green, a maintainer may create the exact
-`vX.Y.Z` tag matching both application package versions; the tag-only release
-workflow verifies CI, smoke-tests the image, publishes Docker Hub/GHCR tags, and
-then creates the GitHub release. Pull requests should describe user-visible
-changes clearly so release notes can be written without archaeology.
+Every green `main` CI publishes the same Linux amd64 image to Docker Hub and
+GHCR as `latest`, `main`, and `sha-<commit>`. Maintainers separately handle
+version bumps and GitHub releases: an exact `vX.Y.Z` tag matching both package
+versions verifies the commit's complete CI, smoke-tests the image, publishes
+immutable version tags, and creates the release. Pull requests should describe
+user-visible changes clearly so release notes can be written without archaeology.
 
 ## License
 
