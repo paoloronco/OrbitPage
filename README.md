@@ -29,7 +29,7 @@ OrbitPage is a free, MIT-licensed Linktree alternative for building link-in-bio 
 This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
 
 <p align="center">
-  <img src="./docs/screenshots/orbitpage-public-page.png" alt="Example self-hosted OrbitPage link-in-bio profile with portfolio, writing, and contact links" width="960" />
+  <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="Animated OrbitPage editor showing content, style, shop, and publishing workflows" width="800" />
 </p>
 
 ## Why OrbitPage
