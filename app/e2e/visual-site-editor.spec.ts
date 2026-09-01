@@ -113,17 +113,19 @@ test("New UI edits the real page through selectable elements and keeps the prefe
     return {
       outlineStyle: outlineStyle.outlineStyle,
       selectionAnimation: selectionStyle.animationName,
+      selectionDuration: selectionStyle.animationDuration,
+      selectionIterations: selectionStyle.animationIterationCount,
       selectionBorderWidth: selectionStyle.borderTopWidth,
       selectionOpacity: selectionStyle.opacity,
-      selectionTransform: selectionStyle.transform,
     };
   });
   expect(reducedMotionIndicator).toEqual({
     outlineStyle: "none",
-    selectionAnimation: "none",
+    selectionAnimation: "visual-editor-selection-breathe",
+    selectionDuration: "2.2s",
+    selectionIterations: "infinite",
     selectionBorderWidth: "3px",
     selectionOpacity: "1",
-    selectionTransform: "none",
   });
 
   await inspector.getByRole("button", { name: "Delete card" }).click();

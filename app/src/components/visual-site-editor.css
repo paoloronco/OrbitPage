@@ -389,13 +389,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .public-page-root--editor .public-editor-target.is-selected::before {
-    animation: none;
-    transform: none;
-  }
-}
-
 @media (max-width: 1180px) {
   .visual-site-editor__workspace {
     grid-template-columns: minmax(0, 1fr) minmax(360px, .82fr);
