@@ -57,7 +57,7 @@ import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
-import { LivePreview, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
+import { LivePreview, PreviewDeviceFrame, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
 import {
   getHostedSurfaceConfig,
@@ -82,6 +82,7 @@ import { SelfHostedAiPanel } from "./SelfHostedAiPanel";
 import { SelfHostedAiAgent } from "./SelfHostedAiAgent";
 import { OpenSourcePlan } from "./OpenSourcePlan";
 import { VisualSiteEditor, type VisualSiteEditorSection } from "./VisualSiteEditor";
+import { MenuView } from "./MenuView";
 
 interface ProfileData {
   name: string;
@@ -168,6 +169,11 @@ function canonicalViewTab(tab: AdminTab): AdminTab {
   return canonicalAdminTab(tab);
 }
 
+function visualSectionForContent(section: ContentDestination): VisualSiteEditorSection {
+  if (section === "link") return "links";
+  return section;
+}
+
 const ctaActionLabels: Record<string, string> = {
   book: "Book",
   contact: "Contact me",
@@ -246,6 +252,7 @@ export const AdminView = ({
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
   const [previewTheme, setPreviewTheme] = useState(theme);
+  const [previewMenu, setPreviewMenu] = useState(menu);
   const [newUiEnabled, setNewUiEnabled] = useState(() => {
     const hostedPreference = getHostedSurfaceConfig()?.newUiEnabled;
     if (hostedPreference !== undefined) return hostedPreference;
@@ -256,7 +263,14 @@ export const AdminView = ({
       return false;
     }
   });
-  const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>("profile");
+  const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>(() => {
+    const config = getHostedSurfaceConfig();
+    if (config?.extensions?.shop?.selected) return "shop";
+    const requestedContent = canonicalViewTab(config?.section || requestedTab) === "content"
+      ? config?.contentSection || requestedContentSection || contentSectionForTab(requestedTab) || "link"
+      : null;
+    return requestedContent ? visualSectionForContent(requestedContent) : "profile";
+  });
   const [visualLinkId, setVisualLinkId] = useState<string | null>(null);
   const [visualEditRequest, setVisualEditRequest] = useState(0);
   const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
@@ -307,6 +321,11 @@ export const AdminView = ({
         if (nextConfig?.extensions?.shop?.selected) return "shop";
         return current;
       });
+      if (nextConfig?.extensions?.shop?.selected) {
+        setVisualSection("shop");
+      } else if (nextConfig && canonicalViewTab(nextConfig.section) === "content" && nextConfig.contentSection) {
+        setVisualSection(visualSectionForContent(nextConfig.contentSection));
+      }
     };
     window.addEventListener(HOSTED_CONFIG_CHANGED_EVENT, syncHostedConfig);
     syncHostedConfig();
@@ -357,6 +376,10 @@ export const AdminView = ({
   useEffect(() => {
     setPreviewTheme(theme);
   }, [theme]);
+
+  useEffect(() => {
+    setPreviewMenu(menu);
+  }, [menu]);
 
   useEffect(() => {
     if (!visualLinkId || links.some((link) => String(link.id) === String(visualLinkId))) return;
@@ -839,6 +862,7 @@ export const AdminView = ({
   ) : visualSection === "menu" ? (
     <MenuEditor
       menu={menu}
+      onPreview={setPreviewMenu}
       presentation="visual"
       publicPageHref={publicPageHref}
       enabled={!saasPlan || entitlements?.nativeMenu === true}
@@ -1206,6 +1230,22 @@ export const AdminView = ({
                 pagesStatus={firstEnabledSubpage ? "active" : "inactive"}
                 onSelect={selectVisualSection}
                 onOpenTheme={canEditTheme ? () => selectTab("theme") : undefined}
+                previewHint={visualSection === "menu"
+                  ? tr("Live public menu preview", "Anteprima live del menu pubblico")
+                  : visualSection === "shop"
+                    ? tr("Live public Shop preview", "Anteprima live dello Shop pubblico")
+                    : undefined}
+                renderPreview={visualSection === "menu" ? ((device) => (
+                  <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
+                    <div className={`admin-menu-live-preview admin-menu-live-preview--${device}`}>
+                      <MenuView embedded menu={previewMenu} pageHref={publicPageHref} />
+                    </div>
+                  </PreviewDeviceFrame>
+                )) : visualSection === "shop" ? ((device) => (
+                  <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/shop`}>
+                    <div className="hosted-shop-preview-slot" data-orbitpage-hosted-shop-preview-slot />
+                  </PreviewDeviceFrame>
+                )) : undefined}
               />
             ) : (
             <div className="admin-content-grid admin-content-grid-editor">

@@ -50,4 +50,29 @@ describe("VisualSiteEditor", () => {
     expect(onOpenTheme).toHaveBeenCalledOnce();
     expect(onSelect).not.toHaveBeenCalled();
   });
+
+  it("replaces the homepage renderer for Menu and Shop previews", () => {
+    const renderPreview = vi.fn(() => <div>Specialized public preview</div>);
+
+    const html = renderToStaticMarkup(
+      <VisualSiteEditor
+        profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+        links={[]}
+        theme={defaultTheme}
+        publicPageHref="/orbitpage"
+        showOrbitPageBadge
+        section="menu"
+        inspectorTitle="Menu"
+        inspectorDescription="Edit menu"
+        inspector={<div>Inspector</div>}
+        onSelect={vi.fn()}
+        previewHint="Live menu preview"
+        renderPreview={renderPreview}
+      />,
+    );
+
+    expect(renderPreview).toHaveBeenCalledWith("mobile");
+    expect(html).toContain("Specialized public preview");
+    expect(html).toContain("Live menu preview");
+  });
 });

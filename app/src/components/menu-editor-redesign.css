@@ -937,3 +937,165 @@
     min-height: 44px;
   }
 }
+
+/* New UI: one quiet hierarchy instead of nested cards inside cards. */
+.menu-editor-stack--visual .menu-editor-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.menu-editor-stack--visual .menu-editor-summary span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.menu-editor-stack--visual .menu-editor-summary strong {
+  font-size: .86rem;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs,
+.menu-editor-stack--visual .menu-editor-tabs:first-child {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid #d8e1ed;
+  border-radius: 8px;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs button,
+.menu-editor-stack--visual .menu-editor-tabs button:first-child,
+.menu-editor-stack--visual .menu-editor-tabs button:last-child {
+  display: flex;
+  min-height: 50px;
+  justify-content: center;
+  gap: 6px;
+  overflow: visible;
+  border: 0;
+  border-right: 1px solid #e2e8f0;
+  border-radius: 0;
+  padding: 7px 6px;
+  text-align: center;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs button:last-child {
+  border-right: 0;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs button.active {
+  background: #173969;
+  box-shadow: none;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs button > svg,
+.menu-editor-stack--visual .menu-editor-tab-copy small {
+  display: none;
+}
+
+.menu-editor-stack--visual .menu-editor-tab-index {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+  font-size: .58rem;
+}
+
+.menu-editor-stack--visual .menu-editor-tab-copy strong {
+  font-size: .7rem;
+}
+
+.menu-editor-stack--visual .menu-category-picker {
+  gap: 0;
+  border-block: 1px solid #e1e7ef;
+}
+
+.menu-editor-stack--visual .menu-category-picker__item,
+.menu-editor-stack--visual .menu-category-picker__item.is-subcategory {
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid #e7ecf2;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.menu-editor-stack--visual .menu-category-picker__item:last-child {
+  border-bottom: 0;
+}
+
+.menu-editor-stack--visual .menu-category-picker__item.is-subcategory {
+  padding-left: 24px;
+}
+
+.menu-editor-stack--visual .menu-category-picker__item.active {
+  background: #edf3ff;
+  box-shadow: inset 3px 0 #2f66df;
+}
+
+.menu-editor-stack--visual .menu-category-picker__copy strong,
+.menu-editor-stack--visual .menu-item-picker__item > span:nth-child(2) strong,
+.menu-editor-stack--visual .menu-item-picker__item > span:nth-child(2) small {
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.menu-editor-stack--visual .menu-category-editor {
+  margin-top: 12px;
+  border: 0;
+  border-left: 3px solid #2f66df;
+  border-radius: 0;
+  background: #f6f8fb;
+}
+
+.menu-editor-stack--visual .menu-item-picker {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid #e0e6ef;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.menu-editor-stack--visual .menu-item-picker__item {
+  min-height: 62px;
+  border: 0;
+  border-bottom: 1px solid #e7ecf2;
+  border-radius: 0;
+  background: transparent;
+}
+
+.menu-editor-stack--visual .menu-item-picker__item:last-child {
+  border-bottom: 0;
+}
+
+@container menu-workspace (max-width: 30rem) {
+  .menu-editor-stack--visual .menu-editor-tabs,
+  .menu-editor-stack--visual .menu-editor-tabs:first-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .menu-editor-stack--visual .menu-editor-tabs button:nth-child(2) {
+    border-right: 0;
+  }
+
+  .menu-editor-stack--visual .menu-editor-tabs button:nth-child(-n + 2) {
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .menu-editor-stack--visual .menu-editor-tabs button,
+  .menu-editor-stack--visual .menu-editor-tabs button:first-child,
+  .menu-editor-stack--visual .menu-editor-tabs button:last-child {
+    min-height: 48px;
+  }
+
+  .menu-editor-stack--visual .menu-category-picker__meta span {
+    display: none;
+  }
+}

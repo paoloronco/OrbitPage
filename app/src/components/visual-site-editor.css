@@ -54,6 +54,8 @@
 }
 
 .visual-site-editor {
+  container-name: visual-site-editor;
+  container-type: inline-size;
   display: grid;
   min-width: 0;
   gap: 12px;
@@ -499,5 +501,56 @@
 
   .visual-site-editor__canvas .admin-preview-device--mobile .admin-preview-device__hardware {
     height: 520px;
+  }
+}
+
+/* The editor can be narrow beside the dashboard sidebar even on a wide screen. */
+@container visual-site-editor (max-width: 900px) {
+  .visual-site-editor__workspace {
+    grid-template-columns: minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .visual-site-editor__canvas {
+    min-height: 520px;
+  }
+
+  .visual-site-editor__inspector {
+    max-height: none;
+    border-width: 1px 0 0;
+  }
+
+  .visual-site-editor__inspector-body {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+@container visual-site-editor (max-width: 600px) {
+  .visual-site-editor__sections {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+
+  .visual-site-editor__sections button {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 8px;
+    scroll-snap-align: none;
+  }
+
+  .visual-site-editor__sections button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@container visual-site-editor (max-width: 390px) {
+  .visual-site-editor__sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

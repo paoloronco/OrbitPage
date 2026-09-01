@@ -54,6 +54,8 @@ interface VisualSiteEditorProps {
   pagesStatus?: VisualSectionItem["status"];
   onSelect: (section: VisualSiteEditorSection, linkId?: string) => void;
   onOpenTheme?: () => void;
+  previewHint?: string;
+  renderPreview?: (device: PreviewDevice) => ReactNode;
 }
 
 export function VisualSiteEditor({
@@ -72,6 +74,8 @@ export function VisualSiteEditor({
   pagesStatus = "inactive",
   onSelect,
   onOpenTheme,
+  previewHint,
+  renderPreview,
 }: VisualSiteEditorProps) {
   const { tr } = useAppI18n();
   const [device, setDevice] = useState<PreviewDevice>("mobile");
@@ -134,18 +138,20 @@ export function VisualSiteEditor({
         <div className="visual-site-editor__canvas" data-device={device}>
           <div className="visual-site-editor__canvas-note">
             <MousePointerClick aria-hidden="true" size={15} />
-            <span>{tr("Click profile, cards or background to edit", "Clicca profilo, card o sfondo per modificare")}</span>
+            <span>{previewHint || tr("Click profile, cards or background to edit", "Clicca profilo, card o sfondo per modificare")}</span>
           </div>
-          <LivePreview
-            device={device}
-            editorSelection={editorSelection}
-            links={links}
-            onEditorSelect={selectFromPreview}
-            profile={profile}
-            publicPageHref={publicPageHref}
-            showOrbitPageBadge={showOrbitPageBadge}
-            theme={theme}
-          />
+          {renderPreview ? renderPreview(device) : (
+            <LivePreview
+              device={device}
+              editorSelection={editorSelection}
+              links={links}
+              onEditorSelect={selectFromPreview}
+              profile={profile}
+              publicPageHref={publicPageHref}
+              showOrbitPageBadge={showOrbitPageBadge}
+              theme={theme}
+            />
+          )}
         </div>
 
         <aside className="visual-site-editor__inspector" aria-label={inspectorTitle}>
