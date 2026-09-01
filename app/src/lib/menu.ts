@@ -74,12 +74,12 @@ export interface NormalizeMenuCatalogOptions {
 
 export const MENU_THEME_PRESETS: Record<MenuThemePreset, MenuTheme> = {
   editorial: {
-    preset: 'editorial', background: '#f4f1eb', surface: '#fffdf8', text: '#17201d', muted: '#66706b',
-    accent: '#1f5b47', border: '#d7d4cc', radius: 8, imageLayout: 'compact',
+    preset: 'editorial', background: '#f1eee7', surface: '#fffdf7', text: '#171717', muted: '#6f685d',
+    accent: '#d3422f', border: '#d5cec1', radius: 0, imageLayout: 'compact',
   },
   bistro: {
-    preset: 'bistro', background: '#f6eee7', surface: '#fffaf5', text: '#291a17', muted: '#745f58',
-    accent: '#a43d2f', border: '#dfcfc3', radius: 4, imageLayout: 'cover',
+    preset: 'bistro', background: '#641d2e', surface: '#fff4df', text: '#35131b', muted: '#7b4e4e',
+    accent: '#d96b32', border: '#e8bd82', radius: 18, imageLayout: 'cover',
   },
   espresso: {
     preset: 'espresso', background: '#171713', surface: '#24231d', text: '#f5f0e4', muted: '#b7ad9b',

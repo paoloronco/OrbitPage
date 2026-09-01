@@ -1,7 +1,7 @@
 import { type ComponentType, type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, Tag, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
+import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -860,6 +860,18 @@ export const LinkManager = ({
             >
               <Plus className="h-4 w-4" />
               {tr("Add content", "Aggiungi contenuto")}
+            </Button>
+          )}
+          {isFullEdit && focusedLink && (
+            <Button
+              aria-label={tr("Delete card", "Elimina card")}
+              className="admin-action"
+              onClick={() => deleteLink(focusedLink.id)}
+              size="icon"
+              title={tr("Delete card", "Elimina card")}
+              variant="destructive"
+            >
+              <Trash2 className="h-4 w-4" />
             </Button>
           )}
           {!isViewOnly && (

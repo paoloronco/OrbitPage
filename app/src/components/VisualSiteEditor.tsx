@@ -156,7 +156,7 @@ export function VisualSiteEditor({
 
         <aside className="visual-site-editor__inspector" aria-label={inspectorTitle}>
           <header className="visual-site-editor__inspector-heading">
-            <p>{tr("Selected element", "Elemento selezionato")}</p>
+            {section !== "menu" && <p>{tr("Selected element", "Elemento selezionato")}</p>}
             <h2>{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
           </header>

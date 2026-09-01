@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
+  MENU_THEME_PRESETS, createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
 } from './menu';
 
 describe('menu catalog normalization', () => {
@@ -88,6 +88,14 @@ describe('menu catalog normalization', () => {
       ...menu,
       routing: { homepage: 'pages', homepagePageSlug: 'summer-menu', linkEnabled: false },
     }).routing).toEqual({ homepage: 'pages', homepagePageSlug: 'summer-menu', linkEnabled: false });
+  });
+
+  it('offers four visually distinct default themes', () => {
+    const themes = Object.values(MENU_THEME_PRESETS);
+
+    expect(themes).toHaveLength(4);
+    expect(new Set(themes.map((theme) => theme.background)).size).toBe(4);
+    expect(new Set(themes.map((theme) => `${theme.radius}:${theme.imageLayout}`)).size).toBeGreaterThan(2);
   });
 });
 

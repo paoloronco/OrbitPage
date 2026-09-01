@@ -5906,7 +5906,6 @@
   .admin-block-editor-shell { gap: .75rem; padding: .7rem; }
   .admin-block-editor-preview { grid-template-columns: 1fr; gap: .55rem; }
   .menu-editor-intro { grid-template-columns: minmax(0, 1fr); align-items: start; padding: .75rem; }
-  .menu-editor-intro .admin-eyebrow { display: none; }
   .menu-editor-intro__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
   .menu-publish-toggle { min-height: 2.75rem; justify-content: space-between; padding: .35rem .55rem; border: 1px solid #dbe3ee; border-radius: 6px; background: #f8fafc; }
   .menu-editor-intro__actions > button { min-height: 2.75rem; }
@@ -6400,13 +6399,6 @@
   display: grid;
   min-width: 0;
   gap: .08rem;
-}
-.menu-product-editor__heading span {
-  color: #214f9d;
-  font-size: .6rem;
-  font-weight: 850;
-  letter-spacing: .07em;
-  text-transform: uppercase;
 }
 .menu-product-editor__heading strong {
   overflow: hidden;
