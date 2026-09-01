@@ -60,9 +60,9 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   expect(profileSelectionIndicator).toEqual({
     outlineStyle: "none",
     selectionAnimation: "visual-editor-selection-breathe",
-    selectionDuration: "2.8s",
+    selectionDuration: "2.2s",
     selectionBorderWidth: "3px",
-    selectionInset: "-2px",
+    selectionInset: "-6px",
   });
   await expect(inspector.getByRole("heading", { name: "Profile and identity" })).toBeVisible();
   await expect(inspector.getByLabel("Page name")).toBeVisible();
@@ -90,11 +90,20 @@ test("New UI edits the real page through selectable elements and keeps the prefe
       opacityRange: opacityValues.length > 1
         ? Math.max(...opacityValues) - Math.min(...opacityValues)
         : 0,
+      shadowCount: new Set(keyframes.map((frame) => String(frame.boxShadow))).size,
+      scaleRange: (() => {
+        const scales = keyframes
+          .map((frame) => Number(String(frame.transform).match(/scale\(([^)]+)\)/)?.[1]))
+          .filter(Number.isFinite);
+        return scales.length > 1 ? Math.max(...scales) - Math.min(...scales) : 0;
+      })(),
       transforms: keyframes.map((frame) => String(frame.transform)),
     };
   });
   expect(selectionMotion.keyframeCount).toBe(2);
   expect(selectionMotion.opacityRange).toBe(0);
+  expect(selectionMotion.shadowCount).toBe(2);
+  expect(selectionMotion.scaleRange).toBeGreaterThanOrEqual(.02);
   expect(new Set(selectionMotion.transforms).size).toBe(2);
 
   await page.emulateMedia({ reducedMotion: "reduce" });
