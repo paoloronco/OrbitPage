@@ -103,39 +103,59 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const arrangedLinkTarget = page.locator(`[data-card-layout-item="${linkId}"]`);
   await expect(arrangedLinkTarget).toBeVisible();
   await arrangedLinkTarget.scrollIntoViewIfNeeded();
-  const dockGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
   const cardCanvasBounds = await page.locator(".public-card-stack--layout").boundingBox();
-  expect(dockGripBounds).not.toBeNull();
+  const profileCardTarget = page.locator('[data-card-layout-item="__orbitpage_profile__"]');
+  const profileCardGrip = profileCardTarget.getByRole("button", { name: "Move profile card", exact: true });
+  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^25,0,50,/);
+  await profileCardTarget.scrollIntoViewIfNeeded();
+  const profileGripBounds = await profileCardGrip.boundingBox();
+  const avatarGripBounds = await page.getByRole("button", { name: "Move Profile image", exact: true }).boundingBox();
+  const profileCardBounds = await profileCardTarget.boundingBox();
+  const companionCardBounds = await page.locator('[data-card-layout-item]:not([data-card-layout-item="__orbitpage_profile__"])').first().boundingBox();
+  expect(profileGripBounds).not.toBeNull();
+  expect(avatarGripBounds).not.toBeNull();
+  expect(profileCardBounds).not.toBeNull();
+  expect(companionCardBounds).not.toBeNull();
+  expect(profileGripBounds!.x).toBeGreaterThan(avatarGripBounds!.x + avatarGripBounds!.width);
   expect(cardCanvasBounds).not.toBeNull();
+  await page.mouse.move(profileGripBounds!.x + profileGripBounds!.width / 2, profileGripBounds!.y + profileGripBounds!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(
+    profileGripBounds!.x + profileGripBounds!.width / 2 + cardCanvasBounds!.width * .16,
+    profileGripBounds!.y + profileGripBounds!.height / 2
+      + companionCardBounds!.y + companionCardBounds!.height / 2
+      - profileCardBounds!.y - profileCardBounds!.height / 2,
+    { steps: 4 },
+  );
+  await page.mouse.up();
+  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^51,(\d+),49,/);
+  const profileDockedY = (await profileCardTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
+  await expect(page.locator(`[data-card-layout-position^="0,${profileDockedY},49,"]`)).toHaveCount(1);
+  await resetLayoutButton.click();
+  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^25,0,50,/);
+  await arrangedLinkTarget.scrollIntoViewIfNeeded();
+  const dockGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
+  expect(dockGripBounds).not.toBeNull();
   await page.mouse.move(dockGripBounds!.x + dockGripBounds!.width / 2, dockGripBounds!.y + dockGripBounds!.height / 2);
   await page.mouse.down();
   await page.mouse.move(dockGripBounds!.x + dockGripBounds!.width / 2 + cardCanvasBounds!.width * .16, dockGripBounds!.y + dockGripBounds!.height / 2, { steps: 4 });
   await page.mouse.up();
   await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^51,(\d+),49,/);
-  const dockedY = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
+  let dockedY = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
   await expect(page.locator(`[data-card-layout-position^="0,${dockedY},49,"]`)).toHaveCount(1);
   const cardMoveGrip = arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true });
   await cardMoveGrip.press("Shift+ArrowDown");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${Number(dockedY) + 16},49,`));
+  dockedY = String(Number(dockedY) + 16);
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},49,`));
   await page.getByRole("button", { name: "Save page" }).click();
   await expect(page.getByText("Unsaved changes")).toBeHidden();
-  const realignGripBounds = await cardMoveGrip.boundingBox();
-  expect(realignGripBounds).not.toBeNull();
-  await page.mouse.move(realignGripBounds!.x + realignGripBounds!.width / 2, realignGripBounds!.y + realignGripBounds!.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(realignGripBounds!.x + realignGripBounds!.width / 2 + cardCanvasBounds!.width * .06,
-    realignGripBounds!.y + realignGripBounds!.height / 2, { steps: 4 });
-  await page.mouse.up();
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},49,`));
-  const adminCardPositions = await page.locator(`[data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
+  const adminCardPositions = await page.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
     .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
   await page.getByRole("button", { name: "Done", exact: true }).click();
-  await page.getByRole("button", { name: "Save page" }).click();
-  await expect(page.getByText("Unsaved changes")).toBeHidden();
   const publicPage = await page.context().newPage();
   await publicPage.goto(new URL("/e2e-public-page", page.url()).toString());
-  await expect(publicPage.locator(`[data-card-layout-item="${linkId}"]`)).toBeVisible();
-  const publicCardPositions = await publicPage.locator(`[data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
+  await expect(publicPage.locator('[data-card-layout-item="__orbitpage_profile__"]')).toBeVisible();
+  const publicCardPositions = await publicPage.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
     .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
   expect(publicCardPositions).toEqual(adminCardPositions);
   await publicPage.close();

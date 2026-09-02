@@ -1,6 +1,7 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { PROFILE_CARD_LAYOUT_ID } from "@/lib/card-layout";
 import { defaultTheme } from "@/lib/theme";
 import { PublicView } from "./PublicView";
 
@@ -80,5 +81,34 @@ describe("PublicView visual editor targets", () => {
     expect(html).toContain('data-card-layout-viewport="desktop"');
     expect(html).toContain('data-card-layout-position="48,20,52,120"');
     expect(html).toContain('data-card-content-layout-position="5,30,70,30"');
+  });
+
+  it("renders the profile and a content card in the same saved desktop canvas", () => {
+    const html = renderToStaticMarkup(
+      <PublicView
+        embedded
+        embeddedViewport="desktop"
+        links={links}
+        profile={{
+          ...profile,
+          appearance: {
+            cardLayouts: {
+              desktop: {
+                positions: {
+                  [PROFILE_CARD_LAYOUT_ID]: { x: 0, y: 0, width: 49, height: 456 },
+                  "visual-link": { x: 51, y: 0, width: 49, height: 120 },
+                },
+                height: 456,
+              },
+            },
+          },
+        }}
+        theme={defaultTheme}
+      />,
+    );
+
+    expect(html).toContain(`data-card-layout-item="${PROFILE_CARD_LAYOUT_ID}"`);
+    expect(html).toContain('data-card-layout-position="0,0,49,456"');
+    expect(html).toContain('data-card-layout-position="51,0,49,120"');
   });
 });

@@ -44,6 +44,8 @@ export const ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS = [
 
 export type OrbitPageCardContentLayoutItem = typeof ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS[number];
 
+export const ORBITPAGE_PROFILE_CARD_LAYOUT_ID = "__orbitpage_profile__";
+
 const OrbitPageProfileLayoutItemSchema = z.enum(ORBITPAGE_PROFILE_LAYOUT_ITEMS);
 const OrbitPageProfileLayoutSpansSchema = z.object(
   Object.fromEntries(
@@ -100,7 +102,7 @@ export type OrbitPageCardContentLayout = z.infer<typeof OrbitPageCardContentLayo
 const OrbitPageCardPositionsSchema = z.record(
   z.string().min(1).max(160),
   OrbitPageCardLayoutRectSchema
-).refine((positions) => Object.keys(positions).length <= 200, "A page layout cannot contain more than 200 cards.");
+).refine((positions) => Object.keys(positions).filter((id) => id !== ORBITPAGE_PROFILE_CARD_LAYOUT_ID).length <= 200, "A page layout cannot contain more than 200 cards.");
 
 const OrbitPageCardContentsSchema = z.record(
   z.string().min(1).max(160),
