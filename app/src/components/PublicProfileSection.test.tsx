@@ -10,6 +10,7 @@ describe("PublicProfileSection custom layout", () => {
       bio: "Designer",
       avatar: "",
       showAvatar: false,
+      socialLinks: { github: "https://github.com/orbitpage" },
       appearance: {
         profileDetails: { primary: "Product designer", secondary: "Torino" },
         layout: {
@@ -29,6 +30,9 @@ describe("PublicProfileSection custom layout", () => {
     const publicHtml = renderToStaticMarkup(<PublicProfileSection profile={profile} />);
     expect(publicHtml).toContain('data-profile-layout-position="34,0,40,96"');
     expect(publicHtml).toContain('--profile-layout-height:192px');
+    expect(publicHtml).toContain("profile-card__title--stacked");
+    expect(publicHtml).toContain(">Mario</span><span>Rossi</span>");
+    expect(publicHtml).toContain('profile-card__layout-item--socials" data-profile-layout-align="center"');
     expect(publicHtml).not.toContain("profile-card__layout-grip");
 
     const editorHtml = renderToStaticMarkup(<PublicProfileSection layoutEditing onLayoutChange={() => undefined} profile={profile} />);

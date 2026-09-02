@@ -457,26 +457,25 @@
 
 .profile-card--layout-editing .profile-card__layout-item {
   min-height: 36px;
-  padding: 5px;
-  border: 1px dashed rgb(47 101 238 / 58%);
+  padding: 0;
+  border: 0;
   border-radius: 9px;
   background: rgb(248 250 255 / 14%);
   cursor: move;
+  outline: 1px dashed rgb(47 101 238 / 58%);
   touch-action: none;
   user-select: none;
-  animation: profile-layout-wiggle 1.8s ease-in-out infinite alternate;
-  transition: border-color 180ms cubic-bezier(.25, 1, .5, 1), box-shadow 180ms cubic-bezier(.25, 1, .5, 1), opacity 180ms cubic-bezier(.25, 1, .5, 1), left 120ms ease, top 120ms ease, width 120ms ease, height 120ms ease;
+  transition: box-shadow 180ms cubic-bezier(.25, 1, .5, 1), opacity 180ms cubic-bezier(.25, 1, .5, 1), left 120ms ease, top 120ms ease, width 120ms ease, height 120ms ease;
 }
 
-.profile-card--layout-editing .profile-card__layout-item:nth-child(2n) { animation-delay: -600ms; }
-.profile-card--layout-editing .profile-card__layout-item:nth-child(3n) { animation-delay: -1.2s; }
+.profile-card--layout-editing .profile-card__layout-item:nth-child(2n) .profile-card__layout-grip { animation-delay: -600ms; }
+.profile-card--layout-editing .profile-card__layout-item:nth-child(3n) .profile-card__layout-grip { animation-delay: -1.2s; }
 
 .profile-card--layout-editing .profile-card__layout-item.is-dragging {
   z-index: 5;
-  border-color: #174bcc;
   box-shadow: 0 10px 26px rgb(25 69 183 / 18%), inset 0 0 0 1px rgb(47 101 238 / 24%);
-  animation: none;
-  transition: border-color 100ms ease, box-shadow 100ms ease;
+  outline: 2px solid #174bcc;
+  transition: box-shadow 100ms ease;
 }
 
 .profile-card--layout-editing .profile-card__layout-content {
@@ -509,6 +508,7 @@
 .profile-card__layout-grip {
   top: -8px;
   left: -8px;
+  animation: profile-layout-wiggle 1.8s ease-in-out infinite alternate;
 }
 
 .profile-card__layout-grip svg {
@@ -589,8 +589,8 @@
 }
 
 @keyframes profile-layout-wiggle {
-  from { transform: rotate(-.28deg); }
-  to { transform: rotate(.28deg); }
+  from { transform: rotate(-1.2deg); }
+  to { transform: rotate(1.2deg); }
 }
 
 @media (max-width: 1180px) {
@@ -725,7 +725,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .visual-site-editor__layout-bar,
-  .profile-card--layout-editing .profile-card__layout-item,
+  .profile-card--layout-editing .profile-card__layout-grip,
   .public-page-root--editor .public-editor-target.is-selected::before {
     animation: none;
   }

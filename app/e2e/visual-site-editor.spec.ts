@@ -36,6 +36,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await newUiSwitch.click();
   await expect(newUiSwitch).toBeChecked();
   await expect(page.locator(".visual-site-editor")).toBeVisible();
+  await expect(page.locator('[data-preview-device="desktop"]')).toBeVisible();
   await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toHaveCount(0);
   await expect(page.locator(".admin-dashboard-nav-page").getByRole("button", { name: "Site editor", exact: true })).toBeVisible();
 
@@ -182,6 +183,7 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
 
   await expect(page.locator(".admin-dashboard-header .admin-new-ui-toggle")).toBeHidden();
   await expect(page.locator(".admin-dashboard-header-public-page")).toBeHidden();
+  await expect(page.locator('[data-preview-device="mobile"]')).toBeVisible();
   await page.getByRole("button", { name: "Open navigation" }).click();
 
   const mobileMode = page.locator(".admin-dashboard-mobile-editor-mode");
