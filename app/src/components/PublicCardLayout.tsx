@@ -149,15 +149,28 @@ export function PublicCardLayout({
     const rect = gesture.mode === "move"
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
       : { ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY };
-    if (gesture.scope === "card" && gesture.mode === "move" && viewport === "desktop" && gesture.startRect.width > 50 && Math.abs(deltaX) >= 12) {
+    if (gesture.scope === "card" && gesture.mode === "move" && viewport === "desktop") {
       const centerY = rect.y + rect.height / 2;
       const target = Object.entries(gesture.layout.positions)
         .filter(([id]) => id !== gesture.cardId)
-        .map(([id, position]) => ({ id, position, distance: Math.abs(position.y + position.height / 2 - centerY) }))
+        .map(([id, position]) => ({
+          id,
+          position,
+          distance: Math.abs(position.y + position.height / 2 - centerY),
+          separated: position.x + position.width <= rect.x + 2 || rect.x + rect.width <= position.x + 2,
+        }))
+        .filter(({ separated }) => gesture.startRect.width > 50 || separated)
         .sort((left, right) => left.distance - right.distance)[0];
-      if (target && target.distance <= Math.max(rect.height, target.position.height) + 24) {
+      const intentionalDock = Math.abs(deltaX) >= (gesture.startRect.width > 50 ? 12 : 4);
+      if (target && intentionalDock && target.distance <= Math.max(rect.height, target.position.height) + 24) {
         setGuides({ x: 50, y: target.position.y, scope: "card", cardId: gesture.cardId });
-        applyWorkingLayout(dockDesktopCards(gesture.layout, links, gesture.cardId, target.id, deltaX < 0 ? "left" : "right"));
+        applyWorkingLayout(dockDesktopCards(
+          gesture.layout,
+          links,
+          gesture.cardId,
+          target.id,
+          rect.x + rect.width / 2 < target.position.x + target.position.width / 2 ? "left" : "right",
+        ));
         return;
       }
     }

@@ -113,6 +113,17 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^51,(\d+),49,/);
   const dockedY = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
   await expect(page.locator(`[data-card-layout-position^="0,${dockedY},49,"]`)).toHaveCount(1);
+  const cardMoveGrip = arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true });
+  for (let step = 0; step < 4; step += 1) await cardMoveGrip.press("ArrowDown");
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${Number(dockedY) + 16},49,`));
+  const realignGripBounds = await cardMoveGrip.boundingBox();
+  expect(realignGripBounds).not.toBeNull();
+  await page.mouse.move(realignGripBounds!.x + realignGripBounds!.width / 2, realignGripBounds!.y + realignGripBounds!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(realignGripBounds!.x + realignGripBounds!.width / 2 + cardCanvasBounds!.width * .06,
+    realignGripBounds!.y + realignGripBounds!.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},49,`));
   const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   await arrangedLinkTarget.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
   await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},48,`));
