@@ -91,8 +91,8 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const arrangedLinkTarget = page.locator(`[data-card-layout-item="${linkId}"]`);
   await expect(arrangedLinkTarget).toBeVisible();
   const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
-  await page.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
-  await page.getByRole("button", { name: "Move card Visual editor card", exact: true }).press("ArrowRight");
+  await arrangedLinkTarget.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
+  await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).press("ArrowRight");
   await expect(arrangedLinkTarget).not.toHaveAttribute("data-card-layout-position", desktopCardPositionBefore || "");
   const cardPositionAfterKeyboard = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   const cardGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
@@ -101,6 +101,9 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await page.mouse.down();
   await page.mouse.move(cardGripBounds!.x + cardGripBounds!.width / 2, cardGripBounds!.y + cardGripBounds!.height / 2 + 18, { steps: 4 });
   await page.mouse.up();
+  await arrangedLinkTarget.evaluate(() => new Promise<void>((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  }));
   await expect(arrangedLinkTarget).not.toHaveAttribute("data-card-layout-position", cardPositionAfterKeyboard || "");
   const desktopCardPosition = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   const cardTitleItem = arrangedLinkTarget.locator('[data-card-content-layout-item="title"]');
