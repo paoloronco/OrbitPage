@@ -80,6 +80,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(inspector.getByRole("heading", { name: "Profile and identity" })).toBeVisible();
   await expect(inspector.getByLabel("Page name")).toBeVisible();
 
+  const legacyCardWidth = (await page.locator(`[data-public-editor-link-id="${linkId}"]`).boundingBox())!.width;
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
   await expect(page.getByText("Drag profile elements, cards and card contents. On mobile, only small cards can sit side by side.")).toBeVisible();
@@ -91,6 +92,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   }))).toEqual({ outline: "none", before: "none", after: "none" });
   const resetLayoutButton = page.getByRole("button", { name: "Reset to standard layout" });
   await expect(resetLayoutButton).toBeVisible();
+  expect(Math.abs((await page.locator(`[data-card-layout-item="${linkId}"]`).boundingBox())!.width - legacyCardWidth)).toBeLessThan(2);
 
   const workItem = page.locator('[data-profile-layout-item="work"]');
   const nameItem = page.locator('[data-profile-layout-item="name"]');
@@ -106,7 +108,12 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const cardCanvasBounds = await page.locator(".public-card-stack--layout").boundingBox();
   const profileCardTarget = page.locator('[data-card-layout-item="__orbitpage_profile__"]');
   const profileCardGrip = profileCardTarget.getByRole("button", { name: "Move profile card", exact: true });
-  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^25,0,50,/);
+  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^30\.5,0,39,/);
+  const arrangedCardWidth = (await arrangedLinkTarget.boundingBox())!.width;
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  const publicCardWidth = (await page.locator(`[data-public-editor-link-id="${linkId}"]`).boundingBox())!.width;
+  expect(Math.abs(arrangedCardWidth - publicCardWidth)).toBeLessThan(2);
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await profileCardTarget.scrollIntoViewIfNeeded();
   const profileGripBounds = await profileCardGrip.boundingBox();
   const avatarGripBounds = await page.getByRole("button", { name: "Move Profile image", exact: true }).boundingBox();
@@ -128,25 +135,35 @@ test("New UI edits the real page through selectable elements and keeps the prefe
     { steps: 4 },
   );
   await page.mouse.up();
-  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^51,(\d+),49,/);
+  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^61,(\d+),39,/);
   const profileDockedY = (await profileCardTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
-  await expect(page.locator(`[data-card-layout-position^="0,${profileDockedY},49,"]`)).toHaveCount(1);
+  await expect(page.locator(`[data-card-layout-position^="0,${profileDockedY},39,"]`)).toHaveCount(1);
   await resetLayoutButton.click();
-  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^25,0,50,/);
+  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^30\.5,0,39,/);
   await arrangedLinkTarget.scrollIntoViewIfNeeded();
   const dockGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
+  const arrangedCardBounds = await arrangedLinkTarget.boundingBox();
+  const dockTargetBounds = await page.locator(`[data-card-layout-item="${dockLinkId}"]`).boundingBox();
   expect(dockGripBounds).not.toBeNull();
+  expect(arrangedCardBounds).not.toBeNull();
+  expect(dockTargetBounds).not.toBeNull();
   await page.mouse.move(dockGripBounds!.x + dockGripBounds!.width / 2, dockGripBounds!.y + dockGripBounds!.height / 2);
   await page.mouse.down();
-  await page.mouse.move(dockGripBounds!.x + dockGripBounds!.width / 2 + cardCanvasBounds!.width * .16, dockGripBounds!.y + dockGripBounds!.height / 2, { steps: 4 });
+  await page.mouse.move(
+    dockGripBounds!.x + dockGripBounds!.width / 2 + cardCanvasBounds!.width * .16,
+    dockGripBounds!.y + dockGripBounds!.height / 2
+      + dockTargetBounds!.y + dockTargetBounds!.height / 2
+      - arrangedCardBounds!.y - arrangedCardBounds!.height / 2,
+    { steps: 4 },
+  );
   await page.mouse.up();
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^51,(\d+),49,/);
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^61,(\d+),39,/);
   let dockedY = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
-  await expect(page.locator(`[data-card-layout-position^="0,${dockedY},49,"]`)).toHaveCount(1);
+  await expect(page.locator(`[data-card-layout-position^="0,${dockedY},39,"]`)).toHaveCount(1);
   const cardMoveGrip = arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true });
   await cardMoveGrip.press("Shift+ArrowDown");
   dockedY = String(Number(dockedY) + 16);
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},49,`));
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^61,${dockedY},39,`));
   await page.getByRole("button", { name: "Save page" }).click();
   await expect(page.getByText("Unsaved changes")).toBeHidden();
   const adminCardPositions = await page.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
@@ -162,9 +179,9 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   await arrangedLinkTarget.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},48,`));
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^61,${dockedY},38,`));
   await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).press("ArrowRight");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^52,${dockedY},48,`));
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^62,${dockedY},38,`));
   expect(await arrangedLinkTarget.getAttribute("data-card-layout-position")).not.toBe(desktopCardPositionBefore);
   const desktopCardPosition = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   const cardTitleItem = arrangedLinkTarget.locator('[data-card-content-layout-item="title"]');
