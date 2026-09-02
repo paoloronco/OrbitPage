@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 
-const PORT = 3124;
+const PORT = Number(process.env.PORT || 3124);
 const MAX_BODY_BYTES = 128 * 1024;
 const E2E_BIO = 'OrbitPage AI E2E verified this page update.';
 

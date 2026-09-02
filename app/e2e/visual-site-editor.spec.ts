@@ -70,7 +70,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
 
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
-  await expect(page.getByText("Drag any element freely. Drag its corner to resize; blue guides help alignment.")).toBeVisible();
+  await expect(page.getByText("Drag profile elements, cards and card contents. On mobile, only small cards can sit side by side.")).toBeVisible();
   await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
   expect(await profileTarget.evaluate((element) => ({
     outline: getComputedStyle(element).outlineStyle,
@@ -88,6 +88,26 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(nameItem).toHaveAttribute("data-profile-layout-position", "10,128,80,64");
   await expect(avatarItem).toHaveAttribute("data-profile-layout-position", "35,0,30,112");
 
+  const arrangedLinkTarget = page.locator(`[data-card-layout-item="${linkId}"]`);
+  await expect(arrangedLinkTarget).toBeVisible();
+  const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
+  await page.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
+  await page.getByRole("button", { name: "Move card Visual editor card", exact: true }).press("ArrowRight");
+  await expect(arrangedLinkTarget).not.toHaveAttribute("data-card-layout-position", desktopCardPositionBefore || "");
+  const cardPositionAfterKeyboard = await arrangedLinkTarget.getAttribute("data-card-layout-position");
+  const cardGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
+  expect(cardGripBounds).not.toBeNull();
+  await page.mouse.move(cardGripBounds!.x + cardGripBounds!.width / 2, cardGripBounds!.y + cardGripBounds!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(cardGripBounds!.x + cardGripBounds!.width / 2, cardGripBounds!.y + cardGripBounds!.height / 2 + 18, { steps: 4 });
+  await page.mouse.up();
+  await expect(arrangedLinkTarget).not.toHaveAttribute("data-card-layout-position", cardPositionAfterKeyboard || "");
+  const desktopCardPosition = await arrangedLinkTarget.getAttribute("data-card-layout-position");
+  const cardTitleItem = arrangedLinkTarget.locator('[data-card-content-layout-item="title"]');
+  const cardTitlePositionBefore = await cardTitleItem.getAttribute("data-card-content-layout-position");
+  await cardTitleItem.getByRole("button", { name: "Move Title", exact: true }).press("ArrowDown");
+  await expect(cardTitleItem).not.toHaveAttribute("data-card-content-layout-position", cardTitlePositionBefore || "");
+
   const workPositionBefore = await workItem.getAttribute("data-profile-layout-position");
   await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowUp");
   await expect(workItem).not.toHaveAttribute("data-profile-layout-position", workPositionBefore || "");
@@ -100,6 +120,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await resetLayoutButton.click();
   await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
   await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowDown");
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^0,\d+,100,\d+$/);
   const mobileWorkPosition = await workItem.getAttribute("data-profile-layout-position");
   expect(mobileWorkPosition).toBeTruthy();
   expect(mobileWorkPosition).not.toBe(desktopWorkPosition);
@@ -107,14 +128,22 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await page.getByRole("button", { name: "Desktop preview" }).click();
   await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
   await expect(workItem).toHaveAttribute("data-profile-layout-position", desktopWorkPosition || "");
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", desktopCardPosition || "");
   await expect(page.locator(".public-page-root--responsive-profile-layout")).toBeVisible();
 
   const namePositionBefore = await nameItem.getAttribute("data-profile-layout-position");
   const nameBounds = await nameItem.boundingBox();
   expect(nameBounds).not.toBeNull();
+  expect(await nameItem.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2)
+      ?.closest<HTMLElement>("[data-profile-layout-item]")?.dataset.profileLayoutItem;
+  })).toBe("name");
   await page.mouse.move(nameBounds!.x + nameBounds!.width / 2, nameBounds!.y + nameBounds!.height / 2);
   await page.mouse.down();
+  await expect(nameItem).toHaveClass(/is-dragging/);
   await page.mouse.move(nameBounds!.x + nameBounds!.width / 2 + 24, nameBounds!.y + nameBounds!.height / 2 + 12, { steps: 4 });
+  await expect(nameItem).not.toHaveAttribute("data-profile-layout-position", namePositionBefore || "");
   await page.mouse.up();
   await expect(nameItem).not.toHaveAttribute("data-profile-layout-position", namePositionBefore || "");
 

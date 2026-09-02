@@ -1,5 +1,6 @@
+import type { CSSProperties } from "react";
 import { PublicProfileSection } from "./PublicProfileSection";
-import { PublicBlockRenderer } from "./PublicBlockRenderer";
+import { PublicCardLayout } from "./PublicCardLayout";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 import type { LinkData } from "./LinkCard";
 import { withTenantBasePath } from "@/lib/base-path";
@@ -7,6 +8,9 @@ import { getInternalLinksData, getSocialRowData, getVideoData, isSocialRowConten
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout } from "@/lib/profile-layout";
+import type { CardLayout } from "@/lib/card-layout";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { ThemeConfig } from "@/lib/theme";
 
 interface ProfileData {
   name: string;
@@ -34,6 +38,8 @@ interface PublicViewProps {
   onEditorSelect?: (target: PublicEditorTarget) => void;
   profileLayoutEditing?: boolean;
   onProfileLayoutChange?: (layout: ProfileLayout) => void;
+  cardLayoutEditing?: boolean;
+  onCardLayoutChange?: (layout: CardLayout) => void;
 }
 
 export type PublicEditorTarget =
@@ -55,7 +61,11 @@ export const PublicView = ({
   onEditorSelect,
   profileLayoutEditing = false,
   onProfileLayoutChange,
+  cardLayoutEditing = false,
+  onCardLayoutChange,
 }: PublicViewProps) => {
+  const responsiveViewport = useIsMobile() ? "mobile" : "desktop";
+  const cardLayoutViewport = embedded ? embeddedViewport : responsiveViewport;
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
   const hasCustomAvatar = Boolean(
@@ -109,10 +119,12 @@ export const PublicView = ({
   const hasResponsiveProfileLayout = Boolean(
     profile.appearance?.layouts?.mobile || profile.appearance?.layouts?.desktop
   );
+  const activeCardLayout = profile.appearance?.cardLayouts?.[cardLayoutViewport];
+  const hasResponsiveCardLayout = cardLayoutEditing || Boolean(activeCardLayout);
 
   return (
     <main
-      className={`public-page-root ${viewportClass}${hasResponsiveProfileLayout ? " public-page-root--responsive-profile-layout" : ""} ${onEditorSelect ? "public-page-root--editor" : ""} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}
+      className={`public-page-root ${viewportClass}${hasResponsiveProfileLayout ? " public-page-root--responsive-profile-layout" : ""}${hasResponsiveCardLayout ? " public-page-root--responsive-card-layout" : ""} ${onEditorSelect ? "public-page-root--editor" : ""} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}
       onClick={onEditorSelect ? () => onEditorSelect({ kind: "page" }) : undefined}
     >
       <div
@@ -151,33 +163,16 @@ export const PublicView = ({
         )}
 
         {visibleLinks.length > 0 && (
-          <div className="public-card-stack flex flex-col" style={{ gap: 'var(--card-spacing)' }}>
-            {visibleLinks.map((link, index) => (
-              <div
-                key={link.id}
-                aria-label={onEditorSelect ? `Edit ${link.title || "content block"}` : undefined}
-                className={`content-card-variant-${index % 6} public-editor-target public-editor-target--link${editorSelection?.kind === "link" && editorSelection.id === link.id ? " is-selected" : ""}`}
-                data-public-editor-link-id={onEditorSelect ? link.id : undefined}
-                data-public-editor-target={onEditorSelect ? "link" : undefined}
-                data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}
-                onClickCapture={onEditorSelect ? (event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onEditorSelect({ kind: "link", id: link.id });
-                } : undefined}
-                onKeyDown={onEditorSelect ? (event) => {
-                  if (event.key !== "Enter" && event.key !== " ") return;
-                  event.preventDefault();
-                  onEditorSelect({ kind: "link", id: link.id });
-                } : undefined}
-                role={onEditorSelect ? "button" : undefined}
-                style={getContentCardVariantCssVariables(theme, index) as CSSProperties}
-                tabIndex={onEditorSelect ? 0 : undefined}
-              >
-                <PublicBlockRenderer link={link} />
-              </div>
-            ))}
-          </div>
+          <PublicCardLayout
+            editorSelection={editorSelection}
+            layout={activeCardLayout}
+            layoutEditing={cardLayoutEditing}
+            links={visibleLinks}
+            onEditorSelect={onEditorSelect}
+            onLayoutChange={onCardLayoutChange}
+            theme={theme}
+            viewport={cardLayoutViewport}
+          />
         )}
 
         <footer className="text-center pt-8 pb-2 space-y-1">
@@ -230,5 +225,3 @@ export const PublicView = ({
     </main>
   );
 };
-import type { CSSProperties } from "react";
-import { getContentCardVariantCssVariables, type ThemeConfig } from "@/lib/theme";

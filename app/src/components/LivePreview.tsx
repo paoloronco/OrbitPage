@@ -6,6 +6,7 @@ import type { LinkData } from "./LinkCard";
 import { getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout } from "@/lib/profile-layout";
+import type { CardLayout } from "@/lib/card-layout";
 
 interface ProfileData {
   name: string;
@@ -44,6 +45,8 @@ interface LivePreviewProps {
   onEditorSelect?: (target: PublicEditorTarget) => void;
   profileLayoutEditing?: boolean;
   onProfileLayoutChange?: (layout: ProfileLayout) => void;
+  cardLayoutEditing?: boolean;
+  onCardLayoutChange?: (layout: CardLayout) => void;
 }
 
 export type PreviewDevice = "mobile" | "desktop";
@@ -165,6 +168,8 @@ export const LivePreview = ({
   onEditorSelect,
   profileLayoutEditing,
   onProfileLayoutChange,
+  cardLayoutEditing,
+  onCardLayoutChange,
 }: LivePreviewProps) => {
   const bgType = theme.backgroundMedia?.type;
   const previewBackground = (bgType === "color" || bgType === "video" || bgType === "gif")
@@ -203,6 +208,8 @@ export const LivePreview = ({
                 onEditorSelect={onEditorSelect}
                 profileLayoutEditing={profileLayoutEditing}
                 onProfileLayoutChange={onProfileLayoutChange}
+                cardLayoutEditing={cardLayoutEditing}
+                onCardLayoutChange={onCardLayoutChange}
               />
             </div>
           </div>

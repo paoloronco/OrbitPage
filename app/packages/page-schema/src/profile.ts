@@ -35,6 +35,15 @@ export const ORBITPAGE_PROFILE_LAYOUT_ITEMS = [
 
 export type OrbitPageProfileLayoutItem = typeof ORBITPAGE_PROFILE_LAYOUT_ITEMS[number];
 
+export const ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS = [
+  "icon",
+  "title",
+  "description",
+  "url"
+] as const;
+
+export type OrbitPageCardContentLayoutItem = typeof ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS[number];
+
 const OrbitPageProfileLayoutItemSchema = z.enum(ORBITPAGE_PROFILE_LAYOUT_ITEMS);
 const OrbitPageProfileLayoutSpansSchema = z.object(
   Object.fromEntries(
@@ -48,6 +57,13 @@ const OrbitPageProfileLayoutRectSchema = z.object({
   width: z.number().finite().min(12).max(100),
   height: z.number().finite().min(36).max(600)
 }).strict().refine((rect) => rect.x + rect.width <= 100.01, "Profile layout items must stay inside the canvas.");
+
+const OrbitPageCardLayoutRectSchema = z.object({
+  x: z.number().finite().min(0).max(100),
+  y: z.number().finite().min(0).max(4_000),
+  width: z.number().finite().min(12).max(100),
+  height: z.number().finite().min(24).max(1_200)
+}).strict().refine((rect) => rect.x + rect.width <= 100.01, "Card layout items must stay inside the canvas.");
 
 const OrbitPageProfileLayoutPositionsSchema = z.object(
   Object.fromEntries(
@@ -68,9 +84,45 @@ export const OrbitPageProfileLayoutSchema = z.object({
 
 export type OrbitPageProfileLayout = z.infer<typeof OrbitPageProfileLayoutSchema>;
 
+const OrbitPageCardContentLayoutPositionsSchema = z.object(
+  Object.fromEntries(
+    ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS.map((item) => [item, OrbitPageCardLayoutRectSchema.optional()])
+  ) as Record<OrbitPageCardContentLayoutItem, z.ZodOptional<typeof OrbitPageCardLayoutRectSchema>>
+).strict();
+
+export const OrbitPageCardContentLayoutSchema = z.object({
+  positions: OrbitPageCardContentLayoutPositionsSchema.optional(),
+  height: z.number().finite().min(48).max(1_200).optional()
+}).strict();
+
+export type OrbitPageCardContentLayout = z.infer<typeof OrbitPageCardContentLayoutSchema>;
+
+const OrbitPageCardPositionsSchema = z.record(
+  z.string().min(1).max(160),
+  OrbitPageCardLayoutRectSchema
+).refine((positions) => Object.keys(positions).length <= 200, "A page layout cannot contain more than 200 cards.");
+
+const OrbitPageCardContentsSchema = z.record(
+  z.string().min(1).max(160),
+  OrbitPageCardContentLayoutSchema
+).refine((contents) => Object.keys(contents).length <= 200, "A page layout cannot contain more than 200 card content layouts.");
+
+export const OrbitPageCardLayoutSchema = z.object({
+  positions: OrbitPageCardPositionsSchema.optional(),
+  contents: OrbitPageCardContentsSchema.optional(),
+  height: z.number().finite().min(48).max(6_000).optional()
+}).strict();
+
+export type OrbitPageCardLayout = z.infer<typeof OrbitPageCardLayoutSchema>;
+
 const OrbitPageResponsiveProfileLayoutsSchema = z.object({
   mobile: OrbitPageProfileLayoutSchema.nullable().optional(),
   desktop: OrbitPageProfileLayoutSchema.nullable().optional()
+}).strict();
+
+const OrbitPageResponsiveCardLayoutsSchema = z.object({
+  mobile: OrbitPageCardLayoutSchema.nullable().optional(),
+  desktop: OrbitPageCardLayoutSchema.nullable().optional()
 }).strict();
 
 const OptionalHex = OrbitPageHexColorSchema.nullable().optional();
@@ -100,7 +152,8 @@ export const OrbitPageProfileAppearanceSchema = z.object({
     secondary: boundedString(200).nullable().optional()
   }).strict().nullable().optional(),
   layout: OrbitPageProfileLayoutSchema.nullable().optional(),
-  layouts: OrbitPageResponsiveProfileLayoutsSchema.nullable().optional()
+  layouts: OrbitPageResponsiveProfileLayoutsSchema.nullable().optional(),
+  cardLayouts: OrbitPageResponsiveCardLayoutsSchema.nullable().optional()
 }).strict();
 
 function migrateProfileAppearanceInput(value: unknown) {
