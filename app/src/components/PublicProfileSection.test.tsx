@@ -40,4 +40,38 @@ describe("PublicProfileSection custom layout", () => {
     expect(editorHtml).toContain("profile-card__layout-grip");
     expect(editorHtml).toContain("profile-card__layout-resize");
   });
+
+  it("selects independent responsive layouts without changing their relative coordinates", () => {
+    const profile = {
+      name: "Mario Rossi",
+      bio: "Designer",
+      avatar: "",
+      showAvatar: false,
+      appearance: {
+        layouts: {
+          mobile: {
+            positions: { name: { x: 10, y: 128, width: 80, height: 64 } },
+            height: 408,
+          },
+          desktop: {
+            positions: {
+              name: { x: 55, y: 24, width: 35, height: 72 },
+              bio: { x: 5, y: 168, width: 90, height: 72 },
+            },
+            height: 240,
+          },
+        },
+      },
+    };
+
+    const mobileHtml = renderToStaticMarkup(<PublicProfileSection layoutViewport="mobile" profile={profile} />);
+    expect(mobileHtml).toContain('data-profile-layout-viewport="mobile"');
+    expect(mobileHtml).toContain('data-profile-layout-position="10,128,80,64"');
+    expect(mobileHtml).toContain('--profile-layout-height:408px');
+
+    const desktopHtml = renderToStaticMarkup(<PublicProfileSection layoutViewport="desktop" profile={profile} />);
+    expect(desktopHtml).toContain('data-profile-layout-viewport="desktop"');
+    expect(desktopHtml).toContain('data-profile-layout-position="55,24,35,72"');
+    expect(desktopHtml).toContain('--profile-layout-height:240px');
+  });
 });

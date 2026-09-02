@@ -68,6 +68,11 @@ export const OrbitPageProfileLayoutSchema = z.object({
 
 export type OrbitPageProfileLayout = z.infer<typeof OrbitPageProfileLayoutSchema>;
 
+const OrbitPageResponsiveProfileLayoutsSchema = z.object({
+  mobile: OrbitPageProfileLayoutSchema.nullable().optional(),
+  desktop: OrbitPageProfileLayoutSchema.nullable().optional()
+}).strict();
+
 const OptionalHex = OrbitPageHexColorSchema.nullable().optional();
 const OptionalNumber = z.number().finite().nullable().optional();
 
@@ -94,7 +99,8 @@ export const OrbitPageProfileAppearanceSchema = z.object({
     primary: boundedString(200).nullable().optional(),
     secondary: boundedString(200).nullable().optional()
   }).strict().nullable().optional(),
-  layout: OrbitPageProfileLayoutSchema.nullable().optional()
+  layout: OrbitPageProfileLayoutSchema.nullable().optional(),
+  layouts: OrbitPageResponsiveProfileLayoutsSchema.nullable().optional()
 }).strict();
 
 function migrateProfileAppearanceInput(value: unknown) {

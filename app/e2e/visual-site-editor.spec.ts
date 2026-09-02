@@ -71,6 +71,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
   await expect(page.getByText("Drag any element freely. Drag its corner to resize; blue guides help alignment.")).toBeVisible();
+  await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
   expect(await profileTarget.evaluate((element) => ({
     outline: getComputedStyle(element).outlineStyle,
     before: getComputedStyle(element, "::before").content,
@@ -90,6 +91,23 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const workPositionBefore = await workItem.getAttribute("data-profile-layout-position");
   await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowUp");
   await expect(workItem).not.toHaveAttribute("data-profile-layout-position", workPositionBefore || "");
+  const desktopWorkPosition = await workItem.getAttribute("data-profile-layout-position");
+  expect(desktopWorkPosition).toBeTruthy();
+
+  await page.getByRole("button", { name: "Mobile preview" }).click();
+  await expect(page.getByText("Mobile layout", { exact: true })).toBeVisible();
+  await expect(page.locator('[data-profile-layout-viewport="mobile"]')).toBeVisible();
+  await resetLayoutButton.click();
+  await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
+  await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowDown");
+  const mobileWorkPosition = await workItem.getAttribute("data-profile-layout-position");
+  expect(mobileWorkPosition).toBeTruthy();
+  expect(mobileWorkPosition).not.toBe(desktopWorkPosition);
+
+  await page.getByRole("button", { name: "Desktop preview" }).click();
+  await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
+  await expect(workItem).toHaveAttribute("data-profile-layout-position", desktopWorkPosition || "");
+  await expect(page.locator(".public-page-root--responsive-profile-layout")).toBeVisible();
 
   const namePositionBefore = await nameItem.getAttribute("data-profile-layout-position");
   const nameBounds = await nameItem.boundingBox();
@@ -111,6 +129,10 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
   await expect(nameItem).toHaveAttribute("data-profile-layout-position", "10,128,80,64");
   await expect(avatarItem).toHaveAttribute("data-profile-layout-position", "35,0,30,112");
+  await page.getByRole("button", { name: "Mobile preview" }).click();
+  await expect(workItem).toHaveAttribute("data-profile-layout-position", mobileWorkPosition || "");
+  await resetLayoutButton.click();
+  await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await page.getByRole("button", { name: "Save page" }).click();
 

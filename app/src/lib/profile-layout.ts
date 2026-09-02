@@ -6,6 +6,7 @@ import {
 
 export type ProfileLayout = OrbitPageProfileLayout;
 export type ProfileLayoutItem = OrbitPageProfileLayoutItem;
+export type ProfileLayoutViewport = "mobile" | "desktop";
 export type ProfileLayoutRect = { x: number; y: number; width: number; height: number };
 export type NormalizedProfileLayout = {
   positions: Record<ProfileLayoutItem, ProfileLayoutRect>;

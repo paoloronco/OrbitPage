@@ -106,10 +106,13 @@ export const PublicView = ({
   const viewportClass = embedded
     ? `public-page-root--preview-${embeddedViewport}`
     : "public-page-root--standalone";
+  const hasResponsiveProfileLayout = Boolean(
+    profile.appearance?.layouts?.mobile || profile.appearance?.layouts?.desktop
+  );
 
   return (
     <main
-      className={`public-page-root ${viewportClass} ${onEditorSelect ? "public-page-root--editor" : ""} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}
+      className={`public-page-root ${viewportClass}${hasResponsiveProfileLayout ? " public-page-root--responsive-profile-layout" : ""} ${onEditorSelect ? "public-page-root--editor" : ""} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}
       onClick={onEditorSelect ? () => onEditorSelect({ kind: "page" }) : undefined}
     >
       <div
@@ -136,9 +139,11 @@ export const PublicView = ({
             tabIndex={onEditorSelect && !profileLayoutEditing ? 0 : undefined}
           >
             <PublicProfileSection
+              key={embedded ? embeddedViewport : "responsive"}
               profile={profile}
               fallbackName={null}
               layoutEditing={profileLayoutEditing}
+              layoutViewport={embedded ? embeddedViewport : undefined}
               onLayoutChange={onProfileLayoutChange}
               surfaceEffect={theme.profileCardEffect}
             />

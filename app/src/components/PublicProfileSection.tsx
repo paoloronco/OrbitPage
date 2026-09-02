@@ -27,8 +27,10 @@ import {
   type ProfileLayout,
   type ProfileLayoutItem,
   type ProfileLayoutRect,
+  type ProfileLayoutViewport,
 } from "@/lib/profile-layout";
 import { useAppI18n } from "@/lib/i18n";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { CardSurfaceEffect } from "@/lib/theme";
 
 interface ProfileData {
@@ -59,6 +61,7 @@ interface PublicProfileSectionProps {
   fallbackName?: string | null;
   surfaceEffect?: CardSurfaceEffect;
   layoutEditing?: boolean;
+  layoutViewport?: ProfileLayoutViewport;
   onLayoutChange?: (layout: ProfileLayout) => void;
 }
 
@@ -150,10 +153,18 @@ export const PublicProfileSection = ({
   fallbackName = "Name or brand",
   surfaceEffect = "solid",
   layoutEditing = false,
+  layoutViewport,
   onLayoutChange,
 }: PublicProfileSectionProps) => {
   const { tr } = useAppI18n();
-  const rawLayout = profile.appearance?.layout;
+  const responsiveViewport: ProfileLayoutViewport = useIsMobile() ? "mobile" : "desktop";
+  const activeLayoutViewport = layoutViewport || responsiveViewport;
+  const rawLayout = profile.appearance?.layouts?.[activeLayoutViewport] || profile.appearance?.layout;
+  const hasCustomLayout = Boolean(
+    profile.appearance?.layout ||
+    profile.appearance?.layouts?.mobile ||
+    profile.appearance?.layouts?.desktop
+  );
   const savedLayout = useMemo(() => normalizeProfileLayout(rawLayout), [rawLayout]);
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
   const [activeItem, setActiveItem] = useState<ProfileLayoutItem | null>(null);
@@ -372,10 +383,11 @@ export const PublicProfileSection = ({
     <Card
       className={`profile-card glass-card p-8 text-center transition-smooth hover:glow-effect${layoutEditing ? " profile-card--layout-editing" : ""}`}
       data-profile-layout-editor={layoutEditing ? "true" : undefined}
+      data-profile-layout-viewport={activeLayoutViewport}
       data-surface-effect={profile.appearance?.surfaceEffect && profile.appearance.surfaceEffect !== "inherit" ? profile.appearance.surfaceEffect : surfaceEffect}
       style={getProfileAppearanceStyle(profile.appearance)}
     >
-      {profile.appearance?.layout || layoutEditing ? (
+      {hasCustomLayout || layoutEditing ? (
         <div
           className="profile-card__layout profile-card__layout--free"
           ref={layoutRef}

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { CardSurfaceEffect } from "./theme";
-import type { ProfileLayout } from "./profile-layout";
+import type { ProfileLayout, ProfileLayoutViewport } from "./profile-layout";
 
 export interface ProfileAppearance {
   surfaceEffect?: CardSurfaceEffect | "inherit";
@@ -26,6 +26,7 @@ export interface ProfileAppearance {
     secondary?: string;
   };
   layout?: ProfileLayout;
+  layouts?: Partial<Record<ProfileLayoutViewport, ProfileLayout>>;
 }
 
 type ProfileCssProperties = CSSProperties & Record<`--profile-card-${string}`, string>;

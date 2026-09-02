@@ -42,7 +42,7 @@ import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import type { ProfileLayout } from "@/lib/profile-layout";
+import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import { uploadApi } from "@/lib/api-client";
 import type { HostedSeoAccess } from "@/lib/hosted-editor-contract";
 import { useAppI18n } from "@/lib/i18n";
@@ -72,7 +72,7 @@ interface ProfileSectionProps {
   seoAccess?: HostedSeoAccess;
   managePlanHref?: string;
   orbitPageBadgeEditable?: boolean;
-  profileLayoutCommand?: { id: number; layout: ProfileLayout } | null;
+  profileLayoutCommand?: { id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null;
 }
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
@@ -240,7 +240,13 @@ export const ProfileSection = ({
     appliedLayoutCommandRef.current = profileLayoutCommand.id;
     setDraft((current) => ({
       ...current,
-      appearance: { ...current.appearance, layout: profileLayoutCommand.layout },
+      appearance: {
+        ...current.appearance,
+        layouts: {
+          ...current.appearance?.layouts,
+          [profileLayoutCommand.viewport]: profileLayoutCommand.layout,
+        },
+      },
     }));
   }, [profileLayoutCommand]);
 
@@ -388,6 +394,7 @@ export const ProfileSection = ({
         avatarShape: current.appearance?.avatarShape,
         avatarSize: current.appearance?.avatarSize,
         layout: current.appearance?.layout,
+        layouts: current.appearance?.layouts,
       },
     }));
   };
