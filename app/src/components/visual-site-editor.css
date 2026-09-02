@@ -440,12 +440,14 @@
   will-change: box-shadow, transform;
 }
 
-.public-page-root--editor .public-editor-target.is-layout-editing::before {
-  border-width: 2px;
-  box-shadow: 0 0 0 2px rgb(255 255 255 / 88%), 0 0 0 6px rgb(47 101 238 / 22%);
-  animation: none;
-  opacity: 1;
-  transform: none;
+.public-page-root--editor .public-editor-target.is-layout-editing {
+  outline: none;
+  filter: none;
+}
+
+.public-page-root--editor .public-editor-target.is-layout-editing::before,
+.public-page-root--editor .public-editor-target.is-layout-editing::after {
+  content: none;
 }
 
 .profile-card--layout-editing .profile-card__layout-item {

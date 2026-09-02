@@ -71,6 +71,11 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
   await expect(page.getByText("Drag any element freely. Drag its corner to resize; blue guides help alignment.")).toBeVisible();
+  expect(await profileTarget.evaluate((element) => ({
+    outline: getComputedStyle(element).outlineStyle,
+    before: getComputedStyle(element, "::before").content,
+    after: getComputedStyle(element, "::after").content,
+  }))).toEqual({ outline: "none", before: "none", after: "none" });
   const resetLayoutButton = page.getByRole("button", { name: "Reset to standard layout" });
   await expect(resetLayoutButton).toBeVisible();
 
@@ -98,6 +103,10 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const avatarPositionBefore = await avatarItem.getAttribute("data-profile-layout-position");
   await page.getByRole("button", { name: /Resize Profile image/ }).press("ArrowLeft");
   await expect(avatarItem).not.toHaveAttribute("data-profile-layout-position", avatarPositionBefore || "");
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.getByRole("button", { name: "Save page" }).click();
+
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await resetLayoutButton.click();
   await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
   await expect(nameItem).toHaveAttribute("data-profile-layout-position", "10,128,80,64");
