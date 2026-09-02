@@ -69,18 +69,27 @@ test("New UI edits the real page through selectable elements and keeps the prefe
 
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
-  await expect(page.getByText("Drag elements to reorder them; drag the corner to resize.")).toBeVisible();
+  await expect(page.getByText("Drag any element freely. Drag its corner to resize; blue guides help alignment.")).toBeVisible();
 
-  const layoutItems = page.locator("[data-profile-layout-item]");
-  const orderBefore = await layoutItems.evaluateAll((items) => items.map((item) => item.getAttribute("data-profile-layout-item")));
+  const workItem = page.locator('[data-profile-layout-item="work"]');
+  const workPositionBefore = await workItem.getAttribute("data-profile-layout-position");
   await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowUp");
-  await expect.poll(() => layoutItems.evaluateAll((items) => items.map((item) => item.getAttribute("data-profile-layout-item")))).not.toEqual(orderBefore);
+  await expect(workItem).not.toHaveAttribute("data-profile-layout-position", workPositionBefore || "");
+
+  const nameItem = page.locator('[data-profile-layout-item="name"]');
+  const namePositionBefore = await nameItem.getAttribute("data-profile-layout-position");
+  const nameBounds = await nameItem.boundingBox();
+  expect(nameBounds).not.toBeNull();
+  await page.mouse.move(nameBounds!.x + nameBounds!.width / 2, nameBounds!.y + nameBounds!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(nameBounds!.x + nameBounds!.width / 2 + 24, nameBounds!.y + nameBounds!.height / 2 + 12, { steps: 4 });
+  await page.mouse.up();
+  await expect(nameItem).not.toHaveAttribute("data-profile-layout-position", namePositionBefore || "");
 
   const avatarItem = page.locator('[data-profile-layout-item="avatar"]');
-  await page.getByRole("button", { name: /Resize Profile image/ }).press("Enter");
-  await expect(avatarItem).toHaveAttribute("data-profile-layout-span", "2");
-  await page.getByRole("slider", { name: "Space between profile elements" }).press("ArrowRight");
-  await expect(page.locator(".visual-site-editor__layout-bar output")).toHaveText("20px");
+  const avatarPositionBefore = await avatarItem.getAttribute("data-profile-layout-position");
+  await page.getByRole("button", { name: /Resize Profile image/ }).press("ArrowLeft");
+  await expect(avatarItem).not.toHaveAttribute("data-profile-layout-position", avatarPositionBefore || "");
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await page.getByRole("button", { name: "Save page" }).click();
 

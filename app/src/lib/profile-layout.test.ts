@@ -1,18 +1,32 @@
 import { describe, expect, it } from "vitest";
 import {
-  moveProfileLayoutItem,
+  DEFAULT_PROFILE_LAYOUT,
   normalizeProfileLayout,
-  reorderProfileLayout,
-  resizeProfileLayoutItem,
+  updateProfileLayoutItem,
 } from "./profile-layout";
 
 describe("profile layout", () => {
-  it("normalizes, reorders and resizes the responsive profile grid", () => {
-    const normalized = normalizeProfileLayout({ order: ["bio", "name"], spans: { name: 1 }, gap: 99 });
-    expect(normalized.order).toEqual(["bio", "name", "avatar", "work", "location", "socials"]);
-    expect(normalized.gap).toBe(32);
-    expect(reorderProfileLayout(normalized, "socials", "name").order.slice(0, 3)).toEqual(["bio", "socials", "name"]);
-    expect(moveProfileLayoutItem(normalized, "bio", 1).order.slice(0, 2)).toEqual(["name", "bio"]);
-    expect(resizeProfileLayoutItem(normalized, "bio", 1).spans.bio).toBe(1);
+  it("supports continuous placement and two-dimensional resizing", () => {
+    const moved = updateProfileLayoutItem(DEFAULT_PROFILE_LAYOUT, "name", {
+      x: 34.25,
+      y: 12,
+      width: 28.5,
+      height: 96,
+    });
+
+    expect(moved.positions.name).toEqual({ x: 34.25, y: 12, width: 28.5, height: 96 });
+    expect(moved.positions.avatar).toEqual(DEFAULT_PROFILE_LAYOUT.positions.avatar);
+  });
+
+  it("keeps old two-column layouts readable when migrating them", () => {
+    const migrated = normalizeProfileLayout({
+      order: ["avatar", "name", "bio"],
+      spans: { avatar: 1, name: 1, bio: 2 },
+      gap: 20,
+    });
+
+    expect(migrated.positions.avatar).toMatchObject({ x: 0, width: 48 });
+    expect(migrated.positions.name).toMatchObject({ x: 52, width: 48 });
+    expect(migrated.positions.bio.y).toBeGreaterThan(migrated.positions.name.y);
   });
 });

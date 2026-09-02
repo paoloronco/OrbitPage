@@ -42,13 +42,28 @@ const OrbitPageProfileLayoutSpansSchema = z.object(
   ) as Record<OrbitPageProfileLayoutItem, z.ZodOptional<z.ZodUnion<[z.ZodLiteral<1>, z.ZodLiteral<2>]>>>
 ).strict();
 
+const OrbitPageProfileLayoutRectSchema = z.object({
+  x: z.number().finite().min(0).max(100),
+  y: z.number().finite().min(0).max(1_600),
+  width: z.number().finite().min(12).max(100),
+  height: z.number().finite().min(36).max(600)
+}).strict().refine((rect) => rect.x + rect.width <= 100.01, "Profile layout items must stay inside the canvas.");
+
+const OrbitPageProfileLayoutPositionsSchema = z.object(
+  Object.fromEntries(
+    ORBITPAGE_PROFILE_LAYOUT_ITEMS.map((item) => [item, OrbitPageProfileLayoutRectSchema.optional()])
+  ) as Record<OrbitPageProfileLayoutItem, z.ZodOptional<typeof OrbitPageProfileLayoutRectSchema>>
+).strict();
+
 export const OrbitPageProfileLayoutSchema = z.object({
   order: z.array(OrbitPageProfileLayoutItemSchema)
     .max(ORBITPAGE_PROFILE_LAYOUT_ITEMS.length)
     .refine((items) => new Set(items).size === items.length, "Profile layout items must be unique.")
     .optional(),
   spans: OrbitPageProfileLayoutSpansSchema.optional(),
-  gap: z.number().int().min(8).max(32).optional()
+  gap: z.number().int().min(8).max(32).optional(),
+  positions: OrbitPageProfileLayoutPositionsSchema.optional(),
+  height: z.number().finite().min(160).max(2_000).optional()
 }).strict();
 
 export type OrbitPageProfileLayout = z.infer<typeof OrbitPageProfileLayoutSchema>;

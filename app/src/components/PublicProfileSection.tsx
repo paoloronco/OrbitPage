@@ -1,4 +1,14 @@
-import { useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,12 +21,12 @@ import { internalAssetPath } from "@/lib/base-path";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 import {
-  moveProfileLayoutItem,
   normalizeProfileLayout,
-  reorderProfileLayout,
-  resizeProfileLayoutItem,
+  updateProfileLayoutItem,
+  type NormalizedProfileLayout,
   type ProfileLayout,
   type ProfileLayoutItem,
+  type ProfileLayoutRect,
 } from "@/lib/profile-layout";
 import { useAppI18n } from "@/lib/i18n";
 import type { CardSurfaceEffect } from "@/lib/theme";
@@ -52,6 +62,20 @@ interface PublicProfileSectionProps {
   onLayoutChange?: (layout: ProfileLayout) => void;
 }
 
+type LayoutGesture = {
+  item: ProfileLayoutItem;
+  mode: "move" | "resize";
+  pointerId: number;
+  startX: number;
+  startY: number;
+  startRect: ProfileLayoutRect;
+  layout: NormalizedProfileLayout;
+  bounds: DOMRect;
+  scale: number;
+};
+
+type AlignmentGuides = { x?: number; y?: number };
+
 const SOCIALS = [
   { id: "linkedin", label: "LinkedIn profile", icon: Linkedin },
   { id: "github", label: "GitHub profile", icon: Github },
@@ -66,6 +90,61 @@ const SOCIALS = [
   { id: "mastodon", label: "Mastodon profile", icon: MastodonIcon },
 ] as const;
 
+const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value));
+
+function closestSnap(anchors: number[], targets: number[], threshold: number) {
+  let best: { shift: number; guide: number } | null = null;
+  for (const anchor of anchors) {
+    for (const target of targets) {
+      const shift = target - anchor;
+      if (Math.abs(shift) <= threshold && (!best || Math.abs(shift) < Math.abs(best.shift))) {
+        best = { shift, guide: target };
+      }
+    }
+  }
+  return best;
+}
+
+function alignedRect(
+  layout: NormalizedProfileLayout,
+  item: ProfileLayoutItem,
+  rect: ProfileLayoutRect,
+  mode: LayoutGesture["mode"],
+  thresholdX: number,
+  thresholdY: number,
+) {
+  const others = Object.entries(layout.positions)
+    .filter(([id]) => id !== item)
+    .map(([, position]) => position);
+  const xTargets = [0, 50, 100, ...others.flatMap((position) => [position.x, position.x + position.width / 2, position.x + position.width])];
+  const yTargets = [0, layout.height, ...others.flatMap((position) => [position.y, position.y + position.height / 2, position.y + position.height])];
+  const xSnap = closestSnap(
+    mode === "move" ? [rect.x, rect.x + rect.width / 2, rect.x + rect.width] : [rect.x + rect.width],
+    xTargets,
+    thresholdX,
+  );
+  const ySnap = closestSnap(
+    mode === "move" ? [rect.y, rect.y + rect.height / 2, rect.y + rect.height] : [rect.y + rect.height],
+    yTargets,
+    thresholdY,
+  );
+
+  const next = { ...rect };
+  if (xSnap) {
+    if (mode === "move") next.x += xSnap.shift;
+    else next.width += xSnap.shift;
+  }
+  if (ySnap) {
+    if (mode === "move") next.y += ySnap.shift;
+    else next.height += ySnap.shift;
+  }
+  next.width = clamp(next.width, 12, 100 - next.x);
+  next.height = clamp(next.height, 36, 600);
+  next.x = clamp(next.x, 0, 100 - next.width);
+  next.y = clamp(next.y, 0, 1_600);
+  return { rect: next, guides: { x: xSnap?.guide, y: ySnap?.guide } as AlignmentGuides };
+}
+
 export const PublicProfileSection = ({
   profile,
   fallbackName = "Name or brand",
@@ -74,10 +153,15 @@ export const PublicProfileSection = ({
   onLayoutChange,
 }: PublicProfileSectionProps) => {
   const { tr } = useAppI18n();
-  const [draggingItem, setDraggingItem] = useState<ProfileLayoutItem | null>(null);
-  const [dragOverItem, setDragOverItem] = useState<ProfileLayoutItem | null>(null);
-  const resizeGestureRef = useRef<{ item: ProfileLayoutItem; span: 1 | 2; x: number } | null>(null);
-  const suppressResizeClickRef = useRef(false);
+  const rawLayout = profile.appearance?.layout;
+  const savedLayout = useMemo(() => normalizeProfileLayout(rawLayout), [rawLayout]);
+  const [workingLayout, setWorkingLayout] = useState(savedLayout);
+  const [activeItem, setActiveItem] = useState<ProfileLayoutItem | null>(null);
+  const [guides, setGuides] = useState<AlignmentGuides>({});
+  const [measuredContentHeight, setMeasuredContentHeight] = useState(0);
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const gestureRef = useRef<LayoutGesture | null>(null);
+  const latestLayoutRef = useRef(workingLayout);
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
   const displayName = profile.name?.trim() || fallbackName || "";
   const socialLinks = Object.fromEntries(SOCIALS.map(({ id }) => [id, resolveSafePublicHref(profile.socialLinks?.[id])])) as Record<typeof SOCIALS[number]["id"], string | null>;
@@ -85,9 +169,14 @@ export const PublicProfileSection = ({
   const profileDetails = profile.appearance?.profileDetails;
   const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);
   const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || profile.showAvatar !== false || layoutEditing);
-  const layout = normalizeProfileLayout(profile.appearance?.layout);
+  const layout = layoutEditing ? workingLayout : savedLayout;
 
-  if (!hasVisibleProfile) return null;
+  useEffect(() => {
+    if (!gestureRef.current) {
+      latestLayoutRef.current = savedLayout;
+      setWorkingLayout(savedLayout);
+    }
+  }, [savedLayout]);
 
   const avatar = profile.showAvatar !== false ? (
     <Avatar className="profile-card__avatar" style={getProfileAvatarStyle(profile.appearance)}>
@@ -139,15 +228,142 @@ export const PublicProfileSection = ({
     socials,
     bio,
   };
+  const baseCanvasHeight = layoutEditing
+    ? layout.height
+    : Math.max(160, ...(Object.keys(layout.positions) as ProfileLayoutItem[])
+        .filter((item) => contents[item])
+        .map((item) => layout.positions[item].y + layout.positions[item].height));
+  const canvasHeight = Math.max(baseCanvasHeight, measuredContentHeight);
 
-  const itemAtPoint = (x: number, y: number) => {
-    const id = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-profile-layout-item]")?.dataset.profileLayoutItem;
-    return layout.order.includes(id as ProfileLayoutItem) ? id as ProfileLayoutItem : null;
+  useLayoutEffect(() => {
+    const canvas = layoutRef.current;
+    if (!canvas) return;
+    const measure = () => {
+      const items = Array.from(canvas.querySelectorAll<HTMLElement>("[data-profile-layout-item]"));
+      const contentHeight = Math.max(0, ...items.map((item) => item.offsetTop + Math.max(item.offsetHeight, item.scrollHeight)));
+      setMeasuredContentHeight(Math.ceil(contentHeight));
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    canvas.querySelectorAll("[data-profile-layout-item]").forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, [displayName, hasSocialLinks, layout, layoutEditing, profile.bio, profile.showAvatar, profileDetails?.primary, profileDetails?.secondary]);
+
+  if (!hasVisibleProfile) return null;
+
+  const applyWorkingLayout = (next: NormalizedProfileLayout) => {
+    latestLayoutRef.current = next;
+    setWorkingLayout(next);
   };
-  const finishDrag = (item: ProfileLayoutItem, before: ProfileLayoutItem | null) => {
-    if (before && before !== item) onLayoutChange?.(reorderProfileLayout(layout, item, before));
-    setDraggingItem(null);
-    setDragOverItem(null);
+
+  const startGesture = (
+    event: ReactPointerEvent<HTMLElement>,
+    item: ProfileLayoutItem,
+    mode: LayoutGesture["mode"],
+  ) => {
+    if (!layoutEditing || event.button !== 0) return;
+    const canvas = layoutRef.current;
+    if (!canvas) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const bounds = canvas.getBoundingClientRect();
+    const itemElement = event.currentTarget.closest<HTMLElement>("[data-profile-layout-item]");
+    const startRect = { ...layout.positions[item] };
+    if (mode === "resize" && itemElement) startRect.height = Math.max(startRect.height, itemElement.offsetHeight);
+    gestureRef.current = {
+      item,
+      mode,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect,
+      layout,
+      bounds,
+      scale: Math.max(.01, bounds.width / canvas.offsetWidth),
+    };
+    latestLayoutRef.current = layout;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setActiveItem(item);
+  };
+
+  const updateGesture = (event: ReactPointerEvent<HTMLElement>) => {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const deltaX = (event.clientX - gesture.startX) / gesture.bounds.width * 100;
+    const deltaY = (event.clientY - gesture.startY) / gesture.scale;
+    const rect = gesture.mode === "move"
+      ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
+      : {
+          ...gesture.startRect,
+          width: gesture.startRect.width + deltaX,
+          height: gesture.startRect.height + deltaY,
+        };
+    const snapped = alignedRect(
+      gesture.layout,
+      gesture.item,
+      rect,
+      gesture.mode,
+      6 / gesture.bounds.width * 100,
+      6 / gesture.scale,
+    );
+    setGuides(snapped.guides);
+    applyWorkingLayout(updateProfileLayoutItem(gesture.layout, gesture.item, snapped.rect));
+  };
+
+  const finishGesture = (event: ReactPointerEvent<HTMLElement>) => {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    gestureRef.current = null;
+    setActiveItem(null);
+    setGuides({});
+    onLayoutChange?.(latestLayoutRef.current);
+  };
+
+  const cancelGesture = (event: ReactPointerEvent<HTMLElement>) => {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    gestureRef.current = null;
+    setActiveItem(null);
+    setGuides({});
+    applyWorkingLayout(gesture.layout);
+  };
+
+  const commitKeyboardChange = (item: ProfileLayoutItem, rect: ProfileLayoutRect) => {
+    const next = updateProfileLayoutItem(layout, item, rect);
+    applyWorkingLayout(next);
+    onLayoutChange?.(next);
+  };
+
+  const moveWithKeyboard = (event: ReactKeyboardEvent, item: ProfileLayoutItem) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = layout.positions[item];
+    const step = event.shiftKey ? 4 : 1;
+    commitKeyboardChange(item, {
+      ...rect,
+      x: rect.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
+      y: rect.y + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
+    });
+  };
+
+  const resizeWithKeyboard = (event: ReactKeyboardEvent, item: ProfileLayoutItem) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = layout.positions[item];
+    const step = event.shiftKey ? 4 : 1;
+    commitKeyboardChange(item, {
+      ...rect,
+      width: rect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
+      height: rect.height + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
+    });
   };
 
   return (
@@ -158,58 +374,49 @@ export const PublicProfileSection = ({
       style={getProfileAppearanceStyle(profile.appearance)}
     >
       {profile.appearance?.layout || layoutEditing ? (
-        <div className="profile-card__layout" style={{ "--profile-layout-gap": `${layout.gap}px` } as CSSProperties}>
-          {layout.order.map((item, index) => {
+        <div
+          className="profile-card__layout profile-card__layout--free"
+          ref={layoutRef}
+          style={{ "--profile-layout-height": `${canvasHeight}px` } as CSSProperties}
+        >
+          {(Object.keys(layout.positions) as ProfileLayoutItem[]).map((item) => {
             const content = contents[item];
             if (!content && !layoutEditing) return null;
-            const span = layout.spans[item];
+            const rect = layout.positions[item];
+            const center = rect.x + rect.width / 2;
+            const alignment = center < 42 ? "left" : center > 58 ? "right" : "center";
             return (
               <div
-                className={`profile-card__layout-item profile-card__layout-item--${item}${draggingItem === item ? " is-dragging" : ""}${dragOverItem === item && draggingItem !== item ? " is-drag-over" : ""}`}
+                className={`profile-card__layout-item profile-card__layout-item--${item}${activeItem === item ? " is-dragging" : ""}`}
+                data-profile-layout-align={alignment}
                 data-profile-layout-item={item}
-                data-profile-layout-span={span}
-                draggable={layoutEditing}
+                data-profile-layout-position={`${rect.x},${rect.y},${rect.width},${rect.height}`}
                 key={item}
-                onDragEnd={() => finishDrag(item, null)}
-                onDragEnter={() => setDragOverItem(item)}
-                onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
-                onDragStart={(event) => {
-                  event.dataTransfer.effectAllowed = "move";
-                  event.dataTransfer.setData("text/plain", item);
-                  setDraggingItem(item);
+                onPointerCancel={cancelGesture}
+                onPointerDown={(event) => {
+                  if ((event.target as HTMLElement).closest(".profile-card__layout-grip, .profile-card__layout-resize")) return;
+                  startGesture(event, item, "move");
                 }}
-                onDrop={(event) => { event.preventDefault(); finishDrag(draggingItem || item, item); }}
-                style={{ "--profile-layout-span": span } as CSSProperties}
+                onPointerMove={updateGesture}
+                onPointerUp={finishGesture}
+                style={{
+                  "--profile-layout-x": `${rect.x}%`,
+                  "--profile-layout-y": `${rect.y}px`,
+                  "--profile-layout-width": `${rect.width}%`,
+                  "--profile-layout-item-height": `${rect.height}px`,
+                } as CSSProperties}
               >
                 {layoutEditing && (
                   <button
                     aria-label={`${tr("Move", "Sposta")} ${labels[item]}`}
                     className="profile-card__layout-grip"
                     onClick={(event) => event.stopPropagation()}
-                    onKeyDown={(event) => {
-                      if (!["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"].includes(event.key)) return;
-                      event.preventDefault();
-                      event.stopPropagation();
-                      onLayoutChange?.(moveProfileLayoutItem(layout, item, event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 1));
-                    }}
-                    onPointerCancel={() => finishDrag(item, null)}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      setDraggingItem(item);
-                      setDragOverItem(item);
-                    }}
-                    onPointerMove={(event) => {
-                      if (draggingItem !== item) return;
-                      setDragOverItem(itemAtPoint(event.clientX, event.clientY));
-                    }}
-                    onPointerUp={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      finishDrag(item, itemAtPoint(event.clientX, event.clientY));
-                    }}
-                    title={tr("Drag to move. Use arrow keys for precise ordering.", "Trascina per spostare. Usa le frecce per un ordine preciso.")}
+                    onKeyDown={(event) => moveWithKeyboard(event, item)}
+                    onPointerCancel={cancelGesture}
+                    onPointerDown={(event) => startGesture(event, item, "move")}
+                    onPointerMove={updateGesture}
+                    onPointerUp={finishGesture}
+                    title={tr("Drag freely. Use arrow keys for precise movement.", "Trascina liberamente. Usa le frecce per movimenti precisi.")}
                     type="button"
                   >
                     <GripVertical aria-hidden="true" size={17} />
@@ -222,52 +429,25 @@ export const PublicProfileSection = ({
 
                 {layoutEditing && (
                   <button
-                    aria-label={`${tr("Resize", "Ridimensiona")} ${labels[item]}: ${span === 2 ? tr("Full width", "Larghezza intera") : tr("Half width", "Mezza larghezza")}`}
+                    aria-label={`${tr("Resize", "Ridimensiona")} ${labels[item]}`}
                     className="profile-card__layout-resize"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      if (suppressResizeClickRef.current) return;
-                      onLayoutChange?.(resizeProfileLayoutItem(layout, item, span === 1 ? 2 : 1));
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter" && event.key !== " ") return;
-                      event.preventDefault();
-                      event.stopPropagation();
-                      suppressResizeClickRef.current = true;
-                      window.setTimeout(() => { suppressResizeClickRef.current = false; }, 0);
-                      onLayoutChange?.(resizeProfileLayoutItem(layout, item, span === 1 ? 2 : 1));
-                    }}
-                    onPointerCancel={() => {
-                      resizeGestureRef.current = null;
-                      suppressResizeClickRef.current = false;
-                    }}
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      resizeGestureRef.current = { item, span, x: event.clientX };
-                    }}
-                    onPointerUp={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      const gesture = resizeGestureRef.current;
-                      resizeGestureRef.current = null;
-                      if (!gesture || gesture.item !== item) return;
-                      suppressResizeClickRef.current = true;
-                      window.setTimeout(() => { suppressResizeClickRef.current = false; }, 0);
-                      const nextSpan = Math.abs(event.clientX - gesture.x) < 12 ? (gesture.span === 1 ? 2 : 1) : (event.clientX > gesture.x ? 2 : 1);
-                      if (nextSpan !== gesture.span) onLayoutChange?.(resizeProfileLayoutItem(layout, item, nextSpan));
-                    }}
-                    title={tr("Drag sideways or press to change width", "Trascina lateralmente o premi per cambiare larghezza")}
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => resizeWithKeyboard(event, item)}
+                    onPointerCancel={cancelGesture}
+                    onPointerDown={(event) => startGesture(event, item, "resize")}
+                    onPointerMove={updateGesture}
+                    onPointerUp={finishGesture}
+                    title={tr("Drag in any direction to resize. Use arrow keys for precision.", "Trascina in ogni direzione per ridimensionare. Usa le frecce per la precisione.")}
                     type="button"
                   >
                     <span aria-hidden="true" />
                   </button>
                 )}
-                {layoutEditing && <span className="sr-only">{index + 1} / {layout.order.length}</span>}
               </div>
             );
           })}
+          {layoutEditing && guides.x !== undefined && <i className="profile-card__layout-guide profile-card__layout-guide--x" style={{ left: `${guides.x}%` }} />}
+          {layoutEditing && guides.y !== undefined && <i className="profile-card__layout-guide profile-card__layout-guide--y" style={{ top: `${guides.y}px` }} />}
         </div>
       ) : (
         <>
