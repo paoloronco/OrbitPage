@@ -6,6 +6,7 @@ import { withTenantBasePath } from "@/lib/base-path";
 import { getInternalLinksData, getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import type { ProfileLayout } from "@/lib/profile-layout";
 
 interface ProfileData {
   name: string;
@@ -31,6 +32,8 @@ interface PublicViewProps {
   embeddedViewport?: "mobile" | "desktop";
   editorSelection?: PublicEditorTarget | null;
   onEditorSelect?: (target: PublicEditorTarget) => void;
+  profileLayoutEditing?: boolean;
+  onProfileLayoutChange?: (layout: ProfileLayout) => void;
 }
 
 export type PublicEditorTarget =
@@ -50,6 +53,8 @@ export const PublicView = ({
   embeddedViewport = "mobile",
   editorSelection = null,
   onEditorSelect,
+  profileLayoutEditing = false,
+  onProfileLayoutChange,
 }: PublicViewProps) => {
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
@@ -58,7 +63,7 @@ export const PublicView = ({
     profile.avatar &&
     !profile.avatar.includes('profile-avatar')
   );
-  const hasProfileContent = Boolean(
+  const hasProfileContent = Boolean(profileLayoutEditing ||
     profile.name?.trim() ||
     profile.bio?.trim() ||
     (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||
@@ -114,9 +119,10 @@ export const PublicView = ({
         {hasProfileContent && (
           <div
             aria-label={onEditorSelect ? "Edit profile and page identity" : undefined}
-            className={`public-editor-target public-editor-target--profile${editorSelection?.kind === "profile" ? " is-selected" : ""}`}
+            className={`public-editor-target public-editor-target--profile${editorSelection?.kind === "profile" ? " is-selected" : ""}${profileLayoutEditing ? " is-layout-editing" : ""}`}
             data-public-editor-target={onEditorSelect ? "profile" : undefined}
-            onClickCapture={onEditorSelect ? (event) => {
+            onClick={profileLayoutEditing ? (event) => event.stopPropagation() : undefined}
+            onClickCapture={onEditorSelect && !profileLayoutEditing ? (event) => {
               event.preventDefault();
               event.stopPropagation();
               onEditorSelect({ kind: "profile" });
@@ -126,10 +132,16 @@ export const PublicView = ({
               event.preventDefault();
               onEditorSelect({ kind: "profile" });
             } : undefined}
-            role={onEditorSelect ? "button" : undefined}
-            tabIndex={onEditorSelect ? 0 : undefined}
+            role={onEditorSelect && !profileLayoutEditing ? "button" : undefined}
+            tabIndex={onEditorSelect && !profileLayoutEditing ? 0 : undefined}
           >
-            <PublicProfileSection profile={profile} fallbackName={null} surfaceEffect={theme.profileCardEffect} />
+            <PublicProfileSection
+              profile={profile}
+              fallbackName={null}
+              layoutEditing={profileLayoutEditing}
+              onLayoutChange={onProfileLayoutChange}
+              surfaceEffect={theme.profileCardEffect}
+            />
           </div>
         )}
 

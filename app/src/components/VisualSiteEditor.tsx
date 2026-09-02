@@ -1,9 +1,13 @@
-import { useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import {
+  Check,
+  Edit,
   Files,
+  GripVertical,
   Layout,
   Menu as MenuIcon,
   MousePointerClick,
+  RotateCcw,
   ShoppingBag,
   UserRound,
 } from "@/components/ui/material-icons";
@@ -12,6 +16,7 @@ import type { LinkData } from "./LinkCard";
 import type { PublicEditorTarget } from "./PublicView";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import { DEFAULT_PROFILE_LAYOUT, normalizeProfileLayout, type ProfileLayout } from "@/lib/profile-layout";
 import { useAppI18n } from "@/lib/i18n";
 import "./visual-site-editor.css";
 
@@ -54,6 +59,7 @@ interface VisualSiteEditorProps {
   pagesStatus?: VisualSectionItem["status"];
   onSelect: (section: VisualSiteEditorSection, linkId?: string) => void;
   onOpenTheme?: () => void;
+  onProfileLayoutChange?: (layout: ProfileLayout) => void;
   previewHint?: string;
   renderPreview?: (device: PreviewDevice) => ReactNode;
 }
@@ -74,11 +80,14 @@ export function VisualSiteEditor({
   pagesStatus = "inactive",
   onSelect,
   onOpenTheme,
+  onProfileLayoutChange,
   previewHint,
   renderPreview,
 }: VisualSiteEditorProps) {
   const { tr } = useAppI18n();
   const [device, setDevice] = useState<PreviewDevice>("mobile");
+  const [layoutEditing, setLayoutEditing] = useState(false);
+  const profileLayout = normalizeProfileLayout(profile.appearance?.layout);
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
     { id: "links", label: tr("Content", "Contenuti"), icon: Layout, status: "active" },
@@ -104,8 +113,18 @@ export function VisualSiteEditor({
     onOpenTheme?.();
   };
 
+  useEffect(() => {
+    if (section !== "profile") setLayoutEditing(false);
+  }, [section]);
+
+  const toggleLayoutEditing = () => {
+    const next = !layoutEditing;
+    if (next) onProfileLayoutChange?.(profileLayout);
+    setLayoutEditing(next);
+  };
+
   return (
-    <section className="visual-site-editor" aria-label={tr("Visual site editor", "Editor visuale del sito")}>
+    <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
       <header className="visual-site-editor__toolbar">
         <div className="visual-site-editor__intro">
           <span className="visual-site-editor__mark"><MousePointerClick aria-hidden="true" size={18} /></span>
@@ -114,7 +133,21 @@ export function VisualSiteEditor({
             <small>{tr("Select an element in the preview to open its settings.", "Seleziona un elemento nell’anteprima per aprire le sue impostazioni.")}</small>
           </div>
         </div>
-        <PreviewDeviceToggle value={device} onChange={setDevice} />
+        <div className="visual-site-editor__toolbar-actions">
+          {section === "profile" && onProfileLayoutChange && (
+            <button
+              aria-pressed={layoutEditing}
+              className={`visual-site-editor__layout-toggle${layoutEditing ? " is-active" : ""}`}
+              onClick={toggleLayoutEditing}
+              title={layoutEditing ? tr("Finish arranging", "Termina disposizione") : tr("Arrange page layout", "Disponi il layout della pagina")}
+              type="button"
+            >
+              {layoutEditing ? <Check aria-hidden="true" size={17} /> : <Edit aria-hidden="true" size={17} />}
+              <span>{layoutEditing ? tr("Done", "Fatto") : tr("Arrange", "Disponi")}</span>
+            </button>
+          )}
+          <PreviewDeviceToggle value={device} onChange={setDevice} />
+        </div>
       </header>
 
       <nav className="visual-site-editor__sections" aria-label={tr("Site sections", "Sezioni del sito")}>
@@ -134,6 +167,28 @@ export function VisualSiteEditor({
         ))}
       </nav>
 
+      {layoutEditing && (
+        <div className="visual-site-editor__layout-bar">
+          <span role="status"><GripVertical aria-hidden="true" size={17} />{tr("Drag elements to reorder them; drag the corner to resize.", "Trascina gli elementi per riordinarli; trascina l’angolo per ridimensionarli.")}</span>
+          <label>
+            <span>{tr("Spacing", "Spaziatura")}</span>
+            <input
+              aria-label={tr("Space between profile elements", "Spazio tra gli elementi del profilo")}
+              max="32"
+              min="8"
+              onChange={(event) => onProfileLayoutChange({ ...profileLayout, gap: Number(event.target.value) })}
+              step="4"
+              type="range"
+              value={profileLayout.gap}
+            />
+            <output>{profileLayout.gap}px</output>
+          </label>
+          <button onClick={() => onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT)} type="button">
+            <RotateCcw aria-hidden="true" size={15} />{tr("Reset layout", "Ripristina layout")}
+          </button>
+        </div>
+      )}
+
       <div className="visual-site-editor__workspace">
         <div className="visual-site-editor__canvas" data-device={device}>
           <div className="visual-site-editor__canvas-note">
@@ -146,7 +201,9 @@ export function VisualSiteEditor({
               editorSelection={editorSelection}
               links={links}
               onEditorSelect={selectFromPreview}
+              onProfileLayoutChange={onProfileLayoutChange}
               profile={profile}
+              profileLayoutEditing={layoutEditing}
               publicPageHref={publicPageHref}
               showOrbitPageBadge={showOrbitPageBadge}
               theme={theme}

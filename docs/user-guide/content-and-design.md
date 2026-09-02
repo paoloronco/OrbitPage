@@ -27,6 +27,8 @@ Most profile-card settings inherit from **Theme**. An explicit value in **Page**
 
 Changes in Page remain a draft in the browser until you select **Save** in the Page toolbar. **Reset** discards the current unsaved draft.
 
+In **Site editor**, select **Arrange** (the pencil button) to compose the profile card directly in the live preview. Drag the image, name, work, location, social links, and description to reorder them. Drag an item's lower corner to switch between half and full width, and use the spacing slider for the gap between items. The two-column responsive grid lets the image and a wrapping name sit side by side without storing fragile pixel coordinates. Keyboard users can focus a move handle and use the arrow keys; reduced-motion preferences disable the arranging animation. Select **Done**, then **Save page** to persist the layout.
+
 ## Main-page blocks
 
 Open **Content > Link**, then select **Add content**. The library groups the available blocks by purpose:

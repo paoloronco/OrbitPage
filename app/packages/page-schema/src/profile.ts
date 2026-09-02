@@ -24,6 +24,35 @@ export const ORBITPAGE_SOCIAL_PLATFORMS = [
   "mastodon"
 ] as const;
 
+export const ORBITPAGE_PROFILE_LAYOUT_ITEMS = [
+  "avatar",
+  "name",
+  "work",
+  "location",
+  "socials",
+  "bio"
+] as const;
+
+export type OrbitPageProfileLayoutItem = typeof ORBITPAGE_PROFILE_LAYOUT_ITEMS[number];
+
+const OrbitPageProfileLayoutItemSchema = z.enum(ORBITPAGE_PROFILE_LAYOUT_ITEMS);
+const OrbitPageProfileLayoutSpansSchema = z.object(
+  Object.fromEntries(
+    ORBITPAGE_PROFILE_LAYOUT_ITEMS.map((item) => [item, z.union([z.literal(1), z.literal(2)]).optional()])
+  ) as Record<OrbitPageProfileLayoutItem, z.ZodOptional<z.ZodUnion<[z.ZodLiteral<1>, z.ZodLiteral<2>]>>>
+).strict();
+
+export const OrbitPageProfileLayoutSchema = z.object({
+  order: z.array(OrbitPageProfileLayoutItemSchema)
+    .max(ORBITPAGE_PROFILE_LAYOUT_ITEMS.length)
+    .refine((items) => new Set(items).size === items.length, "Profile layout items must be unique.")
+    .optional(),
+  spans: OrbitPageProfileLayoutSpansSchema.optional(),
+  gap: z.number().int().min(8).max(32).optional()
+}).strict();
+
+export type OrbitPageProfileLayout = z.infer<typeof OrbitPageProfileLayoutSchema>;
+
 const OptionalHex = OrbitPageHexColorSchema.nullable().optional();
 const OptionalNumber = z.number().finite().nullable().optional();
 
@@ -49,7 +78,8 @@ export const OrbitPageProfileAppearanceSchema = z.object({
   profileDetails: z.object({
     primary: boundedString(200).nullable().optional(),
     secondary: boundedString(200).nullable().optional()
-  }).strict().nullable().optional()
+  }).strict().nullable().optional(),
+  layout: OrbitPageProfileLayoutSchema.nullable().optional()
 }).strict();
 
 function migrateProfileAppearanceInput(value: unknown) {
