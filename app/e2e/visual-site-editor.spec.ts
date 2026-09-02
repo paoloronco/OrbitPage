@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { openAuthenticatedAdmin } from "./helpers";
 
 test("New UI edits the real page through selectable elements and keeps the preference", async ({ browserName, page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
 
@@ -127,6 +127,19 @@ test("New UI edits the real page through selectable elements and keeps the prefe
     realignGripBounds!.y + realignGripBounds!.height / 2, { steps: 4 });
   await page.mouse.up();
   await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},49,`));
+  const adminCardPositions = await page.locator(`[data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
+    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.getByRole("button", { name: "Save page" }).click();
+  await expect(page.getByText("Unsaved changes")).toBeHidden();
+  const publicPage = await page.context().newPage();
+  await publicPage.goto(new URL("/e2e-public-page", page.url()).toString());
+  await expect(publicPage.locator(`[data-card-layout-item="${linkId}"]`)).toBeVisible();
+  const publicCardPositions = await publicPage.locator(`[data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
+    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
+  expect(publicCardPositions).toEqual(adminCardPositions);
+  await publicPage.close();
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
   const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   await arrangedLinkTarget.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
   await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${dockedY},48,`));
