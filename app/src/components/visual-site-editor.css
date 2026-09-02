@@ -603,6 +603,11 @@
   animation: profile-layout-wiggle 1.8s ease-in-out infinite alternate;
 }
 
+.page-card-layout__grip--profile {
+  right: -8px;
+  left: auto;
+}
+
 .page-card-layout__grip svg,
 .public-link-card__layout-grip svg {
   border-radius: 6px;

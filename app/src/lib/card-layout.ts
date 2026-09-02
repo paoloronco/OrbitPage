@@ -1,5 +1,6 @@
 import {
   ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS,
+  ORBITPAGE_PROFILE_CARD_LAYOUT_ID,
   type OrbitPageCardContentLayout,
   type OrbitPageCardContentLayoutItem,
   type OrbitPageCardLayout,
@@ -20,6 +21,8 @@ export type CardLayoutSource = {
   url?: string;
   hideUrl?: boolean;
   coverImage?: string;
+  defaultRect?: Partial<CardLayoutRect>;
+  prepend?: boolean;
 };
 export type NormalizedCardLayout = {
   positions: Record<string, CardLayoutRect>;
@@ -33,6 +36,8 @@ export type NormalizedCardContentLayout = {
 export type CardLayoutGuides = { x?: number; y?: number };
 
 const CARD_GAP = 24;
+
+export const PROFILE_CARD_LAYOUT_ID = ORBITPAGE_PROFILE_CARD_LAYOUT_ID;
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value));
 const round = (value: number) => Math.round(value * 4) / 4;
@@ -76,6 +81,7 @@ export function alignCardLayoutRect(
 }
 
 const defaultCardHeight = (card: CardLayoutSource) => {
+  if (card.defaultRect?.height !== undefined) return clamp(card.defaultRect.height, 48, 1_200);
   if (card.coverImage) return 260;
   if (["image", "video", "embed", "map", "menu"].includes(card.type || "")) return 220;
   if (card.type === "text" || card.type === "callout" || card.type === "event") return 132;
@@ -96,6 +102,7 @@ function normalizeCardRect(
 ): CardLayoutRect {
   const compactMobile = viewport === "mobile" && isCompactMobileCard(card);
   const minimumWidth = compactMobile ? 44 : viewport === "mobile" ? 100 : 20;
+  const minimumHeight = card.defaultRect?.height === undefined ? 48 : defaultCardHeight(card);
   const width = round(clamp(finite(candidate?.width, fallback.width), minimumWidth, 100));
   return {
     x: viewport === "mobile" && !compactMobile
@@ -103,7 +110,7 @@ function normalizeCardRect(
       : round(clamp(finite(candidate?.x, fallback.x), 0, 100 - width)),
     y: Math.round(clamp(finite(candidate?.y, fallback.y), 0, 4_000)),
     width,
-    height: Math.round(clamp(finite(candidate?.height, fallback.height), 48, 1_200)),
+    height: Math.round(clamp(finite(candidate?.height, fallback.height), minimumHeight, 1_200)),
   };
 }
 
@@ -113,13 +120,23 @@ export function normalizeCardLayout(
   viewport: CardLayoutViewport,
 ): NormalizedCardLayout {
   const positions: Record<string, CardLayoutRect> = {};
-  let nextY = layout?.positions
-    ? Math.max(0, ...Object.values(layout.positions).map((rect) => rect.y + rect.height + CARD_GAP))
+  const missingPrepend = cards.find((card) => card.prepend && !layout?.positions?.[card.id]);
+  const prependOffset = missingPrepend ? defaultCardHeight(missingPrepend) + CARD_GAP : 0;
+  const storedPositions = prependOffset
+    ? Object.fromEntries(Object.entries(layout?.positions || {}).map(([id, rect]) => [id, { ...rect, y: rect.y + prependOffset }]))
+    : layout?.positions;
+  let nextY = storedPositions
+    ? Math.max(0, ...Object.values(storedPositions).map((rect) => rect.y + rect.height + CARD_GAP))
     : 0;
 
   for (const card of cards) {
-    const fallback = { x: 0, y: nextY, width: 100, height: defaultCardHeight(card) };
-    const rect = normalizeCardRect(layout?.positions?.[card.id], fallback, card, viewport);
+    const fallback = {
+      x: card.defaultRect?.x ?? 0,
+      y: card.prepend ? (card.defaultRect?.y ?? 0) : nextY,
+      width: card.defaultRect?.width ?? 100,
+      height: defaultCardHeight(card),
+    };
+    const rect = normalizeCardRect(storedPositions?.[card.id], fallback, card, viewport);
     positions[card.id] = rect;
     nextY = Math.max(nextY, rect.y + rect.height + CARD_GAP);
   }
@@ -128,7 +145,7 @@ export function normalizeCardLayout(
   return {
     positions,
     ...(layout?.contents ? { contents: layout.contents } : {}),
-    height: Math.round(clamp(Math.max(layout?.height ?? 0, contentHeight), 48, 6_000)),
+    height: Math.round(clamp(Math.max((layout?.height ?? 0) + prependOffset, contentHeight), 48, 6_000)),
   };
 }
 

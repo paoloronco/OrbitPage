@@ -903,11 +903,12 @@ describe('API Endpoints', () => {
       mobile: null,
       desktop: {
         positions: {
-          github: { x: 0, y: 24, width: 42, height: 100 },
-          website: { x: 56, y: 24, width: 44, height: 100 },
+          __orbitpage_profile__: { x: 25, y: 0, width: 50, height: 456 },
+          github: { x: 0, y: 480, width: 42, height: 100 },
+          website: { x: 56, y: 480, width: 44, height: 100 },
         },
         contents: { github: { positions: { title: { x: 16, y: 0, width: 80, height: 24 } }, height: 64 } },
-        height: 124,
+        height: 580,
       },
     };
 

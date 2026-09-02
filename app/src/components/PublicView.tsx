@@ -7,8 +7,8 @@ import { withTenantBasePath } from "@/lib/base-path";
 import { getInternalLinksData, getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import type { ProfileLayout } from "@/lib/profile-layout";
-import type { CardLayout } from "@/lib/card-layout";
+import { normalizeProfileLayout, type ProfileLayout } from "@/lib/profile-layout";
+import { PROFILE_CARD_LAYOUT_ID, type CardLayout } from "@/lib/card-layout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ThemeConfig } from "@/lib/theme";
 
@@ -121,6 +121,42 @@ export const PublicView = ({
   );
   const activeCardLayout = profile.appearance?.cardLayouts?.[cardLayoutViewport];
   const hasResponsiveCardLayout = cardLayoutEditing || Boolean(activeCardLayout);
+  const profileCardHeight = normalizeProfileLayout(
+    profile.appearance?.layouts?.[cardLayoutViewport] || profile.appearance?.layout,
+  ).height + (cardLayoutViewport === "mobile" ? 64 : 48);
+  const useUnifiedPageLayout = hasProfileContent && (
+    cardLayoutEditing || Boolean(activeCardLayout?.positions?.[PROFILE_CARD_LAYOUT_ID])
+  );
+  const profileTarget = hasProfileContent ? (
+    <div
+      aria-label={onEditorSelect ? "Edit profile and page identity" : undefined}
+      className={`public-editor-target public-editor-target--profile${editorSelection?.kind === "profile" ? " is-selected" : ""}${profileLayoutEditing ? " is-layout-editing" : ""}`}
+      data-public-editor-target={onEditorSelect ? "profile" : undefined}
+      onClick={profileLayoutEditing ? (event) => event.stopPropagation() : undefined}
+      onClickCapture={onEditorSelect && !profileLayoutEditing ? (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onEditorSelect({ kind: "profile" });
+      } : undefined}
+      onKeyDown={onEditorSelect ? (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onEditorSelect({ kind: "profile" });
+      } : undefined}
+      role={onEditorSelect && !profileLayoutEditing ? "button" : undefined}
+      tabIndex={onEditorSelect && !profileLayoutEditing ? 0 : undefined}
+    >
+      <PublicProfileSection
+        key={embedded ? embeddedViewport : "responsive"}
+        profile={profile}
+        fallbackName={null}
+        layoutEditing={profileLayoutEditing}
+        layoutViewport={embedded ? embeddedViewport : undefined}
+        onLayoutChange={onProfileLayoutChange}
+        surfaceEffect={theme.profileCardEffect}
+      />
+    </div>
+  ) : null;
 
   return (
     <main
@@ -131,38 +167,9 @@ export const PublicView = ({
         className="public-page-content mx-auto space-y-6"
         style={{ "--public-page-max-width": theme.maxWidth || "28rem" } as CSSProperties}
       >
-        {hasProfileContent && (
-          <div
-            aria-label={onEditorSelect ? "Edit profile and page identity" : undefined}
-            className={`public-editor-target public-editor-target--profile${editorSelection?.kind === "profile" ? " is-selected" : ""}${profileLayoutEditing ? " is-layout-editing" : ""}`}
-            data-public-editor-target={onEditorSelect ? "profile" : undefined}
-            onClick={profileLayoutEditing ? (event) => event.stopPropagation() : undefined}
-            onClickCapture={onEditorSelect && !profileLayoutEditing ? (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onEditorSelect({ kind: "profile" });
-            } : undefined}
-            onKeyDown={onEditorSelect ? (event) => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              onEditorSelect({ kind: "profile" });
-            } : undefined}
-            role={onEditorSelect && !profileLayoutEditing ? "button" : undefined}
-            tabIndex={onEditorSelect && !profileLayoutEditing ? 0 : undefined}
-          >
-            <PublicProfileSection
-              key={embedded ? embeddedViewport : "responsive"}
-              profile={profile}
-              fallbackName={null}
-              layoutEditing={profileLayoutEditing}
-              layoutViewport={embedded ? embeddedViewport : undefined}
-              onLayoutChange={onProfileLayoutChange}
-              surfaceEffect={theme.profileCardEffect}
-            />
-          </div>
-        )}
+        {!useUnifiedPageLayout && profileTarget}
 
-        {visibleLinks.length > 0 && (
+        {(visibleLinks.length > 0 || useUnifiedPageLayout) && (
           <PublicCardLayout
             editorSelection={editorSelection}
             layout={activeCardLayout}
@@ -170,6 +177,7 @@ export const PublicView = ({
             links={visibleLinks}
             onEditorSelect={onEditorSelect}
             onLayoutChange={onCardLayoutChange}
+            profileCard={useUnifiedPageLayout ? { content: profileTarget, height: profileCardHeight } : undefined}
             theme={theme}
             viewport={cardLayoutViewport}
           />

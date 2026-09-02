@@ -8136,6 +8136,19 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   border-radius: var(--card-radius);
 }
 
+.page-card-layout__surface--profile {
+  overflow: visible;
+}
+
+.page-card-layout__surface--profile > .public-editor-target--profile,
+.page-card-layout__surface--profile .profile-card {
+  height: 100%;
+}
+
+.public-page-root--standalone .page-card-layout__item--profile .profile-card {
+  animation: none;
+}
+
 .public-link-card--free-layout {
   position: relative;
   overflow: hidden;

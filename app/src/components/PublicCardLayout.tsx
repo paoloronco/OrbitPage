@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react";
 import { GripVertical } from "lucide-react";
 
@@ -17,12 +18,14 @@ import {
   dockDesktopCards,
   normalizeCardContentLayout,
   normalizeCardLayout,
+  PROFILE_CARD_LAYOUT_ID,
   updateCardContentLayoutItem,
   updateCardLayoutItem,
   type CardContentLayoutItem,
   type CardLayout,
   type CardLayoutGuides,
   type CardLayoutRect,
+  type CardLayoutSource,
   type CardLayoutViewport,
   type NormalizedCardContentLayout,
   type NormalizedCardLayout,
@@ -39,6 +42,7 @@ interface PublicCardLayoutProps {
   editorSelection?: PublicEditorTarget | null;
   onEditorSelect?: (target: PublicEditorTarget) => void;
   onLayoutChange?: (layout: CardLayout) => void;
+  profileCard?: { content: ReactNode; height: number };
 }
 
 type Gesture = {
@@ -70,16 +74,28 @@ export function PublicCardLayout({
   editorSelection,
   onEditorSelect,
   onLayoutChange,
+  profileCard,
 }: PublicCardLayoutProps) {
   const { tr } = useAppI18n();
-  const savedLayout = useMemo(() => normalizeCardLayout(rawLayout, links, viewport), [links, rawLayout, viewport]);
+  const hasProfileCard = profileCard !== undefined;
+  const profileCardHeight = profileCard?.height;
+  const layoutCards = useMemo<CardLayoutSource[]>(() => [
+    ...(hasProfileCard ? [{
+      id: PROFILE_CARD_LAYOUT_ID,
+      type: "profile",
+      prepend: true,
+      defaultRect: { x: 25, y: 0, width: 50, height: profileCardHeight },
+    }] : []),
+    ...links,
+  ], [hasProfileCard, links, profileCardHeight]);
+  const savedLayout = useMemo(() => normalizeCardLayout(rawLayout, layoutCards, viewport), [layoutCards, rawLayout, viewport]);
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
   const [guides, setGuides] = useState<ActiveGuides>({});
   const gestureRef = useRef<Gesture | null>(null);
   const latestLayoutRef = useRef<NormalizedCardLayout>(workingLayout);
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
-  const activeLayout = layoutEditing ? workingLayout : savedLayout;
+  const activeLayout = layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout;
 
   useEffect(() => {
     if (gestureRef.current) return;
@@ -159,14 +175,14 @@ export function PublicCardLayout({
           distance: Math.abs(position.y + position.height / 2 - centerY),
           separated: position.x + position.width <= rect.x + 2 || rect.x + rect.width <= position.x + 2,
         }))
-        .filter(({ separated }) => gesture.startRect.width > 50 || separated)
+        .filter(({ separated, position }) => gesture.startRect.width > 50 || position.width > 50 || separated)
         .sort((left, right) => left.distance - right.distance)[0];
       const intentionalDock = Math.abs(deltaX) >= (gesture.startRect.width > 50 ? 12 : 4);
       if (target && intentionalDock && target.distance <= Math.max(rect.height, target.position.height) + 24) {
         setGuides({ x: 50, y: target.position.y, scope: "card", cardId: gesture.cardId });
         applyWorkingLayout(dockDesktopCards(
           gesture.layout,
-          links,
+          layoutCards,
           gesture.cardId,
           target.id,
           rect.x + rect.width / 2 < target.position.x + target.position.width / 2 ? "left" : "right",
@@ -180,8 +196,8 @@ export function PublicCardLayout({
     const snapped = alignCardLayoutRect(positions, height, itemId, rect, gesture.mode, 6 / gesture.bounds.width * 100, 6 / gesture.scale);
     setGuides({ ...snapped.guides, scope: gesture.scope, cardId: gesture.cardId });
     applyWorkingLayout(gesture.scope === "content"
-      ? updateCardContentLayoutItem(gesture.layout, links, viewport, gesture.cardId, gesture.item!, snapped.rect)
-      : updateCardLayoutItem(gesture.layout, links, viewport, gesture.cardId, snapped.rect));
+      ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, snapped.rect)
+      : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, snapped.rect));
   };
 
   const finishGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -230,8 +246,8 @@ export function PublicCardLayout({
       height: currentRect.height + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
     };
     const next = scope === "content"
-      ? updateCardContentLayoutItem(activeLayout, links, viewport, cardId, item!, rect)
-      : updateCardLayoutItem(activeLayout, links, viewport, cardId, rect);
+      ? updateCardContentLayoutItem(activeLayout, layoutCards, viewport, cardId, item!, rect)
+      : updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, rect);
     applyWorkingLayout(next);
     onLayoutChange?.(next);
   };
@@ -287,7 +303,7 @@ export function PublicCardLayout({
     );
   }
 
-  const orderedLinks = [...links].sort((left, right) => {
+  const orderedCards = [...layoutCards].sort((left, right) => {
     const a = activeLayout.positions[left.id];
     const b = activeLayout.positions[right.id];
     return a.y - b.y || a.x - b.x;
@@ -305,8 +321,34 @@ export function PublicCardLayout({
       onPointerUp={finishGesture}
       style={{ "--page-card-layout-height": `${activeLayout.height}px` } as CSSProperties}
     >
-      {orderedLinks.map((link) => {
-        const rect = activeLayout.positions[link.id];
+      {orderedCards.map((card) => {
+        const rect = activeLayout.positions[card.id];
+        if (card.id === PROFILE_CARD_LAYOUT_ID) {
+          const active = activeTarget?.scope === "card" && activeTarget.cardId === card.id;
+          return (
+            <div
+              className={`page-card-layout__item page-card-layout__item--profile${active ? " is-dragging" : ""}`}
+              data-card-layout-item={card.id}
+              data-card-layout-position={`${rect.x},${rect.y},${rect.width},${rect.height}`}
+              key={card.id}
+              style={{
+                "--page-card-layout-x": `${rect.x}%`,
+                "--page-card-layout-y": `${rect.y}px`,
+                "--page-card-layout-width": `${rect.width}%`,
+                "--page-card-layout-item-height": `${rect.height}px`,
+              } as CSSProperties}
+            >
+              {layoutEditing && (
+                <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the whole profile freely. Its elements keep their own controls.", "Trascina liberamente l’intero profilo. I suoi elementi mantengono i propri controlli.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              )}
+              <div className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
+              {layoutEditing && (
+                <button aria-label={tr("Resize profile card", "Ridimensiona card profilo")} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the whole profile.", "Trascina per ridimensionare l’intero profilo.")} type="button"><span aria-hidden="true" /></button>
+              )}
+            </div>
+          );
+        }
+        const link = card as LinkData;
         const selected = editorSelection?.kind === "link" && editorSelection.id === link.id;
         const active = activeTarget?.scope === "card" && activeTarget.cardId === link.id;
         return (
