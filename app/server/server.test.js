@@ -886,9 +886,30 @@ describe('API Endpoints', () => {
     expect(vi.mocked(dbRun).mock.calls[0][1][10]).toBe(0);
   });
 
-  it('PUT /api/profile persists contextual profile presets and rounded avatars', async () => {
+  it('PUT /api/profile persists visual profile and card layouts', async () => {
     vi.mocked(dbGet).mockResolvedValueOnce({ id: 1, appearance: '{}' });
     vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
+    const layouts = {
+      mobile: null,
+      desktop: {
+        positions: {
+          avatar: { x: 0, y: 0, width: 28, height: 96 },
+          name: { x: 34, y: 0, width: 40, height: 96 },
+        },
+        height: 192,
+      },
+    };
+    const cardLayouts = {
+      mobile: null,
+      desktop: {
+        positions: {
+          github: { x: 0, y: 24, width: 42, height: 100 },
+          website: { x: 56, y: 24, width: 44, height: 100 },
+        },
+        contents: { github: { positions: { title: { x: 16, y: 0, width: 80, height: 24 } }, height: 64 } },
+        height: 124,
+      },
+    };
 
     const response = await request(app)
       .put('/api/profile')
@@ -920,6 +941,8 @@ describe('API Endpoints', () => {
             },
             height: 192,
           },
+          layouts,
+          cardLayouts,
         },
       });
 
@@ -949,6 +972,8 @@ describe('API Endpoints', () => {
         },
         height: 192,
       },
+      layouts,
+      cardLayouts,
     });
   });
 

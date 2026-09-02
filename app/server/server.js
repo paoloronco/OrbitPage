@@ -2638,6 +2638,36 @@ const ProfileLayoutSchema = z.object({
   }).strip().optional(),
   height: z.number().min(160).max(2000).optional(),
 }).strip();
+const ResponsiveProfileLayoutsSchema = z.object({
+  mobile: ProfileLayoutSchema.nullable().optional(),
+  desktop: ProfileLayoutSchema.nullable().optional(),
+}).strip();
+const CardLayoutRectSchema = z.object({
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(4000),
+  width: z.number().min(12).max(100),
+  height: z.number().min(24).max(1200),
+}).strip().refine((rect) => rect.x + rect.width <= 100.01);
+const CardContentLayoutSchema = z.object({
+  positions: z.object({
+    icon: CardLayoutRectSchema.optional(),
+    title: CardLayoutRectSchema.optional(),
+    description: CardLayoutRectSchema.optional(),
+    url: CardLayoutRectSchema.optional(),
+  }).strip().optional(),
+  height: z.number().min(48).max(1200).optional(),
+}).strip();
+const CardLayoutSchema = z.object({
+  positions: z.record(z.string().min(1).max(160), CardLayoutRectSchema)
+    .refine((positions) => Object.keys(positions).length <= 200).optional(),
+  contents: z.record(z.string().min(1).max(160), CardContentLayoutSchema)
+    .refine((contents) => Object.keys(contents).length <= 200).optional(),
+  height: z.number().min(48).max(6000).optional(),
+}).strip();
+const ResponsiveCardLayoutsSchema = z.object({
+  mobile: CardLayoutSchema.nullable().optional(),
+  desktop: CardLayoutSchema.nullable().optional(),
+}).strip();
 const ProfileAppearanceSchema = z.object({
   surfaceEffect: z.enum(['inherit', 'solid', 'transparent', 'liquid-glass']).optional(),
   surfaceOpacity: z.number().min(0).max(1).optional(),
@@ -2661,7 +2691,9 @@ const ProfileAppearanceSchema = z.object({
     primary: z.string().max(160).optional(),
     secondary: z.string().max(240).optional(),
   }).strip().optional(),
-  layout: ProfileLayoutSchema.optional(),
+  layout: ProfileLayoutSchema.nullable().optional(),
+  layouts: ResponsiveProfileLayoutsSchema.nullable().optional(),
+  cardLayouts: ResponsiveCardLayoutsSchema.nullable().optional(),
 }).strip();
 
 const ProfileSchema = z.object({
