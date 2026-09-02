@@ -17,6 +17,8 @@ dist-ssr
 /node_modules
 /dist
 *.log
+/bun.lock
+/bun.lockb
 
 # Editor directories and files
 .vscode/*
