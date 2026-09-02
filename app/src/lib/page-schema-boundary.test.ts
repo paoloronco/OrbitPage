@@ -183,6 +183,30 @@ describe('canonical page schema boundary', () => {
     });
   });
 
+  it('accepts the bounded responsive profile layout and rejects duplicate items', () => {
+    expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      appearance: {
+        layout: {
+          order: ['avatar', 'name', 'bio'],
+          spans: { avatar: 1, name: 1, bio: 2 },
+          gap: 20,
+        },
+      },
+    })).toMatchObject({
+      appearance: {
+        layout: {
+          order: ['avatar', 'name', 'bio'],
+          spans: { avatar: 1, name: 1, bio: 2 },
+          gap: 20,
+        },
+      },
+    });
+
+    expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      appearance: { layout: { order: ['name', 'name'] } },
+    })).toThrow(/unique|unsupported/i);
+  });
+
   it('binds non-advanced plan metadata to real preset values', () => {
     const essential = ORBITPAGE_THEME_PRESETS['midnight-signal'];
     expect(isOrbitPageThemePresetConfiguration(essential, 'essential')).toBe(true);

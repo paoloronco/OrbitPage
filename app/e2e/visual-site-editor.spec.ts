@@ -67,6 +67,23 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(inspector.getByRole("heading", { name: "Profile and identity" })).toBeVisible();
   await expect(inspector.getByLabel("Page name")).toBeVisible();
 
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
+  await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
+  await expect(page.getByText("Drag elements to reorder them; drag the corner to resize.")).toBeVisible();
+
+  const layoutItems = page.locator("[data-profile-layout-item]");
+  const orderBefore = await layoutItems.evaluateAll((items) => items.map((item) => item.getAttribute("data-profile-layout-item")));
+  await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowUp");
+  await expect.poll(() => layoutItems.evaluateAll((items) => items.map((item) => item.getAttribute("data-profile-layout-item")))).not.toEqual(orderBefore);
+
+  const avatarItem = page.locator('[data-profile-layout-item="avatar"]');
+  await page.getByRole("button", { name: /Resize Profile image/ }).press("Enter");
+  await expect(avatarItem).toHaveAttribute("data-profile-layout-span", "2");
+  await page.getByRole("slider", { name: "Space between profile elements" }).press("ArrowRight");
+  await expect(page.locator(".visual-site-editor__layout-bar output")).toHaveText("20px");
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await page.getByRole("button", { name: "Save page" }).click();
+
   const selectedLinkTarget = page.locator(`[data-public-editor-link-id="${linkId}"]`);
   await selectedLinkTarget.click();
   await expect(selectedLinkTarget).toHaveClass(/is-selected/);
@@ -121,9 +138,9 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   });
   expect(reducedMotionIndicator).toEqual({
     outlineStyle: "none",
-    selectionAnimation: "visual-editor-selection-breathe",
-    selectionDuration: "1.4s",
-    selectionIterations: "infinite",
+    selectionAnimation: "none",
+    selectionDuration: "0s",
+    selectionIterations: "1",
     selectionBorderWidth: "4px",
     selectionOpacity: "1",
   });

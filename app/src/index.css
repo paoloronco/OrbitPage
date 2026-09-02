@@ -1125,6 +1125,42 @@
     color: inherit;
   }
 
+  .profile-card__layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: var(--profile-layout-gap, 16px);
+  }
+
+  .profile-card__layout-item {
+    min-width: 0;
+    grid-column: span var(--profile-layout-span, 2);
+  }
+
+  .profile-card__layout-content {
+    min-width: 0;
+  }
+
+  .profile-card__layout-item--name .profile-card__title {
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
+  .profile-card__layout-item--name[data-profile-layout-span="1"] {
+    text-align: left;
+  }
+
+  .profile-card__layout-item--avatar .profile-card__avatar {
+    aspect-ratio: 1;
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  .profile-card__detail {
+    color: var(--profile-card-muted);
+    font-size: .875rem;
+  }
+
   .public-card-stack,
   .public-block-preview {
     --background: var(--content-card-secondary-hsl);
@@ -9808,6 +9844,13 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 @keyframes public-card-arrive {
   from { opacity: 0; transform: translate3d(0, 12px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-page-root--standalone .profile-card,
+  .public-page-root--standalone .public-card-stack > * {
+    animation: none;
+  }
 }
 
 /* A modern phone frame is close to 9:19.5 (6:13), not the former wide 0.60 ratio. */

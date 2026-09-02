@@ -2610,6 +2610,19 @@ app.get('/api/profile', optionalAuthenticateToken, async (req, res) => {
 
 const SocialLinksSchema = z.record(z.string().max(2048)).optional().default({});
 const ProfileColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const ProfileLayoutItemSchema = z.enum(['avatar', 'name', 'work', 'location', 'socials', 'bio']);
+const ProfileLayoutSchema = z.object({
+  order: z.array(ProfileLayoutItemSchema).max(6).refine((items) => new Set(items).size === items.length).optional(),
+  spans: z.object({
+    avatar: z.union([z.literal(1), z.literal(2)]).optional(),
+    name: z.union([z.literal(1), z.literal(2)]).optional(),
+    work: z.union([z.literal(1), z.literal(2)]).optional(),
+    location: z.union([z.literal(1), z.literal(2)]).optional(),
+    socials: z.union([z.literal(1), z.literal(2)]).optional(),
+    bio: z.union([z.literal(1), z.literal(2)]).optional(),
+  }).strip().optional(),
+  gap: z.number().int().min(8).max(32).optional(),
+}).strip();
 const ProfileAppearanceSchema = z.object({
   surfaceEffect: z.enum(['inherit', 'solid', 'transparent', 'liquid-glass']).optional(),
   surfaceOpacity: z.number().min(0).max(1).optional(),
@@ -2633,6 +2646,7 @@ const ProfileAppearanceSchema = z.object({
     primary: z.string().max(160).optional(),
     secondary: z.string().max(240).optional(),
   }).strip().optional(),
+  layout: ProfileLayoutSchema.optional(),
 }).strip();
 
 const ProfileSchema = z.object({

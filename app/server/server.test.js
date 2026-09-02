@@ -912,6 +912,11 @@ describe('API Endpoints', () => {
           cardRadius: 24,
           cardShadowColor: '#112233',
           cardShadowOpacity: 0.2,
+          layout: {
+            order: ['avatar', 'name', 'bio'],
+            spans: { avatar: 1, name: 1, bio: 2 },
+            gap: 20,
+          },
         },
       });
 
@@ -933,6 +938,11 @@ describe('API Endpoints', () => {
       cardRadius: 24,
       cardShadowColor: '#112233',
       cardShadowOpacity: 0.2,
+      layout: {
+        order: ['avatar', 'name', 'bio'],
+        spans: { avatar: 1, name: 1, bio: 2 },
+        gap: 20,
+      },
     });
   });
 

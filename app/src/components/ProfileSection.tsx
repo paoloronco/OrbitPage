@@ -42,6 +42,7 @@ import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import type { ProfileLayout } from "@/lib/profile-layout";
 import { uploadApi } from "@/lib/api-client";
 import type { HostedSeoAccess } from "@/lib/hosted-editor-contract";
 import { useAppI18n } from "@/lib/i18n";
@@ -71,6 +72,7 @@ interface ProfileSectionProps {
   seoAccess?: HostedSeoAccess;
   managePlanHref?: string;
   orbitPageBadgeEditable?: boolean;
+  profileLayoutCommand?: { id: number; layout: ProfileLayout } | null;
 }
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
@@ -182,6 +184,7 @@ export const ProfileSection = ({
   seoAccess,
   managePlanHref = "/dashboard/billing",
   orbitPageBadgeEditable = true,
+  profileLayoutCommand,
 }: ProfileSectionProps) => {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(profile);
@@ -197,6 +200,7 @@ export const ProfileSection = ({
   const logoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const savedNoticeTimerRef = useRef<number | null>(null);
+  const appliedLayoutCommandRef = useRef(0);
   const seoLocked = seoAccess === "none";
   const preset = PROFILE_PRESETS.find((item) => item.id === (draft.appearance?.profilePreset || "creator")) || PROFILE_PRESETS[0];
   const localPreset = (item: typeof PROFILE_PRESETS[number]) => item.id === "creator" ? {
@@ -230,6 +234,15 @@ export const ProfileSection = ({
   useEffect(() => {
     onProfilePreview?.(draft);
   }, [draft, onProfilePreview]);
+
+  useEffect(() => {
+    if (!profileLayoutCommand || profileLayoutCommand.id === appliedLayoutCommandRef.current) return;
+    appliedLayoutCommandRef.current = profileLayoutCommand.id;
+    setDraft((current) => ({
+      ...current,
+      appearance: { ...current.appearance, layout: profileLayoutCommand.layout },
+    }));
+  }, [profileLayoutCommand]);
 
   useEffect(() => () => {
     if (pendingLogoPreviewUrl) URL.revokeObjectURL(pendingLogoPreviewUrl);
@@ -374,6 +387,7 @@ export const ProfileSection = ({
         avatarBorderColor: current.appearance?.avatarBorderColor,
         avatarShape: current.appearance?.avatarShape,
         avatarSize: current.appearance?.avatarSize,
+        layout: current.appearance?.layout,
       },
     }));
   };
