@@ -27,6 +27,8 @@ Most profile-card settings inherit from **Theme**. An explicit value in **Page**
 
 Changes in Page remain a draft in the browser until you select **Save** in the Page toolbar. **Reset** discards the current unsaved draft.
 
+While arranging the profile, **Reset** appears in the top toolbar and restores the standard layout as an unsaved change.
+
 In **Site editor**, select **Arrange** (the pencil button) to compose the profile card directly in the live preview. Every element moves freely instead of occupying a predefined slot: place the image beside the name, create a centred vertical stack, or position work, location, social links, and description independently. Drag an item's lower corner to resize it in both directions; a compact name block keeps its balanced two-line treatment across screen sizes. Temporary alignment guides provide light snapping without imposing a grid. On a wide dashboard the editor opens with the desktop preview, while narrow dashboards open with mobile; both remain available from the device toggle. Keyboard users can move or resize the focused element with the arrow keys; reduced-motion preferences disable the arranging animation. Select **Done**, then **Save page** to persist the layout.
 
 ## Main-page blocks

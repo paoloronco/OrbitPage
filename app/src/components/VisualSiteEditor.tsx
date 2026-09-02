@@ -133,6 +133,18 @@ export function VisualSiteEditor({
           </div>
         </div>
         <div className="visual-site-editor__toolbar-actions">
+          {layoutEditing && onProfileLayoutChange && (
+            <button
+              aria-label={tr("Reset to standard layout", "Ripristina il layout standard")}
+              className="visual-site-editor__layout-reset"
+              onClick={() => onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT)}
+              title={tr("Reset to standard layout", "Ripristina il layout standard")}
+              type="button"
+            >
+              <RotateCcw aria-hidden="true" size={16} />
+              <span>{tr("Reset", "Ripristina")}</span>
+            </button>
+          )}
           {section === "profile" && onProfileLayoutChange && (
             <button
               aria-pressed={layoutEditing}
@@ -169,9 +181,6 @@ export function VisualSiteEditor({
       {layoutEditing && (
         <div className="visual-site-editor__layout-bar">
           <span role="status"><GripVertical aria-hidden="true" size={17} />{tr("Drag any element freely. Drag its corner to resize; blue guides help alignment.", "Trascina liberamente ogni elemento. Usa l’angolo per ridimensionarlo; le guide blu aiutano l’allineamento.")}</span>
-          <button onClick={() => onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT)} type="button">
-            <RotateCcw aria-hidden="true" size={15} />{tr("Reset layout", "Ripristina layout")}
-          </button>
         </div>
       )}
 
