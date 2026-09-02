@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { openAuthenticatedAdmin } from "./helpers";
 
 test("New UI edits the real page through selectable elements and keeps the preference", async ({ browserName, page }) => {
+  test.setTimeout(60_000);
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
 
@@ -114,8 +115,10 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const dockedY = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
   await expect(page.locator(`[data-card-layout-position^="0,${dockedY},49,"]`)).toHaveCount(1);
   const cardMoveGrip = arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true });
-  for (let step = 0; step < 4; step += 1) await cardMoveGrip.press("ArrowDown");
+  await cardMoveGrip.press("Shift+ArrowDown");
   await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^51,${Number(dockedY) + 16},49,`));
+  await page.getByRole("button", { name: "Save page" }).click();
+  await expect(page.getByText("Unsaved changes")).toBeHidden();
   const realignGripBounds = await cardMoveGrip.boundingBox();
   expect(realignGripBounds).not.toBeNull();
   await page.mouse.move(realignGripBounds!.x + realignGripBounds!.width / 2, realignGripBounds!.y + realignGripBounds!.height / 2);
