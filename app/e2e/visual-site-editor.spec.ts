@@ -140,7 +140,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(page.locator(`[data-card-layout-position^="0,${profileDockedY},39,"]`)).toHaveCount(1);
   await resetLayoutButton.click();
   await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^30\.5,0,39,/);
-  await arrangedLinkTarget.scrollIntoViewIfNeeded();
+  await arrangedLinkTarget.evaluate((element) => element.scrollIntoView({ block: "center" }));
   const dockGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
   const arrangedCardBounds = await arrangedLinkTarget.boundingBox();
   const dockTargetBounds = await page.locator(`[data-card-layout-item="${dockLinkId}"]`).boundingBox();
