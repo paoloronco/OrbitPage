@@ -153,6 +153,26 @@ export function updateCardLayoutItem(
   };
 }
 
+export function dockDesktopCards(
+  layout: CardLayout | null | undefined,
+  cards: CardLayoutSource[],
+  cardId: string,
+  targetId: string,
+  side: "left" | "right",
+): NormalizedCardLayout {
+  const normalized = normalizeCardLayout(layout, cards, "desktop");
+  if (cardId === targetId || !normalized.positions[cardId] || !normalized.positions[targetId]) return normalized;
+  const leftId = side === "left" ? cardId : targetId;
+  const rightId = side === "right" ? cardId : targetId;
+  const y = normalized.positions[targetId].y;
+  const left = updateCardLayoutItem(normalized, cards, "desktop", leftId, {
+    ...normalized.positions[leftId], x: 0, y, width: 49,
+  });
+  return updateCardLayoutItem(left, cards, "desktop", rightId, {
+    ...left.positions[rightId], x: 51, y, width: 49,
+  });
+}
+
 const DEFAULT_CARD_CONTENT_LAYOUT: NormalizedCardContentLayout = {
   positions: {
     icon: { x: 0, y: 14, width: 12, height: 36 },
