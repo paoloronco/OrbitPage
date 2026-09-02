@@ -36,4 +36,13 @@ describe("responsive card layout", () => {
     expect(docked.positions.large).toMatchObject({ x: 0, y: 0, width: 49 });
     expect(docked.positions.compact).toMatchObject({ x: 51, y: 0, width: 49 });
   });
+
+  it("aligns already resized desktop cards without changing their widths", () => {
+    const first = updateCardLayoutItem(undefined, cards, "desktop", "large", { x: 0, y: 20, width: 42, height: 120 });
+    const second = updateCardLayoutItem(first, cards, "desktop", "compact", { x: 56, y: 132, width: 44, height: 92 });
+    const docked = dockDesktopCards(second, cards, "compact", "large", "right");
+
+    expect(docked.positions.large).toMatchObject({ x: 0, y: 20, width: 42 });
+    expect(docked.positions.compact).toMatchObject({ x: 56, y: 20, width: 44 });
+  });
 });

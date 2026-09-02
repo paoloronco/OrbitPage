@@ -164,12 +164,15 @@ export function dockDesktopCards(
   if (cardId === targetId || !normalized.positions[cardId] || !normalized.positions[targetId]) return normalized;
   const leftId = side === "left" ? cardId : targetId;
   const rightId = side === "right" ? cardId : targetId;
+  const mustSplit = normalized.positions[leftId].width + normalized.positions[rightId].width > 98;
+  const leftWidth = mustSplit ? 49 : normalized.positions[leftId].width;
+  const rightWidth = mustSplit ? 49 : normalized.positions[rightId].width;
   const y = normalized.positions[targetId].y;
   const left = updateCardLayoutItem(normalized, cards, "desktop", leftId, {
-    ...normalized.positions[leftId], x: 0, y, width: 49,
+    ...normalized.positions[leftId], x: 0, y, width: leftWidth,
   });
   return updateCardLayoutItem(left, cards, "desktop", rightId, {
-    ...left.positions[rightId], x: 51, y, width: 49,
+    ...left.positions[rightId], x: 100 - rightWidth, y, width: rightWidth,
   });
 }
 
