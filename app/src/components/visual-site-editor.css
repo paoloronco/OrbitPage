@@ -86,7 +86,8 @@
   gap: 8px;
 }
 
-.visual-site-editor__layout-toggle {
+.visual-site-editor__layout-toggle,
+.visual-site-editor__layout-reset {
   display: inline-flex;
   min-height: 36px;
   align-items: center;
@@ -104,12 +105,15 @@
 }
 
 .visual-site-editor__layout-toggle:hover,
-.visual-site-editor__layout-toggle:focus-visible {
+.visual-site-editor__layout-toggle:focus-visible,
+.visual-site-editor__layout-reset:hover,
+.visual-site-editor__layout-reset:focus-visible {
   border-color: #7f9be5;
   background: #edf2ff;
 }
 
-.visual-site-editor__layout-toggle:active {
+.visual-site-editor__layout-toggle:active,
+.visual-site-editor__layout-reset:active {
   transform: scale(.97);
 }
 
@@ -117,6 +121,13 @@
   border-color: #234ec0;
   background: #234ec0;
   color: #fff;
+}
+
+.visual-site-editor__layout-reset {
+  border-color: #b8c8ed;
+  background: #fff;
+  color: #294891;
+  animation: visual-layout-bar-arrive 220ms cubic-bezier(.25, 1, .5, 1) both;
 }
 
 .visual-site-editor__layout-bar {
@@ -132,32 +143,14 @@
   animation: visual-layout-bar-arrive 260ms cubic-bezier(.25, 1, .5, 1) both;
 }
 
-.visual-site-editor__layout-bar > span,
-.visual-site-editor__layout-bar button {
+.visual-site-editor__layout-bar > span {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-}
-
-.visual-site-editor__layout-bar > span {
   min-width: 0;
   flex: 1 1 auto;
   font-size: 11px;
   font-weight: 720;
-}
-
-.visual-site-editor__layout-bar button {
-  min-height: 32px;
-  flex: 0 0 auto;
-  padding: 0 9px;
-  border: 1px solid #c4d0ef;
-  border-radius: 7px;
-  background: #fff;
-  color: #294891;
-  font: inherit;
-  font-size: 10px;
-  font-weight: 800;
-  cursor: pointer;
 }
 
 .visual-site-editor__intro {
@@ -646,11 +639,13 @@
     padding: 11px 12px;
   }
 
-  .visual-site-editor__layout-toggle span {
+  .visual-site-editor__layout-toggle span,
+  .visual-site-editor__layout-reset span {
     display: none;
   }
 
-  .visual-site-editor__layout-toggle {
+  .visual-site-editor__layout-toggle,
+  .visual-site-editor__layout-reset {
     width: 40px;
     justify-content: center;
     padding: 0;
@@ -725,12 +720,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .visual-site-editor__layout-bar,
+  .visual-site-editor__layout-reset,
   .profile-card--layout-editing .profile-card__layout-grip,
   .public-page-root--editor .public-editor-target.is-selected::before {
     animation: none;
   }
 
   .visual-site-editor__layout-toggle,
+  .visual-site-editor__layout-reset,
   .profile-card--layout-editing .profile-card__layout-item {
     transition-duration: .01ms;
   }
