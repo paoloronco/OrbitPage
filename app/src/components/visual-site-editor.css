@@ -153,6 +153,18 @@
   font-weight: 720;
 }
 
+.visual-site-editor__layout-bar strong {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #dfe8ff;
+  color: #2048aa;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
 .visual-site-editor__intro {
   display: flex;
   min-width: 0;
@@ -661,6 +673,7 @@
 
   .visual-site-editor__layout-bar > span {
     flex-basis: 100%;
+    flex-wrap: wrap;
   }
 
   .visual-site-editor__intro {

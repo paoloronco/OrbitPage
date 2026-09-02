@@ -68,7 +68,7 @@ import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import type { ProfileLayout } from "@/lib/profile-layout";
+import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
 import { canonicalAdminTab, type AdminContentSection, type AdminTab } from "@/lib/admin-navigation";
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
@@ -274,7 +274,7 @@ export const AdminView = ({
   });
   const [visualLinkId, setVisualLinkId] = useState<string | null>(null);
   const [visualEditRequest, setVisualEditRequest] = useState(0);
-  const [visualProfileLayoutCommand, setVisualProfileLayoutCommand] = useState<{ id: number; layout: ProfileLayout } | null>(null);
+  const [visualProfileLayoutCommand, setVisualProfileLayoutCommand] = useState<{ id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null>(null);
   const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
     return window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY).matches;
@@ -722,8 +722,8 @@ export const AdminView = ({
     onLogout();
   };
 
-  const updateVisualProfileLayout = (layout: ProfileLayout) => {
-    setVisualProfileLayoutCommand((current) => ({ id: (current?.id || 0) + 1, layout }));
+  const updateVisualProfileLayout = (layout: ProfileLayout, viewport: ProfileLayoutViewport) => {
+    setVisualProfileLayoutCommand((current) => ({ id: (current?.id || 0) + 1, layout, viewport }));
   };
 
   const gaDirty = gaId.trim() !== (profile.googleAnalyticsId || "");

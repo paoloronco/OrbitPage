@@ -9817,6 +9817,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   --public-profile-bio-line-height: 1.5;
 }
 
+.public-page-root--preview-desktop.public-page-root--responsive-profile-layout {
+  --public-page-density-max-width: 36rem;
+}
+
 .public-page-root .public-page-content {
   max-width: min(var(--public-page-max-width, 28rem), var(--public-page-density-max-width));
 }
@@ -9865,6 +9869,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     --public-profile-title-line-height: 1.2;
     --public-profile-bio-cap: .9375rem;
     --public-profile-bio-line-height: 1.5;
+  }
+
+  .public-page-root--standalone.public-page-root--responsive-profile-layout {
+    --public-page-density-max-width: 36rem;
   }
 }
 

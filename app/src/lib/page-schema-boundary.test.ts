@@ -215,6 +215,30 @@ describe('canonical page schema boundary', () => {
     })).toThrow(/inside|unsupported/i);
   });
 
+  it('validates independent mobile and desktop profile layouts', () => {
+    expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      appearance: {
+        layouts: {
+          mobile: { positions: { name: { x: 10, y: 120, width: 80, height: 64 } }, height: 400 },
+          desktop: { positions: { name: { x: 52, y: 16, width: 40, height: 72 } }, height: 240 },
+        },
+      },
+    })).toMatchObject({
+      appearance: {
+        layouts: {
+          mobile: { positions: { name: { x: 10, y: 120, width: 80, height: 64 } } },
+          desktop: { positions: { name: { x: 52, y: 16, width: 40, height: 72 } } },
+        },
+      },
+    });
+
+    expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      appearance: {
+        layouts: { desktop: { positions: { name: { x: 75, y: 0, width: 40, height: 60 } } } },
+      },
+    })).toThrow(/inside|unsupported/i);
+  });
+
   it('binds non-advanced plan metadata to real preset values', () => {
     const essential = ORBITPAGE_THEME_PRESETS['midnight-signal'];
     expect(isOrbitPageThemePresetConfiguration(essential, 'essential')).toBe(true);

@@ -16,7 +16,7 @@ import type { LinkData } from "./LinkCard";
 import type { PublicEditorTarget } from "./PublicView";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import { DEFAULT_PROFILE_LAYOUT, type ProfileLayout } from "@/lib/profile-layout";
+import { DEFAULT_PROFILE_LAYOUT, type ProfileLayout, type ProfileLayoutViewport } from "@/lib/profile-layout";
 import { useAppI18n } from "@/lib/i18n";
 import "./visual-site-editor.css";
 
@@ -59,7 +59,7 @@ interface VisualSiteEditorProps {
   pagesStatus?: VisualSectionItem["status"];
   onSelect: (section: VisualSiteEditorSection, linkId?: string) => void;
   onOpenTheme?: () => void;
-  onProfileLayoutChange?: (layout: ProfileLayout) => void;
+  onProfileLayoutChange?: (layout: ProfileLayout, viewport: ProfileLayoutViewport) => void;
   previewHint?: string;
   renderPreview?: (device: PreviewDevice) => ReactNode;
 }
@@ -137,7 +137,7 @@ export function VisualSiteEditor({
             <button
               aria-label={tr("Reset to standard layout", "Ripristina il layout standard")}
               className="visual-site-editor__layout-reset"
-              onClick={() => onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT)}
+              onClick={() => onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT, device)}
               title={tr("Reset to standard layout", "Ripristina il layout standard")}
               type="button"
             >
@@ -180,7 +180,11 @@ export function VisualSiteEditor({
 
       {layoutEditing && (
         <div className="visual-site-editor__layout-bar">
-          <span role="status"><GripVertical aria-hidden="true" size={17} />{tr("Drag any element freely. Drag its corner to resize; blue guides help alignment.", "Trascina liberamente ogni elemento. Usa l’angolo per ridimensionarlo; le guide blu aiutano l’allineamento.")}</span>
+          <span role="status">
+            <GripVertical aria-hidden="true" size={17} />
+            <strong>{device === "mobile" ? tr("Mobile layout", "Layout mobile") : tr("Desktop layout", "Layout desktop")}</strong>
+            <span>{tr("Drag any element freely. Drag its corner to resize; blue guides help alignment.", "Trascina liberamente ogni elemento. Usa l’angolo per ridimensionarlo; le guide blu aiutano l’allineamento.")}</span>
+          </span>
         </div>
       )}
 
@@ -196,7 +200,7 @@ export function VisualSiteEditor({
               editorSelection={editorSelection}
               links={links}
               onEditorSelect={selectFromPreview}
-              onProfileLayoutChange={onProfileLayoutChange}
+              onProfileLayoutChange={onProfileLayoutChange ? (layout) => onProfileLayoutChange(layout, device) : undefined}
               profile={profile}
               profileLayoutEditing={layoutEditing}
               publicPageHref={publicPageHref}
