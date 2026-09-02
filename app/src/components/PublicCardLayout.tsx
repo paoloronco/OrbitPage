@@ -14,6 +14,7 @@ import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { PublicEditorTarget } from "./PublicView";
 import {
   alignCardLayoutRect,
+  dockDesktopCards,
   normalizeCardContentLayout,
   normalizeCardLayout,
   updateCardContentLayoutItem,
@@ -148,6 +149,18 @@ export function PublicCardLayout({
     const rect = gesture.mode === "move"
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
       : { ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY };
+    if (gesture.scope === "card" && gesture.mode === "move" && viewport === "desktop" && gesture.startRect.width > 50 && Math.abs(deltaX) >= 12) {
+      const centerY = rect.y + rect.height / 2;
+      const target = Object.entries(gesture.layout.positions)
+        .filter(([id]) => id !== gesture.cardId)
+        .map(([id, position]) => ({ id, position, distance: Math.abs(position.y + position.height / 2 - centerY) }))
+        .sort((left, right) => left.distance - right.distance)[0];
+      if (target && target.distance <= Math.max(rect.height, target.position.height) + 24) {
+        setGuides({ x: 50, y: target.position.y, scope: "card", cardId: gesture.cardId });
+        applyWorkingLayout(dockDesktopCards(gesture.layout, links, gesture.cardId, target.id, deltaX < 0 ? "left" : "right"));
+        return;
+      }
+    }
     const positions = gesture.scope === "content" ? gesture.contentLayout!.positions : gesture.layout.positions;
     const height = gesture.scope === "content" ? gesture.contentLayout!.height : gesture.layout.height;
     const itemId = gesture.scope === "content" ? gesture.item! : gesture.cardId;

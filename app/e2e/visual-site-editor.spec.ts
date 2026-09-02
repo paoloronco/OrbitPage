@@ -29,6 +29,17 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await linkCard.getByPlaceholder("Link title").fill("Visual editor card");
   await linkCard.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/visual-editor");
   await linkCard.getByRole("button", { name: "Save", exact: true }).click();
+
+  await page.getByRole("button", { name: "Add content" }).click();
+  await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
+  const dockLinkCard = page.locator(".admin-link-list [data-link-id]").last();
+  const dockLinkId = await dockLinkCard.getAttribute("data-link-id");
+  expect(dockLinkId).toBeTruthy();
+  await dockLinkCard.hover();
+  await dockLinkCard.getByRole("button", { name: "Edit block" }).click();
+  await dockLinkCard.getByPlaceholder("Link title").fill("Dock target card");
+  await dockLinkCard.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/dock-target");
+  await dockLinkCard.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".admin-link-manager > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Unsaved changes")).toBeHidden();
 
@@ -90,21 +101,21 @@ test("New UI edits the real page through selectable elements and keeps the prefe
 
   const arrangedLinkTarget = page.locator(`[data-card-layout-item="${linkId}"]`);
   await expect(arrangedLinkTarget).toBeVisible();
+  const dockGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
+  const cardCanvasBounds = await page.locator(".public-card-stack--layout").boundingBox();
+  expect(dockGripBounds).not.toBeNull();
+  expect(cardCanvasBounds).not.toBeNull();
+  await page.mouse.move(dockGripBounds!.x + dockGripBounds!.width / 2, dockGripBounds!.y + dockGripBounds!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(dockGripBounds!.x + dockGripBounds!.width / 2 + cardCanvasBounds!.width * .16, dockGripBounds!.y + dockGripBounds!.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^51,(\d+),49,/);
+  const dockedY = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
+  await expect(page.locator(`[data-card-layout-position^="0,${dockedY},49,"]`)).toHaveCount(1);
   const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   await arrangedLinkTarget.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
   await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).press("ArrowRight");
   await expect(arrangedLinkTarget).not.toHaveAttribute("data-card-layout-position", desktopCardPositionBefore || "");
-  const cardPositionAfterKeyboard = await arrangedLinkTarget.getAttribute("data-card-layout-position");
-  const cardGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
-  expect(cardGripBounds).not.toBeNull();
-  await page.mouse.move(cardGripBounds!.x + cardGripBounds!.width / 2, cardGripBounds!.y + cardGripBounds!.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(cardGripBounds!.x + cardGripBounds!.width / 2, cardGripBounds!.y + cardGripBounds!.height / 2 + 18, { steps: 4 });
-  await page.mouse.up();
-  await arrangedLinkTarget.evaluate(() => new Promise<void>((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-  }));
-  await expect(arrangedLinkTarget).not.toHaveAttribute("data-card-layout-position", cardPositionAfterKeyboard || "");
   const desktopCardPosition = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   const cardTitleItem = arrangedLinkTarget.locator('[data-card-content-layout-item="title"]');
   const cardTitlePositionBefore = await cardTitleItem.getAttribute("data-card-content-layout-position");
@@ -231,6 +242,13 @@ test("New UI edits the real page through selectable elements and keeps the prefe
 
   await inspector.getByRole("button", { name: "Delete card" }).click();
   await expect(selectedLinkTarget).toHaveCount(0);
+  await inspector.locator(".admin-link-manager--visual > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Unsaved changes")).toBeHidden();
+
+  const selectedDockTarget = page.locator(`[data-public-editor-link-id="${dockLinkId}"]`);
+  await selectedDockTarget.click();
+  await inspector.getByRole("button", { name: "Delete card" }).click();
+  await expect(selectedDockTarget).toHaveCount(0);
   await inspector.locator(".admin-link-manager--visual > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Unsaved changes")).toBeHidden();
 

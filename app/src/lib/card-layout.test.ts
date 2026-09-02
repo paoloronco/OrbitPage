@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeCardLayout, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
+import { dockDesktopCards, normalizeCardLayout, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -28,5 +28,12 @@ describe("responsive card layout", () => {
 
     expect(updated.contents?.large.positions?.title).toEqual({ x: 4, y: 38, width: 62, height: 32 });
     expect(normalizeCardLayout(updated, cards, "desktop").contents?.large).toBeDefined();
+  });
+
+  it("docks two full-width desktop cards side by side", () => {
+    const docked = dockDesktopCards(undefined, cards, "compact", "large", "right");
+
+    expect(docked.positions.large).toMatchObject({ x: 0, y: 0, width: 49 });
+    expect(docked.positions.compact).toMatchObject({ x: 51, y: 0, width: 49 });
   });
 });
