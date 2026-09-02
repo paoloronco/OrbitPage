@@ -170,6 +170,8 @@ export const PublicProfileSection = ({
   const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);
   const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || profile.showAvatar !== false || layoutEditing);
   const layout = layoutEditing ? workingLayout : savedLayout;
+  const compactNameMatch = layout.positions.name.width <= 50 && displayName.match(/^(.*)\s+(\S+)$/);
+  const nameLines = compactNameMatch ? [compactNameMatch[1], compactNameMatch[2]] : [displayName];
 
   useEffect(() => {
     if (!gestureRef.current) {
@@ -186,10 +188,10 @@ export const PublicProfileSection = ({
   ) : null;
   const name = displayName ? (
     <h1
-      className="profile-card__title font-bold"
+      className={`profile-card__title font-bold${nameLines.length > 1 ? " profile-card__title--stacked" : ""}`}
       style={{ "--profile-name-font-size": profile.nameFontSize || "2rem" } as CSSProperties}
     >
-      {displayName}
+      {nameLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>)}
     </h1>
   ) : null;
   const socials = hasSocialLinks ? (
@@ -384,7 +386,9 @@ export const PublicProfileSection = ({
             if (!content && !layoutEditing) return null;
             const rect = layout.positions[item];
             const center = rect.x + rect.width / 2;
-            const alignment = center < 42 ? "left" : center > 58 ? "right" : "center";
+            const alignment = item === "avatar" || item === "name" || item === "socials"
+              ? "center"
+              : center < 42 ? "left" : center > 58 ? "right" : "center";
             return (
               <div
                 className={`profile-card__layout-item profile-card__layout-item--${item}${activeItem === item ? " is-dragging" : ""}`}

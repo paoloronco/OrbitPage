@@ -85,7 +85,9 @@ export function VisualSiteEditor({
   renderPreview,
 }: VisualSiteEditorProps) {
   const { tr } = useAppI18n();
-  const [device, setDevice] = useState<PreviewDevice>("mobile");
+  const [device, setDevice] = useState<PreviewDevice>(() => (
+    typeof window !== "undefined" && window.matchMedia("(min-width: 900px)").matches ? "desktop" : "mobile"
+  ));
   const [layoutEditing, setLayoutEditing] = useState(false);
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
