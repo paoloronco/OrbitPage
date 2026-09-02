@@ -15,12 +15,16 @@ import { PublicTextCard } from "./PublicTextCard";
 import { PublicVideoCard } from "./PublicVideoCard";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
 import { isSocialRowContent } from "@/lib/link-blocks";
+import type { NormalizedCardContentLayout } from "@/lib/card-layout";
 
 interface PublicBlockRendererProps {
   link: LinkData;
+  cardContentLayout?: NormalizedCardContentLayout;
+  cardContentLayoutEditing?: boolean;
+  cardContentLayoutGuides?: { x?: number; y?: number };
 }
 
-export const PublicBlockRenderer = ({ link }: PublicBlockRendererProps) => {
+export const PublicBlockRenderer = ({ link, cardContentLayout, cardContentLayoutEditing, cardContentLayoutGuides }: PublicBlockRendererProps) => {
   if (isNativeMenuLink(link)) return <PublicMenuCard link={link} />;
   if (link.type === "separator") return <PublicSeparatorCard link={link} />;
   if (link.type === "text") return <PublicTextCard link={link} />;
@@ -34,5 +38,5 @@ export const PublicBlockRenderer = ({ link }: PublicBlockRendererProps) => {
   if (link.type === "map") return <PublicMapCard link={link} />;
   if (link.type === "event") return <PublicEventCard link={link} />;
   if (link.type === "embed") return <PublicEmbedCard link={link} />;
-  return <PublicLinkCard link={link} />;
+  return <PublicLinkCard link={link} contentLayout={cardContentLayout} contentLayoutEditing={cardContentLayoutEditing} contentLayoutGuides={cardContentLayoutGuides} />;
 };

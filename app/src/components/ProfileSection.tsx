@@ -43,6 +43,7 @@ import { optimizeImageForUpload } from "@/lib/image-upload";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
+import type { CardLayout } from "@/lib/card-layout";
 import { uploadApi } from "@/lib/api-client";
 import type { HostedSeoAccess } from "@/lib/hosted-editor-contract";
 import { useAppI18n } from "@/lib/i18n";
@@ -73,6 +74,7 @@ interface ProfileSectionProps {
   managePlanHref?: string;
   orbitPageBadgeEditable?: boolean;
   profileLayoutCommand?: { id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null;
+  cardLayoutCommand?: { id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null;
 }
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
@@ -185,6 +187,7 @@ export const ProfileSection = ({
   managePlanHref = "/dashboard/billing",
   orbitPageBadgeEditable = true,
   profileLayoutCommand,
+  cardLayoutCommand,
 }: ProfileSectionProps) => {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(profile);
@@ -201,6 +204,7 @@ export const ProfileSection = ({
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const savedNoticeTimerRef = useRef<number | null>(null);
   const appliedLayoutCommandRef = useRef(0);
+  const appliedCardLayoutCommandRef = useRef(0);
   const seoLocked = seoAccess === "none";
   const preset = PROFILE_PRESETS.find((item) => item.id === (draft.appearance?.profilePreset || "creator")) || PROFILE_PRESETS[0];
   const localPreset = (item: typeof PROFILE_PRESETS[number]) => item.id === "creator" ? {
@@ -249,6 +253,21 @@ export const ProfileSection = ({
       },
     }));
   }, [profileLayoutCommand]);
+
+  useEffect(() => {
+    if (!cardLayoutCommand || cardLayoutCommand.id === appliedCardLayoutCommandRef.current) return;
+    appliedCardLayoutCommandRef.current = cardLayoutCommand.id;
+    setDraft((current) => ({
+      ...current,
+      appearance: {
+        ...current.appearance,
+        cardLayouts: {
+          ...current.appearance?.cardLayouts,
+          [cardLayoutCommand.viewport]: cardLayoutCommand.layout,
+        },
+      },
+    }));
+  }, [cardLayoutCommand]);
 
   useEffect(() => () => {
     if (pendingLogoPreviewUrl) URL.revokeObjectURL(pendingLogoPreviewUrl);
@@ -395,6 +414,7 @@ export const ProfileSection = ({
         avatarSize: current.appearance?.avatarSize,
         layout: current.appearance?.layout,
         layouts: current.appearance?.layouts,
+        cardLayouts: current.appearance?.cardLayouts,
       },
     }));
   };

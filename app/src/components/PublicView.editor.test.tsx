@@ -48,4 +48,37 @@ describe("PublicView visual editor targets", () => {
     expect(html).not.toContain("data-public-editor-target");
     expect(html).not.toContain("data-public-editor-link-id");
   });
+
+  it("renders saved desktop card and inner-content coordinates on the public page", () => {
+    const html = renderToStaticMarkup(
+      <PublicView
+        embedded
+        embeddedViewport="desktop"
+        links={links}
+        profile={{
+          ...profile,
+          appearance: {
+            cardLayouts: {
+              desktop: {
+                positions: { "visual-link": { x: 48, y: 20, width: 52, height: 120 } },
+                contents: {
+                  "visual-link": {
+                    positions: { title: { x: 5, y: 30, width: 70, height: 30 } },
+                    height: 76,
+                  },
+                },
+                height: 140,
+              },
+            },
+          },
+        }}
+        theme={defaultTheme}
+      />,
+    );
+
+    expect(html).toContain("public-page-root--responsive-card-layout");
+    expect(html).toContain('data-card-layout-viewport="desktop"');
+    expect(html).toContain('data-card-layout-position="48,20,52,120"');
+    expect(html).toContain('data-card-content-layout-position="5,30,70,30"');
+  });
 });

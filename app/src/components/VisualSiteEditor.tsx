@@ -17,6 +17,7 @@ import type { PublicEditorTarget } from "./PublicView";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { DEFAULT_PROFILE_LAYOUT, type ProfileLayout, type ProfileLayoutViewport } from "@/lib/profile-layout";
+import type { CardLayout } from "@/lib/card-layout";
 import { useAppI18n } from "@/lib/i18n";
 import "./visual-site-editor.css";
 
@@ -60,6 +61,7 @@ interface VisualSiteEditorProps {
   onSelect: (section: VisualSiteEditorSection, linkId?: string) => void;
   onOpenTheme?: () => void;
   onProfileLayoutChange?: (layout: ProfileLayout, viewport: ProfileLayoutViewport) => void;
+  onCardLayoutChange?: (layout: CardLayout | null, viewport: ProfileLayoutViewport) => void;
   previewHint?: string;
   renderPreview?: (device: PreviewDevice) => ReactNode;
 }
@@ -81,6 +83,7 @@ export function VisualSiteEditor({
   onSelect,
   onOpenTheme,
   onProfileLayoutChange,
+  onCardLayoutChange,
   previewHint,
   renderPreview,
 }: VisualSiteEditorProps) {
@@ -119,7 +122,12 @@ export function VisualSiteEditor({
   }, [section]);
 
   const toggleLayoutEditing = () => {
-    setLayoutEditing((current) => !current);
+    if (layoutEditing) {
+      setLayoutEditing(false);
+      return;
+    }
+    if (section !== "profile") onSelect("profile");
+    setLayoutEditing(true);
   };
 
   return (
@@ -133,11 +141,14 @@ export function VisualSiteEditor({
           </div>
         </div>
         <div className="visual-site-editor__toolbar-actions">
-          {layoutEditing && onProfileLayoutChange && (
+          {layoutEditing && onProfileLayoutChange && onCardLayoutChange && (
             <button
               aria-label={tr("Reset to standard layout", "Ripristina il layout standard")}
               className="visual-site-editor__layout-reset"
-              onClick={() => onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT, device)}
+              onClick={() => {
+                onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT, device);
+                onCardLayoutChange(null, device);
+              }}
               title={tr("Reset to standard layout", "Ripristina il layout standard")}
               type="button"
             >
@@ -145,7 +156,7 @@ export function VisualSiteEditor({
               <span>{tr("Reset", "Ripristina")}</span>
             </button>
           )}
-          {section === "profile" && onProfileLayoutChange && (
+          {(section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
             <button
               aria-pressed={layoutEditing}
               className={`visual-site-editor__layout-toggle${layoutEditing ? " is-active" : ""}`}
@@ -167,6 +178,7 @@ export function VisualSiteEditor({
             aria-current={section === id ? "page" : undefined}
             className={section === id ? "is-active" : ""}
             data-status={status}
+            disabled={layoutEditing && id !== "profile"}
             key={id}
             onClick={() => onSelect(id)}
             type="button"
@@ -183,7 +195,7 @@ export function VisualSiteEditor({
           <span role="status">
             <GripVertical aria-hidden="true" size={17} />
             <strong>{device === "mobile" ? tr("Mobile layout", "Layout mobile") : tr("Desktop layout", "Layout desktop")}</strong>
-            <span>{tr("Drag any element freely. Drag its corner to resize; blue guides help alignment.", "Trascina liberamente ogni elemento. Usa l’angolo per ridimensionarlo; le guide blu aiutano l’allineamento.")}</span>
+            <span>{tr("Drag profile elements, cards and card contents. On mobile, only small cards can sit side by side.", "Trascina elementi del profilo, card e contenuti interni. Su mobile solo le card piccole possono essere affiancate.")}</span>
           </span>
         </div>
       )}
@@ -201,8 +213,10 @@ export function VisualSiteEditor({
               links={links}
               onEditorSelect={selectFromPreview}
               onProfileLayoutChange={onProfileLayoutChange ? (layout) => onProfileLayoutChange(layout, device) : undefined}
+              onCardLayoutChange={onCardLayoutChange ? (layout) => onCardLayoutChange(layout, device) : undefined}
               profile={profile}
               profileLayoutEditing={layoutEditing}
+              cardLayoutEditing={layoutEditing}
               publicPageHref={publicPageHref}
               showOrbitPageBadge={showOrbitPageBadge}
               theme={theme}

@@ -69,6 +69,7 @@ import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
+import type { CardLayout } from "@/lib/card-layout";
 import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
 import { canonicalAdminTab, type AdminContentSection, type AdminTab } from "@/lib/admin-navigation";
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
@@ -275,6 +276,7 @@ export const AdminView = ({
   const [visualLinkId, setVisualLinkId] = useState<string | null>(null);
   const [visualEditRequest, setVisualEditRequest] = useState(0);
   const [visualProfileLayoutCommand, setVisualProfileLayoutCommand] = useState<{ id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null>(null);
+  const [visualCardLayoutCommand, setVisualCardLayoutCommand] = useState<{ id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null>(null);
   const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
     return window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY).matches;
@@ -726,6 +728,10 @@ export const AdminView = ({
     setVisualProfileLayoutCommand((current) => ({ id: (current?.id || 0) + 1, layout, viewport }));
   };
 
+  const updateVisualCardLayout = (layout: CardLayout | null, viewport: ProfileLayoutViewport) => {
+    setVisualCardLayoutCommand((current) => ({ id: (current?.id || 0) + 1, layout, viewport }));
+  };
+
   const gaDirty = gaId.trim() !== (profile.googleAnalyticsId || "");
 
   const handleSaveIntegrations = async () => {
@@ -838,6 +844,7 @@ export const AdminView = ({
       onProfileUpdate={onProfileUpdate}
       onProfilePreview={setPreviewProfile}
       profileLayoutCommand={visualProfileLayoutCommand}
+      cardLayoutCommand={visualCardLayoutCommand}
       seoAccess={entitlements?.seo}
       managePlanHref={managePlanHref}
       orbitPageBadgeEditable={orbitPageBadgeEditable}
@@ -1237,6 +1244,7 @@ export const AdminView = ({
                 onSelect={selectVisualSection}
                 onOpenTheme={canEditTheme ? () => selectTab("theme") : undefined}
                 onProfileLayoutChange={canEditProfile ? updateVisualProfileLayout : undefined}
+                onCardLayoutChange={canEditProfile ? updateVisualCardLayout : undefined}
                 previewHint={visualSection === "menu"
                   ? tr("Live public menu preview", "Anteprima live del menu pubblico")
                   : visualSection === "shop"

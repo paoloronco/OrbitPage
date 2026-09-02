@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { Card } from "@/components/ui/card";
-import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, Link2, Mail, MailPlus, MapPin, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, GripVertical, Link2, Mail, MailPlus, MapPin, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
@@ -13,6 +13,7 @@ import { isPublicImageReference, resolvePublicImageUrl } from '@/lib/public-asse
 import { CompactLinkIcon } from './CompactLinkIcon';
 import type { SocialLinkPlatform } from '@/lib/link-blocks';
 import { getPublicBlockStyle, getPublicTextColor } from '@/lib/public-block-style';
+import type { CardContentLayoutItem, NormalizedCardContentLayout } from '@/lib/card-layout';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   const safeUrl = resolveSafePublicMediaUrl(src);
@@ -24,6 +25,9 @@ const resolveCoverImageUrl = (src?: string | null): string | null => {
 
 interface PublicLinkCardProps {
   link: LinkData;
+  contentLayout?: NormalizedCardContentLayout;
+  contentLayoutEditing?: boolean;
+  contentLayoutGuides?: { x?: number; y?: number };
 }
 
 const ctaActionConfig = {
@@ -66,7 +70,7 @@ function buildValidatedBlobUrl(blobUrl: string): string {
   }
 }
 
-export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
+export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = false, contentLayoutGuides }: PublicLinkCardProps) => {
   const { tr } = useAppI18n();
   const iconIsImage = link.iconType === 'image' || link.iconType === 'svg' || (!link.iconType && isPublicImageReference(link.icon));
   const semanticIconName = iconIsImage ? '' : String(link.icon || '').trim().toLowerCase();
@@ -257,6 +261,89 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
           </span>
           <ArrowRight className="h-5 w-5 shrink-0 text-white/75 transition-transform group-hover:translate-x-0.5" />
         </a>
+      </Card>
+    );
+  }
+
+  if (contentLayout && !hasCoverImage) {
+    const labels: Record<CardContentLayoutItem, string> = {
+      icon: tr('Icon', 'Icona'),
+      title: tr('Title', 'Titolo'),
+      description: tr('Description', 'Descrizione'),
+      url: 'URL',
+    };
+    const href = unavailable ? undefined : safeHref || undefined;
+    const content: Partial<Record<CardContentLayoutItem, ReactNode>> = {
+      icon: (
+        <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1}>
+          {renderIcon()}
+        </a>
+      ),
+      title: (
+        <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={contentLayoutEditing || unavailable ? -1 : undefined} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <h3 className="min-w-0 flex-1 truncate font-semibold" style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+            {link.title || 'Untitled Link'}
+          </h3>
+          <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 text-primary opacity-0 transition-smooth group-hover:opacity-100" />
+        </a>
+      ),
+      ...(link.description ? {
+        description: (
+          <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <p className="line-clamp-2 text-sm" style={{ ...effectiveTextStyle, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}>{link.description}</p>
+          </a>
+        ),
+      } : {}),
+      ...(safeHref && !link.hideUrl ? {
+        url: (
+          <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} tabIndex={-1} className="block truncate rounded-md text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : undefined}>
+            {link.url.replace(/^https?:\/\//, '')}
+          </a>
+        ),
+      } : {}),
+    };
+
+    return (
+      <Card className={`public-link-card--free-layout glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group${unavailable ? ' opacity-65' : ''}`} style={getPublicBlockStyle(link)}>
+        <div
+          className="public-link-card__layout"
+          data-card-content-layout={link.id}
+          style={{ '--card-content-layout-height': `${contentLayout.height}px` } as CSSProperties}
+        >
+          {Object.entries(content).map(([id, node]) => {
+            const item = id as CardContentLayoutItem;
+            const rect = contentLayout.positions[item];
+            const center = rect.x + rect.width / 2;
+            return (
+              <div
+                className="public-link-card__layout-item"
+                data-card-content-layout-align={item === 'icon' ? 'center' : center < 42 ? 'left' : center > 58 ? 'right' : 'center'}
+                data-card-content-layout-item={item}
+                data-card-content-layout-position={`${rect.x},${rect.y},${rect.width},${rect.height}`}
+                key={item}
+                style={{
+                  '--card-content-layout-x': `${rect.x}%`,
+                  '--card-content-layout-y': `${rect.y}px`,
+                  '--card-content-layout-width': `${rect.width}%`,
+                  '--card-content-layout-item-height': `${rect.height}px`,
+                } as CSSProperties}
+              >
+                {contentLayoutEditing && (
+                  <button aria-label={`${tr('Move', 'Sposta')} ${labels[item]}`} className="public-link-card__layout-grip" data-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr('Drag freely. Use arrow keys for precise movement.', 'Trascina liberamente. Usa le frecce per movimenti precisi.')} type="button">
+                    <GripVertical aria-hidden="true" size={15} />
+                  </button>
+                )}
+                <div className="public-link-card__layout-content">{node}</div>
+                {contentLayoutEditing && (
+                  <button aria-label={`${tr('Resize', 'Ridimensiona')} ${labels[item]}`} className="public-link-card__layout-resize" data-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr('Drag to resize. Use arrow keys for precision.', 'Trascina per ridimensionare. Usa le frecce per la precisione.')} type="button"><span aria-hidden="true" /></button>
+                )}
+              </div>
+            );
+          })}
+          {contentLayoutEditing && contentLayoutGuides?.x !== undefined && <i className="page-card-layout__guide page-card-layout__guide--x" style={{ left: `${contentLayoutGuides.x}%` }} />}
+          {contentLayoutEditing && contentLayoutGuides?.y !== undefined && <i className="page-card-layout__guide page-card-layout__guide--y" style={{ top: `${contentLayoutGuides.y}px` }} />}
+        </div>
+        {!unavailable && <button aria-label={copied ? 'Link copied' : 'Copy link'} onClick={handleCopy} className="public-link-card__copy opacity-0 transition-smooth group-hover:opacity-100 focus-visible:opacity-100" title={copied ? 'Link copied' : 'Copy link'} type="button">{copied ? <Check aria-hidden="true" className="h-3 w-3 text-green-500" /> : <Copy aria-hidden="true" className="h-3 w-3 text-muted-foreground" />}</button>}
       </Card>
     );
   }
