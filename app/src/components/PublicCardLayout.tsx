@@ -43,6 +43,7 @@ interface PublicCardLayoutProps {
   onEditorSelect?: (target: PublicEditorTarget) => void;
   onLayoutChange?: (layout: CardLayout) => void;
   profileCard?: { content: ReactNode; height: number };
+  desktopDefaultWidthCapRem?: number;
 }
 
 type Gesture = {
@@ -75,19 +76,33 @@ export function PublicCardLayout({
   onEditorSelect,
   onLayoutChange,
   profileCard,
+  desktopDefaultWidthCapRem = 72,
 }: PublicCardLayoutProps) {
   const { tr } = useAppI18n();
   const hasProfileCard = profileCard !== undefined;
   const profileCardHeight = profileCard?.height;
-  const layoutCards = useMemo<CardLayoutSource[]>(() => [
-    ...(hasProfileCard ? [{
-      id: PROFILE_CARD_LAYOUT_ID,
-      type: "profile",
-      prepend: true,
-      defaultRect: { x: 25, y: 0, width: 50, height: profileCardHeight },
-    }] : []),
-    ...links,
-  ], [hasProfileCard, links, profileCardHeight]);
+  const layoutCards = useMemo<CardLayoutSource[]>(() => {
+    const configuredWidth = Number.parseFloat(theme.maxWidth);
+    const configuredWidthPx = theme.maxWidth.endsWith("rem")
+      ? configuredWidth * 16
+      : theme.maxWidth.endsWith("vw")
+        ? configuredWidth * 12.8
+        : configuredWidth;
+    const initialWidthPx = Math.min(configuredWidthPx, desktopDefaultWidthCapRem * 16);
+    const width = viewport === "desktop" && Number.isFinite(initialWidthPx)
+      ? Math.min(100, Math.max(20, initialWidthPx / (72 * 16) * 100))
+      : 100;
+    const defaultRect = { x: (100 - width) / 2, width };
+    return [
+      ...(hasProfileCard ? [{
+        id: PROFILE_CARD_LAYOUT_ID,
+        type: "profile",
+        prepend: true,
+        defaultRect: { ...defaultRect, y: 0, height: profileCardHeight },
+      }] : []),
+      ...links.map((link) => ({ ...link, defaultRect })),
+    ];
+  }, [desktopDefaultWidthCapRem, hasProfileCard, links, profileCardHeight, theme.maxWidth, viewport]);
   const savedLayout = useMemo(() => normalizeCardLayout(rawLayout, layoutCards, viewport), [layoutCards, rawLayout, viewport]);
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
@@ -173,9 +188,7 @@ export function PublicCardLayout({
           id,
           position,
           distance: Math.abs(position.y + position.height / 2 - centerY),
-          separated: position.x + position.width <= rect.x + 2 || rect.x + rect.width <= position.x + 2,
         }))
-        .filter(({ separated, position }) => gesture.startRect.width > 50 || position.width > 50 || separated)
         .sort((left, right) => left.distance - right.distance)[0];
       const intentionalDock = Math.abs(deltaX) >= (gesture.startRect.width > 50 ? 12 : 4);
       if (target && intentionalDock && target.distance <= Math.max(rect.height, target.position.height) + 24) {

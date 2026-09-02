@@ -171,6 +171,7 @@ export const PublicView = ({
 
         {(visibleLinks.length > 0 || useUnifiedPageLayout) && (
           <PublicCardLayout
+            desktopDefaultWidthCapRem={hasResponsiveProfileLayout ? 36 : 26}
             editorSelection={editorSelection}
             layout={activeCardLayout}
             layoutEditing={cardLayoutEditing}

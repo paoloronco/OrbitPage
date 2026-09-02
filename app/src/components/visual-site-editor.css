@@ -595,7 +595,13 @@
   touch-action: none;
 }
 
-.page-card-layout__grip,
+.page-card-layout__grip {
+  top: -24px;
+  left: calc(50% - 24px);
+  cursor: grab;
+  animation: profile-layout-wiggle 1.8s ease-in-out infinite alternate;
+}
+
 .public-link-card__layout-grip {
   top: -8px;
   left: -8px;
@@ -604,6 +610,7 @@
 }
 
 .page-card-layout__grip--profile {
+  top: -8px;
   right: -8px;
   left: auto;
 }
