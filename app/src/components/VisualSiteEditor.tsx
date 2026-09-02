@@ -16,7 +16,7 @@ import type { LinkData } from "./LinkCard";
 import type { PublicEditorTarget } from "./PublicView";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import { DEFAULT_PROFILE_LAYOUT, normalizeProfileLayout, type ProfileLayout } from "@/lib/profile-layout";
+import { DEFAULT_PROFILE_LAYOUT, type ProfileLayout } from "@/lib/profile-layout";
 import { useAppI18n } from "@/lib/i18n";
 import "./visual-site-editor.css";
 
@@ -87,7 +87,6 @@ export function VisualSiteEditor({
   const { tr } = useAppI18n();
   const [device, setDevice] = useState<PreviewDevice>("mobile");
   const [layoutEditing, setLayoutEditing] = useState(false);
-  const profileLayout = normalizeProfileLayout(profile.appearance?.layout);
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
     { id: "links", label: tr("Content", "Contenuti"), icon: Layout, status: "active" },
@@ -118,9 +117,7 @@ export function VisualSiteEditor({
   }, [section]);
 
   const toggleLayoutEditing = () => {
-    const next = !layoutEditing;
-    if (next) onProfileLayoutChange?.(profileLayout);
-    setLayoutEditing(next);
+    setLayoutEditing((current) => !current);
   };
 
   return (
@@ -169,20 +166,7 @@ export function VisualSiteEditor({
 
       {layoutEditing && (
         <div className="visual-site-editor__layout-bar">
-          <span role="status"><GripVertical aria-hidden="true" size={17} />{tr("Drag elements to reorder them; drag the corner to resize.", "Trascina gli elementi per riordinarli; trascina l’angolo per ridimensionarli.")}</span>
-          <label>
-            <span>{tr("Spacing", "Spaziatura")}</span>
-            <input
-              aria-label={tr("Space between profile elements", "Spazio tra gli elementi del profilo")}
-              max="32"
-              min="8"
-              onChange={(event) => onProfileLayoutChange({ ...profileLayout, gap: Number(event.target.value) })}
-              step="4"
-              type="range"
-              value={profileLayout.gap}
-            />
-            <output>{profileLayout.gap}px</output>
-          </label>
+          <span role="status"><GripVertical aria-hidden="true" size={17} />{tr("Drag any element freely. Drag its corner to resize; blue guides help alignment.", "Trascina liberamente ogni elemento. Usa l’angolo per ridimensionarlo; le guide blu aiutano l’allineamento.")}</span>
           <button onClick={() => onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT)} type="button">
             <RotateCcw aria-hidden="true" size={15} />{tr("Reset layout", "Ripristina layout")}
           </button>

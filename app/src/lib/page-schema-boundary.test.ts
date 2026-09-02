@@ -183,21 +183,26 @@ describe('canonical page schema boundary', () => {
     });
   });
 
-  it('accepts the bounded responsive profile layout and rejects duplicate items', () => {
+  it('accepts bounded free profile coordinates and rejects invalid layouts', () => {
     expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       appearance: {
         layout: {
-          order: ['avatar', 'name', 'bio'],
-          spans: { avatar: 1, name: 1, bio: 2 },
-          gap: 20,
+          positions: {
+            avatar: { x: 0, y: 0, width: 28, height: 96 },
+            name: { x: 34, y: 0, width: 40, height: 96 },
+            bio: { x: 4, y: 120, width: 92, height: 72 },
+          },
+          height: 192,
         },
       },
     })).toMatchObject({
       appearance: {
         layout: {
-          order: ['avatar', 'name', 'bio'],
-          spans: { avatar: 1, name: 1, bio: 2 },
-          gap: 20,
+          positions: {
+            avatar: { x: 0, y: 0, width: 28, height: 96 },
+            name: { x: 34, y: 0, width: 40, height: 96 },
+          },
+          height: 192,
         },
       },
     });
@@ -205,6 +210,9 @@ describe('canonical page schema boundary', () => {
     expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       appearance: { layout: { order: ['name', 'name'] } },
     })).toThrow(/unique|unsupported/i);
+    expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      appearance: { layout: { positions: { name: { x: 80, y: 0, width: 40, height: 60 } } } },
+    })).toThrow(/inside|unsupported/i);
   });
 
   it('binds non-advanced plan metadata to real preset values', () => {

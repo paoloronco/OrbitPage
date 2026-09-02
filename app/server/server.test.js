@@ -913,9 +913,12 @@ describe('API Endpoints', () => {
           cardShadowColor: '#112233',
           cardShadowOpacity: 0.2,
           layout: {
-            order: ['avatar', 'name', 'bio'],
-            spans: { avatar: 1, name: 1, bio: 2 },
-            gap: 20,
+            positions: {
+              avatar: { x: 0, y: 0, width: 28, height: 96 },
+              name: { x: 34, y: 0, width: 40, height: 96 },
+              bio: { x: 4, y: 120, width: 92, height: 72 },
+            },
+            height: 192,
           },
         },
       });
@@ -939,9 +942,12 @@ describe('API Endpoints', () => {
       cardShadowColor: '#112233',
       cardShadowOpacity: 0.2,
       layout: {
-        order: ['avatar', 'name', 'bio'],
-        spans: { avatar: 1, name: 1, bio: 2 },
-        gap: 20,
+        positions: {
+          avatar: { x: 0, y: 0, width: 28, height: 96 },
+          name: { x: 34, y: 0, width: 40, height: 96 },
+          bio: { x: 4, y: 120, width: 92, height: 72 },
+        },
+        height: 192,
       },
     });
   });

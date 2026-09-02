@@ -2611,6 +2611,12 @@ app.get('/api/profile', optionalAuthenticateToken, async (req, res) => {
 const SocialLinksSchema = z.record(z.string().max(2048)).optional().default({});
 const ProfileColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const ProfileLayoutItemSchema = z.enum(['avatar', 'name', 'work', 'location', 'socials', 'bio']);
+const ProfileLayoutRectSchema = z.object({
+  x: z.number().min(0).max(100),
+  y: z.number().min(0).max(1600),
+  width: z.number().min(12).max(100),
+  height: z.number().min(36).max(600),
+}).strip().refine((rect) => rect.x + rect.width <= 100.01);
 const ProfileLayoutSchema = z.object({
   order: z.array(ProfileLayoutItemSchema).max(6).refine((items) => new Set(items).size === items.length).optional(),
   spans: z.object({
@@ -2622,6 +2628,15 @@ const ProfileLayoutSchema = z.object({
     bio: z.union([z.literal(1), z.literal(2)]).optional(),
   }).strip().optional(),
   gap: z.number().int().min(8).max(32).optional(),
+  positions: z.object({
+    avatar: ProfileLayoutRectSchema.optional(),
+    name: ProfileLayoutRectSchema.optional(),
+    work: ProfileLayoutRectSchema.optional(),
+    location: ProfileLayoutRectSchema.optional(),
+    socials: ProfileLayoutRectSchema.optional(),
+    bio: ProfileLayoutRectSchema.optional(),
+  }).strip().optional(),
+  height: z.number().min(160).max(2000).optional(),
 }).strip();
 const ProfileAppearanceSchema = z.object({
   surfaceEffect: z.enum(['inherit', 'solid', 'transparent', 'liquid-glass']).optional(),
