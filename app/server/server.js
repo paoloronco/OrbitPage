@@ -2659,7 +2659,7 @@ const CardContentLayoutSchema = z.object({
 }).strip();
 const CardLayoutSchema = z.object({
   positions: z.record(z.string().min(1).max(160), CardLayoutRectSchema)
-    .refine((positions) => Object.keys(positions).filter((id) => id !== '__orbitpage_profile__').length <= 200).optional(),
+    .refine((positions) => Object.keys(positions).filter((id) => id !== 'orbitpage-profile' && id !== '__orbitpage_profile__').length <= 200).optional(),
   contents: z.record(z.string().min(1).max(160), CardContentLayoutSchema)
     .refine((contents) => Object.keys(contents).length <= 200).optional(),
   height: z.number().min(48).max(6000).optional(),

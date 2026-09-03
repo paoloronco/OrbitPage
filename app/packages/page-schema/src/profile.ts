@@ -44,7 +44,8 @@ export const ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS = [
 
 export type OrbitPageCardContentLayoutItem = typeof ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS[number];
 
-export const ORBITPAGE_PROFILE_CARD_LAYOUT_ID = "__orbitpage_profile__";
+const LEGACY_ORBITPAGE_PROFILE_CARD_LAYOUT_ID = "__orbitpage_profile__";
+export const ORBITPAGE_PROFILE_CARD_LAYOUT_ID = "orbitpage-profile";
 
 const OrbitPageProfileLayoutItemSchema = z.enum(ORBITPAGE_PROFILE_LAYOUT_ITEMS);
 const OrbitPageProfileLayoutSpansSchema = z.object(
@@ -158,12 +159,35 @@ export const OrbitPageProfileAppearanceSchema = z.object({
   cardLayouts: OrbitPageResponsiveCardLayoutsSchema.nullable().optional()
 }).strict();
 
+function migrateCardLayoutProfileId(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const layout = value as Record<string, unknown>;
+  if (!layout.positions || typeof layout.positions !== "object" || Array.isArray(layout.positions)) return value;
+  const positions = { ...layout.positions as Record<string, unknown> };
+  const legacyProfile = positions[LEGACY_ORBITPAGE_PROFILE_CARD_LAYOUT_ID];
+  if (legacyProfile === undefined) return value;
+  delete positions[LEGACY_ORBITPAGE_PROFILE_CARD_LAYOUT_ID];
+  positions[ORBITPAGE_PROFILE_CARD_LAYOUT_ID] ??= legacyProfile;
+  return { ...layout, positions };
+}
+
 function migrateProfileAppearanceInput(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return value;
   const appearance = value as Record<string, unknown>;
-  return appearance.avatarShape === "circle"
+  const migrated = appearance.avatarShape === "circle"
     ? { ...appearance, avatarShape: "round" }
     : value;
+  const cardLayouts = appearance.cardLayouts;
+  if (!cardLayouts || typeof cardLayouts !== "object" || Array.isArray(cardLayouts)) return migrated;
+  const layouts = cardLayouts as Record<string, unknown>;
+  return {
+    ...migrated as Record<string, unknown>,
+    cardLayouts: {
+      ...layouts,
+      mobile: migrateCardLayoutProfileId(layouts.mobile),
+      desktop: migrateCardLayoutProfileId(layouts.desktop)
+    }
+  };
 }
 
 const OrbitPageProfileAppearanceInputSchema = z.preprocess(

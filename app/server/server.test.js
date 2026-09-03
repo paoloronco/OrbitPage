@@ -903,7 +903,7 @@ describe('API Endpoints', () => {
       mobile: null,
       desktop: {
         positions: {
-          __orbitpage_profile__: { x: 25, y: 0, width: 50, height: 456 },
+          'orbitpage-profile': { x: 25, y: 0, width: 50, height: 456 },
           github: { x: 0, y: 480, width: 42, height: 100 },
           website: { x: 56, y: 480, width: 44, height: 100 },
         },

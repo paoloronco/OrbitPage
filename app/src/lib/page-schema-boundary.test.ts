@@ -3,6 +3,7 @@ import {
   DEFAULT_ORBITPAGE_PROFILE,
   DEFAULT_ORBITPAGE_THEME,
   ORBITPAGE_CARD_PRESETS,
+  ORBITPAGE_PROFILE_CARD_LAYOUT_ID,
   ORBITPAGE_THEME_PRESETS,
   applyOrbitPageProfilePatch,
   normalizeOrbitPageSocialHref,
@@ -252,6 +253,16 @@ describe('canonical page schema boundary', () => {
         },
       },
     })).toMatchObject({ appearance: { cardLayouts: { desktop: { height: 200 }, mobile: { height: 72 } } } });
+
+    const migrated = applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      appearance: {
+        cardLayouts: {
+          desktop: { positions: { __orbitpage_profile__: { x: 0, y: 0, width: 48, height: 456 } } },
+        },
+      },
+    });
+    expect(migrated.appearance?.cardLayouts?.desktop?.positions).toHaveProperty(ORBITPAGE_PROFILE_CARD_LAYOUT_ID);
+    expect(migrated.appearance?.cardLayouts?.desktop?.positions).not.toHaveProperty('__orbitpage_profile__');
 
     expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       appearance: { cardLayouts: { desktop: { positions: { feature: { x: 70, y: 0, width: 40, height: 80 } } } } },

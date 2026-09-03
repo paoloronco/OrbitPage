@@ -106,7 +106,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(arrangedLinkTarget).toBeVisible();
   await arrangedLinkTarget.scrollIntoViewIfNeeded();
   const cardCanvasBounds = await page.locator(".public-card-stack--layout").boundingBox();
-  const profileCardTarget = page.locator('[data-card-layout-item="__orbitpage_profile__"]');
+  const profileCardTarget = page.locator('[data-card-layout-item="orbitpage-profile"]');
   const profileCardGrip = profileCardTarget.getByRole("button", { name: "Move profile card", exact: true });
   await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^30\.5,0,39,/);
   const arrangedCardWidth = (await arrangedLinkTarget.boundingBox())!.width;
@@ -168,9 +168,9 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^${sideBySideX},${dockedY},39,`));
   await page.getByRole("button", { name: "Save page" }).click();
   await expect(page.getByText("Unsaved changes")).toBeHidden();
-  const adminCardPositions = await page.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
+  const adminCardPositions = await page.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
     .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
-  const adminCardGeometry = await page.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
+  const adminCardGeometry = await page.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
     const canvas = items[0]?.closest<HTMLElement>(".public-card-stack--layout");
     if (!canvas) return {};
     const canvasBounds = canvas.getBoundingClientRect();
@@ -192,11 +192,11 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await publicPage.setViewportSize({ width: 1280, height: 980 });
   await publicPage.emulateMedia({ reducedMotion: "reduce" });
   await publicPage.goto(new URL("/e2e-public-page", page.url()).toString());
-  await expect(publicPage.locator('[data-card-layout-item="__orbitpage_profile__"]')).toBeVisible();
-  const publicCardPositions = await publicPage.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
+  await expect(publicPage.locator('[data-card-layout-item="orbitpage-profile"]')).toBeVisible();
+  const publicCardPositions = await publicPage.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
     .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
   expect(publicCardPositions).toEqual(adminCardPositions);
-  const publicCardGeometry = await publicPage.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
+  const publicCardGeometry = await publicPage.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
     const canvas = items[0]?.closest<HTMLElement>(".public-card-stack--layout");
     if (!canvas) return {};
     const canvasBounds = canvas.getBoundingClientRect();
