@@ -1,6 +1,6 @@
 import { useState, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { Card } from "@/components/ui/card";
-import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, GripVertical, Link2, Mail, MailPlus, MapPin, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, GripVertical, Link2, Mail, MailPlus, MapPin, MoveDiagonal2, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
@@ -335,7 +335,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
                 )}
                 <div className="public-link-card__layout-content">{node}</div>
                 {contentLayoutEditing && (
-                  <button aria-label={`${tr('Resize', 'Ridimensiona')} ${labels[item]}`} className="public-link-card__layout-resize" data-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr('Drag to resize. Use arrow keys for precision.', 'Trascina per ridimensionare. Usa le frecce per la precisione.')} type="button"><span aria-hidden="true" /></button>
+                  <button aria-label={`${tr('Resize', 'Ridimensiona')} ${labels[item]}`} className="public-link-card__layout-resize" data-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr('Drag to resize. Use arrow keys for precision.', 'Trascina per ridimensionare. Usa le frecce per la precisione.')} type="button"><MoveDiagonal2 aria-hidden="true" size={15} /></button>
                 )}
               </div>
             );

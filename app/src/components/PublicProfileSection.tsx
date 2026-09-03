@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GripVertical } from "@/components/ui/material-icons";
-import { BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, Twitter, Youtube } from "lucide-react";
+import { BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, MoveDiagonal2, Twitter, Youtube } from "lucide-react";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
@@ -32,6 +32,7 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CardSurfaceEffect } from "@/lib/theme";
+import { alignCardLayoutRect, type CardLayoutGuides } from "@/lib/card-layout";
 
 interface ProfileData {
   name: string;
@@ -77,8 +78,6 @@ type LayoutGesture = {
   scale: number;
 };
 
-type AlignmentGuides = { x?: number; y?: number };
-
 const SOCIALS = [
   { id: "linkedin", label: "LinkedIn profile", icon: Linkedin },
   { id: "github", label: "GitHub profile", icon: Github },
@@ -92,61 +91,6 @@ const SOCIALS = [
   { id: "whatsapp", label: "WhatsApp profile", icon: WhatsAppIcon },
   { id: "mastodon", label: "Mastodon profile", icon: MastodonIcon },
 ] as const;
-
-const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value));
-
-function closestSnap(anchors: number[], targets: number[], threshold: number) {
-  let best: { shift: number; guide: number } | null = null;
-  for (const anchor of anchors) {
-    for (const target of targets) {
-      const shift = target - anchor;
-      if (Math.abs(shift) <= threshold && (!best || Math.abs(shift) < Math.abs(best.shift))) {
-        best = { shift, guide: target };
-      }
-    }
-  }
-  return best;
-}
-
-function alignedRect(
-  layout: NormalizedProfileLayout,
-  item: ProfileLayoutItem,
-  rect: ProfileLayoutRect,
-  mode: LayoutGesture["mode"],
-  thresholdX: number,
-  thresholdY: number,
-) {
-  const others = Object.entries(layout.positions)
-    .filter(([id]) => id !== item)
-    .map(([, position]) => position);
-  const xTargets = [0, 50, 100, ...others.flatMap((position) => [position.x, position.x + position.width / 2, position.x + position.width])];
-  const yTargets = [0, layout.height, ...others.flatMap((position) => [position.y, position.y + position.height / 2, position.y + position.height])];
-  const xSnap = closestSnap(
-    mode === "move" ? [rect.x, rect.x + rect.width / 2, rect.x + rect.width] : [rect.x + rect.width],
-    xTargets,
-    thresholdX,
-  );
-  const ySnap = closestSnap(
-    mode === "move" ? [rect.y, rect.y + rect.height / 2, rect.y + rect.height] : [rect.y + rect.height],
-    yTargets,
-    thresholdY,
-  );
-
-  const next = { ...rect };
-  if (xSnap) {
-    if (mode === "move") next.x += xSnap.shift;
-    else next.width += xSnap.shift;
-  }
-  if (ySnap) {
-    if (mode === "move") next.y += ySnap.shift;
-    else next.height += ySnap.shift;
-  }
-  next.width = clamp(next.width, 12, 100 - next.x);
-  next.height = clamp(next.height, 36, 600);
-  next.x = clamp(next.x, 0, 100 - next.width);
-  next.y = clamp(next.y, 0, 1_600);
-  return { rect: next, guides: { x: xSnap?.guide, y: ySnap?.guide } as AlignmentGuides };
-}
 
 export const PublicProfileSection = ({
   profile,
@@ -168,10 +112,11 @@ export const PublicProfileSection = ({
   const savedLayout = useMemo(() => normalizeProfileLayout(rawLayout), [rawLayout]);
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
   const [activeItem, setActiveItem] = useState<ProfileLayoutItem | null>(null);
-  const [guides, setGuides] = useState<AlignmentGuides>({});
+  const [guides, setGuides] = useState<CardLayoutGuides>({});
   const [measuredContentHeight, setMeasuredContentHeight] = useState(0);
   const layoutRef = useRef<HTMLDivElement>(null);
   const gestureRef = useRef<LayoutGesture | null>(null);
+  const pendingLayoutRef = useRef<NormalizedProfileLayout | null>(null);
   const latestLayoutRef = useRef(workingLayout);
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
   const displayName = profile.name?.trim() || fallbackName || "";
@@ -297,6 +242,7 @@ export const PublicProfileSection = ({
       scale: Math.max(.01, bounds.width / canvas.offsetWidth),
     };
     latestLayoutRef.current = layout;
+    pendingLayoutRef.current = null;
     event.currentTarget.setPointerCapture(event.pointerId);
     setActiveItem(item);
   };
@@ -315,16 +261,21 @@ export const PublicProfileSection = ({
           width: gesture.startRect.width + deltaX,
           height: gesture.startRect.height + deltaY,
         };
-    const snapped = alignedRect(
-      gesture.layout,
+    const snapped = alignCardLayoutRect(
+      gesture.layout.positions,
+      gesture.layout.height,
       gesture.item,
       rect,
       gesture.mode,
       6 / gesture.bounds.width * 100,
       6 / gesture.scale,
     );
+    const liveLayout = updateProfileLayoutItem(gesture.layout, gesture.item, rect);
+    pendingLayoutRef.current = snapped.guides.x !== undefined || snapped.guides.y !== undefined
+      ? updateProfileLayoutItem(gesture.layout, gesture.item, snapped.rect)
+      : liveLayout;
     setGuides(snapped.guides);
-    applyWorkingLayout(updateProfileLayoutItem(gesture.layout, gesture.item, snapped.rect));
+    applyWorkingLayout(liveLayout);
   };
 
   const finishGesture = (event: ReactPointerEvent<HTMLElement>) => {
@@ -332,16 +283,20 @@ export const PublicProfileSection = ({
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
+    const committedLayout = pendingLayoutRef.current || latestLayoutRef.current;
     gestureRef.current = null;
+    pendingLayoutRef.current = null;
     setActiveItem(null);
     setGuides({});
-    onLayoutChange?.(latestLayoutRef.current);
+    applyWorkingLayout(committedLayout);
+    onLayoutChange?.(committedLayout);
   };
 
   const cancelGesture = (event: ReactPointerEvent<HTMLElement>) => {
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     gestureRef.current = null;
+    pendingLayoutRef.current = null;
     setActiveItem(null);
     setGuides({});
     applyWorkingLayout(gesture.layout);
@@ -456,7 +411,7 @@ export const PublicProfileSection = ({
                     title={tr("Drag in any direction to resize. Use arrow keys for precision.", "Trascina in ogni direzione per ridimensionare. Usa le frecce per la precisione.")}
                     type="button"
                   >
-                    <span aria-hidden="true" />
+                    <MoveDiagonal2 aria-hidden="true" size={17} />
                   </button>
                 )}
               </div>
