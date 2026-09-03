@@ -36,6 +36,7 @@ export type NormalizedCardContentLayout = {
 export type CardLayoutGuides = { x?: number; y?: number };
 
 const CARD_GAP = 24;
+const LEGACY_PROFILE_CARD_LAYOUT_ID = "__orbitpage_profile__";
 
 export const PROFILE_CARD_LAYOUT_ID = ORBITPAGE_PROFILE_CARD_LAYOUT_ID;
 
@@ -120,11 +121,16 @@ export function normalizeCardLayout(
   viewport: CardLayoutViewport,
 ): NormalizedCardLayout {
   const positions: Record<string, CardLayoutRect> = {};
-  const missingPrepend = cards.find((card) => card.prepend && !layout?.positions?.[card.id]);
+  const initialPositions = layout?.positions ? { ...layout.positions } : undefined;
+  if (initialPositions?.[LEGACY_PROFILE_CARD_LAYOUT_ID]) {
+    initialPositions[PROFILE_CARD_LAYOUT_ID] ??= initialPositions[LEGACY_PROFILE_CARD_LAYOUT_ID];
+    delete initialPositions[LEGACY_PROFILE_CARD_LAYOUT_ID];
+  }
+  const missingPrepend = cards.find((card) => card.prepend && !initialPositions?.[card.id]);
   const prependOffset = missingPrepend ? defaultCardHeight(missingPrepend) + CARD_GAP : 0;
   const storedPositions = prependOffset
-    ? Object.fromEntries(Object.entries(layout?.positions || {}).map(([id, rect]) => [id, { ...rect, y: rect.y + prependOffset }]))
-    : layout?.positions;
+    ? Object.fromEntries(Object.entries(initialPositions || {}).map(([id, rect]) => [id, { ...rect, y: rect.y + prependOffset }]))
+    : initialPositions;
   let nextY = storedPositions
     ? Math.max(0, ...Object.values(storedPositions).map((rect) => rect.y + rect.height + CARD_GAP))
     : 0;

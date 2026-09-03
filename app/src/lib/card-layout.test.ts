@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignCardLayoutRect, normalizeCardLayout, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, normalizeCardLayout, PROFILE_CARD_LAYOUT_ID, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -41,6 +41,23 @@ describe("responsive card layout", () => {
 
     expect(layout.positions.profile).toEqual({ x: 25, y: 0, width: 50, height: 456 });
     expect(layout.positions.large).toMatchObject({ y: 480 });
+  });
+
+  it("migrates the legacy reserved profile key without shifting saved cards", () => {
+    const layout = normalizeCardLayout({
+      positions: {
+        __orbitpage_profile__: { x: 12, y: 0, width: 40, height: 456 },
+        large: { x: 56, y: 0, width: 44, height: 120 },
+      },
+      height: 456,
+    }, [
+      { id: PROFILE_CARD_LAYOUT_ID, type: "profile", prepend: true, defaultRect: { x: 25, width: 50, height: 456 } },
+      ...cards,
+    ], "desktop");
+
+    expect(layout.positions[PROFILE_CARD_LAYOUT_ID]).toEqual({ x: 12, y: 0, width: 40, height: 456 });
+    expect(layout.positions.large).toMatchObject({ x: 56, y: 0 });
+    expect(layout.positions).not.toHaveProperty("__orbitpage_profile__");
   });
 
   it("offers a small alignment snap without resizing freely positioned cards", () => {
