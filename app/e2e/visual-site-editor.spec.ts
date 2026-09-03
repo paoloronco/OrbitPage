@@ -118,70 +118,114 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   const profileGripBounds = await profileCardGrip.boundingBox();
   const avatarGripBounds = await page.getByRole("button", { name: "Move Profile image", exact: true }).boundingBox();
   const profileCardBounds = await profileCardTarget.boundingBox();
-  const companionCardBounds = await page.locator('[data-card-layout-item]:not([data-card-layout-item="__orbitpage_profile__"])').first().boundingBox();
   expect(profileGripBounds).not.toBeNull();
   expect(avatarGripBounds).not.toBeNull();
   expect(profileCardBounds).not.toBeNull();
-  expect(companionCardBounds).not.toBeNull();
   expect(profileGripBounds!.x).toBeGreaterThan(avatarGripBounds!.x + avatarGripBounds!.width);
   expect(cardCanvasBounds).not.toBeNull();
-  await page.mouse.move(profileGripBounds!.x + profileGripBounds!.width / 2, profileGripBounds!.y + profileGripBounds!.height / 2);
+  await profileCardGrip.hover();
   await page.mouse.down();
+  await expect(profileCardTarget).toHaveClass(/is-dragging/);
   await page.mouse.move(
-    profileGripBounds!.x + profileGripBounds!.width / 2 + cardCanvasBounds!.width * .16,
-    profileGripBounds!.y + profileGripBounds!.height / 2
-      + companionCardBounds!.y + companionCardBounds!.height / 2
-      - profileCardBounds!.y - profileCardBounds!.height / 2,
-    { steps: 4 },
+    profileGripBounds!.x + profileGripBounds!.width / 2 - cardCanvasBounds!.width * .16,
+    profileGripBounds!.y + profileGripBounds!.height / 2,
+    { steps: 6 },
   );
+  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^14\.5,0,39,/);
   await page.mouse.up();
-  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^61,(\d+),39,/);
-  const profileDockedY = (await profileCardTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
-  await expect(page.locator(`[data-card-layout-position^="0,${profileDockedY},39,"]`)).toHaveCount(1);
-  await resetLayoutButton.click();
-  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^30\.5,0,39,/);
-  await arrangedLinkTarget.evaluate((element) => element.scrollIntoView({ block: "center" }));
-  const dockGripBounds = await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).boundingBox();
+  const movedProfilePosition = (await profileCardTarget.getAttribute("data-card-layout-position"))!.split(",").map(Number);
+  expect(movedProfilePosition[0]).toBeLessThan(20);
+  expect(movedProfilePosition.slice(1, 3)).toEqual([0, 39]);
+  await page.locator(".admin-live-preview__scroll").evaluate((element) => { element.scrollTop = 0; });
+  const cardMoveGrip = arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true });
+  await cardMoveGrip.hover();
+  const dockGripBounds = await cardMoveGrip.boundingBox();
   const arrangedCardBounds = await arrangedLinkTarget.boundingBox();
-  const dockTargetBounds = await page.locator(`[data-card-layout-item="${dockLinkId}"]`).boundingBox();
+  const currentProfileCardBounds = await profileCardTarget.boundingBox();
   expect(dockGripBounds).not.toBeNull();
   expect(arrangedCardBounds).not.toBeNull();
-  expect(dockTargetBounds).not.toBeNull();
-  await page.mouse.move(dockGripBounds!.x + dockGripBounds!.width / 2, dockGripBounds!.y + dockGripBounds!.height / 2);
+  expect(currentProfileCardBounds).not.toBeNull();
   await page.mouse.down();
+  await expect(arrangedLinkTarget).toHaveClass(/is-dragging/);
   await page.mouse.move(
-    dockGripBounds!.x + dockGripBounds!.width / 2 + cardCanvasBounds!.width * .16,
+    dockGripBounds!.x + dockGripBounds!.width / 2 + cardCanvasBounds!.width * .255,
     dockGripBounds!.y + dockGripBounds!.height / 2
-      + dockTargetBounds!.y + dockTargetBounds!.height / 2
-      - arrangedCardBounds!.y - arrangedCardBounds!.height / 2,
+      + currentProfileCardBounds!.y - arrangedCardBounds!.y,
     { steps: 4 },
   );
   await page.mouse.up();
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^61,(\d+),39,/);
-  let dockedY = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",")[1];
-  await expect(page.locator(`[data-card-layout-position^="0,${dockedY},39,"]`)).toHaveCount(1);
-  const cardMoveGrip = arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true });
+  const sideBySidePosition = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",").map(Number);
+  expect(sideBySidePosition[0]).toBeGreaterThanOrEqual(54);
+  expect(sideBySidePosition.slice(1, 3)).toEqual([0, 39]);
+  const movedProfileBounds = await profileCardTarget.boundingBox();
+  const sideBySideBounds = await arrangedLinkTarget.boundingBox();
+  expect(movedProfileBounds!.x + movedProfileBounds!.width).toBeLessThanOrEqual(sideBySideBounds!.x + 1);
+  expect(Math.abs(movedProfileBounds!.y - sideBySideBounds!.y)).toBeLessThanOrEqual(1);
+  const sideBySideX = String(sideBySidePosition[0]);
+  let dockedY = String(sideBySidePosition[1]);
   await cardMoveGrip.press("Shift+ArrowDown");
   dockedY = String(Number(dockedY) + 16);
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^61,${dockedY},39,`));
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^${sideBySideX},${dockedY},39,`));
   await page.getByRole("button", { name: "Save page" }).click();
   await expect(page.getByText("Unsaved changes")).toBeHidden();
   const adminCardPositions = await page.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
     .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
+  const adminCardGeometry = await page.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
+    const canvas = items[0]?.closest<HTMLElement>(".public-card-stack--layout");
+    if (!canvas) return {};
+    const canvasBounds = canvas.getBoundingClientRect();
+    const scale = canvasBounds.width / canvas.offsetWidth;
+    return Object.fromEntries(items.map((item) => {
+      const bounds = item.getBoundingClientRect();
+      return [item.getAttribute("data-card-layout-item"), {
+        x: (bounds.left - canvasBounds.left) / scale,
+        y: (bounds.top - canvasBounds.top) / scale,
+        width: bounds.width / scale,
+        height: bounds.height / scale,
+      }];
+    }));
+  });
+  const adminContentPositions = await arrangedLinkTarget.locator("[data-card-content-layout-item]")
+    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-content-layout-item"), item.getAttribute("data-card-content-layout-position")])));
   await page.getByRole("button", { name: "Done", exact: true }).click();
   const publicPage = await page.context().newPage();
+  await publicPage.setViewportSize({ width: 1280, height: 980 });
+  await publicPage.emulateMedia({ reducedMotion: "reduce" });
   await publicPage.goto(new URL("/e2e-public-page", page.url()).toString());
   await expect(publicPage.locator('[data-card-layout-item="__orbitpage_profile__"]')).toBeVisible();
   const publicCardPositions = await publicPage.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
     .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
   expect(publicCardPositions).toEqual(adminCardPositions);
+  const publicCardGeometry = await publicPage.locator(`[data-card-layout-item="__orbitpage_profile__"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
+    const canvas = items[0]?.closest<HTMLElement>(".public-card-stack--layout");
+    if (!canvas) return {};
+    const canvasBounds = canvas.getBoundingClientRect();
+    const scale = canvasBounds.width / canvas.offsetWidth;
+    return Object.fromEntries(items.map((item) => {
+      const bounds = item.getBoundingClientRect();
+      return [item.getAttribute("data-card-layout-item"), {
+        x: (bounds.left - canvasBounds.left) / scale,
+        y: (bounds.top - canvasBounds.top) / scale,
+        width: bounds.width / scale,
+        height: bounds.height / scale,
+      }];
+    }));
+  });
+  for (const [id, adminGeometry] of Object.entries(adminCardGeometry)) {
+    for (const property of ["x", "y", "width", "height"] as const) {
+      expect(publicCardGeometry[id][property]).toBeCloseTo(adminGeometry[property], 0);
+    }
+  }
+  const publicContentPositions = await publicPage.locator(`[data-card-layout-item="${linkId}"] [data-card-content-layout-item]`)
+    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-content-layout-item"), item.getAttribute("data-card-content-layout-position")])));
+  expect(publicContentPositions).toEqual(adminContentPositions);
   await publicPage.close();
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   await arrangedLinkTarget.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^61,${dockedY},38,`));
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^${sideBySideX},${dockedY},38,`));
   await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).press("ArrowRight");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^62,${dockedY},38,`));
+  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^${Number(sideBySideX) + 1},${dockedY},38,`));
   expect(await arrangedLinkTarget.getAttribute("data-card-layout-position")).not.toBe(desktopCardPositionBefore);
   const desktopCardPosition = await arrangedLinkTarget.getAttribute("data-card-layout-position");
   const cardTitleItem = arrangedLinkTarget.locator('[data-card-content-layout-item="title"]');

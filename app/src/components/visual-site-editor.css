@@ -462,6 +462,10 @@
   content: none;
 }
 
+.public-page-root--editor .public-card-stack--layout .page-card-layout__item {
+  position: absolute;
+}
+
 .profile-card--layout-editing .profile-card__layout-item {
   min-height: 36px;
   padding: 0;
@@ -472,11 +476,8 @@
   outline: 1px dashed rgb(47 101 238 / 58%);
   touch-action: none;
   user-select: none;
-  transition: box-shadow 180ms cubic-bezier(.25, 1, .5, 1), opacity 180ms cubic-bezier(.25, 1, .5, 1), left 120ms ease, top 120ms ease, width 120ms ease, height 120ms ease;
+  transition: box-shadow 180ms cubic-bezier(.25, 1, .5, 1), opacity 180ms cubic-bezier(.25, 1, .5, 1);
 }
-
-.profile-card--layout-editing .profile-card__layout-item:nth-child(2n) .profile-card__layout-grip { animation-delay: -600ms; }
-.profile-card--layout-editing .profile-card__layout-item:nth-child(3n) .profile-card__layout-grip { animation-delay: -1.2s; }
 
 .profile-card--layout-editing .profile-card__layout-item.is-dragging {
   z-index: 5;
@@ -515,7 +516,6 @@
 .profile-card__layout-grip {
   top: -8px;
   left: -8px;
-  animation: profile-layout-wiggle 1.8s ease-in-out infinite alternate;
 }
 
 .profile-card__layout-grip svg {
@@ -530,14 +530,10 @@
   cursor: nwse-resize;
 }
 
-.profile-card__layout-resize > span {
-  width: 14px;
-  height: 14px;
-  border-right: 3px solid currentColor;
-  border-bottom: 3px solid currentColor;
-  border-radius: 0 0 3px;
+.profile-card__layout-resize > svg {
+  border-radius: 6px;
   background: #fff;
-  box-shadow: 4px 4px 8px rgb(23 52 124 / 14%);
+  box-shadow: 0 2px 8px rgb(23 52 124 / 18%);
 }
 
 .profile-card__layout-grip:focus-visible,
@@ -571,7 +567,7 @@
   cursor: default;
   touch-action: none;
   user-select: none;
-  transition: box-shadow 180ms cubic-bezier(.25, 1, .5, 1), left 120ms ease, top 120ms ease, width 120ms ease, height 120ms ease;
+  transition: box-shadow 180ms cubic-bezier(.25, 1, .5, 1);
 }
 
 .public-card-stack--layout-editing .page-card-layout__item.is-dragging {
@@ -598,15 +594,14 @@
 .page-card-layout__grip {
   top: -24px;
   left: calc(50% - 24px);
+  z-index: 32;
   cursor: grab;
-  animation: profile-layout-wiggle 1.8s ease-in-out infinite alternate;
 }
 
 .public-link-card__layout-grip {
   top: -8px;
   left: -8px;
   cursor: grab;
-  animation: profile-layout-wiggle 1.8s ease-in-out infinite alternate;
 }
 
 .page-card-layout__grip--profile {
@@ -629,15 +624,15 @@
   cursor: nwse-resize;
 }
 
-.page-card-layout__resize > span,
-.public-link-card__layout-resize > span {
-  width: 14px;
-  height: 14px;
-  border-right: 3px solid currentColor;
-  border-bottom: 3px solid currentColor;
-  border-radius: 0 0 3px;
+.page-card-layout__resize {
+  z-index: 32;
+}
+
+.page-card-layout__resize > svg,
+.public-link-card__layout-resize > svg {
+  border-radius: 6px;
   background: #fff;
-  box-shadow: 4px 4px 8px rgb(23 52 124 / 14%);
+  box-shadow: 0 2px 8px rgb(23 52 124 / 18%);
 }
 
 .page-card-layout__grip:focus-visible,
@@ -654,7 +649,12 @@
   cursor: move;
   outline: 1px dashed rgb(47 101 238 / 58%);
   touch-action: none;
-  transition: left 120ms ease, top 120ms ease, width 120ms ease, height 120ms ease, box-shadow 180ms ease;
+  transition: box-shadow 180ms cubic-bezier(.25, 1, .5, 1);
+}
+
+.public-card-stack--layout-editing .page-card-layout__surface > .glass-card,
+.public-card-stack--layout-editing .page-card-layout__surface--profile .profile-card {
+  border-color: transparent;
 }
 
 .public-card-stack--layout-editing .public-link-card__layout-content {
@@ -712,11 +712,6 @@
 @keyframes visual-layout-bar-arrive {
   from { opacity: 0; transform: translate3d(0, -5px, 0); }
   to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-
-@keyframes profile-layout-wiggle {
-  from { transform: rotate(-1.2deg); }
-  to { transform: rotate(1.2deg); }
 }
 
 @media (max-width: 1180px) {
@@ -855,9 +850,6 @@
 @media (prefers-reduced-motion: reduce) {
   .visual-site-editor__layout-bar,
   .visual-site-editor__layout-reset,
-  .profile-card--layout-editing .profile-card__layout-grip,
-  .page-card-layout__grip,
-  .public-link-card__layout-grip,
   .public-page-root--editor .public-editor-target.is-selected::before {
     animation: none;
   }

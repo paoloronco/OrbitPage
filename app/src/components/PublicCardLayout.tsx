@@ -8,14 +8,13 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { GripVertical } from "lucide-react";
+import { GripVertical, MoveDiagonal2 } from "lucide-react";
 
 import type { LinkData } from "./LinkCard";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { PublicEditorTarget } from "./PublicView";
 import {
   alignCardLayoutRect,
-  dockDesktopCards,
   normalizeCardContentLayout,
   normalizeCardLayout,
   PROFILE_CARD_LAYOUT_ID,
@@ -108,6 +107,7 @@ export function PublicCardLayout({
   const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
   const [guides, setGuides] = useState<ActiveGuides>({});
   const gestureRef = useRef<Gesture | null>(null);
+  const pendingLayoutRef = useRef<NormalizedCardLayout | null>(null);
   const latestLayoutRef = useRef<NormalizedCardLayout>(workingLayout);
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
   const activeLayout = layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout;
@@ -166,6 +166,7 @@ export function PublicCardLayout({
       scale: Math.max(.01, bounds.width / canvas.offsetWidth),
     };
     latestLayoutRef.current = activeLayout;
+    pendingLayoutRef.current = null;
     target.setPointerCapture?.(event.pointerId);
     setActiveTarget({ scope, cardId, item });
   };
@@ -180,37 +181,19 @@ export function PublicCardLayout({
     const rect = gesture.mode === "move"
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
       : { ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY };
-    if (gesture.scope === "card" && gesture.mode === "move" && viewport === "desktop") {
-      const centerY = rect.y + rect.height / 2;
-      const target = Object.entries(gesture.layout.positions)
-        .filter(([id]) => id !== gesture.cardId)
-        .map(([id, position]) => ({
-          id,
-          position,
-          distance: Math.abs(position.y + position.height / 2 - centerY),
-        }))
-        .sort((left, right) => left.distance - right.distance)[0];
-      const intentionalDock = Math.abs(deltaX) >= (gesture.startRect.width > 50 ? 12 : 4);
-      if (target && intentionalDock && target.distance <= Math.max(rect.height, target.position.height) + 24) {
-        setGuides({ x: 50, y: target.position.y, scope: "card", cardId: gesture.cardId });
-        applyWorkingLayout(dockDesktopCards(
-          gesture.layout,
-          layoutCards,
-          gesture.cardId,
-          target.id,
-          rect.x + rect.width / 2 < target.position.x + target.position.width / 2 ? "left" : "right",
-        ));
-        return;
-      }
-    }
     const positions = gesture.scope === "content" ? gesture.contentLayout!.positions : gesture.layout.positions;
     const height = gesture.scope === "content" ? gesture.contentLayout!.height : gesture.layout.height;
     const itemId = gesture.scope === "content" ? gesture.item! : gesture.cardId;
     const snapped = alignCardLayoutRect(positions, height, itemId, rect, gesture.mode, 6 / gesture.bounds.width * 100, 6 / gesture.scale);
+    const update = (nextRect: CardLayoutRect) => gesture.scope === "content"
+      ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, nextRect)
+      : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, nextRect);
+    const liveLayout = update(rect);
+    pendingLayoutRef.current = snapped.guides.x !== undefined || snapped.guides.y !== undefined
+      ? update(snapped.rect)
+      : liveLayout;
     setGuides({ ...snapped.guides, scope: gesture.scope, cardId: gesture.cardId });
-    applyWorkingLayout(gesture.scope === "content"
-      ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, snapped.rect)
-      : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, snapped.rect));
+    applyWorkingLayout(liveLayout);
   };
 
   const finishGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -218,16 +201,20 @@ export function PublicCardLayout({
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
+    const committedLayout = pendingLayoutRef.current || latestLayoutRef.current;
     gestureRef.current = null;
+    pendingLayoutRef.current = null;
     setActiveTarget(null);
     setGuides({});
-    onLayoutChange?.(latestLayoutRef.current);
+    applyWorkingLayout(committedLayout);
+    onLayoutChange?.(committedLayout);
   };
 
   const cancelGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     gestureRef.current = null;
+    pendingLayoutRef.current = null;
     setActiveTarget(null);
     setGuides({});
     applyWorkingLayout(gesture.layout);
@@ -271,7 +258,7 @@ export function PublicCardLayout({
 
   const cardContent = (link: LinkData) => {
     const storedContent = activeLayout.contents?.[link.id];
-    const contentLayout = supportsContentLayout(link) && (layoutEditing || storedContent)
+    const contentLayout = supportsContentLayout(link) && (useFreeLayout || storedContent)
       ? normalizeCardContentLayout(storedContent)
       : undefined;
     return (
@@ -356,7 +343,7 @@ export function PublicCardLayout({
               )}
               <div className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
               {layoutEditing && (
-                <button aria-label={tr("Resize profile card", "Ridimensiona card profilo")} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the whole profile.", "Trascina per ridimensionare l’intero profilo.")} type="button"><span aria-hidden="true" /></button>
+                <button aria-label={tr("Resize profile card", "Ridimensiona card profilo")} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the whole profile.", "Trascina per ridimensionare l’intero profilo.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
               )}
             </div>
           );
@@ -398,7 +385,7 @@ export function PublicCardLayout({
             )}
             <div className="page-card-layout__surface" data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}>{cardContent(link)}</div>
             {layoutEditing && (
-              <button aria-label={`${tr("Resize card", "Ridimensiona card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the card. Use arrow keys for precision.", "Trascina per ridimensionare la card. Usa le frecce per la precisione.")} type="button"><span aria-hidden="true" /></button>
+              <button aria-label={`${tr("Resize card", "Ridimensiona card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the card. Use arrow keys for precision.", "Trascina per ridimensionare la card. Usa le frecce per la precisione.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
             )}
           </div>
         );

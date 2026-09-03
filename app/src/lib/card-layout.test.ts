@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dockDesktopCards, normalizeCardLayout, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, normalizeCardLayout, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -30,13 +30,6 @@ describe("responsive card layout", () => {
     expect(normalizeCardLayout(updated, cards, "desktop").contents?.large).toBeDefined();
   });
 
-  it("docks two full-width desktop cards side by side", () => {
-    const docked = dockDesktopCards(undefined, cards, "compact", "large", "right");
-
-    expect(docked.positions.large).toMatchObject({ x: 0, y: 0, width: 49 });
-    expect(docked.positions.compact).toMatchObject({ x: 51, y: 0, width: 49 });
-  });
-
   it("adds a movable profile before existing cards without overlapping them", () => {
     const layout = normalizeCardLayout({
       positions: { large: { x: 0, y: 0, width: 100, height: 120 } },
@@ -50,12 +43,18 @@ describe("responsive card layout", () => {
     expect(layout.positions.large).toMatchObject({ y: 480 });
   });
 
-  it("aligns already resized desktop cards without changing their widths", () => {
-    const first = updateCardLayoutItem(undefined, cards, "desktop", "large", { x: 0, y: 20, width: 42, height: 120 });
-    const second = updateCardLayoutItem(first, cards, "desktop", "compact", { x: 56, y: 132, width: 44, height: 92 });
-    const docked = dockDesktopCards(second, cards, "compact", "large", "right");
+  it("offers a small alignment snap without resizing freely positioned cards", () => {
+    const aligned = alignCardLayoutRect(
+      { large: { x: 0, y: 20, width: 42, height: 120 }, compact: { x: 56, y: 132, width: 44, height: 92 } },
+      224,
+      "compact",
+      { x: 55.75, y: 21.5, width: 44, height: 92 },
+      "move",
+      1,
+      2,
+    );
 
-    expect(docked.positions.large).toMatchObject({ x: 0, y: 20, width: 42 });
-    expect(docked.positions.compact).toMatchObject({ x: 56, y: 20, width: 44 });
+    expect(aligned.rect).toMatchObject({ x: 56, y: 20, width: 44 });
+    expect(aligned.guides).toEqual({ x: 100, y: 20 });
   });
 });

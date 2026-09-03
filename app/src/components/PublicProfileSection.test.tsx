@@ -39,6 +39,7 @@ describe("PublicProfileSection custom layout", () => {
     expect(editorHtml).toContain("profile-card--layout-editing");
     expect(editorHtml).toContain("profile-card__layout-grip");
     expect(editorHtml).toContain("profile-card__layout-resize");
+    expect(editorHtml).toContain("lucide-move-diagonal2");
   });
 
   it("selects independent responsive layouts without changing their relative coordinates", () => {
