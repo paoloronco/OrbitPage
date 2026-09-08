@@ -35,6 +35,8 @@ describe("VisualSiteEditor", () => {
         inspector={<div>Inspector</div>}
         onSelect={onSelect}
         onOpenTheme={onOpenTheme}
+        layoutEditing={false}
+        onLayoutEditingChange={vi.fn()}
       />,
     );
 
@@ -66,6 +68,8 @@ describe("VisualSiteEditor", () => {
         inspectorDescription="Edit menu"
         inspector={<div>Inspector</div>}
         onSelect={vi.fn()}
+        layoutEditing={false}
+        onLayoutEditingChange={vi.fn()}
         previewHint="Live menu preview"
         renderPreview={renderPreview}
       />,
@@ -74,5 +78,65 @@ describe("VisualSiteEditor", () => {
     expect(renderPreview).toHaveBeenCalledWith("mobile");
     expect(html).toContain("Specialized public preview");
     expect(html).toContain("Live menu preview");
+  });
+
+  it("removes the top Done and Reset actions while arranging", () => {
+    const html = renderToStaticMarkup(
+      <VisualSiteEditor
+        profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+        links={[]}
+        theme={defaultTheme}
+        publicPageHref="/orbitpage"
+        showOrbitPageBadge
+        section="profile"
+        inspectorTitle="Profile"
+        inspectorDescription="Edit profile"
+        inspector={<div>Inspector</div>}
+        onSelect={vi.fn()}
+        onProfileLayoutChange={vi.fn()}
+        onCardLayoutChange={vi.fn()}
+        layoutEditing
+        onLayoutEditingChange={vi.fn()}
+      />,
+    );
+
+    expect(html).not.toContain(">Done</span>");
+    expect(html).not.toContain(">Reset</span>");
+    expect(mockState.livePreviewProps?.profileLayoutEditing).toBe(true);
+    expect(mockState.livePreviewProps?.cardLayoutEditing).toBe(true);
+  });
+
+  it("hides Arrange and offers a preview disclosure on smartphones", () => {
+    vi.stubGlobal("window", {
+      matchMedia: (query: string) => ({ matches: query === "(max-width: 600px)" }),
+    });
+
+    try {
+      const html = renderToStaticMarkup(
+        <VisualSiteEditor
+          profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+          links={[]}
+          theme={defaultTheme}
+          publicPageHref="/orbitpage"
+          showOrbitPageBadge
+          section="profile"
+          inspectorTitle="Profile"
+          inspectorDescription="Edit profile"
+          inspector={<div>Inspector</div>}
+          onSelect={vi.fn()}
+          onProfileLayoutChange={vi.fn()}
+          onCardLayoutChange={vi.fn()}
+          layoutEditing={false}
+          onLayoutEditingChange={vi.fn()}
+        />,
+      );
+
+      expect(html).not.toContain(">Arrange</span>");
+      expect(html).toContain(">Hide Preview</span>");
+      expect(html).toContain('aria-controls="visual-site-editor-preview"');
+      expect(html).toContain('aria-expanded="true"');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
