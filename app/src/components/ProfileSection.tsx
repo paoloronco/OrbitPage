@@ -75,6 +75,7 @@ interface ProfileSectionProps {
   orbitPageBadgeEditable?: boolean;
   profileLayoutCommand?: { id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null;
   cardLayoutCommand?: { id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null;
+  onEditingComplete?: () => void;
 }
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
@@ -188,6 +189,7 @@ export const ProfileSection = ({
   orbitPageBadgeEditable = true,
   profileLayoutCommand,
   cardLayoutCommand,
+  onEditingComplete,
 }: ProfileSectionProps) => {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(profile);
@@ -366,6 +368,7 @@ export const ProfileSection = ({
       setPendingFaviconPreviewUrl(null);
       setFaviconDialogOpen(false);
       showSavedNotice(previousProfile);
+      onEditingComplete?.();
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "The page profile could not be saved.");
     } finally {
@@ -400,6 +403,7 @@ export const ProfileSection = ({
     setPendingLogoPreviewUrl(null);
     setPendingFaviconPreviewUrl(null);
     setUploadError(null);
+    onEditingComplete?.();
   };
 
   const resetCardAppearance = () => {
@@ -708,7 +712,7 @@ export const ProfileSection = ({
               </Button>
               <Button type="button" size="sm" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
-                {isSaving ? tr("Saving", "Salvataggio") : tr("Save page", "Salva pagina")}
+                {isSaving ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}
               </Button>
             </div>
           )}

@@ -1,13 +1,13 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import {
-  Check,
   Edit,
+  Eye,
+  EyeOff,
   Files,
   GripVertical,
   Layout,
   Menu as MenuIcon,
   MousePointerClick,
-  RotateCcw,
   ShoppingBag,
   UserRound,
 } from "@/components/ui/material-icons";
@@ -16,10 +16,12 @@ import type { LinkData } from "./LinkCard";
 import type { PublicEditorTarget } from "./PublicView";
 import type { ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import { DEFAULT_PROFILE_LAYOUT, type ProfileLayout, type ProfileLayoutViewport } from "@/lib/profile-layout";
+import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import type { CardLayout } from "@/lib/card-layout";
 import { useAppI18n } from "@/lib/i18n";
 import "./visual-site-editor.css";
+
+const PHONE_MEDIA_QUERY = "(max-width: 600px)";
 
 type VisualProfile = {
   name: string;
@@ -62,6 +64,8 @@ interface VisualSiteEditorProps {
   onOpenTheme?: () => void;
   onProfileLayoutChange?: (layout: ProfileLayout, viewport: ProfileLayoutViewport) => void;
   onCardLayoutChange?: (layout: CardLayout | null, viewport: ProfileLayoutViewport) => void;
+  layoutEditing: boolean;
+  onLayoutEditingChange: (editing: boolean) => void;
   previewHint?: string;
   renderPreview?: (device: PreviewDevice) => ReactNode;
 }
@@ -84,6 +88,8 @@ export function VisualSiteEditor({
   onOpenTheme,
   onProfileLayoutChange,
   onCardLayoutChange,
+  layoutEditing,
+  onLayoutEditingChange,
   previewHint,
   renderPreview,
 }: VisualSiteEditorProps) {
@@ -91,7 +97,10 @@ export function VisualSiteEditor({
   const [device, setDevice] = useState<PreviewDevice>(() => (
     typeof window !== "undefined" && window.matchMedia("(min-width: 900px)").matches ? "desktop" : "mobile"
   ));
-  const [layoutEditing, setLayoutEditing] = useState(false);
+  const [isPhone, setIsPhone] = useState(() => (
+    typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
+  ));
+  const [previewVisible, setPreviewVisible] = useState(true);
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
     { id: "links", label: tr("Content", "Contenuti"), icon: Layout, status: "active" },
@@ -118,16 +127,23 @@ export function VisualSiteEditor({
   };
 
   useEffect(() => {
-    if (section !== "profile") setLayoutEditing(false);
-  }, [section]);
+    if (section !== "profile") onLayoutEditingChange(false);
+  }, [onLayoutEditingChange, section]);
 
-  const toggleLayoutEditing = () => {
-    if (layoutEditing) {
-      setLayoutEditing(false);
-      return;
-    }
+  useEffect(() => {
+    const phoneQuery = window.matchMedia(PHONE_MEDIA_QUERY);
+    const syncPhoneViewport = () => {
+      setIsPhone(phoneQuery.matches);
+      if (phoneQuery.matches) onLayoutEditingChange(false);
+    };
+    phoneQuery.addEventListener("change", syncPhoneViewport);
+    syncPhoneViewport();
+    return () => phoneQuery.removeEventListener("change", syncPhoneViewport);
+  }, [onLayoutEditingChange]);
+
+  const startLayoutEditing = () => {
     if (section !== "profile") onSelect("profile");
-    setLayoutEditing(true);
+    onLayoutEditingChange(true);
   };
 
   return (
@@ -141,31 +157,15 @@ export function VisualSiteEditor({
           </div>
         </div>
         <div className="visual-site-editor__toolbar-actions">
-          {layoutEditing && onProfileLayoutChange && onCardLayoutChange && (
+          {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
             <button
-              aria-label={tr("Reset to standard layout", "Ripristina il layout standard")}
-              className="visual-site-editor__layout-reset"
-              onClick={() => {
-                onProfileLayoutChange(DEFAULT_PROFILE_LAYOUT, device);
-                onCardLayoutChange(null, device);
-              }}
-              title={tr("Reset to standard layout", "Ripristina il layout standard")}
+              className="visual-site-editor__layout-toggle"
+              onClick={startLayoutEditing}
+              title={tr("Arrange page layout", "Disponi il layout della pagina")}
               type="button"
             >
-              <RotateCcw aria-hidden="true" size={16} />
-              <span>{tr("Reset", "Ripristina")}</span>
-            </button>
-          )}
-          {(section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
-            <button
-              aria-pressed={layoutEditing}
-              className={`visual-site-editor__layout-toggle${layoutEditing ? " is-active" : ""}`}
-              onClick={toggleLayoutEditing}
-              title={layoutEditing ? tr("Finish arranging", "Termina disposizione") : tr("Arrange page layout", "Disponi il layout della pagina")}
-              type="button"
-            >
-              {layoutEditing ? <Check aria-hidden="true" size={17} /> : <Edit aria-hidden="true" size={17} />}
-              <span>{layoutEditing ? tr("Done", "Fatto") : tr("Arrange", "Disponi")}</span>
+              <Edit aria-hidden="true" size={17} />
+              <span>{tr("Arrange", "Disponi")}</span>
             </button>
           )}
           <PreviewDeviceToggle value={device} onChange={setDevice} />
@@ -190,6 +190,19 @@ export function VisualSiteEditor({
         ))}
       </nav>
 
+      {isPhone && (
+        <button
+          aria-controls="visual-site-editor-preview"
+          aria-expanded={previewVisible}
+          className="visual-site-editor__preview-toggle"
+          onClick={() => setPreviewVisible((visible) => !visible)}
+          type="button"
+        >
+          {previewVisible ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
+          <span>{previewVisible ? tr("Hide Preview", "Nascondi anteprima") : tr("Show Preview", "Mostra anteprima")}</span>
+        </button>
+      )}
+
       {layoutEditing && (
         <div className="visual-site-editor__layout-bar">
           <span role="status">
@@ -200,8 +213,13 @@ export function VisualSiteEditor({
         </div>
       )}
 
-      <div className="visual-site-editor__workspace">
-        <div className="visual-site-editor__canvas" data-device={device}>
+      <div className={`visual-site-editor__workspace${isPhone && !previewVisible ? " visual-site-editor__workspace--preview-hidden" : ""}`}>
+        <div
+          className="visual-site-editor__canvas"
+          data-device={device}
+          hidden={isPhone && !previewVisible}
+          id="visual-site-editor-preview"
+        >
           <div className="visual-site-editor__canvas-note">
             <MousePointerClick aria-hidden="true" size={15} />
             <span>{previewHint || tr("Click profile, cards or background to edit", "Clicca profilo, card o sfondo per modificare")}</span>
