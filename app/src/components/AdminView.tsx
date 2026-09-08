@@ -277,6 +277,7 @@ export const AdminView = ({
   const [visualEditRequest, setVisualEditRequest] = useState(0);
   const [visualProfileLayoutCommand, setVisualProfileLayoutCommand] = useState<{ id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null>(null);
   const [visualCardLayoutCommand, setVisualCardLayoutCommand] = useState<{ id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null>(null);
+  const [visualLayoutEditing, setVisualLayoutEditing] = useState(false);
   const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
     return window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY).matches;
@@ -608,6 +609,7 @@ export const AdminView = ({
 
   const setNewUiPreference = (enabled: boolean) => {
     setNewUiEnabled(enabled);
+    setVisualLayoutEditing(false);
     if (!isIntegratedHostedAdmin) {
       try {
         window.localStorage.setItem(NEW_UI_STORAGE_KEY, String(enabled));
@@ -845,6 +847,7 @@ export const AdminView = ({
       onProfilePreview={setPreviewProfile}
       profileLayoutCommand={visualProfileLayoutCommand}
       cardLayoutCommand={visualCardLayoutCommand}
+      onEditingComplete={() => setVisualLayoutEditing(false)}
       seoAccess={entitlements?.seo}
       managePlanHref={managePlanHref}
       orbitPageBadgeEditable={orbitPageBadgeEditable}
@@ -1186,7 +1189,7 @@ export const AdminView = ({
           </section>
         )}
 
-        {!(newUiEnabled && activeTab === "profile") && <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
+        {!(newUiEnabled && activeTab === "profile") && !["theme", "publish", "backup", "privacy"].includes(activeTab) && <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
           <MetricCard
             icon={Globe2}
             label={tr("Visible links", "Link visibili")}
@@ -1245,6 +1248,8 @@ export const AdminView = ({
                 onOpenTheme={canEditTheme ? () => selectTab("theme") : undefined}
                 onProfileLayoutChange={canEditProfile ? updateVisualProfileLayout : undefined}
                 onCardLayoutChange={canEditProfile ? updateVisualCardLayout : undefined}
+                layoutEditing={visualLayoutEditing}
+                onLayoutEditingChange={setVisualLayoutEditing}
                 previewHint={visualSection === "menu"
                   ? tr("Live public menu preview", "Anteprima live del menu pubblico")
                   : visualSection === "shop"
