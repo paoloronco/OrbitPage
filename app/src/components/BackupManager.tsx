@@ -435,15 +435,14 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         />
       </section>
 
+      {!hosted && (
       <section className="admin-backup-section admin-backup-section--media space-y-4 border-t border-border/70 pt-5" aria-labelledby="media-cleanup-heading">
         <div className="flex items-start gap-3">
           <span className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-4 w-4" /></span>
           <div>
             <h4 id="media-cleanup-heading" className="text-sm font-semibold">{tr("Unused media", "Media inutilizzati")}</h4>
             <p className="text-xs leading-5 text-muted-foreground">
-              {hosted
-                ? tr("OrbitPage removes old uploads that are no longer used. Recent files and restorable page versions stay protected.", "OrbitPage rimuove i vecchi caricamenti non più usati. I file recenti e le versioni ripristinabili restano protetti.")
-                : tr("OrbitPage removes old uploads that are no longer used by the page. Recent files stay protected.", "OrbitPage rimuove i vecchi caricamenti non più usati dalla pagina. I file recenti restano protetti.")}
+              {tr("OrbitPage removes old uploads that are no longer used by the page. Recent files stay protected.", "OrbitPage rimuove i vecchi caricamenti non più usati dalla pagina. I file recenti restano protetti.")}
             </p>
           </div>
         </div>
@@ -466,6 +465,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           </Button>
         </div>
       </section>
+      )}
     </Card>
   );
 }
