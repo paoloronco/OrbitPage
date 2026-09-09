@@ -331,7 +331,16 @@ export const initializeDatabase = () => {
         )
       `);
       db.run(`INSERT OR IGNORE INTO page_state (id, revision) VALUES (1, 0)`);
-      for (const table of ['profile_data', 'links', 'theme_config']) {
+      db.run(`
+        CREATE TABLE IF NOT EXISTS page_versions (
+          revision INTEGER PRIMARY KEY,
+          snapshot TEXT NOT NULL,
+          size_bytes INTEGER NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_page_versions_created_at ON page_versions(created_at DESC)`);
+      for (const table of ['profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'cookie_consent_config', 'text_files', 'sitemap_config']) {
         for (const action of ['INSERT', 'UPDATE', 'DELETE']) {
           const triggerName = `advance_page_revision_${table}_${action.toLowerCase()}`;
           db.run(`

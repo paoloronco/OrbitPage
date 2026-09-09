@@ -258,11 +258,11 @@ export const AdminView = ({
   const [newUiEnabled, setNewUiEnabled] = useState(() => {
     const hostedPreference = getHostedSurfaceConfig()?.newUiEnabled;
     if (hostedPreference !== undefined) return hostedPreference;
-    if (typeof window === "undefined") return false;
+    if (typeof window === "undefined") return true;
     try {
-      return window.localStorage.getItem(NEW_UI_STORAGE_KEY) === "true";
+      return window.localStorage.getItem(NEW_UI_STORAGE_KEY) !== "false";
     } catch {
-      return false;
+      return true;
     }
   });
   const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>(() => {
@@ -1048,8 +1048,8 @@ export const AdminView = ({
             </nav>
 
             <button
-              aria-checked={newUiEnabled}
-              aria-label={tr("Enable New UI beta", "Attiva New UI beta")}
+              aria-checked={!newUiEnabled}
+              aria-label={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}
               className="admin-dashboard-mobile-editor-mode"
               onClick={() => setNewUiPreference(!newUiEnabled)}
               role="switch"
@@ -1059,8 +1059,7 @@ export const AdminView = ({
               <span className="admin-dashboard-mobile-editor-mode__copy">
                 <Sparkles aria-hidden="true" size={18} />
                 <span>
-                  <strong>{tr("Site editor", "Editor sito")} <small>Beta</small></strong>
-                  <span>New UI</span>
+                  <strong>Classic UI</strong>
                 </span>
               </span>
               <span className="admin-dashboard-mobile-editor-mode__switch" aria-hidden="true"><i /></span>
@@ -1161,13 +1160,12 @@ export const AdminView = ({
             <label className="admin-new-ui-toggle" title={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}>
               <span className="admin-new-ui-toggle__copy">
                 <Sparkles aria-hidden="true" size={15} />
-                <strong>New UI</strong>
-                <small>Beta</small>
+                <strong>Classic UI</strong>
               </span>
               <Switch
-                aria-label={tr("Enable New UI beta", "Attiva New UI beta")}
-                checked={newUiEnabled}
-                onCheckedChange={setNewUiPreference}
+                aria-label={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}
+                checked={!newUiEnabled}
+                onCheckedChange={(classicEnabled) => setNewUiPreference(!classicEnabled)}
                 size="small"
               />
             </label>
@@ -1536,7 +1534,7 @@ export const AdminView = ({
           {canManageUsers && (
             <TabsContent value="backup" className="admin-tab-content">
               <div className={`admin-backup-workspace${isHostedAdmin ? " admin-backup-workspace--managed" : ""}`} data-onboarding="backup-section">
-                {isHostedAdmin && <VersionHistory />}
+                <VersionHistory />
                 <BackupManager hosted={isHostedAdmin} />
               </div>
             </TabsContent>

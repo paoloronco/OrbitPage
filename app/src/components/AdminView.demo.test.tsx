@@ -142,6 +142,8 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('admin-dashboard-mobile-nav-button');
     expect(html).toContain('content-workspace-option-locked');
     expect(html).toContain('Edit with AI');
+    expect(html).toContain('Classic UI');
+    expect(html).not.toContain('Beta');
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain('Page checklist');
     expect(html).not.toContain('Guided setup');
@@ -174,7 +176,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Logout');
     expect(html).toContain('Backup');
     expect(mockState.backupProps.at(-1)).toMatchObject({ hosted: true });
-    expect(html).toContain('admin-metrics-saas');
+    expect(html).not.toContain('admin-metrics-saas');
     expect(html).not.toContain('admin-dashboard-sidebar');
     expect(html).not.toContain('data-onboarding="public-page"');
     expect(html).toContain('data-testid="managed-analytics"');

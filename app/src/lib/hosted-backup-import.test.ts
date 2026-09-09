@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { inspectOrbitPageBackup, prepareHostedRestoreBackup } from './hosted-backup-import';
+import { inspectOrbitPageBackup, prepareHostedRestoreBackup, prepareSelfHostedRestoreBackup } from './hosted-backup-import';
 
 describe('hosted backup import', () => {
   it('converts an OSS application backup without carrying admin credentials', async () => {
@@ -150,6 +150,35 @@ describe('hosted backup import', () => {
       source: { username: 'legacy' },
       content: { profile: {}, links: [], theme: {}, consentConfig: {} },
     }).sections).toEqual(['profile', 'links', 'theme', 'privacy']);
+  });
+
+  it('converts current SaaS backups into selective self-hosted database rows', () => {
+    const backup = prepareSelfHostedRestoreBackup({
+      format: 'orbitpage-managed-page',
+      schemaVersion: 3,
+      runtimeVersion: '4.20.0',
+      createdAt: '2026-09-09T10:00:00.000Z',
+      source: { username: 'paolo', revision: 12 },
+      includedSections: ['profile', 'links', 'pages', 'theme'],
+      content: {
+        profile: { name: 'Paolo', bio: 'Managed backup', showAvatar: false, socialLinks: { github: 'https://github.com/example' } },
+        links: [{ id: 'link-1', title: 'GitHub', url: 'https://github.com/example', isActive: true }],
+        subpages: [{ id: 'page-1', slug: 'work', title: 'Work', links: [], enabled: true }],
+        theme: { primary: '#167d91', background: '#ffffff', foreground: '#111827' },
+      },
+    }, ['profile', 'links', 'pages']);
+
+    expect(backup).toMatchObject({
+      schemaVersion: 2,
+      includedSections: ['profile', 'links', 'pages'],
+      uploads: [],
+      tables: {
+        profile_data: [{ name: 'Paolo', show_avatar: 0, social_links: '{"github":"https://github.com/example"}' }],
+        links: [{ id: 'link-1', title: 'GitHub', sort_order: 0, is_active: 1 }],
+        subpages_config: [{ id: 1 }],
+      },
+    });
+    expect((backup as { tables: Record<string, unknown> }).tables).not.toHaveProperty('theme_config');
   });
 
   it('rejects unknown backup formats', async () => {

@@ -37,7 +37,7 @@ export function VersionHistory() {
     setMessage('');
     try {
       await versionHistoryApi.restore(revision);
-      setMessage(tr('Version restored and published. Reloading…', 'Versione ripristinata e pubblicata. Ricaricamento…'));
+      setMessage(tr('Version restored. Reloading…', 'Versione ripristinata. Ricaricamento…'));
       window.setTimeout(() => window.location.reload(), 900);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : tr('Restore failed.', 'Ripristino non riuscito.'));
@@ -51,19 +51,19 @@ export function VersionHistory() {
       <div className="min-w-0">
         <h3 className="text-lg font-semibold">{tr('Version history', 'Cronologia versioni')}</h3>
         <p className="text-sm leading-6 text-muted-foreground">
-          {tr('OrbitPage keeps the latest 25 published versions. Restoring creates a new version, so nothing is overwritten in place.', 'OrbitPage conserva le ultime 25 versioni pubblicate. Il ripristino crea una nuova versione, quindi nulla viene sovrascritto sul posto.')}
+          {tr('OrbitPage keeps the latest 25 page versions in this installation. Restoring creates a new version, so nothing is overwritten in place.', 'OrbitPage conserva le ultime 25 versioni della pagina in questa installazione. Il ripristino crea una nuova versione, quindi nulla viene sovrascritto sul posto.')}
         </p>
       </div>
     </div>
 
     {message && <p className="rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground" role="status">{message}</p>}
-    {loading ? <OrbitLoadingState compact state="searching" title={tr('Loading versions', 'Caricamento versioni')} description={tr('Reading the latest published snapshots.', 'Lettura delle ultime versioni pubblicate.')} /> : history?.versions.length ? <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+    {loading ? <OrbitLoadingState compact state="searching" title={tr('Loading versions', 'Caricamento versioni')} description={tr('Reading the latest saved snapshots.', 'Lettura delle ultime versioni salvate.')} /> : history?.versions.length ? <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
       {history.versions.map((version) => <div className="flex items-center gap-3 bg-background px-4 py-3" key={version.revision}>
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Clock3 className="h-4 w-4" /></span>
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-2 text-sm font-semibold">
             {tr('Version', 'Versione')} {version.revision}
-            {version.current && <span className="inline-flex items-center gap-1 rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700"><CheckCircle2 className="h-3 w-3" />{tr('Published', 'Pubblicata')}</span>}
+            {version.current && <span className="inline-flex items-center gap-1 rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-emerald-700"><CheckCircle2 className="h-3 w-3" />{tr('Current', 'Attuale')}</span>}
           </span>
           <span className="block truncate text-xs text-muted-foreground">{new Date(version.lastModified).toLocaleString(locale)}</span>
         </span>
@@ -72,6 +72,6 @@ export function VersionHistory() {
           <span className="hidden sm:inline">{restoring === version.revision ? tr('Restoring', 'Ripristino') : tr('Restore', 'Ripristina')}</span>
         </Button>
       </div>)}
-    </div> : <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">{tr('Publish your page to create the first restorable version.', 'Pubblica la pagina per creare la prima versione ripristinabile.')}</div>}
+    </div> : <div className="rounded-md border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">{tr('Save your page to create the first restorable version.', 'Salva la pagina per creare la prima versione ripristinabile.')}</div>}
   </Card>;
 }

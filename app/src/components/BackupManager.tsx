@@ -13,6 +13,7 @@ import {
   MAX_MANAGED_BACKUP_PAYLOAD_BYTES,
   inspectOrbitPageBackup,
   prepareHostedRestoreBackup,
+  prepareSelfHostedRestoreBackup,
   type BackupSectionId,
   type HostedBackupMedia,
   type OrbitPageBackupInspection,
@@ -175,9 +176,6 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
     try {
       const backup = JSON.parse(await file.text());
       const inspection = inspectOrbitPageBackup(backup);
-      if (!hosted && inspection.source !== "self-hosted") {
-        throw new Error("Managed-page backups can only be restored from the hosted OrbitPage dashboard.");
-      }
       const allowedSections = hosted
         ? [...MANAGED_BACKUP_SECTION_IDS, ...(inspection.source === "self-hosted" ? ["media" as const] : [])]
         : [...BACKUP_SECTION_IDS];
@@ -257,7 +255,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
 
     try {
       if (!hosted) {
-        await backupApi.restore(pendingRestore.backup, selected);
+        await backupApi.restore(prepareSelfHostedRestoreBackup(pendingRestore.backup, selected), selected);
         setState("success");
         setMessage("Selected sections restored. Reloading...");
         window.setTimeout(() => window.location.reload(), 800);

@@ -57,6 +57,11 @@ import {
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
 import {
+  captureApplicationVersion,
+  listApplicationVersions,
+  restoreApplicationVersion,
+} from './services/version-history.js';
+import {
   beginTwoFactorSetup,
   confirmTwoFactorSetup,
   disableTwoFactor,
@@ -1911,6 +1916,26 @@ await initializeDatabase();
 if (DEMO_MODE) {
   await initializeDemoReset();
 }
+
+const captureCurrentPageVersion = () => captureApplicationVersion({
+  appVersion: APP_VERSION,
+  dbAll,
+  dbGet,
+  dbRun,
+  uploadsPath,
+});
+const VERSIONED_WRITE_PATH = /^(?:\/api\/(?:profile|links(?:\/import|\/[^/]+\/(?:style|icon))?|theme|menu|subpages|consent-config|text-files(?:\/[^/]+)?|sitemap\/generate|ai\/page\/commit|admin\/restore)|\/api\/versions\/\d+\/restore)$/;
+app.use(async (req, _res, next) => {
+  if (DEMO_MODE || process.env.NODE_ENV === 'test' || !['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) || !VERSIONED_WRITE_PATH.test(req.path)) {
+    return next();
+  }
+  try {
+    await captureCurrentPageVersion();
+  } catch (error) {
+    console.error('Page version snapshot failed:', error?.message || error);
+  }
+  next();
+});
 
 const runAutomaticMediaCleanup = async () => {
   try {
@@ -4357,6 +4382,49 @@ app.post('/api/admin/restore', authenticateToken, requirePermission('users:manag
   }
 });
 
+app.get('/api/versions', authenticateToken, requirePermission('users:manage'), async (_req, res) => {
+  try {
+    await captureCurrentPageVersion();
+    res.json(await listApplicationVersions({ dbAll, dbGet }));
+  } catch (error) {
+    console.error('Version history error:', error);
+    res.status(500).json({ error: 'Failed to load version history.' });
+  }
+});
+
+app.post('/api/versions/:revision/restore', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Version restore is disabled in demo mode.' });
+  const revision = Number(req.params.revision);
+  if (!Number.isSafeInteger(revision) || revision < 0) return res.status(400).json({ error: 'Invalid version.' });
+  try {
+    await withTransaction(() => restoreApplicationVersion({ revision, dbGet, dbRun, uploadsPath }));
+    const currentRevision = await captureCurrentPageVersion();
+    res.json({ success: true, restoredFromRevision: revision, revision: currentRevision });
+  } catch (error) {
+    console.error('Version restore error:', error);
+    res.status(error?.message === 'This version is not available.' ? 404 : 400).json({ error: error?.message || 'Version restore failed.' });
+  }
+});
+
+app.get('/api/admin/media/cleanup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  try {
+    res.json(await cleanupUnusedMedia({ dbAll, uploadsPath, dryRun: true, graceMs: mediaCleanupGraceMs() }));
+  } catch (error) {
+    console.error('Unused media preview error:', error);
+    res.status(500).json({ error: 'Failed to inspect uploaded media.' });
+  }
+});
+
+app.post('/api/admin/media/cleanup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Media cleanup is disabled in demo mode.' });
+  try {
+    res.json(await cleanupUnusedMedia({ dbAll, uploadsPath, dryRun: false, graceMs: mediaCleanupGraceMs() }));
+  } catch (error) {
+    console.error('Unused media cleanup error:', error);
+    res.status(500).json({ error: 'Failed to clean uploaded media.' });
+  }
+});
+
 // Serve React app for all other routes
 
 // Configure multer for file uploads
@@ -4957,25 +5025,6 @@ app.get('*', spaLimiter, async (req, res) => {
   }
   const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) || isConfiguredPrimaryPage || isConfiguredSubpage ? 200 : 404;
   serveSpaIndex(req, res, { statusCode });
-});
-
-app.get('/api/admin/media/cleanup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
-  try {
-    res.json(await cleanupUnusedMedia({ dbAll, uploadsPath, dryRun: true, graceMs: mediaCleanupGraceMs() }));
-  } catch (error) {
-    console.error('Unused media preview error:', error);
-    res.status(500).json({ error: 'Failed to inspect uploaded media.' });
-  }
-});
-
-app.post('/api/admin/media/cleanup', authenticateToken, requirePermission('users:manage'), async (req, res) => {
-  if (DEMO_MODE) return res.status(403).json({ error: 'Media cleanup is disabled in demo mode.' });
-  try {
-    res.json(await cleanupUnusedMedia({ dbAll, uploadsPath, dryRun: false, graceMs: mediaCleanupGraceMs() }));
-  } catch (error) {
-    console.error('Unused media cleanup error:', error);
-    res.status(500).json({ error: 'Failed to clean uploaded media.' });
-  }
 });
 
 export { app, stripStaticSeoTags, buildStructuredData, renderSeoTags };
