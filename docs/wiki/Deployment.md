@@ -29,7 +29,9 @@ sudo docker pull paoloronco/orbitpage:latest
 # Or: sudo docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
-Both registries receive the same manifest only after a release commit passes the complete `main` CI and native smoke tests on amd64 and arm64. Docker selects the matching architecture automatically when you pull `latest` or a complete version such as `4.21.0`; no architecture suffix is required. Registries intentionally omit branch, commit, build, `vX.Y.Z`, and major/minor aliases. `latest` points to the newest stable [GitHub Release](https://github.com/paoloronco/OrbitPage/releases); use a complete `X.Y.Z` tag when updates and rollback must be deterministic.
+Both registries receive the same manifest only after a release commit passes the complete `main` CI and native smoke tests on amd64 and arm64. Docker selects the matching architecture automatically when you pull `latest` or a complete version such as `4.21.0`; no architecture suffix is required. Registries intentionally omit branch, commit, build, `latest-*`, `vX.Y.Z`, and major/minor aliases. `latest` points to the newest stable [GitHub Release](https://github.com/paoloronco/OrbitPage/releases); use a complete `X.Y.Z` tag when updates and rollback must be deterministic.
+
+Registry pages may also show `sha256:...` platform manifests and provenance attestations beneath those tags. They are required OCI internals, not additional pullable tag aliases; the public tag list remains `latest` plus complete versions.
 
 ### Prepare the secret and persistent data
 
@@ -562,7 +564,7 @@ Application code and persisted data are a pair. Do not start an older image agai
 3. Select the previous immutable image and let the installer repair and start the restored configuration:
 
    ```bash
-   sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:vW.X.Y orbitpage install
+   sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:W.X.Y orbitpage install
    ```
 
    Use the exact tag recorded before the update. Do not use `latest` for rollback.
