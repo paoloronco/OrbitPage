@@ -213,7 +213,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Page checklist');
   });
 
-  it('locks the OrbitPage badge on Starter and keeps it hidden by default on Pro', () => {
+  it('locks the OrbitPage badge on OSS and Starter while keeping it optional on Pro', () => {
     vi.stubGlobal('__APP_VERSION__', '4.7.0');
     const basePlan = {
       name: 'Plan',
@@ -231,6 +231,23 @@ describe('AdminView demo mode', () => {
         maxMenuItems: 0,
       },
     };
+
+    renderToStaticMarkup(
+      <AdminView
+        profile={{ name: 'Self-hosted', bio: '', avatar: '', showOrbitPageBadge: false }}
+        links={[]}
+        theme={defaultTheme}
+        currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+        onProfileUpdate={vi.fn()}
+        onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
+        onThemeChange={vi.fn()}
+        onLogout={vi.fn()}
+      />
+    );
+
+    expect(mockState.profileProps.at(-1)).toMatchObject({ orbitPageBadgeEditable: false });
+    expect(mockState.previewProps.at(-1)).toMatchObject({ showOrbitPageBadge: true });
 
     renderToStaticMarkup(
       <AdminView

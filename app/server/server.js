@@ -600,7 +600,7 @@ const getPublicProfilePayload = async () => {
     tab_title: profile.tab_title || undefined,
     meta_description: profile.meta_description || undefined,
     footer_text: profile.footer_text || undefined,
-    show_orbitpage_badge: DEMO_MODE || profile.show_orbitpage_badge !== 0,
+    show_orbitpage_badge: true,
     favicon: profile.favicon || undefined,
     google_analytics_id: profile.google_analytics_id || undefined,
     privacy_policy_url: demoLegalUrls.privacyPolicyUrl || profile.privacy_policy_url || undefined,
@@ -2368,9 +2368,7 @@ app.get('/api/public-page', async (req, res) => {
       ? subpages.find((page) => page.enabled && page.slug === requestedSubpage)
       : null;
     if (requestedSubpage && !requestedPrimaryPage && !subpage) return res.status(404).json({ error: 'Page not found' });
-    const branding = {
-      showOrbitPageBadge: profile.show_orbitpage_badge !== false,
-    };
+    const branding = { showOrbitPageBadge: true };
     const publicSubpage = subpage ? getPublicSubpagesPayload([subpage])[0] : null;
     res.json(publicSubpage ? {
       profile: { ...profile, name: publicSubpage.title, bio: publicSubpage.description, tab_title: publicSubpage.title, meta_description: publicSubpage.description },
@@ -2619,7 +2617,7 @@ app.get('/api/profile', optionalAuthenticateToken, async (req, res) => {
       tab_title: profile.tab_title || undefined,
       meta_description: profile.meta_description || undefined,
       footer_text: profile.footer_text || undefined,
-      show_orbitpage_badge: DEMO_MODE || profile.show_orbitpage_badge !== 0,
+      show_orbitpage_badge: true,
       favicon: profile.favicon || undefined,
       google_analytics_id: profile.google_analytics_id || undefined,
       privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : (profile.privacy_policy_url || undefined),
@@ -2779,7 +2777,6 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
     const tabTitle = body.tabTitle ?? body.tab_title ?? null;
     const metaDescription = body.metaDescription ?? body.meta_description ?? null;
     const footerText = body.footerText ?? body.footer_text ?? null;
-    const showOrbitPageBadgeRaw = body.showOrbitPageBadge ?? body.show_orbitpage_badge;
     const favicon = body.favicon ?? null;
     const googleAnalyticsId = body.googleAnalyticsId ?? body.google_analytics_id ?? null;
     const onboardingRaw = body.adminOnboardingEnabled ?? body.admin_onboarding_enabled;
@@ -2802,13 +2799,9 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 
     // Check if profile exists. In demo mode, privacy/compliance fields are read-only,
     // so profile saves preserve the original legal policy URLs.
-    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance, show_orbitpage_badge FROM profile_data LIMIT 1');
+    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1');
     const appearance = body.appearance ?? safeJsonParse(existing?.appearance, {});
-    const showOrbitPageBadge = DEMO_MODE
-      ? true
-      : (typeof showOrbitPageBadgeRaw === 'boolean'
-        ? showOrbitPageBadgeRaw
-        : existing?.show_orbitpage_badge !== 0);
+    const showOrbitPageBadge = true;
     const adminOnboardingEnabled = typeof onboardingRaw === 'number'
       ? onboardingRaw !== 0
       : (typeof onboardingRaw === 'boolean'

@@ -302,7 +302,7 @@ export const AdminView = ({
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
   const isProspectReadOnly = currentUser?.readOnly === true;
-  const orbitPageBadgeEditable = entitlements?.badgeRequired !== true && !isProspectReadOnly;
+  const orbitPageBadgeEditable = isHostedAdmin && entitlements?.badgeRequired !== true && !isProspectReadOnly;
   const resolveOrbitPageBadgeVisibility = (preference: boolean | undefined) => (
     orbitPageBadgeEditable ? (preference ?? !saasPlan) : true
   );
