@@ -83,3 +83,12 @@ export const ResetViaTokenBodySchema = z.object({
 export const ResetApplicationBodySchema = z.object({
   currentPassword: RequiredPasswordSchema,
 });
+
+export const PersonalPageActionBodySchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('create'), slug: PageSlugSchema }),
+  z.object({
+    action: z.literal('delete'),
+    confirmation: z.string().trim().min(1).max(80),
+    currentPassword: RequiredPasswordSchema,
+  }),
+]);

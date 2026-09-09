@@ -82,6 +82,7 @@ import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 import { PublishTools } from "./PublishTools";
 import { SelfHostedAiPanel } from "./SelfHostedAiPanel";
 import { SelfHostedAiAgent } from "./SelfHostedAiAgent";
+import { SelfHostedAccountActions } from "./SelfHostedAccountActions";
 import { OpenSourcePlan } from "./OpenSourcePlan";
 import { VisualSiteEditor, type VisualSiteEditorSection } from "./VisualSiteEditor";
 import { MenuView } from "./MenuView";
@@ -1524,8 +1525,11 @@ export const AdminView = ({
           {!isHostedAdmin && (
             <TabsContent value="account" className="admin-tab-content">
               <div className="oss-account-layout" data-onboarding="account-section">
-                <PasswordManager />
-                <TwoFactorManager username={currentUser?.username} />
+                <div className="oss-account-column"><PasswordManager /></div>
+                <div className="oss-account-column">
+                  <TwoFactorManager username={currentUser?.username} />
+                  <SelfHostedAccountActions publicPageHref={publicPageHref} />
+                </div>
               </div>
             </TabsContent>
           )}

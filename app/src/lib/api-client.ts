@@ -320,6 +320,13 @@ export interface SetupStatus {
   ready: boolean;
 }
 
+export interface PersonalPageStatus {
+  success: boolean;
+  active: boolean;
+  slug: string | null;
+  confirmationLabel: string;
+}
+
 interface SetupResponse extends ApiResponse {
   success: boolean;
   token: string;
@@ -621,6 +628,18 @@ export const authApi = {
     }
     return response;
   },
+};
+
+export const personalPageApi = {
+  status: async (): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page'),
+  create: async (slug: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'create', slug }),
+  }),
+  remove: async (confirmation: string, currentPassword: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'delete', confirmation, currentPassword }),
+  }),
 };
 
 export type AiSettings = {

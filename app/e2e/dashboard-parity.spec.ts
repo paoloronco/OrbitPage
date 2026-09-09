@@ -316,6 +316,14 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(page.locator('#new-password')).toHaveAttribute('autocomplete', 'new-password');
   await expect(page.locator('#confirm-password')).toHaveAttribute('autocomplete', 'new-password');
   await expect(page.locator('#two-factor-password')).toHaveAttribute('autocomplete', 'current-password');
+  await expect(page.getByRole('link', { name: 'Email support' })).toHaveAttribute('href', /^mailto:contact@orbitpage\.com/);
+  await expect(page.getByRole('button', { name: 'Remove personal page' })).toBeVisible();
+  const passwordCard = await page.locator('.oss-account-password-card').boundingBox();
+  const mfaCard = await page.locator('.oss-account-mfa-card').boundingBox();
+  expect(passwordCard).not.toBeNull();
+  expect(mfaCard).not.toBeNull();
+  expect(passwordCard!.x).toBeLessThan(mfaCard!.x);
+  expect(Math.abs(passwordCard!.y - mfaCard!.y)).toBeLessThanOrEqual(1);
   const passwordForms = await page.locator('.oss-account-layout input[type="password"]').evaluateAll((inputs) => inputs.map((input) => Boolean((input as HTMLInputElement).form)));
   expect(passwordForms.every(Boolean)).toBe(true);
 });

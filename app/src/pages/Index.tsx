@@ -111,6 +111,7 @@ const Index = () => {
   const [initialTheme] = useState(() => normalizeTheme(staticPage?.theme));
   const [loading, setLoading] = useState(!staticPage);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [pageRemoved, setPageRemoved] = useState(false);
   const [profile, setProfile] = useState<ProfileData>(() => normalizePublicProfile(staticPage?.profile));
   const [links, setLinks] = useState<LinkData[]>(() => normalizeLinkDtos(staticPage?.links || []));
   const [backgroundMedia, setBackgroundMedia] = useState<BackgroundMediaConfig | null>(
@@ -344,8 +345,11 @@ const Index = () => {
       } catch (error) {
         console.error('Error loading data:', error);
         if (!cancelled) {
-          window.__ORBITPAGE_BOOT_REPORT__?.('data-load');
-          setLoadFailed(true);
+          if (error instanceof Error && error.message === 'PAGE_REMOVED') setPageRemoved(true);
+          else {
+            window.__ORBITPAGE_BOOT_REPORT__?.('data-load');
+            setLoadFailed(true);
+          }
           setLoading(false);
         }
       }
@@ -359,6 +363,11 @@ const Index = () => {
   }, []);
 
   if (loading) return null;
+  if (pageRemoved) {
+    return <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: '24px', background: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: '420px', textAlign: 'center' }}><h1 style={{ margin: 0, fontSize: '1.25rem' }}>Page unavailable</h1><p style={{ margin: '10px 0 0', color: '#64748b' }}>This public OrbitPage has been removed by its owner.</p></div>
+    </main>;
+  }
   if (loadFailed) {
     return (
       <main

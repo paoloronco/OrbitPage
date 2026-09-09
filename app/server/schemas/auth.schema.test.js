@@ -4,6 +4,7 @@ import {
   CreateUserBodySchema,
   LoginBodySchema,
   PageSlugSchema,
+  PersonalPageActionBodySchema,
   ResetApplicationBodySchema,
   ResetViaTokenBodySchema,
   SetupBodySchema,
@@ -37,6 +38,12 @@ describe('auth schemas', () => {
     expect(() => PageSlugSchema.parse('admin')).toThrow();
     expect(() => PageSlugSchema.parse('links')).toThrow();
     expect(() => PageSlugSchema.parse('../page')).toThrow();
+  });
+
+  it('validates personal page creation and destructive confirmation separately', () => {
+    expect(PersonalPageActionBodySchema.parse({ action: 'create', slug: ' My-Page ' })).toEqual({ action: 'create', slug: 'my-page' });
+    expect(PersonalPageActionBodySchema.parse({ action: 'delete', confirmation: 'REMOVE my-page', currentPassword: 'Secret123!' })).toMatchObject({ action: 'delete' });
+    expect(() => PersonalPageActionBodySchema.parse({ action: 'delete', confirmation: 'REMOVE my-page' })).toThrow();
   });
 
   it('validates user names and roles for user management', () => {
