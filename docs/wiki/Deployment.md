@@ -19,13 +19,13 @@ OrbitPage publishes one prebuilt multi-architecture Linux image for amd64 and ar
 
 | Registry | Image |
 | --- | --- |
-| Docker Hub | `paueron/orbitpage` |
+| Docker Hub | `paoloronco/orbitpage` |
 | GitHub Container Registry | `ghcr.io/paoloronco/orbitpage` |
 
 Pull the image from either registry:
 
 ```bash
-sudo docker pull paueron/orbitpage:latest
+sudo docker pull paoloronco/orbitpage:latest
 # Or: sudo docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
@@ -61,7 +61,7 @@ sudo docker run -d --name orbitpage \
   -p 8080:8080 \
   -v /var/lib/orbitpage:/app/data \
   --security-opt no-new-privileges:true \
-  paueron/orbitpage:latest
+  paoloronco/orbitpage:latest
 ```
 
 `--restart unless-stopped` restarts OrbitPage after a failure or host reboot but respects an explicit `docker stop`. Replace it with `--restart always` only when the container must return after a Docker daemon restart even if it was stopped manually.
@@ -83,7 +83,7 @@ Use `env_file` in the production Compose definition instead of storing the secre
 ```yaml
 services:
   orbitpage:
-    image: paueron/orbitpage:vX.Y.Z
+    image: paoloronco/orbitpage:vX.Y.Z
     container_name: orbitpage
     restart: unless-stopped
     env_file:

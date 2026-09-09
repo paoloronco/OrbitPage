@@ -61,7 +61,9 @@ describe('deployment configuration', () => {
   it('publishes Docker images to both Docker Hub and GitHub Container Registry', () => {
     const workflow = read('.github/workflows/release.yml');
 
-    expect(workflow).toContain('DOCKERHUB_IMAGE: docker.io/paueron/orbitpage');
+    expect(workflow).toContain('DOCKERHUB_IMAGE: docker.io/paoloronco/orbitpage');
+    expect(workflow).toContain('LEGACY_DOCKERHUB_IMAGE: docker.io/paueron/orbitpage');
+    expect(workflow).toContain('LEGACY_DOCKERHUB_CUTOFF: "2026-10-09T00:00:00Z"');
     expect(workflow).toContain('GHCR_IMAGE: ghcr.io/paoloronco/orbitpage');
     expect(workflow).toContain('packages: write');
     expect(workflow).toContain('registry: ghcr.io');
@@ -106,6 +108,8 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('platform: linux/amd64');
     expect(workflow).toContain('platform: linux/arm64');
     expect(workflow).toContain('Smoke test published architecture image');
+    expect(workflow).toContain('ORBITPAGE_DISTRIBUTION_IMAGE=docker.io/paueron/orbitpage');
+    expect(workflow).toContain('Publish legacy rolling tags');
     expect(workflow).toContain('--tag "${IMAGE}:latest"');
     expect(workflow).toContain('--tag "${IMAGE}:main"');
     expect(workflow).toContain('--tag "${IMAGE}:sha-${SHORT_SHA}"');

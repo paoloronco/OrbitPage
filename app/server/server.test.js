@@ -5,6 +5,7 @@ vi.hoisted(() => {
   process.env.BASE_PATH = '/orbitpage';
   process.env.ORBITPAGE_ALLOWED_ORIGINS = 'https://trusted.example';
   process.env.ORBITPAGE_TRUST_PROXY = 'loopback';
+  process.env.ORBITPAGE_DISTRIBUTION_IMAGE = 'docker.io/paueron/orbitpage';
 });
 
 const authMockState = vi.hoisted(() => ({
@@ -100,6 +101,7 @@ describe('API Endpoints', () => {
     const response = await request(app).get('/health');
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('ok');
+    expect(response.body.distributionImage).toBe('docker.io/paueron/orbitpage');
   });
 
   it('serves unused-media inspection as JSON under the configured base path', async () => {

@@ -22,7 +22,7 @@ The README provides the product overview and fastest installation path. This wik
 - Official website and managed SaaS: <https://orbitpage.com>
 - Open-source product page: <https://orbitpage.com/en-US/open-source>
 - Repository: <https://github.com/paoloronco/OrbitPage>
-- Docker Hub: <https://hub.docker.com/r/paueron/orbitpage>
+- Docker Hub: <https://hub.docker.com/r/paoloronco/orbitpage>
 - GitHub Container Registry: <https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage>
 - Releases: <https://github.com/paoloronco/OrbitPage/releases>
 

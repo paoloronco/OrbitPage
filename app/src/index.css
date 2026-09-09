@@ -13623,6 +13623,51 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   }
 }
 
+.admin-docker-migration-banner {
+  align-items: center;
+  background: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-radius: 8px;
+  color: #78350f;
+  display: flex;
+  gap: 11px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+}
+
+.admin-docker-migration-banner > svg {
+  flex: 0 0 auto;
+}
+
+.admin-docker-migration-banner > div {
+  display: grid;
+  flex: 1;
+  font-size: 12px;
+  gap: 2px;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.admin-docker-migration-banner a {
+  color: #92400e;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .admin-docker-migration-banner {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .admin-docker-migration-banner a {
+    margin-left: 30px;
+  }
+}
+
 /* Keep the self-hosted shell controls geometrically identical to the SaaS shell. */
 .admin-dashboard-logo {
   flex: 1 1 0;

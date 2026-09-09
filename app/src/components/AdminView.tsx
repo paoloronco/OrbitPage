@@ -187,6 +187,7 @@ const ctaActionLabels: Record<string, string> = {
 const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
 const NEW_UI_STORAGE_KEY = "orbitpage.admin.new-ui";
 const EMBEDDED_PREVIEW_MEDIA_QUERY = "(min-width: 1121px)";
+const DOCKER_MIGRATION_GUIDE = "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Docker-Hub-migration.md";
 
 export const AdminView = ({
   profile,
@@ -238,6 +239,7 @@ export const AdminView = ({
     privacy: tr("Manage consent, policies and visitor choices.", "Gestisci consenso, informative e scelte dei visitatori."),
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
+  const [distributionImage, setDistributionImage] = useState("");
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [gaSaving, setGaSaving] = useState(false);
@@ -547,6 +549,7 @@ export const AdminView = ({
       try {
         const health = await utilityApi.getHealth();
         if (health.version) setAppVersion(health.version);
+        if (health.distributionImage) setDistributionImage(health.distributionImage.replace(/^docker\.io\//, ""));
       } catch (error) {
         console.warn("Failed to load app version from server, using build version:", error);
       }
@@ -1177,6 +1180,22 @@ export const AdminView = ({
             </a>
           </div>
         </header> : null}
+
+        {!isHostedAdmin && distributionImage === "paueron/orbitpage" && (
+          <section className="admin-docker-migration-banner" role="status">
+            <AlertTriangle aria-hidden="true" size={19} />
+            <div>
+              <strong>{tr("Docker image moved", "Immagine Docker trasferita")}</strong>
+              <span>{tr(
+                "Switch to paoloronco/orbitpage before legacy updates stop on October 9, 2026.",
+                "Passa a paoloronco/orbitpage prima che gli aggiornamenti legacy terminino il 9 ottobre 2026.",
+              )}</span>
+            </div>
+            <a href={DOCKER_MIGRATION_GUIDE} rel="noopener noreferrer" target="_blank">
+              {tr("Migration guide", "Guida alla migrazione")}
+            </a>
+          </section>
+        )}
 
         {isProspectReadOnly && (
           <section className="admin-readonly-banner" role="status">

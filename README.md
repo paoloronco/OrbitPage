@@ -12,7 +12,7 @@
   <a href="https://github.com/paoloronco/OrbitPage/actions/workflows/ci.yml"><img src="https://github.com/paoloronco/OrbitPage/actions/workflows/ci.yml/badge.svg?branch=main" alt="OrbitPage continuous integration status" /></a>
   <a href="https://github.com/paoloronco/OrbitPage/releases"><img src="https://img.shields.io/github/v/release/paoloronco/OrbitPage?label=version&amp;color=2563EB" alt="Latest OrbitPage version" /></a>
   <a href="./LICENSE.txt"><img src="https://img.shields.io/badge/license-MIT-111827" alt="MIT License" /></a>
-  <a href="https://hub.docker.com/r/paueron/orbitpage"><img src="https://img.shields.io/docker/pulls/paueron/orbitpage?logo=docker&amp;label=Docker%20pulls" alt="OrbitPage Docker Hub pulls" /></a>
+  <a href="https://hub.docker.com/r/paoloronco/orbitpage"><img src="https://img.shields.io/docker/pulls/paoloronco/orbitpage?logo=docker&amp;label=Docker%20pulls" alt="OrbitPage Docker Hub pulls" /></a>
   <a href="https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage"><img src="https://img.shields.io/badge/GHCR-orbitpage-181717?logo=github&logoColor=white" alt="GitHub Container Registry" /></a>
 </p>
 
@@ -31,6 +31,8 @@ This repository is the self-hosted edition. The optional managed service is avai
 <p align="center">
   <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="Animated OrbitPage editor showing content, style, shop, and publishing workflows" width="800" />
 </p>
+
+> **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; follow the [migration guide](./docs/wiki/Docker-Hub-migration.md).
 
 ## Why OrbitPage
 
@@ -67,14 +69,14 @@ printf 'NODE_ENV=production\nPORT=8080\nDATA_DIR=/app/data\nJWT_SECRET=%s\n' \
   "$(openssl rand -hex 32)" | sudo tee /etc/orbitpage/orbitpage.env >/dev/null
 sudo chmod 0600 /etc/orbitpage/orbitpage.env
 
-sudo docker pull paueron/orbitpage:latest
+sudo docker pull paoloronco/orbitpage:latest
 sudo docker run -d --name orbitpage \
   --restart unless-stopped \
   --env-file /etc/orbitpage/orbitpage.env \
   -p 8080:8080 \
   -v /var/lib/orbitpage:/app/data \
   --security-opt no-new-privileges:true \
-  paueron/orbitpage:latest
+  paoloronco/orbitpage:latest
 ~~~
 
 Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>.

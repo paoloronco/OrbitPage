@@ -86,14 +86,14 @@ Then refresh the preview in the relevant social platform debugger.
 Use one of the published image paths:
 
 ```bash
-docker pull paueron/orbitpage:latest
+docker pull paoloronco/orbitpage:latest
 docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
 Immutable version examples:
 
 ```bash
-docker pull paueron/orbitpage:v4.21.0
+docker pull paoloronco/orbitpage:v4.21.0
 docker pull ghcr.io/paoloronco/orbitpage:v4.21.0
 ```
 

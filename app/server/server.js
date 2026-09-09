@@ -91,6 +91,7 @@ try {
 } catch { /* package.json not available; use the fallback */ }
 
 const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' || process.env.DEMO_MODE === '1';
+const DISTRIBUTION_IMAGE = String(process.env.ORBITPAGE_DISTRIBUTION_IMAGE || '').trim();
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
 const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'cookie_consent_config', 'text_files', 'sitemap_config'];
@@ -988,7 +989,7 @@ const buildStructuredData = ({ profile, links, origin, canonicalUrl, pageKind })
       operatingSystem: 'Docker, Linux, Windows, macOS',
       softwareVersion: APP_VERSION,
       codeRepository: 'https://github.com/paoloronco/OrbitPage',
-      downloadUrl: 'https://hub.docker.com/r/paueron/orbitpage',
+      downloadUrl: 'https://hub.docker.com/r/paoloronco/orbitpage',
       license: 'https://github.com/paoloronco/OrbitPage/blob/main/LICENSE.txt',
       image: image || undefined,
       offers: {
@@ -1468,7 +1469,7 @@ OrbitPage is a Docker-ready public page manager with links, text blocks, social 
 
 - Website: ${homeUrl}
 ${DEMO_MODE ? `- About: ${aboutUrl}\n` : ''}- Repository: https://github.com/paoloronco/OrbitPage
-- Docker Hub: https://hub.docker.com/r/paueron/orbitpage
+- Docker Hub: https://hub.docker.com/r/paoloronco/orbitpage
 - Sitemap: ${sitemapUrl}
 
 ## Useful Paths
@@ -4780,6 +4781,7 @@ const healthHandler = (req, res) => {
     status: 'ok',
     version: APP_VERSION,
     demoMode: DEMO_MODE,
+    distributionImage: DISTRIBUTION_IMAGE,
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime()),
     node: process.version,
@@ -5149,6 +5151,9 @@ export { app, stripStaticSeoTags, buildStructuredData, renderSeoTags };
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`HTTP server running on port ${PORT}`);
+  if (DISTRIBUTION_IMAGE.replace(/^docker\.io\//, '') === 'paueron/orbitpage') {
+    console.warn('[OrbitPage] Docker Hub image moved to paoloronco/orbitpage. The paueron/orbitpage compatibility feed stops on 2026-10-09.');
+  }
   if (IS_PRODUCTION) {
     console.log(`Production mode: Frontend and API served from same origin`);
     console.log(`Access your OrbitPage instance at: http://your-domain:${PORT}`);

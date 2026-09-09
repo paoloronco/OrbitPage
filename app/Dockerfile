@@ -46,6 +46,8 @@ COPY docker-entrypoint.sh /app/server/docker-entrypoint.sh
 RUN chmod +x /app/server/docker-entrypoint.sh
 
 ENV PORT=8080
+ARG ORBITPAGE_DISTRIBUTION_IMAGE=docker.io/paoloronco/orbitpage
+ENV ORBITPAGE_DISTRIBUTION_IMAGE=${ORBITPAGE_DISTRIBUTION_IMAGE}
 ENV DATA_DIR=/app/data
 RUN mkdir -p /app/data
 
