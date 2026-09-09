@@ -6,8 +6,8 @@ export const APP_LOCALES = ["en", "it", "es", "fr", "de", "pt", "nl", "pl", "tr"
 export type AppLocale = typeof APP_LOCALES[number];
 
 export const APP_LOCALE_LABELS: Record<AppLocale, string> = {
-  en: "EN", it: "IT", es: "ES", fr: "FR", de: "DE", pt: "PT", nl: "NL",
-  pl: "PL", tr: "TR", ru: "RU", ar: "AR", zh: "中文", ja: "日本語", ko: "한국어",
+  en: "English", it: "Italiano", es: "Español", fr: "Français", de: "Deutsch", pt: "Português", nl: "Nederlands",
+  pl: "Polski", tr: "Türkçe", ru: "Русский", ar: "العربية", zh: "中文", ja: "日本語", ko: "한국어",
 };
 
 type PhraseCatalog = Record<string, string>;

@@ -143,6 +143,8 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('content-workspace-option-locked');
     expect(html).toContain('Edit with AI');
     expect(html).toContain('Classic UI');
+    expect(html).toContain('>English</option>');
+    expect(html.indexOf('class="ai-page-agent')).toBeGreaterThan(html.indexOf('</footer>'));
     expect(html).not.toContain('Beta');
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain('Page checklist');
