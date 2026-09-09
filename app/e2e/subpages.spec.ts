@@ -1,10 +1,9 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test('creates and serves an independent subpage from the Pages workspace', async ({ page }) => {
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
-  await page.locator('.content-workspace-option-main').filter({ hasText: /^Additional pages/ }).click();
+  await openAdminSection(page, 'Pages');
 
   const existingPage = page.locator('.subpage-list-item').filter({ hasText: 'Summer events' }).first();
   if (await existingPage.count() > 0) {

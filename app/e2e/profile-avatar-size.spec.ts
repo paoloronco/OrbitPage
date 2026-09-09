@@ -23,7 +23,7 @@ test("persists the profile image size and renders it exactly on the public page"
   await page.keyboard.press("End");
   await expect(avatarSize).toHaveAttribute("aria-valuenow", "192");
 
-  const save = page.getByRole("button", { name: "Save page" });
+  const save = page.getByRole("button", { name: "Save", exact: true });
   await expect(save).toBeEnabled();
   await save.click();
   await expect(save).toBeHidden();

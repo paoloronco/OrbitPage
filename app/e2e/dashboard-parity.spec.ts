@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+
+test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
 const primaryNavigation = [
   'Page',

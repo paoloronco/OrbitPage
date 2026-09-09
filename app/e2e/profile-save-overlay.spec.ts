@@ -19,7 +19,7 @@ test("shows a viewport-fixed save action only for real changes and offers timed 
 
   const pageName = page.getByLabel("Page name");
   const originalName = await pageName.inputValue();
-  const save = page.getByRole("button", { name: "Save page" });
+  const save = page.getByRole("button", { name: "Save", exact: true });
 
   await expect(save).toBeHidden();
   await pageName.fill(`Floating save ${Date.now()}`);
