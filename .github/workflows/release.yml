@@ -3,6 +3,12 @@ name: Publish versioned release
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to republish (for example v4.21.0)
+        required: true
+        type: string
 
 concurrency:
   group: release-${{ github.ref }}
@@ -28,12 +34,14 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
+      legacy_enabled: ${{ steps.legacy.outputs.enabled }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -42,6 +50,8 @@ jobs:
 
       - id: version
         name: Validate version metadata and release tag consistency
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -59,13 +69,14 @@ jobs:
           fi
 
           EXPECTED_TAG="v${VERSION}"
-          if [[ "${GITHUB_REF_NAME}" != "${EXPECTED_TAG}" ]]; then
-            echo "::error::Tag ${GITHUB_REF_NAME} does not match package version ${EXPECTED_TAG}."
+          if [[ "${RELEASE_TAG}" != "${EXPECTED_TAG}" ]]; then
+            echo "::error::Tag ${RELEASE_TAG} does not match package version ${EXPECTED_TAG}."
             exit 1
           fi
 
           git fetch origin main --no-tags
-          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          if ! git merge-base --is-ancestor "${RELEASE_SHA}" origin/main; then
             echo "::error::The tagged commit is not contained in origin/main."
             exit 1
           fi
@@ -78,70 +89,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -Eeuo pipefail
+          RELEASE_SHA="$(git rev-parse HEAD)"
           for CHECK_NAME in \
             "Quality Gate" \
             "E2E (chromium)" \
             "E2E (firefox)" \
             "E2E (webkit)" \
-            "Publish multi-arch Docker manifest"; do
+            "Build and smoke Docker (amd64)" \
+            "Build and smoke Docker (arm64)"; do
             CONCLUSION="$(gh api \
-              "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?per_page=100" \
+              "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_SHA}/check-runs?per_page=100" \
               --jq "[.check_runs[] | select(.name == \"${CHECK_NAME}\")] | sort_by(.completed_at) | last | .conclusion // \"missing\"" \
             )"
             if [[ "${CONCLUSION}" != "success" ]]; then
               echo "::error::Required check '${CHECK_NAME}' is ${CONCLUSION}; release stopped."
               exit 1
             fi
-          done
-
-  publish-images:
-    name: Publish versioned multi-arch manifests
-    needs: validate
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-
-      - name: Publish versioned multi-arch tags
-        env:
-          VERSION: ${{ needs.validate.outputs.version }}
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          SHORT_SHA="${GITHUB_SHA::7}"
-          MAJOR_MINOR="${VERSION%.*}"
-          for IMAGE in "$DOCKERHUB_IMAGE" "$GHCR_IMAGE"; do
-            docker buildx imagetools create \
-              --tag "${IMAGE}:${VERSION}" \
-              --tag "${IMAGE}:v${VERSION}" \
-              --tag "${IMAGE}:${MAJOR_MINOR}" \
-              --tag "${IMAGE}:latest" \
-              --tag "${IMAGE}:sha-${SHORT_SHA}" \
-              "${IMAGE}:build-${GITHUB_SHA}-amd64" \
-              "${IMAGE}:build-${GITHUB_SHA}-arm64"
-            INSPECTION="$(docker buildx imagetools inspect "${IMAGE}:${VERSION}")"
-            printf '%s\n' "$INSPECTION"
-            grep -q 'linux/amd64' <<<"$INSPECTION"
-            grep -q 'linux/arm64' <<<"$INSPECTION"
           done
 
       - id: legacy
@@ -160,39 +123,94 @@ jobs:
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Log out from primary Docker Hub account
-        if: ${{ steps.legacy.outputs.enabled == 'true' }}
-        run: docker logout docker.io
+  publish-images:
+    name: Publish versioned multi-arch manifests
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: write
 
-      - name: Log in to legacy Docker Hub account
-        if: ${{ steps.legacy.outputs.enabled == 'true' }}
-        uses: docker/login-action@v3
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.validate.outputs.tag }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
         with:
           registry: docker.io
-          username: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Publish legacy versioned tags
-        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and publish stable multi-arch images
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}
+            ${{ env.DOCKERHUB_IMAGE }}:latest
+            ${{ env.GHCR_IMAGE }}:${{ needs.validate.outputs.version }}
+            ${{ env.GHCR_IMAGE }}:latest
+          cache-from: type=gha,scope=release
+          cache-to: type=gha,mode=max,scope=release
+
+      - name: Verify stable multi-arch images
         env:
           VERSION: ${{ needs.validate.outputs.version }}
         shell: bash
         run: |
           set -Eeuo pipefail
-          SHORT_SHA="${GITHUB_SHA::7}"
-          MAJOR_MINOR="${VERSION%.*}"
-          docker buildx imagetools create \
-            --tag "${LEGACY_DOCKERHUB_IMAGE}:${VERSION}" \
-            --tag "${LEGACY_DOCKERHUB_IMAGE}:v${VERSION}" \
-            --tag "${LEGACY_DOCKERHUB_IMAGE}:${MAJOR_MINOR}" \
-            --tag "${LEGACY_DOCKERHUB_IMAGE}:latest" \
-            --tag "${LEGACY_DOCKERHUB_IMAGE}:sha-${SHORT_SHA}" \
-            "${LEGACY_DOCKERHUB_IMAGE}:build-${GITHUB_SHA}-amd64" \
-            "${LEGACY_DOCKERHUB_IMAGE}:build-${GITHUB_SHA}-arm64"
-          INSPECTION="$(docker buildx imagetools inspect "${LEGACY_DOCKERHUB_IMAGE}:${VERSION}")"
-          printf '%s\n' "$INSPECTION"
-          grep -q 'linux/amd64' <<<"$INSPECTION"
-          grep -q 'linux/arm64' <<<"$INSPECTION"
+          for IMAGE in "$DOCKERHUB_IMAGE" "$GHCR_IMAGE"; do
+            INSPECTION="$(docker buildx imagetools inspect "${IMAGE}:${VERSION}")"
+            printf '%s\n' "$INSPECTION"
+            grep -q 'linux/amd64' <<<"$INSPECTION"
+            grep -q 'linux/arm64' <<<"$INSPECTION"
+          done
+
+      - name: Log out from primary Docker Hub account
+        if: ${{ needs.validate.outputs.legacy_enabled == 'true' }}
+        run: docker logout docker.io
+
+      - name: Log in to legacy Docker Hub account
+        if: ${{ needs.validate.outputs.legacy_enabled == 'true' }}
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+
+      - name: Build and publish legacy stable multi-arch image
+        if: ${{ needs.validate.outputs.legacy_enabled == 'true' }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: ORBITPAGE_DISTRIBUTION_IMAGE=docker.io/paueron/orbitpage
+          tags: |
+            ${{ env.LEGACY_DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}
+            ${{ env.LEGACY_DOCKERHUB_IMAGE }}:latest
+          cache-from: type=gha,scope=release
 
   github-release:
     name: Create GitHub release
