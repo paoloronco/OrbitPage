@@ -157,12 +157,22 @@ jobs:
           retention-days: 30
         continue-on-error: true
 
-  publish-images:
-    name: Publish rolling Docker images
+  publish-platform-images:
+    name: Build and smoke Docker (${{ matrix.arch }})
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: [test, e2e]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            platform: linux/amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
@@ -173,18 +183,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Resolve image metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ${{ env.DOCKERHUB_IMAGE }}
-            ${{ env.GHCR_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=raw,value=main
-            type=sha,format=short,prefix=sha-
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -200,14 +198,85 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Build and publish rolling tags
+      - name: Build and publish architecture image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64
+          platforms: ${{ matrix.platform }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ env.DOCKERHUB_IMAGE }}:build-${{ github.sha }}-${{ matrix.arch }}
+            ${{ env.GHCR_IMAGE }}:build-${{ github.sha }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=rolling-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=rolling-${{ matrix.arch }}
+
+      - name: Smoke test published architecture image
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          IMAGE="${DOCKERHUB_IMAGE}:build-${GITHUB_SHA}-${{ matrix.arch }}"
+          cleanup() {
+            docker rm -f orbitpage-${{ matrix.arch }}-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker run -d --pull=always --name orbitpage-${{ matrix.arch }}-smoke \
+            -p 3001:8080 \
+            -e JWT_SECRET=ci-smoke-secret-ci-smoke-secret-123456 \
+            "$IMAGE"
+          test "$(docker image inspect "$IMAGE" --format '{{.Architecture}}')" = "${{ matrix.arch }}"
+          for attempt in {1..45}; do
+            if curl --fail http://127.0.0.1:3001/health --silent --show-error >/dev/null; then
+              echo "Docker health check passed on ${{ matrix.platform }} (attempt ${attempt})."
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs orbitpage-${{ matrix.arch }}-smoke
+          exit 1
+
+  publish-images:
+    name: Publish multi-arch Docker manifest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: publish-platform-images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Publish rolling multi-arch tags
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          for IMAGE in "$DOCKERHUB_IMAGE" "$GHCR_IMAGE"; do
+            docker buildx imagetools create \
+              --tag "${IMAGE}:latest" \
+              --tag "${IMAGE}:main" \
+              --tag "${IMAGE}:sha-${SHORT_SHA}" \
+              "${IMAGE}:build-${GITHUB_SHA}-amd64" \
+              "${IMAGE}:build-${GITHUB_SHA}-arm64"
+            INSPECTION="$(docker buildx imagetools inspect "${IMAGE}:latest")"
+            printf '%s\n' "$INSPECTION"
+            grep -q 'linux/amd64' <<<"$INSPECTION"
+            grep -q 'linux/arm64' <<<"$INSPECTION"
+          done
