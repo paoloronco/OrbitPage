@@ -28,6 +28,8 @@ describe('PasswordManager demo mode', () => {
   it('disables password change controls when demo mode is active', () => {
     const html = renderToStaticMarkup(<PasswordManager />);
 
+    expect(html).not.toContain('Security Status');
+    expect(html).not.toContain('Enhanced Security Active');
     expect(html).toContain('Password change is disabled in demo mode.');
     expect(inputWithDisabled(html, 'current-password')).toBe(true);
     expect(inputWithDisabled(html, 'new-password')).toBe(true);
