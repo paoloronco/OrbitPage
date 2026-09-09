@@ -33,6 +33,7 @@ import {
   ChangePasswordBodySchema,
   CreateUserBodySchema,
   LoginBodySchema,
+  PersonalPageActionBodySchema,
   ResetApplicationBodySchema,
   ResetViaTokenBodySchema,
   SetupBodySchema,
@@ -52,6 +53,7 @@ import {
 } from './services/upload-policy.js';
 import { assertUploadedMediaSignature } from './services/media-signature.js';
 import {
+  SELECTIVE_BACKUP_SCHEMA_VERSION,
   createApplicationBackup,
   restoreApplicationBackup,
 } from './services/backup-service.js';
@@ -789,6 +791,7 @@ const getPublicThemePayload = async () => {
 };
 
 const PUBLIC_SPA_ROUTES = new Set(['/', '/links', '/menu', '/privacy', '/cookies']);
+const PERSONAL_PAGE_SPA_ROUTES = new Set(PUBLIC_SPA_ROUTES);
 const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'team', 'account', 'plan', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const ADMIN_CONTENT_SECTIONS = new Set(['link', 'menu', 'shop', 'pages']);
 const isAdminSpaRoute = (pathName) => {
@@ -1972,6 +1975,36 @@ const setInstancePageSlug = async (slug) => {
   );
 };
 
+const isInstancePageActive = async () => {
+  const row = await dbGet('SELECT value FROM instance_settings WHERE key = ?', ['public_page_active']);
+  return row?.value !== '0';
+};
+
+const setInstancePageActive = async (active) => {
+  await dbRun(
+    `INSERT INTO instance_settings (key, value, updated_at)
+     VALUES ('public_page_active', ?, CURRENT_TIMESTAMP)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
+    [active ? '1' : '0'],
+  );
+};
+
+const EMPTY_PERSONAL_PAGE_BACKUP = {
+  schemaVersion: SELECTIVE_BACKUP_SCHEMA_VERSION,
+  includedSections: ['profile', 'links', 'pages', 'theme', 'menu', 'privacy', 'discovery', 'media'],
+  tables: {
+    profile_data: [],
+    links: [],
+    subpages_config: [],
+    theme_config: [],
+    menu_config: [],
+    cookie_consent_config: [],
+    text_files: [],
+    sitemap_config: [],
+  },
+  uploads: [],
+};
+
 const supportedNodeRuntime = () => {
   const [major = 0, minor = 0] = process.versions.node.split('.').map((part) => Number.parseInt(part, 10));
   return (major === 20 && minor >= 19) || (major === 22 && minor >= 12) || major > 22;
@@ -2077,6 +2110,7 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
     await withTransaction(async () => {
       await setupInitialCredentials(password);
       await setInstancePageSlug(slug);
+      await setInstancePageActive(true);
       await dbRun(
         `INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, admin_onboarding_enabled)
          SELECT '', '', '', '{}', 0, 1
@@ -2352,6 +2386,8 @@ app.get('/api/public-page', async (req, res) => {
   try {
     setNoStoreHeaders(res);
 
+    if (!(await isInstancePageActive())) return res.status(410).json({ error: 'PAGE_REMOVED' });
+
     const [profile, links, theme, storedMenu, subpages, pageSlug, setupRequired] = await Promise.all([
       getPublicProfilePayload(),
       getPublicLinksPayload(),
@@ -2399,6 +2435,86 @@ app.get('/api/public-url', apiLimiter, async (req, res) => {
   } catch (error) {
     console.error('Error resolving public URL:', error);
     res.status(500).json({ success: false, error: 'Failed to resolve public URL' });
+  }
+});
+
+app.get('/api/account/personal-page', authenticateToken, requirePermission('users:manage'), async (_req, res) => {
+  try {
+    const [active, slug] = await Promise.all([isInstancePageActive(), getInstancePageSlug()]);
+    res.json({ success: true, active, slug, confirmationLabel: slug || 'PAGE' });
+  } catch (error) {
+    console.error('Personal page status error:', error);
+    res.status(500).json({ success: false, error: 'Failed to load personal page status.' });
+  }
+});
+
+app.post('/api/account/personal-page', authenticateToken, requirePermission('users:manage'), resetLimiter, async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ success: false, error: 'Personal page changes are disabled in demo mode.' });
+
+  let mediaRestore = null;
+  try {
+    const action = PersonalPageActionBodySchema.parse(req.body || {});
+    const active = await isInstancePageActive();
+
+    if (action.action === 'create') {
+      if (active) return res.status(409).json({ success: false, error: 'A personal page is already active.' });
+      const subpages = await getSubpagesPayload();
+      if (subpages.some((page) => page.slug === action.slug)) {
+        return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
+      }
+      await withTransaction(async () => {
+        await setInstancePageSlug(action.slug);
+        await setInstancePageActive(true);
+      });
+      return res.json({ success: true, active: true, slug: action.slug, confirmationLabel: action.slug });
+    }
+
+    if (!active) return res.status(409).json({ success: false, error: 'The personal page has already been removed.' });
+    const slug = await getInstancePageSlug();
+    const confirmationLabel = slug || 'PAGE';
+    if (action.confirmation !== `REMOVE ${confirmationLabel}`) {
+      return res.status(400).json({ success: false, error: `Type REMOVE ${confirmationLabel} exactly.` });
+    }
+    if (!(await authenticateUser(action.currentPassword, req.user.username))) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect.' });
+    }
+
+    await withTransaction(async () => {
+      const restoreResult = await restoreApplicationBackup({
+        backup: EMPTY_PERSONAL_PAGE_BACKUP,
+        dbRun,
+        uploadsPath,
+        deferMediaCommit: true,
+      });
+      mediaRestore = restoreResult?.mediaRestore || null;
+      mediaRestore?.activate();
+      await dbRun(`INSERT OR REPLACE INTO theme_config (id, primary_color, background_color, text_color, button_style, full_config)
+        VALUES (1, '#007bff', '#ffffff', '#000000', 'rounded', '{"primaryColor":"#007bff","backgroundColor":"#ffffff","textColor":"#000000","buttonStyle":"rounded","fontFamily":"Inter, system-ui, sans-serif","linkStyle":"card","customCSS":""}')`);
+      await dbRun(`INSERT OR REPLACE INTO profile_data (id, name, bio, avatar, social_links, show_avatar)
+        VALUES (1, '', '', '', '{}', 1)`);
+      await dbRun('DELETE FROM ai_page_previews');
+      await dbRun('DELETE FROM page_versions');
+      await dbRun('DELETE FROM page_state');
+      await dbRun('INSERT INTO page_state (id, revision) VALUES (1, 0)');
+      await dbRun("DELETE FROM instance_settings WHERE key = 'page_slug'");
+      await setInstancePageActive(false);
+    });
+    try {
+      mediaRestore?.finalize();
+    } catch (cleanupError) {
+      console.warn('Personal page media cleanup warning:', cleanupError?.message || cleanupError);
+    }
+    return res.json({ success: true, active: false, slug: null, confirmationLabel: 'PAGE' });
+  } catch (error) {
+    try {
+      mediaRestore?.rollback();
+    } catch (rollbackError) {
+      console.error('Personal page media rollback error:', rollbackError);
+    }
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ success: false, error: validationMessage });
+    console.error('Personal page action error:', error);
+    return res.status(500).json({ success: false, error: 'The personal page could not be changed.' });
   }
 });
 
@@ -5005,6 +5121,14 @@ app.get('*', spaLimiter, async (req, res) => {
   console.log(`SPA catch-all serving index.html for: ${req.path}`);
   let isConfiguredSubpage = false;
   let isConfiguredPrimaryPage = false;
+  let isActivePersonalPageRoute = true;
+  if (PERSONAL_PAGE_SPA_ROUTES.has(req.path)) {
+    try {
+      isActivePersonalPageRoute = await isInstancePageActive();
+    } catch {
+      isActivePersonalPageRoute = false;
+    }
+  }
   if (/^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path)) {
     try {
       const slug = req.path.slice(1);
@@ -5016,7 +5140,7 @@ app.get('*', spaLimiter, async (req, res) => {
       isConfiguredPrimaryPage = false;
     }
   }
-  const statusCode = PUBLIC_SPA_ROUTES.has(req.path) || isAdminSpaRoute(req.path) || isConfiguredPrimaryPage || isConfiguredSubpage ? 200 : 404;
+  const statusCode = isAdminSpaRoute(req.path) || ((PUBLIC_SPA_ROUTES.has(req.path) || isConfiguredPrimaryPage || isConfiguredSubpage) && isActivePersonalPageRoute) ? 200 : 404;
   serveSpaIndex(req, res, { statusCode });
 });
 

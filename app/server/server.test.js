@@ -54,6 +54,7 @@ vi.mock('./auth.js', () => ({
 }));
 
 vi.mock('./services/backup-service.js', () => ({
+  SELECTIVE_BACKUP_SCHEMA_VERSION: 2,
   createApplicationBackup: vi.fn(),
   restoreApplicationBackup: vi.fn(),
 }));
@@ -622,6 +623,7 @@ describe('API Endpoints', () => {
 
   it('GET /api/public-page should return profile, links, and theme in one response', async () => {
     vi.mocked(dbGet)
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
         name: 'Paolo',
         bio: 'Test bio',
@@ -662,6 +664,42 @@ describe('API Endpoints', () => {
     expect(response.body.branding.showOrbitPageBadge).toBe(true);
     expect(response.body.links).toHaveLength(1);
     expect(response.body.theme.primary).toBe('#111111');
+  });
+
+  it('returns a removed-page response without exposing old public content', async () => {
+    vi.mocked(dbGet).mockResolvedValueOnce({ value: '0' });
+
+    const response = await request(app).get('/api/public-page');
+
+    expect(response.status).toBe(410);
+    expect(response.body).toEqual({ error: 'PAGE_REMOVED' });
+    expect(dbAll).not.toHaveBeenCalled();
+  });
+
+  it('removes only public page data while preserving the administrator account', async () => {
+    const activate = vi.fn();
+    const finalize = vi.fn();
+    vi.mocked(dbGet).mockImplementation(async (sql, params) => {
+      if (String(sql).includes('instance_settings') && params?.[0] === 'public_page_active') return { value: '1' };
+      if (String(sql).includes('instance_settings') && params?.[0] === 'page_slug') return { value: 'my-page' };
+      return null;
+    });
+    vi.mocked(restoreApplicationBackup).mockResolvedValue({ mediaRestore: { activate, finalize, rollback: vi.fn() } });
+
+    const response = await request(app)
+      .post('/api/account/personal-page')
+      .set('Authorization', 'Bearer mock-token')
+      .send({ action: 'delete', confirmation: 'REMOVE my-page', currentPassword: 'Secret123!' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ success: true, active: false, slug: null });
+    const backup = vi.mocked(restoreApplicationBackup).mock.calls[0][0].backup;
+    expect(backup.includedSections).not.toContain('accounts');
+    expect(backup.tables).not.toHaveProperty('admin_users');
+    expect(authenticateUser).toHaveBeenCalledWith('Secret123!', 'admin');
+    expect(activate).toHaveBeenCalledOnce();
+    expect(finalize).toHaveBeenCalledOnce();
+    expect(dbRun).not.toHaveBeenCalledWith(expect.stringContaining('DELETE FROM admin_users'));
   });
 
   it('GET /api/menu removes subsections and products beneath hidden parents', async () => {
@@ -826,6 +864,7 @@ describe('API Endpoints', () => {
 
   it('GET /orbitpage/api/public-page should serve the same API through BASE_PATH', async () => {
     vi.mocked(dbGet)
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
         name: 'Paolo',
         bio: 'Test bio',

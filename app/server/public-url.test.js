@@ -33,6 +33,7 @@ vi.mock('./auth.js', () => ({
 }));
 
 vi.mock('./services/backup-service.js', () => ({
+  SELECTIVE_BACKUP_SCHEMA_VERSION: 2,
   createApplicationBackup: vi.fn(),
   restoreApplicationBackup: vi.fn(),
 }));
