@@ -1187,7 +1187,7 @@ export const AdminView = ({
           </section>
         )}
 
-        {!(newUiEnabled && activeTab === "profile") && !["theme", "publish", "backup", "privacy"].includes(activeTab) && <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
+        {!(newUiEnabled && activeTab === "profile") && !["ai", "theme", "publish", "backup", "privacy", "newsletter", "team", "account"].includes(activeTab) && <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
           <MetricCard
             icon={Globe2}
             label={tr("Visible links", "Link visibili")}
