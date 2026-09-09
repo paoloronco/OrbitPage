@@ -101,6 +101,26 @@ describe('API Endpoints', () => {
     expect(response.body.status).toBe('ok');
   });
 
+  it('serves unused-media inspection as JSON under the configured base path', async () => {
+    const response = await request(app)
+      .get('/orbitpage/api/admin/media/cleanup')
+      .set('Authorization', 'Bearer mock-token');
+
+    expect(response.status).toBe(200);
+    expect(response.type).toBe('application/json');
+    expect(response.body).toMatchObject({ dryRun: true, deleted: 0 });
+  });
+
+  it('exposes local page versions instead of falling through to the SPA', async () => {
+    const response = await request(app)
+      .get('/orbitpage/api/versions')
+      .set('Authorization', 'Bearer mock-token');
+
+    expect(response.status).toBe(200);
+    expect(response.type).toBe('application/json');
+    expect(response.body).toMatchObject({ retention: 25, currentRevision: 0, versions: [] });
+  });
+
   it('does not grant CORS access to arbitrary production origins', async () => {
     const response = await request(app)
       .get('/health')

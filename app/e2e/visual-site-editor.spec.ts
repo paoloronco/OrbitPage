@@ -6,8 +6,8 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
 
-  const newUiSwitch = page.getByRole("switch", { name: "Enable New UI beta" });
-  if (await newUiSwitch.isChecked()) await newUiSwitch.click();
+  const classicUiSwitch = page.getByRole("switch", { name: "Switch between the classic dashboard and the visual editor." });
+  if (!(await classicUiSwitch.isChecked())) await classicUiSwitch.click();
 
   await page.getByRole("button", { name: "Content", exact: true }).click();
 
@@ -45,15 +45,15 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(page.getByText("Unsaved changes")).toBeHidden();
 
   await page.getByRole("button", { name: "Page", exact: true }).click();
-  await newUiSwitch.click();
-  await expect(newUiSwitch).toBeChecked();
+  await classicUiSwitch.click();
+  await expect(classicUiSwitch).not.toBeChecked();
   await expect(page.locator(".visual-site-editor")).toBeVisible();
   await expect(page.locator('[data-preview-device="desktop"]')).toBeVisible();
   await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toHaveCount(0);
   await expect(page.locator(".admin-dashboard-nav-page").getByRole("button", { name: "Site editor", exact: true })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole("switch", { name: "Enable New UI beta" })).toBeChecked();
+  await expect(page.getByRole("switch", { name: "Switch between the classic dashboard and the visual editor." })).not.toBeChecked();
   await expect(page.locator(".visual-site-editor")).toBeVisible();
 
   const inspector = page.locator(".visual-site-editor__inspector");
@@ -367,7 +367,7 @@ test("New UI edits the real page through selectable elements and keeps the prefe
   await expect(page.locator(".visual-site-editor")).toBeHidden();
   await expect(page.locator(".admin-theme-customizer")).toBeVisible();
 
-  await page.getByRole("switch", { name: "Enable New UI beta" }).click();
+  await page.getByRole("switch", { name: "Switch between the classic dashboard and the visual editor." }).click();
   await expect(page.locator(".visual-site-editor")).toBeHidden();
   await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toBeVisible();
 });
@@ -391,10 +391,9 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
 
   const mobileMode = page.locator(".admin-dashboard-mobile-editor-mode");
   await expect(mobileMode).toBeVisible();
-  await expect(mobileMode).toContainText("Site editor");
-  await expect(mobileMode).toContainText("Beta");
+  await expect(mobileMode).toContainText("Classic UI");
   await expect(mobileMode).toHaveRole("switch");
-  await expect(mobileMode).toHaveAttribute("aria-checked", "true");
+  await expect(mobileMode).toHaveAttribute("aria-checked", "false");
   await page.getByRole("button", { name: "Close navigation" }).first().click();
 
   const destinations = page.getByRole("navigation", { name: "Site sections" }).getByRole("button");

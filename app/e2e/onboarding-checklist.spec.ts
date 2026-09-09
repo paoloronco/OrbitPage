@@ -9,8 +9,8 @@ test("keeps guided setup out of the classic and new dashboard UI", async ({ page
   await expect(removedGuidance).toHaveCount(0);
   await expect(page.getByText("Guided setup", { exact: true })).toHaveCount(0);
 
-  const newUiSwitch = page.getByRole("switch", { name: "Enable New UI beta" });
-  if (!(await newUiSwitch.isChecked())) await newUiSwitch.click();
+  const classicUiSwitch = page.getByRole("switch", { name: "Switch between the classic dashboard and the visual editor." });
+  if (await classicUiSwitch.isChecked()) await classicUiSwitch.click();
   await expect(page.locator(".visual-site-editor")).toBeVisible();
   await expect(removedGuidance).toHaveCount(0);
   await expect(page.getByText("Guided setup", { exact: true })).toHaveCount(0);

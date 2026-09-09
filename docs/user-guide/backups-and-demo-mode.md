@@ -35,6 +35,14 @@ A complete export includes every section. A selective export declares only the s
 
 Treat every backup as sensitive. It can contain personal content, analytics counters, policy configuration, credential hashes, and the original uploaded files. The self-hosted AI provider key is intentionally excluded, but that does not make the backup safe to share.
 
+Managed OrbitPage SaaS backups with schema versions 1–3 can also be opened here. OrbitPage restores the supported page, block, subpage, theme, menu, privacy, and discovery data into the self-hosted schema. SaaS-only data such as tenants, plans, billing, managed accounts, and custom-domain state is not imported. Managed backups do not embed uploaded files; use a self-hosted export with **Uploaded media** when the destination must receive local file contents.
+
+## Restore a recent local version
+
+**Dashboard > Backup > Version history** keeps the latest 25 page snapshots in the instance's local SQLite database. OrbitPage records the current state before page, block, theme, menu, subpage, privacy, or discovery changes and captures the current revision when version history is opened. Restoring a snapshot creates a new current revision instead of overwriting history in place.
+
+These snapshots stay only in the instance's `DATA_DIR/orbitpage.db`; they are not uploaded to OrbitPage SaaS or another service. They are convenient for undoing an edit, but they are not a disaster-recovery backup because losing the database also loses the history.
+
 ## Restore selected sections
 
 Restoring is a replacement operation for the selected sections, not a merge.
@@ -59,7 +67,7 @@ Use this small format to move a block layout between trusted instances. Use **Ba
 
 ## Clean unused media
 
-Removing an image or video from the editor removes its database reference but does not immediately delete the file. OrbitPage protects referenced files and recent unreferenced uploads during cleanup.
+Removing an image or video from the editor removes its database reference but does not immediately delete the file. OrbitPage protects referenced files, files referenced by retained local versions, and recent unreferenced uploads during cleanup.
 
 1. Create a backup that includes Uploaded media.
 2. Select **Check unused media** to run a dry inspection.
