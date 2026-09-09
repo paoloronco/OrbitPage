@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Key, CheckCircle, AlertTriangle, Shield } from "lucide-react";
+import { Eye, EyeOff, Key, CheckCircle, AlertTriangle } from "lucide-react";
 import { isPasswordStrong } from "@/lib/auth";
 import { DEMO_MODE } from "@/lib/config";
 import { authApi } from "@/lib/api-client";
@@ -204,38 +204,6 @@ export const PasswordManager = () => {
 
   return (
     <div className="oss-account-password-group">
-      {/* Security Status */}
-      <Card className="glass-card p-6 space-y-4 oss-account-identity-card">
-        <div className="text-center space-y-2">
-          <div className="flex justify-center">
-            <Shield className="w-8 h-8 text-primary" />
-          </div>
-          <h2 className="text-xl font-semibold gradient-text">Security Status</h2>
-          
-          <div className="text-sm bg-primary/10 p-2 rounded-lg">
-            <p className="font-medium">Current Admin: <span className="text-primary">{username}</span></p>
-          </div>
-        </div>
-
-        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 space-y-2">
-          <div className="flex items-center gap-2 text-primary">
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-sm font-medium">Enhanced Security Active</span>
-          </div>
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <p>✅ Passwords hashed with bcrypt (12 rounds)</p>
-            <p>✅ Session token encrypted with AES-GCM</p>
-            <p>✅ Device-specific encryption keys</p>
-            <p>✅ 12-hour session timeout</p>
-            <p>✅ Strong password requirements</p>
-          </div>
-        </div>
-
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p><strong>Username:</strong> {username}</p>
-        </div>
-      </Card>
-
       {/* Password Change Form */}
       <Card className={`glass-card p-6 space-y-6 oss-account-password-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="text-center space-y-2">
