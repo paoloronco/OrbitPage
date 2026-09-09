@@ -659,7 +659,7 @@ describe('API Endpoints', () => {
     expect(response.body.profile.name).toBe('Paolo');
     expect(response.body.profile.privacy_policy_url).toBe('https://example.com/privacy');
     expect(response.body.profile.cookie_policy_url).toBe('https://example.com/cookies');
-    expect(response.body.branding.showOrbitPageBadge).toBe(false);
+    expect(response.body.branding.showOrbitPageBadge).toBe(true);
     expect(response.body.links).toHaveLength(1);
     expect(response.body.theme.primary).toBe('#111111');
   });
@@ -887,7 +887,7 @@ describe('API Endpoints', () => {
     expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('/privacy');
   });
 
-  it('PUT /api/profile persists the public OrbitPage badge preference', async () => {
+  it('PUT /api/profile keeps the public OrbitPage badge enabled', async () => {
     vi.mocked(dbGet).mockResolvedValueOnce({ id: 1, show_orbitpage_badge: 1 });
     vi.mocked(dbRun).mockResolvedValueOnce({ changes: 1 });
 
@@ -904,7 +904,7 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(vi.mocked(dbRun).mock.calls[0][0]).toContain('show_orbitpage_badge = ?');
-    expect(vi.mocked(dbRun).mock.calls[0][1][10]).toBe(0);
+    expect(vi.mocked(dbRun).mock.calls[0][1][10]).toBe(1);
   });
 
   it('PUT /api/profile persists visual profile and card layouts', async () => {

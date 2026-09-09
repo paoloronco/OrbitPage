@@ -250,9 +250,9 @@ const Admin = () => {
             tabTitle: (profileData as any).tab_title || (profileData as any).tabTitle || undefined,
             metaDescription: (profileData as any).meta_description || (profileData as any).metaDescription || undefined,
             footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
-            showOrbitPageBadge: bootstrap?.plan?.entitlements.badgeRequired === true
+            showOrbitPageBadge: !bootstrap || bootstrap.plan?.entitlements.badgeRequired === true
               ? true
-              : ((profileData as any).show_orbitpage_badge ?? (profileData as any).showOrbitPageBadge ?? !bootstrap),
+              : ((profileData as any).show_orbitpage_badge ?? (profileData as any).showOrbitPageBadge ?? false),
             favicon: isBundledProfileAvatar((profileData as any).favicon) ? undefined : ((profileData as any).favicon || undefined),
             googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
             privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
