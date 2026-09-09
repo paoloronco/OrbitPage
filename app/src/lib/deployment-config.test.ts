@@ -74,16 +74,18 @@ describe('deployment configuration', () => {
 
   it('publishes only latest and complete version Docker tags', () => {
     const workflow = read('.github/workflows/release.yml');
+    const publishedTags = workflow
+      .match(/^\s+\$\{\{ env\.(?:DOCKERHUB_IMAGE|GHCR_IMAGE|LEGACY_DOCKERHUB_IMAGE) \}\}:[^\r\n]+/gm)
+      ?.map((tag) => tag.trim());
 
-    expect(workflow).toContain('needs: validate');
-    expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}');
-    expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}:latest');
-    expect(workflow).toContain('${{ env.GHCR_IMAGE }}:${{ needs.validate.outputs.version }}');
-    expect(workflow).toContain('${{ env.GHCR_IMAGE }}:latest');
-    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:main');
-    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:sha-');
-    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:build-');
-    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:v${{ needs.validate.outputs.version }}');
+    expect(publishedTags).toEqual([
+      '${{ env.DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}',
+      '${{ env.DOCKERHUB_IMAGE }}:latest',
+      '${{ env.GHCR_IMAGE }}:${{ needs.validate.outputs.version }}',
+      '${{ env.GHCR_IMAGE }}:latest',
+      '${{ env.LEGACY_DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}',
+      '${{ env.LEGACY_DOCKERHUB_IMAGE }}:latest',
+    ]);
   });
 
   it('runs a blocking CI quality gate for pull requests and main pushes', () => {
