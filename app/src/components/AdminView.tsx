@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { CurrentUser } from "@/pages/Admin";
 import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/lib/permissions";
@@ -1088,18 +1087,18 @@ export const AdminView = ({
 
             <div className="admin-dashboard-sidebar-footer">
               <label className="admin-dashboard-language" title={tr("Language", "Lingua")}>
-                <Languages className="h-4 w-4" aria-hidden="true" />
+                <Languages aria-hidden="true" size={15} />
                 <span className="sr-only">{tr("Language", "Lingua")}</span>
                 <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>
                   {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
                 </select>
               </label>
               <button className="admin-dashboard-footer-action" onClick={handleLogout} title={tr("Sign out", "Esci")} type="button">
-                <LogOut className="h-4 w-4" aria-hidden="true" />
+                <LogOut aria-hidden="true" size={16} />
                 <span>{tr("Sign out", "Esci")}</span>
               </button>
               <a aria-label={tr("Back to site", "Torna al sito")} className="admin-dashboard-footer-action" href={publicPageHref} title={tr("Back to site", "Torna al sito")}>
-                <Globe2 className="h-4 w-4" aria-hidden="true" />
+                <Globe2 aria-hidden="true" size={16} />
                 <span>{tr("Back to site", "Torna al sito")}</span>
               </a>
             </div>
@@ -1158,18 +1157,20 @@ export const AdminView = ({
             </div>
           </div>
           <div className="admin-dashboard-header-actions">
-            <label className="admin-new-ui-toggle" title={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}>
+            <div className="admin-new-ui-toggle" title={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}>
               <span className="admin-new-ui-toggle__copy">
                 <Sparkles aria-hidden="true" size={15} />
                 <strong>Classic UI</strong>
               </span>
-              <Switch
+              <button
                 aria-label={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}
-                checked={!newUiEnabled}
-                onCheckedChange={(classicEnabled) => setNewUiPreference(!classicEnabled)}
-                size="small"
-              />
-            </label>
+                aria-checked={!newUiEnabled}
+                className={!newUiEnabled ? "is-active" : ""}
+                onClick={() => setNewUiPreference(!newUiEnabled)}
+                role="switch"
+                type="button"
+              ><i aria-hidden="true" /></button>
+            </div>
             <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <ExternalLink aria-hidden="true" size={17} />
               {tr("Public page", "Pagina pubblica")}

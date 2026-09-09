@@ -55,16 +55,50 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(shell).toHaveCSS('font-family', /Aptos|Avenir Next|Segoe UI Variable/);
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('width', '30px');
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('height', '30px');
+  await expect(page.locator('.admin-dashboard-logo-copy')).toHaveCSS('width', '130px');
   await expect(page.locator('.admin-dashboard-header')).toHaveCSS('min-height', '92px');
 
   const language = page.locator('.admin-dashboard-language');
   await expect(language).toHaveCSS('height', '36px');
   await expect(page.getByLabel('Language')).toHaveCSS('font-weight', '800');
+  await expect(language.locator('svg')).toHaveCSS('font-size', '15px');
 
+  const sidebarFooter = page.locator('.admin-dashboard-sidebar-footer');
+  await expect(sidebarFooter).toHaveCSS('gap', '4px');
+
+  const signOut = page.getByRole('button', { name: 'Sign out' });
   const backToSite = page.getByRole('link', { name: 'Back to site' });
+  await expect(signOut).toHaveCSS('height', '38px');
   await expect(backToSite).toHaveCSS('height', '38px');
   await expect(backToSite).toHaveCSS('font-weight', '800');
+  await expect(backToSite).toHaveCSS('white-space', 'nowrap');
   await expect(backToSite).not.toHaveAttribute('target', '_blank');
+  const footerActionBounds = await Promise.all([signOut.boundingBox(), backToSite.boundingBox()]);
+  expect(footerActionBounds.every(Boolean)).toBe(true);
+  expect(Math.abs(footerActionBounds[0]!.y - footerActionBounds[1]!.y)).toBeLessThanOrEqual(1);
+
+  const kicker = page.locator('.admin-dashboard-kicker').first();
+  await expect(kicker).toHaveCSS('font-size', '12px');
+  await expect(kicker).toHaveCSS('line-height', '14.4px');
+  const headerLeftEdges = await Promise.all([
+    kicker.boundingBox(),
+    page.locator('.admin-dashboard-heading-row h1').boundingBox(),
+    page.locator('.admin-dashboard-context-row').boundingBox(),
+  ]);
+  expect(headerLeftEdges.every(Boolean)).toBe(true);
+  expect(Math.max(...headerLeftEdges.map((bounds) => bounds!.x)) - Math.min(...headerLeftEdges.map((bounds) => bounds!.x))).toBeLessThanOrEqual(1);
+  const contextSlug = page.locator('.admin-dashboard-context-slug');
+  expect(await contextSlug.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return Math.abs(Number.parseFloat(style.width) - Number.parseFloat(style.flexBasis)) <= 1
+      && style.textOverflow === 'ellipsis';
+  })).toBe(true);
+
+  const classicUi = page.locator('.admin-new-ui-toggle');
+  const classicUiSwitch = classicUi.getByRole('switch');
+  expect((await classicUi.boundingBox())?.height).toBe(38);
+  await expect(classicUiSwitch).toHaveCSS('width', '38px');
+  await expect(classicUiSwitch).toHaveCSS('height', '22px');
 
   const publicPage = page.getByRole('link', { name: 'Public page' });
   await expect(publicPage).toHaveCSS('min-height', '40px');
@@ -101,6 +135,8 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
 
   const launcher = page.getByRole('button', { name: 'Edit with AI' });
   await expect(launcher).toBeVisible();
+  await expect(launcher).toHaveCSS('min-height', '46px');
+  await expect(launcher).toHaveCSS('font-size', '13px');
   await launcher.click();
   await expect(page.getByRole('dialog', { name: 'OrbitPage AI' })).toBeVisible();
   await page.getByRole('button', { name: 'Close AI assistant' }).click();

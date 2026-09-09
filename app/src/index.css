@@ -13622,3 +13622,80 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     forced-color-adjust: none;
   }
 }
+
+/* Keep the self-hosted shell controls geometrically identical to the SaaS shell. */
+.admin-dashboard-logo {
+  flex: 1 1 0;
+}
+
+.admin-dashboard-logo-copy {
+  width: 130px;
+  max-width: 130px;
+  flex: 0 1 130px;
+}
+
+.admin-dashboard-logo-copy small,
+.admin-dashboard-context-slug {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-dashboard-context-slug {
+  width: 14ch;
+  max-width: 14ch;
+  flex: 0 0 14ch;
+}
+
+.admin-dashboard-sidebar-footer {
+  gap: 4px;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.admin-dashboard-sidebar-footer .admin-dashboard-language {
+  height: 36px;
+  min-height: 36px;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.admin-dashboard-sidebar-footer .admin-dashboard-footer-action {
+  height: 38px;
+  min-height: 38px;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  font-size: var(--admin-text-meta);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.admin-dashboard-sidebar-footer :is(.admin-dashboard-language, .admin-dashboard-footer-action) > svg {
+  flex: 0 0 auto;
+}
+
+@media (min-width: 641px) {
+  .ai-page-agent-launcher {
+    min-height: 46px;
+    padding-inline: 17px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-dashboard-nav-stack .admin-dashboard-sidebar-footer {
+    gap: 6px;
+    margin-top: 12px;
+    padding: 10px 0 0;
+  }
+
+  .admin-dashboard-nav-stack .admin-dashboard-footer-action,
+  .admin-dashboard-nav-stack .admin-dashboard-language {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+}

@@ -1,6 +1,6 @@
 .admin-new-ui-toggle {
   display: inline-flex;
-  min-height: 36px;
+  min-height: 38px;
   align-items: center;
   gap: 9px;
   padding: 5px 7px 5px 10px;
@@ -8,13 +8,7 @@
   border-radius: 7px;
   background: #fff;
   color: #31415b;
-  cursor: pointer;
   box-shadow: 0 2px 8px rgb(25 42 70 / 4%);
-}
-
-.admin-new-ui-toggle:hover {
-  border-color: #b9c9e1;
-  background: #fbfcff;
 }
 
 .admin-new-ui-toggle__copy {
@@ -46,6 +40,46 @@
   letter-spacing: .07em;
   line-height: 1;
   text-transform: uppercase;
+}
+
+.orbitpage-admin .admin-new-ui-toggle [role="switch"] {
+  position: relative;
+  width: 38px;
+  min-width: 38px;
+  height: 22px;
+  min-height: 22px;
+  flex: 0 0 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.orbitpage-admin .admin-new-ui-toggle [role="switch"] i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 25%);
+  transition: transform 150ms ease;
+}
+
+.orbitpage-admin .admin-new-ui-toggle [role="switch"].is-active {
+  background: #3568f4;
+}
+
+.orbitpage-admin .admin-new-ui-toggle [role="switch"].is-active i {
+  transform: translateX(16px);
+}
+
+.orbitpage-admin .admin-new-ui-toggle [role="switch"]:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 4px rgb(53 104 244 / 18%);
 }
 
 .admin-new-ui-enabled .admin-tab-stage,
