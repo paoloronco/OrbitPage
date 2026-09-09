@@ -15,7 +15,9 @@ permissions:
   contents: read
 
 env:
-  DOCKERHUB_IMAGE: docker.io/paueron/orbitpage
+  DOCKERHUB_IMAGE: docker.io/paoloronco/orbitpage
+  LEGACY_DOCKERHUB_IMAGE: docker.io/paueron/orbitpage
+  LEGACY_DOCKERHUB_CUTOFF: "2026-10-09T00:00:00Z"
   GHCR_IMAGE: ghcr.io/paoloronco/orbitpage
 
 jobs:
@@ -235,6 +237,46 @@ jobs:
           docker logs orbitpage-${{ matrix.arch }}-smoke
           exit 1
 
+      - id: legacy
+        name: Check legacy Docker Hub compatibility window
+        env:
+          LEGACY_USERNAME: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
+          LEGACY_TOKEN: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if (( $(date -u +%s) >= $(date -u -d "$LEGACY_DOCKERHUB_CUTOFF" +%s) )); then
+            echo "::notice::Legacy Docker Hub updates ended at ${LEGACY_DOCKERHUB_CUTOFF}."
+          elif [[ -z "$LEGACY_USERNAME" || -z "$LEGACY_TOKEN" ]]; then
+            echo "::warning::Legacy Docker Hub credentials are unavailable; paueron/orbitpage was not updated."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log out from primary Docker Hub account
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        run: docker logout docker.io
+
+      - name: Log in to legacy Docker Hub account
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+
+      - name: Build legacy compatibility image
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          build-args: ORBITPAGE_DISTRIBUTION_IMAGE=docker.io/paueron/orbitpage
+          tags: ${{ env.LEGACY_DOCKERHUB_IMAGE }}:build-${{ github.sha }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=rolling-${{ matrix.arch }}
+
   publish-images:
     name: Publish multi-arch Docker manifest
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -280,3 +322,48 @@ jobs:
             grep -q 'linux/amd64' <<<"$INSPECTION"
             grep -q 'linux/arm64' <<<"$INSPECTION"
           done
+
+      - id: legacy
+        name: Check legacy Docker Hub compatibility window
+        env:
+          LEGACY_USERNAME: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
+          LEGACY_TOKEN: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if (( $(date -u +%s) >= $(date -u -d "$LEGACY_DOCKERHUB_CUTOFF" +%s) )); then
+            echo "::notice::Legacy Docker Hub updates ended at ${LEGACY_DOCKERHUB_CUTOFF}."
+          elif [[ -z "$LEGACY_USERNAME" || -z "$LEGACY_TOKEN" ]]; then
+            echo "::warning::Legacy Docker Hub credentials are unavailable; paueron/orbitpage was not updated."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log out from primary Docker Hub account
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        run: docker logout docker.io
+
+      - name: Log in to legacy Docker Hub account
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+
+      - name: Publish legacy rolling tags
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          docker buildx imagetools create \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:latest" \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:main" \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:sha-${SHORT_SHA}" \
+            "${LEGACY_DOCKERHUB_IMAGE}:build-${GITHUB_SHA}-amd64" \
+            "${LEGACY_DOCKERHUB_IMAGE}:build-${GITHUB_SHA}-arm64"
+          INSPECTION="$(docker buildx imagetools inspect "${LEGACY_DOCKERHUB_IMAGE}:latest")"
+          printf '%s\n' "$INSPECTION"
+          grep -q 'linux/amd64' <<<"$INSPECTION"
+          grep -q 'linux/arm64' <<<"$INSPECTION"

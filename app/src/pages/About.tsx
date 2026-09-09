@@ -19,7 +19,7 @@ import NotFound from "./NotFound";
 import { OrbitPageBrand } from "@/components/OrbitPageBrand";
 
 const githubUrl = "https://github.com/paoloronco/OrbitPage";
-const dockerUrl = "https://hub.docker.com/r/paueron/orbitpage";
+const dockerUrl = "https://hub.docker.com/r/paoloronco/orbitpage";
 const publicPageScreenshotUrl = "https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/screenshots/orbitpage-public-page.png";
 
 const coreFeatures = [
@@ -295,7 +295,7 @@ const About = () => {
   -p 8080:8080 \\
   -e JWT_SECRET="$(openssl rand -hex 32)" \\
   -v orbitpage_data:/app/data \\
-  paueron/orbitpage:latest`}</code></pre>
+  paoloronco/orbitpage:latest`}</code></pre>
           <a
             href={dockerUrl}
             target="_blank"

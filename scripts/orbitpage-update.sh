@@ -5,7 +5,7 @@
 # It self-installs and self-updates from the image on every run.
 #
 # First-time install (run once on the server):
-#   docker run --rm paueron/orbitpage:latest cat /app/orbitpage-update.sh \
+#   docker run --rm paoloronco/orbitpage:latest cat /app/orbitpage-update.sh \
 #     > /usr/local/bin/orbitpage-update && chmod +x /usr/local/bin/orbitpage-update
 #
 # After that, just run:
@@ -16,7 +16,7 @@ set -Eeuo pipefail
 umask 077
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-IMAGE="paueron/orbitpage:latest"
+IMAGE="paoloronco/orbitpage:latest"
 
 PROD_NAME="orbitpage"
 DEMO_NAME="orbitpage-demo"

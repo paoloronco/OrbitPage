@@ -1315,7 +1315,7 @@ export const utilityApi = {
     });
   },
 
-  getHealth: async (): Promise<{ status: string; version: string; timestamp: string; uptime: number; node: string; demoMode: boolean }> => {
-    return apiRequest<{ status: string; version: string; timestamp: string; uptime: number; node: string; demoMode: boolean }>('/health');
+  getHealth: async (): Promise<{ status: string; version: string; timestamp: string; uptime: number; node: string; demoMode: boolean; distributionImage: string }> => {
+    return apiRequest<{ status: string; version: string; timestamp: string; uptime: number; node: string; demoMode: boolean; distributionImage: string }>('/health');
   },
 };

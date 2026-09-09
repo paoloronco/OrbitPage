@@ -13,7 +13,9 @@ permissions:
 
 env:
   GHCR_IMAGE: ghcr.io/paoloronco/orbitpage
-  DOCKERHUB_IMAGE: docker.io/paueron/orbitpage
+  DOCKERHUB_IMAGE: docker.io/paoloronco/orbitpage
+  LEGACY_DOCKERHUB_IMAGE: docker.io/paueron/orbitpage
+  LEGACY_DOCKERHUB_CUTOFF: "2026-10-09T00:00:00Z"
 
 jobs:
   validate:
@@ -141,6 +143,56 @@ jobs:
             grep -q 'linux/amd64' <<<"$INSPECTION"
             grep -q 'linux/arm64' <<<"$INSPECTION"
           done
+
+      - id: legacy
+        name: Check legacy Docker Hub compatibility window
+        env:
+          LEGACY_USERNAME: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
+          LEGACY_TOKEN: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if (( $(date -u +%s) >= $(date -u -d "$LEGACY_DOCKERHUB_CUTOFF" +%s) )); then
+            echo "::notice::Legacy Docker Hub updates ended at ${LEGACY_DOCKERHUB_CUTOFF}."
+          elif [[ -z "$LEGACY_USERNAME" || -z "$LEGACY_TOKEN" ]]; then
+            echo "::warning::Legacy Docker Hub credentials are unavailable; paueron/orbitpage was not updated."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Log out from primary Docker Hub account
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        run: docker logout docker.io
+
+      - name: Log in to legacy Docker Hub account
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        uses: docker/login-action@v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
+
+      - name: Publish legacy versioned tags
+        if: ${{ steps.legacy.outputs.enabled == 'true' }}
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          SHORT_SHA="${GITHUB_SHA::7}"
+          MAJOR_MINOR="${VERSION%.*}"
+          docker buildx imagetools create \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:${VERSION}" \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:v${VERSION}" \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:${MAJOR_MINOR}" \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:latest" \
+            --tag "${LEGACY_DOCKERHUB_IMAGE}:sha-${SHORT_SHA}" \
+            "${LEGACY_DOCKERHUB_IMAGE}:build-${GITHUB_SHA}-amd64" \
+            "${LEGACY_DOCKERHUB_IMAGE}:build-${GITHUB_SHA}-arm64"
+          INSPECTION="$(docker buildx imagetools inspect "${LEGACY_DOCKERHUB_IMAGE}:${VERSION}")"
+          printf '%s\n' "$INSPECTION"
+          grep -q 'linux/amd64' <<<"$INSPECTION"
+          grep -q 'linux/arm64' <<<"$INSPECTION"
 
   github-release:
     name: Create GitHub release

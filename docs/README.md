@@ -8,6 +8,7 @@ This documentation covers the open-source, self-hosted OrbitPage application. Fo
 | --- | --- |
 | Evaluate OrbitPage from source | [Getting started](./wiki/Getting-started.md) |
 | Install on Linux, Proxmox, Docker, or a cloud host | [Deployment](./wiki/Deployment.md) |
+| Move from the former Docker Hub namespace | [Docker Hub migration](./wiki/Docker-Hub-migration.md) |
 | Configure runtime and build variables | [Configuration](./wiki/Configuration.md) |
 | Solve startup, proxy, login, or indexing problems | [Troubleshooting](./wiki/Troubleshooting.md) |
 | Use the legacy wiki entry point | [Wiki home](./wiki/Home.md) |

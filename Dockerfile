@@ -69,13 +69,18 @@ COPY docker-entrypoint.sh /app/server/docker-entrypoint.sh
 RUN chmod +x /app/server/docker-entrypoint.sh
 
 # Bundle the update script so the host can extract it:
-#   docker run --rm --entrypoint cat paueron/orbitpage:latest /app/orbitpage-update.sh \
+#   docker run --rm --entrypoint cat paoloronco/orbitpage:latest /app/orbitpage-update.sh \
 #     > /usr/local/bin/orbitpage-update && chmod +x /usr/local/bin/orbitpage-update
 COPY scripts/orbitpage-update.sh /app/orbitpage-update.sh
 RUN chmod +x /app/orbitpage-update.sh
 
 # Set default PORT environment variable
 ENV PORT=8080
+
+# Identifies the registry namespace at runtime. The compatibility build overrides
+# this value so the dashboard can show the Docker Hub migration notice.
+ARG ORBITPAGE_DISTRIBUTION_IMAGE=docker.io/paoloronco/orbitpage
+ENV ORBITPAGE_DISTRIBUTION_IMAGE=${ORBITPAGE_DISTRIBUTION_IMAGE}
 
 # Persistent data directory — mount a volume here to survive container updates:
 #   docker run -v /host/path/orbitpage-data:/app/data ...
