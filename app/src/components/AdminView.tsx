@@ -223,7 +223,7 @@ export const AdminView = ({
     pages: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
     menu: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
     ai: tr("Ask for a change, review the proposal, then apply it.", "Chiedi una modifica, controlla la proposta e poi applicala."),
-    theme: tr("Tune the visual system without losing readability.", "Perfeziona il sistema visivo senza perdere leggibilità."),
+    theme: tr("Adjust colors, type, background and card styles.", "Regola colori, caratteri, sfondo e stile delle card."),
     publish: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     qr: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
     txt: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
@@ -234,7 +234,7 @@ export const AdminView = ({
     plan: tr("Review what is included in this open-source edition.", "Scopri cosa include questa edizione open source."),
     access: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
     backup: tr("Keep portable copies and restore with confidence.", "Mantieni copie portabili e ripristina in sicurezza."),
-    analytics: tr("See visits, clicks and traffic sources.", "Controlla visite, clic e sorgenti di traffico."),
+    analytics: tr("Read the signals behind visits and interactions.", "Controlla visite, clic e sorgenti di traffico."),
     privacy: tr("Manage consent, policies and visitor choices.", "Gestisci consenso, informative e scelte dei visitatori."),
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
@@ -1173,7 +1173,6 @@ export const AdminView = ({
               <ExternalLink aria-hidden="true" size={17} />
               {tr("Public page", "Pagina pubblica")}
             </a>
-            {!isProspectReadOnly && <SelfHostedAiAgent onApplied={onAiApplied} />}
           </div>
         </header> : null}
 
@@ -1641,6 +1640,7 @@ export const AdminView = ({
           )}
         </footer>
       </div>
+      {!isHostedAdmin && !isProspectReadOnly && activeTab !== "ai" && <SelfHostedAiAgent onApplied={onAiApplied} />}
     </div>
   );
 };

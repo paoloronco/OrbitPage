@@ -58,11 +58,11 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(page.locator('.admin-dashboard-header')).toHaveCSS('min-height', '92px');
 
   const language = page.locator('.admin-dashboard-language');
-  await expect(language).toHaveCSS('height', '30px');
+  await expect(language).toHaveCSS('height', '36px');
   await expect(page.getByLabel('Language')).toHaveCSS('font-weight', '800');
 
   const backToSite = page.getByRole('link', { name: 'Back to site' });
-  await expect(backToSite).toHaveCSS('height', '32px');
+  await expect(backToSite).toHaveCSS('height', '38px');
   await expect(backToSite).toHaveCSS('font-weight', '800');
   await expect(backToSite).not.toHaveAttribute('target', '_blank');
 
@@ -110,7 +110,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(page.getByRole('heading', { name: 'Edit by asking' })).toBeVisible();
   await expect(page.getByText('Unmetered', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'OpenAI API' })).toBeVisible();
-  await expect(launcher).toBeVisible();
+  await expect(launcher).toBeHidden();
 });
 
 test('keeps the parity navigation and AI launcher usable on mobile', async ({ page }) => {
@@ -120,7 +120,7 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible();
   const launcher = page.getByRole('button', { name: 'Edit with AI' });
   await expect(launcher).toBeVisible();
-  await expect(page.locator('.ai-page-agent')).toHaveCSS('position', 'relative');
+  await expect(page.locator('.ai-page-agent')).toHaveCSS('position', 'fixed');
   const roleOptions = page.locator('.admin-profile-role-option');
   await expect(roleOptions).toHaveCount(3);
   for (let index = 0; index < 3; index += 1) {
