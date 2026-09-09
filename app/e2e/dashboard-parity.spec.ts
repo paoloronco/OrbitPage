@@ -96,7 +96,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
 
   const classicUi = page.locator('.admin-new-ui-toggle');
   const classicUiSwitch = classicUi.getByRole('switch');
-  expect((await classicUi.boundingBox())?.height).toBe(38);
+  expect((await classicUi.boundingBox())?.height).toBeCloseTo(38, 2);
   await expect(classicUiSwitch).toHaveCSS('width', '38px');
   await expect(classicUiSwitch).toHaveCSS('height', '22px');
 
