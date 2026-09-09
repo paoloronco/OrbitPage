@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+
+test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
 test.describe('OrbitPage Application Flow', () => {
   test('should complete first-time setup, edit profile, add a link, and verify public page', async ({ page }) => {
@@ -21,8 +23,9 @@ test.describe('OrbitPage Application Flow', () => {
     await bioInput.fill('Sviluppatore Web ed entusiasta dell\'open-source.');
 
     // Clicchiamo su Salva nel Profilo
-    const saveProfileButton = page.getByRole('button', { name: 'Save page' });
-    if (await saveProfileButton.isEnabled()) await saveProfileButton.click();
+    const saveProfileButton = page.getByRole('button', { name: 'Save', exact: true });
+    await expect(saveProfileButton).toBeEnabled();
+    await saveProfileButton.click();
 
     // 3. Apriamo la nuova area Content e aggiungiamo un link alla home.
     const linksTabTrigger = page.getByRole('button', { name: 'Content', exact: true });

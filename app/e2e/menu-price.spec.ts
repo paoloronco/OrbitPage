@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { openAdminSection, openAuthenticatedAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+
+test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
 test('accepts localized menu prices without rewriting the field while typing', async ({ page }, testInfo) => {
   const priceByProject: Record<string, string> = {

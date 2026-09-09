@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { openAdminSection, openAuthenticatedAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+
+test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
 test('opens a searchable block library grouped by category', async ({ page }) => {
   await openAuthenticatedAdmin(page);

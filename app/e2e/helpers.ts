@@ -3,6 +3,10 @@ import { expect, type Page } from '@playwright/test';
 export const E2E_ADMIN_PASSWORD = 'OrbitPageE2E123!';
 export const E2E_PUBLIC_PAGE_SLUG = 'e2e-public-page';
 
+export async function useClassicAdmin(page: Page) {
+  await page.addInitScript(() => window.localStorage.setItem('orbitpage.admin.new-ui', 'false'));
+}
+
 export async function openAuthenticatedAdmin(page: Page) {
   await page.goto('/admin');
 
@@ -34,6 +38,13 @@ export async function openAuthenticatedAdmin(page: Page) {
 }
 
 export async function openAdminSection(page: Page, name: string) {
+  const visualSection = page.getByRole('navigation', { name: 'Site sections' })
+    .getByRole('button', { name, exact: true });
+  if (await visualSection.isVisible()) {
+    await visualSection.click();
+    return;
+  }
+
   const openNavigation = page.getByRole('button', { name: 'Open navigation' });
 
   if (await openNavigation.isVisible()) {
@@ -41,7 +52,20 @@ export async function openAdminSection(page: Page, name: string) {
     await expect(page.getByRole('button', { name: 'Close navigation' }).first()).toBeVisible();
   }
 
-  const sectionButton = page.getByRole('button', { name, exact: true });
+  const visualSectionNames = ['Page', 'Content', 'Menu', 'Shop', 'Pages'];
+  if (visualSectionNames.includes(name)) {
+    const siteEditorButton = page.locator('.admin-dashboard-nav-page')
+      .getByRole('button', { name: 'Site editor', exact: true });
+    if (await siteEditorButton.isVisible()) {
+      await siteEditorButton.click();
+      await expect(visualSection).toBeVisible();
+      await visualSection.click();
+      return;
+    }
+  }
+
+  const sectionButton = page.locator('.admin-dashboard-nav')
+    .getByRole('button', { name, exact: true });
   await expect(sectionButton).toBeVisible();
   await sectionButton.click();
 }
