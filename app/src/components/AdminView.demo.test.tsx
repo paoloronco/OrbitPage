@@ -185,6 +185,27 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('https://github.com/paoloronco/OrbitPage');
   });
 
+  it('hides workspace metrics from OSS utility sections', () => {
+    for (const requestedTab of ['ai', 'theme', 'publish', 'backup', 'privacy', 'newsletter', 'team', 'account'] as const) {
+      const html = renderToStaticMarkup(
+        <AdminView
+          profile={{ name: 'Self-hosted', bio: '', avatar: '' }}
+          links={[]}
+          theme={defaultTheme}
+          currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+          onProfileUpdate={vi.fn()}
+          onLinksUpdate={vi.fn()}
+          onMenuUpdate={vi.fn()}
+          onThemeChange={vi.fn()}
+          onLogout={vi.fn()}
+          requestedTab={requestedTab}
+        />
+      );
+
+      expect(html).not.toContain('admin-metrics-saas');
+    }
+  });
+
   it('marks prospect sessions as read-only while keeping the hosted sections visible', () => {
     vi.stubGlobal('__APP_VERSION__', '4.7.0');
 
