@@ -53,9 +53,18 @@ function loadImage(file: File) {
   });
 }
 
-function outputName(filename: string, type: "image/avif" | "image/webp") {
+const OUTPUT_EXTENSIONS = {
+  "image/avif": "avif",
+  "image/webp": "webp",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+} as const;
+
+type CanvasImageType = keyof typeof OUTPUT_EXTENSIONS;
+
+function outputName(filename: string, type: CanvasImageType) {
   const base = filename.replace(/\.[^.]+$/, "").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-+|-+$/g, "") || "image";
-  return `${base.slice(0, 80)}.${type === "image/avif" ? "avif" : "webp"}`;
+  return `${base.slice(0, 80)}.${OUTPUT_EXTENSIONS[type]}`;
 }
 
 export async function optimizeImageForUpload(file: File, variant: ImageUploadVariant): Promise<File> {
@@ -83,6 +92,9 @@ export async function optimizeImageForUpload(file: File, variant: ImageUploadVar
       { scale: 0.82, quality: 0.76 },
       { scale: 0.68, quality: 0.66 },
     ];
+    const outputTypes: CanvasImageType[] = file.type === "image/jpeg"
+      ? ["image/avif", "image/webp", "image/jpeg", "image/png"]
+      : ["image/avif", "image/webp", "image/png", "image/jpeg"];
 
     for (const attempt of attempts) {
       const width = Math.max(1, Math.round(image.naturalWidth * baseScale * attempt.scale));
@@ -93,7 +105,7 @@ export async function optimizeImageForUpload(file: File, variant: ImageUploadVar
       const context = canvas.getContext("2d");
       if (!context) throw new Error("This browser cannot optimize images.");
       context.drawImage(image, 0, 0, width, height);
-      for (const type of ["image/avif", "image/webp"] as const) {
+      for (const type of outputTypes) {
         const blob = await canvasBlob(canvas, type, attempt.quality);
         if (blob && blob.size <= limits.maxOutputBytes) {
           return new File([blob], outputName(file.name, type), { type });
