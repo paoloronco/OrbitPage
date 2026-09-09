@@ -51,9 +51,10 @@ describe('deployment configuration', () => {
     expect(workflow).toContain("require('./app/package.json').version");
     expect(workflow).toContain("require('./app/server/package.json').version");
     expect(workflow).toContain('EXPECTED_TAG="v${VERSION}"');
-    expect(workflow).toContain('git merge-base --is-ancestor "${GITHUB_SHA}" origin/main');
+    expect(workflow).toContain('git merge-base --is-ancestor "${RELEASE_SHA}" origin/main');
     expect(workflow).toContain('"E2E (webkit)"');
-    expect(workflow).toContain('"Publish multi-arch Docker manifest"');
+    expect(workflow).toContain('"Build and smoke Docker (amd64)"');
+    expect(workflow).toContain('"Build and smoke Docker (arm64)"');
     expect(workflow).toContain('gh release create "$TAG"');
     expect(workflow).not.toContain('git push origin "$TAG"');
   });
@@ -71,15 +72,18 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('password: ${{ github.token }}');
   });
 
-  it('promotes the CI-tested amd64 and arm64 images under immutable release tags', () => {
+  it('publishes only latest and complete version Docker tags', () => {
     const workflow = read('.github/workflows/release.yml');
 
     expect(workflow).toContain('needs: validate');
-    expect(workflow).toContain('--tag "${IMAGE}:${VERSION}"');
-    expect(workflow).toContain('--tag "${IMAGE}:v${VERSION}"');
-    expect(workflow).toContain('--tag "${IMAGE}:${MAJOR_MINOR}"');
-    expect(workflow).toContain('"${IMAGE}:build-${GITHUB_SHA}-amd64"');
-    expect(workflow).toContain('"${IMAGE}:build-${GITHUB_SHA}-arm64"');
+    expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}');
+    expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}:latest');
+    expect(workflow).toContain('${{ env.GHCR_IMAGE }}:${{ needs.validate.outputs.version }}');
+    expect(workflow).toContain('${{ env.GHCR_IMAGE }}:latest');
+    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:main');
+    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:sha-');
+    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:build-');
+    expect(workflow).not.toContain('${{ env.DOCKERHUB_IMAGE }}:v${{ needs.validate.outputs.version }}');
   });
 
   it('runs a blocking CI quality gate for pull requests and main pushes', () => {
@@ -96,23 +100,19 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('curl --fail http://127.0.0.1:3001/health');
   });
 
-  it('publishes rolling Docker tags only after every main CI job succeeds', () => {
+  it('tests native Docker architectures on main without publishing registry tags', () => {
     const workflow = read('.github/workflows/ci.yml');
 
     expect(workflow).toContain("github.event_name == 'push' && github.ref == 'refs/heads/main'");
     expect(workflow).toContain('needs: [test, e2e]');
-    expect(workflow).toContain('${{ env.DOCKERHUB_IMAGE }}');
-    expect(workflow).toContain('${{ env.GHCR_IMAGE }}');
     expect(workflow).toContain('runner: ubuntu-24.04');
     expect(workflow).toContain('runner: ubuntu-24.04-arm');
     expect(workflow).toContain('platform: linux/amd64');
     expect(workflow).toContain('platform: linux/arm64');
-    expect(workflow).toContain('Smoke test published architecture image');
-    expect(workflow).toContain('ORBITPAGE_DISTRIBUTION_IMAGE=docker.io/paueron/orbitpage');
-    expect(workflow).toContain('Publish legacy rolling tags');
-    expect(workflow).toContain('--tag "${IMAGE}:latest"');
-    expect(workflow).toContain('--tag "${IMAGE}:main"');
-    expect(workflow).toContain('--tag "${IMAGE}:sha-${SHORT_SHA}"');
+    expect(workflow).toContain('load: true');
+    expect(workflow).toContain('Smoke test architecture image');
+    expect(workflow).not.toContain('docker.io/paoloronco/orbitpage');
+    expect(workflow).not.toContain('ghcr.io/paoloronco/orbitpage');
   });
 
   it('builds the frontend before server tests that exercise SPA rendering', () => {

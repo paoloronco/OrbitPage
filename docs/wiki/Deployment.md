@@ -29,7 +29,7 @@ sudo docker pull paoloronco/orbitpage:latest
 # Or: sudo docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
-Both registries receive the same manifest after the complete `main` CI and native smoke tests pass on amd64 and arm64. Docker selects the matching architecture automatically when you pull a shared tag such as `latest` or `vX.Y.Z`; no architecture suffix is required. The `latest` and `main` tags follow that build, while `sha-<commit>` pins it. Immutable version tags are published with [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). Use a complete `vX.Y.Z` tag when updates and rollback must be deterministic; use `latest` only when the deployment intentionally follows the newest green `main` build.
+Both registries receive the same manifest only after a release commit passes the complete `main` CI and native smoke tests on amd64 and arm64. Docker selects the matching architecture automatically when you pull `latest` or a complete version such as `4.21.0`; no architecture suffix is required. Registries intentionally omit branch, commit, build, `vX.Y.Z`, and major/minor aliases. `latest` points to the newest stable [GitHub Release](https://github.com/paoloronco/OrbitPage/releases); use a complete `X.Y.Z` tag when updates and rollback must be deterministic.
 
 ### Prepare the secret and persistent data
 
@@ -83,7 +83,7 @@ Use `env_file` in the production Compose definition instead of storing the secre
 ```yaml
 services:
   orbitpage:
-    image: paoloronco/orbitpage:vX.Y.Z
+    image: paoloronco/orbitpage:X.Y.Z
     container_name: orbitpage
     restart: unless-stopped
     env_file:
@@ -96,7 +96,7 @@ services:
       - no-new-privileges:true
 ```
 
-Replace `vX.Y.Z` with a real release tag, save the file as `compose.production.yaml`, and start it:
+Replace `X.Y.Z` with a real release version, save the file as `compose.production.yaml`, and start it:
 
 ```bash
 sudo docker compose -f compose.production.yaml pull
@@ -168,10 +168,10 @@ Pin an immutable release tag when deterministic updates and rollback are require
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
-  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:vX.Y.Z bash
+  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:X.Y.Z bash
 ```
 
-Use a real tag from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). Do not copy the literal `vX.Y.Z` placeholder.
+Use the release number from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases) without the Git tag's leading `v`. Do not copy the literal `X.Y.Z` placeholder.
 
 ### Management commands
 
