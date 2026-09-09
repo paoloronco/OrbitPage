@@ -54,6 +54,22 @@ describe("image upload validation", () => {
     expect(toBlob).toHaveBeenCalledTimes(2);
   });
 
+  it("falls back to PNG for images that may contain transparency", async () => {
+    const toBlob = imageEnvironment(["image/png", "image/png", "image/png"]);
+    const png = await optimizeImageForUpload(new File(["source"], "logo.png", { type: "image/png" }), "profile");
+
+    expect(png).toMatchObject({ name: "logo.png", type: "image/png" });
+    expect(toBlob.mock.calls.map(([, type]) => type)).toEqual(["image/avif", "image/webp", "image/png"]);
+  });
+
+  it("falls back to JPEG before PNG for JPEG sources", async () => {
+    const toBlob = imageEnvironment(["image/png", "image/png", "image/jpeg"]);
+    const jpeg = await optimizeImageForUpload(new File(["source"], "photo.jpeg", { type: "image/jpeg" }), "cover");
+
+    expect(jpeg).toMatchObject({ name: "photo.jpg", type: "image/jpeg" });
+    expect(toBlob.mock.calls.map(([, type]) => type)).toEqual(["image/avif", "image/webp", "image/jpeg"]);
+  });
+
   it("formats byte limits for user-facing errors", () => {
     expect(formatFileSize(1.5 * 1024 * 1024)).toBe("1.5 MB");
   });

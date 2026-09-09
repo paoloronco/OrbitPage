@@ -67,6 +67,7 @@ These are targets, not contractual guarantees.
 - On non-secure HTTP contexts where Web Crypto is unavailable, the frontend keeps the JWT in memory for the current document instead of writing a plaintext fallback.
 - SQLite queries use parameterized statements through server-side helpers.
 - Auth, reset, API, and SPA routes are rate-limited.
+- The Content Security Policy permits `blob:` URLs only for local image and media previews; scripts and workers remain restricted.
 - Docker startup requires `JWT_SECRET`; production Node deployments should also set it explicitly.
 - Optional `RESET_TOKEN` enables protected recovery endpoints and should be at least 32 characters.
 - Uploaded files are written under `DATA_DIR/uploads` and served from `/uploads`.
