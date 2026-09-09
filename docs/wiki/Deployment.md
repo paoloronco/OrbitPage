@@ -15,7 +15,7 @@ OrbitPage uses SQLite and local uploads. Run exactly one application replica aga
 
 ## Docker image (recommended)
 
-OrbitPage publishes a prebuilt Linux amd64 image to two registries:
+OrbitPage publishes one prebuilt multi-architecture Linux image for amd64 and arm64 to two registries:
 
 | Registry | Image |
 | --- | --- |
@@ -29,7 +29,7 @@ sudo docker pull paueron/orbitpage:latest
 # Or: sudo docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
-Both registries receive the same image after the complete `main` CI passes. The `latest` and `main` tags follow that build, while `sha-<commit>` pins it. Immutable version tags are published with [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). Use a complete `vX.Y.Z` tag when updates and rollback must be deterministic; use `latest` only when the deployment intentionally follows the newest green `main` build.
+Both registries receive the same manifest after the complete `main` CI and native smoke tests pass on amd64 and arm64. Docker selects the matching architecture automatically when you pull a shared tag such as `latest` or `vX.Y.Z`; no architecture suffix is required. The `latest` and `main` tags follow that build, while `sha-<commit>` pins it. Immutable version tags are published with [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). Use a complete `vX.Y.Z` tag when updates and rollback must be deterministic; use `latest` only when the deployment intentionally follows the newest green `main` build.
 
 ### Prepare the secret and persistent data
 
