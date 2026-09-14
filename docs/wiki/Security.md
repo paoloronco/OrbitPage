@@ -40,7 +40,7 @@ Each self-hosted administrator can enable time-based one-time passwords under **
 - Ten single-use recovery codes are generated at enrollment and displayed once. Only salted scrypt hashes are stored.
 - A successful recovery-code login consumes that code atomically.
 - Disabling 2FA, changing a password or using the operator reset increments the account authentication version and invalidates older sessions.
-- The short-lived pre-authentication challenge cannot access application APIs and expires after five minutes.
+- The short-lived pre-authentication challenge uses a separate signing domain, cannot access application APIs and expires after five minutes.
 
 Keep `JWT_SECRET` stable and backed up. Losing it makes encrypted TOTP secrets unreadable. If both the authenticator and recovery codes are lost, the instance owner can enable the controlled `RESET_TOKEN` recovery flow; this resets the `admin` password, removes its 2FA configuration, and revokes its active sessions.
 

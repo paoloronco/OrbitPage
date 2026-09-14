@@ -24,6 +24,8 @@ if (!allowsEphemeralDevelopmentSecret && !isStrongJwtSecret(configuredJwtSecret)
 const JWT_SECRET = isStrongJwtSecret(configuredJwtSecret)
   ? configuredJwtSecret.trim()
   : randomBytes(32).toString('hex');
+const TWO_FACTOR_JWT_SECRET = `${JWT_SECRET}-two-factor`;
+const JWT_ALGORITHM = 'HS256';
 const SALT_ROUNDS = 12;
 
 // --- Role-Based Access Control ---
@@ -127,19 +129,23 @@ export const generateToken = (username, authVersion = 0) => {
   return jwt.sign(
     { username, authVersion, timestamp: Date.now() },
     JWT_SECRET,
-    { expiresIn: '12h' }
+    { algorithm: JWT_ALGORITHM, expiresIn: '12h' }
   );
 };
 
 export const generateTwoFactorChallenge = (username, authVersion = 0) => jwt.sign(
   { username, authVersion, purpose: 'two-factor-login' },
-  JWT_SECRET,
-  { expiresIn: '5m', audience: 'orbitpage-two-factor', issuer: 'orbitpage' },
+  TWO_FACTOR_JWT_SECRET,
+  { algorithm: JWT_ALGORITHM, expiresIn: '5m', audience: 'orbitpage-two-factor', issuer: 'orbitpage' },
 );
 
 export const verifyTwoFactorChallenge = (token) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, { audience: 'orbitpage-two-factor', issuer: 'orbitpage' });
+    const decoded = jwt.verify(token, TWO_FACTOR_JWT_SECRET, {
+      algorithms: [JWT_ALGORITHM],
+      audience: 'orbitpage-two-factor',
+      issuer: 'orbitpage',
+    });
     return decoded?.purpose === 'two-factor-login' ? decoded : null;
   } catch {
     return null;
@@ -149,7 +155,8 @@ export const verifyTwoFactorChallenge = (token) => {
 // Verify JWT token
 export const verifyToken = (token) => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET, { algorithms: [JWT_ALGORITHM] });
+    return decoded && typeof decoded === 'object' && decoded.purpose === undefined ? decoded : null;
   } catch (error) {
     console.error('Token verification failed:', error);
     return null;

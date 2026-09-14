@@ -62,7 +62,7 @@ These are targets, not contractual guarantees.
 ## Current Security Model
 
 - Passwords are hashed with `bcryptjs` using 12 salt rounds.
-- Admin sessions use signed JWTs with a 12-hour expiry.
+- Admin sessions use purpose-isolated signed JWTs with a 12-hour expiry.
 - In secure browser contexts, the frontend stores the JWT encrypted with AES-GCM in session-scoped `sessionStorage` and removes legacy persistent copies.
 - On non-secure HTTP contexts where Web Crypto is unavailable, the frontend keeps the JWT in memory for the current document instead of writing a plaintext fallback.
 - SQLite queries use parameterized statements through server-side helpers.
