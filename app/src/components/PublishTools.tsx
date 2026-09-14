@@ -4,11 +4,14 @@ import { useAppI18n } from "@/lib/i18n";
 import { ProfileQrCode } from "./ProfileQrCode";
 import { SitemapManager } from "./SitemapManager";
 import { TextFileManager } from "./TextFileManager";
+import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
+import type { SubpageItem } from "@/lib/api-client";
 
 type PublishTool = "qr" | "sitemap" | "txt";
 
 interface PublishToolsProps {
-  menuEnabled?: boolean;
+  menu?: MenuCatalog;
+  subpages?: SubpageItem[];
   readOnly?: boolean;
   canUseQr?: boolean;
   canUseDiscovery?: boolean;
@@ -17,7 +20,8 @@ interface PublishToolsProps {
 const TOOL_STORAGE_KEY = "orbitpage.admin.publish-tool";
 
 export function PublishTools({
-  menuEnabled = false,
+  menu = createDefaultMenu(),
+  subpages = [],
   readOnly = false,
   canUseQr = true,
   canUseDiscovery = true,
@@ -95,7 +99,7 @@ export function PublishTools({
       </div>
 
       <div aria-labelledby={`publish-tab-${activeTool}`} className="publish-tools-panel" id={`publish-tool-${activeTool}`} role="tabpanel">
-        {activeTool === "qr" && canUseQr && <ProfileQrCode menuEnabled={menuEnabled} />}
+        {activeTool === "qr" && canUseQr && <ProfileQrCode menu={menu} subpages={subpages} readOnly={readOnly} />}
         {activeTool === "sitemap" && canUseDiscovery && <SitemapManager readOnly={readOnly} />}
         {activeTool === "txt" && canUseDiscovery && <TextFileManager readOnly={readOnly} />}
       </div>

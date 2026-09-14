@@ -38,5 +38,6 @@ export default function MenuPage() {
     );
   }
 
-  return <MenuView menu={menu} />;
+  const selectedSectionId = typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('section') || '';
+  return <MenuView menu={menu} selectedSectionId={selectedSectionId} />;
 }

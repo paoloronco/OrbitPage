@@ -156,6 +156,7 @@ The production-style source run is available at <http://localhost:3001>.
 
 - A unified Publish workspace for QR codes, sitemap state, and discovery files.
 - Screen and print QR presets with PNG and SVG downloads.
+- Stable smart campaign QR links whose destination can change by local time, including lunch/dinner menu-section presets.
 - Canonical URL, Open Graph, Twitter Card, Schema.org, and <code>noindex</code> controls.
 - Generated <code>sitemap.xml</code>.
 - Editable <code>robots.txt</code>, <code>llms.txt</code>, <code>humans.txt</code>, <code>ai.txt</code>, <code>security.txt</code>, and safe custom text endpoints.

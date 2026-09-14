@@ -10,6 +10,7 @@ export const BACKUP_TABLES = [
   'theme_config',
   'menu_config',
   'subpages_config',
+  'campaign_links',
   'cookie_consent_config',
   'text_files',
   'sitemap_config',
@@ -28,7 +29,7 @@ export const BACKUP_SECTIONS = [
 
 const SECTION_TABLES = {
   profile: ['profile_data'],
-  links: ['links'],
+  links: ['links', 'campaign_links'],
   pages: ['subpages_config'],
   theme: ['theme_config'],
   menu: ['menu_config'],
@@ -42,6 +43,7 @@ const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const DEFAULT_BACKUP_MEDIA_LIMIT_BYTES = 128 * 1024 * 1024;
 const ALLOWED_MEDIA_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif', '.mp4', '.webm']);
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif']);
+const OPTIONAL_COMPAT_TABLES = new Set(['campaign_links']);
 
 const backupMediaLimitBytes = () => {
   const configuredMb = Number(process.env.ORBITPAGE_BACKUP_MEDIA_LIMIT_MB);
@@ -194,7 +196,7 @@ function normalizeBackupPayload(backup) {
   if (schemaVersion === SELECTIVE_BACKUP_SCHEMA_VERSION) {
     const includedTables = tablesForSections(availableSections);
     for (const tableName of includedTables) {
-      if (!Array.isArray(tables[tableName])) {
+      if (!Array.isArray(tables[tableName]) && !OPTIONAL_COMPAT_TABLES.has(tableName)) {
         throw new Error(`Backup section is incomplete: ${tableName}`);
       }
     }
@@ -324,6 +326,9 @@ export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sec
   const unavailable = sections.find((section) => !normalizedBackup.availableSections.includes(section));
   if (unavailable) throw new Error(`Backup does not contain section: ${unavailable}`);
   const includedTables = tablesForSections(sections);
+  const restorableTables = new Set([...includedTables].filter((tableName) => (
+    !OPTIONAL_COMPAT_TABLES.has(tableName) || Array.isArray(normalizedBackup.tables[tableName])
+  )));
   let mediaRestore = null;
 
   if (sections.includes('media')) {
@@ -333,11 +338,11 @@ export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sec
   try {
     await dbRun('PRAGMA foreign_keys = OFF');
     for (const tableName of BACKUP_TABLES) {
-      if (includedTables.has(tableName)) await dbRun(`DELETE FROM ${tableName}`);
+      if (restorableTables.has(tableName)) await dbRun(`DELETE FROM ${tableName}`);
     }
 
     for (const tableName of BACKUP_TABLES) {
-      if (!includedTables.has(tableName)) continue;
+      if (!restorableTables.has(tableName)) continue;
       const rows = Array.isArray(normalizedBackup.tables[tableName])
         ? normalizedBackup.tables[tableName]
         : [];

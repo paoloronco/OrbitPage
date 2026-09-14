@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { ChevronDown, Download, ExternalLink, QrCode, SlidersHorizontal } from "lucide-react";
 
@@ -9,17 +9,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { publicUrlApi } from "@/lib/api-client";
+import { publicUrlApi, type SubpageItem } from "@/lib/api-client";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import { useAppI18n } from "@/lib/i18n";
 import { buildLockedQrUrl, qrContrastRatio } from "@/lib/qr-code";
+import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
+import { CampaignLinksManager } from "./CampaignLinksManager";
 
-type QrDestination = "page" | "menu" | "custom";
+type QrDestination = "page" | "menu" | "campaign" | "custom";
 type QrErrorCorrection = "L" | "M" | "Q" | "H";
 
 interface QrSettings {
   destination: QrDestination;
   customPath: string;
+  campaignSlug: string;
   foreground: string;
   background: string;
   size: number;
@@ -30,6 +33,7 @@ interface QrSettings {
 const DEFAULT_SETTINGS: QrSettings = {
   destination: "page",
   customPath: "",
+  campaignSlug: "",
   foreground: "#111827",
   background: "#ffffff",
   size: 320,
@@ -47,8 +51,9 @@ const safeSettings = (value: unknown): QrSettings => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return DEFAULT_SETTINGS;
   const input = value as Partial<QrSettings>;
   return {
-    destination: input.destination === "menu" || input.destination === "custom" ? input.destination : "page",
+    destination: input.destination === "menu" || input.destination === "campaign" || input.destination === "custom" ? input.destination : "page",
     customPath: typeof input.customPath === "string" ? input.customPath.slice(0, 160) : "",
+    campaignSlug: typeof input.campaignSlug === "string" ? input.campaignSlug.slice(0, 48) : "",
     foreground: typeof input.foreground === "string" && /^#[0-9a-f]{6}$/i.test(input.foreground) ? input.foreground : DEFAULT_SETTINGS.foreground,
     background: typeof input.background === "string" && /^#[0-9a-f]{6}$/i.test(input.background) ? input.background : DEFAULT_SETTINGS.background,
     size: Math.max(160, Math.min(1024, Number(input.size) || DEFAULT_SETTINGS.size)),
@@ -57,7 +62,7 @@ const safeSettings = (value: unknown): QrSettings => {
   };
 };
 
-export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }) {
+export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readOnly = false }: { menu?: MenuCatalog; subpages?: SubpageItem[]; readOnly?: boolean }) {
   const { tr } = useAppI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hydratedUrl = useRef("");
@@ -65,8 +70,11 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
   const [source, setSource] = useState<"configured" | "request">("request");
   const [settings, setSettings] = useState<QrSettings>(DEFAULT_SETTINGS);
   const [renderError, setRenderError] = useState("");
+  const [campaignBaseUrl, setCampaignBaseUrl] = useState("");
   const selectedPath = settings.destination === "menu" ? "menu" : settings.destination === "custom" ? settings.customPath : "";
-  const qrTarget = useMemo(() => buildLockedQrUrl(publicUrl, selectedPath), [publicUrl, selectedPath]);
+  const qrTarget = useMemo(() => settings.destination === "campaign"
+    ? buildLockedQrUrl(campaignBaseUrl, settings.campaignSlug)
+    : buildLockedQrUrl(publicUrl, selectedPath), [campaignBaseUrl, publicUrl, selectedPath, settings.campaignSlug, settings.destination]);
   const contrast = qrContrastRatio(settings.foreground, settings.background);
   const contrastError = contrast < 4.5
     ? tr("Increase the contrast between the QR colors before downloading.", "Aumenta il contrasto tra i colori del QR prima di scaricarlo.")
@@ -113,10 +121,10 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
   }, [publicUrl, settings]);
 
   useEffect(() => {
-    if (!menuEnabled && settings.destination === "menu") {
+    if (!menu.enabled && settings.destination === "menu") {
       setSettings((current) => ({ ...current, destination: "page" }));
     }
-  }, [menuEnabled, settings.destination]);
+  }, [menu.enabled, settings.destination]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -139,7 +147,7 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
       .catch((err) => setRenderError(err instanceof Error ? err.message : tr("Failed to render QR code", "Impossibile generare il QR")));
   }, [contrastError, qrTarget.url, settings, tr]);
 
-  const fileStem = settings.destination === "page" ? "page" : settings.destination === "menu" ? "menu" : "custom";
+  const fileStem = settings.destination === "campaign" ? settings.campaignSlug || "campaign" : settings.destination;
   const downloadPng = () => {
     const canvas = canvasRef.current;
     if (!canvas || error || !qrTarget.url) return;
@@ -168,6 +176,14 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
   const update = <K extends keyof QrSettings>(key: K, value: QrSettings[K]) => {
     setSettings((current) => ({ ...current, [key]: value }));
   };
+  const selectCampaign = useCallback((slug: string) => {
+    setSettings((current) => ({
+      ...current,
+      campaignSlug: slug,
+      destination: slug ? "campaign" : current.destination === "campaign" ? "page" : current.destination,
+    }));
+  }, []);
+  const updateCampaignBaseUrl = useCallback((url: string) => setCampaignBaseUrl(url), []);
 
   return (
     <Card className="overflow-hidden border-slate-200 bg-white p-0 text-left shadow-sm">
@@ -214,15 +230,23 @@ export function ProfileQrCode({ menuEnabled = false }: { menuEnabled?: boolean }
         </div>
 
         <div className="min-w-0 space-y-4 p-4 sm:p-5">
+          <CampaignLinksManager
+            menu={menu}
+            readOnly={readOnly}
+            selectedSlug={settings.campaignSlug}
+            onSelect={selectCampaign}
+            onBaseUrl={updateCampaignBaseUrl}
+            subpages={subpages}
+          />
           <section className="space-y-3">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Destination", "Destinazione")}</h3>
               <p className="mt-1 text-xs text-slate-500">{source === "configured" ? tr("Uses your configured public domain.", "Usa il dominio pubblico configurato.") : tr("Uses this installation's public URL.", "Usa l'URL pubblico di questa installazione.")}</p>
             </div>
-            <div className="grid grid-cols-3 overflow-hidden rounded-md border border-slate-200" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
-              {(["page", "menu", "custom"] as const).map((destination) => {
-                const disabled = destination === "menu" && !menuEnabled;
-                const label = destination === "page" ? tr("Page", "Pagina") : destination === "menu" ? "Menu" : tr("Path", "Percorso");
+            <div className="grid grid-cols-4 overflow-hidden rounded-md border border-slate-200" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
+              {(["page", "menu", "campaign", "custom"] as const).map((destination) => {
+                const disabled = (destination === "menu" && !menu.enabled) || (destination === "campaign" && !settings.campaignSlug);
+                const label = destination === "page" ? tr("Page", "Pagina") : destination === "menu" ? "Menu" : destination === "campaign" ? tr("Smart", "Smart") : tr("Path", "Percorso");
                 return <button aria-pressed={settings.destination === destination} key={destination} type="button" disabled={disabled} onClick={() => update("destination", destination)} className={`min-h-10 border-r border-slate-200 px-2 text-xs font-semibold last:border-r-0 ${settings.destination === destination ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-40`}>{label}</button>;
               })}
             </div>

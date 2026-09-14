@@ -51,4 +51,22 @@ describe('MenuView subsections', () => {
     expect(html).toContain('12 items');
     expect(html).toContain('aria-expanded="false"');
   });
+
+  it('shows only the menu section selected by a smart campaign link', () => {
+    const menu = createDefaultMenu('restaurant');
+    menu.enabled = true;
+    menu.sections = [
+      { id: 'lunch', name: 'Lunch', visible: true, position: 0 },
+      { id: 'dinner', name: 'Dinner', visible: true, position: 1 },
+    ];
+    menu.items = [
+      { id: 'salad', sectionId: 'lunch', name: 'Lunch salad', priceMinor: 900, variants: [], allergens: [], dietaryTags: [], available: true, featured: false, position: 0 },
+      { id: 'steak', sectionId: 'dinner', name: 'Dinner steak', priceMinor: 2200, variants: [], allergens: [], dietaryTags: [], available: true, featured: false, position: 0 },
+    ];
+
+    const html = renderToStaticMarkup(<MenuView menu={menu} selectedSectionId="lunch" />);
+
+    expect(html).toContain('Lunch salad');
+    expect(html).not.toContain('Dinner steak');
+  });
 });

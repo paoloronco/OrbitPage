@@ -1512,7 +1512,8 @@ export const AdminView = ({
 
           <TabsContent value="publish" className="admin-tab-content">
             <PublishTools
-              menuEnabled={menu.enabled}
+              menu={menu}
+              subpages={subpages}
               readOnly={DEMO_MODE}
               canUseQr={canEditProfile}
               canUseDiscovery={canEditCompliance}
