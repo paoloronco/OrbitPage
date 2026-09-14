@@ -101,6 +101,8 @@ export function VisualSiteEditor({
     typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
   ));
   const [previewVisible, setPreviewVisible] = useState(true);
+  const previewEnabled = section !== "shop";
+  const Inspector = previewEnabled ? "aside" : "section";
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
     { id: "links", label: tr("Content", "Contenuti"), icon: Layout, status: "active" },
@@ -147,13 +149,15 @@ export function VisualSiteEditor({
   };
 
   return (
-    <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
+    <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}${previewEnabled ? "" : " visual-site-editor--inspector-only"}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
       <header className="visual-site-editor__toolbar">
         <div className="visual-site-editor__intro">
           <span className="visual-site-editor__mark"><MousePointerClick aria-hidden="true" size={18} /></span>
           <div>
-            <strong>{tr("Edit the real page", "Modifica la pagina reale")}</strong>
-            <small>{tr("Select an element in the preview to open its settings.", "Seleziona un elemento nell’anteprima per aprire le sue impostazioni.")}</small>
+            <strong>{previewEnabled ? tr("Edit the real page", "Modifica la pagina reale") : tr("Manage your Shop", "Gestisci il tuo Shop")}</strong>
+            <small>{previewEnabled
+              ? tr("Select an element in the preview to open its settings.", "Seleziona un elemento nell’anteprima per aprire le sue impostazioni.")
+              : tr("Products, design, payments, orders and customers in one place.", "Prodotti, design, pagamenti, ordini e clienti in un unico spazio.")}</small>
           </div>
         </div>
         <div className="visual-site-editor__toolbar-actions">
@@ -168,7 +172,7 @@ export function VisualSiteEditor({
               <span>{tr("Arrange", "Disponi")}</span>
             </button>
           )}
-          <PreviewDeviceToggle value={device} onChange={setDevice} />
+          {previewEnabled && <PreviewDeviceToggle value={device} onChange={setDevice} />}
         </div>
       </header>
 
@@ -190,7 +194,7 @@ export function VisualSiteEditor({
         ))}
       </nav>
 
-      {isPhone && (
+      {isPhone && previewEnabled && (
         <button
           aria-controls="visual-site-editor-preview"
           aria-expanded={previewVisible}
@@ -214,7 +218,7 @@ export function VisualSiteEditor({
       )}
 
       <div className={`visual-site-editor__workspace${isPhone && !previewVisible ? " visual-site-editor__workspace--preview-hidden" : ""}`}>
-        <div
+        {previewEnabled && <div
           className="visual-site-editor__canvas"
           data-device={device}
           hidden={isPhone && !previewVisible}
@@ -240,16 +244,16 @@ export function VisualSiteEditor({
               theme={theme}
             />
           )}
-        </div>
+        </div>}
 
-        <aside className="visual-site-editor__inspector" aria-label={inspectorTitle}>
-          <header className="visual-site-editor__inspector-heading">
+        <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle}>
+          {previewEnabled && <header className="visual-site-editor__inspector-heading">
             {section !== "menu" && <p>{tr("Selected element", "Elemento selezionato")}</p>}
             <h2>{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
-          </header>
+          </header>}
           <div className="visual-site-editor__inspector-body">{inspector}</div>
-        </aside>
+        </Inspector>
       </div>
     </section>
   );
