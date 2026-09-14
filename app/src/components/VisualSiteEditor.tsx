@@ -160,7 +160,10 @@ export function VisualSiteEditor({
               : tr("Products, design, payments, orders and customers in one place.", "Prodotti, design, pagamenti, ordini e clienti in un unico spazio.")}</small>
           </div>
         </div>
-        <div className="visual-site-editor__toolbar-actions">
+        <div
+          className="visual-site-editor__toolbar-actions"
+          data-orbitpage-hosted-shop-header-slot={!previewEnabled ? "" : undefined}
+        >
           {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
             <button
               className="visual-site-editor__layout-toggle"
