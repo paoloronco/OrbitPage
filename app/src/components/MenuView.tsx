@@ -8,18 +8,25 @@ interface MenuViewProps {
   menu: MenuCatalog;
   embedded?: boolean;
   pageHref?: string;
+  selectedSectionId?: string;
 }
 
-export function MenuView({ menu, embedded = false, pageHref = withBasePath('/') }: MenuViewProps) {
+export function MenuView({ menu, embedded = false, pageHref = withBasePath('/'), selectedSectionId = '' }: MenuViewProps) {
   const [query, setQuery] = useState('');
   const [sectionState, setSectionState] = useState<Record<string, boolean>>({});
   const sections = [...menu.sections]
     .filter((section) => section.visible)
     .sort((a, b) => a.position - b.position);
   const rootSections = sections.filter((section) => !section.parentId);
+  const selectedRootSection = rootSections.find((section) => section.id === selectedSectionId);
+  const visibleRootSections = selectedRootSection ? [selectedRootSection] : rootSections;
+  const visibleSectionIds = new Set(visibleRootSections.flatMap((section) => [
+    section.id,
+    ...sections.filter((candidate) => candidate.parentId === section.id).map((candidate) => candidate.id),
+  ]));
   const subsectionsFor = (sectionId: string) => sections.filter((section) => section.parentId === sectionId);
   const sectionsWithItems = new Set(menu.items.map((item) => item.sectionId));
-  const navigableSections = rootSections.flatMap((section) => {
+  const navigableSections = visibleRootSections.flatMap((section) => {
     const subsections = subsectionsFor(section.id).filter((subsection) => sectionsWithItems.has(subsection.id));
     const hasVisibleContent = sectionsWithItems.has(section.id) || subsections.length > 0;
     return hasVisibleContent ? [section, ...subsections] : [];
@@ -33,14 +40,15 @@ export function MenuView({ menu, embedded = false, pageHref = withBasePath('/') 
     noResults: 'No menu items match your search.', expand: 'Expand', collapse: 'Collapse',
   };
   const normalizedQuery = query.trim().toLocaleLowerCase(menu.locale);
+  const scopedItems = menu.items.filter((item) => visibleSectionIds.has(item.sectionId));
   const filteredItems = normalizedQuery
-    ? menu.items.filter((item) => [
+    ? scopedItems.filter((item) => [
       item.name, item.description, item.details, ...item.dietaryTags, ...item.allergens,
       ...item.variants.map((variant) => variant.name),
     ].some((value) => value?.toLocaleLowerCase(menu.locale).includes(normalizedQuery)))
-    : menu.items;
-  const isLongMenu = menu.items.length >= 12 || navigableSections.length >= 7;
-  const showDirectory = navigableSections.length > 1 || menu.items.length >= 8;
+    : scopedItems;
+  const isLongMenu = scopedItems.length >= 12 || navigableSections.length >= 7;
+  const showDirectory = navigableSections.length > 1 || scopedItems.length >= 8;
   const isOpen = (sectionId: string, defaultOpen: boolean) => normalizedQuery
     ? true
     : sectionState[sectionId] ?? defaultOpen;
@@ -142,7 +150,7 @@ export function MenuView({ menu, embedded = false, pageHref = withBasePath('/') 
                 ))}
               </nav>
             )}
-            {menu.items.length >= 8 && (
+            {scopedItems.length >= 8 && (
               <div className="orbitpage-menu__tools">
                 <label className="orbitpage-menu__search">
                   <Search aria-hidden="true" />
@@ -168,7 +176,7 @@ export function MenuView({ menu, embedded = false, pageHref = withBasePath('/') 
         )}
 
         <div className="orbitpage-menu__catalog">
-          {rootSections.map((section, sectionIndex) => {
+          {visibleRootSections.map((section, sectionIndex) => {
             const directItems = filteredItems
               .filter((item) => item.sectionId === section.id)
               .sort((a, b) => a.position - b.position);
@@ -252,7 +260,7 @@ export function MenuView({ menu, embedded = false, pageHref = withBasePath('/') 
           </section>
         )}
 
-        {menu.items.length === 0 && (
+        {scopedItems.length === 0 && (
           <section className="orbitpage-menu__empty">
             <p>The menu is being prepared.</p>
           </section>

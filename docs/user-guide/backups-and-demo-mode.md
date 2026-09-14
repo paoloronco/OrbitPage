@@ -39,7 +39,7 @@ Managed OrbitPage SaaS backups with schema versions 1–3 can also be opened her
 
 ## Restore a recent local version
 
-**Dashboard > Backup > Version history** keeps the latest 25 page snapshots in the instance's local SQLite database. OrbitPage records the current state before page, block, theme, menu, subpage, privacy, or discovery changes and captures the current revision when version history is opened. Restoring a snapshot creates a new current revision instead of overwriting history in place.
+**Dashboard > Backup > Version history** keeps the latest 25 page snapshots in the instance's local SQLite database. OrbitPage records the current state before page, block, smart-campaign, theme, menu, subpage, privacy, or discovery changes and captures the current revision when version history is opened. Restoring a snapshot creates a new current revision instead of overwriting history in place.
 
 These snapshots stay only in the instance's `DATA_DIR/orbitpage.db`; they are not uploaded to OrbitPage SaaS or another service. They are convenient for undoing an edit, but they are not a disaster-recovery backup because losing the database also loses the history.
 

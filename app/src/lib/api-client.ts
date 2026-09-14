@@ -3,6 +3,7 @@ import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
 import { isHostedRuntime } from './runtime-mode';
 import { createPortableBackupArchive, embeddedBackupImages, type PortableImage } from './portable-backup';
+import type { OrbitPageCampaignLink } from '@orbitpage/page-schema';
 
 // --- Session-scoped token storage (AES-GCM via Web Crypto) ---
 //
@@ -427,6 +428,7 @@ export interface WorkspaceBootstrapResponse {
   theme: Record<string, any>;
   menu?: import('./menu').MenuCatalog;
   consentConfig?: Record<string, any>;
+  campaignLinks?: OrbitPageCampaignLink[];
   publicUrl?: string;
   plan?: import('./hosted-editor-contract').HostedEditorPlan;
   usage?: import('./hosted-editor-contract').HostedEditorUsage;
@@ -630,6 +632,13 @@ export const authApi = {
     }
     return response;
   },
+};
+
+export const campaignLinksApi = {
+  get: async (): Promise<{ success: boolean; data: OrbitPageCampaignLink[]; campaignBaseUrl: string }> =>
+    apiRequest('/campaign-links'),
+  update: async (links: OrbitPageCampaignLink[]): Promise<{ success: boolean; data: OrbitPageCampaignLink[]; revision?: number }> =>
+    apiRequest('/campaign-links', { method: 'PUT', body: JSON.stringify(links) }),
 };
 
 export const personalPageApi = {

@@ -59,7 +59,8 @@ Prefer theme-level changes for consistency. Keep individual profile or block ove
 
 **Publish** groups sharing and discovery tools:
 
-- generate a QR code for the current public URL;
+- generate a static page/menu QR or a stable smart campaign QR;
+- change a smart link's default destination, timezone, and lunch/dinner schedule without replacing the printed QR;
 - choose screen or print presets and download PNG or SVG;
 - generate and inspect `sitemap.xml`;
 - edit `robots.txt`, `llms.txt`, `humans.txt`, `ai.txt`, and `security.txt`;

@@ -550,7 +550,7 @@ describe('API Endpoints', () => {
 
   it('rejects duplicate or reserved subpage slugs', async () => {
     const base = { id: 'one', title: 'Page', description: '', links: [], enabled: true };
-    for (const slug of ['admin', 'links']) {
+    for (const slug of ['admin', 'go', 'links']) {
       const reserved = await request(app).put('/orbitpage/api/subpages').send([{ ...base, slug }]);
       expect(reserved.status).toBe(400);
     }
@@ -666,6 +666,35 @@ describe('API Endpoints', () => {
     expect(response.body.branding.showOrbitPageBadge).toBe(true);
     expect(response.body.links).toHaveLength(1);
     expect(response.body.theme.primary).toBe('#111111');
+  });
+
+  it('redirects a stable campaign slug to the active local-time menu section', async () => {
+    vi.setSystemTime(new Date('2026-09-14T12:00:00Z'));
+    const campaign = {
+      slug: 'today-menu',
+      label: 'Today menu',
+      destination: 'menu',
+      timezone: 'Europe/Rome',
+      enabled: true,
+      rules: [
+        { label: 'Lunch', destination: 'menu?section=lunch', startTime: '11:30', endTime: '15:00', enabled: true },
+        { label: 'Dinner', destination: 'menu?section=dinner', startTime: '18:00', endTime: '23:30', enabled: true },
+      ],
+    };
+    vi.mocked(dbGet).mockImplementation(async (sql) => {
+      const query = String(sql);
+      if (query.includes("key = 'public_page_active'")) return { value: '1' };
+      if (query.includes('FROM campaign_links')) return { full_config: JSON.stringify([campaign]) };
+      if (query.includes("key = 'page_slug'")) return { value: 'venue' };
+      return null;
+    });
+
+    const response = await request(app).get('/orbitpage/go/today-menu');
+
+    expect(response.status).toBe(302);
+    expect(new URL(response.headers.location).pathname).toBe('/orbitpage/menu');
+    expect(new URL(response.headers.location).search).toBe('?section=lunch');
+    expect(response.headers['cache-control']).toContain('no-store');
   });
 
   it('returns a removed-page response without exposing old public content', async () => {

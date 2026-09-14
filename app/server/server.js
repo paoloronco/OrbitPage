@@ -100,7 +100,7 @@ const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' |
 const DISTRIBUTION_IMAGE = String(process.env.ORBITPAGE_DISTRIBUTION_IMAGE || '').trim();
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics'];
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -111,7 +111,7 @@ const videoUploadLimitBytes = getVideoUploadLimitBytes(process.env);
 const getZodErrorMessage = (error) =>
   error instanceof z.ZodError ? (error.issues[0]?.message || 'Invalid request body') : null;
 
-const RESERVED_SUBPAGE_SLUGS = new Set(['admin', 'api', 'assets', 'cookies', 'dashboard', 'links', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots.txt', 'shop', 'sitemap.xml', 'support', 'terms', 'www']);
+const RESERVED_SUBPAGE_SLUGS = new Set(['admin', 'api', 'assets', 'cookies', 'dashboard', 'go', 'links', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots.txt', 'shop', 'sitemap.xml', 'support', 'terms', 'www']);
 const SubpageSchema = z.object({
   id: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   slug: z.string().min(1).max(48).regex(/^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/)
@@ -1756,6 +1756,34 @@ const getSitemapStatusPayload = async (req) => {
 
 app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], serveBuiltInTextFile);
 
+const CampaignDestinationSchema = z.string().trim().max(160).refine(
+  (value) => value === '' || /^(?:[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?)(?:\?section=[a-zA-Z0-9_-]{1,80})?$/.test(value),
+  'Use a page, menu or menu section from this OrbitPage.'
+);
+const CampaignRuleSchema = z.object({
+  label: z.string().trim().min(1).max(48),
+  destination: CampaignDestinationSchema,
+  startTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  endTime: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  enabled: z.boolean(),
+}).strict();
+const CampaignLinksSchema = z.array(z.object({
+  slug: z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/),
+  label: z.string().trim().min(1).max(80),
+  destination: CampaignDestinationSchema,
+  timezone: z.string().trim().min(1).max(80).refine((value) => {
+    try { new Intl.DateTimeFormat('en', { timeZone: value }).format(); return true; } catch { return false; }
+  }, 'Use a valid IANA timezone.'),
+  enabled: z.boolean(),
+  rules: z.array(CampaignRuleSchema).max(4),
+}).strict()).max(20).superRefine((links, context) => {
+  const slugs = new Set();
+  links.forEach((link, index) => {
+    if (slugs.has(link.slug)) context.addIssue({ code: z.ZodIssueCode.custom, path: [index, 'slug'], message: 'Campaign slugs must be unique.' });
+    slugs.add(link.slug);
+  });
+});
+
 app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, res) => {
   try {
     const file = await getCustomTextFileByPath(req.path.toLowerCase());
@@ -1997,7 +2025,7 @@ const captureCurrentPageVersion = () => captureApplicationVersion({
   dbRun,
   uploadsPath,
 });
-const VERSIONED_WRITE_PATH = /^(?:\/api\/(?:profile|links(?:\/import|\/[^/]+\/(?:style|icon))?|theme|menu|subpages|consent-config|text-files(?:\/[^/]+)?|sitemap\/generate|ai\/page\/commit|admin\/restore)|\/api\/versions\/\d+\/restore)$/;
+const VERSIONED_WRITE_PATH = /^(?:\/api\/(?:profile|links(?:\/import|\/[^/]+\/(?:style|icon))?|theme|menu|subpages|campaign-links|consent-config|text-files(?:\/[^/]+)?|sitemap\/generate|ai\/page\/commit|admin\/restore)|\/api\/versions\/\d+\/restore)$/;
 app.use(async (req, _res, next) => {
   if (DEMO_MODE || process.env.NODE_ENV === 'test' || !['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) || !VERSIONED_WRITE_PATH.test(req.path)) {
     return next();
@@ -2066,6 +2094,7 @@ const EMPTY_PERSONAL_PAGE_BACKUP = {
     profile_data: [],
     links: [],
     subpages_config: [],
+    campaign_links: [],
     theme_config: [],
     menu_config: [],
     cookie_consent_config: [],
@@ -2378,6 +2407,90 @@ async function getSubpagesPayload() {
     return [];
   }
 }
+
+async function getCampaignLinksPayload() {
+  const row = await dbGet('SELECT full_config FROM campaign_links WHERE id = 1');
+  if (!row?.full_config) return [];
+  try {
+    return CampaignLinksSchema.parse(JSON.parse(row.full_config));
+  } catch {
+    return [];
+  }
+}
+
+function resolveCampaignDestination(link, now = new Date()) {
+  if (!link?.enabled) return null;
+  let parts;
+  try {
+    parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: link.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(now);
+  } catch {
+    return link.destination;
+  }
+  const current = Number(parts.find((part) => part.type === 'hour')?.value) * 60
+    + Number(parts.find((part) => part.type === 'minute')?.value);
+  for (const rule of link.rules) {
+    if (!rule.enabled) continue;
+    const [startHour, startMinute] = rule.startTime.split(':').map(Number);
+    const [endHour, endMinute] = rule.endTime.split(':').map(Number);
+    const start = startHour * 60 + startMinute;
+    const end = endHour * 60 + endMinute;
+    if ((start < end && current >= start && current < end) || (start > end && (current >= start || current < end))) {
+      return rule.destination;
+    }
+  }
+  return link.destination;
+}
+
+app.get('/api/campaign-links', authenticateToken, requirePermission('profile:write'), async (req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    const campaignBaseUrl = new URL(withRequestBasePath(req, '/go'), getRequestOrigin(req)).toString().replace(/\/$/, '');
+    res.json({ success: true, data: await getCampaignLinksPayload(), campaignBaseUrl });
+  } catch {
+    res.status(500).json({ error: 'Failed to load campaign links' });
+  }
+});
+
+app.put('/api/campaign-links', authenticateToken, requirePermission('profile:write'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Campaign changes are disabled in demo mode.' });
+  try {
+    const links = CampaignLinksSchema.parse(req.body);
+    await dbRun(
+      `INSERT INTO campaign_links (id, full_config, updated_at)
+       VALUES (1, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT(id) DO UPDATE SET full_config = excluded.full_config, updated_at = CURRENT_TIMESTAMP`,
+      [JSON.stringify(links)]
+    );
+    res.json({ success: true, data: links });
+  } catch (error) {
+    res.status(400).json({ error: getZodErrorMessage(error) || error.message || 'Invalid campaign links' });
+  }
+});
+
+app.get('/go/:campaignSlug', async (req, res) => {
+  try {
+    if (!(await isInstancePageActive())) return res.status(410).send('Page removed.');
+    const links = await getCampaignLinksPayload();
+    const link = links.find((candidate) => candidate.slug === req.params.campaignSlug);
+    const destination = link ? resolveCampaignDestination(link) : null;
+    if (destination === null) return res.status(404).send('Campaign link not found.');
+    const [pathName, query = ''] = destination.split('?', 2);
+    const pageSlug = await getInstancePageSlug();
+    const targetPath = pathName ? `/${pathName}` : pageSlug ? `/${pageSlug}` : '/';
+    const target = new URL(withRequestBasePath(req, targetPath), getRequestOrigin(req));
+    if (query) target.search = query;
+    res.set('Cache-Control', 'private, max-age=0, no-store');
+    res.set('X-Robots-Tag', 'noindex');
+    return res.redirect(302, target.toString());
+  } catch {
+    return res.status(500).send('Campaign link unavailable.');
+  }
+});
 
 function getPublicSubpagesPayload(pages) {
   return pages

@@ -268,6 +268,16 @@ export const initializeDatabase = () => {
         if (err) console.error('Error creating subpages_config table:', err);
       });
 
+      db.run(`
+        CREATE TABLE IF NOT EXISTS campaign_links (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          full_config TEXT NOT NULL DEFAULT '[]',
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) console.error('Error creating campaign_links table:', err);
+      });
+
       // Theme configuration table
       db.run(`
         CREATE TABLE IF NOT EXISTS theme_config (
@@ -354,7 +364,7 @@ export const initializeDatabase = () => {
         )
       `);
       db.run(`CREATE INDEX IF NOT EXISTS idx_page_versions_created_at ON page_versions(created_at DESC)`);
-      for (const table of ['profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'cookie_consent_config', 'text_files', 'sitemap_config']) {
+      for (const table of ['profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config']) {
         for (const action of ['INSERT', 'UPDATE', 'DELETE']) {
           const triggerName = `advance_page_revision_${table}_${action.toLowerCase()}`;
           db.run(`
