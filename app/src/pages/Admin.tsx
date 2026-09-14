@@ -262,9 +262,7 @@ const Admin = () => {
           });
         }
 
-        if (linksData && linksData.length > 0) {
-          setLinks(normalizeLinkDtos(linksData));
-        }
+        setLinks(normalizeLinkDtos(linksData || []));
         setSubpages((subpagesData || []).map((page) => ({
           ...page,
           links: normalizeLinkDtos(page.links || []),
