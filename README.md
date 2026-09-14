@@ -164,7 +164,7 @@ The production-style source run is available at <http://localhost:3001>.
 
 - Built-in self-hosted click and CTA counters, plus optional GA4 integration on the public page.
 - Consent controls, policy links, Google Consent Mode, and optional external CMP integration.
-- Complete or selective JSON backup and restore.
+- Complete or selective JSON backup and restore, with optional portable image ZIP for OSS/SaaS transfers.
 - Upload quotas, validated image and video uploads, and unused-media cleanup.
 - Multiple dashboard users, scoped permissions, password management, and TOTP two-factor authentication.
 - Health checks, persistent local data, Docker support, and additive SQLite migrations.
@@ -259,7 +259,7 @@ uploads/
 
 Persist <code>/app/data</code> in Docker. Back up the database and uploads together before upgrades or restores. Never commit a database, database backup or sidecar, uploads, logs, environment file, or real user content.
 
-The dashboard can create complete or selective JSON exports. A selective export does not replace a consistent infrastructure backup. Follow the [verified backup and restore runbook](./docs/wiki/Deployment.md#create-and-verify-an-infrastructure-backup), copy recovery archives off-host, and test a restore periodically.
+The dashboard creates complete or selective JSON exports by default. When images are available, **Include images (ZIP)** creates an archive that can be restored by OrbitPage OSS or SaaS. These exports do not replace a consistent infrastructure backup. Follow the [verified backup and restore runbook](./docs/wiki/Deployment.md#create-and-verify-an-infrastructure-backup), copy recovery archives off-host, and test a restore periodically.
 
 ## Production checklist
 

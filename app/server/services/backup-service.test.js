@@ -7,6 +7,7 @@ import {
   SELECTIVE_BACKUP_SCHEMA_VERSION,
   BACKUP_TABLES,
   createApplicationBackup,
+  listBackupImages,
   restoreApplicationBackup,
 } from './backup-service.js';
 
@@ -18,6 +19,24 @@ const pngBytes = (suffix = '') => Buffer.concat([
 const avifBytes = () => Buffer.from([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66]);
 
 describe('backup service', () => {
+  it('lists only images that can be added to a portable backup', () => {
+    const uploadsPath = makeTempUploadsDir();
+    fs.mkdirSync(path.join(uploadsPath, 'covers'));
+    fs.writeFileSync(path.join(uploadsPath, 'avatar.png'), pngBytes());
+    fs.writeFileSync(path.join(uploadsPath, 'covers', 'hero.webp'), Buffer.from('image'));
+    fs.writeFileSync(path.join(uploadsPath, 'intro.mp4'), Buffer.from('video'));
+
+    expect(listBackupImages(uploadsPath).map(({ path: imagePath }) => imagePath)).toEqual([
+      'avatar.png',
+      'covers/hero.webp',
+    ]);
+    expect(listBackupImages(uploadsPath, { includeData: true })).toEqual([
+      { path: 'avatar.png', sizeBytes: pngBytes().length, data: pngBytes().toString('base64') },
+      { path: 'covers/hero.webp', sizeBytes: 5, data: Buffer.from('image').toString('base64') },
+    ]);
+    fs.rmSync(uploadsPath, { recursive: true, force: true });
+  });
+
   it('exports all application tables and upload files', async () => {
     const uploadsPath = makeTempUploadsDir();
     fs.mkdirSync(path.join(uploadsPath, 'covers'));

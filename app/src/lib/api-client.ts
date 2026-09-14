@@ -2,6 +2,7 @@ import { apiPath, getActiveBasePath, getConsentScope } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
 import { isHostedRuntime } from './runtime-mode';
+import { createPortableBackupArchive, embeddedBackupImages, type PortableImage } from './portable-backup';
 
 // --- Session-scoped token storage (AES-GCM via Web Crypto) ---
 //
@@ -691,7 +692,19 @@ export const aiPageAgentApi = {
 };
 
 export const backupApi = {
-  download: async (sections?: readonly string[]): Promise<Blob> => {
+  images: async (includeData = false): Promise<Array<{ key?: string; path?: string; fileName?: string; contentType?: string; sizeBytes: number; data?: string }>> => {
+    const authHeaders = await getAuthenticatedRequestHeaders();
+    const response = await fetch(resolveAuthenticatedApiUrl(`/admin/backup/images${includeData ? '?data=1' : ''}`, authHeaders), { headers: authHeaders });
+    if (!response.ok) throw new Error('Backup images could not be inspected.');
+    const result = await response.json() as { images?: Array<{ key?: string; path?: string; fileName?: string; contentType?: string; sizeBytes: number; data?: string }> };
+    return Array.isArray(result.images) ? result.images : [];
+  },
+
+  download: async (
+    sections?: readonly string[],
+    includeImages = false,
+    hosted = false,
+  ): Promise<{ blob: Blob; extension: 'json' | 'zip' }> => {
     const authHeaders = await getAuthenticatedRequestHeaders();
     const query = sections?.length ? `?sections=${encodeURIComponent(sections.join(','))}` : '';
     const response = await fetch(resolveAuthenticatedApiUrl(`/admin/backup${query}`, authHeaders), {
@@ -703,7 +716,28 @@ export const backupApi = {
       throw new Error(errorData.error || 'Backup export failed');
     }
 
-    return response.blob();
+    if (!includeImages) return { blob: await response.blob(), extension: 'json' };
+
+    const backup = await response.json() as unknown;
+    let images: PortableImage[];
+    if (hosted) {
+      const available = await backupApi.images();
+      images = await Promise.all(available.map(async (asset) => {
+        const key = asset.key as string;
+        const assetPath = key.split('/').map(encodeURIComponent).join('/');
+        const assetResponse = await fetch(resolveAuthenticatedApiUrl(`/assets/${assetPath}`, authHeaders), { headers: authHeaders });
+        if (!assetResponse.ok) throw new Error(`Backup image could not be downloaded: ${asset.fileName || key.split('/').at(-1)}`);
+        return {
+          path: asset.fileName || key.split('/').at(-1) || 'image',
+          reference: key,
+          bytes: new Uint8Array(await assetResponse.arrayBuffer()),
+        };
+      }));
+    } else {
+      images = embeddedBackupImages({ uploads: await backupApi.images(true) });
+    }
+    const archive = await createPortableBackupArchive(backup, images);
+    return { blob: new Blob([archive], { type: 'application/zip' }), extension: 'zip' };
   },
 
   restore: async (backup: unknown, sections?: readonly string[]): Promise<ApiResponse> => {

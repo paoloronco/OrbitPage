@@ -41,6 +41,7 @@ const SECTION_TABLES = {
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const DEFAULT_BACKUP_MEDIA_LIMIT_BYTES = 128 * 1024 * 1024;
 const ALLOWED_MEDIA_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif', '.mp4', '.webm']);
+const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif']);
 
 const backupMediaLimitBytes = () => {
   const configuredMb = Number(process.env.ORBITPAGE_BACKUP_MEDIA_LIMIT_MB);
@@ -116,6 +117,30 @@ function readUploadFiles(uploadsPath, currentPath = uploadsPath, state = { bytes
   }
 
   return uploads.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function collectBackupImages(uploadsPath, currentPath, includeData, state) {
+  if (!fs.existsSync(currentPath)) return [];
+  return fs.readdirSync(currentPath, { withFileTypes: true }).flatMap((entry) => {
+    const fullPath = path.join(currentPath, entry.name);
+    if (entry.isDirectory()) return collectBackupImages(uploadsPath, fullPath, includeData, state);
+    if (!entry.isFile() || !IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) return [];
+    const sizeBytes = fs.statSync(fullPath).size;
+    if (includeData) {
+      state.bytes += sizeBytes;
+      if (state.bytes > backupMediaLimitBytes()) throw new Error('Backup images exceed the configured size limit');
+    }
+    return [{
+      path: path.relative(uploadsPath, fullPath).split(path.sep).join('/'),
+      sizeBytes,
+      ...(includeData ? { data: fs.readFileSync(fullPath).toString('base64') } : {}),
+    }];
+  });
+}
+
+export function listBackupImages(uploadsPath, { includeData = false } = {}) {
+  return collectBackupImages(uploadsPath, uploadsPath, includeData, { bytes: 0 })
+    .sort((left, right) => left.path.localeCompare(right.path));
 }
 
 function normalizeBackupUploadPath(uploadPath) {
