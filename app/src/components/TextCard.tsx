@@ -53,10 +53,11 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const canEditStyle = editMode === 'full' || editMode === 'style';
   const canEditImages = editMode === 'full' || editMode === 'images';
   const canEdit = editMode !== 'view';
+  const isListCard = Array.isArray(editLink.textItems);
 
   const handleSave = () => {
     if (uploadingImage) return;
-    onUpdate(editLink);
+    onUpdate(isListCard ? { ...editLink, url: '' } : editLink);
     setIsEditing(false);
   };
 
@@ -259,19 +260,6 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
         isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
       }`}
     >
-      <div className="admin-block-editor-preview">
-        <div>
-          <span>Card preview</span>
-          <small>This is the same renderer and effective color set used on the public page.</small>
-        </div>
-        <div
-          className="public-block-preview pointer-events-none"
-          data-surface-effect={editLink.surfaceEffect && editLink.surfaceEffect !== 'inherit' ? editLink.surfaceEffect : defaultSurfaceEffect}
-          style={publicPreviewStyle}
-        >
-          <PublicBlockRenderer link={editLink} />
-        </div>
-      </div>
       {isFullEdit && (
         <div className="admin-card-drag-handle absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
           <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -458,13 +446,15 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
             
             {/* Removed large free-text editor to keep UI compact; use clickable list items instead */}
-            <Input
-              aria-label="Text card URL"
-              value={editLink.url}
-              onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
-              placeholder="https://example.com (optional - makes the entire card clickable)"
-              className="glass-card border-primary/20"
-            />
+            {!isListCard && (
+              <Input
+                aria-label="Text card URL"
+                value={editLink.url}
+                onChange={(e) => setEditLink(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://example.com (optional - makes the entire card clickable)"
+                className="glass-card border-primary/20"
+              />
+            )}
 
             {/* Link Scheduler */}
             {!schedulingEnabled && (
