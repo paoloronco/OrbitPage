@@ -1,4 +1,4 @@
-import { type ComponentType, type CSSProperties, useEffect, useRef, useState } from "react";
+import { type ComponentType, type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
@@ -17,6 +17,7 @@ import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import type { BrandServiceProvider } from "@/lib/service-brand";
+import { mergeLinkPreviews } from "./link-preview-state";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -88,6 +89,7 @@ export const LinkManager = ({
   const { toast } = useToast();
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
+  const [previewDrafts, setPreviewDrafts] = useState<ReadonlyMap<string, LinkData>>(() => new Map());
   const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false);
   const [blockLibrarySearch, setBlockLibrarySearch] = useState("");
   const [blockLibraryCategory, setBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
@@ -139,13 +141,29 @@ export const LinkManager = ({
   useEffect(() => {
     // Replace working copy only when the incoming prop reference changes
     setWorkingLinks(links);
+    setPreviewDrafts(new Map());
     setIsDirty(false);
     setSaveError("");
   }, [links]);
 
   useEffect(() => {
-    onLinksPreview?.(workingLinks);
-  }, [onLinksPreview, workingLinks]);
+    onLinksPreview?.(mergeLinkPreviews(workingLinks, previewDrafts));
+  }, [onLinksPreview, previewDrafts, workingLinks]);
+
+  useEffect(() => {
+    setPreviewDrafts(new Map());
+  }, [visualFocusLinkId]);
+
+  const updateLinkPreview = useCallback((id: string, draft: LinkData | null) => {
+    setPreviewDrafts((current) => {
+      const key = String(id);
+      if (!draft && !current.has(key)) return current;
+      const next = new Map(current);
+      if (draft) next.set(key, draft);
+      else next.delete(key);
+      return next;
+    });
+  }, []);
 
   const addNewLink = () => {
     const newLink: LinkData = {
@@ -1119,6 +1137,7 @@ export const LinkManager = ({
                 <TextCard
                   link={link}
                   onUpdate={updateLink}
+                  onPreview={updateLinkPreview}
                   onDelete={deleteLink}
                   isDragging={draggedItem === link.id}
                   onMoveUp={() => moveByOffset(link.id, -1)}
@@ -1138,6 +1157,7 @@ export const LinkManager = ({
                 <LinkCard
                   link={link}
                   onUpdate={updateLink}
+                  onPreview={updateLinkPreview}
                   onDelete={deleteLink}
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
