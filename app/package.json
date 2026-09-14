@@ -1,7 +1,7 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.21.1",
+  "version": "4.21.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -89,7 +89,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@eslint/js": "^9.9.0",
+    "@eslint/js": "^9.39.3",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",
@@ -99,7 +99,7 @@
     "@vitejs/plugin-react-swc": "^4.2.2",
     "autoprefixer": "^10.4.20",
     "cross-env": "^10.1.0",
-    "eslint": "^9.9.0",
+    "eslint": "^9.39.3",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
@@ -108,7 +108,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^7.3.2",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "lodash": "^4.17.23",
