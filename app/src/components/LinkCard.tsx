@@ -948,19 +948,6 @@ export const LinkCard = ({
         isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
       }`}
     >
-      <div className="admin-block-editor-preview">
-        <div>
-          <span>{tr("Card preview", "Anteprima card")}</span>
-          <small>{tr("This uses the same renderer and effective colors as the public page.", "Usa lo stesso renderer e gli stessi colori effettivi della pagina pubblica.")}</small>
-        </div>
-        <div
-          className="public-block-preview pointer-events-none"
-          data-surface-effect={editLink.surfaceEffect && editLink.surfaceEffect !== 'inherit' ? editLink.surfaceEffect : defaultSurfaceEffect}
-          style={publicPreviewStyle}
-        >
-          <PublicBlockRenderer link={editLink} />
-        </div>
-      </div>
       {canReorder && (
         <div className="admin-card-drag-handle absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
           <GripVertical className="w-4 h-4 text-muted-foreground" />

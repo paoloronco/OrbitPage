@@ -22,7 +22,7 @@ interface PublicTextCardProps {
 export const PublicTextCard = ({ link }: PublicTextCardProps) => {
   const [coverImageError, setCoverImageError] = useState(false);
   useEffect(() => { setCoverImageError(false); }, [link.coverImage]);
-  const safeHref = resolveSafePublicHref(link.url);
+  const safeHref = Array.isArray(link.textItems) ? null : resolveSafePublicHref(link.url);
 
   const trackClick = () => {
     if (safeHref) {
