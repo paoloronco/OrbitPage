@@ -519,14 +519,6 @@ export function MenuEditor({
     <div className={`menu-editor-stack menu-editor-stack--${presentation}`}>
       <div className="menu-editor-main space-y-5">
         <section className="admin-panel menu-editor-intro">
-          <div className="menu-editor-intro__identity">
-            <h2>{tr("Venue menu", "Menu del locale")}</h2>
-            <div className="menu-editor-summary" aria-label={tr("Menu summary", "Riepilogo menu")}>
-              <span><strong>{draft.sections.length}</strong>{tr("categories", "categorie")}</span>
-              <span><strong>{draft.items.length}</strong>{tr("items", "elementi")}</span>
-              <span><strong>{draft.items.filter((item) => item.available).length}</strong>{tr("available", "disponibili")}</span>
-            </div>
-          </div>
           <div className="menu-editor-intro__actions">
             <label className="menu-publish-toggle">
               <span><strong>{draft.enabled ? tr("Published", "Pubblicato") : tr("Draft", "Bozza")}</strong><small>{tr("Public menu visibility", "Visibilità del menu pubblico")}</small></span>
