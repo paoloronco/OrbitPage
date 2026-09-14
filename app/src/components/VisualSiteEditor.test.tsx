@@ -53,7 +53,7 @@ describe("VisualSiteEditor", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("replaces the homepage renderer for the Menu preview", () => {
+  it("gives Menu the full editor width and keeps its preview optional", () => {
     const renderPreview = vi.fn(() => <div>Specialized public preview</div>);
 
     const html = renderToStaticMarkup(
@@ -75,9 +75,12 @@ describe("VisualSiteEditor", () => {
       />,
     );
 
-    expect(renderPreview).toHaveBeenCalledWith("mobile");
-    expect(html).toContain("Specialized public preview");
-    expect(html).toContain("Live menu preview");
+    expect(html).toContain("visual-site-editor--menu");
+    expect(html).toContain("visual-site-editor--inspector-only");
+    expect(html).toContain("Manage your Menu");
+    expect(html).toContain("Show preview");
+    expect(html).not.toContain("visual-site-editor__canvas");
+    expect(renderPreview).not.toHaveBeenCalled();
   });
 
   it("gives Shop the full editor width without a persistent preview", () => {

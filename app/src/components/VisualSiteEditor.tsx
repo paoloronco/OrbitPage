@@ -101,7 +101,8 @@ export function VisualSiteEditor({
     typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
   ));
   const [previewVisible, setPreviewVisible] = useState(true);
-  const previewEnabled = section !== "shop";
+  const [menuPreviewVisible, setMenuPreviewVisible] = useState(false);
+  const previewEnabled = section !== "shop" && (section !== "menu" || menuPreviewVisible);
   const Inspector = previewEnabled ? "aside" : "section";
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
@@ -149,15 +150,21 @@ export function VisualSiteEditor({
   };
 
   return (
-    <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}${previewEnabled ? "" : " visual-site-editor--inspector-only"}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
+    <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}${section === "menu" ? " visual-site-editor--menu" : ""}${previewEnabled ? " visual-site-editor--preview-visible" : " visual-site-editor--inspector-only"}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
       <header className="visual-site-editor__toolbar">
         <div className="visual-site-editor__intro">
           <span className="visual-site-editor__mark"><MousePointerClick aria-hidden="true" size={18} /></span>
           <div>
-            <strong>{previewEnabled ? tr("Edit the real page", "Modifica la pagina reale") : tr("Manage your Shop", "Gestisci il tuo Shop")}</strong>
-            <small>{previewEnabled
-              ? tr("Select an element in the preview to open its settings.", "Seleziona un elemento nell’anteprima per aprire le sue impostazioni.")
-              : tr("Products, design, payments, orders and customers in one place.", "Prodotti, design, pagamenti, ordini e clienti in un unico spazio.")}</small>
+            <strong>{section === "shop"
+              ? tr("Manage your Shop", "Gestisci il tuo Shop")
+              : section === "menu"
+                ? tr("Manage your Menu", "Gestisci il tuo Menu")
+                : tr("Edit the real page", "Modifica la pagina reale")}</strong>
+            <small>{section === "shop"
+              ? tr("Products, design, payments, orders and customers in one place.", "Prodotti, design, pagamenti, ordini e clienti in un unico spazio.")
+              : section === "menu"
+                ? tr("Categories, items, design and publishing in one clear workspace.", "Categorie, elementi, design e pubblicazione in un unico spazio ordinato.")
+                : tr("Select an element in the preview to open its settings.", "Seleziona un elemento nell’anteprima per aprire le sue impostazioni.")}</small>
           </div>
         </div>
         <div
@@ -173,6 +180,17 @@ export function VisualSiteEditor({
             >
               <Edit aria-hidden="true" size={17} />
               <span>{tr("Arrange", "Disponi")}</span>
+            </button>
+          )}
+          {section === "menu" && (
+            <button
+              aria-pressed={menuPreviewVisible}
+              className="visual-site-editor__layout-toggle visual-site-editor__menu-preview-toggle"
+              onClick={() => setMenuPreviewVisible((visible) => !visible)}
+              type="button"
+            >
+              {menuPreviewVisible ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
+              <span>{menuPreviewVisible ? tr("Hide preview", "Nascondi anteprima") : tr("Show preview", "Mostra anteprima")}</span>
             </button>
           )}
           {previewEnabled && <PreviewDeviceToggle value={device} onChange={setDevice} />}
@@ -197,7 +215,7 @@ export function VisualSiteEditor({
         ))}
       </nav>
 
-      {isPhone && previewEnabled && (
+      {isPhone && previewEnabled && section !== "menu" && (
         <button
           aria-controls="visual-site-editor-preview"
           aria-expanded={previewVisible}
