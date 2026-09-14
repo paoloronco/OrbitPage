@@ -1496,6 +1496,7 @@ describe('API Endpoints', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['cache-control']).toContain('no-store');
+    expect(response.headers).toHaveProperty('ratelimit-policy');
     expect(response.body.data).toEqual([
       { day: '2026-09-14', format: 'markdown', path: '/', requests: 3 },
     ]);

@@ -1756,21 +1756,6 @@ const getSitemapStatusPayload = async (req) => {
 
 app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], serveBuiltInTextFile);
 
-app.get('/api/analytics/machine-readable', authenticateToken, requirePermission('analytics:read'), async (_req, res) => {
-  try {
-    const rows = await dbAll(
-      `SELECT day, format, path, request_count AS requests
-       FROM machine_readable_metrics
-       WHERE day >= date('now', '-30 days')
-       ORDER BY day DESC, format, path`,
-    );
-    res.set('Cache-Control', 'private, no-store').json({ success: true, data: rows });
-  } catch (error) {
-    console.error('Failed to load machine-readable telemetry:', error);
-    res.status(500).json({ success: false, error: 'Failed to load machine-readable telemetry' });
-  }
-});
-
 app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, res) => {
   try {
     const file = await getCustomTextFileByPath(req.path.toLowerCase());
@@ -1868,6 +1853,21 @@ const aiAgentLimiter = rateLimit({
 
 // Apply rate limiting
 app.use('/api', apiLimiter);
+
+app.get('/api/analytics/machine-readable', authenticateToken, requirePermission('analytics:read'), async (_req, res) => {
+  try {
+    const rows = await dbAll(
+      `SELECT day, format, path, request_count AS requests
+       FROM machine_readable_metrics
+       WHERE day >= date('now', '-30 days')
+       ORDER BY day DESC, format, path`,
+    );
+    res.set('Cache-Control', 'private, no-store').json({ success: true, data: rows });
+  } catch (error) {
+    console.error('Failed to load machine-readable telemetry:', error);
+    res.status(500).json({ success: false, error: 'Failed to load machine-readable telemetry' });
+  }
+});
 
 let demoDatabaseSnapshot = null;
 let demoResetInProgress = false;
