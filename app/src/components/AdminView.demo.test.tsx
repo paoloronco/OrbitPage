@@ -338,6 +338,34 @@ describe('AdminView demo mode', () => {
     mockState.hostedConfig = null;
     mockState.integratedHostedSurface = false;
   });
+
+  it('identifies Pro as the required Shop plan in a hosted workspace', () => {
+    mockState.integratedHostedSurface = true;
+    mockState.hostedConfig = {
+      extensions: { shop: { enabled: false, entitled: false, selected: true } },
+    };
+
+    const html = renderToStaticMarkup(
+      <AdminView
+        profile={{ name: 'Starter shop', bio: '', avatar: '' }}
+        links={[]}
+        theme={defaultTheme}
+        currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+        saasUsage={{ blocks: 0 }}
+        onProfileUpdate={vi.fn()}
+        onLinksUpdate={vi.fn()}
+        onMenuUpdate={vi.fn()}
+        onThemeChange={vi.fn()}
+        onLogout={vi.fn()}
+        requestedTab="content"
+      />
+    );
+
+    expect(html).toContain('Shop is included with Pro');
+    expect(html).not.toContain('Shop is available on OrbitPage SaaS');
+    mockState.hostedConfig = null;
+    mockState.integratedHostedSurface = false;
+  });
 });
 
 

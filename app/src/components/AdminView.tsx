@@ -919,8 +919,12 @@ export const AdminView = ({
     isIntegratedHostedAdmin && hostedShop?.entitled
       ? <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
       : <PlanLockedFeature
-          title={tr("Shop is available on OrbitPage SaaS", "Shop è disponibile su OrbitPage SaaS")}
-          description={tr("Connect Stripe and manage products from a hosted workspace.", "Collega Stripe e gestisci i prodotti da un workspace hosted.")}
+          title={isIntegratedHostedAdmin
+            ? tr("Shop is included with Pro", "Lo Shop è incluso nel piano Pro")
+            : tr("Shop is available on OrbitPage SaaS", "Shop è disponibile su OrbitPage SaaS")}
+          description={isIntegratedHostedAdmin
+            ? tr("Upgrade to Pro to connect Stripe and sell products and services from your page.", "Passa a Pro per collegare Stripe e vendere prodotti e servizi dalla tua pagina.")
+            : tr("Connect Stripe and manage products from a hosted workspace.", "Collega Stripe e gestisci i prodotti da un workspace hosted.")}
           managePlanHref={managePlanHref}
         />
   );
