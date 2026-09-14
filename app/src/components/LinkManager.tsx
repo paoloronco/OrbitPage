@@ -1,7 +1,7 @@
 import { type ComponentType, type CSSProperties, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
+import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks } from "./link-save-state";
-import { type EmbedProvider, type InternalDestinationOption, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight } from "@/lib/link-blocks";
+import { type EmbedProvider, type InternalDestinationOption, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight, getInternalLinksData } from "@/lib/link-blocks";
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
@@ -190,6 +190,29 @@ export const LinkManager = ({
       }),
       status: "live",
       size: "medium",
+    });
+  };
+
+  const addShopLink = () => {
+    const shop = internalDestinations.find((destination) => destination.kind === 'shop');
+    if (!shop) return;
+    if (workingLinks.some((link) => link.type === 'internal_links' && getInternalLinksData(link.content).items.some((item) => item.kind === 'shop'))) return;
+    appendBlock({
+      id: Date.now().toString(),
+      title: shop.title,
+      description: shop.description,
+      url: '',
+      type: 'internal_links',
+      content: buildBlockContent({
+        items: [{ id: crypto.randomUUID(), kind: shop.kind, path: shop.path, label: shop.title, description: shop.description, icon: shop.icon || '' }],
+        layout: 'buttons',
+        columns: 2,
+        itemStyle: 'filled',
+        showDescriptions: true,
+        showIcons: true,
+      }),
+      status: 'live',
+      size: 'medium',
     });
   };
 
@@ -707,6 +730,7 @@ export const LinkManager = ({
   const isFullEdit = editMode === 'full';
   const isViewOnly = editMode === 'view';
   const hasCompactLinks = workingLinks.some((item) => item.type === "social_row");
+  const hasShopLink = workingLinks.some((link) => link.type === 'internal_links' && getInternalLinksData(link.content).items.some((item) => item.kind === 'shop'));
   const blockLibraryCategories: Array<{
     id: BlockLibraryCategoryId;
     label: string;
@@ -849,6 +873,12 @@ export const LinkManager = ({
         </div>
 
         <div className="admin-link-actions">
+          {isFullEdit && !focusedLink && (
+            internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink}>
+              <ShoppingBag className="h-4 w-4" />
+              {hasShopLink ? tr("Shop added", "Shop aggiunto") : tr("Add Shop", "Aggiungi Shop")}
+            </Button>
+          )}
           {isFullEdit && !focusedLink && (
             <Button
               onClick={openBlockLibrary}
@@ -1052,6 +1082,10 @@ export const LinkManager = ({
                     {nativeMenuEnabled ? <UtensilsCrossed className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
                     {tr("Add menu", "Aggiungi menu")}
                   </Button>
+                  {internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink}>
+                    <ShoppingBag className="h-4 w-4" />
+                    {hasShopLink ? tr("Shop added", "Shop aggiunto") : tr("Add Shop", "Aggiungi Shop")}
+                  </Button>}
                   <Button onClick={addNewBulletedList} variant="outline" className="admin-action" disabled={atBlockLimit}>
                     <List className="h-4 w-4" />
                     {tr("Add list", "Aggiungi elenco")}
