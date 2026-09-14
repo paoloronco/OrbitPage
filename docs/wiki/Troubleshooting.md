@@ -93,8 +93,8 @@ docker pull ghcr.io/paoloronco/orbitpage:latest
 Immutable version examples:
 
 ```bash
-docker pull paoloronco/orbitpage:v4.21.1
-docker pull ghcr.io/paoloronco/orbitpage:v4.21.1
+docker pull paoloronco/orbitpage:v4.21.2
+docker pull ghcr.io/paoloronco/orbitpage:v4.21.2
 ```
 
 ## Local Development Ports
