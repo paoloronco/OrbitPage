@@ -55,6 +55,7 @@ import { assertUploadedMediaSignature } from './services/media-signature.js';
 import {
   SELECTIVE_BACKUP_SCHEMA_VERSION,
   createApplicationBackup,
+  listBackupImages,
   restoreApplicationBackup,
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
@@ -4575,6 +4576,10 @@ app.post('/api/admin/restore', authenticateToken, requirePermission('users:manag
       error: error.message || 'Failed to restore backup',
     });
   }
+});
+
+app.get('/api/admin/backup/images', authenticateToken, requirePermission('users:manage'), (req, res) => {
+  res.json({ images: listBackupImages(uploadsPath, { includeData: req.query.data === '1' }) });
 });
 
 app.get('/api/versions', authenticateToken, requirePermission('users:manage'), async (_req, res) => {

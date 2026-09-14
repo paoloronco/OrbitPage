@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Database, Download, Sparkles, Trash2, Upload, X } from "@/components/ui/material-icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import {
 } from "@/lib/hosted-backup-import";
 import { formatFileSize, optimizeImageForUpload } from "@/lib/image-upload";
 import { useAppI18n } from "@/lib/i18n";
+import { readPortableBackupArchive } from "@/lib/portable-backup";
 
 type BackupState = "idle" | "exporting" | "restoring" | "success" | "error";
 
@@ -121,16 +122,28 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
   const { tr } = useAppI18n();
   const exportableSections = hosted
     ? [...MANAGED_BACKUP_SECTION_IDS]
-    : [...BACKUP_SECTION_IDS];
+    : BACKUP_SECTION_IDS.filter((section) => section !== "media");
   const [state, setState] = useState<BackupState>("idle");
   const [message, setMessage] = useState("");
   const [exportSections, setExportSections] = useState<BackupSectionId[]>(exportableSections);
+  const [imagesAvailable, setImagesAvailable] = useState(false);
+  const [includeImages, setIncludeImages] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<PendingRestore | null>(null);
   const [cleanupReport, setCleanupReport] = useState<MediaCleanupReport | null>(null);
   const [cleanupBusy, setCleanupBusy] = useState<"preview" | "clean" | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const busy = state === "exporting" || state === "restoring";
+
+  useEffect(() => {
+    let active = true;
+    backupApi.images()
+      .then((images) => {
+        if (active) setImagesAvailable(images.length > 0);
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
 
   const downloadBackup = async () => {
     if (exportSections.length === 0) {
@@ -142,15 +155,15 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
     setMessage("");
 
     try {
-      const blob = await backupApi.download(exportSections);
+      const { blob, extension } = await backupApi.download(exportSections, includeImages, hosted);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `orbitpage-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.download = `orbitpage-backup-${new Date().toISOString().slice(0, 10)}.${extension}`;
       link.click();
       URL.revokeObjectURL(url);
       setState("success");
-      setMessage(`Backup downloaded with ${exportSections.length} selected section${exportSections.length === 1 ? "" : "s"}.`);
+      setMessage(`Backup downloaded with ${exportSections.length} selected section${exportSections.length === 1 ? "" : "s"}${extension === "zip" ? " and images" : ""}.`);
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "Backup export failed.");
@@ -159,7 +172,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
 
   const readBackupFile = async (file?: File) => {
     if (!file) return;
-    if (hosted && file.size > MAX_HOSTED_BACKUP_FILE_BYTES) {
+    if (file.size > MAX_HOSTED_BACKUP_FILE_BYTES) {
       setState("error");
       setMessage(`This backup is too large. The maximum import size is ${formatFileSize(MAX_HOSTED_BACKUP_FILE_BYTES)}.`);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -174,7 +187,9 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
     setState("idle");
     setMessage("");
     try {
-      const backup = JSON.parse(await file.text());
+      const backup = /\.zip$/i.test(file.name) || file.type === "application/zip"
+        ? await readPortableBackupArchive(file)
+        : JSON.parse(await file.text());
       const inspection = inspectOrbitPageBackup(backup);
       const allowedSections = hosted
         ? [...MANAGED_BACKUP_SECTION_IDS, ...(inspection.source === "self-hosted" ? ["media" as const] : [])]
@@ -325,7 +340,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           <p className="text-sm leading-6 text-muted-foreground">
             {hosted
               ? tr("Choose exactly which managed-page sections to export or restore. Self-hosted backups can migrate referenced page media, while accounts, passwords, billing and internal files stay excluded.", "Scegli esattamente quali sezioni della pagina gestita esportare o ripristinare. I backup self-hosted possono trasferire i media usati dalla pagina; account, password, fatturazione e file interni restano esclusi.")
-              : tr("Choose which database sections and uploaded media to export or restore. Sections left unchecked remain unchanged.", "Scegli quali sezioni del database e media esportare o ripristinare. Le sezioni non selezionate restano invariate.")}
+              : tr("Choose which database sections to export or restore. Images can be added as a portable ZIP when available.", "Scegli quali sezioni del database esportare o ripristinare. Quando disponibili, le immagini possono essere aggiunte in uno ZIP portabile.")}
           </p>
         </div>
       </div>
@@ -359,6 +374,21 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
           </div>
         </div>
         <SectionSelector idPrefix="export" sections={exportableSections} selected={exportSections} onChange={setExportSections} disabled={busy} />
+        {imagesAvailable && (
+          <label htmlFor="backup-include-images" className="flex cursor-pointer items-start gap-3 rounded-md border border-border bg-background/50 p-3">
+            <Checkbox
+              id="backup-include-images"
+              className="mt-0.5"
+              checked={includeImages}
+              onCheckedChange={(checked) => setIncludeImages(checked === true)}
+              disabled={busy}
+            />
+            <span>
+              <span className="block text-sm font-medium">{tr("Include images (ZIP)", "Includi immagini (ZIP)")}</span>
+              <span className="block text-xs leading-5 text-muted-foreground">{tr("Creates a portable archive for OrbitPage OSS and SaaS. JSON remains the default.", "Crea un archivio portabile tra OrbitPage OSS e SaaS. JSON resta il formato predefinito.")}</span>
+            </span>
+          </label>
+        )}
         <Button
           type="button"
           className="admin-action admin-action-primary"
@@ -427,7 +457,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         <input
           ref={fileInputRef}
           type="file"
-          accept="application/json,.json"
+          accept="application/json,application/zip,.json,.zip"
           className="hidden"
           onChange={(event) => void readBackupFile(event.target.files?.[0])}
         />
