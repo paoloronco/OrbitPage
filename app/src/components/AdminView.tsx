@@ -1275,18 +1275,12 @@ export const AdminView = ({
                 onLayoutEditingChange={setVisualLayoutEditing}
                 previewHint={visualSection === "menu"
                   ? tr("Live public menu preview", "Anteprima live del menu pubblico")
-                  : visualSection === "shop"
-                    ? tr("Live public Shop preview", "Anteprima live dello Shop pubblico")
-                    : undefined}
+                  : undefined}
                 renderPreview={visualSection === "menu" ? ((device) => (
                   <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
                     <div className={`admin-menu-live-preview admin-menu-live-preview--${device}`}>
                       <MenuView embedded menu={previewMenu} pageHref={publicPageHref} />
                     </div>
-                  </PreviewDeviceFrame>
-                )) : visualSection === "shop" ? ((device) => (
-                  <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/shop`}>
-                    <div className="hosted-shop-preview-slot" data-orbitpage-hosted-shop-preview-slot />
                   </PreviewDeviceFrame>
                 )) : undefined}
               />

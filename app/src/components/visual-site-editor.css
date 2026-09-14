@@ -282,6 +282,23 @@
   background: #eef2f7;
 }
 
+.visual-site-editor--inspector-only .visual-site-editor__workspace {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  overflow: visible;
+  background: #fff;
+}
+
+.visual-site-editor--inspector-only .visual-site-editor__inspector {
+  max-height: none;
+  border-width: 0;
+}
+
+.visual-site-editor--inspector-only .visual-site-editor__inspector-body {
+  height: auto;
+  overflow: visible;
+}
+
 .visual-site-editor__canvas {
   position: relative;
   display: grid;

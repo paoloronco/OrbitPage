@@ -53,7 +53,7 @@ describe("VisualSiteEditor", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("replaces the homepage renderer for Menu and Shop previews", () => {
+  it("replaces the homepage renderer for the Menu preview", () => {
     const renderPreview = vi.fn(() => <div>Specialized public preview</div>);
 
     const html = renderToStaticMarkup(
@@ -78,6 +78,35 @@ describe("VisualSiteEditor", () => {
     expect(renderPreview).toHaveBeenCalledWith("mobile");
     expect(html).toContain("Specialized public preview");
     expect(html).toContain("Live menu preview");
+  });
+
+  it("gives Shop the full editor width without a persistent preview", () => {
+    const renderPreview = vi.fn(() => <div>Shop preview</div>);
+
+    const html = renderToStaticMarkup(
+      <VisualSiteEditor
+        profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+        links={[]}
+        theme={defaultTheme}
+        publicPageHref="/orbitpage"
+        showOrbitPageBadge
+        section="shop"
+        inspectorTitle="Shop"
+        inspectorDescription="Manage Shop"
+        inspector={<div>Shop workspace</div>}
+        onSelect={vi.fn()}
+        layoutEditing={false}
+        onLayoutEditingChange={vi.fn()}
+        renderPreview={renderPreview}
+      />,
+    );
+
+    expect(html).toContain("visual-site-editor--inspector-only");
+    expect(html).toContain("Manage your Shop");
+    expect(html).toContain("Shop workspace");
+    expect(html).not.toContain("visual-site-editor__canvas");
+    expect(html).not.toContain("PreviewDeviceToggle");
+    expect(renderPreview).not.toHaveBeenCalled();
   });
 
   it("removes the top Done and Reset actions while arranging", () => {
