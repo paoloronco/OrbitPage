@@ -17,6 +17,7 @@ import type { CardSurfaceEffect } from "@/lib/theme";
 interface TextCardProps {
   link: LinkData;
   onUpdate: (link: LinkData) => void;
+  onPreview?: (id: string, link: LinkData | null) => void;
   onDelete: (id: string) => void;
   isDragging?: boolean;
   onMoveUp?: () => void;
@@ -31,7 +32,7 @@ interface TextCardProps {
   editRequest?: number;
 }
 
-export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onPreview, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editLink, setEditLink] = useState(link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
@@ -55,13 +56,20 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
   const canEdit = editMode !== 'view';
   const isListCard = Array.isArray(editLink.textItems);
 
+  useEffect(() => {
+    if (isEditing) onPreview?.(link.id, isListCard ? { ...editLink, url: '' } : editLink);
+  }, [editLink, isEditing, isListCard, link.id, onPreview]);
+
   const handleSave = () => {
     if (uploadingImage) return;
-    onUpdate(isListCard ? { ...editLink, url: '' } : editLink);
+    const nextLink = isListCard ? { ...editLink, url: '' } : editLink;
+    onUpdate(nextLink);
+    onPreview?.(link.id, null);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
+    onPreview?.(link.id, null);
     setEditLink(link);
     setImageUploadError("");
     setIsEditing(false);
@@ -269,6 +277,12 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
       <div className={isFullEdit ? "admin-card-edit-body ml-6" : "admin-card-edit-body"}>
         {isEditing ? (
           <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Content</p>
+                <p className="text-sm font-semibold text-slate-900">Title, text &amp; typography</p>
+              </div>
+              <div className="space-y-3">
             <Input
               aria-label="Text card title"
               value={editLink.title}
@@ -288,7 +302,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               />
               <p className="text-xs text-slate-500">Plain text and simple lists are supported. The content is escaped before rendering.</p>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <div className="space-y-1">
                 <Label htmlFor={`text-card-title-font-${link.id}`} className="text-xs">Title Font</Label>
                 <Select
@@ -344,8 +358,16 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 </Select>
               </div>
             </div>
-            
+              </div>
+            </section>
+
             {/* Clickable List Items */}
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Destination</p>
+                <p className="text-sm font-semibold text-slate-900">List items &amp; link</p>
+              </div>
+              <div className="space-y-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">Clickable List Items</h3>
@@ -455,16 +477,23 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 className="glass-card border-primary/20"
               />
             )}
+              </div>
+            </section>
 
             {/* Link Scheduler */}
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Publishing</p>
+                <p className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</p>
+              </div>
             {!schedulingEnabled && (
-              <div className="admin-inline-plan-lock">
+              <div className="admin-inline-plan-lock mb-3">
                 <LockKeyhole className="h-4 w-4" />
                 <span>Scheduling is available on Pro.</span>
                 <a href={managePlanHref} target="_top">View plans</a>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label htmlFor={`text-card-status-${link.id}`} className="text-xs">Status</Label>
                 <Select
@@ -536,7 +565,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                   className="h-8 w-full glass-card border-primary/20"
                 />
               </div>
-              <div className="col-span-2 space-y-1">
+              <div className="space-y-1 sm:col-span-2">
                 <Label htmlFor={`text-card-timezone-${link.id}`} className="text-xs">Timezone</Label>
                 <Input
                   id={`text-card-timezone-${link.id}`}
@@ -553,8 +582,15 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 />
               </div>
             </div>
+            </section>
 
             {/* Icon Upload */}
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Media</p>
+                <p className="text-sm font-semibold text-slate-900">Icon &amp; cover image</p>
+              </div>
+              <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor={`text-card-icon-${link.id}`} className="text-sm font-medium">Icon</Label>
               <div className="flex items-center gap-2">
@@ -646,8 +682,16 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
               {imageUploadError && <p className="text-xs font-medium text-destructive" role="alert">{imageUploadError}</p>}
               <p className="text-xs text-muted-foreground">Images up to 10 MB are optimized before upload.</p>
             </div>
+              </div>
+            </section>
 
             {/* Size Selection */}
+            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
+              <div className="mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Appearance</p>
+                <p className="text-sm font-semibold text-slate-900">Surface, size &amp; colors</p>
+              </div>
+              <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor={`text-card-surface-${link.id}`} className="text-sm font-medium">Card surface</Label>
               <Select
@@ -687,7 +731,7 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
             </div>
 
             {/* Colors */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="space-y-1">
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span>Background</span>
@@ -724,7 +768,9 @@ export const TextCard = ({ link, onUpdate, onDelete, isDragging, onMoveUp, onMov
                 Use theme colors
               </Button>
             )}
-            
+              </div>
+            </section>
+
             <div className="flex gap-2">
               <Button aria-busy={Boolean(uploadingImage)} onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>
                 {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}

@@ -112,6 +112,7 @@ export interface LinkData {
 interface LinkCardProps {
   link: LinkData;
   onUpdate: (link: LinkData) => void;
+  onPreview?: (id: string, link: LinkData | null) => void;
   onDelete: (id: string) => void;
   isDragging?: boolean;
   onMoveUp?: () => void;
@@ -149,6 +150,7 @@ const createCompactLinkItemId = () => {
 export const LinkCard = ({
   link,
   onUpdate,
+  onPreview,
   onDelete,
   isDragging,
   onMoveUp,
@@ -203,6 +205,10 @@ export const LinkCard = ({
   const canEdit = editMode !== 'view';
   const canDelete = editMode === 'full';
   const canReorder = editMode === 'full';
+
+  useEffect(() => {
+    if (isEditing) onPreview?.(link.id, editLink);
+  }, [editLink, isEditing, link.id, onPreview]);
 
   const handleSave = async () => {
     if (uploadingImage || uploadingVideo || resolvingMap) return;
@@ -292,10 +298,12 @@ export const LinkCard = ({
         }
       : normalizedLink;
     onUpdate(sanitizedLink);
+    onPreview?.(link.id, null);
     setIsEditing(false);
   };
 
   const handleCancel = () => {
+    onPreview?.(link.id, null);
     setEditLink(link);
     setImageUploadError("");
     setVideoUploadError("");
