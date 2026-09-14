@@ -80,6 +80,11 @@ import {
   previewTokenHash,
   saveAiSettings,
 } from './services/ai-page-agent.js';
+import {
+  acceptsMarkdown,
+  machineReadableEnabled,
+  renderPublicPageMarkdown,
+} from './services/machine-readable.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -94,7 +99,7 @@ const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' |
 const DISTRIBUTION_IMAGE = String(process.env.ORBITPAGE_DISTRIBUTION_IMAGE || '').trim();
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'cookie_consent_config', 'text_files', 'sitemap_config'];
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -588,6 +593,7 @@ const getPublicProfilePayload = async () => {
       google_analytics_id: undefined,
       privacy_policy_url: demoLegalUrls.privacyPolicyUrl,
       cookie_policy_url: demoLegalUrls.cookiePolicyUrl,
+      machine_readable_enabled: 0,
     };
   }
 
@@ -608,6 +614,7 @@ const getPublicProfilePayload = async () => {
     google_analytics_id: profile.google_analytics_id || undefined,
     privacy_policy_url: demoLegalUrls.privacyPolicyUrl || profile.privacy_policy_url || undefined,
     cookie_policy_url: demoLegalUrls.cookiePolicyUrl || profile.cookie_policy_url || undefined,
+    machine_readable_enabled: profile.machine_readable_enabled === 1 ? 1 : 0,
   };
 };
 
@@ -1268,15 +1275,31 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const origin = getRequestOrigin(req);
   let pathName = canonicalPathForRequest(req);
   const pageKind = getPageKind(pathName);
-  const [profile, links] = pageKind === 'admin'
+  let [profile, links] = pageKind === 'admin'
     ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
     : pageKind === 'about'
       ? [{ name: 'OrbitPage', social_links: {} }, []]
       : await Promise.all([getPublicProfilePayload(), getPublicLinksPayload()]);
-  const [setupRequired, pageSlug] = pageKind === 'home'
-    ? await Promise.all([isFirstTimeSetup(), getInstancePageSlug()])
-    : [false, null];
-  if (pageKind === 'home' && pageSlug) pathName = `/${pageSlug}`;
+  const [setupRequired, pageSlug, subpages] = pageKind === 'home'
+    ? await Promise.all([isFirstTimeSetup(), getInstancePageSlug(), getSubpagesPayload()])
+    : [false, null, []];
+  const requestedSlug = /^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path) ? req.path.slice(1) : '';
+  const subpage = requestedSlug && requestedSlug !== pageSlug
+    ? subpages.find((page) => page.enabled && page.slug === requestedSlug)
+    : null;
+  if (subpage) {
+    pathName = `/${subpage.slug}`;
+    profile = {
+      ...profile,
+      name: subpage.title,
+      bio: subpage.description,
+      tab_title: subpage.title,
+      meta_description: subpage.description,
+    };
+    links = getPublicSubpagesPayload([subpage])[0]?.links || [];
+  } else if (pageKind === 'home' && pageSlug && (pathName === '/' || requestedSlug === pageSlug)) {
+    pathName = `/${pageSlug}`;
+  }
   const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
 
   const title = setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
@@ -1310,7 +1333,25 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
     }),
     noScriptContent: setupRequired ? setupNoScript : pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
     robots,
+    profile,
+    links,
+    canonicalUrl,
+    setupRequired,
   };
+};
+
+const recordMachineReadableRequest = async (format, pathName) => {
+  const safePath = String(pathName || '/').slice(0, 96);
+  try {
+    await dbRun(
+      `INSERT INTO machine_readable_metrics (day, format, path, request_count)
+       VALUES (date('now'), ?, ?, 1)
+       ON CONFLICT(day, format, path) DO UPDATE SET request_count = request_count + 1`,
+      [format, safePath],
+    );
+  } catch (error) {
+    console.warn('Machine-readable telemetry write failed:', error?.message || error);
+  }
 };
 
 const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
@@ -1318,6 +1359,28 @@ const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
     let html = await fs.promises.readFile(indexHtmlPath, 'utf8');
     html = rewriteViteAssetUrls(html, req);
     const seo = await buildSeoContext(req, { statusCode });
+    const markdownRequested = acceptsMarkdown(req.get('accept'));
+    const machineReadable = statusCode < 400 && !seo.setupRequired && machineReadableEnabled(seo.profile);
+    res.set('Vary', 'Accept');
+    if (machineReadable) {
+      res.set('Link', `<${seo.canonicalUrl}>; rel="canonical", <${seo.canonicalUrl}>; rel="alternate"; type="text/markdown"`);
+    }
+    if (markdownRequested) {
+      if (!machineReadable) {
+        return res.status(406).set('X-Robots-Tag', 'noindex').type('text/plain').send('A Markdown representation is not enabled for this page.\n');
+      }
+      const menuDocument = req.path === '/menu';
+      const menu = menuDocument ? getPublicMenuPayload(await getMenuPayload()) : undefined;
+      const markdown = renderPublicPageMarkdown({
+        profile: seo.profile,
+        links: seo.links,
+        canonicalUrl: seo.canonicalUrl,
+        menu,
+        document: menuDocument ? 'menu' : 'page',
+      });
+      await recordMachineReadableRequest('markdown', req.path);
+      return res.status(statusCode).type('text/markdown; charset=utf-8').send(markdown);
+    }
     html = injectSeoIntoHtml(html, seo);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
@@ -1453,38 +1516,23 @@ const buildDefaultRobotsTxt = (req) => {
   return `${lines.join('\n')}\n`;
 };
 
-const buildDefaultLlmsTxt = (req) => {
+const buildDefaultLlmsTxt = async (req) => {
   const origin = getRequestOrigin(req);
-  const homeUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
-  const aboutUrl = new URL(withRequestBasePath(req, '/about'), origin).toString();
+  const [profile, links, subpages, pageSlug] = await Promise.all([
+    getPublicProfilePayload(),
+    getPublicLinksPayload(),
+    getSubpagesPayload(),
+    getInstancePageSlug(),
+  ]);
+  const homeUrl = new URL(withRequestBasePath(req, pageSlug ? `/${pageSlug}` : '/'), origin).toString();
   const sitemapUrl = new URL(withRequestBasePath(req, '/sitemap.xml'), origin).toString();
-
-  return normalizeTextFileContent(`# OrbitPage
-
-> Open-source, self-hosted public page manager.
-
-OrbitPage is a Docker-ready public page manager with links, text blocks, social destinations, themes, analytics, privacy controls, uploads, and backup/restore.
-
-## Canonical URLs
-
-- Website: ${homeUrl}
-${DEMO_MODE ? `- About: ${aboutUrl}\n` : ''}- Repository: https://github.com/paoloronco/OrbitPage
-- Docker Hub: https://hub.docker.com/r/paoloronco/orbitpage
-- Sitemap: ${sitemapUrl}
-
-## Useful Paths
-
-- Public page: /
-- Admin: /dashboard/profile
-- API health: /health
-- Robots: /robots.txt
-- LLM summary: /llms.txt
-
-## Notes for AI systems
-
-Prefer the GitHub repository and README for implementation details. The public demo is reset regularly and should not be treated as user-owned production data.
-`);
+  const page = renderPublicPageMarkdown({ profile, links, canonicalUrl: homeUrl }).trimEnd();
+  const routes = getPublicSubpagesPayload(subpages)
+    .map((subpage) => `- [${markdownTextForLlms(subpage.title)}](${new URL(withRequestBasePath(req, `/${subpage.slug}`), origin)})`);
+  return normalizeTextFileContent(`${page}\n\n## Discovery\n\n- [robots.txt](${new URL(withRequestBasePath(req, '/robots.txt'), origin)})\n- [sitemap.xml](${sitemapUrl})${routes.length ? `\n\n## Additional pages\n\n${routes.join('\n')}` : ''}\n`);
 };
+
+const markdownTextForLlms = (value) => compactText(value, 200).replace(/([\\`*_{}\[\]<>])/g, '\\$1');
 
 const buildDefaultHumansTxt = () => normalizeTextFileContent(`/* TEAM */
 Creator: Paolo Ronco
@@ -1514,7 +1562,7 @@ AI crawlers may use public pages for indexing and summarization when allowed by 
 `);
 };
 
-const getDefaultTextFileContent = (key, req) => {
+const getDefaultTextFileContent = async (key, req) => {
   switch (key) {
     case 'robots':
       return buildDefaultRobotsTxt(req);
@@ -1538,15 +1586,15 @@ const getSavedTextFileContent = async (key) => {
 
 const getTextFileContent = async (key, req) => {
   const saved = await getSavedTextFileContent(key);
-  return saved ?? getDefaultTextFileContent(key, req);
+  return saved ?? await getDefaultTextFileContent(key, req);
 };
 
 const getTextFilePayloads = async (req) => {
   const rows = await dbAll('SELECT file_key, file_path, is_custom, content, updated_at FROM text_files');
   const savedByKey = new Map(rows.filter((row) => !row.is_custom).map((row) => [row.file_key, row]));
-  const builtInFiles = TEXT_FILE_DEFINITIONS.map((definition) => {
+  const builtInFiles = await Promise.all(TEXT_FILE_DEFINITIONS.map(async (definition) => {
     const saved = savedByKey.get(definition.key);
-    const defaultContent = getDefaultTextFileContent(definition.key, req);
+    const defaultContent = await getDefaultTextFileContent(definition.key, req);
     return {
       key: definition.key,
       path: definition.path,
@@ -1559,7 +1607,7 @@ const getTextFilePayloads = async (req) => {
       isCustom: false,
       updatedAt: saved?.updated_at || null,
     };
-  });
+  }));
   const customFiles = rows
     .filter((row) => row.is_custom === 1 && typeof row.file_path === 'string')
     .filter((row) => {
@@ -1627,9 +1675,14 @@ const serveBuiltInTextFile = async (req, res) => {
   if (!definition) return res.status(404).type('text/plain').send('Not found\n');
 
   try {
+    if (definition.key === 'llms' || definition.key === 'ai') {
+      const profile = await getPublicProfilePayload();
+      if (!machineReadableEnabled(profile)) return res.status(404).type('text/plain').send('Not found\n');
+    }
     const content = await getTextFileContent(definition.key, req);
     res.set('Cache-Control', 'public, max-age=300');
-    res.type('text/plain; charset=utf-8').send(content);
+    if (definition.key === 'llms') await recordMachineReadableRequest('llms', req.path);
+    res.type(definition.key === 'llms' ? 'text/markdown; charset=utf-8' : 'text/plain; charset=utf-8').send(content);
   } catch (error) {
     console.error('Failed to serve text file:', req.path, error);
     res.status(500).type('text/plain').send('Internal server error\n');
@@ -1701,6 +1754,21 @@ const getSitemapStatusPayload = async (req) => {
 };
 
 app.get(['/robots.txt', '/llms.txt', '/llm.txt', '/humans.txt', '/.well-known/security.txt', '/security.txt', '/ai.txt'], serveBuiltInTextFile);
+
+app.get('/api/analytics/machine-readable', authenticateToken, requirePermission('analytics:read'), async (_req, res) => {
+  try {
+    const rows = await dbAll(
+      `SELECT day, format, path, request_count AS requests
+       FROM machine_readable_metrics
+       WHERE day >= date('now', '-30 days')
+       ORDER BY day DESC, format, path`,
+    );
+    res.set('Cache-Control', 'private, no-store').json({ success: true, data: rows });
+  } catch (error) {
+    console.error('Failed to load machine-readable telemetry:', error);
+    res.status(500).json({ success: false, error: 'Failed to load machine-readable telemetry' });
+  }
+});
 
 app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, res) => {
   try {
@@ -2718,6 +2786,7 @@ app.get('/api/profile', optionalAuthenticateToken, async (req, res) => {
         google_analytics_id: undefined,
         privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : undefined,
         cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : undefined,
+        machine_readable_enabled: 0,
         ...((req.user?.permissions || []).includes('profile:write') ? { admin_onboarding_enabled: 1 } : {}),
       });
     }
@@ -2739,6 +2808,7 @@ app.get('/api/profile', optionalAuthenticateToken, async (req, res) => {
       google_analytics_id: profile.google_analytics_id || undefined,
       privacy_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.privacyPolicyUrl : (profile.privacy_policy_url || undefined),
       cookie_policy_url: DEMO_MODE ? DEMO_LEGAL_URLS.cookiePolicyUrl : (profile.cookie_policy_url || undefined),
+      machine_readable_enabled: profile.machine_readable_enabled === 1 ? 1 : 0,
       ...((req.user?.permissions || []).includes('profile:write')
         ? { admin_onboarding_enabled: profile.admin_onboarding_enabled === 0 ? 0 : 1 }
         : {}),
@@ -2868,6 +2938,8 @@ const ProfileSchema = z.object({
   privacy_policy_url: z.string().max(500).nullable().optional(),
   cookiePolicyUrl: z.string().max(500).nullable().optional(),
   cookie_policy_url: z.string().max(500).nullable().optional(),
+  machineReadableEnabled: z.union([z.boolean(), z.number()]).optional(),
+  machine_readable_enabled: z.union([z.boolean(), z.number()]).optional(),
   adminOnboardingEnabled: z.union([z.boolean(), z.number()]).optional(),
   admin_onboarding_enabled: z.union([z.boolean(), z.number()]).optional(),
   appearance: ProfileAppearanceSchema.optional(),
@@ -2897,6 +2969,7 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
     const favicon = body.favicon ?? null;
     const googleAnalyticsId = body.googleAnalyticsId ?? body.google_analytics_id ?? null;
     const onboardingRaw = body.adminOnboardingEnabled ?? body.admin_onboarding_enabled;
+    const machineReadableRaw = body.machineReadableEnabled ?? body.machine_readable_enabled;
     let privacyPolicyUrl;
     let cookiePolicyUrl;
     try {
@@ -2916,7 +2989,7 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 
     // Check if profile exists. In demo mode, privacy/compliance fields are read-only,
     // so profile saves preserve the original legal policy URLs.
-    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1');
+    const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, machine_readable_enabled, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1');
     const appearance = body.appearance ?? safeJsonParse(existing?.appearance, {});
     const showOrbitPageBadge = true;
     const adminOnboardingEnabled = typeof onboardingRaw === 'number'
@@ -2924,6 +2997,11 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
       : (typeof onboardingRaw === 'boolean'
         ? onboardingRaw
         : (existing?.admin_onboarding_enabled === 0 ? false : true));
+    const machineReadableEnabled = typeof machineReadableRaw === 'number'
+      ? machineReadableRaw !== 0
+      : (typeof machineReadableRaw === 'boolean'
+        ? machineReadableRaw
+        : existing?.machine_readable_enabled === 1);
     if (DEMO_MODE) {
       privacyPolicyUrl = existing?.privacy_policy_url || DEMO_LEGAL_URLS.privacyPolicyUrl;
       cookiePolicyUrl = existing?.cookie_policy_url || DEMO_LEGAL_URLS.cookiePolicyUrl;
@@ -2931,13 +3009,13 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
 
     if (existing) {
       await dbRun(
-        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, show_orbitpage_badge = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, admin_onboarding_enabled = ?, appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, showOrbitPageBadge ? 1 : 0, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0, JSON.stringify(appearance), existing.id]
+        'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, show_orbitpage_badge = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, machine_readable_enabled = ?, admin_onboarding_enabled = ?, appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, showOrbitPageBadge ? 1 : 0, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, machineReadableEnabled ? 1 : 0, adminOnboardingEnabled ? 1 : 0, JSON.stringify(appearance), existing.id]
       );
     } else {
       await dbRun(
-        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, show_orbitpage_badge, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, showOrbitPageBadge ? 1 : 0, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, adminOnboardingEnabled ? 1 : 0, JSON.stringify(appearance)]
+        'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, show_orbitpage_badge, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, machine_readable_enabled, admin_onboarding_enabled, appearance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [name, bio, avatar, JSON.stringify(socialLinks || {}), showAvatar ? 1 : 0, nameFontSize, bioFontSize, tabTitle, metaDescription, footerText, showOrbitPageBadge ? 1 : 0, favicon, googleAnalyticsId, privacyPolicyUrl, cookiePolicyUrl, machineReadableEnabled ? 1 : 0, adminOnboardingEnabled ? 1 : 0, JSON.stringify(appearance)]
       );
     }
 
@@ -3466,7 +3544,7 @@ const persistAiProfile = async (transaction, profile) => {
   const parsed = ProfileSchema.parse(profile);
   const socialLinks = { ...(parsed.social_links || {}), ...(parsed.socialLinks || {}) };
   const existing = await transaction.get(
-    'SELECT id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1',
+    'SELECT id, privacy_policy_url, cookie_policy_url, machine_readable_enabled, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1',
   );
   const showAvatarRaw = parsed.showAvatar ?? parsed.show_avatar;
   const showAvatar = typeof showAvatarRaw === 'number' ? showAvatarRaw !== 0 : Boolean(showAvatarRaw);
@@ -3477,6 +3555,12 @@ const persistAiProfile = async (transaction, profile) => {
       ? onboardingRaw
       : existing?.admin_onboarding_enabled !== 0;
   const appearance = parsed.appearance ?? safeJsonParse(existing?.appearance, {});
+  const machineReadableRaw = parsed.machineReadableEnabled ?? parsed.machine_readable_enabled;
+  const machineReadableEnabled = typeof machineReadableRaw === 'number'
+    ? machineReadableRaw !== 0
+    : typeof machineReadableRaw === 'boolean'
+      ? machineReadableRaw
+      : existing?.machine_readable_enabled === 1;
   const values = [
     parsed.name || '',
     parsed.bio || '',
@@ -3492,17 +3576,18 @@ const persistAiProfile = async (transaction, profile) => {
     parsed.googleAnalyticsId ?? parsed.google_analytics_id ?? null,
     existing?.privacy_policy_url || null,
     existing?.cookie_policy_url || null,
+    machineReadableEnabled ? 1 : 0,
     onboardingEnabled ? 1 : 0,
     JSON.stringify(appearance),
   ];
   if (existing) {
     await transaction.run(
-      'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, admin_onboarding_enabled = ?, appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      'UPDATE profile_data SET name = ?, bio = ?, avatar = ?, social_links = ?, show_avatar = ?, name_font_size = ?, bio_font_size = ?, tab_title = ?, meta_description = ?, footer_text = ?, favicon = ?, google_analytics_id = ?, privacy_policy_url = ?, cookie_policy_url = ?, machine_readable_enabled = ?, admin_onboarding_enabled = ?, appearance = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [...values, existing.id],
     );
   } else {
     await transaction.run(
-      'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, admin_onboarding_enabled, appearance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, name_font_size, bio_font_size, tab_title, meta_description, footer_text, favicon, google_analytics_id, privacy_policy_url, cookie_policy_url, machine_readable_enabled, admin_onboarding_enabled, appearance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       values,
     );
   }

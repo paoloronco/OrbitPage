@@ -93,6 +93,7 @@ export const initializeDatabase = () => {
           bio_font_size TEXT,
           tab_title TEXT,
           meta_description TEXT,
+          machine_readable_enabled BOOLEAN DEFAULT 0,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `);
@@ -114,6 +115,7 @@ export const initializeDatabase = () => {
       // Legal policy links (configurable, not hardcoded — required for open-source deployments)
       db.run(`ALTER TABLE profile_data ADD COLUMN privacy_policy_url TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE profile_data ADD COLUMN cookie_policy_url TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE profile_data ADD COLUMN machine_readable_enabled BOOLEAN DEFAULT 0`, (err) => { /* ignore if exists */ });
       // Admin onboarding preference. Default enabled so new admin/customer sessions see the guided setup.
       db.run(`ALTER TABLE profile_data ADD COLUMN admin_onboarding_enabled BOOLEAN DEFAULT 1`, (err) => { /* ignore if exists */ });
       // Per-profile visual overrides. JSON keeps the schema extensible while old profiles inherit the active theme.
@@ -210,6 +212,18 @@ export const initializeDatabase = () => {
       db.run(`ALTER TABLE text_files ADD COLUMN is_custom INTEGER NOT NULL DEFAULT 0`, (err) => { /* ignore if exists */ });
       db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_text_files_custom_path ON text_files(file_path) WHERE is_custom = 1`, (err) => {
         if (err) console.error('Error indexing custom text files:', err);
+      });
+
+      db.run(`
+        CREATE TABLE IF NOT EXISTS machine_readable_metrics (
+          day TEXT NOT NULL,
+          format TEXT NOT NULL CHECK (format IN ('markdown', 'llms')),
+          path TEXT NOT NULL,
+          request_count INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (day, format, path)
+        )
+      `, (err) => {
+        if (err) console.error('Error creating machine-readable metrics table:', err);
       });
       db.run(`
         CREATE TRIGGER IF NOT EXISTS limit_custom_text_files

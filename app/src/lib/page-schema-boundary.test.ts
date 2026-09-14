@@ -16,6 +16,12 @@ import { themePresets } from './theme-presets';
 import { cardThemePresets } from './card-theme-presets';
 
 describe('canonical page schema boundary', () => {
+  it('keeps machine-readable publishing opt-in and normalizes both key styles', () => {
+    expect(DEFAULT_ORBITPAGE_PROFILE.machine_readable_enabled).toBe(0);
+    expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, { machineReadableEnabled: true }))
+      .toMatchObject({ machine_readable_enabled: 1 });
+  });
+
   it('rejects arbitrary agent fields at profile, theme, block and patch boundaries', () => {
     expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       bio: 'Valid update',

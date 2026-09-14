@@ -298,6 +298,7 @@ export const OrbitPageProfileSchema = z.object({
   google_analytics_id: boundedString(40).regex(/^G-[A-Z0-9]{4,32}$/i).nullable().optional(),
   privacy_policy_url: OrbitPagePublicHrefSchema.nullable().optional(),
   cookie_policy_url: OrbitPagePublicHrefSchema.nullable().optional(),
+  machine_readable_enabled: z.union([z.literal(0), z.literal(1)]).default(0),
   admin_onboarding_enabled: z.union([z.literal(0), z.literal(1)]),
   appearance: OrbitPageProfileAppearanceSchema.nullable().optional()
 }).strict();
@@ -310,6 +311,7 @@ export const DEFAULT_ORBITPAGE_PROFILE: OrbitPageProfile = {
   avatar: "",
   social_links: {},
   show_avatar: 1,
+  machine_readable_enabled: 0,
   admin_onboarding_enabled: 0
 };
 
@@ -340,6 +342,8 @@ const ProfileInputShape = {
   privacyPolicyUrl: OrbitPagePublicHrefInputSchema.nullable().optional(),
   cookie_policy_url: OrbitPagePublicHrefInputSchema.nullable().optional(),
   cookiePolicyUrl: OrbitPagePublicHrefInputSchema.nullable().optional(),
+  machine_readable_enabled: NumericBooleanSchema.optional(),
+  machineReadableEnabled: NumericBooleanSchema.optional(),
   admin_onboarding_enabled: NumericBooleanSchema.optional(),
   adminOnboardingEnabled: NumericBooleanSchema.optional(),
   appearance: OrbitPageProfileAppearanceInputSchema.nullable().optional()
@@ -389,6 +393,7 @@ function canonicalProfilePatch(value: unknown, strict: boolean): Partial<OrbitPa
   assign("cookie_policy_url", cookiePolicyUrl === undefined || cookiePolicyUrl === null
     ? cookiePolicyUrl as undefined | null
     : normalizeOrbitPagePublicHref(String(cookiePolicyUrl)) ?? String(cookiePolicyUrl));
+  assign("machine_readable_enabled", firstDefined(input, "machine_readable_enabled", "machineReadableEnabled") as OrbitPageProfile["machine_readable_enabled"] | undefined);
   assign("admin_onboarding_enabled", firstDefined(input, "admin_onboarding_enabled", "adminOnboardingEnabled") as OrbitPageProfile["admin_onboarding_enabled"] | undefined);
   assign("appearance", (
     strict ? input.appearance : normalizeStoredProfileAppearance(input.appearance)

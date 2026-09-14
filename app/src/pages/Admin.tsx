@@ -59,6 +59,7 @@ interface ProfileData {
   googleAnalyticsId?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
+  machineReadableEnabled?: boolean;
 }
 
 export interface CurrentUser {
@@ -257,6 +258,7 @@ const Admin = () => {
             googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
             privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
             cookiePolicyUrl: (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined,
+            machineReadableEnabled: (profileData as any).machine_readable_enabled === 1 || (profileData as any).machineReadableEnabled === true,
           });
         }
 
@@ -317,6 +319,7 @@ const Admin = () => {
         googleAnalyticsId: newProfile.googleAnalyticsId,
         privacyPolicyUrl: newProfile.privacyPolicyUrl,
         cookiePolicyUrl: newProfile.cookiePolicyUrl,
+        machineReadableEnabled: newProfile.machineReadableEnabled,
       });
       setProfile(newProfile);
     } catch (error: any) {
