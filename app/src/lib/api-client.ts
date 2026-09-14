@@ -358,6 +358,7 @@ export interface ProfileResponse extends ApiResponse {
   google_analytics_id?: string;
   privacy_policy_url?: string;
   cookie_policy_url?: string;
+  machine_readable_enabled?: number;
   appearance?: import('./profile-appearance').ProfileAppearance;
 }
 
@@ -885,7 +886,7 @@ export const profileApi = {
     });
   },
 
-  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string; footerText?: string; showOrbitPageBadge?: boolean; favicon?: string; googleAnalyticsId?: string; privacyPolicyUrl?: string; cookiePolicyUrl?: string; appearance?: import('./profile-appearance').ProfileAppearance }): Promise<ApiResponse> => {
+  update: async (profile: { name: string; bio: string; avatar: string; socialLinks: Record<string, string>; showAvatar?: boolean; nameFontSize?: string; bioFontSize?: string; tabTitle?: string; metaDescription?: string; footerText?: string; showOrbitPageBadge?: boolean; favicon?: string; googleAnalyticsId?: string; privacyPolicyUrl?: string; cookiePolicyUrl?: string; machineReadableEnabled?: boolean; appearance?: import('./profile-appearance').ProfileAppearance }): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>('/profile', {
       method: 'PUT',
       body: JSON.stringify({
@@ -905,6 +906,7 @@ export const profileApi = {
         google_analytics_id: profile.googleAnalyticsId ?? undefined,
         privacy_policy_url: profile.privacyPolicyUrl ?? undefined,
         cookie_policy_url: profile.cookiePolicyUrl ?? undefined,
+        machine_readable_enabled: profile.machineReadableEnabled === true ? 1 : 0,
         appearance: profile.appearance,
       }),
     });

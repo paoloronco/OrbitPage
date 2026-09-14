@@ -63,6 +63,7 @@ interface ProfileData {
   footerText?: string;
   showOrbitPageBadge?: boolean;
   favicon?: string;
+  machineReadableEnabled?: boolean;
 }
 
 interface ProfileSectionProps {
@@ -588,6 +589,19 @@ export const ProfileSection = ({
                   <Label htmlFor="profile-footer">{tr("Footer text", "Testo del footer")}</Label>
                   <Textarea id="profile-footer" value={draft.footerText || ""} onChange={(event) => setDraft((current) => ({ ...current, footerText: event.target.value }))} placeholder={tr("(c) Your name. All rights reserved.", "(c) Il tuo nome. Tutti i diritti riservati.")} rows={2} maxLength={300} />
                 </div>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{tr("Machine-readable access", "Accesso leggibile dalle macchine")}</p>
+                  <p className="text-xs leading-5 text-slate-500">
+                    {tr("Publish Markdown on content negotiation and expose llms.txt for AI agents.", "Pubblica il Markdown tramite content negotiation ed espone llms.txt agli agenti AI.")}
+                  </p>
+                </div>
+                <Switch
+                  aria-label={tr("Machine-readable access", "Accesso leggibile dalle macchine")}
+                  checked={draft.machineReadableEnabled === true}
+                  onCheckedChange={(machineReadableEnabled) => setDraft((current) => ({ ...current, machineReadableEnabled }))}
+                />
               </div>
               <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
                 <div>

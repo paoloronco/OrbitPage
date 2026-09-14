@@ -99,6 +99,7 @@ function mapProfile(row: JsonRecord) {
     google_analytics_id: optionalString(row.google_analytics_id),
     privacy_policy_url: optionalString(row.privacy_policy_url),
     cookie_policy_url: optionalString(row.cookie_policy_url),
+    machine_readable_enabled: row.machine_readable_enabled === 1 || row.machine_readable_enabled === true,
     admin_onboarding_enabled: row.admin_onboarding_enabled === 1 || row.admin_onboarding_enabled === true,
     appearance: parseJsonRecord(row.appearance),
   } satisfies JsonRecord;
@@ -357,6 +358,7 @@ function managedProfileRow(profile: JsonRecord) {
     google_analytics_id: optionalString(profile.googleAnalyticsId ?? profile.google_analytics_id),
     privacy_policy_url: optionalString(profile.privacyPolicyUrl ?? profile.privacy_policy_url),
     cookie_policy_url: optionalString(profile.cookiePolicyUrl ?? profile.cookie_policy_url),
+    machine_readable_enabled: profile.machineReadableEnabled === true || profile.machine_readable_enabled === 1 ? 1 : 0,
     admin_onboarding_enabled: profile.adminOnboardingEnabled === false || profile.admin_onboarding_enabled === 0 ? 0 : 1,
     appearance: JSON.stringify(appearance),
   };

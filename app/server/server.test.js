@@ -1011,7 +1011,7 @@ describe('API Endpoints', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    const savedAppearance = JSON.parse(vi.mocked(dbRun).mock.calls[0][1][16]);
+    const savedAppearance = JSON.parse(vi.mocked(dbRun).mock.calls[0][1][17]);
     expect(savedAppearance).toEqual({
       profilePreset: 'studio',
       profileDetails: {
@@ -1433,7 +1433,9 @@ describe('API Endpoints', () => {
   });
 
   it('GET /llms.txt and /llm.txt expose the same LLM-readable project summary', async () => {
-    vi.mocked(dbGet).mockResolvedValue(null);
+    vi.mocked(dbGet).mockImplementation(async (sql) => String(sql).includes('FROM profile_data')
+      ? { name: 'OrbitPage', bio: 'Public profile', machine_readable_enabled: 1 }
+      : null);
 
     const canonical = await request(app)
       .get('/llms.txt')
@@ -1446,13 +1448,63 @@ describe('API Endpoints', () => {
 
     expect(canonical.status).toBe(200);
     expect(canonical.text).toContain('# OrbitPage');
-    expect(canonical.text).toContain('https://github.com/paoloronco/OrbitPage');
+    expect(canonical.text).toContain('Public profile');
+    expect(canonical.type).toMatch(/text\/markdown/);
     expect(alias.status).toBe(200);
     expect(alias.text).toBe(canonical.text);
   });
 
+  it('negotiates Markdown for the public page only after the profile opt-in', async () => {
+    vi.mocked(dbGet).mockImplementation(async (sql) => String(sql).includes('FROM profile_data')
+      ? { name: 'Alice', bio: 'Designer', social_links: '{}', machine_readable_enabled: 1 }
+      : null);
+    vi.mocked(dbAll).mockImplementation(async (sql) => String(sql).includes('FROM links')
+      ? [{ id: 'portfolio', title: 'Portfolio', description: 'Selected work', url: 'https://example.com', type: 'link', is_active: 1 }]
+      : []);
+
+    const response = await request(app).get('/').set('Accept', 'text/markdown');
+
+    expect(response.status).toBe(200);
+    expect(response.type).toMatch(/text\/markdown/);
+    expect(response.headers.vary).toBe('Accept');
+    expect(response.text).toContain('# Alice');
+    expect(response.text).toContain('Selected work');
+    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('machine_readable_metrics'), ['markdown', '/']);
+  });
+
+  it('keeps HTML unchanged and rejects Markdown when machine access is disabled', async () => {
+    vi.mocked(dbGet).mockImplementation(async (sql) => String(sql).includes('FROM profile_data')
+      ? { name: 'Alice', bio: 'Designer', social_links: '{}', machine_readable_enabled: 0 }
+      : null);
+
+    const markdown = await request(app).get('/').set('Accept', 'text/markdown');
+    const html = await request(app).get('/').set('Accept', 'text/html');
+
+    expect(markdown.status).toBe(406);
+    expect(html.status).toBe(200);
+    expect(html.type).toMatch(/text\/html/);
+    expect(html.text).toContain('application/ld+json');
+    expect(html.text).not.toContain('type="text/markdown"');
+  });
+
+  it('returns bounded aggregate machine-readable telemetry to analytics readers', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([
+      { day: '2026-09-14', format: 'markdown', path: '/', requests: 3 },
+    ]);
+
+    const response = await request(app).get('/api/analytics/machine-readable');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toContain('no-store');
+    expect(response.body.data).toEqual([
+      { day: '2026-09-14', format: 'markdown', path: '/', requests: 3 },
+    ]);
+  });
+
   it('GET text-discovery files exposes useful defaults', async () => {
-    vi.mocked(dbGet).mockResolvedValue(null);
+    vi.mocked(dbGet).mockImplementation(async (sql) => String(sql).includes('FROM profile_data')
+      ? { name: 'OrbitPage', machine_readable_enabled: 1 }
+      : null);
 
     const humans = await request(app).get('/humans.txt');
     const security = await request(app).get('/.well-known/security.txt');

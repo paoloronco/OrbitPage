@@ -29,6 +29,8 @@ Then use the admin panel to configure:
 - Open Graph metadata
 - Twitter Card metadata
 - Schema.org JSON-LD
+- optional Markdown content negotiation for public pages
+- optional generated `/llms.txt` and `/llm.txt`
 - dynamic `/robots.txt`
 - generated `/sitemap.xml` with `lastmod` based on public content changes
 - no-JavaScript fallback links for crawlers
@@ -75,7 +77,11 @@ Private routes such as admin, API, health, and unknown SPA routes are excluded a
 
 The **Admin > Publish > TXT** tool can edit `robots.txt`, `llms.txt`, `humans.txt`, `security.txt`, and `ai.txt`. The plural `llms.txt` is canonical; `/llm.txt` serves the same content as a compatibility alias.
 
-You can also add up to 20 custom endpoints using `/name.txt` or `/.well-known/name.txt`. OrbitPage normalizes paths to lowercase, prevents reserved-name collisions and path traversal, and serves every file as `text/plain` with browser sniffing disabled. TXT files and custom paths are included in the **Discovery files** backup section.
+Enable **Machine-readable access** in **Profile > Online presence** to publish both the generated `llms.txt` and the Markdown representation of each public page. With the option enabled, `Accept: text/markdown` returns the current public content from the same URL; HTML remains the default and responses include `Vary: Accept`. Disabling the option returns `406` for Markdown negotiation and `404` for the AI discovery files. JSON-LD remains in HTML because it is standard search metadata.
+
+Machine-readable requests use only local application data and do not call an AI provider. The server stores daily aggregate counts by format and public path in SQLite without IP addresses, user agents, referrers, cookies, or page content. Administrators with `analytics:read` can retrieve the last 30 days from `/api/analytics/machine-readable`.
+
+You can also add up to 20 custom endpoints using `/name.txt` or `/.well-known/name.txt`. OrbitPage normalizes paths to lowercase, prevents reserved-name collisions and path traversal, and serves every file with browser sniffing disabled. `llms.txt` uses `text/markdown`; other TXT files use `text/plain`. TXT files and custom paths are included in the **Discovery files** backup section.
 
 ## Contributor Checklist
 

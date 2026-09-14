@@ -115,6 +115,7 @@ interface ProfileData {
   googleAnalyticsId?: string;
   privacyPolicyUrl?: string;
   cookiePolicyUrl?: string;
+  machineReadableEnabled?: boolean;
 }
 
 interface AdminViewProps {
