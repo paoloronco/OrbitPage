@@ -1044,3 +1044,94 @@
     display: none;
   }
 }
+
+/* Full-width Menu workspace; compact list-to-editor disclosure returns when a preview narrows it. */
+@container menu-workspace (min-width: 48rem) {
+  .menu-editor-stack--visual .menu-category-index {
+    grid-template-columns: minmax(17rem, .55fr) minmax(28rem, 1.45fr);
+    align-items: start;
+    gap: 0 18px;
+  }
+
+  .menu-editor-stack--visual .menu-section-filter,
+  .menu-editor-stack--visual .menu-category-picker {
+    grid-column: 1;
+  }
+
+  .menu-editor-stack--visual .menu-category-editor {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin-top: 0;
+  }
+
+  .menu-editor-stack--visual .menu-items-workspace-grid {
+    grid-template-columns: minmax(17rem, .58fr) minmax(28rem, 1.42fr);
+    min-height: 34rem;
+  }
+
+  .menu-editor-stack--visual .menu-items-workspace-grid.is-mobile-editing > .menu-item-list-column,
+  .menu-editor-stack--visual .menu-items-workspace-grid:not(.is-mobile-editing) > .menu-product-editor,
+  .menu-editor-stack--visual .menu-items-workspace-grid:not(.is-mobile-editing) > .menu-product-editor-empty {
+    display: grid;
+  }
+
+  .menu-editor-stack--visual .menu-item-list-column {
+    border-right: 1px solid #dfe6ef;
+  }
+
+  .menu-editor-stack--visual .menu-product-editor__back {
+    display: none;
+  }
+}
+
+.menu-editor-stack--classic .menu-category-picker__item,
+.menu-editor-stack--visual .menu-category-picker__item {
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+}
+
+.menu-editor-stack--classic .menu-item-picker__item,
+.menu-editor-stack--visual .menu-item-picker__item {
+  grid-template-columns: 18px 44px minmax(0, 1fr) auto;
+}
+
+.menu-order-grip {
+  width: 18px;
+  height: 18px;
+  color: #8190a5;
+  cursor: grab;
+}
+
+.menu-category-picker__item:active .menu-order-grip,
+.menu-item-picker__item:active .menu-order-grip {
+  cursor: grabbing;
+}
+
+.menu-category-picker__item.is-dragging,
+.menu-item-picker__item.is-dragging {
+  opacity: .46;
+}
+
+.menu-category-picker__item.is-drag-over,
+.menu-item-picker__item.is-drag-over {
+  outline: 2px solid #5f88e5;
+  outline-offset: -2px;
+}
+
+.menu-item-list-heading small {
+  margin-left: auto;
+  color: #718096;
+  font-size: .61rem;
+  font-weight: 650;
+  text-align: right;
+}
+
+@container menu-workspace (max-width: 36rem) {
+  .menu-editor-stack--classic .menu-item-picker__item,
+  .menu-editor-stack--visual .menu-item-picker__item {
+    grid-template-columns: 18px 42px minmax(0, 1fr);
+  }
+
+  .menu-item-list-heading small {
+    display: none;
+  }
+}

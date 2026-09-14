@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import {
-  ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff,
+  ArrowDown, ArrowLeft, ArrowUp, Check, Copy, ExternalLink, Eye, EyeOff, GripVertical,
   ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, Save, Trash2,
   Search, UtensilsCrossed,
 } from '@/components/ui/material-icons';
@@ -20,6 +20,7 @@ import {
   type MenuCatalog, type MenuItem, type MenuSection, type MenuThemePreset, type MenuVenueType,
 } from '@/lib/menu';
 import { useAppI18n } from '@/lib/i18n';
+import { moveMenuSection, orderedSectionTree, reorderMenuItems, reorderMenuSections, sectionSiblings } from './menu-editor-order';
 import './menu-editor-redesign.css';
 
 interface MenuEditorProps {
@@ -63,40 +64,8 @@ function makeId(prefix: string) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
-function move<T>(items: T[], index: number, direction: -1 | 1) {
-  const target = index + direction;
-  if (target < 0 || target >= items.length) return items;
-  const next = [...items];
-  [next[index], next[target]] = [next[target], next[index]];
-  return next;
-}
-
-function sectionSiblings(sections: MenuSection[], parentId?: string) {
-  return sections
-    .filter((section) => section.parentId === parentId)
-    .sort((a, b) => a.position - b.position);
-}
-
-function orderedSectionTree(sections: MenuSection[]) {
-  return sectionSiblings(sections).flatMap((section) => [section, ...sectionSiblings(sections, section.id)]);
-}
-
 function menuFingerprint(menu: MenuCatalog) {
   return JSON.stringify({ ...menu, updatedAt: undefined });
-}
-
-function moveMenuSection(sections: MenuSection[], sectionId: string, direction: -1 | 1) {
-  const selected = sections.find((section) => section.id === sectionId);
-  if (!selected) return sections;
-  const siblings = sectionSiblings(sections, selected.parentId);
-  const index = siblings.findIndex((section) => section.id === sectionId);
-  const reorderedSiblings = move(siblings, index, direction);
-  if (reorderedSiblings === siblings) return sections;
-  const siblingPositions = new Map(reorderedSiblings.map((section, position) => [section.id, position]));
-  const updated = sections.map((section) => siblingPositions.has(section.id)
-    ? { ...section, position: siblingPositions.get(section.id)! }
-    : section);
-  return orderedSectionTree(updated).map((section, position) => ({ ...section, position }));
 }
 
 function TagsInput({
@@ -218,6 +187,9 @@ export function MenuEditor({
   const [activePanel, setActivePanel] = useState<MenuEditorPanel>('content');
   const [mobileContentPane, setMobileContentPane] = useState<MenuContentPane>('sections');
   const [mobileEditingItem, setMobileEditingItem] = useState(false);
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [itemQuery, setItemQuery] = useState('');
   const [productSectionFilter, setProductSectionFilter] = useState(
     () => normalizeMenuCatalog(menu, maxItems ?? 250).sections[0]?.id || 'all',
@@ -253,6 +225,13 @@ export function MenuEditor({
     () => visibleProducts.find((item) => item.id === selectedItemId) || null,
     [selectedItemId, visibleProducts],
   );
+  const selectedItemSiblings = useMemo(
+    () => selectedItem ? draft.items.filter((item) => item.sectionId === selectedItem.sectionId) : [],
+    [draft.items, selectedItem],
+  );
+  const selectedItemIndex = selectedItem
+    ? selectedItemSiblings.findIndex((item) => item.id === selectedItem.id)
+    : -1;
 
   useEffect(() => {
     const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
@@ -503,6 +482,21 @@ export function MenuEditor({
     );
   };
 
+  const moveItem = (itemId: string, direction: -1 | 1) => {
+    const item = draft.items.find((candidate) => candidate.id === itemId);
+    if (!item) return;
+    const siblings = draft.items.filter((candidate) => candidate.sectionId === item.sectionId);
+    const index = siblings.findIndex((candidate) => candidate.id === itemId);
+    const target = siblings[index + direction];
+    if (target) update((current) => ({ ...current, items: reorderMenuItems(current.items, itemId, target.id) }));
+  };
+
+  const finishDrag = () => {
+    setDraggedSectionId(null);
+    setDraggedItemId(null);
+    setDragOverId(null);
+  };
+
   if (!enabled) {
     return (
       <section className="admin-panel menu-upgrade-panel">
@@ -650,11 +644,38 @@ export function MenuEditor({
                       <button
                         type="button"
                         key={section.id}
-                        className={`menu-category-picker__item${section.parentId ? ' is-subcategory' : ''}${productSectionFilter === section.id ? ' active' : ''}`}
+                        className={`menu-category-picker__item${section.parentId ? ' is-subcategory' : ''}${productSectionFilter === section.id ? ' active' : ''}${draggedSectionId === section.id ? ' is-dragging' : ''}${dragOverId === `section:${section.id}` ? ' is-drag-over' : ''}`}
                         aria-current={productSectionFilter === section.id ? 'true' : undefined}
                         aria-label={`${section.name || tr("Untitled category", "Categoria senza nome")} ${itemCount}`}
+                        draggable
+                        onDragStart={(event) => {
+                          setDraggedSectionId(section.id);
+                          event.dataTransfer.effectAllowed = 'move';
+                          event.dataTransfer.setData('text/plain', section.id);
+                        }}
+                        onDragOver={(event) => {
+                          const source = draft.sections.find((candidate) => candidate.id === draggedSectionId);
+                          if (!source || source.parentId !== section.parentId) return;
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = 'move';
+                          setDragOverId(`section:${section.id}`);
+                        }}
+                        onDrop={(event) => {
+                          event.preventDefault();
+                          const source = draft.sections.find((candidate) => candidate.id === draggedSectionId);
+                          if (source && source.parentId === section.parentId) {
+                            update((current) => ({
+                              ...current,
+                              sections: reorderMenuSections(current.sections, source.id, section.id),
+                            }));
+                          }
+                          finishDrag();
+                        }}
+                        onDragEnd={finishDrag}
                         onClick={() => setProductSectionFilter(section.id)}
+                        title={tr('Drag to reorder at this level', 'Trascina per riordinare a questo livello')}
                       >
+                        <GripVertical className="menu-order-grip" aria-hidden="true" />
                         <span className="menu-category-picker__copy">
                           <small>{section.parentId ? tr('Subcategory', 'Sottocategoria') : tr('Category', 'Categoria')}</small>
                           <strong>{section.name || tr("Untitled category", "Categoria senza nome")}</strong>
@@ -664,7 +685,6 @@ export function MenuEditor({
                           <strong>{itemCount}</strong>
                           <span>{itemCount === 1 ? tr('item', 'elemento') : tr('items', 'elementi')}</span>
                         </small>
-                        <ChevronRight aria-hidden="true" />
                       </button>
                     );
                   })}
@@ -708,6 +728,7 @@ export function MenuEditor({
                   <div className="menu-item-list-heading">
                     <strong>{visibleProducts.length}</strong>
                     <span>{visibleProducts.length === 1 ? tr("item", "elemento") : tr("items", "elementi")}</span>
+                    {!itemQuery && <small>{tr('Drag within its category to reorder', 'Trascina nella sua categoria per riordinare')}</small>}
                   </div>
                   {visibleProducts.length > 0 && (
                     <div className="menu-item-picker" aria-label={tr("Items in selected category", "Elementi nella categoria selezionata")}>
@@ -715,14 +736,41 @@ export function MenuEditor({
                         <button
                           key={item.id}
                           type="button"
-                          className={`menu-item-picker__item${selectedItemId === item.id ? ' active' : ''}`}
+                          className={`menu-item-picker__item${selectedItemId === item.id ? ' active' : ''}${draggedItemId === item.id ? ' is-dragging' : ''}${dragOverId === `item:${item.id}` ? ' is-drag-over' : ''}`}
                           aria-pressed={selectedItemId === item.id}
+                          draggable={!itemQuery}
+                          onDragStart={(event) => {
+                            if (itemQuery) return;
+                            setDraggedItemId(item.id);
+                            event.dataTransfer.effectAllowed = 'move';
+                            event.dataTransfer.setData('text/plain', item.id);
+                          }}
+                          onDragOver={(event) => {
+                            const source = draft.items.find((candidate) => candidate.id === draggedItemId);
+                            if (!source || source.sectionId !== item.sectionId) return;
+                            event.preventDefault();
+                            event.dataTransfer.dropEffect = 'move';
+                            setDragOverId(`item:${item.id}`);
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            const source = draft.items.find((candidate) => candidate.id === draggedItemId);
+                            if (source && source.sectionId === item.sectionId) {
+                              update((current) => ({
+                                ...current,
+                                items: reorderMenuItems(current.items, source.id, item.id),
+                              }));
+                            }
+                            finishDrag();
+                          }}
+                          onDragEnd={finishDrag}
                           onClick={() => { setSelectedItemId(item.id); setMobileEditingItem(true); }}
+                          title={tr('Drag to reorder within this category', 'Trascina per riordinare nella categoria')}
                         >
+                          <GripVertical className="menu-order-grip" aria-hidden="true" />
                           <span className="menu-item-picker__thumb">{item.imageUrl ? <img src={item.imageUrl} alt="" /> : <UtensilsCrossed aria-hidden="true" />}</span>
                           <span><strong>{item.name || tr("Untitled item", "Elemento senza nome")}</strong><small>{formatMenuPriceInput(item.priceMinor, draft.locale)} {draft.currency}</small></span>
                           <em className={item.available ? 'available' : ''}>{item.available ? tr("Available", "Disponibile") : tr("Hidden", "Nascosto")}</em>
-                          <ChevronRight aria-hidden="true" />
                         </button>
                       ))}
                     </div>
@@ -742,6 +790,8 @@ export function MenuEditor({
                         <strong>{selectedItem.name || tr("Untitled item", "Elemento senza nome")}</strong>
                       </div>
                       <div className="menu-product-editor__actions">
+                        <Button aria-label={tr("Move item up", "Sposta elemento su")} variant="ghost" size="icon" title={tr("Move item up", "Sposta elemento su")} disabled={selectedItemIndex <= 0} onClick={() => moveItem(selectedItem.id, -1)}><ArrowUp aria-hidden="true" className="h-4 w-4" /></Button>
+                        <Button aria-label={tr("Move item down", "Sposta elemento giù")} variant="ghost" size="icon" title={tr("Move item down", "Sposta elemento giù")} disabled={selectedItemIndex < 0 || selectedItemIndex >= selectedItemSiblings.length - 1} onClick={() => moveItem(selectedItem.id, 1)}><ArrowDown aria-hidden="true" className="h-4 w-4" /></Button>
                         <Button variant="outline" size="sm" onClick={() => void save()} disabled={!isDirty || saving}>
                           {saving ? <OrbitLoader size={15} state="composing" /> : <Save className="h-4 w-4" />}
                           {saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}
