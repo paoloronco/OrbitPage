@@ -510,6 +510,10 @@ If `/usr/local/bin/orbitpage` is missing after a full-host recovery, extract the
      sudo orbitpage update
      ```
 
+     This command also migrates a persisted `paueron/orbitpage:latest` image
+     reference to `paoloronco/orbitpage:latest` before pulling. Explicitly
+     pinned legacy version tags are not changed automatically.
+
    - If releases are pinned, install the new immutable tag:
 
      ```bash

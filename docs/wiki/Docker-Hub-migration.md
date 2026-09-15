@@ -11,13 +11,25 @@ version history.
 
 ## Installer-managed deployment
 
-The installer validates the existing data path, updates the persisted image
-setting and recreates the container:
+For installations that follow `paueron/orbitpage:latest` (with or without the
+`docker.io/` prefix), the normal update command creates a backup, automatically
+changes the persisted image to `paoloronco/orbitpage:latest`, and recreates the
+container:
 
 ```bash
-sudo ORBITPAGE_IMAGE=docker.io/paoloronco/orbitpage:latest orbitpage install
+sudo orbitpage update
 sudo orbitpage status
 ```
+
+Explicitly pinned legacy version tags are preserved. Move a pinned deployment
+to the matching tag in the new namespace when you intentionally upgrade it:
+
+```bash
+sudo ORBITPAGE_IMAGE=paoloronco/orbitpage:X.Y.Z orbitpage install
+```
+
+Use the release number from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases)
+without the Git tag's leading `v`.
 
 If the bundled `orbitpage-update` command was installed from the former image,
 running it once after the compatibility release self-updates the script and

@@ -187,6 +187,31 @@ require_installed() {
   is_installed || die "OrbitPage is not installed. Run: sudo orbitpage install"
 }
 
+migrate_legacy_latest_image() {
+  local compose_env_tmp
+
+  case "${IMAGE#docker.io/}" in
+    paueron/orbitpage | paueron/orbitpage:latest)
+      IMAGE="paoloronco/orbitpage:latest"
+      compose_env_tmp="$(mktemp "${INSTALL_DIR}/.env.XXXXXX")"
+      awk -F= -v image="$IMAGE" '
+        $1 == "ORBITPAGE_IMAGE" {
+          print "ORBITPAGE_IMAGE=" image
+          updated = 1
+          next
+        }
+        { print }
+        END {
+          if (!updated) print "ORBITPAGE_IMAGE=" image
+        }
+      ' "$COMPOSE_ENV_FILE" > "$compose_env_tmp"
+      chmod 0600 "$compose_env_tmp"
+      mv "$compose_env_tmp" "$COMPOSE_ENV_FILE"
+      log "Migrated the retired paueron/orbitpage compatibility feed to ${IMAGE}."
+      ;;
+  esac
+}
+
 write_configuration() {
   local existing_secret
   local jwt_secret
@@ -385,6 +410,7 @@ perform_update() {
   require_root
   require_installed
   backup_app
+  migrate_legacy_latest_image
   log "Pulling the configured OrbitPage image..."
   compose pull
   compose up -d --remove-orphans
