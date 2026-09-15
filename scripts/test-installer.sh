@@ -108,6 +108,16 @@ config_output="$(PATH="${FAKE_BIN}:${PATH}" "$CLI_PATH" config)"
 grep -Fq '127.0.0.1:18080' <<< "$config_output" || fail "management command did not load persisted network settings"
 grep -Fq "$DATA_DIR" <<< "$config_output" || fail "management command did not load the persisted data path"
 
+sed -i 's|^ORBITPAGE_IMAGE=.*|ORBITPAGE_IMAGE=docker.io/paueron/orbitpage:latest|' "${INSTALL_DIR}/.env"
+PATH="${FAKE_BIN}:${PATH}" "$CLI_PATH" _update
+grep -Fxq 'ORBITPAGE_IMAGE=paoloronco/orbitpage:latest' "${INSTALL_DIR}/.env" \
+  || fail "update did not migrate the legacy latest image"
+
+sed -i 's|^ORBITPAGE_IMAGE=.*|ORBITPAGE_IMAGE=paueron/orbitpage:4.18.5|' "${INSTALL_DIR}/.env"
+PATH="${FAKE_BIN}:${PATH}" "$CLI_PATH" _update
+grep -Fxq 'ORBITPAGE_IMAGE=paueron/orbitpage:4.18.5' "${INSTALL_DIR}/.env" \
+  || fail "update changed an explicitly pinned legacy image"
+
 PATH="${FAKE_BIN}:${PATH}" "$CLI_PATH" backup
 compgen -G "${BACKUP_DIR}/orbitpage-*.tar.gz" >/dev/null || fail "backup archive was not created"
 [[ "$(find "$BACKUP_DIR" -maxdepth 1 -name 'orbitpage-*.tar.gz' | wc -l)" -ge 2 ]] || fail "backup names collided"
