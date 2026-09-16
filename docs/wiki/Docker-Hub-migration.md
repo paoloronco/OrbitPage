@@ -32,12 +32,26 @@ Use the release number from [GitHub Releases](https://github.com/paoloronco/Orbi
 without the Git tag's leading `v`.
 
 If the bundled `orbitpage-update` command was installed from the former image,
-running it once after the compatibility release self-updates the script and
-switches its default image to `paoloronco/orbitpage`:
+replace the host command from the official image before running it. The old
+`paueron/orbitpage:latest` feed may still contain a script that pulls from the
+old namespace, so it cannot migrate itself:
 
 ```bash
-sudo orbitpage-update
+tmp="$(mktemp)"
+if sudo docker run --rm --pull=always --entrypoint cat \
+  paoloronco/orbitpage:latest /app/orbitpage-update.sh > "$tmp" &&
+  test -s "$tmp" && bash -n "$tmp"; then
+  sudo install -m 0755 "$tmp" /usr/local/bin/orbitpage-update && sudo orbitpage-update
+else
+  echo "Could not extract the official updater; the installed command was not changed." >&2
+fi
+rm -f "$tmp"
+sudo docker inspect orbitpage orbitpage-demo --format '{{.Name}} {{.Config.Image}}'
 ```
+
+Both containers should now reference `paoloronco/orbitpage:latest`. Keep their
+existing `orbitpage-data-prod` and `orbitpage-data-demo` volumes. The updated
+command pulls the official image directly on future runs.
 
 ## Docker Compose
 
