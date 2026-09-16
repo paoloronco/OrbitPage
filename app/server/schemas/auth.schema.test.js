@@ -3,7 +3,6 @@ import {
   ChangePasswordBodySchema,
   CreateUserBodySchema,
   LoginBodySchema,
-  PageSlugSchema,
   PersonalPageActionBodySchema,
   ResetApplicationBodySchema,
   ResetViaTokenBodySchema,
@@ -32,16 +31,14 @@ describe('auth schemas', () => {
     }).token).toHaveLength(32);
   });
 
-  it('normalizes and validates the first public page slug', () => {
-    expect(PageSlugSchema.parse(' My-Page ')).toBe('my-page');
-    expect(SetupBodySchema.parse({ password: 'Secret123!', slug: 'my-page' }).slug).toBe('my-page');
-    expect(() => PageSlugSchema.parse('admin')).toThrow();
-    expect(() => PageSlugSchema.parse('links')).toThrow();
-    expect(() => PageSlugSchema.parse('../page')).toThrow();
+  it('accepts setup without a page slug and ignores legacy slug input', () => {
+    expect(SetupBodySchema.parse({ password: 'Secret123!' })).toEqual({ password: 'Secret123!' });
+    expect(SetupBodySchema.parse({ password: 'Secret123!', slug: 'old-page' })).toEqual({ password: 'Secret123!' });
   });
 
   it('validates personal page creation and destructive confirmation separately', () => {
-    expect(PersonalPageActionBodySchema.parse({ action: 'create', slug: ' My-Page ' })).toEqual({ action: 'create', slug: 'my-page' });
+    expect(PersonalPageActionBodySchema.parse({ action: 'create' })).toEqual({ action: 'create' });
+    expect(PersonalPageActionBodySchema.parse({ action: 'create', slug: 'old-page' })).toEqual({ action: 'create' });
     expect(PersonalPageActionBodySchema.parse({ action: 'delete', confirmation: 'REMOVE my-page', currentPassword: 'Secret123!' })).toMatchObject({ action: 'delete' });
     expect(() => PersonalPageActionBodySchema.parse({ action: 'delete', confirmation: 'REMOVE my-page' })).toThrow();
   });

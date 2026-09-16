@@ -227,10 +227,9 @@ See [app/README.md](./app/README.md) for application development boundaries.
 2. Open <code>/dashboard/profile</code>.
 3. Review the runtime, SQLite, storage, frontend, and session checks.
 4. Create the password for the fixed first username, <code>admin</code>.
-5. Choose the primary public-page slug.
-6. Complete setup and follow the dashboard guide.
+5. Complete setup and follow the dashboard guide. The main public page uses the installation's root URL automatically.
 
-The administrator, slug, and starter profile are created atomically. Existing installations created before slug-based setup remain backward compatible.
+The administrator and starter profile are created atomically. Existing page-slug URLs remain available as aliases, while the root URL is canonical.
 
 ## Configuration
 

@@ -19,7 +19,6 @@ export function SelfHostedAccountActions({ publicPageHref }: { publicPageHref: s
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmation, setConfirmation] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
-  const [slug, setSlug] = useState('');
 
   useEffect(() => {
     personalPageApi.status().then(setStatus).catch((reason) => setError(reason instanceof Error ? reason.message : tr('Unable to load the public page status.', 'Impossibile caricare lo stato della pagina pubblica.')));
@@ -46,7 +45,7 @@ export function SelfHostedAccountActions({ publicPageHref }: { publicPageHref: s
     setBusy(true);
     setError('');
     try {
-      await personalPageApi.create(slug);
+      await personalPageApi.create();
       window.location.reload();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : tr('The public page could not be created.', 'Non è stato possibile creare la pagina pubblica.'));
@@ -84,7 +83,7 @@ export function SelfHostedAccountActions({ publicPageHref }: { publicPageHref: s
         <div><strong>{publicPageHref}</strong><span>{tr('Published', 'Pubblicata')}</span></div>
         <Button type="button" variant="destructive" disabled={DEMO_MODE} onClick={() => { setError(''); setDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Remove personal page', 'Rimuovi pagina personale')}</Button>
       </div> : status ? <form className="oss-account-page-create" onSubmit={createPage}>
-        <div><Label htmlFor="new-personal-page-slug">{tr('Page slug', 'Slug pagina')}</Label><Input id="new-personal-page-slug" minLength={3} maxLength={48} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="your-page" value={slug} onChange={(event) => setSlug(event.target.value.toLowerCase())} required /></div>
+        <div><strong>{publicPageHref}</strong></div>
         <Button type="submit" variant="gradient" disabled={busy || DEMO_MODE}><Globe2 className="h-4 w-4" />{tr('Create personal page', 'Crea pagina personale')}</Button>
       </form> : null}
       {error && <p className="oss-account-error" role="alert">{error}</p>}
