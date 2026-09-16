@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GripVertical } from "@/components/ui/material-icons";
 import { BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, MoveDiagonal2, Twitter, Youtube } from "lucide-react";
+import { normalizeProfileSocialHref } from "@orbitpage/page-schema";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
@@ -120,7 +121,7 @@ export const PublicProfileSection = ({
   const latestLayoutRef = useRef(workingLayout);
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
   const displayName = profile.name?.trim() || fallbackName || "";
-  const socialLinks = Object.fromEntries(SOCIALS.map(({ id }) => [id, resolveSafePublicHref(profile.socialLinks?.[id])])) as Record<typeof SOCIALS[number]["id"], string | null>;
+  const socialLinks = Object.fromEntries(SOCIALS.map(({ id }) => [id, resolveSafePublicHref(normalizeProfileSocialHref(id, profile.socialLinks?.[id] || ""))])) as Record<typeof SOCIALS[number]["id"], string | null>;
   const hasSocialLinks = Object.values(socialLinks).some(Boolean);
   const profileDetails = profile.appearance?.profileDetails;
   const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);

@@ -4,6 +4,15 @@ import { describe, expect, it } from "vitest";
 import { PublicProfileSection } from "./PublicProfileSection";
 
 describe("PublicProfileSection custom layout", () => {
+  it("links entered usernames and omits empty socials", () => {
+    const html = renderToStaticMarkup(<PublicProfileSection profile={{
+      name: "Alice", bio: "", avatar: "", showAvatar: false,
+      socialLinks: { instagram: "name.with.dots", github: "" },
+    }} />);
+    expect(html).toContain('href="https://www.instagram.com/name.with.dots"');
+    expect(html).not.toContain('aria-label="GitHub profile"');
+  });
+
   it("renders free coordinates and editor handles only while arranging", () => {
     const profile = {
       name: "Mario Rossi",
