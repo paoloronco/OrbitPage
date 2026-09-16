@@ -258,6 +258,7 @@ export const AdminView = ({
   const [previewLinks, setPreviewLinks] = useState(links);
   const [previewTheme, setPreviewTheme] = useState(theme);
   const [previewMenu, setPreviewMenu] = useState(menu);
+  const [menuDesignActive, setMenuDesignActive] = useState(false);
   const [newUiEnabled, setNewUiEnabled] = useState(() => {
     const hostedPreference = getHostedSurfaceConfig()?.newUiEnabled;
     if (hostedPreference !== undefined) return hostedPreference;
@@ -890,6 +891,7 @@ export const AdminView = ({
     <MenuEditor
       menu={menu}
       onPreview={setPreviewMenu}
+      onDesignActiveChange={setMenuDesignActive}
       presentation="visual"
       publicPageHref={publicPageHref}
       enabled={!saasPlan || entitlements?.nativeMenu === true}
@@ -1282,7 +1284,7 @@ export const AdminView = ({
                 previewHint={visualSection === "menu"
                   ? tr("Live public menu preview", "Anteprima live del menu pubblico")
                   : undefined}
-                renderPreview={visualSection === "menu" ? ((device) => (
+                renderPreview={visualSection === "menu" && menuDesignActive ? ((device) => (
                   <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
                     <div className={`admin-menu-live-preview admin-menu-live-preview--${device}`}>
                       <MenuView embedded menu={previewMenu} pageHref={publicPageHref} />

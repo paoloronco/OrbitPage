@@ -101,9 +101,8 @@ export function VisualSiteEditor({
     typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
   ));
   const [previewVisible, setPreviewVisible] = useState(true);
-  const [menuPreviewVisible, setMenuPreviewVisible] = useState(false);
-  const previewEnabled = section !== "shop" && (section !== "menu" || menuPreviewVisible);
-  const Inspector = previewEnabled ? "aside" : "section";
+  const previewEnabled = section !== "shop" && (section !== "menu" || Boolean(renderPreview));
+  const Inspector = previewEnabled || section === "menu" ? "aside" : "section";
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
     { id: "links", label: tr("Content", "Contenuti"), icon: Layout, status: "active" },
@@ -182,17 +181,6 @@ export function VisualSiteEditor({
               <span>{tr("Arrange", "Disponi")}</span>
             </button>
           )}
-          {section === "menu" && (
-            <button
-              aria-pressed={menuPreviewVisible}
-              className="visual-site-editor__layout-toggle visual-site-editor__menu-preview-toggle"
-              onClick={() => setMenuPreviewVisible((visible) => !visible)}
-              type="button"
-            >
-              {menuPreviewVisible ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
-              <span>{menuPreviewVisible ? tr("Hide preview", "Nascondi anteprima") : tr("Show preview", "Mostra anteprima")}</span>
-            </button>
-          )}
           {previewEnabled && <PreviewDeviceToggle value={device} onChange={setDevice} />}
         </div>
       </header>
@@ -238,11 +226,11 @@ export function VisualSiteEditor({
         </div>
       )}
 
-      <div className={`visual-site-editor__workspace${isPhone && !previewVisible ? " visual-site-editor__workspace--preview-hidden" : ""}`}>
+      <div className={`visual-site-editor__workspace${isPhone && section !== "menu" && !previewVisible ? " visual-site-editor__workspace--preview-hidden" : ""}`}>
         {previewEnabled && <div
           className="visual-site-editor__canvas"
           data-device={device}
-          hidden={isPhone && !previewVisible}
+          hidden={isPhone && section !== "menu" && !previewVisible}
           id="visual-site-editor-preview"
         >
           <div className="visual-site-editor__canvas-note">

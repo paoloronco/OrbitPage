@@ -53,34 +53,38 @@ describe("VisualSiteEditor", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("gives Menu the full editor width and keeps its preview optional", () => {
+  it("shows Menu preview only when its Design panel provides one", () => {
     const renderPreview = vi.fn(() => <div>Specialized public preview</div>);
 
-    const html = renderToStaticMarkup(
+    const props = {
+      profile: { name: "OrbitPage", bio: "", avatar: "" },
+      links: [],
+      theme: defaultTheme,
+      publicPageHref: "/orbitpage",
+      showOrbitPageBadge: true,
+      section: "menu" as const,
+      inspectorTitle: "Menu",
+      inspectorDescription: "Edit menu",
+      inspector: <div>Inspector</div>,
+      onSelect: vi.fn(),
+      layoutEditing: false,
+      onLayoutEditingChange: vi.fn(),
+      previewHint: "Live menu preview",
+    };
+    const withoutDesign = renderToStaticMarkup(<VisualSiteEditor {...props} />);
+    const withDesign = renderToStaticMarkup(
       <VisualSiteEditor
-        profile={{ name: "OrbitPage", bio: "", avatar: "" }}
-        links={[]}
-        theme={defaultTheme}
-        publicPageHref="/orbitpage"
-        showOrbitPageBadge
-        section="menu"
-        inspectorTitle="Menu"
-        inspectorDescription="Edit menu"
-        inspector={<div>Inspector</div>}
-        onSelect={vi.fn()}
-        layoutEditing={false}
-        onLayoutEditingChange={vi.fn()}
-        previewHint="Live menu preview"
+        {...props}
         renderPreview={renderPreview}
       />,
     );
 
-    expect(html).toContain("visual-site-editor--menu");
-    expect(html).toContain("visual-site-editor--inspector-only");
-    expect(html).toContain("Manage your Menu");
-    expect(html).toContain("Show preview");
-    expect(html).not.toContain("visual-site-editor__canvas");
-    expect(renderPreview).not.toHaveBeenCalled();
+    expect(withoutDesign).toContain("visual-site-editor--inspector-only");
+    expect(withoutDesign).not.toContain("visual-site-editor__canvas");
+    expect(withDesign).toContain("visual-site-editor--menu visual-site-editor--preview-visible");
+    expect(withDesign).toContain("Specialized public preview");
+    expect(withDesign).not.toContain("Show preview");
+    expect(renderPreview).toHaveBeenCalledOnce();
   });
 
   it("gives Shop the full editor width without a persistent preview", () => {
