@@ -1,6 +1,6 @@
 # Dashboard guide
 
-The self-hosted dashboard opens at `/dashboard/profile` after initial setup. Each main workspace has a stable URL, so refreshing or bookmarking it returns to the same area.
+The self-hosted dashboard opens at `/dashboard/profile` after initial setup. In the visual site editor, **Page**, **Content**, **Menu**, **Shop**, and **Pages** use `/dashboard/editor/page`, `/dashboard/editor/content`, `/dashboard/editor/menu`, `/dashboard/editor/shop`, and `/dashboard/editor/pages`. Refreshing or bookmarking one of these URLs returns to the same section. The classic dashboard keeps its existing `/dashboard/profile` and `/dashboard/content/*` URLs.
 
 ## A reliable editing workflow
 

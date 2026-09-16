@@ -418,6 +418,25 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
   expect(compactOverflow).toBeLessThanOrEqual(1);
 });
 
+test("New UI restores the selected editor section from its URL", async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));
+  await openAuthenticatedAdmin(page);
+
+  const sections = page.getByRole("navigation", { name: "Site sections" });
+  for (const [name, slug] of [["Page", "page"], ["Content", "content"], ["Menu", "menu"], ["Shop", "shop"], ["Pages", "pages"]] as const) {
+    const destination = sections.getByRole("button", { name, exact: true });
+    await destination.click();
+    await expect(page).toHaveURL(new RegExp(`/dashboard/editor/${slug}$`));
+    await expect(destination).toHaveAttribute("aria-current", "page");
+  }
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/dashboard\/editor\/shop$/);
+  await expect(sections.getByRole("button", { name: "Shop", exact: true })).toHaveAttribute("aria-current", "page");
+  await page.reload();
+  await expect(sections.getByRole("button", { name: "Shop", exact: true })).toHaveAttribute("aria-current", "page");
+});
+
 test("New UI gives Menu a focused inspector without clipped labels", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));

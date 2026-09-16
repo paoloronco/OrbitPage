@@ -70,7 +70,7 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import type { CardLayout } from "@/lib/card-layout";
 import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
-import { canonicalAdminTab, type AdminContentSection, type AdminTab } from "@/lib/admin-navigation";
+import { canonicalAdminTab, type AdminContentSection, type AdminEditorSection, type AdminTab } from "@/lib/admin-navigation";
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
 import type { InternalDestinationOption } from "@/lib/link-blocks";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
@@ -137,8 +137,10 @@ interface AdminViewProps {
   onLogout: () => void;
   requestedTab?: AdminTab;
   requestedContentSection?: AdminContentSection;
+  requestedEditorSection?: AdminEditorSection | null;
   onTabChange?: (tab: AdminTab) => void;
   onContentSectionChange?: (section: AdminContentSection) => void;
+  onEditorSectionChange?: (section: AdminEditorSection) => void;
 }
 
 const pageTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName: string }> = [
@@ -209,8 +211,10 @@ export const AdminView = ({
   onLogout,
   requestedTab = "profile",
   requestedContentSection = "link",
+  requestedEditorSection = null,
   onTabChange,
   onContentSectionChange,
+  onEditorSectionChange,
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
@@ -274,6 +278,7 @@ export const AdminView = ({
   const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>(() => {
     const config = getHostedSurfaceConfig();
     if (config?.extensions?.shop?.selected) return "shop";
+    if (requestedEditorSection) return requestedEditorSection === "profile" ? "profile" : visualSectionForContent(requestedEditorSection);
     const requestedContent = canonicalViewTab(config?.section || requestedTab) === "content"
       ? config?.contentSection || requestedContentSection || contentSectionForTab(requestedTab) || "link"
       : null;
@@ -609,7 +614,8 @@ export const AdminView = ({
     if (canonicalTab === "content") setContentNavOpen(true);
     setActiveTab(canonicalTab);
     setMobileNavOpen(false);
-    onTabChange?.(canonicalTab);
+    if (newUiEnabled && canonicalTab === "profile" && !isIntegratedHostedAdmin) onEditorSectionChange?.("profile");
+    else onTabChange?.(canonicalTab);
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       document.querySelector<HTMLElement>(".admin-dashboard-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -631,7 +637,8 @@ export const AdminView = ({
       setVisualLinkId(null);
       setActiveTab("profile");
       setMobileNavOpen(false);
-      onTabChange?.("profile");
+      if (isIntegratedHostedAdmin) onTabChange?.("profile");
+      else onEditorSectionChange?.("profile");
     } else {
       setPreviewTheme(theme);
       applyTheme(theme);
@@ -643,6 +650,8 @@ export const AdminView = ({
     if (isIntegratedHostedAdmin) {
       if (section === "profile") onTabChange?.("profile");
       else selectContentSection(section === "links" ? "link" : section);
+    } else {
+      onEditorSectionChange?.(section === "links" ? "link" : section);
     }
     if (section === "links") {
       setVisualLinkId(linkId || null);
@@ -738,6 +747,12 @@ export const AdminView = ({
     logout();
     onLogout();
   };
+
+  useEffect(() => {
+    if (!requestedEditorSection || isIntegratedHostedAdmin) return;
+    setVisualSection(requestedEditorSection === "profile" ? "profile" : visualSectionForContent(requestedEditorSection));
+    if (requestedEditorSection !== "profile") setContentSection(requestedEditorSection);
+  }, [requestedEditorSection, isIntegratedHostedAdmin]);
 
   const updateVisualProfileLayout = (layout: ProfileLayout, viewport: ProfileLayoutViewport) => {
     setVisualProfileLayoutCommand((current) => ({ id: (current?.id || 0) + 1, layout, viewport }));

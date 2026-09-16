@@ -142,6 +142,7 @@ function RoutedApplication() {
           <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
           <Route path="/dashboard/:section" element={<Admin />} />
           <Route path="/dashboard/content/:contentSection" element={<Admin />} />
+          <Route path="/dashboard/editor/:editorSection" element={<Admin />} />
           <Route path="/links" element={<Index />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/about" element={<About />} />

@@ -1878,7 +1878,7 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
   });
 
-  it.each(['menu', 'qr', 'sitemap', 'content/link', 'content/menu', 'content/shop', 'content/pages'])('GET /orbitpage/dashboard/%s supports direct section refreshes', async (section) => {
+  it.each(['menu', 'qr', 'sitemap', 'content/link', 'content/menu', 'content/shop', 'content/pages', 'editor/page', 'editor/content', 'editor/menu', 'editor/shop', 'editor/pages'])('GET /orbitpage/dashboard/%s supports direct section refreshes', async (section) => {
     const response = await request(app).get(`/orbitpage/dashboard/${section}`);
     expect(response.status).toBe(200);
     expect(response.headers['x-robots-tag']).toContain('noindex');
