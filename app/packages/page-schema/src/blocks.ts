@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  ORBITPAGE_MAX_BLOCKS,
   OrbitPageBlockIdSchema,
   OrbitPageHrefCandidateSchema,
   OrbitPageHexColorSchema,
@@ -98,7 +97,7 @@ const CommonBlockShape = {
   coverImageAlt: NullableString(300),
   systemKey: z.enum(["shop"]).optional(),
   orbitPageSystemLink: z.literal("orbitpage-shop").optional(),
-  position: z.number().int().nonnegative().max(ORBITPAGE_MAX_BLOCKS - 1).optional()
+  position: z.number().int().nonnegative().optional()
 };
 
 export const OrbitPageBlockInputSchema = z.object(CommonBlockShape).strict();
@@ -410,7 +409,7 @@ export const OrbitPageBlockSchema = z.object({
   coverImage: NullableString(2_048),
   coverImageAlt: NullableString(300),
   systemKey: z.enum(["shop"]).optional(),
-  position: z.number().int().nonnegative().max(ORBITPAGE_MAX_BLOCKS - 1)
+  position: z.number().int().nonnegative()
 }).strict();
 
 export type OrbitPageBlock = z.infer<typeof OrbitPageBlockSchema>;
@@ -491,7 +490,7 @@ function assertUniqueIds(blocks: OrbitPageBlock[]) {
   return blocks;
 }
 
-export const OrbitPageBlocksSchema = z.array(OrbitPageBlockSchema).max(ORBITPAGE_MAX_BLOCKS)
+export const OrbitPageBlocksSchema = z.array(OrbitPageBlockSchema)
   .superRefine((blocks, context) => {
     const ids = new Set<string>();
     blocks.forEach((block, index) => {
@@ -507,13 +506,11 @@ export const OrbitPageBlocksSchema = z.array(OrbitPageBlockSchema).max(ORBITPAGE
 
 export function parseOrbitPageBlocks(value: unknown) {
   if (!Array.isArray(value)) throw new Error("Blocks must be provided as a list.");
-  if (value.length > ORBITPAGE_MAX_BLOCKS) throw new Error(`A page cannot contain more than ${ORBITPAGE_MAX_BLOCKS} blocks.`);
   return assertUniqueIds(value.map((block, index) => canonicalBlock(block, index, true)));
 }
 
 export function normalizeStoredOrbitPageBlocks(value: unknown) {
   if (!Array.isArray(value)) return [];
-  if (value.length > ORBITPAGE_MAX_BLOCKS) throw new Error(`A page cannot contain more than ${ORBITPAGE_MAX_BLOCKS} blocks.`);
   const ids = new Set<string>();
   return value.map((block, index) => {
     const normalized = canonicalBlock(block, index, false);

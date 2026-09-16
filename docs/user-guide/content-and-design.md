@@ -45,6 +45,8 @@ Open **Content > Link**, then select **Add content**. The library groups the ava
 
 A list is a preconfigured text block. Connected-service entries create either a link or a consent-aware embed with provider-specific defaults. The page supports one compact-links row; edit the existing row to add, remove, or reorder its destinations.
 
+Main pages and additional pages have no block count quota. Large pages are still subject to request and storage limits.
+
 ### Internal page navigation
 
 Use **Internal page navigation** to connect the current block-based page to any other active destination without copying its public URL. The picker includes Link, Menu, Shop on OrbitPage SaaS, and published additional pages. It is available both in Content > Link and inside every additional page.

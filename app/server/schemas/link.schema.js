@@ -96,4 +96,4 @@ export const LinkSchema = z.object({
   }
 });
 
-export const LinksPayloadSchema = z.array(LinkSchema).max(200);
+export const LinksPayloadSchema = z.array(LinkSchema);

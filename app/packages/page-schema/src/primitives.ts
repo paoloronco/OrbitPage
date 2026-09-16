@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const ORBITPAGE_PAGE_SCHEMA_VERSION = 1 as const;
-export const ORBITPAGE_MAX_BLOCKS = 150;
 export const ORBITPAGE_MAX_SUBPAGES = 20;
 
 export const OrbitPageIdSchema = z.string().trim().regex(/^[a-zA-Z0-9_-]{1,128}$/);
