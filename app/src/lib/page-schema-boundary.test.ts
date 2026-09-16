@@ -7,6 +7,8 @@ import {
   ORBITPAGE_THEME_PRESETS,
   applyOrbitPageProfilePatch,
   normalizeOrbitPageSocialHref,
+  normalizeProfileSocialHref,
+  profileSocialIdentifier,
   parseOrbitPageBlockStylePatch,
   parseOrbitPageBlocks,
   parseOrbitPageTheme,
@@ -181,6 +183,25 @@ describe('canonical page schema boundary', () => {
       .toBe('https://www.instagram.com/invalid/');
     expect(normalizeOrbitPageSocialHref('email', repeatedEmailSegments)).toBeNull();
     expect(performance.now() - startedAt).toBeLessThan(250);
+  });
+
+  it('builds profile social URLs from identifiers and reads saved URLs back', () => {
+    expect(normalizeProfileSocialHref('instagram', 'name.with.dots')).toBe('https://www.instagram.com/name.with.dots');
+    expect(normalizeProfileSocialHref('youtube', '@channel')).toBe('https://www.youtube.com/@channel');
+    expect(normalizeProfileSocialHref('mastodon', '@alice@mastodon.social')).toBe('https://mastodon.social/@alice');
+    expect(normalizeProfileSocialHref('mastodon', '@alice@localhost')).toBeNull();
+    expect(profileSocialIdentifier('instagram', 'https://www.instagram.com/name.with.dots')).toBe('name.with.dots');
+    expect(profileSocialIdentifier('twitter', 'https://twitter.com/alice')).toBe('alice');
+    expect(profileSocialIdentifier('whatsapp', 'https://wa.me/391234567890')).toBe('+391234567890');
+    expect(profileSocialIdentifier('mastodon', 'https://mastodon.social/@alice')).toBe('@alice@mastodon.social');
+    expect(profileSocialIdentifier('youtube', 'https://www.youtube.com/channel/legacy')).toBe('https://www.youtube.com/channel/legacy');
+    expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+      socialLinks: { instagram: 'name.with.dots', mastodon: '@alice@mastodon.social', github: '' },
+    }).social_links).toMatchObject({
+      instagram: 'https://www.instagram.com/name.with.dots',
+      mastodon: 'https://mastodon.social/@alice',
+      github: '',
+    });
   });
 
   it('canonicalizes the legacy circle avatar shape at the profile patch boundary', () => {

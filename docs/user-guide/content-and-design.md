@@ -23,6 +23,8 @@ Use **Page** for information that introduces the whole public destination:
 
 The selected profile type changes the labels for the two detail fields; it does not create a separate kind of public page. The favicon may be different from the profile image.
 
+In **Social links**, enter the username for each network; OrbitPage builds the public profile link automatically. YouTube uses a channel handle, Discord an invite code, WhatsApp a phone number, and Mastodon a full `@username@instance` handle. Leave a field empty to hide that social icon. Existing saved links remain editable.
+
 Most profile-card settings inherit from **Theme**. An explicit value in **Page** takes precedence. Use **Use theme** or reset the card appearance when you want it to inherit the shared design again.
 
 Changes in Page remain a draft in the browser until you select **Save** in the Page toolbar. **Reset** discards the current unsaved draft.

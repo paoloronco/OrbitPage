@@ -18,6 +18,7 @@ import {
   UserRound,
 } from "@/components/ui/material-icons";
 import { Facebook, Github, Instagram, Linkedin, Twitter, Youtube } from "lucide-react";
+import { profileSocialIdentifier } from "@orbitpage/page-schema";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
@@ -134,22 +135,23 @@ const PROFILE_PRESETS: Array<{
 ];
 
 const SOCIAL_FIELDS: Array<{
-  id: string;
+  id: "linkedin" | "github" | "instagram" | "facebook" | "twitter" | "youtube" | "tiktok" | "discord" | "telegram" | "whatsapp" | "mastodon";
   label: string;
   placeholder: string;
+  inputMode?: "tel";
   icon: ComponentType<{ className?: string }>;
 }> = [
-  { id: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/in/username", icon: Linkedin },
-  { id: "github", label: "GitHub", placeholder: "https://github.com/username", icon: Github },
-  { id: "instagram", label: "Instagram", placeholder: "https://instagram.com/username", icon: Instagram },
-  { id: "facebook", label: "Facebook", placeholder: "https://facebook.com/username", icon: Facebook },
-  { id: "twitter", label: "X / Twitter", placeholder: "https://x.com/username", icon: Twitter },
-  { id: "youtube", label: "YouTube", placeholder: "https://youtube.com/@channel", icon: Youtube },
-  { id: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@username", icon: TikTokIcon },
-  { id: "discord", label: "Discord", placeholder: "https://discord.gg/invite", icon: DiscordIcon },
-  { id: "telegram", label: "Telegram", placeholder: "https://t.me/username", icon: TelegramIcon },
-  { id: "whatsapp", label: "WhatsApp", placeholder: "https://wa.me/number", icon: WhatsAppIcon },
-  { id: "mastodon", label: "Mastodon", placeholder: "https://mastodon.social/@username", icon: MastodonIcon },
+  { id: "linkedin", label: "LinkedIn", placeholder: "username", icon: Linkedin },
+  { id: "github", label: "GitHub", placeholder: "username", icon: Github },
+  { id: "instagram", label: "Instagram", placeholder: "username", icon: Instagram },
+  { id: "facebook", label: "Facebook", placeholder: "username", icon: Facebook },
+  { id: "twitter", label: "X / Twitter", placeholder: "username", icon: Twitter },
+  { id: "youtube", label: "YouTube", placeholder: "channel", icon: Youtube },
+  { id: "tiktok", label: "TikTok", placeholder: "username", icon: TikTokIcon },
+  { id: "discord", label: "Discord", placeholder: "invite code", icon: DiscordIcon },
+  { id: "telegram", label: "Telegram", placeholder: "username", icon: TelegramIcon },
+  { id: "whatsapp", label: "WhatsApp", placeholder: "+39 123 456 7890", inputMode: "tel", icon: WhatsAppIcon },
+  { id: "mastodon", label: "Mastodon", placeholder: "@username@mastodon.social", icon: MastodonIcon },
 ];
 
 const ProfileColorField = ({
@@ -548,11 +550,11 @@ export const ProfileSection = ({
             <div className="grid gap-3 border-t border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
               {SOCIAL_FIELDS.map((social) => {
                 const Icon = social.icon;
-                const value = draft.socialLinks?.[social.id] || "";
+                const value = profileSocialIdentifier(social.id, draft.socialLinks?.[social.id]);
                 return (
                   <label key={social.id} className="rounded-lg border border-slate-200 bg-white p-3">
                     <span className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-slate-700"><span className="flex items-center gap-2"><Icon className="h-4 w-4" />{social.label}</span>{value && <Check className="h-3.5 w-3.5 text-emerald-600" />}</span>
-                    <Input value={value} onChange={(event) => setDraft((current) => ({ ...current, socialLinks: { ...current.socialLinks, [social.id]: event.target.value } }))} placeholder={social.placeholder} inputMode="url" />
+                    <Input value={value} onChange={(event) => setDraft((current) => ({ ...current, socialLinks: { ...current.socialLinks, [social.id]: event.target.value } }))} placeholder={social.placeholder} inputMode={social.inputMode || "text"} />
                   </label>
                 );
               })}

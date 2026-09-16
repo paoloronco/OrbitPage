@@ -241,14 +241,11 @@ const PROFILE_SOCIAL_USERNAME_BASES: Partial<Record<typeof ORBITPAGE_SOCIAL_PLAT
   telegram: "https://t.me/"
 };
 
-function normalizeProfileSocialHref(
+export function normalizeProfileSocialHref(
   platform: typeof ORBITPAGE_SOCIAL_PLATFORMS[number],
   value: string
 ) {
   const candidate = value.trim();
-  const existingHref = normalizeOrbitPagePublicHref(candidate);
-  if (existingHref !== null) return existingHref;
-
   const base = PROFILE_SOCIAL_USERNAME_BASES[platform];
   if (base) {
     const username = stripSocialUsernameDecorators(candidate);
@@ -260,7 +257,44 @@ function normalizeProfileSocialHref(
     return phone.length >= 6 && phone.length <= 15 ? `https://wa.me/${phone}` : null;
   }
 
-  return null;
+  if (platform === "mastodon") {
+    const handle = /^@?([a-z0-9_]{1,100})@((?:[a-z0-9-]+\.)+[a-z0-9-]+)$/i.exec(candidate);
+    if (handle) {
+      const href = `https://${handle[2]}/@${handle[1]}`;
+      return normalizeOrbitPagePublicHref(href);
+    }
+  }
+
+  return normalizeOrbitPagePublicHref(candidate);
+}
+
+export function profileSocialIdentifier(
+  platform: typeof ORBITPAGE_SOCIAL_PLATFORMS[number],
+  value: string | null | undefined
+) {
+  const candidate = value?.trim() ?? "";
+  if (!candidate) return "";
+  const href = normalizeOrbitPagePublicHref(candidate);
+  if (!href || !/^https?:\/\//.test(href)) return candidate;
+
+  const url = new URL(href);
+  if (url.search || url.hash) return candidate;
+  if (platform === "whatsapp" && url.hostname === "wa.me" && /^\/\d{6,15}\/?$/.test(url.pathname)) {
+    return `+${url.pathname.slice(1).replace(/\/$/, "")}`;
+  }
+  if (platform === "mastodon" && /^\/@[a-z0-9_]{1,100}\/?$/i.test(url.pathname)) {
+    return `${url.pathname.slice(1).replace(/\/$/, "")}@${url.hostname}`;
+  }
+
+  const base = PROFILE_SOCIAL_USERNAME_BASES[platform];
+  if (!base) return candidate;
+  const expected = new URL(base);
+  const hostname = url.hostname.replace(/^www\./, "");
+  if (hostname !== expected.hostname.replace(/^www\./, "") && !(platform === "twitter" && hostname === "twitter.com")) return candidate;
+  const username = url.pathname.slice(expected.pathname.length).replace(/\/$/, "");
+  return url.pathname.startsWith(expected.pathname) && /^[a-z0-9._-]{1,100}$/i.test(username)
+    ? username
+    : candidate;
 }
 
 function canonicalSocialLinks(value: unknown) {
