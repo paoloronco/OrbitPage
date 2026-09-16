@@ -117,6 +117,30 @@ describe("VisualSiteEditor", () => {
     expect(renderPreview).not.toHaveBeenCalled();
   });
 
+  it("shows Pages preview only when a selected additional page supplies it", () => {
+    const props = {
+      profile: { name: "Main page", bio: "", avatar: "" },
+      links: [],
+      theme: defaultTheme,
+      publicPageHref: "/orbitpage",
+      showOrbitPageBadge: true,
+      section: "pages" as const,
+      inspectorTitle: "Additional pages",
+      inspectorDescription: "Edit pages",
+      inspector: <div>Page workspace</div>,
+      onSelect: vi.fn(),
+      layoutEditing: false,
+      onLayoutEditingChange: vi.fn(),
+    };
+    const withoutPage = renderToStaticMarkup(<VisualSiteEditor {...props} />);
+    const withPage = renderToStaticMarkup(<VisualSiteEditor {...props} renderPreview={() => <div>Selected subpage preview</div>} />);
+
+    expect(withoutPage).toContain("visual-site-editor--inspector-only");
+    expect(withoutPage).not.toContain("visual-site-editor__canvas");
+    expect(withPage).toContain("Selected subpage preview");
+    expect(withPage).not.toContain("Selected element");
+  });
+
   it("removes the top Done and Reset actions while arranging", () => {
     const html = renderToStaticMarkup(
       <VisualSiteEditor

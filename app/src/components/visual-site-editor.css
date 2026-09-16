@@ -1013,3 +1013,49 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Additional pages keep the editor primary; their preview is specific to the selected page. */
+@container visual-site-editor (min-width: 68rem) {
+  .visual-site-editor--pages.visual-site-editor--preview-visible .visual-site-editor__workspace {
+    grid-template-columns: minmax(0, 1.4fr) minmax(19rem, .6fr);
+  }
+
+  .visual-site-editor--pages .visual-site-editor__inspector {
+    grid-column: 1;
+    grid-row: 1;
+    border-width: 0 1px 0 0;
+  }
+
+  .visual-site-editor--pages .visual-site-editor__canvas {
+    grid-column: 2;
+    grid-row: 1;
+    padding-inline: 12px;
+  }
+}
+
+@container visual-site-editor (max-width: 67.99rem) {
+  .visual-site-editor--pages.visual-site-editor--preview-visible .visual-site-editor__workspace {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .visual-site-editor--pages .visual-site-editor__inspector {
+    grid-column: 1;
+    grid-row: 1;
+    max-height: none;
+    border-width: 0;
+  }
+
+  .visual-site-editor--pages .visual-site-editor__inspector-body {
+    height: auto;
+    overflow: visible;
+  }
+
+  .visual-site-editor--pages .visual-site-editor__canvas {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 460px;
+    padding: 44px 12px 16px;
+  }
+}
