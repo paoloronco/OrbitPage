@@ -21,9 +21,12 @@ import { createDefaultMenu, normalizeMenuCatalog, type MenuCatalog } from "@/lib
 import {
   adminContentSectionFromLocation,
   adminDashboardPath,
+  adminEditorPath,
+  adminEditorSectionFromLocation,
   adminTabFromLocation,
   isAdminTab,
   type AdminContentSection,
+  type AdminEditorSection,
   type AdminTab,
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
@@ -78,6 +81,7 @@ const Admin = () => {
   const hostedSurface = integratedHostedSurface;
   const locationTab = adminTabFromLocation(location.pathname, location.search);
   const locationContentSection = adminContentSectionFromLocation(location.pathname);
+  const locationEditorSection = adminEditorSectionFromLocation(location.pathname);
   const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,12 +115,16 @@ const Admin = () => {
   const requestedContentSection = hostedSurface
     ? getHostedSurfaceConfig()?.contentSection || "link"
     : locationContentSection;
+  const requestedEditorSection: AdminEditorSection | null = hostedSurface ? null
+    : locationEditorSection || (locationTab === "profile" ? "profile" : locationTab === "content" ? locationContentSection : null);
 
   useEffect(() => {
     if (hostedSurface) return;
-    const expectedPath = adminDashboardPath(locationTab, locationContentSection);
+    const expectedPath = locationEditorSection
+      ? adminEditorPath(locationEditorSection)
+      : adminDashboardPath(locationTab, locationContentSection);
     if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
-  }, [hostedSurface, location.pathname, locationTab, locationContentSection, navigate]);
+  }, [hostedSurface, location.pathname, locationTab, locationContentSection, locationEditorSection, navigate]);
 
   useEffect(() => {
     if (!hostedSurface) return;
@@ -140,6 +148,12 @@ const Admin = () => {
   const handleContentSectionChange = (section: AdminContentSection) => {
     if (hostedSurface) return;
     navigate(adminDashboardPath("content", section));
+  };
+
+  const handleEditorSectionChange = (section: AdminEditorSection) => {
+    if (hostedSurface) return;
+    const path = adminEditorPath(section);
+    if (location.pathname !== path) navigate(path);
   };
 
   // Check authentication status and setup status on mount.
@@ -566,8 +580,10 @@ const Admin = () => {
       onLogout={handleLogout}
       requestedTab={requestedTab}
       requestedContentSection={requestedContentSection}
+      requestedEditorSection={requestedEditorSection}
       onTabChange={handleTabChange}
       onContentSectionChange={handleContentSectionChange}
+      onEditorSectionChange={handleEditorSectionChange}
     />
   );
 };

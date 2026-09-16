@@ -25,6 +25,20 @@ export const ADMIN_TAB_IDS = [
 export type AdminTab = (typeof ADMIN_TAB_IDS)[number];
 export const ADMIN_CONTENT_SECTION_IDS = ["link", "menu", "shop", "pages"] as const;
 export type AdminContentSection = (typeof ADMIN_CONTENT_SECTION_IDS)[number];
+export type AdminEditorSection = "profile" | AdminContentSection;
+
+export function adminEditorPath(section: AdminEditorSection) {
+  return `/dashboard/editor/${section === "profile" ? "page" : section === "link" ? "content" : section}`;
+}
+
+export function adminEditorSectionFromLocation(pathname: string): AdminEditorSection | null {
+  const segments = pathname.split("/").filter(Boolean);
+  const dashboardIndex = segments.indexOf("dashboard");
+  const section = dashboardIndex >= 0 && segments[dashboardIndex + 1] === "editor" ? segments[dashboardIndex + 2] : null;
+  if (section === "page") return "profile";
+  if (section === "content") return "link";
+  return isAdminContentSection(section) && section !== "link" ? section : null;
+}
 
 export function isAdminContentSection(value: unknown): value is AdminContentSection {
   return typeof value === "string" && ADMIN_CONTENT_SECTION_IDS.includes(value as AdminContentSection);
@@ -47,6 +61,8 @@ export function adminDashboardPath(tab: AdminTab = "profile", contentSection: Ad
 }
 
 export function adminContentSectionFromLocation(pathname: string, fallback: AdminContentSection = "link") {
+  const editorSection = adminEditorSectionFromLocation(pathname);
+  if (editorSection) return editorSection === "profile" ? "link" : editorSection;
   const segments = pathname.split("/").filter(Boolean);
   const routeIndex = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");
   const contentSection = routeIndex >= 0 && segments[routeIndex + 1] === "content" ? segments[routeIndex + 2] : null;
@@ -56,6 +72,7 @@ export function adminContentSectionFromLocation(pathname: string, fallback: Admi
 }
 
 export function adminTabFromLocation(pathname: string, search = "") {
+  if (adminEditorSectionFromLocation(pathname)) return "profile";
   const queryTab = new URLSearchParams(search).get("section");
   if (isAdminTab(queryTab)) return canonicalAdminTab(queryTab);
 

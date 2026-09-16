@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   adminContentSectionFromLocation,
   adminDashboardPath,
+  adminEditorPath,
+  adminEditorSectionFromLocation,
   adminTabFromLocation,
   isAdminTab,
 } from "./admin-navigation";
@@ -55,5 +57,16 @@ describe("admin navigation", () => {
     expect(adminContentSectionFromLocation("/dashboard/content/menu")).toBe("menu");
     expect(adminContentSectionFromLocation("/dashboard/content/shop")).toBe("shop");
     expect(adminContentSectionFromLocation("/dashboard/content/pages")).toBe("pages");
+  });
+
+  it("keeps each visual editor destination in its own URL", () => {
+    for (const [section, slug] of [["profile", "page"], ["link", "content"], ["menu", "menu"], ["shop", "shop"], ["pages", "pages"]] as const) {
+      const path = adminEditorPath(section);
+      expect(path).toBe(`/dashboard/editor/${slug}`);
+      expect(adminEditorSectionFromLocation(path)).toBe(section);
+      expect(adminContentSectionFromLocation(path)).toBe(section === "profile" ? "link" : section);
+      expect(adminTabFromLocation(path)).toBe("profile");
+      expect(adminTabFromLocation(path, "?section=theme")).toBe("profile");
+    }
   });
 });

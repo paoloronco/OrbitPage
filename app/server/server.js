@@ -803,16 +803,19 @@ const PUBLIC_SPA_ROUTES = new Set(['/', '/links', '/menu', '/privacy', '/cookies
 const PERSONAL_PAGE_SPA_ROUTES = new Set(PUBLIC_SPA_ROUTES);
 const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'team', 'account', 'plan', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const ADMIN_CONTENT_SECTIONS = new Set(['link', 'menu', 'shop', 'pages']);
+const ADMIN_EDITOR_SECTIONS = new Set(['page', 'content', 'menu', 'shop', 'pages']);
 const isAdminSpaRoute = (pathName) => {
   const segments = String(pathName || '').split('/').filter(Boolean);
   if (segments.length === 1 && (segments[0] === 'admin' || segments[0] === 'dashboard')) return true;
   if (segments.length === 2
     && (segments[0] === 'admin' || segments[0] === 'dashboard')
     && ADMIN_SPA_SECTIONS.has(segments[1])) return true;
-  return segments.length === 3
-    && (segments[0] === 'admin' || segments[0] === 'dashboard')
-    && segments[1] === 'content'
-    && ADMIN_CONTENT_SECTIONS.has(segments[2]);
+  if (segments.length !== 3) return false;
+  if ((segments[0] === 'admin' || segments[0] === 'dashboard')
+    && segments[1] === 'content') return ADMIN_CONTENT_SECTIONS.has(segments[2]);
+  return segments[0] === 'dashboard'
+    && segments[1] === 'editor'
+    && ADMIN_EDITOR_SECTIONS.has(segments[2]);
 };
 if (DEMO_MODE) {
   PUBLIC_SPA_ROUTES.add('/about');
