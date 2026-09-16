@@ -1,7 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
 export const E2E_ADMIN_PASSWORD = 'OrbitPageE2E123!';
-export const E2E_PUBLIC_PAGE_SLUG = 'e2e-public-page';
 
 export async function useClassicAdmin(page: Page) {
   await page.addInitScript(() => window.localStorage.setItem('orbitpage.admin.new-ui', 'false'));
@@ -21,10 +20,7 @@ export async function openAuthenticatedAdmin(page: Page) {
 
     await page.locator('#setup-password').fill(E2E_ADMIN_PASSWORD);
     await page.locator('#setup-confirm-password').fill(E2E_ADMIN_PASSWORD);
-    await expect(setupContinueButton).toBeEnabled();
-    await setupContinueButton.click();
-
-    await page.locator('#setup-slug').fill(E2E_PUBLIC_PAGE_SLUG);
+    await expect(page.locator('#setup-slug')).toHaveCount(0);
     const completeSetupButton = page.getByRole('button', { name: 'Complete setup' });
     await expect(completeSetupButton).toBeEnabled();
     await completeSetupButton.click();

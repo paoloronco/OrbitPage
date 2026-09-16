@@ -144,7 +144,7 @@ It:
 - starts the container with `no-new-privileges` and a health check;
 - installs the `orbitpage` management command.
 
-The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks, create the fixed `admin` password, choose the primary page slug, and enter the dashboard.
+The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks and create the fixed `admin` password. The main page is then available at `http://SERVER_IP:8080/` without choosing a page slug.
 
 ### Installation options
 

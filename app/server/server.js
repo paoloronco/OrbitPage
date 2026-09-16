@@ -1301,8 +1301,6 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
       meta_description: subpage.description,
     };
     links = getPublicSubpagesPayload([subpage])[0]?.links || [];
-  } else if (pageKind === 'home' && pageSlug && (pathName === '/' || requestedSlug === pageSlug)) {
-    pathName = `/${pageSlug}`;
   }
   const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
 
@@ -1522,13 +1520,12 @@ const buildDefaultRobotsTxt = (req) => {
 
 const buildDefaultLlmsTxt = async (req) => {
   const origin = getRequestOrigin(req);
-  const [profile, links, subpages, pageSlug] = await Promise.all([
+  const [profile, links, subpages] = await Promise.all([
     getPublicProfilePayload(),
     getPublicLinksPayload(),
     getSubpagesPayload(),
-    getInstancePageSlug(),
   ]);
-  const homeUrl = new URL(withRequestBasePath(req, pageSlug ? `/${pageSlug}` : '/'), origin).toString();
+  const homeUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
   const sitemapUrl = new URL(withRequestBasePath(req, '/sitemap.xml'), origin).toString();
   const page = renderPublicPageMarkdown({ profile, links, canonicalUrl: homeUrl }).trimEnd();
   const routes = getPublicSubpagesPayload(subpages)
@@ -1721,9 +1718,8 @@ const buildSitemapDocument = async (req) => {
     console.warn('Sitemap generated without legal policy URLs:', error?.message || error);
   }
 
-  const pageSlug = await getInstancePageSlug();
   const urls = [
-    { loc: new URL(withRequestBasePath(req, pageSlug ? `/${pageSlug}` : '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
+    { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
     ...additionalUrls,
   ];
 
@@ -2067,15 +2063,6 @@ const getInstancePageSlug = async () => {
   return typeof row?.value === 'string' && row.value.trim() ? row.value.trim().toLowerCase() : null;
 };
 
-const setInstancePageSlug = async (slug) => {
-  await dbRun(
-    `INSERT INTO instance_settings (key, value, updated_at)
-     VALUES ('page_slug', ?, CURRENT_TIMESTAMP)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
-    [slug],
-  );
-};
-
 const isInstancePageActive = async () => {
   const row = await dbGet('SELECT value FROM instance_settings WHERE key = ?', ['public_page_active']);
   return row?.value !== '0';
@@ -2198,20 +2185,15 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
 
   setupInProgress = true;
   try {
-    const { password, slug } = SetupBodySchema.parse(req.body || {});
+    const { password } = SetupBodySchema.parse(req.body || {});
     const dependencies = await getSetupDependencies();
     if (dependencies.some((dependency) => !dependency.ok)) {
       return res.status(503).json({ success: false, error: 'Resolve the failed installation checks before continuing.', dependencies });
     }
 
-    const subpages = await getSubpagesPayload();
-    if (subpages.some((page) => page.slug === slug)) {
-      return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
-    }
-
     await withTransaction(async () => {
       await setupInitialCredentials(password);
-      await setInstancePageSlug(slug);
+      await dbRun("DELETE FROM instance_settings WHERE key = 'page_slug'");
       await setInstancePageActive(true);
       await dbRun(
         `INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, admin_onboarding_enabled)
@@ -2224,7 +2206,7 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
     res.json({ 
       success: true, 
       token,
-      pageSlug: slug,
+      pageSlug: null,
       message: 'Admin account created successfully' 
     });
   } catch (error) {
@@ -2483,8 +2465,7 @@ app.get('/go/:campaignSlug', async (req, res) => {
     const destination = link ? resolveCampaignDestination(link) : null;
     if (destination === null) return res.status(404).send('Campaign link not found.');
     const [pathName, query = ''] = destination.split('?', 2);
-    const pageSlug = await getInstancePageSlug();
-    const targetPath = pathName ? `/${pathName}` : pageSlug ? `/${pageSlug}` : '/';
+    const targetPath = pathName ? `/${pathName}` : '/';
     const target = new URL(withRequestBasePath(req, targetPath), getRequestOrigin(req));
     if (query) target.search = query;
     res.set('Cache-Control', 'private, max-age=0, no-store');
@@ -2611,8 +2592,7 @@ app.get('/api/public-url', apiLimiter, async (req, res) => {
   try {
     setNoStoreHeaders(res);
     const origin = getRequestOrigin(req);
-    const pageSlug = await getInstancePageSlug();
-    const publicUrl = new URL(withRequestBasePath(req, pageSlug ? `/${pageSlug}` : '/'), origin).toString();
+    const publicUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
     res.json({
       success: true,
       publicUrl,
@@ -2644,15 +2624,11 @@ app.post('/api/account/personal-page', authenticateToken, requirePermission('use
 
     if (action.action === 'create') {
       if (active) return res.status(409).json({ success: false, error: 'A personal page is already active.' });
-      const subpages = await getSubpagesPayload();
-      if (subpages.some((page) => page.slug === action.slug)) {
-        return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
-      }
       await withTransaction(async () => {
-        await setInstancePageSlug(action.slug);
+        await dbRun("DELETE FROM instance_settings WHERE key = 'page_slug'");
         await setInstancePageActive(true);
       });
-      return res.json({ success: true, active: true, slug: action.slug, confirmationLabel: action.slug });
+      return res.json({ success: true, active: true, slug: null, confirmationLabel: 'PAGE' });
     }
 
     if (!active) return res.status(409).json({ success: false, error: 'The personal page has already been removed.' });

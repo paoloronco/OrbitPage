@@ -333,7 +333,7 @@ interface SetupResponse extends ApiResponse {
   success: boolean;
   token: string;
   message: string;
-  pageSlug: string;
+  pageSlug: string | null;
 }
 
 interface ChangePasswordResponse extends ApiResponse {
@@ -566,10 +566,10 @@ export const authApi = {
     return apiRequest<SetupStatus>('/auth/setup-status');
   },
 
-  setup: async (password: string, slug: string): Promise<SetupResponse> => {
+  setup: async (password: string): Promise<SetupResponse> => {
     const response = await apiRequest<SetupResponse>('/auth/setup', {
       method: 'POST',
-      body: JSON.stringify({ password, slug }),
+      body: JSON.stringify({ password }),
     });
     if (response.token) {
       await setAuthToken(response.token);
@@ -643,9 +643,9 @@ export const campaignLinksApi = {
 
 export const personalPageApi = {
   status: async (): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page'),
-  create: async (slug: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
+  create: async (): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
     method: 'POST',
-    body: JSON.stringify({ action: 'create', slug }),
+    body: JSON.stringify({ action: 'create' }),
   }),
   remove: async (confirmation: string, currentPassword: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
     method: 'POST',

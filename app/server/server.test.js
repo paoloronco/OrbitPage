@@ -338,32 +338,19 @@ describe('API Endpoints', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('POST /api/auth/setup creates the fixed administrator and primary page slug atomically', async () => {
+  it('POST /api/auth/setup creates the administrator with the public page at root', async () => {
     vi.mocked(dbGet).mockResolvedValue(null);
 
     const response = await request(app)
       .post('/api/auth/setup')
-      .send({ password: 'StrongPassword1!', slug: 'my-public-page' });
+      .send({ password: 'StrongPassword1!', slug: 'old-page' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: 'my-public-page' });
+    expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: null });
     expect(withTransaction).toHaveBeenCalledOnce();
     expect(setupInitialCredentials).toHaveBeenCalledWith('StrongPassword1!');
-    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('instance_settings'), ['my-public-page']);
+    expect(dbRun).toHaveBeenCalledWith("DELETE FROM instance_settings WHERE key = 'page_slug'");
     expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('admin_onboarding_enabled'));
-  });
-
-  it('POST /api/auth/setup rejects reserved or ambiguous page slugs', async () => {
-    const reserved = await request(app)
-      .post('/api/auth/setup')
-      .send({ password: 'StrongPassword1!', slug: 'dashboard' });
-    const ambiguous = await request(app)
-      .post('/api/auth/setup')
-      .send({ password: 'StrongPassword1!', slug: 'my--page' });
-
-    expect(reserved.status).toBe(400);
-    expect(ambiguous.status).toBe(400);
-    expect(setupInitialCredentials).not.toHaveBeenCalled();
   });
 
   it('POST /api/ai/page/plan stores a reviewable proposal without mutating the page', async () => {
@@ -731,6 +718,22 @@ describe('API Endpoints', () => {
     expect(activate).toHaveBeenCalledOnce();
     expect(finalize).toHaveBeenCalledOnce();
     expect(dbRun).not.toHaveBeenCalledWith(expect.stringContaining('DELETE FROM admin_users'));
+  });
+
+  it('recreates a removed public page at the installation root without a slug', async () => {
+    vi.mocked(dbGet).mockImplementation(async (_sql, params) => (
+      params?.[0] === 'public_page_active' ? { value: '0' } : null
+    ));
+
+    const response = await request(app)
+      .post('/api/account/personal-page')
+      .set('Authorization', 'Bearer mock-token')
+      .set('X-Forwarded-For', '198.51.100.42')
+      .send({ action: 'create', slug: 'old-page' });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ success: true, active: true, slug: null, confirmationLabel: 'PAGE' });
+    expect(dbRun).toHaveBeenCalledWith("DELETE FROM instance_settings WHERE key = 'page_slug'");
   });
 
   it('GET /api/menu removes subsections and products beneath hidden parents', async () => {
@@ -1392,6 +1395,30 @@ describe('API Endpoints', () => {
     expect(tags).toContain('"codeRepository":"https://github.com/paoloronco/OrbitPage"');
   });
 
+  it('uses the installation root as canonical URL while preserving an old page slug alias', async () => {
+    vi.mocked(dbGet).mockImplementation(async (sql, params) => {
+      if (params?.[0] === 'page_slug') return { value: 'old-page' };
+      if (String(sql).includes('FROM campaign_links')) return { full_config: JSON.stringify([
+        { slug: 'home', label: 'Home', destination: '', timezone: 'Europe/Rome', enabled: true, rules: [] },
+      ]) };
+      return null;
+    });
+
+    const [alias, publicUrl, sitemap, campaign] = await Promise.all([
+      request(app).get('/old-page').set('Host', '127.0.0.1:9006'),
+      request(app).get('/api/public-url').set('Host', '127.0.0.1:9006'),
+      request(app).get('/sitemap.xml').set('Host', '127.0.0.1:9006'),
+      request(app).get('/go/home').set('Host', '127.0.0.1:9006'),
+    ]);
+
+    expect(alias.status).toBe(200);
+    expect(alias.text).toContain('<link rel="canonical" href="http://127.0.0.1:9006/"');
+    expect(publicUrl.body.publicUrl).toBe('http://127.0.0.1:9006/');
+    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/</loc>');
+    expect(sitemap.text).not.toContain('/old-page');
+    expect(campaign.headers.location).toBe('http://127.0.0.1:9006/');
+  });
+
   it('omits Open Graph dimensions when the image size is unknown', () => {
     const tags = renderSeoTags({
       title: 'Public profile',
@@ -1850,15 +1877,11 @@ describe('API Endpoints', () => {
   });
 
   it('POST /api/sitemap/generate persists a fresh generation', async () => {
-    vi.mocked(dbGet).mockReset();
-    vi.mocked(dbGet)
-      .mockResolvedValueOnce({ lastmod: '2026-07-16T12:00:00.000Z' })
-      .mockResolvedValueOnce({ privacy_policy_url: null, cookie_policy_url: null })
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ generated_at: '2026-07-16T12:00:00.000Z', updated_at: '2026-07-16T12:00:00.000Z' })
-      .mockResolvedValueOnce({ lastmod: '2026-07-16T12:00:00.000Z' })
-      .mockResolvedValueOnce({ privacy_policy_url: null, cookie_policy_url: null })
-      .mockResolvedValueOnce(null);
+    vi.mocked(dbGet).mockImplementation(async (sql) => {
+      if (String(sql).includes('FROM sitemap_config')) return { generated_at: '2026-07-16T12:00:00.000Z', updated_at: '2026-07-16T12:00:00.000Z' };
+      if (String(sql).includes('SELECT MAX(updated_at)')) return { lastmod: '2026-07-16T12:00:00.000Z' };
+      return null;
+    });
 
     const response = await request(app).post('/api/sitemap/generate');
 
