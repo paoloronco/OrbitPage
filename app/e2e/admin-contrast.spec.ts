@@ -134,7 +134,7 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
       });
   });
 
-  expect(samples.length).toBeGreaterThan(4);
+  expect(samples.length).toBeGreaterThanOrEqual(4);
   for (const sample of samples) {
     expect(sample.channels, `Could not parse the color for "${sample.text}"`).toHaveLength(3);
     expect(

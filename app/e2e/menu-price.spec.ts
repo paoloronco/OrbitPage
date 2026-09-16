@@ -17,10 +17,10 @@ test('accepts localized menu prices without rewriting the field while typing', a
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
   await workflow.getByRole('button', { name: /Items/ }).click();
-  await expect(page.getByRole('heading', { name: 'Items', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your items', exact: true })).toBeVisible();
 
-  const price = page.getByRole('textbox', { name: 'Product price' }).first();
-  const addFirstProduct = page.getByRole('button', { name: 'Add the first item in this section' });
+  const price = page.getByRole('textbox', { name: 'Item price' }).first();
+  const addFirstProduct = page.getByRole('button', { name: 'Add item', exact: true }).first();
   await expect(price.or(addFirstProduct)).toBeVisible();
   if (await price.count() === 0) await addFirstProduct.click();
   await expect(price).toBeVisible();
@@ -32,7 +32,7 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await expect(price).toHaveValue(normalizedPrice);
   await expect(page.locator('.admin-menu-live-preview')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Save menu' }).click();
+  await page.getByRole('button', { name: 'Save menu' }).first().click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
 });
 
@@ -91,12 +91,12 @@ test('keeps menu categories and items usable on mobile', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
 
   await workflow.getByRole('button', { name: /Items/ }).click();
-  await expect(page.getByRole('heading', { name: 'Items', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your items', exact: true })).toBeVisible();
   await expect(page.locator('.menu-content-pane--sections')).toBeHidden();
 
   const firstItemCard = page.locator('.menu-item-picker__item').first();
   const firstItem = page.locator('.menu-product-editor').first();
-  const emptyState = page.getByRole('button', { name: 'Add the first item in this section' });
+  const emptyState = page.getByRole('button', { name: 'Add item', exact: true }).first();
   if (await firstItemCard.count() === 0) await emptyState.click();
   else await firstItemCard.click();
   await expect(firstItem).toBeVisible();
@@ -147,17 +147,17 @@ test('creates, edits, reorders and removes menu content through the visible cont
 
   await page.getByRole('button', { name: `${subsectionLabel} 0`, exact: true }).click();
   await page.getByRole('button', { name: 'Manage items in this category 0' }).click();
-  await page.getByRole('button', { name: 'New item', exact: true }).click();
+  await page.getByRole('button', { name: 'Add item', exact: true }).first().click();
 
   const editor = page.locator('.menu-product-editor');
   await expect(editor).toBeVisible();
   await editor.getByRole('textbox', { name: 'Name' }).fill(itemLabel);
-  await editor.getByRole('textbox', { name: 'Product price' }).fill('8,50');
-  await editor.getByRole('button', { name: 'Option', exact: true }).click();
+  await editor.getByRole('textbox', { name: 'Item price' }).fill('8,50');
+  await editor.getByRole('button', { name: 'Add option', exact: true }).click();
   await editor.getByRole('textbox', { name: 'Option name' }).fill('Large');
   await editor.getByRole('textbox', { name: 'Option price' }).fill('11,00');
 
-  await page.getByRole('button', { name: 'Save menu' }).click();
+  await page.getByRole('button', { name: 'Save menu' }).first().click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
 
   await page.goto(`/dashboard/content/menu?e2eReload=${Date.now()}`, { waitUntil: 'commit' });
@@ -167,11 +167,11 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
   await page.getByRole('button', { name: `${subsectionLabel} 1`, exact: true }).click();
   await page.getByRole('button', { name: 'Manage items in this category 1' }).click();
-  await page.getByRole('button', { name: itemLabel }).click();
-  await expect(page.locator('.menu-product-editor').getByRole('textbox', { name: 'Product price' })).toHaveValue('8.50');
+  await page.getByRole('button', { name: `Edit ${itemLabel}` }).click();
+  await expect(page.locator('.menu-product-editor').getByRole('textbox', { name: 'Item price' })).toHaveValue('8.50');
 
-  await page.locator('.menu-product-editor').getByTitle('Delete item').click();
-  await expect(page.getByRole('button', { name: itemLabel })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Save menu' }).click();
+  await page.locator('.menu-product-editor').getByRole('button', { name: 'Delete item' }).click();
+  await expect(page.getByRole('button', { name: `Edit ${itemLabel}` })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Save menu' }).first().click();
   await expect(page.getByText('Menu saved and published')).toBeVisible();
 });

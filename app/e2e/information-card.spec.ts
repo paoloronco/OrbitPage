@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { openAuthenticatedAdmin } from './helpers';
 
-test('keeps information text editable and identical in the card preview', async ({ page }) => {
+test('keeps information text editable and identical in the live preview', async ({ page }) => {
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: 'Add content' }).click();
@@ -15,8 +15,9 @@ test('keeps information text editable and identical in the card preview', async 
   await expect(informationText).toBeVisible();
   await informationText.fill('Opening hours\nMonday to Friday, 09:00-18:00');
 
-  await expect(textCard.locator('.admin-block-editor-preview')).toContainText('Opening hours');
-  await expect(textCard.locator('.admin-block-editor-preview')).toContainText('Monday to Friday');
+  const preview = page.locator('.visual-site-editor__canvas').getByRole('button', { name: 'Edit New text' });
+  await expect(preview).toContainText('Opening hours');
+  await expect(preview).toContainText('Monday to Friday');
 
   await textCard.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(textCard).toContainText('Opening hours');
