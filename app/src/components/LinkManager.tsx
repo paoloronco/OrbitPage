@@ -26,6 +26,7 @@ interface LinkManagerProps {
   // Called only when user clicks Save
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
   onLinksPreview?: (links: LinkData[]) => void;
+  onDirtyChange?: (dirty: boolean) => void;
   maxBlocks?: number | null;
   planName?: string;
   schedulingEnabled?: boolean;
@@ -66,6 +67,7 @@ export const LinkManager = ({
   theme,
   onLinksUpdate,
   onLinksPreview,
+  onDirtyChange,
   editMode = 'full',
   maxBlocks,
   planName,
@@ -149,6 +151,10 @@ export const LinkManager = ({
   useEffect(() => {
     onLinksPreview?.(mergeLinkPreviews(workingLinks, previewDrafts));
   }, [onLinksPreview, previewDrafts, workingLinks]);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   useEffect(() => {
     setPreviewDrafts(new Map());

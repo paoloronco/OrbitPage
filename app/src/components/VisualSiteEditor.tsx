@@ -101,8 +101,8 @@ export function VisualSiteEditor({
     typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
   ));
   const [previewVisible, setPreviewVisible] = useState(true);
-  const previewEnabled = section !== "shop" && (section !== "menu" || Boolean(renderPreview));
-  const Inspector = previewEnabled || section === "menu" ? "aside" : "section";
+  const previewEnabled = section === "menu" || section === "pages" ? Boolean(renderPreview) : section !== "shop";
+  const Inspector = previewEnabled || section === "menu" || section === "pages" ? "aside" : "section";
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
     { id: "links", label: tr("Content", "Contenuti"), icon: Layout, status: "active" },
@@ -133,6 +133,10 @@ export function VisualSiteEditor({
   }, [onLayoutEditingChange, section]);
 
   useEffect(() => {
+    if (section === "pages" && previewEnabled) setPreviewVisible(true);
+  }, [previewEnabled, section]);
+
+  useEffect(() => {
     const phoneQuery = window.matchMedia(PHONE_MEDIA_QUERY);
     const syncPhoneViewport = () => {
       setIsPhone(phoneQuery.matches);
@@ -149,7 +153,7 @@ export function VisualSiteEditor({
   };
 
   return (
-    <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}${section === "menu" ? " visual-site-editor--menu" : ""}${previewEnabled ? " visual-site-editor--preview-visible" : " visual-site-editor--inspector-only"}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
+    <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}${section === "menu" ? " visual-site-editor--menu" : ""}${section === "pages" ? " visual-site-editor--pages" : ""}${previewEnabled ? " visual-site-editor--preview-visible" : " visual-site-editor--inspector-only"}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
       <header className="visual-site-editor__toolbar">
         <div className="visual-site-editor__intro">
           <span className="visual-site-editor__mark"><MousePointerClick aria-hidden="true" size={18} /></span>
@@ -158,11 +162,15 @@ export function VisualSiteEditor({
               ? tr("Manage your Shop", "Gestisci il tuo Shop")
               : section === "menu"
                 ? tr("Manage your Menu", "Gestisci il tuo Menu")
+                : section === "pages"
+                  ? tr("Build additional pages", "Crea pagine aggiuntive")
                 : tr("Edit the real page", "Modifica la pagina reale")}</strong>
             <small>{section === "shop"
               ? tr("Products, design, payments, orders and customers in one place.", "Prodotti, design, pagamenti, ordini e clienti in un unico spazio.")
               : section === "menu"
                 ? tr("Categories, items, design and publishing in one clear workspace.", "Categorie, elementi, design e pubblicazione in un unico spazio ordinato.")
+                : section === "pages"
+                  ? tr("Choose or create a page, then add its content. The preview follows the selected page.", "Scegli o crea una pagina, poi aggiungi contenuti. L’anteprima segue la pagina selezionata.")
                 : tr("Select an element in the preview to open its settings.", "Seleziona un elemento nell’anteprima per aprire le sue impostazioni.")}</small>
           </div>
         </div>
@@ -257,7 +265,7 @@ export function VisualSiteEditor({
 
         <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle}>
           {previewEnabled && <header className="visual-site-editor__inspector-heading">
-            {section !== "menu" && <p>{tr("Selected element", "Elemento selezionato")}</p>}
+            {section !== "menu" && section !== "pages" && <p>{tr("Selected element", "Elemento selezionato")}</p>}
             <h2>{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
           </header>}

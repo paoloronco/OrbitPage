@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
@@ -258,6 +258,8 @@ export const AdminView = ({
   const [previewLinks, setPreviewLinks] = useState(links);
   const [previewTheme, setPreviewTheme] = useState(theme);
   const [previewMenu, setPreviewMenu] = useState(menu);
+  const [previewSubpage, setPreviewSubpage] = useState<{ page: EditorSubpage; links: LinkData[] } | null>(null);
+  const onSubpagePreviewChange = useCallback((preview: { page: EditorSubpage; links: LinkData[] } | null) => setPreviewSubpage(preview), []);
   const [menuDesignActive, setMenuDesignActive] = useState(false);
   const [newUiEnabled, setNewUiEnabled] = useState(() => {
     const hostedPreference = getHostedSurfaceConfig()?.newUiEnabled;
@@ -913,6 +915,7 @@ export const AdminView = ({
       theme={previewTheme}
       publicPageHref={publicPageHref}
       onPagesUpdate={onSubpagesUpdate}
+      onPreviewChange={onSubpagePreviewChange}
       editMode={linkEditMode}
       maxPages={entitlements?.pages}
       maxBlocks={entitlements?.maxBlocks}
@@ -1283,13 +1286,24 @@ export const AdminView = ({
                 onLayoutEditingChange={setVisualLayoutEditing}
                 previewHint={visualSection === "menu"
                   ? tr("Live public menu preview", "Anteprima live del menu pubblico")
-                  : undefined}
+                  : visualSection === "pages" && previewSubpage
+                    ? tr(`Preview: ${previewSubpage.page.title}`, `Anteprima: ${previewSubpage.page.title}`)
+                    : undefined}
                 renderPreview={visualSection === "menu" && menuDesignActive ? ((device) => (
                   <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
                     <div className={`admin-menu-live-preview admin-menu-live-preview--${device}`}>
                       <MenuView embedded menu={previewMenu} pageHref={publicPageHref} />
                     </div>
                   </PreviewDeviceFrame>
+                )) : visualSection === "pages" && previewSubpage ? ((device) => (
+                  <LivePreview
+                    device={device}
+                    profile={{ ...previewProfile, name: previewSubpage.page.title, bio: previewSubpage.page.description }}
+                    links={previewSubpage.links}
+                    theme={previewTheme}
+                    publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${previewSubpage.page.slug}`}
+                    showOrbitPageBadge={resolveOrbitPageBadgeVisibility(previewProfile.showOrbitPageBadge)}
+                  />
                 )) : undefined}
               />
             ) : (
