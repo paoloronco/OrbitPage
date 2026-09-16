@@ -333,6 +333,8 @@ export const AdminView = ({
         setVisualSection("shop");
       } else if (nextConfig && canonicalViewTab(nextConfig.section) === "content" && nextConfig.contentSection) {
         setVisualSection(visualSectionForContent(nextConfig.contentSection));
+      } else if (nextConfig?.section === "profile") {
+        setVisualSection("profile");
       }
     };
     window.addEventListener(HOSTED_CONFIG_CHANGED_EVENT, syncHostedConfig);
@@ -635,6 +637,10 @@ export const AdminView = ({
 
   const selectVisualSection = (section: VisualSiteEditorSection, linkId?: string) => {
     setVisualSection(section);
+    if (isIntegratedHostedAdmin) {
+      if (section === "profile") onTabChange?.("profile");
+      else selectContentSection(section === "links" ? "link" : section);
+    }
     if (section === "links") {
       setVisualLinkId(linkId || null);
       if (linkId) setVisualEditRequest((request) => request + 1);
