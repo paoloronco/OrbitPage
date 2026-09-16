@@ -29,13 +29,13 @@ describe('link schemas', () => {
     });
   });
 
-  it('limits bulk payloads to 200 links', () => {
+  it('accepts more than 200 links without a count quota', () => {
     const links = Array.from({ length: 201 }, (_, index) => ({
       id: String(index),
       title: `Link ${index}`,
     }));
 
-    expect(() => LinksPayloadSchema.parse(links)).toThrow();
+    expect(LinksPayloadSchema.parse(links)).toHaveLength(201);
   });
 
   it('accepts only supported card surface effects', () => {

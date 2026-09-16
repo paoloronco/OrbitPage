@@ -63,7 +63,7 @@ const SubpageInputShape = {
   slug: boundedString(80),
   title: boundedString(80),
   description: boundedString(240).nullable().optional(),
-  links: z.array(z.unknown()).max(150).optional(),
+  links: z.array(z.unknown()).optional(),
   enabled: z.boolean().optional(),
   createdAt: OrbitPageIsoDateSchema.optional(),
   updatedAt: OrbitPageIsoDateSchema.optional()

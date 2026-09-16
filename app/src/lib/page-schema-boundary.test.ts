@@ -16,6 +16,11 @@ import { themePresets } from './theme-presets';
 import { cardThemePresets } from './card-theme-presets';
 
 describe('canonical page schema boundary', () => {
+  it('accepts more than 150 blocks without a count quota', () => {
+    const blocks = Array.from({ length: 201 }, (_, index) => ({ id: `block-${index}`, type: 'link', title: `Block ${index}` }));
+    expect(parseOrbitPageBlocks(blocks)).toHaveLength(201);
+  });
+
   it('keeps machine-readable publishing opt-in and normalizes both key styles', () => {
     expect(DEFAULT_ORBITPAGE_PROFILE.machine_readable_enabled).toBe(0);
     expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, { machineReadableEnabled: true }))

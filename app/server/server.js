@@ -118,7 +118,7 @@ const SubpageSchema = z.object({
     .refine((slug) => !RESERVED_SUBPAGE_SLUGS.has(slug), 'This page slug is reserved.'),
   title: z.string().trim().min(1).max(80),
   description: z.string().trim().max(240).default(''),
-  links: z.array(LinkSchema).max(150).default([]),
+  links: z.array(LinkSchema).default([]),
   enabled: z.boolean().default(true),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
