@@ -32,6 +32,7 @@ interface MenuEditorProps {
   onSave: (menu: MenuCatalog) => Promise<void>;
   onAddMenuLink: () => Promise<void>;
   onPreview?: (menu: MenuCatalog) => void;
+  onDesignActiveChange?: (active: boolean) => void;
   presentation?: 'classic' | 'visual';
 }
 
@@ -176,7 +177,7 @@ function MenuQr({ url, color }: { url: string; color: string }) {
 
 export function MenuEditor({
   menu, publicPageHref, enabled, maxItems, advancedTheme,
-  onSave, onAddMenuLink, onPreview, presentation = 'classic',
+  onSave, onAddMenuLink, onPreview, onDesignActiveChange, presentation = 'classic',
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
@@ -241,6 +242,11 @@ export function MenuEditor({
   useEffect(() => {
     onPreview?.(draft);
   }, [draft, onPreview]);
+
+  useEffect(() => {
+    onDesignActiveChange?.(activePanel === 'appearance');
+    return () => onDesignActiveChange?.(false);
+  }, [activePanel, onDesignActiveChange]);
 
   useEffect(() => {
     if (productSectionFilter !== 'all' && !draft.sections.some((section) => section.id === productSectionFilter)) {
