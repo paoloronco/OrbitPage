@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import QRCode from 'qrcode';
 import {
   ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, Edit, ExternalLink, Eye, EyeOff, GripVertical,
@@ -32,7 +32,7 @@ interface MenuEditorProps {
   onSave: (menu: MenuCatalog) => Promise<void>;
   onAddMenuLink: () => Promise<void>;
   onPreview?: (menu: MenuCatalog) => void;
-  onDesignActiveChange?: (active: boolean) => void;
+  designPreview?: ReactNode;
   presentation?: 'classic' | 'visual';
 }
 
@@ -177,7 +177,7 @@ function MenuQr({ url, color }: { url: string; color: string }) {
 
 export function MenuEditor({
   menu, publicPageHref, enabled, maxItems, advancedTheme,
-  onSave, onAddMenuLink, onPreview, onDesignActiveChange, presentation = 'classic',
+  onSave, onAddMenuLink, onPreview, designPreview, presentation = 'classic',
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
@@ -250,11 +250,6 @@ export function MenuEditor({
   useEffect(() => {
     onPreview?.(draft);
   }, [draft, onPreview]);
-
-  useEffect(() => {
-    onDesignActiveChange?.(activePanel === 'appearance');
-    return () => onDesignActiveChange?.(false);
-  }, [activePanel, onDesignActiveChange]);
 
   useEffect(() => {
     if (productSectionFilter !== 'all' && !draft.sections.some((section) => section.id === productSectionFilter)) {
@@ -1008,7 +1003,8 @@ export function MenuEditor({
           </div>
         </section>}
 
-        {activePanel === 'appearance' && <>
+        {activePanel === 'appearance' && <div className="menu-design-layout">
+        <div className="menu-design-settings">
         <section className="admin-panel space-y-5">
           <div className="menu-editor-section-title"><Palette /><div><h3>{tr("Menu appearance", "Aspetto del menu")}</h3><p>{tr("Independent from the main OrbitPage theme.", "Indipendente dal tema principale OrbitPage.")}</p></div></div>
           <div className="menu-theme-presets">
@@ -1045,7 +1041,12 @@ export function MenuEditor({
             </div>
           </div>
         </section>
-        </>}
+        </div>
+        {designPreview && <aside className="menu-design-preview" aria-label={tr('Live mobile menu preview', 'Anteprima live del menu mobile')}>
+          <strong>{tr('Mobile preview', 'Anteprima mobile')}</strong>
+          {designPreview}
+        </aside>}
+        </div>}
       </div>
     </div>
   );
