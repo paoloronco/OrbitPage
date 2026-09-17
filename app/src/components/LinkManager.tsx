@@ -887,7 +887,7 @@ export const LinkManager = ({
               ? tr("Edit this block, then save the content changes.", "Modifica questo blocco, poi salva le modifiche ai contenuti.")
               : workingLinks.length === 0
               ? tr("Start with a block, then arrange your public page.", "Inizia con un blocco, poi organizza la pagina pubblica.")
-              : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` ${tr("of", "di")} ${maxBlocks}` : ""} ${tr("blocks in your public page order.", "blocchi nell'ordine della pagina pubblica.")}`}
+              : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` ${tr("of", "di")} ${maxBlocks}` : ""} ${tr("blocks", "blocchi")}`}
           </p>
           {saveError && (
             <p className="mt-2 text-sm font-medium text-red-600" role="alert">
