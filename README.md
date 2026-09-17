@@ -45,6 +45,7 @@ This repository is the self-hosted edition. The optional managed service is avai
 
 - [Why OrbitPage](#why-orbitpage)
 - [Quick start](#quick-start)
+- [Updates](#updates)
 - [What you can build](#what-you-can-build)
 - [Dashboard workspaces](#dashboard-workspaces)
 - [How it runs](#how-it-runs)
@@ -81,23 +82,26 @@ sudo docker run -d --name orbitpage \
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
 ~~~
 
-Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>. Run <code>sudo orbitpage-update</code> for later updates.
+Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>. The last command installs the host updater; run <code>sudo orbitpage-update</code> for later updates. Python 3 is required on the host for manual Docker and Compose installations.
 
-The same multi-architecture image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. Registries contain only <code>latest</code> and complete release tags such as <code>4.21.3</code>; <code>latest</code> always points to the newest stable release. For deterministic updates and rollback, use the complete version from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
+The same multi-architecture image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. Registries contain only <code>latest</code> and complete release tags such as <code>4.21.7</code>; <code>latest</code> always points to the newest stable release. For deterministic updates and rollback, use the complete version from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
 
 See the complete [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended) for image selection, Compose, verification, updates, backups, and rollback.
 
 ### Docker Compose (local evaluation)
 
-1. Clone the repository.
-2. Start the local evaluation service:
+Clone the repository and set a private secret before starting the local evaluation service:
 
 ~~~bash
+git clone https://github.com/paoloronco/OrbitPage.git
+cd OrbitPage
+umask 077
+printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 32)" > .env
 docker compose up -d
 sudo ./scripts/install-updater.sh
 ~~~
 
-The tracked Compose file contains a public placeholder secret and is only for local evaluation on a trusted machine. Do not expose it to a network. For production, use the [protected env-file Compose procedure](./docs/wiki/Deployment.md#docker-image-recommended); never commit a real secret or put it in a <code>docker run -e</code> argument.
+The tracked Compose file requires <code>JWT_SECRET</code>, binds only to <code>127.0.0.1:8080</code>, and persists data in <code>./orbitpage-data</code>. The ignored <code>.env</code> file keeps the secret available to later Compose updates; preserve it across restarts and back it up securely. For production, use the [protected env-file Compose procedure](./docs/wiki/Deployment.md#docker-image-recommended); never commit a real secret or put it in a <code>docker run -e</code> argument.
 
 ### One-command Linux install
 
@@ -124,6 +128,7 @@ Requirements:
 - Node.js <code>^20.19.0</code> or <code>>=22.12.0</code>
 - npm
 - Git
+- Python 3 (for <code>orbitpage-update</code> on a source checkout)
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
@@ -139,6 +144,18 @@ npm run start
 
 The production-style source run is available at <http://localhost:3001>.
 Run <code>sudo orbitpage-update</code> from any directory to pull a fast-forward release, reinstall dependencies, and rebuild. Restart a foreground <code>npm run start</code> process afterward; an active <code>orbitpage</code> systemd service is restarted automatically.
+
+## Updates
+
+The Linux and Proxmox installers install <code>orbitpage-update</code> automatically. For an existing manual Docker Run or Docker Compose installation on Linux, install the host command once, then update:
+
+~~~bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
+sudo orbitpage-update
+sudo docker exec orbitpage node -p "require('./package.json').version"
+~~~
+
+The version check applies to a container named <code>orbitpage</code>; use your own container name if different. The updater discovers existing official Docker containers and Compose projects, preserves their configuration and data mount, pulls the current <code>:latest</code> image, recreates the service, and checks its image ID and health. For an existing source checkout, run <code>sudo ./scripts/install-updater.sh source "$PWD"</code> from its root once; the updater then updates that registered directory. Restart a foreground source process afterward. A Compose file pinned to a numbered image tag must be changed and redeployed manually; the updater leaves it in place. See [update procedures](./docs/wiki/Deployment.md#update-safely) for unsupported container layouts and recovery steps.
 
 ## What you can build
 
@@ -191,10 +208,11 @@ The current dashboard keeps related work together:
 | **Backup** | Portable exports, selective restore, and unused-media tools |
 | **Analytics** | Built-in performance and optional GA4 settings |
 | **Privacy** | Consent behavior, legal policies, and external CMP settings |
+| **Newsletter** | Your SMTP server, subscribers, campaigns, scheduling, and delivery reports |
 | **Team** | Additional users and permissions |
 | **Account** | Password and two-factor authentication |
 
-Dashboard routes are stable, including <code>/dashboard/profile</code>, the Content destinations <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>, plus <code>/dashboard/ai</code>, <code>/dashboard/theme</code>, and <code>/dashboard/publish</code>. Legacy routes such as <code>/admin</code>, <code>/dashboard/content</code>, and the old Links, Pages, Menu, and Access paths remain compatibility aliases.
+The visual editor changes URL with the active section: <code>/dashboard/editor/page</code>, <code>/dashboard/editor/content</code>, <code>/dashboard/editor/menu</code>, <code>/dashboard/editor/shop</code>, and <code>/dashboard/editor/pages</code>. Classic dashboard routes include <code>/dashboard/profile</code>, <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>. Newsletter settings are at <code>/dashboard/newsletter</code>; the public signup page is <code>/newsletter</code>. Legacy routes such as <code>/admin</code>, <code>/dashboard/content</code>, and the old Links, Pages, Menu, and Access paths remain compatibility aliases.
 
 Read the [dashboard guide](./docs/user-guide/dashboard.md) for the complete route map and editing workflow.
 
@@ -247,13 +265,16 @@ The essential production settings are:
 | <code>JWT_SECRET</code> | Production | Random outside production | Signs sessions and protects encrypted server-side secrets |
 | <code>DATA_DIR</code> | Recommended | Server directory; <code>/app/data</code> in Docker | Stores SQLite and uploads |
 | <code>PORT</code> | No | <code>3001</code>; <code>8080</code> in Docker | HTTP listener |
-| <code>PUBLIC_SITE_URL</code> | Recommended | Request origin | Canonical public URL for sharing, QR, sitemap, and metadata |
+| <code>PUBLIC_SITE_URL</code> | Recommended; set for newsletters | Request origin | Public HTTPS URL for sharing, QR, sitemap, confirmation, unsubscribe, and tracking links |
+| <code>NEWSLETTER_SECRET_KEY</code> | No | <code>JWT_SECRET</code> | Separate stable secret of at least 32 characters for SMTP encryption and email links |
 | <code>PUBLIC_SITE_NAME</code> | No | <code>OrbitPage</code> | Site name in generated metadata |
 | <code>SEO_INDEXING</code> | No | <code>true</code> | Set to <code>false</code> for staging or private deployments |
 | <code>UPLOAD_STORAGE_QUOTA_MB</code> | No | <code>1024</code> | Total upload quota |
 | <code>VIDEO_UPLOAD_LIMIT_MB</code> | No | <code>100</code> | Per-file video limit |
 
-For AI provider settings, cleanup controls, rate limiting, HTTPS, base paths, CORS, reset recovery, and build-time variables, use the complete [Configuration reference](./docs/wiki/Configuration.md).
+Set <code>PUBLIC_SITE_URL</code> to the externally reachable HTTPS origin in the protected environment file before starting a production container, especially when using newsletters. If you change a container's environment file later, recreate the container or Compose service; <code>docker restart</code> does not reload those values.
+
+Configure your own SMTP host, port, credentials, and sender in **Dashboard > Newsletter**, then send a test message before a campaign. Copy the public signup link from that workspace; subscribers must confirm their address. Campaigns can be sent immediately or scheduled. Newsletter settings, subscribers, and delivery history live in <code>DATA_DIR/orbitpage.db</code>. The dashboard's selective JSON export excludes newsletter records and SMTP credentials, so include the SQLite database in infrastructure backups. See the [newsletter guide](./docs/user-guide/newsletters.md) and the complete [Configuration reference](./docs/wiki/Configuration.md) for AI providers, cleanup, rate limiting, HTTPS, base paths, CORS, reset recovery, and other settings.
 
 ## Data and backups
 
@@ -322,6 +343,7 @@ Start from the task-oriented [documentation index](./docs/README.md).
 | Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/user-guide/backups-and-demo-mode.md) |
 | Configure AI safely | [AI assistant](./docs/user-guide/ai-assistant.md) |
 | Configure analytics and consent | [Analytics and privacy](./docs/user-guide/analytics-and-privacy.md) |
+| Configure SMTP and send newsletters | [Newsletters](./docs/user-guide/newsletters.md) |
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 

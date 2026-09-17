@@ -107,18 +107,19 @@ Only routes allowed by the signed-in user's permissions appear in navigation.
 
 | Area | Route |
 | --- | --- |
-| Page | `/dashboard/profile` |
-| Content · Link | `/dashboard/content/link` |
-| Content · Menu | `/dashboard/content/menu` |
-| Content · Shop | `/dashboard/content/shop` |
-| Content · Additional pages | `/dashboard/content/pages` |
+| Visual editor · Page | `/dashboard/editor/page` |
+| Visual editor · Content | `/dashboard/editor/content` |
+| Visual editor · Menu | `/dashboard/editor/menu` |
+| Visual editor · Shop | `/dashboard/editor/shop` |
+| Visual editor · Pages | `/dashboard/editor/pages` |
 | AI Assistant | `/dashboard/ai` |
 | Theme | `/dashboard/theme` |
 | Publish | `/dashboard/publish` |
 | Backup | `/dashboard/backup` |
 | Analytics | `/dashboard/analytics` |
 | Privacy | `/dashboard/privacy` |
+| Newsletter | `/dashboard/newsletter` |
 | Team | `/dashboard/team` |
 | Account | `/dashboard/account` |
 
-`/admin` remains a compatibility entry point and redirects to the dashboard.
+The classic dashboard retains `/dashboard/profile` and `/dashboard/content/{link,menu,shop,pages}`. `/admin` remains a compatibility entry point and redirects to the dashboard.
