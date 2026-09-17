@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import QRCode from 'qrcode';
 import {
-  ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff, GripVertical,
+  ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, Edit, ExternalLink, Eye, EyeOff, GripVertical,
   ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, Save, Trash2,
-  Search, UtensilsCrossed,
+  Search, UtensilsCrossed, X,
 } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -192,13 +192,20 @@ export function MenuEditor({
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [itemQuery, setItemQuery] = useState('');
+  const [categoryQuery, setCategoryQuery] = useState('');
+  const [categoryVisibility, setCategoryVisibility] = useState<'all' | 'visible' | 'hidden'>('all');
+  const [collapsedCategoryIds, setCollapsedCategoryIds] = useState<Set<string>>(() => new Set());
+  const [categoryEditorOpen, setCategoryEditorOpen] = useState(presentation === 'classic');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [collapsedItemSectionIds, setCollapsedItemSectionIds] = useState<Set<string>>(() => new Set());
   const [productSectionFilter, setProductSectionFilter] = useState(
-    () => normalizeMenuCatalog(menu, maxItems ?? 250).sections[0]?.id || 'all',
+    () => presentation === 'visual' ? 'all' : normalizeMenuCatalog(menu, maxItems ?? 250).sections[0]?.id || 'all',
   );
   const [selectedItemId, setSelectedItemId] = useState<string | null>(
     () => normalizeMenuCatalog(menu, maxItems ?? 250).items[0]?.id || null,
   );
   const itemEditorRef = useRef<HTMLElement>(null);
+  const categoryEditorRef = useRef<HTMLElement>(null);
   const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
   const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
   const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
@@ -220,8 +227,8 @@ export function MenuEditor({
     ].some((value) => value?.toLocaleLowerCase(draft.locale).includes(query)));
   }, [draft.locale, itemQuery, sectionProducts]);
   const selectedSection = useMemo(
-    () => draft.sections.find((section) => section.id === productSectionFilter) || null,
-    [draft.sections, productSectionFilter],
+    () => draft.sections.find((section) => section.id === (presentation === 'visual' ? selectedCategoryId : productSectionFilter)) || null,
+    [draft.sections, presentation, productSectionFilter, selectedCategoryId],
   );
   const selectedItem = useMemo(
     () => visibleProducts.find((item) => item.id === selectedItemId) || null,
@@ -266,6 +273,12 @@ export function MenuEditor({
       itemEditorRef.current?.scrollIntoView({ block: 'start' });
     }
   }, [mobileEditingItem, selectedItemId]);
+
+  useEffect(() => {
+    if (categoryEditorOpen && presentation === 'visual' && window.matchMedia('(max-width: 767px)').matches) {
+      categoryEditorRef.current?.scrollIntoView({ block: 'start' });
+    }
+  }, [categoryEditorOpen, presentation, selectedCategoryId]);
 
   const update = (producer: (current: MenuCatalog) => MenuCatalog) => {
     setDraft((current) => {
@@ -339,7 +352,11 @@ export function MenuEditor({
       ...current,
       sections: [...current.sections, { id, name: 'New section', visible: true, position: current.sections.length }],
     }));
-    setProductSectionFilter(id);
+    if (presentation === 'classic') setProductSectionFilter(id);
+    setCategoryQuery('');
+    setCategoryVisibility('all');
+    setSelectedCategoryId(id);
+    setCategoryEditorOpen(true);
   };
 
   const addSubsection = (parentId: string) => {
@@ -351,12 +368,19 @@ export function MenuEditor({
         id, parentId, name: 'New subsection', visible: true, position: current.sections.length,
       }],
     }));
-    setProductSectionFilter(id);
+    if (presentation === 'classic') setProductSectionFilter(id);
+    setCategoryQuery('');
+    setCategoryVisibility('all');
+    setSelectedCategoryId(id);
+    setCategoryEditorOpen(true);
+    setCollapsedCategoryIds((current) => new Set([...current].filter((candidate) => candidate !== parentId)));
   };
 
   const removeSection = (sectionId: string) => {
     const fallbackSection = sortedSections.find((section) => section.id !== sectionId && section.parentId !== sectionId);
     setProductSectionFilter(fallbackSection?.id || 'all');
+    setSelectedCategoryId(null);
+    setCategoryEditorOpen(false);
     update((current) => {
       const removedIds = new Set([
         sectionId,
@@ -403,6 +427,30 @@ export function MenuEditor({
 
   const rootSections = useMemo(() => sectionSiblings(draft.sections), [draft.sections]);
   const sortedSections = useMemo(() => orderedSectionTree(draft.sections), [draft.sections]);
+  const categorySearch = categoryQuery.trim().toLocaleLowerCase(draft.locale);
+  const matchesVisibility = (section: MenuSection) => categoryVisibility === 'all'
+    || (categoryVisibility === 'visible' ? section.visible : !section.visible);
+  const matchesSearch = (section: MenuSection) => !categorySearch
+    || [section.name, section.description].some((value) => value?.toLocaleLowerCase(draft.locale).includes(categorySearch));
+  const categoryGroups = rootSections.map((root) => {
+    const rootMatches = matchesVisibility(root) && matchesSearch(root);
+    const allChildren = sectionSiblings(draft.sections, root.id);
+    const children = allChildren
+      .filter((child) => matchesVisibility(child) && (rootMatches || matchesSearch(child)));
+    const sectionIds = new Set([root.id, ...allChildren.map((child) => child.id)]);
+    const itemCount = draft.items.filter((item) => sectionIds.has(item.sectionId)).length;
+    return { root, children, itemCount, shown: rootMatches || children.length > 0 };
+  }).filter((group) => group.shown);
+  const itemGroups = sortedSections.map((section) => {
+    const items = visibleProducts.filter((item) => item.sectionId === section.id);
+    const sectionIds = new Set([section.id, ...sectionSiblings(draft.sections, section.id).map((child) => child.id)]);
+    return { section, items, count: visibleProducts.filter((item) => sectionIds.has(item.sectionId)).length };
+  }).filter((group) => group.count > 0);
+  const openCategoryEditor = (sectionId: string) => {
+    if (presentation === 'visual') setSelectedCategoryId(sectionId);
+    else setProductSectionFilter(sectionId);
+    setCategoryEditorOpen(true);
+  };
 
   const renderCategoryEditor = (section: MenuSection) => {
     const siblings = sectionSiblings(draft.sections, section.parentId);
@@ -410,7 +458,7 @@ export function MenuEditor({
     const nested = Boolean(section.parentId);
     const canDelete = nested || rootSections.length > 1;
     return (
-      <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
+      <section className="menu-category-editor" ref={categoryEditorRef} aria-label={tr("Selected category", "Categoria selezionata")}>
             <div className="menu-category-editor__heading">
               <div>
                 <span>{nested ? tr("Edit subcategory", "Modifica sottocategoria") : tr("Edit category", "Modifica categoria")}</span>
@@ -427,6 +475,7 @@ export function MenuEditor({
                 />
                 <span>{section.visible ? tr("Visible", "Visibile") : tr("Hidden", "Nascosta")}</span>
               </label>
+              {presentation === 'visual' && <button type="button" className="menu-category-editor__close" aria-label={tr('Close category editor', 'Chiudi modifica categoria')} onClick={() => setCategoryEditorOpen(false)}><X aria-hidden="true" /></button>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="selected-menu-category-name">{tr("Name", "Nome")}</Label>
@@ -486,12 +535,13 @@ export function MenuEditor({
               type="button"
               variant="outline"
               className="menu-category-editor__items"
-              onClick={() => { setMobileContentPane('products'); setMobileEditingItem(false); }}
+              onClick={() => { setProductSectionFilter(section.id); setMobileContentPane('products'); setMobileEditingItem(false); }}
             >
               <ListTree className="h-4 w-4" />
               <span>{tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}</span>
               <strong>{draft.items.filter((item) => item.sectionId === section.id).length}</strong>
             </Button>
+            {presentation === 'visual' && <Button type="button" className="menu-category-editor__save" disabled={!isDirty || saving} onClick={() => void save()}><Save aria-hidden="true" className="h-4 w-4" />{saving ? tr('Saving', 'Salvataggio') : tr('Save changes', 'Salva modifiche')}</Button>}
       </section>
     );
   };
@@ -510,6 +560,31 @@ export function MenuEditor({
     setDraggedItemId(null);
     setDragOverId(null);
   };
+
+  const categoryDragProps = (section: MenuSection) => ({
+    draggable: true,
+    onDragStart: (event: DragEvent<HTMLButtonElement>) => {
+      setDraggedSectionId(section.id);
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', section.id);
+    },
+    onDragOver: (event: DragEvent<HTMLButtonElement>) => {
+      const source = draft.sections.find((candidate) => candidate.id === draggedSectionId);
+      if (!source || source.parentId !== section.parentId) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      setDragOverId(`section:${section.id}`);
+    },
+    onDrop: (event: DragEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const source = draft.sections.find((candidate) => candidate.id === draggedSectionId);
+      if (source && source.parentId === section.parentId) {
+        update((current) => ({ ...current, sections: reorderMenuSections(current.sections, source.id, section.id) }));
+      }
+      finishDrag();
+    },
+    onDragEnd: finishDrag,
+  });
 
   if (!enabled) {
     return (
@@ -636,10 +711,57 @@ export function MenuEditor({
           <div className={`admin-panel menu-content-pane menu-content-pane--sections${mobileContentPane === 'sections' ? ' is-mobile-active' : ''}`}>
             <div className="menu-content-pane__header">
               <div className="menu-editor-section-title"><span>01</span><div><h3>{tr("Categories", "Categorie")}</h3><p>{tr("Build the structure visitors browse.", "Definisci la struttura che vedranno i visitatori.")}</p></div></div>
-              <Button variant="outline" size="sm" onClick={addSection} disabled={draft.sections.length >= 30}><Plus className="h-4 w-4" />{tr("Add", "Aggiungi")}</Button>
+              <Button variant="outline" size="sm" onClick={addSection} disabled={draft.sections.length >= 30}><Plus className="h-4 w-4" />{presentation === 'visual' ? tr('Add category', 'Aggiungi categoria') : tr("Add", "Aggiungi")}</Button>
             </div>
             <div className="menu-content-pane__scroll menu-category-workspace">
-              <div className="menu-category-index">
+              <div className={`menu-category-index${presentation === 'visual' ? ' menu-category-index--visual' : ''}`}>
+                {presentation === 'visual' ? <div className="menu-category-list">
+                  <div className="menu-category-toolbar">
+                    <label className="menu-category-search">
+                      <Search aria-hidden="true" />
+                      <span className="sr-only">{tr('Search categories', 'Cerca categorie')}</span>
+                      <Input type="search" value={categoryQuery} onChange={(event) => setCategoryQuery(event.target.value)} placeholder={tr('Search categories', 'Cerca categorie')} />
+                    </label>
+                    <select aria-label={tr('Filter category visibility', 'Filtra visibilità categorie')} value={categoryVisibility} onChange={(event) => setCategoryVisibility(event.target.value as typeof categoryVisibility)}>
+                      <option value="all">{tr('All categories', 'Tutte le categorie')}</option>
+                      <option value="visible">{tr('Visible', 'Visibili')}</option>
+                      <option value="hidden">{tr('Hidden', 'Nascoste')}</option>
+                    </select>
+                  </div>
+                  <div className="menu-category-groups" aria-label={tr('Menu categories', 'Categorie del menu')}>
+                    {categoryGroups.map(({ root, children, itemCount }) => {
+                      const expanded = Boolean(categorySearch) || !collapsedCategoryIds.has(root.id);
+                      return <section className="menu-category-group" key={root.id}>
+                        <div className="menu-category-group__heading">
+                          <button type="button" className="menu-category-group__toggle" aria-expanded={expanded} aria-controls={`menu-category-group-${root.id}`} disabled={Boolean(categorySearch)} onClick={() => setCollapsedCategoryIds((current) => {
+                            const next = new Set(current);
+                            if (next.has(root.id)) next.delete(root.id); else next.add(root.id);
+                            return next;
+                          })}>
+                            <ChevronRight aria-hidden="true" />
+                            <span><strong>{root.name || tr('Untitled category', 'Categoria senza nome')}</strong><small>{root.description || tr('Main category', 'Categoria principale')}</small></span>
+                            <em title={tr(`${itemCount} items`, `${itemCount} elementi`)}>{itemCount}</em>
+                          </button>
+                          {!root.visible && <span className="menu-category-group__status">{tr('Hidden', 'Nascosta')}</span>}
+                          <button type="button" className="menu-category-group__edit" aria-label={tr(`Edit ${root.name}`, `Modifica ${root.name}`)} onClick={() => openCategoryEditor(root.id)}><Edit aria-hidden="true" />{tr('Edit', 'Modifica')}</button>
+                        </div>
+                        <div className="menu-category-group__body" id={`menu-category-group-${root.id}`} hidden={!expanded}>
+                          {children.map((section) => {
+                            const itemCount = draft.items.filter((item) => item.sectionId === section.id).length;
+                            return <button type="button" key={section.id} {...categoryDragProps(section)} className={`menu-category-row${selectedCategoryId === section.id && categoryEditorOpen ? ' active' : ''}${draggedSectionId === section.id ? ' is-dragging' : ''}${dragOverId === `section:${section.id}` ? ' is-drag-over' : ''}`} aria-label={tr(`Edit ${section.name}`, `Modifica ${section.name}`)} onClick={() => openCategoryEditor(section.id)} title={tr('Drag to reorder at this level', 'Trascina per riordinare a questo livello')}>
+                              <GripVertical className="menu-order-grip" aria-hidden="true" />
+                              <span className="menu-category-row__copy"><strong>{section.name || tr('Untitled category', 'Sottocategoria senza nome')}</strong><small>{section.description || tr('Subcategory', 'Sottocategoria')}</small></span>
+                              <span className="menu-category-row__count">{itemCount} {itemCount === 1 ? tr('item', 'elemento') : tr('items', 'elementi')}</span>
+                              <span className="menu-category-row__icons">{!section.visible && <EyeOff aria-label={tr('Hidden', 'Nascosta')} />}<ChevronRight aria-hidden="true" /></span>
+                            </button>;
+                          })}
+                          <button type="button" className="menu-category-group__add" onClick={() => addSubsection(root.id)} disabled={draft.sections.length >= 30}><Plus aria-hidden="true" />{tr('Add subcategory', 'Aggiungi sottocategoria')}</button>
+                        </div>
+                      </section>;
+                    })}
+                    {categoryGroups.length === 0 && <div className="menu-category-empty"><Search aria-hidden="true" /><strong>{tr('No categories found', 'Nessuna categoria trovata')}</strong><span>{tr('Try another search or visibility filter.', 'Prova un’altra ricerca o filtro di visibilità.')}</span></div>}
+                  </div>
+                </div> : <>
                 <button
                   type="button"
                   className={`menu-section-filter${productSectionFilter === 'all' ? ' active' : ''}`}
@@ -661,31 +783,7 @@ export function MenuEditor({
                         className={`menu-category-picker__item${section.parentId ? ' is-subcategory' : ''}${productSectionFilter === section.id ? ' active' : ''}${draggedSectionId === section.id ? ' is-dragging' : ''}${dragOverId === `section:${section.id}` ? ' is-drag-over' : ''}`}
                         aria-current={productSectionFilter === section.id ? 'true' : undefined}
                         aria-label={`${section.name || tr("Untitled category", "Categoria senza nome")} ${itemCount}`}
-                        draggable
-                        onDragStart={(event) => {
-                          setDraggedSectionId(section.id);
-                          event.dataTransfer.effectAllowed = 'move';
-                          event.dataTransfer.setData('text/plain', section.id);
-                        }}
-                        onDragOver={(event) => {
-                          const source = draft.sections.find((candidate) => candidate.id === draggedSectionId);
-                          if (!source || source.parentId !== section.parentId) return;
-                          event.preventDefault();
-                          event.dataTransfer.dropEffect = 'move';
-                          setDragOverId(`section:${section.id}`);
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          const source = draft.sections.find((candidate) => candidate.id === draggedSectionId);
-                          if (source && source.parentId === section.parentId) {
-                            update((current) => ({
-                              ...current,
-                              sections: reorderMenuSections(current.sections, source.id, section.id),
-                            }));
-                          }
-                          finishDrag();
-                        }}
-                        onDragEnd={finishDrag}
+                        {...categoryDragProps(section)}
                         onClick={() => setProductSectionFilter(section.id)}
                         title={tr('Drag to reorder at this level', 'Trascina per riordinare a questo livello')}
                       >
@@ -703,7 +801,10 @@ export function MenuEditor({
                     );
                   })}
                 </div>
-                {selectedSection && renderCategoryEditor(selectedSection)}
+                </>}
+                {selectedSection && categoryEditorOpen
+                  ? renderCategoryEditor(selectedSection)
+                  : presentation === 'visual' && <div className="menu-category-editor-empty"><Layers3 aria-hidden="true" /><strong>{tr('Select a category to edit', 'Seleziona una categoria da modificare')}</strong><span>{tr('Its name, visibility and order will appear here.', 'Qui potrai modificarne nome, visibilità e ordine.')}</span></div>}
               </div>
             </div>
           </div>
@@ -746,7 +847,19 @@ export function MenuEditor({
                   </div>
                   {visibleProducts.length > 0 && (
                     <div className="menu-item-picker" aria-label={tr("Items in selected category", "Elementi nella categoria selezionata")}>
-                      {visibleProducts.map((item) => (
+                      {(presentation === 'visual' ? itemGroups : [{ section: null, items: visibleProducts, count: visibleProducts.length }]).map(({ section, items, count }) => {
+                        const expanded = !section || Boolean(itemQuery) || !collapsedItemSectionIds.has(section.id);
+                        const hiddenByParent = Boolean(section?.parentId && !itemQuery && collapsedItemSectionIds.has(section.parentId));
+                        return <section key={section?.id || 'all'} className={`menu-item-group${section?.parentId ? ' is-subcategory' : ''}`} hidden={hiddenByParent}>
+                          {section && <button type="button" className="menu-item-group__toggle" aria-expanded={expanded} aria-controls={`menu-item-group-${section.id}`} disabled={Boolean(itemQuery)} onClick={() => setCollapsedItemSectionIds((current) => {
+                            const next = new Set(current);
+                            if (next.has(section.id)) next.delete(section.id); else next.add(section.id);
+                            return next;
+                          })}>
+                            <ChevronRight aria-hidden="true" /><strong>{section.name || tr('Untitled category', 'Categoria senza nome')}</strong><em>{count}</em>
+                          </button>}
+                          <div className="menu-item-group__body" id={section ? `menu-item-group-${section.id}` : undefined} hidden={!expanded}>
+                            {items.map((item) => (
                         <button
                           key={item.id}
                           type="button"
@@ -786,7 +899,10 @@ export function MenuEditor({
                           <span className="menu-item-picker__copy"><strong>{item.name || tr("Untitled item", "Elemento senza nome")}</strong><small>{sortedSections.find((section) => section.id === item.sectionId)?.name || tr('Uncategorized', 'Senza categoria')} · {formatMenuPriceInput(item.priceMinor, draft.locale)} {draft.currency}</small><em className={item.available ? 'available' : ''}>{item.available ? tr("Available", "Disponibile") : tr("Hidden", "Nascosto")}</em></span>
                           <ChevronRight className="menu-item-picker__arrow" aria-hidden="true" />
                         </button>
-                      ))}
+                            ))}
+                          </div>
+                        </section>;
+                      })}
                     </div>
                   )}
                   {visibleProducts.length === 0 && <div className="menu-empty-products">
