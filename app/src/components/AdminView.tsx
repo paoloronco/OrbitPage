@@ -76,6 +76,7 @@ import type { InternalDestinationOption } from "@/lib/link-blocks";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
+import NewsletterWorkspace from "./NewsletterWorkspace";
 import { VersionHistory } from "./VersionHistory";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 import { PublishTools } from "./PublishTools";
@@ -576,7 +577,7 @@ export const AdminView = ({
       case 'theme':     return canEditTheme;
       case 'publish':   return canEditProfile || canEditCompliance;
       case 'team':      return !isHostedAdmin && canManageUsers;
-      case 'newsletter': return !isHostedAdmin;
+      case 'newsletter': return !isHostedAdmin && canManageUsers;
       case 'account':   return !isHostedAdmin;
       case 'plan':      return !isHostedAdmin;
       case 'access':    return false;
@@ -1560,17 +1561,9 @@ export const AdminView = ({
             </TabsContent>
           )}
 
-          {!isHostedAdmin && (
+          {!isHostedAdmin && canManageUsers && (
             <TabsContent value="newsletter" className="admin-tab-content">
-              <section className="oss-hosted-feature" aria-labelledby="oss-newsletter-title">
-                <span className="oss-hosted-feature-mark"><Mail aria-hidden="true" /></span>
-                <div>
-                  <p className="admin-dashboard-kicker">Newsletter</p>
-                  <h2 id="oss-newsletter-title">{tr("Managed campaigns in OrbitPage SaaS", "Campagne gestite in OrbitPage SaaS")}</h2>
-                  <p>{tr("The navigation stays identical across editions. Managed delivery, subscribers and scheduling are available in the hosted service.", "La navigazione resta identica tra le edizioni. Invio gestito, iscritti e programmazione sono disponibili nel servizio hosted.")}</p>
-                </div>
-                <a href="https://orbitpage.com/pricing" target="_blank" rel="noopener noreferrer">{tr("View SaaS plans", "Vedi i piani SaaS")}<ExternalLink aria-hidden="true" /></a>
-              </section>
+              <NewsletterWorkspace user={{ uid: currentUser?.username || 'admin' }} />
             </TabsContent>
           )}
 

@@ -80,6 +80,7 @@ Self-hosted **Analytics** shows built-in click and CTA counters and can configur
 
 ## Workspace tools
 
+- **Newsletter** connects your own SMTP server, manages confirmed subscribers, and creates, schedules, and reports on email campaigns. See [Newsletters](./newsletters.md).
 - **Team** manages additional local users and their roles.
 - **Account** contains the signed-in user's password, TOTP authenticator, recovery codes, and protected recovery actions.
 

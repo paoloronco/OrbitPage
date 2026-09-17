@@ -170,6 +170,7 @@ Run <code>sudo orbitpage-update</code> from any directory to pull a fast-forward
 ### Operations, privacy, and security
 
 - Built-in self-hosted click and CTA counters, plus optional GA4 integration on the public page.
+- Self-hosted newsletters with your own SMTP server, confirmed subscriptions, scheduled campaigns, and delivery reports ([guide](./docs/user-guide/newsletters.md)).
 - Consent controls, policy links, Google Consent Mode, and optional external CMP integration.
 - Complete or selective JSON backup and restore, with optional portable image ZIP for OSS/SaaS transfers.
 - Upload quotas, validated image and video uploads, and unused-media cleanup.

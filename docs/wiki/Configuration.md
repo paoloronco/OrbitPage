@@ -47,6 +47,7 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 | `OPENAI_API_KEY` | Optional environment-based OpenAI key for OrbitPage AI. A key saved in the dashboard takes precedence. |
 | `OPENAI_PAGE_AGENT_MODEL` | Optional default model. The dashboard defaults to `gpt-5.6-terra` and only accepts its supported model list. |
 | `ORBITPAGE_SECRET_ENCRYPTION_KEY` | Optional separate stable secret (32+ characters) for encrypting a dashboard-saved OpenAI key. Falls back to `JWT_SECRET`. |
+| `NEWSLETTER_SECRET_KEY` | Optional separate stable secret (32+ characters) for newsletter SMTP encryption and confirmation, unsubscribe, and tracking links. Falls back to `JWT_SECRET`. Keep it unchanged across updates. |
 
 ## RESET_TOKEN lifecycle
 
