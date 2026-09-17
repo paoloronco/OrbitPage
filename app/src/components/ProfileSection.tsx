@@ -78,6 +78,7 @@ interface ProfileSectionProps {
   profileLayoutCommand?: { id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null;
   cardLayoutCommand?: { id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null;
   onEditingComplete?: () => void;
+  pageTypeEditable?: boolean;
 }
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
@@ -193,6 +194,7 @@ export const ProfileSection = ({
   profileLayoutCommand,
   cardLayoutCommand,
   onEditingComplete,
+  pageTypeEditable = true,
 }: ProfileSectionProps) => {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(profile);
@@ -432,7 +434,7 @@ export const ProfileSection = ({
     <div className="admin-profile-section space-y-5" data-onboarding="profile-card">
       <div className="admin-profile-workspace">
         <div className="admin-profile-flow">
-          <section className="admin-profile-chapter">
+          {pageTypeEditable && <section className="admin-profile-chapter">
             <ProfileSectionHeading title={tr("Page type", "Tipo di pagina")} />
             <div className="admin-profile-role-grid grid gap-3 sm:grid-cols-3" aria-label={tr("Profile type", "Tipo di profilo")}>
             {PROFILE_PRESETS.map((item) => {
@@ -455,7 +457,7 @@ export const ProfileSection = ({
             })}
             </div>
             <p className="mt-2 text-xs leading-5 text-slate-500" aria-live="polite">{activePreset.description}</p>
-          </section>
+          </section>}
 
           <section className="admin-profile-chapter admin-profile-identity">
             <ProfileSectionHeading title={tr("Identity", "Identità")} />

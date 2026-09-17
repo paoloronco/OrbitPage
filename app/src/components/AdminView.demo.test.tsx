@@ -152,6 +152,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Guided setup');
     expect(html).not.toContain('OrbitPage onboarding guide');
     expect(html).toContain('https://github.com/paoloronco/OrbitPage');
+    expect(mockState.profileProps.at(-1)).toMatchObject({ pageTypeEditable: true });
   });
 
   it('hides standalone session details in the hosted SaaS admin', () => {
@@ -186,6 +187,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('data-testid="google-analytics-settings"');
     expect(html).toContain('id="ga-id"');
     expect(html).not.toContain('https://github.com/paoloronco/OrbitPage');
+    expect(mockState.profileProps.at(-1)).toMatchObject({ pageTypeEditable: false });
   });
 
   it('hides workspace metrics from OSS utility sections', () => {
