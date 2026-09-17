@@ -77,9 +77,11 @@ sudo docker run -d --name orbitpage \
   -v /var/lib/orbitpage:/app/data \
   --security-opt no-new-privileges:true \
   paoloronco/orbitpage:latest
+
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
 ~~~
 
-Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>.
+Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>. Run <code>sudo orbitpage-update</code> for later updates.
 
 The same multi-architecture image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. Registries contain only <code>latest</code> and complete release tags such as <code>4.21.3</code>; <code>latest</code> always points to the newest stable release. For deterministic updates and rollback, use the complete version from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
 
@@ -92,6 +94,7 @@ See the complete [Docker deployment procedure](./docs/wiki/Deployment.md#docker-
 
 ~~~bash
 docker compose up -d
+sudo ./scripts/install-updater.sh
 ~~~
 
 The tracked Compose file contains a public placeholder secret and is only for local evaluation on a trusted machine. Do not expose it to a network. For production, use the [protected env-file Compose procedure](./docs/wiki/Deployment.md#docker-image-recommended); never commit a real secret or put it in a <code>docker run -e</code> argument.
@@ -104,7 +107,7 @@ On a clean x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC:
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | sudo bash
 ~~~
 
-The installer automates the same Docker deployment, generates a private JWT secret, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command.
+The installer automates the same Docker deployment, generates a private JWT secret, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> and <code>orbitpage-update</code> management commands.
 
 For a Proxmox VE 8+ host, use the dedicated host-to-LXC installer instead:
 
@@ -124,7 +127,9 @@ Requirements:
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
-cd OrbitPage/app
+cd OrbitPage
+sudo ./scripts/install-updater.sh source "$PWD"
+cd app
 npm ci
 npm run install:server
 export JWT_SECRET="$(openssl rand -hex 32)"
@@ -133,6 +138,7 @@ npm run start
 ~~~
 
 The production-style source run is available at <http://localhost:3001>.
+Run <code>sudo orbitpage-update</code> from any directory to pull a fast-forward release, reinstall dependencies, and rebuild. Restart a foreground <code>npm run start</code> process afterward; an active <code>orbitpage</code> systemd service is restarted automatically.
 
 ## What you can build
 

@@ -39,7 +39,9 @@ jobs:
           bash -n install-pve.sh
           bash -n scripts/test-installer.sh
           bash -n scripts/test-pve-installer.sh
-          shellcheck install.sh install-pve.sh scripts/test-installer.sh scripts/test-pve-installer.sh
+          bash -n scripts/install-updater.sh scripts/orbitpage-update.sh
+          shellcheck install.sh install-pve.sh scripts/test-installer.sh scripts/test-pve-installer.sh scripts/install-updater.sh scripts/orbitpage-update.sh
+          python3 scripts/test-updater.py
           sudo bash scripts/test-installer.sh
           sudo bash scripts/test-pve-installer.sh
 
@@ -103,6 +105,23 @@ jobs:
           done
           docker logs orbitpage-ci-smoke
           exit 1
+
+      - name: Verify Docker Run update preserves settings
+        working-directory: .
+        run: |
+          set -Eeuo pipefail
+          data_dir="$(mktemp -d)"
+          cleanup() {
+            docker rm -f orbitpage-updater-test orbitpage-updater-recreated >/dev/null 2>&1 || true
+            rm -rf -- "$data_dir"
+          }
+          trap cleanup EXIT
+          docker run -d --name orbitpage-updater-test \
+            -p 3002:8080 \
+            -v "$data_dir:/app/data" \
+            -e JWT_SECRET=ci-updater-secret-ci-updater-secret-123456 \
+            orbitpage-ci-smoke
+          python3 scripts/test-updater-docker.py
 
   e2e:
     name: E2E (${{ matrix.browser }})

@@ -64,6 +64,8 @@ sudo docker run -d --name orbitpage \
   -v /var/lib/orbitpage:/app/data \
   --security-opt no-new-privileges:true \
   paoloronco/orbitpage:latest
+
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
 ```
 
 `--restart unless-stopped` restarts OrbitPage after a failure or host reboot but respects an explicit `docker stop`. Replace it with `--restart always` only when the container must return after a Docker daemon restart even if it was stopped manually.
@@ -103,6 +105,7 @@ Replace `X.Y.Z` with a real release version, save the file as `compose.productio
 ```bash
 sudo docker compose -f compose.production.yaml pull
 sudo docker compose -f compose.production.yaml up -d
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
 ```
 
 The repository `docker-compose.yml` contains a public placeholder secret and is only for local evaluation on a trusted machine. Never put a real secret in a tracked file.
@@ -142,7 +145,7 @@ It:
 - stores runtime secrets in `/etc/orbitpage/orbitpage.env` with mode `0600`;
 - persists SQLite and uploads under `/var/lib/orbitpage`;
 - starts the container with `no-new-privileges` and a health check;
-- installs the `orbitpage` management command.
+- installs the `orbitpage` and `orbitpage-update` management commands.
 
 The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks and create the fixed `admin` password. The main page is then available at `http://SERVER_IP:8080/` without choosing a page slug.
 
@@ -185,6 +188,7 @@ orbitpage stop
 orbitpage restart
 orbitpage backup
 orbitpage update
+sudo orbitpage-update
 orbitpage config
 orbitpage uninstall
 ```
@@ -271,6 +275,7 @@ pct exec CTID -- orbitpage status
 pct exec CTID -- orbitpage logs
 pct exec CTID -- orbitpage backup
 pct exec CTID -- orbitpage update
+pct exec CTID -- orbitpage-update
 pct enter CTID
 ```
 
@@ -526,7 +531,20 @@ If `/usr/local/bin/orbitpage` is missing after a full-host recovery, extract the
 
 ### Manual Docker or Compose deployment
 
-Back up the mounted data directory while the container is stopped, preserve the protected environment file, record the old immutable image tag, pull the new tag, and recreate the container with the same volume and `--env-file`. A plain `docker restart` does not load changes from an environment file.
+Install the host updater once on an existing manual deployment, then use the same command as new installations:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
+sudo orbitpage-update
+```
+
+The updater discovers official OrbitPage Docker containers and Compose labels. It preserves Docker Run container settings, makes a protected data archive, pulls `paoloronco/orbitpage:latest` or the matching GHCR image, recreates the container, and checks its image ID and health. Old `paueron/orbitpage:latest` Docker Run containers migrate to the current Docker Hub namespace. Docker Run containers without a persistent `/app/data` mount, with `VolumesFrom`, or with a static container IP require a reviewed manual migration; the command stops before replacing them. Pass a container name to update only one instance, for example `sudo orbitpage-update orbitpage`.
+
+Compose uses its recorded project directory and files, then runs `pull` and `up` for the OrbitPage service. A pinned image tag remains pinned until you change the tag in the Compose file. Custom `--env-file` arguments that are not recorded in the Compose project labels must be supplied through the project configuration before updating.
+
+For an existing source checkout, run `sudo ./scripts/install-updater.sh source "$PWD"` from the repository root. The update command uses `git pull --ff-only`, `npm ci`, and a fresh frontend build. It restarts an active `orbitpage` systemd service; otherwise restart the source process yourself. Python 3 is required for the manual Docker, Compose, and source updater.
+
+Keep the updater's archive under `/var/backups/orbitpage` until the new version has completed an acceptance period. A plain `docker restart` does not load changes from an environment file.
 
 For Compose:
 

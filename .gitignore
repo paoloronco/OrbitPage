@@ -69,6 +69,10 @@ scripts/*
 !scripts/install-git-hooks.ps1
 !scripts/install-git-hooks.sh
 !scripts/orbitpage-update.sh
+!scripts/orbitpage-update.py
+!scripts/install-updater.sh
+!scripts/test-updater.py
+!scripts/test-updater-docker.py
 !scripts/test-installer.sh
 !scripts/test-pve-installer.sh
 docs/superpowers/
