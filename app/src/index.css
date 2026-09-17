@@ -1224,7 +1224,7 @@
     --border: var(--content-card-border-hsl);
   }
 
-  .public-card-stack .glass-card,
+  .public-card-stack .glass-card:not(.profile-card),
   .public-block-preview .glass-card {
     background: var(--content-card-background);
     border-color: var(--content-card-border);
