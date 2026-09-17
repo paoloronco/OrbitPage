@@ -44,7 +44,6 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   await linkCard.getByRole("button", { name: "Edit block" }).click();
   await linkCard.getByPlaceholder("Link title").fill("Visual editor card");
   await linkCard.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/visual-editor");
-  await linkCard.getByRole("button", { name: "Save", exact: true }).click();
 
   await page.getByRole("button", { name: "Add content" }).click();
   await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
@@ -55,7 +54,6 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   await dockLinkCard.getByRole("button", { name: "Edit block" }).click();
   await dockLinkCard.getByPlaceholder("Link title").fill("Dock target card");
   await dockLinkCard.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/dock-target");
-  await dockLinkCard.getByRole("button", { name: "Save", exact: true }).click();
   await page.locator(".admin-link-manager > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Unsaved changes")).toBeHidden();
 

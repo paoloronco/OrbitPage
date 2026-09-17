@@ -10,7 +10,7 @@ import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
 import { linksApi } from "@/lib/api-client";
 import { LinkEditMode } from "@/lib/permissions";
-import { commitWorkingLinks } from "./link-save-state";
+import { commitWorkingLinks, prepareLinkForSave } from "./link-save-state";
 import { type EmbedProvider, type InternalDestinationOption, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight, getInternalLinksData } from "@/lib/link-blocks";
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
@@ -93,11 +93,14 @@ export const LinkManager = ({
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
   const [previewDrafts, setPreviewDrafts] = useState<ReadonlyMap<string, LinkData>>(() => new Map());
+  const [preparingLinks, setPreparingLinks] = useState<ReadonlySet<string>>(() => new Set());
+  const [savedRevision, setSavedRevision] = useState(0);
   const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false);
   const [blockLibrarySearch, setBlockLibrarySearch] = useState("");
   const [blockLibraryCategory, setBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const hasUnsavedChanges = isDirty || previewDrafts.size > 0;
   const publicPreviewStyle = (index: number) => ({
     ...getThemeCssVariables(theme),
     ...getContentCardVariantCssVariables(theme, index),
@@ -154,21 +157,27 @@ export const LinkManager = ({
   }, [onLinksPreview, previewDrafts, workingLinks]);
 
   useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
-
-  useEffect(() => {
-    setPreviewDrafts(new Map());
-  }, [visualFocusLinkId]);
+    onDirtyChange?.(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onDirtyChange]);
 
   const updateLinkPreview = useCallback((id: string, draft: LinkData | null) => {
     setPreviewDrafts((current) => {
       const key = String(id);
       if (!draft && !current.has(key)) return current;
+      if (draft && JSON.stringify(current.get(key)) === JSON.stringify(draft)) return current;
       const next = new Map(current);
       if (draft) next.set(key, draft);
       else next.delete(key);
       return next;
+    });
+  }, []);
+
+  const updatePreparingLink = useCallback((id: string, preparing: boolean) => {
+    setPreparingLinks((current) => {
+      const next = new Set(current);
+      if (preparing) next.add(String(id));
+      else next.delete(String(id));
+      return next.size === current.size ? current : next;
     });
   }, []);
 
@@ -732,17 +741,26 @@ export const LinkManager = ({
   };
 
   const handleSave = async () => {
-    if (!isDirty) return;
+    if (!hasUnsavedChanges || preparingLinks.size > 0 || busy) return;
     setBusy(true);
     setSaveError("");
-    const result = await commitWorkingLinks({
-      isDirty,
-      links: workingLinks,
-      onSave: onLinksUpdate,
-    });
-    setIsDirty(result.isDirty);
-    setSaveError(result.error);
-    setBusy(false);
+    try {
+      const preparedDrafts = new Map<string, LinkData>();
+      for (const [id, draft] of previewDrafts) preparedDrafts.set(id, await prepareLinkForSave(draft));
+      const nextLinks = mergeLinkPreviews(workingLinks, preparedDrafts);
+      const result = await commitWorkingLinks({ isDirty: hasUnsavedChanges, links: nextLinks, onSave: onLinksUpdate });
+      setIsDirty(result.isDirty);
+      setSaveError(result.error);
+      if (result.saved) {
+        setWorkingLinks(nextLinks);
+        setPreviewDrafts(new Map());
+        setSavedRevision((current) => current + 1);
+      }
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : tr("Changes could not be saved. Try again.", "Impossibile salvare le modifiche. Riprova."));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const isFullEdit = editMode === 'full';
@@ -874,7 +892,7 @@ export const LinkManager = ({
                 ? focusedLink.title || tr("Selected content block", "Blocco contenuto selezionato")
                 : tr("Content cards", "Card dei contenuti")}
             </h2>
-            {isDirty && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
+            {hasUnsavedChanges && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
           </div>
           <p className="mt-1 text-sm text-slate-600">
             {focusedLink
@@ -892,7 +910,7 @@ export const LinkManager = ({
 
         <div className="admin-link-actions">
           {isFullEdit && !focusedLink && (
-            internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink}>
+            internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink || busy}>
               <ShoppingBag className="h-4 w-4" />
               {hasShopLink ? tr("Shop added", "Shop aggiunto") : tr("Add Shop", "Aggiungi Shop")}
             </Button>
@@ -902,7 +920,7 @@ export const LinkManager = ({
               onClick={openBlockLibrary}
               variant="outline"
               className="admin-action"
-              disabled={atBlockLimit}
+              disabled={atBlockLimit || busy}
               aria-expanded={isBlockLibraryOpen}
               aria-controls="admin-block-library"
             >
@@ -915,6 +933,7 @@ export const LinkManager = ({
               aria-label={tr("Delete card", "Elimina card")}
               className="admin-action"
               onClick={() => deleteLink(focusedLink.id)}
+              disabled={busy}
               size="icon"
               title={tr("Delete card", "Elimina card")}
               variant="destructive"
@@ -923,7 +942,7 @@ export const LinkManager = ({
             </Button>
           )}
           {!isViewOnly && (
-            <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!isDirty || busy} data-onboarding="links-save">
+            <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
               <Save className="h-4 w-4" />
               {tr("Save", "Salva")}
             </Button>
@@ -1092,23 +1111,23 @@ export const LinkManager = ({
               </div>
               {isFullEdit && (
                 <div className="flex flex-wrap justify-center gap-2">
-                  <Button onClick={addNewLink} className="admin-action admin-action-primary" disabled={atBlockLimit}>
+                  <Button onClick={addNewLink} className="admin-action admin-action-primary" disabled={atBlockLimit || busy}>
                     <Link className="h-4 w-4" />
                     {tr("Add link", "Aggiungi link")}
                   </Button>
-                  <Button onClick={addNativeMenu} variant="outline" className="admin-action" disabled={atBlockLimit}>
+                  <Button onClick={addNativeMenu} variant="outline" className="admin-action" disabled={atBlockLimit || busy}>
                     {nativeMenuEnabled ? <UtensilsCrossed className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
                     {tr("Add menu", "Aggiungi menu")}
                   </Button>
-                  {internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink}>
+                  {internalDestinations.some((destination) => destination.kind === 'shop') && <Button onClick={addShopLink} variant="outline" className="admin-action" disabled={atBlockLimit || hasShopLink || busy}>
                     <ShoppingBag className="h-4 w-4" />
                     {hasShopLink ? tr("Shop added", "Shop aggiunto") : tr("Add Shop", "Aggiungi Shop")}
                   </Button>}
-                  <Button onClick={addNewBulletedList} variant="outline" className="admin-action" disabled={atBlockLimit}>
+                  <Button onClick={addNewBulletedList} variant="outline" className="admin-action" disabled={atBlockLimit || busy}>
                     <List className="h-4 w-4" />
                     {tr("Add list", "Aggiungi elenco")}
                   </Button>
-                  <Button onClick={addNewHeading} variant="outline" className="admin-action" disabled={atBlockLimit}>
+                  <Button onClick={addNewHeading} variant="outline" className="admin-action" disabled={atBlockLimit || busy}>
                     <Type className="h-4 w-4" />
                     {tr("Add heading", "Aggiungi titolo")}
                   </Button>
@@ -1117,7 +1136,7 @@ export const LinkManager = ({
             </div>
         </Card>
       ) : (
-        <div className="admin-link-list">
+        <fieldset className={`admin-link-list min-w-0 border-0 p-0 ${busy ? 'pointer-events-none' : ''}`} disabled={busy} aria-busy={busy}>
           {renderedLinks.map(({ link, index }) => (
             <div
               key={link.id}
@@ -1138,6 +1157,9 @@ export const LinkManager = ({
                   link={link}
                   onUpdate={updateLink}
                   onPreview={updateLinkPreview}
+                  onPreparingChange={updatePreparingLink}
+                  draft={previewDrafts.get(String(link.id))}
+                  savedRevision={savedRevision}
                   onDelete={deleteLink}
                   isDragging={draggedItem === link.id}
                   onMoveUp={() => moveByOffset(link.id, -1)}
@@ -1158,6 +1180,9 @@ export const LinkManager = ({
                   link={asNativeShopLink(link)}
                   onUpdate={updateLink}
                   onPreview={updateLinkPreview}
+                  onPreparingChange={updatePreparingLink}
+                  draft={previewDrafts.get(String(link.id))}
+                  savedRevision={savedRevision}
                   onDelete={deleteLink}
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
@@ -1176,7 +1201,7 @@ export const LinkManager = ({
               )}
             </div>
           ))}
-        </div>
+        </fieldset>
       )}
     </div>
   );

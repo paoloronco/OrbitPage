@@ -40,7 +40,6 @@ test('edits and previews the selected additional page, then publishes its conten
   await linkCard.getByRole('button', { name: 'Edit block' }).click();
   await page.getByPlaceholder('Link title').fill('Book a table');
   await page.getByPlaceholder('https://example.com', { exact: true }).fill('https://example.com/book');
-  await linkCard.getByRole('button', { name: 'Save' }).click();
   await expect(canvas.getByRole('link', { name: 'Book a table' })).toBeVisible();
   await manager.locator('.admin-link-actions').getByRole('button', { name: 'Save' }).click();
 

@@ -43,7 +43,6 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
   await expect(dockCard.getByText('Quick link dock')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
-  await dockCard.getByRole('button', { name: 'Save', exact: true }).click();
   const workspaceSave = page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true });
   await expect(workspaceSave).toBeEnabled();
   const saveResponsePromise = page.waitForResponse((response) =>

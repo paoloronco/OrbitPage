@@ -68,7 +68,7 @@ Each block has its own edit panel. The available fields depend on the block type
 - CTA intent such as booking, contact, download, subscription, or purchase;
 - visibility, availability, status, campaign label, and schedule.
 
-Drag blocks to change their public order, or use the move controls when dragging is inconvenient. Block edits and reordering remain local until **Save** is selected in the Content toolbar. The **Unsaved changes** badge identifies this state.
+Drag blocks to change their public order, or use the move controls when dragging is inconvenient. The single **Save** button above **Content cards** saves edits from open cards together with additions and reordering. **Cancel** inside a card discards that card's unsaved edits. The **Unsaved changes** badge identifies pending work.
 
 The toolbar can also export only the Link blocks to `links-export.json`. Importing that format validates the file and replaces the current Link block list. Create a full backup before importing if the existing list may be needed later.
 
