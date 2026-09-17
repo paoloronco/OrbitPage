@@ -52,6 +52,7 @@ import {
 import { CompactLinkIcon } from "./CompactLinkIcon";
 import { compactLinkPlatformOptions, getCompactLinkBrandStyle, getCompactLinkInputKind } from "@/lib/compact-links";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
+import { isNativeShopLink } from "@/lib/native-shop-link";
 import { useAppI18n } from "@/lib/i18n";
 import {
   extractMapCoordinates,
@@ -395,6 +396,7 @@ export const LinkCard = ({
   const isEvent = link.type === 'event';
   const isEmbed = link.type === 'embed';
   const isMenu = isNativeMenuLink(link);
+  const isShop = isNativeShopLink(link);
   const isActionable = isPublicActionableBlock(link.type);
 
   const contactData = getContactData(editLink.content);
@@ -608,8 +610,10 @@ export const LinkCard = ({
                   ? tr('Navigation title', 'Titolo navigazione')
                 : isMenu
                   ? 'Menu title'
+                  : isShop
+                    ? tr('Shop card title', 'Titolo card Shop')
                   : 'Link title';
-  const showUrlField = isActionable && !isContact && !isSocialRow && !isMenu && !isMap;
+  const showUrlField = isActionable && !isContact && !isSocialRow && !isMenu && !isShop && !isMap;
 
   const isVisible = link.isActive !== false;
   const isCta = link.type === 'cta';
@@ -1095,6 +1099,15 @@ export const LinkCard = ({
                           <div className="min-w-0">
                             <p className="text-sm font-semibold">Native menu</p>
                             <p className="truncate text-xs text-blue-700">{editLink.url}</p>
+                          </div>
+                        </div>
+                      )}
+                      {isShop && (
+                        <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-blue-950">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white"><ShoppingBag className="h-4 w-4" /></span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold">{tr('Native Shop page', 'Pagina Shop nativa')}</p>
+                            <p className="text-xs text-blue-700">{tr('This card opens your Shop. Customize its content and appearance here.', 'Questa card apre il tuo Shop. Personalizzane qui contenuto e aspetto.')}</p>
                           </div>
                         </div>
                       )}
