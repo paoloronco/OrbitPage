@@ -107,6 +107,8 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
     '.content-workspace-option small',
     '.menu-editor-intro span',
     '.menu-editor-section-title p',
+    '.menu-category-group__toggle small',
+    '.menu-category-editor-empty span',
   ].join(',')).evaluateAll((elements) => {
     const colorChannels = (value: string) => value.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
     const backgroundFor = (element: Element) => {

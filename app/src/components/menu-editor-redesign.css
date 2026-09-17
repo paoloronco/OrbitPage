@@ -1627,13 +1627,13 @@
 .menu-category-row:hover, .menu-category-row.active { border-color: #a9c2f5; background: #f3f7ff; }
 .menu-category-row__copy { display: grid; min-width: 0; gap: 3px; }
 .menu-category-row__copy strong { font-size: .8rem; overflow-wrap: anywhere; }
-.menu-category-row__copy small { color: #687c98; font-size: .7rem; overflow-wrap: anywhere; }
+.menu-category-row__copy small { color: #586b85; font-size: .7rem; overflow-wrap: anywhere; }
 .menu-category-row__count { color: #526987; font-size: .7rem; white-space: nowrap; }
 .menu-category-row__icons { display: inline-flex; align-items: center; gap: 5px; color: #7185a6; }
 .menu-category-row__icons svg { width: 16px; height: 16px; }
 .menu-category-group__add { display: inline-flex; align-items: center; justify-self: start; gap: 6px; margin: 2px 0 4px 24px; padding: 6px 8px; border: 0; background: transparent; color: #2858b3; font-size: .73rem; font-weight: 750; cursor: pointer; }
 .menu-category-group__add svg { width: 15px; }
-.menu-category-empty, .menu-category-editor-empty { display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 180px; padding: 24px; border: 1px dashed #d6e0ed; border-radius: 10px; background: #fff; color: #667a97; text-align: center; }
+.menu-category-empty, .menu-category-editor-empty { display: grid; justify-items: center; align-content: center; gap: 8px; min-height: 180px; padding: 24px; border: 1px dashed #d6e0ed; border-radius: 10px; background: #fff; color: #586b85; text-align: center; }
 .menu-category-empty > svg, .menu-category-editor-empty > svg { width: 25px; color: #6483bd; }
 .menu-category-empty strong, .menu-category-editor-empty strong { color: #233955; font-size: .9rem; }
 .menu-category-empty span, .menu-category-editor-empty span { font-size: .75rem; line-height: 1.45; }
@@ -1727,7 +1727,7 @@
 .menu-unified-items .menu-item-picker__copy { display: grid; min-width: 0; gap: 3px; }
 .menu-unified-items .menu-item-picker__copy strong, .menu-unified-items .menu-item-picker__copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .menu-unified-items .menu-item-picker__copy strong { color: #20344f; font-size: .8rem; }
-.menu-unified-items .menu-item-picker__copy small { color: #687c98; font-size: .7rem; }
+.menu-unified-items .menu-item-picker__copy small { color: #586b85; font-size: .7rem; }
 .menu-unified-items .menu-item-picker__copy em { color: #9d6b27; font-size: .67rem; font-style: normal; }
 .menu-unified-items .menu-item-picker__copy em.available { color: #18794e; }
 .menu-unified-item__price { color: #20344f; font-size: .76rem; font-weight: 700; white-space: nowrap; }
