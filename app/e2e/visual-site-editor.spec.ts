@@ -459,7 +459,21 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(editor.locator(".menu-content-pane--sections")).toBeVisible();
   await expect(editor.locator(".menu-content-pane--products")).toBeHidden();
   await expect(editor.locator(".menu-category-accordion")).toHaveCount(0);
-  await expect(editor.locator(".menu-category-editor")).toHaveCount(1);
+  await expect(editor.locator(".menu-category-editor")).toHaveCount(0);
+  const category = editor.locator(".menu-category-group").first();
+  await expect(category).toBeVisible();
+  await category.locator(".menu-category-group__edit").click();
+  await expect(editor.locator(".menu-category-editor").getByLabel("Name", { exact: true })).toBeVisible();
+  await editor.getByRole("button", { name: "Close category editor" }).click();
+  await expect(editor.getByPlaceholder("Search categories")).toHaveCSS("padding-left", "40px");
+  await category.locator(".menu-category-group__toggle").click();
+  await expect(category.locator(".menu-category-group__toggle")).toHaveAttribute("aria-expanded", "false");
+  await editor.getByPlaceholder("Search categories").fill("missing category");
+  await expect(editor.getByText("No categories found")).toBeVisible();
+  await editor.getByPlaceholder("Search categories").fill("");
+  await editor.getByRole("combobox", { name: "Filter category visibility" }).selectOption("hidden");
+  await expect(editor.getByText("No categories found")).toBeVisible();
+  await editor.getByRole("combobox", { name: "Filter category visibility" }).selectOption("all");
 
   const clippedDesktopLabels = await workflow.locator("button").evaluateAll((buttons) => buttons.filter((button) => {
     const label = button.querySelector<HTMLElement>(".menu-editor-tab-copy strong");
@@ -489,6 +503,11 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await editor.locator(".menu-product-editor").getByLabel("Name", { exact: true }).fill("Mobile menu item");
   await editor.getByRole("button", { name: "Back to items" }).click();
   await expect(editor.getByRole("button", { name: /Edit Mobile menu item/ })).toBeVisible();
+  const itemGroup = editor.locator(".menu-item-group").first();
+  await itemGroup.locator(".menu-item-group__toggle").click();
+  await expect(itemGroup.locator(".menu-item-group__toggle")).toHaveAttribute("aria-expanded", "false");
+  await expect(itemGroup.getByRole("button", { name: /Edit Mobile menu item/ })).toBeHidden();
+  await itemGroup.locator(".menu-item-group__toggle").click();
   await editor.getByPlaceholder("Search by name or details").fill("no such item");
   await expect(editor.getByText("No matching items")).toBeVisible();
   await editor.getByRole("button", { name: "Clear filters" }).click();
