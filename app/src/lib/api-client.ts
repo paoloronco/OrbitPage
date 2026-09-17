@@ -634,6 +634,9 @@ export const authApi = {
   },
 };
 
+export const newsletterRequest = <T>(endpoint: string, options: RequestInit = {}): Promise<T> =>
+  apiRequest<T>(endpoint.replace(/^\/api(?=\/)/, ''), options);
+
 export const campaignLinksApi = {
   get: async (): Promise<{ success: boolean; data: OrbitPageCampaignLink[]; campaignBaseUrl: string }> =>
     apiRequest('/campaign-links'),

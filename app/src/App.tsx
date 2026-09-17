@@ -12,6 +12,7 @@ const Menu = lazy(() => import("./pages/Menu"));
 const About = lazy(() => import("./pages/About"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cookies = lazy(() => import("./pages/Cookies"));
+const Newsletter = lazy(() => import("./pages/Newsletter"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const routerBaseName = getActiveBasePath();
 
@@ -146,6 +147,8 @@ function RoutedApplication() {
           <Route path="/links" element={<Index />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/about" element={<About />} />
+          <Route path="/newsletter" element={<Newsletter />} />
+          <Route path="/newsletter/status" element={<Newsletter />} />
           <Route path="/:subpage" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

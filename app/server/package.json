@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "orbitpage-backend",
-  "version": "4.21.6",
+  "version": "4.21.7",
   "description": "Standalone backend for OrbitPage public page manager",
   "main": "server.js",
   "type": "module",
@@ -19,6 +19,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.1.1",
+    "nodemailer": "^9.1.1",
     "otpauth": "^9.4.1",
     "qs": "^6.16.0",
     "selfsigned": "^2.4.1",

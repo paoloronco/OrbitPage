@@ -86,6 +86,8 @@ import {
   machineReadableEnabled,
   renderPublicPageMarkdown,
 } from './services/machine-readable.js';
+import { createNewsletterRouter } from './routes/newsletter.js';
+import { startNewsletterDispatcher } from './services/newsletter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -100,7 +102,7 @@ const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' |
 const DISTRIBUTION_IMAGE = String(process.env.ORBITPAGE_DISTRIBUTION_IMAGE || '').trim();
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics'];
+const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics', 'newsletter_settings', 'newsletter_subscribers', 'newsletter_campaigns', 'newsletter_deliveries'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -111,7 +113,7 @@ const videoUploadLimitBytes = getVideoUploadLimitBytes(process.env);
 const getZodErrorMessage = (error) =>
   error instanceof z.ZodError ? (error.issues[0]?.message || 'Invalid request body') : null;
 
-const RESERVED_SUBPAGE_SLUGS = new Set(['admin', 'api', 'assets', 'cookies', 'dashboard', 'go', 'links', 'login', 'media', 'menu', 'orbitpage-runtime', 'privacy', 'robots.txt', 'shop', 'sitemap.xml', 'support', 'terms', 'www']);
+const RESERVED_SUBPAGE_SLUGS = new Set(['admin', 'api', 'assets', 'cookies', 'dashboard', 'go', 'links', 'login', 'media', 'menu', 'newsletter', 'orbitpage-runtime', 'privacy', 'robots.txt', 'shop', 'sitemap.xml', 'support', 'terms', 'www']);
 const SubpageSchema = z.object({
   id: z.string().min(1).max(80).regex(/^[a-zA-Z0-9_-]+$/),
   slug: z.string().min(1).max(48).regex(/^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/)
@@ -801,6 +803,8 @@ const getPublicThemePayload = async () => {
 
 const PUBLIC_SPA_ROUTES = new Set(['/', '/links', '/menu', '/privacy', '/cookies']);
 const PERSONAL_PAGE_SPA_ROUTES = new Set(PUBLIC_SPA_ROUTES);
+PUBLIC_SPA_ROUTES.add('/newsletter');
+PUBLIC_SPA_ROUTES.add('/newsletter/status');
 const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'team', 'account', 'plan', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const ADMIN_CONTENT_SECTIONS = new Set(['link', 'menu', 'shop', 'pages']);
 const ADMIN_EDITOR_SECTIONS = new Set(['page', 'content', 'menu', 'shop', 'pages']);
@@ -1277,8 +1281,9 @@ const injectSeoIntoHtml = (html, { seoTags, noScriptContent }) => {
 
 const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const origin = getRequestOrigin(req);
+  const newsletterRoute = req.path === '/newsletter' || req.path === '/newsletter/status';
   let pathName = canonicalPathForRequest(req);
-  const pageKind = getPageKind(pathName);
+  const pageKind = newsletterRoute ? 'admin' : getPageKind(pathName);
   let [profile, links] = pageKind === 'admin'
     ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
     : pageKind === 'about'
@@ -1304,7 +1309,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   }
   const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
 
-  const title = setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
+  const title = newsletterRoute ? `Newsletter | ${PUBLIC_SITE_NAME}` : setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
   const description = setupRequired
     ? 'This self-hosted OrbitPage installation is ready and waiting for its owner to complete the initial setup.'
     : getSeoDescription(profile, pageKind);
@@ -1880,6 +1885,10 @@ const aiAgentLimiter = rateLimit({
 
 // Apply rate limiting
 app.use('/api', apiLimiter);
+app.use('/api/newsletter', createNewsletterRouter({
+  publicBase: (req) => `${getRequestOrigin(req)}${getActiveBasePath(req)}`,
+  demoMode: DEMO_MODE,
+}));
 
 app.get('/api/analytics/machine-readable', authenticateToken, requirePermission('analytics:read'), async (_req, res) => {
   try {
@@ -5332,6 +5341,7 @@ export { app, stripStaticSeoTags, buildStructuredData, renderSeoTags };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
 app.listen(PORT, '0.0.0.0', async () => {
+  if (!DEMO_MODE && process.env.NODE_ENV !== 'test') startNewsletterDispatcher();
   console.log(`HTTP server running on port ${PORT}`);
   if (DISTRIBUTION_IMAGE.replace(/^docker\.io\//, '') === 'paueron/orbitpage') {
     console.warn('[OrbitPage] Docker Hub image moved to paoloronco/orbitpage. The paueron/orbitpage compatibility feed stops on 2026-10-09.');

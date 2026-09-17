@@ -364,6 +364,33 @@ export const initializeDatabase = () => {
         )
       `);
       db.run(`CREATE INDEX IF NOT EXISTS idx_page_versions_created_at ON page_versions(created_at DESC)`);
+      db.run(`CREATE TABLE IF NOT EXISTS newsletter_settings (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        host TEXT NOT NULL, port INTEGER NOT NULL, username TEXT NOT NULL,
+        password_enc TEXT NOT NULL, from_name TEXT NOT NULL, from_email TEXT NOT NULL,
+        reply_to TEXT, verified_at TEXT, public_origin TEXT NOT NULL, updated_at TEXT NOT NULL
+      )`);
+      db.run(`CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+        id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT, status TEXT NOT NULL,
+        source TEXT NOT NULL, consent_at TEXT, confirmed_at TEXT, unsubscribed_at TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      )`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_status ON newsletter_subscribers(status, id)`);
+      db.run(`CREATE TABLE IF NOT EXISTS newsletter_campaigns (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, subject TEXT NOT NULL, preheader TEXT NOT NULL,
+        content TEXT NOT NULL, status TEXT NOT NULL, scheduled_for TEXT, sent_at TEXT,
+        target_count INTEGER NOT NULL DEFAULT 0, stats TEXT NOT NULL, last_error TEXT,
+        dispatch_cursor TEXT, next_run_at TEXT, lease_until TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+      )`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_newsletter_campaigns_due ON newsletter_campaigns(status, next_run_at)`);
+      db.run(`CREATE TABLE IF NOT EXISTS newsletter_deliveries (
+        id TEXT PRIMARY KEY, campaign_id TEXT NOT NULL, subscriber_id TEXT NOT NULL,
+        email TEXT NOT NULL, status TEXT NOT NULL, provider_message_id TEXT, error TEXT,
+        opened_at TEXT, clicked_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        UNIQUE(campaign_id, subscriber_id),
+        FOREIGN KEY(campaign_id) REFERENCES newsletter_campaigns(id) ON DELETE CASCADE
+      )`);
       for (const table of ['profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config']) {
         for (const action of ['INSERT', 'UPDATE', 'DELETE']) {
           const triggerName = `advance_page_revision_${table}_${action.toLowerCase()}`;

@@ -21,6 +21,7 @@ This documentation covers the open-source, self-hosted OrbitPage application. Fo
 | Build Home blocks, menus, subpages, themes, and backgrounds | [Content and design](./user-guide/content-and-design.md) |
 | Export or restore data, clean media, and understand demo mode | [Backups, media, and demo mode](./user-guide/backups-and-demo-mode.md) |
 | Configure the self-hosted AI assistant and review changes safely | [AI assistant](./user-guide/ai-assistant.md) |
+| Configure SMTP and send newsletters from your own server | [Newsletters](./user-guide/newsletters.md) |
 | Understand built-in analytics, GA4, and consent | [Analytics and privacy](./user-guide/analytics-and-privacy.md) |
 | Configure metadata, sitemap, robots, and discovery files | [SEO and indexing](./wiki/SEO-and-indexing.md) |
 
