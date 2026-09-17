@@ -79,6 +79,7 @@ interface ProfileSectionProps {
   cardLayoutCommand?: { id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null;
   onEditingComplete?: () => void;
   pageTypeEditable?: boolean;
+  visualMode?: boolean;
 }
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
@@ -195,6 +196,7 @@ export const ProfileSection = ({
   cardLayoutCommand,
   onEditingComplete,
   pageTypeEditable = true,
+  visualMode = false,
 }: ProfileSectionProps) => {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(profile);
@@ -462,9 +464,9 @@ export const ProfileSection = ({
           <section className="admin-profile-chapter admin-profile-identity">
             <ProfileSectionHeading title={tr("Identity", "Identità")} />
             <div className="admin-profile-identity-fields grid gap-5 lg:grid-cols-[11rem_minmax(0,1fr)]">
-              <div className="admin-profile-avatar-editor">
+              <div className="admin-profile-avatar-editor admin-profile-identity-card">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold">{tr("Profile image", "Immagine profilo")}</p>
+                  <h4 className="text-xs font-semibold">{visualMode ? tr("Image", "Immagine") : tr("Profile image", "Immagine profilo")}</h4>
                   <Switch checked={draft.showAvatar !== false} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
                 </div>
                 <div className="admin-profile-avatar-layout">
@@ -505,7 +507,8 @@ export const ProfileSection = ({
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="admin-profile-identity-card admin-profile-identity-details space-y-4">
+                {visualMode && <h4 className="text-xs font-semibold">{tr("Name and details", "Nome e dettagli")}</h4>}
                 <div className="space-y-2">
                   <Label htmlFor="profile-name">{tr("Page name", "Nome pagina")}</Label>
                   <Input id="profile-name" value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} placeholder={activePreset.label} maxLength={200} />

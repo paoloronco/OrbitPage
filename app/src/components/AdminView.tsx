@@ -880,6 +880,7 @@ export const AdminView = ({
       managePlanHref={managePlanHref}
       orbitPageBadgeEditable={orbitPageBadgeEditable}
       pageTypeEditable={!isHostedAdmin}
+      visualMode
     />
   ) : visualSection === "links" ? (
     <LinkManager
