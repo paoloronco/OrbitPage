@@ -18,6 +18,7 @@ interface TextCardProps {
   link: LinkData;
   onUpdate: (link: LinkData) => void;
   onPreview?: (id: string, link: LinkData | null) => void;
+  onPreparingChange?: (id: string, preparing: boolean) => void;
   onDelete: (id: string) => void;
   isDragging?: boolean;
   onMoveUp?: () => void;
@@ -30,25 +31,36 @@ interface TextCardProps {
   schedulingEnabled?: boolean;
   managePlanHref?: string;
   editRequest?: number;
+  savedRevision?: number;
+  draft?: LinkData;
 }
 
-export const TextCard = ({ link, onUpdate, onPreview, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest, savedRevision = 0, draft }: TextCardProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editLink, setEditLink] = useState(link);
+  const [editLink, setEditLink] = useState(draft || link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
   const [imageUploadError, setImageUploadError] = useState("");
   const lastEditRequestRef = useRef<number | undefined>(undefined);
+  const lastSavedRevisionRef = useRef(savedRevision);
+  const lastPreviewRevisionRef = useRef(savedRevision);
 
   useEffect(() => {
-    if (!isEditing) setEditLink(link);
-  }, [isEditing, link]);
+    if (!isEditing) setEditLink(draft || link);
+  }, [draft, isEditing, link]);
 
   useEffect(() => {
     if (editRequest === undefined || editMode === "view" || lastEditRequestRef.current === editRequest) return;
     lastEditRequestRef.current = editRequest;
-    setEditLink(link);
+    setEditLink(draft || link);
     setIsEditing(true);
-  }, [editMode, editRequest, link]);
+  }, [draft, editMode, editRequest, link]);
+
+  useEffect(() => {
+    if (lastSavedRevisionRef.current === savedRevision) return;
+    lastSavedRevisionRef.current = savedRevision;
+    setIsEditing(false);
+    setEditLink(link);
+  }, [link, savedRevision]);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
@@ -57,16 +69,19 @@ export const TextCard = ({ link, onUpdate, onPreview, onDelete, isDragging, onMo
   const isListCard = Array.isArray(editLink.textItems);
 
   useEffect(() => {
-    if (isEditing) onPreview?.(link.id, isListCard ? { ...editLink, url: '' } : editLink);
-  }, [editLink, isEditing, isListCard, link.id, onPreview]);
-
-  const handleSave = () => {
-    if (uploadingImage) return;
+    if (lastPreviewRevisionRef.current !== savedRevision) {
+      lastPreviewRevisionRef.current = savedRevision;
+      return;
+    }
+    if (!isEditing) return;
     const nextLink = isListCard ? { ...editLink, url: '' } : editLink;
-    onUpdate(nextLink);
-    onPreview?.(link.id, null);
-    setIsEditing(false);
-  };
+    onPreview?.(link.id, JSON.stringify(nextLink) === JSON.stringify(link) ? null : nextLink);
+  }, [editLink, isEditing, isListCard, link, onPreview, savedRevision]);
+
+  useEffect(() => {
+    onPreparingChange?.(link.id, Boolean(uploadingImage));
+    return () => onPreparingChange?.(link.id, false);
+  }, [link.id, onPreparingChange, uploadingImage]);
 
   const handleCancel = () => {
     onPreview?.(link.id, null);
@@ -772,10 +787,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onDelete, isDragging, onMo
             </section>
 
             <div className="flex gap-2">
-              <Button aria-busy={Boolean(uploadingImage)} onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage)}>
-                {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
-                {uploadingImage ? "Preparing image" : "Save"}
-              </Button>
               <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage)}>
                 Cancel
               </Button>

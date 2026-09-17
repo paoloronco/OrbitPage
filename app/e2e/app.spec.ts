@@ -59,8 +59,7 @@ test.describe('OrbitPage Application Flow', () => {
     await surfaceSelect.click();
     await page.getByRole('option', { name: 'Liquid glass', exact: true }).click();
 
-    // Salviamo la modifica sulla singola card, poi persistiamo con Save della toolbar
-    await linkCard.getByRole('button', { name: 'Save' }).click();
+    // Persistiamo la card con il solo Save della toolbar.
     await page.locator('.admin-link-actions button:has-text("Save")').click();
     
     // Verifichiamo che il badge di modifiche non salvate sia sparito

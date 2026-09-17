@@ -22,7 +22,7 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
 
   await spotifyCard.getByText('Consent category').locator('..').getByRole('combobox').click();
   await page.getByRole('option', { name: /Necessary/ }).click();
-  await spotifyCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
 
   await expect(spotifyCard.locator('iframe')).toHaveAttribute('src', 'https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT');
   await expect(spotifyCard.locator('[data-service-brand="spotify"]')).toBeVisible();
@@ -33,7 +33,7 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
   await whatsappCard.hover();
   await whatsappCard.getByRole('button', { name: 'Edit block' }).click();
   await whatsappCard.getByRole('textbox', { name: /whatsapp URL/i }).fill('https://wa.me/391234567890');
-  await whatsappCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
   await expect(whatsappCard.locator('[data-service-brand="whatsapp"]')).toBeVisible();
 
   await page.getByRole('button', { name: 'Add content' }).click();
@@ -42,7 +42,7 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
   await githubCard.hover();
   await githubCard.getByRole('button', { name: 'Edit block' }).click();
   await githubCard.getByRole('textbox', { name: /github URL/i }).fill('https://github.com/paoloronco/OrbitPage');
-  await githubCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
   await expect(githubCard.locator('[data-service-brand="github"]')).toBeVisible();
 });
 
@@ -61,7 +61,7 @@ test('renders YouTube with the origin-preserving policy required by the player',
   await youtubeCard.getByRole('textbox', { name: 'YouTube URL' }).fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
   await youtubeCard.getByText('Consent category').locator('..').getByRole('combobox').click();
   await page.getByRole('option', { name: /Necessary/ }).click();
-  await youtubeCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
 
   const player = youtubeCard.locator('iframe');
   await expect(player).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ(?:\?|$)/);
@@ -134,7 +134,7 @@ test('renders every remaining official media provider through its allowlisted pl
     await card.getByRole('textbox', { name: new RegExp(`${provider.label} URL`, 'i') }).fill(provider.source);
     await card.getByText('Consent category').locator('..').getByRole('combobox').click();
     await page.getByRole('option', { name: /Necessary/ }).click();
-    await card.getByRole('button', { name: 'Save', exact: true }).click();
+    await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
 
     const player = card.locator('iframe');
     await expect(player).toHaveAttribute('src', provider.expected);
@@ -159,7 +159,7 @@ test('adds a consent-aware Typeform using the official widget', async ({ page })
   await typeformCard.getByRole('textbox', { name: 'Typeform URL' }).fill('https://form.typeform.com/to/moe6aa');
   await typeformCard.getByText('Consent category').locator('..').getByRole('combobox').click();
   await page.getByRole('option', { name: /Necessary/ }).click();
-  await typeformCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
   await typeformCard.scrollIntoViewIfNeeded();
 
   await expect(typeformCard.locator('iframe[data-testid="iframe"]')).toHaveAttribute('src', /https:\/\/form\.typeform\.com\/to\/moe6aa/);
@@ -180,7 +180,7 @@ test('adds Google Calendar and Calendly booking pages with live availability', a
   await googleCalendarCard.getByRole('textbox', { name: 'Google Calendar URL' }).fill('https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd');
   await googleCalendarCard.getByText('Consent category').locator('..').getByRole('combobox').click();
   await page.getByRole('option', { name: /Necessary/ }).click();
-  await googleCalendarCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
   await expect(googleCalendarCard.locator('iframe')).toHaveAttribute('src', 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0123456789_ABCDEFGHIJKLMNOPQRSTUVWXYZabcd?gv=true');
   await expect(googleCalendarCard.locator('iframe')).toHaveAttribute('referrerpolicy', 'origin');
   await expect(googleCalendarCard.locator('[data-service-brand="google_calendar"]')).toBeVisible();
@@ -193,7 +193,7 @@ test('adds Google Calendar and Calendly booking pages with live availability', a
   await calendlyCard.getByRole('textbox', { name: 'Calendly URL' }).fill('https://calendly.com/orbitpage-demo/30min');
   await calendlyCard.getByText('Consent category').locator('..').getByRole('combobox').click();
   await page.getByRole('option', { name: /Necessary/ }).click();
-  await calendlyCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
   await expect(calendlyCard.locator('iframe')).toHaveAttribute('src', 'https://calendly.com/orbitpage-demo/30min');
   await expect(calendlyCard.locator('[data-service-brand="calendly"]')).toBeVisible();
 });

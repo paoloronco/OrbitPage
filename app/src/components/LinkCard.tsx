@@ -11,7 +11,7 @@ import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload, type ImageUploadVariant } from "@/lib/image-upload";
-import { mapPreviewApi, uploadApi } from "@/lib/api-client";
+import { uploadApi } from "@/lib/api-client";
 import {
   type ContactBlockData,
   type EmbedBlockData,
@@ -54,12 +54,6 @@ import { compactLinkPlatformOptions, getCompactLinkBrandStyle, getCompactLinkInp
 import { isNativeMenuLink } from "@/lib/native-menu-link";
 import { isNativeShopLink } from "@/lib/native-shop-link";
 import { useAppI18n } from "@/lib/i18n";
-import {
-  extractMapCoordinates,
-  getMapQuery,
-  getMapResolutionSource,
-  toMapCoordinates,
-} from "@/lib/map-location";
 import { brandServiceColors, isBrandServiceProvider } from "@/lib/service-brand";
 import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import type { CardSurfaceEffect } from "@/lib/theme";
@@ -114,6 +108,7 @@ interface LinkCardProps {
   link: LinkData;
   onUpdate: (link: LinkData) => void;
   onPreview?: (id: string, link: LinkData | null) => void;
+  onPreparingChange?: (id: string, preparing: boolean) => void;
   onDelete: (id: string) => void;
   isDragging?: boolean;
   onMoveUp?: () => void;
@@ -130,6 +125,8 @@ interface LinkCardProps {
   availablePages?: Array<{ title: string; url: string }>;
   internalDestinations?: InternalDestinationOption[];
   editRequest?: number;
+  savedRevision?: number;
+  draft?: LinkData;
 }
 
 const compactSocialPresets: Array<{ platform: SocialLinkPlatform; label: string }> = [
@@ -152,6 +149,7 @@ export const LinkCard = ({
   link,
   onUpdate,
   onPreview,
+  onPreparingChange,
   onDelete,
   isDragging,
   onMoveUp,
@@ -168,6 +166,8 @@ export const LinkCard = ({
   availablePages = [],
   internalDestinations = [],
   editRequest,
+  savedRevision = 0,
+  draft,
 }: LinkCardProps) => {
   const { tr } = useAppI18n();
   const compactPlatformLabel = (platform: SocialLinkPlatform, fallback: string) => {
@@ -178,27 +178,34 @@ export const LinkCard = ({
     return fallback;
   };
   const [isEditing, setIsEditing] = useState(false);
-  const [editLink, setEditLink] = useState(link);
+  const [editLink, setEditLink] = useState(draft || link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
   const [imageUploadError, setImageUploadError] = useState("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [videoUploadError, setVideoUploadError] = useState("");
-  const [resolvingMap, setResolvingMap] = useState(false);
-  const [mapLookupError, setMapLookupError] = useState("");
   const compactLinkDragIndexRef = useRef<number | null>(null);
   const lastEditRequestRef = useRef<number | undefined>(undefined);
+  const lastSavedRevisionRef = useRef(savedRevision);
+  const lastPreviewRevisionRef = useRef(savedRevision);
 
   useEffect(() => {
-    if (!isEditing) setEditLink(link);
-  }, [isEditing, link]);
+    if (!isEditing) setEditLink(draft || link);
+  }, [draft, isEditing, link]);
 
   useEffect(() => {
     if (editRequest === undefined || editMode === "view" || lastEditRequestRef.current === editRequest) return;
     lastEditRequestRef.current = editRequest;
-    setEditLink(link);
+    setEditLink(draft || link);
     setIsEditing(true);
-  }, [editMode, editRequest, link]);
+  }, [draft, editMode, editRequest, link]);
+
+  useEffect(() => {
+    if (lastSavedRevisionRef.current === savedRevision) return;
+    lastSavedRevisionRef.current = savedRevision;
+    setIsEditing(false);
+    setEditLink(link);
+  }, [link, savedRevision]);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
@@ -208,107 +215,23 @@ export const LinkCard = ({
   const canReorder = editMode === 'full';
 
   useEffect(() => {
-    if (isEditing) onPreview?.(link.id, editLink);
-  }, [editLink, isEditing, link.id, onPreview]);
-
-  const handleSave = async () => {
-    if (uploadingImage || uploadingVideo || resolvingMap) return;
-    let normalizedLink = isNativeMenuLink(editLink)
-      ? { ...editLink, type: 'menu' as const, hideUrl: true }
-      : editLink;
-
-    if (normalizedLink.type === 'map') {
-      const data = getMapData(normalizedLink.content);
-      const source = getMapResolutionSource(data.placeName, data.address, data.mapUrl);
-      const existingCoordinates = data.resolvedSource === source
-        ? toMapCoordinates(data.latitude, data.longitude)
-        : null;
-      const directCoordinates = extractMapCoordinates(data.mapUrl)
-        || extractMapCoordinates(data.address)
-        || extractMapCoordinates(data.placeName);
-      const query = getMapQuery(
-        data.placeName,
-        data.address,
-        normalizedLink.title && normalizedLink.title !== 'Map' ? normalizedLink.title : '',
-        data.mapUrl,
-      );
-
-      let coordinates = directCoordinates || existingCoordinates;
-      if (!coordinates && (query || data.mapUrl)) {
-        setResolvingMap(true);
-        setMapLookupError("");
-        try {
-          const resolved = await mapPreviewApi.resolve(query, data.mapUrl);
-          coordinates = toMapCoordinates(resolved.lat, resolved.lon);
-          if (!coordinates) throw new Error("The map provider returned invalid coordinates.");
-        } catch (error) {
-          setMapLookupError(error instanceof Error ? error.message : "The location could not be resolved.");
-          setResolvingMap(false);
-          return;
-        }
-        setResolvingMap(false);
-      }
-
-      normalizedLink = {
-        ...normalizedLink,
-        url: '',
-        hideUrl: true,
-        content: buildBlockContent({
-          ...data,
-          latitude: coordinates ? String(coordinates.lat) : undefined,
-          longitude: coordinates ? String(coordinates.lon) : undefined,
-          resolvedSource: coordinates ? source : undefined,
-        }),
-      };
+    if (lastPreviewRevisionRef.current !== savedRevision) {
+      lastPreviewRevisionRef.current = savedRevision;
+      return;
     }
+    if (isEditing) onPreview?.(link.id, JSON.stringify(editLink) === JSON.stringify(link) ? null : editLink);
+  }, [editLink, isEditing, link, onPreview, savedRevision]);
 
-    const sanitizedLink = isSocialRow
-      ? {
-          ...normalizedLink,
-          type: 'social_row' as const,
-          title: '',
-          description: '',
-          url: '',
-          hideUrl: true,
-          icon: undefined,
-          iconType: undefined,
-          coverImage: undefined,
-          coverImageAlt: undefined,
-        }
-      : isInternalLinks
-      ? {
-          ...normalizedLink,
-          type: 'internal_links' as const,
-          url: '',
-          hideUrl: true,
-          icon: undefined,
-          iconType: undefined,
-          coverImage: undefined,
-          coverImageAlt: undefined,
-          content: buildBlockContent(getInternalLinksData(normalizedLink.content)),
-        }
-      : normalizedLink.type === 'separator'
-      ? {
-          ...normalizedLink,
-          description: '',
-          url: '',
-          icon: undefined,
-          iconType: undefined,
-          coverImage: undefined,
-          coverImageAlt: undefined,
-        }
-      : normalizedLink;
-    onUpdate(sanitizedLink);
-    onPreview?.(link.id, null);
-    setIsEditing(false);
-  };
+  useEffect(() => {
+    onPreparingChange?.(link.id, Boolean(uploadingImage) || uploadingVideo);
+    return () => onPreparingChange?.(link.id, false);
+  }, [link.id, onPreparingChange, uploadingImage, uploadingVideo]);
 
   const handleCancel = () => {
     onPreview?.(link.id, null);
     setEditLink(link);
     setImageUploadError("");
     setVideoUploadError("");
-    setMapLookupError("");
     setIsEditing(false);
   };
 
@@ -1593,11 +1516,6 @@ export const LinkCard = ({
                       />
                       <p className="text-xs text-slate-500">{tr("Google Maps and OpenStreetMap links are supported.", "Sono supportati i link di Google Maps e OpenStreetMap.")}</p>
                     </div>
-                    {mapLookupError ? (
-                      <p role="alert" className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-900">
-                        {tr("The preview could not locate this URL. Add the full street address or use a complete Maps link, then save again.", "La preview non riesce a localizzare questo URL. Aggiungi l'indirizzo completo o usa un link Maps completo, poi salva di nuovo.")}
-                      </p>
-                    ) : null}
                   </section>
                 )}
                 {isEvent && (
@@ -2194,11 +2112,7 @@ export const LinkCard = ({
             )}
             
             <div className="flex gap-2">
-              <Button aria-busy={Boolean(uploadingImage) || uploadingVideo || resolvingMap} onClick={handleSave} variant="gradient" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo || resolvingMap}>
-                {(uploadingImage || uploadingVideo || resolvingMap) && <Loader2 className="h-4 w-4 animate-spin" />}
-                {uploadingImage || uploadingVideo ? "Preparing media" : resolvingMap ? tr("Locating map", "Localizzazione mappa") : "Save"}
-              </Button>
-              <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo || resolvingMap}>
+              <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo}>
                 Cancel
               </Button>
             </div>

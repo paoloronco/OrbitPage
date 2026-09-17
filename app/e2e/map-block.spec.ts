@@ -30,7 +30,7 @@ test('uses the dedicated Maps URL without asking for a generic card destination'
 
   const mapsUrl = mapCard.getByLabel('Maps URL');
   await mapsUrl.fill('https://www.google.com/maps?q=Turin');
-  await mapCard.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true }).click();
 
   const mapFrame = mapCard.locator('iframe[src*="openstreetmap.org/export/embed.html"]');
   await expect(mapFrame).toHaveCount(1);
