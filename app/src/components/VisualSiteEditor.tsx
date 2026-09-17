@@ -193,7 +193,7 @@ export function VisualSiteEditor({
               <span>{tr("Arrange", "Disponi")}</span>
             </button>
           )}
-          {previewEnabled && <PreviewDeviceToggle value={device} onChange={setDevice} />}
+          {(previewEnabled || section === "menu") && <PreviewDeviceToggle value={device} onChange={setDevice} />}
         </div>
       </header>
 
@@ -268,8 +268,8 @@ export function VisualSiteEditor({
         </div>}
 
         <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle}>
-          {previewEnabled && <header className="visual-site-editor__inspector-heading">
-            {section !== "menu" && section !== "pages" && <p>{tr("Selected element", "Elemento selezionato")}</p>}
+          {previewEnabled && section !== "menu" && <header className="visual-site-editor__inspector-heading">
+            {section !== "pages" && <p>{tr("Selected element", "Elemento selezionato")}</p>}
             <h2>{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
           </header>}
