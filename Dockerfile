@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22-alpine AS builder
 
-LABEL org.opencontainers.image.version="4.21.5"
+LABEL org.opencontainers.image.version="4.21.6"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -43,7 +43,7 @@ COPY app/server/services ./services
 # ---------- STAGE 2: runtime ----------
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.version="4.21.5"
+LABEL org.opencontainers.image.version="4.21.6"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -68,10 +68,9 @@ COPY --from=builder /app/source/server /app/server
 COPY docker-entrypoint.sh /app/server/docker-entrypoint.sh
 RUN chmod +x /app/server/docker-entrypoint.sh
 
-# Bundle the update script so the host can extract it:
-#   docker run --rm --entrypoint cat paoloronco/orbitpage:latest /app/orbitpage-update.sh \
-#     > /usr/local/bin/orbitpage-update && chmod +x /usr/local/bin/orbitpage-update
+# Bundle the host updater for existing installations and legacy updater migration.
 COPY scripts/orbitpage-update.sh /app/orbitpage-update.sh
+COPY scripts/orbitpage-update.py /app/orbitpage-update.py
 RUN chmod +x /app/orbitpage-update.sh
 
 # Set default PORT environment variable

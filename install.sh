@@ -10,6 +10,7 @@ INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"
 BACKUP_DIR="/var/backups/orbitpage"
 CLI_PATH="/usr/local/bin/orbitpage"
+UPDATE_CLI_PATH="/usr/local/bin/orbitpage-update"
 COMPOSE_FILE="${INSTALL_DIR}/compose.yaml"
 COMPOSE_ENV_FILE="${INSTALL_DIR}/.env"
 APP_ENV_FILE="${CONFIG_DIR}/orbitpage.env"
@@ -88,7 +89,7 @@ validate_settings() {
     die "Changing ORBITPAGE_CONTAINER_NAME on an existing installation is not supported."
   fi
 
-  for path in "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$CLI_PATH"; do
+  for path in "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$CLI_PATH" "$UPDATE_CLI_PATH"; do
     [[ "$path" == /* && "$path" != *$'\n'* && "$path" != *$'\r'* ]] || die "Installation paths must be absolute single-line paths."
   done
 
@@ -302,6 +303,11 @@ install_cli() {
   bash -n "$cli_tmp"
   install -m 0755 "$cli_tmp" "$CLI_PATH"
   rm -f "$cli_tmp"
+  cat > "$UPDATE_CLI_PATH" <<'EOF'
+#!/usr/bin/env bash
+exec /usr/local/bin/orbitpage update "$@"
+EOF
+  chmod 0755 "$UPDATE_CLI_PATH"
 }
 
 wait_for_health() {
@@ -344,7 +350,7 @@ print_access_details() {
   printf 'Admin workspace: http://%s:%s/dashboard/profile\n' "$address" "$HTTP_PORT"
   printf 'Health check:    http://%s:%s/health\n' "$address" "$HTTP_PORT"
   printf '\nCreate the first admin password from the Admin workspace.\n'
-  printf 'Manage the installation with: orbitpage status|logs|update|backup|restart\n\n'
+  printf 'Manage the installation with: orbitpage status|logs|backup|restart or sudo orbitpage-update\n\n'
 }
 
 install_app() {
@@ -442,6 +448,7 @@ uninstall_app() {
 
   rm -rf -- "$INSTALL_DIR"
   rm -f -- "$CLI_PATH"
+  rm -f -- "$UPDATE_CLI_PATH"
 }
 
 show_config() {

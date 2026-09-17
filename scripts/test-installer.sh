@@ -7,6 +7,7 @@ readonly CONFIG_DIR="/etc/orbitpage"
 readonly DATA_DIR="/var/lib/orbitpage-installer-test"
 readonly BACKUP_DIR="/var/backups/orbitpage"
 readonly CLI_PATH="/usr/local/bin/orbitpage"
+readonly UPDATE_CLI_PATH="/usr/local/bin/orbitpage-update"
 readonly DOCKER_STATE="/tmp/orbitpage-installer-docker-state"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -20,12 +21,12 @@ fail() {
 
 cleanup() {
   rm -rf -- "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$TEST_DIR"
-  rm -f -- "$CLI_PATH" "$DOCKER_STATE"
+  rm -f -- "$CLI_PATH" "$UPDATE_CLI_PATH" "$DOCKER_STATE"
 }
 
 [[ ${EUID} -eq 0 ]] || fail "run this test as root"
 
-for path in "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$CLI_PATH"; do
+for path in "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$CLI_PATH" "$UPDATE_CLI_PATH"; do
   [[ ! -e "$path" ]] || fail "test path already exists: ${path}"
 done
 
@@ -81,6 +82,8 @@ ORBITPAGE_PUBLIC_SITE_URL=https://links.example.test \
 bash "${REPO_ROOT}/install.sh"
 
 [[ -x "$CLI_PATH" ]] || fail "management command was not installed"
+[[ -x "$UPDATE_CLI_PATH" ]] || fail "update command was not installed"
+grep -Fq 'exec /usr/local/bin/orbitpage update "$@"' "$UPDATE_CLI_PATH" || fail "update command does not delegate to the installer"
 [[ -f "${INSTALL_DIR}/compose.yaml" ]] || fail "Compose definition was not created"
 [[ -f "${INSTALL_DIR}/.env" ]] || fail "installer settings were not persisted"
 [[ -f "${CONFIG_DIR}/orbitpage.env" ]] || fail "application environment was not created"
@@ -123,7 +126,7 @@ compgen -G "${BACKUP_DIR}/orbitpage-*.tar.gz" >/dev/null || fail "backup archive
 [[ "$(find "$BACKUP_DIR" -maxdepth 1 -name 'orbitpage-*.tar.gz' | wc -l)" -ge 2 ]] || fail "backup names collided"
 
 PATH="${FAKE_BIN}:${PATH}" "$CLI_PATH" uninstall
-[[ ! -e "$INSTALL_DIR" && ! -e "$CLI_PATH" ]] || fail "uninstall did not remove application files"
+[[ ! -e "$INSTALL_DIR" && ! -e "$CLI_PATH" && ! -e "$UPDATE_CLI_PATH" ]] || fail "uninstall did not remove application files"
 [[ -d "$DATA_DIR" && -f "${CONFIG_DIR}/orbitpage.env" ]] || fail "non-purge uninstall removed persistent data"
 
 printf 'OrbitPage installer integration test passed.\n'
