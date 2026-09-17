@@ -95,7 +95,7 @@ export function VisualSiteEditor({
 }: VisualSiteEditorProps) {
   const { tr } = useAppI18n();
   const [device, setDevice] = useState<PreviewDevice>(() => (
-    typeof window !== "undefined" && window.matchMedia("(min-width: 900px)").matches ? "desktop" : "mobile"
+    section !== "menu" && typeof window !== "undefined" && window.matchMedia("(min-width: 900px)").matches ? "desktop" : "mobile"
   ));
   const [isPhone, setIsPhone] = useState(() => (
     typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
@@ -134,6 +134,10 @@ export function VisualSiteEditor({
 
   useEffect(() => {
     if (section === "pages" && previewEnabled) setPreviewVisible(true);
+  }, [previewEnabled, section]);
+
+  useEffect(() => {
+    if (section === "menu" && previewEnabled) setDevice("mobile");
   }, [previewEnabled, section]);
 
   useEffect(() => {

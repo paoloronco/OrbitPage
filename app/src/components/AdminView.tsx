@@ -1306,8 +1306,8 @@ export const AdminView = ({
                     : undefined}
                 renderPreview={visualSection === "menu" && menuDesignActive ? ((device) => (
                   <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
-                    <div className={`admin-menu-live-preview admin-menu-live-preview--${device}`}>
-                      <MenuView embedded menu={previewMenu} pageHref={publicPageHref} />
+                    <div className="admin-menu-live-preview">
+                      <MenuView menu={previewMenu} pageHref={publicPageHref} />
                     </div>
                   </PreviewDeviceFrame>
                 )) : visualSection === "pages" && previewSubpage ? ((device) => (
