@@ -1677,3 +1677,15 @@
 .menu-editor-stack--visual .menu-item-group__toggle em { display: grid; width: 25px; height: 23px; flex: none; place-items: center; border: 1px solid #dce6f8; border-radius: 7px; background: #f2f6ff; color: #3155a3; font-size: .67rem; font-style: normal; font-weight: 750; }
 .menu-editor-stack--visual .menu-item-group__body { display: grid; gap: 5px; }
 .menu-editor-stack--visual .menu-item-group__body[hidden] { display: none; }
+
+.menu-editor-stack--classic .menu-design-settings { display: grid; gap: 1.25rem; }
+.menu-editor-stack--visual .menu-design-layout,
+.menu-editor-stack--visual .menu-design-settings { display: grid; align-content: start; gap: 16px; min-width: 0; }
+.menu-editor-stack--visual .menu-design-preview { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 18px; border: 1px solid #d9e2ed; border-radius: 10px; background: #f8faff; }
+.menu-editor-stack--visual .menu-design-preview > strong { color: #20344f; font-size: .85rem; }
+.menu-editor-stack--visual .menu-design-preview .admin-preview-device { width: 100%; min-height: 0; padding: 12px; }
+.menu-editor-stack--visual .menu-design-preview .admin-preview-device--mobile { --admin-preview-phone-width: 300px; }
+
+@container menu-workspace (min-width: 48rem) {
+  .menu-editor-stack--visual .menu-design-layout { grid-template-columns: minmax(0, 1fr) minmax(18rem, .62fr); align-items: start; }
+}

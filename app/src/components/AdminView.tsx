@@ -264,7 +264,6 @@ export const AdminView = ({
   const [previewMenu, setPreviewMenu] = useState(menu);
   const [previewSubpage, setPreviewSubpage] = useState<{ page: EditorSubpage; links: LinkData[] } | null>(null);
   const onSubpagePreviewChange = useCallback((preview: { page: EditorSubpage; links: LinkData[] } | null) => setPreviewSubpage(preview), []);
-  const [menuDesignActive, setMenuDesignActive] = useState(false);
   const [newUiEnabled, setNewUiEnabled] = useState(() => {
     const hostedPreference = getHostedSurfaceConfig()?.newUiEnabled;
     if (hostedPreference !== undefined) return hostedPreference;
@@ -908,7 +907,11 @@ export const AdminView = ({
     <MenuEditor
       menu={menu}
       onPreview={setPreviewMenu}
-      onDesignActiveChange={setMenuDesignActive}
+      designPreview={<PreviewDeviceFrame device="mobile" publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
+        <div className="admin-menu-live-preview">
+          <MenuView menu={previewMenu} pageHref={publicPageHref} />
+        </div>
+      </PreviewDeviceFrame>}
       presentation="visual"
       publicPageHref={publicPageHref}
       enabled={!saasPlan || entitlements?.nativeMenu === true}
@@ -1299,18 +1302,10 @@ export const AdminView = ({
                 onCardLayoutChange={canEditProfile ? updateVisualCardLayout : undefined}
                 layoutEditing={visualLayoutEditing}
                 onLayoutEditingChange={setVisualLayoutEditing}
-                previewHint={visualSection === "menu"
-                  ? tr("Live public menu preview", "Anteprima live del menu pubblico")
-                  : visualSection === "pages" && previewSubpage
-                    ? tr(`Preview: ${previewSubpage.page.title}`, `Anteprima: ${previewSubpage.page.title}`)
-                    : undefined}
-                renderPreview={visualSection === "menu" && menuDesignActive ? ((device) => (
-                  <PreviewDeviceFrame device={device} publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
-                    <div className="admin-menu-live-preview">
-                      <MenuView menu={previewMenu} pageHref={publicPageHref} />
-                    </div>
-                  </PreviewDeviceFrame>
-                )) : visualSection === "pages" && previewSubpage ? ((device) => (
+                previewHint={visualSection === "pages" && previewSubpage
+                  ? tr(`Preview: ${previewSubpage.page.title}`, `Anteprima: ${previewSubpage.page.title}`)
+                  : undefined}
+                renderPreview={visualSection === "pages" && previewSubpage ? ((device) => (
                   <LivePreview
                     device={device}
                     profile={{ ...previewProfile, name: previewSubpage.page.title, bio: previewSubpage.page.description }}

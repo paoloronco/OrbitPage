@@ -451,6 +451,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(editor).toBeVisible();
   await expect(canvas.locator(".admin-menu-live-preview")).toHaveCount(0);
   await expect(canvas.locator(".admin-live-preview")).toHaveCount(0);
+  await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
   await expect(workflow).toBeVisible();
   await expect(workflow.getByRole("button")).toHaveCount(4);
   await expect(editor.getByText("Pro menu", { exact: true })).toHaveCount(0);
@@ -490,9 +491,36 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(editor.locator(".menu-content-pane--products")).toBeVisible();
   await expect(editor.getByText("Selected item", { exact: true })).toHaveCount(0);
 
+  const workflowBeforeDesign = await workflow.boundingBox();
+  await workflow.getByRole("button", { name: /Design/ }).click();
+  const designSettings = editor.locator(".menu-design-settings");
+  const designPreview = editor.locator(".menu-design-preview");
+  await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
+  await expect(designPreview.locator('[data-preview-source-width="390"]')).toHaveAttribute('data-preview-viewport-ready', 'true');
+  await expect(canvas.locator(".admin-menu-live-preview")).toHaveCount(0);
+  const workflowInDesign = await workflow.boundingBox();
+  const settingsBox = await designSettings.boundingBox();
+  const previewBox = await designPreview.boundingBox();
+  expect(workflowBeforeDesign && workflowInDesign && settingsBox && previewBox).toBeTruthy();
+  expect(Math.abs(workflowInDesign!.x - workflowBeforeDesign!.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(workflowInDesign!.y - workflowBeforeDesign!.y)).toBeLessThanOrEqual(1);
+  expect(Math.abs(workflowInDesign!.width - workflowBeforeDesign!.width)).toBeLessThanOrEqual(1);
+  expect(previewBox!.x).toBeGreaterThanOrEqual(settingsBox!.x + settingsBox!.width);
+  expect(previewBox!.y).toBeGreaterThanOrEqual(workflowInDesign!.y + workflowInDesign!.height);
+  await workflow.getByRole("button", { name: /Items/ }).click();
+  await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
+
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(workflow.getByRole("button", { name: /Identity/ })).toBeVisible();
   await expect(workflow.getByRole("button", { name: /Design/ })).toBeVisible();
+  await workflow.getByRole("button", { name: /Design/ }).click();
+  await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
+  const mobileSettingsBox = await designSettings.boundingBox();
+  const mobilePreviewBox = await designPreview.boundingBox();
+  expect(mobileSettingsBox && mobilePreviewBox).toBeTruthy();
+  expect(mobilePreviewBox!.y).toBeGreaterThanOrEqual(mobileSettingsBox!.y + mobileSettingsBox!.height);
+  expect(await editor.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  await workflow.getByRole("button", { name: /Items/ }).click();
   await editor.getByRole("button", { name: "Add item" }).first().click();
   await expect(editor.locator(".menu-content-pane--products")).toHaveClass(/is-item-editing/);
   await expect(editor.getByRole("button", { name: "Back to items" })).toBeVisible();
