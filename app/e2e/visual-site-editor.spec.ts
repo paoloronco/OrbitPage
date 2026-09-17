@@ -453,7 +453,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(canvas.locator(".admin-live-preview")).toHaveCount(0);
   await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
   await expect(workflow).toBeVisible();
-  await expect(workflow.getByRole("button")).toHaveCount(4);
+  await expect(workflow.getByRole("button")).toHaveCount(3);
   const workflowBeforeSettings = await workflow.boundingBox();
   await workflow.getByRole("button", { name: /Settings/ }).click();
   await expect(editor.getByRole("heading", { name: "Menu details" })).toBeVisible();
@@ -467,15 +467,15 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(publicationSwitch).toHaveAttribute("aria-checked", String(!wasPublished));
   await publicationSwitch.click();
   await expect(editor.getByText("Unsaved changes", { exact: true })).toBeHidden();
-  await workflow.getByRole("button", { name: /Categories/ }).click();
+  await workflow.getByRole("button", { name: /^02 Menu/ }).click();
   const workflowAfterSettings = await workflow.boundingBox();
   expect(workflowBeforeSettings && workflowAfterSettings).toBeTruthy();
   expect(Math.abs(workflowAfterSettings!.y - workflowBeforeSettings!.y)).toBeLessThanOrEqual(1);
   await expect(editor.getByText("Pro menu", { exact: true })).toHaveCount(0);
   await expect(inspector.getByText("Selected element", { exact: true })).toHaveCount(0);
   await expect(editor.locator(".menu-visual-context")).toHaveCount(0);
-  await expect(editor.locator(".menu-content-pane--sections")).toBeVisible();
-  await expect(editor.locator(".menu-content-pane--products")).toBeHidden();
+  await expect(editor.locator(".menu-unified-panel")).toBeVisible();
+  await expect(editor.locator(".menu-unified-side .menu-category-editor-empty")).toBeVisible();
   await expect(editor.locator(".menu-category-accordion")).toHaveCount(0);
   await expect(editor.locator(".menu-category-editor")).toHaveCount(0);
   const category = editor.locator(".menu-category-group").first();
@@ -483,14 +483,14 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await category.locator(".menu-category-group__edit").click();
   await expect(editor.locator(".menu-category-editor").getByLabel("Name", { exact: true })).toBeVisible();
   await editor.getByRole("button", { name: "Close category editor" }).click();
-  await expect(editor.getByPlaceholder("Search categories")).toHaveCSS("padding-left", "40px");
+  await expect(editor.getByPlaceholder("Search categories and items")).toHaveCSS("padding-left", "40px");
   await category.locator(".menu-category-group__toggle").click();
   await expect(category.locator(".menu-category-group__toggle")).toHaveAttribute("aria-expanded", "false");
-  await editor.getByPlaceholder("Search categories").fill("missing category");
-  await expect(editor.getByText("No categories found")).toBeVisible();
-  await editor.getByPlaceholder("Search categories").fill("");
+  await editor.getByPlaceholder("Search categories and items").fill("missing category");
+  await expect(editor.getByText("No results found")).toBeVisible();
+  await editor.getByPlaceholder("Search categories and items").fill("");
   await editor.getByRole("combobox", { name: "Filter category visibility" }).selectOption("hidden");
-  await expect(editor.getByText("No categories found")).toBeVisible();
+  await expect(editor.getByText("No results found")).toBeVisible();
   await editor.getByRole("combobox", { name: "Filter category visibility" }).selectOption("all");
 
   const clippedDesktopLabels = await workflow.locator("button").evaluateAll((buttons) => buttons.filter((button) => {
@@ -503,10 +503,18 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   }).length);
   expect(clippedDesktopLabels).toBe(0);
 
-  await workflow.getByRole("button", { name: /Items/ }).click();
-  await expect(editor.locator(".menu-content-pane--sections")).toBeHidden();
-  await expect(editor.locator(".menu-content-pane--products")).toBeVisible();
-  await expect(editor.getByText("Selected item", { exact: true })).toHaveCount(0);
+  await expect(workflow.getByRole("button", { name: /Items/ })).toHaveCount(0);
+  await category.locator(".menu-category-group__toggle").click();
+  await expect(editor.locator(".menu-unified-items").first()).toBeVisible();
+  const categoryBox = await category.locator(".menu-category-group__heading").first().boundingBox();
+  const dishBox = await category.locator(".menu-unified-items .menu-item-picker__item").first().boundingBox();
+  expect(categoryBox && dishBox).toBeTruthy();
+  expect(dishBox!.x).toBeGreaterThan(categoryBox!.x);
+  await category.locator(".menu-unified-items .menu-item-picker__item").first().click();
+  await expect(editor.locator(".menu-unified-side .menu-product-editor")).toBeVisible();
+  await category.locator(".menu-category-group__edit").first().click();
+  await expect(editor.locator(".menu-unified-side .menu-category-editor")).toBeVisible();
+  await editor.getByRole("button", { name: "Close category editor" }).click();
 
   const workflowBeforeDesign = await workflow.boundingBox();
   await workflow.getByRole("button", { name: /Design/ }).click();
@@ -525,7 +533,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   expect(Math.abs(workflowInDesign!.width - workflowBeforeDesign!.width)).toBeLessThanOrEqual(1);
   expect(previewBox!.x).toBeGreaterThanOrEqual(settingsBox!.x + settingsBox!.width);
   expect(previewBox!.y).toBeGreaterThanOrEqual(workflowInDesign!.y + workflowInDesign!.height);
-  await workflow.getByRole("button", { name: /Items/ }).click();
+  await workflow.getByRole("button", { name: /^02 Menu/ }).click();
   await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -541,9 +549,9 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   expect(mobileSettingsBox && mobilePreviewBox).toBeTruthy();
   expect(mobilePreviewBox!.y).toBeGreaterThanOrEqual(mobileSettingsBox!.y + mobileSettingsBox!.height);
   expect(await editor.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
-  await workflow.getByRole("button", { name: /Items/ }).click();
+  await workflow.getByRole("button", { name: /^02 Menu/ }).click();
   await editor.getByRole("button", { name: "Add item" }).first().click();
-  await expect(editor.locator(".menu-content-pane--products")).toHaveClass(/is-item-editing/);
+  await expect(editor.locator(".menu-unified-panel")).toHaveClass(/is-editing/);
   await expect(editor.getByRole("button", { name: "Back to items" })).toBeVisible();
   await expect(editor.getByLabel("Item price")).toBeVisible();
   await expect(editor.getByRole("button", { name: "Move up" })).toBeVisible();
@@ -552,13 +560,13 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await editor.locator(".menu-product-editor").getByLabel("Name", { exact: true }).fill("Mobile menu item");
   await editor.getByRole("button", { name: "Back to items" }).click();
   await expect(editor.getByRole("button", { name: /Edit Mobile menu item/ })).toBeVisible();
-  const itemGroup = editor.locator(".menu-item-group").first();
-  await itemGroup.locator(".menu-item-group__toggle").click();
-  await expect(itemGroup.locator(".menu-item-group__toggle")).toHaveAttribute("aria-expanded", "false");
+  const itemGroup = editor.locator(".menu-category-group").first();
+  await itemGroup.locator(".menu-category-group__toggle").first().click();
+  await expect(itemGroup.locator(".menu-category-group__toggle").first()).toHaveAttribute("aria-expanded", "false");
   await expect(itemGroup.getByRole("button", { name: /Edit Mobile menu item/ })).toBeHidden();
-  await itemGroup.locator(".menu-item-group__toggle").click();
-  await editor.getByPlaceholder("Search by name or details").fill("no such item");
-  await expect(editor.getByText("No matching items")).toBeVisible();
+  await itemGroup.locator(".menu-category-group__toggle").first().click();
+  await editor.getByPlaceholder("Search categories and items").fill("no such item");
+  await expect(editor.getByText("No results found")).toBeVisible();
   await editor.getByRole("button", { name: "Clear filters" }).click();
   await expect(editor.getByRole("button", { name: /Edit Mobile menu item/ })).toBeVisible();
   const mobileOverflow = await editor.evaluate((element) => element.scrollWidth - element.clientWidth);
