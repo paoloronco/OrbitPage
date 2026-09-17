@@ -1698,6 +1698,7 @@
 .menu-editor-stack .menu-settings-visibility > span { display: grid; gap: 3px; min-width: 0; }
 .menu-editor-stack .menu-settings-visibility strong { color: #20344f; font-size: .85rem; }
 .menu-editor-stack .menu-settings-visibility small { color: #64748b; font-size: .72rem; }
+.menu-editor-stack .menu-publish-tools canvas { box-sizing: border-box; max-width: 100%; }
 
 @container menu-workspace (max-width: 32rem) {
   .menu-editor-stack .menu-editor-savebar { flex-wrap: wrap; }
