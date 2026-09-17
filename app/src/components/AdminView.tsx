@@ -1105,7 +1105,6 @@ export const AdminView = ({
 
             {visibleWorkspaceTabs.length > 0 && (
               <nav className="admin-dashboard-nav admin-dashboard-nav-workspace" aria-label={tr("Workspace tools", "Strumenti workspace")}>
-                <span className="admin-dashboard-nav-heading admin-dashboard-nav-heading-workspace">{tr("Workspace Open Source", "Workspace Open Source")}</span>
                 {visibleWorkspaceTabs.map(({ value, icon: Icon, iconName }) => (
                   <button
                     aria-current={activeTab === value ? "page" : undefined}
@@ -1185,7 +1184,6 @@ export const AdminView = ({
           </div>
         </header> : !isHostedAdmin ? <header className="admin-dashboard-header">
           <div className="admin-dashboard-header-copy">
-            <p className="admin-dashboard-kicker">{tr("Open Source plan", "Piano Open Source")}</p>
             <div className="admin-dashboard-heading-row"><h1>{displayedTabLabel(activeTab)}</h1></div>
             <p className="admin-dashboard-section-description">{displayedTabDescription(activeTab)}</p>
             <div className="admin-dashboard-context-row" aria-label={tr("Workspace context", "Contesto workspace")}>

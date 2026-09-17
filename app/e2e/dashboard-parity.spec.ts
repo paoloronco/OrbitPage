@@ -77,11 +77,8 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   expect(footerActionBounds.every(Boolean)).toBe(true);
   expect(Math.abs(footerActionBounds[0]!.y - footerActionBounds[1]!.y)).toBeLessThanOrEqual(1);
 
-  const kicker = page.locator('.admin-dashboard-kicker').first();
-  await expect(kicker).toHaveCSS('font-size', '12px');
-  await expect(kicker).toHaveCSS('line-height', '14.4px');
+  await expect(page.locator('.admin-dashboard-header .admin-dashboard-kicker')).toHaveCount(0);
   const headerLeftEdges = await Promise.all([
-    kicker.boundingBox(),
     page.locator('.admin-dashboard-heading-row h1').boundingBox(),
     page.locator('.admin-dashboard-context-row').boundingBox(),
   ]);

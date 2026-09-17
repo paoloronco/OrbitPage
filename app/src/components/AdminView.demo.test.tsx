@@ -129,7 +129,8 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Admin access');
     expect(html).toContain('admin-dashboard-shell');
     expect(html).toContain('admin-dashboard-sidebar');
-    expect(html).toContain('Open Source plan');
+    expect(html).not.toContain('Open Source plan');
+    expect(html).not.toContain('Workspace Open Source');
     expect(html).toContain('Page tools');
     expect(html).toContain('Open Source');
     expect(html).toContain('Newsletter');
