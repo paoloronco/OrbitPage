@@ -1231,7 +1231,7 @@
     color: var(--content-card-foreground);
   }
 
-  .public-card-stack [data-surface-effect="transparent"] > :not(.public-unboxed-block),
+  .public-card-stack [data-surface-effect="transparent"]:not(.profile-card) > :not(.public-unboxed-block),
   .public-block-preview[data-surface-effect="transparent"] > :not(.public-unboxed-block) {
     background: transparent !important;
     border-color: transparent !important;
@@ -1240,7 +1240,7 @@
     -webkit-backdrop-filter: none !important;
   }
 
-  .public-card-stack [data-surface-effect="liquid-glass"] > :not(.public-unboxed-block),
+  .public-card-stack [data-surface-effect="liquid-glass"]:not(.profile-card) > :not(.public-unboxed-block),
   .public-block-preview[data-surface-effect="liquid-glass"] > :not(.public-unboxed-block) {
     background-color: rgb(255 255 255 / 0.14) !important;
     background:
