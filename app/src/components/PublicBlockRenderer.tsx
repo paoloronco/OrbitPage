@@ -14,6 +14,7 @@ import { PublicSocialRowCard } from "./PublicSocialRowCard";
 import { PublicTextCard } from "./PublicTextCard";
 import { PublicVideoCard } from "./PublicVideoCard";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
+import { asNativeShopLink } from "@/lib/native-shop-link";
 import { isSocialRowContent } from "@/lib/link-blocks";
 import type { NormalizedCardContentLayout } from "@/lib/card-layout";
 
@@ -25,6 +26,7 @@ interface PublicBlockRendererProps {
 }
 
 export const PublicBlockRenderer = ({ link, cardContentLayout, cardContentLayoutEditing, cardContentLayoutGuides }: PublicBlockRendererProps) => {
+  link = asNativeShopLink(link);
   if (isNativeMenuLink(link)) return <PublicMenuCard link={link} />;
   if (link.type === "separator") return <PublicSeparatorCard link={link} />;
   if (link.type === "text") return <PublicTextCard link={link} />;

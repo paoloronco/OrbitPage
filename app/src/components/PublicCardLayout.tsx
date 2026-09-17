@@ -31,6 +31,7 @@ import {
 } from "@/lib/card-layout";
 import { getContentCardVariantCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
+import { isNativeShopLink } from "@/lib/native-shop-link";
 
 interface PublicCardLayoutProps {
   links: LinkData[];
@@ -63,7 +64,7 @@ type Gesture = {
 type ActiveTarget = { scope: Gesture["scope"]; cardId: string; item?: CardContentLayoutItem } | null;
 type ActiveGuides = CardLayoutGuides & { scope?: Gesture["scope"]; cardId?: string };
 
-const supportsContentLayout = (link: LinkData) => !link.type || link.type === "link";
+const supportsContentLayout = (link: LinkData) => !link.type || link.type === "link" || isNativeShopLink(link);
 
 export function PublicCardLayout({
   links,

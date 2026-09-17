@@ -2,7 +2,7 @@ import { useState, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { Card } from "@/components/ui/card";
 import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, GripVertical, Link2, Mail, MailPlus, MapPin, MoveDiagonal2, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import type { LinkData } from "./LinkCard";
-import { internalAssetPath } from "@/lib/base-path";
+import { internalAssetPath, withPageRootPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { useAppI18n } from '@/lib/i18n';
 import { getServiceLinkData } from '@/lib/link-blocks';
@@ -13,6 +13,7 @@ import { isPublicImageReference, resolvePublicImageUrl } from '@/lib/public-asse
 import { CompactLinkIcon } from './CompactLinkIcon';
 import type { SocialLinkPlatform } from '@/lib/link-blocks';
 import { getPublicBlockStyle, getPublicTextColor } from '@/lib/public-block-style';
+import { isNativeShopLink } from '@/lib/native-shop-link';
 import type { CardContentLayoutItem, NormalizedCardContentLayout } from '@/lib/card-layout';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
@@ -78,7 +79,9 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
   const [blobIconUrl, setBlobIconUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const unavailable = link.availability === 'unavailable';
-  const safeHref = resolveSafePublicHref(link.url);
+  const isShopLink = isNativeShopLink(link);
+  const safeHref = resolveSafePublicHref(isShopLink ? withPageRootPath(link.url) : link.url);
+  const linkTarget = isShopLink ? undefined : '_blank';
   const service = getServiceLinkData(link.content).service;
 
   useEffect(() => {
@@ -127,7 +130,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (safeHref) {
-      navigator.clipboard.writeText(safeHref).then(() => {
+      navigator.clipboard.writeText(isShopLink ? new URL(safeHref, window.location.href).href : safeHref).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }).catch(() => {});
@@ -149,6 +152,10 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
 
   // Determine what to show in the icon area
   const renderIcon = () => {
+    if (isShopLink && !link.icon) {
+      return <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary"><ShoppingBag className="h-5 w-5" aria-hidden="true" /></span>;
+    }
+
     if (service && !link.icon) {
       return (
         <div
@@ -229,7 +236,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       >
         <a
           href={unavailable ? undefined : safeHref || undefined}
-          target="_blank"
+          target={linkTarget}
           rel="noopener noreferrer"
           onClick={handleLinkClick}
           aria-disabled={unavailable}
@@ -275,12 +282,12 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
     const href = unavailable ? undefined : safeHref || undefined;
     const content: Partial<Record<CardContentLayoutItem, ReactNode>> = {
       icon: (
-        <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1}>
+        <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1}>
           {renderIcon()}
         </a>
       ),
       title: (
-        <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={contentLayoutEditing || unavailable ? -1 : undefined} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+        <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={contentLayoutEditing || unavailable ? -1 : undefined} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <h3 className="min-w-0 flex-1 truncate font-semibold" style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
             {link.title || 'Untitled Link'}
           </h3>
@@ -289,14 +296,14 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       ),
       ...(link.description ? {
         description: (
-          <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <p className="line-clamp-2 text-sm" style={{ ...effectiveTextStyle, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}>{link.description}</p>
           </a>
         ),
       } : {}),
       ...(safeHref && !link.hideUrl ? {
         url: (
-          <a href={href} target="_blank" rel="noopener noreferrer" onClick={handleLinkClick} tabIndex={-1} className="block truncate rounded-md text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : undefined}>
+          <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} tabIndex={-1} className="block truncate rounded-md text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : undefined}>
             {link.url.replace(/^https?:\/\//, '')}
           </a>
         ),
@@ -356,7 +363,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       {hasCoverImage && (
         <a
           href={unavailable ? undefined : safeHref || undefined}
-          target="_blank"
+          target={linkTarget}
           rel="noopener noreferrer"
           onClick={handleLinkClick}
           className="block overflow-hidden"
@@ -380,7 +387,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
         <div className="flex items-center justify-between gap-3">
           <a
             href={unavailable ? undefined : safeHref || undefined}
-            target="_blank"
+            target={linkTarget}
             rel="noopener noreferrer"
             onClick={handleLinkClick}
             aria-disabled={unavailable}

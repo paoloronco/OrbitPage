@@ -15,6 +15,7 @@ import { type EmbedProvider, type InternalDestinationOption, type LinkBlockType,
 import { getContentCardVariant, getContentCardVariantCssVariables, getThemeCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
+import { asNativeShopLink, isNativeShopLink } from "@/lib/native-shop-link";
 import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import type { BrandServiceProvider } from "@/lib/service-brand";
 import { mergeLinkPreviews } from "./link-preview-state";
@@ -220,23 +221,16 @@ export const LinkManager = ({
   const addShopLink = () => {
     const shop = internalDestinations.find((destination) => destination.kind === 'shop');
     if (!shop) return;
-    if (workingLinks.some((link) => link.type === 'internal_links' && getInternalLinksData(link.content).items.some((item) => item.kind === 'shop'))) return;
+    if (hasShopLink) return;
     appendBlock({
       id: Date.now().toString(),
       title: shop.title,
       description: shop.description,
-      url: '',
-      type: 'internal_links',
-      content: buildBlockContent({
-        items: [{ id: crypto.randomUUID(), kind: shop.kind, path: shop.path, label: shop.title, description: shop.description, icon: shop.icon || '' }],
-        layout: 'buttons',
-        columns: 2,
-        itemStyle: 'filled',
-        showDescriptions: true,
-        showIcons: true,
-      }),
+      url: shop.path,
+      hideUrl: true,
+      type: 'link',
       status: 'live',
-      size: 'medium',
+      size: 'large',
     });
   };
 
@@ -754,7 +748,7 @@ export const LinkManager = ({
   const isFullEdit = editMode === 'full';
   const isViewOnly = editMode === 'view';
   const hasCompactLinks = workingLinks.some((item) => item.type === "social_row");
-  const hasShopLink = workingLinks.some((link) => link.type === 'internal_links' && getInternalLinksData(link.content).items.some((item) => item.kind === 'shop'));
+  const hasShopLink = workingLinks.some((link) => isNativeShopLink(link) || (link.type === 'internal_links' && getInternalLinksData(link.content).items.some((item) => item.kind === 'shop')));
   const blockLibraryCategories: Array<{
     id: BlockLibraryCategoryId;
     label: string;
@@ -1161,7 +1155,7 @@ export const LinkManager = ({
                 />
               ) : (
                 <LinkCard
-                  link={link}
+                  link={asNativeShopLink(link)}
                   onUpdate={updateLink}
                   onPreview={updateLinkPreview}
                   onDelete={deleteLink}
