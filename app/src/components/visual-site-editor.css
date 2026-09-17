@@ -412,15 +412,6 @@
   background: #fbfcfe;
 }
 
-.visual-site-editor__inspector-heading p {
-  margin: 0;
-  color: #2d5dd1;
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-
 .visual-site-editor__inspector-heading h2 {
   margin: 0;
   color: #14213a;

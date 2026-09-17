@@ -269,7 +269,6 @@ export function VisualSiteEditor({
 
         <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle}>
           {previewEnabled && section !== "menu" && <header className="visual-site-editor__inspector-heading">
-            {section !== "pages" && <p>{tr("Selected element", "Elemento selezionato")}</p>}
             <h2>{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
           </header>}
