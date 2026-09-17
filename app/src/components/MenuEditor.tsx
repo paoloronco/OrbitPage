@@ -252,6 +252,10 @@ export function MenuEditor({
   }, [draft, onPreview]);
 
   useEffect(() => {
+    if (!isDirty && message === tr('Unsaved changes', 'Modifiche non salvate')) setMessage('');
+  }, [isDirty, message, tr]);
+
+  useEffect(() => {
     if (productSectionFilter !== 'all' && !draft.sections.some((section) => section.id === productSectionFilter)) {
       setProductSectionFilter('all');
     }
@@ -295,7 +299,9 @@ export function MenuEditor({
       const normalized = normalizeMenuCatalog(draft, maxItems ?? 250);
       await onSave(normalized);
       setDraft(normalized);
-      setMessage(tr('Menu saved and published', 'Menu salvato e pubblicato'));
+      setMessage(normalized.enabled
+        ? tr('Menu saved and published', 'Menu salvato e pubblicato')
+        : tr('Menu saved as unpublished', 'Menu salvato come non pubblicato'));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Menu could not be saved');
     } finally {
@@ -596,19 +602,13 @@ export function MenuEditor({
   return (
     <div className={`menu-editor-stack menu-editor-stack--${presentation}`}>
       <div className="menu-editor-main space-y-5">
-        <section className="admin-panel menu-editor-intro">
-          <div className="menu-editor-intro__actions">
-            <label className="menu-publish-toggle">
-              <span><strong>{draft.enabled ? tr("Published", "Pubblicato") : tr("Draft", "Bozza")}</strong><small>{tr("Public menu visibility", "Visibilità del menu pubblico")}</small></span>
-              <Switch checked={draft.enabled} onCheckedChange={(checked) => update((current) => ({ ...current, enabled: checked }))} />
-            </label>
-            <Button onClick={() => void save()} disabled={!isDirty || saving}>
-              {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
-              {saving ? tr('Saving', 'Salvataggio') : tr('Save menu', 'Salva menu')}
-            </Button>
-          </div>
+        <div className="menu-editor-savebar">
           {message && <p className={`menu-editor-message${isDirty ? ' is-pending' : ' is-saved'}`} aria-live="polite">{message}</p>}
-        </section>
+          <Button onClick={() => void save()} disabled={!isDirty || saving}>
+            {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+            {saving ? tr('Saving', 'Salvataggio') : tr('Save menu', 'Salva menu')}
+          </Button>
+        </div>
 
         <nav className="menu-editor-tabs" aria-label={tr('Menu setup workflow', 'Percorso di configurazione menu')}>
           <button
@@ -618,7 +618,7 @@ export function MenuEditor({
             onClick={() => setActivePanel('setup')}
           >
             <span className="menu-editor-tab-index">01</span>
-            <span className="menu-editor-tab-copy"><strong>{tr('Identity', 'Identità')}</strong><small>{tr('Name, venue and language', 'Nome, locale e lingua')}</small></span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Settings', 'Impostazioni')}</strong><small>{tr('Details, visibility and sharing', 'Dettagli, visibilità e condivisione')}</small></span>
             <UtensilsCrossed aria-hidden="true" />
           </button>
           <button
@@ -648,13 +648,14 @@ export function MenuEditor({
             onClick={() => setActivePanel('appearance')}
           >
             <span className="menu-editor-tab-index">04</span>
-            <span className="menu-editor-tab-copy"><strong>{tr('Design', 'Design')}</strong><small>{tr('Style, URL and QR code', 'Stile, URL e codice QR')}</small></span>
+            <span className="menu-editor-tab-copy"><strong>{tr('Design', 'Design')}</strong><small>{tr('Style and mobile preview', 'Stile e anteprima mobile')}</small></span>
             <Palette aria-hidden="true" />
           </button>
         </nav>
 
-        {activePanel === 'setup' && <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><UtensilsCrossed /><div><h3>{tr("Menu identity", "Identità del menu")}</h3><p>{tr("Choose the venue type and public heading.", "Scegli il tipo di locale e l'intestazione pubblica.")}</p></div></div>
+        {activePanel === 'setup' && <div className="menu-settings-layout">
+        <section className="admin-panel space-y-5">
+          <div className="menu-editor-section-title"><UtensilsCrossed /><div><h3>{tr("Menu details", "Dettagli del menu")}</h3><p>{tr("Choose the venue type and public heading.", "Scegli il tipo di locale e l'intestazione pubblica.")}</p></div></div>
           <div className="menu-venue-switch" role="group" aria-label={tr("Venue type", "Tipo di locale")}>
             {(['restaurant', 'bar', 'cafe'] as const).map((type) => (
               <button key={type} type="button" className={draft.venueType === type ? 'active' : ''} onClick={() => changeVenueType(type)}>
@@ -681,7 +682,28 @@ export function MenuEditor({
             </div>
           </div>
           <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
-        </section>}
+        </section>
+
+        <section className="admin-panel menu-settings-publishing">
+          <div className="menu-editor-section-title"><Eye /><div><h3>{tr('Publication', 'Pubblicazione')}</h3><p>{tr('Choose whether visitors can see your menu.', 'Scegli se i visitatori possono vedere il menu.')}</p></div></div>
+          <label className="menu-settings-visibility">
+            <span><strong>{draft.enabled ? tr('Published', 'Pubblicato') : tr('Unpublished', 'Non pubblicato')}</strong><small>{tr('Public menu visibility', 'Visibilità del menu pubblico')}</small></span>
+            <Switch aria-label={tr('Public menu visibility', 'Visibilità del menu pubblico')} checked={draft.enabled} onCheckedChange={(checked) => update((current) => ({ ...current, enabled: checked }))} />
+          </label>
+        </section>
+
+        <section className="admin-panel menu-publish-tools">
+          <div className="menu-editor-section-title"><QrCode /><div><h3>{tr("Public menu", "Menu pubblico")}</h3><p>{tr("The URL is static, cacheable and ready for print.", "L'URL è statico, memorizzabile in cache e pronto per la stampa.")}</p></div></div>
+          <div className="menu-publish-tools__grid">
+            <MenuQr url={menuUrl} color={draft.theme.text} />
+            <div>
+              <Label htmlFor="menu-public-url">URL menu</Label>
+              <div className="menu-url-row"><Input id="menu-public-url" value={menuUrl} readOnly /><Button aria-label="Copy URL" variant="outline" size="icon" title="Copy URL" onClick={() => { void navigator.clipboard.writeText(menuUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}</Button><Button asChild variant="outline" size="icon"><a aria-label="Open menu" href={menuUrl} target="_blank" rel="noopener noreferrer" title="Open menu"><ExternalLink aria-hidden="true" /></a></Button></div>
+              <Button className="mt-4" variant="outline" onClick={() => void onAddMenuLink()}>{tr("Add menu link to main page", "Aggiungi il link al menu nella pagina principale")}</Button>
+            </div>
+          </div>
+        </section>
+        </div>}
 
         {activePanel === 'content' && <section className="menu-content-shell">
           {presentation === 'classic' && (
@@ -1030,17 +1052,6 @@ export function MenuEditor({
           ) : <p className="menu-plan-note">Starter includes curated menu themes. Fine-tuned colors and layout unlock on Pro.</p>}
         </section>
 
-        <section className="admin-panel menu-publish-tools">
-          <div className="menu-editor-section-title"><QrCode /><div><h3>{tr("Public menu", "Menu pubblico")}</h3><p>{tr("The URL is static, cacheable and ready for print.", "L'URL è statico, memorizzabile in cache e pronto per la stampa.")}</p></div></div>
-          <div className="menu-publish-tools__grid">
-            <MenuQr url={menuUrl} color={draft.theme.text} />
-            <div>
-              <Label htmlFor="menu-public-url">URL menu</Label>
-              <div className="menu-url-row"><Input id="menu-public-url" value={menuUrl} readOnly /><Button aria-label="Copy URL" variant="outline" size="icon" title="Copy URL" onClick={() => { void navigator.clipboard.writeText(menuUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}</Button><Button asChild variant="outline" size="icon"><a aria-label="Open menu" href={menuUrl} target="_blank" rel="noopener noreferrer" title="Open menu"><ExternalLink aria-hidden="true" /></a></Button></div>
-              <Button className="mt-4" variant="outline" onClick={() => void onAddMenuLink()}>{tr("Add menu link to main page", "Aggiungi il link al menu nella pagina principale")}</Button>
-            </div>
-          </div>
-        </section>
         </div>
         {designPreview && <aside className="menu-design-preview" aria-label={tr('Live mobile menu preview', 'Anteprima live del menu mobile')}>
           <strong>{tr('Mobile preview', 'Anteprima mobile')}</strong>

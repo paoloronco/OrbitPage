@@ -335,12 +335,12 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(workflow.getByRole('button')).toHaveCount(4);
-  await expect(workflow.getByText('Identity', { exact: true })).toBeVisible();
+  await expect(workflow.getByText('Settings', { exact: true })).toBeVisible();
   await expect(workflow.getByText('Categories', { exact: true })).toBeVisible();
   await expect(workflow.getByText('Items', { exact: true })).toBeVisible();
   await expect(workflow.getByText('Design', { exact: true })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Menu content view' })).toHaveCount(0);
-  await workflow.getByRole('button', { name: /Identity/ }).click();
+  await workflow.getByRole('button', { name: /Settings/ }).click();
   const localeSelect = page.getByLabel('Locale', { exact: true });
   await expect(localeSelect).toHaveJSProperty('tagName', 'SELECT');
   await expect(localeSelect.locator('option')).toHaveCount(19);

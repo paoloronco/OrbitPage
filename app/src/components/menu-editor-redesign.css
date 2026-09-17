@@ -1689,3 +1689,17 @@
 @container menu-workspace (min-width: 48rem) {
   .menu-editor-stack--visual .menu-design-layout { grid-template-columns: minmax(0, 1fr) minmax(18rem, .62fr); align-items: start; }
 }
+
+.menu-editor-stack .menu-editor-savebar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-height: 42px; }
+.menu-editor-stack .menu-editor-savebar .menu-editor-message { flex: 1; min-width: 0; margin: 0; justify-self: auto; }
+.menu-editor-stack .menu-settings-layout,
+.menu-editor-stack .menu-settings-publishing { display: grid; align-content: start; gap: 16px; min-width: 0; }
+.menu-editor-stack .menu-settings-visibility { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 10px 14px; border: 1px solid #d9e2ed; border-radius: 8px; background: #f8faff; }
+.menu-editor-stack .menu-settings-visibility > span { display: grid; gap: 3px; min-width: 0; }
+.menu-editor-stack .menu-settings-visibility strong { color: #20344f; font-size: .85rem; }
+.menu-editor-stack .menu-settings-visibility small { color: #64748b; font-size: .72rem; }
+
+@container menu-workspace (max-width: 32rem) {
+  .menu-editor-stack .menu-editor-savebar { flex-wrap: wrap; }
+  .menu-editor-stack .menu-editor-savebar > button { width: 100%; }
+}

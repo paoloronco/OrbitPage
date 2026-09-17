@@ -454,6 +454,23 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
   await expect(workflow).toBeVisible();
   await expect(workflow.getByRole("button")).toHaveCount(4);
+  const workflowBeforeSettings = await workflow.boundingBox();
+  await workflow.getByRole("button", { name: /Settings/ }).click();
+  await expect(editor.getByRole("heading", { name: "Menu details" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: "Publication" })).toBeVisible();
+  await expect(editor.getByRole("heading", { name: "Public menu" })).toBeVisible();
+  await expect(editor.locator(".menu-publish-tools canvas")).toBeVisible();
+  await expect(editor.locator("#menu-public-url")).toBeVisible();
+  const publicationSwitch = editor.getByRole("switch", { name: "Public menu visibility" });
+  const wasPublished = await publicationSwitch.isChecked();
+  await publicationSwitch.click();
+  await expect(publicationSwitch).toHaveAttribute("aria-checked", String(!wasPublished));
+  await publicationSwitch.click();
+  await expect(editor.getByText("Unsaved changes", { exact: true })).toBeHidden();
+  await workflow.getByRole("button", { name: /Categories/ }).click();
+  const workflowAfterSettings = await workflow.boundingBox();
+  expect(workflowBeforeSettings && workflowAfterSettings).toBeTruthy();
+  expect(Math.abs(workflowAfterSettings!.y - workflowBeforeSettings!.y)).toBeLessThanOrEqual(1);
   await expect(editor.getByText("Pro menu", { exact: true })).toHaveCount(0);
   await expect(inspector.getByText("Selected element", { exact: true })).toHaveCount(0);
   await expect(editor.locator(".menu-visual-context")).toHaveCount(0);
@@ -493,6 +510,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
 
   const workflowBeforeDesign = await workflow.boundingBox();
   await workflow.getByRole("button", { name: /Design/ }).click();
+  await expect(editor.locator(".menu-publish-tools")).toHaveCount(0);
   const designSettings = editor.locator(".menu-design-settings");
   const designPreview = editor.locator(".menu-design-preview");
   await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
@@ -511,8 +529,11 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(workflow.getByRole("button", { name: /Identity/ })).toBeVisible();
+  await expect(workflow.getByRole("button", { name: /Settings/ })).toBeVisible();
   await expect(workflow.getByRole("button", { name: /Design/ })).toBeVisible();
+  await workflow.getByRole("button", { name: /Settings/ }).click();
+  await expect(editor.locator(".menu-publish-tools canvas")).toBeVisible();
+  expect(await editor.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
   await workflow.getByRole("button", { name: /Design/ }).click();
   await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
   const mobileSettingsBox = await designSettings.boundingBox();

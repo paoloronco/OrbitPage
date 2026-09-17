@@ -9,8 +9,7 @@ test('accepts localized menu prices without rewriting the field while typing', a
     firefox: '38,45',
     webkit: '39,45',
   };
-  const typedPrice = priceByProject[testInfo.project.name] ?? '40,45';
-  const normalizedPrice = typedPrice.replace(',', '.');
+  const basePrice = priceByProject[testInfo.project.name] ?? '40,45';
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
@@ -21,9 +20,14 @@ test('accepts localized menu prices without rewriting the field while typing', a
 
   const price = page.getByRole('textbox', { name: 'Item price' }).first();
   const addFirstProduct = page.getByRole('button', { name: 'Add item', exact: true }).first();
-  await expect(price.or(addFirstProduct)).toBeVisible();
-  if (await price.count() === 0) await addFirstProduct.click();
+  if (await price.count() === 0) {
+    await expect(addFirstProduct).toBeVisible();
+    await addFirstProduct.click();
+  }
   await expect(price).toBeVisible();
+  const typedPrice = (await price.inputValue()).replace(',', '.') === basePrice.replace(',', '.')
+    ? basePrice.replace(',45', ',46') : basePrice;
+  const normalizedPrice = typedPrice.replace(',', '.');
   await price.clear();
   await price.pressSequentially(typedPrice);
   await expect(price).toHaveValue(typedPrice);
@@ -33,7 +37,7 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await expect(page.locator('.admin-menu-live-preview')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Save menu' }).first().click();
-  await expect(page.getByText('Menu saved and published')).toBeVisible();
+  await expect(page.getByText(/Menu saved (and published|as unpublished)/)).toBeVisible();
 });
 
 test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
@@ -158,7 +162,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await editor.getByRole('textbox', { name: 'Option price' }).fill('11,00');
 
   await page.getByRole('button', { name: 'Save menu' }).first().click();
-  await expect(page.getByText('Menu saved and published')).toBeVisible();
+  await expect(page.getByText(/Menu saved (and published|as unpublished)/)).toBeVisible();
 
   await page.goto(`/dashboard/content/menu?e2eReload=${Date.now()}`, { waitUntil: 'commit' });
   const contentNavigation = page.getByRole('button', { name: 'Content', exact: true });
@@ -173,5 +177,5 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await page.locator('.menu-product-editor').getByRole('button', { name: 'Delete item' }).click();
   await expect(page.getByRole('button', { name: `Edit ${itemLabel}` })).toHaveCount(0);
   await page.getByRole('button', { name: 'Save menu' }).first().click();
-  await expect(page.getByText('Menu saved and published')).toBeVisible();
+  await expect(page.getByText(/Menu saved (and published|as unpublished)/)).toBeVisible();
 });
