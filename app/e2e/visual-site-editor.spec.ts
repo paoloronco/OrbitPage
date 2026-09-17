@@ -541,7 +541,17 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(workflow.getByRole("button", { name: /Design/ })).toBeVisible();
   await workflow.getByRole("button", { name: /Settings/ }).click();
   await expect(editor.locator(".menu-publish-tools canvas")).toBeVisible();
-  expect(await editor.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  const settingsOverflow = await editor.evaluate((element) => {
+    const edge = element.getBoundingClientRect().right;
+    return {
+      amount: element.scrollWidth - element.clientWidth,
+      offenders: [...element.querySelectorAll('*')]
+        .filter((child) => child.getBoundingClientRect().right > edge + 1)
+        .slice(0, 8)
+        .map((child) => ({ tag: child.tagName, className: child.getAttribute('class'), right: Math.round(child.getBoundingClientRect().right - edge) })),
+    };
+  });
+  expect(settingsOverflow.amount, JSON.stringify(settingsOverflow.offenders)).toBeLessThanOrEqual(1);
   await workflow.getByRole("button", { name: /Design/ }).click();
   await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
   const mobileSettingsBox = await designSettings.boundingBox();
