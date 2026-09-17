@@ -1,5 +1,19 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { openAuthenticatedAdmin } from "./helpers";
+
+async function protrudingMenuContent(editor: Locator) {
+  return editor.evaluate((element) => {
+    const edge = element.getBoundingClientRect();
+    return [...element.querySelectorAll('*')]
+      .filter((child) => {
+        const bounds = child.getBoundingClientRect();
+        return bounds.width > 0 && bounds.height > 0 && getComputedStyle(child).visibility !== 'hidden'
+          && (bounds.left < edge.left - 1 || bounds.right > edge.right + 1);
+      })
+      .slice(0, 8)
+      .map((child) => ({ tag: child.tagName, className: child.getAttribute('class') }));
+  });
+}
 
 // Legacy arrangement assertions depend on the removed Done/Reset toolbar; focused editor and viewport tests below remain active.
 test.skip("New UI edits the real page through selectable elements and keeps the preference", async ({ browserName, page }) => {
@@ -541,31 +555,21 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(workflow.getByRole("button", { name: /Design/ })).toBeVisible();
   await workflow.getByRole("button", { name: /Settings/ }).click();
   await expect(editor.locator(".menu-publish-tools canvas")).toBeVisible();
-  const settingsOverflow = await editor.evaluate((element) => {
-    const edge = element.getBoundingClientRect().right;
-    return {
-      amount: element.scrollWidth - element.clientWidth,
-      offenders: [...element.querySelectorAll('*')]
-        .filter((child) => child.getBoundingClientRect().right > edge + 1)
-        .slice(0, 8)
-        .map((child) => ({ tag: child.tagName, className: child.getAttribute('class'), right: Math.round(child.getBoundingClientRect().right - edge) })),
-    };
-  });
-  expect(settingsOverflow.amount, JSON.stringify(settingsOverflow.offenders)).toBeLessThanOrEqual(1);
+  expect(await protrudingMenuContent(editor)).toEqual([]);
   await workflow.getByRole("button", { name: /Design/ }).click();
   await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
   const mobileSettingsBox = await designSettings.boundingBox();
   const mobilePreviewBox = await designPreview.boundingBox();
   expect(mobileSettingsBox && mobilePreviewBox).toBeTruthy();
   expect(mobilePreviewBox!.y).toBeGreaterThanOrEqual(mobileSettingsBox!.y + mobileSettingsBox!.height);
-  expect(await editor.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  expect(await protrudingMenuContent(editor)).toEqual([]);
   await workflow.getByRole("button", { name: /^02 Menu/ }).click();
   await editor.getByRole("button", { name: "Add item" }).first().click();
   await expect(editor.locator(".menu-unified-panel")).toHaveClass(/is-editing/);
   await expect(editor.getByRole("button", { name: "Back to items" })).toBeVisible();
   await expect(editor.getByLabel("Item price")).toBeVisible();
   await expect(editor.getByRole("button", { name: "Move up" })).toBeVisible();
-  expect(await editor.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  expect(await protrudingMenuContent(editor)).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   await editor.locator(".menu-product-editor").getByLabel("Name", { exact: true }).fill("Mobile menu item");
   await editor.getByRole("button", { name: "Back to items" }).click();
@@ -579,8 +583,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(editor.getByText("No results found")).toBeVisible();
   await editor.getByRole("button", { name: "Clear filters" }).click();
   await expect(editor.getByRole("button", { name: /Edit Mobile menu item/ })).toBeVisible();
-  const mobileOverflow = await editor.evaluate((element) => element.scrollWidth - element.clientWidth);
-  expect(mobileOverflow).toBeLessThanOrEqual(1);
+  expect(await protrudingMenuContent(editor)).toEqual([]);
   const pageOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(pageOverflow).toBeLessThanOrEqual(1);
 });
