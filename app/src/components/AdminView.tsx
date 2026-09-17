@@ -879,6 +879,7 @@ export const AdminView = ({
       seoAccess={entitlements?.seo}
       managePlanHref={managePlanHref}
       orbitPageBadgeEditable={orbitPageBadgeEditable}
+      pageTypeEditable={!isHostedAdmin}
     />
   ) : visualSection === "links" ? (
     <LinkManager
@@ -1326,6 +1327,7 @@ export const AdminView = ({
                   seoAccess={entitlements?.seo}
                   managePlanHref={managePlanHref}
                   orbitPageBadgeEditable={orbitPageBadgeEditable}
+                  pageTypeEditable={!isHostedAdmin}
                 />
               </div>
               {showEmbeddedPreview && (
