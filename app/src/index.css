@@ -3132,6 +3132,11 @@
     gap: 12px;
   }
 
+  .admin-link-list .public-block-preview[data-surface-effect="liquid-glass"]:has(> :not(.public-unboxed-block)) {
+    background: var(--gradient-background);
+    border-radius: var(--radius);
+  }
+
   .admin-compact-link-editor {
     background: #f8faff;
     border: 1px solid #d8e2f5;
