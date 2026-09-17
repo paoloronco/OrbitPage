@@ -6,12 +6,11 @@ import { resolveSafePublicMediaUrl } from '@/lib/browser-network-policy';
 
 interface MenuViewProps {
   menu: MenuCatalog;
-  embedded?: boolean;
   pageHref?: string;
   selectedSectionId?: string;
 }
 
-export function MenuView({ menu, embedded = false, pageHref = withBasePath('/'), selectedSectionId = '' }: MenuViewProps) {
+export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId = '' }: MenuViewProps) {
   const [query, setQuery] = useState('');
   const [sectionState, setSectionState] = useState<Record<string, boolean>>({});
   const sections = [...menu.sections]
@@ -120,7 +119,7 @@ export function MenuView({ menu, embedded = false, pageHref = withBasePath('/'),
   );
 
   return (
-    <main className={`orbitpage-menu${embedded ? ' orbitpage-menu--embedded' : ''}`} style={style}>
+    <main className="orbitpage-menu" style={style}>
       <div className="orbitpage-menu__shell">
         <header className="orbitpage-menu__header">
           <a className="orbitpage-menu__back" href={pageHref} aria-label="Back to the main page">

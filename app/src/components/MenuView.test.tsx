@@ -24,6 +24,9 @@ describe('MenuView subsections', () => {
 
     const html = renderToStaticMarkup(<MenuView menu={menu} />);
 
+    expect(html).toContain('class="orbitpage-menu"');
+    expect(html).toContain('class="orbitpage-menu__back"');
+    expect(html).toContain('class="orbitpage-menu__footer"');
     expect(html).toContain('href="#menu-beverage"');
     expect(html).toContain('href="#menu-beer"');
     expect(html).toContain('id="menu-beverage"');

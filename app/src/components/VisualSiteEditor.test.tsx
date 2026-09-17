@@ -54,6 +54,7 @@ describe("VisualSiteEditor", () => {
   });
 
   it("shows Menu preview only when its Design panel provides one", () => {
+    vi.stubGlobal("window", { matchMedia: () => ({ matches: true }) });
     const renderPreview = vi.fn(() => <div>Specialized public preview</div>);
 
     const props = {
@@ -85,6 +86,8 @@ describe("VisualSiteEditor", () => {
     expect(withDesign).toContain("Specialized public preview");
     expect(withDesign).not.toContain("Show preview");
     expect(renderPreview).toHaveBeenCalledOnce();
+    expect(renderPreview).toHaveBeenCalledWith("mobile");
+    vi.unstubAllGlobals();
   });
 
   it("gives Shop the full editor width without a persistent preview", () => {
