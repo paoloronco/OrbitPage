@@ -906,52 +906,73 @@
 
 .menu-editor-stack--visual .menu-editor-tabs,
 .menu-editor-stack--visual .menu-editor-tabs:first-child {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
-  overflow: hidden;
-  border: 1px solid #d8e1ed;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  overflow: visible;
+  border: 1px solid #d7dee8;
   border-radius: 8px;
+  background: #fff;
+  padding: 4px;
 }
 
 .menu-editor-stack--visual .menu-editor-tabs button,
 .menu-editor-stack--visual .menu-editor-tabs button:first-child,
 .menu-editor-stack--visual .menu-editor-tabs button:last-child {
-  display: flex;
-  min-height: 50px;
+  position: static;
+  display: inline-flex;
+  min-height: 40px;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   overflow: visible;
-  border: 0;
-  border-right: 1px solid #e2e8f0;
-  border-radius: 0;
-  padding: 7px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  padding: 0 8px;
+  color: #667085;
   text-align: center;
 }
 
-.menu-editor-stack--visual .menu-editor-tabs button:last-child {
-  border-right: 0;
+.menu-editor-stack--visual .menu-editor-tabs button:hover {
+  border-color: transparent;
+  background: #f7f9fd;
+  color: #101623;
 }
 
 .menu-editor-stack--visual .menu-editor-tabs button.active {
-  background: #173969;
+  border-color: #c9d7fa;
+  background: #edf3ff;
   box-shadow: none;
+  color: #2454d6;
 }
 
-.menu-editor-stack--visual .menu-editor-tabs button > svg,
 .menu-editor-stack--visual .menu-editor-tab-copy small {
   display: none;
 }
 
+.menu-editor-stack--visual .menu-editor-tabs button > svg {
+  position: static;
+  display: block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  order: -1;
+  color: inherit;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs button.active > svg {
+  color: inherit;
+}
+
 .menu-editor-stack--visual .menu-editor-tab-index {
-  width: auto;
-  height: auto;
-  border: 0;
-  background: transparent;
-  font-size: .58rem;
+  display: none;
 }
 
 .menu-editor-stack--visual .menu-editor-tab-copy strong {
-  font-size: .7rem;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .menu-editor-stack--visual .menu-category-picker {
@@ -1023,21 +1044,14 @@
 @container menu-workspace (max-width: 30rem) {
   .menu-editor-stack--visual .menu-editor-tabs,
   .menu-editor-stack--visual .menu-editor-tabs:first-child {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .menu-editor-stack--visual .menu-editor-tabs button:nth-child(2) {
-    border-right: 0;
-  }
-
-  .menu-editor-stack--visual .menu-editor-tabs button:nth-child(-n + 2) {
-    border-bottom: 1px solid #e2e8f0;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   }
 
   .menu-editor-stack--visual .menu-editor-tabs button,
   .menu-editor-stack--visual .menu-editor-tabs button:first-child,
   .menu-editor-stack--visual .menu-editor-tabs button:last-child {
-    min-height: 48px;
+    min-height: 44px;
+    padding-inline: 6px;
   }
 
   .menu-editor-stack--visual .menu-category-picker__meta span {

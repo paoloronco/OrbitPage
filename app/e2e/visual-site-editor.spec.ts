@@ -481,7 +481,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(publicationSwitch).toHaveAttribute("aria-checked", String(!wasPublished));
   await publicationSwitch.click();
   await expect(editor.getByText("Unsaved changes", { exact: true })).toBeHidden();
-  await workflow.getByRole("button", { name: /^02 Menu/ }).click();
+  await workflow.getByRole("button", { name: "Menu", exact: true }).click();
   const workflowAfterSettings = await workflow.boundingBox();
   expect(workflowBeforeSettings && workflowAfterSettings).toBeTruthy();
   expect(Math.abs(workflowAfterSettings!.y - workflowBeforeSettings!.y)).toBeLessThanOrEqual(1);
@@ -547,7 +547,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   expect(Math.abs(workflowInDesign!.width - workflowBeforeDesign!.width)).toBeLessThanOrEqual(1);
   expect(previewBox!.x).toBeGreaterThanOrEqual(settingsBox!.x + settingsBox!.width);
   expect(previewBox!.y).toBeGreaterThanOrEqual(workflowInDesign!.y + workflowInDesign!.height);
-  await workflow.getByRole("button", { name: /^02 Menu/ }).click();
+  await workflow.getByRole("button", { name: "Menu", exact: true }).click();
   await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -563,7 +563,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   expect(mobileSettingsBox && mobilePreviewBox).toBeTruthy();
   expect(mobilePreviewBox!.y).toBeGreaterThanOrEqual(mobileSettingsBox!.y + mobileSettingsBox!.height);
   expect(await protrudingMenuContent(editor)).toEqual([]);
-  await workflow.getByRole("button", { name: /^02 Menu/ }).click();
+  await workflow.getByRole("button", { name: "Menu", exact: true }).click();
   await editor.getByRole("button", { name: "Add item" }).first().click();
   await expect(editor.locator(".menu-unified-panel")).toHaveClass(/is-editing/);
   await expect(editor.getByRole("button", { name: "Back to items" })).toBeVisible();
