@@ -183,6 +183,19 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       );
     }
 
+    // If we have a custom icon that is not an emoji and not a social platform name, render it as a custom icon
+    if (link.icon && !iconIsImage && !socialIconNames.has(semanticIconName as SocialLinkPlatform)) {
+      return (
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+          <CompactLinkIcon 
+            url={safeHref || ''} 
+            className="h-4 w-4" 
+            customIcon={link.icon}
+          />
+        </div>
+      );
+    }
+
     const SemanticIcon = semanticIconComponents[semanticIconName as keyof typeof semanticIconComponents];
     if (SemanticIcon) {
       return (
