@@ -152,7 +152,6 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
 
   // Determine what to show in the icon area
   const renderIcon = () => {
-    // Handle special cases for shop and service links when no icon is configured
     if (isShopLink && !link.icon) {
       return <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary"><ShoppingBag className="h-5 w-5" aria-hidden="true" /></span>;
     }
@@ -166,11 +165,6 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
           <ServiceBrandIcon provider={service} className="h-5 w-5" />
         </div>
       );
-    }
-
-    // If no icon is configured at all, return nothing (this covers the case for ordinary links with no icon)
-    if (!link.icon) {
-      return null;
     }
 
     if (link.icon && link.iconType === 'emoji') {
