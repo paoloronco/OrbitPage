@@ -38,4 +38,22 @@ describe("PublicLinkCard media", () => {
     expect(html).not.toContain("/uploads/instagram");
     expect(html).not.toContain('<img');
   });
+
+  it("renders no icon when icon is not configured", () => {
+    const html = renderToStaticMarkup(
+      <PublicLinkCard
+        link={{
+          id: "card-without-icon",
+          title: "No Icon Link",
+          description: "",
+          url: "https://example.com",
+        }}
+      />
+    );
+
+    // Should not contain any icon-related markup when no icon is configured
+    expect(html).not.toContain('class="public-link-icon-fallback"');
+    expect(html).not.toContain('class="flex h-8 w-8 items-center justify-center rounded-full bg-white/10"');
+    expect(html).not.toContain('>N</span>'); // 'N' is first letter of "No Icon Link"
+  });
 });
