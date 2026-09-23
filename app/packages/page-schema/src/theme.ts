@@ -262,9 +262,12 @@ function readableForeground(background: string, fallback: string) {
 }
 
 export function normalizeOrbitPageTheme(value: unknown, strict = false): OrbitPageTheme {
+  const candidate = !strict && isPlainObject(value) && isPlainObject(value.backgroundMedia) && value.backgroundMedia.type === "image"
+    ? { ...value, backgroundMedia: { ...value.backgroundMedia, type: "gif" } }
+    : value;
   const input = parseOrThrow(
     strict ? OrbitPageThemeInputSchema : LegacyThemeInputSchema,
-    value ?? {},
+    candidate ?? {},
     "The theme contains invalid or unsupported data."
   );
   const primary = input.primary ?? input.primaryColor ?? DEFAULT_ORBITPAGE_THEME.primary;

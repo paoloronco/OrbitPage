@@ -291,7 +291,8 @@ export const OrbitPageServiceLinkContentSchema = z.object({
 
 function structuredContent(
   type: OrbitPageBlockType,
-  content: unknown
+  content: unknown,
+  strict: boolean
 ): string | undefined {
   if (content === undefined || content === null || content === "") return undefined;
   if (type === "text") {
@@ -304,17 +305,18 @@ function structuredContent(
   }
 
   const input = parseJsonObject(content, type);
+  const schemaFor = <T extends z.ZodRawShape>(schema: z.ZodObject<T>) => strict ? schema : schema.strip();
   let parsed: Record<string, unknown>;
-  if (type === "video") parsed = parseOrThrow(OrbitPageVideoContentSchema, input, "Invalid video block content.");
+  if (type === "video") parsed = parseOrThrow(schemaFor(OrbitPageVideoContentSchema), input, "Invalid video block content.");
   else if (type === "contact") {
-    const contact = parseOrThrow(OrbitPageContactContentInputSchema, input, "Invalid contact block content.");
+    const contact = parseOrThrow(schemaFor(OrbitPageContactContentInputSchema), input, "Invalid contact block content.");
     parsed = parseOrThrow(OrbitPageContactContentSchema, {
       ...contact,
       website: normalizeOrbitPagePublicHref(contact.website) ?? contact.website
     }, "Invalid contact block content.");
   }
   else if (type === "social_row") {
-    const socialRow = parseOrThrow(OrbitPageSocialRowContentInputSchema, input, "Invalid social-row block content.");
+    const socialRow = parseOrThrow(schemaFor(OrbitPageSocialRowContentInputSchema), input, "Invalid social-row block content.");
     parsed = parseOrThrow(OrbitPageSocialRowContentSchema, {
       ...socialRow,
       items: socialRow.items.map((item) => ({
@@ -323,22 +325,22 @@ function structuredContent(
       }))
     }, "Invalid social-row block content.");
   }
-  else if (type === "callout") parsed = parseOrThrow(OrbitPageCalloutContentSchema, input, "Invalid callout block content.");
+  else if (type === "callout") parsed = parseOrThrow(schemaFor(OrbitPageCalloutContentSchema), input, "Invalid callout block content.");
   else if (type === "map") {
-    const map = parseOrThrow(OrbitPageMapContentInputSchema, input, "Invalid map block content.");
+    const map = parseOrThrow(schemaFor(OrbitPageMapContentInputSchema), input, "Invalid map block content.");
     parsed = parseOrThrow(OrbitPageMapContentSchema, {
       ...map,
       mapUrl: normalizeOrbitPagePublicHref(map.mapUrl) ?? map.mapUrl
     }, "Invalid map block content.");
   }
-  else if (type === "event") parsed = parseOrThrow(OrbitPageEventContentSchema, input, "Invalid event block content.");
-  else if (type === "embed") parsed = parseOrThrow(OrbitPageEmbedContentSchema, input, "Invalid embed block content.");
-  else if (type === "separator") parsed = parseOrThrow(OrbitPageSeparatorContentSchema, input, "Invalid separator block content.");
-  else if (type === "internal_links") parsed = parseOrThrow(OrbitPageInternalLinksContentSchema, input, "Invalid internal-links block content.");
+  else if (type === "event") parsed = parseOrThrow(schemaFor(OrbitPageEventContentSchema), input, "Invalid event block content.");
+  else if (type === "embed") parsed = parseOrThrow(schemaFor(OrbitPageEmbedContentSchema), input, "Invalid embed block content.");
+  else if (type === "separator") parsed = parseOrThrow(schemaFor(OrbitPageSeparatorContentSchema), input, "Invalid separator block content.");
+  else if (type === "internal_links") parsed = parseOrThrow(schemaFor(OrbitPageInternalLinksContentSchema), input, "Invalid internal-links block content.");
   else if (type === "link") {
     if ("items" in input) {
       const socialRow = parseOrThrow(
-        OrbitPageSocialRowContentInputSchema,
+        schemaFor(OrbitPageSocialRowContentInputSchema),
         input,
         "Invalid legacy social-row block content."
       );
@@ -350,7 +352,7 @@ function structuredContent(
         }))
       }, "Invalid legacy social-row block content.");
     } else {
-      parsed = parseOrThrow(OrbitPageServiceLinkContentSchema, input, "Invalid service-link block content.");
+      parsed = parseOrThrow(schemaFor(OrbitPageServiceLinkContentSchema), input, "Invalid service-link block content.");
     }
   } else {
     throw new Error(`Unsupported block type: ${type}`);
@@ -428,7 +430,7 @@ function canonicalBlock(value: unknown, position: number, strict: boolean): Orbi
       : "link";
   const requestedId = String(input.id ?? "");
   const id = OrbitPageBlockIdSchema.safeParse(requestedId).success ? requestedId : generatedId();
-  const content = structuredContent(type, input.content);
+  const content = structuredContent(type, input.content, strict);
   const textItems = input.textItems?.map((item) => ({
     ...item,
     ...(item.url !== undefined && item.url !== null

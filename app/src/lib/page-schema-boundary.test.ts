@@ -7,6 +7,8 @@ import {
   ORBITPAGE_THEME_PRESETS,
   applyOrbitPageProfilePatch,
   normalizeOrbitPageSocialHref,
+  normalizeOrbitPageTheme,
+  normalizeStoredOrbitPageBlocks,
   normalizeProfileSocialHref,
   profileSocialIdentifier,
   parseOrbitPageBlockStylePatch,
@@ -79,6 +81,28 @@ describe('canonical page schema boundary', () => {
         items: [{ id: 'outside', kind: 'page', path: '//attacker.test', label: 'Leave' }],
       }),
     }])).toThrow(/invalid internal-links|items\.0\.path|must match pattern/i);
+  });
+
+  it('normalizes legacy stored blocks and backgrounds without weakening write validation', () => {
+    const legacyEvent = {
+      id: 'legacy-event',
+      type: 'event',
+      content: JSON.stringify({ badge: 'Live', buttonLabel: 'Book' }),
+    };
+    const legacyTheme = {
+      ...DEFAULT_ORBITPAGE_THEME,
+      backgroundMedia: {
+        ...DEFAULT_ORBITPAGE_THEME.backgroundMedia,
+        type: 'image',
+        mediaUrl: 'https://cdn.example.com/background.jpg',
+      },
+    };
+
+    expect(JSON.parse(normalizeStoredOrbitPageBlocks([legacyEvent])[0].content || '{}'))
+      .not.toHaveProperty('badge');
+    expect(normalizeOrbitPageTheme(legacyTheme).backgroundMedia.type).toBe('gif');
+    expect(() => parseOrbitPageBlocks([legacyEvent])).toThrow(/unrecognized|invalid event/i);
+    expect(() => parseOrbitPageTheme(legacyTheme)).toThrow(/invalid option|invalid enum/i);
   });
 
   it('preserves customizable internal OrbitPage navigation blocks', () => {
