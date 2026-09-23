@@ -1256,7 +1256,7 @@ const rewriteViteAssetUrls = (html, req) => {
 
 const buildNoScriptPublicContent = (profile, links, origin) => {
   const visibleLinks = (links || [])
-    .filter((link) => link?.type === 'link' && link?.title && toAbsoluteHttpUrl(link.url, origin))
+    .filter((link) => link?.type === 'link' && link?.title)
     .slice(0, 100);
 
   const title = profile?.name || PUBLIC_SITE_NAME;
@@ -1264,7 +1264,8 @@ const buildNoScriptPublicContent = (profile, links, origin) => {
   const items = visibleLinks.map((link) => {
     const href = toAbsoluteHttpUrl(link.url, origin);
     const description = compactText(link.description || '', 220);
-    return `<li><a href="${escapeHtml(href)}" rel="noopener noreferrer">${escapeHtml(link.title)}</a>${description ? `<p>${escapeHtml(description)}</p>` : ''}</li>`;
+    const title = href ? `<a href="${escapeHtml(href)}" rel="noopener noreferrer">${escapeHtml(link.title)}</a>` : escapeHtml(link.title);
+    return `<li>${title}${description ? `<p>${escapeHtml(description)}</p>` : ''}</li>`;
   }).join('');
 
   return `<noscript><main><h1>${escapeHtml(title)}</h1>${bio ? `<p>${escapeHtml(bio)}</p>` : ''}${items ? `<ul>${items}</ul>` : ''}</main></noscript>`;

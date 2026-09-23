@@ -50,6 +50,20 @@ describe("PublicView visual editor targets", () => {
     expect(html).not.toContain("data-public-editor-link-id");
   });
 
+  it("keeps public cards without a destination visible and non-actionable", () => {
+    const html = renderToStaticMarkup(
+      <PublicView
+        links={[{ ...links[0], id: "information", title: "Opening hours", url: "" }]}
+        profile={profile}
+        theme={defaultTheme}
+      />,
+    );
+
+    expect(html).toContain("Opening hours");
+    expect(html).not.toContain("lucide-external-link");
+    expect(html).not.toContain('aria-label="Copy link"');
+  });
+
   it("renders saved desktop card and inner-content coordinates on the public page", () => {
     const html = renderToStaticMarkup(
       <PublicView

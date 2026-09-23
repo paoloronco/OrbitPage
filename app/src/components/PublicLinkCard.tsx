@@ -261,7 +261,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               </span>
             )}
           </span>
-          <ArrowRight className="h-5 w-5 shrink-0 text-white/75 transition-transform group-hover:translate-x-0.5" />
+          {safeHref && <ArrowRight className="h-5 w-5 shrink-0 text-white/75 transition-transform group-hover:translate-x-0.5" />}
         </a>
       </Card>
     );
@@ -286,7 +286,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
           <h3 className="min-w-0 flex-1 truncate font-semibold" style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
             {link.title || 'Untitled Link'}
           </h3>
-          <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 text-primary opacity-0 transition-smooth group-hover:opacity-100" />
+          {safeHref && <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 text-primary opacity-0 transition-smooth group-hover:opacity-100" />}
         </a>
       ),
       ...(link.description ? {
@@ -345,7 +345,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
           {contentLayoutEditing && contentLayoutGuides?.x !== undefined && <i className="page-card-layout__guide page-card-layout__guide--x" style={{ left: `${contentLayoutGuides.x}%` }} />}
           {contentLayoutEditing && contentLayoutGuides?.y !== undefined && <i className="page-card-layout__guide page-card-layout__guide--y" style={{ top: `${contentLayoutGuides.y}px` }} />}
         </div>
-        {!unavailable && <button aria-label={copied ? 'Link copied' : 'Copy link'} onClick={handleCopy} className="public-link-card__copy opacity-0 transition-smooth group-hover:opacity-100 focus-visible:opacity-100" title={copied ? 'Link copied' : 'Copy link'} type="button">{copied ? <Check aria-hidden="true" className="h-3 w-3 text-green-500" /> : <Copy aria-hidden="true" className="h-3 w-3 text-muted-foreground" />}</button>}
+        {!unavailable && safeHref && <button aria-label={copied ? 'Link copied' : 'Copy link'} onClick={handleCopy} className="public-link-card__copy opacity-0 transition-smooth group-hover:opacity-100 focus-visible:opacity-100" title={copied ? 'Link copied' : 'Copy link'} type="button">{copied ? <Check aria-hidden="true" className="h-3 w-3 text-green-500" /> : <Copy aria-hidden="true" className="h-3 w-3 text-muted-foreground" />}</button>}
       </Card>
     );
   }
@@ -399,7 +399,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
                 >
                   {link.title || "Untitled Link"}
                 </h3>
-                <ExternalLink aria-hidden="true" className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />
+                {safeHref && <ExternalLink aria-hidden="true" className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />}
                 {unavailable ? (
                   <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{tr('Unavailable', 'Non disponibile')}</span>
                 ) : null}
@@ -422,7 +422,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               )}
             </div>
           </a>
-          {!unavailable && <button
+          {!unavailable && safeHref && <button
             aria-label={copied ? "Link copied" : "Copy link"}
             onClick={handleCopy}
             className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
