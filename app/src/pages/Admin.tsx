@@ -421,28 +421,7 @@ const Admin = () => {
 
   const saveTheme = async (newTheme: ThemeConfig) => {
     try {
-      const themedLinks = links.map((link) => ({
-        ...link,
-        backgroundColor: null as unknown as string,
-        textColor: null as unknown as string,
-        titleFontFamily: null as unknown as string,
-        descriptionFontFamily: null as unknown as string,
-        titleFontSize: null as unknown as string,
-        descriptionFontSize: null as unknown as string,
-        textItems: link.textItems?.map((item) => ({
-          ...item,
-          textColor: null as unknown as string,
-          fontFamily: null as unknown as string,
-          fontSize: null as unknown as string,
-        })),
-      }));
-      // Pass the full theme configuration to the API
       await themeApi.update(newTheme);
-      if (themedLinks.length) {
-        await linksApi.update(themedLinks);
-        const reloadedLinks = await linksApi.get();
-        setLinks(normalizeLinkDtos(reloadedLinks));
-      }
       setTheme(newTheme);
       // Apply theme to admin interface too
       applyTheme(newTheme);

@@ -110,7 +110,7 @@ export const PublicView = ({
         ((link.content?.trim() !== '') ||
          (link.textItems && link.textItems.length > 0 && link.textItems.some(item => item.text.trim() !== '')));
     }
-    return link.title.trim() !== '' && link.url.trim() !== '';
+    return link.title.trim() !== '' || link.description.trim() !== '' || Boolean(link.coverImage);
   });
 
   const viewportClass = embedded

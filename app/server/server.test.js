@@ -1295,6 +1295,15 @@ describe('API Endpoints', () => {
         is_active: 1,
         sort_order: 0,
       },
+      {
+        id: '2',
+        title: 'Opening hours',
+        description: 'Monday to Friday',
+        url: '',
+        type: 'link',
+        is_active: 1,
+        sort_order: 1,
+      },
     ]);
 
     const response = await request(app)
@@ -1310,6 +1319,7 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('id="orbitpage-structured-data"');
     expect(response.text).toContain('<noscript>');
     expect(response.text).toContain('href="https://github.com/example"');
+    expect(response.text).toContain('<li>Opening hours<p>Monday to Friday</p></li>');
     expect(response.text).toContain('src="/assets/');
     expect(response.text).toContain('href="/assets/');
     expect(response.text).toContain('href="/brand/orbitpage-favicon-48.png"');
