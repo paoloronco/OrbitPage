@@ -4,13 +4,13 @@
  * Renders:
  *  1. The main consent banner (bottom-bar / centered-modal / corner-popup)
  *  2. The preferences modal (always a centered overlay)
- *  3. A persistent "Cookie preferences" reopener chip in the bottom-left corner
+ *  3. A persistent cookie preferences button in the bottom-left corner
  *
  * Compliance notes:
  *  - "Reject all" and "Accept all" receive identical visual weight (EU/GDPR requirement)
  *  - No consent by inaction, scrolling, or pre-ticked optional categories
  *  - Necessary cookies are pre-checked and locked (cannot be disabled)
- *  - The reopener chip is always visible after consent is given so users can
+ *  - The reopener button is always visible after consent is given so users can
  *    revise their choices at any time (GDPR Art. 7 withdrawal requirement)
  */
 
@@ -595,7 +595,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
     </div>
   );
 
-  // ── Preferences reopener chip ───────────────────────────────────────────────
+  // ── Preferences reopener button ─────────────────────────────────────────────
   // Always visible so users can revise consent at any time (GDPR Art. 7)
   const reopenerChip = !bannerVisible && (
     <button
@@ -610,21 +610,20 @@ export function CookieBanner({ config }: CookieBannerProps) {
         zIndex: 2147483645,
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
+        justifyContent: 'center',
+        width: 40,
+        height: 40,
         background: colors.bg,
         border: `1.5px solid ${colors.border}`,
         borderRadius: '9999px',
-        padding: '0.375rem 0.75rem',
-        fontSize: '0.75rem',
-        fontWeight: 600,
+        padding: 0,
         color: colors.muted,
         cursor: 'pointer',
         boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
         transition: 'box-shadow 0.15s',
       }}
     >
-      <span style={{ fontSize: '0.875rem' }}>🍪</span>
-      {cfg.texts.reopenLabel || 'Cookie preferences'}
+      <span aria-hidden="true" style={{ fontSize: '1rem', lineHeight: 1 }}>🍪</span>
     </button>
   );
 
