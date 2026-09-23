@@ -949,18 +949,18 @@
 
 @container visual-site-editor (max-width: 600px) {
   .visual-site-editor__sections {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    overflow: visible;
-    scroll-snap-type: none;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
   }
 
   .visual-site-editor__sections > button {
-    width: 100%;
-    min-width: 0;
+    width: auto;
+    min-width: max-content;
     justify-content: center;
     padding-inline: 8px;
-    scroll-snap-align: none;
+    scroll-snap-align: start;
   }
 
   .visual-site-editor__sections > button span {
@@ -969,17 +969,12 @@
   }
 
   .visual-site-editor__section-actions {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    justify-self: end;
     margin-left: 0;
     padding: 0 2px;
   }
-}
 
-@container visual-site-editor (max-width: 390px) {
-  .visual-site-editor__sections {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .visual-site-editor__sections::-webkit-scrollbar {
+    display: none;
   }
 }
 
