@@ -2636,9 +2636,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .admin-content-grid-editor .admin-workbench-rail {
+  .admin-content-grid > .admin-workbench-rail {
     position: sticky;
     top: 72px;
+    align-self: start;
   }
 
   .admin-preview-panel {
@@ -4197,7 +4198,7 @@
       display: none;
     }
 
-    .admin-content-grid-editor .admin-workbench-rail {
+    .admin-content-grid > .admin-workbench-rail {
       position: static;
     }
 
