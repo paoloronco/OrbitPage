@@ -25,7 +25,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { OrbitLoadingState } from '@/components/ui/orbit-loader';
 import {
-  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   ClipboardCheck,
@@ -154,116 +153,6 @@ const EMPTY_POLICY_CONFIG = {
   embeddedCode: '',
 };
 
-function generatedPolicies(input: {
-  language: 'it' | 'en';
-  controller: { name: string; email: string; country?: string; address?: string };
-  policyVersion: string;
-  categories: NonNullable<ConsentConfigData['hardcoded']>['categories'];
-}) {
-  const { controller, language, policyVersion, categories } = input;
-  const identity = [controller.name, controller.address, controller.country].filter(Boolean).join(', ');
-  const enabled = Object.entries(categories)
-    .filter(([, category]) => category.enabled)
-    .map(([, category]) => `- ${category.title}: ${category.description}`)
-    .join('\n');
-  if (language === 'it') {
-    return {
-      privacy: `PRIVACY POLICY
-Versione ${policyVersion}
-
-1. Titolare del trattamento
-${identity}
-Contatto privacy: ${controller.email}
-
-2. Dati trattati
-Questa pagina può trattare dati tecnici strettamente necessari alla sicurezza e al funzionamento del servizio. Se il titolare attiva moduli, newsletter, Shop o prenotazioni, vengono inoltre trattati i dati inviati volontariamente dall’utente e quelli necessari a gestire la richiesta, il pagamento, la consegna o l’appuntamento.
-
-3. Finalità e basi giuridiche
-I dati necessari vengono trattati per erogare il servizio richiesto, adempiere obblighi di legge e proteggere la pagina. Analytics, personalizzazione e contenuti di terze parti vengono attivati solo in base alle scelte espresse nel banner, quando richiesto.
-
-4. Fornitori e trasferimenti
-OrbitPage fornisce l’infrastruttura della pagina. Eventuali servizi esterni scelti dal titolare (ad esempio analytics, video, mappe, calendario o moduli) ricevono dati soltanto dopo il consenso previsto e applicano le proprie informative. Alcuni fornitori possono trattare dati fuori dallo SEE usando le garanzie previste dalla normativa applicabile.
-
-5. Conservazione
-I dati sono conservati per il tempo necessario alle finalità indicate e agli obblighi legali. Le scelte cookie sono conservate per il periodo indicato nella Cookie Policy; la prova tecnica del consenso è conservata per un massimo di 24 mesi.
-
-6. Diritti
-L’interessato può chiedere accesso, rettifica, cancellazione, limitazione, portabilità e opposizione, nonché revocare il consenso in qualsiasi momento dal comando “Preferenze cookie”. Le richieste possono essere inviate a ${controller.email}. Resta possibile proporre reclamo all’autorità di controllo competente.
-
-7. Aggiornamenti
-Il titolare può aggiornare questa informativa. La versione pubblicata su questa pagina è quella vigente.`,
-      cookie: `COOKIE POLICY
-Versione ${policyVersion}
-
-1. Titolare
-${identity}
-Contatto privacy: ${controller.email}
-
-2. Cosa utilizza la pagina
-OrbitPage usa storage strettamente necessario per ricordare le scelte privacy, proteggere il servizio e mantenere le funzioni richieste dall’utente. Gli strumenti opzionali restano bloccati fino alla scelta del visitatore.
-
-3. Categorie opzionali configurate
-${enabled || '- Nessuna categoria opzionale attiva.'}
-
-4. Servizi di terze parti
-Video, mappe, calendari, moduli, social embed e strumenti analytics possono comunicare con i rispettivi fornitori soltanto dopo il consenso della categoria associata. Prima del consenso viene mostrato un segnaposto e non viene inviata alcuna richiesta al provider.
-
-5. Durata e prova del consenso
-Le preferenze vengono conservate in modo separato per questa specifica pagina per il periodo configurato dal titolare. OrbitPage registra una ricevuta tecnica delle scelte, senza IP o email del visitatore, per un massimo di 24 mesi.
-
-6. Gestione e revoca
-Il visitatore può accettare, rifiutare o scegliere singole categorie. La scelta può essere modificata o revocata in qualsiasi momento tramite “Preferenze cookie”, sempre disponibile sulla pagina.`,
-    };
-  }
-  return {
-    privacy: `PRIVACY POLICY
-Version ${policyVersion}
-
-1. Data controller
-${identity}
-Privacy contact: ${controller.email}
-
-2. Data processed
-This page may process technical data strictly necessary for security and operation. If the controller enables forms, newsletters, Shop or booking, it also processes data voluntarily submitted by the visitor and data needed to handle the request, payment, delivery or appointment.
-
-3. Purposes and legal bases
-Necessary data is processed to provide requested services, comply with law and protect the page. Analytics, personalisation and third-party content are enabled according to the choices made in the consent banner where consent is required.
-
-4. Providers and transfers
-OrbitPage provides the page infrastructure. External services selected by the controller receive data only after the required consent and apply their own notices. Some providers may process data outside the EEA using safeguards required by applicable law.
-
-5. Retention
-Data is retained only as long as needed for the stated purposes and legal obligations. Cookie choices follow the Cookie Policy; technical consent evidence is kept for up to 24 months.
-
-6. Rights
-Visitors may request access, correction, deletion, restriction, portability or objection and may withdraw consent at any time through “Cookie preferences”. Requests can be sent to ${controller.email}; complaints may be filed with the competent supervisory authority.
-
-7. Updates
-The controller may update this notice. The version published on this page is the current version.`,
-    cookie: `COOKIE POLICY
-Version ${policyVersion}
-
-1. Controller
-${identity}
-Privacy contact: ${controller.email}
-
-2. What this page uses
-OrbitPage uses strictly necessary storage to remember privacy choices, protect the service and maintain functions requested by the visitor. Optional tools remain blocked until the visitor makes a choice.
-
-3. Configured optional categories
-${enabled || '- No optional category is active.'}
-
-4. Third-party services
-Video, maps, calendars, forms, social embeds and analytics may contact their providers only after consent for the associated category. Before consent, a placeholder is shown and no provider request is made.
-
-5. Duration and consent evidence
-Preferences are stored separately for this specific page for the period configured by the controller. OrbitPage records technical evidence of the choices, without the visitor’s IP or email, for up to 24 months.
-
-6. Management and withdrawal
-Visitors can accept, reject or select individual categories. Choices can be changed or withdrawn at any time through “Cookie preferences”, which remains available on the page.`,
-  };
-}
-
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function SectionHeader({ icon: Icon, title, description }: {
@@ -300,15 +189,6 @@ function InfoBox({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs leading-5 text-blue-700">
       <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-      <span>{children}</span>
-    </div>
-  );
-}
-
-function WarnBox({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-700">
-      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       <span>{children}</span>
     </div>
   );
@@ -406,12 +286,7 @@ function PolicyConfigurator({
   return (
     <div className="privacy-policy-configurator space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h4 className="text-sm font-semibold text-slate-950">{title}</h4>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            Choose the simplest option that matches what you already have.
-          </p>
-        </div>
+        <h4 className="text-sm font-semibold text-slate-950">{title}</h4>
         <StatusBadge configured={configured} />
       </div>
 
@@ -523,12 +398,7 @@ function LegalPoliciesForm({
   return (
     <div className="privacy-legal-form space-y-4">
       <div className="privacy-master-toggle flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div>
-          <p className="text-sm font-semibold text-slate-950">Show legal links in footer</p>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
-            When enabled, visitors can open these links from the public footer and consent banner.
-          </p>
-        </div>
+        <p className="text-sm font-semibold text-slate-950">Show legal links in footer</p>
         <Switch aria-label="Show legal links in footer" checked={showLegalLinks} onCheckedChange={onShowLegalLinksChange} />
       </div>
 
@@ -537,15 +407,6 @@ function LegalPoliciesForm({
           <div className="privacy-policy-grid">
             <PolicyConfigurator kind="privacy" title="Privacy Policy" {...privacy} />
             <PolicyConfigurator kind="cookie" title="Cookie Policy" {...cookie} />
-          </div>
-          <div className="flex flex-wrap gap-3 rounded-lg border border-slate-200 bg-white p-3 text-xs">
-            <span className="font-semibold text-slate-700">Preview built-in pages:</span>
-            <a className="inline-flex items-center gap-1 text-blue-700 underline" href={withBasePath('/privacy')} target="_blank" rel="noopener noreferrer">
-              /privacy <ExternalLink className="h-3 w-3" />
-            </a>
-            <a className="inline-flex items-center gap-1 text-blue-700 underline" href={withBasePath('/cookies')} target="_blank" rel="noopener noreferrer">
-              /cookies <ExternalLink className="h-3 w-3" />
-            </a>
           </div>
         </div>
       )}
@@ -641,10 +502,6 @@ function HardcodedForm({
 
       {/* ── Banner text ── */}
       <TabsContent value="content" className="space-y-4">
-        <InfoBox>
-          These texts appear in the consent banner visible to your visitors. Keep them clear and
-          specific enough for informed consent (GDPR requirement).
-        </InfoBox>
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldRow label="Banner title">
             <Input className="admin-input" value={cfg.texts.title}
@@ -685,7 +542,7 @@ function HardcodedForm({
               onChange={(e) => updateTexts({ cookiePolicyLinkText: e.target.value })} maxLength={100} />
           </FieldRow>
         </div>
-        <FieldRow label="Legal / help text" description="Optional small-print shown at the bottom of the preferences modal.">
+        <FieldRow label="Legal / help text">
           <Textarea className="admin-input min-h-[64px] resize-y text-sm" value={cfg.legalFooterText}
             onChange={(e) => onChange({ legalFooterText: e.target.value })} maxLength={500} />
         </FieldRow>
@@ -866,10 +723,6 @@ function BuilderForm({
         CMP = cookie consent banner. Use this only when another service should show the banner
         and manage tracking consent. The native OrbitPage banner is disabled in External mode.
       </InfoBox>
-
-      <WarnBox>
-        External scripts are injected into the public page. Only paste code from a service you trust.
-      </WarnBox>
 
       <FieldRow label="CMP provider" description="Choose a supported integration. Use Custom only when your provider is not listed.">
         <Select value={cfg.provider} onValueChange={(provider) => onChange({ provider: provider as typeof cfg.provider })}>
@@ -1459,12 +1312,6 @@ export function PrivacySettings({
               <div>
                 <span>{tr('Step 1', 'Passaggio 1')}</span>
                 <h3>{tr('Choose where your legal documents live', 'Scegli dove pubblicare i documenti legali')}</h3>
-                <p>
-                  {tr(
-                    'Use an existing URL or host the documents directly in OrbitPage. Both links appear in the public footer.',
-                    'Usa un URL esistente oppure pubblica i documenti direttamente su OrbitPage. Entrambi compariranno nel footer pubblico.',
-                  )}
-                </p>
               </div>
               <Globe2 />
             </div>
@@ -1482,41 +1329,6 @@ export function PrivacySettings({
                 <FieldRow label={tr('Address (optional)', 'Indirizzo (opzionale)')}>
                   <Input className="admin-input" value={controller.address} onChange={(event) => setController((current) => ({ ...current, address: event.target.value }))} maxLength={500} />
                 </FieldRow>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                <p className="max-w-xl text-xs leading-5 text-slate-600">
-                  {tr('Generate editable starter documents from these details and the active consent categories. Review them for your specific activity before publishing.', 'Genera documenti iniziali modificabili da questi dati e dalle categorie attive. Verificali rispetto alla tua attività prima di pubblicare.')}
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    const normalizedController = normalizePrivacyController(controller);
-                    if (!normalizedController.controller) {
-                      setSaveError(tr('Add the controller name and a valid privacy email first.', 'Inserisci prima il nome del titolare e un’email privacy valida.'));
-                      return;
-                    }
-                    const policyVersion = new Date().toISOString().slice(0, 10);
-                    const docs = generatedPolicies({
-                      language: document.documentElement.lang.toLowerCase().startsWith('it') ? 'it' : 'en',
-                      controller: normalizedController.controller,
-                      policyVersion,
-                      categories: hardcoded.categories,
-                    });
-                    setHardcoded((current) => ({ ...current, policyVersion }));
-                    setShowLegalLinks(true);
-                    setPrivacyMethod('hosted');
-                    setCookieMethod('hosted');
-                    setPrivacyHostedText(docs.privacy);
-                    setCookieHostedText(docs.cookie);
-                    setPrivacyHostedFileName('privacy-policy.txt');
-                    setCookieHostedFileName('cookie-policy.txt');
-                    setSaveError('');
-                  }}
-                >
-                  <FileText className="h-4 w-4" />
-                  {tr('Generate starter policies', 'Genera policy iniziali')}
-                </Button>
               </div>
             </div>
             <LegalPoliciesForm
@@ -1548,7 +1360,7 @@ export function PrivacySettings({
               }}
             />
             <div className="privacy-stage-navigation">
-              <span>{legalReady ? tr('Both documents are ready.', 'Entrambi i documenti sono pronti.') : tr('Complete both documents before publishing.', 'Completa entrambi i documenti prima di pubblicare.')}</span>
+              {!legalReady && <span>{tr('Complete both documents before publishing.', 'Completa entrambi i documenti prima di pubblicare.')}</span>}
               <Button onClick={() => setActiveSection('consent')} type="button" variant="outline">
                 {tr('Continue to consent', 'Continua al consenso')}
                 <ArrowRight className="h-4 w-4" />
