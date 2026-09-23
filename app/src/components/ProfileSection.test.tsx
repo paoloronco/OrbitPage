@@ -13,3 +13,14 @@ it("hides the page type choice in hosted pages while keeping studio details", ()
   expect(html).toContain("Specialty");
   expect(html).toContain("Studio location");
 });
+
+it("groups profile controls in their visible page sections", () => {
+  const profile = { name: "Orbit Studio", bio: "", avatar: "", appearance: {} };
+  const html = renderToStaticMarkup(<ProfileSection profile={profile} theme={defaultTheme} onProfileUpdate={() => {}} visualMode />);
+
+  expect(html).toContain('admin-profile-identity-fields grid gap-5"');
+  expect(html.indexOf("Image border")).toBeLessThan(html.indexOf("Name and details"));
+  expect(html.indexOf("Online presence")).toBeLessThan(html.indexOf("Search description"));
+  expect(html.indexOf("Footer text")).toBeLessThan(html.indexOf("Advanced settings"));
+  expect(html).toContain("Typography and technical options.");
+});

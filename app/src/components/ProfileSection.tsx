@@ -467,7 +467,7 @@ export const ProfileSection = ({
 
           <section className="admin-profile-chapter admin-profile-identity">
             <ProfileSectionHeading title={tr("Identity", "Identità")} />
-            <div className="admin-profile-identity-fields grid gap-5 lg:grid-cols-[11rem_minmax(0,1fr)]">
+            <div className="admin-profile-identity-fields grid gap-5">
               <div className="admin-profile-avatar-editor admin-profile-identity-card">
                 <div className="flex items-center justify-between gap-3">
                   <h4 className="text-xs font-semibold">{visualMode ? tr("Image", "Immagine") : tr("Profile image", "Immagine profilo")}</h4>
@@ -505,6 +505,10 @@ export const ProfileSection = ({
                     <div className="admin-profile-slider-field max-w-full md:max-w-44">
                       <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-avatar-size" className="text-xs text-slate-600">{tr("Size", "Dimensione")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{draft.appearance?.avatarSize ?? 112}px</span></div>
                       <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} size="small" value={[draft.appearance?.avatarSize ?? 112]} valueLabelFormat={(avatarSize) => `${avatarSize}px`} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
+                    </div>
+                    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+                      <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-600">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
+                      <ProfileColorField label={tr("Image border color", "Colore bordo immagine")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!draft.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
                     </div>
                     <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</p>
                   </div>
@@ -551,6 +555,17 @@ export const ProfileSection = ({
               </button>
             </div>
 
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
+                <Label htmlFor="profile-meta-description">{tr("Search description", "Descrizione per i motori di ricerca")}</Label>
+                <Textarea id="profile-meta-description" disabled={seoLocked} value={draft.metaDescription || ""} onChange={(event) => setDraft((current) => ({ ...current, metaDescription: event.target.value }))} placeholder={tr("A concise description for search engines and link previews.", "Una descrizione concisa per motori di ricerca e anteprime dei link.")} rows={2} maxLength={500} />
+              </div>
+              <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
+                <Label htmlFor="profile-footer">{tr("Footer text", "Testo del footer")}</Label>
+                <Textarea id="profile-footer" value={draft.footerText || ""} onChange={(event) => setDraft((current) => ({ ...current, footerText: event.target.value }))} placeholder={tr("(c) Your name. All rights reserved.", "(c) Il tuo nome. Tutti i diritti riservati.")} rows={2} maxLength={300} />
+              </div>
+            </div>
+
             <details className="group mt-3 rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4">
               <span><strong className="block text-sm text-slate-950">{tr("Social links", "Link social")}</strong><small className="mt-1 block text-xs text-slate-500">{connectedSocials} {tr(connectedSocials === 1 ? "connected channel" : "connected channels", connectedSocials === 1 ? "canale collegato" : "canali collegati")}</small></span>
@@ -573,32 +588,16 @@ export const ProfileSection = ({
 
           <details className="admin-profile-advanced-details group rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
-              <span><strong className="block text-sm text-slate-950">{tr("Advanced settings", "Impostazioni avanzate")}</strong><small className="mt-0.5 block text-xs text-slate-500">{tr("Typography, SEO and footer.", "Tipografia, SEO e footer.")}</small></span>
+              <span><strong className="block text-sm text-slate-950">{tr("Advanced settings", "Impostazioni avanzate")}</strong><small className="mt-0.5 block text-xs text-slate-500">{tr("Typography and technical options.", "Tipografia e opzioni tecniche.")}</small></span>
               <span className="text-xs font-semibold text-blue-700 group-open:hidden">{tr("Open", "Apri")}</span>
               <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
             </summary>
             <div className="space-y-5 border-t border-slate-200 p-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-4 rounded-lg border border-slate-200 p-3">
-                  <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-600">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
-                  <ProfileColorField label={tr("Image border color", "Colore bordo immagine")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!draft.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
-                </div>
-                <div className="rounded-lg border border-slate-200 p-3">
-                  <p className="mb-3 text-sm font-semibold text-slate-950">{tr("Typography", "Tipografia")}</p>
-                  <div className="grid grid-cols-2 gap-3">
-                  <div><Label htmlFor="profile-name-size" className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input id="profile-name-size" type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>
-                  <div><Label htmlFor="profile-description-size" className="text-xs">{tr("Description size", "Dimensione descrizione")}</Label><Input id="profile-description-size" type="number" min={10} max={48} value={parseInt(draft.bioFontSize || "14", 10)} onChange={(event) => setDraft((current) => ({ ...current, bioFontSize: `${event.target.value}px` }))} /></div>
-                  </div>
-                </div>
-              </div>
-              <div className="grid gap-4 border-t border-slate-200 pt-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="profile-meta-description">{tr("Search description", "Descrizione per i motori di ricerca")}</Label>
-                  <Textarea id="profile-meta-description" disabled={seoLocked} value={draft.metaDescription || ""} onChange={(event) => setDraft((current) => ({ ...current, metaDescription: event.target.value }))} placeholder={tr("A concise description for search engines and link previews.", "Una descrizione concisa per motori di ricerca e anteprime dei link.")} rows={2} maxLength={500} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="profile-footer">{tr("Footer text", "Testo del footer")}</Label>
-                  <Textarea id="profile-footer" value={draft.footerText || ""} onChange={(event) => setDraft((current) => ({ ...current, footerText: event.target.value }))} placeholder={tr("(c) Your name. All rights reserved.", "(c) Il tuo nome. Tutti i diritti riservati.")} rows={2} maxLength={300} />
+              <div className="rounded-lg border border-slate-200 p-3">
+                <p className="mb-3 text-sm font-semibold text-slate-950">{tr("Typography", "Tipografia")}</p>
+                <div className="grid grid-cols-2 gap-3">
+                <div><Label htmlFor="profile-name-size" className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input id="profile-name-size" type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>
+                <div><Label htmlFor="profile-description-size" className="text-xs">{tr("Description size", "Dimensione descrizione")}</Label><Input id="profile-description-size" type="number" min={10} max={48} value={parseInt(draft.bioFontSize || "14", 10)} onChange={(event) => setDraft((current) => ({ ...current, bioFontSize: `${event.target.value}px` }))} /></div>
                 </div>
               </div>
               <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
