@@ -664,55 +664,6 @@
   font-size: .66rem;
 }
 
-.privacy-save-bar {
-  position: sticky;
-  z-index: 12;
-  bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  align-items: center;
-  margin-top: 14px;
-  border: 1px solid var(--privacy-line);
-  border-radius: 8px;
-  background: rgb(255 255 255 / 96%);
-  padding: 11px 13px;
-  box-shadow: 0 12px 32px rgb(18 31 51 / 12%);
-  backdrop-filter: blur(12px);
-}
-
-.privacy-save-bar > div {
-  display: grid;
-  gap: 2px;
-}
-
-.privacy-save-bar strong {
-  color: var(--privacy-ink);
-  font-size: .73rem;
-}
-
-.privacy-save-bar p {
-  margin: 0;
-  color: var(--privacy-copy);
-  font-size: .66rem;
-}
-
-.privacy-save-bar .privacy-save-error {
-  color: #b42318;
-}
-
-.privacy-save-bar .privacy-save-success {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  color: #16865b;
-}
-
-.privacy-save-success svg {
-  width: 13px;
-  height: 13px;
-}
-
 @media (max-width: 1100px) {
   .privacy-policy-grid {
     grid-template-columns: 1fr;
@@ -808,9 +759,6 @@
     justify-content: center;
   }
 
-  .privacy-save-bar {
-    bottom: 72px;
-  }
 }
 
 
@@ -11490,8 +11438,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .privacy-stage-navigation,
 .privacy-consent-switch small,
 .privacy-review-summary p,
-.privacy-checklist,
-.privacy-save-bar p {
+.privacy-checklist {
   font-size: var(--admin-text-small);
   line-height: 1.5;
 }
@@ -11526,21 +11473,15 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .privacy-mode-grid > button,
 .privacy-config-surface,
 .privacy-review-summary h4,
-.privacy-review-actions,
-.privacy-save-bar strong {
+.privacy-review-actions {
   font-size: var(--admin-text-small);
   line-height: 1.5;
 }
 
 .privacy-consent-switch,
 .privacy-config-surface,
-.privacy-review-summary,
-.privacy-save-bar {
+.privacy-review-summary {
   border-radius: var(--admin-card-radius);
-}
-
-.privacy-save-bar {
-  padding: 15px 18px;
 }
 
 /* AI workspaces grow with the monitor and keep the active conversation dominant. */
