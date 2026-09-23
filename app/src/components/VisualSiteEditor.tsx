@@ -261,7 +261,7 @@ export function VisualSiteEditor({
         </div>}
 
         <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle}>
-          {previewEnabled && section !== "menu" && <header className="visual-site-editor__inspector-heading">
+          {previewEnabled && section !== "menu" && inspectorDescription && <header className="visual-site-editor__inspector-heading">
             <h2>{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
           </header>}

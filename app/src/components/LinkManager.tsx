@@ -868,7 +868,7 @@ export const LinkManager = ({
               <h2 className="text-lg font-semibold text-slate-950">
                 {focusedLink
                   ? focusedLink.title || tr("Selected content block", "Blocco contenuto selezionato")
-                  : tr("Content cards", "Card dei contenuti")}
+                  : tr("Content block", "Blocco contenuto")}
               </h2>
               {hasUnsavedChanges && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
             </div>

@@ -18,6 +18,10 @@ describe('Shop link shortcut', () => {
     expect(source).not.toContain('Edit this block, then save the content changes.');
   });
 
+  it('uses the content block label for the card list', () => {
+    expect(source).toContain('tr("Content block", "Blocco contenuto")');
+  });
+
   it('disables card dragging on mobile', () => {
     expect(source).toContain("const canDrag = isFullEdit && !isMobile;");
     expect(source).toContain('draggable={canDrag}');
