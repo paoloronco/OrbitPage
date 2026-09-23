@@ -136,6 +136,10 @@
     width: min(100%, 430px);
   }
 
+  .admin-profile-save-float--single {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .admin-profile-save-float > button {
     min-height: 46px;
     width: 100%;
