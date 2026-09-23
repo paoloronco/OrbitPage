@@ -198,7 +198,7 @@ export function ManagedAnalyticsDashboard() {
 
   return <section className="managed-analytics" data-testid="managed-analytics">
     <header className="managed-analytics-header">
-      <div><span>{tr('Public page activity', 'Attività della pagina pubblica')}</span><h2>{tr('Performance overview', 'Panoramica delle prestazioni')}</h2><p>{tr('Visits and interactions in the selected period. Admin activity is excluded.', 'Visite e interazioni nel periodo selezionato. L’attività Admin è esclusa.')}</p></div>
+      <div><h2>{tr('Page visits and clicks', 'Visite e clic della pagina')}</h2></div>
       <div className="managed-analytics-actions">
         <div role="group" aria-label={tr('Analytics range', 'Intervallo analytics')}>{periods.map((days) => <button aria-pressed={period === days} key={days} onClick={() => setPeriod(days)} type="button">{days}d</button>)}</div>
         <button aria-label={tr('Refresh analytics', 'Aggiorna analytics')} className="managed-analytics-refresh" disabled={loading} onClick={() => void load(period)} type="button">{loading ? <OrbitLoader size={16} state="searching" /> : <RefreshCw size={16} />}</button>
