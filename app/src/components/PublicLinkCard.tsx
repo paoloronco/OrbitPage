@@ -192,15 +192,9 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       );
     }
 
-    // If no icon or there was an error loading it, show a fallback initial
+    // Cards without a valid icon keep the text aligned without inventing one.
     if (!iconUrl || imageError) {
-      return (
-        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-          <span className="text-lg leading-none opacity-70">
-            {link.title ? link.title.charAt(0).toUpperCase() : '?'}
-          </span>
-        </div>
-      );
+      return null;
     }
     // If we have an icon URL, render it with proper error handling. Use full-size image filling the container to avoid layout clipping.
     return (
@@ -219,6 +213,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       </div>
     );
   };
+  const renderedIcon = renderIcon();
 
   const coverUrl = resolveCoverImageUrl(link.coverImage);
   const hasCoverImage = !!(coverUrl && !coverImageError);
@@ -281,11 +276,11 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
     };
     const href = unavailable ? undefined : safeHref || undefined;
     const content: Partial<Record<CardContentLayoutItem, ReactNode>> = {
-      icon: (
+      ...(renderedIcon ? { icon: (
         <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1}>
-          {renderIcon()}
+          {renderedIcon}
         </a>
-      ),
+      ) } : {}),
       title: (
         <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={contentLayoutEditing || unavailable ? -1 : undefined} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <h3 className="min-w-0 flex-1 truncate font-semibold" style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
@@ -395,9 +390,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
             className={`flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed opacity-65' : ''}`}
             aria-label={link.title ? `Open ${link.title}` : 'Open link'}
           >
-            <div className="flex-shrink-0">
-              {renderIcon()}
-            </div>
+            {renderedIcon ? <div className="flex-shrink-0">{renderedIcon}</div> : null}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3

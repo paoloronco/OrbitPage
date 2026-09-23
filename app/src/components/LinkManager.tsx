@@ -95,6 +95,7 @@ export const LinkManager = ({
   const [previewDrafts, setPreviewDrafts] = useState<ReadonlyMap<string, LinkData>>(() => new Map());
   const [preparingLinks, setPreparingLinks] = useState<ReadonlySet<string>>(() => new Set());
   const [savedRevision, setSavedRevision] = useState(0);
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false);
   const [blockLibrarySearch, setBlockLibrarySearch] = useState("");
   const [blockLibraryCategory, setBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
@@ -179,6 +180,10 @@ export const LinkManager = ({
       else next.delete(String(id));
       return next.size === current.size ? current : next;
     });
+  }, []);
+
+  const updateEditingLink = useCallback((id: string, editing: boolean) => {
+    setEditingLinkId((current) => editing ? String(id) : current === String(id) ? null : current);
   }, []);
 
   const addNewLink = () => {
@@ -565,6 +570,7 @@ export const LinkManager = ({
   const deleteLink = (id: string) => {
     const updatedLinks = workingLinks.filter(link => String(link.id) !== String(id));
     setWorkingLinks(updatedLinks);
+    setEditingLinkId((current) => current === String(id) ? null : current);
     setIsDirty(true);
     setSaveError("");
   };
@@ -1174,6 +1180,8 @@ export const LinkManager = ({
                   maxVideoUploadBytes={maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
                   editRequest={focusedLink ? visualEditRequest : undefined}
+                  editing={editingLinkId === String(link.id)}
+                  onEditingChange={updateEditingLink}
                 />
               ) : (
                 <LinkCard
@@ -1197,6 +1205,8 @@ export const LinkManager = ({
                   availablePages={availablePages}
                   internalDestinations={internalDestinations}
                   editRequest={focusedLink ? visualEditRequest : undefined}
+                  editing={editingLinkId === String(link.id)}
+                  onEditingChange={updateEditingLink}
                 />
               )}
             </div>

@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useState, useRef } from "react";
+import { type CSSProperties, useCallback, useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
@@ -33,10 +33,17 @@ interface TextCardProps {
   editRequest?: number;
   savedRevision?: number;
   draft?: LinkData;
+  editing?: boolean;
+  onEditingChange?: (id: string, editing: boolean) => void;
 }
 
-export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest, savedRevision = 0, draft }: TextCardProps) => {
-  const [isEditing, setIsEditing] = useState(false);
+export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest, savedRevision = 0, draft, editing, onEditingChange }: TextCardProps) => {
+  const [internalEditing, setInternalEditing] = useState(false);
+  const isEditing = editing ?? internalEditing;
+  const setIsEditing = useCallback((next: boolean) => {
+    if (editing === undefined) setInternalEditing(next);
+    onEditingChange?.(String(link.id), next);
+  }, [editing, link.id, onEditingChange]);
   const [editLink, setEditLink] = useState(draft || link);
   const [uploadingImage, setUploadingImage] = useState<ImageUploadVariant | null>(null);
   const [imageUploadError, setImageUploadError] = useState("");
@@ -53,14 +60,14 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
     lastEditRequestRef.current = editRequest;
     setEditLink(draft || link);
     setIsEditing(true);
-  }, [draft, editMode, editRequest, link]);
+  }, [draft, editMode, editRequest, link, setIsEditing]);
 
   useEffect(() => {
     if (lastSavedRevisionRef.current === savedRevision) return;
     lastSavedRevisionRef.current = savedRevision;
     setIsEditing(false);
     setEditLink(link);
-  }, [link, savedRevision]);
+  }, [link, savedRevision, setIsEditing]);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';
