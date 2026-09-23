@@ -37,6 +37,13 @@ const clamp = (value: number, minimum: number, maximum: number) => (
   Math.min(maximum, Math.max(minimum, value))
 );
 
+export const resolveProfileSurfaceOpacity = (surfaceEffect: CardSurfaceEffect, opacity: number) => {
+  const normalizedOpacity = clamp(opacity, 0, 1);
+  if (surfaceEffect === "transparent") return 0;
+  if (normalizedOpacity > 0) return normalizedOpacity;
+  return surfaceEffect === "liquid-glass" ? 0.68 : 1;
+};
+
 const getReadableColor = (hex: string) => {
   const normalized = hex.replace(/^#/, "");
   if (!/^[0-9a-f]{6}$/i.test(normalized)) return "#f8fafc";
@@ -46,11 +53,14 @@ const getReadableColor = (hex: string) => {
   return (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255 > 0.58 ? "#172033" : "#f8fafc";
 };
 
-export const getProfileAppearanceStyle = (appearance?: ProfileAppearance): ProfileCssProperties => {
+export const getProfileAppearanceStyle = (
+  appearance?: ProfileAppearance,
+  surfaceEffect: CardSurfaceEffect = "solid",
+): ProfileCssProperties => {
   const style = {} as ProfileCssProperties;
   if (!appearance) return style;
   const surfaceOpacity = typeof appearance.surfaceOpacity === "number"
-    ? clamp(appearance.surfaceOpacity, 0, 1)
+    ? resolveProfileSurfaceOpacity(surfaceEffect, appearance.surfaceOpacity)
     : undefined;
   const opacityPercent = surfaceOpacity === undefined
     ? "var(--profile-card-opacity-percent, 100%)"
