@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { OrbitLoadingState } from '@/components/ui/orbit-loader';
+import { OrbitLoader, OrbitLoadingState } from '@/components/ui/orbit-loader';
 import {
   ArrowRight,
   CheckCircle2,
@@ -1519,19 +1519,12 @@ export function PrivacySettings({
 
       {typeof document !== 'undefined' && (isDirty || saving) ? createPortal(
         <div className="admin-profile-save-layer">
-          <div className="admin-profile-save-float">
-            <div className="col-span-full flex min-w-0 items-center gap-3">
-              {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
-              <Button
-                onClick={handleSave}
-                disabled={saving || readOnly}
-                className="admin-action admin-action-primary ml-auto"
-                size="sm"
-              >
-                <Save className="h-4 w-4" />
-                {saving ? tr('Saving…', 'Salvataggio…') : tr('Save changes', 'Salva modifiche')}
-              </Button>
-            </div>
+          <div className="admin-profile-save-float admin-profile-save-float--single">
+            {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
+            <Button type="button" size="sm" onClick={handleSave} disabled={saving || readOnly}>
+              {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+              {saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}
+            </Button>
           </div>
         </div>,
         document.body,
