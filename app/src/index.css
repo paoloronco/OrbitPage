@@ -11689,6 +11689,46 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     padding: 10px 12px;
   }
 
+  .privacy-section-nav {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .privacy-section-nav::-webkit-scrollbar,
+  .privacy-banner-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .privacy-section-nav > button {
+    min-width: 9rem;
+    flex: 0 0 auto;
+    grid-template-columns: 20px minmax(0, 1fr) 16px;
+    scroll-snap-align: start;
+  }
+
+  .privacy-section-number {
+    display: none;
+  }
+
+  .privacy-section-icon {
+    display: block;
+  }
+
+  .privacy-banner-tabs {
+    display: flex;
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .privacy-banner-tabs > button {
+    flex: 0 0 auto;
+  }
+
   .oss-ai-workspace {
     min-height: 520px;
   }
@@ -11816,6 +11856,13 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .admin-profile-avatar-editor {
   gap: 12px;
+}
+
+.admin-profile-image-column {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 6px;
 }
 
 .admin-profile-avatar-layout,
@@ -12349,7 +12396,28 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   }
 
   .admin-profile-avatar-controls {
-    gap: 14px;
+    display: contents;
+  }
+
+  .admin-profile-avatar-shape {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .admin-profile-avatar-shape-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-profile-avatar-controls > :nth-child(n + 2) {
+    grid-column: 1 / -1;
+  }
+
+  .admin-profile-avatar-controls > :nth-child(2) {
+    grid-row: 2;
+  }
+
+  .admin-profile-avatar-controls > :nth-child(3) {
+    grid-row: 3;
   }
 
   .admin-profile-actions-dock {
@@ -12540,7 +12608,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 @media (max-width: 479px) {
   .admin-profile-avatar-layout {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: 8.5rem minmax(0, 1fr);
   }
 
   .admin-profile-image-picker {
@@ -12548,8 +12616,12 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   }
 
   .admin-profile-avatar-shape-option {
-    min-height: 58px;
-    font-size: .75rem;
+    min-height: 42px;
+    grid-template-columns: 20px minmax(0, 1fr);
+    justify-content: start;
+    padding-inline: 8px;
+    font-size: .6875rem;
+    text-align: left;
   }
 
   .admin-profile-save-state small {

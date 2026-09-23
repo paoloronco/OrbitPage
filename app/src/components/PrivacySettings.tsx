@@ -474,7 +474,7 @@ function HardcodedForm({
 
   return (
     <Tabs defaultValue="content" className="mt-1">
-      <TabsList className="mb-4 h-auto flex-wrap gap-1 bg-slate-100 p-1">
+      <TabsList className="privacy-banner-tabs mb-4 h-auto flex-wrap gap-1 bg-slate-100 p-1">
         {[
           { value: 'content', label: 'Banner text', icon: Type },
           { value: 'categories', label: 'Categories', icon: ListChecks },

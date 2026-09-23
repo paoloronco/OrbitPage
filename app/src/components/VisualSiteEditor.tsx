@@ -1,4 +1,5 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   Edit,
   Eye,
@@ -100,6 +101,7 @@ export function VisualSiteEditor({
   const [isPhone, setIsPhone] = useState(() => (
     typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
   ));
+  const [mobilePreviewSlot, setMobilePreviewSlot] = useState<HTMLElement | null>(null);
   const [previewVisible, setPreviewVisible] = useState(true);
   const previewEnabled = section === "menu" || section === "pages" ? Boolean(renderPreview) : section !== "shop";
   const Inspector = previewEnabled || section === "menu" || section === "pages" ? "aside" : "section";
@@ -151,10 +153,19 @@ export function VisualSiteEditor({
     return () => phoneQuery.removeEventListener("change", syncPhoneViewport);
   }, [onLayoutEditingChange]);
 
+  useEffect(() => {
+    setMobilePreviewSlot(isPhone
+      ? document.querySelector<HTMLElement>("[data-orbitpage-hosted-preview-device-slot]")
+      : null);
+  }, [isPhone]);
+
   const startLayoutEditing = () => {
     if (section !== "profile") onSelect("profile");
     onLayoutEditingChange(true);
   };
+  const previewDeviceToggle = (previewEnabled || section === "menu")
+    ? <PreviewDeviceToggle value={device} onChange={setDevice} />
+    : null;
 
   return (
     <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}${section === "menu" ? " visual-site-editor--menu" : ""}${section === "pages" ? " visual-site-editor--pages" : ""}${previewEnabled ? " visual-site-editor--preview-visible" : " visual-site-editor--inspector-only"}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
@@ -189,9 +200,13 @@ export function VisualSiteEditor({
               <span>{tr("Arrange", "Disponi")}</span>
             </button>
           )}
-          {(previewEnabled || section === "menu") && <PreviewDeviceToggle value={device} onChange={setDevice} />}
+          {(!isPhone || !mobilePreviewSlot) && previewDeviceToggle}
         </div>
       </nav>
+
+      {isPhone && mobilePreviewSlot && previewDeviceToggle
+        ? createPortal(previewDeviceToggle, mobilePreviewSlot)
+        : null}
 
       {isPhone && previewEnabled && section !== "menu" && (
         <button

@@ -474,10 +474,13 @@ export const ProfileSection = ({
                   <Switch checked={draft.showAvatar !== false} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
                 </div>
                 <div className="admin-profile-avatar-layout">
-                  <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-44 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-                    <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
-                    <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 rounded-md bg-slate-950/85 px-2 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-3.5 w-3.5" /> {tr("Replace", "Sostituisci")}</span>
-                  </button>
+                  <div className="admin-profile-image-column">
+                    <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-44 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                      <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
+                      <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 rounded-md bg-slate-950/85 px-2 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-3.5 w-3.5" /> {tr("Replace", "Sostituisci")}</span>
+                    </button>
+                    <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</p>
+                  </div>
                   <input ref={logoInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "logo"); event.target.value = ""; }} />
 
                   <div className="admin-profile-avatar-controls">
@@ -510,7 +513,6 @@ export const ProfileSection = ({
                       <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-600">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
                       <ProfileColorField label={tr("Image border color", "Colore bordo immagine")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!draft.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
                     </div>
-                    <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</p>
                   </div>
                 </div>
               </div>
