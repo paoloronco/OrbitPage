@@ -1,5 +1,6 @@
-export function isBundledProfileAvatar(value?: string | null) {
-  if (!value) return false;
+export function isBundledProfileAvatar(value?: unknown) {
+  if (typeof value !== "string" || !value) return false;
+  if (/^data:image\//i.test(value)) return true;
   try {
     const pathname = new URL(value, "https://orbitpage.invalid").pathname;
     return pathname === "/src/assets/profile-avatar.jpg" ||
@@ -9,7 +10,6 @@ export function isBundledProfileAvatar(value?: string | null) {
   }
 }
 
-export function persistedProfileAvatar(value?: string | null) {
-  return value && !isBundledProfileAvatar(value) ? value : "";
+export function persistedProfileAvatar(value?: unknown) {
+  return typeof value === "string" && value && !/^blob:/i.test(value) && !isBundledProfileAvatar(value) ? value : "";
 }
-

@@ -6,7 +6,8 @@ describe("bundled profile avatar", () => {
     "/src/assets/profile-avatar.jpg",
     "/assets/profile-avatar-DPd-s5ch.jpg",
     "https://orbitpage.com/orbitpage-runtime/assets/profile-avatar-DPd-s5ch.jpg",
-    "http://localhost:3000/orbitpage-runtime/assets/profile-avatar-DPd-s5ch.jpg"
+    "http://localhost:3000/orbitpage-runtime/assets/profile-avatar-DPd-s5ch.jpg",
+    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ"
   ])("recognizes the UI fallback asset: %s", (value) => {
     expect(isBundledProfileAvatar(value)).toBe(true);
     expect(persistedProfileAvatar(value)).toBe("");
@@ -17,5 +18,9 @@ describe("bundled profile avatar", () => {
     expect(isBundledProfileAvatar(value)).toBe(false);
     expect(persistedProfileAvatar(value)).toBe(value);
   });
-});
 
+  it("never persists temporary or non-string preview values", () => {
+    expect(persistedProfileAvatar("blob:https://orbitpage.com/preview")).toBe("");
+    expect(persistedProfileAvatar({ src: "/assets/profile-avatar.jpg" })).toBe("");
+  });
+});
