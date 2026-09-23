@@ -435,7 +435,7 @@
 }
 
 .visual-site-editor .admin-profile-section .admin-profile-identity-fields {
-  grid-template-columns: minmax(8rem, .75fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 12px;
 }
