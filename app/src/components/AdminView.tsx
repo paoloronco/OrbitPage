@@ -859,7 +859,7 @@ export const AdminView = ({
     ? tr("Name, image, bio, social presence and page details.", "Nome, immagine, bio, presenza social e dettagli della pagina.")
     : visualSection === "links"
       ? selectedVisualLink
-        ? tr("The selected card is open and ready to edit.", "La card selezionata è aperta e pronta da modificare.")
+        ? tr("Edit the selected card.", "Modifica la card selezionata.")
         : ""
       : visualSection === "menu"
         ? tr("Manage navigation, categories and menu items.", "Gestisci navigazione, categorie ed elementi del menu.")
