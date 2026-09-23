@@ -12026,12 +12026,13 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 @media (min-width: 768px) {
   .admin-profile-section .admin-profile-identity-fields {
-    grid-template-columns: minmax(11rem, .38fr) minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
   }
 
   .admin-profile-avatar-layout {
-    grid-template-columns: minmax(0, 11rem);
+    grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
+    align-items: start;
   }
 }
 
