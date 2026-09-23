@@ -1,4 +1,4 @@
-import { type ComponentType, type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { type ComponentType, type CSSProperties, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
@@ -19,6 +19,7 @@ import { asNativeShopLink, isNativeShopLink } from "@/lib/native-shop-link";
 import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import type { BrandServiceProvider } from "@/lib/service-brand";
 import { mergeLinkPreviews } from "./link-preview-state";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -85,10 +86,10 @@ export const LinkManager = ({
   visualEditRequest,
 }: LinkManagerProps) => {
   const { tr } = useAppI18n();
+  const isMobile = useIsMobile();
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const touchDragRef = useRef<{ id: string; lastTarget: string | null } | null>(null);
   const { toast } = useToast();
   // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
@@ -613,37 +614,6 @@ export const LinkManager = ({
     setDragOverId(null);
   };
 
-  // --- Touch drag & drop (mobile) ---
-  const handleTouchStart = (e: React.TouchEvent, id: string) => {
-    touchDragRef.current = { id, lastTarget: null };
-    setDraggedItem(id);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchDragRef.current) return;
-    e.preventDefault(); // prevent page scroll while dragging
-    const touch = e.touches[0];
-    const cardElements = document.querySelectorAll<HTMLElement>('[data-link-id]');
-    for (const el of Array.from(cardElements)) {
-      const rect = el.getBoundingClientRect();
-      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-        const targetId = el.dataset.linkId!;
-        if (targetId !== touchDragRef.current.id && targetId !== touchDragRef.current.lastTarget) {
-          touchDragRef.current.lastTarget = targetId;
-          setDragOverId(targetId);
-          performReorder(touchDragRef.current.id, targetId);
-        }
-        break;
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    touchDragRef.current = null;
-    setDraggedItem(null);
-    setDragOverId(null);
-  };
-
   const handleDragEnter = (targetId: string) => {
     if (!draggedItem || draggedItem === targetId) return;
     setDragOverId(targetId);
@@ -770,6 +740,7 @@ export const LinkManager = ({
   };
 
   const isFullEdit = editMode === 'full';
+  const canDrag = isFullEdit && !isMobile;
   const isViewOnly = editMode === 'view';
   const hasCompactLinks = workingLinks.some((item) => item.type === "social_row");
   const hasShopLink = workingLinks.some((link) => isNativeShopLink(link) || (link.type === 'internal_links' && getInternalLinksData(link.content).items.some((item) => item.kind === 'shop')));
@@ -1148,16 +1119,12 @@ export const LinkManager = ({
           {renderedLinks.map(({ link, index }) => (
             <div
               key={link.id}
-              data-link-id={link.id}
-              draggable={isFullEdit}
-              onDragStart={isFullEdit ? (e) => handleDragStart(e, link.id) : undefined}
-              onDragOver={isFullEdit ? handleDragOver : undefined}
-              onDragEnter={isFullEdit ? () => handleDragEnter(link.id) : undefined}
-              onDrop={isFullEdit ? (e) => handleDrop(e, link.id) : undefined}
-              onDragEnd={isFullEdit ? handleDragEnd : undefined}
-              onTouchStart={isFullEdit ? (e) => handleTouchStart(e, link.id) : undefined}
-              onTouchMove={isFullEdit ? handleTouchMove : undefined}
-              onTouchEnd={isFullEdit ? handleTouchEnd : undefined}
+              draggable={canDrag}
+              onDragStart={canDrag ? (e) => handleDragStart(e, link.id) : undefined}
+              onDragOver={canDrag ? handleDragOver : undefined}
+              onDragEnter={canDrag ? () => handleDragEnter(link.id) : undefined}
+              onDrop={canDrag ? (e) => handleDrop(e, link.id) : undefined}
+              onDragEnd={canDrag ? handleDragEnd : undefined}
               className={dragOverId === link.id ? 'rounded-lg ring-2 ring-blue-400/50' : ''}
             >
               {link.type === 'text' ? (

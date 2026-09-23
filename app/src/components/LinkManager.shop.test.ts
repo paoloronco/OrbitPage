@@ -17,4 +17,10 @@ describe('Shop link shortcut', () => {
     expect(source).toContain('tr("Edit the selected card.", "Modifica la card selezionata.")');
     expect(source).not.toContain('Edit this block, then save the content changes.');
   });
+
+  it('disables card dragging on mobile', () => {
+    expect(source).toContain("const canDrag = isFullEdit && !isMobile;");
+    expect(source).toContain('draggable={canDrag}');
+    expect(source).not.toContain('onTouchStart=');
+  });
 });
