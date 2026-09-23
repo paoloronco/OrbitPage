@@ -33,4 +33,9 @@ describe('Shop link shortcut', () => {
     expect(source).toContain('isMobile && !isViewOnly && hasUnsavedChanges ? createPortal(');
     expect(source).toContain('admin-profile-save-float admin-profile-save-float--single');
   });
+
+  it('uses the regular content editor when a preview card is selected on mobile', () => {
+    expect(source).toContain('const focusedLink = visualFocusLinkId && !isMobile');
+    expect(source).toContain('editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}');
+  });
 });
