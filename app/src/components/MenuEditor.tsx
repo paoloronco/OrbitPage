@@ -760,13 +760,13 @@ export function MenuEditor({
   return (
     <div className={`menu-editor-stack menu-editor-stack--${presentation}`}>
       <div className="menu-editor-main space-y-5">
-        <div className="menu-editor-savebar">
+        {presentation === 'classic' && <div className="menu-editor-savebar">
           {message && <p className={`menu-editor-message${isDirty ? ' is-pending' : ' is-saved'}`} aria-live="polite">{message}</p>}
           <Button onClick={() => void save()} disabled={!isDirty || saving}>
             {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
             {saving ? tr('Saving', 'Salvataggio') : tr('Save menu', 'Salva menu')}
           </Button>
-        </div>
+        </div>}
 
         <nav className="menu-editor-tabs" aria-label={tr('Menu setup workflow', 'Percorso di configurazione menu')}>
           <button
@@ -809,7 +809,12 @@ export function MenuEditor({
             <span className="menu-editor-tab-copy"><strong>{tr('Design', 'Design')}</strong><small>{tr('Style and mobile preview', 'Stile e anteprima mobile')}</small></span>
             <Palette aria-hidden="true" />
           </button>
+          {presentation === 'visual' && <button type="button" className="menu-editor-tab-save" disabled={!isDirty || saving} onClick={() => void save()}>
+            <span className="menu-editor-tab-copy"><strong>{saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}</strong></span>
+            {saving ? <OrbitLoader size={17} state="composing" /> : <Save aria-hidden="true" />}
+          </button>}
         </nav>
+        {presentation === 'visual' && message && <p className={`menu-editor-message${isDirty ? ' is-pending' : ' is-saved'}`} aria-live="polite">{message}</p>}
 
         {activePanel === 'setup' && <div className="menu-settings-layout">
         <section className="admin-panel space-y-5">
