@@ -891,28 +891,30 @@ export const LinkManager = ({
       )}
 
       <div className="admin-link-toolbar" data-onboarding="links-toolbar">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-slate-950">
+        {(!visualMode || !focusedLink || saveError) && <div className="min-w-0">
+          {(!visualMode || !focusedLink) && <>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-semibold text-slate-950">
+                {focusedLink
+                  ? focusedLink.title || tr("Selected content block", "Blocco contenuto selezionato")
+                  : tr("Content cards", "Card dei contenuti")}
+              </h2>
+              {hasUnsavedChanges && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
+            </div>
+            <p className="mt-1 text-sm text-slate-600">
               {focusedLink
-                ? focusedLink.title || tr("Selected content block", "Blocco contenuto selezionato")
-                : tr("Content cards", "Card dei contenuti")}
-            </h2>
-            {hasUnsavedChanges && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
-          </div>
-          <p className="mt-1 text-sm text-slate-600">
-            {focusedLink
-              ? tr("Edit this block, then save the content changes.", "Modifica questo blocco, poi salva le modifiche ai contenuti.")
-              : workingLinks.length === 0
-              ? tr("Start with a block, then arrange your public page.", "Inizia con un blocco, poi organizza la pagina pubblica.")
-              : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` ${tr("of", "di")} ${maxBlocks}` : ""} ${tr("blocks", "blocchi")}`}
-          </p>
+                ? tr("Edit the selected card.", "Modifica la card selezionata.")
+                : workingLinks.length === 0
+                ? tr("Start with a block, then arrange your public page.", "Inizia con un blocco, poi organizza la pagina pubblica.")
+                : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` ${tr("of", "di")} ${maxBlocks}` : ""} ${tr("blocks", "blocchi")}`}
+            </p>
+          </>}
           {saveError && (
             <p className="mt-2 text-sm font-medium text-red-600" role="alert">
               {saveError}
             </p>
           )}
-        </div>
+        </div>}
 
         <div className="admin-link-actions">
           {isFullEdit && !focusedLink && (

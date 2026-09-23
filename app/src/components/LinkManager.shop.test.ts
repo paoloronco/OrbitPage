@@ -11,4 +11,10 @@ describe('Shop link shortcut', () => {
     expect(source).toContain('atBlockLimit || hasShopLink');
     expect(source).toContain('tr("Add Shop", "Aggiungi Shop")');
   });
+
+  it('does not repeat the selected card heading in the visual editor', () => {
+    expect(source).toContain('(!visualMode || !focusedLink || saveError)');
+    expect(source).toContain('tr("Edit the selected card.", "Modifica la card selezionata.")');
+    expect(source).not.toContain('Edit this block, then save the content changes.');
+  });
 });
