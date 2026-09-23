@@ -53,7 +53,7 @@ interface ThemeCustomizerProps {
   managePlanHref?: string;
 }
 
-type EditableTheme = ThemeConfig & { cardBlurTint?: string };
+export type EditableTheme = ThemeConfig & { cardBlurTint?: string };
 type PresetScope = "page" | "cards";
 
 interface ThemeColorControlProps {
@@ -84,13 +84,68 @@ const findMatchingPreset = (theme: ThemeConfig) => themePresets.find((preset) =>
   preset.theme.cardRadius === theme.cardRadius
 ))?.id || null;
 
+const sameCardSurface = (left: ThemeConfig['contentCard'], right: ThemeConfig['contentCard']) => (
+  Object.keys(left).every((key) => left[key as keyof typeof left] === right[key as keyof typeof right])
+);
+
 const findMatchingCardPreset = (theme: ThemeConfig) => cardThemePresets.find((preset) => (
   preset.mode === theme.contentCardMode &&
-  preset.card.background === theme.contentCard.background &&
-  preset.card.backgroundSecondary === theme.contentCard.backgroundSecondary &&
-  preset.card.foreground === theme.contentCard.foreground &&
-  preset.card.accent === theme.contentCard.accent
+  sameCardSurface(preset.card, theme.contentCard) &&
+  preset.variants.length === theme.contentCardVariants.length &&
+  preset.variants.every((variant, index) => sameCardSurface(variant, theme.contentCardVariants[index]))
 ))?.id || null;
+
+export const buildPagePresetTheme = (
+  pendingTheme: EditableTheme,
+  preset: ThemePreset,
+  accessLevel?: HostedThemeAccess,
+): EditableTheme => {
+  const advanced = !accessLevel || accessLevel === "advanced";
+  const premium = advanced || accessLevel === "premium";
+  const cardPresetId = premium ? findMatchingCardPreset(pendingTheme) : null;
+  const preserveCards = advanced || Boolean(cardPresetId);
+  return {
+    ...preset.theme,
+    content: pendingTheme.content,
+    contentCard: preserveCards ? pendingTheme.contentCard : preset.theme.contentCard,
+    contentCardMode: preserveCards ? pendingTheme.contentCardMode : preset.theme.contentCardMode,
+    contentCardVariants: preserveCards ? pendingTheme.contentCardVariants : preset.theme.contentCardVariants,
+    profileCardEffect: advanced ? pendingTheme.profileCardEffect : preset.theme.profileCardEffect,
+    contentCardEffect: advanced ? pendingTheme.contentCardEffect : preset.theme.contentCardEffect,
+    profileCardOpacity: advanced ? pendingTheme.profileCardOpacity : preset.theme.profileCardOpacity,
+    contentCardOpacity: advanced ? pendingTheme.contentCardOpacity : preset.theme.contentCardOpacity,
+    orbitPageAccess: { mode: "preset", presetId: preset.id, cardPresetId },
+  };
+};
+
+export const buildCardPresetTheme = (
+  pendingTheme: EditableTheme,
+  preset: CardThemePreset,
+  accessLevel?: HostedThemeAccess,
+): EditableTheme => {
+  const advanced = !accessLevel || accessLevel === "advanced";
+  const baseTheme = advanced || pendingTheme.orbitPageAccess?.mode === "preset"
+    ? pendingTheme
+    : defaultTheme;
+  return {
+    ...baseTheme,
+    content: pendingTheme.content,
+    card: preset.card.background,
+    cardGradient: {
+      from: preset.card.background,
+      to: preset.card.backgroundSecondary,
+      direction: preset.card.direction,
+    },
+    contentCard: preset.card,
+    contentCardMode: preset.mode,
+    contentCardVariants: preset.variants,
+    orbitPageAccess: {
+      mode: "preset",
+      presetId: baseTheme.orbitPageAccess?.presetId || "default",
+      cardPresetId: preset.id,
+    },
+  };
+};
 
 const ThemeColorControl = ({
   id,
@@ -298,43 +353,12 @@ export const ThemeCustomizer = ({
   };
 
   const applyPreset = (preset: ThemePreset) => {
-    const nextTheme: EditableTheme = {
-      ...preset.theme,
-      content: pendingTheme.content,
-      contentCard: premiumThemesEnabled ? pendingTheme.contentCard : preset.theme.contentCard,
-      contentCardMode: premiumThemesEnabled ? pendingTheme.contentCardMode : preset.theme.contentCardMode,
-      contentCardVariants: premiumThemesEnabled ? pendingTheme.contentCardVariants : preset.theme.contentCardVariants,
-      profileCardEffect: pendingTheme.profileCardEffect,
-      contentCardEffect: pendingTheme.contentCardEffect,
-      profileCardOpacity: pendingTheme.profileCardOpacity,
-      contentCardOpacity: pendingTheme.contentCardOpacity,
-      orbitPageAccess: {
-        mode: "preset",
-        presetId: preset.id,
-        cardPresetId: premiumThemesEnabled ? pendingTheme.orbitPageAccess?.cardPresetId || null : null,
-      },
-    };
+    const nextTheme = buildPagePresetTheme(pendingTheme, preset, accessLevel);
     previewTheme(nextTheme, preset.id);
   };
 
   const applyCardPreset = (preset: CardThemePreset) => {
-    const nextTheme: EditableTheme = {
-      ...pendingTheme,
-      card: preset.card.background,
-      cardGradient: {
-        from: preset.card.background,
-        to: preset.card.backgroundSecondary,
-        direction: preset.card.direction,
-      },
-      contentCard: preset.card,
-      contentCardMode: preset.mode,
-      contentCardVariants: preset.variants,
-      orbitPageAccess: {
-        mode: "preset",
-        presetId: pendingTheme.orbitPageAccess?.presetId || selectedPresetId || "default",
-        cardPresetId: preset.id,
-      },
-    };
+    const nextTheme = buildCardPresetTheme(pendingTheme, preset, accessLevel);
     previewTheme(nextTheme, selectedPresetId);
     setSelectedCardPresetId(preset.id);
   };
