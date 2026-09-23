@@ -95,22 +95,11 @@
   gap: 12px;
 }
 
-.visual-site-editor__toolbar,
 .visual-site-editor__sections,
 .visual-site-editor__workspace,
 .visual-site-editor__inspector {
   border: 1px solid #d9e1ec;
   background: #fff;
-}
-
-.visual-site-editor__toolbar {
-  display: flex;
-  min-height: 58px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 14px;
-  border-radius: 10px;
 }
 
 .visual-site-editor__toolbar-actions {
@@ -186,42 +175,6 @@
   text-transform: uppercase;
 }
 
-.visual-site-editor__intro {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 10px;
-}
-
-.visual-site-editor__mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  place-items: center;
-  border-radius: 9px;
-  background: #e9efff;
-  color: #2454d6;
-}
-
-.visual-site-editor__intro > div {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-}
-
-.visual-site-editor__intro strong {
-  color: #17233b;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.visual-site-editor__intro small {
-  color: #66758d;
-  font-size: 11px;
-  line-height: 1.4;
-}
-
 .visual-site-editor__sections {
   display: flex;
   align-items: center;
@@ -231,7 +184,12 @@
   border-radius: 9px;
 }
 
-.visual-site-editor__sections button {
+.visual-site-editor__section-actions {
+  margin-left: auto;
+  padding-left: 8px;
+}
+
+.visual-site-editor__sections > button {
   position: relative;
   display: inline-flex;
   min-height: 37px;
@@ -249,27 +207,27 @@
   cursor: pointer;
 }
 
-.visual-site-editor__sections button:hover,
-.visual-site-editor__sections button:focus-visible {
+.visual-site-editor__sections > button:hover,
+.visual-site-editor__sections > button:focus-visible {
   background: #f3f6fb;
   color: #20304c;
 }
 
-.visual-site-editor__sections button.is-active {
+.visual-site-editor__sections > button.is-active {
   border-color: #c9d6fb;
   background: #edf2ff;
   color: #214ebf;
   box-shadow: 0 2px 7px rgb(32 71 170 / 8%);
 }
 
-.visual-site-editor__sections button > i {
+.visual-site-editor__sections > button > i {
   width: 6px;
   height: 6px;
   border-radius: 999px;
   background: #94a3b8;
 }
 
-.visual-site-editor__sections button[data-status="locked"] > i {
+.visual-site-editor__sections > button[data-status="locked"] > i {
   background: #d97706;
 }
 
@@ -868,14 +826,6 @@
     display: none;
   }
 
-  .visual-site-editor__toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-    gap: 10px;
-    padding: 11px 12px;
-  }
-
   .visual-site-editor__layout-toggle {
     display: none;
   }
@@ -908,17 +858,6 @@
     flex-wrap: wrap;
   }
 
-  .visual-site-editor__intro {
-    align-items: flex-start;
-  }
-
-  .visual-site-editor__intro small {
-    display: block;
-    max-width: 27rem;
-    font-size: 10px;
-    line-height: 1.35;
-  }
-
   .visual-site-editor__canvas-note span {
     display: none;
   }
@@ -932,7 +871,7 @@
     scrollbar-width: thin;
   }
 
-  .visual-site-editor__sections button {
+  .visual-site-editor__sections > button {
     min-width: max-content;
     min-height: 48px;
     justify-content: flex-start;
@@ -944,12 +883,12 @@
     scroll-snap-align: start;
   }
 
-  .visual-site-editor__sections button span {
+  .visual-site-editor__sections > button span {
     display: inline;
     white-space: nowrap;
   }
 
-  .visual-site-editor__sections button svg {
+  .visual-site-editor__sections > button svg {
     width: 18px;
     height: 18px;
     flex: 0 0 18px;
@@ -1016,7 +955,7 @@
     scroll-snap-type: none;
   }
 
-  .visual-site-editor__sections button {
+  .visual-site-editor__sections > button {
     width: 100%;
     min-width: 0;
     justify-content: center;
@@ -1024,9 +963,17 @@
     scroll-snap-align: none;
   }
 
-  .visual-site-editor__sections button span {
+  .visual-site-editor__sections > button span {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .visual-site-editor__section-actions {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: end;
+    margin-left: 0;
+    padding: 0 2px;
   }
 }
 
