@@ -158,45 +158,6 @@ export function VisualSiteEditor({
 
   return (
     <section className={`visual-site-editor${layoutEditing ? " visual-site-editor--layout-editing" : ""}${section === "menu" ? " visual-site-editor--menu" : ""}${section === "pages" ? " visual-site-editor--pages" : ""}${previewEnabled ? " visual-site-editor--preview-visible" : " visual-site-editor--inspector-only"}`} aria-label={tr("Visual site editor", "Editor visuale del sito")}>
-      <header className="visual-site-editor__toolbar">
-        <div className="visual-site-editor__intro">
-          <span className="visual-site-editor__mark"><MousePointerClick aria-hidden="true" size={18} /></span>
-          <div>
-            <strong>{section === "shop"
-              ? tr("Manage your Shop", "Gestisci il tuo Shop")
-              : section === "menu"
-                ? tr("Manage your Menu", "Gestisci il tuo Menu")
-                : section === "pages"
-                  ? tr("Build additional pages", "Crea pagine aggiuntive")
-                : tr("Edit the real page", "Modifica la pagina reale")}</strong>
-            <small>{section === "shop"
-              ? tr("Products, design, payments, orders and customers in one place.", "Prodotti, design, pagamenti, ordini e clienti in un unico spazio.")
-              : section === "menu"
-                ? tr("Categories, items, design and publishing in one clear workspace.", "Categorie, elementi, design e pubblicazione in un unico spazio ordinato.")
-                : section === "pages"
-                  ? tr("Choose or create a page, then add its content. The preview follows the selected page.", "Scegli o crea una pagina, poi aggiungi contenuti. L’anteprima segue la pagina selezionata.")
-                : tr("Select an element in the preview to open its settings.", "Seleziona un elemento nell’anteprima per aprire le sue impostazioni.")}</small>
-          </div>
-        </div>
-        <div
-          className="visual-site-editor__toolbar-actions"
-          data-orbitpage-hosted-shop-header-slot={!previewEnabled ? "" : undefined}
-        >
-          {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
-            <button
-              className="visual-site-editor__layout-toggle"
-              onClick={startLayoutEditing}
-              title={tr("Arrange page layout", "Disponi il layout della pagina")}
-              type="button"
-            >
-              <Edit aria-hidden="true" size={17} />
-              <span>{tr("Arrange", "Disponi")}</span>
-            </button>
-          )}
-          {(previewEnabled || section === "menu") && <PreviewDeviceToggle value={device} onChange={setDevice} />}
-        </div>
-      </header>
-
       <nav className="visual-site-editor__sections" aria-label={tr("Site sections", "Sezioni del sito")}>
         {sections.map(({ id, icon: Icon, label, status }) => (
           <button
@@ -213,6 +174,23 @@ export function VisualSiteEditor({
             {(status === "inactive" || status === "locked") && <i aria-hidden="true" />}
           </button>
         ))}
+        <div
+          className="visual-site-editor__toolbar-actions visual-site-editor__section-actions"
+          data-orbitpage-hosted-shop-header-slot={!previewEnabled ? "" : undefined}
+        >
+          {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
+            <button
+              className="visual-site-editor__layout-toggle"
+              onClick={startLayoutEditing}
+              title={tr("Arrange page layout", "Disponi il layout della pagina")}
+              type="button"
+            >
+              <Edit aria-hidden="true" size={17} />
+              <span>{tr("Arrange", "Disponi")}</span>
+            </button>
+          )}
+          {(previewEnabled || section === "menu") && <PreviewDeviceToggle value={device} onChange={setDevice} />}
+        </div>
       </nav>
 
       {isPhone && previewEnabled && section !== "menu" && (

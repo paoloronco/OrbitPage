@@ -1783,4 +1783,6 @@
   .menu-unified-list { padding: 12px; }
   .menu-unified-subcategory { margin-left: 10px; }
   .menu-unified-items { margin-left: 12px; }
+  .menu-unified-header__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .menu-unified-header__actions > button { min-width: 0; white-space: normal; }
 }
