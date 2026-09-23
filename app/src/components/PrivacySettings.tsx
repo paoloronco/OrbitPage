@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +38,7 @@ import {
   LayoutTemplate,
   ListChecks,
   Link2,
+  Save,
   ShieldCheck,
   Sliders,
   Type,
@@ -45,6 +47,7 @@ import { useAppI18n } from '@/lib/i18n';
 import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
 import { normalizePrivacyController } from '@/lib/privacy-controller';
+import './profile-save-overlay.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -385,31 +388,20 @@ function PolicyConfigurator({
 }
 
 function LegalPoliciesForm({
-  showLegalLinks,
-  onShowLegalLinksChange,
   privacy,
   cookie,
 }: {
-  showLegalLinks: boolean;
-  onShowLegalLinksChange: (show: boolean) => void;
   privacy: Omit<React.ComponentProps<typeof PolicyConfigurator>, 'kind' | 'title'>;
   cookie: Omit<React.ComponentProps<typeof PolicyConfigurator>, 'kind' | 'title'>;
 }) {
   return (
     <div className="privacy-legal-form space-y-4">
-      <div className="privacy-master-toggle flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm font-semibold text-slate-950">Show legal links in footer</p>
-        <Switch aria-label="Show legal links in footer" checked={showLegalLinks} onCheckedChange={onShowLegalLinksChange} />
-      </div>
-
-      {showLegalLinks && (
-        <div className="space-y-4">
-          <div className="privacy-policy-grid">
-            <PolicyConfigurator kind="privacy" title="Privacy Policy" {...privacy} />
-            <PolicyConfigurator kind="cookie" title="Cookie Policy" {...cookie} />
-          </div>
+      <div className="space-y-4">
+        <div className="privacy-policy-grid">
+          <PolicyConfigurator kind="privacy" title="Privacy Policy" {...privacy} />
+          <PolicyConfigurator kind="cookie" title="Cookie Policy" {...cookie} />
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -502,29 +494,32 @@ function HardcodedForm({
 
       {/* ── Banner text ── */}
       <TabsContent value="content" className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FieldRow label="Banner title">
-            <Input className="admin-input" value={cfg.texts.title}
-              onChange={(e) => updateTexts({ title: e.target.value })} maxLength={200} />
-          </FieldRow>
-          <FieldRow label="Accept button label">
-            <Input className="admin-input" value={cfg.texts.acceptAll}
-              onChange={(e) => updateTexts({ acceptAll: e.target.value })} maxLength={100} />
-          </FieldRow>
-        </div>
+        <FieldRow label="Banner title">
+          <Input className="admin-input" value={cfg.texts.title}
+            onChange={(e) => updateTexts({ title: e.target.value })} maxLength={200} />
+        </FieldRow>
         <FieldRow label="Banner description" description="Explain what cookies are used for. Be specific.">
           <Textarea className="admin-input min-h-[80px] resize-y text-sm" value={cfg.texts.description}
             onChange={(e) => updateTexts({ description: e.target.value })} maxLength={2000} />
         </FieldRow>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FieldRow label="Reject button label">
-            <Input className="admin-input" value={cfg.texts.rejectAll}
-              onChange={(e) => updateTexts({ rejectAll: e.target.value })} maxLength={100} />
-          </FieldRow>
-          <FieldRow label="Manage preferences label">
-            <Input className="admin-input" value={cfg.texts.managePreferences}
-              onChange={(e) => updateTexts({ managePreferences: e.target.value })} maxLength={100} />
-          </FieldRow>
+        <div className="space-y-3 border-t border-slate-200 pt-4">
+          <h3 className="text-sm font-semibold text-slate-950">Banner buttons</h3>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <FieldRow label="Accept button label">
+              <Input className="admin-input" value={cfg.texts.acceptAll}
+                onChange={(e) => updateTexts({ acceptAll: e.target.value })} maxLength={100} />
+            </FieldRow>
+            <FieldRow label="Reject button label">
+              <Input className="admin-input" value={cfg.texts.rejectAll}
+                onChange={(e) => updateTexts({ rejectAll: e.target.value })} maxLength={100} />
+            </FieldRow>
+            <FieldRow label="Manage preferences label">
+              <Input className="admin-input" value={cfg.texts.managePreferences}
+                onChange={(e) => updateTexts({ managePreferences: e.target.value })} maxLength={100} />
+            </FieldRow>
+          </div>
+        </div>
+        <div className="grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
           <FieldRow label="Save preferences label">
             <Input className="admin-input" value={cfg.texts.savePreferences}
               onChange={(e) => updateTexts({ savePreferences: e.target.value })} maxLength={100} />
@@ -533,6 +528,8 @@ function HardcodedForm({
             <Input className="admin-input" value={cfg.texts.reopenLabel}
               onChange={(e) => updateTexts({ reopenLabel: e.target.value })} maxLength={100} />
           </FieldRow>
+        </div>
+        <div className="grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
           <FieldRow label="Privacy policy link text">
             <Input className="admin-input" value={cfg.texts.privacyPolicyLinkText}
               onChange={(e) => updateTexts({ privacyPolicyLinkText: e.target.value })} maxLength={100} />
@@ -872,10 +869,8 @@ export function PrivacySettings({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
   const [legalConfigLoaded, setLegalConfigLoaded] = useState(false);
-  const [showLegalLinks, setShowLegalLinks] = useState(Boolean(privacyPolicyUrl || cookiePolicyUrl));
   const [privacyMethod, setPrivacyMethod] = useState<LegalPolicyMethod>(getPolicyMethod(privacyPolicyUrl, 'privacy'));
   const [cookieMethod, setCookieMethod] = useState<LegalPolicyMethod>(getPolicyMethod(cookiePolicyUrl, 'cookie'));
   const [privacyExternalUrl, setPrivacyExternalUrl] = useState(privacyPolicyUrl || '');
@@ -909,7 +904,6 @@ export function PrivacySettings({
           if (lp) {
             const privacyPolicy = { ...EMPTY_POLICY_CONFIG, ...lp.privacyPolicy };
             const cookiePolicy = { ...EMPTY_POLICY_CONFIG, ...lp.cookiePolicy };
-            setShowLegalLinks(Boolean(lp.showFooterLinks));
             setPrivacyMethod(privacyPolicy.mode);
             setCookieMethod(cookiePolicy.mode);
             setPrivacyExternalUrl(privacyPolicy.mode === 'external' ? (privacyPolicy.externalUrl || privacyPolicyUrl || '') : '');
@@ -936,7 +930,6 @@ export function PrivacySettings({
 
   useEffect(() => {
     if (legalConfigLoaded) return;
-    setShowLegalLinks(Boolean(privacyPolicyUrl || cookiePolicyUrl));
     const nextPrivacyMethod = getPolicyMethod(privacyPolicyUrl, 'privacy');
     const nextCookieMethod = getPolicyMethod(cookiePolicyUrl, 'cookie');
     setPrivacyMethod(nextPrivacyMethod);
@@ -972,18 +965,16 @@ export function PrivacySettings({
   };
 
   const resolvedPrivacyPolicyUrl = useMemo(() => {
-    if (!showLegalLinks) return undefined;
     if (privacyMethod === 'hosted') return HOSTED_POLICY_PATH.privacy;
     if (privacyMethod === 'embedded') return HOSTED_POLICY_PATH.privacy;
     return privacyExternalUrl.trim() || undefined;
-  }, [privacyExternalUrl, privacyMethod, showLegalLinks]);
+  }, [privacyExternalUrl, privacyMethod]);
 
   const resolvedCookiePolicyUrl = useMemo(() => {
-    if (!showLegalLinks) return undefined;
     if (cookieMethod === 'hosted') return HOSTED_POLICY_PATH.cookie;
     if (cookieMethod === 'embedded') return HOSTED_POLICY_PATH.cookie;
     return cookieExternalUrl.trim() || undefined;
-  }, [cookieExternalUrl, cookieMethod, showLegalLinks]);
+  }, [cookieExternalUrl, cookieMethod]);
 
   const normalizedBuilder = useMemo(() => ({
     ...builder,
@@ -999,7 +990,7 @@ export function PrivacySettings({
     hardcoded,
     builder: normalizedBuilder,
     legalPolicies: {
-      showFooterLinks: showLegalLinks,
+      showFooterLinks: true,
       privacyPolicy: {
         mode: privacyMethod,
         externalUrl: privacyMethod === 'external' ? (resolvedPrivacyPolicyUrl || '') : '',
@@ -1031,7 +1022,6 @@ export function PrivacySettings({
     privacyProviderConfig,
     resolvedCookiePolicyUrl,
     resolvedPrivacyPolicyUrl,
-    showLegalLinks,
   ]);
   const isDirty = savedSnapshot !== null && savedSnapshot !== privacySnapshot;
 
@@ -1046,7 +1036,6 @@ export function PrivacySettings({
 
     setSaving(true);
     setSaveError('');
-    setSaveSuccess(false);
     try {
       const nextPrivacyPolicyUrl = resolvedPrivacyPolicyUrl;
       const nextCookiePolicyUrl = resolvedCookiePolicyUrl;
@@ -1073,19 +1062,19 @@ export function PrivacySettings({
         return;
       }
 
-      if (showLegalLinks && privacyMethod === 'hosted' && !privacyHostedText.trim()) {
+      if (privacyMethod === 'hosted' && !privacyHostedText.trim()) {
         setSaveError('Add Privacy Policy text or choose another source.');
         return;
       }
-      if (showLegalLinks && cookieMethod === 'hosted' && !cookieHostedText.trim()) {
+      if (cookieMethod === 'hosted' && !cookieHostedText.trim()) {
         setSaveError('Add Cookie Policy text or choose another source.');
         return;
       }
-      if (showLegalLinks && privacyMethod === 'embedded' && !privacyProviderConfig.trim()) {
+      if (privacyMethod === 'embedded' && !privacyProviderConfig.trim()) {
         setSaveError('Paste the Privacy Policy embed code or choose another source.');
         return;
       }
-      if (showLegalLinks && cookieMethod === 'embedded' && !cookieProviderConfig.trim()) {
+      if (cookieMethod === 'embedded' && !cookieProviderConfig.trim()) {
         setSaveError('Paste the Cookie Policy embed code or choose another source.');
         return;
       }
@@ -1101,7 +1090,7 @@ export function PrivacySettings({
 
       const nextBuilder = normalizedBuilder;
       const legalPolicies: NonNullable<ConsentConfigData['legalPolicies']> = {
-        showFooterLinks: showLegalLinks,
+        showFooterLinks: true,
         privacyPolicy: {
           mode: privacyMethod,
           externalUrl: privacyMethod === 'external' ? (nextPrivacyPolicyUrl || '') : '',
@@ -1131,8 +1120,6 @@ export function PrivacySettings({
       } else {
         setBuilder(nextBuilder);
         setSavedSnapshot(privacySnapshot);
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2500);
       }
     } catch (err: unknown) {
       setSaveError(
@@ -1332,8 +1319,6 @@ export function PrivacySettings({
               </div>
             </div>
             <LegalPoliciesForm
-              showLegalLinks={showLegalLinks}
-              onShowLegalLinksChange={setShowLegalLinks}
               privacy={{
                 method: privacyMethod,
                 externalUrl: privacyExternalUrl,
@@ -1532,27 +1517,25 @@ export function PrivacySettings({
         )}
       </fieldset>
 
-      <div className="privacy-save-bar">
-        <div>
-          <strong>{isDirty ? tr('Unsaved privacy changes', 'Modifiche privacy non salvate') : tr('Privacy settings saved', 'Impostazioni privacy salvate')}</strong>
-          {saveError && <p className="privacy-save-error">{saveError}</p>}
-          {!saveError && saveSuccess && (
-            <p className="privacy-save-success">
-              <CheckCircle2 />
-              {tr('Saved successfully', 'Salvato correttamente')}
-            </p>
-          )}
-          {!saveError && !saveSuccess && <p>{tr('Saving updates the public page configuration.', 'Il salvataggio aggiorna la configurazione della pagina pubblica.')}</p>}
-        </div>
-        <Button
-          onClick={handleSave}
-          disabled={!isDirty || saving || readOnly}
-          className="admin-action admin-action-primary"
-          size="sm"
-        >
-          {saving ? tr('Saving…', 'Salvataggio…') : saveSuccess ? tr('Saved', 'Salvato') : tr('Save changes', 'Salva modifiche')}
-        </Button>
-      </div>
+      {typeof document !== 'undefined' && (isDirty || saving) ? createPortal(
+        <div className="admin-profile-save-layer">
+          <div className="admin-profile-save-float">
+            <div className="col-span-full flex min-w-0 items-center gap-3">
+              {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
+              <Button
+                onClick={handleSave}
+                disabled={saving || readOnly}
+                className="admin-action admin-action-primary ml-auto"
+                size="sm"
+              >
+                <Save className="h-4 w-4" />
+                {saving ? tr('Saving…', 'Salvataggio…') : tr('Save changes', 'Salva modifiche')}
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      ) : null}
     </div>
   );
 }
