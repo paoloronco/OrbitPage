@@ -860,7 +860,7 @@ export const AdminView = ({
     : visualSection === "links"
       ? selectedVisualLink
         ? tr("The selected card is open and ready to edit.", "La card selezionata è aperta e pronta da modificare.")
-        : tr("Add, reorder and manage every block on the homepage.", "Aggiungi, riordina e gestisci tutti i blocchi della homepage.")
+        : ""
       : visualSection === "menu"
         ? tr("Manage navigation, categories and menu items.", "Gestisci navigazione, categorie ed elementi del menu.")
         : visualSection === "shop"
