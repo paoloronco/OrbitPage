@@ -24,6 +24,12 @@ describe("profile appearance", () => {
     expect(style["--profile-card-surface-tint"]).toBe("#123456");
   });
 
+  it("keeps solid and liquid-glass cards visible when legacy opacity is zero", () => {
+    expect(getProfileAppearanceStyle({ surfaceOpacity: 0 }, "solid")["--profile-card-opacity-percent"]).toBe("100%");
+    expect(getProfileAppearanceStyle({ surfaceOpacity: 0 }, "liquid-glass")["--profile-card-opacity-percent"]).toBe("68%");
+    expect(getProfileAppearanceStyle({ surfaceOpacity: 0 }, "transparent")["--profile-card-opacity-percent"]).toBe("0%");
+  });
+
   it("applies independent profile-card surface, border, radius, blur and shadow controls", () => {
     const style = getProfileAppearanceStyle({
       surfaceOpacity: 0.42,

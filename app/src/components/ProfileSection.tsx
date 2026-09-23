@@ -42,7 +42,7 @@ import { internalAssetPath } from "@/lib/base-path";
 import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
 import type { ThemeConfig } from "@/lib/theme";
-import type { ProfileAppearance } from "@/lib/profile-appearance";
+import { resolveProfileSurfaceOpacity, type ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import type { CardLayout } from "@/lib/card-layout";
 import { uploadApi } from "@/lib/api-client";
@@ -229,7 +229,11 @@ export const ProfileSection = ({
   const activePreset = localPreset(preset);
   const connectedSocials = Object.values(draft.socialLinks || {}).filter(Boolean).length;
   const selectedSurface = draft.appearance?.surfaceEffect || "inherit";
-  const surfaceOpacity = draft.appearance?.surfaceOpacity ?? theme.profileCardOpacity;
+  const resolvedSurface = selectedSurface === "inherit" ? theme.profileCardEffect : selectedSurface;
+  const surfaceOpacity = resolveProfileSurfaceOpacity(
+    resolvedSurface,
+    draft.appearance?.surfaceOpacity ?? theme.profileCardOpacity,
+  );
   const surfaceTransparency = Math.round((1 - surfaceOpacity) * 100);
   const profileBlur = draft.appearance?.surfaceBlur ?? theme.blurIntensity;
   const profileRadius = draft.appearance?.cardRadius ?? theme.cardRadius;
@@ -679,7 +683,7 @@ export const ProfileSection = ({
               <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-transparency" className="text-xs">{tr("Transparency", "Trasparenza")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{surfaceTransparency}%</span></div>
-                  <Slider id="profile-card-transparency" className="admin-profile-compact-slider" min={0} max={1} step={0.01} size="small" value={[1 - surfaceOpacity]} valueLabelFormat={(transparency) => `${Math.round(transparency * 100)}%`} onValueChange={([transparency]) => updateAppearance({ surfaceOpacity: 1 - transparency })} aria-label={tr("Profile card transparency", "Trasparenza card profilo")} />
+                  <Slider id="profile-card-transparency" className="admin-profile-compact-slider" min={0} max={1} step={0.01} size="small" value={[1 - surfaceOpacity]} valueLabelFormat={(transparency) => `${Math.round(transparency * 100)}%`} onValueChange={([transparency]) => updateAppearance({ surfaceOpacity: 1 - transparency, ...(transparency === 1 ? { surfaceEffect: "transparent" as const } : {}) })} aria-label={tr("Profile card transparency", "Trasparenza card profilo")} />
                 </div>
                 <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-radius" className="text-xs">{tr("Corners", "Angoli")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{profileRadius}px</span></div>

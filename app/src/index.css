@@ -1056,7 +1056,10 @@
     border-color: var(--profile-card-border);
     color: var(--profile-card-foreground);
     box-shadow: var(--profile-card-shadow, var(--card-glow, var(--shadow-card)));
+    overflow: clip;
   }
+
+  .profile-card--layout-editing { overflow: visible; }
 
   .profile-card[data-surface-effect="transparent"] {
     background: transparent !important;

@@ -104,6 +104,9 @@ export const PublicProfileSection = ({
   const { tr } = useAppI18n();
   const responsiveViewport: ProfileLayoutViewport = useIsMobile() ? "mobile" : "desktop";
   const activeLayoutViewport = layoutViewport || responsiveViewport;
+  const resolvedSurfaceEffect = profile.appearance?.surfaceEffect && profile.appearance.surfaceEffect !== "inherit"
+    ? profile.appearance.surfaceEffect
+    : surfaceEffect;
   const rawLayout = profile.appearance?.layouts?.[activeLayoutViewport] || profile.appearance?.layout;
   const hasCustomLayout = Boolean(
     profile.appearance?.layout ||
@@ -340,8 +343,8 @@ export const PublicProfileSection = ({
       className={`profile-card glass-card p-8 text-center transition-smooth hover:glow-effect${layoutEditing ? " profile-card--layout-editing" : ""}`}
       data-profile-layout-editor={layoutEditing ? "true" : undefined}
       data-profile-layout-viewport={activeLayoutViewport}
-      data-surface-effect={profile.appearance?.surfaceEffect && profile.appearance.surfaceEffect !== "inherit" ? profile.appearance.surfaceEffect : surfaceEffect}
-      style={getProfileAppearanceStyle(profile.appearance)}
+      data-surface-effect={resolvedSurfaceEffect}
+      style={getProfileAppearanceStyle(profile.appearance, resolvedSurfaceEffect)}
     >
       {hasCustomLayout || layoutEditing ? (
         <div
