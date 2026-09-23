@@ -906,7 +906,7 @@
 
 .menu-editor-stack--visual .menu-editor-tabs,
 .menu-editor-stack--visual .menu-editor-tabs:first-child {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
   overflow: visible;
   border: 1px solid #d7dee8;
@@ -973,6 +973,22 @@
   font-weight: 850;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs .menu-editor-tab-save {
+  background: #2454d6;
+  color: #fff;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs .menu-editor-tab-save:hover:not(:disabled) {
+  background: #1d46b8;
+  color: #fff;
+}
+
+.menu-editor-stack--visual .menu-editor-tabs .menu-editor-tab-save:disabled {
+  background: #f2f4f7;
+  color: #98a2b3;
+  cursor: default;
 }
 
 .menu-editor-stack--visual .menu-category-picker {
