@@ -1000,6 +1000,14 @@
   }
 }
 
+@container visual-site-editor (min-width: 901px) {
+  .visual-site-editor--preview-visible:not(.visual-site-editor--menu) .visual-site-editor__canvas {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+  }
+}
+
 @container visual-site-editor (max-width: 600px) {
   .visual-site-editor__sections {
     display: grid;
