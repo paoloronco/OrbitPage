@@ -184,6 +184,8 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('admin-dashboard-sidebar');
     expect(html).not.toContain('data-onboarding="public-page"');
     expect(html).toContain('data-testid="managed-analytics"');
+    expect(html).toContain('Page visits and clicks');
+    expect(html).not.toContain('Performance overview');
     expect(html).toContain('data-testid="google-analytics-settings"');
     expect(html).toContain('id="ga-id"');
     expect(html).not.toContain('https://github.com/paoloronco/OrbitPage');
@@ -191,7 +193,7 @@ describe('AdminView demo mode', () => {
   });
 
   it('hides workspace metrics from OSS utility sections', () => {
-    for (const requestedTab of ['ai', 'theme', 'publish', 'backup', 'privacy', 'newsletter', 'team', 'account'] as const) {
+    for (const requestedTab of ['ai', 'theme', 'publish', 'backup', 'privacy', 'analytics', 'newsletter', 'team', 'account'] as const) {
       const html = renderToStaticMarkup(
         <AdminView
           profile={{ name: 'Self-hosted', bio: '', avatar: '' }}
