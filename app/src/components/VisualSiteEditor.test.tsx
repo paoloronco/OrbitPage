@@ -142,6 +142,37 @@ describe("VisualSiteEditor", () => {
     expect(html).toContain('<h2>Content block</h2>');
   });
 
+  it("uses the content editor heading when a preview card is selected on mobile", () => {
+    vi.stubGlobal("window", {
+      matchMedia: (query: string) => ({ matches: query === "(max-width: 600px)" }),
+    });
+
+    try {
+      const html = renderToStaticMarkup(
+        <VisualSiteEditor
+          profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+          links={[]}
+          theme={defaultTheme}
+          publicPageHref="/orbitpage"
+          showOrbitPageBadge
+          section="links"
+          selectedLinkId="card-1"
+          inspectorTitle="Selected card"
+          inspectorDescription="Edit the selected card."
+          inspector={<h2>Content block</h2>}
+          onSelect={vi.fn()}
+          layoutEditing={false}
+          onLayoutEditingChange={vi.fn()}
+        />,
+      );
+
+      expect(html).not.toContain('<h2>Selected card</h2>');
+      expect(html).toContain('<h2>Content block</h2>');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("shows Pages preview only when a selected additional page supplies it", () => {
     const props = {
       profile: { name: "Main page", bio: "", avatar: "" },

@@ -111,7 +111,7 @@ export const LinkManager = ({
     ...getContentCardVariantCssVariables(theme, index),
   }) as CSSProperties;
   const atBlockLimit = maxBlocks !== undefined && maxBlocks !== null && workingLinks.length >= maxBlocks;
-  const focusedLink = visualFocusLinkId
+  const focusedLink = visualFocusLinkId && !isMobile
     ? workingLinks.find((link) => String(link.id) === String(visualFocusLinkId)) || null
     : null;
   const renderedLinks = focusedLink
@@ -1151,7 +1151,7 @@ export const LinkManager = ({
                   videoUploadsEnabled={videoUploadsEnabled}
                   maxVideoUploadBytes={maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
-                  editRequest={focusedLink ? visualEditRequest : undefined}
+                  editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}
                   editing={editingLinkId === String(link.id)}
                   onEditingChange={updateEditingLink}
                 />
@@ -1176,7 +1176,7 @@ export const LinkManager = ({
                   managePlanHref={managePlanHref}
                   availablePages={availablePages}
                   internalDestinations={internalDestinations}
-                  editRequest={focusedLink ? visualEditRequest : undefined}
+                  editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}
                   editing={editingLinkId === String(link.id)}
                   onEditingChange={updateEditingLink}
                 />
