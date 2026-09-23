@@ -27,4 +27,10 @@ describe('Shop link shortcut', () => {
     expect(source).toContain('draggable={canDrag}');
     expect(source).not.toContain('onTouchStart=');
   });
+
+  it('shows the mobile save action only when content changed', () => {
+    expect(source).toContain('!isViewOnly && !isMobile');
+    expect(source).toContain('isMobile && !isViewOnly && hasUnsavedChanges ? createPortal(');
+    expect(source).toContain('admin-profile-save-float admin-profile-save-float--single');
+  });
 });

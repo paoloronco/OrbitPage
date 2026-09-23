@@ -1,4 +1,5 @@
 import { type ComponentType, type CSSProperties, useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
@@ -20,6 +21,8 @@ import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import type { BrandServiceProvider } from "@/lib/service-brand";
 import { mergeLinkPreviews } from "./link-preview-state";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { OrbitLoader } from "@/components/ui/orbit-loader";
+import "./profile-save-overlay.css";
 
 interface LinkManagerProps {
   links: LinkData[];
@@ -920,7 +923,7 @@ export const LinkManager = ({
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
-          {!isViewOnly && (
+          {!isViewOnly && !isMobile && (
             <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
               <Save className="h-4 w-4" />
               {tr("Save", "Salva")}
@@ -1182,6 +1185,19 @@ export const LinkManager = ({
           ))}
         </fieldset>
       )}
+
+      {typeof document !== "undefined" && isMobile && !isViewOnly && hasUnsavedChanges ? createPortal(
+        <div className="admin-profile-save-layer">
+          <div className="admin-profile-save-float admin-profile-save-float--single">
+            {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
+            <Button type="button" size="sm" onClick={handleSave} disabled={preparingLinks.size > 0 || busy} data-onboarding="links-save">
+              {busy ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+              {busy ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}
+            </Button>
+          </div>
+        </div>,
+        document.body,
+      ) : null}
     </div>
   );
 };
