@@ -6788,10 +6788,6 @@ button.subpage-page-card:focus-visible { outline: 3px solid #6d94f3; outline-off
 .subpage-page-status.is-live { background: #e3f7eb; color: #166534; }
 .subpage-upgrade-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem 1rem; margin-top: .85rem; padding: .7rem .85rem; background: #f8fafc; color: #475569; font-size: .76rem; }
 .subpage-upgrade-note a { color: #1d4ed8; font-weight: 750; }
-.subpage-empty-state { display: grid; justify-items: start; gap: .65rem; padding: clamp(1.1rem,3vw,2rem); background: #f8fafc; }
-.subpage-empty-state > svg { color: #356df3; }
-.subpage-empty-state h3 { margin: 0; color: #0f172a; font-size: 1.1rem; }
-.subpage-empty-state p { max-width: 34rem; margin: 0 0 .25rem; color: #64748b; font-size: .85rem; }
 .subpage-workspace { display: grid; gap: 1rem; min-width: 0; }
 .subpage-section-heading { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .6rem; margin-bottom: 1rem; }
 .subpage-section-heading h3 { margin: .15rem 0 .25rem; color: #0f172a; font-size: 1.1rem; font-weight: 750; }

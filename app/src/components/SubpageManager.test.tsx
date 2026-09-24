@@ -6,6 +6,22 @@ import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 vi.mock("./LinkManager", () => ({ LinkManager: () => <div>Content editor</div> }));
 
 describe("additional pages workspace", () => {
+  it("does not render a second empty-state prompt", () => {
+    const html = renderToStaticMarkup(
+      <SubpageManager
+        pages={[]}
+        theme={defaultTheme}
+        publicPageHref="https://example.com/paolo"
+        onPagesUpdate={vi.fn()}
+        editMode="full"
+        maxPages={3}
+      />,
+    );
+
+    expect(html).not.toContain("No additional pages yet");
+    expect(html).not.toContain("Add your first page");
+  });
+
   it("shows a single-page workflow with the selected page and its public state", () => {
     const page: EditorSubpage = {
       id: "services", slug: "services", title: "Services", description: "What I offer", links: [],
