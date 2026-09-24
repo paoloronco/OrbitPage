@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import { FileText, Map, QrCode, Share2 } from "@/components/ui/material-icons";
+import { FileText, Map, QrCode } from "@/components/ui/material-icons";
 import { useAppI18n } from "@/lib/i18n";
 import { ProfileQrCode } from "./ProfileQrCode";
 import { SitemapManager } from "./SitemapManager";
@@ -70,13 +70,6 @@ export function PublishTools({
 
   return (
     <section className="publish-tools" data-onboarding="publish-section">
-      <header className="publish-tools-header !items-center !gap-2 !p-0">
-        <span className="publish-tools-header-icon !h-8 !w-8" aria-hidden="true"><Share2 className="h-4 w-4" /></span>
-        <div>
-          <h2 className="!text-base !font-semibold">{tr("Share your page and make it discoverable.", "Condividi la pagina e rendila facile da trovare.")}</h2>
-        </div>
-      </header>
-
       <div className="publish-tools-tabs" role="tablist" aria-label={tr("Publishing tools", "Strumenti di pubblicazione")}>
         {tools.map(({ id, icon: Icon, title, description }, index) => (
           <button

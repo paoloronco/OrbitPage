@@ -7,7 +7,6 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
 
   await page.getByRole('button', { name: 'Publish', exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard\/publish$/);
-  await expect(page.getByRole('heading', { name: 'Share your page and make it discoverable.' })).toBeVisible();
   await expect(page.getByRole('tablist', { name: 'Publishing tools' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Page QR codes' })).toBeVisible();
   const desktopQrBounds = await page.getByRole('img', { name: 'Generated QR preview' }).boundingBox();
@@ -41,5 +40,5 @@ test('redirects legacy publishing routes to the unified workspace', async ({ pag
   await openAuthenticatedAdmin(page);
   await page.goto('/dashboard/sitemap');
   await expect(page).toHaveURL(/\/dashboard\/publish$/);
-  await expect(page.getByRole('heading', { name: 'Share your page and make it discoverable.' })).toBeVisible();
+  await expect(page.getByRole('tablist', { name: 'Publishing tools' })).toBeVisible();
 });
