@@ -9691,7 +9691,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     display: grid;
     min-height: 52px;
     cursor: pointer;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
     align-items: center;
     padding: 7px 10px;
@@ -9727,7 +9727,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     height: 16px;
   }
 
-  .admin-theme-preview-summary-identity small,
   .admin-theme-preview-summary-identity strong {
     display: block;
     overflow: hidden;
@@ -9735,31 +9734,9 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     white-space: nowrap;
   }
 
-  .admin-theme-preview-summary-identity small {
-    color: #66758b;
-    font-size: .625rem;
-    font-weight: 750;
-    letter-spacing: .08em;
-    line-height: 1.2;
-    text-transform: uppercase;
-  }
-
   .admin-theme-preview-summary-identity strong {
-    margin-top: 2px;
     font-size: .75rem;
     line-height: 1.25;
-  }
-
-  .admin-theme-preview-summary-colors {
-    display: flex;
-    gap: 4px;
-  }
-
-  .admin-theme-preview-summary-colors i {
-    width: 11px;
-    height: 11px;
-    border: 1px solid rgb(148 163 184 / 45%);
-    border-radius: 3px;
   }
 
   .admin-theme-preview-summary-action {
@@ -9812,11 +9789,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     padding: 2px;
   }
 
-  .admin-theme-preview-context > p {
-    font-size: .6875rem;
-    line-height: 1.45;
-  }
-
   .admin-theme-live-preview .admin-preview-device--mobile {
     min-height: 298px;
     padding: 6px;
@@ -9843,7 +9815,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     gap: 8px;
   }
 
-  .admin-theme-preview-summary-colors,
   .admin-theme-preview-summary-action > span {
     display: none !important;
   }
