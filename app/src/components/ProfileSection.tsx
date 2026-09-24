@@ -550,8 +550,11 @@ export const ProfileSection = ({
                       <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} size="small" value={[draft.appearance?.avatarSize ?? 112]} valueLabelFormat={(avatarSize) => `${avatarSize}px`} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
                     </div>
                     <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-                      <div className="flex items-center justify-between gap-3"><div><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><p className="text-xs text-slate-600">{tr("Outline the profile image.", "Aggiungi un contorno all'immagine profilo.")}</p></div><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
-                      <ProfileColorField label={tr("Image border color", "Colore bordo immagine")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} inherited={!draft.appearance?.avatarBorderColor} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} onReset={() => updateAppearance({ avatarBorderColor: undefined })} />
+                      <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
+                      <div className="space-y-1.5">
+                        {draft.appearance?.avatarBorderColor && <div className="flex justify-end"><button type="button" onClick={() => updateAppearance({ avatarBorderColor: undefined })} className="text-[11px] font-semibold text-blue-700 hover:underline">{tr("Use theme", "Usa tema")}</button></div>}
+                        <ColorPicker label={tr("Profile image border", "Bordo immagine profilo")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} />
+                      </div>
                     </div>
                   </div>
                 </div>

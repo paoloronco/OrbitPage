@@ -20,6 +20,8 @@ it("groups profile controls in their visible page sections", () => {
 
   expect(html).toContain('admin-profile-identity-fields grid gap-5"');
   expect(html.indexOf("Image border")).toBeLessThan(html.indexOf("Name and details"));
+  expect(html).not.toContain("Outline the profile image.");
+  expect(html).not.toContain("Image border color");
   expect(html.indexOf("Online presence")).toBeLessThan(html.indexOf("Search description"));
   expect(html.indexOf("Footer text")).toBeLessThan(html.indexOf("Advanced settings"));
   expect(html).toContain("Typography and technical options.");
