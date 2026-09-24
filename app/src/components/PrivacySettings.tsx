@@ -1407,11 +1407,6 @@ export function PrivacySettings({
 
             {mode === 'hardcoded' && enabled && (
               <div className="privacy-config-surface">
-                <SectionHeader
-                  icon={ShieldCheck}
-                  title={tr('Native banner settings', 'Impostazioni banner nativo')}
-                  description={tr('Edit only what your visitors need to understand and choose.', 'Modifica solo ciò che serve ai visitatori per capire e scegliere.')}
-                />
                 <HardcodedForm
                   cfg={hardcoded}
                   onChange={(updates) => setHardcoded((previous) => ({ ...previous, ...updates }))}
