@@ -59,6 +59,7 @@ export interface MenuCatalog {
   venueType: MenuVenueType;
   name: string;
   description: string;
+  footerText: string;
   currency: string;
   locale: string;
   sections: MenuSection[];
@@ -153,6 +154,7 @@ export function createDefaultMenu(venueType: MenuVenueType = 'restaurant'): Menu
     venueType,
     name: venueType === 'restaurant' ? 'Our menu' : venueType === 'bar' ? 'Drinks menu' : 'Café menu',
     description: 'A concise selection, updated by the venue.',
+    footerText: 'Prices and availability may change. Ask the venue about allergens and dietary requirements.',
     currency: 'EUR',
     locale: 'en-GB',
     sections,
@@ -251,6 +253,7 @@ export function normalizeMenuCatalog(
     venueType,
     name: editableText(input.name, 120, fallback.name),
     description: editableText(input.description, 500, fallback.description),
+    footerText: editableText(input.footerText, 500, fallback.footerText),
     currency: /^[A-Z]{3}$/.test(text(input.currency, 3)) ? text(input.currency, 3) : 'EUR',
     locale: /^[a-z]{2}(?:-[A-Z]{2})?$/.test(text(input.locale, 8)) ? text(input.locale, 8) : 'en-GB',
     sections,

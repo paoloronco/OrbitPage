@@ -7,6 +7,7 @@ describe('MenuView subsections', () => {
   it('renders products beneath their subsection and exposes a direct section link', () => {
     const menu = createDefaultMenu('bar');
     menu.enabled = true;
+    menu.footerText = 'Seasonal availability. Ask us about allergens.';
     menu.sections = [
       { id: 'beverage', name: 'Beverage', visible: true, position: 0 },
       { id: 'beer', parentId: 'beverage', name: 'Beer', description: 'Draft and bottled', visible: true, position: 1 },
@@ -27,11 +28,15 @@ describe('MenuView subsections', () => {
     expect(html).toContain('class="orbitpage-menu"');
     expect(html).toContain('class="orbitpage-menu__back"');
     expect(html).toContain('class="orbitpage-menu__footer"');
+    expect(html).toContain('Back to main page');
+    expect(html).not.toContain('Restaurant menu');
+    expect(html).toContain('Seasonal availability. Ask us about allergens.');
     expect(html).toContain('href="#menu-beverage"');
     expect(html).toContain('href="#menu-beer"');
     expect(html).toContain('id="menu-beverage"');
     expect(html).toContain('id="menu-beer"');
     expect(html).toContain('<span>Beer</span>');
+    expect(html).not.toContain('<small>2</small>');
     expect(html).toContain('House lager');
     expect(html).toContain('aria-expanded="true"');
     expect(html).toContain('aria-controls="menu-content-beverage"');
@@ -50,6 +55,7 @@ describe('MenuView subsections', () => {
 
     const html = renderToStaticMarkup(<MenuView menu={menu} />);
 
+    expect(html).not.toContain('Restaurant menu');
     expect(html).toContain('placeholder="Search the menu"');
     expect(html).toContain('12 items');
     expect(html).toContain('aria-expanded="false"');

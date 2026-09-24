@@ -4900,11 +4900,10 @@
 }
 
 .orbitpage-menu__shell { width: min(100%, 76rem); margin: 0 auto; padding: clamp(1.25rem, 4vw, 3rem); }
-.orbitpage-menu__header { display: grid; grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 1fr); gap: clamp(1.5rem, 5vw, 5rem); padding: clamp(1.5rem, 6vw, 5rem) 0 2.5rem; border-bottom: 1px solid var(--menu-border); }
+.orbitpage-menu__header { display: grid; gap: clamp(2.5rem, 7vw, 5rem); padding: 0 0 2.5rem; border-bottom: 1px solid var(--menu-border); }
 .orbitpage-menu__back { align-self: start; display: inline-flex; align-items: center; gap: .55rem; width: max-content; color: var(--menu-muted); font-size: .82rem; font-weight: 750; text-decoration: none; }
 .orbitpage-menu__back svg { width: 1rem; transition: transform 180ms cubic-bezier(.22,1,.36,1); }
 .orbitpage-menu__back:hover svg { transform: translateX(-.2rem); }
-.orbitpage-menu__identity > p { margin: 0 0 1.25rem; color: var(--menu-accent); font-size: .72rem; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
 .orbitpage-menu__identity h1 { max-width: 14ch; margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.8rem, 8vw, 6.8rem); font-weight: 500; line-height: .9; letter-spacing: 0; }
 .orbitpage-menu__identity > div { max-width: 38rem; margin-top: 1.5rem; color: var(--menu-muted); font-size: clamp(1rem, 2vw, 1.2rem); line-height: 1.65; }
 .orbitpage-menu__directory { position: sticky; z-index: 6; top: 0; margin: 0 calc(clamp(1.25rem, 4vw, 3rem) * -1); background: color-mix(in srgb, var(--menu-bg) 93%, transparent); border-bottom: 1px solid var(--menu-border); backdrop-filter: blur(14px); }
@@ -4929,7 +4928,6 @@
 .orbitpage-menu__section-heading > span { color: var(--menu-accent); font-size: .7rem; font-weight: 850; }
 .orbitpage-menu__section-heading h2 { margin: -.25rem 0 .5rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 500; line-height: 1; letter-spacing: 0; }
 .orbitpage-menu__section-heading h2 button, .orbitpage-menu__subsection > header h3 button { display: flex; align-items: center; gap: .65rem; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; line-height: inherit; text-align: left; cursor: pointer; }
-.orbitpage-menu__section-heading h2 button small, .orbitpage-menu__subsection > header h3 button small { display: inline-grid; min-width: 1.7rem; height: 1.7rem; place-items: center; border: 1px solid var(--menu-border); border-radius: 999px; color: var(--menu-muted); font-family: system-ui, sans-serif; font-size: .64rem; font-weight: 800; }
 .orbitpage-menu__section-heading h2 button svg, .orbitpage-menu__subsection > header h3 button svg { flex: 0 0 auto; width: 1rem; height: 1rem; margin-left: auto; color: var(--menu-muted); transition: transform 180ms ease; }
 .orbitpage-menu__section-heading h2 button[aria-expanded="true"] svg, .orbitpage-menu__subsection > header h3 button[aria-expanded="true"] svg { transform: rotate(180deg); }
 .orbitpage-menu__section-heading p { margin: 0; color: var(--menu-muted); font-size: .9rem; line-height: 1.55; }
@@ -4976,9 +4974,8 @@
 .orbitpage-menu--missing h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 6vw, 4rem); font-weight: 500; line-height: 1; }
 .orbitpage-menu--missing a { color: var(--menu-text); font-weight: 800; }
 @media (max-width: 720px) {
-  .orbitpage-menu__header, .orbitpage-menu__section { grid-template-columns: 1fr; }
+  .orbitpage-menu__section { grid-template-columns: 1fr; }
   .orbitpage-menu__header { gap: 2rem; }
-  .orbitpage-menu__back span { display: none; }
   .orbitpage-menu__section { gap: 1.25rem; }
   .orbitpage-menu__tools { gap: .6rem; }
   .orbitpage-menu__search { min-height: 2.5rem; }
@@ -5934,7 +5931,7 @@
 .admin-menu-live-preview > .orbitpage-menu { min-height: 100%; }
 /* The dashboard frame scales a 390px or 1280px canvas; use that canvas for fluid menu sizing. */
 .admin-menu-live-preview .orbitpage-menu__shell { padding: clamp(1.25rem, 4cqw, 3rem); }
-.admin-menu-live-preview .orbitpage-menu__header { gap: clamp(1.5rem, 5cqw, 5rem); padding-top: clamp(1.5rem, 6cqw, 5rem); }
+.admin-menu-live-preview .orbitpage-menu__header { gap: clamp(2.5rem, 7cqw, 5rem); }
 .admin-menu-live-preview .orbitpage-menu__identity h1 { font-size: clamp(2.8rem, 8cqw, 6.8rem); }
 .admin-menu-live-preview .orbitpage-menu__identity > div { font-size: clamp(1rem, 2cqw, 1.2rem); }
 .admin-menu-live-preview .orbitpage-menu__directory { margin-inline: calc(clamp(1.25rem, 4cqw, 3rem) * -1); }
@@ -5950,9 +5947,8 @@
 .admin-menu-live-preview .orbitpage-menu-item:has(.orbitpage-menu-item__image--cover) .orbitpage-menu-item__content { padding: clamp(1rem, 2.5cqw, 1.5rem) clamp(1rem, 2.5cqw, 1.5rem) clamp(1rem, 2.5cqw, 1.5rem) 0; }
 
 @container menu-preview (max-width: 720px) {
-  .admin-menu-live-preview .orbitpage-menu__header, .admin-menu-live-preview .orbitpage-menu__section { grid-template-columns: 1fr; }
+  .admin-menu-live-preview .orbitpage-menu__section { grid-template-columns: 1fr; }
   .admin-menu-live-preview .orbitpage-menu__header { gap: 2rem; }
-  .orbitpage-menu__back span { display: none; }
   .admin-menu-live-preview .orbitpage-menu__section { gap: 1.25rem; }
   .orbitpage-menu__tools { gap: .6rem; }
   .orbitpage-menu__search { min-height: 2.5rem; }
