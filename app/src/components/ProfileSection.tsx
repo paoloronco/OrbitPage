@@ -610,10 +610,13 @@ export const ProfileSection = ({
                 <Textarea id="profile-footer" value={draft.footerText || ""} onChange={(event) => setDraft((current) => ({ ...current, footerText: event.target.value }))} placeholder={tr("(c) Your name. All rights reserved.", "(c) Il tuo nome. Tutti i diritti riservati.")} rows={2} maxLength={300} />
               </div>
             </div>
+          </section>
 
-            <details className="group mt-3 rounded-lg border border-slate-200 bg-white">
+          <section className="admin-profile-chapter">
+            <ProfileSectionHeading title={tr("Social links", "Link social")} />
+            <details className="group rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4">
-              <span><strong className="block text-sm text-slate-950">{tr("Social links", "Link social")}</strong><small className="mt-1 block text-xs text-slate-500">{connectedSocials} {tr(connectedSocials === 1 ? "connected channel" : "connected channels", connectedSocials === 1 ? "canale collegato" : "canali collegati")}</small></span>
+              <strong className="text-sm text-slate-950">{connectedSocials} {tr(connectedSocials === 1 ? "connected channel" : "connected channels", connectedSocials === 1 ? "canale collegato" : "canali collegati")}</strong>
               <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{tr("Manage", "Gestisci")}</span>
             </summary>
             <div className="grid gap-3 border-t border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
