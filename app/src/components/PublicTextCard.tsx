@@ -168,14 +168,14 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                   <div className="flex-1 min-w-0">
                     {/* Label on its own line */}
                     <div style={{ color: item.textColor || readableTextColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || undefined }}>{item.text}</div>
-                    {/* URL on second indented line without wrapping */}
+                    {/* URL on a second line, aligned with the item text */}
                     {itemHref && (
                       <a
                         href={itemHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="ml-6 block whitespace-nowrap overflow-x-auto hover:underline hover:text-primary transition-colors text-left"
+                        className="block whitespace-nowrap overflow-x-auto hover:underline hover:text-primary transition-colors text-left"
                         title={item.url}
                         style={{ color: item.textColor || readableTextColor }}
                       >
