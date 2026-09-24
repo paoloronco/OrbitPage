@@ -135,6 +135,7 @@ export const OrbitPageProfileAppearanceSchema = z.object({
   surfaceEffect: z.enum(["inherit", "solid", "transparent", "liquid-glass"]).nullable().optional(),
   surfaceOpacity: OptionalNumber.refine((value) => value === null || value === undefined || (value >= 0 && value <= 1)),
   surfaceBlur: OptionalNumber.refine((value) => value === null || value === undefined || (value >= 0 && value <= 40)),
+  cardBackgroundImage: boundedString(2_048).nullable().optional(),
   cardBackgroundColor: OptionalHex,
   cardTextColor: OptionalHex,
   cardMutedColor: OptionalHex,

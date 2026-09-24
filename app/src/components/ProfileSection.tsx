@@ -202,8 +202,10 @@ export const ProfileSection = ({
   const [draft, setDraft] = useState(profile);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
   const [pendingFaviconFile, setPendingFaviconFile] = useState<File | null>(null);
+  const [pendingCardBackgroundFile, setPendingCardBackgroundFile] = useState<File | null>(null);
   const [pendingLogoPreviewUrl, setPendingLogoPreviewUrl] = useState<string | null>(null);
   const [pendingFaviconPreviewUrl, setPendingFaviconPreviewUrl] = useState<string | null>(null);
+  const [pendingCardBackgroundPreviewUrl, setPendingCardBackgroundPreviewUrl] = useState<string | null>(null);
   const [faviconDialogOpen, setFaviconDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
@@ -211,6 +213,8 @@ export const ProfileSection = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
+  const cardBackgroundInputRef = useRef<HTMLInputElement>(null);
+  const syncedProfileRef = useRef(profile);
   const savedNoticeTimerRef = useRef<number | null>(null);
   const appliedLayoutCommandRef = useRef(0);
   const appliedCardLayoutCommandRef = useRef(0);
@@ -240,13 +244,15 @@ export const ProfileSection = ({
   const profileBorderWidth = draft.appearance?.cardBorderWidth ?? 1;
   const profileShadowOpacity = draft.appearance?.cardShadowOpacity ?? theme.cardShadow.opacity;
   const isDirty = useMemo(
-    () => JSON.stringify(draft) !== JSON.stringify(profile) || Boolean(pendingLogoFile || pendingFaviconFile),
-    [draft, pendingFaviconFile, pendingLogoFile, profile],
+    () => JSON.stringify(draft) !== JSON.stringify(profile) || Boolean(pendingLogoFile || pendingFaviconFile || pendingCardBackgroundFile),
+    [draft, pendingCardBackgroundFile, pendingFaviconFile, pendingLogoFile, profile],
   );
 
   useEffect(() => {
-    if (!pendingLogoFile && !pendingFaviconFile) setDraft(profile);
-  }, [profile, pendingFaviconFile, pendingLogoFile]);
+    const profileChanged = syncedProfileRef.current !== profile;
+    syncedProfileRef.current = profile;
+    if (profileChanged && !pendingLogoFile && !pendingFaviconFile && !pendingCardBackgroundFile) setDraft(profile);
+  }, [profile, pendingCardBackgroundFile, pendingFaviconFile, pendingLogoFile]);
 
   useEffect(() => {
     onProfilePreview?.(draft);
@@ -285,7 +291,8 @@ export const ProfileSection = ({
   useEffect(() => () => {
     if (pendingLogoPreviewUrl) URL.revokeObjectURL(pendingLogoPreviewUrl);
     if (pendingFaviconPreviewUrl) URL.revokeObjectURL(pendingFaviconPreviewUrl);
-  }, [pendingFaviconPreviewUrl, pendingLogoPreviewUrl]);
+    if (pendingCardBackgroundPreviewUrl) URL.revokeObjectURL(pendingCardBackgroundPreviewUrl);
+  }, [pendingCardBackgroundPreviewUrl, pendingFaviconPreviewUrl, pendingLogoPreviewUrl]);
 
   useEffect(() => () => {
     if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
@@ -315,6 +322,15 @@ export const ProfileSection = ({
     return safeUrl;
   };
 
+  const getOptionalImageUrl = (value?: string | null) => {
+    const safeUrl = resolveSafePublicMediaUrl(value);
+    if (!safeUrl) return null;
+    if (safeUrl.startsWith("/") || (!safeUrl.includes(":") && !safeUrl.startsWith("//"))) {
+      return internalAssetPath(safeUrl) || null;
+    }
+    return safeUrl;
+  };
+
   const updateAppearance = (updates: Partial<ProfileAppearance>) => {
     setDraft((current) => ({ ...current, appearance: { ...current.appearance, ...updates } }));
   };
@@ -329,21 +345,29 @@ export const ProfileSection = ({
     }));
   };
 
-  const prepareImage = async (file: File, target: "logo" | "favicon") => {
+  const prepareImage = async (file: File, target: "logo" | "favicon" | "card-background") => {
     setUploadError(null);
     try {
-      const optimized = await optimizeImageForUpload(file, "profile");
+      const optimized = await optimizeImageForUpload(file, target === "card-background" ? "cover" : "profile");
       const previewUrl = URL.createObjectURL(optimized);
       if (target === "logo") {
         if (pendingLogoPreviewUrl) URL.revokeObjectURL(pendingLogoPreviewUrl);
         setPendingLogoFile(optimized);
         setPendingLogoPreviewUrl(previewUrl);
         setDraft((current) => ({ ...current, avatar: previewUrl, showAvatar: true }));
-      } else {
+      } else if (target === "favicon") {
         if (pendingFaviconPreviewUrl) URL.revokeObjectURL(pendingFaviconPreviewUrl);
         setPendingFaviconFile(optimized);
         setPendingFaviconPreviewUrl(previewUrl);
         setDraft((current) => ({ ...current, favicon: previewUrl }));
+      } else {
+        if (pendingCardBackgroundPreviewUrl) URL.revokeObjectURL(pendingCardBackgroundPreviewUrl);
+        setPendingCardBackgroundFile(optimized);
+        setPendingCardBackgroundPreviewUrl(previewUrl);
+        setDraft((current) => ({
+          ...current,
+          appearance: { ...current.appearance, cardBackgroundImage: previewUrl },
+        }));
       }
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "The selected image could not be processed.");
@@ -371,12 +395,21 @@ export const ProfileSection = ({
         const uploaded = await uploadApi.uploadImage(pendingFaviconFile, "profile-favicon");
         nextProfile = { ...nextProfile, favicon: uploaded.filePath };
       }
+      if (pendingCardBackgroundFile) {
+        const uploaded = await uploadApi.uploadImage(pendingCardBackgroundFile, "profile-card-background");
+        nextProfile = {
+          ...nextProfile,
+          appearance: { ...nextProfile.appearance, cardBackgroundImage: uploaded.filePath },
+        };
+      }
       await onProfileUpdate(nextProfile);
       setDraft(nextProfile);
       setPendingLogoFile(null);
       setPendingFaviconFile(null);
+      setPendingCardBackgroundFile(null);
       setPendingLogoPreviewUrl(null);
       setPendingFaviconPreviewUrl(null);
+      setPendingCardBackgroundPreviewUrl(null);
       setFaviconDialogOpen(false);
       showSavedNotice(previousProfile);
       onEditingComplete?.();
@@ -397,8 +430,10 @@ export const ProfileSection = ({
       setDraft(previousProfile);
       setPendingLogoFile(null);
       setPendingFaviconFile(null);
+      setPendingCardBackgroundFile(null);
       setPendingLogoPreviewUrl(null);
       setPendingFaviconPreviewUrl(null);
+      setPendingCardBackgroundPreviewUrl(null);
       dismissSavedNotice();
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "The previous page version could not be restored.");
@@ -411,13 +446,17 @@ export const ProfileSection = ({
     setDraft(profile);
     setPendingLogoFile(null);
     setPendingFaviconFile(null);
+    setPendingCardBackgroundFile(null);
     setPendingLogoPreviewUrl(null);
     setPendingFaviconPreviewUrl(null);
+    setPendingCardBackgroundPreviewUrl(null);
     setUploadError(null);
     onEditingComplete?.();
   };
 
   const resetCardAppearance = () => {
+    setPendingCardBackgroundFile(null);
+    setPendingCardBackgroundPreviewUrl(null);
     setDraft((current) => ({
       ...current,
       appearance: {
@@ -435,6 +474,7 @@ export const ProfileSection = ({
   };
 
   const faviconValue = draft.favicon || draft.avatar;
+  const cardBackgroundImage = getOptionalImageUrl(draft.appearance?.cardBackgroundImage);
 
   return (
     <div className="admin-profile-section space-y-5" data-onboarding="profile-card">
@@ -679,6 +719,38 @@ export const ProfileSection = ({
                     </button>
                   );
                 })}
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <strong className="block text-sm text-slate-950">{tr("Card background image", "Immagine di sfondo della card")}</strong>
+                    <small className="mt-0.5 block text-xs text-slate-500">{tr("Fills the whole profile card while keeping its text, border and theme style.", "Riempie tutta la card profilo mantenendo testo, bordo e stile del tema.")}</small>
+                  </div>
+                  {cardBackgroundImage && (
+                    <Button type="button" variant="outline" size="sm" onClick={() => {
+                      setPendingCardBackgroundFile(null);
+                      setPendingCardBackgroundPreviewUrl(null);
+                      updateAppearance({ cardBackgroundImage: undefined });
+                    }}>
+                      {tr("Remove image", "Rimuovi immagine")}
+                    </Button>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => cardBackgroundInputRef.current?.click()}
+                  className="group relative mt-3 flex h-28 w-full items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-white text-slate-500 hover:border-blue-400 hover:bg-blue-50/50"
+                  aria-label={tr("Choose profile card background image", "Scegli immagine di sfondo della card profilo")}
+                >
+                  {cardBackgroundImage
+                    ? <img src={cardBackgroundImage} alt="" className="h-full w-full object-cover" />
+                    : <ImageIcon className="h-7 w-7 text-slate-400" />}
+                  <span className="absolute inset-x-2 bottom-2 mx-auto flex w-fit items-center gap-1.5 rounded-md bg-slate-950/85 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950">
+                    <ImageUp className="h-3.5 w-3.5" /> {cardBackgroundImage ? tr("Replace", "Sostituisci") : tr("Choose image", "Scegli immagine")}
+                  </span>
+                </button>
+                <input ref={cardBackgroundInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "card-background"); event.target.value = ""; }} />
               </div>
 
               <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">

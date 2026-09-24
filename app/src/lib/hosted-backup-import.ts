@@ -260,7 +260,7 @@ function normalizeSlot(path: Array<string | number>) {
 function purposeForPath(path: Array<string | number>): MediaPurpose {
   const normalized = path.join('.').toLowerCase();
   if (normalized.includes('backgroundmedia')) return 'background';
-  if (normalized.includes('coverimage') || normalized.includes('posterurl')) return 'cover';
+  if (normalized.includes('cardbackgroundimage') || normalized.includes('coverimage') || normalized.includes('posterurl')) return 'cover';
   if (normalized.includes('avatar')) return 'profile';
   if (normalized.includes('favicon') || normalized.endsWith('.icon')) return 'icon';
   return 'content';
@@ -269,7 +269,7 @@ function purposeForPath(path: Array<string | number>): MediaPurpose {
 function isMediaPath(path: Array<string | number>) {
   const field = String(path[path.length - 1] || '').toLowerCase();
   return field === 'avatar' || field === 'favicon' || field === 'icon' ||
-    field === 'coverimage' || field === 'mediaurl' || field === 'posterurl' || field === 'imageurl';
+    field === 'cardbackgroundimage' || field === 'coverimage' || field === 'mediaurl' || field === 'posterurl' || field === 'imageurl';
 }
 
 function parseDataUrl(value: string) {

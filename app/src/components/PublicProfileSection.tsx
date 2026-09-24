@@ -127,6 +127,7 @@ export const PublicProfileSection = ({
   const socialLinks = Object.fromEntries(SOCIALS.map(({ id }) => [id, resolveSafePublicHref(normalizeProfileSocialHref(id, profile.socialLinks?.[id] || ""))])) as Record<typeof SOCIALS[number]["id"], string | null>;
   const hasSocialLinks = Object.values(socialLinks).some(Boolean);
   const profileDetails = profile.appearance?.profileDetails;
+  const cardBackgroundImage = getMediaUrl(profile.appearance?.cardBackgroundImage);
   const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);
   const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || profile.showAvatar !== false || layoutEditing);
   const layout = layoutEditing ? workingLayout : savedLayout;
@@ -340,12 +341,14 @@ export const PublicProfileSection = ({
 
   return (
     <Card
-      className={`profile-card glass-card p-8 text-center transition-smooth hover:glow-effect${layoutEditing ? " profile-card--layout-editing" : ""}`}
+      className={`profile-card glass-card p-8 text-center transition-smooth hover:glow-effect${cardBackgroundImage ? " profile-card--has-background-image" : ""}${layoutEditing ? " profile-card--layout-editing" : ""}`}
       data-profile-layout-editor={layoutEditing ? "true" : undefined}
       data-profile-layout-viewport={activeLayoutViewport}
       data-surface-effect={resolvedSurfaceEffect}
       style={getProfileAppearanceStyle(profile.appearance, resolvedSurfaceEffect)}
     >
+      {cardBackgroundImage && <img aria-hidden="true" alt="" className="profile-card__background-image" src={cardBackgroundImage} />}
+      {cardBackgroundImage && <span aria-hidden="true" className="profile-card__background-overlay" />}
       {hasCustomLayout || layoutEditing ? (
         <div
           className="profile-card__layout profile-card__layout--free"
@@ -445,10 +448,14 @@ export const PublicProfileSection = ({
 };
 
 function getAvatarUrl(avatar?: string | null) {
-  const safeUrl = resolveSafePublicMediaUrl(avatar);
-  if (!safeUrl) return profileAvatar as unknown as string;
+  return getMediaUrl(avatar) || (profileAvatar as unknown as string);
+}
+
+function getMediaUrl(value?: string | null) {
+  const safeUrl = resolveSafePublicMediaUrl(value);
+  if (!safeUrl) return null;
   if (safeUrl.startsWith("/") || (!safeUrl.includes(":") && !safeUrl.startsWith("//"))) {
-    return internalAssetPath(safeUrl) || (profileAvatar as unknown as string);
+    return internalAssetPath(safeUrl) || null;
   }
   return safeUrl;
 }

@@ -2985,6 +2985,7 @@ const ProfileAppearanceSchema = z.object({
   surfaceEffect: z.enum(['inherit', 'solid', 'transparent', 'liquid-glass']).optional(),
   surfaceOpacity: z.number().min(0).max(1).optional(),
   surfaceBlur: z.number().min(0).max(40).optional(),
+  cardBackgroundImage: z.string().max(2048).optional(),
   cardBackgroundColor: ProfileColorSchema.optional(),
   cardTextColor: ProfileColorSchema.optional(),
   cardMutedColor: ProfileColorSchema.optional(),

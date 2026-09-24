@@ -15,7 +15,7 @@ describe('hosted backup import', () => {
           avatar: 'data:image/png;base64,aGVsbG8=',
           social_links: '{"github":"https://github.com/example"}',
           show_avatar: 1,
-          appearance: '{"avatarShape":"round"}',
+          appearance: '{"avatarShape":"round","cardBackgroundImage":"data:image/png;base64,aW1hZ2U="}',
         }],
         links: [{
           id: 'link-1',
@@ -39,9 +39,9 @@ describe('hosted backup import', () => {
     }, upload);
 
     expect(result.source).toBe('self-hosted');
-    expect(result.migratedMedia).toBe(2);
+    expect(result.migratedMedia).toBe(3);
     expect(result.skippedUploads).toBe(1);
-    expect(upload).toHaveBeenCalledTimes(2);
+    expect(upload).toHaveBeenCalledTimes(3);
     expect(result.backup).not.toHaveProperty('tables');
     expect(result.backup).not.toHaveProperty('uploads');
     expect(JSON.stringify(result.backup)).not.toContain('password_hash');
@@ -54,6 +54,10 @@ describe('hosted backup import', () => {
           name: 'Paolo',
           social_links: { github: 'https://github.com/example' },
           avatar: 'https://media.example/backup-import-content-profile-avatar',
+          appearance: {
+            avatarShape: 'round',
+            cardBackgroundImage: 'https://media.example/backup-import-content-profile-appearance-cardbackgroundimage',
+          },
         },
         links: [{
           id: 'link-1',
