@@ -190,6 +190,13 @@ export const LinkManager = ({
     setEditingLinkId((current) => editing ? String(id) : current === String(id) ? null : current);
   }, []);
 
+  const cancelEditingLink = () => {
+    if (!editingLinkId) return;
+    updateLinkPreview(editingLinkId, null);
+    setEditingLinkId(null);
+    setSaveError("");
+  };
+
   const addNewLink = () => {
     const newLink: LinkData = {
       id: Date.now().toString(),
@@ -923,6 +930,11 @@ export const LinkManager = ({
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
+          {!isViewOnly && !isMobile && editingLinkId && (
+            <Button onClick={cancelEditingLink} variant="outline" className="admin-action admin-content-cancel" disabled={busy}>
+              {tr("Cancel", "Annulla")}
+            </Button>
+          )}
           {!isViewOnly && !isMobile && (
             <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
               <Save className="h-4 w-4" />
@@ -1118,7 +1130,7 @@ export const LinkManager = ({
             </div>
         </Card>
       ) : (
-        <fieldset className={`admin-link-list min-w-0 border-0 p-0 ${busy ? 'pointer-events-none' : ''}`} disabled={busy} aria-busy={busy}>
+        <fieldset className={`admin-link-list min-w-0 border-0 p-0${editingLinkId ? ' is-editing' : ''}${busy ? ' pointer-events-none' : ''}`} disabled={busy} aria-busy={busy}>
           {renderedLinks.map(({ link, index }) => (
             <div
               key={link.id}
@@ -1186,11 +1198,16 @@ export const LinkManager = ({
         </fieldset>
       )}
 
-      {typeof document !== "undefined" && isMobile && !isViewOnly && hasUnsavedChanges ? createPortal(
+      {typeof document !== "undefined" && isMobile && !isViewOnly && (hasUnsavedChanges || editingLinkId) ? createPortal(
         <div className="admin-profile-save-layer">
-          <div className="admin-profile-save-float admin-profile-save-float--single">
-            {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
-            <Button type="button" size="sm" onClick={handleSave} disabled={preparingLinks.size > 0 || busy} data-onboarding="links-save">
+          <div className={`admin-profile-save-float${editingLinkId ? "" : " admin-profile-save-float--single"}`}>
+            {saveError && <span className="col-span-2 max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
+            {editingLinkId && (
+              <Button type="button" variant="outline" size="sm" className="admin-content-cancel" onClick={cancelEditingLink} disabled={busy}>
+                {tr("Cancel", "Annulla")}
+              </Button>
+            )}
+            <Button type="button" size="sm" onClick={handleSave} disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
               {busy ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
               {busy ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}
             </Button>
