@@ -3140,19 +3140,6 @@
     display: none;
   }
 
-  .admin-content-cancel {
-    border-color: #94a3b8;
-    background: #fff;
-    color: #334155;
-    font-weight: 700;
-  }
-
-  .admin-content-cancel:hover {
-    border-color: #64748b;
-    background: #f1f5f9;
-    color: #0f172a;
-  }
-
   .admin-link-list .public-block-preview[data-surface-effect="liquid-glass"]:has(> :not(.public-unboxed-block)) {
     background: var(--gradient-background);
     border-radius: var(--radius);

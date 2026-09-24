@@ -28,16 +28,24 @@ describe('Shop link shortcut', () => {
     expect(source).not.toContain('onTouchStart=');
   });
 
-  it('shows the mobile save action only when content changed', () => {
-    expect(source).toContain('!isViewOnly && !isMobile');
-    expect(source).toContain('isMobile && !isViewOnly && (hasUnsavedChanges || editingLinkId) ? createPortal(');
-    expect(source).toContain('admin-profile-save-float${editingLinkId ? "" : " admin-profile-save-float--single"}');
+  it('shows the shared floating save action only when content changed', () => {
+    expect(source).toContain('!isViewOnly && (hasUnsavedChanges || savedNotice) ? createPortal(');
+    expect(source).toContain('hasUnsavedChanges && (');
+    expect(source).not.toContain('!isViewOnly && !isMobile');
   });
 
-  it('uses the full editor width and keeps cancel beside save while a card is open', () => {
+  it('uses the full editor width and replaces the toolbar save and cancel with revert', () => {
     expect(source).toContain("editingLinkId ? ' is-editing' : ''");
-    expect(source).toContain('onClick={cancelEditingLink}');
-    expect(source).toContain('tr("Cancel", "Annulla")');
+    expect(source).toContain('onClick={revertUnsavedChanges}');
+    expect(source).not.toContain('cancelEditingLink');
+    expect(source).not.toContain('tr("Cancel", "Annulla")');
+  });
+
+  it('offers a ten-second saved notice that can restore the previous content', () => {
+    expect(source).toContain('const CONTENT_SAVE_NOTICE_DURATION_MS = 10_000;');
+    expect(source).toContain('showSavedNotice(previousLinks);');
+    expect(source).toContain('onClick={handleRevertSavedContent}');
+    expect(source).toContain('It will be visible on the public page in about 10 seconds.');
   });
 
   it('uses the regular content editor when a preview card is selected on mobile', () => {

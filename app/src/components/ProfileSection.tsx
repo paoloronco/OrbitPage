@@ -90,7 +90,7 @@ type SavedProfileNotice = {
   previousProfile: ProfileData;
 };
 
-const PROFILE_SAVE_NOTICE_DURATION_MS = 8_000;
+const PROFILE_SAVE_NOTICE_DURATION_MS = 10_000;
 
 const cloneProfile = (value: ProfileData): ProfileData => JSON.parse(JSON.stringify(value)) as ProfileData;
 

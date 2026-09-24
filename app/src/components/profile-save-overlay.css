@@ -88,7 +88,7 @@
 }
 
 .admin-profile-saved-notice__progress > i {
-  animation: admin-profile-saved-notice-countdown 8s linear forwards;
+  animation: admin-profile-saved-notice-countdown 10s linear forwards;
   background: #3475e7;
   display: block;
   height: 100%;
