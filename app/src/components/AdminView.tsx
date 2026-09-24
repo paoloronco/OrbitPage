@@ -849,7 +849,7 @@ export const AdminView = ({
   const visualInspectorTitle = visualSection === "profile"
     ? tr("Profile and identity", "Profilo e identità")
     : visualSection === "links"
-      ? selectedVisualLink?.title || tr("Content blocks", "Blocchi contenuto")
+      ? selectedVisualLink?.title || tr("Content block", "Blocco contenuto")
       : visualSection === "menu"
         ? tr("Menu", "Menu")
         : visualSection === "shop"
@@ -860,7 +860,7 @@ export const AdminView = ({
     : visualSection === "links"
       ? selectedVisualLink
         ? tr("Edit the selected card.", "Modifica la card selezionata.")
-        : ""
+        : `${links.length} ${tr("blocks", "blocchi")}`
       : visualSection === "menu"
         ? tr("Manage navigation, categories and menu items.", "Gestisci navigazione, categorie ed elementi del menu.")
         : visualSection === "shop"
