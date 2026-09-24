@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import {
   ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, Edit, ExternalLink, Eye, EyeOff, GripVertical,
-  ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, Save, Trash2,
+  ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, RotateCcw, Save, Trash2,
   Search, UtensilsCrossed, X,
 } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,9 @@ interface MenuEditorProps {
 
 type MenuEditorPanel = 'setup' | 'content' | 'appearance';
 type MenuContentPane = 'sections' | 'products';
+type SavedMenuNotice = { id: number; previousMenu: MenuCatalog };
+
+const MENU_SAVE_NOTICE_DURATION_MS = 10_000;
 
 const MENU_LOCALE_OPTIONS = [
   { value: 'en-GB', label: 'English (United Kingdom)', labelIt: 'Inglese (Regno Unito)' },
@@ -183,7 +187,8 @@ export function MenuEditor({
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
   const [saving, setSaving] = useState(false);
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [savedNotice, setSavedNotice] = useState<SavedMenuNotice | null>(null);
   const [copied, setCopied] = useState(false);
   const [activePanel, setActivePanel] = useState<MenuEditorPanel>('content');
   const [mobileContentPane, setMobileContentPane] = useState<MenuContentPane>('sections');
@@ -207,6 +212,7 @@ export function MenuEditor({
   );
   const itemEditorRef = useRef<HTMLElement>(null);
   const categoryEditorRef = useRef<HTMLElement>(null);
+  const savedNoticeTimerRef = useRef<number | null>(null);
   const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
   const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
   const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
@@ -252,9 +258,9 @@ export function MenuEditor({
     onPreview?.(draft);
   }, [draft, onPreview]);
 
-  useEffect(() => {
-    if (!isDirty && message === tr('Unsaved changes', 'Modifiche non salvate')) setMessage('');
-  }, [isDirty, message, tr]);
+  useEffect(() => () => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (productSectionFilter !== 'all' && !draft.sections.some((section) => section.id === productSectionFilter)) {
@@ -289,22 +295,57 @@ export function MenuEditor({
       );
       return next;
     });
-    setMessage(tr('Unsaved changes', 'Modifiche non salvate'));
+    setSaveError('');
+  };
+
+  const dismissSavedNotice = () => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+    savedNoticeTimerRef.current = null;
+    setSavedNotice(null);
+  };
+
+  const showSavedNotice = (previousMenu: MenuCatalog) => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+    setSavedNotice({ id: Date.now(), previousMenu });
+    savedNoticeTimerRef.current = window.setTimeout(() => {
+      savedNoticeTimerRef.current = null;
+      setSavedNotice(null);
+    }, MENU_SAVE_NOTICE_DURATION_MS);
   };
 
   const save = async () => {
     if (!isDirty || saving) return;
+    const previousMenu = structuredClone(persistedMenu);
     setSaving(true);
-    setMessage('');
+    setSaveError('');
     try {
       const normalized = normalizeMenuCatalog(draft, maxItems ?? 250);
       await onSave(normalized);
       setDraft(normalized);
-      setMessage(normalized.enabled
-        ? tr('Menu saved and published', 'Menu salvato e pubblicato')
-        : tr('Menu saved as unpublished', 'Menu salvato come non pubblicato'));
+      showSavedNotice(previousMenu);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Menu could not be saved');
+      setSaveError(error instanceof Error ? error.message : 'Menu could not be saved');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const revertUnsavedChanges = () => {
+    setDraft(persistedMenu);
+    setSaveError('');
+  };
+
+  const revertSavedMenu = async () => {
+    if (!savedNotice || saving) return;
+    const previousMenu = structuredClone(savedNotice.previousMenu);
+    setSaving(true);
+    setSaveError('');
+    try {
+      await onSave(previousMenu);
+      setDraft(previousMenu);
+      dismissSavedNotice();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : tr('The previous menu version could not be restored.', 'Impossibile ripristinare la versione precedente del menu.'));
     } finally {
       setSaving(false);
     }
@@ -571,7 +612,6 @@ export function MenuEditor({
               <span>{presentation === 'visual' ? tr('Add item to this category', 'Aggiungi elemento a questa categoria') : tr("Manage items in this category", "Gestisci gli elementi di questa categoria")}</span>
               <strong>{draft.items.filter((item) => item.sectionId === section.id).length}</strong>
             </Button>
-            {presentation === 'visual' && <Button type="button" className="menu-category-editor__save" disabled={!isDirty || saving} onClick={() => void save()}><Save aria-hidden="true" className="h-4 w-4" />{saving ? tr('Saving', 'Salvataggio') : tr('Save changes', 'Salva modifiche')}</Button>}
       </section>
     );
   };
@@ -730,10 +770,6 @@ export function MenuEditor({
                   </div>
                   <div className="menu-item-save-actions">
                     <Button type="button" variant="ghost" size="sm" className="menu-danger-action" onClick={() => removeItem(selectedItem.id)}><Trash2 aria-hidden="true" className="h-4 w-4" />{tr('Delete item', 'Elimina elemento')}</Button>
-                    <div><span className="menu-item-save-state" aria-live="polite">{isDirty ? tr('Unsaved changes', 'Modifiche non salvate') : tr('All changes saved', 'Tutte le modifiche salvate')}</span><Button type="button" size="sm" onClick={() => void save()} disabled={!isDirty || saving}>
-                      {saving ? <OrbitLoader size={15} state="composing" /> : <Save className="h-4 w-4" />}
-                      {saving ? tr('Saving', 'Salvataggio') : tr('Save menu', 'Salva menu')}
-                    </Button></div>
                   </div>
                 </div>
                   </article>
@@ -760,14 +796,6 @@ export function MenuEditor({
   return (
     <div className={`menu-editor-stack menu-editor-stack--${presentation}`}>
       <div className="menu-editor-main space-y-5">
-        {presentation === 'classic' && <div className="menu-editor-savebar">
-          {message && <p className={`menu-editor-message${isDirty ? ' is-pending' : ' is-saved'}`} aria-live="polite">{message}</p>}
-          <Button onClick={() => void save()} disabled={!isDirty || saving}>
-            {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
-            {saving ? tr('Saving', 'Salvataggio') : tr('Save menu', 'Salva menu')}
-          </Button>
-        </div>}
-
         <nav className="menu-editor-tabs" aria-label={tr('Menu setup workflow', 'Percorso di configurazione menu')}>
           <button
             type="button"
@@ -809,12 +837,7 @@ export function MenuEditor({
             <span className="menu-editor-tab-copy"><strong>{tr('Design', 'Design')}</strong><small>{tr('Style and mobile preview', 'Stile e anteprima mobile')}</small></span>
             <Palette aria-hidden="true" />
           </button>
-          {presentation === 'visual' && <button type="button" className="menu-editor-tab-save" disabled={!isDirty || saving} onClick={() => void save()}>
-            <span className="menu-editor-tab-copy"><strong>{saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}</strong></span>
-            {saving ? <OrbitLoader size={17} state="composing" /> : <Save aria-hidden="true" />}
-          </button>}
         </nav>
-        {presentation === 'visual' && message && <p className={`menu-editor-message${isDirty ? ' is-pending' : ' is-saved'}`} aria-live="polite">{message}</p>}
 
         {activePanel === 'setup' && <div className="menu-settings-layout">
         <section className="admin-panel space-y-5">
@@ -1159,6 +1182,41 @@ export function MenuEditor({
         </aside>}
         </div>}
       </div>
+      {typeof document !== 'undefined' && (isDirty || saving || savedNotice) ? createPortal(
+        <div className="admin-profile-save-layer">
+          {(isDirty || saving) && (
+            <div className="admin-profile-save-float">
+              {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
+              <Button type="button" variant="outline" size="sm" onClick={revertUnsavedChanges} disabled={saving}>
+                <RotateCcw className="h-4 w-4" /> {tr('Revert', 'Ripristina')}
+              </Button>
+              <Button type="button" size="sm" onClick={() => void save()} disabled={!isDirty || saving}>
+                {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+                {saving ? tr('Saving', 'Salvataggio') : tr('Save', 'Salva')}
+              </Button>
+            </div>
+          )}
+          {savedNotice && (
+            <aside className="admin-profile-saved-notice">
+              <div className="admin-profile-saved-notice__content">
+                <span className="admin-profile-saved-notice__icon" aria-hidden="true"><Check className="h-4 w-4" /></span>
+                <div role="status" aria-live="polite">
+                  <strong>{tr('Saved', 'Salvato')}</strong>
+                  <small>{tr('It will be visible on the public page in about 10 seconds.', 'Sarà visibile entro circa 10 secondi sulla pagina pubblica.')}</small>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => void revertSavedMenu()} disabled={saving}>
+                  {saving && <OrbitLoader size={14} state="composing" />}
+                  {saving ? tr('Reverting', 'Ripristino') : tr('Revert', 'Ripristina')}
+                </Button>
+              </div>
+              <span className="admin-profile-saved-notice__progress" aria-hidden="true">
+                <i key={savedNotice.id} />
+              </span>
+            </aside>
+          )}
+        </div>,
+        document.body,
+      ) : null}
     </div>
   );
 }
