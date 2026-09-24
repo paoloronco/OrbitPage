@@ -13,7 +13,8 @@ describe('Shop link shortcut', () => {
   });
 
   it('does not repeat the selected card heading in the visual editor', () => {
-    expect(source).toContain('(!visualMode || !focusedLink || saveError)');
+    expect(source).toContain('(!visualMode || saveError)');
+    expect(source).toContain('!visualMode && <>');
     expect(source).toContain('tr("Edit the selected card.", "Modifica la card selezionata.")');
     expect(source).not.toContain('Edit this block, then save the content changes.');
   });

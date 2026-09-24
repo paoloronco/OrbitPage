@@ -925,8 +925,8 @@ export const LinkManager = ({
       )}
 
       <div className="admin-link-toolbar" data-onboarding="links-toolbar">
-        {(!visualMode || !focusedLink || saveError) && <div className="min-w-0">
-          {(!visualMode || !focusedLink) && <>
+        {(!visualMode || saveError) && <div className="min-w-0">
+          {!visualMode && <>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold text-slate-950">
                 {focusedLink

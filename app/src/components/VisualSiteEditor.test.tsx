@@ -117,7 +117,7 @@ describe("VisualSiteEditor", () => {
     expect(renderPreview).not.toHaveBeenCalled();
   });
 
-  it("does not repeat the content heading when no card is selected", () => {
+  it("uses the same inspector heading for profile and content", () => {
     const html = renderToStaticMarkup(
       <VisualSiteEditor
         profile={{ name: "OrbitPage", bio: "", avatar: "" }}
@@ -126,20 +126,20 @@ describe("VisualSiteEditor", () => {
         publicPageHref="/orbitpage"
         showOrbitPageBadge
         section="links"
-        inspectorTitle="Content blocks"
-        inspectorDescription=""
-        inspector={<h2>Content block</h2>}
+        inspectorTitle="Content block"
+        inspectorDescription="7 blocks"
+        inspector={<div>Content editor</div>}
         onSelect={vi.fn()}
         layoutEditing={false}
         onLayoutEditingChange={vi.fn()}
       />,
     );
 
-    expect(html).not.toContain('<h2>Content blocks</h2>');
-    expect(html).toContain('<h2>Content block</h2>');
+    expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Content block</h2><span>7 blocks</span></header>');
+    expect(html.match(/<h2>Content block<\/h2>/g)).toHaveLength(1);
   });
 
-  it("uses the content editor heading when a preview card is selected on mobile", () => {
+  it("keeps the shared inspector heading when a preview card is selected on mobile", () => {
     vi.stubGlobal("window", {
       matchMedia: (query: string) => ({ matches: query === "(max-width: 600px)" }),
     });
@@ -156,15 +156,15 @@ describe("VisualSiteEditor", () => {
           selectedLinkId="card-1"
           inspectorTitle="Selected card"
           inspectorDescription="Edit the selected card."
-          inspector={<h2>Content block</h2>}
+          inspector={<div>Content editor</div>}
           onSelect={vi.fn()}
           layoutEditing={false}
           onLayoutEditingChange={vi.fn()}
         />,
       );
 
-      expect(html).not.toContain('<h2>Selected card</h2>');
-      expect(html).toContain('<h2>Content block</h2>');
+      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Selected card</h2><span>Edit the selected card.</span></header>');
+      expect(html).not.toContain('<h2>Content block</h2>');
     } finally {
       vi.unstubAllGlobals();
     }
