@@ -158,6 +158,13 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             )}
             {safeHref && <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />}
           </div>
+          {link.content && (
+            <div
+              className={`text-sm leading-relaxed${link.textItems?.length ? ' mb-3' : ''}`}
+              style={readableTextColor ? { color: readableTextColor } : undefined}
+              dangerouslySetInnerHTML={{ __html: formatContent(link.content) }}
+            />
+          )}
           {link.textItems && link.textItems.length > 0 && (
             <ul className="text-sm leading-relaxed space-y-2 mb-3" style={readableTextColor ? { color: readableTextColor } : undefined}>
               {link.textItems.map((item, index) => {
@@ -187,13 +194,6 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                 );
               })}
             </ul>
-          )}
-          {link.content && (
-            <div 
-              className="text-sm leading-relaxed"
-              style={readableTextColor ? { color: readableTextColor } : undefined}
-              dangerouslySetInnerHTML={{ __html: formatContent(link.content) }}
-            />
           )}
         </div>
       </div>
