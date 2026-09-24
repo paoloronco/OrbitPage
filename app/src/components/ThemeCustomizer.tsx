@@ -4,6 +4,7 @@ import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
@@ -16,6 +17,7 @@ import {
   ChevronRight,
   Eye,
   ImagePlay,
+  Info,
   Layout,
   Layers3,
   LockKeyhole,
@@ -513,11 +515,25 @@ export const ThemeCustomizer = ({
             <>
               <div className="admin-theme-preset-heading mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{availableThemePresets.length} {tr("page themes", "temi pagina")}</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Page identity and background", "Identità e sfondo della pagina")}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-slate-950">{tr("Page background", "Sfondo pagina")}</h3>
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button type="button" className="grid h-7 w-7 place-items-center rounded-full text-slate-500 transition-colors hover:bg-white hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label={tr("How page themes work", "Come funzionano i temi pagina")}>
+                            <Info className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent align="start" className="max-w-72 px-3 py-2 text-xs leading-5" side="bottom">
+                          {premiumThemesEnabled
+                            ? tr("Page themes update the background and overall palette. Card backgrounds and colors stay controlled by Card styles.", "I temi pagina aggiornano lo sfondo e la palette generale. Sfondo e colori delle card restano gestiti da Stili card.")
+                            : tr("Essential page themes update the page background and card palette together.", "I temi pagina essenziali aggiornano insieme lo sfondo della pagina e la palette delle card.")}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </div>
                 <div className="admin-theme-preset-heading-actions">
-                  <p className="text-sm text-slate-500">{premiumThemesEnabled ? tr("Page themes leave your selected card style untouched.", "I temi pagina non modificano lo stile card selezionato.") : tr("Essential themes style the complete page.", "I temi essenziali definiscono l'intera pagina.")}</p>
                   <div className="flex shrink-0 gap-2">
                     <Button type="button" variant="outline" size="icon" aria-label={tr("Previous page themes", "Temi pagina precedenti")} onClick={() => themePresetRailRef.current?.scrollBy({ left: -280, behavior: "smooth" })}><ChevronLeft className="h-4 w-4" /></Button>
                     <Button type="button" variant="outline" size="icon" aria-label={tr("Next page themes", "Temi pagina successivi")} onClick={() => themePresetRailRef.current?.scrollBy({ left: 280, behavior: "smooth" })}><ChevronRight className="h-4 w-4" /></Button>
@@ -541,9 +557,7 @@ export const ThemeCustomizer = ({
             <>
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">6 Mono + 6 Multi</p>
-                  <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Ready-balanced Mono and Multi cards", "Card Mono e Multi già bilanciate")}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{tr("Surface, text, borders, icons and CTA are designed as one palette.", "Superficie, testo, bordi, icone e CTA sono progettati come un'unica palette.")}</p>
+                  <h3 className="text-xl font-bold text-slate-950">{tr("Card background & colors", "Sfondo e colori delle card")}</h3>
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" size="icon" aria-label={tr("Previous card styles", "Stili card precedenti")} onClick={() => cardPresetRailRef.current?.scrollBy({ left: -300, behavior: "smooth" })}><ChevronLeft className="h-4 w-4" /></Button>
@@ -564,8 +578,7 @@ export const ThemeCustomizer = ({
       <section className="admin-theme-fine-tuning rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
             <div className={`flex flex-wrap items-center justify-between gap-3${manualControlsOpen ? " mb-5" : ""}`}>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">{tr("Manual controls", "Controlli manuali")}</p>
-                <h3 className="mt-1 text-xl font-bold text-slate-950">{tr("Fine tuning", "Regolazioni fini")}</h3>
+                <h3 className="text-xl font-bold text-slate-950">{tr("Fine tuning", "Regolazioni fini")}</h3>
                 <p className="mt-1 text-sm text-slate-500">{tr("Adjust colors, type, layout and background after choosing a starting theme.", "Regola colori, caratteri, layout e sfondo dopo aver scelto il tema di partenza.")}</p>
               </div>
               <div className="flex flex-wrap gap-2">
