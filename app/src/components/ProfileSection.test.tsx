@@ -22,6 +22,8 @@ it("groups profile controls in their visible page sections", () => {
   expect(html).toContain("/brand/orbitpage-mark-192.png");
   expect(html).toContain('aria-checked="false" data-state="unchecked"');
   expect(html).toContain('disabled=""');
+  expect(html).not.toContain('space-y-2 rounded-lg border border-slate-200 bg-white p-4');
+  expect(html).toContain('space-y-3 border-t border-slate-200 pt-4');
   expect(html.indexOf("Image border")).toBeLessThan(html.indexOf("Name and details"));
   expect(html).not.toContain("Outline the profile image.");
   expect(html).not.toContain("Image border color");
