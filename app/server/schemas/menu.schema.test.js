@@ -14,11 +14,13 @@ describe('menu schema', () => {
       }],
     });
     expect(parsed.items[0].variants[0].name).toBe('Glass');
+    expect(parsed.footerText).toBe(DEFAULT_MENU_CATALOG.footerText);
   });
 
   it('keeps legacy menus compatible and validates content routing', () => {
-    const { routing: _routing, ...legacyMenu } = DEFAULT_MENU_CATALOG;
+    const { routing: _routing, footerText: _footerText, ...legacyMenu } = DEFAULT_MENU_CATALOG;
     expect(parseMenuCatalog(legacyMenu).routing).toEqual({ homepage: 'link', linkEnabled: true });
+    expect(parseMenuCatalog(legacyMenu).footerText).toBe(DEFAULT_MENU_CATALOG.footerText);
     expect(parseMenuCatalog({
       ...DEFAULT_MENU_CATALOG,
       routing: { homepage: 'pages', homepagePageSlug: 'summer-menu', linkEnabled: false },

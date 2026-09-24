@@ -69,6 +69,7 @@ describe('menu catalog normalization', () => {
   it('trims text before persistence', () => {
     const menu = createDefaultMenu();
     menu.name = ' Dinner menu ';
+    menu.footerText = ' Seasonal availability. ';
     menu.items = [{
       id: 'item-1',
       sectionId: menu.sections[0].id,
@@ -86,6 +87,7 @@ describe('menu catalog normalization', () => {
     const persisted = normalizeMenuCatalog(menu);
 
     expect(persisted.name).toBe('Dinner menu');
+    expect(persisted.footerText).toBe('Seasonal availability.');
     expect(persisted.items[0].name).toBe('Pasta al pomodoro');
     expect(persisted.items[0].description).toBe('Tomato, basil and olive oil');
   });

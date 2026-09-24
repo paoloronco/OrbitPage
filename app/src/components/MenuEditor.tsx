@@ -849,6 +849,7 @@ export function MenuEditor({
             </div>
           </div>
           <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
+          <div className="space-y-2"><Label htmlFor="menu-footer">{tr("Footer text", "Testo del footer")}</Label><Textarea id="menu-footer" maxLength={500} value={draft.footerText} onChange={(e) => update((current) => ({ ...current, footerText: e.target.value }))} /></div>
         </section>
 
         <section className="admin-panel menu-settings-publishing">

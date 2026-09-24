@@ -124,10 +124,9 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
         <header className="orbitpage-menu__header">
           <a className="orbitpage-menu__back" href={pageHref} aria-label="Back to the main page">
             <ArrowLeft aria-hidden="true" />
-            <span>Back</span>
+            <span>Back to main page</span>
           </a>
           <div className="orbitpage-menu__identity">
-            <p>{menu.venueType === 'restaurant' ? 'Restaurant menu' : menu.venueType === 'bar' ? 'Bar menu' : 'Café menu'}</p>
             <h1>{menu.name}</h1>
             {menu.description && <div>{menu.description}</div>}
           </div>
@@ -186,7 +185,6 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
                 .sort((a, b) => a.position - b.position),
             })).filter((subsection) => subsection.items.length > 0);
             if (directItems.length === 0 && subsections.length === 0) return null;
-            const sectionProductCount = directItems.length + subsections.reduce((total, subsection) => total + subsection.items.length, 0);
             const sectionOpen = isOpen(section.id, !isLongMenu || sectionIndex === 0);
             return (
               <section key={section.id} id={`menu-${section.id}`} className="orbitpage-menu__section">
@@ -202,7 +200,6 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
                         onClick={() => setOpen(section.id, !sectionOpen)}
                       >
                         <span>{section.name}</span>
-                        <small>{sectionProductCount}</small>
                         <ChevronDown aria-hidden="true" />
                       </button>
                     </h2>
@@ -229,7 +226,6 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
                               onClick={() => setOpen(subsection.id, !subsectionOpen)}
                             >
                               <span>{subsection.name}</span>
-                              <small>{subsection.items.length}</small>
                               <ChevronDown aria-hidden="true" />
                             </button>
                           </h3>
@@ -266,7 +262,7 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
         )}
 
         <footer className="orbitpage-menu__footer">
-          <span>Prices and availability may change. Ask the venue about allergens and dietary requirements.</span>
+          {menu.footerText && <span>{menu.footerText}</span>}
           <a href="https://orbitpage.com" rel="noopener noreferrer">Made with OrbitPage</a>
         </footer>
       </div>
