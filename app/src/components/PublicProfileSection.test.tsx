@@ -13,6 +13,17 @@ describe("PublicProfileSection custom layout", () => {
     expect(html).not.toContain('aria-label="GitHub profile"');
   });
 
+  it("renders a safe profile-card background without replacing the card surface", () => {
+    const html = renderToStaticMarkup(<PublicProfileSection profile={{
+      name: "Alice", bio: "Designer", avatar: "", showAvatar: false,
+      appearance: { cardBackgroundImage: "/uploads/profile-card.webp", cardBackgroundColor: "#123456" },
+    }} />);
+    expect(html).toContain("profile-card--has-background-image");
+    expect(html).toContain('class="profile-card__background-image"');
+    expect(html).toContain("/uploads/profile-card.webp");
+    expect(html).toContain("--profile-card-background:color-mix");
+  });
+
   it("renders free coordinates and editor handles only while arranging", () => {
     const profile = {
       name: "Mario Rossi",

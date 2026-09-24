@@ -7,6 +7,7 @@ export interface ProfileAppearance {
   surfaceEffect?: CardSurfaceEffect | "inherit";
   surfaceOpacity?: number;
   surfaceBlur?: number;
+  cardBackgroundImage?: string;
   cardBackgroundColor?: string;
   cardTextColor?: string;
   cardMutedColor?: string;
