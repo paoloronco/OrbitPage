@@ -74,20 +74,20 @@ export interface NormalizeMenuCatalogOptions {
 
 export const MENU_THEME_PRESETS: Record<MenuThemePreset, MenuTheme> = {
   editorial: {
-    preset: 'editorial', background: '#f1eee7', surface: '#fffdf7', text: '#171717', muted: '#6f685d',
-    accent: '#d3422f', border: '#d5cec1', radius: 0, imageLayout: 'compact',
+    preset: 'editorial', background: '#eee7dc', surface: '#fffaf2', text: '#1f1a17', muted: '#665c52',
+    accent: '#9c3025', border: '#c9baa7', radius: 0, imageLayout: 'compact',
   },
   bistro: {
-    preset: 'bistro', background: '#641d2e', surface: '#fff4df', text: '#35131b', muted: '#7b4e4e',
-    accent: '#d96b32', border: '#e8bd82', radius: 18, imageLayout: 'cover',
+    preset: 'bistro', background: '#e8c98f', surface: '#fff8e8', text: '#2a211a', muted: '#62513f',
+    accent: '#185944', border: '#c5a166', radius: 14, imageLayout: 'cover',
   },
   espresso: {
-    preset: 'espresso', background: '#171713', surface: '#24231d', text: '#f5f0e4', muted: '#b7ad9b',
-    accent: '#d5a95f', border: '#454138', radius: 10, imageLayout: 'compact',
+    preset: 'espresso', background: '#15120f', surface: '#28221c', text: '#fff8ea', muted: '#c9bba5',
+    accent: '#efc36f', border: '#584b3d', radius: 10, imageLayout: 'compact',
   },
   coastal: {
-    preset: 'coastal', background: '#edf4f2', surface: '#fbfdfc', text: '#142b2c', muted: '#587072',
-    accent: '#176f78', border: '#c8d9d6', radius: 12, imageLayout: 'cover',
+    preset: 'coastal', background: '#c8e8ee', surface: '#f8feff', text: '#0b3040', muted: '#3f626e',
+    accent: '#006f83', border: '#8fc4ce', radius: 24, imageLayout: 'cover',
   },
 };
 
