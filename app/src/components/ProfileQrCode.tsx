@@ -241,7 +241,7 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
           <section className="space-y-3">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Destination", "Destinazione")}</h3>
-              <p className="mt-1 text-xs text-slate-500">{source === "configured" ? tr("Uses your configured public domain.", "Usa il dominio pubblico configurato.") : tr("Uses this installation's public URL.", "Usa l'URL pubblico di questa installazione.")}</p>
+              {source !== "configured" && <p className="mt-1 text-xs text-slate-500">{tr("Uses this installation's public URL.", "Usa l'URL pubblico di questa installazione.")}</p>}
             </div>
             <div className="grid grid-cols-4 overflow-hidden rounded-md border border-slate-200" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
               {(["page", "menu", "campaign", "custom"] as const).map((destination) => {
