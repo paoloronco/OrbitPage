@@ -551,7 +551,7 @@ export const ProfileSection = ({
                       <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-avatar-size" className="text-xs text-slate-600">{tr("Size", "Dimensione")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{draft.appearance?.avatarSize ?? 112}px</span></div>
                       <Slider id="profile-avatar-size" className="admin-profile-compact-slider mt-3" min={56} max={192} step={4} size="small" value={[draft.appearance?.avatarSize ?? 112]} valueLabelFormat={(avatarSize) => `${avatarSize}px`} onValueChange={([avatarSize]) => updateAppearance({ avatarSize })} aria-label={tr("Profile image size", "Dimensione immagine profilo")} />
                     </div>
-                    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+                    <div className="space-y-3 border-t border-slate-200 pt-4">
                       <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
                       <div className="space-y-1.5">
                         {draft.appearance?.avatarBorderColor && <div className="flex justify-end"><button type="button" onClick={() => updateAppearance({ avatarBorderColor: undefined })} className="text-[11px] font-semibold text-blue-700 hover:underline">{tr("Use theme", "Usa tema")}</button></div>}
@@ -588,26 +588,23 @@ export const ProfileSection = ({
 
           <section className="admin-profile-chapter">
             <ProfileSectionHeading title={tr("Online presence", "Presenza online")} />
-            <div className="grid gap-3 md:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-white p-4">
-              <div className="mb-3 flex items-center gap-2"><Globe2 className="h-4 w-4 text-blue-700" /><h3 className="text-sm font-semibold text-slate-950">{tr("Browser title", "Titolo browser")}</h3></div>
-              {seoLocked && <div className="admin-inline-plan-lock mb-3"><LockKeyhole className="h-4 w-4" /><span>{tr("Available on Starter.", "Disponibile con Starter.")}</span><a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a></div>}
-              <Input aria-label={tr("Browser title", "Titolo browser")} disabled={seoLocked} value={draft.tabTitle || ""} onChange={(event) => setDraft((current) => ({ ...current, tabTitle: event.target.value }))} placeholder={draft.name ? `${draft.name} | OrbitPage` : tr("Title shown in the browser tab", "Titolo mostrato nella scheda del browser")} maxLength={200} />
+            <div className="grid gap-x-5 gap-y-5 md:grid-cols-2">
+              <div className="min-w-0 space-y-2">
+                <div className="flex items-center gap-2"><Globe2 className="h-4 w-4 text-blue-700" /><h3 className="text-sm font-semibold text-slate-950">{tr("Browser title", "Titolo browser")}</h3></div>
+                {seoLocked && <div className="admin-inline-plan-lock"><LockKeyhole className="h-4 w-4" /><span>{tr("Available on Starter.", "Disponibile con Starter.")}</span><a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a></div>}
+                <Input aria-label={tr("Browser title", "Titolo browser")} disabled={seoLocked} value={draft.tabTitle || ""} onChange={(event) => setDraft((current) => ({ ...current, tabTitle: event.target.value }))} placeholder={draft.name ? `${draft.name} | OrbitPage` : tr("Title shown in the browser tab", "Titolo mostrato nella scheda del browser")} maxLength={200} />
               </div>
-              <button type="button" onClick={() => setFaviconDialogOpen(true)} className="flex items-center gap-4 rounded-lg border border-slate-200 bg-white p-4 text-left transition-colors hover:border-blue-300 hover:bg-blue-50/40">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-                {faviconValue && /^(?:https?:|data:image\/|blob:|\/)/i.test(faviconValue) ? <img className="h-full w-full object-contain p-1" src={getImageUrl(faviconValue)} alt={tr("Favicon preview", "Anteprima favicon")} /> : <ImageIcon className="h-5 w-5 text-slate-400" />}
-              </span>
-              <span><strong className="block text-sm text-slate-950">Favicon</strong><small className="mt-1 block text-xs leading-5 text-slate-500">{tr("Custom browser icon.", "Icona personalizzata del browser.")}</small></span>
+              <button type="button" onClick={() => setFaviconDialogOpen(true)} className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 text-left transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
+                  {faviconValue && /^(?:https?:|data:image\/|blob:|\/)/i.test(faviconValue) ? <img className="h-full w-full object-contain p-1" src={getImageUrl(faviconValue)} alt={tr("Favicon preview", "Anteprima favicon")} /> : <ImageIcon className="h-5 w-5 text-slate-400" />}
+                </span>
+                <span><strong className="block text-sm text-slate-950">Favicon</strong><small className="mt-1 block text-xs leading-5 text-slate-500">{tr("Custom browser icon.", "Icona personalizzata del browser.")}</small></span>
               </button>
-            </div>
-
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="profile-meta-description">{tr("Search description", "Descrizione per i motori di ricerca")}</Label>
                 <Textarea id="profile-meta-description" disabled={seoLocked} value={draft.metaDescription || ""} onChange={(event) => setDraft((current) => ({ ...current, metaDescription: event.target.value }))} placeholder={tr("A concise description for search engines and link previews.", "Una descrizione concisa per motori di ricerca e anteprime dei link.")} rows={2} maxLength={500} />
               </div>
-              <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="profile-footer">{tr("Footer text", "Testo del footer")}</Label>
                 <Textarea id="profile-footer" value={draft.footerText || ""} onChange={(event) => setDraft((current) => ({ ...current, footerText: event.target.value }))} placeholder={tr("(c) Your name. All rights reserved.", "(c) Il tuo nome. Tutti i diritti riservati.")} rows={2} maxLength={300} />
               </div>
@@ -616,17 +613,17 @@ export const ProfileSection = ({
 
           <section className="admin-profile-chapter">
             <ProfileSectionHeading title={tr("Social links", "Link social")} />
-            <details className="group rounded-lg border border-slate-200 bg-white">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4">
+            <details className="group rounded-lg bg-slate-50/70">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-3">
               <strong className="text-sm text-slate-950">{connectedSocials} {tr(connectedSocials === 1 ? "connected channel" : "connected channels", connectedSocials === 1 ? "canale collegato" : "canali collegati")}</strong>
               <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{tr("Manage", "Gestisci")}</span>
             </summary>
-            <div className="grid gap-3 border-t border-slate-200 bg-slate-50/60 p-4 md:grid-cols-2">
+            <div className="grid gap-x-4 gap-y-3 border-t border-slate-200 bg-white/70 p-3 md:grid-cols-2">
               {SOCIAL_FIELDS.map((social) => {
                 const Icon = social.icon;
                 const value = profileSocialIdentifier(social.id, draft.socialLinks?.[social.id]);
                 return (
-                  <label key={social.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                  <label key={social.id} className="min-w-0 p-2">
                     <span className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold text-slate-700"><span className="flex items-center gap-2"><Icon className="h-4 w-4" />{social.label}</span>{value && <Check className="h-3.5 w-3.5 text-emerald-600" />}</span>
                     <Input value={value} onChange={(event) => setDraft((current) => ({ ...current, socialLinks: { ...current.socialLinks, [social.id]: event.target.value } }))} placeholder={social.placeholder} inputMode={social.inputMode || "text"} />
                   </label>
@@ -765,7 +762,7 @@ export const ProfileSection = ({
               <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
             </summary>
             <div className="space-y-5 border-t border-slate-200 p-4">
-              <div className="rounded-lg border border-slate-200 p-3">
+              <div className="space-y-3">
                 <p className="mb-3 text-sm font-semibold text-slate-950">{tr("Typography", "Tipografia")}</p>
                 <div className="grid grid-cols-2 gap-3">
                 <div><Label htmlFor="profile-name-size" className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input id="profile-name-size" type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>

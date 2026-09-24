@@ -400,10 +400,11 @@
 
 .visual-site-editor .admin-profile-identity-card {
   min-width: 0;
-  border: 1px solid #dce4ee;
-  border-radius: 8px;
-  background: #fbfcfe;
-  padding: 12px;
+}
+
+.visual-site-editor .admin-profile-identity-details {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 16px;
 }
 
 .visual-site-editor .admin-profile-avatar-editor > div:first-child {
