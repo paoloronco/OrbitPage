@@ -43,7 +43,6 @@ interface PublicViewProps {
 }
 
 export type PublicEditorTarget =
-  | { kind: "page" }
   | { kind: "profile" }
   | { kind: "link"; id: string };
 
@@ -161,7 +160,6 @@ export const PublicView = ({
   return (
     <main
       className={`public-page-root ${viewportClass}${hasResponsiveProfileLayout ? " public-page-root--responsive-profile-layout" : ""}${hasResponsiveCardLayout ? " public-page-root--responsive-card-layout" : ""} ${onEditorSelect ? "public-page-root--editor" : ""} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}
-      onClick={onEditorSelect ? () => onEditorSelect({ kind: "page" }) : undefined}
     >
       <div
         className="public-page-content mx-auto space-y-6"

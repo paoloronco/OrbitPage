@@ -1,4 +1,5 @@
 import React from "react";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { PROFILE_CARD_LAYOUT_ID } from "@/lib/card-layout";
@@ -21,6 +22,12 @@ const links = [{
 }];
 
 describe("PublicView visual editor targets", () => {
+  it("does not make the page background selectable", () => {
+    const source = readFileSync(new URL("./PublicView.tsx", import.meta.url), "utf8");
+
+    expect(source).not.toContain('onEditorSelect({ kind: "page" })');
+  });
+
   it("makes the real profile and content blocks selectable in editor mode", () => {
     const html = renderToStaticMarkup(
       <PublicView
