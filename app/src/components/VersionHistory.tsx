@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CheckCircle2, Clock3, History, RotateCcw } from '@/components/ui/material-icons';
+import { CheckCircle2, Clock3, History, Info, RotateCcw } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { OrbitLoader, OrbitLoadingState } from '@/components/ui/orbit-loader';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { versionHistoryApi, type ManagedVersionHistory } from '@/lib/api-client';
 import { useAppI18n } from '@/lib/i18n';
 
@@ -49,10 +50,21 @@ export function VersionHistory() {
     <div className="flex items-start gap-3">
       <span className="rounded-xl bg-primary/10 p-2 text-primary"><History className="h-5 w-5" /></span>
       <div className="min-w-0">
-        <h3 className="text-lg font-semibold">{tr('Version history', 'Cronologia versioni')}</h3>
-        <p className="text-sm leading-6 text-muted-foreground">
-          {tr('OrbitPage keeps the latest 25 page versions in this installation. Restoring creates a new version, so nothing is overwritten in place.', 'OrbitPage conserva le ultime 25 versioni della pagina in questa installazione. Il ripristino crea una nuova versione, quindi nulla viene sovrascritto sul posto.')}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <h3 className="text-lg font-semibold">{tr('Version history', 'Cronologia versioni')}</h3>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={tr('About version history', 'Informazioni sulla cronologia versioni')}>
+                  <Info className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent align="start" className="max-w-80 px-3 py-2 text-xs leading-5" side="bottom">
+                {tr('OrbitPage keeps the latest 25 page versions in this installation. Restoring creates a new version, so nothing is overwritten in place.', 'OrbitPage conserva le ultime 25 versioni della pagina in questa installazione. Il ripristino crea una nuova versione, quindi nulla viene sovrascritto sul posto.')}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
     </div>
 
