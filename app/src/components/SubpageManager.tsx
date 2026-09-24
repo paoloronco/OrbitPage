@@ -232,16 +232,7 @@ export function SubpageManager({
         )}
       </section>
 
-      {!draft ? (
-        <Card className="subpage-empty-state">
-          <Files className="h-7 w-7" aria-hidden="true" />
-          <h3>No additional pages yet</h3>
-          <p>Add a page for a specific topic or campaign. It stays hidden until you are ready to publish it.</p>
-          <Button type="button" onClick={addPage} disabled={busy || pageLimitReached || editMode === "view"}>
-            <FilePlus2 className="h-4 w-4" /> Add your first page
-          </Button>
-        </Card>
-      ) : (
+      {draft && (
         <div className="subpage-workspace">
           <section className="subpage-details-panel" aria-labelledby="subpage-details-title">
             <div className="subpage-section-heading">
