@@ -3,6 +3,17 @@ import {
   MENU_THEME_PRESETS, createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
 } from './menu';
 
+const luminance = (hex: string) => {
+  const [red, green, blue] = hex.match(/\w\w/g)!.map((value) => Number.parseInt(value, 16) / 255)
+    .map((value) => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+};
+
+const contrast = (foreground: string, background: string) => {
+  const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (values[0] + 0.05) / (values[1] + 0.05);
+};
+
 describe('menu catalog normalization', () => {
   it('preserves one level of menu subsections without changing existing roots', () => {
     const menu = createDefaultMenu('bar');
@@ -96,6 +107,12 @@ describe('menu catalog normalization', () => {
     expect(themes).toHaveLength(4);
     expect(new Set(themes.map((theme) => theme.background)).size).toBe(4);
     expect(new Set(themes.map((theme) => `${theme.radius}:${theme.imageLayout}`)).size).toBeGreaterThan(2);
+    for (const theme of themes) {
+      for (const color of [theme.text, theme.muted, theme.accent]) {
+        expect(contrast(color, theme.background)).toBeGreaterThanOrEqual(4.5);
+        expect(contrast(color, theme.surface)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 });
 
