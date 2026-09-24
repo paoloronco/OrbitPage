@@ -19,5 +19,6 @@ describe('PublicTextCard', () => {
 
     expect(html).not.toContain('whole-card.example');
     expect(html).toContain('href="https://item.example"');
+    expect(html).not.toContain('ml-6');
   });
 });

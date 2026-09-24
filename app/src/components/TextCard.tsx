@@ -837,14 +837,14 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                       <div className="flex-1 min-w-0">
                         {/* Name/label on its own line */}
                         <div className="break-words" style={{ color: item.textColor || link.textColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || undefined }}>{item.text}</div>
-                        {/* Link on a second indented line, wrap and ellipsize if too long */}
+                        {/* Link on a second line, aligned with the item text */}
                         {item.url && (
                           <a
                             onClick={(e) => { e.stopPropagation(); }}
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="ml-6 block truncate hover:underline hover:text-primary transition-colors text-left"
+                            className="block truncate hover:underline hover:text-primary transition-colors text-left"
                             style={{ color: item.textColor || link.textColor }}
                             title={item.url}
                           >
