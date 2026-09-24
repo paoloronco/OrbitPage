@@ -158,22 +158,6 @@ const EMPTY_POLICY_CONFIG = {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SectionHeader({ icon: Icon, title, description }: {
-  icon: React.ElementType; title: string; description?: string;
-}) {
-  return (
-    <div className="mb-4 flex items-start gap-3">
-      <span className="admin-panel-icon mt-0.5">
-        <Icon className="h-4 w-4" />
-      </span>
-      <div>
-        <h3 className="text-sm font-semibold text-slate-950">{title}</h3>
-        {description && <p className="mt-0.5 text-xs leading-5 text-slate-500">{description}</p>}
-      </div>
-    </div>
-  );
-}
-
 function FieldRow({ label, description, children }: {
   label: string; description?: string; children: React.ReactNode;
 }) {
@@ -547,11 +531,6 @@ function HardcodedForm({
 
       {/* ── Categories ── */}
       <TabsContent value="categories" className="space-y-4">
-        <InfoBox>
-          <strong>Necessary</strong> cookies are always active and cannot be disabled by visitors.
-          Enable optional categories only when you actually use them — each enabled category must
-          have a clear description (GDPR transparency requirement).
-        </InfoBox>
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div className="flex items-center gap-3">
             <div className="flex-1">
@@ -716,11 +695,6 @@ function BuilderForm({
 
   return (
     <div className="space-y-5">
-      <InfoBox>
-        CMP = cookie consent banner. Use this only when another service should show the banner
-        and manage tracking consent. The native OrbitPage banner is disabled in External mode.
-      </InfoBox>
-
       <FieldRow label="CMP provider" description="Choose a supported integration. Use Custom only when your provider is not listed.">
         <Select value={cfg.provider} onValueChange={(provider) => onChange({ provider: provider as typeof cfg.provider })}>
           <SelectTrigger className="admin-input"><SelectValue /></SelectTrigger>
@@ -1416,11 +1390,6 @@ export function PrivacySettings({
 
             {mode === 'builder' && enabled && (
               <div className="privacy-config-surface">
-                <SectionHeader
-                  icon={Globe2}
-                  title={tr('External CMP', 'CMP esterna')}
-                  description={tr('Configure the provider that will display the consent interface.', 'Configura il provider che mostrerà l’interfaccia di consenso.')}
-                />
                 {cmpSiteUrl ? (
                   <div className="mb-5 border-y border-blue-200 bg-blue-50/70 px-4 py-4">
                     <Label htmlFor="privacy-cmp-site-url" className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-800">
@@ -1436,9 +1405,6 @@ export function PrivacySettings({
                         {tr('Copy URL', 'Copia URL')}
                       </Button>
                     </div>
-                    <p className="mt-2 text-xs leading-5 text-blue-900/70">
-                      {tr('Use this exact public page URL, including the slug. Do not enter the OrbitPage dashboard URL.', 'Usa esattamente questo URL pubblico, slug incluso. Non inserire l’URL della dashboard OrbitPage.')}
-                    </p>
                   </div>
                 ) : null}
                 <BuilderForm
