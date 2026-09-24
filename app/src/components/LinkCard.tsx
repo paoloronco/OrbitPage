@@ -199,7 +199,11 @@ export const LinkCard = ({
   const lastPreviewRevisionRef = useRef(savedRevision);
 
   useEffect(() => {
-    if (!isEditing) setEditLink(draft || link);
+    if (!isEditing) {
+      setEditLink(draft || link);
+      setImageUploadError("");
+      setVideoUploadError("");
+    }
   }, [draft, isEditing, link]);
 
   useEffect(() => {
@@ -235,14 +239,6 @@ export const LinkCard = ({
     onPreparingChange?.(link.id, Boolean(uploadingImage) || uploadingVideo);
     return () => onPreparingChange?.(link.id, false);
   }, [link.id, onPreparingChange, uploadingImage, uploadingVideo]);
-
-  const handleCancel = () => {
-    onPreview?.(link.id, null);
-    setEditLink(link);
-    setImageUploadError("");
-    setVideoUploadError("");
-    setIsEditing(false);
-  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
@@ -2120,11 +2116,6 @@ export const LinkCard = ({
             </section>
             )}
             
-            <div className="flex gap-2">
-              <Button onClick={handleCancel} variant="outline" size="sm" disabled={Boolean(uploadingImage) || uploadingVideo}>
-                Cancel
-              </Button>
-            </div>
           </div>
         ) : (
             <div className="flex items-start justify-between">

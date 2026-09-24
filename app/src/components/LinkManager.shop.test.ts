@@ -30,8 +30,14 @@ describe('Shop link shortcut', () => {
 
   it('shows the mobile save action only when content changed', () => {
     expect(source).toContain('!isViewOnly && !isMobile');
-    expect(source).toContain('isMobile && !isViewOnly && hasUnsavedChanges ? createPortal(');
-    expect(source).toContain('admin-profile-save-float admin-profile-save-float--single');
+    expect(source).toContain('isMobile && !isViewOnly && (hasUnsavedChanges || editingLinkId) ? createPortal(');
+    expect(source).toContain('admin-profile-save-float${editingLinkId ? "" : " admin-profile-save-float--single"}');
+  });
+
+  it('uses the full editor width and keeps cancel beside save while a card is open', () => {
+    expect(source).toContain("editingLinkId ? ' is-editing' : ''");
+    expect(source).toContain('onClick={cancelEditingLink}');
+    expect(source).toContain('tr("Cancel", "Annulla")');
   });
 
   it('uses the regular content editor when a preview card is selected on mobile', () => {

@@ -3120,6 +3120,39 @@
     gap: 12px;
   }
 
+  .admin-link-list.is-editing {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .admin-link-list.is-editing .admin-block-editor-shell {
+    gap: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .admin-link-list.is-editing .admin-card-edit-body {
+    margin-left: 0 !important;
+  }
+
+  .admin-link-list.is-editing .admin-card-drag-handle {
+    display: none;
+  }
+
+  .admin-content-cancel {
+    border-color: #94a3b8;
+    background: #fff;
+    color: #334155;
+    font-weight: 700;
+  }
+
+  .admin-content-cancel:hover {
+    border-color: #64748b;
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
   .admin-link-list .public-block-preview[data-surface-effect="liquid-glass"]:has(> :not(.public-unboxed-block)) {
     background: var(--gradient-background);
     border-radius: var(--radius);
