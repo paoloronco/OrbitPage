@@ -18,9 +18,8 @@ import { VisualSiteEditor } from "./VisualSiteEditor";
 import { defaultTheme } from "@/lib/theme";
 
 describe("VisualSiteEditor", () => {
-  it("keeps style out of the editor and sends background editing to Theme", () => {
+  it("keeps style out of the editor and only routes selectable preview elements", () => {
     const onSelect = vi.fn();
-    const onOpenTheme = vi.fn();
 
     const html = renderToStaticMarkup(
       <VisualSiteEditor
@@ -34,7 +33,6 @@ describe("VisualSiteEditor", () => {
         inspectorDescription="Edit profile"
         inspector={<div>Inspector</div>}
         onSelect={onSelect}
-        onOpenTheme={onOpenTheme}
         layoutEditing={false}
         onLayoutEditingChange={vi.fn()}
       />,
@@ -45,12 +43,11 @@ describe("VisualSiteEditor", () => {
     expect(html).not.toContain(">Style</span>");
     expect(html).not.toContain(">Stile</span>");
 
-    const onEditorSelect = mockState.livePreviewProps?.onEditorSelect as ((target: { kind: "page" }) => void) | undefined;
+    const onEditorSelect = mockState.livePreviewProps?.onEditorSelect as ((target: { kind: "profile" }) => void) | undefined;
     expect(onEditorSelect).toBeTypeOf("function");
-    onEditorSelect?.({ kind: "page" });
+    onEditorSelect?.({ kind: "profile" });
 
-    expect(onOpenTheme).toHaveBeenCalledOnce();
-    expect(onSelect).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledWith("profile");
   });
 
   it("shows Menu preview only when its Design panel provides one", () => {

@@ -1298,7 +1298,6 @@ export const AdminView = ({
                 shopStatus={!isIntegratedHostedAdmin || !hostedShop?.entitled ? "locked" : hostedShop.enabled ? "active" : "inactive"}
                 pagesStatus={firstEnabledSubpage ? "active" : "inactive"}
                 onSelect={selectVisualSection}
-                onOpenTheme={canEditTheme ? () => selectTab("theme") : undefined}
                 onProfileLayoutChange={canEditProfile ? updateVisualProfileLayout : undefined}
                 onCardLayoutChange={canEditProfile ? updateVisualCardLayout : undefined}
                 layoutEditing={visualLayoutEditing}

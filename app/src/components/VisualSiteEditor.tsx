@@ -62,7 +62,6 @@ interface VisualSiteEditorProps {
   shopStatus?: VisualSectionItem["status"];
   pagesStatus?: VisualSectionItem["status"];
   onSelect: (section: VisualSiteEditorSection, linkId?: string) => void;
-  onOpenTheme?: () => void;
   onProfileLayoutChange?: (layout: ProfileLayout, viewport: ProfileLayoutViewport) => void;
   onCardLayoutChange?: (layout: CardLayout | null, viewport: ProfileLayoutViewport) => void;
   layoutEditing: boolean;
@@ -86,7 +85,6 @@ export function VisualSiteEditor({
   shopStatus = "inactive",
   pagesStatus = "inactive",
   onSelect,
-  onOpenTheme,
   onProfileLayoutChange,
   onCardLayoutChange,
   layoutEditing,
@@ -123,11 +121,7 @@ export function VisualSiteEditor({
       onSelect("profile");
       return;
     }
-    if (target.kind === "link") {
-      onSelect("links", target.id);
-      return;
-    }
-    onOpenTheme?.();
+    onSelect("links", target.id);
   };
 
   useEffect(() => {
