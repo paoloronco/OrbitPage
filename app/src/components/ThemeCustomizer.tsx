@@ -399,26 +399,13 @@ export const ThemeCustomizer = ({
     />
   );
 
-  const activeThemeName = selectedPresetId
-    ? themePresets.find((preset) => preset.id === selectedPresetId)?.name
-    : tr("Custom theme", "Tema personalizzato");
-  const activeThemeColors = [pendingTheme.background, pendingTheme.card, pendingTheme.primary, pendingTheme.foreground];
-
   const livePreviewPanel = (
     <aside className="admin-theme-preview-rail">
       <details className="admin-theme-preview-disclosure" open={previewOpen} onToggle={(event) => setPreviewOpen(event.currentTarget.open)}>
         <summary className="admin-theme-preview-summary">
           <span className="admin-theme-preview-summary-identity">
             <span className="admin-theme-preview-summary-icon" aria-hidden="true"><Eye /></span>
-            <span>
-              <small>{tr("Page preview", "Anteprima pagina")}</small>
-              <strong>{activeThemeName}</strong>
-            </span>
-          </span>
-          <span className="admin-theme-preview-summary-colors" aria-hidden="true">
-            {activeThemeColors.map((color, index) => (
-              <i key={`${color}-${index}`} style={{ backgroundColor: color }} />
-            ))}
+            <strong>{tr("Page preview", "Anteprima pagina")}</strong>
           </span>
           <span className="admin-theme-preview-summary-action">
             <span className="admin-theme-preview-summary-open">{tr("Hide", "Nascondi")}</span>
@@ -428,21 +415,10 @@ export const ThemeCustomizer = ({
         </summary>
         <div className="admin-theme-preview-body">
           <div className="admin-theme-preview-context">
-            <div className="flex items-end justify-between gap-3 px-1">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">{tr("Page preview", "Anteprima pagina")}</p>
-                <p className="mt-1 font-bold text-slate-950">{activeThemeName}</p>
-              </div>
+            <div className="flex items-center justify-between gap-3 px-1">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">{tr("Page preview", "Anteprima pagina")}</p>
               <PreviewDeviceToggle value={previewDevice} onChange={setPreviewDevice} />
             </div>
-            <div className="flex gap-1.5 px-1" aria-label={tr("Active theme colors", "Colori tema attivi")}>
-              {activeThemeColors.map((color, index) => (
-                <span key={`${color}-${index}`} className="h-5 w-5 rounded-md border border-slate-200" style={{ backgroundColor: color }} title={color} />
-              ))}
-            </div>
-            <p className="px-1 text-xs leading-5 text-slate-500">{isDirty
-              ? tr("Drag the divider to compare the saved theme with your draft before saving.", "Trascina il divisore per confrontare il tema salvato con la bozza prima di salvare.")
-              : tr("This is the same renderer used by the public page. Changes remain a preview until you save the theme.", "È lo stesso renderer usato dalla pagina pubblica. Le modifiche restano in anteprima finché non salvi il tema.")}</p>
           </div>
           <div className="admin-theme-live-preview">
             {isDirty ? (

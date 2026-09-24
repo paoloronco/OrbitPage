@@ -15,6 +15,10 @@ describe("ThemeCustomizer preset saves", () => {
     expect(source).toContain("<TooltipContent");
     expect(source).not.toContain("6 Mono + 6 Multi");
     expect(source).not.toContain('tr("Manual controls"');
+    expect(source).not.toContain('tr("Custom theme"');
+    expect(source).not.toContain("admin-theme-preview-summary-colors");
+    expect(source).not.toContain('tr("Active theme colors"');
+    expect(source).not.toContain("This is the same renderer used by the public page.");
   });
 
   it("turns a grandfathered custom theme into valid Starter presets", () => {
