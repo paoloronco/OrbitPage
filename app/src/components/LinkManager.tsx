@@ -1,8 +1,8 @@
-import { type ComponentType, type CSSProperties, useCallback, useEffect, useState } from "react";
+import { type ComponentType, type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
+import { CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, RotateCcw, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -61,6 +61,14 @@ interface BlockLibraryItem {
   restricted?: boolean;
 }
 
+type SavedContentNotice = {
+  id: number;
+  previousLinks: LinkData[];
+};
+
+const CONTENT_SAVE_NOTICE_DURATION_MS = 10_000;
+const cloneLinks = (value: LinkData[]) => JSON.parse(JSON.stringify(value)) as LinkData[];
+
 const normalizeBlockSearch = (value: string) => value
   .normalize("NFD")
   .replace(/[\u0300-\u036f]/g, "")
@@ -105,6 +113,8 @@ export const LinkManager = ({
   const [blockLibraryCategory, setBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [savedNotice, setSavedNotice] = useState<SavedContentNotice | null>(null);
+  const savedNoticeTimerRef = useRef<number | null>(null);
   const hasUnsavedChanges = isDirty || previewDrafts.size > 0;
   const publicPreviewStyle = (index: number) => ({
     ...getThemeCssVariables(theme),
@@ -165,6 +175,25 @@ export const LinkManager = ({
     onDirtyChange?.(hasUnsavedChanges);
   }, [hasUnsavedChanges, onDirtyChange]);
 
+  useEffect(() => () => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+  }, []);
+
+  const dismissSavedNotice = () => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+    savedNoticeTimerRef.current = null;
+    setSavedNotice(null);
+  };
+
+  const showSavedNotice = (previousLinks: LinkData[]) => {
+    if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
+    setSavedNotice({ id: Date.now(), previousLinks });
+    savedNoticeTimerRef.current = window.setTimeout(() => {
+      savedNoticeTimerRef.current = null;
+      setSavedNotice(null);
+    }, CONTENT_SAVE_NOTICE_DURATION_MS);
+  };
+
   const updateLinkPreview = useCallback((id: string, draft: LinkData | null) => {
     setPreviewDrafts((current) => {
       const key = String(id);
@@ -190,11 +219,13 @@ export const LinkManager = ({
     setEditingLinkId((current) => editing ? String(id) : current === String(id) ? null : current);
   }, []);
 
-  const cancelEditingLink = () => {
-    if (!editingLinkId) return;
-    updateLinkPreview(editingLinkId, null);
+  const revertUnsavedChanges = () => {
+    setWorkingLinks(links);
+    setPreviewDrafts(new Map());
+    setIsDirty(false);
     setEditingLinkId(null);
     setSaveError("");
+    setSavedRevision((current) => current + 1);
   };
 
   const addNewLink = () => {
@@ -728,6 +759,7 @@ export const LinkManager = ({
 
   const handleSave = async () => {
     if (!hasUnsavedChanges || preparingLinks.size > 0 || busy) return;
+    const previousLinks = cloneLinks(links);
     setBusy(true);
     setSaveError("");
     try {
@@ -741,9 +773,30 @@ export const LinkManager = ({
         setWorkingLinks(nextLinks);
         setPreviewDrafts(new Map());
         setSavedRevision((current) => current + 1);
+        showSavedNotice(previousLinks);
       }
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : tr("Changes could not be saved. Try again.", "Impossibile salvare le modifiche. Riprova."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRevertSavedContent = async () => {
+    if (!savedNotice || busy) return;
+    const previousLinks = cloneLinks(savedNotice.previousLinks);
+    setBusy(true);
+    setSaveError("");
+    try {
+      await onLinksUpdate(previousLinks);
+      setWorkingLinks(previousLinks);
+      setPreviewDrafts(new Map());
+      setIsDirty(false);
+      setEditingLinkId(null);
+      setSavedRevision((current) => current + 1);
+      dismissSavedNotice();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : tr("The previous content version could not be restored.", "Impossibile ripristinare la versione precedente dei contenuti."));
     } finally {
       setBusy(false);
     }
@@ -928,17 +981,6 @@ export const LinkManager = ({
               variant="destructive"
             >
               <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-          {!isViewOnly && !isMobile && editingLinkId && (
-            <Button onClick={cancelEditingLink} variant="outline" className="admin-action admin-content-cancel" disabled={busy}>
-              {tr("Cancel", "Annulla")}
-            </Button>
-          )}
-          {!isViewOnly && !isMobile && (
-            <Button onClick={handleSave} className="admin-action admin-action-primary" disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
-              <Save className="h-4 w-4" />
-              {tr("Save", "Salva")}
             </Button>
           )}
           {!visualMode && <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Export links", "Esporta link")} title={tr("Export links", "Esporta link")}>
@@ -1198,20 +1240,37 @@ export const LinkManager = ({
         </fieldset>
       )}
 
-      {typeof document !== "undefined" && isMobile && !isViewOnly && (hasUnsavedChanges || editingLinkId) ? createPortal(
+      {typeof document !== "undefined" && !isViewOnly && (hasUnsavedChanges || savedNotice) ? createPortal(
         <div className="admin-profile-save-layer">
-          <div className={`admin-profile-save-float${editingLinkId ? "" : " admin-profile-save-float--single"}`}>
-            {saveError && <span className="col-span-2 max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
-            {editingLinkId && (
-              <Button type="button" variant="outline" size="sm" className="admin-content-cancel" onClick={cancelEditingLink} disabled={busy}>
-                {tr("Cancel", "Annulla")}
+          {hasUnsavedChanges && (
+            <div className="admin-profile-save-float">
+              <Button type="button" variant="outline" size="sm" onClick={revertUnsavedChanges} disabled={busy}>
+                <RotateCcw className="h-4 w-4" /> {tr("Revert", "Ripristina")}
               </Button>
-            )}
-            <Button type="button" size="sm" onClick={handleSave} disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
-              {busy ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
-              {busy ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}
-            </Button>
-          </div>
+              <Button type="button" size="sm" onClick={handleSave} disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
+                {busy ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
+                {busy ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}
+              </Button>
+            </div>
+          )}
+          {savedNotice && (
+            <aside className="admin-profile-saved-notice">
+              <div className="admin-profile-saved-notice__content">
+                <span className="admin-profile-saved-notice__icon" aria-hidden="true"><Check className="h-4 w-4" /></span>
+                <div role="status" aria-live="polite">
+                  <strong>{tr("Saved", "Salvato")}</strong>
+                  <small>{tr("It will be visible on the public page in about 10 seconds.", "Sarà visibile entro circa 10 secondi sulla pagina pubblica.")}</small>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleRevertSavedContent} disabled={busy}>
+                  {busy && <OrbitLoader size={14} state="composing" />}
+                  {busy ? tr("Reverting", "Ripristino") : tr("Revert", "Ripristina")}
+                </Button>
+              </div>
+              <span className="admin-profile-saved-notice__progress" aria-hidden="true">
+                <i key={savedNotice.id} />
+              </span>
+            </aside>
+          )}
         </div>,
         document.body,
       ) : null}
