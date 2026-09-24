@@ -10,6 +10,10 @@ export function isBundledProfileAvatar(value?: unknown) {
   }
 }
 
+export function hasCustomProfileAvatar(value?: unknown) {
+  return typeof value === "string" && Boolean(value.trim()) && !isBundledProfileAvatar(value);
+}
+
 export function persistedProfileAvatar(value?: unknown) {
   return typeof value === "string" && value && !/^blob:/i.test(value) && !isBundledProfileAvatar(value) ? value : "";
 }

@@ -4,6 +4,14 @@ import { describe, expect, it } from "vitest";
 import { PublicProfileSection } from "./PublicProfileSection";
 
 describe("PublicProfileSection custom layout", () => {
+  it("shows only a custom enabled profile image", () => {
+    const emptyHtml = renderToStaticMarkup(<PublicProfileSection profile={{ name: "Alice", bio: "", avatar: "", showAvatar: true }} />);
+    const customHtml = renderToStaticMarkup(<PublicProfileSection profile={{ name: "Alice", bio: "", avatar: "/uploads/alice.webp", showAvatar: true }} />);
+
+    expect(emptyHtml).not.toContain("profile-card__avatar");
+    expect(customHtml).toContain("profile-card__avatar");
+  });
+
   it("links entered usernames and omits empty socials", () => {
     const html = renderToStaticMarkup(<PublicProfileSection profile={{
       name: "Alice", bio: "", avatar: "", showAvatar: false,

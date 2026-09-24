@@ -36,9 +36,9 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { DiscordIcon, MastodonIcon, TelegramIcon, TikTokIcon, WhatsAppIcon } from "./SocialIcons";
-import profileAvatar from "@/assets/profile-avatar.jpg";
 import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
-import { internalAssetPath } from "@/lib/base-path";
+import { internalAssetPath, withRuntimeAssetPath } from "@/lib/base-path";
+import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
 import { RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload } from "@/lib/image-upload";
 import type { ThemeConfig } from "@/lib/theme";
@@ -314,10 +314,11 @@ export const ProfileSection = ({
   };
 
   const getImageUrl = (value?: string | null) => {
+    if (!hasCustomProfileAvatar(value)) return withRuntimeAssetPath("/brand/orbitpage-mark-192.png");
     const safeUrl = resolveSafePublicMediaUrl(value);
-    if (!safeUrl) return profileAvatar as unknown as string;
+    if (!safeUrl) return withRuntimeAssetPath("/brand/orbitpage-mark-192.png");
     if (safeUrl.startsWith("/") || (!safeUrl.includes(":") && !safeUrl.startsWith("//"))) {
-      return internalAssetPath(safeUrl) || (profileAvatar as unknown as string);
+      return internalAssetPath(safeUrl) || withRuntimeAssetPath("/brand/orbitpage-mark-192.png");
     }
     return safeUrl;
   };
@@ -475,6 +476,7 @@ export const ProfileSection = ({
 
   const faviconValue = draft.favicon || draft.avatar;
   const cardBackgroundImage = getOptionalImageUrl(draft.appearance?.cardBackgroundImage);
+  const hasCustomAvatar = hasCustomProfileAvatar(draft.avatar);
 
   return (
     <div className="admin-profile-section space-y-5" data-onboarding="profile-card">
@@ -511,12 +513,12 @@ export const ProfileSection = ({
               <div className="admin-profile-avatar-editor admin-profile-identity-card">
                 <div className="flex items-center justify-between gap-3">
                   <h4 className="text-xs font-semibold">{visualMode ? tr("Image", "Immagine") : tr("Profile image", "Immagine profilo")}</h4>
-                  <Switch checked={draft.showAvatar !== false} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
+                  <Switch checked={hasCustomAvatar && draft.showAvatar !== false} disabled={!hasCustomAvatar} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
                 </div>
                 <div className="admin-profile-avatar-layout">
                   <div className="admin-profile-image-column">
                     <button type="button" onClick={() => logoInputRef.current?.click()} className="admin-profile-image-picker group relative flex aspect-square w-full max-w-44 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-                      <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className="h-full w-full object-cover" />
+                      <img src={getImageUrl(draft.avatar)} alt={tr("Profile image preview", "Anteprima immagine profilo")} className={`h-full w-full ${hasCustomAvatar ? "object-cover" : "object-contain p-5"}`} />
                       <span className="absolute inset-x-2 bottom-2 flex items-center justify-center gap-1.5 rounded-md bg-slate-950/85 px-2 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-slate-950"><ImageUp className="h-3.5 w-3.5" /> {tr("Replace", "Sostituisci")}</span>
                     </button>
                     <p className="admin-profile-image-help text-[11px] leading-4 text-slate-500">{tr("PNG, JPG, GIF, WebP, or AVIF.", "PNG, JPG, GIF, WebP o AVIF.")}</p>

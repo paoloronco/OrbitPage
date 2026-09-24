@@ -1,4 +1,5 @@
 import type { LinkData } from "@/components/LinkCard";
+import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
 import { internalAssetPath } from "@/lib/base-path";
 import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 import type { BackgroundMediaConfig } from "@/lib/theme";
@@ -30,7 +31,7 @@ export function collectCriticalPublicImageUrls(input: {
 }) {
   const candidates: Array<string | null> = [];
 
-  if (input.showAvatar !== false) candidates.push(resolvePublicImageUrl(input.avatar));
+  if (input.showAvatar !== false && hasCustomProfileAvatar(input.avatar)) candidates.push(resolvePublicImageUrl(input.avatar));
   if (input.backgroundMedia?.type === "gif") {
     candidates.push(resolvePublicImageUrl(input.backgroundMedia.mediaUrl));
   }

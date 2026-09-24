@@ -8,10 +8,9 @@ import { publicPageApi, consentConfigPublicApi, type ConsentConfigData, type Pub
 import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
-import profileAvatar from "@/assets/profile-avatar.jpg";
 import { getActiveBasePath, internalAssetPath, withRuntimeAssetPath, withTenantBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import { isBundledProfileAvatar } from "@/lib/profile-avatar";
+import { hasCustomProfileAvatar, isBundledProfileAvatar } from "@/lib/profile-avatar";
 import { trackPublicPageView } from "@/lib/public-runtime";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { getEmbedData } from "@/lib/link-blocks";
@@ -72,7 +71,7 @@ function normalizePublicProfile(profileData: PublicPageResponse["profile"] | nul
     return {
       name: "",
       bio: "",
-      avatar: profileAvatar,
+      avatar: "",
       showAvatar: false,
     };
   }
@@ -88,12 +87,10 @@ function normalizePublicProfile(profileData: PublicPageResponse["profile"] | nul
   return {
     name: profileData.name || "",
     bio: profileData.bio || "",
-    avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
-      ? profileData.avatar
-      : (profileAvatar as string),
-    showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
+    avatar: hasCustomProfileAvatar(profileData.avatar) ? profileData.avatar : "",
+    showAvatar: hasCustomProfileAvatar(profileData.avatar) && (typeof (profileData as any).show_avatar !== 'undefined'
       ? (profileData as any).show_avatar !== 0
-      : ((profileData as any).showAvatar ?? true),
+      : ((profileData as any).showAvatar ?? true)),
     nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
     bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
     appearance: (profileData as any).appearance || {},

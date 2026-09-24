@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isBundledProfileAvatar, persistedProfileAvatar } from "./profile-avatar";
+import { hasCustomProfileAvatar, isBundledProfileAvatar, persistedProfileAvatar } from "./profile-avatar";
 
 describe("bundled profile avatar", () => {
   it.each([
@@ -16,7 +16,13 @@ describe("bundled profile avatar", () => {
   it("preserves uploaded tenant media", () => {
     const value = "/api/orbitpage/assets/tenants/example/profile-avatar-custom.jpg";
     expect(isBundledProfileAvatar(value)).toBe(false);
+    expect(hasCustomProfileAvatar(value)).toBe(true);
     expect(persistedProfileAvatar(value)).toBe(value);
+  });
+
+  it("does not treat an empty or bundled placeholder as a custom image", () => {
+    expect(hasCustomProfileAvatar("")).toBe(false);
+    expect(hasCustomProfileAvatar("/assets/profile-avatar-DPd-s5ch.jpg")).toBe(false);
   });
 
   it("never persists temporary or non-string preview values", () => {
