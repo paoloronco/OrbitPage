@@ -889,7 +889,6 @@ export function MenuEditor({
 
           {presentation === 'visual' && <div className={`menu-unified-panel${visualEditor ? ' is-editing' : ''}`}>
             <div className="menu-unified-header">
-              <div className="menu-editor-section-title"><span>02</span><div><h3>{tr('Categories and items', 'Categorie ed elementi')}</h3><p>{tr('Organize and edit your menu in one place.', 'Organizza e modifica il menu in un unico spazio.')}</p></div></div>
               <div className="menu-unified-header__actions">
                 <Button variant="outline" size="sm" onClick={addSection} disabled={draft.sections.length >= 30}><Plus className="h-4 w-4" />{tr('Add category', 'Aggiungi categoria')}</Button>
                 <Button size="sm" onClick={() => addItem()} disabled={draft.sections.length === 0 || (maxItems !== null && draft.items.length >= maxItems)}><Plus className="h-4 w-4" />{tr('Add item', 'Aggiungi elemento')}</Button>
