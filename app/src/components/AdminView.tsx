@@ -74,7 +74,6 @@ import { canonicalAdminTab, type AdminContentSection, type AdminEditorSection, t
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
 import type { InternalDestinationOption } from "@/lib/link-blocks";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
-import { createNativeMenuLink, isNativeMenuLink, upsertNativeMenuLink } from "@/lib/native-menu-link";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 import NewsletterWorkspace from "./NewsletterWorkspace";
 import { VersionHistory } from "./VersionHistory";
@@ -916,19 +915,10 @@ export const AdminView = ({
         </div>
       </PreviewDeviceFrame>}
       presentation="visual"
-      publicPageHref={publicPageHref}
       enabled={!saasPlan || entitlements?.nativeMenu === true}
       maxItems={entitlements?.maxMenuItems ?? null}
       advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
       onSave={onMenuUpdate}
-      onAddMenuLink={async () => {
-        const menuLink = createNativeMenuLink(publicPageHref, {
-          title: tr("View menu", "Vedi il menu"),
-          description: tr("Browse food and drinks", "Scopri piatti e bevande"),
-        });
-        const exists = links.some(isNativeMenuLink);
-        await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? "append" : "prepend"));
-      }}
     />
   ) : visualSection === "pages" ? (
     <SubpageManager
@@ -1458,19 +1448,10 @@ export const AdminView = ({
                     <MenuEditor
                       menu={menu}
                       presentation="classic"
-                      publicPageHref={publicPageHref}
                       enabled={!saasPlan || entitlements?.nativeMenu === true}
                       maxItems={entitlements?.maxMenuItems ?? null}
                       advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
                       onSave={onMenuUpdate}
-                      onAddMenuLink={async () => {
-                        const menuLink = createNativeMenuLink(publicPageHref, {
-                          title: tr('View menu', 'Vedi il menu'),
-                          description: tr('Browse food and drinks', 'Scopri piatti e bevande'),
-                        });
-                        const exists = links.some(isNativeMenuLink);
-                        await onLinksUpdate(upsertNativeMenuLink(links, menuLink, exists ? 'append' : 'prepend'));
-                      }}
                     />
                   </div>
                 </div>

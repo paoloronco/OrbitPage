@@ -715,10 +715,6 @@
   width: 72px;
 }
 
-.menu-editor-stack--visual .menu-publish-tools__grid {
-  grid-template-columns: minmax(120px, .38fr) minmax(0, 1fr);
-}
-
 /* Container-driven reflow: the inspector can be narrow on a large monitor. */
 
 @container menu-workspace (max-width: 70rem) {
@@ -846,8 +842,7 @@
     display: none;
   }
 
-  .menu-editor-stack--visual .menu-product-editor__top,
-  .menu-editor-stack--visual .menu-publish-tools__grid {
+  .menu-editor-stack--visual .menu-product-editor__top {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -1696,8 +1691,6 @@
 .menu-editor-stack .menu-settings-visibility > span { display: grid; gap: 3px; min-width: 0; }
 .menu-editor-stack .menu-settings-visibility strong { color: #20344f; font-size: .85rem; }
 .menu-editor-stack .menu-settings-visibility small { color: #64748b; font-size: .72rem; }
-.menu-editor-stack .menu-publish-tools canvas { box-sizing: border-box; max-width: 100%; }
-
 /* Unified menu hierarchy: categories and their indented items share one list. */
 .menu-editor-stack--visual .menu-unified-panel { min-width: 0; overflow: hidden; border: 1px solid #d9e2ed; border-radius: 10px; background: #fff; }
 .menu-unified-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 74px; padding: 13px 18px; border-bottom: 1px solid #e0e7f1; }

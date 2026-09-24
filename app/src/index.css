@@ -5930,11 +5930,6 @@
 .menu-color-grid .menu-color-field { display: grid; gap: .35rem; }
 .menu-color-grid .menu-color-field > span { color: var(--admin-secondary-copy); font-size: .66rem; font-weight: 700; text-transform: capitalize; }
 .menu-plan-note { margin: 0; padding: .8rem; border: 1px solid #dbe3ee; border-radius: 6px; background: #f8fafc; color: var(--admin-secondary-copy); font-size: .75rem; line-height: 1.5; }
-.menu-publish-tools__grid { display: grid; grid-template-columns: 11.5rem minmax(0, 1fr); gap: 1.25rem; align-items: center; }
-.menu-publish-tools canvas { padding: .5rem; border: 1px solid #dbe3ee; border-radius: 6px; background: white; }
-.menu-url-row { display: grid; grid-template-columns: minmax(0, 1fr) 2.5rem 2.5rem; gap: .4rem; margin-top: .4rem; }
-.menu-url-row > a, .menu-url-row > button { width: 2.5rem; }
-.menu-url-row svg { width: 1rem; }
 .admin-menu-live-preview { width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; background: #fff; container: menu-preview / inline-size; }
 .admin-menu-live-preview > .orbitpage-menu { min-height: 100%; }
 /* The dashboard frame scales a 390px or 1280px canvas; use that canvas for fluid menu sizing. */
@@ -6043,7 +6038,6 @@
   .menu-product-flags label { min-height: 2.5rem; }
   .menu-product-flags button { grid-column: 1 / -1; justify-self: stretch; width: 100%; }
   .menu-variant-row { grid-template-columns: minmax(0, 1fr) 7.75rem 2.5rem; }
-  .menu-publish-tools__grid { grid-template-columns: 1fr; }
   .menu-editor-main,
   .menu-content-editor,
   .menu-content-pane,
@@ -6963,7 +6957,6 @@ button.subpage-page-card:focus-visible { outline: 3px solid #6d94f3; outline-off
   .menu-variant-row { grid-template-columns: minmax(0,1fr) minmax(5.5rem,.65fr) 2.5rem; gap: .4rem; }
   .menu-theme-presets { gap: .45rem; }
   .menu-color-grid { gap: .55rem; }
-  .menu-publish-tools__grid { gap: .8rem; }
 
   .admin-dashboard-nav { justify-content: space-between; padding-top: 5px; padding-bottom: calc(5px + env(safe-area-inset-bottom)); }
   .admin-dashboard-nav-item { flex: 1 1 0; width: auto; min-width: 0; min-height: 52px; font-size: .58rem; }

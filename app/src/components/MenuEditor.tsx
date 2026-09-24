@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import QRCode from 'qrcode';
 import {
-  ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Copy, Edit, ExternalLink, Eye, EyeOff, GripVertical,
-  ImagePlus, Layers3, ListTree, Palette, Plus, QrCode, RotateCcw, Save, Trash2,
+  ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Edit, Eye, EyeOff, GripVertical,
+  ImagePlus, Layers3, ListTree, Palette, Plus, RotateCcw, Save, Trash2,
   Search, UtensilsCrossed, X,
 } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
@@ -26,12 +25,10 @@ import './menu-editor-redesign.css';
 
 interface MenuEditorProps {
   menu: MenuCatalog;
-  publicPageHref: string;
   enabled: boolean;
   maxItems: number | null;
   advancedTheme: boolean;
   onSave: (menu: MenuCatalog) => Promise<void>;
-  onAddMenuLink: () => Promise<void>;
   onPreview?: (menu: MenuCatalog) => void;
   designPreview?: ReactNode;
   presentation?: 'classic' | 'visual';
@@ -165,23 +162,9 @@ function PriceInput({
   );
 }
 
-function MenuQr({ url, color }: { url: string; color: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    if (!canvasRef.current || !url) return;
-    void QRCode.toCanvas(canvasRef.current, url, {
-      width: 180,
-      margin: 2,
-      errorCorrectionLevel: 'H',
-      color: { dark: color, light: '#ffffff' },
-    });
-  }, [color, url]);
-  return <canvas ref={canvasRef} className="h-auto w-full max-w-[180px]" />;
-}
-
 export function MenuEditor({
-  menu, publicPageHref, enabled, maxItems, advancedTheme,
-  onSave, onAddMenuLink, onPreview, designPreview, presentation = 'classic',
+  menu, enabled, maxItems, advancedTheme,
+  onSave, onPreview, designPreview, presentation = 'classic',
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
@@ -189,7 +172,6 @@ export function MenuEditor({
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
   const [saveError, setSaveError] = useState('');
   const [savedNotice, setSavedNotice] = useState<SavedMenuNotice | null>(null);
-  const [copied, setCopied] = useState(false);
   const [activePanel, setActivePanel] = useState<MenuEditorPanel>('content');
   const [mobileContentPane, setMobileContentPane] = useState<MenuContentPane>('sections');
   const [mobileEditingItem, setMobileEditingItem] = useState(false);
@@ -213,7 +195,6 @@ export function MenuEditor({
   const itemEditorRef = useRef<HTMLElement>(null);
   const categoryEditorRef = useRef<HTMLElement>(null);
   const savedNoticeTimerRef = useRef<number | null>(null);
-  const menuUrl = `${publicPageHref.replace(/\/$/, '')}/menu`;
   const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
   const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
   const sectionProducts = useMemo(
@@ -878,17 +859,6 @@ export function MenuEditor({
           </label>
         </section>
 
-        <section className="admin-panel menu-publish-tools">
-          <div className="menu-editor-section-title"><QrCode /><div><h3>{tr("Public menu", "Menu pubblico")}</h3><p>{tr("The URL is static, cacheable and ready for print.", "L'URL è statico, memorizzabile in cache e pronto per la stampa.")}</p></div></div>
-          <div className="menu-publish-tools__grid">
-            <MenuQr url={menuUrl} color={draft.theme.text} />
-            <div>
-              <Label htmlFor="menu-public-url">URL menu</Label>
-              <div className="menu-url-row"><Input id="menu-public-url" value={menuUrl} readOnly /><Button aria-label="Copy URL" variant="outline" size="icon" title="Copy URL" onClick={() => { void navigator.clipboard.writeText(menuUrl); setCopied(true); setTimeout(() => setCopied(false), 1600); }}>{copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}</Button><Button asChild variant="outline" size="icon"><a aria-label="Open menu" href={menuUrl} target="_blank" rel="noopener noreferrer" title="Open menu"><ExternalLink aria-hidden="true" /></a></Button></div>
-              <Button className="mt-4" variant="outline" onClick={() => void onAddMenuLink()}>{tr("Add menu link to main page", "Aggiungi il link al menu nella pagina principale")}</Button>
-            </div>
-          </div>
-        </section>
         </div>}
 
         {activePanel === 'content' && <section className="menu-content-shell">
