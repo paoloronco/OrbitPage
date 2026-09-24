@@ -634,56 +634,10 @@ export const ProfileSection = ({
             </details>
           </section>
 
-          <details className="admin-profile-advanced-details group rounded-lg border border-slate-200 bg-white">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
-              <span><strong className="block text-sm text-slate-950">{tr("Advanced settings", "Impostazioni avanzate")}</strong><small className="mt-0.5 block text-xs text-slate-500">{tr("Typography and technical options.", "Tipografia e opzioni tecniche.")}</small></span>
-              <span className="text-xs font-semibold text-blue-700 group-open:hidden">{tr("Open", "Apri")}</span>
-              <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
-            </summary>
-            <div className="space-y-5 border-t border-slate-200 p-4">
-              <div className="rounded-lg border border-slate-200 p-3">
-                <p className="mb-3 text-sm font-semibold text-slate-950">{tr("Typography", "Tipografia")}</p>
-                <div className="grid grid-cols-2 gap-3">
-                <div><Label htmlFor="profile-name-size" className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input id="profile-name-size" type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>
-                <div><Label htmlFor="profile-description-size" className="text-xs">{tr("Description size", "Dimensione descrizione")}</Label><Input id="profile-description-size" type="number" min={10} max={48} value={parseInt(draft.bioFontSize || "14", 10)} onChange={(event) => setDraft((current) => ({ ...current, bioFontSize: `${event.target.value}px` }))} /></div>
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">{tr("Machine-readable access", "Accesso leggibile dalle macchine")}</p>
-                  <p className="text-xs leading-5 text-slate-500">
-                    {tr("Publish Markdown on content negotiation and expose llms.txt for AI agents.", "Pubblica il Markdown tramite content negotiation ed espone llms.txt agli agenti AI.")}
-                  </p>
-                </div>
-                <Switch
-                  aria-label={tr("Machine-readable access", "Accesso leggibile dalle macchine")}
-                  checked={draft.machineReadableEnabled === true}
-                  onCheckedChange={(machineReadableEnabled) => setDraft((current) => ({ ...current, machineReadableEnabled }))}
-                />
-              </div>
-              <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">{tr("Powered by", "Realizzato con")} OrbitPage</p>
-                  <p className="text-xs leading-5 text-slate-500">
-                    {orbitPageBadgeEditable
-                      ? tr("Public page", "Pagina pubblica")
-                      : tr("Available on Pro.", "Disponibile con Pro.")}
-                  </p>
-                </div>
-                <Switch
-                  aria-label={`${tr("Powered by", "Realizzato con")} OrbitPage`}
-                  checked={orbitPageBadgeEditable ? draft.showOrbitPageBadge !== false : true}
-                  disabled={!orbitPageBadgeEditable}
-                  onCheckedChange={(showOrbitPageBadge) => setDraft((current) => ({ ...current, showOrbitPageBadge }))}
-                />
-              </div>
-            </div>
-          </details>
-
           <details className="admin-profile-appearance-details group rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
               <span className="min-w-0">
-                <strong className="block text-sm text-slate-950">{tr("Advanced card style", "Stile avanzato della card")}</strong>
+                <strong className="block text-sm text-slate-950">{tr("Card style", "Stile della card")}</strong>
                 <small className="mt-0.5 block text-xs text-slate-500">{tr("Override the active theme only when needed.", "Personalizza il tema attivo solo quando serve.")}</small>
               </span>
               <span className="admin-profile-appearance-action text-xs font-semibold text-blue-700">
@@ -799,6 +753,52 @@ export const ProfileSection = ({
                   <ProfileColorField label={tr("Social accent", "Accento social")} value={draft.appearance?.accentColor || theme.profileCard.accent} inherited={!draft.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
                 </div>
               </details>
+            </div>
+          </details>
+
+          <details className="admin-profile-advanced-details group rounded-lg border border-slate-200 bg-white">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
+              <span><strong className="block text-sm text-slate-950">{tr("Advanced settings", "Impostazioni avanzate")}</strong><small className="mt-0.5 block text-xs text-slate-500">{tr("Typography and technical options.", "Tipografia e opzioni tecniche.")}</small></span>
+              <span className="text-xs font-semibold text-blue-700 group-open:hidden">{tr("Open", "Apri")}</span>
+              <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
+            </summary>
+            <div className="space-y-5 border-t border-slate-200 p-4">
+              <div className="rounded-lg border border-slate-200 p-3">
+                <p className="mb-3 text-sm font-semibold text-slate-950">{tr("Typography", "Tipografia")}</p>
+                <div className="grid grid-cols-2 gap-3">
+                <div><Label htmlFor="profile-name-size" className="text-xs">{tr("Name size", "Dimensione nome")}</Label><Input id="profile-name-size" type="number" min={12} max={96} value={parseInt(draft.nameFontSize || "32", 10)} onChange={(event) => setDraft((current) => ({ ...current, nameFontSize: `${event.target.value}px` }))} /></div>
+                <div><Label htmlFor="profile-description-size" className="text-xs">{tr("Description size", "Dimensione descrizione")}</Label><Input id="profile-description-size" type="number" min={10} max={48} value={parseInt(draft.bioFontSize || "14", 10)} onChange={(event) => setDraft((current) => ({ ...current, bioFontSize: `${event.target.value}px` }))} /></div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{tr("Machine-readable access", "Accesso leggibile dalle macchine")}</p>
+                  <p className="text-xs leading-5 text-slate-500">
+                    {tr("Publish Markdown on content negotiation and expose llms.txt for AI agents.", "Pubblica il Markdown tramite content negotiation ed espone llms.txt agli agenti AI.")}
+                  </p>
+                </div>
+                <Switch
+                  aria-label={tr("Machine-readable access", "Accesso leggibile dalle macchine")}
+                  checked={draft.machineReadableEnabled === true}
+                  onCheckedChange={(machineReadableEnabled) => setDraft((current) => ({ ...current, machineReadableEnabled }))}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-slate-200 pt-5">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{tr("Powered by", "Realizzato con")} OrbitPage</p>
+                  <p className="text-xs leading-5 text-slate-500">
+                    {orbitPageBadgeEditable
+                      ? tr("Public page", "Pagina pubblica")
+                      : tr("Available on Pro.", "Disponibile con Pro.")}
+                  </p>
+                </div>
+                <Switch
+                  aria-label={`${tr("Powered by", "Realizzato con")} OrbitPage`}
+                  checked={orbitPageBadgeEditable ? draft.showOrbitPageBadge !== false : true}
+                  disabled={!orbitPageBadgeEditable}
+                  onCheckedChange={(showOrbitPageBadge) => setDraft((current) => ({ ...current, showOrbitPageBadge }))}
+                />
+              </div>
             </div>
           </details>
 

@@ -26,5 +26,7 @@ it("groups profile controls in their visible page sections", () => {
   expect(html.indexOf("Footer text")).toBeLessThan(html.indexOf("Social links"));
   expect(html.indexOf("Social links")).toBeLessThan(html.indexOf("Advanced settings"));
   expect(html.indexOf("Footer text")).toBeLessThan(html.indexOf("Advanced settings"));
+  expect(html).not.toContain("Advanced card style");
+  expect(html.indexOf("Card style")).toBeLessThan(html.indexOf("Advanced settings"));
   expect(html).toContain("Typography and technical options.");
 });
