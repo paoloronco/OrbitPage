@@ -115,6 +115,9 @@ export function ManagedAnalyticsDashboard() {
 
   useEffect(() => { void load(period); }, [load, period]);
   const periods = useMemo(() => [7, 30, 90].filter((days) => days <= report.maxPeriodDays), [report.maxPeriodDays]);
+  const contentLinks = report.links.map((item) => item.label === 'Removed content'
+    ? { ...item, label: tr('Removed content', 'Contenuto rimosso') }
+    : item);
   const number = (value: number) => value.toLocaleString(locale);
   const decimal = (value: number) => value.toLocaleString(locale, { maximumFractionDigits: 2 });
   const dataGroupsLabel = (count: number) => count === 1
@@ -135,7 +138,7 @@ export function ManagedAnalyticsDashboard() {
     {
       key: 'links',
       denominator: report.summary.clicks,
-      items: report.links,
+      items: contentLinks,
       title: tr('Most clicked content', 'Contenuti più cliccati'),
       empty: tr('No block clicks.', 'Nessun clic sui blocchi.'),
     },
@@ -233,7 +236,7 @@ export function ManagedAnalyticsDashboard() {
         <section className="managed-analytics-insight managed-analytics-insight--content">
           <header><Activity aria-hidden="true" size={17} /><h3>{tr('Content snapshot', 'Sintesi dei contenuti')}</h3></header>
           <dl>
-            <div><dt>{tr('Top content', 'Contenuto migliore')}</dt><dd>{report.links[0]?.label || tr('Not available yet', 'Non ancora disponibile')}</dd></div>
+            <div><dt>{tr('Top content', 'Contenuto migliore')}</dt><dd>{contentLinks[0]?.label || tr('Not available yet', 'Non ancora disponibile')}</dd></div>
             <div><dt>{tr('Most viewed path', 'Percorso più visto')}</dt><dd>{report.paths[0]?.label || tr('Main page', 'Pagina principale')}</dd></div>
             <div><dt>{tr('Clicks per visitor', 'Clic per utente')}</dt><dd>{decimal(report.summary.clicksPerVisitor)}</dd></div>
           </dl>
