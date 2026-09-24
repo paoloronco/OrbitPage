@@ -4976,6 +4976,7 @@
 @media (max-width: 720px) {
   .orbitpage-menu__section { grid-template-columns: 1fr; }
   .orbitpage-menu__header { gap: 2rem; }
+  .orbitpage-menu__sections .orbitpage-menu__section-link--nested { display: none; }
   .orbitpage-menu__section { gap: 1.25rem; }
   .orbitpage-menu__tools { gap: .6rem; }
   .orbitpage-menu__search { min-height: 2.5rem; }
@@ -5949,6 +5950,7 @@
 @container menu-preview (max-width: 720px) {
   .admin-menu-live-preview .orbitpage-menu__section { grid-template-columns: 1fr; }
   .admin-menu-live-preview .orbitpage-menu__header { gap: 2rem; }
+  .admin-menu-live-preview .orbitpage-menu__sections .orbitpage-menu__section-link--nested { display: none; }
   .admin-menu-live-preview .orbitpage-menu__section { gap: 1.25rem; }
   .orbitpage-menu__tools { gap: .6rem; }
   .orbitpage-menu__search { min-height: 2.5rem; }
