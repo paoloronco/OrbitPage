@@ -68,14 +68,14 @@ export const PublicView = ({
   const cardLayoutViewport = embedded ? embeddedViewport : responsiveViewport;
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
-  const hasCustomAvatar = profile.showAvatar !== false && hasCustomProfileAvatar(profile.avatar);
+  const hasVisibleAvatar = profile.showAvatar ?? hasCustomProfileAvatar(profile.avatar);
   const hasProfileContent = Boolean(profileLayoutEditing ||
     profile.name?.trim() ||
     profile.bio?.trim() ||
     (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||
     profile.appearance?.profileDetails?.primary ||
     profile.appearance?.profileDetails?.secondary ||
-    hasCustomAvatar
+    hasVisibleAvatar
   );
 
   const visibleLinks = links.filter(link => {
