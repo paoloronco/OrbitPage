@@ -12,11 +12,10 @@ import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHosted
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { parseOrbitPageBlocks } from "@orbitpage/page-schema";
 import { useToast } from "@/hooks/use-toast";
-import profileAvatar from "@/assets/profile-avatar.jpg";
 import { Permission } from "@/lib/permissions";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
-import { isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
+import { hasCustomProfileAvatar, isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
 import { createDefaultMenu, normalizeMenuCatalog, type MenuCatalog } from "@/lib/menu";
 import {
   adminContentSectionFromLocation,
@@ -94,8 +93,8 @@ const Admin = () => {
   const [profile, setProfile] = useState<ProfileData>({
     name: "",
     bio: "",
-    avatar: profileAvatar,
-    showAvatar: true,
+    avatar: "",
+    showAvatar: false,
     showOrbitPageBadge: true,
   });
 
@@ -252,12 +251,10 @@ const Admin = () => {
           setProfile({
             name: profileData.name,
             bio: profileData.bio,
-            avatar: profileData.avatar && !isBundledProfileAvatar(profileData.avatar)
-              ? profileData.avatar
-              : (profileAvatar as string),
-            showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
+            avatar: hasCustomProfileAvatar(profileData.avatar) ? profileData.avatar : "",
+            showAvatar: hasCustomProfileAvatar(profileData.avatar) && (typeof (profileData as any).show_avatar !== 'undefined'
               ? (profileData as any).show_avatar !== 0
-              : ((profileData as any).showAvatar ?? true),
+              : ((profileData as any).showAvatar ?? true)),
             socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
@@ -319,7 +316,7 @@ const Admin = () => {
         bio: newProfile.bio,
         avatar: persistedProfileAvatar(newProfile.avatar),
         socialLinks: newProfile.socialLinks || {},
-        showAvatar: typeof newProfile.showAvatar === 'boolean' ? newProfile.showAvatar : true,
+        showAvatar: hasCustomProfileAvatar(newProfile.avatar) && newProfile.showAvatar !== false,
         nameFontSize: newProfile.nameFontSize,
         bioFontSize: newProfile.bioFontSize,
         appearance: newProfile.appearance,

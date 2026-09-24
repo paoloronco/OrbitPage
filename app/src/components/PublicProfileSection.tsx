@@ -17,9 +17,9 @@ import { GripVertical } from "@/components/ui/material-icons";
 import { BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, MoveDiagonal2, Twitter, Youtube } from "lucide-react";
 import { normalizeProfileSocialHref } from "@orbitpage/page-schema";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
-import profileAvatar from "@/assets/profile-avatar.jpg";
 import { internalAssetPath } from "@/lib/base-path";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
+import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 import {
   normalizeProfileLayout,
@@ -129,7 +129,8 @@ export const PublicProfileSection = ({
   const profileDetails = profile.appearance?.profileDetails;
   const cardBackgroundImage = getMediaUrl(profile.appearance?.cardBackgroundImage);
   const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);
-  const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || profile.showAvatar !== false || layoutEditing);
+  const hasCustomAvatar = hasCustomProfileAvatar(profile.avatar);
+  const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || (hasCustomAvatar && profile.showAvatar !== false) || layoutEditing);
   const layout = layoutEditing ? workingLayout : savedLayout;
   const compactNameMatch = layout.positions.name.width <= 50 && displayName.match(/^(.*)\s+(\S+)$/);
   const nameLines = compactNameMatch ? [compactNameMatch[1], compactNameMatch[2]] : [displayName];
@@ -141,9 +142,9 @@ export const PublicProfileSection = ({
     }
   }, [savedLayout]);
 
-  const avatar = profile.showAvatar !== false ? (
+  const avatar = hasCustomAvatar && profile.showAvatar !== false ? (
     <Avatar className="profile-card__avatar" style={getProfileAvatarStyle(profile.appearance)}>
-      <AvatarImage className="object-cover object-center" src={getAvatarUrl(profile.avatar)} alt={profile.name || "Page avatar"} />
+      <AvatarImage className="object-cover object-center" src={getMediaUrl(profile.avatar) || undefined} alt={profile.name || "Page avatar"} />
       <AvatarFallback delayMs={1_200} className="profile-card__avatar-fallback text-4xl font-bold">{profile.name?.charAt(0) ?? "U"}</AvatarFallback>
     </Avatar>
   ) : null;
@@ -212,7 +213,7 @@ export const PublicProfileSection = ({
     observer.observe(canvas);
     canvas.querySelectorAll("[data-profile-layout-item]").forEach((item) => observer.observe(item));
     return () => observer.disconnect();
-  }, [displayName, hasSocialLinks, layout, layoutEditing, profile.bio, profile.showAvatar, profileDetails?.primary, profileDetails?.secondary]);
+  }, [displayName, hasSocialLinks, layout, layoutEditing, profile.avatar, profile.bio, profile.showAvatar, profileDetails?.primary, profileDetails?.secondary]);
 
   if (!hasVisibleProfile) return null;
 
@@ -446,10 +447,6 @@ export const PublicProfileSection = ({
     </Card>
   );
 };
-
-function getAvatarUrl(avatar?: string | null) {
-  return getMediaUrl(avatar) || (profileAvatar as unknown as string);
-}
 
 function getMediaUrl(value?: string | null) {
   const safeUrl = resolveSafePublicMediaUrl(value);

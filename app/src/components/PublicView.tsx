@@ -11,6 +11,7 @@ import { normalizeProfileLayout, type ProfileLayout } from "@/lib/profile-layout
 import { PROFILE_CARD_LAYOUT_ID, type CardLayout } from "@/lib/card-layout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ThemeConfig } from "@/lib/theme";
+import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
 
 interface ProfileData {
   name: string;
@@ -67,11 +68,7 @@ export const PublicView = ({
   const cardLayoutViewport = embedded ? embeddedViewport : responsiveViewport;
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
-  const hasCustomAvatar = Boolean(
-    profile.showAvatar !== false &&
-    profile.avatar &&
-    !profile.avatar.includes('profile-avatar')
-  );
+  const hasCustomAvatar = profile.showAvatar !== false && hasCustomProfileAvatar(profile.avatar);
   const hasProfileContent = Boolean(profileLayoutEditing ||
     profile.name?.trim() ||
     profile.bio?.trim() ||

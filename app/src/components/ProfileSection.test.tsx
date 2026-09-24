@@ -19,6 +19,9 @@ it("groups profile controls in their visible page sections", () => {
   const html = renderToStaticMarkup(<ProfileSection profile={profile} theme={defaultTheme} onProfileUpdate={() => {}} visualMode />);
 
   expect(html).toContain('admin-profile-identity-fields grid gap-5"');
+  expect(html).toContain("/brand/orbitpage-mark-192.png");
+  expect(html).toContain('aria-checked="false" data-state="unchecked"');
+  expect(html).toContain('disabled=""');
   expect(html.indexOf("Image border")).toBeLessThan(html.indexOf("Name and details"));
   expect(html).not.toContain("Outline the profile image.");
   expect(html).not.toContain("Image border color");
