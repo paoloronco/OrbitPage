@@ -248,13 +248,14 @@ const Admin = () => {
         }
         
         if (profileData) {
+          const hasCustomAvatar = hasCustomProfileAvatar(profileData.avatar);
           setProfile({
             name: profileData.name,
             bio: profileData.bio,
             avatar: hasCustomProfileAvatar(profileData.avatar) ? profileData.avatar : "",
-            showAvatar: hasCustomProfileAvatar(profileData.avatar) && (typeof (profileData as any).show_avatar !== 'undefined'
+            showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
               ? (profileData as any).show_avatar !== 0
-              : ((profileData as any).showAvatar ?? true)),
+              : (hasCustomAvatar ? ((profileData as any).showAvatar ?? true) : false),
             socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
             nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
             bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
@@ -316,7 +317,7 @@ const Admin = () => {
         bio: newProfile.bio,
         avatar: persistedProfileAvatar(newProfile.avatar),
         socialLinks: newProfile.socialLinks || {},
-        showAvatar: hasCustomProfileAvatar(newProfile.avatar) && newProfile.showAvatar !== false,
+        showAvatar: newProfile.showAvatar === true,
         nameFontSize: newProfile.nameFontSize,
         bioFontSize: newProfile.bioFontSize,
         appearance: newProfile.appearance,

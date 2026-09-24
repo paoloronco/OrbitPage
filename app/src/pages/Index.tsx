@@ -83,14 +83,15 @@ function normalizePublicProfile(profileData: PublicPageResponse["profile"] | nul
   const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
   const privacyPolicyUrl = resolveSafePublicHref(getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl)) || undefined;
   const cookiePolicyUrl = resolveSafePublicHref((profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl) || undefined;
+  const hasCustomAvatar = hasCustomProfileAvatar(profileData.avatar);
 
   return {
     name: profileData.name || "",
     bio: profileData.bio || "",
     avatar: hasCustomProfileAvatar(profileData.avatar) ? profileData.avatar : "",
-    showAvatar: hasCustomProfileAvatar(profileData.avatar) && (typeof (profileData as any).show_avatar !== 'undefined'
+    showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
       ? (profileData as any).show_avatar !== 0
-      : ((profileData as any).showAvatar ?? true)),
+      : (hasCustomAvatar ? ((profileData as any).showAvatar ?? true) : false),
     nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
     bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
     appearance: (profileData as any).appearance || {},

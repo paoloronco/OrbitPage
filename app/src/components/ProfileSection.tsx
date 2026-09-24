@@ -513,7 +513,7 @@ export const ProfileSection = ({
               <div className="admin-profile-avatar-editor admin-profile-identity-card">
                 <div className="flex items-center justify-between gap-3">
                   <h4 className="text-xs font-semibold">{visualMode ? tr("Image", "Immagine") : tr("Profile image", "Immagine profilo")}</h4>
-                  <Switch checked={hasCustomAvatar && draft.showAvatar !== false} disabled={!hasCustomAvatar} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
+                  <Switch checked={draft.showAvatar ?? hasCustomAvatar} onCheckedChange={(showAvatar) => setDraft((current) => ({ ...current, showAvatar }))} aria-label={tr("Show profile image", "Mostra immagine profilo")} />
                 </div>
                 <div className="admin-profile-avatar-layout">
                   <div className="admin-profile-image-column">

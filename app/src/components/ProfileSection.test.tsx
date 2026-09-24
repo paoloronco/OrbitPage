@@ -21,7 +21,7 @@ it("groups profile controls in their visible page sections", () => {
   expect(html).toContain('admin-profile-identity-fields grid gap-5"');
   expect(html).toContain("/brand/orbitpage-mark-192.png");
   expect(html).toContain('aria-checked="false" data-state="unchecked"');
-  expect(html).toContain('disabled=""');
+  expect(html).not.toContain('data-disabled=""');
   expect(html).not.toContain('space-y-2 rounded-lg border border-slate-200 bg-white p-4');
   expect(html).toContain('space-y-3 border-t border-slate-200 pt-4');
   expect(html.indexOf("Image border")).toBeLessThan(html.indexOf("Name and details"));
@@ -34,4 +34,11 @@ it("groups profile controls in their visible page sections", () => {
   expect(html).not.toContain("Advanced card style");
   expect(html.indexOf("Card style")).toBeLessThan(html.indexOf("Advanced settings"));
   expect(html).toContain("Typography and technical options.");
+});
+
+it("allows the default OrbitPage image to be enabled", () => {
+  const html = renderToStaticMarkup(<ProfileSection profile={{ name: "Orbit Studio", bio: "", avatar: "", showAvatar: true }} theme={defaultTheme} onProfileUpdate={() => {}} visualMode />);
+
+  expect(html).toContain('aria-checked="true" data-state="checked"');
+  expect(html).toContain("/brand/orbitpage-mark-192.png");
 });
