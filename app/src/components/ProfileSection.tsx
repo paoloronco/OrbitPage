@@ -111,7 +111,7 @@ const PROFILE_PRESETS: Array<{
     primaryLabel: "Role or focus",
     primaryPlaceholder: "Designer, creator, photographer...",
     secondaryLabel: "Location",
-    secondaryPlaceholder: "Turin, Italy or Remote",
+    secondaryPlaceholder: "City, Country",
     icon: UserRound,
   },
   {
@@ -222,7 +222,7 @@ export const ProfileSection = ({
   const preset = PROFILE_PRESETS.find((item) => item.id === (draft.appearance?.profilePreset || "creator")) || PROFILE_PRESETS[0];
   const localPreset = (item: typeof PROFILE_PRESETS[number]) => item.id === "creator" ? {
     ...item, label: tr("Creator / name", "Creator / nome"), description: tr("Personal work, content and contact points.", "Lavori personali, contenuti e contatti."),
-    primaryLabel: tr("Role or focus", "Ruolo o attività"), primaryPlaceholder: tr("Designer, creator, photographer...", "Designer, creator, fotografo..."), secondaryLabel: tr("Location", "Località"), secondaryPlaceholder: tr("Turin, Italy or Remote", "Torino, Italia o Da remoto"),
+    primaryLabel: tr("Role or focus", "Ruolo o attività"), primaryPlaceholder: tr("Designer, creator, photographer...", "Designer, creator, fotografo..."), secondaryLabel: tr("Location", "Località"), secondaryPlaceholder: tr("City, Country", "Città, Paese"),
   } : item.id === "company" ? {
     ...item, label: tr("Company", "Azienda"), description: tr("A clear business identity and location.", "Un'identità aziendale chiara, con sede e riferimenti."),
     primaryLabel: tr("Industry", "Settore"), primaryPlaceholder: tr("Hospitality, software, retail...", "Ospitalità, software, vendita..."), secondaryLabel: tr("Business address", "Indirizzo aziendale"), secondaryPlaceholder: tr("Street, city, country", "Via, città, paese"),
