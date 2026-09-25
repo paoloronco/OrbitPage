@@ -55,7 +55,7 @@ describe("PublicLinkCard media", () => {
 
     expect(html).not.toContain(">C</span>");
     expect(managerSource).toContain("const [editingLinkId, setEditingLinkId] = useState<string | null>(null)");
-    expect(managerSource.match(/editing=\{editingLinkId === String\(link\.id\)\}/g)).toHaveLength(2);
+    expect(managerSource.match(/editing=\{visualMode \? true : editingLinkId === String\(link\.id\)\}/g)).toHaveLength(2);
     expect(managerSource.match(/onEditingChange=\{updateEditingLink\}/g)).toHaveLength(2);
   });
 });
