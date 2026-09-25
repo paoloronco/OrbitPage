@@ -2949,6 +2949,14 @@ const ProfileLayoutSchema = z.object({
     socials: ProfileLayoutRectSchema.optional(),
     bio: ProfileLayoutRectSchema.optional(),
   }).strip().optional(),
+  alignments: z.object({
+    avatar: z.enum(['left', 'center', 'right']).optional(),
+    name: z.enum(['left', 'center', 'right']).optional(),
+    work: z.enum(['left', 'center', 'right']).optional(),
+    location: z.enum(['left', 'center', 'right']).optional(),
+    socials: z.enum(['left', 'center', 'right']).optional(),
+    bio: z.enum(['left', 'center', 'right']).optional(),
+  }).strip().optional(),
   height: z.number().min(160).max(2000).optional(),
 }).strip();
 const ResponsiveProfileLayoutsSchema = z.object({

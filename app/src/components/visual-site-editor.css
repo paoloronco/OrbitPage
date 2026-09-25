@@ -475,6 +475,14 @@
   transition: outline-color 150ms ease, filter 150ms ease;
 }
 
+.public-page-root--editor .public-editor-target iframe {
+  pointer-events: none;
+}
+
+.visual-site-editor__inspector .admin-compact-link-board {
+  grid-template-columns: 1fr;
+}
+
 .public-page-root--editor .public-editor-target::before {
   position: absolute;
   z-index: 29;
@@ -614,6 +622,38 @@
   box-shadow: 0 2px 8px rgb(23 52 124 / 18%);
 }
 
+.profile-card__layout-align {
+  position: absolute;
+  z-index: 3;
+  top: -15px;
+  left: 50%;
+  display: flex;
+  padding: 2px;
+  border: 1px solid #c9d6f4;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgb(23 52 124 / 16%);
+  transform: translateX(-50%);
+}
+
+.profile-card__layout-align button {
+  display: grid;
+  width: 28px;
+  height: 26px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #536b9f;
+}
+
+.profile-card__layout-align button:hover,
+.profile-card__layout-align button:focus-visible,
+.profile-card__layout-align button.is-active {
+  background: #eaf1ff;
+  color: #174bcc;
+}
+
 .profile-card__layout-grip:focus-visible,
 .profile-card__layout-resize:focus-visible {
   outline: 3px solid #2f65ee;
@@ -670,10 +710,16 @@
 }
 
 .page-card-layout__grip {
-  top: -24px;
-  left: calc(50% - 24px);
+  top: -22px;
+  left: 50%;
   z-index: 32;
+  width: clamp(80px, 62%, 132px);
+  border: 1px solid rgb(47 101 238 / 22%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 3px 12px rgb(23 52 124 / 14%);
   cursor: grab;
+  transform: translateX(-50%);
 }
 
 .public-link-card__layout-grip {
@@ -686,6 +732,11 @@
   top: -8px;
   right: -8px;
   left: auto;
+  width: 48px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
 }
 
 .page-card-layout__grip svg,

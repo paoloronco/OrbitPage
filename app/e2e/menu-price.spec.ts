@@ -36,8 +36,8 @@ test('accepts localized menu prices without rewriting the field while typing', a
   await expect(price).toHaveValue(normalizedPrice);
   await expect(page.locator('.admin-menu-live-preview')).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Save menu' }).first().click();
-  await expect(page.getByText(/Menu saved (and published|as unpublished)/)).toBeVisible();
+  await page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.locator('.admin-profile-saved-notice')).toContainText('Saved');
 });
 
 test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
@@ -161,8 +161,8 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await editor.getByRole('textbox', { name: 'Option name' }).fill('Large');
   await editor.getByRole('textbox', { name: 'Option price' }).fill('11,00');
 
-  await page.getByRole('button', { name: 'Save menu' }).first().click();
-  await expect(page.getByText(/Menu saved (and published|as unpublished)/)).toBeVisible();
+  await page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.locator('.admin-profile-saved-notice')).toContainText('Saved');
 
   await page.goto(`/dashboard/content/menu?e2eReload=${Date.now()}`, { waitUntil: 'commit' });
   const contentNavigation = page.getByRole('button', { name: 'Content', exact: true });
@@ -176,6 +176,6 @@ test('creates, edits, reorders and removes menu content through the visible cont
 
   await page.locator('.menu-product-editor').getByRole('button', { name: 'Delete item' }).click();
   await expect(page.getByRole('button', { name: `Edit ${itemLabel}` })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Save menu' }).first().click();
-  await expect(page.getByText(/Menu saved (and published|as unpublished)/)).toBeVisible();
+  await page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.locator('.admin-profile-saved-notice')).toContainText('Saved');
 });

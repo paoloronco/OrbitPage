@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 export const E2E_ADMIN_PASSWORD = 'OrbitPageE2E123!';
 
@@ -64,4 +64,18 @@ export async function openAdminSection(page: Page, name: string) {
     .getByRole('button', { name, exact: true });
   await expect(sectionButton).toBeVisible();
   await sectionButton.click();
+}
+
+export async function openPreviewContentCard(page: Page, previewCard: Locator) {
+  await expect(previewCard).toBeVisible();
+  const id = await previewCard.getAttribute('data-public-editor-link-id');
+  expect(id).toBeTruthy();
+  const editor = page.locator('.visual-site-editor__inspector .admin-link-list .admin-block-editor-shell');
+  if (!await previewCard.evaluate((element) => element.classList.contains('is-selected'))) await previewCard.click();
+  await expect(editor).toBeVisible();
+  return { editor, id: id! };
+}
+
+export function contentSaveButton(page: Page) {
+  return page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true });
 }

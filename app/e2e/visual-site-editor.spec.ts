@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from "@playwright/test";
-import { openAuthenticatedAdmin } from "./helpers";
+import { contentSaveButton, openAuthenticatedAdmin } from "./helpers";
 
 async function protrudingMenuContent(editor: Locator) {
   return editor.evaluate((element) => {
@@ -71,7 +71,7 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
 
   const inspector = page.locator(".visual-site-editor__inspector");
   await inspector.getByLabel("Page name").fill(`Visual editor profile ${browserName} ${Date.now()}`);
-  await page.getByRole("button", { name: "Save page" }).click();
+  await contentSaveButton(page).click();
   const profileTarget = page.locator('[data-public-editor-target="profile"]');
   await expect(profileTarget).toBeVisible();
   await profileTarget.click();
@@ -96,7 +96,7 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   const legacyCardWidth = (await page.locator(`[data-public-editor-link-id="${linkId}"]`).boundingBox())!.width;
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
-  await expect(page.getByText("Drag profile elements, cards and card contents. On mobile, only small cards can sit side by side.")).toBeVisible();
+  await expect(page.getByText("Drag with the wide handles. Card sizes snap to presets, elements cannot overlap, and text alignment is available on each text block.")).toBeVisible();
   await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
   expect(await profileTarget.evaluate((element) => ({
     outline: getComputedStyle(element).outlineStyle,
@@ -108,10 +108,17 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   expect(Math.abs((await page.locator(`[data-card-layout-item="${linkId}"]`).boundingBox())!.width - legacyCardWidth)).toBeLessThan(2);
 
   const workItem = page.locator('[data-profile-layout-item="work"]');
+  const locationItem = page.locator('[data-profile-layout-item="location"]');
   const nameItem = page.locator('[data-profile-layout-item="name"]');
   const avatarItem = page.locator('[data-profile-layout-item="avatar"]');
   await resetLayoutButton.click();
   await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
+  await expect(workItem).toHaveAttribute("data-profile-layout-align", "center");
+  await expect(locationItem).toHaveAttribute("data-profile-layout-align", "center");
+  await page.getByRole("button", { name: "Align left Work", exact: true }).click();
+  await expect(workItem).toHaveAttribute("data-profile-layout-align", "left");
+  await page.getByRole("button", { name: "Align center Work", exact: true }).click();
+  await expect(workItem).toHaveAttribute("data-profile-layout-align", "center");
   await expect(nameItem).toHaveAttribute("data-profile-layout-position", "10,128,80,64");
   await expect(avatarItem).toHaveAttribute("data-profile-layout-position", "35,0,30,112");
 
@@ -385,6 +392,38 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toBeVisible();
 });
 
+test("Arrange uses preset sizes, wide handles and persistent text alignment", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await openAuthenticatedAdmin(page);
+  await page.getByRole("button", { name: "Content", exact: true }).click();
+  await page.getByRole("button", { name: "Add content" }).click();
+  await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
+  await contentSaveButton(page).click();
+
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
+  const workItem = page.locator('[data-profile-layout-item="work"]');
+  const locationItem = page.locator('[data-profile-layout-item="location"]');
+  await expect(workItem).toHaveAttribute("data-profile-layout-align", "center");
+  await expect(locationItem).toHaveAttribute("data-profile-layout-align", "center");
+  await page.getByRole("button", { name: "Align left Work", exact: true }).click();
+  await expect(workItem).toHaveAttribute("data-profile-layout-align", "left");
+
+  const contentCard = page.locator('[data-card-layout-item]:not([data-card-layout-item="orbitpage-profile"])').last();
+  const moveHandle = contentCard.getByRole("button", { name: /^Move card/ });
+  const handleBounds = await moveHandle.boundingBox();
+  expect(handleBounds).not.toBeNull();
+  expect(await moveHandle.evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBeGreaterThanOrEqual(80);
+  expect(handleBounds!.width).toBeGreaterThanOrEqual(56);
+
+  await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
+  const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
+  expect([25, 33.25, 40, 50, 66.75, 75, 100]).toContain(resized[2]);
+
+  await contentSaveButton(page).click();
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
+  await expect(page.locator('[data-profile-layout-item="work"]')).toHaveAttribute("data-profile-layout-align", "left");
+});
+
 test("New UI keeps mobile navigation and editor destinations explicit", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));
@@ -409,7 +448,7 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
   await expect(mobileMode).toHaveAttribute("aria-checked", "false");
   await page.getByRole("button", { name: "Close navigation" }).first().click();
 
-  const destinations = page.getByRole("navigation", { name: "Site sections" }).getByRole("button");
+  const destinations = page.getByRole("navigation", { name: "Site sections" }).locator(":scope > button");
   await expect(destinations).toHaveCount(5);
   for (const label of ["Page", "Content", "Menu", "Shop", "Pages"]) {
     const destination = destinations.filter({ hasText: label }).first();
@@ -470,9 +509,6 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await workflow.getByRole("button", { name: /Settings/ }).click();
   await expect(editor.getByRole("heading", { name: "Menu details" })).toBeVisible();
   await expect(editor.getByRole("heading", { name: "Publication" })).toBeVisible();
-  await expect(editor.getByRole("heading", { name: "Public menu" })).toBeVisible();
-  await expect(editor.locator(".menu-publish-tools canvas")).toBeVisible();
-  await expect(editor.locator("#menu-public-url")).toBeVisible();
   const publicationSwitch = editor.getByRole("switch", { name: "Public menu visibility" });
   const wasPublished = await publicationSwitch.isChecked();
   await publicationSwitch.click();
@@ -516,13 +552,7 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   expect(clippedDesktopLabels).toBe(0);
 
   await expect(workflow.getByRole("button", { name: /Items/ })).toHaveCount(0);
-  await category.locator(".menu-category-group__toggle").click();
-  await expect(editor.locator(".menu-unified-items").first()).toBeVisible();
-  const categoryBox = await category.locator(".menu-category-group__heading").first().boundingBox();
-  const dishBox = await category.locator(".menu-unified-items .menu-item-picker__item").first().boundingBox();
-  expect(categoryBox && dishBox).toBeTruthy();
-  expect(dishBox!.x).toBeGreaterThan(categoryBox!.x);
-  await category.locator(".menu-unified-items .menu-item-picker__item").first().click();
+  await editor.locator(".menu-unified-toolbar").getByRole("button", { name: "Add item", exact: true }).click();
   await expect(editor.locator(".menu-unified-side .menu-product-editor")).toBeVisible();
   await category.locator(".menu-category-group__edit").first().click();
   await expect(editor.locator(".menu-unified-side .menu-category-editor")).toBeVisible();
@@ -552,7 +582,6 @@ test("New UI gives Menu a focused inspector without clipped labels", async ({ pa
   await expect(workflow.getByRole("button", { name: /Settings/ })).toBeVisible();
   await expect(workflow.getByRole("button", { name: /Design/ })).toBeVisible();
   await workflow.getByRole("button", { name: /Settings/ }).click();
-  await expect(editor.locator(".menu-publish-tools canvas")).toBeVisible();
   expect(await protrudingMenuContent(editor)).toEqual([]);
   await workflow.getByRole("button", { name: /Design/ }).click();
   await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();

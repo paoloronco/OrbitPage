@@ -901,13 +901,14 @@
 
 .menu-editor-stack--visual .menu-editor-tabs,
 .menu-editor-stack--visual .menu-editor-tabs:first-child {
-  display: flex;
-  width: fit-content;
-  max-width: calc(100% + 8px);
+  display: grid;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 4px;
-  overflow-x: auto;
-  margin: -8px 0 0 -8px;
+  overflow: hidden;
+  margin: 0;
   border: 1px solid #d9e1ec;
   border-radius: 9px;
   background: #fff;
@@ -919,6 +920,8 @@
 .menu-editor-stack--visual .menu-editor-tabs button:last-child {
   position: static;
   display: inline-flex;
+  width: 100%;
+  min-width: 0;
   min-height: 37px;
   flex: 0 0 auto;
   align-items: center;
@@ -1049,7 +1052,7 @@
 @container menu-workspace (max-width: 30rem) {
   .menu-editor-stack--visual .menu-editor-tabs,
   .menu-editor-stack--visual .menu-editor-tabs:first-child {
-    width: calc(100% + 8px);
+    width: 100%;
   }
 
   .menu-editor-stack--visual .menu-editor-tabs button,

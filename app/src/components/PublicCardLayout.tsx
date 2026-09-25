@@ -18,6 +18,7 @@ import {
   normalizeCardContentLayout,
   normalizeCardLayout,
   PROFILE_CARD_LAYOUT_ID,
+  snapCardLayoutSize,
   updateCardContentLayoutItem,
   updateCardLayoutItem,
   type CardContentLayoutItem,
@@ -181,7 +182,7 @@ export function PublicCardLayout({
     const deltaY = (event.clientY - gesture.startY) / gesture.scale;
     const rect = gesture.mode === "move"
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
-      : { ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY };
+      : snapCardLayoutSize({ ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY });
     const positions = gesture.scope === "content" ? gesture.contentLayout!.positions : gesture.layout.positions;
     const height = gesture.scope === "content" ? gesture.contentLayout!.height : gesture.layout.height;
     const itemId = gesture.scope === "content" ? gesture.item! : gesture.cardId;
@@ -241,11 +242,11 @@ export function PublicCardLayout({
       ...currentRect,
       x: currentRect.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
       y: currentRect.y + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
-    } : {
+    } : snapCardLayoutSize({
       ...currentRect,
       width: currentRect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
       height: currentRect.height + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
-    };
+    });
     const next = scope === "content"
       ? updateCardContentLayoutItem(activeLayout, layoutCards, viewport, cardId, item!, rect)
       : updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, rect);
@@ -340,7 +341,7 @@ export function PublicCardLayout({
               } as CSSProperties}
             >
               {layoutEditing && (
-                <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the whole profile freely. Its elements keep their own controls.", "Trascina liberamente l’intero profilo. I suoi elementi mantengono i propri controlli.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Other cards cannot be overlapped.", "Trascina la card profilo. Le altre card non possono essere sovrapposte.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
               )}
               <div className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
               {layoutEditing && (
@@ -382,11 +383,11 @@ export function PublicCardLayout({
             tabIndex={onEditorSelect && !layoutEditing ? 0 : undefined}
           >
             {layoutEditing && (
-              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card freely. Use arrow keys for precise movement.", "Trascina liberamente la card. Usa le frecce per movimenti precisi.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card. Other cards cannot be overlapped.", "Trascina la card. Le altre card non possono essere sovrapposte.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
             )}
             <div className="page-card-layout__surface" data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}>{cardContent(link)}</div>
             {layoutEditing && (
-              <button aria-label={`${tr("Resize card", "Ridimensiona card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the card. Use arrow keys for precision.", "Trascina per ridimensionare la card. Usa le frecce per la precisione.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
+              <button aria-label={`${tr("Resize card", "Ridimensiona card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to choose a preset card size.", "Trascina per scegliere una dimensione predefinita della card.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
             )}
           </div>
         );

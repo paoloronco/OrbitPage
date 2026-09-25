@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+import { contentSaveButton, openAuthenticatedAdmin, useClassicAdmin } from './helpers';
 
 test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
 test.describe('OrbitPage Application Flow', () => {
-  test('should complete first-time setup, edit profile, add a link, and verify public page', async ({ page }) => {
+  test('should complete first-time setup, edit profile, add a link, and verify public page', async ({ page }, testInfo) => {
     await openAuthenticatedAdmin(page);
+    const profileName = `Mario Rossi ${testInfo.project.name} ${testInfo.retry}`;
+    const linkTitle = `Mio Sito Web ${Date.now()}`;
     
     // Selezioniamo esplicitamente la scheda "Page" per gestire stati di inizializzazione transitori
     const profileTabTrigger = page.getByRole('button', { name: 'Page', exact: true });
@@ -16,7 +18,7 @@ test.describe('OrbitPage Application Flow', () => {
     const nameInput = page.getByLabel('Page name');
     await expect(nameInput).toBeVisible();
     await nameInput.clear();
-    await nameInput.fill('Mario Rossi');
+    await nameInput.fill(profileName);
 
     const bioInput = page.getByRole('textbox', { name: 'Description', exact: true });
     await bioInput.clear();
@@ -32,24 +34,20 @@ test.describe('OrbitPage Application Flow', () => {
     await expect(linksTabTrigger).toBeVisible();
     await linksTabTrigger.click();
 
-    let linkCard = page.locator('.admin-link-list [data-link-id]').filter({ has: page.getByRole('heading', { name: 'Mio Sito Web' }) }).first();
+    let linkCard = page.locator('.admin-link-list > div').filter({ hasText: 'Mio Sito Web' }).first();
     if (await linkCard.count() === 0) {
-      await page.getByRole('button', { name: 'Add link' }).click();
-      linkCard = page.locator('.admin-link-list [data-link-id]').filter({ has: page.getByRole('heading', { name: 'New link' }) }).first();
-      await expect(linkCard).toBeVisible();
+      await page.getByRole('button', { name: 'Add content' }).click();
+      await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
+      linkCard = page.locator('.admin-link-list > div').last();
     }
-
-    const linkId = await linkCard.getAttribute('data-link-id');
-    expect(linkId).toBeTruthy();
-    linkCard = page.locator(`.admin-link-list [data-link-id="${linkId}"]`);
-
     await linkCard.hover();
     await linkCard.getByRole('button', { name: 'Edit block' }).click();
+    linkCard = page.locator('.admin-link-list .admin-block-editor-shell');
 
     const linkTitleInput = page.getByPlaceholder('Link title');
     await expect(linkTitleInput).toBeVisible();
     await linkTitleInput.clear();
-    await linkTitleInput.fill('Mio Sito Web');
+    await linkTitleInput.fill(linkTitle);
 
     const linkUrlInput = page.getByPlaceholder('https://example.com', { exact: true });
     await linkUrlInput.clear();
@@ -60,7 +58,7 @@ test.describe('OrbitPage Application Flow', () => {
     await page.getByRole('option', { name: 'Liquid glass', exact: true }).click();
 
     // Persistiamo la card con il solo Save della toolbar.
-    await page.locator('.admin-link-actions button:has-text("Save")').click();
+    await contentSaveButton(page).click();
     
     // Verifichiamo che il badge di modifiche non salvate sia sparito
     await expect(page.getByText('Unsaved changes')).not.toBeVisible();
@@ -70,10 +68,10 @@ test.describe('OrbitPage Application Flow', () => {
     await page.goto('/');
 
     // Il nome, la bio e il link devono essere visibili pubblicamente
-    await expect(page.getByText('Mario Rossi')).toBeVisible();
+    await expect(page.getByText(profileName)).toBeVisible();
     await expect(page.getByText('Sviluppatore Web ed entusiasta dell\'open-source.')).toBeVisible();
     
-    const publicLink = page.getByRole('link', { name: 'Mio Sito Web' }).first();
+    const publicLink = page.getByRole('link', { name: linkTitle }).first();
     await expect(publicLink).toBeVisible();
     await expect(publicLink).toHaveAttribute('href', 'https://mariorossi.dev');
 

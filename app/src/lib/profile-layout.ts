@@ -8,8 +8,10 @@ export type ProfileLayout = OrbitPageProfileLayout;
 export type ProfileLayoutItem = OrbitPageProfileLayoutItem;
 export type ProfileLayoutViewport = "mobile" | "desktop";
 export type ProfileLayoutRect = { x: number; y: number; width: number; height: number };
+export type ProfileLayoutAlignment = "left" | "center" | "right";
 export type NormalizedProfileLayout = {
   positions: Record<ProfileLayoutItem, ProfileLayoutRect>;
+  alignments: Record<ProfileLayoutItem, ProfileLayoutAlignment>;
   height: number;
 };
 
@@ -30,6 +32,14 @@ export const DEFAULT_PROFILE_LAYOUT: NormalizedProfileLayout = {
     location: { x: 52, y: 208, width: 40, height: 40 },
     socials: { x: 10, y: 264, width: 80, height: 48 },
     bio: { x: 5, y: 328, width: 90, height: 80 },
+  },
+  alignments: {
+    avatar: "center",
+    name: "center",
+    work: "center",
+    location: "center",
+    socials: "center",
+    bio: "center",
   },
   height: 408,
 };
@@ -75,7 +85,7 @@ function migrateGridLayout(layout: ProfileLayout): NormalizedProfileLayout {
     }
   }
 
-  return { positions, height: Math.max(160, y - gap) };
+  return { positions, alignments: DEFAULT_PROFILE_LAYOUT.alignments, height: Math.max(160, y - gap) };
 }
 
 export function normalizeProfileLayout(layout?: ProfileLayout | null): NormalizedProfileLayout {
@@ -84,9 +94,14 @@ export function normalizeProfileLayout(layout?: ProfileLayout | null): Normalize
     item,
     normalizeRect(layout?.positions?.[item], base.positions[item]),
   ])) as NormalizedProfileLayout["positions"];
+  const alignments = Object.fromEntries(ORBITPAGE_PROFILE_LAYOUT_ITEMS.map((item) => [
+    item,
+    layout?.alignments?.[item] || base.alignments[item],
+  ])) as NormalizedProfileLayout["alignments"];
   const contentHeight = Math.max(...Object.values(positions).map((rect) => rect.y + rect.height));
   return {
     positions,
+    alignments,
     height: Math.round(clamp(Math.max(layout?.height ?? base.height, contentHeight), 160, 2_000)),
   };
 }
@@ -100,5 +115,14 @@ export function updateProfileLayoutItem(
   const nextRect = normalizeRect(rect, normalized.positions[item]);
   const positions = { ...normalized.positions, [item]: nextRect };
   const contentHeight = Math.max(...Object.values(positions).map((position) => position.y + position.height));
-  return { positions, height: Math.round(clamp(Math.max(160, contentHeight), 160, 2_000)) };
+  return { positions, alignments: normalized.alignments, height: Math.round(clamp(Math.max(160, contentHeight), 160, 2_000)) };
+}
+
+export function updateProfileLayoutAlignment(
+  layout: ProfileLayout | null | undefined,
+  item: ProfileLayoutItem,
+  alignment: ProfileLayoutAlignment,
+): NormalizedProfileLayout {
+  const normalized = normalizeProfileLayout(layout);
+  return { ...normalized, alignments: { ...normalized.alignments, [item]: alignment } };
 }

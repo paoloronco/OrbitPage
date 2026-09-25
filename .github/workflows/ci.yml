@@ -83,9 +83,11 @@ jobs:
         run: npm run test:unit
 
       - name: Build Docker image for smoke test
+        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
         run: docker build -t orbitpage-ci-smoke ..
 
       - name: Smoke test Docker image
+        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
         run: |
           set -Eeuo pipefail
           cleanup() {
@@ -107,6 +109,7 @@ jobs:
           exit 1
 
       - name: Verify Docker Run update preserves settings
+        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
         working-directory: .
         run: |
           set -Eeuo pipefail
@@ -125,7 +128,6 @@ jobs:
 
   e2e:
     name: E2E (${{ matrix.browser }})
-    needs: test
     runs-on: ubuntu-24.04
     timeout-minutes: 22
     strategy:
@@ -229,3 +231,21 @@ jobs:
           done
           docker logs orbitpage-${{ matrix.arch }}-smoke
           exit 1
+
+      - name: Verify Docker Run update preserves settings
+        if: ${{ matrix.arch == 'amd64' }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          data_dir="$(mktemp -d)"
+          cleanup() {
+            docker rm -f orbitpage-updater-test orbitpage-updater-recreated >/dev/null 2>&1 || true
+            rm -rf -- "$data_dir"
+          }
+          trap cleanup EXIT
+          docker run -d --name orbitpage-updater-test \
+            -p 3002:8080 \
+            -v "$data_dir:/app/data" \
+            -e JWT_SECRET=ci-updater-secret-ci-updater-secret-123456 \
+            "orbitpage-ci:${GITHUB_SHA}-amd64"
+          python3 scripts/test-updater-docker.py
