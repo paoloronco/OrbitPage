@@ -78,6 +78,8 @@ type LayoutGesture = {
   layout: NormalizedProfileLayout;
   bounds: DOMRect;
   scale: number;
+  minimumWidth: number;
+  minimumHeight: number;
 };
 
 const SOCIALS = [
@@ -233,6 +235,17 @@ export const PublicProfileSection = ({
     setWorkingLayout(next);
   };
 
+  const minimumItemSize = (item: ProfileLayoutItem) => {
+    const canvas = layoutRef.current;
+    const itemElement = canvas?.querySelector<HTMLElement>(`[data-profile-layout-item="${item}"]`);
+    const contentElement = itemElement?.querySelector<HTMLElement>(".profile-card__layout-content");
+    const avatarSize = Math.min(192, Math.max(56, profile.appearance?.avatarSize ?? 112));
+    return {
+      width: item === "avatar" && canvas ? avatarSize / canvas.offsetWidth * 100 : 12,
+      height: item === "avatar" ? avatarSize : Math.max(36, contentElement?.scrollHeight || 0),
+    };
+  };
+
   const startGesture = (
     event: ReactPointerEvent<HTMLElement>,
     item: ProfileLayoutItem,
@@ -244,9 +257,8 @@ export const PublicProfileSection = ({
     event.preventDefault();
     event.stopPropagation();
     const bounds = canvas.getBoundingClientRect();
-    const itemElement = event.currentTarget.closest<HTMLElement>("[data-profile-layout-item]");
     const startRect = { ...layout.positions[item] };
-    if (mode === "resize" && itemElement) startRect.height = Math.max(startRect.height, itemElement.offsetHeight);
+    const minimumSize = minimumItemSize(item);
     gestureRef.current = {
       item,
       mode,
@@ -257,6 +269,8 @@ export const PublicProfileSection = ({
       layout,
       bounds,
       scale: Math.max(.01, bounds.width / canvas.offsetWidth),
+      minimumWidth: minimumSize.width,
+      minimumHeight: minimumSize.height,
     };
     latestLayoutRef.current = layout;
     pendingLayoutRef.current = null;
@@ -275,8 +289,8 @@ export const PublicProfileSection = ({
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
       : {
           ...gesture.startRect,
-          width: gesture.startRect.width + deltaX,
-          height: gesture.startRect.height + deltaY,
+          width: Math.max(gesture.minimumWidth, gesture.startRect.width + deltaX),
+          height: Math.max(gesture.minimumHeight, gesture.startRect.height + deltaY),
         };
     const snapped = alignCardLayoutRect(
       gesture.layout.positions,
@@ -287,10 +301,12 @@ export const PublicProfileSection = ({
       6 / gesture.bounds.width * 100,
       6 / gesture.scale,
     );
-    const liveLayout = safeProfileLayoutUpdate(gesture.layout, gesture.item, rect);
-    pendingLayoutRef.current = snapped.guides.x !== undefined || snapped.guides.y !== undefined
-      ? safeProfileLayoutUpdate(gesture.layout, gesture.item, snapped.rect)
-      : liveLayout;
+    const liveLayout = updateProfileLayoutItem(gesture.layout, gesture.item, rect);
+    pendingLayoutRef.current = safeProfileLayoutUpdate(
+      gesture.layout,
+      gesture.item,
+      snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect,
+    );
     setGuides(snapped.guides);
     applyWorkingLayout(liveLayout);
   };
@@ -350,10 +366,11 @@ export const PublicProfileSection = ({
     event.stopPropagation();
     const rect = layout.positions[item];
     const step = event.shiftKey ? 4 : 1;
+    const minimumSize = minimumItemSize(item);
     commitKeyboardChange(item, {
       ...rect,
-      width: rect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
-      height: rect.height + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
+      width: Math.max(minimumSize.width, rect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0)),
+      height: Math.max(minimumSize.height, rect.height + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0)),
     });
   };
 

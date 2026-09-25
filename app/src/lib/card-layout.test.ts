@@ -105,5 +105,14 @@ describe("responsive card layout", () => {
 
     expect(updateCardLayoutItem(layout, cards, "desktop", "compact", { x: 25, y: 0, width: 50, height: 92 }).positions.compact)
       .toEqual(layout.positions.compact);
+    expect(updateCardLayoutItem(layout, cards, "desktop", "compact", { x: 25, y: 0, width: 50, height: 92 }, true).positions.compact)
+      .toEqual({ x: 25, y: 0, width: 50, height: 92 });
+  });
+
+  it("does not resize visual cards below their useful default height", () => {
+    const imageCard = [{ id: "photo", type: "image" }];
+
+    expect(updateCardLayoutItem(undefined, imageCard, "desktop", "photo", { x: 0, y: 0, width: 50, height: 48 }).positions.photo.height)
+      .toBe(220);
   });
 });

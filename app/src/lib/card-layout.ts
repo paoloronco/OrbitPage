@@ -133,7 +133,7 @@ function normalizeCardRect(
 ): CardLayoutRect {
   const compactMobile = viewport === "mobile" && isCompactMobileCard(card);
   const minimumWidth = compactMobile ? 44 : viewport === "mobile" ? 100 : 20;
-  const minimumHeight = card.defaultRect?.height === undefined ? 48 : defaultCardHeight(card);
+  const minimumHeight = defaultCardHeight(card);
   const width = round(clamp(finite(candidate?.width, fallback.width), minimumWidth, 100));
   return {
     x: viewport === "mobile" && !compactMobile
@@ -191,6 +191,7 @@ export function updateCardLayoutItem(
   viewport: CardLayoutViewport,
   cardId: string,
   rect: CardLayoutRect,
+  allowOverlap = false,
 ): NormalizedCardLayout {
   const normalized = normalizeCardLayout(layout, cards, viewport);
   const card = cards.find((candidate) => candidate.id === cardId);
@@ -198,7 +199,9 @@ export function updateCardLayoutItem(
   const candidate = normalizeCardRect(rect, normalized.positions[cardId], card, viewport);
   const positions = {
     ...normalized.positions,
-    [cardId]: preventCardLayoutOverlap(normalized.positions, cardId, candidate, normalized.positions[cardId]),
+    [cardId]: allowOverlap
+      ? candidate
+      : preventCardLayoutOverlap(normalized.positions, cardId, candidate, normalized.positions[cardId]),
   };
   return {
     positions,
@@ -246,6 +249,7 @@ export function updateCardContentLayoutItem(
   cardId: string,
   item: CardContentLayoutItem,
   rect: CardLayoutRect,
+  allowOverlap = false,
 ): NormalizedCardLayout {
   const normalized = normalizeCardLayout(layout, cards, viewport);
   const content = normalizeCardContentLayout(layout?.contents?.[cardId]);
@@ -256,7 +260,9 @@ export function updateCardContentLayoutItem(
   )));
   const positions = {
     ...content.positions,
-    [item]: preventCardLayoutOverlap(visiblePositions, item, candidate, content.positions[item]),
+    [item]: allowOverlap
+      ? candidate
+      : preventCardLayoutOverlap(visiblePositions, item, candidate, content.positions[item]),
   };
   const nextContent = {
     positions,
