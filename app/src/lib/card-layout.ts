@@ -37,6 +37,7 @@ export type CardLayoutGuides = { x?: number; y?: number };
 
 const CARD_GAP = 24;
 const LEGACY_PROFILE_CARD_LAYOUT_ID = "__orbitpage_profile__";
+const CARD_WIDTH_PRESETS = [25, 100 / 3, 40, 50, 200 / 3, 75, 100];
 
 export const PROFILE_CARD_LAYOUT_ID = ORBITPAGE_PROFILE_CARD_LAYOUT_ID;
 
@@ -55,6 +56,35 @@ function closestSnap(anchors: number[], targets: number[], threshold: number) {
     }
   }
   return best;
+}
+
+const overlaps = (left: CardLayoutRect, right: CardLayoutRect) => (
+  left.x < right.x + right.width &&
+  left.x + left.width > right.x &&
+  left.y < right.y + right.height &&
+  left.y + left.height > right.y
+);
+
+export function preventCardLayoutOverlap(
+  positions: Record<string, CardLayoutRect>,
+  item: string,
+  candidate: CardLayoutRect,
+  previous: CardLayoutRect,
+) {
+  const collides = (rect: CardLayoutRect) => Object.entries(positions)
+    .some(([id, position]) => id !== item && overlaps(rect, position));
+  if (!collides(candidate)) return candidate;
+  const horizontalOnly = { ...previous, x: candidate.x, width: candidate.width };
+  if (!collides(horizontalOnly)) return horizontalOnly;
+  const verticalOnly = { ...previous, y: candidate.y, height: candidate.height };
+  return collides(verticalOnly) ? previous : verticalOnly;
+}
+
+export function snapCardLayoutSize(rect: CardLayoutRect): CardLayoutRect {
+  const width = CARD_WIDTH_PRESETS.reduce((closest, preset) => (
+    Math.abs(preset - rect.width) < Math.abs(closest - rect.width) ? preset : closest
+  ));
+  return { ...rect, width: round(width), height: Math.max(48, Math.round(rect.height / 24) * 24) };
 }
 
 export function alignCardLayoutRect(
@@ -165,9 +195,10 @@ export function updateCardLayoutItem(
   const normalized = normalizeCardLayout(layout, cards, viewport);
   const card = cards.find((candidate) => candidate.id === cardId);
   if (!card) return normalized;
+  const candidate = normalizeCardRect(rect, normalized.positions[cardId], card, viewport);
   const positions = {
     ...normalized.positions,
-    [cardId]: normalizeCardRect(rect, normalized.positions[cardId], card, viewport),
+    [cardId]: preventCardLayoutOverlap(normalized.positions, cardId, candidate, normalized.positions[cardId]),
   };
   return {
     positions,
@@ -218,7 +249,15 @@ export function updateCardContentLayoutItem(
 ): NormalizedCardLayout {
   const normalized = normalizeCardLayout(layout, cards, viewport);
   const content = normalizeCardContentLayout(layout?.contents?.[cardId]);
-  const positions = { ...content.positions, [item]: normalizeContentRect(rect, content.positions[item]) };
+  const candidate = normalizeContentRect(rect, content.positions[item]);
+  const card = cards.find((entry) => entry.id === cardId);
+  const visiblePositions = Object.fromEntries(Object.entries(content.positions).filter(([id]) => (
+    id === "icon" || id === "title" || (id === "description" && card?.description) || (id === "url" && card?.url && !card.hideUrl)
+  )));
+  const positions = {
+    ...content.positions,
+    [item]: preventCardLayoutOverlap(visiblePositions, item, candidate, content.positions[item]),
+  };
   const nextContent = {
     positions,
     height: Math.round(Math.max(48, ...Object.values(positions).map((position) => position.y + position.height))),

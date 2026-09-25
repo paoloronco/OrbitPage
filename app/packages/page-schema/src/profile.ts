@@ -74,6 +74,13 @@ const OrbitPageProfileLayoutPositionsSchema = z.object(
   ) as Record<OrbitPageProfileLayoutItem, z.ZodOptional<typeof OrbitPageProfileLayoutRectSchema>>
 ).strict();
 
+const OrbitPageLayoutAlignmentSchema = z.enum(["left", "center", "right"]);
+const OrbitPageProfileLayoutAlignmentsSchema = z.object(
+  Object.fromEntries(
+    ORBITPAGE_PROFILE_LAYOUT_ITEMS.map((item) => [item, OrbitPageLayoutAlignmentSchema.optional()])
+  ) as Record<OrbitPageProfileLayoutItem, z.ZodOptional<typeof OrbitPageLayoutAlignmentSchema>>
+).strict();
+
 export const OrbitPageProfileLayoutSchema = z.object({
   order: z.array(OrbitPageProfileLayoutItemSchema)
     .max(ORBITPAGE_PROFILE_LAYOUT_ITEMS.length)
@@ -82,6 +89,7 @@ export const OrbitPageProfileLayoutSchema = z.object({
   spans: OrbitPageProfileLayoutSpansSchema.optional(),
   gap: z.number().int().min(8).max(32).optional(),
   positions: OrbitPageProfileLayoutPositionsSchema.optional(),
+  alignments: OrbitPageProfileLayoutAlignmentsSchema.optional(),
   height: z.number().finite().min(160).max(2_000).optional()
 }).strict();
 

@@ -1,24 +1,20 @@
 import { test, expect } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { contentSaveButton, openAuthenticatedAdmin, openPreviewContentCard } from './helpers';
 
 test('builds an icon-only quick link dock and keeps it first on the public page', async ({ page }) => {
   await openAuthenticatedAdmin(page);
 
   await page.getByRole('button', { name: 'Content', exact: true }).click();
-  let dockCard = page.locator('[data-link-id]').filter({ has: page.locator('.public-compact-links') });
-  if (await dockCard.count() === 0) {
+  let dockPreview = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').filter({ has: page.locator('.public-compact-links') });
+  if (await dockPreview.count() === 0) {
     await page.getByRole('button', { name: 'Add content' }).click();
     await page.getByRole('button', { name: /Compact links/ }).click();
-    dockCard = page.locator('[data-link-id]').filter({ has: page.locator('.public-compact-links') });
+    await contentSaveButton(page).click();
+    dockPreview = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').filter({ has: page.locator('.public-compact-links') });
   }
-  await expect(dockCard).toHaveCount(1);
-  const dockId = await dockCard.getAttribute('data-link-id');
-  expect(dockId).toBeTruthy();
-  dockCard = page.locator(`[data-link-id="${dockId}"]`);
-  await expect(page.locator('[data-link-id]').first()).toHaveAttribute('data-link-id', dockId || '');
-
-  await dockCard.hover();
-  await dockCard.getByRole('button', { name: 'Edit block' }).click();
+  await expect(dockPreview).toHaveCount(1);
+  const { editor: dockCard, id: dockId } = await openPreviewContentCard(page, dockPreview);
+  await expect(page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').first()).toHaveAttribute('data-public-editor-link-id', dockId);
   await expect(dockCard.getByText('Quick link dock')).toBeVisible();
 
   const existingItems = dockCard.locator('.admin-compact-link-item');
@@ -43,7 +39,7 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
   await expect(dockCard.getByText('Quick link dock')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 
-  const workspaceSave = page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true });
+  const workspaceSave = contentSaveButton(page);
   await expect(workspaceSave).toBeEnabled();
   const saveResponsePromise = page.waitForResponse((response) =>
     response.request().method() === 'PUT' &&
@@ -52,7 +48,7 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
   await workspaceSave.click();
   const saveResponse = await saveResponsePromise;
   expect(saveResponse.ok()).toBeTruthy();
-  await expect(workspaceSave).toBeDisabled();
+  await expect(workspaceSave).toHaveCount(0);
 
   await expect.poll(async () => {
     const response = await page.request.get('/api/public-page');

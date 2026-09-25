@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAdminSection, openAuthenticatedAdmin } from './helpers';
+import { contentSaveButton, openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test('edits and previews the selected additional page, then publishes its content', async ({ page }) => {
   await openAuthenticatedAdmin(page);
@@ -26,22 +26,19 @@ test('edits and previews the selected additional page, then publishes its conten
   const saveSettings = manager.getByRole('button', { name: 'Save settings' });
   if (await saveSettings.isEnabled()) await saveSettings.click();
 
-  let linkCard = manager.locator('.admin-link-list [data-link-id]').filter({ has: page.getByRole('heading', { name: 'Book a table' }) }).first();
+  let linkCard = manager.locator('.admin-link-list > div').filter({ hasText: 'Book a table' }).first();
   if (await linkCard.count() === 0) {
     await manager.getByRole('button', { name: 'Add content' }).click();
     await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
-    linkCard = manager.locator('.admin-link-list [data-link-id]').filter({ has: page.getByRole('heading', { name: 'New link' }) }).first();
+    linkCard = manager.locator('.admin-link-list > div').last();
   }
   await expect(linkCard).toBeVisible();
-  const linkId = await linkCard.getAttribute('data-link-id');
-  expect(linkId).toBeTruthy();
-  linkCard = manager.locator(`.admin-link-list [data-link-id="${linkId}"]`);
   await linkCard.hover();
   await linkCard.getByRole('button', { name: 'Edit block' }).click();
   await page.getByPlaceholder('Link title').fill('Book a table');
   await page.getByPlaceholder('https://example.com', { exact: true }).fill('https://example.com/book');
   await expect(canvas.getByRole('link', { name: 'Book a table' })).toBeVisible();
-  await manager.locator('.admin-link-actions').getByRole('button', { name: 'Save' }).click();
+  await contentSaveButton(page).click();
 
   const visibility = manager.locator('.subpage-publish-toggle');
   if (await visibility.getAttribute('aria-pressed') === 'false') {

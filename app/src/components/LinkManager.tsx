@@ -135,7 +135,9 @@ export const LinkManager = ({
       });
       return;
     }
-    setWorkingLinks((current) => [...current, block]);
+    const nextLinks = [...workingLinks, block];
+    setWorkingLinks(nextLinks);
+    onLinksPreview?.(nextLinks);
     setIsDirty(true);
     setSaveError("");
     setIsBlockLibraryOpen(false);
@@ -150,7 +152,9 @@ export const LinkManager = ({
       });
       return;
     }
-    setWorkingLinks((current) => [block, ...current]);
+    const nextLinks = [block, ...workingLinks];
+    setWorkingLinks(nextLinks);
+    onLinksPreview?.(nextLinks);
     setIsDirty(true);
     setSaveError("");
     setIsBlockLibraryOpen(false);
@@ -158,12 +162,13 @@ export const LinkManager = ({
 
   // Keep working copy in sync when parent provides a new links array
   useEffect(() => {
+    if (hasUnsavedChanges) return;
     // Replace working copy only when the incoming prop reference changes
     setWorkingLinks(links);
     setPreviewDrafts(new Map());
     setIsDirty(false);
     setSaveError("");
-  }, [links]);
+  }, [hasUnsavedChanges, links]);
 
   useEffect(() => {
     onLinksPreview?.(mergeLinkPreviews(workingLinks, previewDrafts));
@@ -738,6 +743,7 @@ export const LinkManager = ({
         setPreviewDrafts(new Map());
         setSavedRevision((current) => current + 1);
         showSavedNotice(previousLinks);
+        if (visualMode) onVisualFocusChange?.(null);
       }
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : tr("Changes could not be saved. Try again.", "Impossibile salvare le modifiche. Riprova."));

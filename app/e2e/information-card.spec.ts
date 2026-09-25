@@ -1,17 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { contentSaveButton, openAuthenticatedAdmin, openPreviewContentCard } from './helpers';
 
 test('keeps information text editable and identical in the live preview', async ({ page }) => {
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: 'Add content' }).click();
   await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Text/ }).click();
+  await contentSaveButton(page).click();
 
-  const textCard = page.locator('[data-link-id]').last();
-  const cardId = await textCard.getAttribute('data-link-id');
-  expect(cardId).toBeTruthy();
-  await textCard.hover();
-  await textCard.getByRole('button', { name: 'Edit block' }).click();
+  const previewCard = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').filter({ hasText: 'New text' }).last();
+  const { editor: textCard, id: cardId } = await openPreviewContentCard(page, previewCard);
 
   const informationText = textCard.getByLabel('Information text');
   await expect(informationText).toBeVisible();
@@ -22,18 +20,16 @@ test('keeps information text editable and identical in the live preview', async 
   await expect(preview).toContainText('Monday to Friday');
 
   await expect(textCard.getByRole('button', { name: 'Save', exact: true })).toHaveCount(0);
-  const saveContent = page.locator('.admin-link-actions').getByRole('button', { name: 'Save', exact: true });
+  const saveContent = contentSaveButton(page);
   await expect(saveContent).toBeEnabled();
   await saveContent.click();
-  await expect(textCard).toContainText('Opening hours');
+  await expect(preview).toContainText('Opening hours');
   await page.reload();
   await page.getByRole('button', { name: 'Content', exact: true }).click();
-  const savedCard = page.locator(`[data-link-id="${cardId}"]`);
-  await expect(savedCard).toHaveCount(1);
-  await savedCard.hover();
-  await savedCard.getByRole('button', { name: 'Edit block' }).click();
+  const savedPreview = page.locator(`.visual-site-editor__canvas [data-public-editor-link-id="${cardId}"]`);
+  const { editor: savedCard } = await openPreviewContentCard(page, savedPreview);
   await savedCard.getByLabel('Information text').fill('Temporary change');
   await expect(saveContent).toBeEnabled();
-  await savedCard.getByRole('button', { name: 'Cancel' }).click();
-  await expect(saveContent).toBeDisabled();
+  await page.locator('.admin-profile-save-float').getByRole('button', { name: 'Cancel' }).click();
+  await expect(saveContent).toHaveCount(0);
 });

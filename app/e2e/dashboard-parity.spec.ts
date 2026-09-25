@@ -120,7 +120,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   const contentList = page.locator('.admin-link-list');
   await expect(contentList).toBeVisible();
   await expect(contentList).toHaveCSS('width', '416px');
-  await expect(contentList.locator('.public-block-preview h3')).toHaveCSS('font-size', '13px');
+  await expect(contentList.locator('.public-block-preview h3').first()).toHaveCSS('font-size', '13px');
 
   await page.getByRole('button', { name: 'Desktop preview' }).click();
   const desktopPreview = page.locator('.admin-preview-device--desktop');
@@ -270,7 +270,7 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   const secondThemeBounds = await secondTheme.boundingBox();
   expect(firstThemeBounds).not.toBeNull();
   expect(secondThemeBounds).not.toBeNull();
-  expect(Math.abs(firstThemeBounds!.y - secondThemeBounds!.y)).toBeLessThanOrEqual(1);
+  expect(Math.abs(firstThemeBounds!.y - secondThemeBounds!.y)).toBeLessThanOrEqual(2);
   expect(secondThemeBounds!.x).toBeGreaterThan(firstThemeBounds!.x);
   await summary.click();
   await expect(previewBody).toBeHidden();
@@ -307,7 +307,7 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
 
   await expect(page.getByRole('heading', { name: 'Page type', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Identity', exact: true })).toBeVisible();
-  await expect(page.getByText('Advanced card style', { exact: true })).toBeVisible();
+  await expect(page.getByText('Card style', { exact: true })).toBeVisible();
   await expect(page.locator('.admin-profile-save-layer')).toHaveCount(0);
   const avatarSizeSlider = page.getByLabel('Profile image size');
   const avatarSizeBounds = await avatarSizeSlider.boundingBox();

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PROFILE_LAYOUT,
   normalizeProfileLayout,
+  updateProfileLayoutAlignment,
   updateProfileLayoutItem,
 } from "./profile-layout";
 
@@ -28,5 +29,13 @@ describe("profile layout", () => {
     expect(migrated.positions.avatar).toMatchObject({ x: 0, width: 48 });
     expect(migrated.positions.name).toMatchObject({ x: 52, width: 48 });
     expect(migrated.positions.bio.y).toBeGreaterThan(migrated.positions.name.y);
+  });
+
+  it("stores explicit text alignment instead of inferring it from position", () => {
+    const aligned = updateProfileLayoutAlignment(DEFAULT_PROFILE_LAYOUT, "location", "left");
+
+    expect(aligned.alignments.location).toBe("left");
+    expect(normalizeProfileLayout(aligned).alignments.location).toBe("left");
+    expect(normalizeProfileLayout(undefined).alignments.work).toBe("center");
   });
 });

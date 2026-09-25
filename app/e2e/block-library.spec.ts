@@ -29,7 +29,7 @@ test('opens a searchable block library grouped by category', async ({ page }) =>
 
   await dialog.getByRole('button', { name: /Map/ }).click();
   await expect(dialog).toBeHidden();
-  await expect(page.locator('[data-link-id]').last()).toContainText('Map');
+  await expect(page.locator('.admin-link-list > div').last()).toContainText('Map');
 });
 
 test('keeps the block library usable on a mobile viewport', async ({ page }) => {

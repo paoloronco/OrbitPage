@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GripVertical } from "@/components/ui/material-icons";
-import { BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, MoveDiagonal2, Twitter, Youtube } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, BriefcaseBusiness, Linkedin, Github, Instagram, Facebook, MapPin, MoveDiagonal2, Twitter, Youtube } from "lucide-react";
 import { normalizeProfileSocialHref } from "@orbitpage/page-schema";
 import { TikTokIcon, DiscordIcon, TelegramIcon, WhatsAppIcon, MastodonIcon } from "./SocialIcons";
 import { internalAssetPath, withRuntimeAssetPath } from "@/lib/base-path";
@@ -23,6 +23,7 @@ import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 import {
   normalizeProfileLayout,
+  updateProfileLayoutAlignment,
   updateProfileLayoutItem,
   type NormalizedProfileLayout,
   type ProfileLayout,
@@ -33,7 +34,7 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CardSurfaceEffect } from "@/lib/theme";
-import { alignCardLayoutRect, type CardLayoutGuides } from "@/lib/card-layout";
+import { alignCardLayoutRect, preventCardLayoutOverlap, type CardLayoutGuides } from "@/lib/card-layout";
 
 interface ProfileData {
   name: string;
@@ -92,6 +93,16 @@ const SOCIALS = [
   { id: "whatsapp", label: "WhatsApp profile", icon: WhatsAppIcon },
   { id: "mastodon", label: "Mastodon profile", icon: MastodonIcon },
 ] as const;
+
+const safeProfileLayoutUpdate = (
+  layout: NormalizedProfileLayout,
+  item: ProfileLayoutItem,
+  rect: ProfileLayoutRect,
+) => {
+  const candidate = updateProfileLayoutItem(layout, item, rect);
+  const safeRect = preventCardLayoutOverlap(layout.positions, item, candidate.positions[item], layout.positions[item]);
+  return updateProfileLayoutItem(layout, item, safeRect);
+};
 
 export const PublicProfileSection = ({
   profile,
@@ -276,9 +287,9 @@ export const PublicProfileSection = ({
       6 / gesture.bounds.width * 100,
       6 / gesture.scale,
     );
-    const liveLayout = updateProfileLayoutItem(gesture.layout, gesture.item, rect);
+    const liveLayout = safeProfileLayoutUpdate(gesture.layout, gesture.item, rect);
     pendingLayoutRef.current = snapped.guides.x !== undefined || snapped.guides.y !== undefined
-      ? updateProfileLayoutItem(gesture.layout, gesture.item, snapped.rect)
+      ? safeProfileLayoutUpdate(gesture.layout, gesture.item, snapped.rect)
       : liveLayout;
     setGuides(snapped.guides);
     applyWorkingLayout(liveLayout);
@@ -309,7 +320,13 @@ export const PublicProfileSection = ({
   };
 
   const commitKeyboardChange = (item: ProfileLayoutItem, rect: ProfileLayoutRect) => {
-    const next = updateProfileLayoutItem(layout, item, rect);
+    const next = safeProfileLayoutUpdate(layout, item, rect);
+    applyWorkingLayout(next);
+    onLayoutChange?.(next);
+  };
+
+  const alignItem = (item: ProfileLayoutItem, alignment: "left" | "center" | "right") => {
+    const next = updateProfileLayoutAlignment(layout, item, alignment);
     applyWorkingLayout(next);
     onLayoutChange?.(next);
   };
@@ -360,10 +377,8 @@ export const PublicProfileSection = ({
             const content = contents[item];
             if (!content && !layoutEditing) return null;
             const rect = layout.positions[item];
-            const center = rect.x + rect.width / 2;
-            const alignment = item === "avatar" || item === "name" || item === "socials"
-              ? "center"
-              : center < 42 ? "left" : center > 58 ? "right" : "center";
+            const alignment = layout.alignments[item];
+            const canAlignText = item === "name" || item === "work" || item === "location" || item === "bio";
             return (
               <div
                 className={`profile-card__layout-item profile-card__layout-item--${item}${activeItem === item ? " is-dragging" : ""}`}
@@ -405,6 +420,18 @@ export const PublicProfileSection = ({
                 <div className="profile-card__layout-content">
                   {content || <span className="profile-card__layout-placeholder">{labels[item]}</span>}
                 </div>
+
+                {layoutEditing && canAlignText && (
+                  <div className="profile-card__layout-align" role="group" aria-label={`${tr("Align", "Allinea")} ${labels[item]}`} onPointerDown={(event) => event.stopPropagation()}>
+                    {([
+                      ["left", AlignLeft, tr("Align left", "Allinea a sinistra")],
+                      ["center", AlignCenter, tr("Align center", "Allinea al centro")],
+                      ["right", AlignRight, tr("Align right", "Allinea a destra")],
+                    ] as const).map(([value, Icon, label]) => (
+                      <button aria-label={`${label} ${labels[item]}`} className={alignment === value ? "is-active" : undefined} key={value} onClick={(event) => { event.stopPropagation(); alignItem(item, value); }} title={label} type="button"><Icon aria-hidden="true" size={13} /></button>
+                    ))}
+                  </div>
+                )}
 
                 {layoutEditing && (
                   <button

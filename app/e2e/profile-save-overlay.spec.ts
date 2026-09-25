@@ -85,7 +85,7 @@ test("shows a viewport-fixed save action only for real changes and offers timed 
   await expect(notice).toBeVisible();
   await expect(notice).toContainText("Saved");
   await expect(notice).toContainText("visible on the public page in about 10 seconds");
-  await expect(notice.locator(".admin-profile-saved-notice__progress > i")).toHaveCSS("animation-duration", "8s");
+  await expect(notice.locator(".admin-profile-saved-notice__progress > i")).toHaveCSS("animation-duration", "10s");
   const noticeBounds = await notice.boundingBox();
   expect(noticeBounds).not.toBeNull();
   expect(rectanglesOverlap(noticeBounds!, chatbotBounds!)).toBe(false);

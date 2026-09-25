@@ -221,7 +221,7 @@ export function VisualSiteEditor({
           <span role="status">
             <GripVertical aria-hidden="true" size={17} />
             <strong>{device === "mobile" ? tr("Mobile layout", "Layout mobile") : tr("Desktop layout", "Layout desktop")}</strong>
-            <span>{tr("Drag profile elements, cards and card contents. On mobile, only small cards can sit side by side.", "Trascina elementi del profilo, card e contenuti interni. Su mobile solo le card piccole possono essere affiancate.")}</span>
+            <span>{tr("Drag with the wide handles. Card sizes snap to presets, elements cannot overlap, and text alignment is available on each text block.", "Trascina dalle maniglie larghe. Le card seguono dimensioni predefinite, gli elementi non possono sovrapporsi e ogni testo può essere allineato direttamente.")}</span>
           </span>
         </div>
       )}

@@ -1,9 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-import { openAuthenticatedAdmin } from "./helpers";
+import { openAuthenticatedAdmin, useClassicAdmin } from "./helpers";
 
 test("persists the profile image size and renders it exactly on the public page", async ({ browserName, page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
+  await useClassicAdmin(page);
   await openAuthenticatedAdmin(page);
 
   const pageSection = page.getByRole("button", { name: "Page", exact: true });
@@ -19,8 +20,7 @@ test("persists the profile image size and renders it exactly on the public page"
 
   const avatarSize = page.getByRole("slider", { name: "Profile image size" });
   await expect(avatarSize).toBeVisible();
-  await avatarSize.focus();
-  await page.keyboard.press("End");
+  for (let step = 0; step < 20; step += 1) await avatarSize.press("ArrowRight");
   await expect(avatarSize).toHaveAttribute("aria-valuenow", "192");
 
   const save = page.getByRole("button", { name: "Save", exact: true });

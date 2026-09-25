@@ -86,7 +86,7 @@ export const PublicView = ({
     if (link.type === 'image') return (link.url || link.coverImage) !== '';
     if (link.type === 'video') return Boolean(getVideoData(link.content).mediaUrl);
     if (link.type === 'social_row' || isSocialRowContent(link.content)) {
-      return (getSocialRowData(link.content).items || []).length > 0;
+      return Boolean(onEditorSelect) || (getSocialRowData(link.content).items || []).length > 0;
     }
     if (link.type === 'internal_links') return getInternalLinksData(link.content).items.length > 0;
     if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event' || link.type === 'embed') {

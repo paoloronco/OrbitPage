@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignCardLayoutRect, normalizeCardLayout, PROFILE_CARD_LAYOUT_ID, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, snapCardLayoutSize, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -21,12 +21,12 @@ describe("responsive card layout", () => {
   it("stores free positioning for elements inside a card", () => {
     const updated = updateCardContentLayoutItem(undefined, cards, "desktop", "large", "title", {
       x: 4,
-      y: 38,
+      y: 70,
       width: 62,
       height: 32,
     });
 
-    expect(updated.contents?.large.positions?.title).toEqual({ x: 4, y: 38, width: 62, height: 32 });
+    expect(updated.contents?.large.positions?.title).toEqual({ x: 4, y: 70, width: 62, height: 32 });
     expect(normalizeCardLayout(updated, cards, "desktop").contents?.large).toBeDefined();
   });
 
@@ -73,5 +73,37 @@ describe("responsive card layout", () => {
 
     expect(aligned.rect).toMatchObject({ x: 56, y: 20, width: 44 });
     expect(aligned.guides).toEqual({ x: 100, y: 20 });
+  });
+
+  it("snaps card sizes to reusable presets", () => {
+    expect(snapCardLayoutSize({ x: 0, y: 0, width: 47, height: 137 })).toEqual({
+      x: 0,
+      y: 0,
+      width: 50,
+      height: 144,
+    });
+  });
+
+  it("rejects overlap while still allowing movement on a free axis", () => {
+    const positions = {
+      left: { x: 0, y: 0, width: 50, height: 120 },
+      right: { x: 50, y: 140, width: 50, height: 120 },
+    };
+
+    expect(preventCardLayoutOverlap(positions, "right", { x: 25, y: 60, width: 50, height: 120 }, positions.right)).toEqual({ x: 25, y: 140, width: 50, height: 120 });
+    expect(preventCardLayoutOverlap(positions, "right", { x: 25, y: 280, width: 50, height: 120 }, positions.right)).toEqual({ x: 25, y: 280, width: 50, height: 120 });
+  });
+
+  it("keeps an updated card out of occupied space", () => {
+    const layout = {
+      positions: {
+        large: { x: 0, y: 0, width: 50, height: 120 },
+        compact: { x: 50, y: 0, width: 50, height: 92 },
+      },
+      height: 120,
+    };
+
+    expect(updateCardLayoutItem(layout, cards, "desktop", "compact", { x: 25, y: 0, width: 50, height: 92 }).positions.compact)
+      .toEqual(layout.positions.compact);
   });
 });
