@@ -728,7 +728,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Colors */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div className="space-y-1">
-                <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="admin-paired-field-label flex items-center justify-between gap-2 text-xs">
                   <span>Background</span>
                   <span className="font-normal text-slate-500">{editLink.backgroundColor ? 'Card override' : 'Theme color'}</span>
                 </div>
@@ -739,7 +739,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 />
               </div>
               <div className="space-y-1">
-                <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="admin-paired-field-label flex items-center justify-between gap-2 text-xs">
                   <span>Text Color</span>
                   <span className="font-normal text-slate-500">{editLink.textColor ? 'Card override' : 'Theme color'}</span>
                 </div>

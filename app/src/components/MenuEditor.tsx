@@ -883,23 +883,21 @@ export function MenuEditor({
 
           {presentation === 'visual' && <div className={`menu-unified-panel${visualEditor ? ' is-editing' : ''}`}>
             <div className="menu-unified-header">
-              <div className="menu-unified-header__actions">
+              <div className="menu-category-toolbar menu-unified-toolbar">
+                <label className="menu-category-search"><Search aria-hidden="true" /><span className="sr-only">{tr('Search categories and items', 'Cerca categorie ed elementi')}</span><Input type="search" value={itemQuery} onChange={(event) => setItemQuery(event.target.value)} placeholder={tr('Search categories and items', 'Cerca categorie ed elementi')} /></label>
+                <select aria-label={tr('Filter by category', 'Filtra per categoria')} value={productSectionFilter} onChange={(event) => setProductSectionFilter(event.target.value)}>
+                  <option value="all">{tr('All categories', 'Tutte le categorie')}</option>
+                  {sortedSections.map((section) => <option key={section.id} value={section.id}>{section.parentId ? '↳ ' : ''}{section.name}</option>)}
+                </select>
+                <select aria-label={tr('Filter category visibility', 'Filtra visibilità categorie')} value={categoryVisibility} onChange={(event) => setCategoryVisibility(event.target.value as typeof categoryVisibility)}>
+                  <option value="all">{tr('All visibility', 'Tutte le visibilità')}</option><option value="visible">{tr('Visible', 'Visibili')}</option><option value="hidden">{tr('Hidden', 'Nascoste')}</option>
+                </select>
                 <Button variant="outline" size="sm" onClick={addSection} disabled={draft.sections.length >= 30}><Plus className="h-4 w-4" />{tr('Add category', 'Aggiungi categoria')}</Button>
                 <Button size="sm" onClick={() => addItem()} disabled={draft.sections.length === 0 || (maxItems !== null && draft.items.length >= maxItems)}><Plus className="h-4 w-4" />{tr('Add item', 'Aggiungi elemento')}</Button>
               </div>
             </div>
             <div className="menu-unified-layout">
               <div className="menu-unified-list">
-                <div className="menu-category-toolbar menu-unified-toolbar">
-                  <label className="menu-category-search"><Search aria-hidden="true" /><span className="sr-only">{tr('Search categories and items', 'Cerca categorie ed elementi')}</span><Input type="search" value={itemQuery} onChange={(event) => setItemQuery(event.target.value)} placeholder={tr('Search categories and items', 'Cerca categorie ed elementi')} /></label>
-                  <select aria-label={tr('Filter by category', 'Filtra per categoria')} value={productSectionFilter} onChange={(event) => setProductSectionFilter(event.target.value)}>
-                    <option value="all">{tr('All categories', 'Tutte le categorie')}</option>
-                    {sortedSections.map((section) => <option key={section.id} value={section.id}>{section.parentId ? '↳ ' : ''}{section.name}</option>)}
-                  </select>
-                  <select aria-label={tr('Filter category visibility', 'Filtra visibilità categorie')} value={categoryVisibility} onChange={(event) => setCategoryVisibility(event.target.value as typeof categoryVisibility)}>
-                    <option value="all">{tr('All visibility', 'Tutte le visibilità')}</option><option value="visible">{tr('Visible', 'Visibili')}</option><option value="hidden">{tr('Hidden', 'Nascoste')}</option>
-                  </select>
-                </div>
                 <div className="menu-category-groups" aria-label={tr('Menu categories and items', 'Categorie ed elementi del menu')}>
                   {visualGroups.map(({ root, rootItems, children, count }) => {
                     const expanded = Boolean(visualQuery) || !collapsedCategoryIds.has(root.id);

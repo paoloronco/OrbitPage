@@ -154,8 +154,8 @@ describe("VisualSiteEditor", () => {
           showOrbitPageBadge
           section="links"
           selectedLinkId="card-1"
-          inspectorTitle="Selected card"
-          inspectorDescription="Edit the selected card."
+          inspectorTitle="Content block"
+          inspectorDescription="7 blocks"
           inspector={<div>Content editor</div>}
           onSelect={vi.fn()}
           layoutEditing={false}
@@ -163,11 +163,39 @@ describe("VisualSiteEditor", () => {
         />,
       );
 
-      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Selected card</h2><span>Edit the selected card.</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
-      expect(html).not.toContain('<h2>Content block</h2>');
+      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it("leaves card editing when the selected preview card is clicked again", () => {
+    const onSelect = vi.fn();
+
+    renderToStaticMarkup(
+      <VisualSiteEditor
+        profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+        links={[]}
+        theme={defaultTheme}
+        publicPageHref="/orbitpage"
+        showOrbitPageBadge
+        section="links"
+        selectedLinkId="card-1"
+        inspectorTitle="Content block"
+        inspectorDescription="7 blocks"
+        inspector={<div>Content editor</div>}
+        onSelect={onSelect}
+        layoutEditing={false}
+        onLayoutEditingChange={vi.fn()}
+      />,
+    );
+
+    const onEditorSelect = mockState.livePreviewProps?.onEditorSelect as ((target: { kind: "link"; id: string }) => void) | undefined;
+    onEditorSelect?.({ kind: "link", id: "card-1" });
+    onEditorSelect?.({ kind: "link", id: "card-2" });
+
+    expect(onSelect).toHaveBeenNthCalledWith(1, "links", undefined);
+    expect(onSelect).toHaveBeenNthCalledWith(2, "links", "card-2");
   });
 
   it("shows Pages preview only when a selected additional page supplies it", () => {
@@ -249,6 +277,26 @@ describe("VisualSiteEditor", () => {
       expect(html).toContain(">Hide Preview</span>");
       expect(html).toContain('aria-controls="visual-site-editor-preview"');
       expect(html).toContain('aria-expanded="true"');
+
+      const contentHtml = renderToStaticMarkup(
+        <VisualSiteEditor
+          profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+          links={[]}
+          theme={defaultTheme}
+          publicPageHref="/orbitpage"
+          showOrbitPageBadge
+          section="links"
+          inspectorTitle="Content block"
+          inspectorDescription="0 blocks"
+          inspector={<div>Content editor</div>}
+          onSelect={vi.fn()}
+          layoutEditing={false}
+          onLayoutEditingChange={vi.fn()}
+        />,
+      );
+
+      expect(contentHtml).not.toContain("Hide Preview");
+      expect(contentHtml).not.toContain("Show Preview");
     } finally {
       vi.unstubAllGlobals();
     }

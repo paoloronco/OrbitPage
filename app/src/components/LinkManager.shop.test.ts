@@ -63,5 +63,7 @@ describe('Shop link shortcut', () => {
     expect(source).toContain('const focusedLink = visualFocusLinkId');
     expect(source).toContain('visualMode && !focusedLink ? null');
     expect(source).toContain('editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}');
+    expect(source.match(/editing=\{visualMode \? true : editingLinkId === String\(link.id\)\}/g)).toHaveLength(2);
+    expect(source).toContain('onVisualFocusChange?.(null)');
   });
 });

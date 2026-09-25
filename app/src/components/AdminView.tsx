@@ -842,13 +842,10 @@ export const AdminView = ({
     />
   );
 
-  const selectedVisualLink = visualLinkId
-    ? links.find((link) => String(link.id) === String(visualLinkId)) || null
-    : null;
   const visualInspectorTitle = visualSection === "profile"
     ? tr("Profile and identity", "Profilo e identità")
     : visualSection === "links"
-      ? selectedVisualLink?.title || tr("Content block", "Blocco contenuto")
+      ? tr("Content block", "Blocco contenuto")
       : visualSection === "menu"
         ? tr("Menu", "Menu")
         : visualSection === "shop"
@@ -857,9 +854,7 @@ export const AdminView = ({
   const visualInspectorDescription = visualSection === "profile"
     ? tr("Name, image, bio, social presence and page details.", "Nome, immagine, bio, presenza social e dettagli della pagina.")
     : visualSection === "links"
-      ? selectedVisualLink
-        ? tr("Edit the selected card.", "Modifica la card selezionata.")
-        : `${links.length} ${tr("blocks", "blocchi")}`
+      ? `${links.length} ${tr("blocks", "blocchi")}`
       : visualSection === "menu"
         ? tr("Manage navigation, categories and menu items.", "Gestisci navigazione, categorie ed elementi del menu.")
         : visualSection === "shop"
@@ -904,6 +899,7 @@ export const AdminView = ({
       visualMode
       visualFocusLinkId={visualLinkId}
       visualEditRequest={visualEditRequest}
+      onVisualFocusChange={setVisualLinkId}
     />
   ) : visualSection === "menu" ? (
     <MenuEditor
