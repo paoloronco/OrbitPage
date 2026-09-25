@@ -901,13 +901,17 @@
 
 .menu-editor-stack--visual .menu-editor-tabs,
 .menu-editor-stack--visual .menu-editor-tabs:first-child {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  width: fit-content;
+  max-width: calc(100% + 8px);
+  align-items: center;
   gap: 4px;
-  overflow: visible;
-  border: 1px solid #d7dee8;
-  border-radius: 8px;
+  overflow-x: auto;
+  margin: -8px 0 0 -8px;
+  border: 1px solid #d9e1ec;
+  border-radius: 9px;
   background: #fff;
-  padding: 4px;
+  padding: 5px;
 }
 
 .menu-editor-stack--visual .menu-editor-tabs button,
@@ -915,15 +919,20 @@
 .menu-editor-stack--visual .menu-editor-tabs button:last-child {
   position: static;
   display: inline-flex;
-  min-height: 40px;
+  min-height: 37px;
+  flex: 0 0 auto;
+  align-items: center;
   justify-content: center;
   gap: 7px;
   overflow: visible;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 7px;
   background: transparent;
-  padding: 0 8px;
+  padding: 0 11px;
   color: #667085;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 760;
   text-align: center;
 }
 
@@ -947,9 +956,9 @@
 .menu-editor-stack--visual .menu-editor-tabs button > svg {
   position: static;
   display: block;
-  width: 17px;
-  height: 17px;
-  flex: 0 0 17px;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
   order: -1;
   color: inherit;
 }
@@ -964,8 +973,9 @@
 
 .menu-editor-stack--visual .menu-editor-tab-copy strong {
   overflow: hidden;
-  font-size: 12px;
-  font-weight: 850;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1039,14 +1049,21 @@
 @container menu-workspace (max-width: 30rem) {
   .menu-editor-stack--visual .menu-editor-tabs,
   .menu-editor-stack--visual .menu-editor-tabs:first-child {
-    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+    width: calc(100% + 8px);
   }
 
   .menu-editor-stack--visual .menu-editor-tabs button,
   .menu-editor-stack--visual .menu-editor-tabs button:first-child,
   .menu-editor-stack--visual .menu-editor-tabs button:last-child {
-    min-height: 44px;
-    padding-inline: 6px;
+    min-height: 48px;
+    padding-inline: 13px;
+    font-size: 12px;
+  }
+
+  .menu-editor-stack--visual .menu-editor-tabs button > svg {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
   }
 
   .menu-editor-stack--visual .menu-category-picker__meta span {

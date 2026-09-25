@@ -6766,13 +6766,13 @@
 .subpage-overview, .subpage-collection, .subpage-details-panel, .subpage-content-panel, .subpage-preview-panel { border: 1px solid #dbe3ee; border-radius: .75rem; background: #fff; }
 .subpage-overview { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: clamp(1rem, 2vw, 1.5rem); background: linear-gradient(115deg,#fff 62%,#f0f5ff); }
 .subpage-overview > div:first-child { min-width: 0; max-width: 39rem; }
-.subpage-overview h2 { margin: .25rem 0 .35rem; color: #0f172a; font-size: clamp(1.35rem, 2vw, 1.7rem); line-height: 1.2; }
+.subpage-overview h2 { margin: 0; color: #14213a; font-size: 17px; font-weight: 820; line-height: 1.2; }
 .subpage-overview p, .subpage-collection-heading p, .subpage-section-heading p { margin: 0; color: #64748b; font-size: .84rem; line-height: 1.5; }
 .subpage-overview-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; }
 .subpage-count { color: #475569; font-size: .77rem; font-weight: 700; white-space: nowrap; }
 .subpage-collection, .subpage-details-panel, .subpage-content-panel { padding: clamp(.9rem, 2vw, 1.35rem); }
 .subpage-collection-heading { margin-bottom: .9rem; }
-.subpage-collection-heading h3 { margin: 0 0 .2rem; color: #0f172a; font-size: 1rem; font-weight: 750; }
+.subpage-collection-heading h3 { margin: 0; color: #14213a; font-size: 17px; font-weight: 820; line-height: 1.2; }
 .subpage-page-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,14rem),1fr)); gap: .65rem; }
 .subpage-page-card { display: grid; grid-template-columns: 1.25rem minmax(0,1fr); align-items: start; gap: .5rem .65rem; min-width: 0; min-height: 5.25rem; padding: .8rem; border: 1px solid #dbe3ee; border-radius: .6rem; background: #fff; color: #334155; font: inherit; text-align: left; }
 button.subpage-page-card { cursor: pointer; transition: border-color 160ms ease,background-color 160ms ease,box-shadow 160ms ease; }

@@ -186,9 +186,7 @@ export function SubpageManager({
     <div className="subpage-manager">
       <header className="subpage-overview">
         <div>
-          <span className="admin-kicker">Site editor / Pages</span>
           <h2>Additional pages</h2>
-          <p>Give a topic, service or campaign its own URL. Choose a page below, set its details, then add content.</p>
         </div>
         <div className="subpage-overview-actions">
           <span className="subpage-count">{pages.length + 1}{maxPages ? ` / ${maxPages}` : ""} pages used</span>
@@ -201,7 +199,6 @@ export function SubpageManager({
       <section className="subpage-collection" aria-label="Your pages">
         <div className="subpage-collection-heading">
           <h3>Your pages</h3>
-          <p>Your main page is always available. Additional pages start hidden until you publish them.</p>
         </div>
         <div className="subpage-page-grid">
           <div className="subpage-page-card subpage-page-card--main">

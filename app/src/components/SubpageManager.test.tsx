@@ -20,6 +20,9 @@ describe("additional pages workspace", () => {
 
     expect(html).not.toContain("No additional pages yet");
     expect(html).not.toContain("Add your first page");
+    expect(html).not.toContain("Site editor / Pages");
+    expect(html).not.toContain("Give a topic, service or campaign its own URL.");
+    expect(html).not.toContain("Your main page is always available.");
   });
 
   it("shows a single-page workflow with the selected page and its public state", () => {

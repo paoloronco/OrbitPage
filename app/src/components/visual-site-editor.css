@@ -176,7 +176,10 @@
 }
 
 .visual-site-editor__sections {
+  box-sizing: border-box;
   display: flex;
+  width: 100%;
+  min-height: 49px;
   align-items: center;
   gap: 4px;
   overflow-x: auto;
@@ -185,6 +188,8 @@
 }
 
 .visual-site-editor__section-actions {
+  min-width: 158px;
+  justify-content: flex-end;
   margin-left: auto;
   padding-left: 8px;
 }
@@ -192,6 +197,7 @@
 .visual-site-editor__sections > button {
   position: relative;
   display: inline-flex;
+  height: 37px;
   min-height: 37px;
   flex: 0 0 auto;
   align-items: center;
@@ -204,7 +210,14 @@
   font: inherit;
   font-size: 11px;
   font-weight: 760;
+  line-height: 1;
   cursor: pointer;
+}
+
+.visual-site-editor__sections > button > svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
 }
 
 .visual-site-editor__sections > button:hover,
@@ -863,6 +876,7 @@
   }
 
   .visual-site-editor__sections {
+    min-height: 62px;
     gap: 6px;
     padding: 6px;
     scroll-padding-inline: 6px;
@@ -873,6 +887,7 @@
 
   .visual-site-editor__sections > button {
     min-width: max-content;
+    height: 48px;
     min-height: 48px;
     justify-content: flex-start;
     gap: 8px;
@@ -969,6 +984,7 @@
   }
 
   .visual-site-editor__section-actions {
+    min-width: 0;
     margin-left: 0;
     padding: 0 2px;
   }
