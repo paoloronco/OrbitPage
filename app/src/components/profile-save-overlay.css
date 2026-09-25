@@ -29,6 +29,10 @@
   min-height: 44px;
 }
 
+.admin-profile-save-float > button:disabled {
+  box-shadow: none;
+}
+
 .admin-profile-saved-notice {
   background: rgb(255 255 255 / 98%);
   border: 1px solid #cbd8e8;

@@ -3127,9 +3127,11 @@
 
   .admin-link-list.is-editing .admin-block-editor-shell {
     gap: 0;
-    padding: 0;
-    border: 0;
-    background: transparent;
+    padding: 14px;
+    border: 3px solid #2f66df;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgb(47 102 223 / 12%), 0 14px 34px rgb(15 23 42 / 10%);
   }
 
   .admin-link-list.is-editing .admin-card-edit-body {
@@ -9566,6 +9568,11 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 @media (min-width: 1024px) {
   .admin-link-list {
+    width: min(100%, 26rem);
+    align-self: center;
+  }
+
+  .admin-link-list.is-editing > div:not(:has(> .admin-block-editor-shell)) {
     width: min(100%, 26rem);
     align-self: center;
   }
