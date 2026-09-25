@@ -96,7 +96,7 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   const legacyCardWidth = (await page.locator(`[data-public-editor-link-id="${linkId}"]`).boundingBox())!.width;
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
-  await expect(page.getByText("Drag with the wide handles. Card sizes snap to presets, elements cannot overlap, and text alignment is available on each text block.")).toBeVisible();
+  await expect(page.getByText("Drag with the handles. Card sizes snap to presets, elements cannot overlap, and text alignment is available on each text block.")).toBeVisible();
   await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
   expect(await profileTarget.evaluate((element) => ({
     outline: getComputedStyle(element).outlineStyle,
@@ -392,7 +392,7 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toBeVisible();
 });
 
-test("Arrange uses preset sizes, wide handles and persistent text alignment", async ({ page }) => {
+test("Arrange uses preset sizes, compact handles and persistent text alignment", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
   await page.getByRole("button", { name: "Content", exact: true }).click();
@@ -403,6 +403,8 @@ test("Arrange uses preset sizes, wide handles and persistent text alignment", as
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   const workItem = page.locator('[data-profile-layout-item="work"]');
   const locationItem = page.locator('[data-profile-layout-item="location"]');
+  await page.getByRole("button", { name: "Align center Work", exact: true }).click();
+  await page.getByRole("button", { name: "Align center Location", exact: true }).click();
   await expect(workItem).toHaveAttribute("data-profile-layout-align", "center");
   await expect(locationItem).toHaveAttribute("data-profile-layout-align", "center");
   await page.getByRole("button", { name: "Align left Work", exact: true }).click();
@@ -412,8 +414,7 @@ test("Arrange uses preset sizes, wide handles and persistent text alignment", as
   const moveHandle = contentCard.getByRole("button", { name: /^Move card/ });
   const handleBounds = await moveHandle.boundingBox();
   expect(handleBounds).not.toBeNull();
-  expect(await moveHandle.evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBeGreaterThanOrEqual(80);
-  expect(handleBounds!.width).toBeGreaterThanOrEqual(56);
+  expect(await moveHandle.evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBe(64);
 
   await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
   const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);

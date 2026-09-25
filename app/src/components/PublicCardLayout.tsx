@@ -187,13 +187,13 @@ export function PublicCardLayout({
     const height = gesture.scope === "content" ? gesture.contentLayout!.height : gesture.layout.height;
     const itemId = gesture.scope === "content" ? gesture.item! : gesture.cardId;
     const snapped = alignCardLayoutRect(positions, height, itemId, rect, gesture.mode, 6 / gesture.bounds.width * 100, 6 / gesture.scale);
-    const update = (nextRect: CardLayoutRect) => gesture.scope === "content"
-      ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, nextRect)
-      : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, nextRect);
-    const liveLayout = update(rect);
-    pendingLayoutRef.current = snapped.guides.x !== undefined || snapped.guides.y !== undefined
-      ? update(snapped.rect)
-      : liveLayout;
+    const update = (nextRect: CardLayoutRect, allowOverlap = false) => gesture.scope === "content"
+      ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, nextRect, allowOverlap)
+      : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, nextRect, allowOverlap);
+    const liveLayout = update(rect, true);
+    pendingLayoutRef.current = update(
+      snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect,
+    );
     setGuides({ ...snapped.guides, scope: gesture.scope, cardId: gesture.cardId });
     applyWorkingLayout(liveLayout);
   };
