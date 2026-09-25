@@ -258,6 +258,7 @@ export function VisualSiteEditor({
           {previewEnabled && section !== "menu" && inspectorDescription && <header className="visual-site-editor__inspector-heading">
             <h2>{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
+            {section === "links" && <div className="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot="" />}
           </header>}
           <div className="visual-site-editor__inspector-body">{inspector}</div>
         </Inspector>

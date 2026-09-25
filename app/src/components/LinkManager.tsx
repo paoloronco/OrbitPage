@@ -2,7 +2,7 @@ import { type ComponentType, type CSSProperties, useCallback, useEffect, useRef,
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, RotateCcw, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed } from "lucide-react";
+import { CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,7 +20,6 @@ import { asNativeShopLink, isNativeShopLink } from "@/lib/native-shop-link";
 import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import type { BrandServiceProvider } from "@/lib/service-brand";
 import { mergeLinkPreviews } from "./link-preview-state";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import "./profile-save-overlay.css";
 
@@ -97,12 +96,8 @@ export const LinkManager = ({
   visualEditRequest,
 }: LinkManagerProps) => {
   const { tr } = useAppI18n();
-  const isMobile = useIsMobile();
-  const [draggedItem, setDraggedItem] = useState<string | null>(null);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { toast } = useToast();
-  // Maintain a working copy to allow fluid drag reordering without spamming saves
   const [workingLinks, setWorkingLinks] = useState<LinkData[]>(links);
   const [previewDrafts, setPreviewDrafts] = useState<ReadonlyMap<string, LinkData>>(() => new Map());
   const [preparingLinks, setPreparingLinks] = useState<ReadonlySet<string>>(() => new Set());
@@ -114,6 +109,7 @@ export const LinkManager = ({
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedNotice, setSavedNotice] = useState<SavedContentNotice | null>(null);
+  const [visualHeaderSlot, setVisualHeaderSlot] = useState<HTMLElement | null>(null);
   const savedNoticeTimerRef = useRef<number | null>(null);
   const hasUnsavedChanges = isDirty || previewDrafts.size > 0;
   const publicPreviewStyle = (index: number) => ({
@@ -121,7 +117,7 @@ export const LinkManager = ({
     ...getContentCardVariantCssVariables(theme, index),
   }) as CSSProperties;
   const atBlockLimit = maxBlocks !== undefined && maxBlocks !== null && workingLinks.length >= maxBlocks;
-  const focusedLink = visualFocusLinkId && !isMobile
+  const focusedLink = visualFocusLinkId
     ? workingLinks.find((link) => String(link.id) === String(visualFocusLinkId)) || null
     : null;
   const renderedLinks = focusedLink
@@ -174,6 +170,12 @@ export const LinkManager = ({
   useEffect(() => {
     onDirtyChange?.(hasUnsavedChanges);
   }, [hasUnsavedChanges, onDirtyChange]);
+
+  useEffect(() => {
+    setVisualHeaderSlot(visualMode
+      ? document.querySelector<HTMLElement>("[data-orbitpage-content-header-slot]")
+      : null);
+  }, [visualMode]);
 
   useEffect(() => () => {
     if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
@@ -617,51 +619,6 @@ export const LinkManager = ({
     setSaveError("");
   };
 
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    setDraggedItem(id);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const performReorder = (fromId: string, toId: string) => {
-    if (!fromId || !toId || fromId === toId) return;
-    const draggedIndex = workingLinks.findIndex(link => String(link.id) === String(fromId));
-    const targetIndex = workingLinks.findIndex(link => String(link.id) === String(toId));
-    if (draggedIndex === -1 || targetIndex === -1) return;
-    const newLinks = [...workingLinks];
-    const [draggedLink] = newLinks.splice(draggedIndex, 1);
-    newLinks.splice(targetIndex, 0, draggedLink);
-    setWorkingLinks(newLinks);
-    setIsDirty(true);
-    setSaveError("");
-    return newLinks;
-  };
-
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    if (!draggedItem || draggedItem === targetId) return;
-    const newOrder = performReorder(draggedItem, targetId);
-    setDraggedItem(null);
-    setDragOverId(null);
-    // Do not persist here; wait for explicit Save
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItem(null);
-    setDragOverId(null);
-  };
-
-  const handleDragEnter = (targetId: string) => {
-    if (!draggedItem || draggedItem === targetId) return;
-    setDragOverId(targetId);
-    // Reorder locally for fluid UX; do not persist until drop
-    performReorder(draggedItem, targetId);
-  };
-
   // Export links as JSON
   const exportLinks = async () => {
     try {
@@ -803,7 +760,6 @@ export const LinkManager = ({
   };
 
   const isFullEdit = editMode === 'full';
-  const canDrag = isFullEdit && !isMobile;
   const isViewOnly = editMode === 'view';
   const hasCompactLinks = workingLinks.some((item) => item.type === "social_row");
   const hasShopLink = workingLinks.some((link) => isNativeShopLink(link) || (link.type === 'internal_links' && getInternalLinksData(link.content).items.some((item) => item.kind === 'shop')));
@@ -910,6 +866,33 @@ export const LinkManager = ({
     setIsBlockLibraryOpen(true);
   };
 
+  const addContentAction = isFullEdit && !focusedLink ? (
+    <Button
+      onClick={openBlockLibrary}
+      variant="outline"
+      className="admin-action"
+      disabled={atBlockLimit || busy}
+      aria-expanded={isBlockLibraryOpen}
+      aria-controls="admin-block-library"
+    >
+      <Plus className="h-4 w-4" />
+      {tr("Add content", "Aggiungi contenuto")}
+    </Button>
+  ) : null;
+  const deleteFocusedAction = isFullEdit && focusedLink ? (
+    <Button
+      aria-label={tr("Delete card", "Elimina card")}
+      className="admin-action"
+      onClick={() => deleteLink(focusedLink.id)}
+      disabled={busy}
+      size="icon"
+      title={tr("Delete card", "Elimina card")}
+      variant="destructive"
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  ) : null;
+
   return (
     <div className={`admin-link-manager${visualMode ? " admin-link-manager--visual" : ""}`}>
       {!isFullEdit && (
@@ -924,31 +907,29 @@ export const LinkManager = ({
         </div>
       )}
 
-      <div className="admin-link-toolbar" data-onboarding="links-toolbar">
-        {(!visualMode || saveError) && <div className="min-w-0">
-          {!visualMode && <>
-            <div className="flex flex-wrap items-center gap-2">
+      {!visualMode && <div className="admin-link-toolbar" data-onboarding="links-toolbar">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold text-slate-950">
                 {focusedLink
                   ? focusedLink.title || tr("Selected content block", "Blocco contenuto selezionato")
                   : tr("Content block", "Blocco contenuto")}
               </h2>
               {hasUnsavedChanges && <span className="admin-dirty-badge">{tr("Unsaved changes", "Modifiche non salvate")}</span>}
-            </div>
-            <p className="mt-1 text-sm text-slate-600">
-              {focusedLink
-                ? tr("Edit the selected card.", "Modifica la card selezionata.")
-                : workingLinks.length === 0
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            {focusedLink
+              ? tr("Edit the selected card.", "Modifica la card selezionata.")
+              : workingLinks.length === 0
                 ? tr("Start with a block, then arrange your public page.", "Inizia con un blocco, poi organizza la pagina pubblica.")
                 : `${workingLinks.length}${maxBlocks !== undefined && maxBlocks !== null ? ` ${tr("of", "di")} ${maxBlocks}` : ""} ${tr("blocks", "blocchi")}`}
-            </p>
-          </>}
+          </p>
           {saveError && (
             <p className="mt-2 text-sm font-medium text-red-600" role="alert">
               {saveError}
             </p>
           )}
-        </div>}
+        </div>
 
         <div className="admin-link-actions">
           {isFullEdit && !focusedLink && (
@@ -957,42 +938,27 @@ export const LinkManager = ({
               {hasShopLink ? tr("Shop added", "Shop aggiunto") : tr("Add Shop", "Aggiungi Shop")}
             </Button>
           )}
-          {isFullEdit && !focusedLink && (
-            <Button
-              onClick={openBlockLibrary}
-              variant="outline"
-              className="admin-action"
-              disabled={atBlockLimit || busy}
-              aria-expanded={isBlockLibraryOpen}
-              aria-controls="admin-block-library"
-            >
-              <Plus className="h-4 w-4" />
-              {tr("Add content", "Aggiungi contenuto")}
-            </Button>
-          )}
-          {isFullEdit && focusedLink && (
-            <Button
-              aria-label={tr("Delete card", "Elimina card")}
-              className="admin-action"
-              onClick={() => deleteLink(focusedLink.id)}
-              disabled={busy}
-              size="icon"
-              title={tr("Delete card", "Elimina card")}
-              variant="destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-          {!visualMode && <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Export links", "Esporta link")} title={tr("Export links", "Esporta link")}>
+          {addContentAction}
+          {deleteFocusedAction}
+          <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Export links", "Esporta link")} title={tr("Export links", "Esporta link")}>
             <Download className="h-4 w-4" />
-          </Button>}
-          {isFullEdit && !visualMode && (
+          </Button>
+          {isFullEdit && (
             <Button onClick={handleImportFile} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Import links", "Importa link")} title={tr("Import links", "Importa link")}>
               <Upload className="h-4 w-4" />
             </Button>
           )}
         </div>
-      </div>
+      </div>}
+
+      {visualMode && saveError && <p className="text-sm font-medium text-red-600" role="alert">{saveError}</p>}
+      {visualMode && visualHeaderSlot ? createPortal(
+        <div className="admin-link-actions">
+          {addContentAction}
+          {deleteFocusedAction}
+        </div>,
+        visualHeaderSlot,
+      ) : null}
 
       {atBlockLimit && (
         <div className="admin-inline-plan-lock mb-4">
@@ -1133,7 +1099,7 @@ export const LinkManager = ({
           </DialogContent>
         </Dialog>
       )}
-      {workingLinks.length === 0 ? (
+      {visualMode && !focusedLink ? null : workingLinks.length === 0 ? (
         <Card className="admin-empty-state">
             <div className="space-y-4">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
@@ -1176,13 +1142,6 @@ export const LinkManager = ({
           {renderedLinks.map(({ link, index }) => (
             <div
               key={link.id}
-              draggable={canDrag}
-              onDragStart={canDrag ? (e) => handleDragStart(e, link.id) : undefined}
-              onDragOver={canDrag ? handleDragOver : undefined}
-              onDragEnter={canDrag ? () => handleDragEnter(link.id) : undefined}
-              onDrop={canDrag ? (e) => handleDrop(e, link.id) : undefined}
-              onDragEnd={canDrag ? handleDragEnd : undefined}
-              className={dragOverId === link.id ? 'rounded-lg ring-2 ring-blue-400/50' : ''}
             >
               {link.type === 'text' ? (
                 <TextCard
@@ -1193,7 +1152,6 @@ export const LinkManager = ({
                   draft={previewDrafts.get(String(link.id))}
                   savedRevision={savedRevision}
                   onDelete={deleteLink}
-                  isDragging={draggedItem === link.id}
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
                   editMode={editMode}
@@ -1220,7 +1178,6 @@ export const LinkManager = ({
                   onDelete={deleteLink}
                   onMoveUp={() => moveByOffset(link.id, -1)}
                   onMoveDown={() => moveByOffset(link.id, 1)}
-                  isDragging={draggedItem === link.id}
                   editMode={editMode}
                   publicPreviewStyle={publicPreviewStyle(index)}
                   defaultSurfaceEffect={theme.contentCardEffect}
@@ -1240,12 +1197,12 @@ export const LinkManager = ({
         </fieldset>
       )}
 
-      {typeof document !== "undefined" && !isViewOnly && (hasUnsavedChanges || savedNotice) ? createPortal(
+      {typeof document !== "undefined" && !isViewOnly && (editingLinkId || hasUnsavedChanges || savedNotice) ? createPortal(
         <div className="admin-profile-save-layer">
-          {hasUnsavedChanges && (
+          {(editingLinkId || hasUnsavedChanges) && (
             <div className="admin-profile-save-float">
               <Button type="button" variant="outline" size="sm" onClick={revertUnsavedChanges} disabled={busy}>
-                <RotateCcw className="h-4 w-4" /> {tr("Revert", "Ripristina")}
+                <X className="h-4 w-4" /> {tr("Cancel", "Annulla")}
               </Button>
               <Button type="button" size="sm" onClick={handleSave} disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
                 {busy ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}

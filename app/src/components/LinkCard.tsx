@@ -110,7 +110,6 @@ interface LinkCardProps {
   onPreview?: (id: string, link: LinkData | null) => void;
   onPreparingChange?: (id: string, preparing: boolean) => void;
   onDelete: (id: string) => void;
-  isDragging?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
@@ -153,7 +152,6 @@ export const LinkCard = ({
   onPreview,
   onPreparingChange,
   onDelete,
-  isDragging,
   onMoveUp,
   onMoveDown,
   editMode = 'full',
@@ -611,15 +609,8 @@ export const LinkCard = ({
   if (!isEditing) {
     return (
       <div
-        className={`group relative transition-smooth ${
-          isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
-        }`}
+        className={`group relative transition-smooth ${!isVisible ? 'opacity-40' : ''}`}
       >
-        {canReorder && (
-          <div className="admin-card-drag-handle absolute left-2 top-2 z-20 rounded-md bg-white/90 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
-          </div>
-        )}
         <div>
           <div
             className="public-block-preview pointer-events-none"
@@ -884,23 +875,14 @@ export const LinkCard = ({
 
   return (
     <section
-      className={`admin-block-editor-shell group relative ${
-        isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
-      }`}
+      className={`admin-block-editor-shell group relative ${!isVisible ? 'opacity-40' : ''}`}
     >
-      {canReorder && (
-        <div className="admin-card-drag-handle absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </div>
-      )}
-      
-      <div className={canReorder ? "admin-card-edit-body ml-6" : "admin-card-edit-body"}>
+      <div className="admin-card-edit-body">
         {isEditing ? (
             <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             {!isSocialRow && (isFullEdit || canEditStyle) && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Content hierarchy</p>
                 <p className="text-sm font-semibold text-slate-900">Title &amp; typography</p>
               </div>
               <div className="space-y-3">
@@ -1005,7 +987,6 @@ export const LinkCard = ({
                 {!isSocialRow && !isMap && (!isSeparator || showUrlField) && (
                   <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                     <div className="mb-3">
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">{isInternalLinks ? tr("Introduction", "Introduzione") : tr("Destination", "Destinazione")}</p>
                       <p className="text-sm font-semibold text-slate-900">{isInternalLinks ? tr("Section description", "Descrizione della sezione") : tr("Description & link", "Descrizione e link")}</p>
                     </div>
                     <div className="space-y-3">
@@ -1749,7 +1730,6 @@ export const LinkCard = ({
             {/* Link Scheduler */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Publishing</p>
                 <p className="text-sm font-semibold text-slate-900">{isMenu ? tr('Menu availability schedule', 'Programmazione disponibilità menu') : tr('Status, campaign & schedule', 'Stato, campagna e programmazione')}</p>
               </div>
               {!schedulingEnabled && (
@@ -1868,7 +1848,6 @@ export const LinkCard = ({
             {isVideo && canEditImages && (
               <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                 <div className="mb-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Video</p>
                   <p className="text-sm font-semibold text-slate-900">Uploaded media</p>
                 </div>
                 <div className="space-y-3">
@@ -1932,7 +1911,6 @@ export const LinkCard = ({
             {canEditImages && !isSeparator && !isSocialRow && !isInternalLinks && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Media</p>
                 <p className="text-sm font-semibold text-slate-900">Icon &amp; cover image</p>
               </div>
               <div className="space-y-4">
@@ -2033,7 +2011,6 @@ export const LinkCard = ({
             {canEditStyle && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Appearance</p>
                 <p className="text-sm font-semibold text-slate-900">Size &amp; colors</p>
               </div>
               <div className="space-y-4">

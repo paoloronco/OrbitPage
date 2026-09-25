@@ -135,7 +135,7 @@ describe("VisualSiteEditor", () => {
       />,
     );
 
-    expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Content block</h2><span>7 blocks</span></header>');
+    expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
     expect(html.match(/<h2>Content block<\/h2>/g)).toHaveLength(1);
   });
 
@@ -163,7 +163,7 @@ describe("VisualSiteEditor", () => {
         />,
       );
 
-      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Selected card</h2><span>Edit the selected card.</span></header>');
+      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Selected card</h2><span>Edit the selected card.</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
       expect(html).not.toContain('<h2>Content block</h2>');
     } finally {
       vi.unstubAllGlobals();

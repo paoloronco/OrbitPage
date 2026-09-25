@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, GripVertical, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole, RotateCcw } from "@/components/ui/material-icons";
+import { Edit, Trash2, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole, RotateCcw } from "@/components/ui/material-icons";
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
@@ -20,7 +20,6 @@ interface TextCardProps {
   onPreview?: (id: string, link: LinkData | null) => void;
   onPreparingChange?: (id: string, preparing: boolean) => void;
   onDelete: (id: string) => void;
-  isDragging?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   editMode?: LinkEditMode;
@@ -37,7 +36,7 @@ interface TextCardProps {
   onEditingChange?: (id: string, editing: boolean) => void;
 }
 
-export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelete, isDragging, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest, savedRevision = 0, draft, editing, onEditingChange }: TextCardProps) => {
+export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelete, onMoveUp, onMoveDown, editMode = 'full', publicPreviewStyle, defaultSurfaceEffect = 'solid', inheritedBackgroundColor = '#000000', inheritedTextColor = '#ffffff', schedulingEnabled = true, managePlanHref = "/dashboard/billing", editRequest, savedRevision = 0, draft, editing, onEditingChange }: TextCardProps) => {
   const [internalEditing, setInternalEditing] = useState(false);
   const isEditing = editing ?? internalEditing;
   const setIsEditing = useCallback((next: boolean) => {
@@ -184,8 +183,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
   };
 
   const isVisible = link.isActive !== false;
-  const canReorder = isFullEdit;
-
   const renderAdminControls = () => canEdit ? (
     <div className="admin-card-controls flex gap-1 rounded-md border border-slate-200 bg-white/95 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
       {isFullEdit && onMoveUp && (
@@ -248,15 +245,8 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
   if (!isEditing) {
     return (
       <div
-        className={`group relative transition-smooth ${
-          isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
-        }`}
+        className={`group relative transition-smooth ${!isVisible ? 'opacity-40' : ''}`}
       >
-        {canReorder && (
-          <div className="admin-card-drag-handle absolute left-2 top-2 z-20 rounded-md bg-white/90 p-1 opacity-0 shadow-sm transition-smooth group-hover:opacity-100 cursor-grab active:cursor-grabbing">
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
-          </div>
-        )}
         <div
           className="public-block-preview pointer-events-none"
           data-surface-effect={link.surfaceEffect && link.surfaceEffect !== 'inherit' ? link.surfaceEffect : defaultSurfaceEffect}
@@ -282,22 +272,13 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
 
   return (
     <section
-      className={`admin-block-editor-shell group relative ${
-        isDragging ? 'opacity-50 rotate-2' : !isVisible ? 'opacity-40' : ''
-      }`}
+      className={`admin-block-editor-shell group relative ${!isVisible ? 'opacity-40' : ''}`}
     >
-      {isFullEdit && (
-        <div className="admin-card-drag-handle absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-smooth cursor-grab active:cursor-grabbing">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </div>
-      )}
-
-      <div className={isFullEdit ? "admin-card-edit-body ml-6" : "admin-card-edit-body"}>
+      <div className="admin-card-edit-body">
         {isEditing ? (
           <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Content</p>
                 <p className="text-sm font-semibold text-slate-900">Title, text &amp; typography</p>
               </div>
               <div className="space-y-3">
@@ -382,7 +363,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Clickable List Items */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Destination</p>
                 <p className="text-sm font-semibold text-slate-900">List items &amp; link</p>
               </div>
               <div className="space-y-3">
@@ -501,7 +481,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Link Scheduler */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Publishing</p>
                 <p className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</p>
               </div>
             {!schedulingEnabled && (
@@ -605,7 +584,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Icon Upload */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Media</p>
                 <p className="text-sm font-semibold text-slate-900">Icon &amp; cover image</p>
               </div>
               <div className="space-y-4">
@@ -706,7 +684,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Size Selection */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Appearance</p>
                 <p className="text-sm font-semibold text-slate-900">Surface, size &amp; colors</p>
               </div>
               <div className="space-y-4">
