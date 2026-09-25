@@ -102,6 +102,7 @@ export function VisualSiteEditor({
   const [mobilePreviewSlot, setMobilePreviewSlot] = useState<HTMLElement | null>(null);
   const [previewVisible, setPreviewVisible] = useState(true);
   const previewEnabled = section === "menu" || section === "pages" ? Boolean(renderPreview) : section !== "shop";
+  const previewCanCollapse = isPhone && previewEnabled && section !== "menu" && section !== "links";
   const Inspector = previewEnabled || section === "menu" || section === "pages" ? "aside" : "section";
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
@@ -121,7 +122,7 @@ export function VisualSiteEditor({
       onSelect("profile");
       return;
     }
-    onSelect("links", target.id);
+    onSelect("links", target.id === selectedLinkId ? undefined : target.id);
   };
 
   useEffect(() => {
@@ -202,7 +203,7 @@ export function VisualSiteEditor({
         ? createPortal(previewDeviceToggle, mobilePreviewSlot)
         : null}
 
-      {isPhone && previewEnabled && section !== "menu" && (
+      {previewCanCollapse && (
         <button
           aria-controls="visual-site-editor-preview"
           aria-expanded={previewVisible}
@@ -225,16 +226,16 @@ export function VisualSiteEditor({
         </div>
       )}
 
-      <div className={`visual-site-editor__workspace${isPhone && section !== "menu" && !previewVisible ? " visual-site-editor__workspace--preview-hidden" : ""}`}>
+      <div className={`visual-site-editor__workspace${previewCanCollapse && !previewVisible ? " visual-site-editor__workspace--preview-hidden" : ""}`}>
         {previewEnabled && <div
           className="visual-site-editor__canvas"
           data-device={device}
-          hidden={isPhone && section !== "menu" && !previewVisible}
+          hidden={previewCanCollapse && !previewVisible}
           id="visual-site-editor-preview"
         >
           <div className="visual-site-editor__canvas-note">
             <MousePointerClick aria-hidden="true" size={15} />
-            <span>{previewHint || tr("Click profile, cards or background to edit", "Clicca profilo, card o sfondo per modificare")}</span>
+            <span>{previewHint || tr("Click profile or cards to edit", "Clicca profilo o card per modificare")}</span>
           </div>
           {renderPreview ? renderPreview(device) : (
             <LivePreview

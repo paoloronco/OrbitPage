@@ -898,7 +898,7 @@ export const LinkCard = ({
               {canEditStyle && (
               <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label htmlFor={`link-card-title-size-${link.id}`} className="text-xs">Title Font Size (px)</Label>
+                <Label htmlFor={`link-card-title-size-${link.id}`} className="admin-paired-field-label text-xs">Title Font Size (px)</Label>
                 <Input
                   id={`link-card-title-size-${link.id}`}
                   type="number"
@@ -908,7 +908,7 @@ export const LinkCard = ({
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor={`link-card-description-size-${link.id}`} className="text-xs">Description Font Size (px)</Label>
+                <Label htmlFor={`link-card-description-size-${link.id}`} className="admin-paired-field-label text-xs">Description Font Size (px)</Label>
                 <Input
                   id={`link-card-description-size-${link.id}`}
                   type="number"
@@ -2053,7 +2053,7 @@ export const LinkCard = ({
             <div className={`grid gap-2 ${isSeparator && separatorData.boxed !== true ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {(!isSeparator || separatorData.boxed === true) && (
                 <div className="space-y-1">
-                <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="admin-paired-field-label flex items-center justify-between gap-2 text-xs">
                   <span>{isSeparator ? 'Full Background' : 'Background'}</span>
                   <span className="font-normal text-slate-500">{editLink.backgroundColor ? 'Card override' : 'Theme color'}</span>
                 </div>
@@ -2065,7 +2065,7 @@ export const LinkCard = ({
                 </div>
               )}
               <div className="space-y-1">
-                <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="admin-paired-field-label flex items-center justify-between gap-2 text-xs">
                   <span>{isSeparator ? 'Line/Text Color' : 'Text Color'}</span>
                   <span className="font-normal text-slate-500">{editLink.textColor ? 'Card override' : 'Theme color'}</span>
                 </div>

@@ -358,6 +358,7 @@
 }
 
 .visual-site-editor__inspector {
+  align-self: stretch;
   min-width: 0;
   border-width: 0 0 0 1px;
 }
@@ -368,7 +369,7 @@
   gap: 4px;
   padding: 16px 18px 14px;
   border-bottom: 1px solid #e2e7ef;
-  background: #fbfcfe;
+  background: #fff;
 }
 
 .visual-site-editor__inspector-heading h2 {
@@ -807,6 +808,12 @@
 }
 
 @media (max-width: 600px) {
+  .visual-site-editor .admin-paired-field-label {
+    min-height: 2.7em;
+    align-items: flex-start;
+    line-height: 1.35;
+  }
+
   .admin-new-ui-toggle {
     width: 50px;
     min-width: 50px;

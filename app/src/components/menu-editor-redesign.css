@@ -1693,11 +1693,11 @@
 .menu-editor-stack .menu-settings-visibility small { color: #64748b; font-size: .72rem; }
 /* Unified menu hierarchy: categories and their indented items share one list. */
 .menu-editor-stack--visual .menu-unified-panel { min-width: 0; overflow: hidden; border: 1px solid #d9e2ed; border-radius: 10px; background: #fff; }
-.menu-unified-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 74px; padding: 13px 18px; border-bottom: 1px solid #e0e7f1; }
-.menu-unified-header__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.menu-unified-header { min-height: 74px; padding: 13px 18px; border-bottom: 1px solid #e0e7f1; }
 .menu-unified-layout { display: grid; min-width: 0; }
 .menu-unified-list { display: grid; align-content: start; gap: 15px; min-width: 0; padding: 18px; background: #f8faff; }
-.menu-unified-toolbar { grid-template-columns: minmax(0, 1fr) minmax(9rem, .36fr) minmax(8rem, .3fr); }
+.menu-unified-toolbar { grid-template-columns: minmax(14rem, 1fr) minmax(9rem, .36fr) minmax(8rem, .3fr) auto auto; width: 100%; }
+.menu-unified-toolbar > button { height: 44px; white-space: nowrap; }
 .menu-unified-side { min-width: 0; background: #fff; }
 .menu-unified-side .menu-category-editor { margin: 0; padding: 20px; border: 0; border-radius: 0; }
 .menu-unified-side .menu-category-editor__heading { grid-template-columns: minmax(0, 1fr) auto auto; }
@@ -1727,9 +1727,8 @@
 
 @container menu-workspace (max-width: 47.99rem) {
   .menu-unified-panel:not(.is-editing) .menu-unified-side, .menu-unified-panel.is-editing .menu-unified-list { display: none; }
-  .menu-unified-toolbar { grid-template-columns: minmax(0, 1fr); }
-  .menu-unified-header { align-items: flex-start; flex-wrap: wrap; }
-  .menu-unified-header__actions { justify-content: flex-start; }
+  .menu-unified-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .menu-unified-toolbar .menu-category-search { grid-column: 1 / -1; }
   .menu-unified-items .menu-item-picker__item { grid-template-columns: 16px 42px minmax(0, 1fr) 16px; }
   .menu-unified-items .menu-item-picker__thumb { width: 42px; height: 42px; }
   .menu-unified-item__price { display: none; }
@@ -1739,6 +1738,5 @@
   .menu-unified-list { padding: 12px; }
   .menu-unified-subcategory { margin-left: 10px; }
   .menu-unified-items { margin-left: 12px; }
-  .menu-unified-header__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
-  .menu-unified-header__actions > button { min-width: 0; white-space: normal; }
+  .menu-unified-toolbar > button { min-width: 0; white-space: normal; }
 }

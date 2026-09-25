@@ -44,6 +44,7 @@ interface LinkManagerProps {
   visualMode?: boolean;
   visualFocusLinkId?: string | null;
   visualEditRequest?: number;
+  onVisualFocusChange?: (linkId: string | null) => void;
 }
 
 type BlockLibraryCategoryId = "essential" | "services" | "structure" | "media" | "engagement";
@@ -94,6 +95,7 @@ export const LinkManager = ({
   visualMode = false,
   visualFocusLinkId = null,
   visualEditRequest,
+  onVisualFocusChange,
 }: LinkManagerProps) => {
   const { tr } = useAppI18n();
   const [busy, setBusy] = useState(false);
@@ -177,6 +179,10 @@ export const LinkManager = ({
       : null);
   }, [visualMode]);
 
+  useEffect(() => {
+    if (visualMode && !visualFocusLinkId) setEditingLinkId(null);
+  }, [visualFocusLinkId, visualMode]);
+
   useEffect(() => () => {
     if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
   }, []);
@@ -219,7 +225,8 @@ export const LinkManager = ({
 
   const updateEditingLink = useCallback((id: string, editing: boolean) => {
     setEditingLinkId((current) => editing ? String(id) : current === String(id) ? null : current);
-  }, []);
+    if (visualMode && !editing && String(id) === String(visualFocusLinkId)) onVisualFocusChange?.(null);
+  }, [onVisualFocusChange, visualFocusLinkId, visualMode]);
 
   const revertUnsavedChanges = () => {
     setWorkingLinks(links);
@@ -1164,7 +1171,7 @@ export const LinkManager = ({
                   maxVideoUploadBytes={maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
                   editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}
-                  editing={editingLinkId === String(link.id)}
+                  editing={visualMode ? true : editingLinkId === String(link.id)}
                   onEditingChange={updateEditingLink}
                 />
               ) : (
@@ -1188,7 +1195,7 @@ export const LinkManager = ({
                   availablePages={availablePages}
                   internalDestinations={internalDestinations}
                   editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}
-                  editing={editingLinkId === String(link.id)}
+                  editing={visualMode ? true : editingLinkId === String(link.id)}
                   onEditingChange={updateEditingLink}
                 />
               )}
