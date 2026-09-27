@@ -1418,33 +1418,33 @@ const TEXT_FILE_DEFINITIONS = [
     key: 'robots',
     path: '/robots.txt',
     label: 'robots.txt',
-    description: 'Crawler access rules and sitemap discovery.',
+    description: 'Crawler access rules for this public page.',
   },
   {
     key: 'llms',
     path: '/llms.txt',
     aliases: ['/llm.txt'],
     label: 'llms.txt',
-    description: 'LLM-readable project overview and canonical resources.',
+    description: 'The canonical LLM-readable summary. llm.txt is served as an alias.',
   },
   {
     key: 'humans',
     path: '/humans.txt',
     label: 'humans.txt',
-    description: 'Human-readable credits, tech stack, and repository links.',
+    description: 'Human-readable page credits and ownership notes.',
   },
   {
     key: 'security',
     path: '/.well-known/security.txt',
     aliases: ['/security.txt'],
     label: 'security.txt',
-    description: 'Responsible disclosure and security contact metadata.',
+    description: 'Responsible disclosure contact metadata.',
   },
   {
     key: 'ai',
     path: '/ai.txt',
     label: 'ai.txt',
-    description: 'Plain-text AI/crawler usage guidance for this deployment.',
+    description: 'Optional plain-text guidance for AI systems.',
   },
 ];
 const TEXT_FILE_KEYS = new Set(TEXT_FILE_DEFINITIONS.map((file) => file.key));

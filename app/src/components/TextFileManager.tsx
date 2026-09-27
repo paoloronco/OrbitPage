@@ -234,10 +234,10 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
               key={file.key}
               type="button"
               onClick={() => selectFile(file)}
-              className={`w-full rounded-lg border px-3 py-3 text-left transition ${
+              className={`w-full rounded-lg border-0 px-3 py-3 text-left transition-colors ${
                 activeFile?.key === file.key
-                  ? "border-blue-300 bg-blue-50 text-blue-950"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  ? "bg-blue-50 text-blue-950"
+                  : "bg-transparent text-slate-700 hover:bg-slate-50"
               }`}
             >
               <span className="flex items-center justify-between gap-2">

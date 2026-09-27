@@ -1595,6 +1595,13 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(response.body.data.files.map((file) => file.key)).toEqual(['robots', 'llms', 'humans', 'security', 'ai']);
+    expect(response.body.data.files.map((file) => file.description)).toEqual([
+      'Crawler access rules for this public page.',
+      'The canonical LLM-readable summary. llm.txt is served as an alias.',
+      'Human-readable page credits and ownership notes.',
+      'Responsible disclosure contact metadata.',
+      'Optional plain-text guidance for AI systems.',
+    ]);
     expect(response.body.data.files.find((file) => file.key === 'humans').content).toContain('Custom: yes');
   });
 
