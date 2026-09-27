@@ -337,11 +337,6 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         </span>
         <div>
           <h3 className="text-lg font-semibold">{tr("Backup & Restore", "Backup e ripristino")}</h3>
-          <p className="text-sm leading-6 text-muted-foreground">
-            {hosted
-              ? tr("Choose exactly which managed-page sections to export or restore. Self-hosted backups can migrate referenced page media, while accounts, passwords, billing and internal files stay excluded.", "Scegli esattamente quali sezioni della pagina gestita esportare o ripristinare. I backup self-hosted possono trasferire i media usati dalla pagina; account, password, fatturazione e file interni restano esclusi.")
-              : tr("Choose which database sections to export or restore. Images can be added as a portable ZIP when available.", "Scegli quali sezioni del database esportare o ripristinare. Quando disponibili, le immagini possono essere aggiunte in uno ZIP portabile.")}
-          </p>
         </div>
       </div>
 
@@ -366,7 +361,6 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h4 id="backup-export-heading" className="text-sm font-semibold">Export</h4>
-            <p className="text-xs leading-5 text-muted-foreground">{tr("The downloaded file contains only the checked sections.", "Il file scaricato contiene solo le sezioni selezionate.")}</p>
           </div>
           <div className="flex gap-3 text-xs">
             <button type="button" className="font-medium text-primary hover:underline" onClick={() => setExportSections(exportableSections)} disabled={busy}>{tr("Select all", "Seleziona tutto")}</button>
