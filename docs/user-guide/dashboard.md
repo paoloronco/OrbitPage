@@ -35,9 +35,9 @@ Profile-card overrides take precedence over the active theme. Use **Use theme** 
 **Content** groups four destinations:
 
 - **Link** contains the profile and ordered content blocks.
-- **Menu** creates the native venue menu at `/menu`.
+- **Menu** creates the native venue menu below the localized public prefix, for example `/en-US/my-page/menu`.
 - **Shop** publishes the Stripe-powered product and service catalog at `/shop` on OrbitPage SaaS.
-- **Pages** creates focused public subpages with their own slug, title, description, publication state, and blocks.
+- **Pages** creates focused public subpages below the same locale and primary slug, for example `/it-IT/my-page/services`.
 
 One active destination is always selected as the homepage. Choose a different homepage before deactivating the current one. Deactivation requires confirmation and keeps the destination's content saved for later reactivation.
 

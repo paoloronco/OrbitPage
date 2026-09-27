@@ -71,7 +71,7 @@ export const initializeDatabase = () => {
       `);
 
       // Singleton installation settings. Existing installations remain valid
-      // when no page_slug row exists and continue serving the page at root.
+      // when no page_slug row exists; the Account page can add one after upgrade.
       db.run(`
         CREATE TABLE IF NOT EXISTS instance_settings (
           key TEXT PRIMARY KEY,

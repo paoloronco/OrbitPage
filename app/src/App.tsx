@@ -1,10 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route, useLocation, useParams } from "react-router-dom";
 import { Component, lazy, Suspense, useLayoutEffect, useRef, type ErrorInfo, type ReactNode } from "react";
 import { getActiveBasePath } from "@/lib/base-path";
 import { AppI18nProvider, resolveApplicationErrorLocale, type AppLocale } from "@/lib/i18n";
+import { publicLocaleFromSlug } from "@/lib/public-routing";
 
 const Index = lazy(() => import("./pages/Index"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -149,6 +150,14 @@ function RoutedApplication() {
           <Route path="/about" element={<About />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/newsletter/status" element={<Newsletter />} />
+          <Route path="/:locale/:pageSlug" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:pageSlug/links" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:pageSlug/menu" element={<LocalizedPublicRoute><Menu /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:pageSlug/privacy" element={<LocalizedPublicRoute><Privacy /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:pageSlug/cookies" element={<LocalizedPublicRoute><Cookies /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:pageSlug/newsletter" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:pageSlug/newsletter/status" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:pageSlug/:subpage" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
           <Route path="/:subpage" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
@@ -156,6 +165,14 @@ function RoutedApplication() {
       </Suspense>
     </AppI18nProvider>
   );
+}
+
+function LocalizedPublicRoute({ children }: { children: ReactNode }) {
+  const { locale, pageSlug } = useParams();
+  if (!publicLocaleFromSlug(locale) || !pageSlug || !/^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])$/.test(pageSlug)) {
+    return <NotFound />;
+  }
+  return children;
 }
 
 const App = () => (

@@ -19,10 +19,17 @@ export function SelfHostedAccountActions({ publicPageHref }: { publicPageHref: s
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmation, setConfirmation] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
+  const [slug, setSlug] = useState('');
 
   useEffect(() => {
-    personalPageApi.status().then(setStatus).catch((reason) => setError(reason instanceof Error ? reason.message : tr('Unable to load the public page status.', 'Impossibile caricare lo stato della pagina pubblica.')));
+    personalPageApi.status().then((nextStatus) => {
+      setStatus(nextStatus);
+      setSlug(nextStatus.slug || '');
+    }).catch((reason) => setError(reason instanceof Error ? reason.message : tr('Unable to load the public page status.', 'Impossibile caricare lo stato della pagina pubblica.')));
   }, [tr]);
+
+  const normalizedSlug = slug.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-{2,}/g, '-').replace(/^-+/, '').slice(0, 48);
+  const slugReady = /^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])$/.test(normalizedSlug);
 
   const removePage = async () => {
     if (!status) return;
@@ -45,10 +52,24 @@ export function SelfHostedAccountActions({ publicPageHref }: { publicPageHref: s
     setBusy(true);
     setError('');
     try {
-      await personalPageApi.create();
+      await personalPageApi.create(normalizedSlug);
       window.location.reload();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : tr('The public page could not be created.', 'Non è stato possibile creare la pagina pubblica.'));
+      setBusy(false);
+    }
+  };
+
+  const saveSlug = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!slugReady) return;
+    setBusy(true);
+    setError('');
+    try {
+      await personalPageApi.setSlug(normalizedSlug);
+      window.location.reload();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : tr('The page slug could not be saved.', 'Non è stato possibile salvare lo slug della pagina.'));
       setBusy(false);
     }
   };
@@ -80,11 +101,12 @@ export function SelfHostedAccountActions({ publicPageHref }: { publicPageHref: s
         </div>
       </div>
       {status?.active ? <div className="oss-account-page-action">
-        <div><strong>{publicPageHref}</strong><span>{tr('Published', 'Pubblicata')}</span></div>
+        <div><strong>{status.slug ? publicPageHref : tr('Choose a slug to publish localized URLs.', 'Scegli uno slug per pubblicare gli URL localizzati.')}</strong><span>{status.slug ? tr('Published', 'Pubblicata') : tr('Slug required', 'Slug richiesto')}</span></div>
         <Button type="button" variant="destructive" disabled={DEMO_MODE} onClick={() => { setError(''); setDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Remove personal page', 'Rimuovi pagina personale')}</Button>
-      </div> : status ? <form className="oss-account-page-create" onSubmit={createPage}>
-        <div><strong>{publicPageHref}</strong></div>
-        <Button type="submit" variant="gradient" disabled={busy || DEMO_MODE}><Globe2 className="h-4 w-4" />{tr('Create personal page', 'Crea pagina personale')}</Button>
+      </div> : null}
+      {status ? <form className="oss-account-page-create" onSubmit={status.active ? saveSlug : createPage}>
+        <div><Label htmlFor="personal-page-slug">{tr('Page slug', 'Slug pagina')}</Label><Input id="personal-page-slug" value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="your-page" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></div>
+        <Button type="submit" variant="gradient" disabled={busy || DEMO_MODE || !slugReady || (status.active && normalizedSlug === status.slug)}><Globe2 className="h-4 w-4" />{status.active ? tr('Save slug', 'Salva slug') : tr('Create personal page', 'Crea pagina personale')}</Button>
       </form> : null}
       {error && <p className="oss-account-error" role="alert">{error}</p>}
     </Card>

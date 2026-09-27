@@ -52,6 +52,7 @@ describe('public URL endpoint', () => {
       success: true,
       publicUrl: 'https://links.example.test/orbitpage/',
       source: 'request',
+      slug: null,
     });
   });
 });

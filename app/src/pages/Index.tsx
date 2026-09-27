@@ -15,6 +15,7 @@ import { trackPublicPageView } from "@/lib/public-runtime";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { getEmbedData } from "@/lib/link-blocks";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
+import { parseLocalizedPublicPath } from "@/lib/public-routing";
 
 interface ProfileData {
   name: string;
@@ -165,7 +166,8 @@ const Index = () => {
 
         if (!currentStaticSnapshot) {
           const basePath = getActiveBasePath();
-          const relativePath = window.location.pathname.slice(basePath.length).replace(/^\/+|\/+$/g, '');
+          const localizedRoute = parseLocalizedPublicPath(window.location.pathname, basePath);
+          const relativePath = (localizedRoute?.routePath || window.location.pathname.slice(basePath.length)).replace(/^\/+|\/+$/g, '');
           const routing = pageData.menu?.routing;
           if (relativePath === 'links' && routing?.linkEnabled === false) {
             window.location.replace(withTenantBasePath('/'));

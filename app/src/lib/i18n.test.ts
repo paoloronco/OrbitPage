@@ -10,11 +10,13 @@ describe("editor i18n", () => {
     expect(normalizeAppLocale("sv-SE")).toBeNull();
   });
 
-  it("uses only explicit editor preferences and keeps public pages language-neutral", () => {
+  it("uses explicit editor preferences and the public URL locale", () => {
     expect(resolveInitialAppLocale("editor", "?locale=fr", "de")).toBe("fr");
     expect(resolveInitialAppLocale("editor", "", "de")).toBe("de");
     expect(resolveInitialAppLocale("editor", "", null)).toBe("en");
-    expect(resolveInitialAppLocale("public", "?locale=ar", "ja")).toBe("en");
+    expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/it-IT/paolo")).toBe("it");
+    expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/en-US/paolo")).toBe("en");
+    expect(resolveInitialAppLocale("public", "", null, "/orbitpage/it-IT/paolo", "/orbitpage")).toBe("it");
   });
 
   it("keeps the emergency fallback in the active interface language", () => {
