@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, type InputHTMLAttributes, useEffect, useMemo, useState } from "react";
+import { FormEvent, type InputHTMLAttributes, useEffect, useState } from "react";
 import {
   CalendarClock,
   Check,
@@ -236,6 +236,11 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
     fromName: "",
     fromEmail: "",
     replyTo: "",
+    senderType: "business",
+    footerText: "",
+    senderAddress: "",
+    privacyPolicyUrl: "",
+    termsUrl: "",
   });
   const [subscriber, setSubscriber] = useState({
     email: "",
@@ -268,6 +273,11 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
         fromName: result.settings.fromName,
         fromEmail: result.settings.fromEmail,
         replyTo: result.settings.replyTo || "",
+        senderType: result.settings.senderType,
+        footerText: result.settings.footerText,
+        senderAddress: result.settings.senderAddress,
+        privacyPolicyUrl: result.settings.privacyPolicyUrl,
+        termsUrl: result.settings.termsUrl,
       });
     } catch (requestError) {
       setError(
@@ -450,16 +460,6 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
     }
   }
 
-  const usagePercent = useMemo(() => {
-    if (!data?.limits.maxSendsPerMonth) return 0;
-    return Math.min(
-      100,
-      ((data.limits.sendsThisMonth + data.limits.reservedThisMonth) /
-        data.limits.maxSendsPerMonth) *
-        100,
-    );
-  }, [data]);
-
   if (loading)
     return (
       <section className="newsletter-loading">
@@ -485,6 +485,19 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
     );
   return (
     <section className="newsletter-workspace">
+      {data.signupUrl && (
+        <header className="newsletter-heading">
+          <button
+            className="button secondary compact"
+            onClick={copySignupUrl}
+            type="button"
+          >
+            <Copy aria-hidden="true" size={15} />
+            Copy signup link
+          </button>
+        </header>
+      )}
+
       <nav aria-label="Newsletter sections" className="newsletter-tabs">
         {(
           ["overview", "campaigns", "subscribers", "smtp"] as NewsletterView[]
@@ -495,7 +508,7 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
             onClick={() => setView(item)}
             type="button"
           >
-            {item === "smtp" ? "SMTP" : item[0].toUpperCase() + item.slice(1)}
+            {item === "smtp" ? "Settings" : item[0].toUpperCase() + item.slice(1)}
           </button>
         ))}
       </nav>
@@ -556,24 +569,6 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
               <small>{data.settings.host || "No server configured"}</small>
             </article>
           </section>
-          <section className="newsletter-usage-band">
-            <div>
-              <strong>Monthly delivery allowance</strong>
-              <span>
-                {data.limits.sendsThisMonth + data.limits.reservedThisMonth}{" "}
-                used or reserved{" "}
-                {data.limits.maxSendsPerMonth === null
-                  ? ""
-                  : `of ${data.limits.maxSendsPerMonth}`}
-              </span>
-            </div>
-            <div
-              className="newsletter-usage-track"
-              aria-label={`${Math.round(usagePercent)} percent used`}
-            >
-              <span style={{ transform: `scaleX(${usagePercent / 100})` }} />
-            </div>
-          </section>
           <section className="newsletter-recent">
             <header>
               <div>
@@ -623,8 +618,8 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
           <form className="newsletter-smtp-form" onSubmit={saveSmtp}>
             <header>
               <div>
-                <p className="dashboard-kicker">Connection</p>
-                <h3>Your SMTP server</h3>
+                <p className="dashboard-kicker">Newsletter settings</p>
+                <h3>Sender and delivery</h3>
               </div>
               {data.settings.verifiedAt && (
                 <span className="newsletter-verified">
@@ -634,6 +629,10 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
               )}
             </header>
             <div className="newsletter-form-grid">
+              <div className="newsletter-settings-section wide">
+                <strong>SMTP connection</strong>
+                <span>Connect the server that sends confirmation messages and campaigns.</span>
+              </div>
               <label className="field wide">
                 <span className="label">SMTP host</span>
                 <input
@@ -699,8 +698,12 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                   value={smtp.password}
                 />
               </label>
+              <div className="newsletter-settings-section wide">
+                <strong>Sender profile</strong>
+                <span>Shown on signup pages and used consistently in every newsletter.</span>
+              </div>
               <label className="field">
-                <span className="label">Sender name</span>
+                <span className="label">Business / sender name</span>
                 <input
                   className="input"
                   onChange={(event) =>
@@ -712,6 +715,22 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                   required
                   value={smtp.fromName}
                 />
+              </label>
+              <label className="field">
+                <span className="label">Sender type</span>
+                <select
+                  className="input"
+                  onChange={(event) => setSmtp((value) => ({ ...value, senderType: event.target.value }))}
+                  value={smtp.senderType}
+                >
+                  <option value="individual">Individual / private</option>
+                  <option value="bar">Bar / café</option>
+                  <option value="restaurant">Restaurant</option>
+                  <option value="creator">Creator</option>
+                  <option value="business">Business / shop</option>
+                  <option value="association">Association / nonprofit</option>
+                  <option value="other">Other</option>
+                </select>
               </label>
               <label className="field">
                 <span className="label">Sender email</span>
@@ -744,6 +763,49 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                   value={smtp.replyTo}
                 />
               </label>
+              <label className="field wide">
+                <span className="label">Default footer text <small>optional</small></span>
+                <textarea
+                  className="input"
+                  maxLength={500}
+                  onChange={(event) => setSmtp((value) => ({ ...value, footerText: event.target.value }))}
+                  placeholder="You receive this email because you subscribed to our updates."
+                  rows={3}
+                  value={smtp.footerText}
+                />
+              </label>
+              <label className="field wide">
+                <span className="label">Sender address / legal details <small>optional</small></span>
+                <input
+                  className="input"
+                  maxLength={300}
+                  onChange={(event) => setSmtp((value) => ({ ...value, senderAddress: event.target.value }))}
+                  placeholder="Business name, street, city and country"
+                  value={smtp.senderAddress}
+                />
+              </label>
+              <label className="field">
+                <span className="label">Privacy Policy URL <small>optional</small></span>
+                <input
+                  className="input"
+                  maxLength={2048}
+                  onChange={(event) => setSmtp((value) => ({ ...value, privacyPolicyUrl: event.target.value }))}
+                  placeholder="https://example.com/privacy"
+                  type="url"
+                  value={smtp.privacyPolicyUrl}
+                />
+              </label>
+              <label className="field">
+                <span className="label">Terms URL <small>optional</small></span>
+                <input
+                  className="input"
+                  maxLength={2048}
+                  onChange={(event) => setSmtp((value) => ({ ...value, termsUrl: event.target.value }))}
+                  placeholder="https://example.com/terms"
+                  type="url"
+                  value={smtp.termsUrl}
+                />
+              </label>
             </div>
             <footer>
               <button
@@ -757,7 +819,7 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                 ) : (
                   <Server size={16} />
                 )}
-                Save connection
+                Save settings
               </button>
               <button
                 aria-busy={action === "smtp-test"}

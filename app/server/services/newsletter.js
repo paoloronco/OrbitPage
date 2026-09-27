@@ -23,6 +23,11 @@ export const smtpSchema = z.object({
   username: header(320), password: z.string().max(1024).default(''),
   fromName: header(100), fromEmail: email,
   replyTo: z.union([z.literal(''), email]).default(''),
+  senderType: z.enum(['individual', 'bar', 'restaurant', 'creator', 'business', 'association', 'other']).default('business'),
+  footerText: z.string().trim().max(500).default(''),
+  senderAddress: z.string().trim().max(300).default(''),
+  privacyPolicyUrl: httpsUrl.default(''),
+  termsUrl: httpsUrl.default(''),
 }).strict();
 export const subscriberSchema = z.object({
   email, name: optionalHeader(100).default(''), consentConfirmed: z.literal(true),
@@ -104,7 +109,10 @@ const publicSettings = (row) => ({
   configured: Boolean(row), passwordConfigured: Boolean(row?.password_enc),
   host: row?.host || '', port: row?.port || 587, secure: row?.port === 465,
   username: row?.username || '', fromName: row?.from_name || '', fromEmail: row?.from_email || '',
-  replyTo: row?.reply_to || null, verifiedAt: row?.verified_at || null, updatedAt: row?.updated_at || null,
+  replyTo: row?.reply_to || null, senderType: row?.sender_type || 'business',
+  footerText: row?.footer_text || '', senderAddress: row?.sender_address || '',
+  privacyPolicyUrl: row?.privacy_policy_url || '', termsUrl: row?.terms_url || '',
+  verifiedAt: row?.verified_at || null, updatedAt: row?.updated_at || null,
 });
 const emptyStats = () => ({ attempted: 0, accepted: 0, rejected: 0, openedUnique: 0, clickedUnique: 0, unsubscribed: 0 });
 const subscriberDto = (row) => ({
@@ -146,15 +154,19 @@ export async function saveSmtpSettings(raw, publicBase) {
     || previous.username !== input.username || previous.from_email !== input.fromEmail || Boolean(input.password);
   const updatedAt = now();
   await dbRun(`INSERT INTO newsletter_settings
-    (id, host, port, username, password_enc, from_name, from_email, reply_to, verified_at, public_origin, updated_at)
-    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (id, host, port, username, password_enc, from_name, from_email, reply_to, sender_type,
+    footer_text, sender_address, privacy_policy_url, terms_url, verified_at, public_origin, updated_at)
+    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(id) DO UPDATE SET host=excluded.host, port=excluded.port, username=excluded.username,
     password_enc=excluded.password_enc, from_name=excluded.from_name, from_email=excluded.from_email,
-    reply_to=excluded.reply_to, verified_at=excluded.verified_at, public_origin=excluded.public_origin,
-    updated_at=excluded.updated_at`, [
+    reply_to=excluded.reply_to, sender_type=excluded.sender_type, footer_text=excluded.footer_text,
+    sender_address=excluded.sender_address, privacy_policy_url=excluded.privacy_policy_url,
+    terms_url=excluded.terms_url, verified_at=excluded.verified_at,
+    public_origin=excluded.public_origin, updated_at=excluded.updated_at`, [
     input.host, input.port, input.username,
     input.password ? encryptSmtpPassword(input.password) : previous.password_enc,
     input.fromName, input.fromEmail, input.replyTo || null,
+    input.senderType, input.footerText, input.senderAddress, input.privacyPolicyUrl, input.termsUrl,
     changed ? null : previous?.verified_at || null, publicBase, updatedAt,
   ]);
   return publicSettings(await settings());
@@ -255,7 +267,20 @@ export async function deleteCampaign(id) {
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 const personalize = (value, subscriber) => String(value).replaceAll('{{name}}', subscriber.name || 'there');
 
-export function emailDocument(campaign, subscriber, deliveryId, publicBase) {
+function newsletterFooter(setting) {
+  const copy = setting.footer_text?.trim() || `You receive this email because you subscribed to updates from ${setting.from_name}.`;
+  const details = [copy, setting.sender_address?.trim()].filter(Boolean);
+  const links = [
+    setting.privacy_policy_url ? { label: 'Privacy Policy', url: setting.privacy_policy_url } : null,
+    setting.terms_url ? { label: 'Terms', url: setting.terms_url } : null,
+  ].filter(Boolean);
+  return {
+    text: [...details, ...links.map((item) => `${item.label}: ${item.url}`)].join('\n'),
+    html: [...details.map(escapeHtml), ...links.map((item) => `<a href="${escapeHtml(item.url)}">${item.label}</a>`)].join('<br>'),
+  };
+}
+
+export function emailDocument(campaign, subscriber, deliveryId, publicBase, setting) {
   const content = { ...designDefaults, ...JSON.parse(campaign.content) };
   const unsubscribeUrl = `${publicBase}/api/newsletter/public/unsubscribe?token=${encodeURIComponent(signNewsletterToken({
     action: 'unsubscribe', subscriberId: subscriber.id, campaignId: campaign.id,
@@ -275,18 +300,27 @@ export function emailDocument(campaign, subscriber, deliveryId, publicBase) {
     ? `<p style="margin:0 0 24px;text-align:${content.textAlign}"><img src="${escapeHtml(content.logoUrl)}" alt="" width="144" style="display:inline-block;width:auto;max-width:144px;max-height:56px;height:auto"></p>` : '';
   const cta = content.ctaLabel && ctaUrl
     ? `<p style="margin:28px 0 8px;text-align:${content.textAlign}"><a href="${escapeHtml(ctaUrl)}" style="display:inline-block;padding:13px 20px;border-radius:${content.buttonRadius}px;background:${content.accentColor};color:${content.buttonTextColor};text-decoration:none;font-weight:700">${escapeHtml(content.ctaLabel)}</a></p>` : '';
+  const persistentFooter = newsletterFooter(setting);
+  const footerText = [content.footerNote, persistentFooter.text].filter(Boolean).join('\n');
+  const footerHtml = [content.footerNote ? escapeHtml(content.footerNote) : '', persistentFooter.html].filter(Boolean).join('<br>');
   return {
     unsubscribeUrl,
     subject: personalize(campaign.subject, subscriber),
-    text: `${personalize(content.headline, subscriber)}\n\n${personalize(content.body, subscriber)}${content.ctaUrl ? `\n\n${content.ctaLabel}: ${content.ctaUrl}` : ''}\n\nUnsubscribe: ${unsubscribeUrl}`,
-    html: `<!doctype html><html><body style="margin:0;background:${content.backgroundColor};color:${content.contentColor};font-family:${fonts[content.fontFamily]}"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(campaign.preheader)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:28px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:${content.containerWidth}px;background:${content.contentBackgroundColor};border-radius:${content.cornerRadius}px;overflow:hidden"><tr><td>${image}</td></tr><tr><td style="padding:34px;text-align:${content.textAlign}">${logo}<p style="margin:0 0 10px;color:${content.accentColor};font-size:12px;font-weight:700;text-transform:uppercase">${escapeHtml(content.eyebrow)}</p><h1 style="margin:0 0 20px;font-size:30px;line-height:1.15;color:${content.contentColor}">${escapeHtml(personalize(content.headline, subscriber))}</h1>${paragraphs}${cta}<p style="margin:34px 0 0;padding-top:20px;border-top:1px solid #e5e7eb;color:${content.contentColor};opacity:.72;font-size:12px;line-height:1.55">${escapeHtml(content.footerNote)}<br><a href="${escapeHtml(unsubscribeUrl)}" style="color:${content.contentColor}">Unsubscribe</a></p></td></tr></table></td></tr></table><img src="${escapeHtml(openUrl)}" width="1" height="1" alt="" style="display:block;width:1px;height:1px"></body></html>`,
+    text: `${personalize(content.headline, subscriber)}\n\n${personalize(content.body, subscriber)}${content.ctaUrl ? `\n\n${content.ctaLabel}: ${content.ctaUrl}` : ''}\n\n${footerText}\nUnsubscribe: ${unsubscribeUrl}`,
+    html: `<!doctype html><html><body style="margin:0;background:${content.backgroundColor};color:${content.contentColor};font-family:${fonts[content.fontFamily]}"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(campaign.preheader)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:28px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:${content.containerWidth}px;background:${content.contentBackgroundColor};border-radius:${content.cornerRadius}px;overflow:hidden"><tr><td>${image}</td></tr><tr><td style="padding:34px;text-align:${content.textAlign}">${logo}<p style="margin:0 0 10px;color:${content.accentColor};font-size:12px;font-weight:700;text-transform:uppercase">${escapeHtml(content.eyebrow)}</p><h1 style="margin:0 0 20px;font-size:30px;line-height:1.15;color:${content.contentColor}">${escapeHtml(personalize(content.headline, subscriber))}</h1>${paragraphs}${cta}<p style="margin:34px 0 0;padding-top:20px;border-top:1px solid #e5e7eb;color:${content.contentColor};opacity:.72;font-size:12px;line-height:1.55">${footerHtml}<br><a href="${escapeHtml(unsubscribeUrl)}" style="color:${content.contentColor}">Unsubscribe</a></p></td></tr></table></td></tr></table><img src="${escapeHtml(openUrl)}" width="1" height="1" alt="" style="display:block;width:1px;height:1px"></body></html>`,
   };
 }
 
 export async function publicLanding() {
   const setting = await settings();
   if (!setting?.verified_at) return null;
-  return { fromName: setting.from_name, publicPageUrl: `${setting.public_origin}/` };
+  return {
+    fromName: setting.from_name,
+    senderType: setting.sender_type || 'business',
+    privacyPolicyUrl: setting.privacy_policy_url || '',
+    termsUrl: setting.terms_url || '',
+    publicPageUrl: `${setting.public_origin}/`,
+  };
 }
 
 export async function subscribe(raw) {
@@ -305,14 +339,15 @@ export async function subscribe(raw) {
   [id, input.email, input.name || null, date, existing?.created_at || date, date]);
   const token = signNewsletterToken({ action: 'confirm', subscriberId: id }, 48 * 3600);
   const confirmUrl = `${setting.public_origin}/api/newsletter/public/confirm?token=${encodeURIComponent(token)}`;
+  const footer = newsletterFooter(setting);
   const client = await transport(setting);
   try {
     await client.sendMail({
       from: { name: setting.from_name, address: setting.from_email }, to: input.email,
       replyTo: setting.reply_to || undefined,
       subject: `Confirm your subscription to ${setting.from_name}`,
-      text: `Confirm your subscription: ${confirmUrl}\n\nIf you did not request this, ignore this message.`,
-      html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1 style="font-size:24px">Confirm your subscription</h1><p>One click confirms that you want to receive updates from ${escapeHtml(setting.from_name)}.</p><p><a href="${escapeHtml(confirmUrl)}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700">Confirm subscription</a></p><p style="color:#667085;font-size:12px">If you did not request this, ignore this message.</p></div>`,
+      text: `Confirm your subscription: ${confirmUrl}\n\nIf you did not request this, ignore this message.\n\n${footer.text}`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1 style="font-size:24px">Confirm your subscription</h1><p>One click confirms that you want to receive updates from ${escapeHtml(setting.from_name)}.</p><p><a href="${escapeHtml(confirmUrl)}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700">Confirm subscription</a></p><p style="color:#667085;font-size:12px">If you did not request this, ignore this message.</p><p style="color:#667085;font-size:12px;line-height:1.55">${footer.html}</p></div>`,
     });
   } finally { client.close(); }
   return { pending: true, alreadySubscribed: false };
@@ -400,7 +435,7 @@ async function sendBatch(id) {
         (id, campaign_id, subscriber_id, email, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, 'sending', ?, ?)`, [deliveryId, id, subscriber.id, subscriber.email, date, date]);
       if (!created.changes) continue;
-      const message = emailDocument(campaign, subscriber, deliveryId, setting.public_origin);
+      const message = emailDocument(campaign, subscriber, deliveryId, setting.public_origin, setting);
       await incrementStat(dbRun, id, 'attempted');
       try {
         const response = await client.sendMail({

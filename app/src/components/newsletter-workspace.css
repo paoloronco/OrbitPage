@@ -64,6 +64,13 @@
   min-width: 0;
 }
 
+.newsletter-heading {
+  align-items: flex-end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+}
+
 
 .newsletter-tabs {
   border-bottom: 1px solid var(--line);
@@ -158,46 +165,6 @@
 
 .newsletter-metrics .newsletter-metric-status {
   font-size: 22px;
-}
-
-.newsletter-usage-band {
-  align-items: center;
-  background: var(--dashboard-brand-soft, #edf2ff);
-  border: 1px solid #cbd8fa;
-  border-radius: 8px;
-  display: grid;
-  gap: 20px;
-  grid-template-columns: minmax(220px, 0.45fr) minmax(280px, 1fr);
-  padding: 17px 20px;
-}
-
-.newsletter-usage-band > div:first-child {
-  display: grid;
-  gap: 4px;
-}
-
-.newsletter-usage-band strong {
-  font-size: 13px;
-}
-
-.newsletter-usage-band span {
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
-.newsletter-usage-track {
-  background: #c9dcd9;
-  border-radius: 999px;
-  height: 7px;
-  overflow: hidden;
-}
-
-.newsletter-usage-track span {
-  background: var(--teal-dark);
-  display: block;
-  height: 100%;
-  transform-origin: left;
-  transition: transform 300ms ease;
 }
 
 .newsletter-recent,
@@ -384,6 +351,23 @@
 .newsletter-form-grid .wide,
 .newsletter-composer-fields .full {
   grid-column: 1 / -1;
+}
+
+.newsletter-settings-section {
+  display: grid;
+  gap: 3px;
+  padding-top: 4px;
+}
+
+.newsletter-settings-section strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.newsletter-settings-section span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .newsletter-workspace .label small {
@@ -1088,11 +1072,6 @@
 
   .newsletter-metrics strong {
     font-size: 24px;
-  }
-
-  .newsletter-usage-band {
-    gap: 14px;
-    grid-template-columns: 1fr;
   }
 
   .newsletter-zero {

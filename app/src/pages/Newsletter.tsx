@@ -4,7 +4,17 @@ import { useLocation } from 'react-router-dom';
 import { apiPath, withBasePath } from '@/lib/base-path';
 import '../components/newsletter-workspace.css';
 
-type Landing = { fromName: string; publicPageUrl: string };
+type SenderType = 'individual' | 'bar' | 'restaurant' | 'creator' | 'business' | 'association' | 'other';
+type Landing = { fromName: string; senderType: SenderType; privacyPolicyUrl: string; termsUrl: string; publicPageUrl: string };
+const senderCopy: Record<SenderType, string> = {
+  bar: 'Events, specials and useful updates from your favourite place.',
+  restaurant: 'Menus, events and useful updates, sent directly from the restaurant.',
+  creator: 'New work, releases and useful updates, sent directly by the creator.',
+  individual: 'Personal updates sent directly to your inbox.',
+  association: 'Activities, events and useful updates from the association.',
+  business: 'New releases, services and useful updates from the business.',
+  other: 'Useful updates sent directly to your inbox.',
+};
 const messages = {
   confirmed: { title: 'Subscription confirmed', copy: 'You are on the list. Future updates will arrive by email.', success: true },
   unsubscribed: { title: 'You have been unsubscribed', copy: 'This address will not receive future campaigns from this newsletter.', success: true },
@@ -63,11 +73,11 @@ export default function Newsletter() {
     {loading ? <p role="status">Loading newsletter…</p> : landing ? <>
       <p className="dashboard-kicker">Email updates</p>
       <h1>Stay close to {landing.fromName}</h1>
-      <p className="newsletter-public-intro">New releases, menus, events and useful updates, sent directly by {landing.fromName}. No social algorithm in between.</p>
+      <p className="newsletter-public-intro">{senderCopy[landing.senderType]}</p>
       {sent ? <div className="newsletter-public-success" role="status"><Check aria-hidden="true" size={22} /><div><strong>Check your inbox</strong><span>Use the confirmation link within 48 hours to join {landing.fromName}’s newsletter.</span></div></div> : <form className="newsletter-public-form" onSubmit={subscribe}>
         <label><span>Name <small>optional</small></span><input autoComplete="name" maxLength={100} onChange={(event) => setName(event.target.value)} value={name} /></label>
         <label><span>Email</span><input autoComplete="email" maxLength={254} onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
-        <label className="newsletter-consent"><input checked={consent} onChange={(event) => setConsent(event.target.checked)} required type="checkbox" /><span>I want to receive email updates from {landing.fromName}. I can unsubscribe at any time.</span></label>
+        <label className="newsletter-consent"><input checked={consent} onChange={(event) => setConsent(event.target.checked)} required type="checkbox" /><span>I want to receive email updates from {landing.fromName}. I can unsubscribe at any time.{landing.privacyPolicyUrl && <> <a href={landing.privacyPolicyUrl} rel="noreferrer" target="_blank">Privacy Policy</a>.</>}{landing.termsUrl && <> <a href={landing.termsUrl} rel="noreferrer" target="_blank">Terms</a>.</>}</span></label>
         {error && <p className="error" role="alert">{error}</p>}
         <button aria-busy={sending} className="button" disabled={sending} type="submit">{sending ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Mail aria-hidden="true" size={17} />}{sending ? 'Sending confirmation' : 'Subscribe'}</button>
       </form>}

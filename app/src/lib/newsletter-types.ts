@@ -1,3 +1,5 @@
+export type NewsletterSenderType = "individual" | "bar" | "restaurant" | "creator" | "business" | "association" | "other";
+
 export type NewsletterSmtpSettings = {
   configured: boolean;
   passwordConfigured: boolean;
@@ -8,6 +10,11 @@ export type NewsletterSmtpSettings = {
   fromName: string;
   fromEmail: string;
   replyTo: string | null;
+  senderType: NewsletterSenderType;
+  footerText: string;
+  senderAddress: string;
+  privacyPolicyUrl: string;
+  termsUrl: string;
   verifiedAt: string | null;
   updatedAt: string | null;
 };

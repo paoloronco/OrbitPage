@@ -368,8 +368,15 @@ export const initializeDatabase = () => {
         id INTEGER PRIMARY KEY CHECK (id = 1),
         host TEXT NOT NULL, port INTEGER NOT NULL, username TEXT NOT NULL,
         password_enc TEXT NOT NULL, from_name TEXT NOT NULL, from_email TEXT NOT NULL,
-        reply_to TEXT, verified_at TEXT, public_origin TEXT NOT NULL, updated_at TEXT NOT NULL
+        reply_to TEXT, sender_type TEXT NOT NULL DEFAULT 'business', footer_text TEXT NOT NULL DEFAULT '',
+        sender_address TEXT NOT NULL DEFAULT '', privacy_policy_url TEXT NOT NULL DEFAULT '',
+        terms_url TEXT NOT NULL DEFAULT '', verified_at TEXT, public_origin TEXT NOT NULL, updated_at TEXT NOT NULL
       )`);
+      db.run(`ALTER TABLE newsletter_settings ADD COLUMN sender_type TEXT NOT NULL DEFAULT 'business'`, () => {});
+      db.run(`ALTER TABLE newsletter_settings ADD COLUMN footer_text TEXT NOT NULL DEFAULT ''`, () => {});
+      db.run(`ALTER TABLE newsletter_settings ADD COLUMN sender_address TEXT NOT NULL DEFAULT ''`, () => {});
+      db.run(`ALTER TABLE newsletter_settings ADD COLUMN privacy_policy_url TEXT NOT NULL DEFAULT ''`, () => {});
+      db.run(`ALTER TABLE newsletter_settings ADD COLUMN terms_url TEXT NOT NULL DEFAULT ''`, () => {});
       db.run(`CREATE TABLE IF NOT EXISTS newsletter_subscribers (
         id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT, status TEXT NOT NULL,
         source TEXT NOT NULL, consent_at TEXT, confirmed_at TEXT, unsubscribed_at TEXT,
