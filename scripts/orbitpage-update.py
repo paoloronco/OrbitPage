@@ -296,6 +296,8 @@ def main():
     selected = []
     requested = sys.argv[1:]
     for name in names:
+        if name == 'orbitpage-demo' and not requested:
+            continue
         container = docker_json('inspect', name)[0]
         try:
             target_image(container['Config']['Image'])
