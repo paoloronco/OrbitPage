@@ -122,7 +122,7 @@ export function VisualSiteEditor({
       onSelect("profile");
       return;
     }
-    onSelect("links", target.id === selectedLinkId ? undefined : target.id);
+    onSelect("links", target.id);
   };
 
   useEffect(() => {

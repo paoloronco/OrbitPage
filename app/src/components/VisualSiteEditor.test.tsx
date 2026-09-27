@@ -169,7 +169,7 @@ describe("VisualSiteEditor", () => {
     }
   });
 
-  it("leaves card editing when the selected preview card is clicked again", () => {
+  it("keeps the selected preview card in editing mode when clicked again", () => {
     const onSelect = vi.fn();
 
     renderToStaticMarkup(
@@ -194,7 +194,7 @@ describe("VisualSiteEditor", () => {
     onEditorSelect?.({ kind: "link", id: "card-1" });
     onEditorSelect?.({ kind: "link", id: "card-2" });
 
-    expect(onSelect).toHaveBeenNthCalledWith(1, "links", undefined);
+    expect(onSelect).toHaveBeenNthCalledWith(1, "links", "card-1");
     expect(onSelect).toHaveBeenNthCalledWith(2, "links", "card-2");
   });
 
