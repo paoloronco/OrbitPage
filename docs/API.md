@@ -1,8 +1,10 @@
 # Self-hosted application API boundary
 
-The Express `/api` routes in this repository are the internal application boundary
-used by the bundled OrbitPage dashboard. They are versioned together
-with the frontend and are not a supported external automation API.
+The Express `/api` routes in this repository are the application boundary used
+by the bundled OrbitPage dashboard. Personal API tokens can also authenticate
+automation against the same installation. Routes are versioned with each
+OrbitPage release; self-hosted installations do not provide a separate stable
+API-version compatibility contract.
 
 ## Supported use
 
@@ -10,9 +12,10 @@ The React dashboard and Express server are shipped as one application. Keep
 them on the same trusted HTTPS origin and let the bundled API client manage the
 authenticated requests between them.
 
-The internal routes may change when the dashboard changes. Do not build an
-external SDK against undocumented responses, expose the routes to unrelated
-origins, or reuse the interactive administrator session in scripts and CI.
+The routes may change when the dashboard changes. Do not build an external SDK
+against undocumented responses or expose the routes to unrelated origins. Use
+a personal API token instead of an interactive administrator session in scripts
+and CI.
 
 ## Security boundary
 
@@ -24,6 +27,8 @@ origins, or reuse the interactive administrator session in scripts and CI.
   issue reports.
 - Do not interchange self-hosted credentials, managed-service credentials, or
   AI-provider keys.
+- Personal API tokens are shown once, stored as SHA-256 hashes, limited to the
+  creator's current role, and can never receive user-management permission.
 
 Deployment hardening, CORS, rate limits, HTTPS, and recovery controls are
 documented in [Security](./wiki/Security.md) and
@@ -47,7 +52,21 @@ server-side validation and permission checks, and add focused server and
 frontend tests. Document changes that affect configuration, deployment,
 public behavior, backup compatibility, or operator recovery.
 
-## External automation
+## Self-hosted automation
+
+Open **Team → Personal API tokens** in the dashboard. Choose the access level
+and expiry, enter the current account password, create the token, and copy it
+immediately. Send it as a bearer credential:
+
+```sh
+curl https://your-orbitpage.example/api/links/export \
+  --header "Authorization: Bearer $ORBITPAGE_TOKEN"
+```
+
+Tokens can be revoked from the same panel. Role changes take effect on existing
+tokens immediately, and deleting a local account deletes its tokens.
+
+## Managed automation
 
 The managed OrbitPage service provides a separate, versioned API with its own
 credentials and compatibility contract. Its documentation does not redefine
@@ -56,7 +75,3 @@ the self-hosted `/api` routes described here.
 - [Managed API guide](https://orbitpage.com/en-US/docs/api-tokens)
 - [Managed OpenAPI document](https://orbitpage.com/api/openapi.json)
 - [Public OrbitPage n8n integration](https://github.com/paoloronco/n8n-nodes-orbitpage)
-
-If a stable automation API is added to the self-hosted edition in the future,
-it must be versioned, documented separately, and use credentials independent
-from the interactive administrator session.

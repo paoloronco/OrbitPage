@@ -50,6 +50,7 @@ import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
 import { UserManager } from "./UserManager";
+import { PersonalApiTokens } from "./PersonalApiTokens";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
@@ -1515,8 +1516,9 @@ export const AdminView = ({
 
           {!isHostedAdmin && canManageUsers && (
             <TabsContent value="team" className="admin-tab-content">
-              <div className="admin-single-column space-y-6" data-onboarding="team-section">
-                <UserManager />
+              <div className="team-workspace" data-onboarding="team-section">
+                <UserManager currentUsername={currentUser?.username} />
+                <PersonalApiTokens />
               </div>
             </TabsContent>
           )}

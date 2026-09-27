@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { dbGet, dbRun } from './database.js';
-import { randomBytes, randomInt } from 'crypto';
+import { dbAll, dbGet, dbRun } from './database.js';
+import { createHash, randomBytes, randomInt, randomUUID } from 'crypto';
 
 const KNOWN_INSECURE_JWT_SECRETS = new Set([
   'change-me',
@@ -27,6 +27,7 @@ const JWT_SECRET = isStrongJwtSecret(configuredJwtSecret)
 const TWO_FACTOR_JWT_SECRET = `${JWT_SECRET}-two-factor`;
 const JWT_ALGORITHM = 'HS256';
 const SALT_ROUNDS = 12;
+export const PERSONAL_API_TOKEN_PREFIX = 'op_pat_';
 
 // --- Role-Based Access Control ---
 
@@ -131,6 +132,64 @@ export const generateToken = (username, authVersion = 0) => {
     JWT_SECRET,
     { algorithm: JWT_ALGORITHM, expiresIn: '12h' }
   );
+};
+
+const hashPersonalApiToken = (token) => createHash('sha256').update(token).digest('hex');
+
+const personalApiTokenRecord = (row) => ({
+  tokenId: row.id,
+  name: row.name,
+  tokenPrefix: row.token_prefix,
+  scopes: JSON.parse(row.scopes || '[]'),
+  username: row.username,
+  status: row.status,
+  createdAt: row.created_at,
+  expiresAt: row.expires_at,
+  lastUsedAt: row.last_used_at,
+  revokedAt: row.revoked_at,
+});
+
+export const listPersonalApiTokens = async (username) => (
+  await dbAll('SELECT * FROM personal_api_tokens WHERE username = ? ORDER BY created_at DESC', [username])
+).map(personalApiTokenRecord);
+
+export const createPersonalApiToken = async (username, { name, scopes, expiresInDays }) => {
+  const active = await dbGet(
+    `SELECT COUNT(*) AS count FROM personal_api_tokens
+     WHERE username = ? AND status = 'active' AND (expires_at IS NULL OR expires_at > ?)`,
+    [username, new Date().toISOString()],
+  );
+  if (Number(active?.count || 0) >= 10) throw new Error('TOKEN_LIMIT_REACHED');
+
+  const token = `${PERSONAL_API_TOKEN_PREFIX}${randomBytes(32).toString('base64url')}`;
+  const now = new Date();
+  const expiresAt = expiresInDays === null
+    ? null
+    : new Date(now.getTime() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
+  const row = {
+    id: randomUUID(), username, name: name.trim(), token_prefix: token.slice(0, 18),
+    token_hash: hashPersonalApiToken(token), scopes: JSON.stringify(scopes), status: 'active',
+    created_at: now.toISOString(), expires_at: expiresAt, last_used_at: null, revoked_at: null,
+  };
+  await dbRun(
+    `INSERT INTO personal_api_tokens
+      (id, username, name, token_prefix, token_hash, scopes, status, created_at, expires_at, last_used_at, revoked_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [row.id, row.username, row.name, row.token_prefix, row.token_hash, row.scopes, row.status,
+      row.created_at, row.expires_at, row.last_used_at, row.revoked_at],
+  );
+  return { token, record: personalApiTokenRecord(row) };
+};
+
+export const revokePersonalApiToken = async (username, tokenId) => {
+  const now = new Date().toISOString();
+  const result = await dbRun(
+    `UPDATE personal_api_tokens SET status = 'revoked', revoked_at = ?
+     WHERE id = ? AND username = ? AND status = 'active'`,
+    [now, tokenId, username],
+  );
+  if (!result.changes) return null;
+  return personalApiTokenRecord(await dbGet('SELECT * FROM personal_api_tokens WHERE id = ?', [tokenId]));
 };
 
 export const generateTwoFactorChallenge = (username, authVersion = 0) => jwt.sign(
@@ -238,12 +297,32 @@ export const authenticateToken = async (req, res, next) => {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  const decoded = verifyToken(token);
-  if (!decoded) {
-    return res.status(403).json({ error: 'Invalid or expired token' });
-  }
-
   try {
+    if (token.startsWith(PERSONAL_API_TOKEN_PREFIX)) {
+      const storedToken = await dbGet(
+        `SELECT * FROM personal_api_tokens
+         WHERE token_hash = ? AND status = 'active' AND (expires_at IS NULL OR expires_at > ?)`,
+        [hashPersonalApiToken(token), new Date().toISOString()],
+      );
+      if (!storedToken) return res.status(403).json({ error: 'Invalid or expired token' });
+      const user = await dbGet('SELECT username, role FROM admin_users WHERE username = ?', [storedToken.username]);
+      if (!user) return res.status(403).json({ error: 'User not found' });
+      const rolePermissions = getPermissionsForRole(user.username, user.role || 'admin');
+      const scopes = JSON.parse(storedToken.scopes || '[]')
+        .filter((scope) => scope !== 'users:manage' && rolePermissions.includes(scope));
+      await dbRun('UPDATE personal_api_tokens SET last_used_at = ? WHERE id = ?', [new Date().toISOString(), storedToken.id]);
+      req.user = {
+        username: user.username,
+        role: user.role || 'admin',
+        permissions: scopes,
+        authType: 'personal_token',
+        tokenId: storedToken.id,
+      };
+      return next();
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(403).json({ error: 'Invalid or expired token' });
     const user = await dbGet(
       'SELECT username, role, auth_version FROM admin_users WHERE username = ?',
       [decoded.username]
@@ -260,6 +339,7 @@ export const authenticateToken = async (req, res, next) => {
       ...decoded,
       role: user.role || 'admin',
       permissions: getPermissionsForRole(decoded.username, user.role || 'admin'),
+      authType: 'session',
     };
     next();
   } catch (error) {
