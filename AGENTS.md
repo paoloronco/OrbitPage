@@ -57,7 +57,8 @@ Update documentation whenever a route, environment variable, setup command, publ
 ## Releases
 
 Normal `main` commits run CI but do not publish images or GitHub releases.
-Maintainers release only from an exact `vX.Y.Z` tag matching both application
-package versions after all four main CI checks are green. Do not create tags,
-move existing version tags, or publish artifacts unless the task explicitly
-authorizes a release.
+After a runtime, schema, installer, or deployment change reaches `main`, publish
+one patch release before considering the task complete. Documentation-only and
+test-only changes do not require a release. Release only from an exact `vX.Y.Z`
+tag matching both application package versions after all main CI checks are
+green. Never move an existing version tag.
