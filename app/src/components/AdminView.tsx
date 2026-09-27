@@ -313,6 +313,7 @@ export const AdminView = ({
   const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
   const hostedPanelTabs = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.panels || [] : [];
   const usesDashboardShell = !isHostedAdmin || isIntegratedHostedAdmin;
+  const dashboardSlug = hostedSurfaceConfig?.publicSlug || currentUser?.username || "admin";
   const isProspectReadOnly = currentUser?.readOnly === true;
   const orbitPageBadgeEditable = isHostedAdmin && entitlements?.badgeRequired !== true && !isProspectReadOnly;
   const resolveOrbitPageBadgeVisibility = (preference: boolean | undefined) => (
@@ -966,7 +967,7 @@ export const AdminView = ({
               <OrbitPageBrand className="orbitpage-dashboard-brand" showName={false} size="md" />
               <div className="admin-dashboard-logo-copy orbitpage-dashboard-brand-copy">
                 <strong>OrbitPage</strong>
-                <small>/{currentUser?.username || "admin"}</small>
+                <small>/{dashboardSlug}</small>
               </div>
             </button>
             <button
@@ -1187,7 +1188,7 @@ export const AdminView = ({
             <div className="admin-dashboard-heading-row"><h1>{displayedTabLabel(activeTab)}</h1></div>
             <p className="admin-dashboard-section-description">{displayedTabDescription(activeTab)}</p>
             <div className="admin-dashboard-context-row" aria-label={tr("Workspace context", "Contesto workspace")}>
-              <span className="admin-dashboard-context-slug">/{currentUser?.username || "admin"}</span>
+              <span className="admin-dashboard-context-slug">/{dashboardSlug}</span>
               <span>{hostedSurfaceConfig?.workspace?.roleLabel || tr("Owner", "Proprietario")}</span>
               <span className={`admin-dashboard-page-state${hostedSurfaceConfig?.workspace?.status ? ` admin-dashboard-page-state-${hostedSurfaceConfig.workspace.status}` : ""}`}><i aria-hidden="true" />{hostedSurfaceConfig?.workspace?.statusLabel || tr("Self-hosted", "Self-hosted")}</span>
             </div>
