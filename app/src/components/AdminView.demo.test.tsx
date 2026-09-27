@@ -132,6 +132,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Open Source plan');
     expect(html).not.toContain('Workspace Open Source');
     expect(html).toContain('Page tools');
+    expect(html).toContain('admin-backup-workspace admin-backup-workspace--managed');
     expect(html).toContain('Open Source');
     expect(html).toContain('Newsletter');
     expect(html).toContain('Team');
