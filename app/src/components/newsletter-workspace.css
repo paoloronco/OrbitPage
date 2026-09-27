@@ -64,18 +64,20 @@
   min-width: 0;
 }
 
-.newsletter-heading {
-  align-items: flex-end;
+.newsletter-toolbar {
+  align-items: center;
   display: flex;
-  gap: 24px;
-  justify-content: space-between;
+  gap: 12px;
 }
 
+.newsletter-toolbar > .button { flex: 0 0 auto; }
 
 .newsletter-tabs {
   border-bottom: 1px solid var(--line);
   display: flex;
+  flex: 1;
   gap: 24px;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
