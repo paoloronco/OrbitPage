@@ -33,8 +33,8 @@ test('reveals a static public page only after critical images are ready', async 
     await route.fulfill({ body: delayedSvg, contentType: 'image/svg+xml', status: 200 });
   });
 
-  await page.goto('/', { waitUntil: 'commit' });
-  await expect(page.locator('body')).toHaveClass(/orbitpage-booting/);
+  const response = await page.goto('/', { waitUntil: 'commit' });
+  expect(await response?.text()).toContain('<body class="orbitpage-booting">');
   await expect(page.locator('.profile-card__avatar-fallback')).toBeHidden();
   await expect(page.locator('.public-link-icon-fallback')).toBeHidden();
 
