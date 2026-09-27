@@ -10658,6 +10658,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   text-align: center;
 }
 
+.managed-analytics--oss .managed-analytics-section-empty {
+  color: #5b6d85;
+}
+
 @media (max-width: 760px) {
   .managed-analytics-header {
     gap: 9px;

@@ -1563,7 +1563,7 @@ export const AdminView = ({
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">
               {isHostedAdmin ? <ManagedAnalyticsDashboard /> : (
-                <section className="managed-analytics" data-onboarding="analytics-section" data-testid="oss-analytics">
+                <section className="managed-analytics managed-analytics--oss" data-onboarding="analytics-section" data-testid="oss-analytics">
                   <div className="managed-analytics-metrics managed-analytics-primary-kpis">
                     <StatusTile icon={BarChart3} label={tr("Total clicks", "Clic totali")} value={String(metrics.totalClicks)} />
                     <StatusTile icon={Link} label={tr("Tracked content", "Contenuti monitorati")} value={String(metrics.totalLinks)} />

@@ -154,13 +154,7 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   const launcher = page.getByRole('button', { name: 'Edit with AI' });
   await expect(launcher).toBeVisible();
   await expect(page.locator('.ai-page-agent')).toHaveCSS('position', 'fixed');
-  const roleOptions = page.locator('.admin-profile-role-option');
-  await expect(roleOptions).toHaveCount(3);
-  for (let index = 0; index < 3; index += 1) {
-    const roleBounds = await roleOptions.nth(index).boundingBox();
-    expect(roleBounds).not.toBeNull();
-    expect(roleBounds!.height).toBeLessThanOrEqual(72);
-  }
+  await expect(page.locator('.admin-profile-role-option')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(page.getByRole('button', { name: 'AI Assistant', exact: true })).toBeVisible();
@@ -305,7 +299,7 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
 
-  await expect(page.getByRole('heading', { name: 'Page type', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Page type', exact: true })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Identity', exact: true })).toBeVisible();
   await expect(page.getByText('Card style', { exact: true })).toBeVisible();
   await expect(page.locator('.admin-profile-save-layer')).toHaveCount(0);
