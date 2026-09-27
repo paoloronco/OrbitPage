@@ -11,7 +11,7 @@ export const ClickAnalyticsChart = ({ links }: { links: LinkData[] }) => {
     }));
 
   if (data.length === 0) {
-    return <p className="text-center text-muted-foreground text-sm py-8">No clicks recorded yet. Share your public page to start collecting analytics.</p>;
+    return <p className="managed-analytics-empty">No clicks recorded yet. Share your public page to start collecting analytics.</p>;
   }
 
   return (
