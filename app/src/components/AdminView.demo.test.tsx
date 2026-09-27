@@ -141,6 +141,9 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Everything included in the OSS edition is unlocked.');
     expect(html).toContain('Explore OrbitPage SaaS');
     expect(html).toContain('/en-US/pricing');
+    expect(html).toContain('data-testid="oss-analytics"');
+    expect(html).toContain('managed-analytics-primary-kpis');
+    expect(html).toContain('Content performance');
     expect(html).toContain('admin-dashboard-mobile-nav-button');
     expect(html).toContain('content-workspace-option-locked');
     expect(html).toContain('Edit with AI');
@@ -185,6 +188,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('admin-dashboard-sidebar');
     expect(html).not.toContain('data-onboarding="public-page"');
     expect(html).toContain('data-testid="managed-analytics"');
+    expect(html).not.toContain('data-testid="oss-analytics"');
     expect(html).not.toContain('Page visits and clicks');
     expect(html).not.toContain('Performance overview');
     expect(html).toContain('data-testid="google-analytics-settings"');

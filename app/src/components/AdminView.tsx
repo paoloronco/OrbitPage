@@ -15,7 +15,6 @@ import { CurrentUser } from "@/pages/Admin";
 import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/lib/permissions";
 import {
   AlertTriangle,
-  BarChart2,
   BarChart3,
   CheckCircle2,
   ChevronDown,
@@ -727,6 +726,7 @@ export const AdminView = ({
       .filter(link => (link.ctaClicks ?? 0) > 0)
       .sort((a, b) => (b.ctaClicks ?? 0) - (a.ctaClicks ?? 0))
       .slice(0, 5);
+    const maxCtaClicks = Math.max(...ctaPerformance.map(link => link.ctaClicks ?? 0), 1);
     const visibleLinks = contentLinks.filter(link => link.isActive !== false);
     const scheduledLinks = contentLinks.filter(link => link.startDate || link.endDate);
     const totalClicks = links.reduce((sum, link) => sum + (link.clickCount ?? 0), 0);
@@ -739,6 +739,7 @@ export const AdminView = ({
       ctaLinks: ctaLinks.length,
       ctaClicks,
       ctaPerformance,
+      maxCtaClicks,
       scheduledLinks: scheduledLinks.length,
       totalClicks,
       socialCount,
@@ -1593,43 +1594,46 @@ export const AdminView = ({
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">
               {isHostedAdmin ? <ManagedAnalyticsDashboard /> : (
-                <section className="admin-panel" data-onboarding="analytics-section">
-                  <PanelHeader icon={BarChart2} title={tr("Click analytics", "Analytics dei clic")} />
-                  <div className="mb-5 grid grid-cols-2 gap-3">
-                    <StatusTile label={tr("Total clicks", "Clic totali")} value={String(metrics.totalClicks)} />
-                    <StatusTile label={tr("Tracked items", "Elementi monitorati")} value={String(metrics.totalLinks)} />
-                    <StatusTile label={tr("CTA clicks", "Clic sulle CTA")} value={String(metrics.ctaClicks)} />
-                    <StatusTile label={tr("Smart CTAs", "CTA intelligenti")} value={String(metrics.ctaLinks)} />
+                <section className="managed-analytics" data-onboarding="analytics-section" data-testid="oss-analytics">
+                  <div className="managed-analytics-metrics managed-analytics-primary-kpis">
+                    <StatusTile icon={BarChart3} label={tr("Total clicks", "Clic totali")} value={String(metrics.totalClicks)} />
+                    <StatusTile icon={Link} label={tr("Tracked content", "Contenuti monitorati")} value={String(metrics.totalLinks)} />
+                    <StatusTile icon={MousePointerClick} label={tr("CTA clicks", "Clic sulle CTA")} value={String(metrics.ctaClicks)} />
+                    <StatusTile icon={Sparkles} label={tr("Smart CTAs", "CTA intelligenti")} value={String(metrics.ctaLinks)} />
                   </div>
-                  {(!saasPlan || entitlements?.analytics !== "basic-clicks") ? (
+
+                  <div className="managed-analytics-chart managed-analytics-trend">
+                    <div>
+                      <h3>{tr("Content performance", "Rendimento dei contenuti")}</h3>
+                      <p>{tr("Clicks recorded for each published content item.", "Clic registrati per ogni contenuto pubblicato.")}</p>
+                    </div>
                     <ClickAnalyticsChart links={links} />
-                  ) : (
-                    <p className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-                      {tr("Free includes basic click totals. Trends and per-block comparisons unlock on Starter.", "Free include i totali di base dei clic. Trend e confronti per blocco si sbloccano con Starter.")}
-                    </p>
-                  )}
-                  {(!saasPlan || entitlements?.analytics !== "basic-clicks") && <div className="mt-6 border-t border-slate-200 pt-5">
-                    <PanelHeader icon={MousePointerClick} title={tr("CTA performance", "Prestazioni CTA")} />
+                  </div>
+
+                  <section className="managed-analytics-breakdown managed-analytics-breakdown--priority">
+                    <div className="managed-analytics-section-heading">
+                      <span>{tr("CTA performance", "Prestazioni CTA")}</span>
+                      <p>{tr("See which smart actions attract the most clicks.", "Scopri quali azioni intelligenti ricevono più clic.")}</p>
+                    </div>
                     {metrics.ctaPerformance.length > 0 ? (
-                      <div className="space-y-2">
-                        {metrics.ctaPerformance.map((link) => (
-                          <div key={link.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-slate-950">{link.title || tr('Untitled CTA', 'CTA senza titolo')}</p>
-                              <p className="text-xs text-slate-500">{ctaActionLabels[link.ctaAction || 'book']}</p>
-                            </div>
-                            <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
-                              {link.ctaClicks ?? 0} {tr("clicks", "clic")}
+                      <div className="managed-analytics-details managed-analytics-details--content">
+                        <section className="managed-analytics-ranking">
+                          <h3>{tr("Most clicked CTAs", "CTA più cliccate")}</h3>
+                          <div>{metrics.ctaPerformance.map((link) => <div className="managed-analytics-rank" key={link.id}>
+                            <span>
+                              <b title={link.title}>{link.title || tr('Untitled CTA', 'CTA senza titolo')}</b>
+                              <em>{ctaActionLabels[link.ctaAction || 'book']} · {link.ctaClicks ?? 0}</em>
                             </span>
-                          </div>
-                        ))}
+                            <i><span style={{ width: `${Math.max(4, (link.ctaClicks ?? 0) / metrics.maxCtaClicks * 100)}%` }} /></i>
+                          </div>)}</div>
+                        </section>
                       </div>
                     ) : (
-                      <p className="text-sm leading-6 text-slate-600">
+                      <p className="managed-analytics-section-empty">
                         {tr("Smart CTA clicks will appear here separately from normal link clicks.", "I clic sulle CTA intelligenti compariranno qui separati dai clic sui link normali.")}
                       </p>
                     )}
-                  </div>}
+                  </section>
                 </section>
               )}
               {googleAnalyticsPanel}
@@ -1765,22 +1769,11 @@ function PreviewPanel({
   );
 }
 
-function PanelHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+function StatusTile({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="mb-4 flex items-center gap-3">
-      <span className="admin-panel-icon">
-        <Icon className="h-4 w-4" />
-      </span>
-      <h2 className="text-base font-semibold text-slate-950">{title}</h2>
-    </div>
-  );
-}
-
-function StatusTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p>
+    <div className="managed-analytics-kpi">
+      <Icon aria-hidden="true" size={18} />
+      <span>{label}<strong>{value}</strong></span>
     </div>
   );
 }
