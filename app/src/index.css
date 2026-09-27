@@ -10813,11 +10813,25 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 /* Dashboard balance pass: one readable, space-aware contract across every workbench. */
 .orbitpage-admin {
-  --admin-text-meta: .75rem;
-  --admin-text-small: .8125rem;
-  --admin-text-body: .875rem;
-  --admin-text-lead: 1rem;
-  --admin-text-section: 1.25rem;
+  --orbitpage-dashboard-font: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  --orbitpage-dashboard-ink: #111b2d;
+  --orbitpage-dashboard-copy: #26354b;
+  --orbitpage-dashboard-muted: #5e6f87;
+  --orbitpage-dashboard-accent: #2456d3;
+  --orbitpage-type-page: 1.75rem;
+  --orbitpage-type-section: 1.25rem;
+  --orbitpage-type-panel: 1rem;
+  --orbitpage-type-body: .875rem;
+  --orbitpage-type-small: .8125rem;
+  --orbitpage-type-meta: .75rem;
+  --orbitpage-weight-page: 800;
+  --orbitpage-weight-title: 750;
+  --orbitpage-weight-label: 700;
+  --admin-text-meta: var(--orbitpage-type-meta);
+  --admin-text-small: var(--orbitpage-type-small);
+  --admin-text-body: var(--orbitpage-type-body);
+  --admin-text-lead: var(--orbitpage-type-panel);
+  --admin-text-section: var(--orbitpage-type-section);
   --admin-space-1: 4px;
   --admin-space-2: 8px;
   --admin-space-3: 12px;
@@ -10827,7 +10841,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   --admin-space-8: 32px;
   --admin-control-height: 40px;
   --admin-card-radius: 10px;
-  font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-family: var(--orbitpage-dashboard-font);
   font-size: var(--admin-text-body);
   line-height: 1.5;
 }
@@ -12058,6 +12072,66 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     grid-template-columns: minmax(9rem, 11rem) minmax(0, 1fr);
     align-items: start;
   }
+}
+
+/* One semantic type scale for every dashboard surface; public previews keep the page theme. */
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) :is(h1, h2, h3, h4):not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+  margin-block-start: 0;
+  color: var(--orbitpage-dashboard-ink);
+  font-family: var(--orbitpage-dashboard-font);
+  font-style: normal;
+  letter-spacing: -.015em;
+}
+
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h1:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+  font-size: var(--orbitpage-type-page);
+  font-weight: var(--orbitpage-weight-page);
+  line-height: 1.12;
+}
+
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h2:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+  font-size: var(--orbitpage-type-section);
+  font-weight: var(--orbitpage-weight-title);
+  line-height: 1.25;
+}
+
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h3:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+  font-size: var(--orbitpage-type-panel);
+  font-weight: var(--orbitpage-weight-title);
+  line-height: 1.3;
+}
+
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h4:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+  font-size: var(--orbitpage-type-body);
+  font-weight: var(--orbitpage-weight-label);
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.orbitpage-admin :is(.admin-dashboard-kicker, .dashboard-kicker, .admin-eyebrow, .privacy-workspace-eyebrow) {
+  color: var(--orbitpage-dashboard-accent);
+  font-size: var(--orbitpage-type-meta);
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: .075em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.orbitpage-admin :is(.admin-dashboard-section-description, .admin-subtitle, .muted) {
+  color: var(--orbitpage-dashboard-muted);
+  font-size: var(--orbitpage-type-small);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.orbitpage-admin :is(.label, .team-field > span, .admin-paired-field-label) {
+  color: var(--orbitpage-dashboard-copy);
+  font-size: var(--orbitpage-type-small);
+  font-style: normal;
+  font-weight: var(--orbitpage-weight-label);
+  line-height: 1.4;
 }
 
 /* The Content destinations are real cards again, with enough room for their purpose and state. */
