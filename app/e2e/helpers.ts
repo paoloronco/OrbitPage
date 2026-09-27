@@ -21,6 +21,10 @@ export async function openAuthenticatedAdmin(page: Page) {
     await page.locator('#setup-password').fill(E2E_ADMIN_PASSWORD);
     await page.locator('#setup-confirm-password').fill(E2E_ADMIN_PASSWORD);
     await expect(page.locator('#setup-slug')).toHaveCount(0);
+    await expect(setupContinueButton).toBeEnabled();
+    await setupContinueButton.click();
+
+    await page.locator('#setup-slug').fill('e2e-page');
     const completeSetupButton = page.getByRole('button', { name: 'Complete setup' });
     await expect(completeSetupButton).toBeEnabled();
     await completeSetupButton.click();
