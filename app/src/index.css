@@ -8086,6 +8086,15 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .oss-account-page-create { grid-template-columns: 1fr; }
 }
 
+.admin-dashboard-logo {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
 @media (max-width: 640px) {
   .ai-page-agent { right: 12px; bottom: 12px; }
   .ai-page-agent-panel { width: calc(100vw - 24px); max-height: calc(100dvh - 82px); }
@@ -10816,26 +10825,23 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .admin-dashboard-shell {
-  --orbitpage-dashboard-sidebar-width: 240px;
-  --orbitpage-dashboard-nav-height: 42px;
-  --orbitpage-dashboard-header-height: 104px;
+  --orbitpage-dashboard-sidebar-width: 228px;
+  --orbitpage-dashboard-nav-height: 38px;
+  --orbitpage-dashboard-header-height: 84px;
 }
 
 .admin-dashboard-main {
-  display: grid;
-  gap: 16px;
-  grid-template-rows: auto auto 1fr;
-  padding-right: clamp(20px, 2.5vw, 36px);
-  padding-bottom: 40px;
-  padding-left: clamp(20px, 2.5vw, 36px);
+  display: block;
+  padding: 0 clamp(16px, 2vw, 28px) 32px;
 }
 
 .admin-dashboard-header {
+  position: sticky;
+  z-index: 30;
+  top: 0;
   min-height: var(--orbitpage-dashboard-header-height);
-  margin-right: calc(clamp(20px, 2.5vw, 36px) * -1);
-  margin-bottom: 0;
-  margin-left: calc(clamp(20px, 2.5vw, 36px) * -1);
-  padding: 15px clamp(20px, 2.5vw, 36px);
+  margin: 0 calc(clamp(16px, 2vw, 28px) * -1) 8px;
+  padding: 10px clamp(16px, 2vw, 28px);
 }
 
 .admin-dashboard-heading-row h1 {
