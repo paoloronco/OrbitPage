@@ -485,27 +485,6 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
     );
   return (
     <section className="newsletter-workspace">
-      <header className="newsletter-heading">
-        <div>
-          <p className="dashboard-kicker">Audience</p>
-          <h2>Newsletter</h2>
-          <p>
-            Send useful updates through your own SMTP server and keep the
-            audience attached to this workspace.
-          </p>
-        </div>
-        {data.signupUrl && (
-          <button
-            className="button secondary compact"
-            onClick={copySignupUrl}
-            type="button"
-          >
-            <Copy aria-hidden="true" size={15} />
-            Copy signup link
-          </button>
-        )}
-      </header>
-
       <nav aria-label="Newsletter sections" className="newsletter-tabs">
         {(
           ["overview", "campaigns", "subscribers", "smtp"] as NewsletterView[]

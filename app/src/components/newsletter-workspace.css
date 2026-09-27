@@ -65,26 +65,6 @@
 }
 
 
-.newsletter-heading {
-  align-items: flex-end;
-  display: flex;
-  gap: 24px;
-  justify-content: space-between;
-}
-
-.newsletter-heading h2 {
-  font-size: 32px;
-  margin: 0;
-}
-
-.newsletter-heading p:last-child {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.55;
-  margin: 7px 0 0;
-  max-width: 700px;
-}
-
 .newsletter-tabs {
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -1097,20 +1077,6 @@
 }
 
 @media (max-width: 760px) {
-  .newsletter-heading {
-    align-items: start;
-    display: grid;
-    gap: 14px;
-  }
-
-  .newsletter-heading h2 {
-    font-size: 28px;
-  }
-
-  .newsletter-heading .button {
-    justify-self: start;
-  }
-
   .newsletter-tabs {
     gap: 20px;
   }
