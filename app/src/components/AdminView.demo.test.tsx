@@ -152,7 +152,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Guided setup');
     expect(html).not.toContain('OrbitPage onboarding guide');
     expect(html).toContain('https://github.com/paoloronco/OrbitPage');
-    expect(mockState.profileProps.at(-1)).toMatchObject({ pageTypeEditable: true });
+    expect(mockState.profileProps.at(-1)).toMatchObject({ pageTypeEditable: false });
   });
 
   it('hides standalone session details in the hosted SaaS admin', () => {
