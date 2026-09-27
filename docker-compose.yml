@@ -3,13 +3,7 @@ services:
     image: paoloronco/orbitpage:latest   # or ghcr.io/paoloronco/orbitpage:latest
     ports:
       - "127.0.0.1:8080:8080"
-    environment:
-      # REQUIRED: set a long, random secret (e.g. openssl rand -hex 32)
-      JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET to a stable random value with at least 32 characters}"
-      PORT: "8080"
-      # DATA_DIR is already set to /app/data in the image; override only if needed
-      # DATA_DIR: "/app/data"
     volumes:
-      # Mount a host directory so the database and uploads survive container updates
+      # Also persists the automatically generated JWT secret.
       - ./orbitpage-data:/app/data
     restart: unless-stopped

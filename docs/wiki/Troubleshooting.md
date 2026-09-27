@@ -2,7 +2,7 @@
 
 ## Container Exits Immediately
 
-Check whether `JWT_SECRET` is set. Docker production startup requires it.
+Check the container log. Docker generates `JWT_SECRET` automatically, but startup fails when the persisted data directory is not writable or an explicit value is weak.
 
 ```bash
 docker logs orbitpage
@@ -16,7 +16,7 @@ test "$(sudo stat -c '%a' /etc/orbitpage/orbitpage.env)" = '600'
 sudo orbitpage install
 ```
 
-For a manual deployment, create the root-owned `0600` environment file described in [Deployment](./Deployment.md#docker-image-recommended), then recreate the container with `--env-file`. Do not put `JWT_SECRET` in a `docker run -e` argument, tracked Compose file, or shell history.
+For a manual deployment, confirm that the mounted data directory contains a non-empty `.jwt-secret` readable only by its owner. Do not replace it: recreate the container with the same data mount.
 
 ## Data Disappeared After Updating
 
@@ -32,9 +32,9 @@ For Compose, keep the `./orbitpage-data:/app/data` mount or migrate the old data
 
 ## Admin Login Stops Working After Restart
 
-If `JWT_SECRET` changes between restarts, existing JWTs become invalid. This is expected.
+If `JWT_SECRET` changes between restarts, existing JWTs become invalid. This means the container used a different data directory or an explicit override changed.
 
-If the change was accidental, restore the previous `JWT_SECRET` from the protected configuration backup, recreate the container, and log in again. Do not rotate this secret merely to recover a login: it also protects encrypted TOTP and dashboard-saved provider secrets.
+If the change was accidental, restore the previous `.jwt-secret` from the data backup or the explicit `JWT_SECRET` from the protected configuration backup, recreate the container, and log in again. Do not rotate this secret merely to recover a login: it also protects encrypted TOTP and dashboard-saved provider secrets.
 
 A changed environment file requires container recreation; `docker restart` does not reload it. See [Configuration](./Configuration.md) and the [restore runbook](./Deployment.md#restore-an-infrastructure-backup).
 

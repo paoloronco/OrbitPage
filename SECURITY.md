@@ -68,15 +68,14 @@ These are targets, not contractual guarantees.
 - SQLite queries use parameterized statements through server-side helpers.
 - Auth, reset, API, and SPA routes are rate-limited.
 - The Content Security Policy permits `blob:` URLs only for local image and media previews; scripts and workers remain restricted.
-- Docker startup requires `JWT_SECRET`; production Node deployments should also set it explicitly.
+- Docker generates `JWT_SECRET` once under persistent `DATA_DIR`; production Node deployments must set it explicitly.
 - Optional `RESET_TOKEN` enables protected recovery endpoints and should be at least 32 characters.
 - Uploaded files are written under `DATA_DIR/uploads` and served from `/uploads`.
 
 ## Deployment Recommendations
 
 - Run behind HTTPS in production.
-- Set a long random `JWT_SECRET` and keep it stable across restarts.
-- Persist and back up `DATA_DIR`; it contains the SQLite database and uploads.
+- Persist and back up `DATA_DIR`; it contains the generated `JWT_SECRET`, SQLite database, and uploads. Keep any explicit secret override stable across restarts.
 - Never bake databases, database backups or sidecars, uploads, logs, or environment files into an image or source archive.
 - Keep Docker images, Node.js, npm dependencies, and host packages updated.
 - Limit admin access to trusted users.

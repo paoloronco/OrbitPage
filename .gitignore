@@ -75,6 +75,7 @@ scripts/*
 !scripts/test-updater-docker.py
 !scripts/test-installer.sh
 !scripts/test-pve-installer.sh
+!scripts/test-docker-entrypoint.sh
 docs/superpowers/
 
 # Local private workspace

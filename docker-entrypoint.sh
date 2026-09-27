@@ -8,11 +8,28 @@ if [ "$1" = "cat" ] || [ "$1" = "sh" ] || [ "$1" = "bash" ]; then
   exec "$@"
 fi
 
-# Abort unless JWT_SECRET is strong and deployment-specific.
+if [ -z "${JWT_SECRET:-}" ]; then
+  data_dir="${DATA_DIR:-/app/data}"
+  secret_file="${data_dir}/.jwt-secret"
+  mkdir -p "$data_dir"
+
+  if [ -s "$secret_file" ]; then
+    JWT_SECRET="$(cat "$secret_file")"
+  else
+    JWT_SECRET="$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")"
+    printf '%s\n' "$JWT_SECRET" > "$secret_file"
+    echo >&2 "[OrbitPage] Generated JWT_SECRET in ${secret_file}."
+  fi
+
+  chmod 600 "$secret_file"
+  export JWT_SECRET
+fi
+
+# Reject explicitly configured or persisted weak secrets.
 case "${JWT_SECRET:-}" in
   ""|change-me|change-me-to-a-long-random-string|secret|your-secret-key)
-    echo >&2 "ERROR: JWT_SECRET is missing or uses a known placeholder."
-    echo >&2 "Set a stable random value with at least 32 characters (for example: openssl rand -hex 32)."
+    echo >&2 "ERROR: JWT_SECRET uses a known placeholder."
+    echo >&2 "Remove it to let OrbitPage generate one, or set at least 32 random characters."
     exit 1
     ;;
 esac
