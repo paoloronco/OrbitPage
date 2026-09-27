@@ -5,10 +5,10 @@ const MANAGED_BACKUP_FORMAT = 'orbitpage-managed-page';
 export const BACKUP_SECTION_IDS = [
   'profile',
   'links',
-  'pages',
   'theme',
-  'menu',
   'privacy',
+  'pages',
+  'menu',
   'discovery',
   'accounts',
   'media',

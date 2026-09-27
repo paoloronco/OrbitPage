@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { inspectOrbitPageBackup, prepareHostedRestoreBackup, prepareSelfHostedRestoreBackup } from './hosted-backup-import';
+import { BACKUP_SECTION_IDS, MANAGED_BACKUP_SECTION_IDS, inspectOrbitPageBackup, prepareHostedRestoreBackup, prepareSelfHostedRestoreBackup } from './hosted-backup-import';
 
 describe('hosted backup import', () => {
+  it('keeps shared export sections in the same OSS and SaaS display order', () => {
+    expect(BACKUP_SECTION_IDS.filter((section) => MANAGED_BACKUP_SECTION_IDS.includes(section as typeof MANAGED_BACKUP_SECTION_IDS[number])))
+      .toEqual(MANAGED_BACKUP_SECTION_IDS);
+  });
+
   it('converts an OSS application backup without carrying admin credentials', async () => {
     const upload = vi.fn(async ({ slot }: { slot: string }) => `https://media.example/${slot}`);
     const result = await prepareHostedRestoreBackup({
