@@ -31,10 +31,14 @@ describe('self-hosted newsletter', () => {
     await newsletter.saveSmtpSettings({
       host: 'smtp.example.com', port: 587, username: 'sender', password: 'private-smtp-password',
       fromName: 'OrbitPage Test', fromEmail: 'sender@example.com', replyTo: '',
+      senderType: 'restaurant', footerText: 'Restaurant updates for confirmed subscribers.',
+      senderAddress: '1 Test Street, Rome', privacyPolicyUrl: 'https://example.com/privacy',
+      termsUrl: 'https://example.com/terms',
     }, 'https://example.com');
     const setting = await db.dbGet('SELECT * FROM newsletter_settings WHERE id = 1');
     expect(setting.password_enc).not.toContain('private-smtp-password');
     expect(newsletter.decryptSmtpPassword(setting.password_enc)).toBe('private-smtp-password');
+    expect(setting).toMatchObject({ sender_type: 'restaurant', sender_address: '1 Test Street, Rome' });
 
     await newsletter.testSmtp('sender@example.com');
     await newsletter.subscribe({ email: 'reader@example.com', name: 'Reader', consent: true });
@@ -60,6 +64,8 @@ describe('self-hosted newsletter', () => {
 
     const sent = smtp.messages.at(-1);
     expect(sent.subject).toBe('Hello Reader');
+    expect(sent.text).toContain('Restaurant updates for confirmed subscribers.');
+    expect(sent.html).toContain('https://example.com/privacy');
     const delivery = await db.dbGet('SELECT * FROM newsletter_deliveries WHERE campaign_id = ?', [campaign.campaignId]);
     expect(delivery.status).toBe('accepted');
     const clickToken = new URL(sent.html.match(/https:\/\/example\.com\/api\/newsletter\/public\/click\?token=[^"<]+/)[0]).searchParams.get('token');
