@@ -46,12 +46,12 @@ else
   echo "Could not extract the official updater; the installed command was not changed." >&2
 fi
 rm -f "$tmp"
-sudo docker inspect orbitpage orbitpage-demo --format '{{.Name}} {{.Config.Image}}'
+sudo docker inspect orbitpage --format '{{.Name}} {{.Config.Image}}'
 ```
 
-Both containers should now reference `paoloronco/orbitpage:latest`. Keep their
-existing `orbitpage-data-prod` and `orbitpage-data-demo` volumes. The updated
-command pulls the official image directly on future runs.
+The container should now reference `paoloronco/orbitpage:latest`. Keep its
+existing persistent `/app/data` mount. The updated command pulls the official
+image directly on future runs.
 
 ## Docker Compose
 
