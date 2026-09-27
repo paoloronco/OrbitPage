@@ -29,37 +29,25 @@ sudo docker pull paoloronco/orbitpage:latest
 # Or: sudo docker pull ghcr.io/paoloronco/orbitpage:latest
 ```
 
-Both registries receive the same manifest only after a release commit passes the complete `main` CI and native smoke tests on amd64 and arm64. Docker selects the matching architecture automatically when you pull `latest` or a complete version such as `4.21.10`; no architecture suffix is required. Registries intentionally omit branch, commit, build, `latest-*`, `vX.Y.Z`, and major/minor aliases. `latest` points to the newest stable [GitHub Release](https://github.com/paoloronco/OrbitPage/releases); use a complete `X.Y.Z` tag when updates and rollback must be deterministic.
+Both registries receive the same manifest only after a release commit passes the complete `main` CI and native smoke tests on amd64 and arm64. Docker selects the matching architecture automatically when you pull `latest` or a complete version such as `4.21.11`; no architecture suffix is required. Registries intentionally omit branch, commit, build, `latest-*`, `vX.Y.Z`, and major/minor aliases. `latest` points to the newest stable [GitHub Release](https://github.com/paoloronco/OrbitPage/releases); use a complete `X.Y.Z` tag when updates and rollback must be deterministic.
 
 Registry pages may also show `sha256:...` platform manifests and provenance attestations beneath those tags. They are required OCI internals, not additional pullable tag aliases; the public tag list remains `latest` plus complete versions.
 
-### Prepare the secret and persistent data
+### Prepare persistent data
 
-Do not pass `JWT_SECRET` with `docker run -e JWT_SECRET=...`: process arguments can be captured by shell history, process inspection, or automation logs. Create a root-owned runtime file without printing the generated value:
+Create the persistent data directory:
 
 ```bash
-sudo install -d -m 0700 /etc/orbitpage
 sudo install -d -m 0750 /var/lib/orbitpage
-sudo bash <<'EOF'
-set -euo pipefail
-umask 077
-env_file=/etc/orbitpage/orbitpage.env
-printf 'NODE_ENV=production\n' > "$env_file"
-printf 'PORT=8080\n' >> "$env_file"
-printf 'DATA_DIR=/app/data\n' >> "$env_file"
-printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 32)" >> "$env_file"
-chmod 0600 "$env_file"
-EOF
 ```
 
-Keep the environment file out of the repository and include it only in encrypted, access-controlled disaster-recovery backups.
+On first start the image generates a 256-bit `JWT_SECRET` in `/app/data/.jwt-secret` with mode `0600`; later starts reuse it. Persist and back up the whole data directory. An explicitly configured `JWT_SECRET` still takes precedence and must contain at least 32 random characters.
 
 ### Start with Docker Run
 
 ```bash
 sudo docker run -d --name orbitpage \
   --restart unless-stopped \
-  --env-file /etc/orbitpage/orbitpage.env \
   -p 8080:8080 \
   -v /var/lib/orbitpage:/app/data \
   --security-opt no-new-privileges:true \
@@ -82,7 +70,7 @@ Open `http://SERVER_IP:8080/dashboard/profile` for first setup. A fresh public U
 
 ### Start with Docker Compose
 
-Use `env_file` in the production Compose definition instead of storing the secret in YAML:
+Mount the persistent data directory in the production Compose definition:
 
 ```yaml
 services:
@@ -90,8 +78,6 @@ services:
     image: paoloronco/orbitpage:latest
     container_name: orbitpage
     restart: unless-stopped
-    env_file:
-      - /etc/orbitpage/orbitpage.env
     ports:
       - "8080:8080"
     volumes:
@@ -108,15 +94,15 @@ sudo docker compose -f compose.production.yaml up -d
 curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
 ```
 
-The repository `docker-compose.yml` requires a stable `JWT_SECRET` from the environment, binds to localhost, and is intended for local evaluation. Never put a real secret in a tracked file.
+The repository `docker-compose.yml` binds to localhost, persists `./orbitpage-data`, and lets the image create the secret there automatically.
 
-### Required container settings
+### Container defaults
 
 | Variable | Purpose |
 | --- | --- |
 | `NODE_ENV=production` | Enables production behavior |
 | `PORT=8080` | Sets the container listener |
-| `JWT_SECRET` | Signs sessions and protects encrypted server-side secrets |
+| `JWT_SECRET` | Optional override; otherwise generated once under `DATA_DIR` |
 | `DATA_DIR=/app/data` | Places all persistent data on the mounted volume |
 
 Recommended behind a proxy, CDN, tunnel, or managed cloud domain:

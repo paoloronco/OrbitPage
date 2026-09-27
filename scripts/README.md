@@ -11,6 +11,7 @@ These scripts support installation, updates, Git hooks, and installer verificati
   CI runs it before application checks.
 - `test-installer.sh`: isolated Linux-installer checks.
 - `test-pve-installer.sh`: isolated Proxmox-installer checks with mocked host commands.
+- `test-docker-entrypoint.sh`: verifies automatic JWT secret creation and reuse.
 
 The public installers themselves live at repository root as `install.sh` and `install-pve.sh` because users invoke them directly from raw GitHub URLs.
 

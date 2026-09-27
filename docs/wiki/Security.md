@@ -21,7 +21,7 @@ When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage keeps the 
 - SQLite queries use parameterized helpers.
 - Auth, reset, API, and SPA routes are rate-limited.
 - API routes validate input with server-side logic and schemas where applicable.
-- Every production runtime requires a stable `JWT_SECRET` of at least 32 characters and rejects known placeholders.
+- Docker generates a stable 256-bit `JWT_SECRET` under persistent `DATA_DIR`; production source runtimes require an explicit value of at least 32 characters. Known placeholders are rejected.
 - Optional `RESET_TOKEN` protects an administrator-recovery endpoint and a separate destructive full-reset endpoint. Leave it unset outside a controlled recovery window.
 - Destructive in-dashboard instance reset requires `users:manage` and re-authentication with the current password.
 - Forwarded client/protocol headers are ignored unless the socket peer is explicitly trusted with `ORBITPAGE_TRUST_PROXY`.
@@ -135,8 +135,8 @@ Do not rotate `JWT_SECRET` as part of this procedure. Changing `JWT_SECRET` inva
 Recommended production practices:
 
 - run behind HTTPS
-- set a long random `JWT_SECRET`
-- keep `JWT_SECRET` stable across restarts
+- persist and back up `DATA_DIR/.jwt-secret`, or set a long random `JWT_SECRET`
+- keep the selected secret source stable across restarts
 - leave `RESET_TOKEN` unset outside a controlled recovery window
 - persist and back up `DATA_DIR`
 - keep `ORBITPAGE_TRUST_PROXY` unset unless OrbitPage is directly behind a known proxy; then list only that proxy's IP/CIDR

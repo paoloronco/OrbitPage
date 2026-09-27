@@ -37,10 +37,11 @@ jobs:
         run: |
           bash -n install.sh
           bash -n install-pve.sh
+          bash -n docker-entrypoint.sh app/docker-entrypoint.sh scripts/test-docker-entrypoint.sh
           bash -n scripts/test-installer.sh
           bash -n scripts/test-pve-installer.sh
           bash -n scripts/install-updater.sh scripts/orbitpage-update.sh
-          shellcheck install.sh install-pve.sh scripts/test-installer.sh scripts/test-pve-installer.sh scripts/install-updater.sh scripts/orbitpage-update.sh
+          shellcheck install.sh install-pve.sh docker-entrypoint.sh app/docker-entrypoint.sh scripts/test-docker-entrypoint.sh scripts/test-installer.sh scripts/test-pve-installer.sh scripts/install-updater.sh scripts/orbitpage-update.sh
           python3 scripts/test-updater.py
           sudo bash scripts/test-installer.sh
           sudo bash scripts/test-pve-installer.sh
@@ -56,6 +57,10 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci --prefer-offline --no-audit
+
+      - name: Verify automatic Docker JWT secret
+        working-directory: .
+        run: bash scripts/test-docker-entrypoint.sh
 
       - name: Install backend dependencies
         run: npm --prefix server ci --prefer-offline --no-audit
@@ -96,7 +101,6 @@ jobs:
           trap cleanup EXIT
           docker run -d --name orbitpage-ci-smoke \
             -p 3001:8080 \
-            -e JWT_SECRET=ci-smoke-secret-ci-smoke-secret-123456 \
             orbitpage-ci-smoke
           for attempt in {1..45}; do
             if curl --fail http://127.0.0.1:3001/health --silent --show-error >/dev/null; then
@@ -219,7 +223,6 @@ jobs:
           trap cleanup EXIT
           docker run -d --name orbitpage-${{ matrix.arch }}-smoke \
             -p 3001:8080 \
-            -e JWT_SECRET=ci-smoke-secret-ci-smoke-secret-123456 \
             "$IMAGE"
           test "$(docker image inspect "$IMAGE" --format '{{.Architecture}}')" = "${{ matrix.arch }}"
           for attempt in {1..45}; do

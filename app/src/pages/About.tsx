@@ -293,7 +293,6 @@ const About = () => {
           </p>
           <pre className="mt-5 overflow-x-auto rounded-md bg-slate-950 p-4 text-sm leading-6 text-slate-100"><code>{`docker run -d --name orbitpage \\
   -p 8080:8080 \\
-  -e JWT_SECRET="$(openssl rand -hex 32)" \\
   -v orbitpage_data:/app/data \\
   paoloronco/orbitpage:latest`}</code></pre>
           <a

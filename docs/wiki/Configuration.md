@@ -6,7 +6,7 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 
 | Variable | Default | Recommendation |
 | --- | --- | --- |
-| `JWT_SECRET` | ephemeral only in development/test | Required for every production runtime. Use a stable random value of at least 32 characters. Known placeholders are rejected. |
+| `JWT_SECRET` | Generated once under `DATA_DIR` by Docker; ephemeral only in development/test source runs | Optional Docker override. Production source runs must set a stable random value of at least 32 characters. Known placeholders are rejected. |
 | `NODE_ENV` | unset | Set to `production` in production. |
 | `PORT` | `3001` local, `8080` Docker | Set to the port your platform expects. |
 | `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production. |
@@ -21,9 +21,9 @@ OrbitPage is configured through environment variables. Frontend `VITE_*` values 
 
 | Variable | Notes |
 | --- | --- |
-| `JWT_SECRET` | Signs admin JWT sessions. Production and Docker startup abort when it is missing, shorter than 32 characters, or a known placeholder. |
+| `JWT_SECRET` | Signs admin JWT sessions. Docker generates and persists it in `DATA_DIR/.jwt-secret` when omitted. Explicit values shorter than 32 characters or known placeholders are rejected. |
 | `PORT` | HTTP listener port. |
-| `DATA_DIR` | Stores `orbitpage.db` and uploads. |
+| `DATA_DIR` | Stores `orbitpage.db`, uploads, and Docker's generated `.jwt-secret`. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
 | `VIDEO_UPLOAD_LIMIT_MB` | Per-file limit for uploaded video/background media. Content is also validated by MIME, extension, and binary signature. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |
@@ -174,7 +174,7 @@ OrbitPage AI uses the OpenAI Responses API with storage disabled and strict stru
 
 ## Example Production Environment
 
-Store these values in a protected environment file or the platform secret store. The `JWT_SECRET` line below is a placeholder, not a value to pass on a command line or commit.
+Store explicit values in a protected environment file or platform secret store. Docker users may omit `JWT_SECRET` and use the generated value under persistent `DATA_DIR`; the line below is for source or managed-platform deployments and remains a placeholder.
 
 ```bash
 NODE_ENV=production
