@@ -398,6 +398,21 @@ export const initializeDatabase = () => {
         UNIQUE(campaign_id, subscriber_id),
         FOREIGN KEY(campaign_id) REFERENCES newsletter_campaigns(id) ON DELETE CASCADE
       )`);
+      db.run(`CREATE TABLE IF NOT EXISTS personal_api_tokens (
+        id TEXT PRIMARY KEY,
+        username TEXT NOT NULL,
+        name TEXT NOT NULL,
+        token_prefix TEXT NOT NULL,
+        token_hash TEXT NOT NULL UNIQUE,
+        scopes TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'active',
+        created_at TEXT NOT NULL,
+        expires_at TEXT,
+        last_used_at TEXT,
+        revoked_at TEXT,
+        FOREIGN KEY(username) REFERENCES admin_users(username) ON DELETE CASCADE
+      )`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_personal_api_tokens_owner ON personal_api_tokens(username, status)`);
       for (const table of ['profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config']) {
         for (const action of ['INSERT', 'UPDATE', 'DELETE']) {
           const triggerName = `advance_page_revision_${table}_${action.toLowerCase()}`;

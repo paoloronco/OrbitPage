@@ -19,6 +19,9 @@ import {
   requirePermission,
   requireAnyPermission,
   getPermissionsForRole,
+  createPersonalApiToken,
+  listPersonalApiTokens,
+  revokePersonalApiToken,
 } from './auth.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -102,7 +105,7 @@ const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' |
 const DISTRIBUTION_IMAGE = String(process.env.ORBITPAGE_DISTRIBUTION_IMAGE || '').trim();
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics', 'newsletter_settings', 'newsletter_subscribers', 'newsletter_campaigns', 'newsletter_deliveries'];
+const DEMO_RESET_TABLES = ['personal_api_tokens', 'admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics', 'newsletter_settings', 'newsletter_subscribers', 'newsletter_campaigns', 'newsletter_deliveries'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -1788,6 +1791,12 @@ const CampaignLinksSchema = z.array(z.object({
     slugs.add(link.slug);
   });
 });
+const PersonalApiTokenBodySchema = z.object({
+  name: z.string().trim().min(1).max(64),
+  scopes: z.array(z.string().min(1).max(64)).min(1).max(20),
+  expiresInDays: z.union([z.literal(30), z.literal(90), z.literal(365), z.null()]),
+  currentPassword: z.string().min(1).max(1024),
+}).strict();
 
 app.get(/^\/(?:\.well-known\/)?[a-z0-9][a-z0-9._-]{0,70}\.txt$/i, async (req, res) => {
   try {
@@ -2280,7 +2289,9 @@ app.post('/api/auth/verify', authenticateToken, async (req, res) => {
       user: {
         username: user.username,
         role,
-        permissions: getPermissionsForRole(user.username, role),
+        permissions: req.user.authType === 'personal_token'
+          ? req.user.permissions
+          : getPermissionsForRole(user.username, role),
       },
     });
   } catch (error) {
@@ -4177,6 +4188,60 @@ app.post('/api/validate-password', (req, res) => {
   const { password } = req.body;
   const isStrong = isPasswordStrong(password);
   res.json({ isStrong });
+});
+
+const rejectPersonalTokenSession = (req, res, next) => (
+  req.user?.authType === 'personal_token'
+    ? res.status(403).json({ error: 'A dashboard session is required.' })
+    : next()
+);
+
+app.get('/api/account/api-tokens', authenticateToken, rejectPersonalTokenSession, async (req, res) => {
+  try {
+    const availableScopes = req.user.permissions.filter((permission) => permission !== 'users:manage');
+    res.json({ tokens: await listPersonalApiTokens(req.user.username), availableScopes });
+  } catch (error) {
+    console.error('Error listing personal API tokens:', error);
+    res.status(500).json({ error: 'Failed to list personal API tokens' });
+  }
+});
+
+app.post('/api/account/api-tokens', authLimiter, authenticateToken, rejectPersonalTokenSession, async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  try {
+    const input = PersonalApiTokenBodySchema.parse(req.body || {});
+    if (!(await authenticateUser(input.currentPassword, req.user.username))) {
+      return res.status(401).json({ error: 'Current password is incorrect.' });
+    }
+    const availableScopes = req.user.permissions.filter((permission) => permission !== 'users:manage');
+    const scopes = [...new Set(input.scopes)];
+    if (scopes.some((scope) => !availableScopes.includes(scope))) {
+      return res.status(403).json({ error: 'One or more requested permissions are not available to this account.' });
+    }
+    const result = await createPersonalApiToken(req.user.username, { ...input, scopes });
+    return res.status(201).json(result);
+  } catch (error) {
+    const validationMessage = getZodErrorMessage(error);
+    if (validationMessage) return res.status(400).json({ error: validationMessage });
+    if (error?.message === 'TOKEN_LIMIT_REACHED') return res.status(409).json({ error: 'The limit of 10 active tokens has been reached.' });
+    console.error('Error creating personal API token:', error);
+    return res.status(500).json({ error: 'Failed to create personal API token' });
+  }
+});
+
+app.delete('/api/account/api-tokens/:tokenId', authenticateToken, rejectPersonalTokenSession, async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  const tokenId = z.string().uuid().safeParse(req.params.tokenId);
+  if (!tokenId.success) return res.status(400).json({ error: 'Invalid token identifier.' });
+  try {
+    const token = await revokePersonalApiToken(req.user.username, tokenId.data);
+    return token
+      ? res.json({ token })
+      : res.status(404).json({ error: 'Active token not found.' });
+  } catch (error) {
+    console.error('Error revoking personal API token:', error);
+    return res.status(500).json({ error: 'Failed to revoke personal API token' });
+  }
 });
 
 // User management routes

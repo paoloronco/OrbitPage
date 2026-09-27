@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -19,7 +18,6 @@ import {
   Loader2,
   Pencil,
   Plus,
-  Shield,
   Trash2,
   Users,
   X,
@@ -28,6 +26,7 @@ import { usersApi } from '@/lib/api-client';
 import { isPasswordStrong } from '@/lib/auth';
 import { DEMO_MODE } from '@/lib/config';
 import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, UserRole } from '@/lib/permissions';
+import './team-workspace.css';
 
 interface User {
   username: string;
@@ -110,18 +109,7 @@ const RoleSelect = ({
   );
 };
 
-const roleBadgeClass: Record<string, string> = {
-  admin:        'bg-primary/15 text-primary',
-  editor:       'bg-blue-500/15 text-blue-600',
-  links_editor: 'bg-cyan-500/15 text-cyan-700',
-  links_style:  'bg-violet-500/15 text-violet-700',
-  links_images: 'bg-pink-500/15 text-pink-700',
-  theme_editor: 'bg-amber-500/15 text-amber-700',
-  compliance:   'bg-emerald-500/15 text-emerald-700',
-  viewer:       'bg-slate-400/20 text-slate-600',
-};
-
-export const UserManager = () => {
+export const UserManager = ({ currentUsername }: { currentUsername?: string }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [globalMsg, setGlobalMsg] = useState<Msg | null>(null);
@@ -258,33 +246,34 @@ export const UserManager = () => {
   };
 
   return (
-    <Card className="glass-card p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-semibold gradient-text">Users</h2>
+    <section className="team-panel team-overview-panel">
+      <div className="team-heading">
+        <div>
+          <p className="dashboard-kicker">Team</p>
+          <h2>Workspace members</h2>
+          <p className="muted">Create a local account for each person. Everyone signs in with their own credentials and receives only the permissions assigned to their role.</p>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 text-xs"
+        <Users aria-hidden="true" size={22} />
+      </div>
+
+      <div className="team-toolbar">
+        <p className="team-seat-summary">{users.length} local {users.length === 1 ? 'account' : 'accounts'}</p>
+        <button
+          className="team-button secondary compact"
           onClick={() => {
             setShowAddForm((v) => !v);
             setAddMsg(null);
           }}
+          type="button"
         >
           {showAddForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
           {showAddForm ? 'Cancel' : 'Add user'}
-        </Button>
+        </button>
       </div>
 
       {globalMsg && (
         <div
-          className={`text-sm p-3 rounded-lg flex items-center gap-2 ${
-            globalMsg.type === 'success'
-              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-              : 'bg-destructive/10 text-destructive border border-destructive/20'
-          }`}
+          className={`team-feedback ${globalMsg.type}`}
         >
           {globalMsg.type === 'success' ? (
             <CheckCircle className="w-4 h-4 shrink-0" />
@@ -299,7 +288,7 @@ export const UserManager = () => {
       {showAddForm && (
         <form
           onSubmit={handleAddUser}
-          className="border border-primary/20 rounded-lg p-4 space-y-3 bg-primary/5"
+          className="team-user-form"
         >
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">New user</p>
           <div className="space-y-1">
@@ -350,31 +339,29 @@ export const UserManager = () => {
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="team-member-list">
           {users.map((u) => {
             const isAdmin = u.username === 'admin';
             const isEditing = editingUser === u.username;
             const roleKey = (u.role || 'admin') as UserRole;
             const roleLabel = ROLE_LABELS[roleKey] || u.role || 'Admin';
-            const badgeClass = roleBadgeClass[roleKey] || roleBadgeClass.viewer;
             return (
-              <li key={u.username} className="border border-primary/10 rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2.5 bg-primary/5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Shield className={`w-4 h-4 shrink-0 ${isAdmin ? 'text-primary' : 'text-muted-foreground'}`} />
-                    <span className="text-sm font-medium truncate">{u.username}</span>
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${badgeClass}`}>
-                      {roleLabel}
-                    </span>
+              <li key={u.username} className="team-member-entry">
+                <div className="team-member-row">
+                  <span className="team-member-avatar" aria-hidden="true">{u.username.slice(0, 1)}</span>
+                  <div className="team-member-identity">
+                    <strong>{u.username}{u.username === currentUsername ? ' (you)' : ''}</strong>
+                    <span>Local account · created {new Date(u.created_at).toLocaleDateString()}</span>
                   </div>
+                  <span className={`team-role-badge ${roleKey}`}>{roleLabel}</span>
                   {!demoMode && (
-                    <div className="flex items-center gap-1 shrink-0 ml-2">
+                    <div className="team-member-actions">
                       {!isAdmin && (
                         <Button
                           aria-label="Change role"
                           size="icon"
                           variant="ghost"
-                          className="h-7 w-7"
+                          className="team-icon-button"
                           title="Change role"
                           onClick={() => {
                             if (isEditing && editMode === 'role') {
@@ -391,7 +378,7 @@ export const UserManager = () => {
                         aria-label="Change password"
                         size="icon"
                         variant="ghost"
-                        className="h-7 w-7"
+                        className="team-icon-button"
                         title="Change password"
                         onClick={() => {
                           if (isEditing && editMode === 'password') {
@@ -411,7 +398,7 @@ export const UserManager = () => {
                         aria-label={isAdmin ? 'The admin user cannot be deleted' : 'Delete user'}
                         size="icon"
                         variant="ghost"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        className="team-icon-button danger"
                         title={isAdmin ? 'The admin user cannot be deleted' : 'Delete user'}
                         disabled={isAdmin}
                         onClick={() => handleDelete(u.username)}
@@ -426,7 +413,7 @@ export const UserManager = () => {
                 {isEditing && editMode === 'password' && (
                   <form
                     onSubmit={(e) => handleEditPassword(e, u.username)}
-                    className="px-3 py-3 space-y-2 border-t border-primary/10 bg-background/40"
+                    className="team-member-editor"
                   >
                     <p className="text-xs text-muted-foreground font-medium">Change password for "{u.username}"</p>
                     <PasswordFields label="New password" value={editPassword} onChange={setEditPassword} disabled={editLoading} />
@@ -462,7 +449,7 @@ export const UserManager = () => {
                 {isEditing && editMode === 'role' && (
                   <form
                     onSubmit={(e) => handleSaveRole(e, u.username)}
-                    className="px-3 py-3 space-y-2 border-t border-primary/10 bg-background/40"
+                    className="team-member-editor"
                   >
                     <p className="text-xs text-muted-foreground font-medium">Change role for "{u.username}"</p>
                     <div className="space-y-1">
@@ -501,6 +488,6 @@ export const UserManager = () => {
           })}
         </ul>
       )}
-    </Card>
+    </section>
   );
 };

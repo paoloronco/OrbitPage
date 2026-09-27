@@ -997,6 +997,28 @@ export const usersApi = {
   },
 };
 
+export type PersonalApiToken = {
+  tokenId: string;
+  name: string;
+  tokenPrefix: string;
+  scopes: string[];
+  username: string;
+  status: 'active' | 'revoked';
+  createdAt: string;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+};
+
+export const personalApiTokensApi = {
+  list: (): Promise<{ tokens: PersonalApiToken[]; availableScopes: string[] }> =>
+    apiRequest('/account/api-tokens'),
+  create: (input: { name: string; scopes: string[]; expiresInDays: 30 | 90 | 365 | null; currentPassword: string }): Promise<{ token: string; record: PersonalApiToken }> =>
+    apiRequest('/account/api-tokens', { method: 'POST', body: JSON.stringify(input) }),
+  revoke: (tokenId: string): Promise<{ token: PersonalApiToken }> =>
+    apiRequest(`/account/api-tokens/${encodeURIComponent(tokenId)}`, { method: 'DELETE' }),
+};
+
 // Links API
 export const linksApi = {
   get: async (): Promise<LinkItem[]> => {
