@@ -16,7 +16,6 @@ import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/
 import {
   AlertTriangle,
   BarChart3,
-  CheckCircle2,
   ChevronDown,
   CircleUserRound,
   Cookie,
@@ -727,25 +726,18 @@ export const AdminView = ({
       .sort((a, b) => (b.ctaClicks ?? 0) - (a.ctaClicks ?? 0))
       .slice(0, 5);
     const maxCtaClicks = Math.max(...ctaPerformance.map(link => link.ctaClicks ?? 0), 1);
-    const visibleLinks = contentLinks.filter(link => link.isActive !== false);
-    const scheduledLinks = contentLinks.filter(link => link.startDate || link.endDate);
     const totalClicks = links.reduce((sum, link) => sum + (link.clickCount ?? 0), 0);
     const ctaClicks = ctaLinks.reduce((sum, link) => sum + (link.ctaClicks ?? 0), 0);
-    const socialCount = Object.values(profile.socialLinks || {}).filter(Boolean).length;
 
     return {
-      visibleLinks: visibleLinks.length,
       totalLinks: contentLinks.length,
       ctaLinks: ctaLinks.length,
       ctaClicks,
       ctaPerformance,
       maxCtaClicks,
-      scheduledLinks: scheduledLinks.length,
       totalClicks,
-      socialCount,
-      profileReady: Boolean(profile.name?.trim() && profile.bio?.trim()),
     };
-  }, [links, profile]);
+  }, [links]);
 
   const handleLogout = () => {
     if (isIntegratedHostedAdmin && hostedSurfaceConfig?.onSignOut) {
@@ -1242,29 +1234,6 @@ export const AdminView = ({
           </section>
         )}
 
-        {!(newUiEnabled && activeTab === "profile") && !["ai", "theme", "publish", "backup", "privacy", "analytics", "newsletter", "team", "account"].includes(activeTab) && <section className="admin-metrics admin-metrics-saas" aria-label={tr("Workspace status", "Stato del workspace")}>
-          <MetricCard
-            icon={Globe2}
-            label={tr("Visible links", "Link visibili")}
-            value={`${metrics.visibleLinks}/${metrics.totalLinks}`}
-            detail={entitlements?.maxBlocks !== undefined
-              ? `${saasUsage?.blocks ?? links.length}/${entitlements.maxBlocks ?? "∞"} ${tr("plan blocks", "blocchi del piano")}`
-              : metrics.scheduledLinks > 0 ? `${metrics.scheduledLinks} ${tr("scheduled", "programmati")}` : tr("Ready to publish", "Pronta per la pubblicazione")}
-          />
-          <MetricCard
-            icon={MousePointerClick}
-            label={tr("Total clicks", "Clic totali")}
-            value={String(metrics.totalClicks)}
-            detail={metrics.ctaClicks > 0 ? `${metrics.ctaClicks} ${tr("CTA clicks", "clic sulle CTA")}` : tr("Built-in tracking", "Monitoraggio integrato")}
-          />
-          <MetricCard
-            icon={CheckCircle2}
-            label={tr("Page", "Pagina")}
-            value={metrics.profileReady ? tr("Ready", "Pronta") : tr("Draft", "Bozza")}
-            detail={`${metrics.socialCount} ${tr("social links", "link social")}`}
-          />
-        </section>}
-
         <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin && !isIntegratedHostedAdmin ? "mt-5 flex-1" : "admin-dashboard-tabs flex-1"}>
           {isHostedAdmin && !isIntegratedHostedAdmin && <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
@@ -1693,31 +1662,6 @@ export const AdminView = ({
     </div>
   );
 };
-
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  detail,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  detail: string;
-}) {
-  return (
-    <div className="admin-metric-card">
-      <div className="admin-metric-icon">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div>
-        <p className="admin-metric-label">{label}</p>
-        <p className="admin-metric-value">{value}</p>
-        <p className="admin-metric-detail">{detail}</p>
-      </div>
-    </div>
-  );
-}
 
 function PreviewPanel({
   title,
