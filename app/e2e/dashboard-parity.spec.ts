@@ -55,7 +55,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(shell).toHaveCSS('font-family', /Aptos|Avenir Next|Segoe UI Variable/);
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('width', '30px');
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('height', '30px');
-  await expect(page.locator('.admin-dashboard-logo-copy')).toHaveCSS('width', '130px');
+  await expect(page.locator('.admin-dashboard-logo-copy')).toHaveCSS('width', '125px');
   await expect(page.locator('.admin-dashboard-header')).toHaveCSS('min-height', '92px');
 
   const language = page.locator('.admin-dashboard-language');

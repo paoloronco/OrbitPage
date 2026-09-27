@@ -311,6 +311,8 @@ export const AdminView = ({
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
+  const hostedPanelTabs = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.panels || [] : [];
+  const usesDashboardShell = !isHostedAdmin || isIntegratedHostedAdmin;
   const isProspectReadOnly = currentUser?.readOnly === true;
   const orbitPageBadgeEditable = isHostedAdmin && entitlements?.badgeRequired !== true && !isProspectReadOnly;
   const resolveOrbitPageBadgeVisibility = (preference: boolean | undefined) => (
@@ -572,13 +574,13 @@ export const AdminView = ({
     switch (tab.value) {
       case 'profile':   return canEditProfile;
       case 'content':   return canEditLinks || canEditMenu;
-      case 'ai':        return !isHostedAdmin && (canEditProfile || canEditLinks || canEditTheme);
+      case 'ai':        return hostedPanelTabs.includes('ai') || (!isHostedAdmin && (canEditProfile || canEditLinks || canEditTheme));
       case 'theme':     return canEditTheme;
       case 'publish':   return canEditProfile || canEditCompliance;
-      case 'team':      return !isHostedAdmin && canManageUsers;
-      case 'newsletter': return !isHostedAdmin && canManageUsers;
-      case 'account':   return !isHostedAdmin;
-      case 'plan':      return !isHostedAdmin;
+      case 'team':      return hostedPanelTabs.includes('team') || (!isHostedAdmin && canManageUsers);
+      case 'newsletter': return hostedPanelTabs.includes('newsletter') || (!isHostedAdmin && canManageUsers);
+      case 'account':   return hostedPanelTabs.includes('account') || !isHostedAdmin;
+      case 'plan':      return hostedPanelTabs.includes('plan') || !isHostedAdmin;
       case 'access':    return false;
       case 'backup':    return canManageUsers;
       case 'analytics': return canViewAnalytics;
@@ -623,6 +625,7 @@ export const AdminView = ({
 
   const setNewUiPreference = (enabled: boolean) => {
     setNewUiEnabled(enabled);
+    hostedSurfaceConfig?.onNewUiChange?.(enabled);
     setVisualLayoutEditing(false);
     if (!isIntegratedHostedAdmin) {
       try {
@@ -743,6 +746,10 @@ export const AdminView = ({
   }, [links, profile]);
 
   const handleLogout = () => {
+    if (isIntegratedHostedAdmin && hostedSurfaceConfig?.onSignOut) {
+      hostedSurfaceConfig.onSignOut();
+      return;
+    }
     logout();
     onLogout();
   };
@@ -949,19 +956,19 @@ export const AdminView = ({
 
   return (
     <div
-      className={`orbitpage-admin min-h-screen${!isHostedAdmin ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : isIntegratedHostedAdmin ? " admin-integrated-surface" : ""}${newUiEnabled ? " admin-new-ui-enabled" : ""}`}
+      className={`orbitpage-admin min-h-screen${usesDashboardShell ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : ""}${newUiEnabled ? " admin-new-ui-enabled" : ""}`}
       data-orbitpage-workspace-ready={isIntegratedHostedAdmin ? "true" : undefined}
     >
-      {!isHostedAdmin && (
+      {usesDashboardShell && (
         <aside className="admin-dashboard-sidebar">
           <div className="admin-dashboard-logo-row">
-            <div className="admin-dashboard-logo">
+            <button className="admin-dashboard-logo" onClick={() => selectTab("profile")} type="button">
               <OrbitPageBrand className="orbitpage-dashboard-brand" showName={false} size="md" />
               <div className="admin-dashboard-logo-copy orbitpage-dashboard-brand-copy">
                 <strong>OrbitPage</strong>
                 <small>/{currentUser?.username || "admin"}</small>
               </div>
-            </div>
+            </button>
             <button
               aria-label={sidebarCollapsed ? tr("Expand navigation", "Espandi navigazione") : tr("Collapse navigation", "Comprimi navigazione")}
               aria-pressed={sidebarCollapsed}
@@ -1010,6 +1017,7 @@ export const AdminView = ({
           />
 
           <div className={`admin-dashboard-nav-stack${mobileNavOpen ? " open" : ""}`} id="admin-dashboard-primary-navigation">
+            {isIntegratedHostedAdmin && <div data-orbitpage-hosted-workspace-slot />}
             <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}</div>
             <nav className="admin-dashboard-nav admin-dashboard-nav-page" aria-label={tr("Page tools", "Strumenti pagina")}>
               {visiblePageTabs.map(({ value, icon: Icon, iconName }) => value === "content" ? (
@@ -1114,7 +1122,11 @@ export const AdminView = ({
               <label className="admin-dashboard-language" title={tr("Language", "Lingua")}>
                 <Languages aria-hidden="true" size={15} />
                 <span className="sr-only">{tr("Language", "Lingua")}</span>
-                <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => setLocale(event.target.value as AppLocale)}>
+                <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => {
+                  const nextLocale = event.target.value as AppLocale;
+                  setLocale(nextLocale);
+                  hostedSurfaceConfig?.onLocaleChange?.(nextLocale);
+                }}>
                   {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
                 </select>
               </label>
@@ -1122,7 +1134,7 @@ export const AdminView = ({
                 <LogOut aria-hidden="true" size={16} />
                 <span>{tr("Sign out", "Esci")}</span>
               </button>
-              <a aria-label={tr("Back to site", "Torna al sito")} className="admin-dashboard-footer-action" href={publicPageHref} title={tr("Back to site", "Torna al sito")}>
+              <a aria-label={tr("Back to site", "Torna al sito")} className="admin-dashboard-footer-action" href={hostedSurfaceConfig?.siteUrl || publicPageHref} title={tr("Back to site", "Torna al sito")}>
                 <Globe2 aria-hidden="true" size={16} />
                 <span>{tr("Back to site", "Torna al sito")}</span>
               </a>
@@ -1131,7 +1143,7 @@ export const AdminView = ({
         </aside>
       )}
 
-      <div className={isHostedAdmin ? "admin-app-shell" : "admin-dashboard-main"}>
+      <div className={usesDashboardShell ? "admin-dashboard-main" : "admin-app-shell"}>
         {isHostedAdmin && !isIntegratedHostedAdmin ? <header className="admin-topbar">
           <div className="admin-heading min-w-0">
             <OrbitPageBrand showName={false} size="md" />
@@ -1170,14 +1182,14 @@ export const AdminView = ({
               </Button>
             )}
           </div>
-        </header> : !isHostedAdmin ? <header className="admin-dashboard-header">
+        </header> : usesDashboardShell ? <header className="admin-dashboard-header">
           <div className="admin-dashboard-header-copy">
             <div className="admin-dashboard-heading-row"><h1>{displayedTabLabel(activeTab)}</h1></div>
             <p className="admin-dashboard-section-description">{displayedTabDescription(activeTab)}</p>
             <div className="admin-dashboard-context-row" aria-label={tr("Workspace context", "Contesto workspace")}>
               <span className="admin-dashboard-context-slug">/{currentUser?.username || "admin"}</span>
-              <span>{tr("Owner", "Proprietario")}</span>
-              <span className="admin-dashboard-page-state"><i aria-hidden="true" />{tr("Self-hosted", "Self-hosted")}</span>
+              <span>{hostedSurfaceConfig?.workspace?.roleLabel || tr("Owner", "Proprietario")}</span>
+              <span className={`admin-dashboard-page-state${hostedSurfaceConfig?.workspace?.status ? ` admin-dashboard-page-state-${hostedSurfaceConfig.workspace.status}` : ""}`}><i aria-hidden="true" />{hostedSurfaceConfig?.workspace?.statusLabel || tr("Self-hosted", "Self-hosted")}</span>
             </div>
           </div>
           <div className="admin-dashboard-header-actions">
@@ -1251,7 +1263,7 @@ export const AdminView = ({
           />
         </section>}
 
-        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin && !isIntegratedHostedAdmin ? "mt-5 flex-1" : isIntegratedHostedAdmin ? "admin-integrated-tabs flex-1" : "admin-dashboard-tabs flex-1"}>
+        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin && !isIntegratedHostedAdmin ? "mt-5 flex-1" : "admin-dashboard-tabs flex-1"}>
           {isHostedAdmin && !isIntegratedHostedAdmin && <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
               {visibleNavigationTabs.map(({ value, icon: Icon }) => (
@@ -1570,6 +1582,12 @@ export const AdminView = ({
               <OpenSourcePlan />
             </TabsContent>
           )}
+
+          {isIntegratedHostedAdmin && hostedPanelTabs.map((tab) => (
+            <TabsContent value={tab} className="admin-tab-content" key={tab}>
+              <div data-orbitpage-hosted-panel-slot={tab} />
+            </TabsContent>
+          ))}
 
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">

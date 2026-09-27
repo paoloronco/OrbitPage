@@ -16,6 +16,7 @@ export type HostedSurfaceConfig = {
   locale: string;
   newUiEnabled?: boolean;
   extensions?: {
+    panels?: AdminTab[];
     shop?: {
       entitled: boolean;
       enabled?: boolean;
@@ -23,6 +24,15 @@ export type HostedSurfaceConfig = {
       selected?: boolean;
     };
   };
+  workspace?: {
+    roleLabel?: string;
+    statusLabel?: string;
+    status?: string;
+  };
+  siteUrl?: string;
+  onSignOut?: () => void;
+  onLocaleChange?: (locale: string) => void;
+  onNewUiChange?: (enabled: boolean) => void;
   contentSection?: ContentDestination;
   onContentRoutingChange?: (routing: ContentRouting) => void;
   onContentSectionChange?: (section: ContentDestination) => void;
