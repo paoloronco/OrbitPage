@@ -330,7 +330,8 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
   };
 
   return (
-    <Card className={`admin-backup-manager glass-card space-y-6 p-6 ${DEMO_MODE ? "opacity-70" : ""}`}>
+    <div className="admin-backup-manager-stack">
+      <Card className={`admin-backup-manager glass-card space-y-6 p-6 ${DEMO_MODE ? "opacity-70" : ""}`}>
       <div className="flex items-start gap-3">
         <span className="rounded-xl bg-primary/10 p-2 text-primary">
           <Database className="h-5 w-5" />
@@ -457,37 +458,41 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
         />
       </section>
 
+      </Card>
+
       {!hosted && (
-      <section className="admin-backup-section admin-backup-section--media space-y-4 border-t border-border/70 pt-5" aria-labelledby="media-cleanup-heading">
-        <div className="flex items-start gap-3">
-          <span className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-4 w-4" /></span>
-          <div>
-            <h4 id="media-cleanup-heading" className="text-sm font-semibold">{tr("Unused media", "Media inutilizzati")}</h4>
-            <p className="text-xs leading-5 text-muted-foreground">
-              {tr("OrbitPage removes old uploads that are no longer used by the page. Recent files stay protected.", "OrbitPage rimuove i vecchi caricamenti non più usati dalla pagina. I file recenti restano protetti.")}
-            </p>
-          </div>
-        </div>
-        {cleanupReport && (
-          <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background/50 p-4 text-sm sm:grid-cols-4">
-            <div><span className="block text-xs text-muted-foreground">{tr("Scanned", "Analizzati")}</span><strong>{cleanupReport.scanned}</strong></div>
-            <div><span className="block text-xs text-muted-foreground">{tr("Protected", "Protetti")}</span><strong>{cleanupReport.referenced + cleanupReport.skippedRecent}</strong></div>
-            <div><span className="block text-xs text-muted-foreground">{tr("Unused", "Inutilizzati")}</span><strong>{cleanupReport.unused}</strong></div>
-            <div><span className="block text-xs text-muted-foreground">{tr("Space", "Spazio")}</span><strong>{formatFileSize(cleanupReport.dryRun ? cleanupReport.reclaimableBytes : cleanupReport.reclaimedBytes)}</strong></div>
-          </div>
-        )}
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button type="button" variant="outline" className="admin-action" onClick={() => void inspectUnusedMedia()} disabled={Boolean(cleanupBusy)}>
-            {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : <Sparkles className="h-4 w-4" />}
-            {tr("Check unused media", "Controlla media inutilizzati")}
-          </Button>
-          <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !cleanupReport?.unused}>
-            {cleanupBusy === "clean" ? <OrbitLoader size={16} state="working" /> : <Trash2 className="h-4 w-4" />}
-            {tr("Clean now", "Pulisci ora")}
-          </Button>
-        </div>
-      </section>
+        <Card className={`admin-backup-manager admin-backup-media-card glass-card p-6 ${DEMO_MODE ? "opacity-70" : ""}`}>
+          <section className="admin-backup-section admin-backup-section--media space-y-4" aria-labelledby="media-cleanup-heading">
+            <div className="flex items-start gap-3">
+              <span className="rounded-lg bg-primary/10 p-2 text-primary"><Sparkles className="h-4 w-4" /></span>
+              <div>
+                <h4 id="media-cleanup-heading" className="text-sm font-semibold">{tr("Unused media", "Media inutilizzati")}</h4>
+                <p className="text-xs leading-5 text-muted-foreground">
+                  {tr("OrbitPage removes old uploads that are no longer used by the page. Recent files stay protected.", "OrbitPage rimuove i vecchi caricamenti non più usati dalla pagina. I file recenti restano protetti.")}
+                </p>
+              </div>
+            </div>
+            {cleanupReport && (
+              <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background/50 p-4 text-sm sm:grid-cols-4">
+                <div><span className="block text-xs text-muted-foreground">{tr("Scanned", "Analizzati")}</span><strong>{cleanupReport.scanned}</strong></div>
+                <div><span className="block text-xs text-muted-foreground">{tr("Protected", "Protetti")}</span><strong>{cleanupReport.referenced + cleanupReport.skippedRecent}</strong></div>
+                <div><span className="block text-xs text-muted-foreground">{tr("Unused", "Inutilizzati")}</span><strong>{cleanupReport.unused}</strong></div>
+                <div><span className="block text-xs text-muted-foreground">{tr("Space", "Spazio")}</span><strong>{formatFileSize(cleanupReport.dryRun ? cleanupReport.reclaimableBytes : cleanupReport.reclaimedBytes)}</strong></div>
+              </div>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button type="button" variant="outline" className="admin-action" onClick={() => void inspectUnusedMedia()} disabled={Boolean(cleanupBusy)}>
+                {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : <Sparkles className="h-4 w-4" />}
+                {tr("Check unused media", "Controlla media inutilizzati")}
+              </Button>
+              <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !cleanupReport?.unused}>
+                {cleanupBusy === "clean" ? <OrbitLoader size={16} state="working" /> : <Trash2 className="h-4 w-4" />}
+                {tr("Clean now", "Pulisci ora")}
+              </Button>
+            </div>
+          </section>
+        </Card>
       )}
-    </Card>
+    </div>
   );
 }

@@ -11307,6 +11307,12 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   grid-template-columns: minmax(360px, .9fr) minmax(520px, 1.1fr);
 }
 
+.admin-backup-manager-stack {
+  display: grid;
+  min-width: 0;
+  gap: var(--admin-space-5);
+}
+
 .admin-version-history,
 .admin-backup-manager {
   min-width: 0;
