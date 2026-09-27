@@ -225,6 +225,38 @@ export const initializeDatabase = () => {
       `, (err) => {
         if (err) console.error('Error creating machine-readable metrics table:', err);
       });
+
+      // Privacy-conscious first-party analytics for the self-hosted dashboard.
+      // Raw IP addresses and user-agent strings are intentionally not retained.
+      db.run(`
+        CREATE TABLE IF NOT EXISTS analytics_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event TEXT NOT NULL CHECK (event IN ('view', 'click')),
+          visitor_id TEXT,
+          link_id TEXT,
+          source TEXT,
+          device TEXT,
+          path TEXT,
+          utm_source TEXT,
+          utm_medium TEXT,
+          utm_campaign TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) console.error('Error creating analytics events table:', err);
+      });
+      db.run(`CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at)`, (err) => {
+        if (err) console.error('Error indexing analytics events:', err);
+      });
+      db.run(`
+        CREATE TRIGGER IF NOT EXISTS cleanup_analytics_events
+        AFTER INSERT ON analytics_events
+        BEGIN
+          DELETE FROM analytics_events WHERE created_at < datetime('now', '-62 days');
+        END
+      `, (err) => {
+        if (err) console.error('Error creating analytics retention policy:', err);
+      });
       db.run(`
         CREATE TRIGGER IF NOT EXISTS limit_custom_text_files
         BEFORE INSERT ON text_files

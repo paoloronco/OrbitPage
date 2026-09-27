@@ -1597,6 +1597,53 @@ describe('API Endpoints', () => {
     ]);
   });
 
+  it('returns the shared 7-day analytics report from local events', async () => {
+    vi.mocked(dbAll)
+      .mockResolvedValueOnce([{ visits: 12, visitors: 8, clicks: 4 }])
+      .mockResolvedValueOnce([{ visits: 6, visitors: 4, clicks: 2 }])
+      .mockResolvedValueOnce([{ date: '2026-09-27', visits: 12, visitors: 8, clicks: 4 }])
+      .mockResolvedValueOnce([{ label: 'Direct', value: 12 }])
+      .mockResolvedValueOnce([{ label: 'Desktop', value: 12 }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ label: 'Homepage', value: 4 }])
+      .mockResolvedValueOnce([{ label: '/', value: 12 }]);
+
+    const response = await request(app).get('/api/analytics?days=7');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toContain('no-store');
+    expect(response.body).toMatchObject({
+      configured: true,
+      detailed: true,
+      periodDays: 7,
+      maxPeriodDays: 30,
+      summary: { visits: 12, visitors: 8, clicks: 4, ctr: 33.3 },
+      comparison: { changes: { visits: 100, visitors: 100, clicks: 100, ctr: 0 } },
+      links: [{ label: 'Homepage', value: 4 }],
+    });
+  });
+
+  it('stores a consented public page view without raw request identifiers', async () => {
+    const response = await request(app)
+      .post('/api/analytics/events')
+      .set('User-Agent', 'Mozilla/5.0 (iPhone; Mobile)')
+      .send({
+        event: 'view',
+        visitorId: 'visitor-1',
+        referrer: 'https://www.instagram.com/post',
+        path: '/it-IT/',
+        utmSource: 'profile',
+      });
+
+    expect(response.status).toBe(204);
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO analytics_events'),
+      ['view', 'visitor-1', null, 'instagram.com', 'Mobile', '/it-IT/', 'profile', null, null],
+    );
+  });
+
   it('GET text-discovery files exposes useful defaults', async () => {
     vi.mocked(dbGet).mockImplementation(async (sql) => String(sql).includes('FROM profile_data')
       ? { name: 'OrbitPage', machine_readable_enabled: 1 }

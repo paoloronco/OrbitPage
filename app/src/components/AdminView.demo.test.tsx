@@ -56,7 +56,6 @@ vi.mock('@/lib/hosted-surface', () => ({
   getHostedSurfaceConfig: () => mockState.hostedConfig,
   HOSTED_CONFIG_CHANGED_EVENT: 'orbitpage:hosted-config-changed',
 }));
-vi.mock('./ClickAnalyticsChart', () => ({ ClickAnalyticsChart: () => <div>ClickAnalyticsChart</div> }));
 vi.mock('./PasswordManager', () => ({ PasswordManager: () => <div>PasswordManager</div> }));
 vi.mock('./UserManager', () => ({ UserManager: () => <div>UserManager</div> }));
 vi.mock('./BackupManager', () => ({
@@ -141,9 +140,13 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Everything included in the OSS edition is unlocked.');
     expect(html).toContain('Explore OrbitPage SaaS');
     expect(html).toContain('/en-US/pricing');
-    expect(html).toContain('data-testid="oss-analytics"');
+    expect(html).toContain('data-testid="managed-analytics"');
     expect(html).toContain('managed-analytics-primary-kpis');
-    expect(html).toContain('Content performance');
+    expect(html).toContain('Performance over time');
+    expect(html).toContain('>7d</button>');
+    expect(html).toContain('>30d</button>');
+    expect(html).not.toContain('>90d</button>');
+    expect(html).not.toContain('Smart CTA clicks will appear here separately');
     expect(html).toContain('admin-dashboard-mobile-nav-button');
     expect(html).toContain('content-workspace-option-locked');
     expect(html).toContain('Edit with AI');

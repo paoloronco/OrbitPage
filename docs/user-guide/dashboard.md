@@ -76,7 +76,7 @@ Restoring replaces only the selected sections. Restoring Media replaces the uplo
 
 ### Analytics and Privacy
 
-Self-hosted **Analytics** shows built-in click and CTA counters and can configure optional GA4. **Privacy** controls policy links, the consent banner, consent categories, and optional external consent integration. See [Analytics and privacy](./analytics-and-privacy.md) before enabling third-party tracking.
+Self-hosted **Analytics** shows the same 7/30-day visit and content dashboard as the managed edition and can configure optional GA4. **Privacy** controls policy links, the consent banner, consent categories, and optional external consent integration. See [Analytics and privacy](./analytics-and-privacy.md) before enabling third-party tracking.
 
 ## Workspace tools
 

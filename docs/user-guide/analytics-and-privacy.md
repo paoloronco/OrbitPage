@@ -1,14 +1,14 @@
 # Analytics and privacy
 
-OrbitPage separates its built-in self-hosted counters from optional Google Analytics 4. Configure each only when it fits the deployment's privacy notice and consent requirements.
+OrbitPage separates its built-in self-hosted analytics from optional Google Analytics 4. Configure each only when it fits the deployment's privacy notice and consent requirements.
 
 ## Built-in analytics
 
-The self-hosted application records page-link and call-to-action click counters used by the bundled dashboard. It does not require a third-party analytics account.
+The self-hosted application records first-party page visits and content clicks in its local SQLite database. It does not require a third-party analytics account or send these events to OrbitPage.
 
-Use **Dashboard > Analytics** to review the available totals and content performance. Empty states are expected on a new page. Admin activity is excluded from public-page tracking.
+Use **Dashboard > Analytics** to switch between the latest 7 and 30 days and review visits, visitors, clicks, trends, content, referrers, devices, and tagged campaigns. Empty states are expected on a new page, and collection starts after the version that introduced period-based analytics is installed. Admin activity is excluded from public-page tracking.
 
-The managed service can expose additional visit, visitor, acquisition, device, country, and campaign reporting. Those hosted reports are not a guarantee of the self-hosted edition.
+Visit-level details are collected only after analytics consent. Click totals continue to work without consent, but OrbitPage does not attach a visitor identifier, referrer, device, or campaign values to those clicks. Raw IP addresses and user-agent strings are not stored. Local event rows are retained for 62 days so the dashboard can compare a 30-day period with the preceding 30 days. Approximate country reporting remains available only where the deployment infrastructure provides it.
 
 ## Google Analytics 4
 

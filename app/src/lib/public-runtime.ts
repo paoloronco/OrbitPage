@@ -13,7 +13,12 @@ export const trackPublicLinkClick = (id: string) => {
     sendManagedAnalyticsEvent('click', id);
     return;
   }
-  fetch(apiPath(`/links/${encodeURIComponent(id)}/click`), { method: 'POST' }).catch(() => {});
+  fetch(apiPath(`/links/${encodeURIComponent(id)}/click`), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(managedAnalyticsPayload('click', id)),
+    keepalive: true,
+  }).catch(() => {});
 };
 
 type ManagedAnalyticsEvent = 'view' | 'click';
@@ -37,7 +42,7 @@ function managedAnalyticsPayload(event: ManagedAnalyticsEvent, linkId?: string) 
   const params = new URLSearchParams(window.location.search);
   return {
     event,
-    visitorId: visitorId(),
+    visitorId: consentManager.isGranted('analytics') ? visitorId() : '',
     linkId: linkId || '',
     referrer: document.referrer || '',
     path: window.location.pathname,
@@ -48,8 +53,8 @@ function managedAnalyticsPayload(event: ManagedAnalyticsEvent, linkId?: string) 
 }
 
 function sendManagedAnalyticsEvent(event: ManagedAnalyticsEvent, linkId?: string) {
-  if (typeof window === 'undefined' || !hasStaticPublicSnapshot()) return;
-  fetch(withBasePath('/_orbitpage/event'), {
+  if (typeof window === 'undefined') return;
+  fetch(hasStaticPublicSnapshot() ? withBasePath('/_orbitpage/event') : apiPath('/analytics/events'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(managedAnalyticsPayload(event, linkId)),
@@ -59,7 +64,7 @@ function sendManagedAnalyticsEvent(event: ManagedAnalyticsEvent, linkId?: string
 }
 
 export function trackPublicPageView() {
-  if (typeof window === 'undefined' || !hasStaticPublicSnapshot()) return;
+  if (typeof window === 'undefined') return;
   if (!consentManager.isGranted('analytics')) return;
   const sessionKey = `${VIEW_SESSION_PREFIX}${window.location.pathname}${window.location.search}`;
   try {
