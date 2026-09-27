@@ -114,7 +114,8 @@ export function ManagedAnalyticsDashboard() {
   }, [tr]);
 
   useEffect(() => { void load(period); }, [load, period]);
-  const periods = useMemo(() => [7, 30, 90].filter((days) => days <= report.maxPeriodDays), [report.maxPeriodDays]);
+  const periods = useMemo(() => [7, 30].filter((days) => days <= report.maxPeriodDays), [report.maxPeriodDays]);
+  const daySuffix = locale.toLowerCase().startsWith('it') ? 'g' : 'd';
   const contentLinks = report.links.map((item) => item.label === 'Removed content'
     ? { ...item, label: tr('Removed content', 'Contenuto rimosso') }
     : item);
@@ -202,7 +203,7 @@ export function ManagedAnalyticsDashboard() {
   return <section className="managed-analytics" data-testid="managed-analytics">
     <header className="managed-analytics-header">
       <div className="managed-analytics-actions ml-auto">
-        <div role="group" aria-label={tr('Analytics range', 'Intervallo analytics')}>{periods.map((days) => <button aria-pressed={period === days} key={days} onClick={() => setPeriod(days)} type="button">{days}d</button>)}</div>
+        <div role="group" aria-label={tr('Analytics range', 'Intervallo analytics')}>{periods.map((days) => <button aria-pressed={period === days} key={days} onClick={() => setPeriod(days)} type="button">{days}{daySuffix}</button>)}</div>
         <button aria-label={tr('Refresh analytics', 'Aggiorna analytics')} className="managed-analytics-refresh" disabled={loading} onClick={() => void load(period)} type="button">{loading ? <OrbitLoader size={16} state="searching" /> : <RefreshCw size={16} />}</button>
       </div>
     </header>

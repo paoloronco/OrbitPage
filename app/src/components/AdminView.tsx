@@ -4,7 +4,6 @@ import { LinkManager } from "./LinkManager";
 import { ThemeCustomizer } from "./ThemeCustomizer";
 import { MenuEditor } from "./MenuEditor";
 import { LinkData } from "./LinkCard";
-import { ClickAnalyticsChart } from "./ClickAnalyticsChart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,6 @@ import {
   LogOut,
   Mail,
   Menu as MenuIcon,
-  MousePointerClick,
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
@@ -177,14 +175,6 @@ function visualSectionForContent(section: ContentDestination): VisualSiteEditorS
   if (section === "link") return "links";
   return section;
 }
-
-const ctaActionLabels: Record<string, string> = {
-  book: "Book",
-  contact: "Contact me",
-  download: "Download",
-  subscribe: "Subscribe",
-  buy: "Buy",
-};
 
 const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
 const NEW_UI_STORAGE_KEY = "orbitpage.admin.new-ui";
@@ -722,27 +712,6 @@ export const AdminView = ({
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
   }, [profile.googleAnalyticsId]);
-
-  const metrics = useMemo(() => {
-    const contentLinks = links.filter(link => link.type !== "separator");
-    const ctaLinks = contentLinks.filter(link => link.type === "cta");
-    const ctaPerformance = ctaLinks
-      .filter(link => (link.ctaClicks ?? 0) > 0)
-      .sort((a, b) => (b.ctaClicks ?? 0) - (a.ctaClicks ?? 0))
-      .slice(0, 5);
-    const maxCtaClicks = Math.max(...ctaPerformance.map(link => link.ctaClicks ?? 0), 1);
-    const totalClicks = links.reduce((sum, link) => sum + (link.clickCount ?? 0), 0);
-    const ctaClicks = ctaLinks.reduce((sum, link) => sum + (link.ctaClicks ?? 0), 0);
-
-    return {
-      totalLinks: contentLinks.length,
-      ctaLinks: ctaLinks.length,
-      ctaClicks,
-      ctaPerformance,
-      maxCtaClicks,
-      totalClicks,
-    };
-  }, [links]);
 
   const handleLogout = () => {
     if (isIntegratedHostedAdmin && hostedSurfaceConfig?.onSignOut) {
@@ -1568,49 +1537,7 @@ export const AdminView = ({
 
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">
-              {isHostedAdmin ? <ManagedAnalyticsDashboard /> : (
-                <section className="managed-analytics managed-analytics--oss" data-onboarding="analytics-section" data-testid="oss-analytics">
-                  <div className="managed-analytics-metrics managed-analytics-primary-kpis">
-                    <StatusTile icon={BarChart3} label={tr("Total clicks", "Clic totali")} value={String(metrics.totalClicks)} />
-                    <StatusTile icon={Link} label={tr("Tracked content", "Contenuti monitorati")} value={String(metrics.totalLinks)} />
-                    <StatusTile icon={MousePointerClick} label={tr("CTA clicks", "Clic sulle CTA")} value={String(metrics.ctaClicks)} />
-                    <StatusTile icon={Sparkles} label={tr("Smart CTAs", "CTA intelligenti")} value={String(metrics.ctaLinks)} />
-                  </div>
-
-                  <div className="managed-analytics-chart managed-analytics-trend">
-                    <div>
-                      <h3>{tr("Content performance", "Rendimento dei contenuti")}</h3>
-                      <p>{tr("Clicks recorded for each published content item.", "Clic registrati per ogni contenuto pubblicato.")}</p>
-                    </div>
-                    <ClickAnalyticsChart links={links} />
-                  </div>
-
-                  <section className="managed-analytics-breakdown managed-analytics-breakdown--priority">
-                    <div className="managed-analytics-section-heading">
-                      <span>{tr("CTA performance", "Prestazioni CTA")}</span>
-                      <p>{tr("See which smart actions attract the most clicks.", "Scopri quali azioni intelligenti ricevono più clic.")}</p>
-                    </div>
-                    {metrics.ctaPerformance.length > 0 ? (
-                      <div className="managed-analytics-details managed-analytics-details--content">
-                        <section className="managed-analytics-ranking">
-                          <h3>{tr("Most clicked CTAs", "CTA più cliccate")}</h3>
-                          <div>{metrics.ctaPerformance.map((link) => <div className="managed-analytics-rank" key={link.id}>
-                            <span>
-                              <b title={link.title}>{link.title || tr('Untitled CTA', 'CTA senza titolo')}</b>
-                              <em>{ctaActionLabels[link.ctaAction || 'book']} · {link.ctaClicks ?? 0}</em>
-                            </span>
-                            <i><span style={{ width: `${Math.max(4, (link.ctaClicks ?? 0) / metrics.maxCtaClicks * 100)}%` }} /></i>
-                          </div>)}</div>
-                        </section>
-                      </div>
-                    ) : (
-                      <p className="managed-analytics-section-empty">
-                        {tr("Smart CTA clicks will appear here separately from normal link clicks.", "I clic sulle CTA intelligenti compariranno qui separati dai clic sui link normali.")}
-                      </p>
-                    )}
-                  </section>
-                </section>
-              )}
+              <ManagedAnalyticsDashboard />
               {googleAnalyticsPanel}
             </div>
           </TabsContent>
@@ -1716,15 +1643,6 @@ function PreviewPanel({
         showOrbitPageBadge={showOrbitPageBadge}
       />
     </section>
-  );
-}
-
-function StatusTile({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
-  return (
-    <div className="managed-analytics-kpi">
-      <Icon aria-hidden="true" size={18} />
-      <span>{label}<strong>{value}</strong></span>
-    </div>
   );
 }
 

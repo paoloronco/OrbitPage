@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { hasStaticPublicSnapshot, trackPublicLinkClick, trackPublicPageView } from './public-runtime';
+import { consentManager } from './consent-manager';
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -33,16 +35,33 @@ describe('managed public runtime', () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ event: 'click', linkId: 'link-1' });
   });
 
-  it('keeps click tracking available to the self-hosted runtime', () => {
+  it('sends self-hosted views and clicks to the local analytics API', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    const localStorage = new Map<string, string>();
+    const sessionStorage = new Map<string, string>();
+    vi.spyOn(consentManager, 'isGranted').mockReturnValue(true);
     vi.stubGlobal('window', {
-      location: { href: 'https://self-hosted.example/', pathname: '/', search: '' },
+      location: { href: 'https://self-hosted.example/', hostname: 'self-hosted.example', pathname: '/', search: '' },
+      localStorage: { getItem: (key: string) => localStorage.get(key) || null, setItem: (key: string, value: string) => localStorage.set(key, value) },
+      sessionStorage: { getItem: (key: string) => sessionStorage.get(key) || null, setItem: (key: string, value: string) => sessionStorage.set(key, value) },
     });
+    vi.stubGlobal('document', { referrer: '' });
+    vi.stubGlobal('crypto', { randomUUID: () => 'visitor-oss' });
     vi.stubGlobal('fetch', fetchMock);
 
     expect(hasStaticPublicSnapshot()).toBe(false);
+    trackPublicPageView();
     trackPublicLinkClick('link-1');
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/links/link-1/click', { method: 'POST' });
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/analytics/events', expect.objectContaining({
+      method: 'POST',
+      keepalive: true,
+    }));
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/links/link-1/click', expect.objectContaining({
+      method: 'POST',
+      keepalive: true,
+    }));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ event: 'view', visitorId: 'visitor-oss' });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ event: 'click', linkId: 'link-1' });
   });
 });

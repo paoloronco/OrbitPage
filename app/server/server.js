@@ -106,7 +106,7 @@ const DEMO_MODE = String(process.env.DEMO_MODE || '').toLowerCase() === 'true' |
 const DISTRIBUTION_IMAGE = String(process.env.ORBITPAGE_DISTRIBUTION_IMAGE || '').trim();
 console.log('Demo mode:', DEMO_MODE, 'from env:', process.env.DEMO_MODE);
 const DEMO_RESET_INTERVAL_MS = 5 * 60 * 1000;
-const DEMO_RESET_TABLES = ['personal_api_tokens', 'admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics', 'newsletter_settings', 'newsletter_subscribers', 'newsletter_campaigns', 'newsletter_deliveries'];
+const DEMO_RESET_TABLES = ['personal_api_tokens', 'admin_users', 'profile_data', 'links', 'theme_config', 'menu_config', 'subpages_config', 'campaign_links', 'cookie_consent_config', 'text_files', 'sitemap_config', 'machine_readable_metrics', 'analytics_events', 'newsletter_settings', 'newsletter_subscribers', 'newsletter_campaigns', 'newsletter_deliveries'];
 
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
@@ -1956,6 +1956,147 @@ app.use('/api/newsletter', createNewsletterRouter({
   demoMode: DEMO_MODE,
 }));
 
+const analyticsEventSchema = z.object({
+  event: z.enum(['view', 'click']),
+  visitorId: z.string().trim().max(100).optional().default(''),
+  linkId: z.string().trim().max(100).optional().default(''),
+  referrer: z.string().trim().max(2048).optional().default(''),
+  path: z.string().trim().max(500).optional().default('/'),
+  utmSource: z.string().trim().max(240).optional().default(''),
+  utmMedium: z.string().trim().max(240).optional().default(''),
+  utmCampaign: z.string().trim().max(240).optional().default(''),
+}).strip();
+
+const analyticsSource = (referrer) => {
+  if (!referrer) return 'Direct';
+  try {
+    return new URL(referrer).hostname.replace(/^www\./, '') || 'Direct';
+  } catch {
+    return 'Direct';
+  }
+};
+
+const analyticsDevice = (userAgent = '') => {
+  if (/ipad|tablet/i.test(userAgent)) return 'Tablet';
+  if (/android|iphone|ipod|mobile/i.test(userAgent)) return 'Mobile';
+  return 'Desktop';
+};
+
+const recordAnalyticsEvent = (req, event) => dbRun(
+  `INSERT INTO analytics_events
+    (event, visitor_id, link_id, source, device, path, utm_source, utm_medium, utm_campaign)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  [
+    event.event,
+    event.visitorId || null,
+    event.linkId || null,
+    event.visitorId ? analyticsSource(event.referrer) : null,
+    event.visitorId ? analyticsDevice(req.get('user-agent')) : null,
+    event.path || '/',
+    event.visitorId ? event.utmSource || null : null,
+    event.visitorId ? event.utmMedium || null : null,
+    event.visitorId ? event.utmCampaign || null : null,
+  ],
+);
+
+const analyticsNumber = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
+const analyticsChange = (current, previous) => previous <= 0
+  ? (current > 0 ? null : 0)
+  : Math.round(((current - previous) / previous) * 1000) / 10;
+const analyticsSummary = (row = {}) => {
+  const visits = analyticsNumber(row.visits);
+  const visitors = analyticsNumber(row.visitors);
+  const clicks = analyticsNumber(row.clicks);
+  return { visits, visitors, clicks, ctr: visits > 0 ? Math.round((clicks / visits) * 1000) / 10 : 0 };
+};
+
+app.post('/api/analytics/events', async (req, res) => {
+  const parsed = analyticsEventSchema.safeParse(req.body);
+  if (!parsed.success || parsed.data.event !== 'view') return res.status(400).json({ error: 'Invalid analytics event' });
+  try {
+    await recordAnalyticsEvent(req, parsed.data);
+    return res.status(204).end();
+  } catch (error) {
+    console.error('Failed to record analytics event:', error);
+    return res.status(500).json({ error: 'Failed to record analytics event' });
+  }
+});
+
+app.get('/api/analytics', authenticateToken, requirePermission('analytics:read'), async (req, res) => {
+  const periodDays = Number(req.query.days) === 7 ? 7 : 30;
+  const currentStart = `-${periodDays} days`;
+  const previousStart = `-${periodDays * 2} days`;
+  const summarySql = `SELECT
+    SUM(CASE WHEN event = 'view' THEN 1 ELSE 0 END) AS visits,
+    COUNT(DISTINCT CASE WHEN event = 'view' AND visitor_id != '' THEN visitor_id END) AS visitors,
+    SUM(CASE WHEN event = 'click' THEN 1 ELSE 0 END) AS clicks
+    FROM analytics_events WHERE created_at >= datetime('now', ?)`;
+  const dimension = (field, event = 'view') => dbAll(
+    `SELECT ${field} AS label, COUNT(*) AS value FROM analytics_events
+     WHERE event = ? AND created_at >= datetime('now', ?) AND ${field} IS NOT NULL AND ${field} != ''
+     GROUP BY ${field} ORDER BY value DESC LIMIT 10`,
+    [event, currentStart],
+  );
+
+  try {
+    const [currentRows, previousRows, trendRows, sources, devices, utmSources, utmMediums, campaigns, links, paths] = await Promise.all([
+      dbAll(summarySql, [currentStart]),
+      dbAll(`${summarySql} AND created_at < datetime('now', ?)`, [previousStart, currentStart]),
+      dbAll(`SELECT date(created_at) AS date,
+        SUM(CASE WHEN event = 'view' THEN 1 ELSE 0 END) AS visits,
+        COUNT(DISTINCT CASE WHEN event = 'view' AND visitor_id != '' THEN visitor_id END) AS visitors,
+        SUM(CASE WHEN event = 'click' THEN 1 ELSE 0 END) AS clicks
+        FROM analytics_events WHERE created_at >= datetime('now', ?)
+        GROUP BY date(created_at) ORDER BY date ASC`, [currentStart]),
+      dimension('source'),
+      dimension('device'),
+      dimension('utm_source'),
+      dimension('utm_medium'),
+      dimension('utm_campaign'),
+      dbAll(`SELECT COALESCE(NULLIF(TRIM(links.title), ''), 'Removed content') AS label, COUNT(*) AS value
+        FROM analytics_events LEFT JOIN links ON links.id = analytics_events.link_id
+        WHERE event = 'click' AND analytics_events.created_at >= datetime('now', ?) AND link_id IS NOT NULL AND link_id != ''
+        GROUP BY label ORDER BY value DESC LIMIT 10`, [currentStart]),
+      dimension('path'),
+    ]);
+    const current = analyticsSummary(currentRows[0]);
+    const previous = analyticsSummary(previousRows[0]);
+    const mapDimension = (rows) => rows.map((row) => ({ label: String(row.label), value: analyticsNumber(row.value) }));
+    res.set('Cache-Control', 'private, no-store').json({
+      configured: true,
+      detailed: true,
+      periodDays,
+      maxPeriodDays: 30,
+      summary: {
+        ...current,
+        visitsPerVisitor: current.visitors > 0 ? Math.round((current.visits / current.visitors) * 100) / 100 : 0,
+        clicksPerVisitor: current.visitors > 0 ? Math.round((current.clicks / current.visitors) * 100) / 100 : 0,
+      },
+      comparison: {
+        previous,
+        changes: {
+          visits: analyticsChange(current.visits, previous.visits),
+          visitors: analyticsChange(current.visitors, previous.visitors),
+          clicks: analyticsChange(current.clicks, previous.clicks),
+          ctr: analyticsChange(current.ctr, previous.ctr),
+        },
+      },
+      trend: trendRows.map((row) => ({ date: row.date, visits: analyticsNumber(row.visits), visitors: analyticsNumber(row.visitors), clicks: analyticsNumber(row.clicks) })),
+      sources: mapDimension(sources),
+      devices: mapDimension(devices),
+      countries: [],
+      utmSources: mapDimension(utmSources),
+      utmMediums: mapDimension(utmMediums),
+      campaigns: mapDimension(campaigns),
+      links: mapDimension(links),
+      paths: mapDimension(paths),
+    });
+  } catch (error) {
+    console.error('Failed to load analytics:', error);
+    res.status(500).json({ error: 'Failed to load analytics' });
+  }
+});
+
 app.get('/api/analytics/machine-readable', authenticateToken, requirePermission('analytics:read'), async (_req, res) => {
   try {
     const rows = await dbAll(
@@ -3321,10 +3462,14 @@ app.post('/api/links/:id/click', apiLimiter, async (req, res) => {
     if (!id || typeof id !== 'string' || id.length > 100) {
       return res.status(400).json({ error: 'Invalid id' });
     }
-    await dbRun(
+    const result = await dbRun(
       "UPDATE links SET click_count = click_count + 1, cta_click_count = CASE WHEN type = 'cta' THEN COALESCE(cta_click_count, 0) + 1 ELSE cta_click_count END WHERE id = ?",
       [id]
     );
+    const analyticsEvent = analyticsEventSchema.safeParse({ ...req.body, event: 'click', linkId: id });
+    if (result.changes > 0 && analyticsEvent.success) {
+      await recordAnalyticsEvent(req, analyticsEvent.data).catch(() => {});
+    }
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to record click' });
