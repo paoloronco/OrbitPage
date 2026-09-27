@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   FileCheck2,
+  Globe2,
   HardDrive,
   LockKeyhole,
   RefreshCw,
@@ -25,6 +26,7 @@ import { generateSecurePassword, isPasswordStrong, setupInitialCredentials } fro
 import { withBasePath } from "@/lib/base-path";
 import { useAppI18n } from "@/lib/i18n";
 import { OrbitPageBrand } from "./OrbitPageBrand";
+import { localizedPublicPath } from "@/lib/public-routing";
 
 interface InitialSetupProps {
   onSetupComplete: () => void | Promise<void>;
@@ -38,6 +40,14 @@ const dependencyIcons: Record<string, typeof ServerCog> = {
   sessions: ShieldCheck,
 };
 
+const normalizeSlugInput = (value: string) => value
+  .toLowerCase()
+  .replace(/\s+/g, "-")
+  .replace(/[^a-z0-9-]/g, "")
+  .replace(/-{2,}/g, "-")
+  .replace(/^-+/, "")
+  .slice(0, 48);
+
 export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
   const { tr } = useAppI18n();
   const [step, setStep] = useState(0);
@@ -45,6 +55,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
   const [checksLoading, setChecksLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [slug, setSlug] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,9 +70,10 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
 
   const passwordReady = requirements.every((requirement) => requirement.test(password));
   const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const slugReady = /^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])$/.test(slug);
   const publicPagePreview = typeof window === "undefined"
-    ? withBasePath("/")
-    : `${window.location.origin}${withBasePath("/")}`;
+    ? localizedPublicPath("en", slug || "your-page")
+    : `${window.location.origin}${withBasePath(localizedPublicPath("en", slug || "your-page"))}`;
 
   const refreshChecks = async () => {
     setChecksLoading(true);
@@ -91,14 +103,14 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
 
   const handleComplete = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (step !== 1 || !passwordReady || !passwordsMatch) return;
+    if (step !== 2 || !slugReady || !passwordReady || !passwordsMatch) return;
     setIsLoading(true);
     setError("");
     try {
       if (!(await isPasswordStrong(password))) {
         throw new Error(tr("Please meet all password requirements before continuing.", "Soddisfa tutti i requisiti della password prima di continuare."));
       }
-      await setupInitialCredentials(password);
+      await setupInitialCredentials(password, slug);
       await onSetupComplete();
     } catch (setupError) {
       setError(setupError instanceof Error ? setupError.message : tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
@@ -130,7 +142,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
         </header>
 
         <ol className="initial-setup-progress" aria-label={tr("Setup progress", "Avanzamento configurazione")}>
-          {[tr("System", "Sistema"), tr("Administrator", "Amministratore")].map((label, index) => (
+          {[tr("System", "Sistema"), tr("Administrator", "Amministratore"), tr("Public URL", "URL pubblico")].map((label, index) => (
             <li className={index === step ? "active" : index < step ? "complete" : ""} key={label}>
               <span>{index < step ? <Check aria-hidden="true" size={14} /> : index + 1}</span>
               {label}
@@ -197,15 +209,25 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                 })}
                 <li className={passwordsMatch ? "ready" : ""}>{passwordsMatch ? <Check size={14} /> : <X size={14} />}{tr("Passwords match", "Le password coincidono")}</li>
               </ul>
-              <p className="initial-setup-lead">{tr("The main page uses this installation's address automatically.", "La pagina principale usa automaticamente l'indirizzo di questa installazione.")}</p>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="initial-setup-content">
+              <p className="initial-setup-kicker">03 / {tr("Public URL", "URL pubblico")}</p>
+              <h1 id="setup-title">{tr("Choose the page address.", "Scegli l'indirizzo della pagina.")}</h1>
+              <p className="initial-setup-lead">{tr("The slug stays the same in every language URL.", "Lo slug resta uguale in ogni URL lingua.")}</p>
+              <div className="setup-field setup-slug-field">
+                <Label htmlFor="setup-slug">{tr("Page slug", "Slug pagina")}</Label>
+                <div className="setup-slug-input"><Globe2 aria-hidden="true" size={18} /><Input id="setup-slug" maxLength={48} placeholder="your-page" value={slug} onChange={(event) => setSlug(normalizeSlugInput(event.target.value))} autoCapitalize="none" autoCorrect="off" spellCheck={false} /></div>
+                <small>{tr("Lowercase letters, numbers and hyphens. Between 3 and 48 characters.", "Lettere minuscole, numeri e trattini. Da 3 a 48 caratteri.")}</small>
+              </div>
               <div className="setup-url-preview">
                 <span>{tr("Public page", "Pagina pubblica")}</span>
                 <strong>{publicPagePreview}</strong>
+                <strong>{publicPagePreview.replace("/en-US/", "/it-IT/")}</strong>
               </div>
-              <div className="initial-setup-summary">
-                <CheckCircle2 aria-hidden="true" size={22} />
-                <div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong></div>
-              </div>
+              <div className="initial-setup-summary"><CheckCircle2 aria-hidden="true" size={22} /><div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong></div></div>
             </div>
           )}
 
@@ -218,10 +240,10 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
               <Button onClick={() => { setError(""); setStep((value) => Math.max(0, value - 1)); }} type="button" variant="outline"><ArrowLeft size={16} />{tr("Back", "Indietro")}</Button>
             )}
 
-            {step === 0 ? (
-              <Button className="setup-primary-button" disabled={!setupStatus?.ready} onClick={() => { setError(""); setStep(1); }} type="button">{tr("Continue", "Continua")}<ArrowRight size={16} /></Button>
+            {step < 2 ? (
+              <Button className="setup-primary-button" disabled={step === 0 ? !setupStatus?.ready : !passwordReady || !passwordsMatch} onClick={() => { setError(""); setStep((value) => value + 1); }} type="button">{tr("Continue", "Continua")}<ArrowRight size={16} /></Button>
             ) : (
-              <Button className="setup-primary-button" disabled={!passwordReady || !passwordsMatch || isLoading} type="submit">{isLoading ? <RefreshCw className="setup-spinner" size={16} /> : <ShieldCheck size={16} />}{isLoading ? tr("Creating workspace", "Creazione workspace") : tr("Complete setup", "Completa configurazione")}</Button>
+              <Button className="setup-primary-button" disabled={!slugReady || isLoading} type="submit">{isLoading ? <RefreshCw className="setup-spinner" size={16} /> : <ShieldCheck size={16} />}{isLoading ? tr("Creating workspace", "Creazione workspace") : tr("Complete setup", "Completa configurazione")}</Button>
             )}
           </footer>
         </form>

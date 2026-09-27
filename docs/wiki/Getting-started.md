@@ -11,7 +11,7 @@ OrbitPage has two surfaces:
 | Public page | The public page visitors see | None |
 | Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
 
-Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` first checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, set the admin password. The main public page then uses the installation's root URL automatically, such as `http://SERVER_IP:8080/`. The visual editor sections use `/dashboard/editor/page`, `/dashboard/editor/content`, `/dashboard/editor/menu`, `/dashboard/editor/shop`, and `/dashboard/editor/pages`. Classic dashboard paths and older page-slug URLs remain available as aliases.
+Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, set the admin password and choose the stable page slug. Public routes then include the locale, for example `http://SERVER_IP:8080/en-US/my-page` and `http://SERVER_IP:8080/it-IT/my-page`. Classic dashboard paths and older root or slug-only public URLs remain aliases.
 
 ## Requirements
 

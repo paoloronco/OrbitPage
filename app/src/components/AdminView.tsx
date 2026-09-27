@@ -301,6 +301,7 @@ export const AdminView = ({
   const [contentWorkspaceError, setContentWorkspaceError] = useState<string | null>(null);
   const publicUrlOverride = getPublicUrlOverride();
   const [publicPageHref, setPublicPageHref] = useState(publicUrlOverride || withBasePath('/'));
+  const [publicPageSlug, setPublicPageSlug] = useState<string | null>(null);
   const entitlements = saasPlan?.entitlements;
   const managePlanHref = saasBilling?.manageUrl || "/dashboard/billing";
   const isHostedAdmin = isSaasMode() || Boolean(
@@ -312,7 +313,7 @@ export const AdminView = ({
   const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
   const hostedPanelTabs = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.panels || [] : [];
   const usesDashboardShell = !isHostedAdmin || isIntegratedHostedAdmin;
-  const dashboardSlug = hostedSurfaceConfig?.publicSlug || currentUser?.username || "admin";
+  const dashboardSlug = hostedSurfaceConfig?.publicSlug || publicPageSlug || currentUser?.username || "admin";
   const isProspectReadOnly = currentUser?.readOnly === true;
   const orbitPageBadgeEditable = isHostedAdmin && entitlements?.badgeRequired !== true && !isProspectReadOnly;
   const resolveOrbitPageBadgeVisibility = (preference: boolean | undefined) => (
@@ -372,9 +373,12 @@ export const AdminView = ({
     if (isHostedAdmin) return;
 
     let cancelled = false;
-    void publicUrlApi.get()
+    void publicUrlApi.get(locale)
       .then((response) => {
-        if (!cancelled && response.publicUrl) setPublicPageHref(response.publicUrl);
+        if (!cancelled && response.publicUrl) {
+          setPublicPageHref(response.publicUrl);
+          setPublicPageSlug(response.slug);
+        }
       })
       .catch(() => {
         if (!cancelled) setPublicPageHref(withBasePath('/'));
@@ -382,7 +386,7 @@ export const AdminView = ({
     return () => {
       cancelled = true;
     };
-  }, [isHostedAdmin, publicUrlOverride]);
+  }, [isHostedAdmin, locale, publicUrlOverride]);
 
   useEffect(() => {
     setPreviewProfile(profile);

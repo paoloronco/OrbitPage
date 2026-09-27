@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getHostedThemeRoot, isIntegratedHostedSurface } from "./hosted-surface";
+import { parseLocalizedPublicPath } from "./public-routing";
 
 export const APP_LOCALES = ["en", "it", "es", "fr", "de", "pt", "nl", "pl", "tr", "ru", "ar", "zh", "ja", "ko"] as const;
 export type AppLocale = typeof APP_LOCALES[number];
@@ -70,8 +71,8 @@ async function loadPhraseCatalog(locale: AppLocale) {
   }
 }
 
-export function resolveInitialAppLocale(mode: AppI18nMode, search: string, storedLocale: string | null): AppLocale {
-  if (mode === "public") return "en";
+export function resolveInitialAppLocale(mode: AppI18nMode, search: string, storedLocale: string | null, pathname = "", basePath = ""): AppLocale {
+  if (mode === "public") return parseLocalizedPublicPath(pathname, basePath)?.locale || "en";
   const queryLocale = normalizeAppLocale(new URLSearchParams(search).get("locale"));
   if (queryLocale) return queryLocale;
   const stored = normalizeAppLocale(storedLocale);
@@ -96,7 +97,7 @@ export function resolveApplicationErrorLocale(
 
 function initialLocale(mode: AppI18nMode): AppLocale {
   if (typeof window === "undefined") return "en";
-  return resolveInitialAppLocale(mode, window.location.search, window.localStorage.getItem(STORAGE_KEY));
+  return resolveInitialAppLocale(mode, window.location.search, window.localStorage.getItem(STORAGE_KEY), window.location.pathname, window.__ORBITPAGE_BASE_PATH__ || "");
 }
 
 export function AppI18nProvider({ children, mode = "editor" }: { children: ReactNode; mode?: AppI18nMode }) {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { MenuView } from '@/components/MenuView';
 import { normalizeMenuCatalog, type MenuCatalog } from '@/lib/menu';
 import { publicPageApi } from '@/lib/api-client';
-import { withBasePath } from '@/lib/base-path';
+import { withPageRootPath } from '@/lib/base-path';
 import { trackPublicPageView } from '@/lib/public-runtime';
 
 export default function MenuPage() {
@@ -32,12 +32,12 @@ export default function MenuPage() {
         <section>
           <p>Menu unavailable</p>
           <h1>This venue has not published its menu yet.</h1>
-          <a href={withBasePath('/')}>Return to the main page</a>
+          <a href={withPageRootPath('/')}>Return to the main page</a>
         </section>
       </main>
     );
   }
 
   const selectedSectionId = typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('section') || '';
-  return <MenuView menu={menu} selectedSectionId={selectedSectionId} />;
+  return <MenuView menu={menu} pageHref={withPageRootPath('/')} selectedSectionId={selectedSectionId} />;
 }

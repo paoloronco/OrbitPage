@@ -4,6 +4,7 @@ import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surf
 import { isHostedRuntime } from './runtime-mode';
 import { createPortableBackupArchive, embeddedBackupImages, type PortableImage } from './portable-backup';
 import type { OrbitPageCampaignLink } from '@orbitpage/page-schema';
+import { parseLocalizedPublicPath } from './public-routing';
 
 // --- Session-scoped token storage (AES-GCM via Web Crypto) ---
 //
@@ -539,9 +540,11 @@ export const publicPageApi = {
     let endpoint = '/public-page';
     if (typeof window !== 'undefined' && !window.__ORBITPAGE_STATIC_SNAPSHOT__) {
       const basePath = getActiveBasePath();
-      const relativePath = window.location.pathname.slice(basePath.length).replace(/^\/+|\/+$/g, '');
+      const localizedRoute = parseLocalizedPublicPath(window.location.pathname, basePath);
+      const relativePath = (localizedRoute?.routePath || window.location.pathname.slice(basePath.length)).replace(/^\/+|\/+$/g, '');
+      if (localizedRoute) endpoint += `?slug=${encodeURIComponent(localizedRoute.pageSlug)}`;
       if (relativePath && !['about', 'cookies', 'privacy', 'links', 'menu'].includes(relativePath) && !relativePath.includes('/')) {
-        endpoint += `?subpage=${encodeURIComponent(relativePath)}`;
+        endpoint += `${localizedRoute ? '&' : '?'}subpage=${encodeURIComponent(relativePath)}`;
       }
     }
     return apiRequest<PublicPageResponse>(endpoint);
@@ -555,8 +558,9 @@ export const workspaceBootstrapApi = {
 };
 
 export const publicUrlApi = {
-  get: async (): Promise<{ success: boolean; publicUrl: string; source: 'configured' | 'request' }> => {
-    return apiRequest<{ success: boolean; publicUrl: string; source: 'configured' | 'request' }>('/public-url');
+  get: async (locale?: string): Promise<{ success: boolean; publicUrl: string; source: 'configured' | 'request'; slug: string | null }> => {
+    const query = locale ? `?locale=${encodeURIComponent(locale)}` : '';
+    return apiRequest<{ success: boolean; publicUrl: string; source: 'configured' | 'request'; slug: string | null }>(`/public-url${query}`);
   },
 };
 
@@ -566,10 +570,10 @@ export const authApi = {
     return apiRequest<SetupStatus>('/auth/setup-status');
   },
 
-  setup: async (password: string): Promise<SetupResponse> => {
+  setup: async (password: string, slug: string): Promise<SetupResponse> => {
     const response = await apiRequest<SetupResponse>('/auth/setup', {
       method: 'POST',
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password, slug }),
     });
     if (response.token) {
       await setAuthToken(response.token);
@@ -646,9 +650,13 @@ export const campaignLinksApi = {
 
 export const personalPageApi = {
   status: async (): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page'),
-  create: async (): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
+  create: async (slug: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
     method: 'POST',
-    body: JSON.stringify({ action: 'create' }),
+    body: JSON.stringify({ action: 'create', slug }),
+  }),
+  setSlug: async (slug: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'set-slug', slug }),
   }),
   remove: async (confirmation: string, currentPassword: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
     method: 'POST',

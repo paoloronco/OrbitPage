@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { ArrowLeft, Check, LoaderCircle, Mail, MailX } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { apiPath, withBasePath } from '@/lib/base-path';
+import { apiPath, withPageRootPath } from '@/lib/base-path';
 import '../components/newsletter-workspace.css';
 
 type SenderType = 'individual' | 'bar' | 'restaurant' | 'creator' | 'business' | 'association' | 'other';
@@ -65,7 +65,7 @@ export default function Newsletter() {
 
   if (isStatus) {
     const Icon = message.success ? Check : MailX;
-    return <main className="newsletter-public-shell"><section className="newsletter-status-panel"><strong>OrbitPage</strong><span className={message.success ? 'newsletter-status-icon success' : 'newsletter-status-icon'}><Icon aria-hidden="true" size={26} /></span><h1>{message.title}</h1><p>{message.copy}</p><a className="button" href={withBasePath('/')}>Go to OrbitPage</a></section></main>;
+    return <main className="newsletter-public-shell"><section className="newsletter-status-panel"><strong>OrbitPage</strong><span className={message.success ? 'newsletter-status-icon success' : 'newsletter-status-icon'}><Icon aria-hidden="true" size={26} /></span><h1>{message.title}</h1><p>{message.copy}</p><a className="button" href={withPageRootPath('/')}>Go to OrbitPage</a></section></main>;
   }
 
   return <main className="newsletter-public-shell"><section className="newsletter-public-panel">
@@ -81,7 +81,7 @@ export default function Newsletter() {
         {error && <p className="error" role="alert">{error}</p>}
         <button aria-busy={sending} className="button" disabled={sending} type="submit">{sending ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Mail aria-hidden="true" size={17} />}{sending ? 'Sending confirmation' : 'Subscribe'}</button>
       </form>}
-      <a className="newsletter-back-link" href={landing.publicPageUrl}><ArrowLeft aria-hidden="true" size={15} />Back to the public page</a>
-    </> : <><h1>Newsletter unavailable</h1><p role="alert">{error}</p><a href={withBasePath('/')}>Back to the public page</a></>}
+      <a className="newsletter-back-link" href={withPageRootPath('/')}><ArrowLeft aria-hidden="true" size={15} />Back to the public page</a>
+    </> : <><h1>Newsletter unavailable</h1><p role="alert">{error}</p><a href={withPageRootPath('/')}>Back to the public page</a></>}
   </section></main>;
 }

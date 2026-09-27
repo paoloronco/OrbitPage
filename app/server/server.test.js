@@ -338,7 +338,7 @@ describe('API Endpoints', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('POST /api/auth/setup creates the administrator with the public page at root', async () => {
+  it('POST /api/auth/setup creates the administrator with a public page slug', async () => {
     vi.mocked(dbGet).mockResolvedValue(null);
 
     const response = await request(app)
@@ -346,10 +346,10 @@ describe('API Endpoints', () => {
       .send({ password: 'StrongPassword1!', slug: 'old-page' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: null });
+    expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: 'old-page' });
     expect(withTransaction).toHaveBeenCalledOnce();
     expect(setupInitialCredentials).toHaveBeenCalledWith('StrongPassword1!');
-    expect(dbRun).toHaveBeenCalledWith("DELETE FROM instance_settings WHERE key = 'page_slug'");
+    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining("VALUES ('page_slug'"), ['old-page']);
     expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('admin_onboarding_enabled'));
   });
 
@@ -720,7 +720,7 @@ describe('API Endpoints', () => {
     expect(dbRun).not.toHaveBeenCalledWith(expect.stringContaining('DELETE FROM admin_users'));
   });
 
-  it('recreates a removed public page at the installation root without a slug', async () => {
+  it('recreates a removed public page with its requested slug', async () => {
     vi.mocked(dbGet).mockImplementation(async (_sql, params) => (
       params?.[0] === 'public_page_active' ? { value: '0' } : null
     ));
@@ -732,8 +732,8 @@ describe('API Endpoints', () => {
       .send({ action: 'create', slug: 'old-page' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ success: true, active: true, slug: null, confirmationLabel: 'PAGE' });
-    expect(dbRun).toHaveBeenCalledWith("DELETE FROM instance_settings WHERE key = 'page_slug'");
+    expect(response.body).toMatchObject({ success: true, active: true, slug: 'old-page', confirmationLabel: 'old-page' });
+    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining("VALUES ('page_slug'"), ['old-page']);
   });
 
   it('GET /api/menu removes subsections and products beneath hidden parents', async () => {
@@ -1276,14 +1276,18 @@ describe('API Endpoints', () => {
   });
 
   it('GET / serves profile-specific SEO metadata and crawlable fallback links', async () => {
-    vi.mocked(dbGet).mockResolvedValueOnce({
-      name: 'Paolo',
-      bio: 'Developer and maker',
-      avatar: '/uploads/avatar.png',
-      social_links: '{"github":"https://github.com/example"}',
-      show_avatar: 1,
-      tab_title: 'Paolo Links',
-      meta_description: 'All of Paolo links in one place.',
+    vi.mocked(dbGet).mockImplementation(async (sql) => {
+      if (String(sql).includes('instance_settings')) return null;
+      if (!String(sql).includes('FROM profile_data')) return null;
+      return {
+        name: 'Paolo',
+        bio: 'Developer and maker',
+        avatar: '/uploads/avatar.png',
+        social_links: '{"github":"https://github.com/example"}',
+        show_avatar: 1,
+        tab_title: 'Paolo Links',
+        meta_description: 'All of Paolo links in one place.',
+      };
     });
     vi.mocked(dbAll).mockResolvedValueOnce([
       {
@@ -1405,7 +1409,7 @@ describe('API Endpoints', () => {
     expect(tags).toContain('"codeRepository":"https://github.com/paoloronco/OrbitPage"');
   });
 
-  it('uses the installation root as canonical URL while preserving an old page slug alias', async () => {
+  it('uses locale-prefixed canonical URLs while preserving legacy aliases', async () => {
     vi.mocked(dbGet).mockImplementation(async (sql, params) => {
       if (params?.[0] === 'page_slug') return { value: 'old-page' };
       if (String(sql).includes('FROM campaign_links')) return { full_config: JSON.stringify([
@@ -1414,19 +1418,44 @@ describe('API Endpoints', () => {
       return null;
     });
 
-    const [alias, publicUrl, sitemap, campaign] = await Promise.all([
+    const [root, alias, publicUrl, sitemap, campaign] = await Promise.all([
+      request(app).get('/').set('Host', '127.0.0.1:9006').set('Accept-Language', 'it-IT,it;q=0.9'),
       request(app).get('/old-page').set('Host', '127.0.0.1:9006'),
       request(app).get('/api/public-url').set('Host', '127.0.0.1:9006'),
       request(app).get('/sitemap.xml').set('Host', '127.0.0.1:9006'),
       request(app).get('/go/home').set('Host', '127.0.0.1:9006'),
     ]);
 
-    expect(alias.status).toBe(200);
-    expect(alias.text).toContain('<link rel="canonical" href="http://127.0.0.1:9006/"');
-    expect(publicUrl.body.publicUrl).toBe('http://127.0.0.1:9006/');
-    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/</loc>');
-    expect(sitemap.text).not.toContain('/old-page');
-    expect(campaign.headers.location).toBe('http://127.0.0.1:9006/');
+    expect(root.status).toBe(302);
+    expect(root.headers.location).toBe('/it-IT/old-page');
+    expect(alias.status).toBe(302);
+    expect(alias.headers.location).toBe('/en-US/old-page');
+    expect(publicUrl.body.publicUrl).toBe('http://127.0.0.1:9006/en-US/old-page');
+    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/en-US/old-page</loc>');
+    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/it-IT/old-page</loc>');
+    expect(campaign.headers.location).toBe('http://127.0.0.1:9006/en-US/old-page');
+  });
+
+  it('serves localized page and subpage routes under the configured slug', async () => {
+    vi.mocked(dbGet).mockImplementation(async (sql, params) => {
+      if (params?.[0] === 'page_slug') return { value: 'paolo' };
+      if (params?.[0] === 'public_page_active') return { value: '1' };
+      if (String(sql).includes('FROM subpages_config')) return { full_config: JSON.stringify([{ id: 'services', slug: 'services', title: 'Services', description: '', links: [], enabled: true }]) };
+      return null;
+    });
+
+    const [home, subpage, missing] = await Promise.all([
+      request(app).get('/it-IT/paolo'),
+      request(app).get('/en-US/paolo/services'),
+      request(app).get('/it-IT/other'),
+    ]);
+
+    expect(home.status).toBe(200);
+    expect(home.headers['content-language']).toBe('it-IT');
+    expect(home.text).toContain('/it-IT/paolo"');
+    expect(subpage.status).toBe(200);
+    expect(subpage.text).toContain('/en-US/paolo/services');
+    expect(missing.status).toBe(404);
   });
 
   it('omits Open Graph dimensions when the image size is unknown', () => {

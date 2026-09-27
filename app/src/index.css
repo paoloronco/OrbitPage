@@ -7045,6 +7045,10 @@ button.subpage-page-card:focus-visible { outline: 3px solid #6d94f3; outline-off
 .setup-password-requirements { display: grid; gap: 7px 18px; grid-template-columns: repeat(2,minmax(0,1fr)); list-style: none; margin: 22px 0 0; padding: 14px; background: #f8fafc; border: 1px solid #e2e7ee; border-radius: 7px; }
 .setup-password-requirements li { align-items: center; color: #8692a3; display: flex; font-size: 12px; gap: 7px; }
 .setup-password-requirements li.ready { color: #17745f; }
+.setup-slug-field { max-width: 680px; }
+.setup-slug-input { align-items: center; border: 1px solid #cfd8e5; border-radius: 6px; color: #66758a; display: flex; overflow: hidden; padding-left: 13px; }
+.setup-slug-input:focus-within { border-color: #3167ef; box-shadow: 0 0 0 3px rgb(49 103 239 / .12); }
+.setup-slug-input input { border: 0; box-shadow: none; }
 .setup-field>small { color: #7a8799; font-size: 11px; }
 .setup-url-preview { background: #101928; border-radius: 7px; display: grid; gap: 5px; margin-top: 22px; max-width: 680px; padding: 16px 18px; }
 .setup-url-preview span { color: #9eb0c8; font-size: 10px; font-weight: 800; text-transform: uppercase; }

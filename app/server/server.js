@@ -91,6 +91,7 @@ import {
 } from './services/machine-readable.js';
 import { createNewsletterRouter } from './routes/newsletter.js';
 import { startNewsletterDispatcher } from './services/newsletter.js';
+import { PUBLIC_LOCALES, localizedAlternates, localizedPublicPath, normalizePublicLocale, parseLocalizedPublicPath } from './public-locale.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -902,8 +903,7 @@ const toAbsoluteHttpUrl = (value, origin) => {
   }
 };
 
-const canonicalPathForRequest = (req) => {
-  const pathOnly = req.path || '/';
+const canonicalPathForRequest = (pathOnly = '/') => {
   if (pathOnly === '/links' || pathOnly === '/menu' || pathOnly === '/privacy' || pathOnly === '/cookies' || isAdminSpaRoute(pathOnly) || (DEMO_MODE && pathOnly === '/about')) return pathOnly;
   return '/';
 };
@@ -1098,6 +1098,8 @@ const renderSeoTags = ({
   robots,
   structuredData,
   basePath,
+  locale = 'en-US',
+  alternates = { 'x-default': canonicalUrl },
 }) => {
   const cardType = imageUrl ? 'summary_large_image' : 'summary';
   const hasImageDimensions = imageUrl
@@ -1113,13 +1115,13 @@ const renderSeoTags = ({
     keywords ? `<meta name="keywords" content="${escapeHtml(keywords)}" />` : '',
     `<meta name="application-name" content="${escapeHtml(PUBLIC_SITE_NAME)}" />`,
     `<link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`,
-    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(canonicalUrl)}" />`,
+    ...Object.entries(alternates).map(([language, href]) => `<link rel="alternate" hreflang="${escapeHtml(language)}" href="${escapeHtml(href)}" />`),
     `<meta property="og:title" content="${escapeHtml(title)}" />`,
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:url" content="${escapeHtml(canonicalUrl)}" />`,
     `<meta property="og:site_name" content="${escapeHtml(PUBLIC_SITE_NAME)}" />`,
-    `<meta property="og:locale" content="en_US" />`,
+    `<meta property="og:locale" content="${escapeHtml(locale.replace('-', '_'))}" />`,
     imageUrl ? `<meta property="og:image" content="${escapeHtml(imageUrl)}" />` : '',
     imageUrl ? `<meta property="og:image:secure_url" content="${escapeHtml(imageUrl)}" />` : '',
     hasImageDimensions ? `<meta property="og:image:width" content="${imageWidth}" />` : '',
@@ -1285,18 +1287,22 @@ const injectSeoIntoHtml = (html, { seoTags, noScriptContent }) => {
 
 const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const origin = getRequestOrigin(req);
-  const newsletterRoute = req.path === '/newsletter' || req.path === '/newsletter/status';
-  let pathName = canonicalPathForRequest(req);
+  const pageSlug = await getInstancePageSlug();
+  const localizedRequest = parseLocalizedPublicPath(req.path, pageSlug);
+  const requestPath = localizedRequest?.routePath || req.path;
+  const locale = localizedRequest || normalizePublicLocale('en');
+  const newsletterRoute = requestPath === '/newsletter' || requestPath === '/newsletter/status';
+  let pathName = canonicalPathForRequest(requestPath);
   const pageKind = newsletterRoute ? 'admin' : getPageKind(pathName);
   let [profile, links] = pageKind === 'admin'
     ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
     : pageKind === 'about'
       ? [{ name: 'OrbitPage', social_links: {} }, []]
       : await Promise.all([getPublicProfilePayload(), getPublicLinksPayload()]);
-  const [setupRequired, pageSlug, subpages] = pageKind === 'home'
-    ? await Promise.all([isFirstTimeSetup(), getInstancePageSlug(), getSubpagesPayload()])
-    : [false, null, []];
-  const requestedSlug = /^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path) ? req.path.slice(1) : '';
+  const [setupRequired, subpages] = pageKind === 'home'
+    ? await Promise.all([isFirstTimeSetup(), getSubpagesPayload()])
+    : [false, []];
+  const requestedSlug = /^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(requestPath) ? requestPath.slice(1) : '';
   const subpage = requestedSlug && requestedSlug !== pageSlug
     ? subpages.find((page) => page.enabled && page.slug === requestedSlug)
     : null;
@@ -1311,7 +1317,12 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
     };
     links = getPublicSubpagesPayload([subpage])[0]?.links || [];
   }
-  const canonicalUrl = new URL(withRequestBasePath(req, pathName), origin).toString();
+  const localizablePage = pageSlug && !isAdminSpaRoute(requestPath) && pageKind !== 'about';
+  const canonicalPath = localizablePage ? localizedPublicPath(locale.slug, pageSlug, pathName) : pathName;
+  const canonicalUrl = new URL(withRequestBasePath(req, canonicalPath), origin).toString();
+  const alternates = localizablePage
+    ? localizedAlternates(origin, getActiveBasePath(req), pageSlug, pathName)
+    : { 'x-default': canonicalUrl };
 
   const title = newsletterRoute ? `Newsletter | ${PUBLIC_SITE_NAME}` : setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
   const description = setupRequired
@@ -1341,12 +1352,16 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
       robots,
       structuredData,
       basePath: BASE_PATH,
+      locale: locale.slug,
+      alternates,
     }),
     noScriptContent: setupRequired ? setupNoScript : pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
     robots,
     profile,
     links,
     canonicalUrl,
+    locale: locale.slug,
+    routePath: requestPath,
     setupRequired,
   };
 };
@@ -1380,7 +1395,7 @@ const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
       if (!machineReadable) {
         return res.status(406).set('X-Robots-Tag', 'noindex').type('text/plain').send('A Markdown representation is not enabled for this page.\n');
       }
-      const menuDocument = req.path === '/menu';
+      const menuDocument = seo.routePath === '/menu';
       const menu = menuDocument ? getPublicMenuPayload(await getMenuPayload()) : undefined;
       const markdown = renderPublicPageMarkdown({
         profile: seo.profile,
@@ -1393,6 +1408,8 @@ const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
       return res.status(statusCode).type('text/markdown; charset=utf-8').send(markdown);
     }
     html = injectSeoIntoHtml(html, seo);
+    html = html.replace(/<html lang="[^"]*"/, `<html lang="${seo.locale}"`);
+    res.set('Content-Language', seo.locale);
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
@@ -1529,16 +1546,18 @@ const buildDefaultRobotsTxt = (req) => {
 
 const buildDefaultLlmsTxt = async (req) => {
   const origin = getRequestOrigin(req);
-  const [profile, links, subpages] = await Promise.all([
+  const [profile, links, subpages, pageSlug] = await Promise.all([
     getPublicProfilePayload(),
     getPublicLinksPayload(),
     getSubpagesPayload(),
+    getInstancePageSlug(),
   ]);
-  const homeUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
+  const homePath = pageSlug ? localizedPublicPath('en', pageSlug) : '/';
+  const homeUrl = new URL(withRequestBasePath(req, homePath), origin).toString();
   const sitemapUrl = new URL(withRequestBasePath(req, '/sitemap.xml'), origin).toString();
   const page = renderPublicPageMarkdown({ profile, links, canonicalUrl: homeUrl }).trimEnd();
   const routes = getPublicSubpagesPayload(subpages)
-    .map((subpage) => `- [${markdownTextForLlms(subpage.title)}](${new URL(withRequestBasePath(req, `/${subpage.slug}`), origin)})`);
+    .map((subpage) => `- [${markdownTextForLlms(subpage.title)}](${new URL(withRequestBasePath(req, pageSlug ? localizedPublicPath('en', pageSlug, `/${subpage.slug}`) : `/${subpage.slug}`), origin)})`);
   return normalizeTextFileContent(`${page}\n\n## Discovery\n\n- [robots.txt](${new URL(withRequestBasePath(req, '/robots.txt'), origin)})\n- [sitemap.xml](${sitemapUrl})${routes.length ? `\n\n## Additional pages\n\n${routes.join('\n')}` : ''}\n`);
 };
 
@@ -1675,9 +1694,25 @@ const getSitemapLastModified = async () => {
   }
 };
 
+const preferredPublicLocale = (req) => normalizePublicLocale(
+  req.acceptsLanguages(...PUBLIC_LOCALES.map(([, slug]) => slug)) || 'en',
+);
+
 // Serve the public page. GA is loaded client-side only after analytics consent.
-app.get('/', spaLimiter, (req, res) => {
-  serveSpaIndex(req, res);
+app.get('/', spaLimiter, async (req, res) => {
+  try {
+    const [pageSlug, setupRequired, active] = await Promise.all([
+      getInstancePageSlug(),
+      isFirstTimeSetup(),
+      isInstancePageActive(),
+    ]);
+    if (pageSlug && !setupRequired && active) {
+      return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug, pageSlug)));
+    }
+  } catch (error) {
+    console.warn('Could not resolve the localized public route:', error?.message || error);
+  }
+  return serveSpaIndex(req, res);
 });
 
 const serveBuiltInTextFile = async (req, res) => {
@@ -1727,10 +1762,31 @@ const buildSitemapDocument = async (req) => {
     console.warn('Sitemap generated without legal policy URLs:', error?.message || error);
   }
 
-  const urls = [
+  const [pageSlug, subpages, menu] = await Promise.all([
+    getInstancePageSlug(),
+    getSubpagesPayload(),
+    getMenuPayload(),
+  ]);
+  getPublicSubpagesPayload(subpages).forEach((page) => {
+    additionalUrls.push({ loc: new URL(withRequestBasePath(req, `/${page.slug}`), origin).toString(), priority: '0.8', changefreq: 'weekly' });
+  });
+  if (getPublicMenuPayload(menu).enabled) {
+    additionalUrls.push({ loc: new URL(withRequestBasePath(req, '/menu'), origin).toString(), priority: '0.8', changefreq: 'weekly' });
+  }
+
+  const routeUrls = [
     { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
     ...additionalUrls,
   ];
+  const urls = pageSlug
+    ? routeUrls.flatMap((url) => {
+        const routePath = new URL(url.loc).pathname.slice(getActiveBasePath(req).length) || '/';
+        return PUBLIC_LOCALES.map(([locale]) => ({
+          ...url,
+          loc: new URL(withRequestBasePath(req, localizedPublicPath(locale, pageSlug, routePath)), origin).toString(),
+        }));
+      })
+    : routeUrls;
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -2082,6 +2138,15 @@ const getInstancePageSlug = async () => {
   return typeof row?.value === 'string' && row.value.trim() ? row.value.trim().toLowerCase() : null;
 };
 
+const setInstancePageSlug = async (slug) => {
+  await dbRun(
+    `INSERT INTO instance_settings (key, value, updated_at)
+     VALUES ('page_slug', ?, CURRENT_TIMESTAMP)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP`,
+    [slug],
+  );
+};
+
 const isInstancePageActive = async () => {
   const row = await dbGet('SELECT value FROM instance_settings WHERE key = ?', ['public_page_active']);
   return row?.value !== '0';
@@ -2204,15 +2269,20 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
 
   setupInProgress = true;
   try {
-    const { password } = SetupBodySchema.parse(req.body || {});
+    const { password, slug } = SetupBodySchema.parse(req.body || {});
     const dependencies = await getSetupDependencies();
     if (dependencies.some((dependency) => !dependency.ok)) {
       return res.status(503).json({ success: false, error: 'Resolve the failed installation checks before continuing.', dependencies });
     }
 
+    const subpages = await getSubpagesPayload();
+    if (subpages.some((page) => page.slug === slug)) {
+      return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
+    }
+
     await withTransaction(async () => {
       await setupInitialCredentials(password);
-      await dbRun("DELETE FROM instance_settings WHERE key = 'page_slug'");
+      await setInstancePageSlug(slug);
       await setInstancePageActive(true);
       await dbRun(
         `INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, admin_onboarding_enabled)
@@ -2225,7 +2295,7 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
     res.json({ 
       success: true, 
       token,
-      pageSlug: null,
+      pageSlug: slug,
       message: 'Admin account created successfully' 
     });
   } catch (error) {
@@ -2486,7 +2556,9 @@ app.get('/go/:campaignSlug', async (req, res) => {
     const destination = link ? resolveCampaignDestination(link) : null;
     if (destination === null) return res.status(404).send('Campaign link not found.');
     const [pathName, query = ''] = destination.split('?', 2);
-    const targetPath = pathName ? `/${pathName}` : '/';
+    const pageSlug = await getInstancePageSlug();
+    const routePath = pathName ? `/${pathName}` : '/';
+    const targetPath = pageSlug ? localizedPublicPath('en', pageSlug, routePath) : routePath;
     const target = new URL(withRequestBasePath(req, targetPath), getRequestOrigin(req));
     if (query) target.search = query;
     res.set('Cache-Control', 'private, max-age=0, no-store');
@@ -2587,6 +2659,8 @@ app.get('/api/public-page', async (req, res) => {
     ]);
     const menu = getPublicMenuPayload(storedMenu);
     const requestedSubpage = typeof req.query.subpage === 'string' ? req.query.subpage.trim().toLowerCase() : '';
+    const requestedPageSlug = typeof req.query.slug === 'string' ? req.query.slug.trim().toLowerCase() : '';
+    if (requestedPageSlug && requestedPageSlug !== pageSlug) return res.status(404).json({ error: 'Page not found' });
     const requestedPrimaryPage = Boolean(requestedSubpage && pageSlug && requestedSubpage === pageSlug);
     const subpage = requestedSubpage && !requestedPrimaryPage
       ? subpages.find((page) => page.enabled && page.slug === requestedSubpage)
@@ -2613,11 +2687,15 @@ app.get('/api/public-url', apiLimiter, async (req, res) => {
   try {
     setNoStoreHeaders(res);
     const origin = getRequestOrigin(req);
-    const publicUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
+    const pageSlug = await getInstancePageSlug();
+    const locale = normalizePublicLocale(req.query.locale);
+    const publicPath = pageSlug ? localizedPublicPath(locale.slug, pageSlug) : '/';
+    const publicUrl = new URL(withRequestBasePath(req, publicPath), origin).toString();
     res.json({
       success: true,
       publicUrl,
       source: normalizeOrigin(PUBLIC_SITE_URL) ? 'configured' : 'request',
+      slug: pageSlug,
     });
   } catch (error) {
     console.error('Error resolving public URL:', error);
@@ -2645,11 +2723,25 @@ app.post('/api/account/personal-page', authenticateToken, requirePermission('use
 
     if (action.action === 'create') {
       if (active) return res.status(409).json({ success: false, error: 'A personal page is already active.' });
+      const subpages = await getSubpagesPayload();
+      if (subpages.some((page) => page.slug === action.slug)) {
+        return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
+      }
       await withTransaction(async () => {
-        await dbRun("DELETE FROM instance_settings WHERE key = 'page_slug'");
+        await setInstancePageSlug(action.slug);
         await setInstancePageActive(true);
       });
-      return res.json({ success: true, active: true, slug: null, confirmationLabel: 'PAGE' });
+      return res.json({ success: true, active: true, slug: action.slug, confirmationLabel: action.slug });
+    }
+
+    if (action.action === 'set-slug') {
+      if (!active) return res.status(409).json({ success: false, error: 'Create the personal page before choosing its slug.' });
+      const subpages = await getSubpagesPayload();
+      if (subpages.some((page) => page.slug === action.slug)) {
+        return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
+      }
+      await setInstancePageSlug(action.slug);
+      return res.json({ success: true, active: true, slug: action.slug, confirmationLabel: action.slug });
     }
 
     if (!active) return res.status(409).json({ success: false, error: 'The personal page has already been removed.' });
@@ -5390,25 +5482,35 @@ app.get('*', spaLimiter, async (req, res) => {
   let isConfiguredSubpage = false;
   let isConfiguredPrimaryPage = false;
   let isActivePersonalPageRoute = true;
-  if (PERSONAL_PAGE_SPA_ROUTES.has(req.path)) {
-    try {
+  let publicRoutePath = req.path;
+  let configuredPageSlug = null;
+  let localizedRoute = null;
+  try {
+    const [subpages, pageSlug] = await Promise.all([getSubpagesPayload(), getInstancePageSlug()]);
+    configuredPageSlug = pageSlug;
+    localizedRoute = parseLocalizedPublicPath(req.path, pageSlug);
+    if (localizedRoute) {
+      publicRoutePath = localizedRoute.routePath;
+      isConfiguredPrimaryPage = publicRoutePath === '/' || PUBLIC_SPA_ROUTES.has(publicRoutePath);
+    } else if (/^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path)) {
+      isConfiguredPrimaryPage = pageSlug === req.path.slice(1);
+    }
+    const requestedSubpage = /^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(publicRoutePath)
+      ? publicRoutePath.slice(1)
+      : '';
+    isConfiguredSubpage = Boolean(requestedSubpage && subpages.some((page) => page.enabled && page.slug === requestedSubpage));
+    if (PERSONAL_PAGE_SPA_ROUTES.has(publicRoutePath) || localizedRoute || isConfiguredPrimaryPage || isConfiguredSubpage) {
       isActivePersonalPageRoute = await isInstancePageActive();
-    } catch {
-      isActivePersonalPageRoute = false;
     }
+  } catch {
+    isConfiguredSubpage = false;
+    isConfiguredPrimaryPage = false;
+    isActivePersonalPageRoute = false;
   }
-  if (/^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path)) {
-    try {
-      const slug = req.path.slice(1);
-      const [subpages, pageSlug] = await Promise.all([getSubpagesPayload(), getInstancePageSlug()]);
-      isConfiguredPrimaryPage = pageSlug === slug;
-      isConfiguredSubpage = subpages.some((page) => page.enabled && page.slug === slug);
-    } catch {
-      isConfiguredSubpage = false;
-      isConfiguredPrimaryPage = false;
-    }
+  const statusCode = isAdminSpaRoute(req.path) || ((PUBLIC_SPA_ROUTES.has(publicRoutePath) || isConfiguredPrimaryPage || isConfiguredSubpage) && isActivePersonalPageRoute) ? 200 : 404;
+  if (statusCode === 200 && configuredPageSlug && isConfiguredPrimaryPage && !localizedRoute && req.path === `/${configuredPageSlug}`) {
+    return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug, configuredPageSlug)));
   }
-  const statusCode = isAdminSpaRoute(req.path) || ((PUBLIC_SPA_ROUTES.has(req.path) || isConfiguredPrimaryPage || isConfiguredSubpage) && isActivePersonalPageRoute) ? 200 : 404;
   serveSpaIndex(req, res, { statusCode });
 });
 

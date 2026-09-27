@@ -18,8 +18,24 @@ export const UsernameSchema = z
 
 const RequiredPasswordSchema = z.string({ required_error: 'Password is required' }).min(1, 'Password is required');
 
+const RESERVED_PAGE_SLUGS = new Set([
+  'about', 'admin', 'ai', 'api', 'assets', 'cookies', 'dashboard', 'health', 'humans',
+  'links', 'llm', 'llms', 'login', 'media', 'menu', 'newsletter', 'orbitpage-runtime', 'privacy',
+  'robots', 'security', 'shop', 'sitemap', 'support', 'terms', 'uploads', 'www',
+]);
+
+export const PageSlugSchema = z
+  .string({ required_error: 'Page slug is required' })
+  .trim()
+  .toLowerCase()
+  .min(3, 'Page slug must contain at least 3 characters')
+  .max(48, 'Page slug must contain at most 48 characters')
+  .regex(/^[a-z0-9](?:[a-z0-9]+(?:-[a-z0-9]+)*)?$/, 'Use lowercase letters, numbers, and single hyphens only')
+  .refine((slug) => !RESERVED_PAGE_SLUGS.has(slug), 'This page slug is reserved');
+
 export const SetupBodySchema = z.object({
   password: RequiredPasswordSchema,
+  slug: PageSlugSchema,
 });
 
 export const LoginBodySchema = z.object({
@@ -69,7 +85,8 @@ export const ResetApplicationBodySchema = z.object({
 });
 
 export const PersonalPageActionBodySchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('create') }),
+  z.object({ action: z.literal('create'), slug: PageSlugSchema }),
+  z.object({ action: z.literal('set-slug'), slug: PageSlugSchema }),
   z.object({
     action: z.literal('delete'),
     confirmation: z.string().trim().min(1).max(80),
