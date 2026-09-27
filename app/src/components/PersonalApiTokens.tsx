@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bot, Braces, Check, Clock3, Copy, ExternalLink, KeyRound, Loader2, PlugZap, Plus, Trash2 } from 'lucide-react';
+import { Braces, Check, Clock3, Copy, ExternalLink, KeyRound, Loader2, Plus, Trash2 } from 'lucide-react';
 import { personalApiTokensApi, type PersonalApiToken } from '@/lib/api-client';
 import { getActiveBasePath } from '@/lib/base-path';
 import './team-workspace.css';
@@ -114,11 +114,6 @@ export function PersonalApiTokens() {
         </div>
         {message && <p className="team-feedback success" role="status">{message}</p>}
         {error && <p className="team-feedback error" role="alert">{error}</p>}
-      </section>
-
-      <section className="team-panel account-connected-apps-panel">
-        <div className="account-section-heading"><div><p className="dashboard-kicker">AI connections</p><h2>Connected apps</h2><p className="muted">OAuth-connected ChatGPT and MCP clients require the managed OrbitPage authorization service. Self-hosted integrations can use the personal API tokens above.</p><a className="account-doc-link" href="https://orbitpage.com/en-US/docs/ai-and-chatgpt" rel="noreferrer" target="_blank"><ExternalLink size={14} /> Open AI connection guide</a></div><PlugZap aria-hidden="true" size={22} /></div>
-        <div className="api-token-empty"><Bot aria-hidden="true" size={22} /><span><strong>No connected apps</strong><small>OAuth app connections are not available in the self-hosted edition.</small></span></div>
       </section>
     </>
   );

@@ -485,8 +485,22 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
     );
   return (
     <section className="newsletter-workspace">
-      {data.signupUrl && (
-        <header className="newsletter-heading">
+      <div className="newsletter-toolbar">
+        <nav aria-label="Newsletter sections" className="newsletter-tabs">
+          {(
+            ["overview", "campaigns", "subscribers", "smtp"] as NewsletterView[]
+          ).map((item) => (
+            <button
+              className={view === item ? "active" : ""}
+              key={item}
+              onClick={() => setView(item)}
+              type="button"
+            >
+              {item === "smtp" ? "Settings" : item[0].toUpperCase() + item.slice(1)}
+            </button>
+          ))}
+        </nav>
+        {data.signupUrl && (
           <button
             className="button secondary compact"
             onClick={copySignupUrl}
@@ -495,23 +509,8 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
             <Copy aria-hidden="true" size={15} />
             Copy signup link
           </button>
-        </header>
-      )}
-
-      <nav aria-label="Newsletter sections" className="newsletter-tabs">
-        {(
-          ["overview", "campaigns", "subscribers", "smtp"] as NewsletterView[]
-        ).map((item) => (
-          <button
-            className={view === item ? "active" : ""}
-            key={item}
-            onClick={() => setView(item)}
-            type="button"
-          >
-            {item === "smtp" ? "Settings" : item[0].toUpperCase() + item.slice(1)}
-          </button>
-        ))}
-      </nav>
+        )}
+      </div>
       {error && (
         <p className="error newsletter-feedback" role="alert">
           {error}

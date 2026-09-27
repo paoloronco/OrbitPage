@@ -64,7 +64,7 @@
 .team-field { display: grid; gap: 7px; }
 .team-field > span { color: var(--team-copy); font-size: 12px; font-weight: 750; }
 .team-field input, .team-field select { background: #fff; border: 1px solid #c8d3df; border-radius: 7px; color: var(--team-ink); min-height: 42px; padding: 9px 11px; width: 100%; }
-.account-api-token-panel, .account-connected-apps-panel { gap: 18px; }
+.account-api-token-panel { gap: 18px; }
 .account-doc-link { align-items: center; color: var(--team-blue); display: inline-flex; font-size: 12px; font-weight: 800; gap: 6px; margin-top: 8px; text-decoration: none; }
 .account-doc-link:hover { text-decoration: underline; }
 .api-token-example { background: #fff; border: 1px solid var(--team-line); color: var(--team-ink); display: grid; gap: 13px; padding: 17px; }
