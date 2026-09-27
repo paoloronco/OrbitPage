@@ -405,9 +405,9 @@ export const AdminView = ({
   }, [menu]);
 
   useEffect(() => {
-    if (!visualLinkId || links.some((link) => String(link.id) === String(visualLinkId))) return;
+    if (!visualLinkId || previewLinks.some((link) => String(link.id) === String(visualLinkId))) return;
     setVisualLinkId(null);
-  }, [links, visualLinkId]);
+  }, [previewLinks, visualLinkId]);
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
