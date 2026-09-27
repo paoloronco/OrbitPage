@@ -1117,11 +1117,6 @@ export function PrivacySettings({
     );
   }
 
-  const activeLabel = mode === 'hardcoded'
-    ? tr('Native banner', 'Banner nativo')
-    : mode === 'builder'
-      ? tr('External CMP', 'CMP esterna')
-      : null;
   const legalReady = Boolean(resolvedPrivacyPolicyUrl && resolvedCookiePolicyUrl);
   const consentReady = enabled && (
     mode === 'hardcoded' || isBuilderProviderConfigured(builder)
@@ -1201,35 +1196,6 @@ export function PrivacySettings({
 
   return (
     <div className="privacy-workspace">
-      <header className="privacy-workspace-header">
-        <div className="privacy-workspace-heading">
-          <span className="privacy-workspace-eyebrow">{tr('Visitor trust', 'Fiducia dei visitatori')}</span>
-          <h2>{tr('Privacy, without the maze.', 'Privacy, senza complicazioni.')}</h2>
-          <p>
-            {tr(
-              'Publish the required documents, choose how consent is collected, then verify the result.',
-              'Pubblica i documenti necessari, scegli come raccogliere il consenso e verifica il risultato.',
-            )}
-          </p>
-        </div>
-        <div className="privacy-status-summary" aria-label={tr('Privacy configuration status', 'Stato configurazione privacy')}>
-          <div className={legalReady ? 'is-ready' : ''}>
-            <FileText />
-            <span>
-              <small>{tr('Legal pages', 'Pagine legali')}</small>
-              <strong>{legalReady ? tr('Ready', 'Pronte') : tr('To complete', 'Da completare')}</strong>
-            </span>
-          </div>
-          <div className={consentReady ? 'is-ready' : ''}>
-            <ShieldCheck />
-            <span>
-              <small>{tr('Consent', 'Consenso')}</small>
-              <strong>{consentReady ? activeLabel : tr('Not active', 'Non attivo')}</strong>
-            </span>
-          </div>
-        </div>
-      </header>
-
       {readOnly && (
         <div className="privacy-readonly-notice">
           <Info className="h-4 w-4" />
