@@ -67,7 +67,6 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const hydratedUrl = useRef("");
   const [publicUrl, setPublicUrl] = useState("");
-  const [source, setSource] = useState<"configured" | "request">("request");
   const [settings, setSettings] = useState<QrSettings>(DEFAULT_SETTINGS);
   const [renderError, setRenderError] = useState("");
   const [campaignBaseUrl, setCampaignBaseUrl] = useState("");
@@ -85,10 +84,9 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
   useEffect(() => {
     let cancelled = false;
     const override = getPublicUrlOverride();
-    const applyUrl = (url: string, nextSource: "configured" | "request") => {
+    const applyUrl = (url: string) => {
       if (cancelled) return;
       setPublicUrl(url);
-      setSource(nextSource);
       try {
         const stored = window.localStorage.getItem(`orbitpage:qr:${url}`);
         if (stored) setSettings(safeSettings(JSON.parse(stored)));
@@ -99,12 +97,12 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
     };
 
     if (override) {
-      applyUrl(override, "configured");
+      applyUrl(override);
       return () => { cancelled = true; };
     }
 
     publicUrlApi.get()
-      .then((result) => applyUrl(result.publicUrl, result.source))
+      .then((result) => applyUrl(result.publicUrl))
       .catch((err) => {
         if (!cancelled) setRenderError(err instanceof Error ? err.message : tr("Failed to load public URL", "Impossibile caricare l'URL pubblico"));
       });
@@ -241,7 +239,6 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
           <section className="space-y-3">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Destination", "Destinazione")}</h3>
-              {source !== "configured" && <p className="mt-1 text-xs text-slate-500">{tr("Uses this installation's public URL.", "Usa l'URL pubblico di questa installazione.")}</p>}
             </div>
             <div className="grid grid-cols-4 overflow-hidden rounded-md border border-slate-200" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
               {(["page", "menu", "campaign", "custom"] as const).map((destination) => {
