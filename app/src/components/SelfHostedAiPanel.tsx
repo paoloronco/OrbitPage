@@ -337,24 +337,6 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
             )}</p>
           </div>
         </div>
-        <div className="oss-ai-usage-summary">
-          <div className="oss-ai-usage">
-            <div>
-              <span>{tr("OrbitPage usage", "Utilizzo OrbitPage")}</span>
-              <strong>{tr("Unmetered", "Senza limite")}</strong>
-            </div>
-            <div>
-              <span>{tr("Active model", "Modello attivo")}</span>
-              <strong>{MODEL_LABELS[selectedModel]?.name || selectedModel}</strong>
-            </div>
-          </div>
-          <div className="oss-ai-usage-progress" aria-hidden="true"><span /></div>
-          <p>{tr(
-            "API costs and provider quotas remain in your OpenAI account.",
-            "Costi API e quote del provider restano nel tuo account OpenAI.",
-          )}</p>
-        </div>
-
         <div className="oss-ai-settings-section-heading">
           <KeyRound aria-hidden="true" />
           <div>
@@ -370,11 +352,16 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
           <div className="oss-ai-settings-loading"><OrbitLoader size={18} state="connecting" />{tr("Checking configuration…", "Verifica configurazione…")}</div>
         ) : (
           <>
-            <div className="oss-ai-key-state">
-              <span className={configured ? "configured" : ""}><i /></span>
+            <div className={`oss-ai-key-state ${configured ? "oss-ai-key-state--configured" : "oss-ai-key-state--empty"}`}>
+              <span>{configured ? <Check aria-hidden="true" /> : <KeyRound aria-hidden="true" />}</span>
               <div>
                 <strong>{configured ? tr("Key connected", "Chiave collegata") : tr("No key connected", "Nessuna chiave collegata")}</strong>
-                <small>{settings?.keyHint || tr("Stored only on this server", "Salvata solo su questo server")}</small>
+                <small>{configured
+                  ? settings?.keyHint
+                  : tr(
+                    "Connect an OpenAI API key to enable AI editing on this installation.",
+                    "Collega una chiave API OpenAI per abilitare la modifica AI su questa installazione.",
+                  )}</small>
               </div>
               {settings?.source && (
                 <em>{settings.source === "environment" ? "ENV" : tr("Saved", "Salvata")}</em>
@@ -477,13 +464,6 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
           </>
         )}
 
-        <footer>
-          <ShieldCheck aria-hidden="true" />
-          <p>
-            <strong>{tr("Encrypted at rest", "Cifrata a riposo")}</strong>
-            <span>{tr("AES-256-GCM · excluded from backups", "AES-256-GCM · esclusa dai backup")}</span>
-          </p>
-        </footer>
       </aside>
       </div>
     </div>

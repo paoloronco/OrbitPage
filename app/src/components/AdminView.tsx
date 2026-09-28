@@ -84,6 +84,16 @@ import { OpenSourcePlan } from "./OpenSourcePlan";
 import { VisualSiteEditor, type VisualSiteEditorSection } from "./VisualSiteEditor";
 import { MenuView } from "./MenuView";
 
+function GoogleAnalyticsIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg aria-hidden="true" focusable="false" height={size} viewBox="0 0 24 24" width={size}>
+      <circle cx="4.75" cy="20.25" fill="#e37400" r="2.75" />
+      <rect fill="#e37400" height="13.75" rx="2.75" width="5.5" x="9.25" y="9.25" />
+      <rect fill="#f9ab00" height="22" rx="2.75" width="5.5" x="16.5" y="1" />
+    </svg>
+  );
+}
+
 interface ProfileData {
   name: string;
   bio: string;
@@ -758,7 +768,7 @@ export const AdminView = ({
     <Dialog open={gaSetupOpen} onOpenChange={setGaSetupOpen}>
       <DialogContent className="managed-analytics-integration-dialog" data-testid="google-analytics-settings">
         <DialogHeader className="managed-analytics-integration-dialog-header">
-          <span className="admin-panel-icon" aria-hidden="true"><Globe2 size={17} /></span>
+          <span className="admin-panel-icon" aria-hidden="true"><GoogleAnalyticsIcon size={17} /></span>
           <div>
             <DialogTitle>Google Analytics 4</DialogTitle>
             <DialogDescription>{tr("Connect Google Analytics to your public page.", "Collega Google Analytics alla tua pagina pubblica.")}</DialogDescription>
@@ -1561,8 +1571,8 @@ export const AdminView = ({
                   type="button"
                   variant="outline"
                 >
-                  <Globe2 aria-hidden="true" size={16} />
-                  {profile.googleAnalyticsId ? "Google Analytics" : tr("Add Google Analytics", "Aggiungi Google Analytics")}
+                  <GoogleAnalyticsIcon size={16} />
+                  Google Analytics
                 </Button>
               )} />
               {googleAnalyticsDialog}

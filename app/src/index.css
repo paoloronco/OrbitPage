@@ -5564,72 +5564,6 @@
   line-height: 1.25;
 }
 
-.oss-ai-usage-summary {
-  display: grid;
-  gap: 10px;
-  padding: 0 14px 14px;
-}
-
-.oss-ai-usage {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  min-width: 0;
-}
-
-.oss-ai-usage > div {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-  padding: 2px 12px;
-  border-left: 1px solid #e4eaf2;
-}
-
-.oss-ai-usage > div:first-child {
-  border-left: 0;
-  padding-left: 0;
-}
-
-.oss-ai-usage span {
-  overflow: hidden;
-  color: #718096;
-  font-size: .58rem;
-  font-weight: 800;
-  letter-spacing: .055em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.oss-ai-usage strong {
-  overflow: hidden;
-  color: #152a47;
-  font-size: .9rem;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.oss-ai-usage-progress {
-  height: 4px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #e9eef5;
-}
-
-.oss-ai-usage-progress > span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: #2f9c66;
-}
-
-.oss-ai-usage-summary > p {
-  margin: 0;
-  color: #7a8799;
-  font-size: .6rem;
-}
-
 .oss-ai-settings-section-heading {
   display: flex;
   gap: 9px;
@@ -5681,8 +5615,10 @@
   gap: 10px;
   align-items: center;
   margin: 0 14px 14px;
-  padding: 12px 0;
-  border-block: 1px solid #e8edf4;
+  padding: 13px;
+  border: 1px solid #cbd9ee;
+  border-radius: 11px;
+  background: #f6f9ff;
 }
 
 .oss-ai-key-state > span {
@@ -5690,19 +5626,14 @@
   width: 28px;
   height: 28px;
   place-items: center;
-  border-radius: 50%;
-  background: #f0f3f7;
+  border-radius: 9px;
+  color: #315ee7;
+  background: #e8efff;
 }
 
-.oss-ai-key-state > span i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #9ba6b6;
-}
-
-.oss-ai-key-state > span.configured { background: #eaf7f0; }
-.oss-ai-key-state > span.configured i { background: #2f9c66; }
+.oss-ai-key-state > span svg { width: 15px; height: 15px; }
+.oss-ai-key-state--configured { border-color: #b9dfcc; background: #f2fbf6; }
+.oss-ai-key-state--configured > span { color: #19734b; background: #def3e7; }
 
 .oss-ai-key-state strong,
 .oss-ai-key-state small {
@@ -5839,28 +5770,6 @@
   color: #a23842 !important;
 }
 
-.oss-ai-settings > footer {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 12px 14px;
-  border-top: 1px solid #e6ecf3;
-  color: #687890;
-  background: #f7f9fc;
-}
-
-.oss-ai-settings > footer > svg {
-  width: 18px;
-  height: 18px;
-  color: #3569ad;
-}
-
-.oss-ai-settings > footer p { margin: 0; }
-.oss-ai-settings > footer strong,
-.oss-ai-settings > footer span { display: block; }
-.oss-ai-settings > footer strong { color: #334862; font-size: .71rem; }
-.oss-ai-settings > footer span { margin-top: 2px; font-size: .62rem; }
-
 @keyframes oss-ai-enter {
   from { opacity: 0; transform: translateY(7px); }
   to { opacity: 1; transform: translateY(0); }
@@ -5888,8 +5797,7 @@
   .oss-ai-proposal-actions { align-items: stretch; flex-direction: column; }
   .oss-ai-composer { margin: 0 10px 10px; }
   .oss-ai-settings-title,
-  .oss-ai-settings-form,
-  .oss-ai-settings > footer { padding-right: 14px; padding-left: 14px; }
+  .oss-ai-settings-form { padding-right: 14px; padding-left: 14px; }
   .oss-ai-key-state { margin-right: 14px; margin-left: 14px; }
 }
 
@@ -8402,7 +8310,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 /* OSS edition and managed SaaS comparison. */
 .oss-plan-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(280px, .55fr);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
   align-items: start;
   gap: 16px;
 }
@@ -8421,13 +8329,11 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-plan-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 28px;
-  padding: clamp(22px, 3vw, 34px);
+  align-items: center;
+  gap: 20px;
+  padding: 22px;
   border-bottom: 1px solid var(--admin-soft-line);
-  background:
-    linear-gradient(135deg, rgb(49 103 239 / 7%), transparent 46%),
-    #fff;
+  background: #fff;
 }
 
 .oss-plan-eyebrow,
@@ -8444,50 +8350,50 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-saas-promo h2 {
   margin: 0;
   color: var(--admin-ink);
-  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-size: 1.3rem;
   font-weight: 820;
   letter-spacing: -.025em;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .oss-plan-hero > div:first-child > p:last-child,
 .oss-saas-promo > p {
-  max-width: 62ch;
-  margin: 12px 0 0;
+  max-width: 54ch;
+  margin: 7px 0 0;
   color: var(--admin-muted-copy);
-  font-size: .88rem;
-  line-height: 1.65;
+  font-size: .8rem;
+  line-height: 1.5;
 }
 
 .oss-plan-status {
-  display: grid;
-  min-width: 172px;
-  gap: 4px;
-  padding: 13px 15px;
-  border: 1px solid #b9e6ce;
-  border-radius: 7px;
-  background: #f0fbf5;
-  color: #155f3c;
-}
-
-.oss-plan-status > span {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: .68rem;
-  font-weight: 800;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-}
-
-.oss-plan-status strong {
-  color: #103f2b;
-  font-size: 1rem;
-}
-
-.oss-plan-status small {
-  color: #397359;
+  padding: 7px 10px;
+  border: 1px solid #b9e6ce;
+  border-radius: 999px;
+  background: #f0fbf5;
+  color: #155f3c;
   font-size: .72rem;
+  font-weight: 800;
+}
+
+.oss-plan-section-heading {
+  padding: 18px 22px 10px;
+}
+
+.oss-plan-section-heading h3 {
+  margin: 0;
+  color: var(--admin-ink);
+  font-size: .9rem;
+  font-weight: 800;
+}
+
+.oss-plan-section-heading p {
+  margin: 4px 0 0;
+  color: var(--admin-muted-copy);
+  font-size: .75rem;
+  line-height: 1.45;
 }
 
 .oss-plan-feature-list {
@@ -8499,8 +8405,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);
   gap: 10px;
-  min-height: 138px;
-  padding: 22px;
+  min-height: 92px;
+  padding: 16px 22px;
   border-right: 1px solid var(--admin-soft-line);
   border-bottom: 1px solid var(--admin-soft-line);
 }
@@ -8518,13 +8424,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   color: var(--admin-accent);
 }
 
-.oss-plan-feature-title {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
 .oss-plan-feature h3 {
   margin: 0;
   color: var(--admin-ink);
@@ -8532,24 +8431,12 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   font-weight: 800;
 }
 
-.oss-plan-feature-title span {
-  flex: 0 0 auto;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--admin-accent-soft);
-  color: var(--admin-accent-strong);
-  font-size: .6rem;
-  font-weight: 800;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-}
-
 .oss-plan-feature p,
 .oss-plan-operations p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--admin-muted-copy);
   font-size: .78rem;
-  line-height: 1.55;
+  line-height: 1.45;
 }
 
 .oss-plan-operations {
@@ -8557,32 +8444,26 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   grid-template-columns: 30px minmax(0, 1fr);
   gap: 10px;
   margin: 0;
-  padding: 18px 22px;
-  border-top: 1px solid #ead9a9;
-  background: #fffbec;
-  color: #805b12;
+  padding: 16px 22px;
+  border-top: 1px solid var(--admin-soft-line);
+  background: #f8fafc;
+  color: var(--admin-muted-copy);
 }
 
 .oss-plan-operations strong {
-  color: #60430c;
+  color: var(--admin-ink);
   font-size: .82rem;
 }
 
 .oss-plan-operations p {
-  color: #785e2a;
+  color: var(--admin-muted-copy);
 }
 
 .oss-saas-promo {
   position: sticky;
   top: 132px;
-  overflow: hidden;
-  padding: clamp(22px, 3vw, 30px);
-  border-color: #203354;
-  background:
-    radial-gradient(circle at 100% 0, rgb(87 132 255 / 22%), transparent 40%),
-    #0d1728;
-  color: #dce6f5;
-  box-shadow: 0 18px 38px rgb(13 23 40 / 12%);
+  padding: 22px;
+  background: #fff;
 }
 
 .oss-saas-promo-heading {
@@ -8594,28 +8475,27 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .oss-saas-promo-heading > span {
   margin: 0;
-  color: #8daeff;
+  color: var(--admin-accent-strong);
 }
 
 .oss-saas-promo-heading > svg {
-  color: #8daeff;
+  color: var(--admin-accent);
 }
 
 .oss-saas-promo h2 {
-  margin-top: 18px;
-  color: #fff;
+  margin-top: 14px;
 }
 
 .oss-saas-promo > p {
-  color: #b7c5d8;
+  color: var(--admin-muted-copy);
 }
 
 .oss-saas-promo ul {
   display: grid;
-  gap: 11px;
-  margin: 23px 0 0;
-  padding: 18px 0 0;
-  border-top: 1px solid rgb(255 255 255 / 10%);
+  gap: 9px;
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--admin-soft-line);
   list-style: none;
 }
 
@@ -8623,14 +8503,14 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   gap: 7px;
-  color: #dbe5f4;
+  color: var(--admin-copy);
   font-size: .78rem;
   line-height: 1.45;
 }
 
 .oss-saas-promo li svg {
   margin-top: 2px;
-  color: #86a8ff;
+  color: var(--admin-accent);
 }
 
 .oss-saas-actions {
@@ -8655,13 +8535,13 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .oss-saas-primary {
-  background: #fff;
-  color: #152440;
+  background: var(--admin-accent);
+  color: #fff;
 }
 
 .oss-saas-secondary {
-  border-color: rgb(255 255 255 / 16%);
-  color: #e8effa;
+  border-color: var(--admin-line);
+  color: var(--admin-ink);
 }
 
 .oss-saas-primary:hover,
@@ -8670,16 +8550,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .oss-saas-secondary:hover {
-  border-color: rgb(255 255 255 / 30%);
-  background: rgb(255 255 255 / 6%);
-}
-
-.oss-saas-promo > small {
-  display: block;
-  margin-top: 12px;
-  color: #8696ae;
-  font-size: .65rem;
-  text-align: center;
+  border-color: var(--admin-accent);
+  background: var(--admin-accent-soft);
 }
 
 @media (max-width: 1080px) {
@@ -9074,12 +8946,16 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
   .oss-plan-hero {
     grid-template-columns: 1fr;
-    gap: 18px;
+    gap: 14px;
     padding: 20px 17px;
   }
 
   .oss-plan-status {
-    min-width: 0;
+    justify-self: start;
+  }
+
+  .oss-plan-section-heading {
+    padding: 17px 17px 9px;
   }
 
   .oss-plan-feature-list {
@@ -9104,7 +8980,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   }
 
   .oss-saas-promo {
-    padding: 22px 18px;
+    padding: 20px 17px;
   }
 }
 
@@ -11699,9 +11575,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-ai-settings-copy,
 .oss-ai-key-state strong,
 .oss-ai-key-state small,
-.oss-ai-settings-form label,
-.oss-ai-settings > footer strong,
-.oss-ai-settings > footer span {
+.oss-ai-settings-form label {
   font-size: var(--admin-text-small);
   line-height: 1.5;
 }

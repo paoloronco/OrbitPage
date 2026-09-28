@@ -2864,15 +2864,11 @@ app.post('/api/account/personal-page', authenticateToken, requirePermission('use
 
     if (action.action === 'create') {
       if (active) return res.status(409).json({ success: false, error: 'A personal page is already active.' });
-      const subpages = await getSubpagesPayload();
-      if (subpages.some((page) => page.slug === action.slug)) {
-        return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
-      }
       await withTransaction(async () => {
-        await setInstancePageSlug(action.slug);
+        await dbRun("DELETE FROM instance_settings WHERE key = 'page_slug'");
         await setInstancePageActive(true);
       });
-      return res.json({ success: true, active: true, slug: action.slug, confirmationLabel: action.slug });
+      return res.json({ success: true, active: true, slug: null, confirmationLabel: 'PAGE' });
     }
 
     if (action.action === 'set-slug') {
