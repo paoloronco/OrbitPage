@@ -11,6 +11,22 @@ describe("ProfileQrCode", () => {
     expect(source).toContain('className="mt-1 text-sm leading-6 text-slate-600"');
   });
 
+  it("removes Smart QR links optimistically and dismisses status messages", () => {
+    const source = readFileSync(new URL("./CampaignLinksManager.tsx", import.meta.url), "utf8");
+    expect(source.indexOf("setLinks(next);")).toBeLessThan(source.indexOf("await campaignLinksApi.update(next)"));
+    expect(source).toContain("window.setTimeout(() => setMessage(''), 3000)");
+    expect(source).toContain("setLinks(previous);");
+  });
+
+  it("shows Smart QR configuration only below the selected Smart destination", () => {
+    const source = readFileSync(new URL("./ProfileQrCode.tsx", import.meta.url), "utf8");
+    const destinationSelector = source.indexOf('aria-label={tr("QR destination", "Destinazione QR")}');
+    const conditionalManager = source.indexOf('settings.destination === "campaign" && (');
+    expect(conditionalManager).toBeGreaterThan(destinationSelector);
+    expect(source.slice(conditionalManager)).toContain("<CampaignLinksManager");
+    expect(source).not.toContain('destination === "campaign" && !settings.campaignSlug');
+  });
+
   it("builds child targets below the unique tenant page", () => {
     expect(buildLockedQrUrl("https://orbitpage.net/alice", "menu")).toEqual({
       url: "https://orbitpage.net/alice/menu",

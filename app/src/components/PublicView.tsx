@@ -7,7 +7,7 @@ import { withTenantBasePath } from "@/lib/base-path";
 import { getInternalLinksData, getSocialRowData, getVideoData, isSocialRowContent } from "@/lib/link-blocks";
 import { isLinkVisibleNow } from "@/lib/link-visibility";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import { normalizeProfileLayout, type ProfileLayout } from "@/lib/profile-layout";
+import { normalizeVisibleProfileLayout, type ProfileLayout, type ProfileLayoutItem } from "@/lib/profile-layout";
 import { PROFILE_CARD_LAYOUT_ID, type CardLayout } from "@/lib/card-layout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ThemeConfig } from "@/lib/theme";
@@ -69,6 +69,14 @@ export const PublicView = ({
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
   const cookieHref = cookiePolicyUrl?.trim() ? withTenantBasePath(cookiePolicyUrl.trim()) : undefined;
   const hasVisibleAvatar = profile.showAvatar ?? hasCustomProfileAvatar(profile.avatar);
+  const visibleProfileItems: ProfileLayoutItem[] = [
+    ...(hasVisibleAvatar ? ["avatar" as const] : []),
+    ...(profile.name?.trim() ? ["name" as const] : []),
+    ...(profile.appearance?.profileDetails?.primary ? ["work" as const] : []),
+    ...(profile.appearance?.profileDetails?.secondary ? ["location" as const] : []),
+    ...(profile.socialLinks && Object.values(profile.socialLinks).some(Boolean) ? ["socials" as const] : []),
+    ...(profile.bio?.trim() ? ["bio" as const] : []),
+  ];
   const hasProfileContent = Boolean(profileLayoutEditing ||
     profile.name?.trim() ||
     profile.bio?.trim() ||
@@ -117,8 +125,9 @@ export const PublicView = ({
   );
   const activeCardLayout = profile.appearance?.cardLayouts?.[cardLayoutViewport];
   const hasResponsiveCardLayout = cardLayoutEditing || Boolean(activeCardLayout);
-  const profileCardHeight = normalizeProfileLayout(
+  const profileCardHeight = normalizeVisibleProfileLayout(
     profile.appearance?.layouts?.[cardLayoutViewport] || profile.appearance?.layout,
+    visibleProfileItems,
   ).height + (cardLayoutViewport === "mobile" ? 64 : 48);
   const useUnifiedPageLayout = hasProfileContent && (
     cardLayoutEditing || Boolean(activeCardLayout?.positions?.[PROFILE_CARD_LAYOUT_ID])

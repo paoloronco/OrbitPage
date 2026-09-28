@@ -42,3 +42,19 @@ it("allows the default OrbitPage image to be enabled", () => {
   expect(html).toContain('aria-checked="true" data-state="checked"');
   expect(html).toContain("/brand/orbitpage-mark-192.png");
 });
+
+it("shows profile-card controls only for the selected style", () => {
+  const base = { name: "Orbit Studio", bio: "", avatar: "" };
+  const themed = renderToStaticMarkup(<ProfileSection profile={{ ...base, appearance: {} }} theme={defaultTheme} onProfileUpdate={() => {}} />);
+  const personalized = renderToStaticMarkup(<ProfileSection profile={{ ...base, appearance: { surfaceEffect: "solid" } }} theme={defaultTheme} onProfileUpdate={() => {}} />);
+  const image = renderToStaticMarkup(<ProfileSection profile={{ ...base, appearance: { cardBackgroundImage: "https://example.com/card.jpg" } }} theme={defaultTheme} onProfileUpdate={() => {}} />);
+
+  expect(themed).toContain("Theme card color");
+  expect(themed).toContain("Personalized");
+  expect(themed).not.toContain("Override the active theme only when needed.");
+  expect(themed).not.toContain("Custom colors");
+  expect(personalized).toContain("Card background");
+  expect(personalized).toContain("Main text");
+  expect(personalized).not.toContain("Custom colors");
+  expect(image).toContain("Card background image");
+});

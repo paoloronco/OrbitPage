@@ -1,8 +1,16 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { OrbitLoadingState, OrbitProgressRing } from "./orbit-loader";
+import { OrbitLoader, OrbitLoadingState, OrbitProgressRing } from "./orbit-loader";
 
 describe("Orbit loading feedback", () => {
+  it("uses the lightweight OrbitPage ring for inline loading", () => {
+    const html = renderToStaticMarkup(<OrbitLoader size={20} state="working" />);
+
+    expect(html).toContain("orbit-loader__arc");
+    expect(html).toContain("orbit-loader__satellite");
+    expect(html).toContain("--orbit-loader-size:20px");
+  });
+
   it("renders the long-wait state with a circular progress ring instead of the dark canvas orb", () => {
     const html = renderToStaticMarkup(
       <OrbitLoadingState description="Loading your workspace" state="connecting" title="Loading OrbitPage Admin" />,

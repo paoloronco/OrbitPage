@@ -22,7 +22,7 @@ import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-
 import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 import {
-  normalizeProfileLayout,
+  normalizeVisibleProfileLayout,
   updateProfileLayoutAlignment,
   updateProfileLayoutItem,
   type NormalizedProfileLayout,
@@ -126,15 +126,6 @@ export const PublicProfileSection = ({
     profile.appearance?.layouts?.mobile ||
     profile.appearance?.layouts?.desktop
   );
-  const savedLayout = useMemo(() => normalizeProfileLayout(rawLayout), [rawLayout]);
-  const [workingLayout, setWorkingLayout] = useState(savedLayout);
-  const [activeItem, setActiveItem] = useState<ProfileLayoutItem | null>(null);
-  const [guides, setGuides] = useState<CardLayoutGuides>({});
-  const [measuredContentHeight, setMeasuredContentHeight] = useState(0);
-  const layoutRef = useRef<HTMLDivElement>(null);
-  const gestureRef = useRef<LayoutGesture | null>(null);
-  const pendingLayoutRef = useRef<NormalizedProfileLayout | null>(null);
-  const latestLayoutRef = useRef(workingLayout);
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
   const displayName = profile.name?.trim() || fallbackName || "";
   const socialLinks = Object.fromEntries(SOCIALS.map(({ id }) => [id, resolveSafePublicHref(normalizeProfileSocialHref(id, profile.socialLinks?.[id] || ""))])) as Record<typeof SOCIALS[number]["id"], string | null>;
@@ -143,6 +134,23 @@ export const PublicProfileSection = ({
   const cardBackgroundImage = getMediaUrl(profile.appearance?.cardBackgroundImage);
   const hasProfileDetails = Boolean(profileDetails?.primary || profileDetails?.secondary);
   const avatarVisible = profile.showAvatar ?? hasCustomProfileAvatar(profile.avatar);
+  const visibleLayoutItems = useMemo<ProfileLayoutItem[]>(() => [
+    ...(avatarVisible ? ["avatar" as const] : []),
+    ...(displayName ? ["name" as const] : []),
+    ...(profileDetails?.primary ? ["work" as const] : []),
+    ...(profileDetails?.secondary ? ["location" as const] : []),
+    ...(hasSocialLinks ? ["socials" as const] : []),
+    ...(hasBio ? ["bio" as const] : []),
+  ], [avatarVisible, displayName, hasBio, hasSocialLinks, profileDetails?.primary, profileDetails?.secondary]);
+  const savedLayout = useMemo(() => normalizeVisibleProfileLayout(rawLayout, visibleLayoutItems), [rawLayout, visibleLayoutItems]);
+  const [workingLayout, setWorkingLayout] = useState(savedLayout);
+  const [activeItem, setActiveItem] = useState<ProfileLayoutItem | null>(null);
+  const [guides, setGuides] = useState<CardLayoutGuides>({});
+  const [measuredContentHeight, setMeasuredContentHeight] = useState(0);
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const gestureRef = useRef<LayoutGesture | null>(null);
+  const pendingLayoutRef = useRef<NormalizedProfileLayout | null>(null);
+  const latestLayoutRef = useRef(workingLayout);
   const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || avatarVisible || layoutEditing);
   const layout = layoutEditing ? workingLayout : savedLayout;
   const compactNameMatch = layout.positions.name.width <= 50 && displayName.match(/^(.*)\s+(\S+)$/);
@@ -205,11 +213,8 @@ export const PublicProfileSection = ({
     socials,
     bio,
   };
-  const baseCanvasHeight = layoutEditing
-    ? layout.height
-    : Math.max(160, ...(Object.keys(layout.positions) as ProfileLayoutItem[])
-        .filter((item) => contents[item])
-        .map((item) => layout.positions[item].y + layout.positions[item].height));
+  const baseCanvasHeight = Math.max(160, ...visibleLayoutItems
+    .map((item) => layout.positions[item].y + layout.positions[item].height));
   const canvasHeight = Math.max(baseCanvasHeight, measuredContentHeight);
 
   useLayoutEffect(() => {
@@ -392,7 +397,7 @@ export const PublicProfileSection = ({
         >
           {(Object.keys(layout.positions) as ProfileLayoutItem[]).map((item) => {
             const content = contents[item];
-            if (!content && !layoutEditing) return null;
+            if (!content) return null;
             const rect = layout.positions[item];
             const alignment = layout.alignments[item];
             const canAlignText = item === "name" || item === "work" || item === "location" || item === "bio";

@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  ImagePlus,
   KeyRound,
   Send,
   ShieldCheck,
@@ -22,16 +23,19 @@ import {
   type AiSettings,
 } from "@/lib/api-client";
 import { useAppI18n } from "@/lib/i18n";
+import { AI_HISTORY_STORAGE_KEY, readAiConversationHistory, writeAiConversationHistory } from "@/lib/ai-conversation-history";
 import { AiPageComparisonPreview } from "./AiPageComparisonPreview";
 
 type SelfHostedAiPanelProps = {
   canManageSettings: boolean;
+  historyKey?: string;
   onApplied?: () => void;
 };
 
 type ConversationEntry = AiConversationMessage & {
   id: string;
   error?: boolean;
+  persistent?: boolean;
 };
 
 const MODEL_LABELS: Record<string, { name: string; detail: string }> = {
@@ -40,17 +44,23 @@ const MODEL_LABELS: Record<string, { name: string; detail: string }> = {
   "gpt-5.6-luna": { name: "GPT-5.6 Luna", detail: "Fast" },
 };
 
-function entry(role: "user" | "assistant", content: string, error = false): ConversationEntry {
+function entry(role: "user" | "assistant", content: string, error = false, persistent = true): ConversationEntry {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     role,
     content,
     error,
+    persistent,
   };
 }
 
-export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAiPanelProps) {
+export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onApplied }: SelfHostedAiPanelProps) {
   const { tr } = useAppI18n();
+  const historyStorageKey = useMemo(() => `${AI_HISTORY_STORAGE_KEY}:${encodeURIComponent(historyKey)}`, [historyKey]);
+  const welcome = tr(
+    "Tell me what should change. I read the current page and prepare a preview before touching anything.",
+    "Dimmi cosa vuoi cambiare. Leggo la pagina attuale e preparo un’anteprima prima di modificare qualsiasi cosa.",
+  );
   const [settings, setSettings] = useState<AiSettings | null>(null);
   const [settingsError, setSettingsError] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -58,21 +68,34 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
   const [selectedModel, setSelectedModel] = useState("gpt-5.6-terra");
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
-  const [messages, setMessages] = useState<ConversationEntry[]>([
-    entry(
-      "assistant",
-      tr(
-        "Tell me what should change. I read the current page and prepare a reviewable proposal before touching anything.",
-        "Dimmi cosa vuoi cambiare. Leggo la pagina attuale e preparo una proposta da controllare prima di modificare qualsiasi cosa.",
-      ),
-    ),
-  ]);
+  const [messages, setMessages] = useState<ConversationEntry[]>([]);
+  const [loadedHistoryKey, setLoadedHistoryKey] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   const [planning, setPlanning] = useState(false);
   const [proposal, setProposal] = useState<AiPageProposal | null>(null);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
+  const [launchScreenshot, setLaunchScreenshot] = useState<File | null>(null);
+  const [launchAttested, setLaunchAttested] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const [launchError, setLaunchError] = useState("");
   const conversationRef = useRef<HTMLDivElement>(null);
+  const launchScreenshotRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const history = readAiConversationHistory(historyStorageKey);
+    setMessages(history.length
+      ? history.map(({ role, content }) => entry(role, content))
+      : [entry("assistant", welcome, false, false)]);
+    setLoadedHistoryKey(historyStorageKey);
+  }, [historyStorageKey, welcome]);
+
+  useEffect(() => {
+    if (loadedHistoryKey !== historyStorageKey) return;
+    writeAiConversationHistory(historyStorageKey, messages
+      .filter((message) => !message.error && message.persistent !== false)
+      .map(({ role, content }) => ({ role, content })));
+  }, [historyStorageKey, loadedHistoryKey, messages]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +121,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
 
   const conversationHistory = useMemo<AiConversationMessage[]>(() => (
     messages
-      .filter((message) => !message.error)
+      .filter((message) => !message.error && message.persistent !== false)
       .slice(-8)
       .map(({ role, content }) => ({ role, content }))
   ), [messages]);
@@ -200,6 +223,30 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
     }
   };
 
+  const submitLaunchKit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!configured || !launchScreenshot || !launchAttested || launching) return;
+    setLaunching(true);
+    setLaunchError("");
+    setProposal(null);
+    setApplied(false);
+    setMessages((current) => [...current, entry("user", `Launch Kit · ${launchScreenshot.name}`)]);
+    try {
+      const result = await aiPageAgentApi.launchKit(launchScreenshot);
+      setMessages((current) => [...current, entry("assistant", result.reply)]);
+      setProposal(result.proposal);
+      setLaunchScreenshot(null);
+      setLaunchAttested(false);
+      if (launchScreenshotRef.current) launchScreenshotRef.current.value = "";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : tr("The screenshot could not be analyzed.", "Impossibile analizzare lo screenshot.");
+      setLaunchError(message);
+      setMessages((current) => [...current, entry("assistant", message, true)]);
+    } finally {
+      setLaunching(false);
+    }
+  };
+
   const configured = settings?.configured === true;
   const modelOptions = settings?.supportedModels?.length
     ? settings.supportedModels
@@ -251,22 +298,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
           )}
 
           {proposal && (
-            <section className="oss-ai-proposal" aria-label={tr("Proposed changes", "Modifiche proposte")}>
-              <div className="oss-ai-proposal-heading">
-                <ShieldCheck aria-hidden="true" />
-                <div>
-                  <span>{tr("Review before applying", "Controlla prima di applicare")}</span>
-                  <h3>{proposal.summary}</h3>
-                </div>
-              </div>
-              <ol>
-                {proposal.changes.map((change, index) => (
-                  <li key={`${index}-${change}`}>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <p>{change}</p>
-                  </li>
-                ))}
-              </ol>
+            <section className="oss-ai-proposal" aria-label={tr("Page preview", "Anteprima pagina")}>
               <AiPageComparisonPreview {...proposal.preview} />
               <div className="oss-ai-proposal-actions">
                 <Button
@@ -276,7 +308,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
                   type="button"
                 >
                   {applying ? <OrbitLoader size={16} state="weaving" /> : <Check className="h-4 w-4" />}
-                  {applying ? tr("Applying…", "Applicazione…") : tr("Apply approved changes", "Applica modifiche approvate")}
+                  {applying ? tr("Applying…", "Applicazione…") : tr("Apply changes", "Applica modifiche")}
                 </Button>
                 <Button
                   className="admin-action"
@@ -465,6 +497,59 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
             )}
           </>
         )}
+
+        <form
+          aria-disabled={!configured}
+          className={`oss-ai-launch-kit${configured ? "" : " is-disabled"}`}
+          data-disabled-message={tr("Please set up the OpenAI API key first.", "Configura prima la chiave API OpenAI.")}
+          onSubmit={submitLaunchKit}
+        >
+          <div className="oss-ai-launch-kit-heading">
+            <span aria-hidden="true"><ImagePlus /></span>
+            <div>
+              <p className="admin-dashboard-kicker">Launch Kit</p>
+              <h3>{tr("Recreate a page from a screenshot", "Ricrea una pagina da uno screenshot")}</h3>
+              <p>{tr(
+                "Upload a visual reference and get a page preview before applying it.",
+                "Carica un riferimento visivo e visualizza l’anteprima della pagina prima di applicarla.",
+              )}</p>
+            </div>
+          </div>
+          <label className="oss-ai-launch-kit-upload">
+            <ImagePlus aria-hidden="true" />
+            <span>
+              <strong>{launchScreenshot ? tr("Screenshot selected", "Screenshot selezionato") : tr("Choose screenshot", "Scegli screenshot")}</strong>
+              <small>{launchScreenshot?.name || "PNG, JPEG, WebP · 4 MB"}</small>
+            </span>
+            <input
+              accept="image/png,image/jpeg,image/webp"
+              disabled={!configured || launching}
+              onChange={(event) => setLaunchScreenshot(event.target.files?.[0] || null)}
+              ref={launchScreenshotRef}
+              required
+              type="file"
+            />
+          </label>
+          <label className="oss-ai-launch-kit-attestation">
+            <input
+              checked={launchAttested}
+              disabled={!configured || launching}
+              onChange={(event) => setLaunchAttested(event.target.checked)}
+              required
+              type="checkbox"
+            />
+            <span>{tr("I have the right to use this content.", "Ho il diritto di utilizzare questi contenuti.")}</span>
+          </label>
+          {launchError && <p className="oss-ai-launch-kit-error" role="alert">{launchError}</p>}
+          <Button
+            className="admin-action admin-action-primary"
+            disabled={!configured || launching || !launchScreenshot || !launchAttested}
+            type="submit"
+          >
+            {launching ? <OrbitLoader size={16} state="weaving" /> : <Sparkles className="h-4 w-4" />}
+            {launching ? tr("Preparing preview…", "Preparazione anteprima…") : tr("Create preview", "Crea anteprima")}
+          </Button>
+        </form>
 
       </aside>
       </div>

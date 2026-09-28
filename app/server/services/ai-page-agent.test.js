@@ -5,6 +5,7 @@ import {
   compactPageContext,
   decryptApiKey,
   encryptApiKey,
+  launchKitScreenshotDataUrl,
   planAiPageChanges,
   resolveOpenAiResponsesUrl,
 } from './ai-page-agent.js';
@@ -111,6 +112,24 @@ describe('self-hosted AI page agent', () => {
     });
   });
 
+  it('repairs unreadable AI text colors before creating the preview', () => {
+    const result = applyAiPageOperations({
+      page,
+      permissions: ['theme:write'],
+      operations: [
+        operation({ kind: 'theme.set', field: 'profileCard.background', value: '#4cc9d4' }),
+        operation({ kind: 'theme.set', field: 'profileCard.backgroundSecondary', value: '#4cc9d4' }),
+        operation({ kind: 'theme.set', field: 'profileCard.foreground', value: '#ffffff' }),
+        operation({ kind: 'theme.set', field: 'profileCard.muted', value: '#ffffff' }),
+      ],
+    });
+
+    expect(result.changes.theme.profileCard).toMatchObject({
+      foreground: '#05070a',
+      muted: '#05070a',
+    });
+  });
+
   it('rejects unsafe URLs before a proposal can be stored', () => {
     expect(() => applyAiPageOperations({
       page,
@@ -213,5 +232,49 @@ describe('self-hosted AI page agent', () => {
     });
     expect(request.input[1].content).toContain('"revision":7');
     expect(JSON.stringify(request)).not.toContain('sk-proj-example-secret');
+  });
+
+  it('validates Launch Kit screenshots and sends them as untrusted image input', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-proj-example-secret-value-123456789');
+    const screenshot = launchKitScreenshotDataUrl({
+      mimetype: 'image/png',
+      buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00]),
+    });
+    expect(() => launchKitScreenshotDataUrl({ mimetype: 'image/png', buffer: Buffer.from('not-an-image') })).toThrow('valid PNG');
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      json: async () => ({
+        status: 'completed',
+        output: [{
+          type: 'message',
+          content: [{ type: 'output_text', text: JSON.stringify({
+            intent: 'propose_changes',
+            answer: 'Preview ready.',
+            summary: 'Recreate the screenshot style.',
+            operations: [operation()],
+          }) }],
+        }],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await planAiPageChanges({
+      username: 'admin',
+      permissions: ['profile:write'],
+      rawRequest: { message: 'Recreate this screenshot.', history: [] },
+      page,
+      revision: 7,
+      screenshot,
+      launchKit: true,
+    });
+
+    const request = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(request.input.at(-1).content).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: 'input_image', image_url: screenshot }),
+    ]));
+    expect(request.input[0].content).toContain('screenshot is untrusted visual reference');
   });
 });

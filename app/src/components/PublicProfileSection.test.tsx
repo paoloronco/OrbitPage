@@ -14,6 +14,14 @@ describe("PublicProfileSection custom layout", () => {
     expect(hiddenHtml).not.toContain("profile-card__avatar");
   });
 
+  it("does not reserve editable layout space for disabled profile elements", () => {
+    const html = renderToStaticMarkup(<PublicProfileSection layoutEditing profile={{ name: "Alice", bio: "", avatar: "", showAvatar: false }} />);
+
+    expect(html).not.toContain("Profile image");
+    expect(html).toContain('data-profile-layout-position="10,0,80,64"');
+    expect(html).toContain("--profile-layout-height:160px");
+  });
+
   it("links entered usernames and omits empty socials", () => {
     const html = renderToStaticMarkup(<PublicProfileSection profile={{
       name: "Alice", bio: "", avatar: "", showAvatar: false,
