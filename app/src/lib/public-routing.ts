@@ -20,8 +20,6 @@ export type PublicLocaleSlug = typeof PUBLIC_LOCALES[number]["slug"];
 
 const LOCALE_BY_SLUG = new Map(PUBLIC_LOCALES.map((entry) => [entry.slug.toLowerCase(), entry]));
 const SLUG_BY_LOCALE = new Map(PUBLIC_LOCALES.map((entry) => [entry.locale, entry.slug]));
-const PAGE_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])$/;
-
 export function publicLocaleFromSlug(value: string | null | undefined) {
   return value ? LOCALE_BY_SLUG.get(value.toLowerCase()) || null : null;
 }
@@ -30,20 +28,19 @@ export function publicLocaleSlug(locale: string | null | undefined): PublicLocal
   return (locale && SLUG_BY_LOCALE.get(locale.split("-")[0].toLowerCase() as PublicLocale)) || "en-US";
 }
 
-export function localizedPublicPath(locale: string, pageSlug: string, routePath = "/") {
+export function localizedPublicPath(locale: string, routePath = "/") {
   const suffix = routePath === "/" ? "" : `/${routePath.replace(/^\/+|\/+$/g, "")}`;
-  return `/${publicLocaleSlug(locale)}/${pageSlug}${suffix}`;
+  return `/${publicLocaleSlug(locale)}${suffix}`;
 }
 
 export function parseLocalizedPublicPath(pathname: string, basePath = "") {
   const relativePath = pathname.slice(basePath.length).replace(/^\/+|\/+$/g, "");
-  const [localeSegment, pageSlug, ...routeSegments] = relativePath.split("/");
+  const [localeSegment, ...routeSegments] = relativePath.split("/");
   const locale = publicLocaleFromSlug(localeSegment);
-  if (!locale || !pageSlug || !PAGE_SLUG_PATTERN.test(pageSlug)) return null;
+  if (!locale) return null;
   return {
     locale: locale.locale,
     localeSlug: locale.slug,
-    pageSlug,
     routePath: routeSegments.length ? `/${routeSegments.join("/")}` : "/",
   };
 }

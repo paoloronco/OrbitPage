@@ -34,6 +34,6 @@ describe('PasswordManager demo mode', () => {
     expect(inputWithDisabled(html, 'current-password')).toBe(true);
     expect(inputWithDisabled(html, 'new-password')).toBe(true);
     expect(inputWithDisabled(html, 'confirm-password')).toBe(true);
-    expect(html).toMatch(/<button(?=[^>]*disabled="")[^>]*>Change Password<\/button>/);
+    expect(html).toMatch(/<button(?=[^>]*disabled="")[^>]*>Change password<\/button>/);
   });
 });

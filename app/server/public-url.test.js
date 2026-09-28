@@ -50,7 +50,7 @@ describe('public URL endpoint', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       success: true,
-      publicUrl: 'https://links.example.test/orbitpage/',
+      publicUrl: 'https://links.example.test/orbitpage/en-US',
       source: 'request',
       slug: null,
     });

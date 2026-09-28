@@ -35,7 +35,6 @@ export const PageSlugSchema = z
 
 export const SetupBodySchema = z.object({
   password: RequiredPasswordSchema,
-  slug: PageSlugSchema,
 });
 
 export const LoginBodySchema = z.object({

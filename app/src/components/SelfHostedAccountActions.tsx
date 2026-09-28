@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Globe2, LifeBuoy, Mail, ShieldCheck, Trash2 } from '@/components/ui/material-icons';
+import { Database, Globe2, LifeBuoy, Mail, ShieldCheck, Trash2 } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -93,22 +93,29 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
         </dl>
       </Card>
 
-      <Card className="glass-card p-6 account-panel oss-account-marketing-card">
-        <div className="account-section-heading"><div><h2>{tr('Marketing email', 'Email marketing')}</h2><p className="muted">{tr('Control product updates sent by OrbitPage.', 'Controlla gli aggiornamenti di prodotto inviati da OrbitPage.')}</p></div></div>
-        <label className="marketing-preference-check"><input checked={false} disabled readOnly type="checkbox" /><span>{tr('This self-hosted installation does not collect an account email or send platform marketing messages.', 'Questa installazione self-hosted non raccoglie un’email account e non invia messaggi marketing della piattaforma.')}</span></label>
+      <Card className="glass-card p-6 account-panel account-instance-card">
+        <div className="account-section-heading">
+          <div><p className="oss-account-kicker">{tr('Installation', 'Installazione')}</p><h2>{tr('Instance details', 'Dettagli istanza')}</h2><p className="muted">{tr('Information about this OrbitPage environment.', 'Informazioni su questo ambiente OrbitPage.')}</p></div>
+          <Database className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <dl className="account-details">
+          <div className="account-detail-row"><dt>{tr('Runtime', 'Runtime')}</dt><dd>OrbitPage Open Source</dd></div>
+          <div className="account-detail-row"><dt>{tr('Deployment', 'Distribuzione')}</dt><dd>{tr('Self-hosted', 'Self-hosted')}</dd></div>
+          <div className="account-detail-row"><dt>{tr('Administration', 'Amministrazione')}</dt><dd>{tr('Managed by this installation', 'Gestita da questa installazione')}</dd></div>
+        </dl>
       </Card>
     </div>
 
     <Card className="glass-card p-6 account-support oss-account-support-card">
-      <div className="oss-account-action-copy">
+      <div className="account-support-copy">
         <LifeBuoy className="h-6 w-6" aria-hidden="true" />
         <div>
           <p className="oss-account-kicker">{tr('Support', 'Supporto')}</p>
           <h2>{tr('Need help with your account?', 'Hai bisogno di aiuto con il tuo account?')}</h2>
-          <p>{tr('Contact OrbitPage support for errors, reports, feedback, or publishing issues.', 'Contatta il supporto OrbitPage per errori, segnalazioni, feedback o problemi di pubblicazione.')}</p>
+          <p className="muted">{tr('Contact OrbitPage support for account, access, or publishing issues.', 'Contatta il supporto OrbitPage per problemi relativi ad account, accesso o pubblicazione.')}</p>
         </div>
       </div>
-      <a className="oss-account-secondary-action" href={`mailto:${SUPPORT_EMAIL}?subject=OrbitPage%20OSS%20support`}><Mail className="h-4 w-4" aria-hidden="true" />{tr('Email support', 'Scrivi al supporto')}</a>
+      <a className="account-secondary-action" href={`mailto:${SUPPORT_EMAIL}?subject=OrbitPage%20OSS%20support`}><Mail className="h-4 w-4" aria-hidden="true" />{tr('Email support', 'Scrivi al supporto')}</a>
     </Card>
 
     <Card className="glass-card p-6 account-personal-page oss-account-page-card">
@@ -118,13 +125,13 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
           <p className="oss-account-kicker">{tr('Personal page', 'Pagina personale')}</p>
           <h2>{status?.active ? tr('Your public OrbitPage', 'La tua OrbitPage pubblica') : tr('Public page removed', 'Pagina pubblica rimossa')}</h2>
           <p>{status?.active
-            ? tr('Removing it permanently deletes its content, versions, and uploaded media while keeping administrator access and security settings.', 'La rimozione elimina definitivamente contenuti, versioni e media caricati, mantenendo l’accesso amministratore e le impostazioni di sicurezza.')
+            ? tr('Removing it permanently deletes its content, versions, and uploaded media while keeping account access and security settings.', 'La rimozione elimina definitivamente contenuti, versioni e media caricati, mantenendo l’accesso all’account e le impostazioni di sicurezza.')
             : tr('Create a new empty public page whenever you are ready.', 'Crea una nuova pagina pubblica vuota quando vuoi.')}</p>
         </div>
       </div>
       {status?.active ? <div className="oss-account-page-action">
         <div><strong>{publicPageHref}</strong><span>{tr('Published', 'Pubblicata')}</span></div>
-        <Button type="button" variant="destructive" disabled={DEMO_MODE} onClick={() => { setError(''); setDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Remove personal page', 'Rimuovi pagina personale')}</Button>
+        <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE} onClick={() => { setError(''); setDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Remove personal page', 'Rimuovi pagina personale')}</Button>
       </div> : status ? <form className="oss-account-page-create" onSubmit={createPage}>
         <div><strong>{publicPageHref}</strong></div>
         <Button type="submit" variant="gradient" disabled={busy || DEMO_MODE}><Globe2 className="h-4 w-4" />{tr('Create personal page', 'Crea pagina personale')}</Button>
@@ -137,7 +144,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
         <Trash2 className="h-6 w-6" aria-hidden="true" />
         <div><p className="oss-account-kicker">{tr('Danger zone', 'Zona pericolosa')}</p><h2>{tr('Delete account and installation', 'Elimina account e installazione')}</h2><p className="muted">{tr('Permanently removes administrator accounts, page data, uploads, settings, and authentication configuration.', 'Rimuove definitivamente account amministratori, dati della pagina, caricamenti, impostazioni e configurazione di autenticazione.')}</p></div>
       </div>
-      <Button type="button" variant="destructive" disabled={DEMO_MODE || !canDeleteInstallation} onClick={() => { setAccountError(''); setAccountDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Delete account', 'Elimina account')}</Button>
+      <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE || !canDeleteInstallation} onClick={() => { setAccountError(''); setAccountDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Delete account', 'Elimina account')}</Button>
     </Card>
 
     <Dialog open={dialogOpen} onOpenChange={(open) => { if (!busy) setDialogOpen(open); }}>

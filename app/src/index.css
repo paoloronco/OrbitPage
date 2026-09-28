@@ -7974,7 +7974,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 .oss-account-layout.account-workspace { grid-template-columns: 1fr; }
 .account-tabs {
-  border-bottom: 1px solid var(--admin-line);
+  border-bottom: 1px solid #d8e1ee;
   display: flex;
   gap: 24px;
   min-width: 0;
@@ -7987,7 +7987,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   background: transparent;
   border: 0;
   border-bottom: 2px solid transparent;
-  color: var(--admin-muted-copy);
+  color: #5e6f87;
   cursor: pointer;
   display: inline-flex;
   flex: 0 0 auto;
@@ -7999,7 +7999,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   padding: 0 2px;
 }
 .account-tabs button:hover,
-.account-tabs button.active { border-bottom-color: var(--admin-accent-strong); color: var(--admin-ink); }
+.account-tabs button.active { border-bottom-color: #3158d8; color: #111b2d; }
 .account-tabs button:focus-visible { border-radius: 4px; outline: 2px solid var(--admin-accent-strong); outline-offset: -2px; }
 .account-tabs svg { height: 16px; width: 16px; }
 .account-info-stack,
@@ -8010,7 +8010,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-account-password-group { display: grid; align-content: start; gap: 18px; }
 .oss-account-layout .glass-card {
   margin: 0;
-  border-color: var(--admin-line);
+  border-color: #d8e1ee;
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 8px 26px rgb(18 31 51 / 4%);
@@ -8021,7 +8021,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-account-layout .account-support h2,
 .oss-account-layout .account-danger-copy h2 { margin: 0; color: var(--admin-ink); font-size: 16px; font-weight: 700; line-height: 1.25; }
 .oss-account-layout .account-section-heading > svg,
-.oss-account-layout .account-support-copy > svg { color: var(--admin-accent-strong); flex: 0 0 auto; }
+.oss-account-layout .account-support-copy > svg { color: #3158d8; flex: 0 0 auto; }
 .oss-account-layout .account-section-heading .muted,
 .oss-account-layout .account-support .muted,
 .oss-account-layout .account-danger-copy .muted { color: var(--admin-muted-copy); font-size: 12px; line-height: 1.45; }
@@ -8030,23 +8030,25 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-account-layout .account-detail-row dt { color: var(--admin-muted-copy); font-size: 12px; font-weight: 800; }
 .oss-account-layout .account-detail-row dd { margin: 0; overflow-wrap: anywhere; color: var(--admin-ink); font-size: 13px; font-weight: 750; }
 .oss-account-layout .login-method { display: inline-flex; padding: 5px 9px; border: 1px solid #c8e5de; border-radius: 999px; background: #e9f5f2; color: #126152; font-size: 12px; font-weight: 850; }
-.oss-account-marketing-card { align-content: start; }
-.oss-account-layout .marketing-preference-check { display: flex; align-items: flex-start; gap: 10px; color: var(--admin-muted-copy); font-size: 13px; line-height: 1.5; }
-.oss-account-layout .marketing-preference-check input { width: 18px; height: 18px; flex: 0 0 auto; margin-top: 1px; accent-color: var(--admin-accent-strong); }
-.oss-account-password-card { padding: 18px 20px; }
+.account-instance-card { align-content: start; }
+.oss-account-password-card { padding: 24px; }
 .oss-account-password-card .text-center { text-align: left; }
 .oss-account-password-card .justify-center { justify-content: flex-start; }
 .oss-account-layout .gradient-text { background: none; color: var(--admin-ink); -webkit-text-fill-color: currentColor; }
 .oss-account-password-card > div:first-child > div:first-child { display: none; }
 .oss-account-support-card,
 .oss-account-page-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.account-support-copy,
 .oss-account-action-copy { display: flex; min-width: 0; align-items: flex-start; gap: 14px; }
-.oss-account-action-copy > svg { flex: 0 0 auto; color: var(--admin-accent-strong); }
+.account-support-copy > svg,
+.oss-account-action-copy > svg { flex: 0 0 auto; color: #3158d8; }
+.account-support-copy h2,
 .oss-account-action-copy h2 { margin: 2px 0 0; color: var(--admin-ink); font-size: 16px; font-weight: 700; line-height: 1.25; }
+.account-support-copy p:last-child,
 .oss-account-action-copy p:last-child { margin: 7px 0 0; color: var(--admin-muted-copy); font-size: 12px; line-height: 1.5; }
-.oss-account-kicker { margin: 0; color: var(--admin-accent-strong); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.oss-account-secondary-action { display: inline-flex; min-height: 38px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fff; color: var(--admin-ink); font-size: 12px; font-weight: 750; text-decoration: none; }
-.oss-account-secondary-action:hover { background: var(--admin-accent-soft); }
+.oss-account-kicker { margin: 0; color: #3158d8; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.account-secondary-action { display: inline-flex; min-height: 38px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; padding: 0 14px; border: 1px solid var(--admin-line); border-radius: 6px; background: #fff; color: var(--admin-ink); font-size: 12px; font-weight: 750; text-decoration: none; }
+.account-secondary-action:hover { background: var(--admin-accent-soft); }
 .oss-account-page-card { align-items: stretch; flex-direction: column; }
 .oss-account-page-action { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-top: 18px; border-top: 1px solid var(--admin-line); }
 .oss-account-page-action > div { display: grid; min-width: 0; gap: 4px; }
@@ -8058,6 +8060,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-account-danger-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; border-color: #efc7c2 !important; }
 .oss-account-danger-card .account-danger-copy { display: flex; align-items: flex-start; gap: 14px; }
 .oss-account-danger-card .account-danger-copy > svg { flex: 0 0 auto; color: var(--destructive); }
+.oss-account-layout .account-danger-action { min-height: 40px; flex: 0 0 auto; padding: 0 15px; border-color: #a62b21; border-radius: 6px; background: #a62b21; color: #fff; font-size: 12px; font-weight: 800; }
+.oss-account-mfa-card h2 { margin: 2px 0 0; color: var(--admin-ink); font-size: 16px; font-weight: 700; line-height: 1.25; }
 .oss-account-error { margin: 0; color: var(--destructive); font-size: 12px; }
 .oss-account-delete-overlay { z-index: 300; background: rgb(15 23 42 / 56%); backdrop-filter: blur(1px); }
 .oss-account-delete-dialog { z-index: 301; border-color: var(--admin-line); border-radius: 8px; background: #fff; color: var(--admin-ink); box-shadow: 0 24px 70px rgb(15 23 42 / 28%); }
@@ -8138,7 +8142,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .oss-account-support-card,
   .oss-account-page-action,
   .oss-account-danger-card { align-items: stretch; flex-direction: column; }
-  .oss-account-secondary-action,
+  .account-secondary-action,
   .oss-account-page-action .button { width: 100%; }
   .oss-account-page-create { grid-template-columns: 1fr; }
 }

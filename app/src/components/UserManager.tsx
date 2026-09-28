@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   AlertTriangle,
   CheckCircle,
-  ChevronDown,
   Eye,
   EyeOff,
   Info,
@@ -50,15 +41,15 @@ const PasswordFields = ({
 }) => {
   const [show, setShow] = useState(false);
   return (
-    <div className="space-y-1">
-      <p className="text-xs">{label}</p>
-      <div className="relative">
+    <label className="team-field">
+      <span>{label}</span>
+      <div className="team-password-control">
         <Input
           aria-label={label}
           type={show ? 'text' : 'password'}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="glass-card border-primary/20 pr-10 text-sm"
+          className="team-form-control pr-10"
           placeholder="Min 8 chars, upper/lower/number/symbol"
           required
           disabled={disabled}
@@ -68,14 +59,14 @@ const PasswordFields = ({
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+          className="team-password-toggle"
           onClick={() => setShow((v) => !v)}
           disabled={disabled}
         >
           {show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
         </Button>
       </div>
-    </div>
+    </label>
   );
 };
 
@@ -92,21 +83,15 @@ const RoleSelect = ({
 }) => {
   const roleList = excludeAdmin ? ROLES.filter(r => r !== 'admin') : ROLES;
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled}>
-      <SelectTrigger aria-label="Role" className="glass-card border-primary/20 text-sm h-9">
-        <SelectValue placeholder="Select role" />
-      </SelectTrigger>
-      <SelectContent>
-        {roleList.map((role) => (
-          <SelectItem key={role} value={role}>
-            <div className="flex flex-col gap-0.5">
-              <span className="font-medium">{ROLE_LABELS[role]}</span>
-              <span className="text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</span>
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <select
+      aria-label="Role"
+      className="team-form-control"
+      disabled={disabled}
+      onChange={(event) => onChange(event.target.value)}
+      value={value}
+    >
+      {roleList.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
+    </select>
   );
 };
 
@@ -124,13 +109,12 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
   const [addLoading, setAddLoading] = useState(false);
   const [addMsg, setAddMsg] = useState<Msg | null>(null);
 
-  // Edit state: tracks which username is being edited (password or role)
+  // Edit state: tracks which local user's password is being edited.
   const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState<'password' | 'role'>('password');
   const [editPassword, setEditPassword] = useState('');
   const [editConfirm, setEditConfirm] = useState('');
-  const [editRole, setEditRole] = useState<string>('viewer');
   const [editLoading, setEditLoading] = useState(false);
+  const [roleUpdating, setRoleUpdating] = useState<string | null>(null);
   const [editMsg, setEditMsg] = useState<Msg | null>(null);
 
   const demoMode = DEMO_MODE;
@@ -203,19 +187,20 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
     }
   };
 
-  const handleSaveRole = async (e: React.FormEvent, username: string) => {
-    e.preventDefault();
-    setEditMsg(null);
-    setEditLoading(true);
+  const handleRoleChange = async (username: string, role: string) => {
+    const previousRole = users.find((user) => user.username === username)?.role;
+    setGlobalMsg(null);
+    setRoleUpdating(username);
+    setUsers((current) => current.map((user) => user.username === username ? { ...user, role } : user));
     try {
-      await usersApi.updateRole(username, editRole);
-      setEditingUser(null);
+      await usersApi.updateRole(username, role);
       setGlobalMsg({ type: 'success', text: `Role updated for "${username}"` });
       await fetchUsers();
     } catch (err: any) {
-      setEditMsg({ type: 'error', text: err?.message || 'Failed to update role' });
+      setUsers((current) => current.map((user) => user.username === username ? { ...user, role: previousRole } : user));
+      setGlobalMsg({ type: 'error', text: err?.message || 'Failed to update role' });
     } finally {
-      setEditLoading(false);
+      setRoleUpdating(null);
     }
   };
 
@@ -230,12 +215,10 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
     }
   };
 
-  const openEdit = (username: string, mode: 'password' | 'role', currentRole?: string) => {
+  const openEdit = (username: string) => {
     setEditingUser(username);
-    setEditMode(mode);
     setEditPassword('');
     setEditConfirm('');
-    setEditRole(currentRole || 'viewer');
     setEditMsg(null);
   };
 
@@ -258,13 +241,13 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
               <span className="team-doc-tooltip" id="team-doc-tooltip" role="tooltip">Teams and permissions in OrbitPage</span>
             </span>
           </div>
-          <p className="muted">Create a local account for each person. Everyone signs in with their own credentials and receives only the permissions assigned to their role.</p>
+          <p className="muted">Add each person to this workspace. Everyone signs in with their own credentials and receives access based on their role.</p>
         </div>
         <UsersRound aria-hidden="true" size={24} />
       </div>
 
       <div className="team-toolbar">
-        <p className="team-seat-summary">{users.length} local {users.length === 1 ? 'account' : 'accounts'}</p>
+        <p className="team-seat-summary">{users.length} workspace {users.length === 1 ? 'member' : 'members'}</p>
         <button
           className="team-button secondary compact"
           onClick={() => {
@@ -297,35 +280,30 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
           onSubmit={handleAddUser}
           className="team-user-form"
         >
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">New user</p>
-          <div className="space-y-1">
-            <Label htmlFor="new-user-username" className="text-xs">Username</Label>
+          <label className="team-field" htmlFor="new-user-username">
+            <span>Username</span>
             <Input
               id="new-user-username"
               type="text"
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
-              className="glass-card border-primary/20 text-sm"
+              className="team-form-control"
               placeholder="3–32 characters (letters, numbers, _ -)"
               required
               disabled={addLoading}
               pattern="[a-zA-Z0-9_-]{3,32}"
               title="3–32 alphanumeric characters (underscores and hyphens allowed)"
             />
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs">Role</p>
+          </label>
+          <label className="team-field">
+            <span>Role</span>
             <RoleSelect value={newRole} onChange={setNewRole} disabled={addLoading} excludeAdmin />
-          </div>
+          </label>
           <PasswordFields label="Password" value={newPassword} onChange={setNewPassword} disabled={addLoading} />
           <PasswordFields label="Confirm password" value={newConfirm} onChange={setNewConfirm} disabled={addLoading} />
           {addMsg && (
             <div
-              className={`text-xs p-2 rounded flex items-center gap-1.5 ${
-                addMsg.type === 'success'
-                  ? 'bg-green-500/10 text-green-400'
-                  : 'bg-destructive/10 text-destructive'
-              }`}
+              className={`team-feedback ${addMsg.type}`}
             >
               {addMsg.type === 'success' ? (
                 <CheckCircle className="w-3.5 h-3.5 shrink-0" />
@@ -335,12 +313,15 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
               {addMsg.text}
             </div>
           )}
-          <Button aria-busy={addLoading} type="submit" variant="gradient" size="sm" className="w-full" disabled={addLoading}>
-            {addLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {addLoading ? 'Creating user' : 'Create user'}
-          </Button>
+          <div className="team-form-actions">
+            <button aria-busy={addLoading} className="team-button primary" disabled={addLoading} type="submit">
+              {addLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {addLoading ? 'Creating user' : 'Create user'}
+            </button>
+          </div>
         </form>
       )}
+      {showAddForm && <p className="team-role-description">{ROLE_DESCRIPTIONS[newRole as UserRole]}</p>}
 
       {/* User list */}
       {loading ? (
@@ -360,64 +341,46 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
                     <strong>{u.username}{u.username === currentUsername ? ' (you)' : ''}</strong>
                     <span>Local account · created {new Date(u.created_at).toLocaleDateString()}</span>
                   </div>
-                  <span className={`team-role-badge ${roleKey}`}>{roleLabel}</span>
+                  {isAdmin ? (
+                    <span className={`team-role-badge ${roleKey}`}>{roleLabel}</span>
+                  ) : (
+                    <select
+                      aria-label={`Role for ${u.username}`}
+                      disabled={roleUpdating !== null}
+                      onChange={(event) => void handleRoleChange(u.username, event.target.value)}
+                      value={roleKey}
+                    >
+                      {ROLES.filter((role) => role !== 'admin').map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
+                    </select>
+                  )}
                   {!demoMode && (
                     <div className="team-member-actions">
-                      {!isAdmin && (
-                        <Button
-                          aria-label="Change role"
-                          size="icon"
-                          variant="ghost"
-                          className="team-icon-button"
-                          title="Change role"
-                          onClick={() => {
-                            if (isEditing && editMode === 'role') {
-                              cancelEdit();
-                            } else {
-                              openEdit(u.username, 'role', u.role);
-                            }
-                          }}
-                        >
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        </Button>
-                      )}
-                      <Button
+                      <button
                         aria-label="Change password"
-                        size="icon"
-                        variant="ghost"
-                        className="team-icon-button"
+                        className="team-member-password-button"
                         title="Change password"
+                        type="button"
                         onClick={() => {
-                          if (isEditing && editMode === 'password') {
+                          if (isEditing) {
                             cancelEdit();
                           } else {
-                            openEdit(u.username, 'password', u.role);
+                            openEdit(u.username);
                           }
                         }}
                       >
-                        {isEditing && editMode === 'password' ? (
+                        {isEditing ? (
                           <X className="w-3.5 h-3.5" />
                         ) : (
                           <Pencil className="w-3.5 h-3.5" />
                         )}
-                      </Button>
-                      <Button
-                        aria-label={isAdmin ? 'The admin user cannot be deleted' : 'Delete user'}
-                        size="icon"
-                        variant="ghost"
-                        className="team-icon-button danger"
-                        title={isAdmin ? 'The admin user cannot be deleted' : 'Delete user'}
-                        disabled={isAdmin}
-                        onClick={() => handleDelete(u.username)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      </button>
+                      {!isAdmin && <button aria-label={`Delete ${u.username}`} className="team-remove-button" onClick={() => handleDelete(u.username)} type="button"><Trash2 size={16} /></button>}
                     </div>
                   )}
                 </div>
 
                 {/* Inline edit panel */}
-                {isEditing && editMode === 'password' && (
+                {isEditing && (
                   <form
                     onSubmit={(e) => handleEditPassword(e, u.username)}
                     className="team-member-editor"
@@ -453,43 +416,6 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
                   </form>
                 )}
 
-                {isEditing && editMode === 'role' && (
-                  <form
-                    onSubmit={(e) => handleSaveRole(e, u.username)}
-                    className="team-member-editor"
-                  >
-                    <p className="text-xs text-muted-foreground font-medium">Change role for "{u.username}"</p>
-                    <div className="space-y-1">
-                      <p className="text-xs">Role</p>
-                      <RoleSelect value={editRole} onChange={setEditRole} disabled={editLoading} excludeAdmin />
-                    </div>
-                    {editMsg && (
-                      <div
-                        className={`text-xs p-2 rounded flex items-center gap-1.5 ${
-                          editMsg.type === 'success'
-                            ? 'bg-green-500/10 text-green-400'
-                            : 'bg-destructive/10 text-destructive'
-                        }`}
-                      >
-                        {editMsg.type === 'success' ? (
-                          <CheckCircle className="w-3.5 h-3.5 shrink-0" />
-                        ) : (
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                        )}
-                        {editMsg.text}
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <Button aria-busy={editLoading} type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
-                        {editLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                        {editLoading ? 'Saving role' : 'Save role'}
-                      </Button>
-                      <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={editLoading}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                )}
               </li>
             );
           })}

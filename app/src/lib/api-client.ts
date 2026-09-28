@@ -542,9 +542,8 @@ export const publicPageApi = {
       const basePath = getActiveBasePath();
       const localizedRoute = parseLocalizedPublicPath(window.location.pathname, basePath);
       const relativePath = (localizedRoute?.routePath || window.location.pathname.slice(basePath.length)).replace(/^\/+|\/+$/g, '');
-      if (localizedRoute) endpoint += `?slug=${encodeURIComponent(localizedRoute.pageSlug)}`;
       if (relativePath && !['about', 'cookies', 'privacy', 'links', 'menu'].includes(relativePath) && !relativePath.includes('/')) {
-        endpoint += `${localizedRoute ? '&' : '?'}subpage=${encodeURIComponent(relativePath)}`;
+        endpoint += `?subpage=${encodeURIComponent(relativePath)}`;
       }
     }
     return apiRequest<PublicPageResponse>(endpoint);
@@ -570,10 +569,10 @@ export const authApi = {
     return apiRequest<SetupStatus>('/auth/setup-status');
   },
 
-  setup: async (password: string, slug: string): Promise<SetupResponse> => {
+  setup: async (password: string): Promise<SetupResponse> => {
     const response = await apiRequest<SetupResponse>('/auth/setup', {
       method: 'POST',
-      body: JSON.stringify({ password, slug }),
+      body: JSON.stringify({ password }),
     });
     if (response.token) {
       await setAuthToken(response.token);

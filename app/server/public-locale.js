@@ -8,25 +8,22 @@ const LOCALE_BY_VALUE = new Map(PUBLIC_LOCALES.flatMap(([locale, slug]) => [
   [locale.toLowerCase(), { locale, slug }],
   [slug.toLowerCase(), { locale, slug }],
 ]));
-const PAGE_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])$/;
-
 export const normalizePublicLocale = (value) => LOCALE_BY_VALUE.get(String(value || '').trim().toLowerCase()) || LOCALE_BY_VALUE.get('en');
 
-export const localizedPublicPath = (localeValue, pageSlug, routePath = '/') => {
+export const localizedPublicPath = (localeValue, routePath = '/') => {
   const { slug } = normalizePublicLocale(localeValue);
   const suffix = routePath === '/' ? '' : `/${String(routePath).replace(/^\/+|\/+$/g, '')}`;
-  return `/${slug}/${pageSlug}${suffix}`;
+  return `/${slug}${suffix}`;
 };
 
-export const parseLocalizedPublicPath = (pathName, pageSlug) => {
-  if (!pageSlug || !PAGE_SLUG_PATTERN.test(pageSlug)) return null;
-  const [localeValue, requestedSlug, ...routeSegments] = String(pathName || '').split('/').filter(Boolean);
+export const parseLocalizedPublicPath = (pathName) => {
+  const [localeValue, ...routeSegments] = String(pathName || '').split('/').filter(Boolean);
   const locale = LOCALE_BY_VALUE.get(String(localeValue || '').toLowerCase());
-  if (!locale || requestedSlug !== pageSlug) return null;
+  if (!locale) return null;
   return { ...locale, routePath: routeSegments.length ? `/${routeSegments.join('/')}` : '/' };
 };
 
-export const localizedAlternates = (origin, basePath, pageSlug, routePath = '/') => Object.fromEntries([
-  ...PUBLIC_LOCALES.map(([locale, slug]) => [slug, new URL(`${basePath}${localizedPublicPath(locale, pageSlug, routePath)}`, `${origin}/`).toString()]),
-  ['x-default', new URL(`${basePath}${localizedPublicPath('en', pageSlug, routePath)}`, `${origin}/`).toString()],
+export const localizedAlternates = (origin, basePath, routePath = '/') => Object.fromEntries([
+  ...PUBLIC_LOCALES.map(([locale, slug]) => [slug, new URL(`${basePath}${localizedPublicPath(locale, routePath)}`, `${origin}/`).toString()]),
+  ['x-default', new URL(`${basePath}${localizedPublicPath('en', routePath)}`, `${origin}/`).toString()],
 ]);

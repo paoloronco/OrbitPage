@@ -71,7 +71,7 @@ export const withPageRootPath = (path = '/'): string => {
   const activeBase = getActiveBasePath();
   const localizedRoute = typeof window === 'undefined' ? null : parseLocalizedPublicPath(window.location.pathname, activeBase);
   if (localizedRoute) {
-    const localizedRoot = `${activeBase}/${localizedRoute.localeSlug}/${localizedRoute.pageSlug}`;
+    const localizedRoot = `${activeBase}/${localizedRoute.localeSlug}`;
     return normalizedPath === '/' ? localizedRoot : `${localizedRoot}${normalizedPath}`;
   }
   const scope = getConsentScope();
