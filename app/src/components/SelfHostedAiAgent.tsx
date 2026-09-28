@@ -10,6 +10,7 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { useDialogAccessibility } from "@/lib/use-dialog-accessibility";
+import { AI_HISTORY_STORAGE_KEY, readAiConversationHistory, writeAiConversationHistory } from "@/lib/ai-conversation-history";
 import { AiPageComparisonPreview } from "./AiPageComparisonPreview";
 
 type AgentMessage = AiConversationMessage & {
@@ -18,23 +19,27 @@ type AgentMessage = AiConversationMessage & {
   error?: boolean;
   applying?: boolean;
   applied?: boolean;
+  persistent?: boolean;
 };
 
-function message(role: AgentMessage["role"], content: string, error = false): AgentMessage {
+function message(role: AgentMessage["role"], content: string, error = false, persistent = true): AgentMessage {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     role,
     content,
     error,
+    persistent,
   };
 }
 
-export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
+export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { historyKey?: string; onApplied?: () => void }) {
   const { tr } = useAppI18n();
+  const historyStorageKey = useMemo(() => `${AI_HISTORY_STORAGE_KEY}:${encodeURIComponent(historyKey)}`, [historyKey]);
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState<AiSettings | null>(null);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [loadedHistoryKey, setLoadedHistoryKey] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
@@ -57,7 +62,6 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
       "Es. Rendi la bio più diretta e sposta le prenotazioni al primo posto…",
     ),
     thinking: tr("Reviewing your page…", "Sto analizzando la pagina…"),
-    review: tr("Proposed changes", "Modifiche proposte"),
     apply: tr("Apply changes", "Applica modifiche"),
     applying: tr("Applying…", "Applicazione…"),
     applied: tr("Changes applied.", "Modifiche applicate."),
@@ -66,6 +70,18 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
       "Nessuna modifica viene applicata senza la tua conferma.",
     ),
   }), [tr]);
+
+  useEffect(() => {
+    setMessages(readAiConversationHistory(historyStorageKey).map(({ role, content }) => message(role, content)));
+    setLoadedHistoryKey(historyStorageKey);
+  }, [historyStorageKey]);
+
+  useEffect(() => {
+    if (loadedHistoryKey !== historyStorageKey) return;
+    writeAiConversationHistory(historyStorageKey, messages
+      .filter((item) => !item.error && item.persistent !== false)
+      .map(({ role, content }) => ({ role, content })));
+  }, [historyStorageKey, loadedHistoryKey, messages]);
 
   useEffect(() => {
     if (!open) return;
@@ -83,9 +99,9 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
   }, [open]);
 
   useEffect(() => {
-    if (!open || messages.length > 0) return;
-    setMessages([message("assistant", settings?.configured === false ? labels.configure : labels.welcome)]);
-  }, [labels.configure, labels.welcome, messages.length, open, settings?.configured]);
+    if (loadedHistoryKey !== historyStorageKey || !open || messages.length > 0) return;
+    setMessages([message("assistant", settings?.configured === false ? labels.configure : labels.welcome, false, false)]);
+  }, [historyStorageKey, labels.configure, labels.welcome, loadedHistoryKey, messages.length, open, settings?.configured]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -97,10 +113,10 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
     if (!prompt || sending || settings?.configured !== true) return;
     const userMessage = message("user", prompt);
     const history = messages
-      .filter((item) => !item.error)
+      .filter((item) => !item.error && item.persistent !== false)
       .slice(-8)
       .map(({ role, content }) => ({ role, content }));
-    setMessages((current) => [...current, userMessage]);
+    setMessages((current) => [...current.map((item) => ({ ...item, proposal: null })), userMessage]);
     setDraft("");
     setSending(true);
     try {
@@ -125,7 +141,7 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
     try {
       await aiPageAgentApi.commit(proposal.previewToken);
       setMessages((current) => current.map((item) => item.id === messageId
-        ? { ...item, applying: false, applied: true, content: `${item.content}\n\n${labels.applied}` }
+        ? { ...item, applying: false, applied: true, proposal: null, content: `${item.content}\n\n${labels.applied}` }
         : item));
       onApplied?.();
     } catch (error) {
@@ -154,13 +170,7 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
                 <p>{item.content}</p>
                 {item.proposal && (
                   <section className="ai-page-agent-proposal">
-                    <div className="ai-page-agent-proposal-heading">
-                      <ShieldCheck aria-hidden="true" size={17} />
-                      <div><strong>{labels.review}</strong><span>{item.proposal.summary}</span></div>
-                    </div>
-                    <ul>{item.proposal.changes.map((change, index) => <li key={`${item.id}-${index}`}><Check aria-hidden="true" size={14} />{change}</li>)}</ul>
                     <AiPageComparisonPreview {...item.proposal.preview} />
-                    <small>{tr("Review every item before applying.", "Controlla ogni voce prima di applicare.")}</small>
                     <button disabled={item.applying || item.applied} onClick={() => void applyProposal(item.id, item.proposal!)} type="button">
                       {item.applying
                         ? <><OrbitLoader size={16} state="weaving" />{labels.applying}</>

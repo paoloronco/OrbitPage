@@ -61,6 +61,12 @@ export function CampaignLinksManager({
     return () => { active = false; };
   }, [onBaseUrl, onSelect, tr]);
 
+  useEffect(() => {
+    if (!message) return;
+    const timeout = window.setTimeout(() => setMessage(''), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [message]);
+
   const replaceSelected = (patch: Partial<OrbitPageCampaignLink>) => {
     if (!selected) return;
     const next = { ...selected, ...patch };
@@ -114,14 +120,21 @@ export function CampaignLinksManager({
 
   const remove = async () => {
     if (!selected || !window.confirm(tr('Delete this campaign link?', 'Eliminare questo link campagna?'))) return;
-    const next = links.filter((link) => link !== selected);
+    const removed = selected;
+    const previous = links;
+    const next = links.filter((link) => link.slug !== removed.slug);
+    setLinks(next);
+    onSelect(next[0]?.slug || '');
     setBusy(true);
+    setMessage('');
     try {
       const result = await campaignLinksApi.update(next);
       setLinks(result.data);
       onSelect(result.data[0]?.slug || '');
       setMessage(tr('Campaign link deleted.', 'Link campagna eliminato.'));
     } catch (error) {
+      setLinks(previous);
+      onSelect(removed.slug);
       setMessage(error instanceof Error ? error.message : tr('Campaign link could not be deleted.', 'Impossibile eliminare il link campagna.'));
     } finally {
       setBusy(false);

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PROFILE_LAYOUT,
   normalizeProfileLayout,
+  normalizeVisibleProfileLayout,
   updateProfileLayoutAlignment,
   updateProfileLayoutItem,
 } from "./profile-layout";
@@ -37,5 +38,15 @@ describe("profile layout", () => {
     expect(aligned.alignments.location).toBe("left");
     expect(normalizeProfileLayout(aligned).alignments.location).toBe("left");
     expect(normalizeProfileLayout(undefined).alignments.work).toBe("center");
+  });
+
+  it("removes rows reserved by disabled default profile elements", () => {
+    const compact = normalizeVisibleProfileLayout(undefined, ["name", "work", "location", "bio"]);
+
+    expect(compact.positions.name.y).toBe(0);
+    expect(compact.positions.work.y).toBe(80);
+    expect(compact.positions.location.y).toBe(80);
+    expect(compact.positions.bio.y).toBe(136);
+    expect(compact.height).toBe(216);
   });
 });

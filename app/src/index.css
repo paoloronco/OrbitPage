@@ -778,10 +778,10 @@
 .orbit-loader {
   --orbit-loader-size: 20px;
   align-items: center;
-  background: #10213b;
-  border: 1px solid rgb(126 164 224 / 30%);
+  background: transparent;
+  border: 0;
   border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 5%), 0 2px 6px rgb(15 30 54 / 14%);
+  box-shadow: none;
   display: inline-grid;
   flex: 0 0 auto;
   height: var(--orbit-loader-size);
@@ -802,13 +802,15 @@
 .orbit-loader__canvas {
   animation: orbitpage-loader-turn .8s linear infinite;
   display: block;
+  filter: drop-shadow(0 2px 3px rgb(47 109 246 / 20%));
   height: 100%;
   transform-origin: center;
   width: 100%;
 }
 
-.orbit-loader__track { stroke: rgb(148 180 228 / 32%); }
-.orbit-loader__arc { stroke: #8db7ff; }
+.orbit-loader__track { stroke: #dce6f5; }
+.orbit-loader__arc { stroke: #2f6df6; }
+.orbit-loader__satellite { fill: #7656f5; }
 
 .orbit-loading-state {
   align-items: center;
@@ -5518,7 +5520,7 @@
 
 .oss-ai-settings {
   position: static;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #d9e2ee;
   border-radius: 12px;
   color: #22344d;
@@ -5857,6 +5859,100 @@
   width: 38px;
   padding: 0 !important;
   color: #a23842 !important;
+}
+
+.oss-ai-launch-kit {
+  position: relative;
+  display: grid;
+  gap: 11px;
+  padding: 14px;
+  border-top: 1px solid #e7ecf3;
+}
+
+.oss-ai-launch-kit-heading {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.oss-ai-launch-kit-heading > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: 9px;
+  color: #315ee7;
+  background: #e8efff;
+}
+
+.oss-ai-launch-kit-heading svg { width: 17px; height: 17px; }
+.oss-ai-launch-kit-heading h3 { margin: 2px 0 3px; color: #10223a; font-size: .8rem; line-height: 1.3; }
+.oss-ai-launch-kit-heading p:last-child { margin: 0; color: #66758b; font-size: .66rem; line-height: 1.45; }
+
+.oss-ai-launch-kit-upload {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  padding: 11px;
+  border: 1px dashed #bfcde0;
+  border-radius: 10px;
+  color: #315ee7;
+  background: #f8faff;
+  cursor: pointer;
+}
+
+.oss-ai-launch-kit-upload > svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.oss-ai-launch-kit-upload span { display: grid; min-width: 0; gap: 2px; }
+.oss-ai-launch-kit-upload strong,
+.oss-ai-launch-kit-upload small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oss-ai-launch-kit-upload strong { color: #21334b; font-size: .72rem; }
+.oss-ai-launch-kit-upload small { color: #748299; font-size: .64rem; }
+.oss-ai-launch-kit-upload input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+.oss-ai-launch-kit-upload:focus-within { outline: 2px solid #9db9e2; outline-offset: 2px; }
+
+.oss-ai-launch-kit-attestation {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  color: #52627a;
+  font-size: .67rem;
+  line-height: 1.4;
+}
+
+.oss-ai-launch-kit-attestation input { margin: 2px 0 0; }
+.oss-ai-launch-kit > .admin-action { width: 100%; }
+.oss-ai-launch-kit-error { margin: 0; color: #a12f3a; font-size: .68rem; line-height: 1.4; }
+
+.oss-ai-launch-kit.is-disabled {
+  background: #f6f7f9;
+}
+
+.oss-ai-launch-kit.is-disabled > * { opacity: .42; }
+.oss-ai-launch-kit.is-disabled::after {
+  position: absolute;
+  z-index: 2;
+  right: 14px;
+  bottom: 14px;
+  max-width: calc(100% - 28px);
+  padding: 7px 9px;
+  border-radius: 8px;
+  color: #fff;
+  background: #24334a;
+  box-shadow: 0 8px 22px -10px rgba(16, 34, 58, .7);
+  content: attr(data-disabled-message);
+  font-size: .65rem;
+  line-height: 1.35;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity .15s ease, transform .15s ease;
+}
+
+.oss-ai-launch-kit.is-disabled:hover::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @keyframes oss-ai-enter {
@@ -8334,6 +8430,9 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .page-card-layout__surface--profile > .public-editor-target--profile,
 .page-card-layout__surface--profile .profile-card {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
   height: 100%;
 }
 

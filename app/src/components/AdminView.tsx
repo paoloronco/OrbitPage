@@ -1462,6 +1462,7 @@ export const AdminView = ({
             <TabsContent value="ai" className="admin-tab-content">
               <SelfHostedAiPanel
                 canManageSettings={canManageUsers}
+                historyKey={currentUser?.username}
                 onApplied={onAiApplied}
               />
             </TabsContent>
@@ -1628,7 +1629,7 @@ export const AdminView = ({
           )}
         </footer>
       </div>
-      {!isHostedAdmin && !isProspectReadOnly && activeTab !== "ai" && <SelfHostedAiAgent onApplied={onAiApplied} />}
+      {!isHostedAdmin && !isProspectReadOnly && activeTab !== "ai" && <SelfHostedAiAgent historyKey={currentUser?.username} onApplied={onAiApplied} />}
     </div>
   );
 };

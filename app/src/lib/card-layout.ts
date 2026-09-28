@@ -235,9 +235,9 @@ export function updateCardLayoutItem(
 const DEFAULT_CARD_CONTENT_LAYOUT: NormalizedCardContentLayout = {
   positions: {
     icon: { x: 0, y: 14, width: 12, height: 36 },
-    title: { x: 16, y: 0, width: 80, height: 24 },
-    description: { x: 16, y: 25, width: 80, height: 22 },
-    url: { x: 16, y: 48, width: 80, height: 18 },
+    title: { x: 16, y: 0, width: 68, height: 24 },
+    description: { x: 10, y: 25, width: 80, height: 22 },
+    url: { x: 10, y: 48, width: 80, height: 18 },
   },
   height: 66,
 };

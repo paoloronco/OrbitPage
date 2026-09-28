@@ -106,6 +106,33 @@ export function normalizeProfileLayout(layout?: ProfileLayout | null): Normalize
   };
 }
 
+export function normalizeVisibleProfileLayout(
+  layout: ProfileLayout | null | undefined,
+  visibleItems: ProfileLayoutItem[],
+): NormalizedProfileLayout {
+  const normalized = normalizeProfileLayout(layout);
+  const visible = new Set(visibleItems);
+
+  if (!layout?.positions) {
+    const rows = [...new Set(ORBITPAGE_PROFILE_LAYOUT_ITEMS.filter((item) => visible.has(item))
+      .map((item) => DEFAULT_PROFILE_LAYOUT.positions[item].y))];
+    const positions = { ...normalized.positions };
+    let nextY = 0;
+    for (const rowY of rows) {
+      const rowItems = ORBITPAGE_PROFILE_LAYOUT_ITEMS.filter((item) => visible.has(item) && DEFAULT_PROFILE_LAYOUT.positions[item].y === rowY);
+      for (const item of rowItems) positions[item] = { ...positions[item], y: nextY };
+      nextY += Math.max(...rowItems.map((item) => positions[item].height)) + 16;
+    }
+    normalized.positions = positions;
+  }
+
+  const contentHeight = Math.max(160, ...visibleItems.map((item) => {
+    const rect = normalized.positions[item];
+    return rect.y + rect.height;
+  }));
+  return { ...normalized, height: Math.round(clamp(contentHeight, 160, 2_000)) };
+}
+
 export function updateProfileLayoutItem(
   layout: ProfileLayout | null | undefined,
   item: ProfileLayoutItem,

@@ -178,7 +178,7 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
     setSettings((current) => ({
       ...current,
       campaignSlug: slug,
-      destination: slug ? "campaign" : current.destination === "campaign" ? "page" : current.destination,
+      destination: "campaign",
     }));
   }, []);
   const updateCampaignBaseUrl = useCallback((url: string) => setCampaignBaseUrl(url), []);
@@ -228,25 +228,27 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
         </div>
 
         <div className="min-w-0 space-y-4 p-4 sm:p-5">
-          <CampaignLinksManager
-            menu={menu}
-            readOnly={readOnly}
-            selectedSlug={settings.campaignSlug}
-            onSelect={selectCampaign}
-            onBaseUrl={updateCampaignBaseUrl}
-            subpages={subpages}
-          />
           <section className="space-y-3">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Destination", "Destinazione")}</h3>
             </div>
             <div className="grid grid-cols-4 overflow-hidden rounded-md border border-slate-200" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
               {(["page", "menu", "campaign", "custom"] as const).map((destination) => {
-                const disabled = (destination === "menu" && !menu.enabled) || (destination === "campaign" && !settings.campaignSlug);
+                const disabled = destination === "menu" && !menu.enabled;
                 const label = destination === "page" ? tr("Page", "Pagina") : destination === "menu" ? "Menu" : destination === "campaign" ? tr("Smart", "Smart") : tr("Path", "Percorso");
                 return <button aria-pressed={settings.destination === destination} key={destination} type="button" disabled={disabled} onClick={() => update("destination", destination)} className={`min-h-10 border-r border-slate-200 px-2 text-xs font-semibold last:border-r-0 ${settings.destination === destination ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-40`}>{label}</button>;
               })}
             </div>
+            {settings.destination === "campaign" && (
+              <CampaignLinksManager
+                menu={menu}
+                readOnly={readOnly}
+                selectedSlug={settings.campaignSlug}
+                onSelect={selectCampaign}
+                onBaseUrl={updateCampaignBaseUrl}
+                subpages={subpages}
+              />
+            )}
             {settings.destination === "custom" && (
               <div className="space-y-1.5">
                 <Label htmlFor="qr-path" className="text-xs">{tr("Relative path", "Percorso relativo")}</Label>

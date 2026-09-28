@@ -41,6 +41,7 @@ export function OrbitLoader({
       >
         <circle className="orbit-loader__track" cx="12" cy="12" fill="none" r="8" strokeWidth="3" />
         <circle className="orbit-loader__arc" cx="12" cy="12" fill="none" pathLength="100" r="8" strokeDasharray="28 72" strokeLinecap="round" strokeWidth="3" />
+        <circle className="orbit-loader__satellite" cx="12" cy="4" r="1.6" />
       </svg>
     </span>
   );

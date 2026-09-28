@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignCardLayoutRect, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, reflowCardLayoutPositions, snapCardLayoutSize, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, normalizeCardContentLayout, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, reflowCardLayoutPositions, snapCardLayoutSize, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -28,6 +28,14 @@ describe("responsive card layout", () => {
 
     expect(updated.contents?.large.positions?.title).toEqual({ x: 4, y: 70, width: 62, height: 32 });
     expect(normalizeCardLayout(updated, cards, "desktop").contents?.large).toBeDefined();
+  });
+
+  it("centers every default card text region", () => {
+    const layout = normalizeCardContentLayout();
+
+    for (const item of ["title", "description", "url"] as const) {
+      expect(layout.positions[item].x + layout.positions[item].width / 2).toBe(50);
+    }
   });
 
   it("adds a movable profile before existing cards without overlapping them", () => {

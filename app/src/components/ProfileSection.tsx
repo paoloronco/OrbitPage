@@ -84,6 +84,7 @@ interface ProfileSectionProps {
 
 type ProfilePreset = NonNullable<ProfileAppearance["profilePreset"]>;
 type AvatarShape = NonNullable<ProfileAppearance["avatarShape"]>;
+type ProfileCardStyleMode = "theme" | "personalized" | "transparent" | "image" | "liquid-glass";
 
 type SavedProfileNotice = {
   id: number;
@@ -476,7 +477,37 @@ export const ProfileSection = ({
 
   const faviconValue = draft.favicon || draft.avatar;
   const cardBackgroundImage = getOptionalImageUrl(draft.appearance?.cardBackgroundImage);
+  const selectedCardStyle: ProfileCardStyleMode = cardBackgroundImage
+    ? "image"
+    : selectedSurface === "inherit"
+      ? "theme"
+      : selectedSurface === "solid"
+        ? "personalized"
+        : selectedSurface;
   const hasCustomAvatar = hasCustomProfileAvatar(draft.avatar);
+
+  const clearCardBackgroundImage = () => {
+    if (pendingCardBackgroundPreviewUrl) URL.revokeObjectURL(pendingCardBackgroundPreviewUrl);
+    setPendingCardBackgroundFile(null);
+    setPendingCardBackgroundPreviewUrl(null);
+  };
+
+  const selectCardStyle = (mode: ProfileCardStyleMode) => {
+    if (mode === "theme") {
+      resetCardAppearance();
+      return;
+    }
+    if (mode === "image") {
+      updateAppearance({ surfaceEffect: "solid" });
+      cardBackgroundInputRef.current?.click();
+      return;
+    }
+    clearCardBackgroundImage();
+    updateAppearance({
+      cardBackgroundImage: undefined,
+      surfaceEffect: mode === "personalized" ? "solid" : mode,
+    });
+  };
 
   return (
     <div className="admin-profile-section space-y-5" data-onboarding="profile-card">
@@ -635,10 +666,7 @@ export const ProfileSection = ({
 
           <details className="admin-profile-appearance-details group rounded-lg border border-slate-200 bg-white">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3">
-              <span className="min-w-0">
-                <strong className="block text-sm text-slate-950">{tr("Card style", "Stile della card")}</strong>
-                <small className="mt-0.5 block text-xs text-slate-500">{tr("Override the active theme only when needed.", "Personalizza il tema attivo solo quando serve.")}</small>
-              </span>
+              <strong className="text-sm text-slate-950">{tr("Card style", "Stile della card")}</strong>
               <span className="admin-profile-appearance-action text-xs font-semibold text-blue-700">
                 <span className="group-open:hidden">{tr("Open", "Apri")}</span>
                 <span className="hidden group-open:inline">{tr("Close", "Chiudi")}</span>
@@ -646,31 +674,22 @@ export const ProfileSection = ({
             </summary>
 
             <div className="space-y-5 border-t border-slate-200 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Switch checked={draft.appearance?.cardBorderEnabled !== false} onCheckedChange={(cardBorderEnabled) => updateAppearance({ cardBorderEnabled })} aria-label={tr("Show profile card border", "Mostra bordo della card profilo")} />
-                  <span className="text-sm font-semibold text-slate-800">{tr("Card border", "Bordo card")}</span>
-                </div>
-                <Button type="button" variant="outline" size="sm" onClick={resetCardAppearance}>
-                  <RotateCcw className="h-4 w-4" /> {tr("Use theme style", "Usa stile del tema")}
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-4" role="group" aria-label={tr("Profile card surface", "Superficie card profilo")}>
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-5" role="group" aria-label={tr("Profile card style", "Stile card profilo")}>
                 {([
-                  { id: "inherit", label: tr("Theme", "Tema"), icon: Palette },
-                  { id: "solid", label: tr("Solid", "Solida"), icon: Square },
+                  { id: "theme", label: tr("Theme", "Tema"), icon: Palette },
+                  { id: "personalized", label: tr("Personalized", "Personalizzato"), icon: Square },
                   { id: "transparent", label: tr("Transparent", "Trasparente"), icon: EyeOff },
+                  { id: "image", label: tr("Image", "Immagine"), icon: ImageIcon },
                   { id: "liquid-glass", label: "Liquid glass", icon: Sparkles },
                 ] as const).map((option) => {
                   const Icon = option.icon;
-                  const active = selectedSurface === option.id;
+                  const active = selectedCardStyle === option.id;
                   return (
                     <button
                       key={option.id}
                       type="button"
                       aria-pressed={active}
-                      onClick={() => updateAppearance({ surfaceEffect: option.id })}
+                      onClick={() => selectCardStyle(option.id)}
                       className={`flex min-h-0 items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors ${active ? "border-blue-500 bg-blue-50" : "border-slate-200 bg-white hover:border-blue-300"}`}
                     >
                       <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"}`}><Icon className="h-4 w-4" /></span>
@@ -679,8 +698,33 @@ export const ProfileSection = ({
                   );
                 })}
               </div>
+              <input ref={cardBackgroundInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "card-background"); event.target.value = ""; }} />
 
-              <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              {selectedCardStyle === "theme" && (
+                <div className="flex items-center gap-3" aria-label={tr("Theme card color", "Colore card del tema")}>
+                  <span
+                    className="h-10 w-10 shrink-0 rounded-lg border border-slate-200"
+                    style={{ background: `linear-gradient(${theme.profileCard.direction}, ${theme.profileCard.background}, ${theme.profileCard.backgroundSecondary})` }}
+                  />
+                  <span>
+                    <strong className="block text-sm text-slate-950">{tr("Theme card color", "Colore card del tema")}</strong>
+                    <small className="text-xs text-slate-500">{theme.profileCard.background} · {theme.profileCard.backgroundSecondary}</small>
+                  </span>
+                </div>
+              )}
+
+              {selectedCardStyle === "personalized" && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <ProfileColorField label={tr("Card background", "Sfondo card")} value={draft.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!draft.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
+                  <ProfileColorField label={tr("Main text", "Testo principale")} value={draft.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!draft.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />
+                  <ProfileColorField label={tr("Secondary text", "Testo secondario")} value={draft.appearance?.cardMutedColor || theme.profileCard.muted} inherited={!draft.appearance?.cardMutedColor} onChange={(cardMutedColor) => updateAppearance({ cardMutedColor })} onReset={() => updateAppearance({ cardMutedColor: undefined })} />
+                  <ProfileColorField label={tr("Card border", "Bordo card")} value={draft.appearance?.cardBorderColor || theme.profileCard.border} inherited={!draft.appearance?.cardBorderColor} onChange={(cardBorderColor) => updateAppearance({ cardBorderColor })} onReset={() => updateAppearance({ cardBorderColor: undefined })} />
+                  <ProfileColorField label={tr("Shadow", "Ombra")} value={draft.appearance?.cardShadowColor || theme.cardShadow.color} inherited={!draft.appearance?.cardShadowColor} onChange={(cardShadowColor) => updateAppearance({ cardShadowColor })} onReset={() => updateAppearance({ cardShadowColor: undefined })} />
+                  <ProfileColorField label={tr("Social accent", "Accento social")} value={draft.appearance?.accentColor || theme.profileCard.accent} inherited={!draft.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
+                </div>
+              )}
+
+              {selectedCardStyle === "image" && <div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <strong className="block text-sm text-slate-950">{tr("Card background image", "Immagine di sfondo della card")}</strong>
@@ -688,8 +732,7 @@ export const ProfileSection = ({
                   </div>
                   {cardBackgroundImage && (
                     <Button type="button" variant="outline" size="sm" onClick={() => {
-                      setPendingCardBackgroundFile(null);
-                      setPendingCardBackgroundPreviewUrl(null);
+                      clearCardBackgroundImage();
                       updateAppearance({ cardBackgroundImage: undefined });
                     }}>
                       {tr("Remove image", "Rimuovi immagine")}
@@ -709,14 +752,19 @@ export const ProfileSection = ({
                     <ImageUp className="h-3.5 w-3.5" /> {cardBackgroundImage ? tr("Replace", "Sostituisci") : tr("Choose image", "Scegli immagine")}
                   </span>
                 </button>
-                <input ref={cardBackgroundInputRef} type="file" accept={RASTER_IMAGE_ACCEPT} className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void prepareImage(file, "card-background"); event.target.value = ""; }} />
-              </div>
+              </div>}
 
-              <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="admin-profile-slider-field space-y-2 md:max-w-44">
+              {selectedCardStyle !== "theme" && <>
+                <div className="flex items-center gap-3">
+                  <Switch checked={draft.appearance?.cardBorderEnabled !== false} onCheckedChange={(cardBorderEnabled) => updateAppearance({ cardBorderEnabled })} aria-label={tr("Show profile card border", "Mostra bordo della card profilo")} />
+                  <span className="text-sm font-semibold text-slate-800">{tr("Card border", "Bordo card")}</span>
+                </div>
+
+                <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                {selectedCardStyle !== "transparent" && selectedCardStyle !== "image" && <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-transparency" className="text-xs">{tr("Transparency", "Trasparenza")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{surfaceTransparency}%</span></div>
                   <Slider id="profile-card-transparency" className="admin-profile-compact-slider" min={0} max={1} step={0.01} size="small" value={[1 - surfaceOpacity]} valueLabelFormat={(transparency) => `${Math.round(transparency * 100)}%`} onValueChange={([transparency]) => updateAppearance({ surfaceOpacity: 1 - transparency, ...(transparency === 1 ? { surfaceEffect: "transparent" as const } : {}) })} aria-label={tr("Profile card transparency", "Trasparenza card profilo")} />
-                </div>
+                </div>}
                 <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-radius" className="text-xs">{tr("Corners", "Angoli")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{profileRadius}px</span></div>
                   <Slider id="profile-card-radius" className="admin-profile-compact-slider" min={0} max={40} step={1} size="small" value={[profileRadius]} valueLabelFormat={(cardRadius) => `${cardRadius}px`} onValueChange={([cardRadius]) => updateAppearance({ cardRadius })} aria-label={tr("Profile card corner radius", "Arrotondamento card profilo")} />
@@ -729,29 +777,14 @@ export const ProfileSection = ({
                   <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-shadow" className="text-xs">{tr("Shadow", "Ombra")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{Math.round(profileShadowOpacity * 100)}%</span></div>
                   <Slider id="profile-card-shadow" className="admin-profile-compact-slider" min={0} max={0.6} step={0.01} size="small" value={[profileShadowOpacity]} valueLabelFormat={(shadowOpacity) => `${Math.round(shadowOpacity * 100)}%`} onValueChange={([cardShadowOpacity]) => updateAppearance({ cardShadowOpacity })} aria-label={tr("Profile card shadow depth", "Profondità ombra card profilo")} />
                 </div>
-                {(selectedSurface === "liquid-glass" || (selectedSurface === "inherit" && theme.profileCardEffect === "liquid-glass")) && (
+                {selectedCardStyle === "liquid-glass" && (
                   <div className="admin-profile-slider-field space-y-2 md:max-w-44">
                     <div className="flex items-center justify-between gap-3"><Label htmlFor="profile-card-blur" className="text-xs">{tr("Glass blur", "Sfocatura vetro")}</Label><span className="text-xs font-semibold tabular-nums text-slate-600">{profileBlur}px</span></div>
                     <Slider id="profile-card-blur" className="admin-profile-compact-slider" min={0} max={40} step={1} size="small" value={[profileBlur]} valueLabelFormat={(surfaceBlur) => `${surfaceBlur}px`} onValueChange={([surfaceBlur]) => updateAppearance({ surfaceBlur })} aria-label={tr("Profile card glass blur", "Sfocatura vetro card profilo")} />
                   </div>
                 )}
               </div>
-
-              <details className="group rounded-lg border border-slate-200 bg-slate-50/60">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3">
-                  <strong className="text-sm text-slate-950">{tr("Custom colors", "Colori personalizzati")}</strong>
-                  <span className="text-xs font-semibold text-blue-700 group-open:hidden">{tr("Open", "Apri")}</span>
-                  <span className="hidden text-xs font-semibold text-blue-700 group-open:inline">{tr("Close", "Chiudi")}</span>
-                </summary>
-                <div className="grid gap-4 border-t border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <ProfileColorField label={tr("Card background", "Sfondo card")} value={draft.appearance?.cardBackgroundColor || theme.profileCard.background} inherited={!draft.appearance?.cardBackgroundColor} onChange={(cardBackgroundColor) => updateAppearance({ cardBackgroundColor })} onReset={() => updateAppearance({ cardBackgroundColor: undefined })} />
-                  <ProfileColorField label={tr("Main text", "Testo principale")} value={draft.appearance?.cardTextColor || theme.profileCard.foreground} inherited={!draft.appearance?.cardTextColor} onChange={(cardTextColor) => updateAppearance({ cardTextColor })} onReset={() => updateAppearance({ cardTextColor: undefined })} />
-                  <ProfileColorField label={tr("Secondary text", "Testo secondario")} value={draft.appearance?.cardMutedColor || theme.profileCard.muted} inherited={!draft.appearance?.cardMutedColor} onChange={(cardMutedColor) => updateAppearance({ cardMutedColor })} onReset={() => updateAppearance({ cardMutedColor: undefined })} />
-                  <ProfileColorField label={tr("Card border", "Bordo card")} value={draft.appearance?.cardBorderColor || theme.profileCard.border} inherited={!draft.appearance?.cardBorderColor} onChange={(cardBorderColor) => updateAppearance({ cardBorderColor })} onReset={() => updateAppearance({ cardBorderColor: undefined })} />
-                  <ProfileColorField label={tr("Shadow", "Ombra")} value={draft.appearance?.cardShadowColor || theme.cardShadow.color} inherited={!draft.appearance?.cardShadowColor} onChange={(cardShadowColor) => updateAppearance({ cardShadowColor })} onReset={() => updateAppearance({ cardShadowColor: undefined })} />
-                  <ProfileColorField label={tr("Social accent", "Accento social")} value={draft.appearance?.accentColor || theme.profileCard.accent} inherited={!draft.appearance?.accentColor} onChange={(accentColor) => updateAppearance({ accentColor })} onReset={() => updateAppearance({ accentColor: undefined })} />
-                </div>
-              </details>
+              </>}
             </div>
           </details>
 

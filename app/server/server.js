@@ -80,6 +80,7 @@ import {
   aiPageAgentHttpError,
   createPreviewToken,
   getAiSettings,
+  launchKitScreenshotDataUrl,
   planAiPageChanges,
   previewTokenHash,
   saveAiSettings,
@@ -4026,6 +4027,53 @@ const sendAiError = (res, error) => {
   });
 };
 
+const launchKitUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4 * 1024 * 1024, files: 1 },
+});
+
+const aiProposalResponse = async (username, snapshot, result) => {
+  if (!result.proposal) return { reply: result.reply, proposal: null };
+
+  const previewToken = createPreviewToken();
+  const createdAt = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + AI_PREVIEW_TTL_MS).toISOString();
+  await dbRun(
+    `INSERT INTO ai_page_previews
+      (token_hash, username, expected_revision, changes, summary, operation_summaries, created_at, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      previewTokenHash(previewToken),
+      username,
+      snapshot.revision,
+      JSON.stringify(result.proposal.changes),
+      result.proposal.summary,
+      JSON.stringify(result.proposal.operationSummaries),
+      createdAt,
+      expiresAt,
+    ],
+  );
+  await dbRun(
+    `DELETE FROM ai_page_previews
+     WHERE expires_at <= ? OR (used_at IS NOT NULL AND used_at <= ?)`,
+    [createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()],
+  ).catch(() => undefined);
+  return {
+    reply: result.reply,
+    proposal: {
+      previewToken,
+      summary: result.proposal.summary,
+      changes: result.proposal.operationSummaries,
+      expectedRevision: snapshot.revision,
+      expiresAt,
+      preview: {
+        before: snapshot.page,
+        after: { ...snapshot.page, ...result.proposal.changes },
+      },
+    },
+  };
+};
+
 app.get(
   '/api/ai/settings',
   authenticateToken,
@@ -4072,45 +4120,41 @@ app.post(
         page: snapshot.page,
         revision: snapshot.revision,
       });
-      if (!result.proposal) return res.json({ reply: result.reply, proposal: null });
+      res.json(await aiProposalResponse(req.user.username, snapshot, result));
+    } catch (error) {
+      sendAiError(res, error);
+    }
+  },
+);
 
-      const previewToken = createPreviewToken();
-      const createdAt = new Date().toISOString();
-      const expiresAt = new Date(Date.now() + AI_PREVIEW_TTL_MS).toISOString();
-      await dbRun(
-        `INSERT INTO ai_page_previews
-          (token_hash, username, expected_revision, changes, summary, operation_summaries, created_at, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          previewTokenHash(previewToken),
-          req.user.username,
-          snapshot.revision,
-          JSON.stringify(result.proposal.changes),
-          result.proposal.summary,
-          JSON.stringify(result.proposal.operationSummaries),
-          createdAt,
-          expiresAt,
-        ],
-      );
-      await dbRun(
-        `DELETE FROM ai_page_previews
-         WHERE expires_at <= ? OR (used_at IS NOT NULL AND used_at <= ?)`,
-        [createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()],
-      ).catch(() => undefined);
-      res.json({
-        reply: result.reply,
-        proposal: {
-          previewToken,
-          summary: result.proposal.summary,
-          changes: result.proposal.operationSummaries,
-          expectedRevision: snapshot.revision,
-          expiresAt,
-          preview: {
-            before: snapshot.page,
-            after: { ...snapshot.page, ...result.proposal.changes },
-          },
+app.post(
+  '/api/ai/launch-kit',
+  authenticateToken,
+  aiAgentLimiter,
+  requireAnyPermission('profile:write', 'links:write', 'theme:write'),
+  launchKitUpload.single('screenshot'),
+  async (req, res) => {
+    if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
+    try {
+      setNoStoreHeaders(res);
+      if (req.body?.attested !== 'true') {
+        throw new AiPageAgentError(400, 'LAUNCH_KIT_ATTESTATION_REQUIRED', 'Confirm that you can use the screenshot content.');
+      }
+      const screenshot = launchKitScreenshotDataUrl(req.file);
+      const snapshot = await getAiPageSnapshot();
+      const result = await planAiPageChanges({
+        username: req.user.username,
+        permissions: req.user.permissions || [],
+        rawRequest: {
+          message: 'Recreate the visible design, copy, order, and supported cards from this screenshot.',
+          history: [],
         },
+        page: snapshot.page,
+        revision: snapshot.revision,
+        screenshot,
+        launchKit: true,
       });
+      res.json(await aiProposalResponse(req.user.username, snapshot, result));
     } catch (error) {
       sendAiError(res, error);
     }

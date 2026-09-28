@@ -440,8 +440,9 @@ export interface WorkspaceBootstrapResponse {
 const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   const method = (options.method || 'GET').toUpperCase();
   const performRequest = async (authHeaders: Record<string, string>) => {
+    const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
+      ...(!isMultipart ? { 'Content-Type': 'application/json' } : {}),
       ...authHeaders,
       ...(method !== 'GET' && capturedPageRevision !== null
         ? { 'If-Match': String(capturedPageRevision) }
@@ -707,6 +708,12 @@ export const aiPageAgentApi = {
       method: 'POST',
       body: JSON.stringify({ message, history }),
     }),
+  launchKit: (screenshot: File): Promise<AiPagePlanResponse> => {
+    const body = new FormData();
+    body.append('screenshot', screenshot);
+    body.append('attested', 'true');
+    return apiRequest<AiPagePlanResponse>('/ai/launch-kit', { method: 'POST', body });
+  },
   commit: (previewToken: string): Promise<{ success: boolean; revision: number; alreadyApplied: boolean }> =>
     apiRequest<{ success: boolean; revision: number; alreadyApplied: boolean }>('/ai/page/commit', {
       method: 'POST',
