@@ -13,6 +13,14 @@ describe("ThemeCustomizer preset saves", () => {
     expect(source).toContain('tr("Page background", "Sfondo pagina")');
     expect(source).toContain('tr("Card background & colors", "Sfondo e colori delle card")');
     expect(source).toContain("<TooltipContent");
+    expect(source).toContain('tr("Buttons & highlights", "Pulsanti ed elementi in evidenza")');
+    expect(source).toContain('tr("Content card background", "Sfondo card contenuto")');
+    expect(source).toContain('aria-label={`${label}: ${description}`}');
+    expect(source).toContain('label={tr("Name and surname", "Nome e cognome")}');
+    expect(source).toContain('label={tr("Card titles", "Titoli delle card")}');
+    expect(source).toContain('label="URL"');
+    expect(source).not.toContain("Page typeface");
+    expect(source).not.toContain("Applied to profile, cards, labels and calls to action.");
     expect(source).not.toContain("6 Mono + 6 Multi");
     expect(source).not.toContain('tr("Manual controls"');
     expect(source).not.toContain('tr("Custom theme"');

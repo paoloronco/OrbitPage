@@ -51,7 +51,7 @@ export const PublicInternalLinksCard = ({ link }: PublicInternalLinksCardProps) 
           {link.description && (
             <p style={{
               ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}),
-              ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}),
+              fontFamily: link.descriptionFontFamily || "var(--font-card-description, inherit)",
             }}>
               {link.description}
             </p>
@@ -78,7 +78,7 @@ export const PublicInternalLinksCard = ({ link }: PublicInternalLinksCardProps) 
               key={item.id}
               onClick={() => trackPublicLinkClick(link.id)}
             >
-              {data.showIcons && (
+              {data.showIcons && data.layout !== "tabs" && (
                 <span className="public-internal-link__icon" aria-hidden="true">
                   {item.icon ? <span>{item.icon}</span> : <Icon />}
                 </span>

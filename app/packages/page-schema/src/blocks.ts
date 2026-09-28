@@ -234,7 +234,7 @@ export const OrbitPageMapContentSchema = z.object({
   mapUrl: OrbitPagePublicHrefSchema.optional().default(""),
   latitude: boundedString(40).optional().default(""),
   longitude: boundedString(40).optional().default(""),
-  resolvedSource: boundedString(40).optional().default("")
+  resolvedSource: boundedString(2_752).optional().default("")
 }).strict();
 
 const OrbitPageMapContentInputSchema = OrbitPageMapContentSchema.extend({
@@ -271,7 +271,7 @@ export const OrbitPageSeparatorContentSchema = z.object({
 export const OrbitPageInternalLinkItemSchema = z.object({
   id: OrbitPageBlockIdSchema,
   kind: z.enum(["link", "menu", "shop", "page"]),
-  path: boundedString(100).regex(/^\/(?:links|menu|shop|[a-z0-9]+(?:-[a-z0-9]+)*)$/),
+  path: boundedString(100).regex(/^\/(?:links|menu|shop|[a-z0-9]+(?:-[a-z0-9]+)*)?$/),
   label: boundedString(120).optional().default(""),
   description: boundedString(300).optional().default(""),
   icon: boundedString(24).optional().default("")
@@ -279,7 +279,7 @@ export const OrbitPageInternalLinkItemSchema = z.object({
 
 export const OrbitPageInternalLinksContentSchema = z.object({
   items: z.array(OrbitPageInternalLinkItemSchema).max(12).optional().default([]),
-  layout: z.enum(["stacked", "grid", "buttons"]).optional().default("stacked"),
+  layout: z.enum(["stacked", "grid", "buttons", "tabs"]).optional().default("stacked"),
   columns: z.union([z.literal(2), z.literal(3)]).optional().default(2),
   itemStyle: z.enum(["filled", "outline", "minimal"]).optional().default("filled"),
   showDescriptions: z.boolean().optional().default(true),

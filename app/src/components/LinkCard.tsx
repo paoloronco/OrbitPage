@@ -329,6 +329,8 @@ export const LinkCard = ({
   const contactData = getContactData(editLink.content);
   const socialData = getSocialRowDraftData(editLink.content);
   const internalLinksData = getInternalLinksData(editLink.content);
+  const availableInternalDestinations = internalDestinations.filter((destination) => !internalLinksData.items.some((item) => item.path === destination.path));
+  const canAddInternalDestination = internalLinksData.items.length < 12 && availableInternalDestinations.length > 0;
   const calloutData = getCalloutData(editLink.content);
   const mapData = getMapData(editLink.content);
   const eventData = getEventData(editLink.content);
@@ -883,7 +885,7 @@ export const LinkCard = ({
       <div className="admin-card-edit-body">
         {isEditing ? (
             <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-            {!isSocialRow && (isFullEdit || canEditStyle) && (
+            {!isSocialRow && !isInternalLinks && (isFullEdit || canEditStyle) && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
                 <p className="text-sm font-semibold text-slate-900">Title &amp; typography</p>
@@ -987,7 +989,7 @@ export const LinkCard = ({
             )}
             {isFullEdit && (
               <>
-                {!isSocialRow && !isMap && (!isSeparator || showUrlField) && (
+                {!isSocialRow && !isInternalLinks && !isMap && (!isSeparator || showUrlField) && (
                   <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                     <div className="mb-3">
                       <p className="text-sm font-semibold text-slate-900">{isInternalLinks ? tr("Section description", "Descrizione della sezione") : tr("Description & link", "Descrizione e link")}</p>
@@ -1150,14 +1152,6 @@ export const LinkCard = ({
                 )}
                 {isInternalLinks && (
                   <section className="admin-internal-links-editor">
-                    <div className="admin-internal-links-editor__heading">
-                      <span className="admin-internal-links-editor__mark"><ExternalLink className="h-4 w-4" /></span>
-                      <span>
-                        <strong>{tr("Internal page navigation", "Navigazione interna")}</strong>
-                        <small>{tr("Guide visitors between your active destinations without sending them outside the site.", "Guida i visitatori tra le destinazioni attive senza farli uscire dal sito.")}</small>
-                      </span>
-                    </div>
-
                     <div className="admin-internal-links-layout" role="group" aria-label={tr("Navigation layout", "Layout navigazione")}>
                       {([
                         ["stacked", tr("Cards", "Card"), tr("Full-width navigation cards", "Card di navigazione a tutta larghezza")],
@@ -1213,22 +1207,19 @@ export const LinkCard = ({
                       </label>
                     </div>
 
-                    <div className="admin-internal-links-add">
-                      <div>
-                        <strong>{tr("Add destination", "Aggiungi destinazione")}</strong>
-                        <small>{tr("Only active internal destinations are shown.", "Sono mostrate solo le destinazioni interne attive.")}</small>
-                      </div>
-                      <div>
-                        {internalDestinations.filter((destination) => !internalLinksData.items.some((item) => item.path === destination.path)).map((destination) => (
-                          <Button key={destination.id} type="button" variant="outline" size="sm" disabled={internalLinksData.items.length >= 12} onClick={() => addInternalDestination(destination)}>
-                            {destination.kind === 'menu' ? <UtensilsCrossed className="h-3.5 w-3.5" /> : destination.kind === 'shop' ? <ShoppingBag className="h-3.5 w-3.5" /> : destination.kind === 'page' ? <FileText className="h-3.5 w-3.5" /> : <ExternalLink className="h-3.5 w-3.5" />}
-                            {destination.title}
-                          </Button>
-                        ))}
-                        {internalDestinations.every((destination) => internalLinksData.items.some((item) => item.path === destination.path)) && (
-                          <span>{tr("All available destinations are already included.", "Tutte le destinazioni disponibili sono già incluse.")}</span>
-                        )}
-                      </div>
+                    <div className="admin-internal-links-add-action" title={canAddInternalDestination ? tr("Choose a destination to add", "Scegli una destinazione da aggiungere") : tr("No other destinations are available to add", "Non ci sono altre destinazioni disponibili da aggiungere")}>
+                      <Select disabled={!canAddInternalDestination} onValueChange={(destinationId) => {
+                        const destination = availableInternalDestinations.find((candidate) => candidate.id === destinationId);
+                        if (destination) addInternalDestination(destination);
+                      }}>
+                        <SelectTrigger className="admin-internal-links-add-trigger">
+                          <Plus className="h-4 w-4" />
+                          <SelectValue placeholder={canAddInternalDestination ? tr("Add destination", "Aggiungi destinazione") : tr("No destinations available", "Nessuna destinazione disponibile")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableInternalDestinations.map((destination) => <SelectItem key={destination.id} value={destination.id}>{destination.title}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="admin-internal-links-list">
@@ -1732,6 +1723,7 @@ export const LinkCard = ({
                 )}
 
             {/* Link Scheduler */}
+            {!isInternalLinks && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
                 <p className="text-sm font-semibold text-slate-900">{isMenu ? tr('Menu availability schedule', 'Programmazione disponibilità menu') : tr('Status, campaign & schedule', 'Stato, campagna e programmazione')}</p>
@@ -1846,6 +1838,7 @@ export const LinkCard = ({
               </div>
               </div>
             </section>
+            )}
               </>
             )}
 

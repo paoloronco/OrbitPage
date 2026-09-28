@@ -174,7 +174,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                   <span className="mr-2" style={{ color: item.textColor || readableTextColor }}>•</span>
                   <div className="flex-1 min-w-0">
                     {/* Label on its own line */}
-                    <div style={{ color: item.textColor || readableTextColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || undefined }}>{item.text}</div>
+                    <div style={{ color: item.textColor || readableTextColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || "var(--font-card-description, inherit)" }}>{item.text}</div>
                     {/* URL on a second line, aligned with the item text */}
                     {itemHref && (
                       <a

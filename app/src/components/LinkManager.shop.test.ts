@@ -81,4 +81,9 @@ describe('Shop link shortcut', () => {
     expect(source.match(/editing=\{visualMode \? true : editingLinkId === String\(link.id\)\}/g)).toHaveLength(2);
     expect(source).toContain('onVisualFocusChange?.(null)');
   });
+
+  it('opens newly added blocks immediately so empty media can be configured', () => {
+    expect(source.match(/setEditingLinkId\(String\(block\.id\)\)/g)).toHaveLength(2);
+    expect(source.match(/if \(visualMode\) onVisualFocusChange\?\.\(String\(block\.id\)\)/g)).toHaveLength(2);
+  });
 });

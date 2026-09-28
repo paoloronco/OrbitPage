@@ -137,6 +137,8 @@ const toString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';
 };
 
+const toEditableString = (value: unknown): string => typeof value === 'string' ? value : '';
+
 const socialRowLayouts: SocialRowLayout[] = ['icons', 'pills', 'grid'];
 const socialRowIconStyles: SocialRowIconStyle[] = ['brand', 'theme', 'outline'];
 const socialLinkPlatforms: SocialLinkPlatform[] = ['auto', 'page', 'link', 'website', 'instagram', 'facebook', 'tiktok', 'x', 'youtube', 'linkedin', 'whatsapp', 'telegram', 'discord', 'github', 'email'];
@@ -267,12 +269,13 @@ export const getInternalLinksData = (content: string | null | undefined): Intern
     .filter((item): item is InternalLinkItemData => item !== null)
     .slice(0, 12);
 
+  const layout = internalLinksLayouts.includes(record.layout as InternalLinksLayout) ? record.layout as InternalLinksLayout : 'stacked';
   return {
     items,
-    layout: internalLinksLayouts.includes(record.layout as InternalLinksLayout) ? record.layout as InternalLinksLayout : 'stacked',
+    layout,
     columns: record.columns === 3 ? 3 : 2,
     itemStyle: internalLinksItemStyles.includes(record.itemStyle as InternalLinksItemStyle) ? record.itemStyle as InternalLinksItemStyle : 'filled',
-    showDescriptions: record.showDescriptions !== false,
+    showDescriptions: layout !== 'buttons' && layout !== 'tabs' && record.showDescriptions !== false,
     showIcons: record.showIcons !== false,
   };
 };
@@ -292,8 +295,8 @@ export const getMapData = (content: string | null | undefined): MapBlockData => 
   if (!isPlainObject(parsed)) return {};
 
   return {
-    address: toString((parsed as Record<string, unknown>).address),
-    placeName: toString((parsed as Record<string, unknown>).placeName),
+    address: toEditableString((parsed as Record<string, unknown>).address),
+    placeName: toEditableString((parsed as Record<string, unknown>).placeName),
     mapUrl: toString((parsed as Record<string, unknown>).mapUrl),
     latitude: toString((parsed as Record<string, unknown>).latitude),
     longitude: toString((parsed as Record<string, unknown>).longitude),

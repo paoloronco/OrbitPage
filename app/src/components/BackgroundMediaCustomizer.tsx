@@ -10,7 +10,7 @@ import {
   Paintbrush,
   Layers,
   Film,
-  ImagePlay,
+  Image as ImageIcon,
   Upload,
   X,
   Loader2,
@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { BackgroundMediaConfig, defaultBackgroundMedia } from "@/lib/theme";
 import { uploadApi } from "@/lib/api-client";
-import { formatFileSize } from "@/lib/image-upload";
-import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, validateVideoFile } from "@/lib/media-validation";
+import { formatFileSize, imageSourceValidationError, optimizeImageForUpload } from "@/lib/image-upload";
+import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, RASTER_IMAGE_ACCEPT, validateVideoFile } from "@/lib/media-validation";
 
 interface BackgroundMediaCustomizerProps {
   config: BackgroundMediaConfig;
@@ -38,12 +38,12 @@ const TYPE_OPTIONS: { type: BgType; label: string; icon: React.ElementType; desc
   { type: "color", label: "Color", icon: Paintbrush, description: "Solid background color" },
   { type: "gradient", label: "Gradient", icon: Layers, description: "Gradient (from Colors tab)" },
   { type: "video", label: "Video", icon: Film, description: "Looping video background" },
-  { type: "gif", label: "GIF", icon: ImagePlay, description: "Animated GIF background" },
+  { type: "gif", label: "Image", icon: ImageIcon, description: "Static image or animated GIF background" },
 ];
 
 const ACCEPTED_MIME: Record<"video" | "gif", string> = {
   video: "video/mp4,video/webm",
-  gif: "image/gif",
+  gif: RASTER_IMAGE_ACCEPT,
 };
 
 type UploadState = "idle" | "uploading" | "done" | "error";
@@ -79,8 +79,12 @@ export const BackgroundMediaCustomizer = ({
       : maxUploadBytes;
     try {
       if (config.type === "video") validateVideoFile(file, selectedLimit ?? DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES);
+      if (config.type !== "video") {
+        const validationError = imageSourceValidationError(file);
+        if (validationError) throw new Error(validationError);
+      }
       if (config.type !== "video" && selectedLimit !== undefined && selectedLimit !== null && file.size > selectedLimit) {
-        throw new Error(`GIF uploads on this plan are limited to ${formatFileSize(selectedLimit)}.`);
+        throw new Error(`Image uploads on this plan are limited to ${formatFileSize(selectedLimit)}.`);
       }
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Unsupported media file.");
@@ -96,7 +100,9 @@ export const BackgroundMediaCustomizer = ({
     try {
       const result = config.type === "video"
         ? await uploadApi.uploadVideo(file, "background-media", setUploadProgress)
-        : await uploadApi.uploadBackgroundMedia(file);
+        : file.type === "image/gif"
+          ? await uploadApi.uploadBackgroundMedia(file)
+          : await uploadApi.uploadImage(await optimizeImageForUpload(file, "cover"), "background-media");
       update({ mediaUrl: result.filePath });
       setUploadState("done");
     } catch (err: unknown) {
@@ -164,7 +170,7 @@ export const BackgroundMediaCustomizer = ({
         <div className="space-y-3">
           <Separator />
           <p className="text-sm font-medium">
-            {config.type === "video" ? "Video File" : "GIF File"}
+            {config.type === "video" ? "Video File" : "Image File"}
           </p>
 
           {config.mediaUrl ? (
@@ -172,7 +178,7 @@ export const BackgroundMediaCustomizer = ({
               <div className="flex-1 min-w-0">
                 <p className="truncate text-xs text-foreground">{config.mediaUrl.split("/").pop()}</p>
                 <p className="text-xs text-muted-foreground">
-                  {config.type === "video" ? "Video active" : "GIF active"}
+                  {config.type === "video" ? "Video active" : "Image active"}
                 </p>
               </div>
               <button
@@ -203,7 +209,7 @@ export const BackgroundMediaCustomizer = ({
                 <>
                   <Upload className="h-6 w-6 text-muted-foreground" />
                   <span className="text-xs font-medium text-foreground">
-                    {config.type === "video" ? "Upload MP4 / WebM" : "Upload GIF"}
+                    {config.type === "video" ? "Upload MP4 / WebM" : "Upload PNG, JPG, WebP, AVIF or GIF"}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {config.type === "video"

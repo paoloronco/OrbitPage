@@ -164,7 +164,7 @@ export const PublicProfileSection = ({
   const name = displayName ? (
     <h1
       className={`profile-card__title font-bold${nameLines.length > 1 ? " profile-card__title--stacked" : ""}`}
-      style={{ "--profile-name-font-size": profile.nameFontSize || "2rem" } as CSSProperties}
+      style={{ "--profile-name-font-size": profile.nameFontSize || "2rem", fontFamily: "var(--font-profile-name, inherit)" } as CSSProperties}
     >
       {nameLines.map((line, index) => <span key={`${index}-${line}`}>{line}</span>)}
     </h1>
@@ -183,7 +183,7 @@ export const PublicProfileSection = ({
   const bio = hasBio ? (
     <p
       className="profile-card__bio whitespace-pre-line leading-relaxed"
-      style={{ "--profile-bio-font-size": profile.bioFontSize || "1rem" } as CSSProperties}
+      style={{ "--profile-bio-font-size": profile.bioFontSize || "1rem", fontFamily: "var(--font-profile-description, inherit)" } as CSSProperties}
     >
       {profile.bio}
     </p>

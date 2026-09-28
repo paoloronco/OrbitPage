@@ -179,7 +179,7 @@ export const PublicView = ({
           />
         )}
 
-        <footer className="text-center pt-8 pb-2 space-y-1">
+        <footer className="text-center pt-8 pb-2 space-y-1" style={{ fontFamily: "var(--font-footer, inherit)" }}>
           {footerText && (
             <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
               {footerText}

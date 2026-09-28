@@ -20,15 +20,18 @@ export async function prepareLinkForSave(link: LinkData): Promise<LinkData> {
 
   if (normalized.type === 'map') {
     const data = getMapData(normalized.content);
-    const source = getMapResolutionSource(data.placeName, data.address, data.mapUrl);
+    const placeName = data.placeName?.trim();
+    const address = data.address?.trim();
+    const mapUrl = data.mapUrl?.trim();
+    const source = getMapResolutionSource(placeName, address, mapUrl);
     const existing = data.resolvedSource === source ? toMapCoordinates(data.latitude, data.longitude) : null;
-    const direct = extractMapCoordinates(data.mapUrl)
-      || extractMapCoordinates(data.address)
-      || extractMapCoordinates(data.placeName);
-    const query = getMapQuery(data.placeName, data.address, normalized.title && normalized.title !== 'Map' ? normalized.title : '', data.mapUrl);
+    const direct = extractMapCoordinates(mapUrl)
+      || extractMapCoordinates(address)
+      || extractMapCoordinates(placeName);
+    const query = getMapQuery(placeName, address, normalized.title && normalized.title !== 'Map' ? normalized.title : '', mapUrl);
     let coordinates = direct || existing;
-    if (!coordinates && (query || data.mapUrl)) {
-      const resolved = await mapPreviewApi.resolve(query, data.mapUrl);
+    if (!coordinates && (query || mapUrl)) {
+      const resolved = await mapPreviewApi.resolve(query, mapUrl);
       coordinates = toMapCoordinates(resolved.lat, resolved.lon);
       if (!coordinates) throw new Error('The map provider returned invalid coordinates.');
     }
@@ -38,6 +41,9 @@ export async function prepareLinkForSave(link: LinkData): Promise<LinkData> {
       hideUrl: true,
       content: buildBlockContent({
         ...data,
+        placeName,
+        address,
+        mapUrl,
         latitude: coordinates ? String(coordinates.lat) : undefined,
         longitude: coordinates ? String(coordinates.lon) : undefined,
         resolvedSource: coordinates ? source : undefined,
@@ -50,7 +56,7 @@ export async function prepareLinkForSave(link: LinkData): Promise<LinkData> {
       icon: undefined, iconType: undefined, coverImage: undefined, coverImageAlt: undefined };
   }
   if (link.type === 'internal_links') {
-    return { ...normalized, type: 'internal_links', url: '', hideUrl: true,
+    return { ...normalized, type: 'internal_links', title: '', description: '', url: '', hideUrl: true,
       icon: undefined, iconType: undefined, coverImage: undefined, coverImageAlt: undefined,
       content: buildBlockContent(getInternalLinksData(normalized.content)) };
   }

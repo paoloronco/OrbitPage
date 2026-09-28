@@ -61,9 +61,21 @@ type PresetScope = "page" | "cards";
 interface ThemeColorControlProps {
   id: string;
   label: string;
+  description?: string;
   value: string;
   onChange: (color: string) => void;
 }
+
+const FONT_FAMILY_OPTIONS = [
+  ["Inter, system-ui, sans-serif", "Inter"],
+  ["Poppins, system-ui, sans-serif", "Poppins"],
+  ["Roboto, system-ui, sans-serif", "Roboto"],
+  ["Montserrat, system-ui, sans-serif", "Montserrat"],
+  ["Open Sans, system-ui, sans-serif", "Open Sans"],
+  ["Lato, system-ui, sans-serif", "Lato"],
+  ["Playfair Display, Georgia, serif", "Playfair Display"],
+  ["Georgia, serif", "Georgia"],
+] as const;
 
 const cardShadowPresets: Array<{ id: string; label: string; value: CardShadowConfig }> = [
   { id: 'none', label: 'None', value: { color: '#07111f', offsetX: 0, offsetY: 0, blur: 0, spread: 0, opacity: 0 } },
@@ -152,14 +164,57 @@ export const buildCardPresetTheme = (
 const ThemeColorControl = ({
   id,
   label,
+  description,
   value,
   onChange,
 }: ThemeColorControlProps) => (
   <div className="space-y-2">
-    <Label htmlFor={`theme-${id}`} className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
-      {label}
-    </Label>
+    <div className="flex items-center gap-1.5">
+      <Label htmlFor={`theme-${id}`} className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+        {label}
+      </Label>
+      {description && (
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-slate-400 hover:text-slate-700" aria-label={`${label}: ${description}`}>
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-64 text-xs leading-5">{description}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </div>
     <ColorPicker id={`theme-${id}`} label={label} value={value} onChange={onChange} />
+  </div>
+);
+
+const FontFamilyControl = ({
+  id,
+  label,
+  description,
+  value,
+  defaultLabel,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  description: string;
+  value: string;
+  defaultLabel?: string;
+  onChange: (value: string) => void;
+}) => (
+  <div className="space-y-2">
+    <Label htmlFor={id}>{label}</Label>
+    <p className="text-xs leading-5 text-slate-500">{description}</p>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger id={id}><SelectValue /></SelectTrigger>
+      <SelectContent>
+        {defaultLabel && <SelectItem value="inherit">{defaultLabel}</SelectItem>}
+        {FONT_FAMILY_OPTIONS.map(([fontFamily, name]) => <SelectItem key={fontFamily} value={fontFamily}>{name}</SelectItem>)}
+      </SelectContent>
+    </Select>
   </div>
 );
 
@@ -390,10 +445,11 @@ export const ThemeCustomizer = ({
     }, findMatchingPreset(defaultTheme));
   };
 
-  const colorControl = (id: string, label: string, value: string, onChange: (color: string) => void) => (
+  const colorControl = (id: string, label: string, description: string, value: string, onChange: (color: string) => void) => (
     <ThemeColorControl
       id={id}
       label={label}
+      description={description}
       value={value}
       onChange={onChange}
     />
@@ -597,11 +653,11 @@ export const ThemeCustomizer = ({
                   <h4 className="font-bold text-slate-900">{tr("Core palette", "Palette principale")}</h4>
                   <p className="mt-1 text-sm text-slate-500">{tr("Shared by the page, profile, cards and calls to action.", "Condivisa da pagina, profilo, card e call to action.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {colorControl("primary", "Primary", pendingTheme.primary, (primary) => updatePendingTheme({ primary, accent: primary }))}
-                    {colorControl("primaryGlow", "Primary glow", pendingTheme.primaryGlow, (primaryGlow) => updatePendingTheme({ primaryGlow }))}
-                    {colorControl("foreground", "Main text", pendingTheme.foreground, (foreground) => updatePendingTheme({ foreground }))}
-                    {colorControl("muted", "Muted text", pendingTheme.muted, (muted) => updatePendingTheme({ muted }))}
-                    {colorControl("border", "Borders", pendingTheme.border, (border) => updatePendingTheme({ border }))}
+                    {colorControl("primary", tr("Buttons & highlights", "Pulsanti ed elementi in evidenza"), tr("Used for primary buttons, active controls, links and highlights.", "Usato per pulsanti principali, controlli attivi, link ed elementi in evidenza."), pendingTheme.primary, (primary) => updatePendingTheme({ primary, accent: primary }))}
+                    {colorControl("primaryGlow", tr("Accent glow", "Bagliore accento"), tr("The second accent color used in branded gradients and glow effects.", "Il secondo colore di accento usato nei gradienti del brand e negli effetti luminosi."), pendingTheme.primaryGlow, (primaryGlow) => updatePendingTheme({ primaryGlow }))}
+                    {colorControl("foreground", tr("Default page text", "Testo predefinito pagina"), tr("Main text outside the profile and content cards.", "Testo principale esterno alle card profilo e contenuto."), pendingTheme.foreground, (foreground) => updatePendingTheme({ foreground }))}
+                    {colorControl("muted", tr("Secondary page text", "Testo secondario pagina"), tr("Descriptions and supporting text outside the cards.", "Descrizioni e testi di supporto esterni alle card."), pendingTheme.muted, (muted) => updatePendingTheme({ muted }))}
+                    {colorControl("border", tr("Default borders", "Bordi predefiniti"), tr("Borders of shared page elements that do not use a dedicated card palette.", "Bordi degli elementi della pagina che non usano una palette dedicata alle card."), pendingTheme.border, (border) => updatePendingTheme({ border }))}
                   </div>
                 </div>
 
@@ -611,13 +667,13 @@ export const ThemeCustomizer = ({
                   <h4 className="font-bold text-slate-900">{tr("Surfaces", "Superfici")}</h4>
                   <p className="mt-1 text-sm text-slate-500">{tr("Control the page canvas and every card surface independently.", "Controlla separatamente lo sfondo pagina e ogni superficie delle card.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {colorControl("background", "Background", pendingTheme.background, (background) => updatePendingTheme({
+                    {colorControl("background", tr("Page background", "Sfondo pagina"), tr("The base color behind the entire public page and the start of its gradient.", "Il colore di base dietro l'intera pagina pubblica e l'inizio del suo gradiente."), pendingTheme.background, (background) => updatePendingTheme({
                       background,
                       ...(pendingTheme.backgroundMedia?.type === "gradient" ? { backgroundGradient: { ...pendingTheme.backgroundGradient, from: background } } : {}),
                     }))}
-                    {colorControl("backgroundSecondary", "Secondary surface", pendingTheme.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ backgroundSecondary }))}
-                    {colorControl("card", "Card background", pendingTheme.contentCard.background, (card) => updatePendingTheme({ card, cardGradient: { ...pendingTheme.cardGradient, from: card }, contentCard: { ...pendingTheme.contentCard, background: card } }))}
-                    {colorControl("cardTint", "Card blur tint", pendingTheme.cardBlurTint || pendingTheme.card, (cardBlurTint) => updatePendingTheme({ cardBlurTint }))}
+                    {colorControl("backgroundSecondary", tr("Secondary page surfaces", "Superfici secondarie pagina"), tr("Used by secondary controls, inputs and muted areas outside content cards.", "Usato da controlli secondari, input e aree attenuate esterne alle card contenuto."), pendingTheme.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ backgroundSecondary }))}
+                    {colorControl("card", tr("Content card background", "Sfondo card contenuto"), tr("The first background color of link and content cards.", "Il primo colore di sfondo delle card link e contenuto."), pendingTheme.contentCard.background, (card) => updatePendingTheme({ card, cardGradient: { ...pendingTheme.cardGradient, from: card }, contentCard: { ...pendingTheme.contentCard, background: card } }))}
+                    {colorControl("cardTint", tr("Glass card tint", "Tinta card trasparenti"), tr("Color applied to blurred and liquid-glass card surfaces.", "Colore applicato alle superfici sfocate e liquid glass delle card."), pendingTheme.cardBlurTint || pendingTheme.card, (cardBlurTint) => updatePendingTheme({ cardBlurTint }))}
                   </div>
                 </div>
 
@@ -627,11 +683,11 @@ export const ThemeCustomizer = ({
                   <h4 className="font-bold text-slate-900">{tr("Content cards", "Card contenuti")}</h4>
                   <p className="mt-1 text-sm text-slate-500">{tr("Fine tune the selected card style without changing the page or profile palette.", "Perfeziona lo stile card selezionato senza cambiare la palette di pagina o profilo.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {colorControl("contentForeground", "Card text", pendingTheme.contentCard.foreground, (foreground) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, foreground } }))}
-                    {colorControl("contentMuted", "Secondary text", pendingTheme.contentCard.muted, (muted) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, muted } }))}
-                    {colorControl("contentBorder", "Card border", pendingTheme.contentCard.border, (border) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, border } }))}
-                    {colorControl("contentAccent", "Icons & CTA", pendingTheme.contentCard.accent, (accent) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, accent } }))}
-                    {colorControl("contentAccentForeground", "CTA text", pendingTheme.contentCard.accentForeground, (accentForeground) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, accentForeground } }))}
+                    {colorControl("contentForeground", tr("Main card text", "Testo principale card"), tr("Titles and primary text inside content cards.", "Titoli e testo principale dentro le card contenuto."), pendingTheme.contentCard.foreground, (foreground) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, foreground } }))}
+                    {colorControl("contentMuted", tr("Secondary card text", "Testo secondario card"), tr("Descriptions and supporting text inside content cards.", "Descrizioni e testi di supporto dentro le card contenuto."), pendingTheme.contentCard.muted, (muted) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, muted } }))}
+                    {colorControl("contentBorder", tr("Content card border", "Bordo card contenuto"), tr("Outline around link and content cards.", "Contorno delle card link e contenuto."), pendingTheme.contentCard.border, (border) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, border } }))}
+                    {colorControl("contentAccent", tr("Card icons & buttons", "Icone e pulsanti card"), tr("Icons, links and button backgrounds inside content cards.", "Icone, link e sfondi dei pulsanti dentro le card contenuto."), pendingTheme.contentCard.accent, (accent) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, accent } }))}
+                    {colorControl("contentAccentForeground", tr("Text on card buttons", "Testo sui pulsanti card"), tr("Text and icons displayed on accent-colored buttons.", "Testo e icone mostrati sui pulsanti con colore di accento."), pendingTheme.contentCard.accentForeground, (accentForeground) => updatePendingTheme({ contentCard: { ...pendingTheme.contentCard, accentForeground } }))}
                   </div>
                 </div>
 
@@ -641,15 +697,15 @@ export const ThemeCustomizer = ({
                   <h4 className="font-bold text-slate-900">{tr("Profile card", "Card profilo")}</h4>
                   <p className="mt-1 text-sm text-slate-500">{tr("A dedicated palette for the page header, logo, profile text and social actions.", "Una palette dedicata a intestazione, logo, testo profilo e azioni social.")}</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {colorControl("profileBackground", "Background start", pendingTheme.profileCard.background, (background) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, background } }))}
-                    {colorControl("profileBackgroundSecondary", "Background end", pendingTheme.profileCard.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, backgroundSecondary } }))}
-                    {colorControl("profileForeground", "Profile text", pendingTheme.profileCard.foreground, (foreground) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, foreground } }))}
-                    {colorControl("profileMuted", "Profile secondary text", pendingTheme.profileCard.muted, (muted) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, muted } }))}
-                    {colorControl("profileBorder", "Profile border", pendingTheme.profileCard.border, (border) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, border } }))}
-                    {colorControl("profileAccent", "Logo & social accent", pendingTheme.profileCard.accent, (accent) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, accent } }))}
+                    {colorControl("profileBackground", tr("Profile background start", "Inizio sfondo profilo"), tr("First color of the profile card background.", "Primo colore dello sfondo della card profilo."), pendingTheme.profileCard.background, (background) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, background } }))}
+                    {colorControl("profileBackgroundSecondary", tr("Profile background end", "Fine sfondo profilo"), tr("Second color of the profile card background gradient.", "Secondo colore del gradiente di sfondo della card profilo."), pendingTheme.profileCard.backgroundSecondary, (backgroundSecondary) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, backgroundSecondary } }))}
+                    {colorControl("profileForeground", tr("Main profile text", "Testo principale profilo"), tr("Profile name and primary text in the page header.", "Nome profilo e testo principale nell'intestazione della pagina."), pendingTheme.profileCard.foreground, (foreground) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, foreground } }))}
+                    {colorControl("profileMuted", tr("Secondary profile text", "Testo secondario profilo"), tr("Biography, location and supporting profile information.", "Biografia, posizione e informazioni di supporto del profilo."), pendingTheme.profileCard.muted, (muted) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, muted } }))}
+                    {colorControl("profileBorder", tr("Profile card border", "Bordo card profilo"), tr("Outline around the profile header card.", "Contorno della card di intestazione del profilo."), pendingTheme.profileCard.border, (border) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, border } }))}
+                    {colorControl("profileAccent", tr("Profile icons & links", "Icone e link profilo"), tr("Logo details, social icons and interactive accents in the profile card.", "Dettagli del logo, icone social e accenti interattivi nella card profilo."), pendingTheme.profileCard.accent, (accent) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, accent } }))}
                   </div>
                   <div className="mt-4 max-w-sm space-y-2">
-                    <Label htmlFor="theme-profile-gradient-direction">Profile gradient direction</Label>
+                    <Label htmlFor="theme-profile-gradient-direction">{tr("Profile background direction", "Direzione sfondo profilo")}</Label>
                     <Select value={pendingTheme.profileCard.direction} onValueChange={(direction) => updatePendingTheme({ profileCard: { ...pendingTheme.profileCard, direction } })}>
                       <SelectTrigger id="theme-profile-gradient-direction"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -667,13 +723,13 @@ export const ThemeCustomizer = ({
 
                 <div className="grid gap-7 lg:grid-cols-2">
                   <div>
-                    <h4 className="font-bold text-slate-900">Background gradient</h4>
+                    <h4 className="font-bold text-slate-900">{tr("Page background gradient", "Gradiente sfondo pagina")}</h4>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {colorControl("bgGradientFrom", "Start", pendingTheme.backgroundGradient.from, (from) => updatePendingTheme({ backgroundGradient: { ...pendingTheme.backgroundGradient, from } }))}
-                      {colorControl("bgGradientTo", "End", pendingTheme.backgroundGradient.to, (to) => updatePendingTheme({ backgroundGradient: { ...pendingTheme.backgroundGradient, to } }))}
+                      {colorControl("bgGradientFrom", tr("Start color", "Colore iniziale"), tr("Color shown at the beginning of the page background gradient.", "Colore mostrato all'inizio del gradiente di sfondo della pagina."), pendingTheme.backgroundGradient.from, (from) => updatePendingTheme({ backgroundGradient: { ...pendingTheme.backgroundGradient, from } }))}
+                      {colorControl("bgGradientTo", tr("End color", "Colore finale"), tr("Color shown at the end of the page background gradient.", "Colore mostrato alla fine del gradiente di sfondo della pagina."), pendingTheme.backgroundGradient.to, (to) => updatePendingTheme({ backgroundGradient: { ...pendingTheme.backgroundGradient, to } }))}
                     </div>
                     <div className="mt-4 space-y-2">
-                      <Label htmlFor="theme-background-gradient-direction">Direction</Label>
+                      <Label htmlFor="theme-background-gradient-direction">{tr("Gradient direction", "Direzione gradiente")}</Label>
                       <Select value={pendingTheme.backgroundGradient.direction} onValueChange={(direction) => updatePendingTheme({ backgroundGradient: { ...pendingTheme.backgroundGradient, direction } })}>
                         <SelectTrigger id="theme-background-gradient-direction"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -688,13 +744,13 @@ export const ThemeCustomizer = ({
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Card gradient</h4>
+                    <h4 className="font-bold text-slate-900">{tr("Content card gradient", "Gradiente card contenuto")}</h4>
                     <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                      {colorControl("cardGradientFrom", "Start", pendingTheme.contentCard.background, (from) => updatePendingTheme({ card: from, cardGradient: { ...pendingTheme.cardGradient, from }, contentCard: { ...pendingTheme.contentCard, background: from } }))}
-                      {colorControl("cardGradientTo", "End", pendingTheme.contentCard.backgroundSecondary, (to) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, to }, contentCard: { ...pendingTheme.contentCard, backgroundSecondary: to } }))}
+                      {colorControl("cardGradientFrom", tr("Start color", "Colore iniziale"), tr("First color of link and content card backgrounds.", "Primo colore dello sfondo delle card link e contenuto."), pendingTheme.contentCard.background, (from) => updatePendingTheme({ card: from, cardGradient: { ...pendingTheme.cardGradient, from }, contentCard: { ...pendingTheme.contentCard, background: from } }))}
+                      {colorControl("cardGradientTo", tr("End color", "Colore finale"), tr("Second color of link and content card backgrounds.", "Secondo colore dello sfondo delle card link e contenuto."), pendingTheme.contentCard.backgroundSecondary, (to) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, to }, contentCard: { ...pendingTheme.contentCard, backgroundSecondary: to } }))}
                     </div>
                     <div className="mt-4 space-y-2">
-                      <Label htmlFor="theme-card-gradient-direction">Direction</Label>
+                      <Label htmlFor="theme-card-gradient-direction">{tr("Gradient direction", "Direzione gradiente")}</Label>
                       <Select value={pendingTheme.contentCard.direction} onValueChange={(direction) => updatePendingTheme({ cardGradient: { ...pendingTheme.cardGradient, direction }, contentCard: { ...pendingTheme.contentCard, direction } })}>
                         <SelectTrigger id="theme-card-gradient-direction"><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -711,28 +767,70 @@ export const ThemeCustomizer = ({
               </TabsContent>
 
               <TabsContent value="typography" className="mt-6 space-y-5">
-                <div>
-                  <h4 className="font-bold text-slate-900">Page typeface</h4>
-                  <p className="mt-1 text-sm text-slate-500">Applied to profile, cards, labels and calls to action.</p>
-                </div>
-                <div className="max-w-xl space-y-2">
-                  <Label htmlFor="theme-font-family">Font family</Label>
-                  <Select value={pendingTheme.fontFamily} onValueChange={(fontFamily) => updatePendingTheme({ fontFamily })}>
-                    <SelectTrigger id="theme-font-family"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Inter, system-ui, sans-serif">Inter</SelectItem>
-                      <SelectItem value="Poppins, system-ui, sans-serif">Poppins</SelectItem>
-                      <SelectItem value="Roboto, system-ui, sans-serif">Roboto</SelectItem>
-                      <SelectItem value="Montserrat, system-ui, sans-serif">Montserrat</SelectItem>
-                      <SelectItem value="Open Sans, system-ui, sans-serif">Open Sans</SelectItem>
-                      <SelectItem value="Lato, system-ui, sans-serif">Lato</SelectItem>
-                      <SelectItem value="Playfair Display, Georgia, serif">Playfair Display</SelectItem>
-                      <SelectItem value="Georgia, serif">Georgia</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                  Individual profile and card font sizes remain available in their respective editors and are not overwritten by a preset.
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  <FontFamilyControl
+                    id="theme-font-family"
+                    label={tr("Page default", "Predefinito pagina")}
+                    description={tr("Fallback font for every element without a dedicated choice.", "Font usato dagli elementi senza una scelta dedicata.")}
+                    value={pendingTheme.fontFamily}
+                    onChange={(fontFamily) => updatePendingTheme({ fontFamily })}
+                  />
+                  <FontFamilyControl
+                    id="theme-profile-name-font"
+                    label={tr("Name and surname", "Nome e cognome")}
+                    description={tr("Main name in the profile card.", "Nome principale nella card profilo.")}
+                    defaultLabel={tr("Use page default", "Usa predefinito pagina")}
+                    value={pendingTheme.profileNameFontFamily}
+                    onChange={(profileNameFontFamily) => updatePendingTheme({ profileNameFontFamily })}
+                  />
+                  <FontFamilyControl
+                    id="theme-profile-description-font"
+                    label={tr("Profile description", "Descrizione profilo")}
+                    description={tr("Biography and profile details in the main card.", "Biografia e dettagli del profilo nella card principale.")}
+                    defaultLabel={tr("Use page default", "Usa predefinito pagina")}
+                    value={pendingTheme.profileDescriptionFontFamily}
+                    onChange={(profileDescriptionFontFamily) => updatePendingTheme({ profileDescriptionFontFamily })}
+                  />
+                  <FontFamilyControl
+                    id="theme-card-title-font"
+                    label={tr("Card titles", "Titoli delle card")}
+                    description={tr("Titles of links and other content blocks.", "Titoli dei link e degli altri blocchi contenuto.")}
+                    defaultLabel={tr("Use page default", "Usa predefinito pagina")}
+                    value={pendingTheme.cardTitleFontFamily}
+                    onChange={(cardTitleFontFamily) => updatePendingTheme({ cardTitleFontFamily })}
+                  />
+                  <FontFamilyControl
+                    id="theme-card-description-font"
+                    label={tr("Card descriptions", "Descrizioni delle card")}
+                    description={tr("Descriptions and supporting copy inside content cards.", "Descrizioni e testi di supporto nelle card contenuto.")}
+                    defaultLabel={tr("Use page default", "Usa predefinito pagina")}
+                    value={pendingTheme.cardDescriptionFontFamily}
+                    onChange={(cardDescriptionFontFamily) => updatePendingTheme({ cardDescriptionFontFamily })}
+                  />
+                  <FontFamilyControl
+                    id="theme-url-font"
+                    label="URL"
+                    description={tr("Web addresses shown below link descriptions.", "Indirizzi web mostrati sotto le descrizioni dei link.")}
+                    defaultLabel={tr("Use page default", "Usa predefinito pagina")}
+                    value={pendingTheme.urlFontFamily}
+                    onChange={(urlFontFamily) => updatePendingTheme({ urlFontFamily })}
+                  />
+                  <FontFamilyControl
+                    id="theme-button-font"
+                    label={tr("Buttons and actions", "Pulsanti e azioni")}
+                    description={tr("Buttons and calls to action on the public page.", "Pulsanti e call to action nella pagina pubblica.")}
+                    defaultLabel={tr("Use page default", "Usa predefinito pagina")}
+                    value={pendingTheme.buttonFontFamily}
+                    onChange={(buttonFontFamily) => updatePendingTheme({ buttonFontFamily })}
+                  />
+                  <FontFamilyControl
+                    id="theme-footer-font"
+                    label={tr("Footer and legal links", "Footer e link legali")}
+                    description={tr("Footer text, privacy links and the OrbitPage badge.", "Testo del footer, link privacy e badge OrbitPage.")}
+                    defaultLabel={tr("Use page default", "Usa predefinito pagina")}
+                    value={pendingTheme.footerFontFamily}
+                    onChange={(footerFontFamily) => updatePendingTheme({ footerFontFamily })}
+                  />
                 </div>
               </TabsContent>
 
@@ -838,7 +936,7 @@ export const ThemeCustomizer = ({
 
                   <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_12rem]">
                     <div className="grid gap-6 sm:grid-cols-2">
-                      {colorControl('cardShadowColor', 'Shadow color', pendingTheme.cardShadow.color, (color) => updateCardShadow({ color }))}
+                      {colorControl('cardShadowColor', tr('Card shadow color', 'Colore ombra card'), tr('Color used by the shadow below profile and content cards.', 'Colore usato dall’ombra sotto le card profilo e contenuto.'), pendingTheme.cardShadow.color, (color) => updateCardShadow({ color }))}
                       <div className="space-y-3">
                         <p>Opacity <span className="text-slate-500">{Math.round(pendingTheme.cardShadow.opacity * 100)}%</span></p>
                         <Slider aria-label="Card shadow opacity" value={[pendingTheme.cardShadow.opacity]} valueLabelFormat={(opacity) => `${Math.round(opacity * 100)}%`} onValueChange={([opacity]) => updateCardShadow({ opacity })} max={1} min={0} step={0.01} />

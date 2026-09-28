@@ -34,7 +34,8 @@ export const getPublicBlockStyle = (link: LinkData): PublicBlockCssProperties =>
     '--content-card-surface-tint': link.backgroundColor,
   } : {}),
   ...(getPublicTextColor(link) ? { color: getPublicTextColor(link) } : {}),
-  ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
+  fontFamily: link.titleFontFamily || "var(--font-card-title, inherit)",
+  '--font-card-description-effective': link.descriptionFontFamily || "var(--font-card-description, inherit)",
   ...(link.alignment ? { textAlign: link.alignment } : {}),
 });
 
@@ -72,8 +73,9 @@ export const getPublicAccentStyle = (link: LinkData): CSSProperties | undefined 
 );
 
 export const getPublicButtonStyle = (link: LinkData): CSSProperties | undefined => {
-  if (!link.textColor) return undefined;
+  if (!link.textColor) return { fontFamily: "var(--font-button, inherit)" };
   return {
+    fontFamily: "var(--font-button, inherit)",
     backgroundColor: link.textColor,
     color: link.backgroundColor || "hsl(var(--background))",
   };
