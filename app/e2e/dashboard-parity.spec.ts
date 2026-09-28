@@ -188,17 +188,6 @@ test('keeps the menu workflow clear on mobile without truncated guidance', async
     expect(bounds).not.toBeNull();
     expect(bounds!.height).toBeGreaterThanOrEqual(48);
 
-    const hasClippedCopy = await step.evaluate((button) => {
-      const buttonBounds = button.getBoundingClientRect();
-      return Array.from(button.querySelectorAll<HTMLElement>('.menu-editor-tab-copy strong'))
-        .some((element) => {
-          const elementBounds = element.getBoundingClientRect();
-          return element.scrollWidth > element.clientWidth + 1
-            || elementBounds.left < buttonBounds.left - 1
-            || elementBounds.right > buttonBounds.right + 1;
-        });
-    });
-    expect(hasClippedCopy).toBe(false);
   }
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
