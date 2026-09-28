@@ -34,8 +34,16 @@ export async function openAuthenticatedAdmin(page: Page) {
 }
 
 export async function openAdminSection(page: Page, name: string) {
+  await expect(page.locator('.admin-dashboard-shell')).toBeVisible();
+  const localizedNames: Record<string, RegExp> = {
+    Page: /^(Page|Pagina)$/,
+    Content: /^(Content|Contenuti)$/,
+    Pages: /^(Pages|Pagine)$/,
+    'Site editor': /^(Site editor|Editor sito)$/,
+  };
+  const accessibleName = localizedNames[name] ?? new RegExp(`^${name}$`);
   const visualSection = page.getByRole('navigation', { name: 'Site sections' })
-    .getByRole('button', { name, exact: true });
+    .getByRole('button', { name: accessibleName });
   if (await visualSection.isVisible()) {
     await visualSection.click();
     return;
@@ -51,17 +59,16 @@ export async function openAdminSection(page: Page, name: string) {
   const visualSectionNames = ['Page', 'Content', 'Menu', 'Shop', 'Pages'];
   if (visualSectionNames.includes(name)) {
     const siteEditorButton = page.locator('.admin-dashboard-nav-page')
-      .getByRole('button', { name: 'Site editor', exact: true });
-    if (await siteEditorButton.isVisible()) {
-      await siteEditorButton.click();
-      await expect(visualSection).toBeVisible();
-      await visualSection.click();
-      return;
-    }
+      .getByRole('button', { name: localizedNames['Site editor'] });
+    await expect(siteEditorButton).toBeVisible();
+    await siteEditorButton.click();
+    await expect(visualSection).toBeVisible();
+    await visualSection.click();
+    return;
   }
 
   const sectionButton = page.locator('.admin-dashboard-nav')
-    .getByRole('button', { name, exact: true });
+    .getByRole('button', { name: accessibleName });
   await expect(sectionButton).toBeVisible();
   await sectionButton.click();
 }
