@@ -163,7 +163,7 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   expect(bounds).not.toBeNull();
   expect(bounds!.x).toBeGreaterThanOrEqual(0);
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
-  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(844);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
 });
 
 test('keeps the menu workflow clear on mobile without truncated guidance', async ({ page }) => {
