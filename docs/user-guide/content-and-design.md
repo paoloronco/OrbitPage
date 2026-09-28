@@ -51,9 +51,9 @@ Main pages and additional pages have no block count quota. Large pages are still
 
 ### Internal page navigation
 
-Use **Internal page navigation** to connect the current block-based page to any other active destination without copying its public URL. The picker includes Link, Menu, Shop on OrbitPage SaaS, and published additional pages. It is available both in Content > Link and inside every additional page.
+Use **Internal page navigation** to connect the current block-based page to any other active destination without copying its public URL. The picker includes Home, Menu, Shop on OrbitPage SaaS, and published additional pages. It is available both in Content > Link and inside every additional page. Choose **Horizontal menu** for a single row of page tabs like Home, Shop, About, and Contact.
 
-Each navigation block can contain up to 12 destinations. Choose full-width cards, two or three side-by-side cards, or small wrapping buttons. Labels, supporting descriptions and symbols are editable; descriptions and icons can be hidden, while filled, outline and minimal appearances inherit the active theme and any block-level color overrides.
+Each navigation block can contain up to 12 destinations. Choose a horizontal menu, full-width cards, two or three side-by-side cards, or small wrapping buttons. Labels, supporting descriptions and symbols are editable; descriptions and icons can be hidden, while filled, outline and minimal appearances inherit the active theme and any block-level color overrides.
 
 Internal paths are resolved from the OrbitPage root, so navigation remains correct on custom domains, hosted username routes and self-hosted subfolder installations. If an additional-page slug changes, reopen any navigation block that points to it and select the renamed destination again.
 

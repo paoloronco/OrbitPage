@@ -46,7 +46,7 @@ export interface SocialRowBlockData {
 }
 
 export type InternalLinkKind = 'link' | 'menu' | 'shop' | 'page';
-export type InternalLinksLayout = 'stacked' | 'grid' | 'buttons';
+export type InternalLinksLayout = 'stacked' | 'grid' | 'buttons' | 'tabs';
 export type InternalLinksItemStyle = 'filled' | 'outline' | 'minimal';
 
 export interface InternalLinkItemData {
@@ -141,9 +141,9 @@ const socialRowLayouts: SocialRowLayout[] = ['icons', 'pills', 'grid'];
 const socialRowIconStyles: SocialRowIconStyle[] = ['brand', 'theme', 'outline'];
 const socialLinkPlatforms: SocialLinkPlatform[] = ['auto', 'page', 'link', 'website', 'instagram', 'facebook', 'tiktok', 'x', 'youtube', 'linkedin', 'whatsapp', 'telegram', 'discord', 'github', 'email'];
 const internalLinkKinds: InternalLinkKind[] = ['link', 'menu', 'shop', 'page'];
-const internalLinksLayouts: InternalLinksLayout[] = ['stacked', 'grid', 'buttons'];
+const internalLinksLayouts: InternalLinksLayout[] = ['stacked', 'grid', 'buttons', 'tabs'];
 const internalLinksItemStyles: InternalLinksItemStyle[] = ['filled', 'outline', 'minimal'];
-const internalLinkPathPattern = /^\/(?:links|menu|shop|[a-z0-9]+(?:-[a-z0-9]+)*)$/;
+const internalLinkPathPattern = /^\/(?:links|menu|shop|[a-z0-9]+(?:-[a-z0-9]+)*)?$/;
 
 export const parseBlockContent = <T>(content: string | null | undefined): T | undefined => {
   const parsed = parseJson(content);

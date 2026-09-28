@@ -535,11 +535,11 @@ export const AdminView = ({
   ];
   const internalDestinations: InternalDestinationOption[] = [
     ...(contentRouting.linkEnabled ? [{
-      id: "link",
+      id: "home",
       kind: "link" as const,
-      path: "/links",
-      title: tr("Links", "Link"),
-      description: tr("Profile, links and content blocks", "Profilo, link e blocchi di contenuto"),
+      path: "/",
+      title: tr("Home", "Home"),
+      description: tr("Main page", "Pagina principale"),
     }] : []),
     ...(menu.enabled ? [{
       id: "menu",
@@ -882,9 +882,9 @@ export const AdminView = ({
       publicPageHref={publicPageHref}
       availablePages={subpages.filter((page) => page.enabled).map((page) => ({
         title: page.title || page.slug,
-        url: `${publicPageHref.replace(/\/$/, "")}/${page.slug}`,
+        url: `/${page.slug}`,
       }))}
-      internalDestinations={internalDestinations.filter((destination) => destination.path !== "/links")}
+      internalDestinations={internalDestinations}
       visualMode
       visualFocusLinkId={visualLinkId}
       visualEditRequest={visualEditRequest}
@@ -1391,9 +1391,9 @@ export const AdminView = ({
                       publicPageHref={publicPageHref}
                       availablePages={subpages.filter((page) => page.enabled).map((page) => ({
                         title: page.title || page.slug,
-                        url: `${publicPageHref.replace(/\/$/, "")}/${page.slug}`,
+                        url: `/${page.slug}`,
                       }))}
-                      internalDestinations={internalDestinations.filter((destination) => destination.path !== "/links")}
+                      internalDestinations={internalDestinations}
                     />
                   </div>
                   {showEmbeddedPreview && <aside className="admin-workbench-rail">

@@ -274,8 +274,8 @@ export const LinkManager = ({
     }
     appendBlock({
       id: Date.now().toString(),
-      title: tr("Explore", "Esplora"),
-      description: tr("Continue through this page", "Continua a esplorare questa pagina"),
+      title: "",
+      description: "",
       url: "",
       type: "internal_links",
       content: buildBlockContent({
@@ -287,11 +287,11 @@ export const LinkManager = ({
           description: destination.description,
           icon: destination.icon || "",
         })),
-        layout: "stacked",
+        layout: "tabs",
         columns: 2,
         itemStyle: "filled",
-        showDescriptions: true,
-        showIcons: true,
+        showDescriptions: false,
+        showIcons: false,
       }),
       status: "live",
       size: "medium",
@@ -829,7 +829,7 @@ export const LinkManager = ({
       icon: LayoutGrid,
       items: [
         { id: "link", title: "Link", description: tr("A clear card for any destination.", "Una card chiara per qualsiasi destinazione."), keywords: "url website destination sito", icon: Link, onSelect: addNewLink },
-        { id: "internal-links", title: tr("Internal page navigation", "Navigazione interna"), description: tr("Link Menu, Shop and pages with cards or compact buttons.", "Collega Menu, Shop e pagine con card o pulsanti compatti."), keywords: "internal navigation pages shop menu cards buttons navigazione pagine pulsanti", icon: LayoutGrid, onSelect: addInternalLinks, badge: internalDestinations.length === 0 ? tr("No destinations", "Nessuna destinazione") : undefined, restricted: internalDestinations.length === 0 },
+        { id: "internal-links", title: tr("Internal page navigation", "Navigazione interna"), description: tr("Add a horizontal menu for Home, Shop and your pages.", "Aggiungi un menu orizzontale per Home, Shop e le tue pagine."), keywords: "internal navigation pages shop menu cards buttons tabs navigazione pagine pulsanti", icon: LayoutGrid, onSelect: addInternalLinks, badge: internalDestinations.length === 0 ? tr("No destinations", "Nessuna destinazione") : undefined, restricted: internalDestinations.length === 0 },
         { id: "compact-links", title: tr("Compact links", "Link compatti"), description: tr("Social profiles and page shortcuts.", "Profili social e collegamenti alle pagine."), keywords: "social icons instagram facebook shortcut icone", icon: Share2, onSelect: addNewSocialRow, badge: hasCompactLinks ? tr("Added", "Aggiunto") : undefined, restricted: hasCompactLinks },
         { id: "contact", title: tr("Contact", "Contatto"), description: tr("Phone, email and useful contact details.", "Telefono, email e contatti utili."), keywords: "phone email whatsapp telefono contatti", icon: UserCircle2, onSelect: addNewContact },
         { id: "cta", title: "CTA", description: tr("A prominent action such as booking or buying.", "Un'azione in evidenza, come prenotare o acquistare."), keywords: "action booking buy prenota acquista button", icon: MousePointerClick, onSelect: addNewCta },

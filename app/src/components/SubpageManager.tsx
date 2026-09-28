@@ -285,7 +285,7 @@ export function SubpageManager({
               publicPageHref={pageUrl}
               availablePages={internalDestinations
                 .filter((destination) => destination.kind === "page" && destination.path !== `/${selected?.slug}`)
-                .map((destination) => ({ title: destination.title, url: `${publicPageHref.replace(/\/$/, "")}${destination.path}` }))}
+                .map((destination) => ({ title: destination.title, url: destination.path }))}
               internalDestinations={internalDestinations.filter((destination) => destination.path !== `/${selected?.slug}`)}
             />
           </section>

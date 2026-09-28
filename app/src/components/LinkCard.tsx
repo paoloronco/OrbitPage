@@ -1163,6 +1163,7 @@ export const LinkCard = ({
                         ["stacked", tr("Cards", "Card"), tr("Full-width navigation cards", "Card di navigazione a tutta larghezza")],
                         ["grid", tr("Side by side", "Affiancate"), tr("Two or three cards per row", "Due o tre card per riga")],
                         ["buttons", tr("Small buttons", "Pulsanti piccoli"), tr("Compact wrapping actions", "Azioni compatte su più righe")],
+                        ["tabs", tr("Horizontal menu", "Menu orizzontale"), tr("One row of page tabs", "Una riga di pulsanti pagina")],
                       ] as Array<[InternalLinksLayout, string, string]>).map(([value, label, description]) => (
                         <button
                           aria-pressed={internalLinksData.layout === value}
@@ -1208,7 +1209,7 @@ export const LinkCard = ({
                       </label>
                       <label className="admin-internal-links-switch">
                         <span><strong>{tr("Descriptions", "Descrizioni")}</strong><small>{tr("Add context below each label", "Aggiungi contesto sotto ogni etichetta")}</small></span>
-                        <Switch checked={internalLinksData.showDescriptions} disabled={internalLinksData.layout === 'buttons'} onCheckedChange={(checked) => updateInternalLinksData('showDescriptions', checked)} />
+                        <Switch checked={internalLinksData.showDescriptions} disabled={internalLinksData.layout === 'buttons' || internalLinksData.layout === 'tabs'} onCheckedChange={(checked) => updateInternalLinksData('showDescriptions', checked)} />
                       </label>
                     </div>
 

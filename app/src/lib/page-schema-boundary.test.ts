@@ -161,6 +161,7 @@ describe('canonical page schema boundary', () => {
             { label: 'Instagram', platform: 'instagram', url: '@orbitpage' },
             { label: 'WhatsApp', platform: 'whatsapp', url: '+39 123 456 7890' },
             { label: 'Email', platform: 'email', url: 'hello@orbitpage.com' },
+            { label: 'About', platform: 'page', url: '/about' },
           ],
         }),
       },
@@ -174,6 +175,7 @@ describe('canonical page schema boundary', () => {
       expect.objectContaining({ platform: 'instagram', url: 'https://www.instagram.com/orbitpage/' }),
       expect.objectContaining({ platform: 'whatsapp', url: 'https://wa.me/391234567890' }),
       expect.objectContaining({ platform: 'email', url: 'mailto:hello@orbitpage.com' }),
+      expect.objectContaining({ platform: 'page', url: '/about' }),
     ]);
 
     expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {

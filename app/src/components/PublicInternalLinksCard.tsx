@@ -34,6 +34,7 @@ export const PublicInternalLinksCard = ({ link }: PublicInternalLinksCardProps) 
     ...getPublicBlockStyle(link),
     "--internal-link-columns": data.columns,
   } as CSSProperties;
+  const currentPath = typeof window === "undefined" ? "" : window.location.pathname.replace(/\/$/, "") || "/";
 
   return (
     <Card className={`public-internal-links glass-card ${getPublicBlockPadding(link.size)}`} style={style}>
@@ -65,12 +66,15 @@ export const PublicInternalLinksCard = ({ link }: PublicInternalLinksCardProps) 
         {data.items.map((item) => {
           const Icon = destinationIcons[item.kind];
           const label = item.label || defaultLabel(item.kind);
-          const showDescription = data.layout !== "buttons" && data.showDescriptions && item.description;
+          const href = withPageRootPath(item.path);
+          const isCurrent = currentPath === (href.replace(/\/$/, "") || "/");
+          const showDescription = data.layout !== "buttons" && data.layout !== "tabs" && data.showDescriptions && item.description;
           return (
             <a
+              aria-current={isCurrent ? "page" : undefined}
               aria-label={label}
               className="public-internal-link"
-              href={withPageRootPath(item.path)}
+              href={href}
               key={item.id}
               onClick={() => trackPublicLinkClick(link.id)}
             >
@@ -83,7 +87,7 @@ export const PublicInternalLinksCard = ({ link }: PublicInternalLinksCardProps) 
                 <strong>{label}</strong>
                 {showDescription ? <small>{item.description}</small> : null}
               </span>
-              {data.layout !== "buttons" && <ArrowRight className="public-internal-link__arrow" aria-hidden="true" />}
+              {data.layout !== "buttons" && data.layout !== "tabs" && <ArrowRight className="public-internal-link__arrow" aria-hidden="true" />}
             </a>
           );
         })}
