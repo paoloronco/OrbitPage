@@ -2,10 +2,6 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 export const E2E_ADMIN_PASSWORD = 'OrbitPageE2E123!';
 
-export async function useClassicAdmin(page: Page) {
-  await page.addInitScript(() => window.localStorage.setItem('orbitpage.admin.new-ui', 'false'));
-}
-
 export async function openAuthenticatedAdmin(page: Page) {
   await page.goto('/admin');
 

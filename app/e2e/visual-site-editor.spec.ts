@@ -15,14 +15,35 @@ async function protrudingMenuContent(editor: Locator) {
   });
 }
 
+test("Page and Content keep the same editor and preview geometry", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await openAuthenticatedAdmin(page);
+  expect(await page.locator("html").evaluate((element) => getComputedStyle(element).scrollbarGutter)).toBe("stable");
+
+  const geometry = () => page.locator(".visual-site-editor__workspace").evaluate((workspace) => {
+    const preview = workspace.querySelector<HTMLElement>(".visual-site-editor__canvas")!;
+    const inspector = workspace.querySelector<HTMLElement>(".visual-site-editor__inspector")!;
+    return {
+      workspace: workspace.getBoundingClientRect().width,
+      preview: preview.getBoundingClientRect().width,
+      inspector: inspector.getBoundingClientRect().width,
+    };
+  });
+
+  await page.getByRole("button", { name: "Page", exact: true }).click();
+  const pageGeometry = await geometry();
+  await page.getByRole("button", { name: "Content", exact: true }).click();
+  await expect(page.locator(".visual-site-editor__inspector")).toHaveAttribute("aria-label", "Content block");
+  const contentGeometry = await geometry();
+
+  expect(contentGeometry).toEqual(pageGeometry);
+});
+
 // Legacy arrangement assertions depend on the removed Done/Reset toolbar; focused editor and viewport tests below remain active.
-test.skip("New UI edits the real page through selectable elements and keeps the preference", async ({ browserName, page }) => {
+test.skip("Visual editor edits the real page through selectable elements", async ({ browserName, page }) => {
   test.setTimeout(90_000);
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
-
-  const classicUiSwitch = page.getByRole("switch", { name: "Switch between the classic dashboard and the visual editor." });
-  if (!(await classicUiSwitch.isChecked())) await classicUiSwitch.click();
 
   await page.getByRole("button", { name: "Content", exact: true }).click();
 
@@ -58,15 +79,12 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   await expect(page.getByText("Unsaved changes")).toBeHidden();
 
   await page.getByRole("button", { name: "Page", exact: true }).click();
-  await classicUiSwitch.click();
-  await expect(classicUiSwitch).not.toBeChecked();
   await expect(page.locator(".visual-site-editor")).toBeVisible();
   await expect(page.locator('[data-preview-device="desktop"]')).toBeVisible();
   await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toHaveCount(0);
   await expect(page.locator(".admin-dashboard-nav-page").getByRole("button", { name: "Site editor", exact: true })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole("switch", { name: "Switch between the classic dashboard and the visual editor." })).not.toBeChecked();
   await expect(page.locator(".visual-site-editor")).toBeVisible();
 
   const inspector = page.locator(".visual-site-editor__inspector");
@@ -387,9 +405,7 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
   await expect(page.locator(".visual-site-editor")).toBeHidden();
   await expect(page.locator(".admin-theme-customizer")).toBeVisible();
 
-  await page.getByRole("switch", { name: "Switch between the classic dashboard and the visual editor." }).click();
-  await expect(page.locator(".visual-site-editor")).toBeHidden();
-  await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toBeVisible();
+  await expect(page.getByText("Classic UI", { exact: true })).toHaveCount(0);
 });
 
 test("Arrange uses preset sizes, compact handles and persistent text alignment", async ({ page }) => {
@@ -430,9 +446,8 @@ test("Arrange uses preset sizes, compact handles and persistent text alignment",
   await expect(page.locator('[data-profile-layout-item="work"]')).toHaveAttribute("data-profile-layout-align", "left");
 });
 
-test("New UI keeps mobile navigation and editor destinations explicit", async ({ page }) => {
+test("Visual editor keeps mobile navigation and destinations explicit", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));
   await openAuthenticatedAdmin(page);
 
   const topbarPublicPage = page.locator(".admin-dashboard-mobile-public-page");
@@ -442,16 +457,11 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
   expect(topbarPublicPageBounds).not.toBeNull();
   expect(topbarPublicPageBounds!.height).toBeGreaterThanOrEqual(44);
 
-  await expect(page.locator(".admin-dashboard-header .admin-new-ui-toggle")).toBeHidden();
   await expect(page.locator(".admin-dashboard-header-public-page")).toBeHidden();
   await expect(page.locator('[data-preview-device="mobile"]')).toBeVisible();
   await page.getByRole("button", { name: "Open navigation" }).click();
 
-  const mobileMode = page.locator(".admin-dashboard-mobile-editor-mode");
-  await expect(mobileMode).toBeVisible();
-  await expect(mobileMode).toContainText("Classic UI");
-  await expect(mobileMode).toHaveRole("switch");
-  await expect(mobileMode).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByText("Classic UI", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Close navigation" }).first().click();
 
   const destinations = page.getByRole("navigation", { name: "Site sections" }).locator(":scope > button");
@@ -475,8 +485,7 @@ test("New UI keeps mobile navigation and editor destinations explicit", async ({
   expect(compactOverflow).toBeLessThanOrEqual(1);
 });
 
-test("New UI restores the selected editor section from its URL", async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));
+test("Visual editor restores the selected section from its URL", async ({ page }) => {
   await openAuthenticatedAdmin(page);
 
   const sections = page.getByRole("navigation", { name: "Site sections" });
@@ -494,9 +503,8 @@ test("New UI restores the selected editor section from its URL", async ({ page }
   await expect(sections.getByRole("button", { name: "Shop", exact: true })).toHaveAttribute("aria-current", "page");
 });
 
-test("New UI gives Menu a focused inspector without clipped labels", async ({ page }) => {
+test("Visual editor gives Menu a focused inspector without clipped labels", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
-  await page.addInitScript(() => window.localStorage.setItem("orbitpage.admin.new-ui", "true"));
   await openAuthenticatedAdmin(page);
 
   await page.getByRole("navigation", { name: "Site sections" }).getByRole("button", { name: "Menu", exact: true }).click();

@@ -14,7 +14,6 @@ export type HostedSurfaceConfig = {
   }>;
   section: AdminTab;
   locale: string;
-  newUiEnabled?: boolean;
   extensions?: {
     panels?: AdminTab[];
     shop?: {
@@ -32,7 +31,6 @@ export type HostedSurfaceConfig = {
   siteUrl?: string;
   onSignOut?: () => void;
   onLocaleChange?: (locale: string) => void;
-  onNewUiChange?: (enabled: boolean) => void;
   contentSection?: ContentDestination;
   onContentRoutingChange?: (routing: ContentRouting) => void;
   onContentSectionChange?: (section: ContentDestination) => void;

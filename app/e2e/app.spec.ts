@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { contentSaveButton, openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+import { contentSaveButton, openAuthenticatedAdmin } from './helpers';
 
-test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
 test.describe('OrbitPage Application Flow', () => {
   test('should complete first-time setup, edit profile, add a link, and verify public page', async ({ page }, testInfo) => {

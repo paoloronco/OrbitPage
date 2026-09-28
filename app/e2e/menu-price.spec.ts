@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { openAdminSection, openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
-test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
 test('accepts localized menu prices without rewriting the field while typing', async ({ page }, testInfo) => {
   const priceByProject: Record<string, string> = {
@@ -11,8 +10,7 @@ test('accepts localized menu prices without rewriting the field while typing', a
   };
   const basePrice = priceByProject[testInfo.project.name] ?? '40,45';
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
-  await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
+  await openAdminSection(page, 'Menu');
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
   await workflow.getByRole('button', { name: /Items/ }).click();
@@ -43,8 +41,7 @@ test('accepts localized menu prices without rewriting the field while typing', a
 test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
-  await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
+  await openAdminSection(page, 'Menu');
 
   const editor = page.locator('.menu-editor-stack');
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
@@ -87,8 +84,7 @@ test('keeps the menu workspace inside a laptop viewport', async ({ page }) => {
 test('keeps menu categories and items usable on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openAuthenticatedAdmin(page);
-  await openAdminSection(page, 'Content');
-  await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
+  await openAdminSection(page, 'Menu');
 
   const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
   await expect(workflow).toBeVisible();
@@ -130,8 +126,7 @@ test('creates, edits, reorders and removes menu content through the visible cont
   const itemLabel = `Tiramisu ${testSuffix}`;
 
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
-  await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
+  await openAdminSection(page, 'Menu');
 
   await page.getByRole('button', { name: 'Add', exact: true }).click();
   const selectedCategory = page.getByRole('region', { name: 'Selected category' });
@@ -165,10 +160,8 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await expect(page.locator('.admin-profile-saved-notice')).toContainText('Saved');
 
   await page.goto(`/dashboard/content/menu?e2eReload=${Date.now()}`, { waitUntil: 'commit' });
-  const contentNavigation = page.getByRole('button', { name: 'Content', exact: true });
-  await expect(contentNavigation).toBeVisible({ timeout: 15_000 });
-  await contentNavigation.click();
-  await page.locator('.content-workspace-option-main').filter({ hasText: /^Menu/ }).click();
+  await expect(page.locator('.admin-dashboard-shell')).toBeVisible({ timeout: 15_000 });
+  await openAdminSection(page, 'Menu');
   await page.getByRole('button', { name: `${subsectionLabel} 1`, exact: true }).click();
   await page.getByRole('button', { name: 'Manage items in this category 1' }).click();
   await page.getByRole('button', { name: `Edit ${itemLabel}` }).click();

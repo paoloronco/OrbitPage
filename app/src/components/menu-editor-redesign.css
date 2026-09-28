@@ -22,7 +22,7 @@
   min-width: 0;
 }
 
-/* Classic UI: broad overview, explicit hierarchy, list and editor together. */
+/* Overview layout: broad hierarchy with list and editor together. */
 
 .menu-editor-stack--classic .menu-editor-intro {
   position: relative;

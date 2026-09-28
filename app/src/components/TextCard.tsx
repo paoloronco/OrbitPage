@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole, RotateCcw } from "@/components/ui/material-icons";
+import { ChevronDown, Edit, Trash2, Upload, Type, ExternalLink, Plus, X, Eye, EyeOff, Image, Loader2, LockKeyhole, RotateCcw } from "@/components/ui/material-icons";
 import { LinkData } from "./LinkCard";
 import { LinkEditMode } from "@/lib/permissions";
 import { isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT } from "@/lib/media-validation";
@@ -479,10 +479,12 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             </section>
 
             {/* Link Scheduler */}
-            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
-              <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</p>
-              </div>
+            <details className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 sm:p-4">
+                <span className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</span>
+                <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-slate-200 p-3 sm:p-4">
             {!schedulingEnabled && (
               <div className="admin-inline-plan-lock mb-3">
                 <LockKeyhole className="h-4 w-4" />
@@ -579,7 +581,8 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 />
               </div>
             </div>
-            </section>
+              </div>
+            </details>
 
             {/* Icon Upload */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">

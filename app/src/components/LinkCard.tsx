@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ArrowRight, CalendarClock, Code2, FileText, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, FileText, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";
@@ -1726,10 +1726,12 @@ export const LinkCard = ({
 
             {/* Link Scheduler */}
             {!isInternalLinks && (
-            <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
-              <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">{isMenu ? tr('Menu availability schedule', 'Programmazione disponibilità menu') : tr('Status, campaign & schedule', 'Stato, campagna e programmazione')}</p>
-              </div>
+            <details className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 sm:p-4">
+                <span className="text-sm font-semibold text-slate-900">{isMenu ? tr('Menu availability schedule', 'Programmazione disponibilità menu') : tr('Status, campaign & schedule', 'Stato, campagna e programmazione')}</span>
+                <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="border-t border-slate-200 p-3 sm:p-4">
               {!schedulingEnabled && (
                 <div className="admin-inline-plan-lock mb-3">
                   <LockKeyhole className="h-4 w-4" />
@@ -1839,7 +1841,8 @@ export const LinkCard = ({
                 />
               </div>
               </div>
-            </section>
+              </div>
+            </details>
             )}
               </>
             )}

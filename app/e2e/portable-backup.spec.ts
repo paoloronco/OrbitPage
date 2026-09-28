@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import JSZip from 'jszip';
 
-import { openAdminSection, openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 import { prepareHostedRestoreBackup } from '../src/lib/hosted-backup-import';
 import { createPortableBackupArchive, readPortableBackupArchive } from '../src/lib/portable-backup';
 
@@ -18,7 +18,6 @@ test.beforeEach(async ({ page }) => {
   expect(uploadRoot.startsWith(`${e2eDataRoot}${path.sep}`)).toBe(true);
   fs.rmSync(uploadRoot, { recursive: true, force: true });
   fs.mkdirSync(uploadRoot, { recursive: true });
-  await useClassicAdmin(page);
 });
 
 test('moves a backup with images through OSS restore and the SaaS import path', async ({ page }) => {

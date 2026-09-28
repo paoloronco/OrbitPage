@@ -123,7 +123,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('TXT files');
     expect(mockState.privacyProps[0]).toMatchObject({ readOnly: true });
     expect(mockState.publishProps[0]).toMatchObject({ readOnly: true, canUseQr: true, canUseDiscovery: true });
-    expect(mockState.previewProps).toHaveLength(2);
+    expect(mockState.previewProps).toHaveLength(1);
     expect(mockState.previewProps[0]).toMatchObject({ publicPageHref: '/' });
     expect(html).not.toContain('Admin access');
     expect(html).toContain('admin-dashboard-shell');
@@ -156,9 +156,9 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('>90d</button>');
     expect(html).not.toContain('Smart CTA clicks will appear here separately');
     expect(html).toContain('admin-dashboard-mobile-nav-button');
-    expect(html).toContain('content-workspace-option-locked');
+    expect(html).toContain('data-status="locked"');
     expect(html).toContain('Edit with AI');
-    expect(html).toContain('Classic UI');
+    expect(html).not.toContain('Classic UI');
     expect(html).toContain('>English</option>');
     expect(html.indexOf('class="ai-page-agent')).toBeGreaterThan(html.indexOf('</footer>'));
     expect(html).not.toContain('Beta');
@@ -252,7 +252,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('admin-readonly-stage');
     expect(html).toContain('inert=""');
     expect(html).toContain('ProfileSection');
-    expect(html).toContain('LinkManager');
+    expect(html).toContain('visual-site-editor');
     expect(html).not.toContain('>Guide<');
     expect(html).not.toContain('Page checklist');
   });
@@ -355,7 +355,7 @@ describe('AdminView demo mode', () => {
 
     expect(html).toContain('data-orbitpage-hosted-shop-slot');
     expect(html).toContain('aria-current="page"');
-    expect(html).toContain('Digital products and services with Stripe checkout');
+    expect(html).toContain('>Shop</span>');
     mockState.hostedConfig = null;
     mockState.integratedHostedSurface = false;
   });
