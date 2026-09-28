@@ -650,9 +650,9 @@ export const campaignLinksApi = {
 
 export const personalPageApi = {
   status: async (): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page'),
-  create: async (slug: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
+  create: async (): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
     method: 'POST',
-    body: JSON.stringify({ action: 'create', slug }),
+    body: JSON.stringify({ action: 'create' }),
   }),
   setSlug: async (slug: string): Promise<PersonalPageStatus> => apiRequest<PersonalPageStatus>('/account/personal-page', {
     method: 'POST',

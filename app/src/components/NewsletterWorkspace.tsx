@@ -80,53 +80,6 @@ async function newsletterFetch<T>(
   return newsletterRequest<T>(input, init);
 }
 
-function templateCampaign(
-  kind: "restaurant" | "venue" | "general",
-  sender: string,
-): CampaignDraft {
-  if (kind === "restaurant")
-    return {
-      ...EMPTY_CAMPAIGN,
-      name: "New menu",
-      subject: `A new menu from ${sender || "us"}`,
-      preheader: "Seasonal dishes, familiar favourites and something new.",
-      content: {
-        ...EMPTY_CAMPAIGN.content,
-        eyebrow: "From the kitchen",
-        headline: "The new menu is ready",
-        body: "We have refreshed the menu with new seasonal ingredients and a few dishes we have been waiting to share. Take a first look, then reserve your table.",
-        ctaLabel: "View the menu",
-        accentColor: "#b42318",
-        backgroundColor: "#fff4ed",
-        contentColor: "#3b1d16",
-      },
-    };
-  if (kind === "venue")
-    return {
-      ...EMPTY_CAMPAIGN,
-      name: "Weekly events",
-      subject: `This week at ${sender || "the venue"}`,
-      preheader: "New dates, guests and the details you need for the weekend.",
-      content: {
-        ...EMPTY_CAMPAIGN.content,
-        eyebrow: "This week",
-        headline: "Three nights. Three different sounds.",
-        body: "The new programme is live. Discover this week's guests, set times and reservation details before the dates fill up.",
-        ctaLabel: "See the events",
-        accentColor: "#7c3aed",
-        backgroundColor: "#f3e8ff",
-        contentColor: "#20123a",
-      },
-    };
-  return {
-    ...EMPTY_CAMPAIGN,
-    name: "Monthly update",
-    subject: `News from ${sender || "our team"}`,
-    preheader: "A concise update with what is new and what comes next.",
-    content: { ...EMPTY_CAMPAIGN.content },
-  };
-}
-
 function campaignFromSaved(campaign: NewsletterCampaign): CampaignDraft {
   return {
     campaignId: campaign.campaignId,
@@ -1083,39 +1036,6 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                 </button>
               )}
             </header>
-            <div
-              className="newsletter-template-row"
-              aria-label="Campaign templates"
-            >
-              <button
-                onClick={() =>
-                  setCampaign(
-                    templateCampaign("restaurant", data.settings.fromName),
-                  )
-                }
-                type="button"
-              >
-                Restaurant
-              </button>
-              <button
-                onClick={() =>
-                  setCampaign(templateCampaign("venue", data.settings.fromName))
-                }
-                type="button"
-              >
-                Venue
-              </button>
-              <button
-                onClick={() =>
-                  setCampaign(
-                    templateCampaign("general", data.settings.fromName),
-                  )
-                }
-                type="button"
-              >
-                General
-              </button>
-            </div>
             <div className="newsletter-composer-fields">
               <label className="field">
                 <span className="label">Internal campaign name</span>

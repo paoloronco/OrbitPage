@@ -720,7 +720,7 @@ describe('API Endpoints', () => {
     expect(dbRun).not.toHaveBeenCalledWith(expect.stringContaining('DELETE FROM admin_users'));
   });
 
-  it('recreates a removed public page with its requested slug', async () => {
+  it('recreates a removed public page at the installation root', async () => {
     vi.mocked(dbGet).mockImplementation(async (_sql, params) => (
       params?.[0] === 'public_page_active' ? { value: '0' } : null
     ));
@@ -729,11 +729,11 @@ describe('API Endpoints', () => {
       .post('/api/account/personal-page')
       .set('Authorization', 'Bearer mock-token')
       .set('X-Forwarded-For', '198.51.100.42')
-      .send({ action: 'create', slug: 'old-page' });
+      .send({ action: 'create' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ success: true, active: true, slug: 'old-page', confirmationLabel: 'old-page' });
-    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining("VALUES ('page_slug'"), ['old-page']);
+    expect(response.body).toMatchObject({ success: true, active: true, slug: null, confirmationLabel: 'PAGE' });
+    expect(dbRun).toHaveBeenCalledWith("DELETE FROM instance_settings WHERE key = 'page_slug'");
   });
 
   it('GET /api/menu removes subsections and products beneath hidden parents', async () => {

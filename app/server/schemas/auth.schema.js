@@ -85,7 +85,7 @@ export const ResetApplicationBodySchema = z.object({
 });
 
 export const PersonalPageActionBodySchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('create'), slug: PageSlugSchema }),
+  z.object({ action: z.literal('create') }),
   z.object({ action: z.literal('set-slug'), slug: PageSlugSchema }),
   z.object({
     action: z.literal('delete'),

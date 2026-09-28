@@ -29,6 +29,12 @@
 .team-heading h2, .account-section-heading h2 { font-size: 20px; font-weight: 500; margin: 0; }
 .team-heading .muted, .account-section-heading .muted { line-height: 1.55; margin: 7px 0 0; max-width: 720px; }
 .team-heading > svg, .account-section-heading > svg { color: var(--team-blue-strong); flex: 0 0 auto; }
+.team-title-row { align-items: center; display: flex; gap: 6px; }
+.team-doc-help { display: inline-flex; position: relative; }
+.team-doc-help-trigger { align-items: center; border-radius: 50%; color: var(--team-muted); display: inline-flex; height: 24px; justify-content: center; width: 24px; }
+.team-doc-help-trigger:hover, .team-doc-help-trigger:focus-visible { background: #edf3ff; color: var(--team-blue-strong); outline: none; }
+.team-doc-tooltip { background: #152338; border-radius: 7px; color: #fff; font-size: 11px; font-weight: 700; left: 50%; line-height: 1.4; opacity: 0; padding: 8px 10px; pointer-events: none; position: absolute; top: calc(100% + 6px); transform: translate(-50%, -3px); transition: opacity 150ms ease, transform 150ms ease, visibility 150ms ease; visibility: hidden; white-space: nowrap; z-index: 8; }
+.team-doc-help:hover .team-doc-tooltip, .team-doc-help:focus-within .team-doc-tooltip { opacity: 1; transform: translate(-50%, 0); visibility: visible; }
 
 .team-toolbar { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
 .team-seat-summary { color: var(--team-ink); font-size: 12px; font-weight: 850; margin: 0; }

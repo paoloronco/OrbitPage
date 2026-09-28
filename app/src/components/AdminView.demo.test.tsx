@@ -144,8 +144,8 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Delete account');
     expect(html).not.toContain('PasswordManager');
     expect(html).toContain('Plan');
-    expect(html).toContain('Everything included in the OSS edition is unlocked.');
-    expect(html).toContain('Explore OrbitPage SaaS');
+    expect(html).toContain('Self-hosted with no subscription or feature tiers.');
+    expect(html).toContain('View SaaS plans');
     expect(html).toContain('/en-US/pricing');
     expect(html).toContain('data-testid="managed-analytics"');
     expect(html).toContain('managed-analytics-primary-kpis');

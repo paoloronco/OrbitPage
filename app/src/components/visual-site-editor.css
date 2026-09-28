@@ -431,12 +431,12 @@
 
   .admin-content-start__primary {
     width: 100%;
-    min-height: 54px;
-    gap: 9px;
-    border-radius: 9px;
+    min-height: 66px;
+    gap: 10px;
+    border-radius: 10px;
     background: #315ee7;
     color: #fff;
-    font-size: 15px;
+    font-size: 17px;
     font-weight: 800;
     box-shadow: 0 8px 20px rgb(49 94 231 / 20%);
   }
@@ -447,31 +447,13 @@
 
   .admin-content-quick-add {
     display: grid;
-    gap: 10px;
-  }
-
-  .admin-content-quick-add__heading {
-    display: grid;
-    gap: 2px;
-    padding: 0 2px;
-  }
-
-  .admin-content-quick-add__heading strong {
-    color: #14213a;
-    font-size: 14px;
-    font-weight: 820;
-  }
-
-  .admin-content-quick-add__heading span {
-    color: #66758d;
-    font-size: 11px;
-    line-height: 1.45;
+    gap: 8px;
   }
 
   .admin-content-quick-add__group {
     display: grid;
-    gap: 8px;
-    padding: 12px;
+    gap: 6px;
+    padding: 10px;
     border: 1px solid #d9e1ec;
     border-radius: 9px;
     background: #fff;
@@ -479,7 +461,7 @@
 
   .admin-content-quick-add__group h3 {
     color: #53637b;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 850;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -488,23 +470,23 @@
   .admin-content-quick-add__grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
+    gap: 5px;
   }
 
   .admin-content-quick-add__grid button {
     display: grid;
     min-width: 0;
-    min-height: 48px;
-    grid-template-columns: 30px minmax(0, 1fr) auto;
+    min-height: 42px;
+    grid-template-columns: 26px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 8px;
-    padding: 8px;
+    gap: 7px;
+    padding: 6px 7px;
     border: 1px solid #dce4ef;
     border-radius: 8px;
     background: #f9fbff;
     color: #1d2b43;
     font: inherit;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 760;
     text-align: left;
   }
@@ -527,8 +509,8 @@
 
   .admin-content-quick-add__icon {
     display: inline-flex;
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     align-items: center;
     justify-content: center;
     border-radius: 7px;

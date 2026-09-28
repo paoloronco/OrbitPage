@@ -38,9 +38,8 @@ describe('auth schemas', () => {
   });
 
   it('validates personal page creation and destructive confirmation separately', () => {
-    expect(PersonalPageActionBodySchema.parse({ action: 'create', slug: 'new-page' })).toEqual({ action: 'create', slug: 'new-page' });
+    expect(PersonalPageActionBodySchema.parse({ action: 'create' })).toEqual({ action: 'create' });
     expect(PersonalPageActionBodySchema.parse({ action: 'set-slug', slug: 'new-page' })).toEqual({ action: 'set-slug', slug: 'new-page' });
-    expect(() => PersonalPageActionBodySchema.parse({ action: 'create' })).toThrow();
     expect(PersonalPageActionBodySchema.parse({ action: 'delete', confirmation: 'REMOVE my-page', currentPassword: 'Secret123!' })).toMatchObject({ action: 'delete' });
     expect(() => PersonalPageActionBodySchema.parse({ action: 'delete', confirmation: 'REMOVE my-page' })).toThrow();
   });

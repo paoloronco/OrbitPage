@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
+  Info,
   Loader2,
   Pencil,
   Plus,
@@ -250,7 +251,13 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
       <div className="team-heading">
         <div>
           <p className="dashboard-kicker">Team</p>
-          <h2>Workspace members</h2>
+          <div className="team-title-row">
+            <h2>Workspace members</h2>
+            <span className="team-doc-help">
+              <a aria-describedby="team-doc-tooltip" aria-label="Teams and permissions in OrbitPage" className="team-doc-help-trigger" href="https://orbitpage.com/docs/team-and-permissions" rel="noreferrer" target="_blank"><Info aria-hidden="true" size={15} /></a>
+              <span className="team-doc-tooltip" id="team-doc-tooltip" role="tooltip">Teams and permissions in OrbitPage</span>
+            </span>
+          </div>
           <p className="muted">Create a local account for each person. Everyone signs in with their own credentials and receives only the permissions assigned to their role.</p>
         </div>
         <UsersRound aria-hidden="true" size={24} />

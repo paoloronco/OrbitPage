@@ -1194,10 +1194,6 @@ export const LinkManager = ({
           </Button>
 
           <div className="admin-content-quick-add">
-            <div className="admin-content-quick-add__heading">
-              <strong>{tr("Quick add", "Aggiunta rapida")}</strong>
-              <span>{tr("Add a common block directly to your page.", "Aggiungi direttamente un blocco comune alla pagina.")}</span>
-            </div>
             {quickAddGroups.map((group) => (
               <section key={group.id} className="admin-content-quick-add__group">
                 <h3>{group.label}</h3>
