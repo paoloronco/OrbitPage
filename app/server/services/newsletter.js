@@ -25,9 +25,9 @@ export const smtpSchema = z.object({
   replyTo: z.union([z.literal(''), email]).default(''),
   senderType: z.enum(['individual', 'bar', 'restaurant', 'creator', 'business', 'association', 'other']).default('business'),
   footerText: z.string().trim().max(500).default(''),
-  senderAddress: z.string().trim().max(300).default(''),
-  privacyPolicyUrl: httpsUrl.default(''),
-  termsUrl: httpsUrl.default(''),
+  senderAddress: z.string().trim().min(1, "Add the sender's legal address or details.").max(300),
+  privacyPolicyUrl: httpsUrl.refine(Boolean, 'Add the Privacy Policy URL.'),
+  termsUrl: httpsUrl.refine(Boolean, 'Add the Terms URL.'),
 }).strict();
 export const subscriberSchema = z.object({
   email, name: optionalHeader(100).default(''), consentConfirmed: z.literal(true),
@@ -105,6 +105,9 @@ export function verifyNewsletterToken(token, action) {
 }
 
 const settings = () => dbGet('SELECT * FROM newsletter_settings WHERE id = 1');
+export const newsletterComplianceReady = (row) => Boolean(
+  row?.sender_address?.trim() && row.privacy_policy_url?.trim() && row.terms_url?.trim()
+);
 const publicSettings = (row) => ({
   configured: Boolean(row), passwordConfigured: Boolean(row?.password_enc),
   host: row?.host || '', port: row?.port || 587, secure: row?.port === 465,
@@ -112,6 +115,7 @@ const publicSettings = (row) => ({
   replyTo: row?.reply_to || null, senderType: row?.sender_type || 'business',
   footerText: row?.footer_text || '', senderAddress: row?.sender_address || '',
   privacyPolicyUrl: row?.privacy_policy_url || '', termsUrl: row?.terms_url || '',
+  complianceReady: newsletterComplianceReady(row),
   verifiedAt: row?.verified_at || null, updatedAt: row?.updated_at || null,
 });
 const emptyStats = () => ({ attempted: 0, accepted: 0, rejected: 0, openedUnique: 0, clickedUnique: 0, unsubscribed: 0 });
@@ -142,7 +146,7 @@ export async function newsletterDashboard(publicBase, canManage = true) {
     limits: { maxSubscribers: null, maxSendsPerMonth: null, sendsThisMonth: usage?.sent || 0, reservedThisMonth: 0 },
     settings: publicSettings(setting), subscriberCounts,
     subscribers: subscribers.map(subscriberDto), campaigns: campaigns.map(campaignDto),
-    signupUrl: `${publicBase}/newsletter`,
+    signupUrl: setting?.verified_at && newsletterComplianceReady(setting) ? `${publicBase}/newsletter` : null,
   };
 }
 
@@ -243,6 +247,7 @@ export async function queueCampaign(id, scheduledFor) {
   }
   const setting = await settings();
   if (!setting?.verified_at) throw new NewsletterError(409, 'SMTP_VERIFICATION_REQUIRED', 'Verify the SMTP connection before sending.');
+  if (!newsletterComplianceReady(setting)) throw new NewsletterError(409, 'NEWSLETTER_COMPLIANCE_REQUIRED', 'Complete the Newsletter compliance settings before sending campaigns.');
   const audience = await dbGet("SELECT COUNT(*) AS count FROM newsletter_subscribers WHERE status = 'active'");
   if (!audience.count) throw new NewsletterError(409, 'NEWSLETTER_AUDIENCE_EMPTY', 'Add at least one active subscriber before sending.');
   const result = await dbRun(`UPDATE newsletter_campaigns SET status='scheduled', scheduled_for=?, target_count=?,
@@ -313,7 +318,7 @@ export function emailDocument(campaign, subscriber, deliveryId, publicBase, sett
 
 export async function publicLanding() {
   const setting = await settings();
-  if (!setting?.verified_at) return null;
+  if (!setting?.verified_at || !newsletterComplianceReady(setting)) return null;
   return {
     fromName: setting.from_name,
     senderType: setting.sender_type || 'business',
@@ -326,7 +331,7 @@ export async function publicLanding() {
 export async function subscribe(raw) {
   const input = publicSubscriberSchema.parse(raw);
   const setting = await settings();
-  if (!setting?.verified_at) throw new NewsletterError(409, 'NEWSLETTER_UNAVAILABLE', 'This newsletter is not accepting subscriptions right now.');
+  if (!setting?.verified_at || !newsletterComplianceReady(setting)) throw new NewsletterError(409, 'NEWSLETTER_UNAVAILABLE', 'This newsletter is not accepting subscriptions right now.');
   const existing = await dbGet('SELECT * FROM newsletter_subscribers WHERE email = ?', [input.email]);
   if (existing?.status === 'active') return { pending: false, alreadySubscribed: true };
   const id = existing?.id || randomUUID();
@@ -421,6 +426,7 @@ async function sendBatch(id) {
   const campaign = await dbGet('SELECT * FROM newsletter_campaigns WHERE id=?', [id]);
   const setting = await settings();
   if (!setting?.verified_at) throw new Error('SMTP settings are missing or no longer verified.');
+  if (!newsletterComplianceReady(setting)) throw new Error('Newsletter compliance settings are incomplete.');
   const recipients = await dbAll("SELECT * FROM newsletter_subscribers WHERE status='active' AND id>? ORDER BY id LIMIT 50", [campaign.dispatch_cursor || '']);
   if (!recipients.length) {
     await dbRun("UPDATE newsletter_campaigns SET status='sent', sent_at=?, next_run_at=NULL, lease_until=NULL, updated_at=? WHERE id=?", [now(), now(), id]);

@@ -1,15 +1,16 @@
-import { type ComponentType, type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { type ComponentType, type CSSProperties, type UIEvent, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
+import { CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MailPlus, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
-import { linksApi } from "@/lib/api-client";
+import { linksApi, newsletterRequest } from "@/lib/api-client";
+import type { NewsletterDashboardData } from "@/lib/newsletter-types";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks, prepareLinkForSave } from "./link-save-state";
 import { type EmbedProvider, type InternalDestinationOption, type LinkBlockType, type ServiceLinkProvider, buildBlockContent, getDefaultEmbedConsentCategory, getEmbedProviderDefaultHeight, getInternalLinksData } from "@/lib/link-blocks";
@@ -108,11 +109,13 @@ export const LinkManager = ({
   const [isBlockLibraryOpen, setIsBlockLibraryOpen] = useState(false);
   const [blockLibrarySearch, setBlockLibrarySearch] = useState("");
   const [blockLibraryCategory, setBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
+  const [activeBlockLibraryCategory, setActiveBlockLibraryCategory] = useState<"all" | BlockLibraryCategoryId>("all");
   const [isDirty, setIsDirty] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedNotice, setSavedNotice] = useState<SavedContentNotice | null>(null);
   const [visualHeaderSlot, setVisualHeaderSlot] = useState<HTMLElement | null>(null);
   const savedNoticeTimerRef = useRef<number | null>(null);
+  const blockLibraryFiltersRef = useRef<HTMLElement | null>(null);
   const hasUnsavedChanges = isDirty || previewDrafts.size > 0;
   const publicPreviewStyle = (index: number) => ({
     ...getThemeCssVariables(theme),
@@ -191,6 +194,13 @@ export const LinkManager = ({
   useEffect(() => () => {
     if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!isBlockLibraryOpen) return;
+    blockLibraryFiltersRef.current
+      ?.querySelector<HTMLElement>(`[data-block-library-filter="${activeBlockLibraryCategory}"]`)
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [activeBlockLibraryCategory, isBlockLibraryOpen]);
 
   const dismissSavedNotice = () => {
     if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
@@ -508,6 +518,35 @@ export const LinkManager = ({
       status: "live",
     };
     appendBlock(newCallout);
+  };
+
+  const addNewNewsletter = async () => {
+    try {
+      const newsletter = await newsletterRequest<NewsletterDashboardData>("/api/newsletter");
+      if (!newsletter.settings.complianceReady) {
+        toast({
+          title: tr("Complete newsletter compliance", "Completa la compliance newsletter"),
+          description: tr("Add the sender legal details, Privacy Policy and Terms in Newsletter settings first.", "Aggiungi prima dati legali del mittente, Privacy Policy e Termini nelle impostazioni Newsletter."),
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch (error) {
+      toast({
+        title: tr("Newsletter unavailable", "Newsletter non disponibile"),
+        description: error instanceof Error ? error.message : tr("Open Newsletter settings and complete compliance first.", "Apri le impostazioni Newsletter e completa prima la compliance."),
+        variant: "destructive",
+      });
+      return;
+    }
+    appendBlock({
+      id: Date.now().toString(),
+      title: tr("Join the newsletter", "Iscriviti alla newsletter"),
+      description: tr("Get useful updates by email.", "Ricevi aggiornamenti utili via email."),
+      url: "",
+      type: "newsletter",
+      status: "live",
+    });
   };
 
   const addNewMap = () => {
@@ -852,6 +891,7 @@ export const LinkManager = ({
       description: tr("Promote timely offers, events and menus.", "Promuovi offerte, eventi e menu nel momento giusto."),
       icon: CalendarClock,
       items: [
+        { id: "newsletter", title: "Newsletter", description: tr("Collect email subscribers directly from your page.", "Raccogli iscritti email direttamente dalla pagina."), keywords: "newsletter email subscribe signup iscrizione", icon: MailPlus, onSelect: addNewNewsletter },
         { id: "event", title: tr("Event", "Evento"), description: tr("Feature a date, time and countdown.", "Metti in evidenza data, ora e conto alla rovescia."), keywords: "calendar countdown date evento calendario data", icon: CalendarClock, onSelect: addNewEvent },
         { id: "callout", title: "Callout", description: tr("Highlight a promotion or important update.", "Evidenzia una promozione o un aggiornamento importante."), keywords: "promo offer update announcement offerta avviso", icon: Tag, onSelect: addNewCallout },
         { id: "menu", title: "Menu", description: nativeMenuEnabled ? tr("Open the native food and drinks menu.", "Apri il menu nativo di cibi e bevande.") : tr("Available from Starter.", "Disponibile da Starter."), keywords: "restaurant bar food drinks ristorante cibo bevande", icon: nativeMenuEnabled ? UtensilsCrossed : LockKeyhole, onSelect: addNativeMenu, badge: !nativeMenuEnabled ? "Starter" : undefined, restricted: !nativeMenuEnabled },
@@ -871,19 +911,39 @@ export const LinkManager = ({
       ].join(" ")).includes(normalizedBlockSearch)),
     }))
     .filter((category) => category.items.length > 0);
+  const allBlockLibraryItems = blockLibraryCategories.flatMap((category) => category.items);
+  const quickAddGroups = [
+    { id: "basics", label: tr("Most used", "Più usati"), itemIds: ["link", "internal-links", "heading", "text"] },
+    { id: "social", label: tr("Social & contact", "Social e contatti"), itemIds: ["instagram", "whatsapp", "facebook"] },
+    { id: "tools", label: tr("Forms & tools", "Moduli e strumenti"), itemIds: ["calendly", "typeform", "github"] },
+  ];
   const visibleBlockCount = visibleBlockLibraryCategories.reduce((total, category) => total + category.items.length, 0);
 
   const openBlockLibrary = () => {
     setBlockLibrarySearch("");
     setBlockLibraryCategory("all");
+    setActiveBlockLibraryCategory("all");
     setIsBlockLibraryOpen(true);
+  };
+
+  const handleBlockLibraryScroll = (event: UIEvent<HTMLDivElement>) => {
+    if (blockLibraryCategory !== "all" || !(event.target instanceof HTMLElement)) return;
+    const viewport = event.target;
+    const threshold = viewport.getBoundingClientRect().top + 56;
+    const sections = Array.from(viewport.querySelectorAll<HTMLElement>("[data-block-library-category]"));
+    const activeSection = sections.reduce<HTMLElement | null>(
+      (active, section) => section.getBoundingClientRect().top <= threshold ? section : active,
+      sections[0] || null,
+    );
+    const category = activeSection?.dataset.blockLibraryCategory as BlockLibraryCategoryId | undefined;
+    if (category) setActiveBlockLibraryCategory((current) => current === category ? current : category);
   };
 
   const addContentAction = isFullEdit && !focusedLink ? (
     <Button
       onClick={openBlockLibrary}
       variant="outline"
-      className="admin-action"
+      className="admin-action admin-content-header-add"
       disabled={atBlockLimit || busy}
       aria-expanded={isBlockLibraryOpen}
       aria-controls="admin-block-library"
@@ -1012,12 +1072,16 @@ export const LinkManager = ({
             </div>
 
             <div className="admin-block-library-body">
-              <nav className="admin-block-library-filters" aria-label={tr("Block categories", "Categorie dei blocchi")}>
+              <nav ref={blockLibraryFiltersRef} className="admin-block-library-filters" aria-label={tr("Block categories", "Categorie dei blocchi")}>
                 <button
                   type="button"
-                  className={blockLibraryCategory === "all" ? "is-active" : ""}
-                  onClick={() => setBlockLibraryCategory("all")}
-                  aria-pressed={blockLibraryCategory === "all"}
+                  className={activeBlockLibraryCategory === "all" ? "is-active" : ""}
+                  data-block-library-filter="all"
+                  onClick={() => {
+                    setBlockLibraryCategory("all");
+                    setActiveBlockLibraryCategory("all");
+                  }}
+                  aria-pressed={activeBlockLibraryCategory === "all"}
                 >
                   <LayoutGrid className="h-4 w-4" />
                   <span>{tr("All blocks", "Tutti i blocchi")}</span>
@@ -1029,9 +1093,13 @@ export const LinkManager = ({
                     <button
                       type="button"
                       key={category.id}
-                      className={blockLibraryCategory === category.id ? "is-active" : ""}
-                      onClick={() => setBlockLibraryCategory(category.id)}
-                      aria-pressed={blockLibraryCategory === category.id}
+                      className={activeBlockLibraryCategory === category.id ? "is-active" : ""}
+                      data-block-library-filter={category.id}
+                      onClick={() => {
+                        setBlockLibraryCategory(category.id);
+                        setActiveBlockLibraryCategory(category.id);
+                      }}
+                      aria-pressed={activeBlockLibraryCategory === category.id}
                     >
                       <CategoryIcon className="h-4 w-4" />
                       <span>{category.label}</span>
@@ -1051,12 +1119,12 @@ export const LinkManager = ({
                   )}
                 </div>
 
-                <ScrollArea className="admin-block-library-scroll">
+                <ScrollArea className="admin-block-library-scroll" onScrollCapture={handleBlockLibraryScroll}>
                   <div className="admin-block-library-sections">
                     {visibleBlockLibraryCategories.map((category) => {
                       const CategoryIcon = category.icon;
                       return (
-                        <section key={category.id} className="admin-block-category">
+                        <section key={category.id} className="admin-block-category" data-block-library-category={category.id}>
                           <div className="admin-block-category-heading">
                             <span className="admin-block-category-icon"><CategoryIcon className="h-4 w-4" /></span>
                             <div>
@@ -1112,7 +1180,55 @@ export const LinkManager = ({
           </DialogContent>
         </Dialog>
       )}
-      {visualMode && !focusedLink ? null : workingLinks.length === 0 ? (
+      {visualMode && !focusedLink ? (
+        isFullEdit && <div className="admin-content-start">
+          <Button
+            onClick={openBlockLibrary}
+            className="admin-content-start__primary"
+            disabled={atBlockLimit || busy}
+            aria-expanded={isBlockLibraryOpen}
+            aria-controls="admin-block-library"
+          >
+            <Plus className="h-5 w-5" />
+            {tr("Add content", "Aggiungi contenuto")}
+          </Button>
+
+          <div className="admin-content-quick-add">
+            <div className="admin-content-quick-add__heading">
+              <strong>{tr("Quick add", "Aggiunta rapida")}</strong>
+              <span>{tr("Add a common block directly to your page.", "Aggiungi direttamente un blocco comune alla pagina.")}</span>
+            </div>
+            {quickAddGroups.map((group) => (
+              <section key={group.id} className="admin-content-quick-add__group">
+                <h3>{group.label}</h3>
+                <div className="admin-content-quick-add__grid">
+                  {group.itemIds.map((itemId) => {
+                    const item = allBlockLibraryItems.find((candidate) => candidate.id === itemId);
+                    if (!item) return null;
+                    const ItemIcon = item.icon;
+                    return (
+                      <button
+                        type="button"
+                        key={item.id}
+                        onClick={item.onSelect}
+                        disabled={atBlockLimit || busy || item.restricted}
+                      >
+                        <span className="admin-content-quick-add__icon" data-service-brand-tile={item.brand || undefined}>
+                          {item.brand
+                            ? <ServiceBrandIcon provider={item.brand} className="h-5 w-5" />
+                            : ItemIcon && <ItemIcon className="h-5 w-5" />}
+                        </span>
+                        <span>{item.title}</span>
+                        {item.badge && <small>{item.badge}</small>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      ) : workingLinks.length === 0 ? (
         <Card className="admin-empty-state">
             <div className="space-y-4">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-blue-50 text-blue-700">

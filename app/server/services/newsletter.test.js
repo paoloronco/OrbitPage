@@ -27,6 +27,11 @@ afterAll(async () => {
 });
 
 describe('self-hosted newsletter', () => {
+  it('requires complete compliance data', () => {
+    expect(newsletter.newsletterComplianceReady({ sender_address: 'Via Roma 1', privacy_policy_url: 'https://example.com/privacy', terms_url: '' })).toBe(false);
+    expect(newsletter.newsletterComplianceReady({ sender_address: 'Via Roma 1', privacy_policy_url: 'https://example.com/privacy', terms_url: 'https://example.com/terms' })).toBe(true);
+  });
+
   it('stores SMTP credentials encrypted and completes opt-in, delivery, tracking, and unsubscribe', async () => {
     await newsletter.saveSmtpSettings({
       host: 'smtp.example.com', port: 587, username: 'sender', password: 'private-smtp-password',

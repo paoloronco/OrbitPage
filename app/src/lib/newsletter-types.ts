@@ -15,6 +15,7 @@ export type NewsletterSmtpSettings = {
   senderAddress: string;
   privacyPolicyUrl: string;
   termsUrl: string;
+  complianceReady: boolean;
   verifiedAt: string | null;
   updatedAt: string | null;
 };

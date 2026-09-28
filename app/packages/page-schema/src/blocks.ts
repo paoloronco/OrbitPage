@@ -31,7 +31,8 @@ export const ORBITPAGE_BLOCK_TYPES = [
   "callout",
   "map",
   "event",
-  "embed"
+  "embed",
+  "newsletter"
 ] as const;
 
 export const OrbitPageBlockTypeSchema = z.enum(ORBITPAGE_BLOCK_TYPES);
@@ -300,7 +301,7 @@ function structuredContent(
     return content.slice(0, 20_000);
   }
 
-  if (["menu", "cta", "heading", "image"].includes(type)) {
+  if (["menu", "cta", "heading", "image", "newsletter"].includes(type)) {
     throw new Error(`${type} blocks do not support structured content.`);
   }
 
@@ -575,7 +576,8 @@ export const ORBITPAGE_BLOCK_CAPABILITIES = [
   { type: "callout", contentKind: "structured", contentSchema: "callout", supportsUrl: true },
   { type: "map", contentKind: "structured", contentSchema: "map", supportsUrl: true },
   { type: "event", contentKind: "structured", contentSchema: "event", supportsUrl: true },
-  { type: "embed", contentKind: "structured", contentSchema: "embed", supportsUrl: false }
+  { type: "embed", contentKind: "structured", contentSchema: "embed", supportsUrl: false },
+  { type: "newsletter", contentKind: "none", supportsUrl: false }
 ] as const;
 
 export const OrbitPageStructuredBlockContentJsonSchemas = {

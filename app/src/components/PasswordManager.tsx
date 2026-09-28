@@ -11,14 +11,12 @@ import { apiPath, withBasePath } from "@/lib/base-path";
 
 const useCurrentUsername = () => {
   const [username, setUsername] = useState('admin');
-  const [canManageUsers, setCanManageUsers] = useState(false);
   useEffect(() => {
     authApi.verify().then((r) => {
       if (r.valid && r.user?.username) setUsername(r.user.username);
-      setCanManageUsers(Boolean(r.valid && r.user?.permissions?.includes('users:manage')));
     }).catch(() => {});
   }, []);
-  return { username, canManageUsers };
+  return username;
 };
 
 type MessageType = 'success' | 'error' | 'info' | 'warning';
@@ -44,7 +42,7 @@ export const PasswordManager = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
-  const { username, canManageUsers } = useCurrentUsername();
+  const username = useCurrentUsername();
 
   // Token-based password reset state
   const [showTokenReset, setShowTokenReset] = useState(false);
@@ -148,64 +146,10 @@ export const PasswordManager = () => {
     }
   };
 
-  const handleResetSuccess = () => {
-    setMessage({ 
-      type: 'success', 
-      text: 'Application reset successful. You will be redirected to setup...' 
-    });
-    
-    // Clear any existing auth data
-    authApi.logout();
-    
-    // Redirect to setup page
-    setTimeout(() => {
-      window.location.href = withBasePath('/dashboard/account');
-    }, 2000);
-  };
-
-  const handleResetApp = async (): Promise<void> => {
-    if (demoMode) {
-      setMessage({
-        type: 'warning',
-        text: 'Application reset is disabled in demo mode.'
-      });
-      return;
-    }
-
-    if (!currentPassword) {
-      setMessage({ type: 'error', text: 'Enter your current password before resetting the application.' });
-      return;
-    }
-
-    if (!window.confirm('Are you sure you want to reset the application? This will delete all data and cannot be undone.')) {
-      return;
-    }
-
-    setIsLoading(true);
-    setMessage(null);
-
-    try {
-      const result = await authApi.reset(currentPassword);
-      if (result.success) {
-        handleResetSuccess();
-      } else {
-        throw new Error(result.error || 'Reset failed');
-      }
-    } catch (error: unknown) {
-      console.error('Reset failed:', error instanceof Error ? error.message : String(error));
-      setMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'Failed to reset application. Please try again.'
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="oss-account-password-group">
       {/* Password Change Form */}
-      <Card className={`glass-card p-6 space-y-6 oss-account-password-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
+      <Card className={`glass-card p-6 space-y-6 account-panel account-password-panel oss-account-password-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <Key className="w-8 h-8 text-primary" />
@@ -343,34 +287,9 @@ export const PasswordManager = () => {
             </Button>
           </form>
 
-        {canManageUsers && <div className="pt-4 border-t border-primary/20">
-          <div className={`bg-destructive/10 border border-destructive/20 rounded-lg p-4 space-y-3 ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">Reset Authentication</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              This will completely reset the instance, clearing all users, links, profile data, and themes. You'll need to set up the admin account again.
-            </p>
-            {demoMode && (
-              <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-2 text-sm text-yellow-900">
-                <p>Application reset is disabled in demo mode.</p>
-              </div>
-            )}
-            <Button
-              onClick={handleResetApp}
-              variant="destructive"
-              size="sm"
-              className="w-full"
-              disabled={isLoading || demoMode}
-            >
-              Clear Auth Data & Reset
-            </Button>
-          </div>
-        </div>}
       </Card>
       {/* Forgot password — token-based reset */}
-      <Card className={`glass-card p-6 space-y-4 oss-account-recovery-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
+      <Card className={`glass-card p-6 space-y-4 account-panel oss-account-recovery-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
         <button
           type="button"
           className="w-full text-left flex items-center justify-between"

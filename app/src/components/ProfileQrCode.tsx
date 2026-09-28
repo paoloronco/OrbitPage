@@ -184,23 +184,23 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
   const updateCampaignBaseUrl = useCallback((url: string) => setCampaignBaseUrl(url), []);
 
   return (
-    <Card className="overflow-hidden border-slate-200 bg-white p-0 text-left shadow-sm">
-      <header className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span className="admin-panel-icon !h-8 !w-8" aria-hidden="true"><QrCode className="h-4 w-4" /></span>
+    <Card className="admin-panel space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="admin-panel-icon" aria-hidden="true"><QrCode className="h-4 w-4" /></span>
           <div>
-            <h2 className="text-sm font-semibold text-slate-950">{tr("Page QR codes", "QR delle pagine")}</h2>
-            <p className="mt-0.5 text-[11px] leading-4 text-slate-500">{tr("Choose a destination, test it and download.", "Scegli la destinazione, provala e scarica il QR.")}</p>
+            <h2 className="text-base font-semibold text-slate-950">{tr("Page QR codes", "QR delle pagine")}</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{tr("Choose a destination, test it and download.", "Scegli la destinazione, provala e scarica il QR.")}</p>
           </div>
         </div>
         {qrTarget.url && !error && (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" className="admin-action">
             <a href={qrTarget.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr("Test target", "Prova destinazione")}</a>
           </Button>
         )}
-      </header>
+      </div>
 
-      <div className="grid gap-0 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <div className="grid gap-0 overflow-hidden rounded-lg border border-slate-200 lg:grid-cols-[260px_minmax(0,1fr)]">
         <div className="flex items-center justify-center border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
           <figure className="flex w-full flex-col items-center">
             <div className="relative grid w-full max-w-[190px] place-items-center sm:max-w-[220px]">

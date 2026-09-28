@@ -206,36 +206,6 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
 
   return (
     <div className="ai-assistant-page" data-ai-assistant-edition="oss">
-      <section className="ai-assistant-overview" aria-labelledby="oss-ai-usage-title">
-        <div className="ai-assistant-overview-copy">
-          <p className="ai-assistant-kicker">{tr("Self-hosted assistant", "Assistente self-hosted")}</p>
-          <h2 id="oss-ai-usage-title">{tr("Usage and working session", "Uso e sessione di lavoro")}</h2>
-          <p>{tr(
-            "OrbitPage does not add a request limit. Usage and billing follow the API provider connected to this server.",
-            "OrbitPage non aggiunge un limite di richieste. Utilizzo e costi seguono il provider API collegato a questo server.",
-          )}</p>
-        </div>
-        <div className="ai-assistant-usage">
-          <div>
-            <span>{tr("OrbitPage usage", "Utilizzo OrbitPage")}</span>
-            <strong>{tr("Unmetered", "Senza limite")}</strong>
-          </div>
-          <div>
-            <span>{tr("Remaining allowance", "Utilizzo rimanente")}</span>
-            <strong>{tr("Provider-managed", "Gestito dal provider")}</strong>
-          </div>
-          <div>
-            <span>{tr("Active model", "Modello attivo")}</span>
-            <strong>{MODEL_LABELS[selectedModel]?.name || selectedModel}</strong>
-          </div>
-        </div>
-        <div className="ai-assistant-progress is-unmetered"><span /></div>
-        <p className="ai-assistant-reset">{tr(
-          "API costs and provider quotas remain in your OpenAI account.",
-          "Costi API e quote del provider restano nel tuo account OpenAI.",
-        )}</p>
-      </section>
-
       <div className="oss-ai-layout ai-assistant-layout">
       <section className="oss-ai-workspace ai-assistant-chat" aria-labelledby="oss-ai-heading">
         <header className="oss-ai-workspace-header">
@@ -358,16 +328,43 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
 
       <aside className="oss-ai-settings ai-assistant-aside" aria-labelledby="oss-ai-settings-heading">
         <div className="oss-ai-settings-title">
-          <span><KeyRound aria-hidden="true" /></span>
+          <span><Sparkles aria-hidden="true" /></span>
           <div>
-            <p>{tr("Your provider", "Il tuo provider")}</p>
-            <h2 id="oss-ai-settings-heading">OpenAI API</h2>
+            <h2 id="oss-ai-settings-heading">{tr("AI usage", "Utilizzo AI")}</h2>
+            <p>{tr(
+              "Track the requests available while you work on your page.",
+              "Controlla le richieste disponibili mentre lavori sulla pagina.",
+            )}</p>
           </div>
         </div>
-        <p className="oss-ai-settings-copy">{tr(
-          "Usage is billed directly to your OpenAI account. OrbitPage never sends the key back to the browser after saving it.",
-          "L’utilizzo viene addebitato direttamente al tuo account OpenAI. Dopo il salvataggio OrbitPage non restituisce mai la chiave al browser.",
-        )}</p>
+        <div className="oss-ai-usage-summary">
+          <div className="oss-ai-usage">
+            <div>
+              <span>{tr("OrbitPage usage", "Utilizzo OrbitPage")}</span>
+              <strong>{tr("Unmetered", "Senza limite")}</strong>
+            </div>
+            <div>
+              <span>{tr("Active model", "Modello attivo")}</span>
+              <strong>{MODEL_LABELS[selectedModel]?.name || selectedModel}</strong>
+            </div>
+          </div>
+          <div className="oss-ai-usage-progress" aria-hidden="true"><span /></div>
+          <p>{tr(
+            "API costs and provider quotas remain in your OpenAI account.",
+            "Costi API e quote del provider restano nel tuo account OpenAI.",
+          )}</p>
+        </div>
+
+        <div className="oss-ai-settings-section-heading">
+          <KeyRound aria-hidden="true" />
+          <div>
+            <h3>OpenAI API key</h3>
+            <p>{tr(
+              "Usage is billed directly to your OpenAI account. OrbitPage never sends the key back to the browser after saving it.",
+              "L’utilizzo viene addebitato direttamente al tuo account OpenAI. Dopo il salvataggio OrbitPage non restituisce mai la chiave al browser.",
+            )}</p>
+          </div>
+        </div>
 
         {settings === null && !settingsError ? (
           <div className="oss-ai-settings-loading"><OrbitLoader size={18} state="connecting" />{tr("Checking configuration…", "Verifica configurazione…")}</div>

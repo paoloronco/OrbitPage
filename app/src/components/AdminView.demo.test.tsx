@@ -136,6 +136,13 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Newsletter');
     expect(html).toContain('Team');
     expect(html).toContain('Account');
+    expect(html).toContain('Account sections');
+    expect(html).toContain('>General</button>');
+    expect(html).toContain('>Security</button>');
+    expect(html).toContain('Account details');
+    expect(html).toContain('Marketing email');
+    expect(html).toContain('Delete account');
+    expect(html).not.toContain('PasswordManager');
     expect(html).toContain('Plan');
     expect(html).toContain('Everything included in the OSS edition is unlocked.');
     expect(html).toContain('Explore OrbitPage SaaS');
@@ -194,8 +201,8 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('data-testid="oss-analytics"');
     expect(html).not.toContain('Page visits and clicks');
     expect(html).not.toContain('Performance overview');
-    expect(html).toContain('data-testid="google-analytics-settings"');
-    expect(html).toContain('id="ga-id"');
+    expect(html).toContain('data-testid="google-analytics-settings-trigger"');
+    expect(html).not.toContain('id="ga-id"');
     expect(html).not.toContain('https://github.com/paoloronco/OrbitPage');
     expect(mockState.profileProps.at(-1)).toMatchObject({ pageTypeEditable: false });
   });
