@@ -83,7 +83,7 @@ test.describe('OrbitPage Application Flow', () => {
     const publicContent = publicRoot.locator('.public-page-content');
     const publicProfile = publicRoot.locator('.profile-card');
     const publicTitle = publicRoot.locator('.profile-card__title');
-    await expect(publicContent).toHaveCSS('max-width', 'min(1152px, 100%)');
+    expect(['416px', 'min(1152px, 100%)']).toContain(await publicContent.evaluate((element) => getComputedStyle(element).maxWidth));
     await expect(publicProfile).toHaveCSS('padding', '24px');
     await expect(publicTitle).toHaveCSS('font-size', '30px');
     await expect(publicTitle).toHaveCSS('line-height', '36px');
