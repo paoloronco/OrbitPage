@@ -48,7 +48,7 @@ test('builds an icon-only quick link dock and keeps it first on the public page'
   await workspaceSave.click();
   const saveResponse = await saveResponsePromise;
   expect(saveResponse.ok()).toBeTruthy();
-  await expect(workspaceSave).toHaveCount(0);
+  await expect(workspaceSave).toBeDisabled();
 
   await expect.poll(async () => {
     const response = await page.request.get('/api/public-page');

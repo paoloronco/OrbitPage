@@ -7,6 +7,7 @@ test('keeps information text editable and identical in the live preview', async 
   await page.getByRole('button', { name: 'Add content' }).click();
   await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Text/ }).click();
   await contentSaveButton(page).click();
+  await expect(contentSaveButton(page)).toBeDisabled();
 
   const previewCard = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').filter({ hasText: 'New text' }).last();
   const { editor: textCard, id: cardId } = await openPreviewContentCard(page, previewCard);
