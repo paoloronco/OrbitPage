@@ -786,7 +786,6 @@ export const LinkManager = ({
         setPreviewDrafts(new Map());
         setSavedRevision((current) => current + 1);
         showSavedNotice(previousLinks);
-        if (visualMode) onVisualFocusChange?.(null);
       }
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : tr("Changes could not be saved. Try again.", "Impossibile salvare le modifiche. Riprova."));

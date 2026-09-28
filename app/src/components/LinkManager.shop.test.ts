@@ -86,4 +86,12 @@ describe('Shop link shortcut', () => {
     expect(source.match(/setEditingLinkId\(String\(block\.id\)\)/g)).toHaveLength(2);
     expect(source.match(/if \(visualMode\) onVisualFocusChange\?\.\(String\(block\.id\)\)/g)).toHaveLength(2);
   });
+
+  it('keeps the selected block open after saving', () => {
+    expect(source).not.toContain('showSavedNotice(previousLinks);\n        if (visualMode) onVisualFocusChange?.(null);');
+    for (const component of ['LinkCard.tsx', 'TextCard.tsx']) {
+      const cardSource = readFileSync(new URL(`./${component}`, import.meta.url), 'utf8');
+      expect(cardSource).toContain('if (editing === undefined) setIsEditing(false);');
+    }
+  });
 });
