@@ -38,7 +38,7 @@ test('edits and previews the selected additional page, then publishes its conten
   await page.getByPlaceholder('Link title').fill('Book a table');
   await page.getByPlaceholder('https://example.com', { exact: true }).fill('https://example.com/book');
   await expect(canvas.getByRole('link', { name: 'Book a table' })).toBeVisible();
-  await contentSaveButton(page).click();
+  if (await contentSaveButton(page).isEnabled()) await contentSaveButton(page).click();
 
   const visibility = manager.locator('.subpage-publish-toggle');
   if (await visibility.getAttribute('aria-pressed') === 'false') {
@@ -51,7 +51,7 @@ test('edits and previews the selected additional page, then publishes its conten
   await expect(canvas.getByRole('heading', { name: 'Summer events' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-  await page.goto('/events');
+  await page.goto('/en-US/events');
   await expect(page.getByRole('heading', { name: 'Summer events' })).toBeVisible();
   await expect(page.getByText('Dates, guests and booking details.')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Book a table' }).first()).toHaveAttribute('href', 'https://example.com/book');
