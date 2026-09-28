@@ -55,4 +55,24 @@ describe('PublicSocialRowCard', () => {
     expect(html).toContain('href="https://github.com/paoloronco"');
     expect(html).not.toContain('public-link-card');
   });
+
+  it('renders an OrbitPage shortcut as an internal relative link', () => {
+    const html = renderToStaticMarkup(
+      <PublicBlockRenderer
+        link={{
+          id: 'page-shortcut',
+          title: '',
+          description: '',
+          url: '',
+          type: 'social_row',
+          content: JSON.stringify({
+            items: [{ label: 'About', url: '/about', platform: 'page' }],
+          }),
+        }}
+      />,
+    );
+
+    expect(html).toContain('href="/about"');
+    expect(html).not.toContain('target="_blank"');
+  });
 });

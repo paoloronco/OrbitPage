@@ -41,7 +41,7 @@ Profile-card overrides take precedence over the active theme. Use **Use theme** 
 
 One active destination is always selected as the homepage. Choose a different homepage before deactivating the current one. Deactivation requires confirmation and keeps the destination's content saved for later reactivation.
 
-The Link page and every additional page can include an **Internal page navigation** block. It links to active Menu, Shop, Link or page destinations as full-width cards, side-by-side cards or compact buttons while inheriting the page theme.
+The Link page and every additional page can include an **Internal page navigation** block. It links to Home, Menu, Shop or additional pages as full-width cards, side-by-side cards, compact buttons or a horizontal page menu while inheriting the page theme.
 
 Legacy URLs such as `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` continue to resolve to Content. The complete block, menu, subpage, scheduling, embed, and media workflows are in [Content and design](./content-and-design.md).
 

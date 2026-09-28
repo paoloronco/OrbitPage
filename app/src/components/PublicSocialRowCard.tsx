@@ -4,6 +4,7 @@ import { getSocialRowData } from "@/lib/link-blocks";
 import { CompactLinkIcon } from "./CompactLinkIcon";
 import { detectCompactLinkPlatform, getCompactLinkAccessibleLabel, getCompactLinkBrandStyle, getCompactLinkHref } from "@/lib/compact-links";
 import { getPublicBlockStyle } from "@/lib/public-block-style";
+import { withPageRootPath } from "@/lib/base-path";
 
 interface PublicSocialRowCardProps {
   link: LinkData;
@@ -28,7 +29,8 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
               const platform = item.platform === "auto" || !item.platform ? detectCompactLinkPlatform(item.url) : item.platform;
               const isInternal = platform === "page" || item.url.startsWith("/") || item.url.startsWith("#");
               const iconStyleValue = iconStyle === "brand" ? getCompactLinkBrandStyle(platform, item.url) : undefined;
-              const safeHref = getCompactLinkHref(platform, item.url);
+              const resolvedHref = getCompactLinkHref(platform, item.url);
+              const safeHref = resolvedHref && !resolvedHref.startsWith("#") && isInternal ? withPageRootPath(resolvedHref) : resolvedHref;
               const accessibleLabel = getCompactLinkAccessibleLabel(platform, item.url, item.label);
               return (
                 <a

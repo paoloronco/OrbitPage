@@ -52,4 +52,27 @@ describe("PublicInternalLinksCard", () => {
     expect(html).toContain("Services");
     expect(html).not.toContain("Long supporting copy");
   });
+
+  it("renders a horizontal page menu", () => {
+    const html = renderToStaticMarkup(<PublicInternalLinksCard link={{
+      id: "tabs",
+      type: "internal_links",
+      title: "",
+      description: "",
+      url: "",
+      content: JSON.stringify({
+        items: [
+          { id: "home", kind: "link", path: "/", label: "Home" },
+          { id: "shop", kind: "shop", path: "/shop", label: "Shop" },
+        ],
+        layout: "tabs",
+        showDescriptions: false,
+        showIcons: false,
+      }),
+    }} />);
+
+    expect(html).toContain("public-internal-links__items--tabs");
+    expect(html).toContain('href="/"');
+    expect(html).toContain('href="/shop"');
+  });
 });

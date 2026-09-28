@@ -21,6 +21,15 @@ describe('compact link block data', () => {
       items: [{ id: 'menu', kind: 'menu', path: '/menu', label: 'Menu' }],
     });
   });
+  it('keeps the main page and horizontal navigation layout', () => {
+    expect(getInternalLinksData(JSON.stringify({
+      items: [{ id: 'home', kind: 'link', path: '/', label: 'Home' }],
+      layout: 'tabs',
+    }))).toMatchObject({
+      layout: 'tabs',
+      items: [{ id: 'home', path: '/', label: 'Home' }],
+    });
+  });
   it('recognizes legacy quick-link payloads when their block type was lost', () => {
     expect(isSocialRowContent(JSON.stringify({
       items: [{ label: 'Instagram', url: 'orbitpage', platform: 'instagram' }],

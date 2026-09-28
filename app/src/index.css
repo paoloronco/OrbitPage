@@ -13093,6 +13093,18 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   gap: .5rem;
 }
 
+.public-internal-links__items--tabs {
+  display: grid;
+  grid-auto-columns: minmax(max-content, 1fr);
+  grid-auto-flow: column;
+  gap: .25rem;
+  overflow-x: auto;
+  padding: .25rem;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: max(9px, var(--radius, 12px));
+  scrollbar-width: thin;
+}
+
 .public-internal-link {
   position: relative;
   display: grid;
@@ -13229,6 +13241,35 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .public-internal-links__items--buttons .public-internal-link__copy strong {
   font-size: .75rem;
+}
+
+.public-internal-links__items--tabs .public-internal-link {
+  display: inline-flex;
+  justify-content: center;
+  min-width: 6rem;
+  min-height: 42px;
+  padding: .5rem .9rem;
+  border-color: transparent;
+  border-radius: max(7px, calc(var(--radius, 12px) * .72));
+  background: transparent;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.public-internal-links__items--tabs .public-internal-link[aria-current="page"] {
+  background: var(--content-card-accent, currentColor);
+  color: var(--content-card-accent-foreground, #fff);
+}
+
+.public-internal-links__items--tabs .public-internal-link__icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 0;
+  background: transparent;
+}
+
+.public-internal-links__items--tabs .public-internal-link__copy strong {
+  font-size: .78rem;
 }
 
 @container orbitpage-public-page (max-width: 340px) {
