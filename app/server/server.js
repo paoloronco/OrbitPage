@@ -1288,7 +1288,7 @@ const injectSeoIntoHtml = (html, { seoTags, noScriptContent }) => {
 const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const origin = getRequestOrigin(req);
   const pageSlug = await getInstancePageSlug();
-  const localizedRequest = parseLocalizedPublicPath(req.path, pageSlug);
+  const localizedRequest = parseLocalizedPublicPath(req.path);
   const requestPath = localizedRequest?.routePath || req.path;
   const locale = localizedRequest || normalizePublicLocale('en');
   const newsletterRoute = requestPath === '/newsletter' || requestPath === '/newsletter/status';
@@ -1317,11 +1317,11 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
     };
     links = getPublicSubpagesPayload([subpage])[0]?.links || [];
   }
-  const localizablePage = pageSlug && !isAdminSpaRoute(requestPath) && pageKind !== 'about';
-  const canonicalPath = localizablePage ? localizedPublicPath(locale.slug, pageSlug, pathName) : pathName;
+  const localizablePage = !isAdminSpaRoute(requestPath) && pageKind !== 'about';
+  const canonicalPath = localizablePage ? localizedPublicPath(locale.slug, pathName) : pathName;
   const canonicalUrl = new URL(withRequestBasePath(req, canonicalPath), origin).toString();
   const alternates = localizablePage
-    ? localizedAlternates(origin, getActiveBasePath(req), pageSlug, pathName)
+    ? localizedAlternates(origin, getActiveBasePath(req), pathName)
     : { 'x-default': canonicalUrl };
 
   const title = newsletterRoute ? `Newsletter | ${PUBLIC_SITE_NAME}` : setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
@@ -1546,18 +1546,17 @@ const buildDefaultRobotsTxt = (req) => {
 
 const buildDefaultLlmsTxt = async (req) => {
   const origin = getRequestOrigin(req);
-  const [profile, links, subpages, pageSlug] = await Promise.all([
+  const [profile, links, subpages] = await Promise.all([
     getPublicProfilePayload(),
     getPublicLinksPayload(),
     getSubpagesPayload(),
-    getInstancePageSlug(),
   ]);
-  const homePath = pageSlug ? localizedPublicPath('en', pageSlug) : '/';
+  const homePath = localizedPublicPath('en');
   const homeUrl = new URL(withRequestBasePath(req, homePath), origin).toString();
   const sitemapUrl = new URL(withRequestBasePath(req, '/sitemap.xml'), origin).toString();
   const page = renderPublicPageMarkdown({ profile, links, canonicalUrl: homeUrl }).trimEnd();
   const routes = getPublicSubpagesPayload(subpages)
-    .map((subpage) => `- [${markdownTextForLlms(subpage.title)}](${new URL(withRequestBasePath(req, pageSlug ? localizedPublicPath('en', pageSlug, `/${subpage.slug}`) : `/${subpage.slug}`), origin)})`);
+    .map((subpage) => `- [${markdownTextForLlms(subpage.title)}](${new URL(withRequestBasePath(req, localizedPublicPath('en', `/${subpage.slug}`)), origin)})`);
   return normalizeTextFileContent(`${page}\n\n## Discovery\n\n- [robots.txt](${new URL(withRequestBasePath(req, '/robots.txt'), origin)})\n- [sitemap.xml](${sitemapUrl})${routes.length ? `\n\n## Additional pages\n\n${routes.join('\n')}` : ''}\n`);
 };
 
@@ -1701,13 +1700,9 @@ const preferredPublicLocale = (req) => normalizePublicLocale(
 // Serve the public page. GA is loaded client-side only after analytics consent.
 app.get('/', spaLimiter, async (req, res) => {
   try {
-    const [pageSlug, setupRequired, active] = await Promise.all([
-      getInstancePageSlug(),
-      isFirstTimeSetup(),
-      isInstancePageActive(),
-    ]);
-    if (pageSlug && !setupRequired && active) {
-      return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug, pageSlug)));
+    const [setupRequired, active] = await Promise.all([isFirstTimeSetup(), isInstancePageActive()]);
+    if (!setupRequired && active) {
+      return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug)));
     }
   } catch (error) {
     console.warn('Could not resolve the localized public route:', error?.message || error);
@@ -1762,11 +1757,7 @@ const buildSitemapDocument = async (req) => {
     console.warn('Sitemap generated without legal policy URLs:', error?.message || error);
   }
 
-  const [pageSlug, subpages, menu] = await Promise.all([
-    getInstancePageSlug(),
-    getSubpagesPayload(),
-    getMenuPayload(),
-  ]);
+  const [subpages, menu] = await Promise.all([getSubpagesPayload(), getMenuPayload()]);
   getPublicSubpagesPayload(subpages).forEach((page) => {
     additionalUrls.push({ loc: new URL(withRequestBasePath(req, `/${page.slug}`), origin).toString(), priority: '0.8', changefreq: 'weekly' });
   });
@@ -1778,15 +1769,13 @@ const buildSitemapDocument = async (req) => {
     { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
     ...additionalUrls,
   ];
-  const urls = pageSlug
-    ? routeUrls.flatMap((url) => {
-        const routePath = new URL(url.loc).pathname.slice(getActiveBasePath(req).length) || '/';
-        return PUBLIC_LOCALES.map(([locale]) => ({
-          ...url,
-          loc: new URL(withRequestBasePath(req, localizedPublicPath(locale, pageSlug, routePath)), origin).toString(),
-        }));
-      })
-    : routeUrls;
+  const urls = routeUrls.flatMap((url) => {
+    const routePath = new URL(url.loc).pathname.slice(getActiveBasePath(req).length) || '/';
+    return PUBLIC_LOCALES.map(([locale]) => ({
+      ...url,
+      loc: new URL(withRequestBasePath(req, localizedPublicPath(locale, routePath)), origin).toString(),
+    }));
+  });
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -2410,20 +2399,14 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
 
   setupInProgress = true;
   try {
-    const { password, slug } = SetupBodySchema.parse(req.body || {});
+    const { password } = SetupBodySchema.parse(req.body || {});
     const dependencies = await getSetupDependencies();
     if (dependencies.some((dependency) => !dependency.ok)) {
       return res.status(503).json({ success: false, error: 'Resolve the failed installation checks before continuing.', dependencies });
     }
 
-    const subpages = await getSubpagesPayload();
-    if (subpages.some((page) => page.slug === slug)) {
-      return res.status(409).json({ success: false, error: 'This page slug is already used by a sub-page.' });
-    }
-
     await withTransaction(async () => {
       await setupInitialCredentials(password);
-      await setInstancePageSlug(slug);
       await setInstancePageActive(true);
       await dbRun(
         `INSERT INTO profile_data (name, bio, avatar, social_links, show_avatar, admin_onboarding_enabled)
@@ -2436,7 +2419,7 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
     res.json({ 
       success: true, 
       token,
-      pageSlug: slug,
+      pageSlug: null,
       message: 'Admin account created successfully' 
     });
   } catch (error) {
@@ -2697,9 +2680,8 @@ app.get('/go/:campaignSlug', async (req, res) => {
     const destination = link ? resolveCampaignDestination(link) : null;
     if (destination === null) return res.status(404).send('Campaign link not found.');
     const [pathName, query = ''] = destination.split('?', 2);
-    const pageSlug = await getInstancePageSlug();
     const routePath = pathName ? `/${pathName}` : '/';
-    const targetPath = pageSlug ? localizedPublicPath('en', pageSlug, routePath) : routePath;
+    const targetPath = localizedPublicPath('en', routePath);
     const target = new URL(withRequestBasePath(req, targetPath), getRequestOrigin(req));
     if (query) target.search = query;
     res.set('Cache-Control', 'private, max-age=0, no-store');
@@ -2828,15 +2810,14 @@ app.get('/api/public-url', apiLimiter, async (req, res) => {
   try {
     setNoStoreHeaders(res);
     const origin = getRequestOrigin(req);
-    const pageSlug = await getInstancePageSlug();
     const locale = normalizePublicLocale(req.query.locale);
-    const publicPath = pageSlug ? localizedPublicPath(locale.slug, pageSlug) : '/';
+    const publicPath = localizedPublicPath(locale.slug);
     const publicUrl = new URL(withRequestBasePath(req, publicPath), origin).toString();
     res.json({
       success: true,
       publicUrl,
       source: normalizeOrigin(PUBLIC_SITE_URL) ? 'configured' : 'request',
-      slug: pageSlug,
+      slug: null,
     });
   } catch (error) {
     console.error('Error resolving public URL:', error);
@@ -5626,12 +5607,15 @@ app.get('*', spaLimiter, async (req, res) => {
   let publicRoutePath = req.path;
   let configuredPageSlug = null;
   let localizedRoute = null;
+  let legacyLocalizedAlias = false;
   try {
     const [subpages, pageSlug] = await Promise.all([getSubpagesPayload(), getInstancePageSlug()]);
     configuredPageSlug = pageSlug;
-    localizedRoute = parseLocalizedPublicPath(req.path, pageSlug);
+    localizedRoute = parseLocalizedPublicPath(req.path);
     if (localizedRoute) {
       publicRoutePath = localizedRoute.routePath;
+      legacyLocalizedAlias = Boolean(pageSlug && publicRoutePath === `/${pageSlug}`);
+      if (legacyLocalizedAlias) publicRoutePath = '/';
       isConfiguredPrimaryPage = publicRoutePath === '/' || PUBLIC_SPA_ROUTES.has(publicRoutePath);
     } else if (/^\/[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/.test(req.path)) {
       isConfiguredPrimaryPage = pageSlug === req.path.slice(1);
@@ -5649,8 +5633,11 @@ app.get('*', spaLimiter, async (req, res) => {
     isActivePersonalPageRoute = false;
   }
   const statusCode = isAdminSpaRoute(req.path) || ((PUBLIC_SPA_ROUTES.has(publicRoutePath) || isConfiguredPrimaryPage || isConfiguredSubpage) && isActivePersonalPageRoute) ? 200 : 404;
+  if (statusCode === 200 && legacyLocalizedAlias) {
+    return res.redirect(302, withRequestBasePath(req, localizedPublicPath(localizedRoute.slug)));
+  }
   if (statusCode === 200 && configuredPageSlug && isConfiguredPrimaryPage && !localizedRoute && req.path === `/${configuredPageSlug}`) {
-    return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug, configuredPageSlug)));
+    return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug)));
   }
   serveSpaIndex(req, res, { statusCode });
 });

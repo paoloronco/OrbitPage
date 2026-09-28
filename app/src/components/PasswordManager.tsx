@@ -154,9 +154,9 @@ export const PasswordManager = () => {
           <div className="flex justify-center">
             <Key className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold gradient-text">Change Password</h2>
+          <h2 className="text-xl font-semibold gradient-text">Change password</h2>
           <p className="text-muted-foreground text-sm">
-            Update your admin password
+            Update your account password
           </p>
           {demoMode && (
             <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
@@ -169,7 +169,7 @@ export const PasswordManager = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
             <input className="sr-only" type="text" name="username" autoComplete="username" value={username} readOnly tabIndex={-1} aria-hidden="true" />
             <div className="space-y-2">
-              <Label htmlFor="current-password">Current Password</Label>
+              <Label htmlFor="current-password">Current password</Label>
               <div className="relative">
                 <Input
                   id="current-password"
@@ -197,7 +197,7 @@ export const PasswordManager = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
+              <Label htmlFor="new-password">New password</Label>
               <div className="relative">
                 <Input
                   id="new-password"
@@ -235,7 +235,7 @@ export const PasswordManager = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Label htmlFor="confirm-password">Confirm new password</Label>
               <div className="relative">
                 <Input
                   id="confirm-password"
@@ -283,7 +283,7 @@ export const PasswordManager = () => {
               className="w-full"
               disabled={passwordControlsDisabled}
             >
-              {isLoading ? "Changing Password..." : "Change Password"}
+              {isLoading ? "Saving..." : "Change password"}
             </Button>
           </form>
 

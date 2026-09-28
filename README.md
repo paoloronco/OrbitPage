@@ -83,7 +83,7 @@ Open the public page at <http://localhost:8080>, the dashboard at <http://localh
 
 Docker users do not need to configure <code>JWT_SECRET</code>. On first start, the image generates a private 256-bit value in <code>/app/data/.jwt-secret</code> with mode <code>0600</code> and reuses it across restarts and updates. Persist and back up <code>/app/data</code>: losing or changing the secret invalidates active sessions and can make encrypted TOTP and saved provider credentials unreadable. An explicit <code>JWT_SECRET</code> override is still supported, but it must contain at least 32 random characters and remain stable and private.
 
-The same multi-architecture image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. Registries contain only <code>latest</code> and complete release tags such as <code>4.21.18</code>; <code>latest</code> always points to the newest stable release. For deterministic updates and rollback, use the complete version from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
+The same multi-architecture image is available as <code>ghcr.io/paoloronco/orbitpage:latest</code>. Registries contain only <code>latest</code> and complete release tags such as <code>4.21.19</code>; <code>latest</code> always points to the newest stable release. For deterministic updates and rollback, use the complete version from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases). The <code>unless-stopped</code> policy restarts OrbitPage after failures and host reboots while respecting an explicit stop; use <code>always</code> only when an explicit stop must not survive a Docker daemon restart.
 
 See the complete [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended) for image selection, Compose, verification, updates, backups, and rollback.
 
@@ -209,7 +209,7 @@ The current dashboard keeps related work together:
 | **Team** | Additional users and permissions |
 | **Account** | Password and two-factor authentication |
 
-The visual editor changes URL with the active section: <code>/dashboard/editor/page</code>, <code>/dashboard/editor/content</code>, <code>/dashboard/editor/menu</code>, <code>/dashboard/editor/shop</code>, and <code>/dashboard/editor/pages</code>. Classic dashboard routes include <code>/dashboard/profile</code>, <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>. Public pages use locale and page-slug prefixes such as <code>/en-US/my-page</code> and <code>/it-IT/my-page</code>; menus, legal pages, newsletters, and subpages stay below that prefix. Legacy root and page-slug URLs remain compatibility aliases.
+The visual editor changes URL with the active section: <code>/dashboard/editor/page</code>, <code>/dashboard/editor/content</code>, <code>/dashboard/editor/menu</code>, <code>/dashboard/editor/shop</code>, and <code>/dashboard/editor/pages</code>. Classic dashboard routes include <code>/dashboard/profile</code>, <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>. Public pages use locale prefixes such as <code>/en-US</code> and <code>/it-IT</code>; menus, legal pages, newsletters, and subpages stay below that prefix. The installation root and older page-slug URLs remain compatibility aliases.
 
 Read the [dashboard guide](./docs/user-guide/dashboard.md) for the complete route map and editing workflow.
 
@@ -249,9 +249,9 @@ See [app/README.md](./app/README.md) for application development boundaries.
 2. Open <code>/dashboard/profile</code>.
 3. Review the runtime, SQLite, storage, frontend, and session checks.
 4. Create the password for the fixed first username, <code>admin</code>.
-5. Choose the stable public-page slug, complete setup, and follow the dashboard guide.
+5. Confirm the localized public URLs, complete setup, and follow the dashboard guide.
 
-The administrator, slug, and starter profile are created atomically. The canonical public URLs are locale-prefixed, for example <code>/en-US/my-page</code> and <code>/it-IT/my-page</code>. Existing installations without a slug can set one in **Account → Personal page**; old root and slug-only URLs remain aliases.
+The administrator and starter profile are created atomically. Canonical public URLs are locale-prefixed, for example <code>/en-US</code> and <code>/it-IT</code>. The installation root redirects to the preferred language; older page-slug URLs remain aliases after an upgrade.
 
 ## Configuration
 

@@ -14,9 +14,9 @@ describe("editor i18n", () => {
     expect(resolveInitialAppLocale("editor", "?locale=fr", "de")).toBe("fr");
     expect(resolveInitialAppLocale("editor", "", "de")).toBe("de");
     expect(resolveInitialAppLocale("editor", "", null)).toBe("en");
-    expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/it-IT/paolo")).toBe("it");
-    expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/en-US/paolo")).toBe("en");
-    expect(resolveInitialAppLocale("public", "", null, "/orbitpage/it-IT/paolo", "/orbitpage")).toBe("it");
+    expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/it-IT")).toBe("it");
+    expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/en-US")).toBe("en");
+    expect(resolveInitialAppLocale("public", "", null, "/orbitpage/it-IT", "/orbitpage")).toBe("it");
   });
 
   it("keeps the emergency fallback in the active interface language", () => {

@@ -338,18 +338,18 @@ describe('API Endpoints', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('POST /api/auth/setup creates the administrator with a public page slug', async () => {
+  it('POST /api/auth/setup creates the administrator without a page slug', async () => {
     vi.mocked(dbGet).mockResolvedValue(null);
 
     const response = await request(app)
       .post('/api/auth/setup')
-      .send({ password: 'StrongPassword1!', slug: 'old-page' });
+      .send({ password: 'StrongPassword1!' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: 'old-page' });
+    expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: null });
     expect(withTransaction).toHaveBeenCalledOnce();
     expect(setupInitialCredentials).toHaveBeenCalledWith('StrongPassword1!');
-    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining("VALUES ('page_slug'"), ['old-page']);
+    expect(dbRun).not.toHaveBeenCalledWith(expect.stringContaining("VALUES ('page_slug'"), expect.anything());
     expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('admin_onboarding_enabled'));
   });
 
@@ -679,7 +679,7 @@ describe('API Endpoints', () => {
     const response = await request(app).get('/orbitpage/go/today-menu');
 
     expect(response.status).toBe(302);
-    expect(new URL(response.headers.location).pathname).toBe('/orbitpage/menu');
+    expect(new URL(response.headers.location).pathname).toBe('/orbitpage/en-US/menu');
     expect(new URL(response.headers.location).search).toBe('?section=lunch');
     expect(response.headers['cache-control']).toContain('no-store');
   });
@@ -1311,15 +1311,15 @@ describe('API Endpoints', () => {
     ]);
 
     const response = await request(app)
-      .get('/')
+      .get('/en-US')
       .set('Host', 'links.example.test')
       .set('X-Forwarded-Proto', 'https');
 
     expect(response.status).toBe(200);
     expect(response.text).toContain('<title>Paolo Links</title>');
     expect(response.text).toContain('content="All of Paolo links in one place."');
-    expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/"');
-    expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/"');
+    expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/en-US"');
+    expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/en-US"');
     expect(response.text).toContain('id="orbitpage-structured-data"');
     expect(response.text).toContain('<noscript>');
     expect(response.text).toContain('href="https://github.com/example"');
@@ -1344,14 +1344,14 @@ describe('API Endpoints', () => {
     vi.mocked(dbAll).mockResolvedValueOnce([]);
 
     const response = await request(app)
-      .get('/orbitpage')
+      .get('/orbitpage/en-US')
       .set('Host', 'links.example.test')
       .set('X-Forwarded-Proto', 'https');
 
     expect(response.status).toBe(200);
     expect(response.text).toContain('window.__ORBITPAGE_BASE_PATH__="/orbitpage"');
-    expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/orbitpage/"');
-    expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/orbitpage/"');
+    expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/orbitpage/en-US"');
+    expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/orbitpage/en-US"');
     expect(response.text).toContain('src="/orbitpage/assets/');
     expect(response.text).toContain('href="/orbitpage/assets/');
     expect(response.text).toContain('href="/orbitpage/brand/orbitpage-favicon-48.png"');
@@ -1427,16 +1427,16 @@ describe('API Endpoints', () => {
     ]);
 
     expect(root.status).toBe(302);
-    expect(root.headers.location).toBe('/it-IT/old-page');
+    expect(root.headers.location).toBe('/it-IT');
     expect(alias.status).toBe(302);
-    expect(alias.headers.location).toBe('/en-US/old-page');
-    expect(publicUrl.body.publicUrl).toBe('http://127.0.0.1:9006/en-US/old-page');
-    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/en-US/old-page</loc>');
-    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/it-IT/old-page</loc>');
-    expect(campaign.headers.location).toBe('http://127.0.0.1:9006/en-US/old-page');
+    expect(alias.headers.location).toBe('/en-US');
+    expect(publicUrl.body.publicUrl).toBe('http://127.0.0.1:9006/en-US');
+    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/en-US</loc>');
+    expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/it-IT</loc>');
+    expect(campaign.headers.location).toBe('http://127.0.0.1:9006/en-US');
   });
 
-  it('serves localized page and subpage routes under the configured slug', async () => {
+  it('serves localized page and subpage routes directly under the locale', async () => {
     vi.mocked(dbGet).mockImplementation(async (sql, params) => {
       if (params?.[0] === 'page_slug') return { value: 'paolo' };
       if (params?.[0] === 'public_page_active') return { value: '1' };
@@ -1444,17 +1444,20 @@ describe('API Endpoints', () => {
       return null;
     });
 
-    const [home, subpage, missing] = await Promise.all([
+    const [home, subpage, legacy, missing] = await Promise.all([
+      request(app).get('/it-IT'),
+      request(app).get('/en-US/services'),
       request(app).get('/it-IT/paolo'),
-      request(app).get('/en-US/paolo/services'),
       request(app).get('/it-IT/other'),
     ]);
 
     expect(home.status).toBe(200);
     expect(home.headers['content-language']).toBe('it-IT');
-    expect(home.text).toContain('/it-IT/paolo"');
+    expect(home.text).toContain('/it-IT"');
     expect(subpage.status).toBe(200);
-    expect(subpage.text).toContain('/en-US/paolo/services');
+    expect(subpage.text).toContain('/en-US/services');
+    expect(legacy.status).toBe(302);
+    expect(legacy.headers.location).toBe('/it-IT');
     expect(missing.status).toBe(404);
   });
 
@@ -1557,14 +1560,14 @@ describe('API Endpoints', () => {
       ? [{ id: 'portfolio', title: 'Portfolio', description: 'Selected work', url: 'https://example.com', type: 'link', is_active: 1 }]
       : []);
 
-    const response = await request(app).get('/').set('Accept', 'text/markdown');
+    const response = await request(app).get('/en-US').set('Accept', 'text/markdown');
 
     expect(response.status).toBe(200);
     expect(response.type).toMatch(/text\/markdown/);
     expect(response.headers.vary).toBe('Accept');
     expect(response.text).toContain('# Alice');
     expect(response.text).toContain('Selected work');
-    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('machine_readable_metrics'), ['markdown', '/']);
+    expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('machine_readable_metrics'), ['markdown', '/en-US']);
   });
 
   it('keeps HTML unchanged and rejects Markdown when machine access is disabled', async () => {
@@ -1572,8 +1575,8 @@ describe('API Endpoints', () => {
       ? { name: 'Alice', bio: 'Designer', social_links: '{}', machine_readable_enabled: 0 }
       : null);
 
-    const markdown = await request(app).get('/').set('Accept', 'text/markdown');
-    const html = await request(app).get('/').set('Accept', 'text/html');
+    const markdown = await request(app).get('/en-US').set('Accept', 'text/markdown');
+    const html = await request(app).get('/en-US').set('Accept', 'text/html');
 
     expect(markdown.status).toBe(406);
     expect(html.status).toBe(200);
@@ -1764,9 +1767,9 @@ describe('API Endpoints', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['cache-control']).toContain('no-store');
-    expect(response.text).toContain('<loc>https://links.example.test/</loc>');
-    expect(response.text).toContain('<loc>https://links.example.test/privacy</loc>');
-    expect(response.text).toContain('<loc>https://links.example.test/cookies</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/en-US</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/it-IT/privacy</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/en-US/cookies</loc>');
     expect(response.text).toContain('<lastmod>2026-07-08T15:30:00.000Z</lastmod>');
     expect(response.text).not.toContain('<loc>https://links.example.test/about</loc>');
   });
@@ -1804,9 +1807,9 @@ describe('API Endpoints', () => {
       .set('X-Forwarded-Proto', 'https');
 
     expect(response.status).toBe(200);
-    expect(response.text).toContain('<loc>https://links.example.test/orbitpage/</loc>');
-    expect(response.text).toContain('<loc>https://links.example.test/orbitpage/privacy</loc>');
-    expect(response.text).toContain('<loc>https://links.example.test/orbitpage/cookies</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/orbitpage/en-US</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/orbitpage/it-IT/privacy</loc>');
+    expect(response.text).toContain('<loc>https://links.example.test/orbitpage/en-US/cookies</loc>');
   });
 
   it('GET /orbitpage/admin serves the admin route with noindex headers', async () => {
@@ -1838,7 +1841,7 @@ describe('API Endpoints', () => {
       .mockResolvedValueOnce({ google_analytics_id: 'G-TEST123' })
       .mockResolvedValueOnce({ mode: 'hardcoded', enabled: 1, full_config: JSON.stringify({}) });
 
-    const response = await request(app).get('/');
+    const response = await request(app).get('/en-US');
 
     expect(response.status).toBe(200);
     expect(response.text).not.toContain('id="orbitpage-gcm-default-consent"');
@@ -1853,7 +1856,7 @@ describe('API Endpoints', () => {
       .mockResolvedValueOnce({ google_analytics_id: 'G-TEST123' })
       .mockResolvedValueOnce({ mode: 'disabled', enabled: 0, full_config: JSON.stringify({}) });
 
-    const response = await request(app).get('/');
+    const response = await request(app).get('/en-US');
 
     expect(response.status).toBe(200);
     expect(response.text).not.toContain('id="orbitpage-gcm-default-consent"');
@@ -1874,7 +1877,7 @@ describe('API Endpoints', () => {
         }),
       });
 
-    const response = await request(app).get('/');
+    const response = await request(app).get('/en-US');
 
     expect(response.status).toBe(200);
     expect(response.text).not.toContain('id="orbitpage-gcm-default-consent"');
@@ -1964,7 +1967,7 @@ describe('API Endpoints', () => {
     expect(response.body.data).toMatchObject({
       generated: true,
       url: 'https://links.example.test/sitemap.xml',
-      entryCount: 2,
+      entryCount: 28,
       automaticUpdates: true,
     });
   });
@@ -2000,10 +2003,10 @@ describe('API Endpoints', () => {
     expect(response.headers['x-robots-tag']).toContain('noindex');
   });
 
-  it.each(['links', 'menu'])('GET /orbitpage/%s serves a canonical public destination', async (destination) => {
-    const response = await request(app).get(`/orbitpage/${destination}`);
+  it.each(['links', 'menu'])('GET /orbitpage/en-US/%s serves a canonical public destination', async (destination) => {
+    const response = await request(app).get(`/orbitpage/en-US/${destination}`);
     expect(response.status).toBe(200);
-    expect(response.text).toMatch(new RegExp(`href="http://127\\.0\\.0\\.1:\\d+/orbitpage/${destination}"`));
+    expect(response.text).toMatch(new RegExp(`href="http://127\\.0\\.0\\.1:\\d+/orbitpage/en-US/${destination}"`));
   });
 
   it('PUT /api/links persists the public URL visibility preference', async () => {

@@ -150,14 +150,14 @@ function RoutedApplication() {
           <Route path="/about" element={<About />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/newsletter/status" element={<Newsletter />} />
-          <Route path="/:locale/:pageSlug" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
-          <Route path="/:locale/:pageSlug/links" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
-          <Route path="/:locale/:pageSlug/menu" element={<LocalizedPublicRoute><Menu /></LocalizedPublicRoute>} />
-          <Route path="/:locale/:pageSlug/privacy" element={<LocalizedPublicRoute><Privacy /></LocalizedPublicRoute>} />
-          <Route path="/:locale/:pageSlug/cookies" element={<LocalizedPublicRoute><Cookies /></LocalizedPublicRoute>} />
-          <Route path="/:locale/:pageSlug/newsletter" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
-          <Route path="/:locale/:pageSlug/newsletter/status" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
-          <Route path="/:locale/:pageSlug/:subpage" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
+          <Route path="/:locale" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
+          <Route path="/:locale/links" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
+          <Route path="/:locale/menu" element={<LocalizedPublicRoute><Menu /></LocalizedPublicRoute>} />
+          <Route path="/:locale/privacy" element={<LocalizedPublicRoute><Privacy /></LocalizedPublicRoute>} />
+          <Route path="/:locale/cookies" element={<LocalizedPublicRoute><Cookies /></LocalizedPublicRoute>} />
+          <Route path="/:locale/newsletter" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
+          <Route path="/:locale/newsletter/status" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
+          <Route path="/:locale/:subpage" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
           <Route path="/:subpage" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
@@ -168,8 +168,8 @@ function RoutedApplication() {
 }
 
 function LocalizedPublicRoute({ children }: { children: ReactNode }) {
-  const { locale, pageSlug } = useParams();
-  if (!publicLocaleFromSlug(locale) || !pageSlug || !/^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])$/.test(pageSlug)) {
+  const { locale } = useParams();
+  if (!publicLocaleFromSlug(locale)) {
     return <NotFound />;
   }
   return children;

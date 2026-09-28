@@ -42,13 +42,13 @@ describe('tenant public paths', () => {
     expect(withPageRootPath('/links')).toBe('/orbitpage/links');
   });
 
-  it('keeps navigation inside the localized self-hosted page slug', () => {
+  it('keeps navigation inside the localized self-hosted route', () => {
     vi.stubGlobal('window', {
       __ORBITPAGE_BASE_PATH__: '/orbitpage',
-      location: { pathname: '/orbitpage/it-IT/paolo/services' },
+      location: { pathname: '/orbitpage/it-IT/services' },
     });
-    expect(withPageRootPath('/menu')).toBe('/orbitpage/it-IT/paolo/menu');
-    expect(withTenantBasePath('/privacy')).toBe('/orbitpage/it-IT/paolo/privacy');
+    expect(withPageRootPath('/menu')).toBe('/orbitpage/it-IT/menu');
+    expect(withTenantBasePath('/privacy')).toBe('/orbitpage/it-IT/privacy');
   });
 
   it('loads shared brand files from the hosted runtime instead of the tenant slug', () => {

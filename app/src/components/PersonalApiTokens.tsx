@@ -82,13 +82,13 @@ export function PersonalApiTokens() {
           <div>
             <p className="dashboard-kicker">Developer access</p>
             <h2>Personal API tokens</h2>
-            <p className="muted">Create revocable credentials for the OrbitPage REST API. They are separate from your dashboard session and stay bound to your local account.</p>
+            <p className="muted">Create revocable credentials for the Automation REST API. They are separate from your dashboard session, OrbitPage AI and OpenAI provider keys, and stay bound to this workspace.</p>
           </div>
           <Braces aria-hidden="true" size={22} />
         </div>
 
         <div className="api-token-example">
-          <div><strong>Quick start</strong><span>Verify a token by fetching the current links. API permissions always follow the role of the account that created it.</span></div>
+          <div><strong>Quick start</strong><span>Verify the token by fetching links and the current revision. The REST guide and OpenAPI document cover every dashboard resource and the If-Match rules for draft writes.</span></div>
           <pre>{curlExample}</pre>
           <div className="api-token-example-actions">
             <button className="team-button secondary compact" onClick={() => void copy(curlExample, 'Example copied.')} type="button"><Copy size={15} /> Copy example</button>

@@ -31,10 +31,9 @@ describe('auth schemas', () => {
     }).token).toHaveLength(32);
   });
 
-  it('requires a safe public page slug during setup', () => {
-    expect(() => SetupBodySchema.parse({ password: 'Secret123!' })).toThrow();
-    expect(SetupBodySchema.parse({ password: 'Secret123!', slug: 'my-page' })).toEqual({ password: 'Secret123!', slug: 'my-page' });
-    expect(() => SetupBodySchema.parse({ password: 'Secret123!', slug: 'dashboard' })).toThrow();
+  it('does not require a page slug during setup', () => {
+    expect(SetupBodySchema.parse({ password: 'Secret123!' })).toEqual({ password: 'Secret123!' });
+    expect(SetupBodySchema.parse({ password: 'Secret123!', slug: 'legacy-page' })).toEqual({ password: 'Secret123!' });
   });
 
   it('validates personal page creation and destructive confirmation separately', () => {

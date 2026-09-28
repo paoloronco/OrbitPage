@@ -133,7 +133,7 @@ It:
 - starts the container with `no-new-privileges` and a health check;
 - installs the `orbitpage` and `orbitpage-update` management commands.
 
-The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks, create the fixed `admin` password, and choose the page slug. The main page then uses locale-prefixed URLs such as `http://SERVER_IP:8080/en-US/my-page` and `http://SERVER_IP:8080/it-IT/my-page`; the installation root remains a compatibility alias.
+The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks and create the fixed `admin` password. The main page then uses locale-prefixed URLs such as `http://SERVER_IP:8080/en-US` and `http://SERVER_IP:8080/it-IT`; the installation root remains a compatibility alias.
 
 ### Installation options
 
@@ -561,7 +561,7 @@ The health response must contain `"status":"ok"` and the expected version. Then 
 4. a harmless edit can be saved and read back;
 5. the reverse proxy returns the expected certificate and does not cache `/api/*`.
 
-For a restore or migration, also compare the expected page slug, user list, upload count, and recent content with the backup source.
+For a restore or migration, also compare the user list, upload count, and recent content with the backup source.
 
 ## Roll back an update
 

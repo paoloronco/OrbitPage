@@ -59,13 +59,13 @@ export function TwoFactorManager({ username = "admin" }: { username?: string }) 
 
   return <Card className={`glass-card p-6 space-y-5 account-panel account-mfa-panel oss-account-mfa-card ${DEMO_MODE ? 'opacity-60 pointer-events-none' : ''}`}>
     <div className="flex items-start justify-between gap-4">
-      <div><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Two-step verification</p><h2 className="mt-1 text-xl font-semibold">Authenticator app</h2><p className="mt-1 text-sm text-muted-foreground">Require a rotating code after the password for this administrator.</p></div>
+      <div><p className="oss-account-kicker">Two-step verification</p><h2 className="mt-1 text-xl font-semibold">Authenticator app</h2></div>
       {status?.enabled ? <ShieldCheck className="h-6 w-6 text-emerald-600" /> : <KeyRound className="h-6 w-6 text-primary" />}
     </div>
 
     <div className={`flex items-center gap-3 border p-3 ${status?.enabled ? 'border-emerald-300 bg-emerald-50 text-emerald-900' : 'border-border bg-muted/40'}`}>
       <span className={`h-2.5 w-2.5 rounded-full ${status?.enabled ? 'bg-emerald-600' : 'bg-slate-400'}`} />
-      <div className="grid"><strong className="text-sm">{status?.enabled ? '2FA active' : '2FA off'}</strong><span className="text-xs opacity-75">{status?.enabled ? `${status.recoveryCodesRemaining} recovery codes remaining` : 'Compatible with standard TOTP authenticator apps'}</span></div>
+      <div className="grid"><strong className="text-sm">{status?.enabled ? 'Two-factor authentication is active' : 'Two-factor authentication is off'}</strong><span className="text-xs opacity-75">{status?.enabled ? `${status.recoveryCodesRemaining} recovery codes remaining` : 'Protect sign-in with a time-based code from your authenticator app.'}</span></div>
     </div>
 
     {!setup && <form className="grid gap-3" onSubmit={(event) => { event.preventDefault(); if (!status?.enabled) void startSetup(); }}>
