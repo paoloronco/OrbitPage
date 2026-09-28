@@ -45,8 +45,10 @@ describe('link schemas', () => {
       .toThrow();
   });
 
-  it('allows a titleless compact-link dock but keeps titles required elsewhere', () => {
+  it('allows titleless compact-link and media blocks but keeps titles required elsewhere', () => {
     expect(LinkSchema.parse({ id: 'quick-links', type: 'social_row', title: '' }).title).toBe('');
+    expect(LinkSchema.parse({ id: 'image', type: 'image', coverImage: '/uploads/image.webp' }).title).toBe('');
+    expect(LinkSchema.parse({ id: 'video', type: 'video', content: '{"mediaUrl":"/uploads/video.mp4"}' }).title).toBe('');
     expect(() => LinkSchema.parse({ id: 'regular-link', type: 'link', title: '' })).toThrow();
   });
 

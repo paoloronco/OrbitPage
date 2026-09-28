@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignCardLayoutRect, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, snapCardLayoutSize, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, reflowCardLayoutPositions, snapCardLayoutSize, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -94,7 +94,7 @@ describe("responsive card layout", () => {
     expect(preventCardLayoutOverlap(positions, "right", { x: 25, y: 280, width: 50, height: 120 }, positions.right)).toEqual({ x: 25, y: 280, width: 50, height: 120 });
   });
 
-  it("keeps an updated card out of occupied space", () => {
+  it("moves occupied cards below the updated card", () => {
     const layout = {
       positions: {
         large: { x: 0, y: 0, width: 50, height: 120 },
@@ -103,10 +103,27 @@ describe("responsive card layout", () => {
       height: 120,
     };
 
-    expect(updateCardLayoutItem(layout, cards, "desktop", "compact", { x: 25, y: 0, width: 50, height: 92 }).positions.compact)
-      .toEqual(layout.positions.compact);
+    const updated = updateCardLayoutItem(layout, cards, "desktop", "compact", { x: 25, y: 0, width: 50, height: 92 });
+    expect(updated.positions.compact).toEqual({ x: 25, y: 0, width: 50, height: 92 });
+    expect(updated.positions.large).toEqual({ x: 0, y: 116, width: 50, height: 120 });
     expect(updateCardLayoutItem(layout, cards, "desktop", "compact", { x: 25, y: 0, width: 50, height: 92 }, true).positions.compact)
       .toEqual({ x: 25, y: 0, width: 50, height: 92 });
+  });
+
+  it("reflows vertical collisions as a cascade while preserving free columns", () => {
+    const positions = {
+      top: { x: 0, y: 0, width: 100, height: 100 },
+      middle: { x: 0, y: 124, width: 100, height: 100 },
+      moved: { x: 0, y: 248, width: 100, height: 100 },
+      side: { x: 75, y: 0, width: 25, height: 100 },
+    };
+
+    expect(reflowCardLayoutPositions(positions, "moved", { ...positions.moved, x: 0, y: 0, width: 75 })).toEqual({
+      moved: { x: 0, y: 0, width: 75, height: 100 },
+      top: { x: 0, y: 124, width: 100, height: 100 },
+      side: { x: 75, y: 0, width: 25, height: 100 },
+      middle: { x: 0, y: 248, width: 100, height: 100 },
+    });
   });
 
   it("does not resize visual cards below their useful default height", () => {

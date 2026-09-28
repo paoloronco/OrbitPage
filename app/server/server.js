@@ -4105,6 +4105,10 @@ app.post(
           changes: result.proposal.operationSummaries,
           expectedRevision: snapshot.revision,
           expiresAt,
+          preview: {
+            before: snapshot.page,
+            after: { ...snapshot.page, ...result.proposal.changes },
+          },
         },
       });
     } catch (error) {

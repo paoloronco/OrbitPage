@@ -22,6 +22,7 @@ import {
   type AiSettings,
 } from "@/lib/api-client";
 import { useAppI18n } from "@/lib/i18n";
+import { AiPageComparisonPreview } from "./AiPageComparisonPreview";
 
 type SelfHostedAiPanelProps = {
   canManageSettings: boolean;
@@ -266,6 +267,7 @@ export function SelfHostedAiPanel({ canManageSettings, onApplied }: SelfHostedAi
                   </li>
                 ))}
               </ol>
+              <AiPageComparisonPreview {...proposal.preview} />
               <div className="oss-ai-proposal-actions">
                 <Button
                   className="admin-action admin-action-primary"

@@ -10,6 +10,7 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { useDialogAccessibility } from "@/lib/use-dialog-accessibility";
+import { AiPageComparisonPreview } from "./AiPageComparisonPreview";
 
 type AgentMessage = AiConversationMessage & {
   id: string;
@@ -158,6 +159,7 @@ export function SelfHostedAiAgent({ onApplied }: { onApplied?: () => void }) {
                       <div><strong>{labels.review}</strong><span>{item.proposal.summary}</span></div>
                     </div>
                     <ul>{item.proposal.changes.map((change, index) => <li key={`${item.id}-${index}`}><Check aria-hidden="true" size={14} />{change}</li>)}</ul>
+                    <AiPageComparisonPreview {...item.proposal.preview} />
                     <small>{tr("Review every item before applying.", "Controlla ogni voce prima di applicare.")}</small>
                     <button disabled={item.applying || item.applied} onClick={() => void applyProposal(item.id, item.proposal!)} type="button">
                       {item.applying

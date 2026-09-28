@@ -34,4 +34,22 @@ describe('PublicVideoCard', () => {
     expect(html).toContain('object-fit:contain');
     expect(html).toContain('Product reel');
   });
+
+  it('renders only the video when title and description are empty', () => {
+    const html = renderToStaticMarkup(
+      <PublicVideoCard
+        link={{
+          id: 'video-only',
+          title: '',
+          description: '',
+          url: '',
+          type: 'video',
+          content: buildBlockContent({ mediaUrl: '/uploads/video.mp4' }),
+        }}
+      />,
+    );
+
+    expect(html).toContain('<video');
+    expect(html).not.toContain('<p');
+  });
 });

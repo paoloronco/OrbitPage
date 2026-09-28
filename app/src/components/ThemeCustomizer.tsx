@@ -857,7 +857,7 @@ export const ThemeCustomizer = ({
                     <h4 className="font-bold text-slate-900">{tr("Card surfaces", "Superfici delle card")}</h4>
                     <p className="mt-1 text-sm leading-6 text-slate-500">{tr("Choose a solid, fully transparent or liquid-glass default. Opacity changes only the surface; text, media and actions stay fully visible.", "Scegli un default solido, completamente trasparente o liquid glass. L'opacità modifica solo la superficie: testo, media e azioni restano pienamente visibili.")}</p>
                   </div>
-                  <div className="grid gap-6 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2 sm:p-5">
+                  <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-3">
                       <Label htmlFor="content-card-effect">{tr("Content card style", "Stile card contenuto")}</Label>
                       <Select value={pendingTheme.contentCardEffect} onValueChange={(contentCardEffect: CardSurfaceEffect) => updatePendingTheme({ contentCardEffect })}>

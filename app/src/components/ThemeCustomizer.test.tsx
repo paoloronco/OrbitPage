@@ -9,6 +9,7 @@ import { buildCardPresetTheme, buildPagePresetTheme } from "./ThemeCustomizer";
 describe("ThemeCustomizer preset saves", () => {
   it("keeps the theme headings concise and moves page-theme guidance into a tooltip", () => {
     const source = readFileSync(new URL("./ThemeCustomizer.tsx", import.meta.url), "utf8");
+    const tooltipSource = readFileSync(new URL("./ui/tooltip.tsx", import.meta.url), "utf8");
 
     expect(source).toContain('tr("Page background", "Sfondo pagina")');
     expect(source).toContain('tr("Card background & colors", "Sfondo e colori delle card")');
@@ -16,6 +17,7 @@ describe("ThemeCustomizer preset saves", () => {
     expect(source).toContain('tr("Buttons & highlights", "Pulsanti ed elementi in evidenza")');
     expect(source).toContain('tr("Content card background", "Sfondo card contenuto")');
     expect(source).toContain('aria-label={`${label}: ${description}`}');
+    expect(tooltipSource).toContain("<TooltipPrimitive.Portal>");
     expect(source).toContain('label={tr("Name and surname", "Nome e cognome")}');
     expect(source).toContain('label={tr("Card titles", "Titoli delle card")}');
     expect(source).toContain('label="URL"');

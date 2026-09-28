@@ -80,6 +80,31 @@ export function preventCardLayoutOverlap(
   return collides(verticalOnly) ? previous : verticalOnly;
 }
 
+export function reflowCardLayoutPositions(
+  positions: Record<string, CardLayoutRect>,
+  item: string,
+  candidate: CardLayoutRect,
+) {
+  const next: Record<string, CardLayoutRect> = { [item]: candidate };
+  const placed: CardLayoutRect[] = [candidate];
+  const remaining = Object.entries(positions)
+    .filter(([id]) => id !== item)
+    .sort(([, left], [, right]) => left.y - right.y || left.x - right.x);
+
+  for (const [id, position] of remaining) {
+    let rect = { ...position };
+    while (true) {
+      const collisions = placed.filter((placedRect) => overlaps(rect, placedRect));
+      if (collisions.length === 0) break;
+      rect = { ...rect, y: Math.max(...collisions.map((placedRect) => placedRect.y + placedRect.height + CARD_GAP)) };
+    }
+    next[id] = rect;
+    placed.push(rect);
+  }
+
+  return next;
+}
+
 export function snapCardLayoutSize(rect: CardLayoutRect): CardLayoutRect {
   const width = CARD_WIDTH_PRESETS.reduce((closest, preset) => (
     Math.abs(preset - rect.width) < Math.abs(closest - rect.width) ? preset : closest
@@ -197,12 +222,9 @@ export function updateCardLayoutItem(
   const card = cards.find((candidate) => candidate.id === cardId);
   if (!card) return normalized;
   const candidate = normalizeCardRect(rect, normalized.positions[cardId], card, viewport);
-  const positions = {
-    ...normalized.positions,
-    [cardId]: allowOverlap
-      ? candidate
-      : preventCardLayoutOverlap(normalized.positions, cardId, candidate, normalized.positions[cardId]),
-  };
+  const positions = allowOverlap
+    ? { ...normalized.positions, [cardId]: candidate }
+    : reflowCardLayoutPositions(normalized.positions, cardId, candidate);
   return {
     positions,
     ...(normalized.contents ? { contents: normalized.contents } : {}),
