@@ -321,6 +321,7 @@ export const LinkCard = ({
   const isMap = link.type === 'map';
   const isEvent = link.type === 'event';
   const isEmbed = link.type === 'embed';
+  const isNewsletter = link.type === 'newsletter';
   const isMenu = isNativeMenuLink(link);
   const isShop = isNativeShopLink(link);
   const isActionable = isPublicActionableBlock(link.type);
@@ -532,6 +533,8 @@ export const LinkCard = ({
               ? 'Event title'
           : isEmbed
                 ? 'Embed title'
+                : isNewsletter
+                  ? tr('Newsletter title', 'Titolo newsletter')
                 : isInternalLinks
                   ? tr('Navigation title', 'Titolo navigazione')
                 : isMenu

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
 import { CurrentUser } from "@/pages/Admin";
 import { Permission, hasPermission, hasAnyPermission, getLinkEditMode } from "@/lib/permissions";
@@ -180,6 +181,7 @@ const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
 const NEW_UI_STORAGE_KEY = "orbitpage.admin.new-ui";
 const EMBEDDED_PREVIEW_MEDIA_QUERY = "(min-width: 1121px)";
 const DOCKER_MIGRATION_GUIDE = "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Docker-Hub-migration.md";
+type AccountView = "general" | "security";
 
 export const AdminView = ({
   profile,
@@ -237,6 +239,8 @@ export const AdminView = ({
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
   const [gaSaved, setGaSaved] = useState(false);
   const [gaSaving, setGaSaving] = useState(false);
+  const [gaSetupOpen, setGaSetupOpen] = useState(false);
+  const [accountView, setAccountView] = useState<AccountView>("general");
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
   const [contentSection, setContentSection] = useState<ContentDestination>(() => (
     getHostedSurfaceConfig()?.contentSection
@@ -750,19 +754,17 @@ export const AdminView = ({
     }
   };
 
-  const googleAnalyticsPanel = (!saasPlan || entitlements?.analytics === "advanced-ga4") ? (
-    <details className="managed-analytics-integration" data-testid="google-analytics-settings">
-      <summary>
-        <span className="managed-analytics-integration-title">
-          <Globe2 aria-hidden="true" size={17} />
-          <span>
-            <strong>Google Analytics 4</strong>
-          </span>
-        </span>
-        <span className={profile.googleAnalyticsId ? "is-active" : ""}>
-          {profile.googleAnalyticsId ? tr("Active", "Attivo") : tr("Manage", "Gestisci")}
-        </span>
-      </summary>
+  const googleAnalyticsDialog = (
+    <Dialog open={gaSetupOpen} onOpenChange={setGaSetupOpen}>
+      <DialogContent className="managed-analytics-integration-dialog" data-testid="google-analytics-settings">
+        <DialogHeader className="managed-analytics-integration-dialog-header">
+          <span className="admin-panel-icon" aria-hidden="true"><Globe2 size={17} /></span>
+          <div>
+            <DialogTitle>Google Analytics 4</DialogTitle>
+            <DialogDescription>{tr("Connect Google Analytics to your public page.", "Collega Google Analytics alla tua pagina pubblica.")}</DialogDescription>
+          </div>
+        </DialogHeader>
+        {(!saasPlan || entitlements?.analytics === "advanced-ga4") ? (
       <div className="managed-analytics-integration-body">
         <p>
           {tr("Tracking runs on the public page only. Admin activity stays out of analytics.", "Il monitoraggio viene eseguito solo sulla pagina pubblica. L'attività nell'Admin resta esclusa dalle analytics.")}
@@ -808,13 +810,15 @@ export const AdminView = ({
           )}
         </div>
       </div>
-    </details>
-  ) : (
-    <PlanLockedFeature
-      title="Google Analytics 4"
-      description={tr("Connect a GA4 Measurement ID with the Pro plan.", "Collega un ID di misurazione GA4 con il piano Pro.")}
-      managePlanHref={managePlanHref}
-    />
+        ) : (
+          <PlanLockedFeature
+            title="Google Analytics 4"
+            description={tr("Connect a GA4 Measurement ID with the Pro plan.", "Collega un ID di misurazione GA4 con il piano Pro.")}
+            managePlanHref={managePlanHref}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 
   const visualInspectorTitle = visualSection === "profile"
@@ -1504,12 +1508,24 @@ export const AdminView = ({
 
           {!isHostedAdmin && (
             <TabsContent value="account" className="admin-tab-content">
-              <div className="oss-account-layout" data-onboarding="account-section">
-                <div className="oss-account-column"><PasswordManager /></div>
-                <div className="oss-account-column">
-                  <TwoFactorManager username={currentUser?.username} />
-                  <SelfHostedAccountActions publicPageHref={publicPageHref} />
-                </div>
+              <div className="oss-account-layout account-layout account-workspace" data-onboarding="account-section">
+                <nav aria-label={tr("Account sections", "Sezioni account")} className="account-tabs">
+                  <button aria-current={accountView === "general" ? "page" : undefined} className={accountView === "general" ? "active" : ""} onClick={() => setAccountView("general")} type="button"><CircleUserRound aria-hidden="true" />{tr("General", "Generale")}</button>
+                  <button aria-current={accountView === "security" ? "page" : undefined} className={accountView === "security" ? "active" : ""} onClick={() => setAccountView("security")} type="button"><ShieldCheck aria-hidden="true" />{tr("Security", "Sicurezza")}</button>
+                </nav>
+                {accountView === "general" ? (
+                  <SelfHostedAccountActions
+                    canDeleteInstallation={canManageUsers}
+                    publicPageHref={publicPageHref}
+                    role={currentUser?.role || "-"}
+                    username={currentUser?.username || "admin"}
+                  />
+                ) : (
+                  <div className="account-security-stack">
+                    <PasswordManager />
+                    <TwoFactorManager username={currentUser?.username} />
+                  </div>
+                )}
               </div>
             </TabsContent>
           )}
@@ -1537,8 +1553,19 @@ export const AdminView = ({
 
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">
-              <ManagedAnalyticsDashboard />
-              {googleAnalyticsPanel}
+              <ManagedAnalyticsDashboard headerAction={(
+                <Button
+                  className="admin-action"
+                  data-testid="google-analytics-settings-trigger"
+                  onClick={() => setGaSetupOpen(true)}
+                  type="button"
+                  variant="outline"
+                >
+                  <Globe2 aria-hidden="true" size={16} />
+                  {profile.googleAnalyticsId ? "Google Analytics" : tr("Add Google Analytics", "Aggiungi Google Analytics")}
+                </Button>
+              )} />
+              {googleAnalyticsDialog}
             </div>
           </TabsContent>
 

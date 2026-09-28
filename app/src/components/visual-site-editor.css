@@ -415,6 +415,145 @@
   padding: 14px;
 }
 
+.admin-content-start {
+  display: none;
+}
+
+@media (min-width: 601px) {
+  .visual-site-editor__inspector-heading-actions .admin-content-header-add {
+    display: none;
+  }
+
+  .admin-content-start {
+    display: grid;
+    gap: 14px;
+  }
+
+  .admin-content-start__primary {
+    width: 100%;
+    min-height: 54px;
+    gap: 9px;
+    border-radius: 9px;
+    background: #315ee7;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgb(49 94 231 / 20%);
+  }
+
+  .admin-content-start__primary:hover {
+    background: #244dcc;
+  }
+
+  .admin-content-quick-add {
+    display: grid;
+    gap: 10px;
+  }
+
+  .admin-content-quick-add__heading {
+    display: grid;
+    gap: 2px;
+    padding: 0 2px;
+  }
+
+  .admin-content-quick-add__heading strong {
+    color: #14213a;
+    font-size: 14px;
+    font-weight: 820;
+  }
+
+  .admin-content-quick-add__heading span {
+    color: #66758d;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .admin-content-quick-add__group {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #d9e1ec;
+    border-radius: 9px;
+    background: #fff;
+  }
+
+  .admin-content-quick-add__group h3 {
+    color: #53637b;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  .admin-content-quick-add__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .admin-content-quick-add__grid button {
+    display: grid;
+    min-width: 0;
+    min-height: 48px;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid #dce4ef;
+    border-radius: 8px;
+    background: #f9fbff;
+    color: #1d2b43;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 760;
+    text-align: left;
+  }
+
+  .admin-content-quick-add__grid button:hover:not(:disabled) {
+    border-color: #8eacf5;
+    background: #eef3ff;
+    color: #1746b0;
+  }
+
+  .admin-content-quick-add__grid button:focus-visible {
+    outline: 3px solid rgb(47 102 237 / 18%);
+    outline-offset: 1px;
+  }
+
+  .admin-content-quick-add__grid button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+  }
+
+  .admin-content-quick-add__icon {
+    display: inline-flex;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: #e9f0ff;
+    color: #2858d4;
+  }
+
+  .admin-content-quick-add__icon[data-service-brand-tile] {
+    border: 1px solid #dfe5ed;
+    background: #fff;
+  }
+
+  .admin-content-quick-add__grid button > span:nth-child(2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-content-quick-add__grid small {
+    color: #6b7890;
+    font-size: 9px;
+    font-weight: 800;
+  }
+}
+
 .visual-site-editor .admin-profile-identity {
   container: profile-identity / inline-size;
 }

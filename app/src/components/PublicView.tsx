@@ -89,7 +89,7 @@ export const PublicView = ({
       return Boolean(onEditorSelect) || (getSocialRowData(link.content).items || []).length > 0;
     }
     if (link.type === 'internal_links') return getInternalLinksData(link.content).items.length > 0;
-    if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event' || link.type === 'embed') {
+    if (link.type === 'contact' || link.type === 'callout' || link.type === 'map' || link.type === 'event' || link.type === 'embed' || link.type === 'newsletter') {
       return (
         link.title.trim() !== '' ||
         link.description.trim() !== '' ||

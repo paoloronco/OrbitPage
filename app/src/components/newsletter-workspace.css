@@ -344,15 +344,25 @@
 }
 
 .newsletter-form-grid,
-.newsletter-composer-fields {
+.newsletter-composer-fields,
+.newsletter-settings-fields {
   display: grid;
   gap: 15px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .newsletter-form-grid .wide,
-.newsletter-composer-fields .full {
+.newsletter-composer-fields .full,
+.newsletter-settings-fields .wide {
   grid-column: 1 / -1;
+}
+
+.newsletter-settings-group {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
 }
 
 .newsletter-settings-section {
@@ -1098,12 +1108,14 @@
 
   .newsletter-form-grid,
   .newsletter-composer-fields,
+  .newsletter-settings-fields,
   .newsletter-subscriber-tools {
     grid-template-columns: 1fr;
   }
 
   .newsletter-form-grid .wide,
-  .newsletter-composer-fields .full {
+  .newsletter-composer-fields .full,
+  .newsletter-settings-fields .wide {
     grid-column: auto;
   }
 

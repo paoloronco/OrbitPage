@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import {
   Activity,
@@ -95,7 +95,7 @@ function Metric({
   </div>;
 }
 
-export function ManagedAnalyticsDashboard() {
+export function ManagedAnalyticsDashboard({ headerAction }: { headerAction?: ReactNode }) {
   const { locale, tr } = useAppI18n();
   const [period, setPeriod] = useState(30);
   const [report, setReport] = useState<ManagedAnalyticsReport>(EMPTY);
@@ -202,6 +202,7 @@ export function ManagedAnalyticsDashboard() {
 
   return <section className="managed-analytics" data-testid="managed-analytics">
     <header className="managed-analytics-header">
+      {headerAction && <div className="managed-analytics-header-action">{headerAction}</div>}
       <div className="managed-analytics-actions ml-auto">
         <div role="group" aria-label={tr('Analytics range', 'Intervallo analytics')}>{periods.map((days) => <button aria-pressed={period === days} key={days} onClick={() => setPeriod(days)} type="button">{days}{daySuffix}</button>)}</div>
         <button aria-label={tr('Refresh analytics', 'Aggiorna analytics')} className="managed-analytics-refresh" disabled={loading} onClick={() => void load(period)} type="button">{loading ? <OrbitLoader size={16} state="searching" /> : <RefreshCw size={16} />}</button>

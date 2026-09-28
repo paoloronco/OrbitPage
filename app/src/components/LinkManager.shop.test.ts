@@ -24,6 +24,21 @@ describe('Shop link shortcut', () => {
     expect(source).not.toContain('Edit this block, then save the content changes.');
   });
 
+  it('moves desktop content creation into the empty inspector with direct shortcuts', () => {
+    expect(source).toContain('className="admin-content-start__primary"');
+    expect(source).toContain('className="admin-content-quick-add"');
+    expect(source).toContain('itemIds: ["link", "internal-links", "heading", "text"]');
+    expect(source).toContain('itemIds: ["instagram", "whatsapp", "facebook"]');
+    expect(source).toContain('itemIds: ["calendly", "typeform", "github"]');
+  });
+
+  it('keeps the category rail synchronized with block-library scrolling', () => {
+    expect(source).toContain('onScrollCapture={handleBlockLibraryScroll}');
+    expect(source).toContain('data-block-library-category={category.id}');
+    expect(source).toContain('data-block-library-filter={category.id}');
+    expect(source).toContain('scrollIntoView({ block: "nearest", inline: "nearest" })');
+  });
+
   it('uses the content block label for the card list', () => {
     expect(source).toContain('tr("Content block", "Blocco contenuto")');
   });
@@ -61,7 +76,7 @@ describe('Shop link shortcut', () => {
 
   it('opens only the preview-selected card in the visual editor', () => {
     expect(source).toContain('const focusedLink = visualFocusLinkId');
-    expect(source).toContain('visualMode && !focusedLink ? null');
+    expect(source).toContain('visualMode && !focusedLink ? (');
     expect(source).toContain('editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}');
     expect(source.match(/editing=\{visualMode \? true : editingLinkId === String\(link.id\)\}/g)).toHaveLength(2);
     expect(source).toContain('onVisualFocusChange?.(null)');

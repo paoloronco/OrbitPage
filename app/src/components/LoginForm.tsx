@@ -133,12 +133,6 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
           <Button type="button" variant="ghost" className="text-sm" onClick={() => { setRecoveryMode((value) => !value); setSecondFactorCode(''); setError(''); }}>{recoveryMode ? "Use authenticator app" : "Use a recovery code"}</Button>
           <Button type="button" variant="ghost" className="text-sm text-muted-foreground" onClick={() => { setChallengeToken(''); setSecondFactorCode(''); setRecoveryMode(false); setError(''); }}>Back to sign in</Button>
         </div>}
-
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">
-            Secure admin access for link management
-          </p>
-        </div>
       </Card>
     </div>
   );

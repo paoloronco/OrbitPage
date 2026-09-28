@@ -19,7 +19,7 @@ import {
   Pencil,
   Plus,
   Trash2,
-  Users,
+  UsersRound,
   X,
 } from 'lucide-react';
 import { usersApi } from '@/lib/api-client';
@@ -253,7 +253,7 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
           <h2>Workspace members</h2>
           <p className="muted">Create a local account for each person. Everyone signs in with their own credentials and receives only the permissions assigned to their role.</p>
         </div>
-        <Users aria-hidden="true" size={22} />
+        <UsersRound aria-hidden="true" size={24} />
       </div>
 
       <div className="team-toolbar">

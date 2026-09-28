@@ -559,8 +559,10 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
             <article>
               <span>SMTP</span>
               <strong className="newsletter-metric-status">
-                {data.settings.verifiedAt
+                {data.settings.verifiedAt && data.settings.complianceReady
                   ? "Ready"
+                  : data.settings.verifiedAt
+                    ? "Complete"
                   : data.settings.configured
                     ? "Verify"
                     : "Connect"}
@@ -628,11 +630,13 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
               )}
             </header>
             <div className="newsletter-form-grid">
-              <div className="newsletter-settings-section wide">
-                <strong>SMTP connection</strong>
-                <span>Connect the server that sends confirmation messages and campaigns.</span>
-              </div>
-              <label className="field wide">
+              <section className="newsletter-settings-group wide">
+                <div className="newsletter-settings-section">
+                  <strong>SMTP connection</strong>
+                  <span>Connect the server that sends confirmation messages and campaigns.</span>
+                </div>
+                <div className="newsletter-settings-fields">
+                <label className="field wide">
                 <span className="label">SMTP host</span>
                 <input
                   className="input"
@@ -697,11 +701,15 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                   value={smtp.password}
                 />
               </label>
-              <div className="newsletter-settings-section wide">
-                <strong>Sender profile</strong>
-                <span>Shown on signup pages and used consistently in every newsletter.</span>
-              </div>
-              <label className="field">
+                </div>
+              </section>
+              <section className="newsletter-settings-group wide">
+                <div className="newsletter-settings-section">
+                  <strong>Sender profile</strong>
+                  <span>Shown on signup pages and used consistently in every newsletter.</span>
+                </div>
+                <div className="newsletter-settings-fields">
+                <label className="field">
                 <span className="label">Business / sender name</span>
                 <input
                   className="input"
@@ -773,38 +781,51 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                   value={smtp.footerText}
                 />
               </label>
+                </div>
+              </section>
+              <section className="newsletter-settings-group wide">
+                <div className="newsletter-settings-section">
+                  <strong>Compliance</strong>
+                  <span>Required before signup forms or campaign sending can be enabled.</span>
+                </div>
+                <div className="newsletter-settings-fields">
               <label className="field wide">
-                <span className="label">Sender address / legal details <small>optional</small></span>
+                <span className="label">Sender address / legal details</span>
                 <input
                   className="input"
                   maxLength={300}
                   onChange={(event) => setSmtp((value) => ({ ...value, senderAddress: event.target.value }))}
                   placeholder="Business name, street, city and country"
+                  required
                   value={smtp.senderAddress}
                 />
               </label>
               <label className="field">
-                <span className="label">Privacy Policy URL <small>optional</small></span>
+                <span className="label">Privacy Policy URL</span>
                 <input
                   className="input"
                   maxLength={2048}
                   onChange={(event) => setSmtp((value) => ({ ...value, privacyPolicyUrl: event.target.value }))}
                   placeholder="https://example.com/privacy"
+                  required
                   type="url"
                   value={smtp.privacyPolicyUrl}
                 />
               </label>
               <label className="field">
-                <span className="label">Terms URL <small>optional</small></span>
+                <span className="label">Terms URL</span>
                 <input
                   className="input"
                   maxLength={2048}
                   onChange={(event) => setSmtp((value) => ({ ...value, termsUrl: event.target.value }))}
                   placeholder="https://example.com/terms"
+                  required
                   type="url"
                   value={smtp.termsUrl}
                 />
               </label>
+                </div>
+              </section>
             </div>
             <footer>
               <button
@@ -938,7 +959,7 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                   pending until they click the confirmation email.
                 </span>
               </div>
-              {data.signupUrl && (
+              {data.signupUrl ? (
                 <>
                   <input
                     aria-label="Newsletter signup URL"
@@ -954,6 +975,8 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                     Copy
                   </button>
                 </>
+              ) : (
+                <span className="newsletter-signup-unavailable">Complete compliance, verify SMTP and publish the page to enable signup.</span>
               )}
             </aside>
           </section>
@@ -1429,7 +1452,7 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
               </button>
               <button
                 className="button"
-                disabled={action !== null || !data.settings.verifiedAt}
+                disabled={action !== null || !data.settings.verifiedAt || !data.settings.complianceReady}
                 onClick={() => void queueCampaign("now")}
                 type="button"
               >
@@ -1449,7 +1472,8 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                   disabled={
                     action !== null ||
                     !scheduledFor ||
-                    !data.settings.verifiedAt
+                    !data.settings.verifiedAt ||
+                    !data.settings.complianceReady
                   }
                   onClick={() => void queueCampaign("schedule")}
                   type="button"
@@ -1459,9 +1483,9 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
                 </button>
               </div>
             </footer>
-            {!data.settings.verifiedAt && (
+            {(!data.settings.verifiedAt || !data.settings.complianceReady) && (
               <p className="newsletter-inline-warning">
-                Verify the SMTP connection before sending or scheduling.
+                Complete compliance and verify the SMTP connection before sending or scheduling.
               </p>
             )}
           </form>

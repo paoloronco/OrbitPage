@@ -9,6 +9,7 @@ import { PublicInternalLinksCard } from "./PublicInternalLinksCard";
 import { PublicLinkCard } from "./PublicLinkCard";
 import { PublicMapCard } from "./PublicMapCard";
 import { PublicMenuCard } from "./PublicMenuCard";
+import { PublicNewsletterCard } from "./PublicNewsletterCard";
 import { PublicSeparatorCard } from "./PublicSeparatorCard";
 import { PublicSocialRowCard } from "./PublicSocialRowCard";
 import { PublicTextCard } from "./PublicTextCard";
@@ -40,5 +41,6 @@ export const PublicBlockRenderer = ({ link, cardContentLayout, cardContentLayout
   if (link.type === "map") return <PublicMapCard link={link} />;
   if (link.type === "event") return <PublicEventCard link={link} />;
   if (link.type === "embed") return <PublicEmbedCard link={link} />;
+  if (link.type === "newsletter") return <PublicNewsletterCard link={link} />;
   return <PublicLinkCard link={link} contentLayout={cardContentLayout} contentLayoutEditing={cardContentLayoutEditing} contentLayoutGuides={cardContentLayoutGuides} />;
 };
