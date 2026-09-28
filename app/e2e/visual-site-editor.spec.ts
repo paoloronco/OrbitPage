@@ -420,8 +420,10 @@ test("Arrange uses preset sizes, compact handles and persistent text alignment",
   expect(await moveHandle.evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBe(64);
 
   await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
-  const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
-  expect([25, 33.25, 40, 50, 66.75, 75, 100]).toContain(resized[2]);
+  await expect.poll(async () => {
+    const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
+    return [25, 33.25, 40, 50, 66.75, 75, 100].includes(resized[2]);
+  }).toBe(true);
 
   await contentSaveButton(page).click();
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
