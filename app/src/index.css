@@ -9935,6 +9935,14 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   padding-block: var(--public-page-block-padding);
 }
 
+.public-page-root button {
+  font-family: var(--font-button, inherit);
+}
+
+.public-card-stack .text-muted-foreground {
+  font-family: var(--font-card-description-effective, var(--font-card-description, inherit));
+}
+
 .public-page-root--preview-desktop {
   --public-page-density-max-width: 26rem;
   --public-page-block-padding: 1.5rem;
@@ -13287,45 +13295,9 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   background: #f8fafc;
 }
 
-.admin-internal-links-editor__heading {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: .7rem;
-}
-
-.admin-internal-links-editor__mark {
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: .5rem;
-  background: #e9efff;
-  color: #2454d6;
-}
-
-.admin-internal-links-editor__heading > span:last-child,
-.admin-internal-links-add > div:first-child {
-  display: grid;
-  gap: .15rem;
-}
-
-.admin-internal-links-editor__heading strong,
-.admin-internal-links-add strong {
-  color: #14213a;
-  font-size: .84rem;
-}
-
-.admin-internal-links-editor__heading small,
-.admin-internal-links-add small {
-  color: #526785;
-  font-size: .73rem;
-  line-height: 1.45;
-}
-
 .admin-internal-links-layout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: .55rem;
 }
 
@@ -13441,29 +13413,32 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   font-size: .66rem;
 }
 
-.admin-internal-links-add {
-  display: grid;
-  grid-template-columns: minmax(10rem, .4fr) minmax(0, 1fr);
-  align-items: center;
-  gap: .8rem;
-  padding: .75rem;
-  border: 1px dashed #b9c8dc;
-  border-radius: .55rem;
-  background: #fff;
+.admin-internal-links-add-action,
+.admin-internal-links-add-trigger {
+  width: 100%;
 }
 
-.admin-internal-links-add > div:last-child {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: .4rem;
-  color: #64748b;
-  font-size: .7rem;
+.admin-internal-links-add-trigger {
+  min-height: 46px;
+  justify-content: center;
+  gap: .45rem;
+  border-color: #315be8;
+  background: #315be8;
+  color: #fff;
+  font-weight: 750;
 }
 
-.admin-internal-links-add button {
-  min-height: 36px;
-  gap: .35rem;
+.admin-internal-links-add-trigger:hover {
+  border-color: #2449c7;
+  background: #2449c7;
+}
+
+.admin-internal-links-add-trigger[data-disabled] {
+  border-color: #d6dde8;
+  background: #e8edf4;
+  color: #7b8799;
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .admin-internal-links-list {
@@ -13567,15 +13542,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     min-height: 88px;
   }
 
-  .admin-internal-links-add {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-internal-links-add > div:last-child {
-    justify-content: flex-start;
-  }
-
-  .admin-internal-links-add button,
   .admin-internal-link-item > header button {
     min-height: 44px;
   }

@@ -221,6 +221,9 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
   const ctaConfig = ctaActionConfig[link.ctaAction || 'book'];
   const effectiveTextColor = getPublicTextColor(link);
   const effectiveTextStyle = effectiveTextColor ? { color: effectiveTextColor } : undefined;
+  const titleFontFamily = link.titleFontFamily || 'var(--font-card-title, inherit)';
+  const descriptionFontFamily = link.descriptionFontFamily || 'var(--font-card-description, inherit)';
+  const urlFontFamily = 'var(--font-url, inherit)';
 
   if (isCta) {
     const { Icon } = ctaConfig;
@@ -243,19 +246,19 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
             <Icon className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="mb-1 inline-flex rounded-md bg-white/14 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85">
+            <span className="mb-1 inline-flex rounded-md bg-white/14 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85" style={{ fontFamily: 'var(--font-button, inherit)' }}>
               {unavailable ? tr('Unavailable', 'Non disponibile') : ctaConfig.label}
             </span>
             <span
               className="block line-clamp-2 text-base font-semibold leading-tight"
-              style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
+              style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}
             >
               {link.title || ctaConfig.label}
             </span>
             {link.description && (
               <span
                 className="mt-1 block line-clamp-2 text-sm text-white/78"
-                style={{ ...effectiveTextStyle, ...(effectiveTextColor ? { opacity: 0.78 } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
+                style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(effectiveTextColor ? { opacity: 0.78 } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}
               >
                 {link.description}
               </span>
@@ -283,7 +286,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       ) } : {}),
       title: (
         <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={contentLayoutEditing || unavailable ? -1 : undefined} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <h3 className="min-w-0 flex-1 truncate font-semibold" style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+          <h3 className="min-w-0 flex-1 truncate font-semibold" style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}>
             {link.title || 'Untitled Link'}
           </h3>
           {safeHref && <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 text-primary opacity-0 transition-smooth group-hover:opacity-100" />}
@@ -292,13 +295,13 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       ...(link.description ? {
         description: (
           <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <p className="line-clamp-2 text-sm" style={{ ...effectiveTextStyle, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}>{link.description}</p>
+            <p className="line-clamp-2 text-sm" style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}>{link.description}</p>
           </a>
         ),
       } : {}),
       ...(safeHref && !link.hideUrl ? {
         url: (
-          <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} tabIndex={-1} className="block truncate rounded-md text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : undefined}>
+          <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} tabIndex={-1} className="block truncate rounded-md text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={{ fontFamily: urlFontFamily, ...(effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : {}) }}>
             {link.url.replace(/^https?:\/\//, '')}
           </a>
         ),
@@ -395,7 +398,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               <div className="flex items-center gap-2">
                 <h3
                   className="font-semibold truncate flex-1"
-                  style={{ ...effectiveTextStyle, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}
+                  style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}
                 >
                   {link.title || "Untitled Link"}
                 </h3>
@@ -407,7 +410,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               {link.description && (
                 <p
                   className="text-sm line-clamp-2 mt-1"
-                  style={{ ...effectiveTextStyle, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
+                  style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}
                 >
                   {link.description}
                 </p>
@@ -415,7 +418,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               {safeHref && !link.hideUrl && (
                 <p
                   className="text-xs mt-1 truncate text-muted-foreground"
-                  style={effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : undefined}
+                  style={{ fontFamily: urlFontFamily, ...(effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : {}) }}
                 >
                   {link.url.replace(/^https?:\/\//, '')}
                 </p>

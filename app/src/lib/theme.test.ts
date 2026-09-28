@@ -83,6 +83,20 @@ describe('theme normalization', () => {
     expect(getCardSurfaceGradient(theme.contentCard, 0)).toContain(', 0)');
   });
 
+  it('exposes independent typography choices to the public renderer', () => {
+    const theme = normalizeTheme({
+      profileNameFontFamily: 'Georgia, serif',
+      cardTitleFontFamily: 'Poppins, system-ui, sans-serif',
+      urlFontFamily: 'Roboto, system-ui, sans-serif',
+    });
+    const variables = getThemeCssVariables(theme);
+
+    expect(variables['--font-profile-name']).toBe('Georgia, serif');
+    expect(variables['--font-card-title']).toBe('Poppins, system-ui, sans-serif');
+    expect(variables['--font-url']).toBe('Roboto, system-ui, sans-serif');
+    expect(variables['--font-card-description']).toBe('inherit');
+  });
+
   it('keeps valid card surface effects and safely falls back for older or invalid themes', () => {
     const customizedTheme = normalizeTheme({
       profileCardEffect: 'transparent',

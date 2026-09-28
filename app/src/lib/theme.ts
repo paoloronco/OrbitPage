@@ -106,6 +106,13 @@ export interface ThemeConfig {
 
   // Typography
   fontFamily: string;
+  profileNameFontFamily: string;
+  profileDescriptionFontFamily: string;
+  cardTitleFontFamily: string;
+  cardDescriptionFontFamily: string;
+  urlFontFamily: string;
+  buttonFontFamily: string;
+  footerFontFamily: string;
   // Note: per-item font sizes are handled on profile and link objects; theme no longer stores font sizes
 
   // Layout
@@ -183,6 +190,13 @@ export const defaultTheme: ThemeConfig = {
   contentCardEffect: 'solid',
   
   fontFamily: 'Inter, system-ui, sans-serif',
+  profileNameFontFamily: 'inherit',
+  profileDescriptionFontFamily: 'inherit',
+  cardTitleFontFamily: 'inherit',
+  cardDescriptionFontFamily: 'inherit',
+  urlFontFamily: 'inherit',
+  buttonFontFamily: 'inherit',
+  footerFontFamily: 'inherit',
   // font sizes removed from theme defaults; items will use their own saved sizes
   
   cardRadius: 12,
@@ -505,6 +519,13 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
     '--gradient-card': `linear-gradient(${theme.cardGradient.direction}, ${theme.cardGradient.from}, ${theme.cardGradient.to})`,
     '--gradient-primary': `linear-gradient(135deg, ${theme.primary}, ${theme.primaryGlow})`,
     '--font-family': theme.fontFamily,
+    '--font-profile-name': theme.profileNameFontFamily,
+    '--font-profile-description': theme.profileDescriptionFontFamily,
+    '--font-card-title': theme.cardTitleFontFamily,
+    '--font-card-description': theme.cardDescriptionFontFamily,
+    '--font-url': theme.urlFontFamily,
+    '--font-button': theme.buttonFontFamily,
+    '--font-footer': theme.footerFontFamily,
     '--line-height-normal': '1.45',
     '--line-height-tight': '1.25',
     '--radius': `${theme.cardRadius}px`,

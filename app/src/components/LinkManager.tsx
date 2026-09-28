@@ -141,6 +141,8 @@ export const LinkManager = ({
     const nextLinks = [...workingLinks, block];
     setWorkingLinks(nextLinks);
     onLinksPreview?.(nextLinks);
+    setEditingLinkId(String(block.id));
+    if (visualMode) onVisualFocusChange?.(String(block.id));
     setIsDirty(true);
     setSaveError("");
     setIsBlockLibraryOpen(false);
@@ -158,6 +160,8 @@ export const LinkManager = ({
     const nextLinks = [block, ...workingLinks];
     setWorkingLinks(nextLinks);
     onLinksPreview?.(nextLinks);
+    setEditingLinkId(String(block.id));
+    if (visualMode) onVisualFocusChange?.(String(block.id));
     setIsDirty(true);
     setSaveError("");
     setIsBlockLibraryOpen(false);

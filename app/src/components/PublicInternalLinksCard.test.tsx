@@ -67,12 +67,13 @@ describe("PublicInternalLinksCard", () => {
         ],
         layout: "tabs",
         showDescriptions: false,
-        showIcons: false,
+        showIcons: true,
       }),
     }} />);
 
     expect(html).toContain("public-internal-links__items--tabs");
     expect(html).toContain('href="/"');
     expect(html).toContain('href="/shop"');
+    expect(html).not.toContain("public-internal-link__icon");
   });
 });

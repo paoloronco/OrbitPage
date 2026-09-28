@@ -113,10 +113,11 @@ describe('canonical page schema boundary', () => {
       description: 'Choose a destination',
       content: JSON.stringify({
         items: [
+          { id: 'home-link', kind: 'link', path: '/', label: 'Home' },
           { id: 'menu-link', kind: 'menu', path: '/menu', label: 'Menu', description: 'Food and drinks', icon: '🍽️' },
           { id: 'shop-link', kind: 'shop', path: '/shop', label: 'Shop', description: 'Products and services' },
         ],
-        layout: 'grid',
+        layout: 'tabs',
         columns: 2,
         itemStyle: 'outline',
         showDescriptions: true,
@@ -126,14 +127,27 @@ describe('canonical page schema boundary', () => {
 
     expect(navigation).toMatchObject({ type: 'internal_links', url: '' });
     expect(JSON.parse(navigation.content || '{}')).toMatchObject({
-      layout: 'grid',
+      layout: 'tabs',
       columns: 2,
       itemStyle: 'outline',
       items: [
+        expect.objectContaining({ kind: 'link', path: '/' }),
         expect.objectContaining({ kind: 'menu', path: '/menu' }),
         expect.objectContaining({ kind: 'shop', path: '/shop' }),
       ],
     });
+  });
+
+  it('accepts the full bounded map resolution source', () => {
+    const resolvedSource = `${'Place'.repeat(20)}|${'Address'.repeat(30)}|https://maps.example.com/${'location/'.repeat(20)}`;
+    const [map] = parseOrbitPageBlocks([{
+      id: 'map',
+      type: 'map',
+      title: 'Map',
+      content: JSON.stringify({ placeName: 'Place', address: 'Address', resolvedSource }),
+    }]);
+
+    expect(JSON.parse(map.content || '{}').resolvedSource).toBe(resolvedSource);
   });
 
   it('canonicalizes legitimate editor URL shortcuts before persistence', () => {

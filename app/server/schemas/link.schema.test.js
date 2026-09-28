@@ -52,8 +52,11 @@ describe('link schemas', () => {
 
   it('validates structured internal OrbitPage destinations', () => {
     const content = JSON.stringify({
-      items: [{ id: 'shop-link', kind: 'shop', path: '/shop', label: 'Shop' }],
-      layout: 'buttons',
+      items: [
+        { id: 'home-link', kind: 'link', path: '/', label: 'Home' },
+        { id: 'shop-link', kind: 'shop', path: '/shop', label: 'Shop' },
+      ],
+      layout: 'tabs',
       columns: 2,
       itemStyle: 'outline',
       showDescriptions: false,

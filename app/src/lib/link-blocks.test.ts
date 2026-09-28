@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { detectEmbedProvider, getInternalLinksData, getKnownEmbedUrl, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference, isSocialRowContent } from './link-blocks';
+import { detectEmbedProvider, getInternalLinksData, getKnownEmbedUrl, getMapData, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference, isSocialRowContent } from './link-blocks';
 
 describe('compact link block data', () => {
+  it('preserves spaces while editing map names and addresses', () => {
+    expect(getMapData(JSON.stringify({ placeName: 'Orbit Page ', address: 'Via Roma ' }))).toMatchObject({
+      placeName: 'Orbit Page ',
+      address: 'Via Roma ',
+    });
+  });
+
   it('normalizes internal navigation layouts and removes unsafe stored paths', () => {
     expect(getInternalLinksData(JSON.stringify({
       items: [
@@ -27,6 +34,7 @@ describe('compact link block data', () => {
       layout: 'tabs',
     }))).toMatchObject({
       layout: 'tabs',
+      showDescriptions: false,
       items: [{ id: 'home', path: '/', label: 'Home' }],
     });
   });
