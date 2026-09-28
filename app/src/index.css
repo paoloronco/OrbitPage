@@ -8342,8 +8342,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 @media (max-width: 640px) {
-  .ai-page-agent { right: 12px; bottom: 12px; }
-  .ai-page-agent-panel { width: calc(100vw - 24px); max-height: calc(100dvh - 82px); }
+  .ai-page-agent { right: 12px; bottom: 12px; left: 12px; }
+  .ai-page-agent-panel { width: 100%; max-height: calc(100dvh - 82px); }
   .ai-page-agent-messages { max-height: calc(100dvh - 310px); }
   .ai-page-agent-launcher { width: 48px; justify-content: center; padding: 0; }
   .ai-page-agent-launcher span { display: none; }
@@ -10312,9 +10312,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .ai-page-agent-panel {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
   z-index: 100;
 }
 
@@ -10341,11 +10338,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
   .admin-theme-fine-tuning > div:first-child {
     align-items: flex-end;
-  }
-
-  .ai-page-agent-panel {
-    right: 12px;
-    bottom: 12px;
   }
 
   .admin-profile-role-grid {

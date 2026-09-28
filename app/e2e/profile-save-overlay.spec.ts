@@ -33,7 +33,11 @@ test("shows a viewport-fixed save action only for real changes and offers timed 
   expect(desktopBeforeScroll).not.toBeNull();
   const desktopActions = await floatingActions.boundingBox();
   expect(desktopActions).not.toBeNull();
-  expect(Math.abs(desktopActions!.x + (desktopActions!.width / 2) - 640)).toBeLessThanOrEqual(1);
+  const viewportCenter = await page.evaluate(() => {
+    const bounds = document.body.getBoundingClientRect();
+    return bounds.x + (bounds.width / 2);
+  });
+  expect(Math.abs(desktopActions!.x + (desktopActions!.width / 2) - viewportCenter)).toBeLessThanOrEqual(1);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   const desktopAfterScroll = await layer.boundingBox();
   expect(desktopAfterScroll).not.toBeNull();
