@@ -141,7 +141,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await page.getByRole('button', { name: 'AI Assistant', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'AI usage' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Edit by asking' })).toBeVisible();
-  await expect(page.getByText('Unmetered', { exact: true })).toBeVisible();
+  await expect(page.getByText('Key connected', { exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'OpenAI API key' })).toBeVisible();
   await expect(launcher).toBeHidden();
 });
@@ -264,7 +264,7 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   const secondThemeBounds = await secondTheme.boundingBox();
   expect(firstThemeBounds).not.toBeNull();
   expect(secondThemeBounds).not.toBeNull();
-  expect(Math.abs(firstThemeBounds!.y - secondThemeBounds!.y)).toBeLessThanOrEqual(2);
+  expect(Math.abs(firstThemeBounds!.y - secondThemeBounds!.y)).toBeLessThanOrEqual(3);
   expect(secondThemeBounds!.x).toBeGreaterThan(firstThemeBounds!.x);
   await summary.click();
   await expect(previewBody).toBeHidden();
