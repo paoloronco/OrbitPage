@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin, useClassicAdmin } from './helpers';
+import { contentSaveButton, openAuthenticatedAdmin, useClassicAdmin } from './helpers';
 
 test.beforeEach(async ({ page }) => useClassicAdmin(page));
 
@@ -115,12 +115,24 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   expect(mobileHardwareBounds!.width).toBeLessThanOrEqual(240);
   await expect(mobileHardware).toHaveCSS('aspect-ratio', '6 / 13');
 
-  const addLink = page.getByRole('button', { name: 'Add link', exact: true });
-  if (await addLink.isVisible()) await addLink.click();
   const contentList = page.locator('.admin-link-list');
+  let previewTitle = contentList.locator('.public-block-preview h3').first();
+  if (await previewTitle.count() === 0) {
+    const addLink = page.getByRole('button', { name: 'Add link', exact: true });
+    if (await addLink.isVisible()) {
+      await addLink.click();
+    } else {
+      await page.getByRole('button', { name: 'Add content', exact: true }).click();
+      await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
+    }
+    await page.getByPlaceholder('Link title').fill('Preview link');
+    await page.getByPlaceholder('https://example.com', { exact: true }).fill('https://example.com');
+    await contentSaveButton(page).click();
+    previewTitle = contentList.locator('.public-block-preview h3').first();
+  }
   await expect(contentList).toBeVisible();
   await expect(contentList).toHaveCSS('width', '416px');
-  await expect(contentList.locator('.public-block-preview h3').first()).toHaveCSS('font-size', '13px');
+  await expect(previewTitle).toHaveCSS('font-size', '13px');
 
   await page.getByRole('button', { name: 'Desktop preview' }).click();
   const desktopPreview = page.locator('.admin-preview-device--desktop');

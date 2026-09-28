@@ -33,8 +33,12 @@ test('edits and previews the selected additional page, then publishes its conten
     linkCard = manager.locator('.admin-link-list > div').last();
   }
   await expect(linkCard).toBeVisible();
-  await linkCard.hover();
-  await linkCard.getByRole('button', { name: 'Edit block' }).click();
+  const editButton = linkCard.getByRole('button', { name: 'Edit block' });
+  if (await editButton.count()) {
+    await linkCard.hover();
+    await editButton.click();
+  }
+  await expect(manager.locator('.admin-block-editor-shell')).toBeVisible();
   await page.getByPlaceholder('Link title').fill('Book a table');
   await page.getByPlaceholder('https://example.com', { exact: true }).fill('https://example.com/book');
   await expect(canvas.getByRole('link', { name: 'Book a table' })).toBeVisible();
