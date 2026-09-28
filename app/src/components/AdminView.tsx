@@ -22,12 +22,9 @@ import {
   CreditCard,
   Database,
   ExternalLink,
-  Files,
   Globe2,
   HelpCircle,
-  Home,
   Languages,
-  Link,
   LockKeyhole,
   LogOut,
   Mail,
@@ -35,11 +32,8 @@ import {
   Palette,
   PanelLeftClose,
   PanelLeftOpen,
-  Power,
   Share2,
-  ShoppingBag,
   Sparkles,
-  UtensilsCrossed,
   ShieldCheck,
   UserRound,
   UsersRound,
@@ -54,7 +48,7 @@ import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
-import { LivePreview, PreviewDeviceFrame, PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
+import { LivePreview, PreviewDeviceFrame } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
 import {
   getHostedSurfaceConfig,
@@ -153,7 +147,6 @@ interface AdminViewProps {
 
 const pageTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName: string }> = [
   { value: "profile", icon: UserRound, iconName: "person-outline" },
-  { value: "content", icon: Files, iconName: "folder-copy-outlined" },
   { value: "ai", icon: Sparkles, iconName: "auto-awesome-outlined" },
   { value: "theme", icon: Palette, iconName: "palette-outlined" },
   { value: "publish", icon: Share2, iconName: "share-outlined" },
@@ -188,7 +181,6 @@ function visualSectionForContent(section: ContentDestination): VisualSiteEditorS
 }
 
 const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
-const NEW_UI_STORAGE_KEY = "orbitpage.admin.new-ui";
 const EMBEDDED_PREVIEW_MEDIA_QUERY = "(min-width: 1121px)";
 const DOCKER_MIGRATION_GUIDE = "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Docker-Hub-migration.md";
 type AccountView = "general" | "security";
@@ -267,16 +259,6 @@ export const AdminView = ({
   const [previewMenu, setPreviewMenu] = useState(menu);
   const [previewSubpage, setPreviewSubpage] = useState<{ page: EditorSubpage; links: LinkData[] } | null>(null);
   const onSubpagePreviewChange = useCallback((preview: { page: EditorSubpage; links: LinkData[] } | null) => setPreviewSubpage(preview), []);
-  const [newUiEnabled, setNewUiEnabled] = useState(() => {
-    const hostedPreference = getHostedSurfaceConfig()?.newUiEnabled;
-    if (hostedPreference !== undefined) return hostedPreference;
-    if (typeof window === "undefined") return true;
-    try {
-      return window.localStorage.getItem(NEW_UI_STORAGE_KEY) !== "false";
-    } catch {
-      return true;
-    }
-  });
   const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>(() => {
     const config = getHostedSurfaceConfig();
     if (config?.extensions?.shop?.selected) return "shop";
@@ -300,9 +282,6 @@ export const AdminView = ({
     return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [contentNavOpen, setContentNavOpen] = useState(() => requestedTab === "content");
-  const [contentAction, setContentAction] = useState<string | null>(null);
-  const [contentWorkspaceError, setContentWorkspaceError] = useState<string | null>(null);
   const publicUrlOverride = getPublicUrlOverride();
   const [publicPageHref, setPublicPageHref] = useState(publicUrlOverride || withBasePath('/'));
   const [publicPageSlug, setPublicPageSlug] = useState<string | null>(null);
@@ -337,7 +316,6 @@ export const AdminView = ({
     const syncHostedConfig = () => {
       const nextConfig = getHostedSurfaceConfig();
       setHostedSurfaceConfig(nextConfig);
-      if (nextConfig?.newUiEnabled !== undefined) setNewUiEnabled(nextConfig.newUiEnabled);
       setContentSection((current) => {
         if (nextConfig?.contentSection) return nextConfig.contentSection;
         if (nextConfig?.extensions?.shop?.selected) return "shop";
@@ -358,7 +336,6 @@ export const AdminView = ({
 
   const selectContentSection = (section: ContentDestination) => {
     setContentSection(section);
-    setContentNavOpen(true);
     onContentSectionChange?.(section);
     if (!isIntegratedHostedAdmin) return;
     const config = getHostedSurfaceConfig();
@@ -424,115 +401,11 @@ export const AdminView = ({
   const linkEditMode = getLinkEditMode(userPerms);
   const contentRouting: ContentRouting = menu.routing || DEFAULT_CONTENT_ROUTING;
   const firstEnabledSubpage = subpages.find((page) => page.enabled) || null;
-  const contentDestinationEnabled: Record<ContentDestination, boolean> = {
-    link: contentRouting.linkEnabled,
-    menu: menu.enabled,
-    shop: Boolean(hostedShop?.enabled),
-    pages: Boolean(firstEnabledSubpage),
-  };
-
   useEffect(() => {
     if (!isIntegratedHostedAdmin) return;
     getHostedSurfaceConfig()?.onContentRoutingChange?.(contentRouting);
   }, [contentRouting, isIntegratedHostedAdmin]);
 
-  const saveContentRouting = async (routing: ContentRouting) => {
-    await onMenuUpdate({ ...menu, routing });
-  };
-
-  const makeContentHomepage = async (destination: ContentDestination) => {
-    if (!contentDestinationEnabled[destination] || contentAction) return;
-    const homepagePageSlug = destination === "pages" ? firstEnabledSubpage?.slug : undefined;
-    if (destination === "pages" && !homepagePageSlug) return;
-    setContentWorkspaceError(null);
-    setContentAction(`homepage:${destination}`);
-    try {
-      await saveContentRouting({
-        ...contentRouting,
-        homepage: destination,
-        ...(homepagePageSlug ? { homepagePageSlug } : { homepagePageSlug: undefined }),
-      });
-    } catch (error) {
-      setContentWorkspaceError(error instanceof Error ? error.message : tr("The homepage could not be changed.", "Non è stato possibile cambiare la homepage."));
-    } finally {
-      setContentAction(null);
-    }
-  };
-
-  const toggleContentDestination = async (destination: ContentDestination) => {
-    if (contentAction || contentRouting.homepage === destination) return;
-    const enabled = contentDestinationEnabled[destination];
-    if (enabled && !window.confirm(tr(
-      "Deactivate this destination? Its content stays saved and you can reactivate it later.",
-      "Disattivare questa destinazione? I contenuti restano salvati e potrai riattivarla in seguito.",
-    ))) return;
-
-    setContentWorkspaceError(null);
-    setContentAction(`toggle:${destination}`);
-    try {
-      if (destination === "link") {
-        await saveContentRouting({ ...contentRouting, linkEnabled: !enabled });
-      } else if (destination === "menu") {
-        await onMenuUpdate({ ...menu, enabled: !enabled });
-      } else if (destination === "pages") {
-        if (subpages.length === 0) {
-          selectContentSection("pages");
-          return;
-        }
-        await onSubpagesUpdate(subpages.map((page) => ({ ...page, enabled: !enabled })));
-      } else {
-        const changeShopStatus = getHostedSurfaceConfig()?.onShopStatusChange;
-        if (!changeShopStatus) {
-          selectContentSection("shop");
-          return;
-        }
-        await changeShopStatus(!enabled);
-      }
-    } catch (error) {
-      setContentWorkspaceError(error instanceof Error ? error.message : tr("The destination status could not be changed.", "Non è stato possibile cambiare lo stato della destinazione."));
-    } finally {
-      setContentAction(null);
-    }
-  };
-
-  const contentDestinationCards: Array<{
-    description: string;
-    enabled: boolean;
-    icon: React.ElementType;
-    id: ContentDestination;
-    label: string;
-    locked?: boolean;
-  }> = [
-    {
-      id: "link",
-      icon: Link,
-      label: tr("Links", "Link"),
-      description: tr("Profile, links and blocks in one destination", "Profilo, link e blocchi in un'unica destinazione"),
-      enabled: contentDestinationEnabled.link,
-    },
-    {
-      id: "menu",
-      icon: UtensilsCrossed,
-      label: tr("Menu", "Menu"),
-      description: tr("A dedicated food and drinks destination", "Una destinazione dedicata a piatti e bevande"),
-      enabled: contentDestinationEnabled.menu,
-    },
-    {
-      id: "shop",
-      icon: ShoppingBag,
-      label: tr("Shop", "Shop"),
-      description: tr("Digital products and services with Stripe checkout", "Prodotti digitali e servizi con checkout Stripe"),
-      enabled: contentDestinationEnabled.shop,
-      locked: !hostedShop,
-    },
-    {
-      id: "pages",
-      icon: Files,
-      label: tr("Additional pages", "Pagine aggiuntive"),
-      description: tr("Separate URLs for events, services or campaigns", "URL separati per eventi, servizi o campagne"),
-      enabled: contentDestinationEnabled.pages,
-    },
-  ];
   const internalDestinations: InternalDestinationOption[] = [
     ...(contentRouting.linkEnabled ? [{
       id: "home",
@@ -596,21 +469,16 @@ export const AdminView = ({
       default:          return false;
     }
   });
-  const visiblePageTabs = visibleTabs.filter((tab) => (
-    pageTabs.some((pageTab) => pageTab.value === tab.value)
-    && (!newUiEnabled || tab.value !== "content")
-  ));
-  const visibleNavigationTabs = newUiEnabled
-    ? visibleTabs.filter((tab) => tab.value !== "content")
-    : visibleTabs;
+  const visiblePageTabs = visibleTabs.filter((tab) => pageTabs.some((pageTab) => pageTab.value === tab.value));
+  const visibleNavigationTabs = visibleTabs;
   const visibleWorkspaceTabs = visibleTabs.filter((tab) => workspaceTabs.some((workspaceTab) => workspaceTab.value === tab.value));
   const displayedTabLabel = (tab: AdminTab) => (
-    newUiEnabled && tab === "profile"
+    tab === "profile"
       ? tr("Site editor", "Editor sito")
       : tabLabel(tab)
   );
   const displayedTabDescription = (tab: AdminTab) => (
-    newUiEnabled && tab === "profile"
+    tab === "profile"
       ? tr("Edit identity and content directly on your real page.", "Modifica identità e contenuti direttamente sulla pagina reale.")
       : tabDescription(tab)
   );
@@ -619,40 +487,15 @@ export const AdminView = ({
     const requestedContentSection = contentSectionForTab(tab);
     if (requestedContentSection) setContentSection(requestedContentSection);
     const requestedCanonicalTab = canonicalViewTab(tab);
-    const canonicalTab = newUiEnabled && requestedCanonicalTab === "content" ? "profile" : requestedCanonicalTab;
-    if (canonicalTab === "content") setContentNavOpen(true);
+    const canonicalTab = requestedCanonicalTab === "content" ? "profile" : requestedCanonicalTab;
     setActiveTab(canonicalTab);
     setMobileNavOpen(false);
-    if (newUiEnabled && canonicalTab === "profile" && !isIntegratedHostedAdmin) onEditorSectionChange?.("profile");
+    if (canonicalTab === "profile" && !isIntegratedHostedAdmin) onEditorSectionChange?.("profile");
     else onTabChange?.(canonicalTab);
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
       document.querySelector<HTMLElement>(".admin-dashboard-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
-  };
-
-  const setNewUiPreference = (enabled: boolean) => {
-    setNewUiEnabled(enabled);
-    hostedSurfaceConfig?.onNewUiChange?.(enabled);
-    setVisualLayoutEditing(false);
-    if (!isIntegratedHostedAdmin) {
-      try {
-        window.localStorage.setItem(NEW_UI_STORAGE_KEY, String(enabled));
-      } catch {
-        // Keep the preference in memory when storage is unavailable.
-      }
-    }
-    if (enabled) {
-      setVisualSection("profile");
-      setVisualLinkId(null);
-      setActiveTab("profile");
-      setMobileNavOpen(false);
-      if (isIntegratedHostedAdmin) onTabChange?.("profile");
-      else onEditorSectionChange?.("profile");
-    } else {
-      setPreviewTheme(theme);
-      applyTheme(theme);
-    }
   };
 
   const selectVisualSection = (section: VisualSiteEditorSection, linkId?: string) => {
@@ -687,7 +530,7 @@ export const AdminView = ({
       const legacyContentSection = contentSectionForTab(requestedTab);
       if (canonicalViewTab(requestedTab) === "content") setContentSection(requestedContentSection || legacyContentSection || "link");
       const rawCanonicalRequestedTab = canonicalViewTab(requestedTab);
-      const canonicalRequestedTab = newUiEnabled && rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
+      const canonicalRequestedTab = rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
       const preferred = visibleTabs.find(tab => tab.value === canonicalRequestedTab)
         || visibleTabs.find(tab => tab.value === "profile")
         || visibleTabs[0];
@@ -701,18 +544,18 @@ export const AdminView = ({
       selectTab(visibleTabs[0].value);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser, didPickInitialTab, requestedTab, requestedContentSection, newUiEnabled]);
+  }, [currentUser, didPickInitialTab, requestedTab, requestedContentSection]);
 
   useEffect(() => {
     const legacyContentSection = contentSectionForTab(requestedTab);
     if (canonicalViewTab(requestedTab) === "content") setContentSection(requestedContentSection || legacyContentSection || "link");
     const rawCanonicalRequestedTab = canonicalViewTab(requestedTab);
-    const canonicalRequestedTab = newUiEnabled && rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
+    const canonicalRequestedTab = rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
     if (!didPickInitialTab || !visibleTabs.some((tab) => tab.value === canonicalRequestedTab)) return;
     setActiveTab((current) => current === canonicalRequestedTab ? current : canonicalRequestedTab);
   // Permission booleans are included so a deep link is applied as soon as its tab becomes available.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestedTab, requestedContentSection, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance, newUiEnabled]);
+  }, [requestedTab, requestedContentSection, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
 
   useEffect(() => {
     if (isHostedAdmin || !mobileNavOpen) return;
@@ -938,7 +781,7 @@ export const AdminView = ({
 
   return (
     <div
-      className={`orbitpage-admin min-h-screen${usesDashboardShell ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : ""}${newUiEnabled ? " admin-new-ui-enabled" : ""}`}
+      className={`orbitpage-admin min-h-screen${usesDashboardShell ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : ""} admin-visual-editor-enabled`}
       data-orbitpage-workspace-ready={isIntegratedHostedAdmin ? "true" : undefined}
     >
       {usesDashboardShell && (
@@ -999,55 +842,9 @@ export const AdminView = ({
           />
 
           <div className={`admin-dashboard-nav-stack${mobileNavOpen ? " open" : ""}`} id="admin-dashboard-primary-navigation">
-            {isIntegratedHostedAdmin && <div data-orbitpage-hosted-workspace-slot />}
             <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}</div>
             <nav className="admin-dashboard-nav admin-dashboard-nav-page" aria-label={tr("Page tools", "Strumenti pagina")}>
-              {visiblePageTabs.map(({ value, icon: Icon, iconName }) => value === "content" ? (
-                <div className="admin-dashboard-content-nav" key={value}>
-                  <div className="admin-dashboard-content-nav-row">
-                    <button
-                      aria-current={activeTab === value ? "page" : undefined}
-                      className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
-                      data-onboarding={`${value}-tab`}
-                      onClick={() => selectTab(value)}
-                      title={displayedTabLabel(value)}
-                      type="button"
-                    >
-                      <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
-                      <span>{displayedTabLabel(value)}</span>
-                    </button>
-                    <button
-                      aria-expanded={contentNavOpen}
-                      aria-label={contentNavOpen ? tr("Collapse Content destinations", "Comprimi le destinazioni Content") : tr("Expand Content destinations", "Espandi le destinazioni Content")}
-                      className="admin-dashboard-content-nav-toggle"
-                      onClick={() => setContentNavOpen((current) => !current)}
-                      type="button"
-                    >
-                      <ChevronDown aria-hidden="true" />
-                    </button>
-                  </div>
-                  <div className={contentNavOpen ? "admin-dashboard-content-subnav open" : "admin-dashboard-content-subnav"}>
-                    {contentDestinationCards.map(({ icon: DestinationIcon, id, label, locked }) => (
-                      <button
-                        aria-current={activeTab === "content" && contentSection === id ? "page" : undefined}
-                        className={activeTab === "content" && contentSection === id ? "active" : ""}
-                        disabled={locked}
-                        key={id}
-                        onClick={() => {
-                          setActiveTab("content");
-                          selectContentSection(id);
-                          setMobileNavOpen(false);
-                        }}
-                        type="button"
-                      >
-                        <DestinationIcon aria-hidden="true" />
-                        <span>{label}</span>
-                        {locked && <small>SaaS</small>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
+              {visiblePageTabs.map(({ value, icon: Icon, iconName }) => (
                 <button
                   aria-current={activeTab === value ? "page" : undefined}
                   className={activeTab === value ? "admin-dashboard-nav-item active" : "admin-dashboard-nav-item"}
@@ -1062,24 +859,6 @@ export const AdminView = ({
                 </button>
               ))}
             </nav>
-
-            <button
-              aria-checked={!newUiEnabled}
-              aria-label={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}
-              className="admin-dashboard-mobile-editor-mode"
-              onClick={() => setNewUiPreference(!newUiEnabled)}
-              role="switch"
-              title={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}
-              type="button"
-            >
-              <span className="admin-dashboard-mobile-editor-mode__copy">
-                <Sparkles aria-hidden="true" size={18} />
-                <span>
-                  <strong>Classic UI</strong>
-                </span>
-              </span>
-              <span className="admin-dashboard-mobile-editor-mode__switch" aria-hidden="true"><i /></span>
-            </button>
 
             {visibleWorkspaceTabs.length > 0 && (
               <nav className="admin-dashboard-nav admin-dashboard-nav-workspace" aria-label={tr("Workspace tools", "Strumenti workspace")}>
@@ -1175,20 +954,6 @@ export const AdminView = ({
             </div>
           </div>
           <div className="admin-dashboard-header-actions">
-            <div className="admin-new-ui-toggle" title={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}>
-              <span className="admin-new-ui-toggle__copy">
-                <Sparkles aria-hidden="true" size={15} />
-                <strong>Classic UI</strong>
-              </span>
-              <button
-                aria-label={tr("Switch between the classic dashboard and the visual editor.", "Passa dalla dashboard classica all’editor visuale.")}
-                aria-checked={!newUiEnabled}
-                className={!newUiEnabled ? "is-active" : ""}
-                onClick={() => setNewUiPreference(!newUiEnabled)}
-                role="switch"
-                type="button"
-              ><i aria-hidden="true" /></button>
-            </div>
             <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <ExternalLink aria-hidden="true" size={17} />
               {tr("Public page", "Pagina pubblica")}
@@ -1239,8 +1004,7 @@ export const AdminView = ({
             inert={isProspectReadOnly && activeTab !== "analytics" ? "" : undefined}
           >
           <TabsContent value="profile" className="admin-tab-content">
-            {newUiEnabled ? (
-              <VisualSiteEditor
+            <VisualSiteEditor
                 profile={previewProfile}
                 links={previewLinks}
                 theme={previewTheme}
@@ -1272,190 +1036,7 @@ export const AdminView = ({
                     showOrbitPageBadge={resolveOrbitPageBadgeVisibility(previewProfile.showOrbitPageBadge)}
                   />
                 )) : undefined}
-              />
-            ) : (
-            <div className="admin-content-grid admin-content-grid-editor">
-              <div className="admin-main-column">
-                <ProfileSection
-                  profile={profile}
-                  theme={theme}
-                  onProfileUpdate={onProfileUpdate}
-                  onProfilePreview={setPreviewProfile}
-                  seoAccess={entitlements?.seo}
-                  managePlanHref={managePlanHref}
-                  orbitPageBadgeEditable={orbitPageBadgeEditable}
-                  pageTypeEditable={false}
-                />
-              </div>
-              {showEmbeddedPreview && (
-                <aside className="admin-workbench-rail">
-                  <PreviewPanel
-                    title={tr("Profile and identity", "Profilo e identità")}
-                    profile={previewProfile}
-                    links={links}
-                    theme={theme}
-                    publicPageHref={publicPageHref}
-                    showOrbitPageBadge={resolveOrbitPageBadgeVisibility(previewProfile.showOrbitPageBadge)}
-                  />
-                </aside>
-              )}
-            </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="content" className="admin-tab-content">
-            <section className="content-workspace" aria-labelledby="content-workspace-title">
-              <header className="content-workspace-header">
-                <div>
-                  <p className="admin-dashboard-kicker">{tr("Page structure", "Struttura pagina")}</p>
-                  <h2 id="content-workspace-title">{tr("Choose what your OrbitPage contains", "Scegli cosa contiene la tua OrbitPage")}</h2>
-                  <p>{tr("Choose one active destination as the homepage. Keep the others available only when they are useful.", "Scegli una destinazione attiva come homepage. Mantieni disponibili le altre solo quando servono.")}</p>
-                </div>
-              </header>
-
-              <div className="content-workspace-switcher with-shop" role="list" aria-label={tr("Content destinations", "Destinazioni contenuto")}>
-                {contentDestinationCards.map(({ description, enabled, icon: Icon, id, label, locked }) => {
-                  const isHomepage = contentRouting.homepage === id;
-                  const isBusy = contentAction?.endsWith(`:${id}`) === true;
-                  const canToggle = !locked
-                    && !isHomepage
-                    && (id === "pages" ? linkEditMode !== "view" : id === "shop" ? !isProspectReadOnly : canEditMenu);
-                  return (
-                    <article
-                      className={`content-workspace-option${contentSection === id ? " active" : ""}${locked ? " content-workspace-option-locked" : ""}`}
-                      key={id}
-                      role="listitem"
-                    >
-                      <button
-                        aria-current={contentSection === id ? "page" : undefined}
-                        className="content-workspace-option-main"
-                        data-onboarding={id === "link" ? "links-tab" : undefined}
-                        disabled={locked}
-                        onClick={() => selectContentSection(id)}
-                        type="button"
-                      >
-                        <span className="content-workspace-option-icon"><Icon aria-hidden="true" /></span>
-                        <span className="content-workspace-option-copy"><strong>{label}</strong><small>{description}</small></span>
-                        <em className={enabled ? "content-status content-status-live" : "content-status content-status-offline"}>
-                          <i aria-hidden="true" />
-                          {locked ? "SaaS" : enabled ? tr("Active", "Attiva") : tr("Inactive", "Disattivata")}
-                        </em>
-                      </button>
-                      <div className="content-workspace-option-actions">
-                        <button
-                          aria-pressed={isHomepage}
-                          className={isHomepage ? "content-homepage-action is-homepage" : "content-homepage-action"}
-                          disabled={locked || !enabled || Boolean(contentAction) || !canEditMenu}
-                          onClick={() => void makeContentHomepage(id)}
-                          title={!enabled ? tr("Activate the destination before making it the homepage.", "Attiva la destinazione prima di renderla la homepage.") : undefined}
-                          type="button"
-                        >
-                          <Home aria-hidden="true" />
-                          {isHomepage ? tr("Homepage", "Homepage") : tr("Make homepage", "Rendi homepage")}
-                        </button>
-                        <button
-                          aria-pressed={enabled}
-                          className="content-toggle-action"
-                          disabled={!canToggle || Boolean(contentAction)}
-                          onClick={() => void toggleContentDestination(id)}
-                          title={isHomepage ? tr("Choose another homepage before deactivating this destination.", "Scegli un'altra homepage prima di disattivare questa destinazione.") : undefined}
-                          type="button"
-                        >
-                          {isBusy ? <OrbitLoader size={14} state="connecting" /> : <Power aria-hidden="true" />}
-                          {enabled ? tr("Deactivate", "Disattiva") : tr("Activate", "Attiva")}
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-
-              {contentWorkspaceError && <p className="content-workspace-error" role="alert">{contentWorkspaceError}</p>}
-
-              {contentSection === "link" && (
-                <div className="admin-content-grid admin-content-grid-wide">
-                  <div className="admin-main-column">
-                    <LinkManager
-                      links={links}
-                      theme={theme}
-                      onLinksUpdate={onLinksUpdate}
-                      onLinksPreview={setPreviewLinks}
-                      editMode={linkEditMode}
-                      maxBlocks={entitlements?.maxBlocks}
-                      planName={saasPlan?.name}
-                      schedulingEnabled={entitlements?.scheduling ?? true}
-                      videoUploadsEnabled={entitlements?.videoUploads ?? true}
-                      maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
-                      managePlanHref={managePlanHref}
-                      nativeMenuEnabled={!saasPlan || entitlements?.nativeMenu === true}
-                      publicPageHref={publicPageHref}
-                      availablePages={subpages.filter((page) => page.enabled).map((page) => ({
-                        title: page.title || page.slug,
-                        url: `/${page.slug}`,
-                      }))}
-                      internalDestinations={internalDestinations}
-                    />
-                  </div>
-                  {showEmbeddedPreview && <aside className="admin-workbench-rail">
-                    <PreviewPanel
-                      title={tr("Home blocks and composition", "Blocchi e composizione della home")}
-                      profile={profile}
-                      links={previewLinks}
-                      theme={theme}
-                      publicPageHref={publicPageHref}
-                      showOrbitPageBadge={resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)}
-                    />
-                  </aside>}
-                </div>
-              )}
-
-              {contentSection === "menu" && (
-                <div className="admin-menu-content-layout">
-                  <div className="admin-main-column content-workspace-section">
-                    <MenuEditor
-                      menu={menu}
-                      presentation="classic"
-                      enabled={!saasPlan || entitlements?.nativeMenu === true}
-                      maxItems={entitlements?.maxMenuItems ?? null}
-                      advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
-                      onSave={onMenuUpdate}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {contentSection === "pages" && (
-                <SubpageManager
-                  pages={subpages}
-                  theme={theme}
-                  publicPageHref={publicPageHref}
-                  onPagesUpdate={onSubpagesUpdate}
-                  editMode={linkEditMode}
-                  maxPages={entitlements?.pages}
-                  maxBlocks={entitlements?.maxBlocks}
-                  planName={saasPlan?.name}
-                  schedulingEnabled={entitlements?.scheduling ?? true}
-                  videoUploadsEnabled={entitlements?.videoUploads ?? true}
-                  maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
-                  managePlanHref={managePlanHref}
-                  internalDestinations={internalDestinations}
-                  renderPreview={showEmbeddedPreview ? ((page, pageLinks) => (
-                    <PreviewPanel
-                      title={tr("Subpage preview", "Anteprima sottopagina")}
-                      profile={{ ...profile, name: page.title, bio: page.description }}
-                      links={pageLinks}
-                      theme={theme}
-                      publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${page.slug}`}
-                      showOrbitPageBadge={resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)}
-                    />
-                  )) : undefined}
-                />
-              )}
-
-              {contentSection === "shop" && (
-                <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
-              )}
-            </section>
+            />
           </TabsContent>
 
           {!isHostedAdmin && (
@@ -1633,56 +1214,6 @@ export const AdminView = ({
     </div>
   );
 };
-
-function PreviewPanel({
-  title,
-  profile,
-  links,
-  theme,
-  publicPageHref,
-  showOrbitPageBadge,
-}: {
-  title: string;
-  profile: ProfileData;
-  links: LinkData[];
-  theme: ThemeConfig;
-  publicPageHref: string;
-  showOrbitPageBadge: boolean;
-}) {
-  const { tr } = useAppI18n();
-  const [device, setDevice] = useState<PreviewDevice>("mobile");
-
-  return (
-    <section className="admin-preview-panel">
-      <div className="admin-preview-heading">
-        <div>
-          <h2>{tr("Page preview", "Anteprima pagina")}</h2>
-          <p>{title}</p>
-        </div>
-        <div className="admin-preview-heading-actions">
-          <PreviewDeviceToggle value={device} onChange={setDevice} />
-          <a
-            href={publicPageHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={tr("Open published page", "Apri la pagina pubblicata")}
-            title={tr("Open published page", "Apri la pagina pubblicata")}
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        </div>
-      </div>
-      <LivePreview
-        profile={profile}
-        links={links}
-        theme={theme}
-        publicPageHref={publicPageHref}
-        device={device}
-        showOrbitPageBadge={showOrbitPageBadge}
-      />
-    </section>
-  );
-}
 
 function PlanLockedFeature({
   title,

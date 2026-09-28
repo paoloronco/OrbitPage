@@ -1,10 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { openAuthenticatedAdmin, useClassicAdmin } from "./helpers";
+import { openAuthenticatedAdmin } from "./helpers";
 
 test("persists the profile image size and renders it exactly on the public page", async ({ browserName, page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await useClassicAdmin(page);
   await openAuthenticatedAdmin(page);
 
   const pageSection = page.getByRole("button", { name: "Page", exact: true });
