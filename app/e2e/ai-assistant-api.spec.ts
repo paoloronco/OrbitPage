@@ -37,14 +37,15 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await page.locator('#oss-ai-prompt').fill('Set the E2E biography marker now.');
     await page.getByRole('button', { name: 'Send request' }).click();
 
-    const proposal = page.getByRole('region', { name: 'Proposed changes' });
+    const proposal = page.getByRole('region', { name: 'Page preview', exact: true });
     await expect(proposal).toBeVisible();
-    await expect(proposal.getByRole('heading', { name: 'Update the public biography.' })).toBeVisible({ timeout: 15_000 });
+    await expect(proposal.getByRole('region', { name: 'Page preview before and after' })).toBeVisible({ timeout: 15_000 });
+    await expect(proposal.getByRole('slider', { name: 'Move to compare before and after' })).toBeVisible();
 
     await publicPage.reload();
     await expect(publicPage.getByText(E2E_BIO, { exact: true })).toHaveCount(0);
 
-    await proposal.getByRole('button', { name: 'Apply approved changes' }).click();
+    await proposal.getByRole('button', { name: 'Apply changes' }).click();
     await expect(page.getByText('Editor data refreshed.')).toBeVisible();
     await expect(page.getByText('Done. The approved changes are now live in your editor.')).toBeVisible();
 
@@ -64,6 +65,6 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await page.getByRole('button', { name: 'Send request' }).click();
 
     await expect(page.getByText('The new block URL is not safe.', { exact: true })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Proposed changes' })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Page preview', exact: true })).toHaveCount(0);
   });
 });

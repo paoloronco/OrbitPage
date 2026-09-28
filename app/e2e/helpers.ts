@@ -25,8 +25,9 @@ export async function openAuthenticatedAdmin(page: Page) {
     await setupContinueButton.click();
 
     const completeSetupButton = page.getByRole('button', { name: 'Complete setup' });
-    await expect(completeSetupButton).toBeEnabled();
-    await completeSetupButton.click();
+    const dashboard = page.locator('.admin-dashboard-shell');
+    await expect(completeSetupButton.or(dashboard)).toBeVisible();
+    if (await completeSetupButton.isVisible()) await completeSetupButton.click();
   } else {
     await page.locator('#password').fill(E2E_ADMIN_PASSWORD);
     await loginButton.click();
@@ -74,7 +75,7 @@ export async function openPreviewContentCard(page: Page, previewCard: Locator) {
   const id = await previewCard.getAttribute('data-public-editor-link-id');
   expect(id).toBeTruthy();
   const editor = page.locator('.visual-site-editor__inspector .admin-link-list .admin-block-editor-shell');
-  if (!await previewCard.evaluate((element) => element.classList.contains('is-selected'))) await previewCard.click();
+  if (!await editor.isVisible()) await previewCard.click();
   await expect(editor).toBeVisible();
   return { editor, id: id! };
 }

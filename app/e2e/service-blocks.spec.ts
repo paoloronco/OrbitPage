@@ -27,6 +27,7 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
   await expect(spotifyPreview.locator('iframe')).toHaveAttribute('src', 'https://open.spotify.com/embed/track/4cOdK2wGLETKBW3PvgPWqT');
   await expect(spotifyPreview.locator('[data-service-brand="spotify"]')).toBeVisible();
 
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: 'Add content' }).click();
   await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /WhatsApp/ }).click();
   await contentSaveButton(page).click();
@@ -36,6 +37,7 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
   await contentSaveButton(page).click();
   await expect(whatsappPreview.locator('[data-service-brand="whatsapp"]')).toBeVisible();
 
+  await page.getByRole('button', { name: 'Content', exact: true }).click();
   await page.getByRole('button', { name: 'Add content' }).click();
   await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /GitHub/ }).click();
   await contentSaveButton(page).click();

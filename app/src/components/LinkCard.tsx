@@ -214,9 +214,9 @@ export const LinkCard = ({
   useEffect(() => {
     if (lastSavedRevisionRef.current === savedRevision) return;
     lastSavedRevisionRef.current = savedRevision;
-    setIsEditing(false);
+    if (editing === undefined) setIsEditing(false);
     setEditLink(link);
-  }, [link, savedRevision, setIsEditing]);
+  }, [editing, link, savedRevision, setIsEditing]);
 
   const isFullEdit = editMode === 'full';
   const canEditStyle = editMode === 'full' || editMode === 'style';

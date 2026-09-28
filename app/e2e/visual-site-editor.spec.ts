@@ -395,6 +395,9 @@ test.skip("New UI edits the real page through selectable elements and keeps the 
 test("Arrange uses preset sizes, compact handles and persistent text alignment", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
+  await page.getByRole("textbox", { name: "Role or focus" }).fill("Work");
+  await page.getByRole("textbox", { name: "Location" }).fill("Turin");
+  await contentSaveButton(page).click();
   await page.getByRole("button", { name: "Content", exact: true }).click();
   await page.getByRole("button", { name: "Add content" }).click();
   await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
