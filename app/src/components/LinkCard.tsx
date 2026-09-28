@@ -522,9 +522,9 @@ export const LinkCard = ({
   const titlePlaceholder = isHeading
     ? 'Heading title'
     : isVideo
-      ? 'Video title'
+      ? 'Video title (optional)'
     : isImage
-      ? 'Image title'
+      ? 'Image title (optional)'
       : isContact
         ? 'Contact card title'
         : isCallout
@@ -685,9 +685,11 @@ export const LinkCard = ({
               />
             </div>
           )}
-          <h3 className="font-semibold truncate" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
-            {link.title || 'Image'}
-          </h3>
+          {link.title && (
+            <h3 className="font-semibold truncate" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+              {link.title}
+            </h3>
+          )}
           {link.description && (
             <p
               className="text-sm line-clamp-2"
@@ -1000,7 +1002,7 @@ export const LinkCard = ({
                           aria-label="Block description"
                           value={editLink.description}
                           onChange={(e) => setEditLink(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Block description"
+                          placeholder={isImage || isVideo ? "Description (optional)" : "Block description"}
                           className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white resize-none"
                           rows={2}
                         />
@@ -1908,9 +1910,10 @@ export const LinkCard = ({
             {canEditImages && !isSeparator && !isSocialRow && !isInternalLinks && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Icon &amp; cover image</p>
+                <p className="text-sm font-semibold text-slate-900">{isImage ? "Image" : isVideo ? "Poster image" : "Icon & cover image"}</p>
               </div>
               <div className="space-y-4">
+            {!isImage && !isVideo && (
             <div className="space-y-2">
               <Label htmlFor={`link-card-icon-${link.id}`} className="text-sm font-medium">Icon</Label>
               <div className="flex items-center gap-2">
@@ -1941,6 +1944,7 @@ export const LinkCard = ({
                 />
               </div>
             </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor={`link-card-cover-url-${link.id}`} className="text-sm font-medium flex items-center gap-1">
                 <Image className="w-3.5 h-3.5" />

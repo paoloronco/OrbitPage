@@ -684,6 +684,10 @@ export type AiPageProposal = {
   changes: string[];
   expectedRevision: number;
   expiresAt: string;
+  preview: {
+    before: import('@/components/AiPageComparisonPreview').AiPagePreviewSnapshot;
+    after: import('@/components/AiPageComparisonPreview').AiPagePreviewSnapshot;
+  };
 };
 
 export type AiPagePlanResponse = {

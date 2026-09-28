@@ -426,6 +426,8 @@ describe('API Endpoints', () => {
       changes: ['Update profile field bio.'],
     });
     expect(response.body.proposal.previewToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(response.body.proposal.preview.before.profile.bio).toBe('Original bio');
+    expect(response.body.proposal.preview.after.profile.bio).toBe('A short, direct bio.');
     expect(dbRun).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO ai_page_previews'),
       expect.arrayContaining(['admin', 9]),

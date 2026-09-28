@@ -19,7 +19,7 @@ const InternalLinksContentSchema = z.object({
 // Validation schema for a single link — used by import and PUT /api/links.
 export const LinkSchema = z.object({
   id: z.union([z.string().min(1), z.number().int().nonnegative()]),
-  title: z.string().max(500),
+  title: z.string().max(500).optional().default(''),
   description: z.string().max(2000).optional().default(''),
   url: z.string().max(5000).optional().default(''),
   hideUrl: z.boolean().optional(),
@@ -71,7 +71,7 @@ export const LinkSchema = z.object({
   coverImage: z.string().max(5000000).nullable().optional(),
   coverImageAlt: z.string().max(500).nullable().optional(),
 }).strip().superRefine((link, context) => {
-  if (link.type !== 'social_row' && link.type !== 'internal_links' && !link.title.trim()) {
+  if (!['social_row', 'internal_links', 'image', 'video'].includes(link.type) && !link.title.trim()) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['title'],

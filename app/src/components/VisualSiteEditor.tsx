@@ -221,7 +221,7 @@ export function VisualSiteEditor({
           <span role="status">
             <GripVertical aria-hidden="true" size={17} />
             <strong>{device === "mobile" ? tr("Mobile layout", "Layout mobile") : tr("Desktop layout", "Layout desktop")}</strong>
-            <span>{tr("Drag with the handles. Card sizes snap to presets, elements cannot overlap, and text alignment is available on each text block.", "Trascina dalle maniglie. Le card seguono dimensioni predefinite, gli elementi non possono sovrapporsi e ogni testo può essere allineato direttamente.")}</span>
+            <span>{tr("Drag with the handles. Cards move out of the way automatically, sizes snap to presets, and text alignment is available on each text block.", "Trascina dalle maniglie. Le card si spostano automaticamente, le dimensioni seguono valori predefiniti e ogni testo può essere allineato direttamente.")}</span>
           </span>
         </div>
       )}

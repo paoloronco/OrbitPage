@@ -190,7 +190,7 @@ export function PublicCardLayout({
     const update = (nextRect: CardLayoutRect, allowOverlap = false) => gesture.scope === "content"
       ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, nextRect, allowOverlap)
       : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, nextRect, allowOverlap);
-    const liveLayout = update(rect, true);
+    const liveLayout = gesture.scope === "card" ? update(rect) : update(rect, true);
     pendingLayoutRef.current = update(
       snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect,
     );
@@ -341,7 +341,7 @@ export function PublicCardLayout({
               } as CSSProperties}
             >
               {layoutEditing && (
-              <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Other cards cannot be overlapped.", "Trascina la card profilo. Le altre card non possono essere sovrapposte.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Other cards move out of the way.", "Trascina la card profilo. Le altre card si spostano automaticamente.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
               )}
               <div className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
               {layoutEditing && (
@@ -383,7 +383,7 @@ export function PublicCardLayout({
             tabIndex={onEditorSelect && !layoutEditing ? 0 : undefined}
           >
             {layoutEditing && (
-              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card. Other cards cannot be overlapped.", "Trascina la card. Le altre card non possono essere sovrapposte.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card. Other cards move out of the way.", "Trascina la card. Le altre card si spostano automaticamente.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
             )}
             <div className="page-card-layout__surface" data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}>{cardContent(link)}</div>
             {layoutEditing && (

@@ -12,9 +12,18 @@ import {
   type HostedSurfaceConfig,
 } from "@/lib/hosted-surface";
 import "./index.css";
+import {
+  AiPageComparisonPreview,
+  type AiPagePreviewSnapshot,
+} from "@/components/AiPageComparisonPreview";
 
 type HostedAdminController = {
   update(config: HostedSurfaceConfig): void;
+  unmount(): void;
+};
+
+type HostedPreviewController = {
+  update(preview: { before: AiPagePreviewSnapshot; after: AiPagePreviewSnapshot }): void;
   unmount(): void;
 };
 
@@ -22,6 +31,7 @@ declare global {
   interface Window {
     OrbitPageHostedAdmin?: {
       mount(element: HTMLElement, config: HostedSurfaceConfig): HostedAdminController;
+      mountAiPreview(element: HTMLElement, preview: { before: AiPagePreviewSnapshot; after: AiPagePreviewSnapshot }): HostedPreviewController;
     };
   }
 }
@@ -67,6 +77,22 @@ window.OrbitPageHostedAdmin = {
           delete window.__ORBITPAGE_HOSTED_CONFIG__;
           delete window.__ORBITPAGE_HOSTED_SURFACE__;
         }
+      },
+    };
+  },
+  mountAiPreview(element, initialPreview) {
+    const root = createRoot(element);
+    const render = (preview: { before: AiPagePreviewSnapshot; after: AiPagePreviewSnapshot }) => root.render(
+      <AppI18nProvider mode="editor">
+        <AiPageComparisonPreview {...preview} />
+      </AppI18nProvider>,
+    );
+    render(initialPreview);
+    return {
+      update: render,
+      unmount() {
+        root.unmount();
+        element.replaceChildren();
       },
     };
   },

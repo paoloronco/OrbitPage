@@ -418,7 +418,7 @@ export const LinkManager = ({
   const addNewImage = () => {
     const newImage: LinkData = {
       id: Date.now().toString(),
-      title: "Image block",
+      title: "",
       description: "",
       url: "",
       type: "image",
@@ -438,7 +438,7 @@ export const LinkManager = ({
     }
     appendBlock({
       id: Date.now().toString(),
-      title: "Video",
+      title: "",
       description: "",
       url: "",
       type: "video",
