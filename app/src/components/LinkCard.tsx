@@ -1,4 +1,4 @@
-import { type ChangeEvent, type CSSProperties, type DragEvent, useCallback, useEffect, useState, useRef } from "react";
+import { type ChangeEvent, type CSSProperties, type DragEvent, useCallback, useEffect, useLayoutEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
@@ -196,8 +196,8 @@ export const LinkCard = ({
   const lastSavedRevisionRef = useRef(savedRevision);
   const lastPreviewRevisionRef = useRef(savedRevision);
 
-  useEffect(() => {
-    if (!isEditing) {
+  useLayoutEffect(() => {
+    if (!isEditing || !draft) {
       setEditLink(draft || link);
       setImageUploadError("");
       setVideoUploadError("");
@@ -211,7 +211,7 @@ export const LinkCard = ({
     setIsEditing(true);
   }, [draft, editMode, editRequest, link, setIsEditing]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (lastSavedRevisionRef.current === savedRevision) return;
     lastSavedRevisionRef.current = savedRevision;
     if (editing === undefined) setIsEditing(false);

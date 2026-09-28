@@ -92,6 +92,7 @@ describe('Shop link shortcut', () => {
     for (const component of ['LinkCard.tsx', 'TextCard.tsx']) {
       const cardSource = readFileSync(new URL(`./${component}`, import.meta.url), 'utf8');
       expect(cardSource).toContain('if (editing === undefined) setIsEditing(false);');
+      expect(cardSource).toContain('useLayoutEffect(() => {');
     }
   });
 });

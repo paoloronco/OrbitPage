@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useEffect, useState, useRef } from "react";
+import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
 import { Input } from "@/components/ui/input";
@@ -50,8 +50,8 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
   const lastSavedRevisionRef = useRef(savedRevision);
   const lastPreviewRevisionRef = useRef(savedRevision);
 
-  useEffect(() => {
-    if (!isEditing) {
+  useLayoutEffect(() => {
+    if (!isEditing || !draft) {
       setEditLink(draft || link);
       setImageUploadError("");
     }
@@ -64,7 +64,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
     setIsEditing(true);
   }, [draft, editMode, editRequest, link, setIsEditing]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (lastSavedRevisionRef.current === savedRevision) return;
     lastSavedRevisionRef.current = savedRevision;
     if (editing === undefined) setIsEditing(false);

@@ -42,7 +42,10 @@ test('edits and previews the selected additional page, then publishes its conten
   await page.getByPlaceholder('Link title').fill('Book a table');
   await page.getByPlaceholder('https://example.com', { exact: true }).fill('https://example.com/book');
   await expect(canvas.getByRole('link', { name: 'Book a table' })).toBeVisible();
-  if (await contentSaveButton(page).isEnabled()) await contentSaveButton(page).click();
+  if (await contentSaveButton(page).isEnabled()) {
+    await contentSaveButton(page).click();
+    await expect(contentSaveButton(page)).toBeDisabled();
+  }
 
   const visibility = manager.locator('.subpage-publish-toggle');
   if (await visibility.getAttribute('aria-pressed') === 'false') {
