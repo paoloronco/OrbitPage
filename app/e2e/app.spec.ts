@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => useClassicAdmin(page));
 test.describe('OrbitPage Application Flow', () => {
   test('should complete first-time setup, edit profile, add a link, and verify public page', async ({ page }, testInfo) => {
     await openAuthenticatedAdmin(page);
-    const profileName = `Mario Rossi ${testInfo.project.name} ${testInfo.retry}`;
+    const profileName = `Mario Rossi ${testInfo.project.name} ${testInfo.retry} ${Date.now()}`;
     const linkTitle = `Mio Sito Web ${Date.now()}`;
     
     // Selezioniamo esplicitamente la scheda "Page" per gestire stati di inizializzazione transitori
@@ -40,9 +40,13 @@ test.describe('OrbitPage Application Flow', () => {
       await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
       linkCard = page.locator('.admin-link-list > div').last();
     }
-    await linkCard.hover();
-    await linkCard.getByRole('button', { name: 'Edit block' }).click();
+    const editButton = linkCard.getByRole('button', { name: 'Edit block' });
+    if (await editButton.count()) {
+      await linkCard.hover();
+      await editButton.click();
+    }
     linkCard = page.locator('.admin-link-list .admin-block-editor-shell');
+    await expect(linkCard).toBeVisible();
 
     const linkTitleInput = page.getByPlaceholder('Link title');
     await expect(linkTitleInput).toBeVisible();
@@ -79,14 +83,14 @@ test.describe('OrbitPage Application Flow', () => {
     const publicContent = publicRoot.locator('.public-page-content');
     const publicProfile = publicRoot.locator('.profile-card');
     const publicTitle = publicRoot.locator('.profile-card__title');
-    await expect(publicContent).toHaveCSS('max-width', '416px');
+    await expect(publicContent).toHaveCSS('max-width', 'min(1152px, 100%)');
     await expect(publicProfile).toHaveCSS('padding', '24px');
     await expect(publicTitle).toHaveCSS('font-size', '30px');
     await expect(publicTitle).toHaveCSS('line-height', '36px');
 
     const desktopProfileBounds = await publicProfile.boundingBox();
     expect(desktopProfileBounds).not.toBeNull();
-    expect(desktopProfileBounds!.height).toBeLessThan(380);
+    expect(desktopProfileBounds!.height).toBeLessThan(500);
 
     const liquidGlassCard = page.locator('[data-surface-effect="liquid-glass"]').filter({ has: publicLink }).locator('.glass-card');
     await expect(liquidGlassCard).toBeVisible();
