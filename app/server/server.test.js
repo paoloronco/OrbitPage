@@ -2005,6 +2005,14 @@ describe('API Endpoints', () => {
     expect(response.headers['x-robots-tag']).toContain('noindex');
   });
 
+  it('GET /orbitpage/it-IT/dashboard supports localized direct refreshes', async () => {
+    const response = await request(app).get('/orbitpage/it-IT/dashboard');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-robots-tag']).toContain('noindex');
+    expect(response.headers['content-language']).toBe('it-IT');
+  });
+
   it.each(['links', 'menu'])('GET /orbitpage/en-US/%s serves a canonical public destination', async (destination) => {
     const response = await request(app).get(`/orbitpage/en-US/${destination}`);
     expect(response.status).toBe(200);

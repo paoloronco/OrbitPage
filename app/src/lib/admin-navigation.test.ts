@@ -5,6 +5,7 @@ import {
   adminEditorPath,
   adminEditorSectionFromLocation,
   adminTabFromLocation,
+  isAdminLocation,
   isAdminTab,
 } from "./admin-navigation";
 
@@ -50,6 +51,10 @@ describe("admin navigation", () => {
     expect(adminDashboardPath("publish")).toBe("/dashboard/publish");
     expect(isAdminTab("publish")).toBe(true);
     expect(isAdminTab("billing")).toBe(false);
+    expect(adminDashboardPath("profile", "link", "it")).toBe("/it-IT/dashboard/profile");
+    expect(adminEditorPath("link", "it")).toBe("/it-IT/dashboard/editor/content");
+    expect(isAdminLocation("/it-IT/dashboard")).toBe(true);
+    expect(isAdminLocation("/it-IT/portfolio")).toBe(false);
   });
 
   it("resolves nested Content destinations", () => {

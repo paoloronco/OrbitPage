@@ -50,6 +50,30 @@ describe("VisualSiteEditor", () => {
     expect(onSelect).toHaveBeenCalledWith("profile");
   });
 
+  it("shows the status dot only on Menu", () => {
+    const html = renderToStaticMarkup(
+      <VisualSiteEditor
+        profile={{ name: "OrbitPage", bio: "", avatar: "" }}
+        links={[]}
+        theme={defaultTheme}
+        publicPageHref="/orbitpage"
+        showOrbitPageBadge
+        section="profile"
+        inspectorTitle="Profile"
+        inspectorDescription="Edit profile"
+        inspector={<div>Inspector</div>}
+        menuStatus="inactive"
+        shopStatus="locked"
+        pagesStatus="inactive"
+        onSelect={vi.fn()}
+        layoutEditing={false}
+        onLayoutEditingChange={vi.fn()}
+      />,
+    );
+
+    expect(html.match(/<i aria-hidden="true"><\/i>/g)).toHaveLength(1);
+  });
+
   it("shows Menu preview only when its Design panel provides one", () => {
     vi.stubGlobal("window", { matchMedia: () => ({ matches: true }) });
     const renderPreview = vi.fn(() => <div>Specialized public preview</div>);
@@ -135,8 +159,8 @@ describe("VisualSiteEditor", () => {
       />,
     );
 
-    expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
-    expect(html.match(/<h2>Content block<\/h2>/g)).toHaveLength(1);
+    expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2 class="visual-site-editor__title">Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
+    expect(html.match(/<h2 class="visual-site-editor__title">Content block<\/h2>/g)).toHaveLength(1);
   });
 
   it("keeps the shared inspector heading when a preview card is selected on mobile", () => {
@@ -163,7 +187,7 @@ describe("VisualSiteEditor", () => {
         />,
       );
 
-      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2>Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
+      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2 class="visual-site-editor__title">Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
     } finally {
       vi.unstubAllGlobals();
     }

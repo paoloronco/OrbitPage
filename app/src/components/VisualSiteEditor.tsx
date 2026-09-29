@@ -177,7 +177,7 @@ export function VisualSiteEditor({
           >
             <Icon aria-hidden="true" size={16} />
             <span>{label}</span>
-            {(status === "inactive" || status === "locked") && <i aria-hidden="true" />}
+            {id === "menu" && (status === "inactive" || status === "locked") && <i aria-hidden="true" />}
           </button>
         ))}
         <div
@@ -257,7 +257,7 @@ export function VisualSiteEditor({
 
         <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle}>
           {previewEnabled && section !== "menu" && inspectorDescription && <header className="visual-site-editor__inspector-heading">
-            <h2>{inspectorTitle}</h2>
+            <h2 className="visual-site-editor__title">{inspectorTitle}</h2>
             <span>{inspectorDescription}</span>
             {section === "links" && <div className="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot="" />}
           </header>}

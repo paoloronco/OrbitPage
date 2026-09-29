@@ -1,3 +1,5 @@
+import { publicLocaleFromSlug, publicLocaleSlug } from "./public-routing";
+
 export const ADMIN_TAB_IDS = [
   "profile",
   "content",
@@ -27,8 +29,18 @@ export const ADMIN_CONTENT_SECTION_IDS = ["link", "menu", "shop", "pages"] as co
 export type AdminContentSection = (typeof ADMIN_CONTENT_SECTION_IDS)[number];
 export type AdminEditorSection = "profile" | AdminContentSection;
 
-export function adminEditorPath(section: AdminEditorSection) {
-  return `/dashboard/editor/${section === "profile" ? "page" : section === "link" ? "content" : section}`;
+function adminLocalePrefix(locale?: string | null) {
+  return locale ? `/${publicLocaleSlug(locale)}` : "";
+}
+
+export function isAdminLocation(pathname: string) {
+  const segments = pathname.split("/").filter(Boolean);
+  const routeIndex = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");
+  return routeIndex === 0 || (routeIndex === 1 && Boolean(publicLocaleFromSlug(segments[0])));
+}
+
+export function adminEditorPath(section: AdminEditorSection, locale?: string | null) {
+  return `${adminLocalePrefix(locale)}/dashboard/editor/${section === "profile" ? "page" : section === "link" ? "content" : section}`;
 }
 
 export function adminEditorSectionFromLocation(pathname: string): AdminEditorSection | null {
@@ -55,9 +67,10 @@ export function isAdminTab(value: unknown): value is AdminTab {
   return typeof value === "string" && ADMIN_TAB_IDS.includes(value as AdminTab);
 }
 
-export function adminDashboardPath(tab: AdminTab = "profile", contentSection: AdminContentSection = "link") {
+export function adminDashboardPath(tab: AdminTab = "profile", contentSection: AdminContentSection = "link", locale?: string | null) {
   const canonical = canonicalAdminTab(tab);
-  return canonical === "content" ? `/dashboard/content/${contentSection}` : `/dashboard/${canonical}`;
+  const prefix = adminLocalePrefix(locale);
+  return canonical === "content" ? `${prefix}/dashboard/content/${contentSection}` : `${prefix}/dashboard/${canonical}`;
 }
 
 export function adminContentSectionFromLocation(pathname: string, fallback: AdminContentSection = "link") {

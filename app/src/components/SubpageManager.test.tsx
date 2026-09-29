@@ -41,7 +41,7 @@ describe("additional pages workspace", () => {
       />,
     );
 
-    expect(html).toContain("Additional pages");
+    expect(html).toContain('<h2 class="visual-site-editor__title">Additional pages</h2>');
     expect(html).toContain('class="subpage-page-grid"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain("Page settings");

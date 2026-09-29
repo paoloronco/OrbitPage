@@ -389,7 +389,7 @@ app.use((req, res, next) => {
   next();
 });
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/admin') || req.path.startsWith('/dashboard') || req.path === '/health') {
+  if (req.path.startsWith('/api') || isAdminSpaRoute(req.path) || req.path === '/health') {
     res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   }
   next();
@@ -813,8 +813,9 @@ PUBLIC_SPA_ROUTES.add('/newsletter/status');
 const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'team', 'account', 'plan', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const ADMIN_CONTENT_SECTIONS = new Set(['link', 'menu', 'shop', 'pages']);
 const ADMIN_EDITOR_SECTIONS = new Set(['page', 'content', 'menu', 'shop', 'pages']);
-const isAdminSpaRoute = (pathName) => {
-  const segments = String(pathName || '').split('/').filter(Boolean);
+function isAdminSpaRoute(pathName) {
+  const localizedRoute = parseLocalizedPublicPath(pathName);
+  const segments = String(localizedRoute?.routePath || pathName || '').split('/').filter(Boolean);
   if (segments.length === 1 && (segments[0] === 'admin' || segments[0] === 'dashboard')) return true;
   if (segments.length === 2
     && (segments[0] === 'admin' || segments[0] === 'dashboard')
@@ -825,7 +826,7 @@ const isAdminSpaRoute = (pathName) => {
   return segments[0] === 'dashboard'
     && segments[1] === 'editor'
     && ADMIN_EDITOR_SECTIONS.has(segments[2]);
-};
+}
 if (DEMO_MODE) {
   PUBLIC_SPA_ROUTES.add('/about');
 }

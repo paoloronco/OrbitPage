@@ -912,7 +912,7 @@
   border: 1px solid #d9e1ec;
   border-radius: 9px;
   background: #fff;
-  padding: 5px;
+  padding: 4px;
 }
 
 .menu-editor-stack--visual .menu-editor-tabs button,
@@ -922,20 +922,20 @@
   display: inline-flex;
   width: 100%;
   min-width: 0;
-  min-height: 37px;
+  min-height: 40px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   gap: 7px;
   overflow: visible;
   border: 1px solid transparent;
-  border-radius: 7px;
+  border-radius: 6px;
   background: transparent;
   padding: 0 11px;
   color: #667085;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 760;
+  font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 850;
   text-align: center;
 }
 
@@ -959,9 +959,9 @@
 .menu-editor-stack--visual .menu-editor-tabs button > svg {
   position: static;
   display: block;
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
   order: -1;
   color: inherit;
 }
