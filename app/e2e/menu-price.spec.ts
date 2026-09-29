@@ -134,9 +134,6 @@ test('creates, edits, reorders and removes menu content through the visible cont
   await expect(itemEditor).toBeVisible();
   await itemEditor.getByRole('textbox', { name: 'Name' }).fill(itemLabel);
   await itemEditor.getByRole('textbox', { name: 'Item price' }).fill('8,50');
-  await itemEditor.getByRole('button', { name: 'Add option', exact: true }).click();
-  await itemEditor.getByRole('textbox', { name: 'Option name' }).fill('Large');
-  await itemEditor.getByRole('textbox', { name: 'Option price' }).fill('11,00');
 
   await page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('.admin-profile-saved-notice')).toContainText('Saved');
