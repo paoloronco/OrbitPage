@@ -72,7 +72,9 @@ async function loadPhraseCatalog(locale: AppLocale) {
 }
 
 export function resolveInitialAppLocale(mode: AppI18nMode, search: string, storedLocale: string | null, pathname = "", basePath = ""): AppLocale {
-  if (mode === "public") return parseLocalizedPublicPath(pathname, basePath)?.locale || "en";
+  const localizedPath = parseLocalizedPublicPath(pathname, basePath);
+  if (mode === "public") return localizedPath?.locale || "en";
+  if (localizedPath && /^\/(?:admin|dashboard)(?:\/|$)/.test(localizedPath.routePath)) return localizedPath.locale;
   const queryLocale = normalizeAppLocale(new URLSearchParams(search).get("locale"));
   if (queryLocale) return queryLocale;
   const stored = normalizeAppLocale(storedLocale);

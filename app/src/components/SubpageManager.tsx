@@ -186,7 +186,7 @@ export function SubpageManager({
     <div className="subpage-manager">
       <header className="subpage-overview">
         <div>
-          <h2>Additional pages</h2>
+          <h2 className="visual-site-editor__title">Additional pages</h2>
         </div>
         <div className="subpage-overview-actions">
           <span className="subpage-count">{pages.length + 1}{maxPages ? ` / ${maxPages}` : ""} pages used</span>

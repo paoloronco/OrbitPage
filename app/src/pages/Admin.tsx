@@ -73,7 +73,7 @@ export interface CurrentUser {
 
 const Admin = () => {
   const { toast } = useToast();
-  const { tr } = useAppI18n();
+  const { locale, tr } = useAppI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const integratedHostedSurface = isIntegratedHostedSurface();
@@ -120,10 +120,10 @@ const Admin = () => {
   useEffect(() => {
     if (hostedSurface) return;
     const expectedPath = locationEditorSection
-      ? adminEditorPath(locationEditorSection)
-      : adminDashboardPath(locationTab, locationContentSection);
+      ? adminEditorPath(locationEditorSection, locale)
+      : adminDashboardPath(locationTab, locationContentSection, locale);
     if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
-  }, [hostedSurface, location.pathname, locationTab, locationContentSection, locationEditorSection, navigate]);
+  }, [hostedSurface, locale, location.pathname, locationTab, locationContentSection, locationEditorSection, navigate]);
 
   useEffect(() => {
     if (!hostedSurface) return;
@@ -141,17 +141,17 @@ const Admin = () => {
       window.dispatchEvent(new CustomEvent(HOSTED_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
       return;
     }
-    navigate(adminDashboardPath(tab, locationContentSection));
+    navigate(adminDashboardPath(tab, locationContentSection, locale));
   };
 
   const handleContentSectionChange = (section: AdminContentSection) => {
     if (hostedSurface) return;
-    navigate(adminDashboardPath("content", section));
+    navigate(adminDashboardPath("content", section, locale));
   };
 
   const handleEditorSectionChange = (section: AdminEditorSection) => {
     if (hostedSurface) return;
-    const path = adminEditorPath(section);
+    const path = adminEditorPath(section, locale);
     if (location.pathname !== path) navigate(path);
   };
 

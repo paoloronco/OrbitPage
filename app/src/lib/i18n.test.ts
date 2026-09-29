@@ -14,6 +14,7 @@ describe("editor i18n", () => {
     expect(resolveInitialAppLocale("editor", "?locale=fr", "de")).toBe("fr");
     expect(resolveInitialAppLocale("editor", "", "de")).toBe("de");
     expect(resolveInitialAppLocale("editor", "", null)).toBe("en");
+    expect(resolveInitialAppLocale("editor", "?locale=fr", "de", "/it-IT/dashboard")).toBe("it");
     expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/it-IT")).toBe("it");
     expect(resolveInitialAppLocale("public", "?locale=ar", "ja", "/en-US")).toBe("en");
     expect(resolveInitialAppLocale("public", "", null, "/orbitpage/it-IT", "/orbitpage")).toBe("it");

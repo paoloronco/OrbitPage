@@ -171,7 +171,7 @@ html:has(.admin-visual-editor-enabled) {
   min-height: min(760px, calc(100vh - 214px));
   overflow: clip;
   border-radius: 12px;
-  background: #eef2f7;
+  background: #fff;
 }
 
 .visual-site-editor--inspector-only .visual-site-editor__workspace {
@@ -238,9 +238,7 @@ html:has(.admin-visual-editor-enabled) {
   place-items: center;
   overflow: hidden;
   padding: 44px clamp(12px, 2.4vw, 34px) 26px;
-  background:
-    radial-gradient(circle at 50% 4%, rgb(255 255 255 / 96%), transparent 39%),
-    linear-gradient(135deg, #edf2f8, #e5ebf4);
+  background: #fff;
 }
 
 .visual-site-editor__canvas[hidden] {
@@ -272,6 +270,9 @@ html:has(.admin-visual-editor-enabled) {
   width: 100%;
   min-height: 0;
   padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .visual-site-editor__canvas .admin-preview-device--desktop .admin-preview-device__hardware {
@@ -305,12 +306,15 @@ html:has(.admin-visual-editor-enabled) {
   background: #fff;
 }
 
-.visual-site-editor__inspector-heading h2 {
+.visual-site-editor h2.visual-site-editor__title {
   grid-column: 1;
   margin: 0;
   color: #14213a;
+  font-family: var(--orbitpage-dashboard-font);
   font-size: 17px;
+  font-style: normal;
   font-weight: 820;
+  letter-spacing: -.015em;
   line-height: 1.2;
 }
 

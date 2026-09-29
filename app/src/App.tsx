@@ -1,11 +1,12 @@
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Routes, Route, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useParams } from "react-router-dom";
 import { Component, lazy, Suspense, useLayoutEffect, useRef, type ErrorInfo, type ReactNode } from "react";
-import { getActiveBasePath } from "@/lib/base-path";
+import { getActiveBasePath, withBasePath } from "@/lib/base-path";
 import { AppI18nProvider, resolveApplicationErrorLocale, type AppLocale } from "@/lib/i18n";
-import { publicLocaleFromSlug } from "@/lib/public-routing";
+import { parseLocalizedPublicPath, publicLocaleFromSlug } from "@/lib/public-routing";
+import { adminDashboardPath, isAdminLocation } from "@/lib/admin-navigation";
 
 const Index = lazy(() => import("./pages/Index"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -28,8 +29,8 @@ function storedApplicationLocale() {
 }
 
 const APPLICATION_ERROR_COPY = {
-  en: { title: "Something drifted off course.", description: "OrbitPage could not load this page. Check your connection and try again.", retry: "Try again" },
-  it: { title: "Qualcosa è uscito dall'orbita.", description: "OrbitPage non è riuscito a caricare questa pagina. Controlla la connessione e riprova.", retry: "Riprova" },
+  en: { title: "We couldn't open this page.", description: "Reload it now. If the problem continues, return to the dashboard and try again.", retry: "Reload page" },
+  it: { title: "Non siamo riusciti ad aprire la pagina.", description: "Ricaricala ora. Se il problema continua, torna alla dashboard e riprova.", retry: "Ricarica pagina" },
   es: { title: "Algo se salió de órbita.", description: "OrbitPage no pudo cargar esta página. Comprueba tu conexión e inténtalo de nuevo.", retry: "Inténtalo de nuevo" },
   fr: { title: "Quelque chose est sorti de son orbite.", description: "OrbitPage n'a pas pu charger cette page. Vérifiez votre connexion et réessayez.", retry: "Réessayer" },
   de: { title: "Etwas ist aus der Umlaufbahn geraten.", description: "OrbitPage konnte diese Seite nicht laden. Prüfe deine Verbindung und versuche es erneut.", retry: "Erneut versuchen" },
@@ -75,8 +76,11 @@ class ApplicationErrorBoundary extends Component<
   render() {
     if (!this.state.failed) return this.props.children;
 
-    const mode = /^\/(?:admin|dashboard)(?:\/|$)/.test(window.location.pathname) ? "editor" : "public";
-    const locale = resolveApplicationErrorLocale(
+    const basePath = getActiveBasePath();
+    const localizedPath = parseLocalizedPublicPath(window.location.pathname, basePath);
+    const relativePath = localizedPath?.routePath || window.location.pathname.slice(basePath.length) || "/";
+    const mode = isAdminLocation(relativePath) ? "editor" : "public";
+    const locale = localizedPath?.locale || resolveApplicationErrorLocale(
       mode,
       window.location.search,
       storedApplicationLocale(),
@@ -94,27 +98,27 @@ class ApplicationErrorBoundary extends Component<
           display: "grid",
           placeItems: "center",
           padding: "24px",
-          backgroundColor: "#07111f",
-          backgroundImage: "linear-gradient(90deg, rgb(255 255 255 / 3%) 1px, transparent 1px), linear-gradient(rgb(255 255 255 / 3%) 1px, transparent 1px)",
+          backgroundColor: "#f5f7fb",
+          backgroundImage: "linear-gradient(90deg, rgb(37 82 214 / 4%) 1px, transparent 1px), linear-gradient(rgb(37 82 214 / 4%) 1px, transparent 1px)",
           backgroundSize: "64px 64px",
-          color: "#f7f9fd",
+          color: "#101a30",
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        <div style={{ maxWidth: "640px", textAlign: "center" }}>
-          <p style={{ color: "#a8c5f5", fontSize: "12px", fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase" }}>OrbitPage / 500</p>
-          <h1 style={{ margin: "18px 0 0", fontSize: "clamp(2.5rem, 8vw, 5.5rem)", letterSpacing: "-.055em", lineHeight: ".98" }}>{copy.title}</h1>
-          <p style={{ margin: "24px auto 28px", maxWidth: "520px", color: "#aebbd0", fontSize: "1.05rem", lineHeight: 1.65 }}>{copy.description}</p>
+        <div style={{ width: "min(100%, 560px)", border: "1px solid #d9e1ef", borderRadius: "18px", padding: "clamp(28px, 6vw, 48px)", background: "#fff", boxShadow: "0 20px 55px rgb(24 48 92 / 10%)", textAlign: "center" }}>
+          <p style={{ margin: 0, color: "#315bd8", fontSize: "12px", fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase" }}>OrbitPage</p>
+          <h1 style={{ margin: "14px 0 0", fontSize: "clamp(1.75rem, 5vw, 2.5rem)", letterSpacing: "-.035em", lineHeight: 1.08 }}>{copy.title}</h1>
+          <p style={{ margin: "18px auto 26px", maxWidth: "440px", color: "#62708b", fontSize: "1rem", lineHeight: 1.6 }}>{copy.description}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
             style={{
               minHeight: "50px",
               border: 0,
-              borderRadius: "6px",
+              borderRadius: "10px",
               padding: "10px 22px",
-              background: "#f8fafd",
-              color: "#0a1728",
+              background: "#315bd8",
+              color: "#fff",
               font: "inherit",
               fontWeight: 700,
               cursor: "pointer",
@@ -122,6 +126,7 @@ class ApplicationErrorBoundary extends Component<
           >
             {copy.retry}
           </button>
+          {mode === "editor" && <a href={withBasePath(adminDashboardPath("profile", "link", locale))} style={{ display: "block", marginTop: "16px", color: "#315bd8", fontSize: "14px", fontWeight: 700, textDecoration: "none" }}>Dashboard</a>}
         </div>
       </main>
     );
@@ -130,7 +135,7 @@ class ApplicationErrorBoundary extends Component<
 
 function RoutedApplication() {
   const location = useLocation();
-  const isEditorRoute = /^\/(?:admin|dashboard)(?:\/|$)/.test(location.pathname);
+  const isEditorRoute = isAdminLocation(location.pathname);
   return (
     <AppI18nProvider mode={isEditorRoute ? "editor" : "public"}>
       <Suspense fallback={<RouteLoadingFallback />}>
@@ -141,10 +146,14 @@ function RoutedApplication() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/:section" element={<Admin />} />
           <Route path="/admin/content/:contentSection" element={<Admin />} />
-          <Route path="/dashboard" element={<Navigate to="/dashboard/profile" replace />} />
+          <Route path="/dashboard" element={<Admin />} />
           <Route path="/dashboard/:section" element={<Admin />} />
           <Route path="/dashboard/content/:contentSection" element={<Admin />} />
           <Route path="/dashboard/editor/:editorSection" element={<Admin />} />
+          <Route path="/:locale/dashboard" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/:section" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/content/:contentSection" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/editor/:editorSection" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
           <Route path="/links" element={<Index />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/about" element={<About />} />
