@@ -179,10 +179,7 @@ export function VisualSiteEditor({
             <span>{label}</span>
           </button>
         ))}
-        <div
-          className="visual-site-editor__toolbar-actions visual-site-editor__section-actions"
-          data-orbitpage-hosted-shop-header-slot={!previewEnabled ? "" : undefined}
-        >
+        <div className="visual-site-editor__toolbar-actions visual-site-editor__section-actions">
           {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
             <button
               className="visual-site-editor__layout-toggle"

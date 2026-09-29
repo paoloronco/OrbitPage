@@ -348,13 +348,6 @@ export function MenuEditor({
     update((current) => ({ ...current, items: current.items.map((item) => item.id === id ? { ...item, ...patch } : item) }));
   };
 
-  const addVariant = (item: MenuItem) => {
-    if (item.variants.length >= 8) return;
-    updateItem(item.id, {
-      variants: [...item.variants, { id: makeId('variant'), name: 'Option', priceMinor: item.priceMinor }],
-    });
-  };
-
   const uploadItemImage = async (id: string, file?: File) => {
     if (!file) return;
     setUploadingItem(id);
@@ -689,8 +682,7 @@ export function MenuEditor({
                         <strong>{selectedItem.name || tr("Untitled item", "Elemento senza nome")}</strong>
                       </div>
                     </div>
-                    <section className="menu-item-form-section" aria-label={tr('Essential information', 'Informazioni essenziali')}>
-                      <div className="menu-item-form-section__title"><strong>{tr('Essential information', 'Informazioni essenziali')}</strong><span>{tr('The name, price and category visitors will see.', 'Nome, prezzo e categoria che vedranno i visitatori.')}</span></div>
+                    <section className="menu-item-form-section" aria-label={tr('Item information', 'Informazioni elemento')}>
                 <div className="menu-product-editor__top">
                   <div className="menu-item-image-field">
                     <label className="menu-product-image">
@@ -699,6 +691,7 @@ export function MenuEditor({
                       <input type="file" accept={RASTER_IMAGE_ACCEPT} onChange={(event) => void uploadItemImage(selectedItem.id, event.target.files?.[0])} />
                     </label>
                     <span>{selectedItem.imageUrl ? tr('Change image', 'Cambia immagine') : tr('Add image', 'Aggiungi immagine')}</span>
+                    {selectedItem.imageUrl && <button type="button" className="menu-remove-image-action" onClick={() => updateItem(selectedItem.id, { imageUrl: undefined, imageAlt: undefined })}>{tr("Remove image", "Rimuovi immagine")}</button>}
                   </div>
                   <div className="min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
                     <div className="space-y-2"><Label htmlFor={`menu-item-name-${selectedItem.id}`}>{tr("Name", "Nome")}</Label><Input id={`menu-item-name-${selectedItem.id}`} value={selectedItem.name} onChange={(e) => updateItem(selectedItem.id, { name: e.target.value })} /></div>
@@ -718,29 +711,11 @@ export function MenuEditor({
                   <div className="space-y-2"><p>{tr("Allergens", "Allergeni")}</p><TagsInput label="Allergens" value={selectedItem.allergens} onChange={(allergens) => updateItem(selectedItem.id, { allergens })} placeholder="Gluten, milk, nuts" /></div>
                       </div>
                     </details>
-                <div className="menu-variants-editor">
-                  <div className="menu-variants-editor__heading">
-                    <div><strong>{tr("Sizes and options", "Formati e opzioni")}</strong><span>{tr("Add only if this item has more than one size or price.", "Aggiungili solo se questo elemento ha più formati o prezzi.")}</span></div>
-                    <Button type="button" variant="outline" size="sm" disabled={selectedItem.variants.length >= 8} onClick={() => addVariant(selectedItem)}><Plus className="h-4 w-4" />{tr("Add option", "Aggiungi opzione")}</Button>
-                  </div>
-                  {selectedItem.variants.map((variant) => (
-                    <div key={variant.id} className="menu-variant-row">
-                      <Input aria-label="Option name" placeholder="Glass, bottle, large" value={variant.name} onChange={(event) => updateItem(selectedItem.id, {
-                        variants: selectedItem.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, name: event.target.value } : candidate),
-                      })} />
-                      <div className="menu-variant-price"><span>{draft.currency}</span><PriceInput value={variant.priceMinor} locale={draft.locale} label="Option price" onChange={(priceMinor) => updateItem(selectedItem.id, {
-                        variants: selectedItem.variants.map((candidate) => candidate.id === variant.id ? { ...candidate, priceMinor } : candidate),
-                      })} /></div>
-                      <Button aria-label="Delete option" type="button" variant="ghost" size="icon" title="Delete option" onClick={() => updateItem(selectedItem.id, { variants: selectedItem.variants.filter((candidate) => candidate.id !== variant.id) })}><Trash2 aria-hidden="true" className="h-4 w-4" /></Button>
-                    </div>
-                  ))}
-                </div>
                 <div className="menu-item-visibility">
                   <div className="menu-item-form-section__title"><strong>{tr('Visibility', 'Visibilità')}</strong><span>{tr('Control how this item appears on the public menu.', 'Scegli come appare nel menu pubblico.')}</span></div>
                   <div className="menu-product-flags">
                   <label><Switch checked={selectedItem.available} onCheckedChange={(available) => updateItem(selectedItem.id, { available })} /><span><strong>{tr("Available", "Disponibile")}</strong><small>{tr('Show this item to visitors', 'Mostra questo elemento ai visitatori')}</small></span></label>
                   <label><Switch checked={selectedItem.featured} onCheckedChange={(featured) => updateItem(selectedItem.id, { featured })} /><span><strong>{tr("Featured", "In evidenza")}</strong><small>{tr('Highlight it in the menu', 'Mettilo in evidenza nel menu')}</small></span></label>
-                  {selectedItem.imageUrl && <button type="button" className="menu-remove-image-action" onClick={() => updateItem(selectedItem.id, { imageUrl: undefined, imageAlt: undefined })}>{tr("Remove image", "Rimuovi immagine")}</button>}
                   </div>
                 </div>
                 <div className="menu-product-editor__actions">

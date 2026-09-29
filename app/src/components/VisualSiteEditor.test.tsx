@@ -134,7 +134,7 @@ describe("VisualSiteEditor", () => {
 
     expect(html).toContain("visual-site-editor--inspector-only");
     expect(html).not.toContain("Manage your Shop");
-    expect(html).toContain("data-orbitpage-hosted-shop-header-slot");
+    expect(html).not.toContain("data-orbitpage-hosted-shop-header-slot");
     expect(html).toContain("Shop workspace");
     expect(html).not.toContain("visual-site-editor__canvas");
     expect(html).not.toContain("PreviewDeviceToggle");
