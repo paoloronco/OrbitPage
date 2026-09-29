@@ -173,6 +173,7 @@ export function SubpageManager({
   };
 
   const pageUrl = selected ? `${publicPageHref.replace(/\/$/, "")}/${selected.slug}` : publicPageHref;
+  const activeDestinations = internalDestinations.filter((destination) => destination.path !== "/" && destination.kind !== "page");
   const copyPageUrl = async () => {
     try {
       await navigator.clipboard.writeText(pageUrl);
@@ -206,20 +207,29 @@ export function SubpageManager({
             <span className="subpage-page-card-copy"><strong>Main page</strong><small>{publicPageHref.replace(/^https?:\/\//, "")}</small></span>
             <span className="subpage-page-status">Home</span>
           </div>
-          {pages.map((page) => (
-            <button
-              key={page.id}
-              type="button"
-              aria-current={page.id === selected?.id ? "page" : undefined}
-              className={`subpage-page-card ${page.id === selected?.id ? "is-active" : ""}`}
-              onClick={() => selectPage(page.id)}
-              disabled={busy}
-            >
-              <Files className="h-5 w-5" aria-hidden="true" />
-              <span className="subpage-page-card-copy"><strong>{page.title}</strong><small>/{page.slug}</small></span>
-              <span className={`subpage-page-status ${page.enabled ? "is-live" : ""}`}>{page.enabled ? "Live" : "Hidden"}</span>
-            </button>
-          ))}
+          <div className="subpage-page-children">
+            {activeDestinations.map((destination) => (
+              <div className="subpage-page-card subpage-page-card--destination" key={destination.id}>
+                <Files className="h-5 w-5" aria-hidden="true" />
+                <span className="subpage-page-card-copy"><strong>{destination.title}</strong><small>{destination.path}</small></span>
+                <span className="subpage-page-status is-live">Live</span>
+              </div>
+            ))}
+            {pages.map((page) => (
+              <button
+                key={page.id}
+                type="button"
+                aria-current={page.id === selected?.id ? "page" : undefined}
+                className={`subpage-page-card ${page.id === selected?.id ? "is-active" : ""}`}
+                onClick={() => selectPage(page.id)}
+                disabled={busy}
+              >
+                <Files className="h-5 w-5" aria-hidden="true" />
+                <span className="subpage-page-card-copy"><strong>{page.title}</strong><small>/{page.slug}</small></span>
+                <span className={`subpage-page-status ${page.enabled ? "is-live" : ""}`}>{page.enabled ? "Live" : "Hidden"}</span>
+              </button>
+            ))}
+          </div>
         </div>
         {pageLimitReached && (
           <Card className="subpage-upgrade-note">

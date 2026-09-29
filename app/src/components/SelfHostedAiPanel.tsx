@@ -58,8 +58,8 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
   const { tr } = useAppI18n();
   const historyStorageKey = useMemo(() => `${AI_HISTORY_STORAGE_KEY}:${encodeURIComponent(historyKey)}`, [historyKey]);
   const welcome = tr(
-    "Tell me what should change. I read the current page and prepare a preview before touching anything.",
-    "Dimmi cosa vuoi cambiare. Leggo la pagina attuale e preparo un’anteprima prima di modificare qualsiasi cosa.",
+    "Tell me what you want to change on the open page. I will show you the edits to review before you apply them.",
+    "Dimmi cosa vuoi cambiare nella pagina aperta. Ti mostrerò le modifiche da controllare prima di applicarle.",
   );
   const [settings, setSettings] = useState<AiSettings | null>(null);
   const [settingsError, setSettingsError] = useState("");
@@ -269,10 +269,6 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
               "Descrivi il risultato. L’assistente lavora sul profilo, sui contenuti e sul tema attuali di questa pagina.",
             )}</p>
           </div>
-          <span className={configured ? "oss-ai-status configured" : "oss-ai-status"}>
-            <i aria-hidden="true" />
-            {configured ? tr("Ready", "Pronta") : tr("Key required", "Chiave richiesta")}
-          </span>
         </header>
 
         <div className="oss-ai-conversation" ref={conversationRef} aria-live="polite">
@@ -360,6 +356,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
         </form>
       </section>
 
+      <div className="oss-ai-aside-stack">
       <aside className="oss-ai-settings ai-assistant-aside" aria-labelledby="oss-ai-settings-heading">
         <div className="oss-ai-settings-title">
           <span><Sparkles aria-hidden="true" /></span>
@@ -374,7 +371,10 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
         <div className="oss-ai-settings-section-heading">
           <KeyRound aria-hidden="true" />
           <div>
-            <h3>OpenAI API key</h3>
+            <div className="oss-ai-settings-heading-line">
+              <h3>OpenAI API key</h3>
+              {settings && <span className={`oss-ai-connection-status${configured ? " configured" : ""}`}>{configured ? tr("Connected", "Collegata") : tr("Not connected", "Non collegata")}</span>}
+            </div>
             <p>{tr(
               "Usage is billed directly to your OpenAI account. OrbitPage never sends the key back to the browser after saving it.",
               "L’utilizzo viene addebitato direttamente al tuo account OpenAI. Dopo il salvataggio OrbitPage non restituisce mai la chiave al browser.",
@@ -386,22 +386,6 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
           <div className="oss-ai-settings-loading"><OrbitLoader size={18} state="connecting" />{tr("Checking configuration…", "Verifica configurazione…")}</div>
         ) : (
           <>
-            <div className={`oss-ai-key-state ${configured ? "oss-ai-key-state--configured" : "oss-ai-key-state--empty"}`}>
-              <span>{configured ? <Check aria-hidden="true" /> : <KeyRound aria-hidden="true" />}</span>
-              <div>
-                <strong>{configured ? tr("Key connected", "Chiave collegata") : tr("No key connected", "Nessuna chiave collegata")}</strong>
-                <small>{configured
-                  ? settings?.keyHint
-                  : tr(
-                    "Connect an OpenAI API key to enable AI editing on this installation.",
-                    "Collega una chiave API OpenAI per abilitare la modifica AI su questa installazione.",
-                  )}</small>
-              </div>
-              {settings?.source && (
-                <em>{settings.source === "environment" ? "ENV" : tr("Saved", "Salvata")}</em>
-              )}
-            </div>
-
             {canManageSettings ? (
               <form
                 className="oss-ai-settings-form"
@@ -497,6 +481,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             )}
           </>
         )}
+      </aside>
 
         <form
           aria-disabled={!configured}
@@ -550,8 +535,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             {launching ? tr("Preparing preview…", "Preparazione anteprima…") : tr("Create preview", "Crea anteprima")}
           </Button>
         </form>
-
-      </aside>
+      </div>
       </div>
     </div>
   );

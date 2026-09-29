@@ -50,4 +50,24 @@ describe("additional pages workspace", () => {
     expect(html).toContain("Hidden");
     expect(html).toContain('title="Publish this page before opening its public URL"');
   });
+
+  it("shows every active internal destination in the page tree", () => {
+    const html = renderToStaticMarkup(
+      <SubpageManager
+        pages={[]}
+        theme={defaultTheme}
+        publicPageHref="https://example.com/paolo"
+        onPagesUpdate={vi.fn()}
+        editMode="full"
+        internalDestinations={[
+          { id: "home", kind: "link", path: "/", title: "Home", description: "Main page" },
+          { id: "menu", kind: "menu", path: "/menu", title: "Menu", description: "Food and drinks" },
+        ]}
+      />,
+    );
+
+    expect(html).toContain('class="subpage-page-children"');
+    expect(html).toContain("Menu");
+    expect(html).toContain("/menu");
+  });
 });
