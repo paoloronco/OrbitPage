@@ -108,7 +108,9 @@ html:has(.admin-visual-editor-enabled) {
 }
 
 .visual-site-editor__section-actions {
-  min-width: 158px;
+  width: 260px;
+  min-width: 260px;
+  flex: 0 0 260px;
   justify-content: flex-end;
   margin-left: auto;
   padding-left: 8px;
@@ -117,20 +119,23 @@ html:has(.admin-visual-editor-enabled) {
 .visual-site-editor__sections > button {
   position: relative;
   display: inline-flex;
+  width: 94px;
   height: 37px;
   min-height: 37px;
-  flex: 0 0 auto;
+  flex: 0 0 94px;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   padding: 0 11px;
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
   color: #5d6d84;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 760;
+  font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
   line-height: 1;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -151,17 +156,6 @@ html:has(.admin-visual-editor-enabled) {
   background: #edf2ff;
   color: #214ebf;
   box-shadow: 0 2px 7px rgb(32 71 170 / 8%);
-}
-
-.visual-site-editor__sections > button > i {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: #94a3b8;
-}
-
-.visual-site-editor__sections > button[data-status="locked"] > i {
-  background: #d97706;
 }
 
 .visual-site-editor__workspace {
@@ -1069,7 +1063,9 @@ html:has(.admin-visual-editor-enabled) {
   }
 
   .visual-site-editor__section-actions {
+    width: auto;
     min-width: 0;
+    flex-basis: auto;
     margin-left: 0;
     padding: 0 2px;
   }

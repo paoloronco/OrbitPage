@@ -50,7 +50,7 @@ describe("VisualSiteEditor", () => {
     expect(onSelect).toHaveBeenCalledWith("profile");
   });
 
-  it("shows the status dot only on Menu", () => {
+  it("keeps section labels aligned without status dots", () => {
     const html = renderToStaticMarkup(
       <VisualSiteEditor
         profile={{ name: "OrbitPage", bio: "", avatar: "" }}
@@ -71,7 +71,7 @@ describe("VisualSiteEditor", () => {
       />,
     );
 
-    expect(html.match(/<i aria-hidden="true"><\/i>/g)).toHaveLength(1);
+    expect(html).not.toContain('<i aria-hidden="true"></i>');
   });
 
   it("shows Menu preview only when its Design panel provides one", () => {

@@ -931,11 +931,12 @@
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
-  padding: 0 11px;
+  padding: 0 13px;
   color: #667085;
   font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 800;
+  line-height: 1;
   text-align: center;
 }
 
@@ -1058,15 +1059,15 @@
   .menu-editor-stack--visual .menu-editor-tabs button,
   .menu-editor-stack--visual .menu-editor-tabs button:first-child,
   .menu-editor-stack--visual .menu-editor-tabs button:last-child {
-    min-height: 48px;
+    min-height: 44px;
     padding-inline: 13px;
     font-size: 12px;
   }
 
   .menu-editor-stack--visual .menu-editor-tabs button > svg {
-    width: 18px;
-    height: 18px;
-    flex-basis: 18px;
+    width: 17px;
+    height: 17px;
+    flex-basis: 17px;
   }
 
   .menu-editor-stack--visual .menu-category-picker__meta span {
