@@ -874,7 +874,7 @@
 @media (hover: none) {
   .menu-editor-stack--classic button,
   .menu-editor-stack--visual button {
-    min-height: 44px;
+    min-height: 48px;
   }
 }
 
@@ -1059,7 +1059,7 @@
   .menu-editor-stack--visual .menu-editor-tabs button,
   .menu-editor-stack--visual .menu-editor-tabs button:first-child,
   .menu-editor-stack--visual .menu-editor-tabs button:last-child {
-    min-height: 44px;
+    min-height: 48px;
     padding-inline: 13px;
     font-size: 12px;
   }
