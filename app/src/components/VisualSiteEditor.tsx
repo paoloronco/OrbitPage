@@ -177,7 +177,6 @@ export function VisualSiteEditor({
           >
             <Icon aria-hidden="true" size={16} />
             <span>{label}</span>
-            {id === "menu" && (status === "inactive" || status === "locked") && <i aria-hidden="true" />}
           </button>
         ))}
         <div
