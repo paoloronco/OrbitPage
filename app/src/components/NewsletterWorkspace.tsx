@@ -28,7 +28,6 @@ import {
 } from "@/lib/newsletter-types";
 import ColorPicker from "@/components/ui/color-picker";
 import { useDialogAccessibility } from "@/lib/use-dialog-accessibility";
-import "./newsletter-workspace.css";
 
 type NewsletterUser = { uid: string; email?: string };
 const LoadingIndicator = ({ size }: { size: number }) => <LoaderCircle aria-hidden="true" className="animate-spin" size={size} />;

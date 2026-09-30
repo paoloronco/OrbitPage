@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Braces, Check, Clock3, Copy, ExternalLink, KeyRound, Loader2, Plus, Trash2 } from 'lucide-react';
 import { personalApiTokensApi, type PersonalApiToken } from '@/lib/api-client';
 import { getActiveBasePath } from '@/lib/base-path';
-import './team-workspace.css';
 
 const tokenState = (token: PersonalApiToken) => token.status === 'revoked'
   ? 'revoked'

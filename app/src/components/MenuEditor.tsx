@@ -21,7 +21,6 @@ import {
 } from '@/lib/menu';
 import { useAppI18n } from '@/lib/i18n';
 import { moveMenuSection, orderedSectionTree, reorderMenuItems, reorderMenuSections, sectionSiblings } from './menu-editor-order';
-import './menu-editor-redesign.css';
 
 interface MenuEditorProps {
   menu: MenuCatalog;

@@ -48,7 +48,6 @@ import { useAppI18n } from '@/lib/i18n';
 import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
 import { normalizePrivacyController } from '@/lib/privacy-controller';
-import './profile-save-overlay.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
