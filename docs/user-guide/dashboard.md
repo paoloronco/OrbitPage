@@ -51,7 +51,7 @@ The self-hosted assistant proposes profile, content, and theme operations from t
 
 ### Theme
 
-Use **Theme** for the page-wide visual system: presets, colors, typography, card surfaces, borders, radius, shadow, blur, spacing, width, and background. The live preview uses the public renderer.
+Use **Theme** for the page-wide visual system: presets, colors, typography, card surfaces, borders, radius, shadow, blur, spacing, width, and background. The live preview uses the public renderer. Mobile and desktop mockups fill their screens with the selected background and remain scrollable.
 
 Prefer theme-level changes for consistency. Keep individual profile or block overrides for deliberate exceptions.
 

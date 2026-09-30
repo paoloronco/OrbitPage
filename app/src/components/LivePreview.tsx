@@ -74,7 +74,7 @@ export function PreviewDeviceFrame({
     if (!screen) return;
 
     const updateViewport = () => {
-      const { width, height } = screen.getBoundingClientRect();
+      const { clientWidth: width, clientHeight: height } = screen;
       if (width <= 0 || height <= 0) return;
       const scale = width / sourceWidth;
       setViewport({ device, height: height / scale, scale });
@@ -179,7 +179,7 @@ export const LivePreview = ({
 
   return (
     <PreviewDeviceFrame device={device} publicPageHref={publicPageHref}>
-      <div className="admin-live-preview relative overflow-hidden bg-white">
+      <div className="admin-live-preview relative overflow-hidden" style={{ background: previewBackground }}>
         <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
           <div
             className="admin-live-preview__page relative isolate min-h-full overflow-hidden"
