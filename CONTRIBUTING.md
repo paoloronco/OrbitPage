@@ -79,6 +79,7 @@ Run these before opening a pull request:
 ```bash
 cd OrbitPage/app
 npm run lint
+npm run typecheck
 npm run test:unit
 npm run build
 ```

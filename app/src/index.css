@@ -10099,6 +10099,11 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .admin-dashboard-nav-stack,
+  .admin-dashboard-mobile-nav-backdrop {
+    transition: none;
+  }
+
   .public-page-root--standalone .profile-card,
   .public-page-root--standalone .public-card-stack > * {
     animation: none;

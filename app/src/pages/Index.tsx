@@ -77,26 +77,26 @@ function normalizePublicProfile(profileData: PublicPageResponse["profile"] | nul
     };
   }
 
-  const footerText = (profileData as any).footer_text || (profileData as any).footerText || undefined;
-  const faviconValue = (profileData as any).favicon;
+  const footerText = profileData.footer_text || profileData.footerText || undefined;
+  const faviconValue = profileData.favicon;
   const favicon = isBundledProfileAvatar(faviconValue) ? undefined : (faviconValue || undefined);
-  const googleAnalyticsId = (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined;
-  const configuredPrivacyPolicyUrl = (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined;
+  const googleAnalyticsId = profileData.google_analytics_id || profileData.googleAnalyticsId || undefined;
+  const configuredPrivacyPolicyUrl = profileData.privacy_policy_url || profileData.privacyPolicyUrl || undefined;
   const privacyPolicyUrl = resolveSafePublicHref(getEffectivePrivacyPolicyUrl(configuredPrivacyPolicyUrl)) || undefined;
-  const cookiePolicyUrl = resolveSafePublicHref((profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl) || undefined;
+  const cookiePolicyUrl = resolveSafePublicHref(profileData.cookie_policy_url || profileData.cookiePolicyUrl) || undefined;
   const hasCustomAvatar = hasCustomProfileAvatar(profileData.avatar);
 
   return {
     name: profileData.name || "",
     bio: profileData.bio || "",
     avatar: hasCustomProfileAvatar(profileData.avatar) ? profileData.avatar : "",
-    showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
-      ? (profileData as any).show_avatar !== 0
-      : (hasCustomAvatar ? ((profileData as any).showAvatar ?? true) : false),
-    nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
-    bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
-    appearance: (profileData as any).appearance || {},
-    socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
+    showAvatar: typeof profileData.show_avatar !== 'undefined'
+      ? profileData.show_avatar !== 0
+      : (hasCustomAvatar ? (profileData.showAvatar ?? true) : false),
+    nameFontSize: profileData.name_font_size || profileData.nameFontSize || undefined,
+    bioFontSize: profileData.bio_font_size || profileData.bioFontSize || undefined,
+    appearance: profileData.appearance || {},
+    socialLinks: profileData.social_links || profileData.socialLinks || {},
     footerText,
     favicon,
     googleAnalyticsId,
@@ -204,7 +204,10 @@ const Index = () => {
         const requiredCategories = new Set<'preferences' | 'analytics' | 'marketing'>(['analytics']);
         normalizedLinks.forEach((link) => {
           if (link.type === 'map') requiredCategories.add('preferences');
-          if (link.type === 'embed') requiredCategories.add(getEmbedData(link.content).consentCategory || 'marketing');
+          if (link.type === 'embed') {
+            const category = getEmbedData(link.content).consentCategory || 'marketing';
+            if (category !== 'necessary') requiredCategories.add(category);
+          }
         });
         const cfg: ConsentConfigData = baseConfig.mode === 'hardcoded' && baseConfig.hardcoded
           ? {
@@ -262,7 +265,7 @@ const Index = () => {
           //   2. Register the gtag.js load + gtag('config') call as a consent-dependent
           //      action — it only runs once the visitor grants analytics consent.
           if (googleAnalyticsId && typeof googleAnalyticsId === 'string' && googleAnalyticsId.match(/^G-[A-Z0-9]+$/i)) {
-            const win = window as any;
+            const win = window;
 
             // Load gtag.js and call config ONLY after analytics consent is granted.
             // No GA network request of any kind is made before this callback fires.
@@ -299,12 +302,12 @@ const Index = () => {
           }
 
           // Apply document title
-          const tabTitle = (profileData as any).tab_title || (profileData as any).tabTitle;
+          const tabTitle = profileData.tab_title || profileData.tabTitle;
           if (tabTitle && typeof tabTitle === 'string') {
             document.title = tabTitle;
           }
           // Apply meta description
-          const metaDesc = (profileData as any).meta_description || (profileData as any).metaDescription;
+          const metaDesc = profileData.meta_description || profileData.metaDescription;
           if (metaDesc && typeof metaDesc === 'string') {
             let tag = document.querySelector('meta[name="description"]');
             if (!tag) {

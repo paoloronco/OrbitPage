@@ -123,8 +123,8 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
     try {
       const data = await usersApi.list();
       setUsers(data);
-    } catch (err: any) {
-      setGlobalMsg({ type: 'error', text: err?.message || 'Failed to load users' });
+    } catch (err) {
+      setGlobalMsg({ type: 'error', text: (err instanceof Error ? err.message : "") || 'Failed to load users' });
     } finally {
       setLoading(false);
     }
@@ -155,8 +155,8 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
       setNewRole('viewer');
       setShowAddForm(false);
       await fetchUsers();
-    } catch (err: any) {
-      setAddMsg({ type: 'error', text: err?.message || 'Failed to create user' });
+    } catch (err) {
+      setAddMsg({ type: 'error', text: (err instanceof Error ? err.message : "") || 'Failed to create user' });
     } finally {
       setAddLoading(false);
     }
@@ -180,8 +180,8 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
       setEditConfirm('');
       setEditingUser(null);
       setGlobalMsg({ type: 'success', text: `Password updated for "${username}"` });
-    } catch (err: any) {
-      setEditMsg({ type: 'error', text: err?.message || 'Failed to update password' });
+    } catch (err) {
+      setEditMsg({ type: 'error', text: (err instanceof Error ? err.message : "") || 'Failed to update password' });
     } finally {
       setEditLoading(false);
     }
@@ -196,9 +196,9 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
       await usersApi.updateRole(username, role);
       setGlobalMsg({ type: 'success', text: `Role updated for "${username}"` });
       await fetchUsers();
-    } catch (err: any) {
+    } catch (err) {
       setUsers((current) => current.map((user) => user.username === username ? { ...user, role: previousRole } : user));
-      setGlobalMsg({ type: 'error', text: err?.message || 'Failed to update role' });
+      setGlobalMsg({ type: 'error', text: (err instanceof Error ? err.message : "") || 'Failed to update role' });
     } finally {
       setRoleUpdating(null);
     }
@@ -210,8 +210,8 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
       await usersApi.delete(username);
       setGlobalMsg({ type: 'success', text: `User "${username}" deleted` });
       await fetchUsers();
-    } catch (err: any) {
-      setGlobalMsg({ type: 'error', text: err?.message || 'Failed to delete user' });
+    } catch (err) {
+      setGlobalMsg({ type: 'error', text: (err instanceof Error ? err.message : "") || 'Failed to delete user' });
     }
   };
 

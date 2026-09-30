@@ -1,3 +1,73 @@
+import { defaultTheme, type ThemeConfig } from "@/lib/theme";
+import type { ThemePreset } from "@/lib/theme-presets";
+import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
+import type { HostedThemeAccess } from "@/lib/hosted-editor-contract";
+
+export type EditableTheme = ThemeConfig & { cardBlurTint?: string };
+
+const sameCardSurface = (left: ThemeConfig['contentCard'], right: ThemeConfig['contentCard']) => (
+  Object.keys(left).every((key) => left[key as keyof typeof left] === right[key as keyof typeof right])
+);
+
+export const findMatchingCardPreset = (theme: ThemeConfig) => cardThemePresets.find((preset) => (
+  preset.mode === theme.contentCardMode &&
+  sameCardSurface(preset.card, theme.contentCard) &&
+  preset.variants.length === theme.contentCardVariants.length &&
+  preset.variants.every((variant, index) => sameCardSurface(variant, theme.contentCardVariants[index]))
+))?.id || null;
+
+export const buildPagePresetTheme = (
+  pendingTheme: EditableTheme,
+  preset: ThemePreset,
+  accessLevel?: HostedThemeAccess,
+): EditableTheme => {
+  const advanced = !accessLevel || accessLevel === "advanced";
+  const premium = advanced || accessLevel === "premium";
+  const cardPresetId = premium ? findMatchingCardPreset(pendingTheme) : null;
+  const preserveCards = advanced || Boolean(cardPresetId);
+  return {
+    ...preset.theme,
+    content: pendingTheme.content,
+    contentCard: preserveCards ? pendingTheme.contentCard : preset.theme.contentCard,
+    contentCardMode: preserveCards ? pendingTheme.contentCardMode : preset.theme.contentCardMode,
+    contentCardVariants: preserveCards ? pendingTheme.contentCardVariants : preset.theme.contentCardVariants,
+    profileCardEffect: advanced ? pendingTheme.profileCardEffect : preset.theme.profileCardEffect,
+    contentCardEffect: advanced ? pendingTheme.contentCardEffect : preset.theme.contentCardEffect,
+    profileCardOpacity: advanced ? pendingTheme.profileCardOpacity : preset.theme.profileCardOpacity,
+    contentCardOpacity: advanced ? pendingTheme.contentCardOpacity : preset.theme.contentCardOpacity,
+    orbitPageAccess: { mode: "preset", presetId: preset.id, cardPresetId },
+  };
+};
+
+export const buildCardPresetTheme = (
+  pendingTheme: EditableTheme,
+  preset: CardThemePreset,
+  accessLevel?: HostedThemeAccess,
+): EditableTheme => {
+  const advanced = !accessLevel || accessLevel === "advanced";
+  const baseTheme = advanced || pendingTheme.orbitPageAccess?.mode === "preset"
+    ? pendingTheme
+    : defaultTheme;
+  return {
+    ...baseTheme,
+    content: pendingTheme.content,
+    card: preset.card.background,
+    cardGradient: {
+      from: preset.card.background,
+      to: preset.card.backgroundSecondary,
+      direction: preset.card.direction,
+    },
+    contentCard: preset.card,
+    contentCardMode: preset.mode,
+    contentCardVariants: preset.variants,
+    orbitPageAccess: {
+      mode: "preset",
+      presetId: baseTheme.orbitPageAccess?.presetId || "default",
+      cardPresetId: preset.id,
+    },
+  };
+};
+
 type ThemeSaveResult = {
   saved: boolean;
   isDirty: boolean;

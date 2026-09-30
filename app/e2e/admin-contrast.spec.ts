@@ -98,6 +98,7 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
   const contentTab = page.getByRole('button', { name: 'Content', exact: true });
   await contentTab.click();
   await page.getByRole('button', { name: /Menu/ }).first().click();
+  await expect(page.locator('.menu-editor-stack')).toBeVisible();
 
   const samples = await page.locator([
     '.admin-dashboard-logo-copy small',
@@ -151,6 +152,7 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
     const navigationItem = page.getByRole('button', { name: workspace, exact: true }).first();
     if (await navigationItem.count() === 0) continue;
     await navigationItem.click();
+    if (workspace === 'Theme') await expect(page.locator('.admin-theme-customizer')).toBeVisible();
     await page.waitForTimeout(80);
     await expectReadableDashboardCopy(page, workspace);
   }

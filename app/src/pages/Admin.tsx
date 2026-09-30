@@ -253,24 +253,24 @@ const Admin = () => {
             name: profileData.name,
             bio: profileData.bio,
             avatar: hasCustomProfileAvatar(profileData.avatar) ? profileData.avatar : "",
-            showAvatar: typeof (profileData as any).show_avatar !== 'undefined'
-              ? (profileData as any).show_avatar !== 0
-              : (hasCustomAvatar ? ((profileData as any).showAvatar ?? true) : false),
-            socialLinks: profileData.social_links || (profileData as any).socialLinks || {},
-            nameFontSize: (profileData as any).name_font_size || (profileData as any).nameFontSize || undefined,
-            bioFontSize: (profileData as any).bio_font_size || (profileData as any).bioFontSize || undefined,
+            showAvatar: typeof profileData.show_avatar !== 'undefined'
+              ? profileData.show_avatar !== 0
+              : (hasCustomAvatar ? (profileData.showAvatar ?? true) : false),
+            socialLinks: profileData.social_links || profileData.socialLinks || {},
+            nameFontSize: profileData.name_font_size || profileData.nameFontSize || undefined,
+            bioFontSize: profileData.bio_font_size || profileData.bioFontSize || undefined,
             appearance: profileData.appearance || {},
-            tabTitle: (profileData as any).tab_title || (profileData as any).tabTitle || undefined,
-            metaDescription: (profileData as any).meta_description || (profileData as any).metaDescription || undefined,
-            footerText: (profileData as any).footer_text || (profileData as any).footerText || undefined,
+            tabTitle: profileData.tab_title || profileData.tabTitle || undefined,
+            metaDescription: profileData.meta_description || profileData.metaDescription || undefined,
+            footerText: profileData.footer_text || profileData.footerText || undefined,
             showOrbitPageBadge: !bootstrap || bootstrap.plan?.entitlements.badgeRequired === true
               ? true
-              : ((profileData as any).show_orbitpage_badge ?? (profileData as any).showOrbitPageBadge ?? false),
-            favicon: isBundledProfileAvatar((profileData as any).favicon) ? undefined : ((profileData as any).favicon || undefined),
-            googleAnalyticsId: (profileData as any).google_analytics_id || (profileData as any).googleAnalyticsId || undefined,
-            privacyPolicyUrl: (profileData as any).privacy_policy_url || (profileData as any).privacyPolicyUrl || undefined,
-            cookiePolicyUrl: (profileData as any).cookie_policy_url || (profileData as any).cookiePolicyUrl || undefined,
-            machineReadableEnabled: (profileData as any).machine_readable_enabled === 1 || (profileData as any).machineReadableEnabled === true,
+              : (profileData.show_orbitpage_badge ?? profileData.showOrbitPageBadge ?? false),
+            favicon: isBundledProfileAvatar(profileData.favicon) ? undefined : (profileData.favicon || undefined),
+            googleAnalyticsId: profileData.google_analytics_id || profileData.googleAnalyticsId || undefined,
+            privacyPolicyUrl: profileData.privacy_policy_url || profileData.privacyPolicyUrl || undefined,
+            cookiePolicyUrl: profileData.cookie_policy_url || profileData.cookiePolicyUrl || undefined,
+            machineReadableEnabled: profileData.machine_readable_enabled === 1 || profileData.machineReadableEnabled === true,
           });
         }
 
@@ -332,14 +332,14 @@ const Admin = () => {
         machineReadableEnabled: newProfile.machineReadableEnabled,
       });
       setProfile(newProfile);
-    } catch (error: any) {
-      if (error?.message === 'AUTH_EXPIRED') {
+    } catch (error) {
+      if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') {
         throw error;
       }
       console.error('Error saving page:', error);
       toast({
         title: 'Error saving page',
-        description: error?.message || 'An unexpected error occurred. Please try again.',
+        description: (error instanceof Error ? error.message : "") || 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
       throw error instanceof Error ? error : new Error('The page could not be saved.');
@@ -402,15 +402,15 @@ const Admin = () => {
       const normalizedLinks = normalizeLinkDtos(reloaded);
       setLinks(normalizedLinks);
       setSaasUsage((current) => current ? { ...current, blocks: normalizedLinks.length } : current);
-    } catch (error: any) {
-      if (error?.message === 'AUTH_EXPIRED') {
+    } catch (error) {
+      if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);
         throw new Error('Your session expired. Sign in again before retrying the save.');
       }
       console.error('Error saving links:', error);
       toast({
         title: 'Error saving links',
-        description: error?.message || 'An unexpected error occurred. Please try again.',
+        description: (error instanceof Error ? error.message : "") || 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
       throw error instanceof Error ? error : new Error('Changes could not be saved. Try again.');
@@ -423,15 +423,15 @@ const Admin = () => {
       setTheme(newTheme);
       // Apply theme to admin interface too
       applyTheme(newTheme);
-    } catch (error: any) {
-      if (error?.message === 'AUTH_EXPIRED') {
+    } catch (error) {
+      if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);
         throw error;
       }
       console.error('Error saving theme:', error);
       toast({
         title: 'Error saving theme',
-        description: error?.message || 'An unexpected error occurred. Please try again.',
+        description: (error instanceof Error ? error.message : "") || 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
       throw error;
@@ -443,11 +443,11 @@ const Admin = () => {
       const response = await subpagesApi.update(nextSubpages as SubpageItem[]);
       const saved = response.data || await subpagesApi.get();
       setSubpages(saved.map((page) => ({ ...page, links: normalizeLinkDtos(page.links || []) })));
-    } catch (error: any) {
-      if (error?.message === 'AUTH_EXPIRED') setIsLoggedIn(false);
+    } catch (error) {
+      if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') setIsLoggedIn(false);
       toast({
         title: 'Error saving pages',
-        description: error?.message || 'The page could not be saved. Please try again.',
+        description: (error instanceof Error ? error.message : "") || 'The page could not be saved. Please try again.',
         variant: 'destructive',
       });
       throw error instanceof Error ? error : new Error('The page could not be saved.');
@@ -459,8 +459,8 @@ const Admin = () => {
       await menuApi.update(newMenu);
       const reloaded = await menuApi.get();
       setMenu(normalizeMenuCatalog(reloaded, saasPlan?.entitlements.maxMenuItems ?? 250));
-    } catch (error: any) {
-      if (error?.message === 'AUTH_EXPIRED') setIsLoggedIn(false);
+    } catch (error) {
+      if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') setIsLoggedIn(false);
       throw error instanceof Error ? error : new Error('Menu changes could not be saved.');
     }
   };

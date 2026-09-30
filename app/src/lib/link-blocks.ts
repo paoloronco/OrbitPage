@@ -200,7 +200,7 @@ export const getSocialRowDraftData = (content: string | null | undefined): Socia
         icon: toString(entry.icon).slice(0, 24),
       };
     })
-    .filter((item): item is SocialRowItemData => Boolean(item));
+    .filter((item) => item !== undefined);
 
   const record = parsed as Record<string, unknown>;
   const layout = socialRowLayouts.includes(record.layout as SocialRowLayout) ? record.layout as SocialRowLayout : 'icons';

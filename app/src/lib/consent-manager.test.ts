@@ -1,9 +1,12 @@
+import type { BuilderConfig, ConsentConfig } from './consent-manager';
+import { DEFAULT_HARDCODED } from './consent-manager';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const hardcodedConfig = {
+const hardcodedConfig: ConsentConfig = {
   mode: 'hardcoded',
   enabled: true,
   hardcoded: {
+    ...DEFAULT_HARDCODED,
     policyVersion: '1.0',
     consentExpiryDays: 365,
     reshowOnVersionChange: true,
@@ -11,7 +14,7 @@ const hardcodedConfig = {
 } as const;
 
 const readConsentCalls = () => {
-  const dataLayer = (window as any).dataLayer as unknown[];
+  const dataLayer = window.dataLayer as unknown[];
   return dataLayer.map((entry) => Array.from(entry as ArrayLike<unknown>));
 };
 
@@ -64,7 +67,7 @@ describe('consentManager Google Consent Mode v2', () => {
   it('sets denied Consent Mode v2 defaults before analytics consent exists', async () => {
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init(hardcodedConfig as any);
+    consentManager.init(hardcodedConfig);
 
     const defaultCall = findConsentCall('default');
     expect(defaultCall).toBeDefined();
@@ -80,7 +83,7 @@ describe('consentManager Google Consent Mode v2', () => {
   it('updates Consent Mode v2 to granted when all consent is accepted', async () => {
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init(hardcodedConfig as any);
+    consentManager.init(hardcodedConfig);
     consentManager.acceptAll('banner');
 
     const updateCall = findConsentCall('update');
@@ -97,7 +100,7 @@ describe('consentManager Google Consent Mode v2', () => {
   it('updates Consent Mode v2 to denied when optional consent is rejected', async () => {
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init(hardcodedConfig as any);
+    consentManager.init(hardcodedConfig);
     consentManager.rejectAll('banner');
 
     const updateCall = findConsentCall('update');
@@ -113,25 +116,25 @@ describe('consentManager Google Consent Mode v2', () => {
   it('isolates consent records between pages that share orbitpage.net', async () => {
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init({ ...hardcodedConfig, scope: 'first-page' } as any);
+    consentManager.init({ ...hardcodedConfig, scope: 'first-page' });
     consentManager.acceptAll('banner');
     expect(consentManager.isGranted('analytics')).toBe(true);
 
-    consentManager.init({ ...hardcodedConfig, scope: 'second-page' } as any);
+    consentManager.init({ ...hardcodedConfig, scope: 'second-page' });
     expect(consentManager.getConsent()).toBeNull();
     expect(consentManager.isGranted('analytics')).toBe(false);
 
-    consentManager.init({ ...hardcodedConfig, scope: 'first-page' } as any);
+    consentManager.init({ ...hardcodedConfig, scope: 'first-page' });
     expect(consentManager.isGranted('analytics')).toBe(true);
   });
 
   it('uses a persisted CookieYes decision immediately on returning visits', async () => {
-    const win = window as any;
+    const win = window;
     win.getCkyConsent = () => ({ categories: { accepted: ['functional', 'analytics'] } });
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init(builderConfig('cookieyes', { scriptId: 'site-id' }) as any);
-    (consentManager as any)._wireCookieYesConsentEvents();
+    consentManager.init(builderConfig('cookieyes', { scriptId: 'site-id' }));
+    consentManager.injectBuilderScript();
 
     expect(consentManager.isGranted('preferences')).toBe(true);
     expect(consentManager.isGranted('analytics')).toBe(true);
@@ -140,12 +143,12 @@ describe('consentManager Google Consent Mode v2', () => {
 
   it('uses persisted Cookiebot consent and supports revocation', async () => {
     vi.useFakeTimers();
-    const win = window as any;
+    const win = window;
     win.Cookiebot = { consent: { preferences: true, statistics: true, marketing: false } };
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init(builderConfig('cookiebot', { scriptId: 'cbid' }) as any);
-    (consentManager as any)._wireCookiebotConsentEvents();
+    consentManager.init(builderConfig('cookiebot', { scriptId: 'cbid' }));
+    consentManager.injectBuilderScript();
     expect(consentManager.isGranted('analytics')).toBe(true);
 
     win.Cookiebot.consent.statistics = false;
@@ -158,17 +161,17 @@ describe('consentManager Google Consent Mode v2', () => {
     const snippet = '<script src="https://embeds.iubenda.com/widgets/site-code.js"></script>';
     const { consentManager } = await import('./consent-manager');
     const injectSnippet = vi
-      .spyOn(consentManager as any, '_injectHtmlSnippet')
+      .spyOn(consentManager as unknown as { _injectHtmlSnippet: (target: HTMLElement, html: string, markerId?: string) => boolean }, '_injectHtmlSnippet')
       .mockReturnValue(true);
 
-    consentManager.init(builderConfig('iubenda', { headSnippet: snippet }) as any);
-    (consentManager as any)._injectIubenda({ headSnippet: snippet });
+    consentManager.init(builderConfig('iubenda', { headSnippet: snippet }));
+    consentManager.injectBuilderScript();
 
     expect(injectSnippet).toHaveBeenCalledWith(document.head, snippet, 'orbitpage-cmp-script');
   });
 
   it('preserves granular GCM v2 advertising signals from an external CMP update', async () => {
-    const win = window as any;
+    const win = window;
     win.dataLayer.push(['consent', 'update', {
       analytics_storage: 'granted',
       ad_storage: 'granted',
@@ -180,7 +183,7 @@ describe('consentManager Google Consent Mode v2', () => {
     }]);
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init(builderConfig('custom') as any);
+    consentManager.init(builderConfig('custom'));
     consentManager.injectBuilderScript();
 
     expect(consentManager.isGranted('analytics')).toBe(true);
@@ -199,6 +202,7 @@ describe('consentManager Google Consent Mode v2', () => {
     const appended: Array<Record<string, unknown>> = [];
     Object.defineProperty(globalThis, 'document', {
       value: {
+        getElementById: () => null,
         createElement: () => ({
           setAttribute(name: string, value: string) { (this as Record<string, unknown>)[name] = value; },
         }),
@@ -206,12 +210,12 @@ describe('consentManager Google Consent Mode v2', () => {
       },
       configurable: true,
     });
-    const win = window as any;
+    const win = window;
     win.OnetrustActiveGroups = ',C0001,C0002,C0003,';
     const { consentManager } = await import('./consent-manager');
 
-    consentManager.init(builderConfig('onetrust', { siteId: 'domain-script-id' }) as any);
-    (consentManager as any)._injectOneTrust({ siteId: 'domain-script-id' });
+    consentManager.init(builderConfig('onetrust', { siteId: 'domain-script-id' }));
+    consentManager.injectBuilderScript();
 
     expect(appended).toHaveLength(1);
     expect(appended[0]).not.toHaveProperty('text');

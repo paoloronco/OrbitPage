@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from "@playwright/test";
-import { contentSaveButton, openAuthenticatedAdmin } from "./helpers";
+import { contentSaveButton, openAuthenticatedAdmin, openPreviewContentCard, saveEditorChanges } from "./helpers";
 
 async function protrudingMenuContent(editor: Locator) {
   return editor.evaluate((element) => {
@@ -39,373 +39,41 @@ test("Page and Content keep the same editor and preview geometry", async ({ page
   expect(contentGeometry).toEqual(pageGeometry);
 });
 
-// Legacy arrangement assertions depend on the removed Done/Reset toolbar; focused editor and viewport tests below remain active.
-test.skip("Visual editor edits the real page through selectable elements", async ({ browserName, page }) => {
-  test.setTimeout(90_000);
+test("Visual editor persists profile and content selected on the real preview", async ({ browserName, page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
+  const pageName = `Visual editor ${browserName} ${Date.now()}`;
+  const inspector = page.locator(".visual-site-editor__inspector");
+  const profile = page.locator('[data-public-editor-target="profile"]');
+  await page.getByRole("button", { name: "Page", exact: true }).click();
+  await inspector.getByLabel("Page name").fill(pageName);
+  await saveEditorChanges(page);
+  await profile.click();
+  await expect(profile).toHaveClass(/is-selected/);
 
   await page.getByRole("button", { name: "Content", exact: true }).click();
-
-  let linkCard;
-  if (await page.locator(".admin-link-list [data-link-id]").count() === 0) {
-    await page.getByRole("button", { name: "Add link" }).click();
-    linkCard = page.locator(".admin-link-list [data-link-id]").last();
-  } else {
-    await page.getByRole("button", { name: "Add content" }).click();
-    await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
-    linkCard = page.locator(".admin-link-list [data-link-id]").last();
-  }
-
-  await expect(linkCard).toBeVisible();
-  const linkId = await linkCard.getAttribute("data-link-id");
-  expect(linkId).toBeTruthy();
-
-  await linkCard.hover();
-  await linkCard.getByRole("button", { name: "Edit block" }).click();
-  await linkCard.getByPlaceholder("Link title").fill("Visual editor card");
-  await linkCard.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/visual-editor");
-
   await page.getByRole("button", { name: "Add content" }).click();
   await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
-  const dockLinkCard = page.locator(".admin-link-list [data-link-id]").last();
-  const dockLinkId = await dockLinkCard.getAttribute("data-link-id");
-  expect(dockLinkId).toBeTruthy();
-  await dockLinkCard.hover();
-  await dockLinkCard.getByRole("button", { name: "Edit block" }).click();
-  await dockLinkCard.getByPlaceholder("Link title").fill("Dock target card");
-  await dockLinkCard.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/dock-target");
-  await page.locator(".admin-link-manager > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Unsaved changes")).toBeHidden();
-
-  await page.getByRole("button", { name: "Page", exact: true }).click();
-  await expect(page.locator(".visual-site-editor")).toBeVisible();
-  await expect(page.locator('[data-preview-device="desktop"]')).toBeVisible();
-  await expect(page.locator(".admin-dashboard-nav-page .admin-dashboard-content-nav")).toHaveCount(0);
-  await expect(page.locator(".admin-dashboard-nav-page").getByRole("button", { name: "Site editor", exact: true })).toBeVisible();
+  await saveEditorChanges(page);
+  const card = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
+  const { editor, id } = await openPreviewContentCard(page, card);
+  await expect(card).toHaveClass(/is-selected/);
+  await editor.getByPlaceholder("Link title").fill("Visual editor saved card");
+  await editor.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/visual-editor");
+  await expect(card).toContainText("Visual editor saved card");
+  await saveEditorChanges(page);
 
   await page.reload();
-  await expect(page.locator(".visual-site-editor")).toBeVisible();
+  const savedCard = page.locator(`.visual-site-editor__canvas [data-public-editor-link-id="${id}"]`);
+  const { editor: savedEditor } = await openPreviewContentCard(page, savedCard);
+  await expect(savedEditor.getByPlaceholder("Link title")).toHaveValue("Visual editor saved card");
+  await expect(savedEditor.getByPlaceholder("https://example.com", { exact: true })).toHaveValue("https://example.com/visual-editor");
+  await page.getByRole("button", { name: "Page", exact: true }).click();
+  await expect(inspector.getByLabel("Page name")).toHaveValue(pageName);
 
-  const inspector = page.locator(".visual-site-editor__inspector");
-  await inspector.getByLabel("Page name").fill(`Visual editor profile ${browserName} ${Date.now()}`);
-  await contentSaveButton(page).click();
-  const profileTarget = page.locator('[data-public-editor-target="profile"]');
-  await expect(profileTarget).toBeVisible();
-  await profileTarget.click();
-  await expect(profileTarget).toHaveClass(/is-selected/);
-  const profileSelectionIndicator = await profileTarget.evaluate((element) => ({
-    outlineStyle: getComputedStyle(element).outlineStyle,
-    selectionAnimation: getComputedStyle(element, "::before").animationName,
-    selectionDuration: getComputedStyle(element, "::before").animationDuration,
-    selectionBorderWidth: getComputedStyle(element, "::before").borderTopWidth,
-    selectionInset: getComputedStyle(element, "::before").inset,
-  }));
-  expect(profileSelectionIndicator).toEqual({
-    outlineStyle: "none",
-    selectionAnimation: "visual-editor-selection-breathe",
-    selectionDuration: "1.4s",
-    selectionBorderWidth: "4px",
-    selectionInset: "-7px",
-  });
-  await expect(inspector.getByRole("heading", { name: "Profile and identity" })).toBeVisible();
-  await expect(inspector.getByLabel("Page name")).toBeVisible();
-
-  const legacyCardWidth = (await page.locator(`[data-public-editor-link-id="${linkId}"]`).boundingBox())!.width;
-  await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  await expect(page.locator(".visual-site-editor")).toHaveClass(/visual-site-editor--layout-editing/);
-  await expect(page.getByText("Drag with the handles. Card sizes snap to presets, elements cannot overlap, and text alignment is available on each text block.")).toBeVisible();
-  await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
-  expect(await profileTarget.evaluate((element) => ({
-    outline: getComputedStyle(element).outlineStyle,
-    before: getComputedStyle(element, "::before").content,
-    after: getComputedStyle(element, "::after").content,
-  }))).toEqual({ outline: "none", before: "none", after: "none" });
-  const resetLayoutButton = page.getByRole("button", { name: "Reset to standard layout" });
-  await expect(resetLayoutButton).toBeVisible();
-  expect(Math.abs((await page.locator(`[data-card-layout-item="${linkId}"]`).boundingBox())!.width - legacyCardWidth)).toBeLessThan(2);
-
-  const workItem = page.locator('[data-profile-layout-item="work"]');
-  const locationItem = page.locator('[data-profile-layout-item="location"]');
-  const nameItem = page.locator('[data-profile-layout-item="name"]');
-  const avatarItem = page.locator('[data-profile-layout-item="avatar"]');
-  await resetLayoutButton.click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
-  await expect(workItem).toHaveAttribute("data-profile-layout-align", "center");
-  await expect(locationItem).toHaveAttribute("data-profile-layout-align", "center");
-  await page.getByRole("button", { name: "Align left Work", exact: true }).click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-align", "left");
-  await page.getByRole("button", { name: "Align center Work", exact: true }).click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-align", "center");
-  await expect(nameItem).toHaveAttribute("data-profile-layout-position", "10,128,80,64");
-  await expect(avatarItem).toHaveAttribute("data-profile-layout-position", "35,0,30,112");
-
-  const arrangedLinkTarget = page.locator(`[data-card-layout-item="${linkId}"]`);
-  await expect(arrangedLinkTarget).toBeVisible();
-  await arrangedLinkTarget.scrollIntoViewIfNeeded();
-  const cardCanvasBounds = await page.locator(".public-card-stack--layout").boundingBox();
-  const profileCardTarget = page.locator('[data-card-layout-item="orbitpage-profile"]');
-  const profileCardGrip = profileCardTarget.getByRole("button", { name: "Move profile card", exact: true });
-  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^30\.5,0,39,/);
-  const arrangedCardWidth = (await arrangedLinkTarget.boundingBox())!.width;
-  await page.getByRole("button", { name: "Done", exact: true }).click();
-  const publicCardWidth = (await page.locator(`[data-public-editor-link-id="${linkId}"]`).boundingBox())!.width;
-  expect(Math.abs(arrangedCardWidth - publicCardWidth)).toBeLessThan(2);
-  await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  await profileCardTarget.scrollIntoViewIfNeeded();
-  const profileGripBounds = await profileCardGrip.boundingBox();
-  const avatarGripBounds = await page.getByRole("button", { name: "Move Profile image", exact: true }).boundingBox();
-  const profileCardBounds = await profileCardTarget.boundingBox();
-  expect(profileGripBounds).not.toBeNull();
-  expect(avatarGripBounds).not.toBeNull();
-  expect(profileCardBounds).not.toBeNull();
-  expect(profileGripBounds!.x).toBeGreaterThan(avatarGripBounds!.x + avatarGripBounds!.width);
-  expect(cardCanvasBounds).not.toBeNull();
-  await profileCardGrip.hover();
-  await page.mouse.down();
-  await expect(profileCardTarget).toHaveClass(/is-dragging/);
-  await page.mouse.move(
-    profileGripBounds!.x + profileGripBounds!.width / 2 - cardCanvasBounds!.width * .16,
-    profileGripBounds!.y + profileGripBounds!.height / 2,
-    { steps: 6 },
-  );
-  await expect(profileCardTarget).toHaveAttribute("data-card-layout-position", /^14\.5,0,39,/);
-  await page.mouse.up();
-  const movedProfilePosition = (await profileCardTarget.getAttribute("data-card-layout-position"))!.split(",").map(Number);
-  expect(movedProfilePosition[0]).toBeLessThan(20);
-  expect(movedProfilePosition.slice(1, 3)).toEqual([0, 39]);
-  await page.locator(".admin-live-preview__scroll").evaluate((element) => { element.scrollTop = 0; });
-  const cardMoveGrip = arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true });
-  await cardMoveGrip.hover();
-  const dockGripBounds = await cardMoveGrip.boundingBox();
-  const arrangedCardBounds = await arrangedLinkTarget.boundingBox();
-  const currentProfileCardBounds = await profileCardTarget.boundingBox();
-  expect(dockGripBounds).not.toBeNull();
-  expect(arrangedCardBounds).not.toBeNull();
-  expect(currentProfileCardBounds).not.toBeNull();
-  await page.mouse.down();
-  await expect(arrangedLinkTarget).toHaveClass(/is-dragging/);
-  await page.mouse.move(
-    dockGripBounds!.x + dockGripBounds!.width / 2 + cardCanvasBounds!.width * .255,
-    dockGripBounds!.y + dockGripBounds!.height / 2
-      + currentProfileCardBounds!.y - arrangedCardBounds!.y,
-    { steps: 4 },
-  );
-  await page.mouse.up();
-  const sideBySidePosition = (await arrangedLinkTarget.getAttribute("data-card-layout-position"))!.split(",").map(Number);
-  expect(sideBySidePosition[0]).toBeGreaterThanOrEqual(54);
-  expect(sideBySidePosition.slice(1, 3)).toEqual([0, 39]);
-  const movedProfileBounds = await profileCardTarget.boundingBox();
-  const sideBySideBounds = await arrangedLinkTarget.boundingBox();
-  expect(movedProfileBounds!.x + movedProfileBounds!.width).toBeLessThanOrEqual(sideBySideBounds!.x + 1);
-  expect(Math.abs(movedProfileBounds!.y - sideBySideBounds!.y)).toBeLessThanOrEqual(1);
-  const sideBySideX = String(sideBySidePosition[0]);
-  let dockedY = String(sideBySidePosition[1]);
-  await cardMoveGrip.press("Shift+ArrowDown");
-  dockedY = String(Number(dockedY) + 16);
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^${sideBySideX},${dockedY},39,`));
-  await page.getByRole("button", { name: "Save page" }).click();
-  await expect(page.getByText("Unsaved changes")).toBeHidden();
-  const adminCardPositions = await page.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
-    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
-  const adminCardGeometry = await page.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
-    const canvas = items[0]?.closest<HTMLElement>(".public-card-stack--layout");
-    if (!canvas) return {};
-    const canvasBounds = canvas.getBoundingClientRect();
-    const scale = canvasBounds.width / canvas.offsetWidth;
-    return Object.fromEntries(items.map((item) => {
-      const bounds = item.getBoundingClientRect();
-      return [item.getAttribute("data-card-layout-item"), {
-        x: (bounds.left - canvasBounds.left) / scale,
-        y: (bounds.top - canvasBounds.top) / scale,
-        width: bounds.width / scale,
-        height: bounds.height / scale,
-      }];
-    }));
-  });
-  const adminContentPositions = await arrangedLinkTarget.locator("[data-card-content-layout-item]")
-    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-content-layout-item"), item.getAttribute("data-card-content-layout-position")])));
-  await page.getByRole("button", { name: "Done", exact: true }).click();
-  const publicPage = await page.context().newPage();
-  await publicPage.setViewportSize({ width: 1280, height: 980 });
-  await publicPage.emulateMedia({ reducedMotion: "reduce" });
-  await publicPage.goto(new URL("/e2e-public-page", page.url()).toString());
-  await expect(publicPage.locator('[data-card-layout-item="orbitpage-profile"]')).toBeVisible();
-  const publicCardPositions = await publicPage.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`)
-    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-layout-item"), item.getAttribute("data-card-layout-position")])));
-  expect(publicCardPositions).toEqual(adminCardPositions);
-  const publicCardGeometry = await publicPage.locator(`[data-card-layout-item="orbitpage-profile"], [data-card-layout-item="${linkId}"], [data-card-layout-item="${dockLinkId}"]`).evaluateAll((items) => {
-    const canvas = items[0]?.closest<HTMLElement>(".public-card-stack--layout");
-    if (!canvas) return {};
-    const canvasBounds = canvas.getBoundingClientRect();
-    const scale = canvasBounds.width / canvas.offsetWidth;
-    return Object.fromEntries(items.map((item) => {
-      const bounds = item.getBoundingClientRect();
-      return [item.getAttribute("data-card-layout-item"), {
-        x: (bounds.left - canvasBounds.left) / scale,
-        y: (bounds.top - canvasBounds.top) / scale,
-        width: bounds.width / scale,
-        height: bounds.height / scale,
-      }];
-    }));
-  });
-  for (const [id, adminGeometry] of Object.entries(adminCardGeometry)) {
-    for (const property of ["x", "y", "width", "height"] as const) {
-      expect(publicCardGeometry[id][property]).toBeCloseTo(adminGeometry[property], 0);
-    }
-  }
-  const publicContentPositions = await publicPage.locator(`[data-card-layout-item="${linkId}"] [data-card-content-layout-item]`)
-    .evaluateAll((items) => Object.fromEntries(items.map((item) => [item.getAttribute("data-card-content-layout-item"), item.getAttribute("data-card-content-layout-position")])));
-  expect(publicContentPositions).toEqual(adminContentPositions);
-  await publicPage.close();
-  await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  const desktopCardPositionBefore = await arrangedLinkTarget.getAttribute("data-card-layout-position");
-  await arrangedLinkTarget.getByRole("button", { name: "Resize card Visual editor card", exact: true }).press("ArrowLeft");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^${sideBySideX},${dockedY},38,`));
-  await arrangedLinkTarget.getByRole("button", { name: "Move card Visual editor card", exact: true }).press("ArrowRight");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", new RegExp(`^${Number(sideBySideX) + 1},${dockedY},38,`));
-  expect(await arrangedLinkTarget.getAttribute("data-card-layout-position")).not.toBe(desktopCardPositionBefore);
-  const desktopCardPosition = await arrangedLinkTarget.getAttribute("data-card-layout-position");
-  const cardTitleItem = arrangedLinkTarget.locator('[data-card-content-layout-item="title"]');
-  const cardTitlePositionBefore = await cardTitleItem.getAttribute("data-card-content-layout-position");
-  await cardTitleItem.getByRole("button", { name: "Move Title", exact: true }).press("ArrowDown");
-  await expect(cardTitleItem).not.toHaveAttribute("data-card-content-layout-position", cardTitlePositionBefore || "");
-
-  const workPositionBefore = await workItem.getAttribute("data-profile-layout-position");
-  await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowUp");
-  await expect(workItem).not.toHaveAttribute("data-profile-layout-position", workPositionBefore || "");
-  const desktopWorkPosition = await workItem.getAttribute("data-profile-layout-position");
-  expect(desktopWorkPosition).toBeTruthy();
-
-  await page.getByRole("button", { name: "Mobile preview" }).click();
-  await expect(page.getByText("Mobile layout", { exact: true })).toBeVisible();
-  await expect(page.locator('[data-profile-layout-viewport="mobile"]')).toBeVisible();
-  await resetLayoutButton.click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
-  await page.getByRole("button", { name: "Move Work", exact: true }).press("ArrowDown");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", /^0,\d+,100,\d+$/);
-  const mobileWorkPosition = await workItem.getAttribute("data-profile-layout-position");
-  expect(mobileWorkPosition).toBeTruthy();
-  expect(mobileWorkPosition).not.toBe(desktopWorkPosition);
-
-  await page.getByRole("button", { name: "Desktop preview" }).click();
-  await expect(page.getByText("Desktop layout", { exact: true })).toBeVisible();
-  await expect(workItem).toHaveAttribute("data-profile-layout-position", desktopWorkPosition || "");
-  await expect(arrangedLinkTarget).toHaveAttribute("data-card-layout-position", desktopCardPosition || "");
-  await expect(page.locator(".public-page-root--responsive-profile-layout")).toBeVisible();
-
-  const namePositionBefore = await nameItem.getAttribute("data-profile-layout-position");
-  const nameBounds = await nameItem.boundingBox();
-  expect(nameBounds).not.toBeNull();
-  expect(await nameItem.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    return document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2)
-      ?.closest<HTMLElement>("[data-profile-layout-item]")?.dataset.profileLayoutItem;
-  })).toBe("name");
-  await page.mouse.move(nameBounds!.x + nameBounds!.width / 2, nameBounds!.y + nameBounds!.height / 2);
-  await page.mouse.down();
-  await expect(nameItem).toHaveClass(/is-dragging/);
-  await page.mouse.move(nameBounds!.x + nameBounds!.width / 2 + 24, nameBounds!.y + nameBounds!.height / 2 + 12, { steps: 4 });
-  await expect(nameItem).not.toHaveAttribute("data-profile-layout-position", namePositionBefore || "");
-  await page.mouse.up();
-  await expect(nameItem).not.toHaveAttribute("data-profile-layout-position", namePositionBefore || "");
-
-  const avatarPositionBefore = await avatarItem.getAttribute("data-profile-layout-position");
-  await page.getByRole("button", { name: /Resize Profile image/ }).press("ArrowLeft");
-  await expect(avatarItem).not.toHaveAttribute("data-profile-layout-position", avatarPositionBefore || "");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
-  await page.getByRole("button", { name: "Save page" }).click();
-
-  await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  await resetLayoutButton.click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
-  await expect(nameItem).toHaveAttribute("data-profile-layout-position", "10,128,80,64");
-  await expect(avatarItem).toHaveAttribute("data-profile-layout-position", "35,0,30,112");
-  await page.getByRole("button", { name: "Mobile preview" }).click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-position", mobileWorkPosition || "");
-  await resetLayoutButton.click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-position", "8,208,40,40");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
-  await page.getByRole("button", { name: "Save page" }).click();
-
-  const selectedLinkTarget = page.locator(`[data-public-editor-link-id="${linkId}"]`);
-  await selectedLinkTarget.click();
-  await expect(selectedLinkTarget).toHaveClass(/is-selected/);
-  await expect(profileTarget).not.toHaveClass(/is-selected/);
-  await expect(inspector.getByRole("heading", { name: "Visual editor card", exact: true }).first()).toBeVisible();
-  await expect(inspector.getByPlaceholder("Link title")).toHaveValue("Visual editor card");
-  await expect(inspector.getByPlaceholder("https://example.com", { exact: true })).toHaveValue("https://example.com/visual-editor");
-
-  const selectionMotion = await selectedLinkTarget.evaluate((element) => {
-    const animation = element.getAnimations({ subtree: true })
-      .find((candidate) => candidate instanceof CSSAnimation
-        && candidate.animationName === "visual-editor-selection-breathe");
-    const keyframes = animation?.effect instanceof KeyframeEffect
-      ? animation.effect.getKeyframes()
-      : [];
-    const opacityValues = keyframes
-      .map((frame) => Number(frame.opacity))
-      .filter(Number.isFinite);
-    return {
-      keyframeCount: keyframes.length,
-      opacityRange: opacityValues.length > 1
-        ? Math.max(...opacityValues) - Math.min(...opacityValues)
-        : 0,
-      shadowCount: new Set(keyframes.map((frame) => String(frame.boxShadow))).size,
-      scaleRange: (() => {
-        const scales = keyframes
-          .map((frame) => Number(String(frame.transform).match(/scale\(([^)]+)\)/)?.[1]))
-          .filter(Number.isFinite);
-        return scales.length > 1 ? Math.max(...scales) - Math.min(...scales) : 0;
-      })(),
-      transforms: keyframes.map((frame) => String(frame.transform)),
-    };
-  });
-  expect(selectionMotion.keyframeCount).toBe(2);
-  expect(selectionMotion.opacityRange).toBe(0);
-  expect(selectionMotion.shadowCount).toBe(2);
-  expect(selectionMotion.scaleRange).toBeGreaterThanOrEqual(.039);
-  expect(new Set(selectionMotion.transforms).size).toBe(2);
-
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  const reducedMotionIndicator = await selectedLinkTarget.evaluate((element) => {
-    const outlineStyle = getComputedStyle(element);
-    const selectionStyle = getComputedStyle(element, "::before");
-    return {
-      outlineStyle: outlineStyle.outlineStyle,
-      selectionAnimation: selectionStyle.animationName,
-      selectionDuration: selectionStyle.animationDuration,
-      selectionIterations: selectionStyle.animationIterationCount,
-      selectionBorderWidth: selectionStyle.borderTopWidth,
-      selectionOpacity: selectionStyle.opacity,
-    };
-  });
-  expect(reducedMotionIndicator).toEqual({
-    outlineStyle: "none",
-    selectionAnimation: "none",
-    selectionDuration: "0s",
-    selectionIterations: "1",
-    selectionBorderWidth: "4px",
-    selectionOpacity: "1",
-  });
-
-  await inspector.getByRole("button", { name: "Delete card" }).click();
-  await expect(selectedLinkTarget).toHaveCount(0);
-  await inspector.locator(".admin-link-manager--visual > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Unsaved changes")).toBeHidden();
-
-  const selectedDockTarget = page.locator(`[data-public-editor-link-id="${dockLinkId}"]`);
-  await selectedDockTarget.click();
-  await inspector.getByRole("button", { name: "Delete card" }).click();
-  await expect(selectedDockTarget).toHaveCount(0);
-  await inspector.locator(".admin-link-manager--visual > .admin-link-toolbar .admin-link-actions").getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Unsaved changes")).toBeHidden();
-
-  await page.locator(".public-page-root--editor").dispatchEvent("click");
-  await expect(page.locator(".visual-site-editor")).toBeHidden();
-  await expect(page.locator(".admin-theme-customizer")).toBeVisible();
-
-  await expect(page.getByText("Classic UI", { exact: true })).toHaveCount(0);
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: pageName, exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Visual editor saved card/ })).toHaveAttribute("href", "https://example.com/visual-editor");
 });
 
 test("Arrange uses preset sizes, compact handles and persistent text alignment", async ({ page }) => {

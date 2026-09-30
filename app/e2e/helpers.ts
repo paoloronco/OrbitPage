@@ -86,3 +86,11 @@ export async function openPreviewContentCard(page: Page, previewCard: Locator) {
 export function contentSaveButton(page: Page) {
   return page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true });
 }
+
+export async function saveEditorChanges(page: Page) {
+  const progress = page.locator('.admin-profile-saved-notice__progress i');
+  const previous = await progress.count() ? await progress.elementHandle() : null;
+  await contentSaveButton(page).click();
+  await expect(page.locator('.admin-profile-saved-notice').getByRole('status')).toContainText(/Saved|Salvato/);
+  if (previous) await expect.poll(() => progress.evaluate((element, old) => element !== old, previous)).toBe(true);
+}

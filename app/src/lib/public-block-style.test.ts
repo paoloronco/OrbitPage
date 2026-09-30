@@ -7,6 +7,7 @@ describe("public block style", () => {
     const style = getPublicBlockStyle({
       id: "link-1",
       title: "Example",
+      description: "",
       url: "https://example.com",
       type: "link",
       isActive: true,

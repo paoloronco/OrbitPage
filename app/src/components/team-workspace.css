@@ -7,6 +7,9 @@
   --team-blue-strong: #1b43b4;
   --team-teal: #126152;
   display: grid;
+  container: team-workspace / inline-size;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   font-family: Arial, Helvetica, sans-serif;
   gap: 12px;
   max-width: 1180px;
@@ -132,7 +135,7 @@
   .team-workspace .dashboard-kicker { font-size: 9px; line-height: 1.1; margin-bottom: 2px; }
 }
 
-@media (max-width: 720px) {
+@container team-workspace (max-width: 900px) {
   .team-panel { padding: 15px; }
   .team-user-form, .api-token-create-grid, .api-token-reveal, .api-token-row, .team-member-row { grid-template-columns: 1fr; }
   .team-user-form > .team-form-actions, .team-user-form > .team-feedback { grid-column: auto; }

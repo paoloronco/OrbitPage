@@ -140,7 +140,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
   const addTextItem = () => {
     setEditLink(prev => ({
       ...prev,
-      textItems: [...(prev.textItems || []), { text: '', url: '', textColor: prev.textColor || '#000000', fontSize: prev.descriptionFontSize || '14px', fontFamily: prev.descriptionFontFamily || 'Inter, system-ui, sans-serif' } as any]
+      textItems: [...(prev.textItems || []), { text: '', url: '', textColor: prev.textColor || '#000000', fontSize: prev.descriptionFontSize || '14px', fontFamily: prev.descriptionFontFamily || 'Inter, system-ui, sans-serif' }]
     }));
   };
 
@@ -379,7 +379,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                   Add Item
                 </Button>
               </div>
-              {editLink.textItems?.map((item: any, index) => (
+              {editLink.textItems?.map((item, index) => (
                 <div key={index} className="bg-white/5 dark:bg-white/3 rounded-lg p-3 mb-3 border border-white/5">
                   <div className="flex items-center justify-between gap-2">
                     <Input
@@ -810,8 +810,8 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 </span>
               ) : null}
               {link.textItems && link.textItems.length > 0 && (
-                <ul className="text-sm leading-relaxed space-y-2 mb-3" style={{ textAlign: link.alignment as any }}>
-                  {link.textItems.map((item: any, index) => (
+                <ul className="text-sm leading-relaxed space-y-2 mb-3" style={{ textAlign: link.alignment }}>
+                  {link.textItems.map((item, index) => (
                     <li key={index} className="flex items-start">
                       <span className="mr-2 mt-1 text-lg" style={{ color: item.textColor || link.textColor }}>•</span>
                       <div className="flex-1 min-w-0">

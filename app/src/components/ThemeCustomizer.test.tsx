@@ -4,7 +4,7 @@ import { isOrbitPageThemePresetConfiguration, parseOrbitPageTheme } from "@orbit
 import { cardThemePresets } from "@/lib/card-theme-presets";
 import { defaultTheme } from "@/lib/theme";
 import { themePresets } from "@/lib/theme-presets";
-import { buildCardPresetTheme, buildPagePresetTheme } from "./ThemeCustomizer";
+import { buildCardPresetTheme, buildPagePresetTheme } from "./theme-save-state";
 
 describe("ThemeCustomizer preset saves", () => {
   it("keeps the theme headings concise and moves page-theme guidance into a tooltip", () => {

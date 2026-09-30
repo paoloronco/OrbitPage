@@ -69,6 +69,7 @@ This builds the frontend and starts the backend server.
 ```bash
 cd OrbitPage/app
 npm run lint
+npm run typecheck
 npm run test:unit
 npm run build
 ```

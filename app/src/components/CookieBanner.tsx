@@ -80,7 +80,7 @@ interface ButtonProps {
   onClick: () => void;
   children: React.ReactNode;
   primary?: boolean;
-  colors: typeof palette['light'];
+  colors: typeof palette[keyof typeof palette];
   style?: React.CSSProperties;
 }
 function Btn({ onClick, children, primary, colors, style }: ButtonProps) {
@@ -116,7 +116,7 @@ interface ToggleProps {
   checked: boolean;
   disabled?: boolean;
   onChange: (v: boolean) => void;
-  colors: typeof palette['light'];
+  colors: typeof palette[keyof typeof palette];
 }
 function Toggle({ id, checked, disabled, onChange, colors }: ToggleProps) {
   return (
@@ -138,7 +138,7 @@ function Toggle({ id, checked, disabled, onChange, colors }: ToggleProps) {
 
 interface PreferencesModalProps {
   cfg: HardcodedBannerConfig;
-  colors: typeof palette['light'];
+  colors: typeof palette[keyof typeof palette];
   onClose: () => void;
   onAcceptAll: () => void;
   onRejectAll: () => void;
@@ -322,7 +322,7 @@ interface CategoryRowProps {
   checked: boolean;
   disabled: boolean;
   alwaysActive: boolean;
-  colors: typeof palette['light'];
+  colors: typeof palette[keyof typeof palette];
   onToggle: () => void;
 }
 function CategoryRow({
@@ -371,7 +371,7 @@ function CategoryRow({
 
 interface BannerBodyProps {
   cfg: HardcodedBannerConfig;
-  colors: typeof palette['light'];
+  colors: typeof palette[keyof typeof palette];
   onAcceptAll: () => void;
   onRejectAll: () => void;
   onOpenPrefs: () => void;

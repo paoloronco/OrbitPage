@@ -1,4 +1,4 @@
-import { forwardRef, type ForwardRefExoticComponent, type RefAttributes } from "react";
+import { forwardRef, type ForwardRefExoticComponent, type RefAttributes, type PropsWithoutRef } from "react";
 import type { SvgIconComponent } from "@mui/icons-material";
 import type { SvgIconProps } from "@mui/material/SvgIcon";
 import AccountCircleOutlined from "@mui/icons-material/AccountCircleOutlined";
@@ -105,7 +105,7 @@ export type MaterialIconProps = Omit<SvgIconProps, "color" | "fontSize"> & {
   strokeWidth?: number;
 };
 
-export type MaterialIcon = ForwardRefExoticComponent<MaterialIconProps & RefAttributes<SVGSVGElement>>;
+export type MaterialIcon = ForwardRefExoticComponent<PropsWithoutRef<MaterialIconProps> & RefAttributes<SVGSVGElement>>;
 
 function createMaterialIcon(Icon: SvgIconComponent, displayName: string): MaterialIcon {
   const Component = forwardRef<SVGSVGElement, MaterialIconProps>(({

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { contentSaveButton, openAuthenticatedAdmin } from './helpers';
+import { openAuthenticatedAdmin, saveEditorChanges } from './helpers';
 
 
 test.describe('OrbitPage Application Flow', () => {
@@ -26,7 +26,7 @@ test.describe('OrbitPage Application Flow', () => {
     // Clicchiamo su Salva nel Profilo
     const saveProfileButton = page.getByRole('button', { name: 'Save', exact: true });
     await expect(saveProfileButton).toBeEnabled();
-    await saveProfileButton.click();
+    await saveEditorChanges(page);
 
     // 3. Apriamo la nuova area Content e aggiungiamo un link alla home.
     const linksTabTrigger = page.getByRole('button', { name: 'Content', exact: true });
@@ -61,11 +61,8 @@ test.describe('OrbitPage Application Flow', () => {
     await page.getByRole('option', { name: 'Liquid glass', exact: true }).click();
 
     // Persistiamo la card con il solo Save della toolbar.
-    await contentSaveButton(page).click();
+    await saveEditorChanges(page);
     
-    // Verifichiamo che il badge di modifiche non salvate sia sparito
-    await expect(page.getByText('Unsaved changes')).not.toBeVisible();
-
     // 4. Verifichiamo il rendering corretto sulla Pagina Pubblica
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/');

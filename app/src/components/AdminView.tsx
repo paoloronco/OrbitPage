@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
-import { ThemeCustomizer } from "./ThemeCustomizer";
-import { MenuEditor } from "./MenuEditor";
 import { LinkData } from "./LinkCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -67,7 +65,9 @@ import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, ty
 import type { InternalDestinationOption } from "@/lib/link-blocks";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
-import NewsletterWorkspace from "./NewsletterWorkspace";
+const ThemeCustomizer = lazy(() => import("./ThemeCustomizer").then(module => ({ default: module.ThemeCustomizer })));
+const MenuEditor = lazy(() => import("./MenuEditor").then(module => ({ default: module.MenuEditor })));
+const NewsletterWorkspace = lazy(() => import("./NewsletterWorkspace"));
 import { VersionHistory } from "./VersionHistory";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
 import { PublishTools } from "./PublishTools";
@@ -734,7 +734,7 @@ export const AdminView = ({
       onVisualFocusChange={setVisualLinkId}
     />
   ) : visualSection === "menu" ? (
-    <MenuEditor
+    <Suspense fallback={<OrbitLoader size={24} state="composing" />}><MenuEditor
       menu={menu}
       onPreview={setPreviewMenu}
       designPreview={<PreviewDeviceFrame device="mobile" publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
@@ -747,7 +747,7 @@ export const AdminView = ({
       maxItems={entitlements?.maxMenuItems ?? null}
       advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
       onSave={onMenuUpdate}
-    />
+    /></Suspense>
   ) : visualSection === "pages" ? (
     <SubpageManager
       pages={subpages}
@@ -936,10 +936,9 @@ export const AdminView = ({
                 className="admin-action"
                 variant="outline"
                 size="sm"
-                onClick={() => setOnboardingReplayKey(key => key + 1)}
+                asChild
               >
-                <HelpCircle className="h-4 w-4" />
-                {tr("Guide", "Guida")}
+                <a href="https://orbitpage.com/en-US/docs" target="_blank" rel="noopener noreferrer"><HelpCircle className="h-4 w-4" />{tr("Guide", "Guida")}</a>
               </Button>
             )}
           </div>
@@ -1001,7 +1000,7 @@ export const AdminView = ({
 
           <div
             className={isProspectReadOnly && activeTab !== "analytics" ? "admin-tab-stage admin-readonly-stage" : "admin-tab-stage"}
-            inert={isProspectReadOnly && activeTab !== "analytics" ? "" : undefined}
+            {...(isProspectReadOnly && activeTab !== "analytics" ? { inert: "" } : {})}
           >
           <TabsContent value="profile" className="admin-tab-content">
             <VisualSiteEditor
@@ -1050,7 +1049,7 @@ export const AdminView = ({
           )}
 
           <TabsContent value="theme" className="admin-tab-content">
-            <ThemeCustomizer
+            <Suspense fallback={<OrbitLoader size={24} state="composing" />}><ThemeCustomizer
               theme={theme}
               onThemeChange={onThemeChange}
               onThemePreview={(nextTheme) => applyTheme(nextTheme)}
@@ -1070,7 +1069,7 @@ export const AdminView = ({
               maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
               managePlanHref={managePlanHref}
               showEmbeddedPreview
-            />
+            /></Suspense>
           </TabsContent>
 
           <TabsContent value="publish" className="admin-tab-content">
@@ -1094,7 +1093,7 @@ export const AdminView = ({
 
           {!isHostedAdmin && canManageUsers && (
             <TabsContent value="newsletter" className="admin-tab-content">
-              <NewsletterWorkspace user={{ uid: currentUser?.username || 'admin' }} />
+              <Suspense fallback={<OrbitLoader size={24} state="composing" />}><NewsletterWorkspace user={{ uid: currentUser?.username || 'admin' }} /></Suspense>
             </TabsContent>
           )}
 

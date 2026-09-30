@@ -1288,8 +1288,6 @@ export const LinkManager = ({
                   inheritedBackgroundColor={getContentCardVariant(theme, index).background}
                   inheritedTextColor={getContentCardVariant(theme, index).foreground}
                   schedulingEnabled={schedulingEnabled}
-                  videoUploadsEnabled={videoUploadsEnabled}
-                  maxVideoUploadBytes={maxVideoUploadBytes}
                   managePlanHref={managePlanHref}
                   editRequest={String(link.id) === String(visualFocusLinkId) ? visualEditRequest : undefined}
                   editing={visualMode ? true : editingLinkId === String(link.id)}

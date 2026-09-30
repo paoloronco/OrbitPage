@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
   Edit,
@@ -7,6 +7,7 @@ import {
   Files,
   GripVertical,
   Layout,
+  type MaterialIcon,
   Menu as MenuIcon,
   MousePointerClick,
   ShoppingBag,
@@ -43,7 +44,7 @@ export type VisualSiteEditorSection = "profile" | "links" | "menu" | "shop" | "p
 type VisualSectionItem = {
   id: VisualSiteEditorSection;
   label: string;
-  icon: ComponentType<{ className?: string; size?: number }>;
+  icon: MaterialIcon;
   status?: "active" | "inactive" | "locked";
 };
 

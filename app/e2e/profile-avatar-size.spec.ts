@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { openAuthenticatedAdmin } from "./helpers";
+import { openAuthenticatedAdmin, saveEditorChanges } from "./helpers";
 
 test("persists the profile image size and renders it exactly on the public page", async ({ browserName, page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -24,7 +24,7 @@ test("persists the profile image size and renders it exactly on the public page"
 
   const save = page.getByRole("button", { name: "Save", exact: true });
   await expect(save).toBeEnabled();
-  await save.click();
+  await saveEditorChanges(page);
   await expect(save).toBeHidden();
 
   await page.goto("/", { waitUntil: "load" });

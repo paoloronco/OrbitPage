@@ -98,7 +98,7 @@ export async function createPortableBackupArchive(input: unknown, images: readon
   const portableBackup = {
     ...restored,
     schemaVersion: 2,
-    includedSections: [...new Set([...sections, 'media'])].filter((section) => BACKUP_SECTION_IDS.includes(section)),
+    includedSections: BACKUP_SECTION_IDS.filter((section) => section === 'media' || sections.includes(section)),
     uploads: [],
   };
   const backupJson = JSON.stringify(portableBackup, null, 2);
