@@ -1,3 +1,4 @@
+import type { ThemeInput } from './theme';
 import { apiPath, getActiveBasePath, getConsentScope } from './base-path';
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
@@ -166,7 +167,7 @@ const decryptToken = async (ivB64: string, ctB64: string): Promise<string | null
 // Get auth token quickly if cached; otherwise null
 const getAuthToken = (): string | null => {
   if (!isCryptoAvailable()) {
-    return ((window as any).__orbitpageTokenCache as { val?: string } | undefined)?.val || null;
+    return (window.__orbitpageTokenCache as { val?: string } | undefined)?.val || null;
   }
 
   const ctB64 = sessionStorage.getItem(TOKEN_STORAGE_KEY);
@@ -175,7 +176,7 @@ const getAuthToken = (): string | null => {
   // Synchronous callers expect a string; we cannot block on async here.
   // For simplicity, decrypt synchronously via microtask by caching the last token.
   // We'll maintain a small cache.
-  const cached = (window as any).__orbitpageTokenCache as { iv: string; ct: string; val: string } | undefined;
+  const cached = window.__orbitpageTokenCache as { iv: string; ct: string; val: string } | undefined;
   if (cached && cached.iv === ivB64 && cached.ct === ctB64) {
     return cached.val;
   }
@@ -183,7 +184,7 @@ const getAuthToken = (): string | null => {
 };
 
 const hasStoredAuthToken = (): boolean => {
-  if (typeof window !== 'undefined' && ((window as any).__orbitpageTokenCache as { val?: string } | undefined)?.val) {
+  if (typeof window !== 'undefined' && (window.__orbitpageTokenCache as { val?: string } | undefined)?.val) {
     return true;
   }
   try {
@@ -213,7 +214,7 @@ const getAuthTokenAsync = async (): Promise<string | null> => {
   if (!ctB64 || !ivB64) return null;
   const val = await decryptToken(ivB64, ctB64);
   if (val) {
-    (window as any).__orbitpageTokenCache = { iv: ivB64, ct: ctB64, val };
+    window.__orbitpageTokenCache = { iv: ivB64, ct: ctB64, val };
   }
   return val;
 };
@@ -238,7 +239,7 @@ const setAuthToken = (token: string): Promise<void> => {
       'The session is kept in memory and will end on reload. ' +
       'Use HTTPS or access via localhost for persistent encrypted storage.'
     );
-    (window as any).__orbitpageTokenCache = { iv: '', ct: '', val: token };
+    window.__orbitpageTokenCache = { iv: '', ct: '', val: token };
     return Promise.resolve();
   }
 
@@ -249,11 +250,11 @@ const setAuthToken = (token: string): Promise<void> => {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
     localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
     localStorage.removeItem(DEVICE_SECRET_KEY);
-    (window as any).__orbitpageTokenCache = { iv: ivB64, ct: ctB64, val: token };
+    window.__orbitpageTokenCache = { iv: ivB64, ct: ctB64, val: token };
   }).catch((err) => {
     // Encryption unexpectedly failed even though crypto.subtle was available.
     console.warn('Token encryption failed; keeping the session in memory only:', err);
-    (window as any).__orbitpageTokenCache = { iv: '', ct: '', val: token };
+    window.__orbitpageTokenCache = { iv: '', ct: '', val: token };
   });
 };
 
@@ -266,11 +267,11 @@ const removeAuthToken = (): void => {
   localStorage.removeItem(TOKEN_IV_PREFIX + TOKEN_STORAGE_KEY);
   localStorage.removeItem(DEVICE_SECRET_KEY);
   capturedPageRevision = null;
-  delete (window as any).__orbitpageTokenCache;
+  delete window.__orbitpageTokenCache;
 };
 
 // Base response interface
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   error?: string;
@@ -344,6 +345,16 @@ interface ChangePasswordResponse extends ApiResponse {
 }
 
 export interface ProfileResponse extends ApiResponse {
+  socialLinks?: Record<string, string>;
+  nameFontSize?: string;
+  bioFontSize?: string;
+  tabTitle?: string;
+  metaDescription?: string;
+  footerText?: string;
+  googleAnalyticsId?: string;
+  privacyPolicyUrl?: string;
+  cookiePolicyUrl?: string;
+  machineReadableEnabled?: boolean;
   name: string;
   bio: string;
   avatar: string;
@@ -370,7 +381,7 @@ export interface LinkItem {
   title: string;
   description: string;
   url: string;
-  type: string;
+  type?: string;
   icon?: string;
   // Support both camelCase and snake_case for API compatibility
   iconType?: 'emoji' | 'image' | 'svg';
@@ -400,7 +411,8 @@ export interface LinkItem {
 export interface PublicPageResponse {
   profile: ProfileResponse;
   links: LinkItem[];
-  theme: Record<string, any>;
+  theme: ThemeInput;
+  subpages?: SubpageItem[];
   menu?: import('./menu').MenuCatalog;
   setupRequired?: boolean;
   pageSlug?: string | null;
@@ -426,9 +438,9 @@ export interface WorkspaceBootstrapResponse {
   profile: ProfileResponse;
   links: LinkItem[];
   subpages?: SubpageItem[];
-  theme: Record<string, any>;
+  theme: ThemeInput;
   menu?: import('./menu').MenuCatalog;
-  consentConfig?: Record<string, any>;
+  consentConfig?: ConsentConfigData;
   campaignLinks?: OrbitPageCampaignLink[];
   publicUrl?: string;
   plan?: import('./hosted-editor-contract').HostedEditorPlan;
@@ -489,7 +501,7 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
 
     // Safely parse JSON — proxies (Cloudflare, nginx) and rate limiters may return
     // plain text (e.g. "Too many requests"), which would throw on response.json().
-    let data: any;
+    let data: unknown;
     const contentType = response.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
       data = await response.json();
@@ -499,9 +511,10 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
       try { data = JSON.parse(text); } catch { data = { error: text || 'Unknown error' }; }
     }
 
+    const metadata = data && typeof data === 'object' ? data as Record<string, unknown> : {};
     if (!response.ok) {
-      const errorMessage = data?.error || data?.message || 'Request failed';
-      const isAppCheckError = data?.code === 'APP_CHECK_REQUIRED' || data?.code === 'APP_CHECK_INVALID';
+      const errorMessage = typeof metadata.error === 'string' ? metadata.error : typeof metadata.message === 'string' ? metadata.message : 'Request failed';
+      const isAppCheckError = metadata.code === 'APP_CHECK_REQUIRED' || metadata.code === 'APP_CHECK_INVALID';
       const isAuthExpired =
         (!isAppCheckError && response.status === 401) ||
         (response.status === 403 && /invalid or expired token|user not found|access token required/i.test(errorMessage));
@@ -513,12 +526,12 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
         throw new Error('AUTH_EXPIRED');
       }
       if (response.status === 429) {
-        throw new Error(data?.error || 'Too many requests. Please wait a moment and try again.');
+        throw new Error(typeof metadata.error === 'string' ? metadata.error : 'Too many requests. Please wait a moment and try again.');
       }
       throw new Error(errorMessage);
     }
 
-    const bodyRevision = typeof data?.revision === 'number' ? data.revision : Number.NaN;
+    const bodyRevision = typeof metadata.revision === 'number' ? metadata.revision : Number.NaN;
     const rawHeaderRevision = response.headers.get('x-orbitpage-revision');
     const headerRevision = rawHeaderRevision === null ? Number.NaN : Number(rawHeaderRevision);
     const revision = Number.isSafeInteger(bodyRevision) && bodyRevision >= 0
@@ -529,9 +542,9 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
     if (revision !== null) capturedPageRevision = revision;
 
     return data as T;
-  } catch (error: any) {
+  } catch (error) {
     console.error(`API Request Error (${endpoint}):`, error);
-    throw new Error(error.message || 'Failed to connect to the server');
+    throw new Error(error instanceof Error ? error.message : 'Failed to connect to the server');
   }
 };
 
@@ -767,7 +780,7 @@ export const backupApi = {
       images = embeddedBackupImages({ uploads: await backupApi.images(true) });
     }
     const archive = await createPortableBackupArchive(backup, images);
-    return { blob: new Blob([archive], { type: 'application/zip' }), extension: 'zip' };
+    return { blob: new Blob([new Uint8Array(archive)], { type: 'application/zip' }), extension: 'zip' };
   },
 
   restore: async (backup: unknown, sections?: readonly string[]): Promise<ApiResponse> => {
@@ -943,10 +956,10 @@ export const sitemapApi = {
 export const profileApi = {
   get: async (): Promise<ProfileResponse> => {
     return apiRequest<ProfileResponse>('/profile').then((resp) => {
-      const showAvatar = typeof (resp as any).show_avatar !== 'undefined'
-        ? ((resp as any).show_avatar !== 0)
-        : (typeof (resp as any).showAvatar !== 'undefined' ? (resp as any).showAvatar : true);
-      return { ...(resp as any), showAvatar } as ProfileResponse;
+      const showAvatar = typeof resp.show_avatar !== 'undefined'
+        ? (resp.show_avatar !== 0)
+        : (typeof resp.showAvatar !== 'undefined' ? resp.showAvatar : true);
+      return { ...resp, showAvatar } as ProfileResponse;
     });
   },
 
@@ -1069,7 +1082,7 @@ export const linksApi = {
     }
   },
 
-  import: async (data: any[]): Promise<ApiResponse> => {
+  import: async (data: unknown[]): Promise<ApiResponse> => {
     try {
       return await apiRequest<ApiResponse>('/links/import', {
         method: 'POST',
@@ -1113,11 +1126,11 @@ export const linksApi = {
 
 // Theme API
 export const themeApi = {
-  get: async (): Promise<Record<string, any>> => {
-    return apiRequest<Record<string, any>>('/theme');
+  get: async (): Promise<ThemeInput> => {
+    return apiRequest<ThemeInput>('/theme');
   },
 
-  update: async (theme: Record<string, any>): Promise<ApiResponse> => {
+  update: async (theme: ThemeInput): Promise<ApiResponse> => {
     return apiRequest<ApiResponse>('/theme', {
       method: 'PUT',
       body: JSON.stringify(theme),
@@ -1162,7 +1175,7 @@ export const uploadApi = {
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({}));
-      throw new Error((err as any).error || 'Upload failed');
+      throw new Error((typeof err?.error === 'string' ? err.error : 'Upload failed'));
     }
     return response.json();
   },

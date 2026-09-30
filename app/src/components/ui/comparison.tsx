@@ -74,7 +74,7 @@ const ComparisonItem = React.forwardRef<HTMLDivElement, ComparisonItemProps>(({
       className,
     )}
     data-comparison-item={position}
-    inert=""
+    {...{ inert: "" }}
     style={position === "right" ? {
       ...style,
       clipPath: "inset(0 0 0 var(--comparison-position))",

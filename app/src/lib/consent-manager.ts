@@ -105,6 +105,50 @@ export interface ConsentConfig {
   builder?: BuilderConfig;
 }
 
+export const DEFAULT_HARDCODED: HardcodedBannerConfig = {
+  policyVersion: '1.0',
+  texts: {
+    title: 'We value your privacy',
+    description:
+      'We use cookies to improve your experience, analyse traffic, and provide personalised content. You can choose which categories to allow or reject all optional cookies.',
+    acceptAll: 'Accept all',
+    rejectAll: 'Reject all',
+    managePreferences: 'Manage preferences',
+    savePreferences: 'Save preferences',
+    reopenLabel: 'Cookie preferences',
+    privacyPolicyLinkText: 'Privacy policy',
+    cookiePolicyLinkText: 'Cookie policy',
+  },
+  urls: { privacyPolicy: '', cookiePolicy: '' },
+  categories: {
+    preferences: {
+      enabled: false,
+      title: 'Preferences',
+      description:
+        'These cookies remember your choices and personalise your experience, such as language or region preferences.',
+    },
+    analytics: {
+      enabled: true,
+      title: 'Analytics',
+      description:
+        'These cookies help us understand how visitors interact with the site by collecting and reporting information anonymously (e.g. Google Analytics).',
+    },
+    marketing: {
+      enabled: false,
+      title: 'Marketing',
+      description:
+        'These cookies track your online activity to help advertisers deliver more relevant advertising or to limit how many times you see an ad.',
+    },
+  },
+  layout: 'bottom-bar',
+  theme: 'auto',
+  buttonPriority: 'equal',
+  geoMode: 'eu-only',
+  consentExpiryDays: 365,
+  reshowOnVersionChange: true,
+  legalFooterText: '',
+};
+
 // ── Constants ────────────────────────────────────────────────────────────────
 
 /** Prefix for tenant-scoped consent records. */
@@ -128,6 +172,28 @@ type GoogleConsentState = {
   personalization_storage: GoogleConsentValue;
   security_storage: GoogleConsentValue;
 };
+
+type ConsentDataLayer = unknown[] & { push: ((...items: unknown[]) => number) & { __orbitpageConsentPushObserved?: boolean } };
+declare global {
+  interface Window {
+    dataLayer?: ConsentDataLayer;
+    gtag?: (...args: unknown[]) => void;
+    Cookiebot?: { consent?: { preferences?: boolean; statistics?: boolean; marketing?: boolean } };
+    getCkyConsent?: () => { categories?: { accepted?: string[] } };
+    OnetrustActiveGroups?: string;
+    OptanonWrapper?: () => void;
+    _iub?: { cs?: { consent?: { purposes?: unknown; coreStorage?: { purposes?: unknown; consent?: unknown } }; on?: (event: string, listener: () => void) => void } };
+    __orbitpageGcmDefaultConsentSet?: boolean;
+    __orbitpageIubendaConsentEventsWired?: boolean;
+    __orbitpageCookiebotConsentEventsWired?: boolean;
+    __orbitpageCookieYesConsentEventsWired?: boolean;
+    __orbitpageCustomConsentEventWired?: boolean;
+    __orbitpageDataLayerConsentObserverInstalled?: boolean;
+    __orbitpageGaConsentUnsubscribe?: () => void;
+    OrbitPageConsent?: ConsentManager;
+    [key: `ga-disable-${string}`]: boolean;
+  }
+}
 
 // ── Consent Manager Class ────────────────────────────────────────────────────
 
@@ -192,7 +258,7 @@ class ConsentManager {
     if (!this.config?.enabled || this.config.mode === 'disabled') return;
     if (this._configuredProviderAlreadySetsGcmDefault()) return;
 
-    const win = window as any;
+    const win = window;
     win.dataLayer = win.dataLayer || [];
     if (this._dataLayerHasGcmDefault(win.dataLayer)) {
       win.__orbitpageGcmDefaultConsentSet = true;
@@ -481,7 +547,7 @@ class ConsentManager {
   }
 
   private _recordReceipt(record: ConsentRecord): void {
-    if (!this.scope || typeof window === 'undefined' || !(window as any).__ORBITPAGE_STATIC_SNAPSHOT__) return;
+    if (!this.scope || typeof window === 'undefined' || !window.__ORBITPAGE_STATIC_SNAPSHOT__) return;
     fetch(apiPath('/consent/receipt'), {
       method: 'POST',
       mode: 'no-cors',
@@ -562,7 +628,7 @@ class ConsentManager {
     exactState?: Partial<GoogleConsentState>,
   ): void {
     this.ensureGoogleConsentDefaults();
-    const win = window as any;
+    const win = window;
     win.dataLayer = win.dataLayer || [];
     if (typeof win.gtag !== 'function') {
       win.gtag = function () { win.dataLayer.push(arguments); };
@@ -598,7 +664,7 @@ class ConsentManager {
   private _isExternalCategoryGranted(category: ConsentCategory): boolean {
     if (!this.config?.enabled || this.config.mode !== 'builder') return false;
 
-    const cookiebotConsent = (window as any).Cookiebot?.consent;
+    const cookiebotConsent = window.Cookiebot?.consent;
     if (cookiebotConsent && this.config.builder?.provider === 'cookiebot') {
       if (category === 'preferences') return cookiebotConsent.preferences === true;
       if (category === 'analytics') return cookiebotConsent.statistics === true;
@@ -691,7 +757,7 @@ _iub.csConfiguration = {
   }
 
   private _wireIubendaConsentEvents(): void {
-    const win = window as any;
+    const win = window;
     if (win.__orbitpageIubendaConsentEventsWired) return;
     win.__orbitpageIubendaConsentEventsWired = true;
 
@@ -710,9 +776,9 @@ _iub.csConfiguration = {
     const readIubendaConsent = () => {
       const consent = win._iub?.cs?.consent;
       if (!consent || typeof consent !== 'object') return null;
-      let purposes = (consent as any).purposes ?? (consent as any).coreStorage?.purposes;
-      if (!purposes && typeof (consent as any).coreStorage === 'object') {
-        const coreStorage = (consent as any).coreStorage as any;
+      let purposes = consent.purposes ?? consent.coreStorage?.purposes;
+      if (!purposes && typeof consent.coreStorage === 'object') {
+        const coreStorage = consent.coreStorage;
         if (coreStorage && typeof coreStorage === 'object') {
           purposes = coreStorage.purposes ?? coreStorage.consent;
         }
@@ -823,7 +889,7 @@ _iub.csConfiguration = {
   }
 
   private _wireCookiebotConsentEvents(): void {
-    const win = window as any;
+    const win = window;
     if (win.__orbitpageCookiebotConsentEventsWired) return;
     win.__orbitpageCookiebotConsentEventsWired = true;
 
@@ -874,11 +940,11 @@ _iub.csConfiguration = {
   }
 
   private _wireCookieYesConsentEvents(): void {
-    const win = window as any;
+    const win = window;
     if (win.__orbitpageCookieYesConsentEventsWired) return;
     win.__orbitpageCookieYesConsentEventsWired = true;
 
-    const syncCookieYesConsent = (detail?: any, explicit: boolean = false) => {
+    const syncCookieYesConsent = (detail?: { accepted?: string[] }, explicit: boolean = false) => {
       const accepted: string[] = detail?.accepted ?? win.getCkyConsent?.()?.categories?.accepted ?? [];
       this._setExternalConsent({
         necessary: true,
@@ -911,7 +977,7 @@ _iub.csConfiguration = {
 
     // OneTrust calls OptanonWrapper after consent is loaded/changed.
     // We wrap it to sync consent state into OrbitPage.
-    const win = window as any;
+    const win = window;
     const prevWrapper = typeof win.OptanonWrapper === 'function' ? win.OptanonWrapper : null;
     win.OptanonWrapper = () => {
       prevWrapper?.();
@@ -920,7 +986,7 @@ _iub.csConfiguration = {
   }
 
   private _syncOneTrustConsent(explicit: boolean = false): void {
-    const win = window as any;
+    const win = window;
     // OneTrust exposes active groups as a comma-separated string in window.OnetrustActiveGroups
     const active: string = win.OnetrustActiveGroups ?? '';
     // Common OneTrust group IDs: C0001=necessary, C0002=performance/analytics, C0003=functional, C0004=targeting
@@ -956,7 +1022,7 @@ _iub.csConfiguration = {
   }
 
   private _wireCustomConsentEvent(): void {
-    const win = window as any;
+    const win = window;
     if (win.__orbitpageCustomConsentEventWired) return;
     win.__orbitpageCustomConsentEventWired = true;
 
@@ -993,7 +1059,7 @@ _iub.csConfiguration = {
    * reflect preloaded defaults.
    */
   private _syncFromDataLayer(source: 'implicit' | 'explicit' = 'implicit'): void {
-    const win = window as any;
+    const win = window;
     const dataLayer: unknown[] = win.dataLayer;
     if (!Array.isArray(dataLayer)) return;
 
@@ -1048,7 +1114,7 @@ _iub.csConfiguration = {
   }
 
   private _observeDataLayerConsentSignals(): void {
-    const win = window as any;
+    const win = window;
     if (!Array.isArray(win.dataLayer) || win.__orbitpageDataLayerConsentObserverInstalled) return;
     win.__orbitpageDataLayerConsentObserverInstalled = true;
 
@@ -1065,7 +1131,7 @@ _iub.csConfiguration = {
       }
       return result;
     };
-    (wrappedPush as any).__orbitpageConsentPushObserved = true;
+    Object.assign(wrappedPush, { __orbitpageConsentPushObserved: true });
     dataLayer.push = wrappedPush;
   }
 }
@@ -1076,5 +1142,5 @@ export const consentManager = new ConsentManager();
 
 // Expose on window so external CMPs and legacy tag integrations can query consent
 if (typeof window !== 'undefined') {
-  (window as any).OrbitPageConsent = consentManager;
+  window.OrbitPageConsent = consentManager;
 }

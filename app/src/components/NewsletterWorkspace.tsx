@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, type InputHTMLAttributes, useEffect, useState } from "react";
+import { FormEvent, type InputHTMLAttributes, useCallback, useEffect, useState } from "react";
 import {
   CalendarClock,
   Check,
@@ -209,11 +209,11 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
     useState<NewsletterCampaign | null>(null);
   const deleteDialogRef = useDialogAccessibility<HTMLDivElement>(Boolean(campaignToDelete), () => { if (action === null) setCampaignToDelete(null); });
 
-  async function load(showLoader = false) {
+  const load = useCallback(async (showLoader = false) => {
     if (showLoader) setLoading(true);
     try {
       const result = await newsletterFetch<NewsletterDashboardData>(
-        user,
+        { uid: user.uid },
         "/api/newsletter",
         { method: "GET" },
       );
@@ -241,11 +241,11 @@ export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) 
     } finally {
       setLoading(false);
     }
-  }
+  }, [user.uid]);
 
   useEffect(() => {
     void load(true);
-  }, [user.uid]);
+  }, [load]);
 
   async function run<T>(name: string, task: () => Promise<T>, success: string) {
     setAction(name);

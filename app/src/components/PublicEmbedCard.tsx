@@ -33,9 +33,6 @@ interface PublicEmbedCardProps {
 
 const getProviderIcon = (provider: Exclude<EmbedProvider, 'auto'>) => {
   if (isBrandServiceProvider(provider)) return <ServiceBrandIcon provider={provider} className="h-5 w-5" />;
-  if (provider === 'youtube') return <PlaySquare className="h-5 w-5" />;
-  if (provider === 'spotify') return <Music2 className="h-5 w-5" />;
-  if (provider === 'calendly') return <CalendarDays className="h-5 w-5" />;
   if (provider === 'google_maps') return <MapPinned className="h-5 w-5" />;
   if (provider === 'newsletter') return <Mail className="h-5 w-5" />;
   return <Code2 className="h-5 w-5" />;

@@ -104,7 +104,7 @@ function initialLocale(mode: AppI18nMode): AppLocale {
 
 export function AppI18nProvider({ children, mode = "editor" }: { children: ReactNode; mode?: AppI18nMode }) {
   const [locale, setLocaleState] = useState<AppLocale>(() => initialLocale(mode));
-  const [catalogVersion, setCatalogVersion] = useState(0);
+  const [catalog, setCatalog] = useState<PhraseCatalog | undefined>(() => phraseCatalogs.get(locale));
   const localeRequest = useRef(0);
 
   const setLocale = useCallback((nextLocale: AppLocale) => {
@@ -112,7 +112,7 @@ export function AppI18nProvider({ children, mode = "editor" }: { children: React
     void loadPhraseCatalog(nextLocale).then(() => {
       if (localeRequest.current !== request) return;
       setLocaleState(nextLocale);
-      setCatalogVersion((version) => version + 1);
+      setCatalog(phraseCatalogs.get(nextLocale));
       window.localStorage.setItem(STORAGE_KEY, nextLocale);
     });
   }, []);
@@ -123,7 +123,7 @@ export function AppI18nProvider({ children, mode = "editor" }: { children: React
     void loadPhraseCatalog(nextLocale).then(() => {
       if (localeRequest.current !== request) return;
       setLocaleState(nextLocale);
-      setCatalogVersion((version) => version + 1);
+      setCatalog(phraseCatalogs.get(nextLocale));
     });
   }, [mode]);
 
@@ -136,8 +136,8 @@ export function AppI18nProvider({ children, mode = "editor" }: { children: React
   const tr = useCallback((english: string, italian: string) => {
     if (locale === "it") return italian;
     if (locale === "en") return english;
-    return phraseCatalogs.get(locale)?.[english] || english;
-  }, [catalogVersion, locale]);
+    return catalog?.[english] || english;
+  }, [catalog, locale]);
   const value = useMemo(() => ({ locale, setLocale, tr }), [locale, setLocale, tr]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }

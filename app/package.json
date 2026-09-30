@@ -1,15 +1,16 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.21.27",
+  "version": "4.21.28",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:hosted": "cross-env VITE_ORBITPAGE_HOSTED_MODE=true vite build",
+    "build": "cross-env NODE_ENV=production vite build",
+    "build:hosted": "cross-env NODE_ENV=production VITE_ORBITPAGE_HOSTED_MODE=true vite build",
     "build:hosted-library": "vite build --config vite.hosted.config.ts",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest",
     "test:unit": "vitest run && cd server && npm test -- --run",
     "clean:e2e": "node scripts/clean-e2e.js",
@@ -117,6 +118,6 @@
     "rollup": "^4.60.0",
     "flatted": "^3.4.2",
     "picomatch": "^4.0.4",
-    "brace-expansion": "^5.0.9"
+    "brace-expansion": "^5.0.12"
   }
 }

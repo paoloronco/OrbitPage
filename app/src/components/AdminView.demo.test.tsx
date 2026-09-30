@@ -265,10 +265,10 @@ describe('AdminView demo mode', () => {
         maxBlocks: 10,
         maxUploadBytes: 1,
         maxVideoUploadBytes: 0,
-        themes: 'essential',
-        analytics: 'basic-clicks',
+        themes: 'essential' as const,
+        analytics: 'basic-clicks' as const,
         scheduling: false,
-        seo: 'none',
+        seo: 'none' as const,
         pages: 1,
         videoUploads: false,
         nativeMenu: false,
@@ -299,7 +299,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: true } } as any}
+        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: true } }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}
@@ -317,7 +317,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: false } } as any}
+        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: false } }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}

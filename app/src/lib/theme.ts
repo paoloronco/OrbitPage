@@ -218,7 +218,15 @@ export const defaultTheme: ThemeConfig = {
   }
 };
 
-export const normalizeTheme = (themeData?: Record<string, any> | null): ThemeConfig => {
+export type ThemeInput = Partial<ThemeConfig> & {
+  primaryColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  cardBlurTint?: string;
+};
+
+export const normalizeTheme = (input?: ThemeInput | Record<string, unknown> | null): ThemeConfig => {
+  const themeData = input as ThemeInput | null | undefined;
   if (!themeData) return defaultTheme;
 
   const legacyColors: Partial<ThemeConfig> = {};
@@ -469,7 +477,7 @@ export const getThemeCssVariables = (theme: ThemeConfig): Record<string, string>
   const borderHsl = hexToHsl(theme.border);
   const primaryGlowHsl = hexToHsl(theme.primaryGlow);
   const primaryForegroundHsl = hexToHsl(getReadableForeground(theme.primary, theme.foreground));
-  const tint = (theme as any).cardBlurTint || theme.card;
+  const tint = (theme as ThemeInput).cardBlurTint || theme.card;
   const profileAccentForeground = getReadableForeground(theme.profileCard.accent, theme.profileCard.foreground);
   const contentAccentForeground = theme.contentCard.accentForeground || getReadableForeground(theme.contentCard.accent, theme.contentCard.foreground);
   const contentCardVariants = theme.contentCardMode === 'multi' && theme.contentCardVariants.length

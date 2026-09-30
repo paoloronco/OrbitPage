@@ -5,6 +5,14 @@ import { readFileSync } from "fs";
 
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf-8"));
 
+export function vendorChunk(id: string) {
+  if (!id.includes("node_modules/")) return;
+  if (/node_modules\/(?:react|react-dom|scheduler|react-router|react-router-dom)\//.test(id)) return "react-vendor";
+  if (/node_modules\/(?:@mui|@emotion)\//.test(id)) return "material-ui";
+  if (id.includes("node_modules/@radix-ui/")) return "radix-ui";
+  if (/node_modules\/(?:recharts|d3-[^/]+)\//.test(id)) return "charts";
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // Build assets as relocatable URLs. The Express server rewrites the entry
@@ -34,6 +42,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
+        manualChunks: vendorChunk,
         entryFileNames: "assets/orbitpage.js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: (assetInfo) =>

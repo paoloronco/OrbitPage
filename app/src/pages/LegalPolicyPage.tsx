@@ -80,8 +80,8 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
           window.location.replace(withBasePath(externalUrl));
           return;
         }
-      } catch (err: any) {
-        if (!cancelled) setError(err?.message || "Policy could not be loaded.");
+      } catch (err) {
+        if (!cancelled) setError((err instanceof Error ? err.message : "") || "Policy could not be loaded.");
       } finally {
         if (!cancelled) setLoading(false);
       }

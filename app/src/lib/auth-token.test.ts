@@ -20,7 +20,7 @@ const storage = () => {
 
 describe('auth token presence', () => {
   afterEach(() => {
-    if (typeof window !== 'undefined') delete (window as any).__orbitpageTokenCache;
+    if (typeof window !== 'undefined') delete window.__orbitpageTokenCache;
     vi.unstubAllGlobals();
   });
 
@@ -67,7 +67,7 @@ describe('auth token presence', () => {
       location: { hash: '', search: '', href: 'http://example.test/', origin: 'http://example.test' },
       history: { replaceState: vi.fn(), state: null },
     });
-    (window as any).__orbitpageTokenCache = { iv: '', ct: '', val: 'token' };
+    window.__orbitpageTokenCache = { iv: '', ct: '', val: 'token' };
 
     expect(authApi.hasStoredToken()).toBe(true);
   });

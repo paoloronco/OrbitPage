@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { readFileSync } from "fs";
+import { vendorChunk } from "./vite.config";
 
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf-8"));
 
@@ -28,6 +29,7 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
+        manualChunks: vendorChunk,
         chunkFileNames: "chunks/[name]-[hash].js",
         assetFileNames: (assetInfo) => assetInfo.name?.endsWith(".css")
           ? "orbitpage-hosted.css"

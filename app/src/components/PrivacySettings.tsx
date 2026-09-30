@@ -43,6 +43,7 @@ import {
   Sliders,
   Type,
 } from '@/components/ui/material-icons';
+import { DEFAULT_HARDCODED } from '@/lib/consent-manager';
 import { useAppI18n } from '@/lib/i18n';
 import { consentConfigApi, type ConsentConfigData } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
@@ -57,50 +58,6 @@ type PolicyKind = 'privacy' | 'cookie';
 type PrivacySection = 'documents' | 'consent' | 'review';
 
 // ── Default / empty config ────────────────────────────────────────────────────
-
-const DEFAULT_HARDCODED: NonNullable<ConsentConfigData['hardcoded']> = {
-  policyVersion: '1.0',
-  texts: {
-    title: 'We value your privacy',
-    description:
-      'We use cookies to improve your experience, analyse traffic, and provide personalised content. You can choose which categories to allow or reject all optional cookies.',
-    acceptAll: 'Accept all',
-    rejectAll: 'Reject all',
-    managePreferences: 'Manage preferences',
-    savePreferences: 'Save preferences',
-    reopenLabel: 'Cookie preferences',
-    privacyPolicyLinkText: 'Privacy policy',
-    cookiePolicyLinkText: 'Cookie policy',
-  },
-  urls: { privacyPolicy: '', cookiePolicy: '' },
-  categories: {
-    preferences: {
-      enabled: false,
-      title: 'Preferences',
-      description:
-        'These cookies remember your choices and personalise your experience, such as language or region preferences.',
-    },
-    analytics: {
-      enabled: true,
-      title: 'Analytics',
-      description:
-        'These cookies help us understand how visitors interact with the site by collecting and reporting information anonymously (e.g. Google Analytics).',
-    },
-    marketing: {
-      enabled: false,
-      title: 'Marketing',
-      description:
-        'These cookies track your online activity to help advertisers deliver more relevant advertising or to limit how many times you see an ad.',
-    },
-  },
-  layout: 'bottom-bar',
-  theme: 'auto',
-  buttonPriority: 'equal',
-  geoMode: 'eu-only',
-  consentExpiryDays: 365,
-  reshowOnVersionChange: true,
-  legalFooterText: '',
-};
 
 const DEFAULT_BUILDER: NonNullable<ConsentConfigData['builder']> = {
   provider: 'custom',
@@ -845,6 +802,7 @@ export function PrivacySettings({
   const [saveError, setSaveError] = useState('');
   const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
   const [legalConfigLoaded, setLegalConfigLoaded] = useState(false);
+  const [initialPolicyUrls] = useState({ privacyPolicyUrl, cookiePolicyUrl });
   const [privacyMethod, setPrivacyMethod] = useState<LegalPolicyMethod>(getPolicyMethod(privacyPolicyUrl, 'privacy'));
   const [cookieMethod, setCookieMethod] = useState<LegalPolicyMethod>(getPolicyMethod(cookiePolicyUrl, 'cookie'));
   const [privacyExternalUrl, setPrivacyExternalUrl] = useState(privacyPolicyUrl || '');
@@ -880,8 +838,8 @@ export function PrivacySettings({
             const cookiePolicy = { ...EMPTY_POLICY_CONFIG, ...lp.cookiePolicy };
             setPrivacyMethod(privacyPolicy.mode);
             setCookieMethod(cookiePolicy.mode);
-            setPrivacyExternalUrl(privacyPolicy.mode === 'external' ? (privacyPolicy.externalUrl || privacyPolicyUrl || '') : '');
-            setCookieExternalUrl(cookiePolicy.mode === 'external' ? (cookiePolicy.externalUrl || cookiePolicyUrl || '') : '');
+            setPrivacyExternalUrl(privacyPolicy.mode === 'external' ? (privacyPolicy.externalUrl || initialPolicyUrls.privacyPolicyUrl || '') : '');
+            setCookieExternalUrl(cookiePolicy.mode === 'external' ? (cookiePolicy.externalUrl || initialPolicyUrls.cookiePolicyUrl || '') : '');
             setPrivacyHostedText(privacyPolicy.mode === 'hosted' ? privacyPolicy.hostedText : '');
             setCookieHostedText(cookiePolicy.mode === 'hosted' ? cookiePolicy.hostedText : '');
             setPrivacyHostedFileName(privacyPolicy.mode === 'hosted' ? privacyPolicy.hostedFileName : '');
@@ -900,7 +858,7 @@ export function PrivacySettings({
       }
     };
     load();
-  }, []);
+  }, [initialPolicyUrls]);
 
   useEffect(() => {
     if (legalConfigLoaded) return;
@@ -910,8 +868,7 @@ export function PrivacySettings({
     setCookieMethod(nextCookieMethod);
     setPrivacyExternalUrl(nextPrivacyMethod === 'hosted' ? '' : (privacyPolicyUrl || ''));
     setCookieExternalUrl(nextCookieMethod === 'hosted' ? '' : (cookiePolicyUrl || ''));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [legalConfigLoaded]);
+  }, [legalConfigLoaded, privacyPolicyUrl, cookiePolicyUrl]);
 
   const changePolicyMethod = (kind: PolicyKind, nextMethod: LegalPolicyMethod) => {
     if (kind === 'privacy') {

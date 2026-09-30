@@ -81,6 +81,9 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Check frontend types
+        run: npm run typecheck
+
       - name: Build frontend application
         run: npm run build
 
