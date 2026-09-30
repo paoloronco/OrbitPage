@@ -482,6 +482,15 @@ If `/usr/local/bin/orbitpage` is missing after a full-host recovery, extract the
 
 ## Update safely
 
+In **Account → General → Instance details**, OrbitPage shows the running
+version. **Check for updates** contacts the official GitHub latest-release API
+only when clicked, without login credentials, and compares stable versions.
+If a newer version is available, administrators can open **Install update…**
+for the host command, release notes and this guide. The browser does not run
+the update: execute the command on the server, then reload the dashboard.
+Failed checks remain retryable and are never reported as an up-to-date result.
+Demo installations do not offer the installation action.
+
 ### Installer-managed deployment
 
 1. Record the current image and health version:

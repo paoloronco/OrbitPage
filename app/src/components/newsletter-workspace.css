@@ -477,6 +477,10 @@
   gap: 5px;
 }
 
+.newsletter-subscriber-tools > aside > .newsletter-signup-unavailable {
+  grid-column: 1 / -1;
+}
+
 .newsletter-subscriber-tools > aside span {
   color: var(--muted);
   font-size: 12px;

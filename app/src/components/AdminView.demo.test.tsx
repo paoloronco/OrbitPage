@@ -141,6 +141,9 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('>Security</button>');
     expect(html).toContain('Account details');
     expect(html).toContain('Instance details');
+    expect(html).toContain('Current version');
+    expect(html).toContain('Check for updates');
+    expect(html).toContain('Install update…');
     expect(html).not.toContain('Marketing email');
     expect(html).toContain('Delete account');
     expect(html).not.toContain('PasswordManager');

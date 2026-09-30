@@ -1106,6 +1106,7 @@ export const AdminView = ({
                 </nav>
                 {accountView === "general" ? (
                   <SelfHostedAccountActions
+                    version={appVersion}
                     canDeleteInstallation={canManageUsers}
                     publicPageHref={publicPageHref}
                     role={currentUser?.role || "-"}
