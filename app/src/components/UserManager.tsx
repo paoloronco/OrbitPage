@@ -6,14 +6,11 @@ import {
   CheckCircle,
   Eye,
   EyeOff,
-  Info,
   Loader2,
   Pencil,
-  Plus,
-  Trash2,
-  UsersRound,
-  X,
 } from 'lucide-react';
+import { Info, Plus, Trash2, UsersRound, X } from '@/components/ui/material-icons';
+import { useAppI18n } from '@/lib/i18n';
 import { usersApi } from '@/lib/api-client';
 import { isPasswordStrong } from '@/lib/auth';
 import { DEMO_MODE } from '@/lib/config';
@@ -95,6 +92,7 @@ const RoleSelect = ({
 };
 
 export const UserManager = ({ currentUsername }: { currentUsername?: string }) => {
+  const { tr, locale } = useAppI18n();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [globalMsg, setGlobalMsg] = useState<Msg | null>(null);
@@ -234,19 +232,19 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
         <div>
           <p className="dashboard-kicker">Team</p>
           <div className="team-title-row">
-            <h2>Workspace members</h2>
+            <h2>{tr("Workspace members", "Membri del workspace")}</h2>
             <span className="team-doc-help">
-              <a aria-describedby="team-doc-tooltip" aria-label="Teams and permissions in OrbitPage" className="team-doc-help-trigger" href="https://orbitpage.com/docs/team-and-permissions" rel="noreferrer" target="_blank"><Info aria-hidden="true" size={15} /></a>
-              <span className="team-doc-tooltip" id="team-doc-tooltip" role="tooltip">Teams and permissions in OrbitPage</span>
+              <a aria-describedby="team-doc-tooltip" aria-label={tr("Teams and permissions in OrbitPage", "Team e permessi in OrbitPage")} className="team-doc-help-trigger" href="https://orbitpage.com/docs/team-and-permissions" rel="noreferrer" target="_blank"><Info aria-hidden="true" size={15} /></a>
+              <span className="team-doc-tooltip" id="team-doc-tooltip" role="tooltip">{tr("Teams and permissions in OrbitPage", "Team e permessi in OrbitPage")}</span>
             </span>
           </div>
-          <p className="muted">Add each person to this workspace. Everyone signs in with their own credentials and receives access based on their role.</p>
+          <p className="muted">{tr("Add each person to this workspace. Everyone signs in with their own credentials and receives access based on their role.", "Aggiungi ogni persona a questo workspace. Ognuno accede con le proprie credenziali e riceve l'accesso previsto dal proprio ruolo.")}</p>
         </div>
         <UsersRound aria-hidden="true" size={24} />
       </div>
 
       <div className="team-toolbar">
-        <p className="team-seat-summary">{users.length} workspace {users.length === 1 ? 'member' : 'members'}</p>
+        <p className="team-seat-summary">{users.length} {users.length === 1 ? tr("workspace member", "membro del workspace") : tr("workspace members", "membri del workspace")}</p>
         <button
           className="team-button secondary compact"
           onClick={() => {
@@ -255,8 +253,8 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
           }}
           type="button"
         >
-          {showAddForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-          {showAddForm ? 'Cancel' : 'Add user'}
+          {showAddForm ? <X aria-hidden="true" size={16} /> : <Plus aria-hidden="true" size={16} />}
+          {showAddForm ? tr("Cancel", "Annulla") : "Add user"}
         </button>
       </div>
 
@@ -324,7 +322,7 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
 
       {/* User list */}
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="team-loading"><Loader2 aria-hidden="true" className="spin" size={18} />{tr("Loading collaborators", "Caricamento collaboratori")}</div>
       ) : (
         <ul className="team-member-list">
           {users.map((u) => {
@@ -337,8 +335,8 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
                 <div className="team-member-row">
                   <span className="team-member-avatar" aria-hidden="true">{u.username.slice(0, 1)}</span>
                   <div className="team-member-identity">
-                    <strong>{u.username}{u.username === currentUsername ? ' (you)' : ''}</strong>
-                    <span>Local account · created {new Date(u.created_at).toLocaleDateString()}</span>
+                    <strong>{u.username}{u.username === currentUsername ? ` (${tr("you", "tu")})` : ''}</strong>
+                    <span>Local account · created {new Date(u.created_at).toLocaleDateString(locale)}</span>
                   </div>
                   {isAdmin ? (
                     <span className={`team-role-badge ${roleKey}`}>{roleLabel}</span>
