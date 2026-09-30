@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Key, CheckCircle, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, CheckCircle, AlertTriangle } from "lucide-react";
+import { useAppI18n } from "@/lib/i18n";
 import { isPasswordStrong } from "@/lib/auth";
 import { DEMO_MODE } from "@/lib/config";
 import { authApi } from "@/lib/api-client";
@@ -34,6 +35,7 @@ interface ApiResponse {
 }
 
 export const PasswordManager = () => {
+  const { tr } = useAppI18n();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -150,34 +152,31 @@ export const PasswordManager = () => {
     <div className="oss-account-password-group">
       {/* Password Change Form */}
       <Card className={`glass-card p-6 space-y-6 account-panel account-password-panel oss-account-password-card ${demoMode ? 'opacity-50 pointer-events-none' : ''}`}>
-        <div className="text-center space-y-2">
-          <div className="flex justify-center">
-            <Key className="w-8 h-8 text-primary" />
-          </div>
-          <h2 className="text-xl font-semibold gradient-text">Change password</h2>
-          <p className="text-muted-foreground text-sm">
-            Update your account password
-          </p>
+        <div className="account-section-heading">
+          <div>
+            <h2>{tr('Change password', 'Cambia password')}</h2>
+            <p className="muted">{tr('Update your account password', 'Aggiorna la password del tuo account')}</p>
           {demoMode && (
             <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900">
               <p className="font-semibold">Demo mode is active</p>
               <p className="mt-1">Password change is disabled in demo mode.</p>
             </div>
           )}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="password-form">
             <input className="sr-only" type="text" name="username" autoComplete="username" value={username} readOnly tabIndex={-1} aria-hidden="true" />
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Current password</Label>
-              <div className="relative">
+            <div className="field">
+              <Label htmlFor="current-password">{tr('Current password', 'Password attuale')}</Label>
+              <div className="password-field-control">
                 <Input
                   id="current-password"
                   type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="glass-card border-primary/20 pr-10"
-                  placeholder="Enter current password"
+                  className="input"
+                  placeholder={tr('Enter current password', 'Inserisci la password attuale')}
                   autoComplete="current-password"
                   required
                   disabled={passwordControlsDisabled}
@@ -186,7 +185,7 @@ export const PasswordManager = () => {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  className="password-visibility-button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   disabled={passwordControlsDisabled}
                   aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
@@ -196,16 +195,16 @@ export const PasswordManager = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New password</Label>
-              <div className="relative">
+            <div className="field">
+              <Label htmlFor="new-password">{tr('New password', 'Nuova password')}</Label>
+              <div className="password-field-control">
                 <Input
                   id="new-password"
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="glass-card border-primary/20 pr-10"
-                  placeholder="Enter new password"
+                  className="input"
+                  placeholder={tr('Enter new password', 'Inserisci la nuova password')}
                   autoComplete="new-password"
                   required
                   disabled={passwordControlsDisabled}
@@ -214,7 +213,7 @@ export const PasswordManager = () => {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  className="password-visibility-button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   disabled={passwordControlsDisabled}
                   aria-label={showNewPassword ? "Hide new password" : "Show new password"}
@@ -222,28 +221,28 @@ export const PasswordManager = () => {
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
               </div>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>Requirements:</p>
-                <ul className="list-disc list-inside ml-2 space-y-0.5">
-                  <li className={newPassword.length >= 8 ? 'text-green-400' : ''}>At least 8 characters</li>
-                  <li className={/[A-Z]/.test(newPassword) ? 'text-green-400' : ''}>Uppercase letter</li>
-                  <li className={/[a-z]/.test(newPassword) ? 'text-green-400' : ''}>Lowercase letter</li>
-                  <li className={/\d/.test(newPassword) ? 'text-green-400' : ''}>Number</li>
-                  <li className={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) ? 'text-green-400' : ''}>Special character</li>
+              <div className="password-requirements">
+                <p>{tr('Requirements:', 'Requisiti:')}</p>
+                <ul>
+                  <li data-valid={newPassword.length >= 8}>{tr('At least 8 characters', 'Almeno 8 caratteri')}</li>
+                  <li data-valid={/[A-Z]/.test(newPassword)}>{tr('Uppercase letter', 'Lettera maiuscola')}</li>
+                  <li data-valid={/[a-z]/.test(newPassword)}>{tr('Lowercase letter', 'Lettera minuscola')}</li>
+                  <li data-valid={/\d/.test(newPassword)}>{tr('Number', 'Numero')}</li>
+                  <li data-valid={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)}>{tr('Special character', 'Carattere speciale')}</li>
                 </ul>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm new password</Label>
-              <div className="relative">
+            <div className="field">
+              <Label htmlFor="confirm-password">{tr('Confirm new password', 'Conferma nuova password')}</Label>
+              <div className="password-field-control">
                 <Input
                   id="confirm-password"
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="glass-card border-primary/20 pr-10"
-                  placeholder="Confirm new password"
+                  className="input"
+                  placeholder={tr('Confirm new password', 'Conferma nuova password')}
                   autoComplete="new-password"
                   required
                   disabled={passwordControlsDisabled}
@@ -252,7 +251,7 @@ export const PasswordManager = () => {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  className="password-visibility-button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={passwordControlsDisabled}
                   aria-label={showConfirmPassword ? "Hide password confirmation" : "Show password confirmation"}
@@ -280,10 +279,10 @@ export const PasswordManager = () => {
             <Button
               type="submit"
               variant="gradient"
-              className="w-full"
+              className="account-password-action"
               disabled={passwordControlsDisabled}
             >
-              {isLoading ? "Saving..." : "Change password"}
+              {isLoading ? tr('Saving...', 'Salvataggio...') : tr('Change password', 'Cambia password')}
             </Button>
           </form>
 
@@ -310,7 +309,7 @@ export const PasswordManager = () => {
                 <p>Password reset is disabled in demo mode.</p>
               </div>
             )}
-            <div className="space-y-2">
+            <div className="field">
               <Label htmlFor="reset-token">Reset Token</Label>
               <Input
                 id="reset-token"
@@ -324,14 +323,14 @@ export const PasswordManager = () => {
                 disabled={tokenResetControlsDisabled}
               />
             </div>
-            <div className="space-y-2">
+            <div className="field">
               <Label htmlFor="reset-new-password">New Password</Label>
               <Input
                 id="reset-new-password"
                 type="password"
                 value={resetNewPassword}
                 onChange={(e) => setResetNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder={tr('Enter new password', 'Inserisci la nuova password')}
                 autoComplete="new-password"
                 className="glass-card border-primary/20"
                 required

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "orbitpage-backend",
-  "version": "4.21.31",
+  "version": "4.21.32",
   "description": "Standalone backend for OrbitPage public page manager",
   "main": "server.js",
   "type": "module",

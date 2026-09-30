@@ -135,7 +135,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
               : tr('Check for a newer stable release.', 'Verifica se è disponibile una nuova versione stabile.')}
           </p>
           <div className="account-instance-update-actions">
-            <Button type="button" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
+            <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
             <Button type="button" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canDeleteInstallation} onClick={() => { setCopyStatus('idle'); setUpdateDialogOpen(true); }}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
           </div>
           {update && <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Release notes', 'Note di rilascio')}</a>}
@@ -179,17 +179,17 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     <Card className="glass-card p-6 account-danger-zone oss-account-danger-card">
       <div className="account-danger-copy">
         <Trash2 className="h-6 w-6" aria-hidden="true" />
-        <div><p className="oss-account-kicker">{tr('Danger zone', 'Zona pericolosa')}</p><h2>{tr('Delete account and installation', 'Elimina account e installazione')}</h2><p className="muted">{tr('Permanently removes administrator accounts, page data, uploads, settings, and authentication configuration.', 'Rimuove definitivamente account amministratori, dati della pagina, caricamenti, impostazioni e configurazione di autenticazione.')}</p></div>
+        <div><p className="oss-account-kicker">{tr('Danger zone', 'Zona pericolosa')}</p><h2>{tr('Delete account', 'Elimina account')}</h2><p className="muted">{tr('Permanently removes administrator accounts, page data, uploads, settings, and authentication configuration.', 'Rimuove definitivamente account amministratori, dati della pagina, caricamenti, impostazioni e configurazione di autenticazione.')}</p></div>
       </div>
       <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE || !canDeleteInstallation} onClick={() => { setAccountError(''); setAccountDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Delete account', 'Elimina account')}</Button>
     </Card>
 
     <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
       <DialogContent className="orbitpage-admin oss-account-delete-dialog account-update-dialog" overlayClassName="oss-account-delete-overlay">
-        <DialogHeader>
+        <DialogHeader className="account-delete-header">
           <DialogTitle>{tr('Install OrbitPage update', 'Installa l’aggiornamento di OrbitPage')}</DialogTitle>
-          <DialogDescription>{tr('Updates are installed on the server hosting OrbitPage. The official updater backs up your data before replacing the running application.', 'Gli aggiornamenti si installano sul server che ospita OrbitPage. L’updater ufficiale salva un backup dei dati prima di sostituire l’applicazione in esecuzione.')}</DialogDescription>
         </DialogHeader>
+        <DialogDescription>{tr('Updates are installed on the server hosting OrbitPage. The official updater backs up your data before replacing the running application.', 'Gli aggiornamenti si installano sul server che ospita OrbitPage. L’updater ufficiale salva un backup dei dati prima di sostituire l’applicazione in esecuzione.')}</DialogDescription>
         <ol className="account-update-steps">
           <li>{tr('Open a terminal on your OrbitPage server.', 'Apri un terminale sul server OrbitPage.')}</li>
           <li>{tr('Run the official update command.', 'Esegui il comando ufficiale di aggiornamento.')}<div className="account-update-command"><code>{UPDATE_COMMAND}</code><Button type="button" variant="outline" size="sm" onClick={() => void copyUpdateCommand()}><Copy className="h-4 w-4" />{copyStatus === 'copied' ? tr('Copied', 'Copiato') : tr('Copy command', 'Copia comando')}</Button></div></li>
@@ -198,7 +198,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
         {copyStatus === 'error' && <p className="oss-account-error" role="alert">{tr('Copy unavailable. Select and copy the command manually.', 'Copia non disponibile. Seleziona e copia il comando manualmente.')}</p>}
         <p className="muted">{tr('For pinned image versions or an updater that is not installed yet, follow the update guide first.', 'Se l’immagine è bloccata a una versione o l’updater non è ancora installato, segui prima la guida agli aggiornamenti.')}</p>
         <a className="account-instance-release-link" href={UPDATE_GUIDE} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Update guide', 'Guida agli aggiornamenti')}</a>
-        <DialogFooter>
+        <DialogFooter className="account-delete-actions">
           <Button type="button" variant="outline" onClick={() => setUpdateDialogOpen(false)}>{tr('Close', 'Chiudi')}</Button>
           <Button type="button" variant="gradient" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" />{tr('Reload after updating', 'Ricarica dopo l’aggiornamento')}</Button>
         </DialogFooter>
@@ -207,36 +207,36 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
 
     <Dialog open={dialogOpen} onOpenChange={(open) => { if (!busy) setDialogOpen(open); }}>
       <DialogContent className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
-        <DialogHeader>
+        <DialogHeader className="account-delete-header">
           <DialogTitle>{tr('Remove your personal OrbitPage?', 'Rimuovere la tua OrbitPage personale?')}</DialogTitle>
-          <DialogDescription>{tr('This permanently deletes public content, page versions, and uploaded media. Your administrator login and two-factor settings remain active. Export a backup first if you may need this data.', 'Questa operazione elimina definitivamente contenuti pubblici, versioni della pagina e media caricati. Login amministratore e verifica in due passaggi restano attivi. Esporta prima un backup se potresti aver bisogno di questi dati.')}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2"><Label htmlFor="remove-page-confirmation">{tr(`Type ${expected} to confirm`, `Scrivi ${expected} per confermare`)}</Label><Input id="remove-page-confirmation" autoComplete="off" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} disabled={busy} /></div>
-          <div className="space-y-2"><Label htmlFor="remove-page-password">{tr('Current password', 'Password attuale')}</Label><Input id="remove-page-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} disabled={busy} /></div>
+        <DialogDescription>{tr('This permanently deletes public content, page versions, and uploaded media. Your administrator login and two-factor settings remain active. Export a backup first if you may need this data.', 'Questa operazione elimina definitivamente contenuti pubblici, versioni della pagina e media caricati. Login amministratore e verifica in due passaggi restano attivi. Esporta prima un backup se potresti aver bisogno di questi dati.')}</DialogDescription>
+        <div className="account-delete-fields">
+          <div className="field"><Label htmlFor="remove-page-confirmation">{tr(`Type ${expected} to confirm`, `Scrivi ${expected} per confermare`)}</Label><Input id="remove-page-confirmation" autoComplete="off" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} disabled={busy} /></div>
+          <div className="field"><Label htmlFor="remove-page-password">{tr('Current password', 'Password attuale')}</Label><Input id="remove-page-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} disabled={busy} /></div>
           {error && <p className="oss-account-error" role="alert">{error}</p>}
         </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" disabled={busy} onClick={() => setDialogOpen(false)}>{tr('Cancel', 'Annulla')}</Button>
-          <Button type="button" variant="destructive" disabled={busy || confirmation !== expected || !currentPassword} onClick={() => void removePage()}><Trash2 className="h-4 w-4" />{busy ? tr('Removing…', 'Rimozione…') : tr('Remove page permanently', 'Rimuovi pagina definitivamente')}</Button>
+        <DialogFooter className="account-delete-actions">
+          <Button type="button" className="account-secondary-action" variant="outline" disabled={busy} onClick={() => setDialogOpen(false)}>{tr('Cancel', 'Annulla')}</Button>
+          <Button type="button" className="account-danger-action" variant="destructive" disabled={busy || confirmation !== expected || !currentPassword} onClick={() => void removePage()}><Trash2 className="h-4 w-4" />{busy ? tr('Removing…', 'Rimozione…') : tr('Remove page permanently', 'Rimuovi pagina definitivamente')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
 
     <Dialog open={accountDialogOpen} onOpenChange={(open) => { if (!accountBusy) setAccountDialogOpen(open); }}>
       <DialogContent className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
-        <DialogHeader>
-          <DialogTitle>{tr('Delete the account and reset OrbitPage?', 'Eliminare l’account e ripristinare OrbitPage?')}</DialogTitle>
-          <DialogDescription>{tr('This permanently removes every administrator, page, upload, and setting from this installation. Export a backup first if you may need this data.', 'Questa operazione rimuove definitivamente tutti gli amministratori, le pagine, i caricamenti e le impostazioni dall’installazione. Esporta prima un backup se potresti aver bisogno di questi dati.')}</DialogDescription>
+        <DialogHeader className="account-delete-header">
+          <DialogTitle>{tr("Delete your OrbitPage account?", "Eliminare l'account OrbitPage?")}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2"><Label htmlFor="delete-account-confirmation">{tr(`Type ${expectedAccountConfirmation} to confirm`, `Scrivi ${expectedAccountConfirmation} per confermare`)}</Label><Input id="delete-account-confirmation" autoComplete="off" value={accountConfirmation} onChange={(event) => setAccountConfirmation(event.target.value)} disabled={accountBusy} /></div>
-          <div className="space-y-2"><Label htmlFor="delete-account-password">{tr('Current password', 'Password attuale')}</Label><Input id="delete-account-password" type="password" autoComplete="current-password" value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} disabled={accountBusy} /></div>
+        <DialogDescription>{tr('This permanently removes every administrator, page, upload, and setting from this installation. Export a backup first if you may need this data.', 'Questa operazione rimuove definitivamente tutti gli amministratori, le pagine, i caricamenti e le impostazioni dall’installazione. Esporta prima un backup se potresti aver bisogno di questi dati.')}</DialogDescription>
+        <div className="account-delete-fields">
+          <div className="field"><Label htmlFor="delete-account-confirmation">{tr(`Type ${expectedAccountConfirmation} to confirm`, `Scrivi ${expectedAccountConfirmation} per confermare`)}</Label><Input id="delete-account-confirmation" autoComplete="off" value={accountConfirmation} onChange={(event) => setAccountConfirmation(event.target.value)} disabled={accountBusy} /></div>
+          <div className="field"><Label htmlFor="delete-account-password">{tr('Current password', 'Password attuale')}</Label><Input id="delete-account-password" type="password" autoComplete="current-password" value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} disabled={accountBusy} /></div>
           {accountError && <p className="oss-account-error" role="alert">{accountError}</p>}
         </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" disabled={accountBusy} onClick={() => setAccountDialogOpen(false)}>{tr('Cancel', 'Annulla')}</Button>
-          <Button type="button" variant="destructive" disabled={accountBusy || accountConfirmation !== expectedAccountConfirmation || !accountPassword} onClick={() => void deleteInstallation()}><Trash2 className="h-4 w-4" />{accountBusy ? tr('Deleting…', 'Eliminazione…') : tr('Delete permanently', 'Elimina definitivamente')}</Button>
+        <DialogFooter className="account-delete-actions">
+          <Button type="button" className="account-secondary-action" variant="outline" disabled={accountBusy} onClick={() => setAccountDialogOpen(false)}>{tr('Cancel', 'Annulla')}</Button>
+          <Button type="button" className="account-danger-action" variant="destructive" disabled={accountBusy || accountConfirmation !== expectedAccountConfirmation || !accountPassword} onClick={() => void deleteInstallation()}><Trash2 className="h-4 w-4" />{accountBusy ? tr('Deleting…', 'Eliminazione…') : tr('Delete permanently', 'Elimina definitivamente')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
