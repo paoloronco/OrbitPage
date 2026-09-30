@@ -402,6 +402,21 @@ test('keeps product labels shared with SaaS while localizing section description
 
   await page.getByRole('button', { name: 'Team', exact: true }).click();
   await expect(page.getByText("Assegna a ogni collaboratore solo l'accesso necessario.", { exact: true })).toBeVisible();
+  const members = page.locator('.team-overview-panel');
+  const tokens = page.locator('.account-api-token-panel');
+  await expect(members.getByRole('heading', { name: 'Membri del workspace', exact: true })).toHaveCSS('font-size', '16px');
+  await expect(tokens.getByRole('heading', { name: 'Token API personali', exact: true })).toHaveCSS('font-size', '16px');
+  await expect(members).toHaveCSS('border-color', 'rgb(216, 225, 238)');
+  await expect(tokens).toHaveCSS('padding', '24px');
+  await expect(tokens.locator('.api-token-list')).toHaveAttribute('aria-busy', 'false');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(members).toHaveCSS('padding', '16px');
+  await expect(tokens).toHaveCSS('padding', '16px');
+  await expect(tokens.getByLabel('Nome token')).toHaveCSS('height', '40px');
+  await expect(tokens.getByLabel('Password attuale')).toHaveCSS('height', '40px');
+  await expect(tokens.locator('.api-token-example pre')).toHaveCSS('white-space', 'pre');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  await page.setViewportSize({ width: 1280, height: 720 });
 
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   await expect(page.getByText('Gestisci identità, sicurezza e workspace attivo.', { exact: true })).toBeVisible();
