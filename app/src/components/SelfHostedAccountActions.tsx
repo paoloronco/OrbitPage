@@ -136,7 +136,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
           </p>
           <div className="account-instance-update-actions">
             <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
-            <Button type="button" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canDeleteInstallation} onClick={() => { setCopyStatus('idle'); setUpdateDialogOpen(true); }}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
+            <Button type="button" className="account-primary-action" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canDeleteInstallation} onClick={() => { setCopyStatus('idle'); setUpdateDialogOpen(true); }}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
           </div>
           {update && <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Release notes', 'Note di rilascio')}</a>}
         </div>
