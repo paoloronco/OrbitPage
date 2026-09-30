@@ -369,6 +369,25 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   expect(Math.abs(passwordCard!.y - mfaCard!.y)).toBeLessThanOrEqual(1);
   const passwordForms = await page.locator('.oss-account-layout input[type="password"]').evaluateAll((inputs) => inputs.map((input) => Boolean((input as HTMLInputElement).form)));
   expect(passwordForms.every(Boolean)).toBe(true);
+  await page.route('**/api/auth/2fa/setup', (route) => route.fulfill({ json: {
+    success: true,
+    uri: 'otpauth://totp/OrbitPage:parity?secret=JBSWY3DPEHPK3PXP&issuer=OrbitPage',
+    secretKey: 'JBSWY3DPEHPK3PXP',
+    expiresAt: '2099-01-01T00:00:00.000Z',
+  } }));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('#two-factor-password').fill('synthetic-layout-password');
+  await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
+  await expect(page.getByRole('img', { name: 'QR code for the OrbitPage authenticator setup' })).toBeVisible();
+  const setupGrid = page.locator('.mfa-setup-grid');
+  const qrBounds = await setupGrid.locator('img').boundingBox();
+  const fieldsBounds = await setupGrid.locator('.mfa-setup-fields').boundingBox();
+  expect(qrBounds).not.toBeNull();
+  expect(fieldsBounds).not.toBeNull();
+  expect(fieldsBounds!.y).toBeGreaterThanOrEqual(qrBounds!.y + qrBounds!.height);
+  expect(fieldsBounds!.x + fieldsBounds!.width).toBeLessThanOrEqual(390);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  await setupGrid.getByRole('button', { name: 'Cancel', exact: true }).click();
 });
 
 test('keeps product labels shared with SaaS while localizing section descriptions', async ({ page }) => {

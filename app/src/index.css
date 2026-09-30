@@ -8239,7 +8239,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .orbitpage-admin .oss-account-layout .password-requirements ul { display: grid; gap: 5px; margin: 0; padding-left: 22px; list-style: disc; }
 .orbitpage-admin .oss-account-layout .password-requirements li { margin: 0; }
 .orbitpage-admin .oss-account-layout .password-requirements li[data-valid="true"] { color: #178f5f; }
-.orbitpage-admin .oss-account-layout :is(.account-password-action, .mfa-identity-check > button, .mfa-identity-check > .button) { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; height: 40px; padding: 0 15px; border: 1px solid #3158d8; border-radius: 6px; background: #3158d8; box-shadow: none; color: #fff; font-size: 12px; font-weight: 800; line-height: 1.4; }
+.orbitpage-admin .oss-account-layout :is(.account-password-action, .account-primary-action, .mfa-identity-check > button, .mfa-identity-check > .button) { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; height: 40px; padding: 0 15px; border: 1px solid #3158d8; border-radius: 6px; background: #3158d8; box-shadow: none; color: #fff; font-size: 12px; font-weight: 800; line-height: 1.4; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check > button svg { width: 16px; height: 16px; }
 .orbitpage-admin .oss-account-layout button:disabled { cursor: not-allowed; opacity: .5; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check { display: grid; align-items: start; gap: 18px; }
@@ -8289,6 +8289,19 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .orbitpage-admin .oss-account-layout .mfa-code-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .orbitpage-admin .oss-account-layout .mfa-code-grid code { padding: 9px 10px; border: 1px solid #ead7aa; background: white; text-align: center; font-weight: 700; letter-spacing: .04em; }
 
+
+.orbitpage-admin .oss-account-layout .mfa-setup-fields { display: grid; gap: 18px; min-width: 0; }
+.orbitpage-admin .oss-account-layout :is(.mfa-setup-fields, .mfa-recovery-box) { color: var(--admin-copy); font-size: 12px; line-height: 1.5; }
+.orbitpage-admin .oss-account-layout :is(.mfa-setup-fields, .mfa-recovery-box) strong { color: var(--admin-ink); font-size: 13px; font-weight: 700; }
+.orbitpage-admin .oss-account-layout .mfa-setup-fields .muted { margin: 4px 0 0; color: var(--admin-muted-copy); font-size: 12px; line-height: 1.5; }
+.orbitpage-admin .oss-account-layout .mfa-actions :is(.account-primary-action, .account-secondary-action) { width: auto; }
+.orbitpage-admin .oss-account-layout .mfa-recovery-box .account-secondary-action { justify-self: start; }
+@media (max-width: 767px) {
+  .orbitpage-admin .oss-account-layout .mfa-setup-grid { grid-template-columns: 1fr; }
+  .orbitpage-admin .oss-account-layout .mfa-setup-grid > img { justify-self: center; }
+  .orbitpage-admin .oss-account-layout .mfa-code-grid { grid-template-columns: 1fr; }
+  .orbitpage-admin .oss-account-layout .mfa-actions :is(.account-primary-action, .account-secondary-action) { width: 100%; }
+}
 
 /* The editor agent uses the same floating visual contract in OSS and SaaS. */
 .ai-page-agent { position: fixed; right: 24px; bottom: 24px; z-index: 90; display: grid; justify-items: end; gap: 12px; color: #172033; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
