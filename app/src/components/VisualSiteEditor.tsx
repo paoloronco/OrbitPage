@@ -21,7 +21,6 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import type { CardLayout } from "@/lib/card-layout";
 import { useAppI18n } from "@/lib/i18n";
-import "./visual-site-editor.css";
 
 const PHONE_MEDIA_QUERY = "(max-width: 600px)";
 

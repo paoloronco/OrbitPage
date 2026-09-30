@@ -2,7 +2,6 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { ArrowLeft, Check, LoaderCircle, Mail, MailX } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { apiPath, withPageRootPath } from '@/lib/base-path';
-import '../components/newsletter-workspace.css';
 
 type SenderType = 'individual' | 'bar' | 'restaurant' | 'creator' | 'business' | 'association' | 'other';
 type Landing = { fromName: string; senderType: SenderType; privacyPolicyUrl: string; termsUrl: string; publicPageUrl: string };

@@ -18,7 +18,6 @@ import { usersApi } from '@/lib/api-client';
 import { isPasswordStrong } from '@/lib/auth';
 import { DEMO_MODE } from '@/lib/config';
 import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS, UserRole } from '@/lib/permissions';
-import './team-workspace.css';
 
 interface User {
   username: string;

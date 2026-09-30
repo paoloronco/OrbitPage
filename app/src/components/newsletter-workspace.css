@@ -11,7 +11,7 @@
 .newsletter-workspace .button, .newsletter-public-shell .button, .newsletter-empty .button {
   align-items: center; background: var(--teal); border: 1px solid var(--teal);
   border-radius: 7px; color: #fff; cursor: pointer; display: inline-flex;
-  font-size: 13px; font-weight: 750; gap: 8px; padding: 10px 14px; text-decoration: none;
+  font-size: 13px; font-weight: 750; gap: 8px; min-height: 0; padding: 10px 14px; text-decoration: none;
 }
 .newsletter-workspace .button.secondary, .newsletter-workspace .button.ghost, .newsletter-empty .button.secondary {
   background: #fff; border-color: var(--line); color: var(--ink);

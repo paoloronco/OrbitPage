@@ -48,7 +48,6 @@ import type { CardLayout } from "@/lib/card-layout";
 import { uploadApi } from "@/lib/api-client";
 import type { HostedSeoAccess } from "@/lib/hosted-editor-contract";
 import { useAppI18n } from "@/lib/i18n";
-import "./profile-save-overlay.css";
 
 interface ProfileData {
   name: string;

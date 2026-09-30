@@ -1,6 +1,12 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+/* One stylesheet owns the cascade in both the self-hosted and embedded editor. */
+@import './components/profile-save-overlay.css';
+@import './components/menu-editor-redesign.css';
+@import './components/newsletter-workspace.css';
+@import './components/team-workspace.css';
+@import './components/visual-site-editor.css';
 
 :focus-visible {
   outline: 3px solid hsl(var(--ring)) !important;
@@ -8224,6 +8230,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .ai-page-agent-message.assistant p { border-bottom-left-radius: 4px; }
 .ai-page-agent-message.error p { border: 1px solid #fecaca; background: #fff1f2; color: #9f1239; }
 .ai-page-agent-proposal { display: grid; gap: 10px; padding: 12px; border: 1px solid #c7d2fe; border-radius: 13px; background: #fff; }
+.ai-page-agent-proposal-actions { display: contents; }
 .ai-page-agent-proposal-heading { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 8px; color: #3730a3; }
 .ai-page-agent-proposal-heading > div { display: grid; gap: 2px; }
 .ai-page-agent-proposal-heading strong { font-size: 12px; }
@@ -8232,10 +8239,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .ai-page-agent-proposal li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 6px; color: #334155; font-size: 11px; line-height: 1.4; }
 .ai-page-agent-proposal li svg { margin-top: 1px; color: #16a34a; }
 .ai-page-agent-proposal > small { color: #7c8596; font-size: 10px; }
-.ai-page-agent-proposal > button { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 10px; background: #4338ca; color: #fff; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
-.ai-page-agent-proposal > button:hover:not(:disabled),
-.ai-page-agent-proposal > button:focus-visible:not(:disabled) { background: #3730a3; }
-.ai-page-agent-proposal > button:disabled { cursor: default; opacity: .7; }
+:is(.ai-page-agent-proposal, .ai-page-agent-proposal-actions) > button { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 10px; background: #4338ca; color: #fff; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
+:is(.ai-page-agent-proposal, .ai-page-agent-proposal-actions) > button:hover:not(:disabled),
+:is(.ai-page-agent-proposal, .ai-page-agent-proposal-actions) > button:focus-visible:not(:disabled) { background: #3730a3; }
+:is(.ai-page-agent-proposal, .ai-page-agent-proposal-actions) > button:disabled { cursor: default; opacity: .7; }
 .ai-page-agent-thinking { display: flex; align-items: center; gap: 7px; color: #667085; font-size: 12px; }
 .ai-page-agent .spin { animation: ai-page-agent-spin 850ms linear infinite; }
 .ai-page-agent-composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 9px; padding: 12px 13px 8px; border-top: 1px solid #e7eaf1; background: #fff; }
@@ -10268,6 +10275,9 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .ai-page-agent-panel {
+  font-family: var(--orbitpage-dashboard-font, "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
   z-index: 100;
 }
 

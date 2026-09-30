@@ -22,7 +22,6 @@ import { ServiceBrandIcon } from "./ServiceBrandIcon";
 import type { BrandServiceProvider } from "@/lib/service-brand";
 import { mergeLinkPreviews } from "./link-preview-state";
 import { OrbitLoader } from "@/components/ui/orbit-loader";
-import "./profile-save-overlay.css";
 
 interface LinkManagerProps {
   links: LinkData[];
