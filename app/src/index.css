@@ -8108,6 +8108,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .orbitpage-admin .oss-account-layout {
   display: grid;
+  container: account-workspace / inline-size;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: 18px;
@@ -8162,6 +8163,9 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   box-shadow: 0 8px 26px rgb(18 31 51 / 4%);
 }
 .orbitpage-admin .oss-account-layout .account-panel { display: grid; align-content: start; align-self: start; gap: 22px; }
+.orbitpage-admin .oss-account-layout .account-general-info > .account-panel { min-height: 480px; align-self: stretch; }
+.orbitpage-admin .account-security-stack .oss-account-password-group { display: contents; }
+.orbitpage-admin .account-security-stack .oss-account-recovery-card { grid-column: 1; grid-row: 2; }
 .orbitpage-admin .oss-account-layout .account-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .orbitpage-admin .oss-account-layout .account-section-heading h2,
 .orbitpage-admin .oss-account-layout .account-support h2,
@@ -8220,7 +8224,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .orbitpage-admin .oss-account-layout .account-panel > * + * { margin-top: 0; }
 .orbitpage-admin .oss-account-layout .account-section-heading svg,
 .orbitpage-admin .oss-account-layout :is(.account-support-copy, .oss-account-action-copy, .account-danger-copy) > svg { width: 22px; height: 22px; }
-.orbitpage-admin .oss-account-layout .account-danger-copy .muted { margin: 7px 0 0; }
+.orbitpage-admin .oss-account-layout .account-danger-copy .muted { min-height: 36px; margin: 7px 0 0; }
 .orbitpage-admin :is(.oss-account-layout, .account-delete-actions) .account-danger-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; line-height: 1.4; height: 40px; white-space: nowrap; }
 .orbitpage-admin :is(.oss-account-layout, .account-delete-actions) .account-danger-action:hover:not(:disabled) { background: #842118; border-color: #842118; }
 .orbitpage-admin :is(.oss-account-layout, .account-delete-actions) .account-danger-action svg,
@@ -8241,6 +8245,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .orbitpage-admin .oss-account-layout .password-requirements li[data-valid="true"] { color: #178f5f; }
 .orbitpage-admin .oss-account-layout :is(.account-password-action, .account-primary-action, .mfa-identity-check > button, .mfa-identity-check > .button) { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; height: 40px; padding: 0 15px; border: 1px solid #3158d8; border-radius: 6px; background: #3158d8; box-shadow: none; color: #fff; font-size: 12px; font-weight: 800; line-height: 1.4; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check > button svg { width: 16px; height: 16px; }
+.orbitpage-admin .oss-account-layout .account-instance-update-actions :is(.account-primary-action, .account-secondary-action) { width: auto; }
 .orbitpage-admin .oss-account-layout button:disabled { cursor: not-allowed; opacity: .5; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check { display: grid; align-items: start; gap: 18px; }
 .orbitpage-admin .oss-account-layout .mfa-identity-check > .muted { margin: 0; color: var(--admin-muted-copy); font-size: 12px; line-height: 1.5; }
@@ -8264,12 +8269,25 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 @media (max-width: 767px) {
   .orbitpage-admin .oss-account-layout :is(.glass-card, .panel):not(input) { padding: 16px; }
   .orbitpage-admin .oss-account-layout :is(.account-general-info, .account-security-stack) { grid-template-columns: 1fr; }
+  .orbitpage-admin .account-security-stack .oss-account-recovery-card { grid-row: 3; }
   .orbitpage-admin .oss-account-layout :is(.oss-account-support-card, .oss-account-page-action, .oss-account-danger-card) { align-items: stretch; flex-direction: column; }
   .orbitpage-admin .oss-account-layout :is(.account-danger-action, .account-secondary-action) { width: 100%; }
   .orbitpage-admin.oss-account-delete-dialog { padding: 20px; }
   .orbitpage-admin.oss-account-delete-dialog .account-delete-actions { flex-direction: column-reverse; }
   .orbitpage-admin .oss-account-layout .mfa-setup-grid { grid-template-columns: 1fr; }
   .orbitpage-admin .oss-account-layout .mfa-code-grid { grid-template-columns: 1fr; }
+}
+
+@container account-workspace (max-width: 900px) {
+  .orbitpage-admin .oss-account-layout :is(.account-general-info, .account-security-stack) { grid-template-columns: 1fr; }
+  .orbitpage-admin .account-security-stack .oss-account-recovery-card { grid-row: 3; }
+  .orbitpage-admin .oss-account-layout :is(.oss-account-support-card, .oss-account-page-action, .oss-account-danger-card) { align-items: stretch; flex-direction: column; }
+  .orbitpage-admin .oss-account-layout :is(.account-danger-action, .account-secondary-action) { width: 100%; }
+  .orbitpage-admin .oss-account-layout .account-danger-copy .muted { min-height: 72px; }
+}
+@container account-workspace (max-width: 300px) {
+  .orbitpage-admin .oss-account-layout .account-general-info > .account-panel { min-height: 540px; }
+  .orbitpage-admin .oss-account-layout .account-danger-copy .muted { min-height: 90px; }
 }
 
 .orbitpage-admin .oss-account-layout .mfa-status { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid #d8dee8; background: #f8fafc; }

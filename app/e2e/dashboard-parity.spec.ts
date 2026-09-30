@@ -38,6 +38,11 @@ test('checks OSS updates and opens the host installation guide without executing
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   const instance = page.locator('.account-instance-card');
+  const details = page.locator('.oss-account-details-card');
+  const initialCards = await Promise.all([details.boundingBox(), instance.boundingBox()]);
+  expect(initialCards.every(Boolean)).toBe(true);
+  expect(Math.abs(initialCards[0]!.height - initialCards[1]!.height)).toBeLessThanOrEqual(1);
+  const initialSupport = await page.locator('.oss-account-support-card').boundingBox();
   const currentVersion = await instance.locator('.account-detail-row').filter({ hasText: 'Current version' }).locator('dd').innerText();
   expect(currentVersion).toMatch(/^v\d+\.\d+\.\d+$/);
   const check = instance.getByRole('button', { name: 'Check for updates', exact: true });
@@ -46,6 +51,8 @@ test('checks OSS updates and opens the host installation guide without executing
   await check.click();
   await expect(instance.getByRole('status')).toContainText('Update available: v99.0.0');
   await expect(instance.getByRole('link', { name: 'Release notes' })).toHaveAttribute('href', 'https://github.com/paoloronco/OrbitPage/releases/tag/v99.0.0');
+  const updatedSupport = await page.locator('.oss-account-support-card').boundingBox();
+  expect(Math.abs(updatedSupport!.y - initialSupport!.y)).toBeLessThanOrEqual(1);
   await install.click();
   const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
   await expect(dialog).toBeVisible();
@@ -376,6 +383,11 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
     expiresAt: '2099-01-01T00:00:00.000Z',
   } }));
   await page.setViewportSize({ width: 390, height: 844 });
+  const mobilePassword = await page.locator('.oss-account-password-card').boundingBox();
+  const mobileMfa = await page.locator('.oss-account-mfa-card').boundingBox();
+  const mobileRecovery = await page.locator('.oss-account-recovery-card').boundingBox();
+  expect(Math.abs(mobileMfa!.y - mobilePassword!.y - mobilePassword!.height - 18)).toBeLessThanOrEqual(1);
+  expect(mobileRecovery!.y).toBeGreaterThanOrEqual(mobileMfa!.y + mobileMfa!.height);
   await page.locator('#two-factor-password').fill('synthetic-layout-password');
   await page.getByRole('button', { name: 'Set up authenticator', exact: true }).click();
   await expect(page.getByRole('img', { name: 'QR code for the OrbitPage authenticator setup' })).toBeVisible();
