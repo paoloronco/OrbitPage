@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Database, Globe2, LifeBuoy, Mail, ShieldCheck, Trash2 } from '@/components/ui/material-icons';
+import { Copy, Database, Download, ExternalLink, Globe2, LifeBuoy, Mail, RefreshCw, ShieldCheck, Trash2 } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -9,11 +9,19 @@ import { DEMO_MODE } from '@/lib/config';
 import { authApi, personalPageApi, type PersonalPageStatus } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
 import { useAppI18n } from '@/lib/i18n';
+import { checkApplicationUpdate } from '@/lib/application-updates';
 
 const SUPPORT_EMAIL = 'contact@orbitpage.com';
+const UPDATE_COMMAND = 'sudo orbitpage-update';
+const UPDATE_GUIDE = 'https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Deployment.md#update-safely';
 
-export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref, role, username }: { canDeleteInstallation: boolean; publicPageHref: string; role: string; username: string }) {
+export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref, role, username, version }: { canDeleteInstallation: boolean; publicPageHref: string; role: string; username: string; version: string }) {
   const { tr } = useAppI18n();
+  const [update, setUpdate] = useState<Awaited<ReturnType<typeof checkApplicationUpdate>> | null>(null);
+  const [checkingUpdates, setCheckingUpdates] = useState(false);
+  const [updateError, setUpdateError] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const [status, setStatus] = useState<PersonalPageStatus | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -77,6 +85,20 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     }
   };
 
+  const checkUpdates = async () => {
+    setCheckingUpdates(true);
+    setUpdateError(false);
+    setUpdate(null);
+    try { setUpdate(await checkApplicationUpdate(version)); }
+    catch { setUpdateError(true); }
+    finally { setCheckingUpdates(false); }
+  };
+
+  const copyUpdateCommand = async () => {
+    try { await navigator.clipboard.writeText(UPDATE_COMMAND); setCopyStatus('copied'); }
+    catch { setCopyStatus('error'); }
+  };
+
   return <>
     <div className="account-info-stack account-general-info">
       <Card className="glass-card p-6 account-panel oss-account-details-card">
@@ -100,9 +122,24 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
         </div>
         <dl className="account-details">
           <div className="account-detail-row"><dt>{tr('Runtime', 'Runtime')}</dt><dd>OrbitPage Open Source</dd></div>
+          <div className="account-detail-row"><dt>{tr('Current version', 'Versione installata')}</dt><dd>v{version.replace(/^v/, '')}</dd></div>
           <div className="account-detail-row"><dt>{tr('Deployment', 'Distribuzione')}</dt><dd>{tr('Self-hosted', 'Self-hosted')}</dd></div>
           <div className="account-detail-row"><dt>{tr('Administration', 'Amministrazione')}</dt><dd>{tr('Managed by this installation', 'Gestita da questa installazione')}</dd></div>
         </dl>
+        <div className="account-instance-updates">
+          <p className={updateError ? 'oss-account-error' : 'muted'} role="status" aria-live="polite">
+            {checkingUpdates ? tr('Checking for updates…', 'Verifica aggiornamenti…')
+              : updateError ? tr('Could not check for updates. Try again.', 'Impossibile verificare gli aggiornamenti. Riprova.')
+              : update?.updateAvailable ? <>{tr('Update available:', 'Aggiornamento disponibile:')} <strong>v{update.version}</strong></>
+              : update ? tr('You’re up to date.', 'La versione è aggiornata.')
+              : tr('Check for a newer stable release.', 'Verifica se è disponibile una nuova versione stabile.')}
+          </p>
+          <div className="account-instance-update-actions">
+            <Button type="button" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
+            <Button type="button" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canDeleteInstallation} onClick={() => { setCopyStatus('idle'); setUpdateDialogOpen(true); }}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
+          </div>
+          {update && <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Release notes', 'Note di rilascio')}</a>}
+        </div>
       </Card>
     </div>
 
@@ -147,8 +184,29 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
       <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE || !canDeleteInstallation} onClick={() => { setAccountError(''); setAccountDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Delete account', 'Elimina account')}</Button>
     </Card>
 
+    <Dialog open={updateDialogOpen} onOpenChange={setUpdateDialogOpen}>
+      <DialogContent className="orbitpage-admin oss-account-delete-dialog account-update-dialog" overlayClassName="oss-account-delete-overlay">
+        <DialogHeader>
+          <DialogTitle>{tr('Install OrbitPage update', 'Installa l’aggiornamento di OrbitPage')}</DialogTitle>
+          <DialogDescription>{tr('Updates are installed on the server hosting OrbitPage. The official updater backs up your data before replacing the running application.', 'Gli aggiornamenti si installano sul server che ospita OrbitPage. L’updater ufficiale salva un backup dei dati prima di sostituire l’applicazione in esecuzione.')}</DialogDescription>
+        </DialogHeader>
+        <ol className="account-update-steps">
+          <li>{tr('Open a terminal on your OrbitPage server.', 'Apri un terminale sul server OrbitPage.')}</li>
+          <li>{tr('Run the official update command.', 'Esegui il comando ufficiale di aggiornamento.')}<div className="account-update-command"><code>{UPDATE_COMMAND}</code><Button type="button" variant="outline" size="sm" onClick={() => void copyUpdateCommand()}><Copy className="h-4 w-4" />{copyStatus === 'copied' ? tr('Copied', 'Copiato') : tr('Copy command', 'Copia comando')}</Button></div></li>
+          <li>{tr('When the update finishes, reload this page to see the installed version.', 'Al termine, ricarica questa pagina per vedere la versione installata.')}</li>
+        </ol>
+        {copyStatus === 'error' && <p className="oss-account-error" role="alert">{tr('Copy unavailable. Select and copy the command manually.', 'Copia non disponibile. Seleziona e copia il comando manualmente.')}</p>}
+        <p className="muted">{tr('For pinned image versions or an updater that is not installed yet, follow the update guide first.', 'Se l’immagine è bloccata a una versione o l’updater non è ancora installato, segui prima la guida agli aggiornamenti.')}</p>
+        <a className="account-instance-release-link" href={UPDATE_GUIDE} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Update guide', 'Guida agli aggiornamenti')}</a>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setUpdateDialogOpen(false)}>{tr('Close', 'Chiudi')}</Button>
+          <Button type="button" variant="gradient" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" />{tr('Reload after updating', 'Ricarica dopo l’aggiornamento')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
     <Dialog open={dialogOpen} onOpenChange={(open) => { if (!busy) setDialogOpen(open); }}>
-      <DialogContent className="oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
+      <DialogContent className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
         <DialogHeader>
           <DialogTitle>{tr('Remove your personal OrbitPage?', 'Rimuovere la tua OrbitPage personale?')}</DialogTitle>
           <DialogDescription>{tr('This permanently deletes public content, page versions, and uploaded media. Your administrator login and two-factor settings remain active. Export a backup first if you may need this data.', 'Questa operazione elimina definitivamente contenuti pubblici, versioni della pagina e media caricati. Login amministratore e verifica in due passaggi restano attivi. Esporta prima un backup se potresti aver bisogno di questi dati.')}</DialogDescription>
@@ -166,7 +224,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     </Dialog>
 
     <Dialog open={accountDialogOpen} onOpenChange={(open) => { if (!accountBusy) setAccountDialogOpen(open); }}>
-      <DialogContent className="oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
+      <DialogContent className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
         <DialogHeader>
           <DialogTitle>{tr('Delete the account and reset OrbitPage?', 'Eliminare l’account e ripristinare OrbitPage?')}</DialogTitle>
           <DialogDescription>{tr('This permanently removes every administrator, page, upload, and setting from this installation. Export a backup first if you may need this data.', 'Questa operazione rimuove definitivamente tutti gli amministratori, le pagine, i caricamenti e le impostazioni dall’installazione. Esporta prima un backup se potresti aver bisogno di questi dati.')}</DialogDescription>

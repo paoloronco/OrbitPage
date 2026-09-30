@@ -8172,6 +8172,14 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-account-layout .account-detail-row dd { margin: 0; overflow-wrap: anywhere; color: var(--admin-ink); font-size: 13px; font-weight: 750; }
 .oss-account-layout .login-method { display: inline-flex; padding: 5px 9px; border: 1px solid #c8e5de; border-radius: 999px; background: #e9f5f2; color: #126152; font-size: 12px; font-weight: 850; }
 .account-instance-card { align-content: start; }
+.account-instance-updates { display: grid; gap: 10px; }
+.account-instance-updates > p { margin: 0; }
+.account-instance-update-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.account-instance-update-actions button { min-height: 36px; }
+.account-instance-release-link { display: inline-flex; align-items: center; gap: 6px; justify-self: start; color: #3158d8; font-size: 12px; font-weight: 700; }
+.account-update-steps { display: grid; gap: 14px; margin: 0; padding-left: 20px; list-style: decimal; font-size: 13px; line-height: 1.5; }
+.account-update-command { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; padding: 10px; border: 1px solid #d8e1ee; border-radius: 6px; background: #f8fafc; }
+.account-update-command code { overflow-wrap: anywhere; user-select: all; font-size: 12px; }
 .oss-account-password-card { padding: 24px; }
 .oss-account-password-card .text-center { text-align: left; }
 .oss-account-password-card .justify-center { justify-content: flex-start; }

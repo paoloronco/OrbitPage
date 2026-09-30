@@ -310,6 +310,7 @@ app.use(helmet({
       connectSrc: IS_PRODUCTION
         ? [
             "'self'", "http://localhost:*", "https://localhost:*",
+            "https://api.github.com",
             "https://www.google-analytics.com", "https://*.google-analytics.com",
             "https://analytics.google.com", "https://*.analytics.google.com",
             "https://www.googletagmanager.com", "https://*.googletagmanager.com",
@@ -323,6 +324,7 @@ app.use(helmet({
           ]
         : [
             "'self'", FRONTEND_URL,
+            "https://api.github.com",
             "https://www.google-analytics.com", "https://*.google-analytics.com",
             "https://analytics.google.com", "https://*.analytics.google.com",
             "https://www.googletagmanager.com", "https://*.googletagmanager.com",

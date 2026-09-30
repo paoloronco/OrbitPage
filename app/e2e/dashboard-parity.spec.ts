@@ -28,6 +28,42 @@ const navigationIcons = {
   Plan: 'credit-card-outlined',
 } as const;
 
+test('checks OSS updates and opens the host installation guide without executing an update', async ({ page }) => {
+  let tag = 'v99.0.0';
+  let status = 200;
+  await page.route('https://api.github.com/repos/paoloronco/OrbitPage/releases/latest', route => route.fulfill({
+    status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
+    body: JSON.stringify({ tag_name: tag, draft: false, prerelease: false }),
+  }));
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  const instance = page.locator('.account-instance-card');
+  const currentVersion = await instance.locator('.account-detail-row').filter({ hasText: 'Current version' }).locator('dd').innerText();
+  expect(currentVersion).toMatch(/^v\d+\.\d+\.\d+$/);
+  const check = instance.getByRole('button', { name: 'Check for updates', exact: true });
+  const install = instance.getByRole('button', { name: 'Install update…', exact: true });
+  await expect(install).toBeDisabled();
+  await check.click();
+  await expect(instance.getByRole('status')).toContainText('Update available: v99.0.0');
+  await expect(instance.getByRole('link', { name: 'Release notes' })).toHaveAttribute('href', 'https://github.com/paoloronco/OrbitPage/releases/tag/v99.0.0');
+  await install.click();
+  const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('heading')).toHaveCSS('color', 'rgb(17, 27, 45)');
+  await expect(dialog.getByRole('button', { name: 'Copy command', exact: true })).toHaveCSS('color', 'rgb(15, 23, 41)');
+  await expect(dialog.locator('code')).toHaveText('sudo orbitpage-update');
+  await expect(dialog.getByRole('link', { name: 'Update guide' })).toHaveAttribute('href', /#update-safely$/);
+  await page.keyboard.press('Escape');
+  tag = currentVersion;
+  await check.click();
+  await expect(instance.getByRole('status')).toHaveText('You’re up to date.');
+  await expect(install).toBeDisabled();
+  status = 503;
+  await check.click();
+  await expect(instance.getByRole('status')).toHaveText('Could not check for updates. Try again.');
+  await expect(install).toBeDisabled();
+});
+
 test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
