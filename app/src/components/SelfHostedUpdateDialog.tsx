@@ -38,7 +38,8 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       if (wasActive.current && !next.enabled) throw new Error('Updater disconnected.');
       if (wasActive.current && acceptedJobId.current && next.job?.id !== acceptedJobId.current) throw new Error('Waiting for the accepted update.');
       const busy = ['queued', 'running'].includes(next.job?.state || '');
-      if (wasActive.current && !busy) setShowResult(true);
+      if (wasActive.current && !busy && next.job
+        && (next.job.id === acceptedJobId.current || next.job.version === requestedVersion || requestedVersion === null)) setShowResult(true);
       wasActive.current = busy;
       acceptedJobId.current = next.job?.id || null;
       setAwaitingConfirmation(false);
@@ -70,7 +71,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
 
   const install = async () => {
     if (!requestedVersion || !password || !canInstall || !status?.enabled) return;
-    setStarting(true); setAwaitingConfirmation(true); wasActive.current = true; setError('');
+    setStarting(true); setAwaitingConfirmation(true); wasActive.current = true; acceptedJobId.current = null; setError('');
     try {
       const next = await applicationUpdatesApi.install(requestedVersion, password);
       setStatus(next); wasActive.current = ['queued', 'running'].includes(next.job?.state || '');
