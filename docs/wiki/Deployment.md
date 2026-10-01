@@ -53,7 +53,11 @@ sudo docker run -d --name orbitpage \
   --security-opt no-new-privileges:true \
   paoloronco/orbitpage:latest
 
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
+updater_setup_dir="$(mktemp -d)"
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
+sudo bash "$updater_setup_dir/install-updater.sh"
+rm -f -- "$updater_setup_dir/install-updater.sh"
+rmdir -- "$updater_setup_dir"
 ```
 
 `--restart unless-stopped` restarts OrbitPage after a failure or host reboot but respects an explicit `docker stop`. Replace it with `--restart always` only when the container must return after a Docker daemon restart even if it was stopped manually.
@@ -91,7 +95,11 @@ Save the file as `compose.production.yaml` and start it. Use `latest` for update
 ```bash
 sudo docker compose -f compose.production.yaml pull
 sudo docker compose -f compose.production.yaml up -d
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
+updater_setup_dir="$(mktemp -d)"
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
+sudo bash "$updater_setup_dir/install-updater.sh"
+rm -f -- "$updater_setup_dir/install-updater.sh"
+rmdir -- "$updater_setup_dir"
 ```
 
 The repository `docker-compose.yml` binds to localhost, persists `./orbitpage-data`, and lets the image create the secret there automatically.
@@ -530,7 +538,11 @@ Demo installations do not offer the installation action.
 Install the host updater once on an existing manual deployment, then use the same command as new installations:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash
+updater_setup_dir="$(mktemp -d)"
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
+sudo bash "$updater_setup_dir/install-updater.sh"
+rm -f -- "$updater_setup_dir/install-updater.sh"
+rmdir -- "$updater_setup_dir"
 sudo orbitpage-update
 ```
 
@@ -561,7 +573,11 @@ On a Linux host with systemd and a local Docker engine, enable the service once
 for the intended container (replace `orbitpage` with its actual name):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash -s -- --enable-web-updates orbitpage
+updater_setup_dir="$(mktemp -d)"
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
+sudo bash "$updater_setup_dir/install-updater.sh" --enable-web-updates orbitpage
+rm -f -- "$updater_setup_dir/install-updater.sh"
+rmdir -- "$updater_setup_dir"
 ```
 
 Install the current release through `sudo orbitpage-update` and reload Account
