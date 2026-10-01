@@ -327,18 +327,13 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   expect(Math.abs(footerActionBounds[0]!.y - footerActionBounds[1]!.y)).toBeLessThanOrEqual(1);
 
   await expect(page.locator('.admin-dashboard-header .admin-dashboard-kicker')).toHaveCount(0);
+  await expect(page.locator('.admin-dashboard-context-row')).toHaveCount(0);
   const headerLeftEdges = await Promise.all([
     page.locator('.admin-dashboard-heading-row h1').boundingBox(),
-    page.locator('.admin-dashboard-context-row').boundingBox(),
+    page.locator('.admin-dashboard-section-description').boundingBox(),
   ]);
   expect(headerLeftEdges.every(Boolean)).toBe(true);
   expect(Math.max(...headerLeftEdges.map((bounds) => bounds!.x)) - Math.min(...headerLeftEdges.map((bounds) => bounds!.x))).toBeLessThanOrEqual(1);
-  const contextSlug = page.locator('.admin-dashboard-context-slug');
-  expect(await contextSlug.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return Math.abs(Number.parseFloat(style.width) - Number.parseFloat(style.flexBasis)) <= 1
-      && style.textOverflow === 'ellipsis';
-  })).toBe(true);
 
   const publicPage = page.getByRole('link', { name: 'Public page' });
   await expect(publicPage).toHaveCSS('min-height', '40px');

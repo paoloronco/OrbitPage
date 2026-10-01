@@ -958,11 +958,6 @@ export const AdminView = ({
           <div className="admin-dashboard-header-copy">
             <div className="admin-dashboard-heading-row"><h1>{displayedTabLabel(activeTab)}</h1></div>
             <p className="admin-dashboard-section-description">{displayedTabDescription(activeTab)}</p>
-            <div className="admin-dashboard-context-row" aria-label={tr("Workspace context", "Contesto workspace")}>
-              <span className="admin-dashboard-context-slug">/{dashboardSlug}</span>
-              <span>{hostedSurfaceConfig?.workspace?.roleLabel || tr("Owner", "Proprietario")}</span>
-              <span className={`admin-dashboard-page-state${hostedSurfaceConfig?.workspace?.status ? ` admin-dashboard-page-state-${hostedSurfaceConfig.workspace.status}` : ""}`}><i aria-hidden="true" />{hostedSurfaceConfig?.workspace?.statusLabel || tr("Self-hosted", "Self-hosted")}</span>
-            </div>
           </div>
           <div className="admin-dashboard-header-actions">
             <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
