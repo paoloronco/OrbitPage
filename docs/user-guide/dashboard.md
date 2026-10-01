@@ -2,6 +2,19 @@
 
 The self-hosted dashboard opens at `/dashboard/profile` after initial setup. In the visual site editor, **Page**, **Content**, **Menu**, **Shop**, and **Pages** use `/dashboard/editor/page`, `/dashboard/editor/content`, `/dashboard/editor/menu`, `/dashboard/editor/shop`, and `/dashboard/editor/pages`. Refreshing or bookmarking one of these URLs returns to the same section. The classic dashboard keeps its existing `/dashboard/profile` and `/dashboard/content/*` URLs.
 
+Tabs also have their own URLs, prefixed by the dashboard language, for example `/en-US/dashboard/account/security`:
+
+| Workspace path | Tab slugs |
+| --- | --- |
+| `/dashboard/editor/menu` | `settings`, `content`, `design` |
+| `/dashboard/editor/shop` | `legal`, `payments`, `design`, `products`, `orders`, `customers` |
+| `/dashboard/theme` | `page`, `card` |
+| `/dashboard/publish` | `QR`, `Sitemap`, `TXT` |
+| `/dashboard/newsletter` | `overview`, `campaigns`, `subscribers`, `settings` |
+| `/dashboard/account` | `general`, `security` |
+
+Opening, refreshing or using browser Back/Forward restores the selected tab. Changing tabs keeps the current in-memory Menu or Theme draft; refreshing still discards unsaved changes. Existing workspace URLs remain valid. Shop URLs preserve the shared navigation contract; commerce remains a managed-service capability and is shown as unavailable in OSS.
+
 ## A reliable editing workflow
 
 Use this sequence to avoid leaving related changes half-finished:

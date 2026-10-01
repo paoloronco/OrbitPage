@@ -53,6 +53,8 @@ interface ThemeCustomizerProps {
   maxUploadBytes?: number | null;
   maxVideoUploadBytes?: number | null;
   managePlanHref?: string;
+  selectedScope?: PresetScope;
+  onScopeChange?: (scope: PresetScope) => void;
 }
 
 
@@ -277,9 +279,13 @@ export const ThemeCustomizer = ({
   maxUploadBytes,
   maxVideoUploadBytes,
   managePlanHref = "/dashboard/billing",
+  selectedScope,
+  onScopeChange,
 }: ThemeCustomizerProps) => {
   const { tr } = useAppI18n();
-  const [presetScope, setPresetScope] = useState<PresetScope>("page");
+  const [localScope, setLocalScope] = useState<PresetScope>("page");
+  const presetScope = selectedScope ?? localScope;
+  const setPresetScope = (scope: PresetScope) => { setLocalScope(scope); onScopeChange?.(scope); };
   const [pendingTheme, setPendingTheme] = useState<EditableTheme>(theme);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(() => findMatchingPreset(theme));
   const [selectedCardPresetId, setSelectedCardPresetId] = useState<string | null>(() => findMatchingCardPreset(theme));
@@ -306,8 +312,11 @@ export const ThemeCustomizer = ({
   }, [theme]);
 
   useEffect(() => {
-    if (!premiumThemesEnabled && presetScope === "cards") setPresetScope("page");
-  }, [premiumThemesEnabled, presetScope]);
+    if (!premiumThemesEnabled && presetScope === "cards") {
+      setLocalScope("page");
+      onScopeChange?.("page");
+    }
+  }, [premiumThemesEnabled, presetScope, onScopeChange]);
 
   useEffect(() => {
     const wideWorkspace = window.matchMedia("(min-width: 1121px)");

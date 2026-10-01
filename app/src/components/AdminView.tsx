@@ -60,7 +60,7 @@ import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import type { CardLayout } from "@/lib/card-layout";
 import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
-import { canonicalAdminTab, type AdminContentSection, type AdminEditorSection, type AdminTab } from "@/lib/admin-navigation";
+import { canonicalAdminTab, type AdminContentSection, type AdminEditorSection, type AdminTab, type AdminSubsectionScope } from "@/lib/admin-navigation";
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
 import type { InternalDestinationOption } from "@/lib/link-blocks";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
@@ -141,6 +141,8 @@ interface AdminViewProps {
   requestedTab?: AdminTab;
   requestedContentSection?: AdminContentSection;
   requestedEditorSection?: AdminEditorSection | null;
+  requestedSubsection?: string | null;
+  onSubsectionChange?: (scope: AdminSubsectionScope, subsection: string) => void;
   onTabChange?: (tab: AdminTab) => void;
   onContentSectionChange?: (section: AdminContentSection) => void;
   onEditorSectionChange?: (section: AdminEditorSection) => void;
@@ -184,7 +186,6 @@ function visualSectionForContent(section: ContentDestination): VisualSiteEditorS
 const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
 const EMBEDDED_PREVIEW_MEDIA_QUERY = "(min-width: 1121px)";
 const DOCKER_MIGRATION_GUIDE = "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Docker-Hub-migration.md";
-type AccountView = "general" | "security";
 
 export const AdminView = ({
   profile,
@@ -206,6 +207,8 @@ export const AdminView = ({
   requestedTab = "profile",
   requestedContentSection = "link",
   requestedEditorSection = null,
+  requestedSubsection = null,
+  onSubsectionChange,
   onTabChange,
   onContentSectionChange,
   onEditorSectionChange,
@@ -243,7 +246,6 @@ export const AdminView = ({
   const [gaSaved, setGaSaved] = useState(false);
   const [gaSaving, setGaSaving] = useState(false);
   const [gaSetupOpen, setGaSetupOpen] = useState(false);
-  const [accountView, setAccountView] = useState<AccountView>("general");
   const [updateDialogVersion, setUpdateDialogVersion] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
   const [contentSection, setContentSection] = useState<ContentDestination>(() => (
@@ -295,6 +297,12 @@ export const AdminView = ({
     saasBilling
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
+  const subsection = isIntegratedHostedAdmin ? hostedSurfaceConfig?.subsection : requestedSubsection;
+  const accountView = subsection === "security" ? "security" : "general";
+  const selectSubsection = (scope: AdminSubsectionScope, value: string) => {
+    if (isIntegratedHostedAdmin) hostedSurfaceConfig?.onSubsectionChange?.(scope, value);
+    else onSubsectionChange?.(scope, value);
+  };
   const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
   const hostedPanelTabs = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.panels || [] : [];
   const usesDashboardShell = !isHostedAdmin || isIntegratedHostedAdmin;
@@ -737,6 +745,8 @@ export const AdminView = ({
     />
   ) : visualSection === "menu" ? (
     <Suspense fallback={<OrbitLoader size={24} state="composing" />}><MenuEditor
+      selectedPanel={subsection === "settings" ? "setup" : subsection === "design" ? "appearance" : "content"}
+      onPanelChange={(panel) => selectSubsection("menu", panel === "setup" ? "settings" : panel === "appearance" ? "design" : "content")}
       menu={menu}
       onPreview={setPreviewMenu}
       designPreview={<PreviewDeviceFrame device="mobile" publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
@@ -1052,6 +1062,8 @@ export const AdminView = ({
 
           <TabsContent value="theme" className="admin-tab-content">
             <Suspense fallback={<OrbitLoader size={24} state="composing" />}><ThemeCustomizer
+              selectedScope={subsection === "card" ? "cards" : "page"}
+              onScopeChange={(scope) => selectSubsection("theme", scope === "cards" ? "card" : "page")}
               theme={theme}
               onThemeChange={onThemeChange}
               onThemePreview={(nextTheme) => applyTheme(nextTheme)}
@@ -1076,6 +1088,8 @@ export const AdminView = ({
 
           <TabsContent value="publish" className="admin-tab-content">
             <PublishTools
+              selectedTool={subsection === "Sitemap" ? "sitemap" : subsection === "TXT" ? "txt" : subsection === "QR" ? "qr" : undefined}
+              onToolChange={(tool) => selectSubsection("publish", tool === "qr" ? "QR" : tool === "sitemap" ? "Sitemap" : "TXT")}
               menu={menu}
               subpages={subpages}
               readOnly={DEMO_MODE}
@@ -1095,7 +1109,7 @@ export const AdminView = ({
 
           {!isHostedAdmin && canManageUsers && (
             <TabsContent value="newsletter" className="admin-tab-content">
-              <Suspense fallback={<OrbitLoader size={24} state="composing" />}><NewsletterWorkspace user={{ uid: currentUser?.username || 'admin' }} /></Suspense>
+              <Suspense fallback={<OrbitLoader size={24} state="composing" />}><NewsletterWorkspace user={{ uid: currentUser?.username || 'admin' }} selectedView={subsection === "settings" ? "smtp" : subsection === "campaigns" || subsection === "subscribers" ? subsection : "overview"} onViewChange={(view) => selectSubsection("newsletter", view === "smtp" ? "settings" : view)} /></Suspense>
             </TabsContent>
           )}
 
@@ -1103,8 +1117,8 @@ export const AdminView = ({
             <TabsContent value="account" className="admin-tab-content">
               <div className="oss-account-layout account-layout account-workspace" data-onboarding="account-section">
                 <nav aria-label={tr("Account sections", "Sezioni account")} className="account-tabs">
-                  <button aria-current={accountView === "general" ? "page" : undefined} className={accountView === "general" ? "active" : ""} onClick={() => setAccountView("general")} type="button"><CircleUserRound aria-hidden="true" />{tr("General", "Generale")}</button>
-                  <button aria-current={accountView === "security" ? "page" : undefined} className={accountView === "security" ? "active" : ""} onClick={() => setAccountView("security")} type="button"><ShieldCheck aria-hidden="true" />{tr("Security", "Sicurezza")}</button>
+                  <button aria-current={accountView === "general" ? "page" : undefined} className={accountView === "general" ? "active" : ""} onClick={() => selectSubsection("account", "general")} type="button"><CircleUserRound aria-hidden="true" />{tr("General", "Generale")}</button>
+                  <button aria-current={accountView === "security" ? "page" : undefined} className={accountView === "security" ? "active" : ""} onClick={() => selectSubsection("account", "security")} type="button"><ShieldCheck aria-hidden="true" />{tr("Security", "Sicurezza")}</button>
                 </nav>
                 {accountView === "general" ? (
                   <SelfHostedAccountActions

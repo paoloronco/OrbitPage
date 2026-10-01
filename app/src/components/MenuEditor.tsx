@@ -31,6 +31,8 @@ interface MenuEditorProps {
   onPreview?: (menu: MenuCatalog) => void;
   designPreview?: ReactNode;
   presentation?: 'classic' | 'visual';
+  selectedPanel?: MenuEditorPanel;
+  onPanelChange?: (panel: MenuEditorPanel) => void;
 }
 
 type MenuEditorPanel = 'setup' | 'content' | 'appearance';
@@ -163,7 +165,7 @@ function PriceInput({
 
 export function MenuEditor({
   menu, enabled, maxItems, advancedTheme,
-  onSave, onPreview, designPreview, presentation = 'classic',
+  onSave, onPreview, designPreview, presentation = 'classic', selectedPanel, onPanelChange,
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
@@ -171,7 +173,9 @@ export function MenuEditor({
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
   const [saveError, setSaveError] = useState('');
   const [savedNotice, setSavedNotice] = useState<SavedMenuNotice | null>(null);
-  const [activePanel, setActivePanel] = useState<MenuEditorPanel>('content');
+  const [localPanel, setLocalPanel] = useState<MenuEditorPanel>('content');
+  const activePanel = selectedPanel ?? localPanel;
+  const setActivePanel = (panel: MenuEditorPanel) => { setLocalPanel(panel); onPanelChange?.(panel); };
   const [mobileContentPane, setMobileContentPane] = useState<MenuContentPane>('sections');
   const [mobileEditingItem, setMobileEditingItem] = useState(false);
   const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);

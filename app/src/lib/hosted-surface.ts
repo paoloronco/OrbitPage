@@ -1,4 +1,4 @@
-import type { AdminTab } from "./admin-navigation";
+import type { AdminTab, AdminSubsectionScope } from "./admin-navigation";
 import type { ContentDestination, ContentRouting } from "./menu";
 import { isHostedRuntime } from "./runtime-mode";
 
@@ -32,6 +32,8 @@ export type HostedSurfaceConfig = {
   onSignOut?: () => void;
   onLocaleChange?: (locale: string) => void;
   contentSection?: ContentDestination;
+  subsection?: string | null;
+  onSubsectionChange?: (scope: AdminSubsectionScope, subsection: string) => void;
   onContentRoutingChange?: (routing: ContentRouting) => void;
   onContentSectionChange?: (section: ContentDestination) => void;
   onShopStatusChange?: (enabled: boolean) => Promise<void>;

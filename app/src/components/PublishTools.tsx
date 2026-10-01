@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { FileText, Map, QrCode } from "@/components/ui/material-icons";
 import { useAppI18n } from "@/lib/i18n";
 import { ProfileQrCode } from "./ProfileQrCode";
@@ -15,6 +15,8 @@ interface PublishToolsProps {
   readOnly?: boolean;
   canUseQr?: boolean;
   canUseDiscovery?: boolean;
+  selectedTool?: PublishTool;
+  onToolChange?: (tool: PublishTool) => void;
 }
 
 const TOOL_STORAGE_KEY = "orbitpage.admin.publish-tool";
@@ -25,6 +27,8 @@ export function PublishTools({
   readOnly = false,
   canUseQr = true,
   canUseDiscovery = true,
+  selectedTool,
+  onToolChange,
 }: PublishToolsProps) {
   const { tr } = useAppI18n();
   const tools = useMemo(() => [
@@ -34,19 +38,17 @@ export function PublishTools({
       { id: "txt" as const, icon: FileText, title: "TXT", description: tr("Control crawler, AI and trust files.", "Gestisci file per crawler, AI e attendibilità.") },
     ] : []),
   ], [canUseDiscovery, canUseQr, tr]);
-  const [activeTool, setActiveTool] = useState<PublishTool>(() => {
+  const [localTool, setActiveTool] = useState<PublishTool>(() => {
     if (typeof window === "undefined") return canUseQr ? "qr" : "sitemap";
     const stored = window.localStorage.getItem(TOOL_STORAGE_KEY);
     return stored === "qr" || stored === "sitemap" || stored === "txt" ? stored : canUseQr ? "qr" : "sitemap";
   });
-
-  useEffect(() => {
-    if (tools.some((tool) => tool.id === activeTool)) return;
-    setActiveTool(tools[0]?.id || "qr");
-  }, [activeTool, tools]);
+  const requestedTool = selectedTool ?? localTool;
+  const activeTool = tools.some((tool) => tool.id === requestedTool) ? requestedTool : tools[0]?.id || "qr";
 
   const selectTool = (tool: PublishTool) => {
     setActiveTool(tool);
+    onToolChange?.(tool);
     try {
       window.localStorage.setItem(TOOL_STORAGE_KEY, tool);
     } catch {
