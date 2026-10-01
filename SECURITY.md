@@ -71,6 +71,8 @@ These are targets, not contractual guarantees.
 - Docker generates `JWT_SECRET` once under persistent `DATA_DIR`; production Node deployments must set it explicitly.
 - Optional `RESET_TOKEN` enables protected recovery endpoints and should be at least 32 characters.
 - Uploaded files are written under `DATA_DIR/uploads` and served from `/uploads`.
+- AI screenshot input accepts only supported image MIME types with matching file signatures.
+- The web updater accepts bounded stable version identifiers before starting an update job.
 
 ## Deployment Recommendations
 

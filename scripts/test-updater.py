@@ -61,7 +61,7 @@ class UpdatePlanTests(unittest.TestCase):
     def test_web_job_survives_restart_and_rejects_parallel_or_untrusted_requests(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(updater.threading.Thread, 'start'):
             state = updater.WebUpdateState('orbitpage-test', Path(directory))
-            for version in ['v4.21.35', '4.21.35; rm -rf /', '../file', 42, '04.1.1']:
+            for version in ['v4.21.35', '4.21.35; rm -rf /', '../file', 42, '04.1.1', '1' * 10000]:
                 with self.assertRaises(ValueError): state.start(version)
             state.start('4.21.35')
             with self.assertRaisesRegex(RuntimeError, 'already in progress'): state.start('4.21.35')

@@ -401,7 +401,10 @@ class WebUpdateState:
         self.save()
 
     def start(self, version):
-        if not isinstance(version, str) or not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', version):
+        if not isinstance(version, str) or len(version) > 64:
+            raise ValueError('Invalid stable version.')
+        parts = version.split('.')
+        if len(parts) != 3 or any(not part.isascii() or not part.isdecimal() or (len(part) > 1 and part[0] == '0') for part in parts):
             raise ValueError('Invalid stable version.')
         with self.lock:
             if self.job and self.job['state'] in ('queued', 'running'):
