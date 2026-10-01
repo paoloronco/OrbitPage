@@ -93,7 +93,7 @@ import {
 } from './services/machine-readable.js';
 import { createNewsletterRouter } from './routes/newsletter.js';
 import { startNewsletterDispatcher } from './services/newsletter.js';
-import { PUBLIC_LOCALES, localizedAlternates, localizedPublicPath, normalizePublicLocale, parseLocalizedPublicPath } from './public-locale.js';
+import { normalizePublicLocale, parseLocalizedPublicPath } from './public-locale.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1310,7 +1310,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const pageSlug = await getInstancePageSlug();
   const localizedRequest = parseLocalizedPublicPath(req.path);
   const requestPath = localizedRequest?.routePath || req.path;
-  const locale = localizedRequest || normalizePublicLocale('en');
+  const locale = (isAdminSpaRoute(requestPath) && localizedRequest) || normalizePublicLocale('en');
   const newsletterRoute = requestPath === '/newsletter' || requestPath === '/newsletter/status';
   let pathName = canonicalPathForRequest(requestPath);
   const pageKind = newsletterRoute ? 'admin' : getPageKind(pathName);
@@ -1337,12 +1337,9 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
     };
     links = getPublicSubpagesPayload([subpage])[0]?.links || [];
   }
-  const localizablePage = !isAdminSpaRoute(requestPath) && pageKind !== 'about';
-  const canonicalPath = localizablePage ? localizedPublicPath(locale.slug, pathName) : pathName;
+  const canonicalPath = isAdminSpaRoute(requestPath) ? req.path : pathName;
   const canonicalUrl = new URL(withRequestBasePath(req, canonicalPath), origin).toString();
-  const alternates = localizablePage
-    ? localizedAlternates(origin, getActiveBasePath(req), pathName)
-    : { 'x-default': canonicalUrl };
+  const alternates = { 'x-default': canonicalUrl };
 
   const title = newsletterRoute ? `Newsletter | ${PUBLIC_SITE_NAME}` : setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
   const description = setupRequired
@@ -1571,12 +1568,11 @@ const buildDefaultLlmsTxt = async (req) => {
     getPublicLinksPayload(),
     getSubpagesPayload(),
   ]);
-  const homePath = localizedPublicPath('en');
-  const homeUrl = new URL(withRequestBasePath(req, homePath), origin).toString();
+  const homeUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
   const sitemapUrl = new URL(withRequestBasePath(req, '/sitemap.xml'), origin).toString();
   const page = renderPublicPageMarkdown({ profile, links, canonicalUrl: homeUrl }).trimEnd();
   const routes = getPublicSubpagesPayload(subpages)
-    .map((subpage) => `- [${markdownTextForLlms(subpage.title)}](${new URL(withRequestBasePath(req, localizedPublicPath('en', `/${subpage.slug}`)), origin)})`);
+    .map((subpage) => `- [${markdownTextForLlms(subpage.title)}](${new URL(withRequestBasePath(req, `/${subpage.slug}`), origin)})`);
   return normalizeTextFileContent(`${page}\n\n## Discovery\n\n- [robots.txt](${new URL(withRequestBasePath(req, '/robots.txt'), origin)})\n- [sitemap.xml](${sitemapUrl})${routes.length ? `\n\n## Additional pages\n\n${routes.join('\n')}` : ''}\n`);
 };
 
@@ -1713,22 +1709,8 @@ const getSitemapLastModified = async () => {
   }
 };
 
-const preferredPublicLocale = (req) => normalizePublicLocale(
-  req.acceptsLanguages(...PUBLIC_LOCALES.map(([, slug]) => slug)) || 'en',
-);
-
 // Serve the public page. GA is loaded client-side only after analytics consent.
-app.get('/', spaLimiter, async (req, res) => {
-  try {
-    const [setupRequired, active] = await Promise.all([isFirstTimeSetup(), isInstancePageActive()]);
-    if (!setupRequired && active) {
-      return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug)));
-    }
-  } catch (error) {
-    console.warn('Could not resolve the localized public route:', error?.message || error);
-  }
-  return serveSpaIndex(req, res);
-});
+app.get('/', spaLimiter, (req, res) => serveSpaIndex(req, res));
 
 const serveBuiltInTextFile = async (req, res) => {
   const definition = TEXT_FILE_PATHS.get(req.path);
@@ -1785,17 +1767,10 @@ const buildSitemapDocument = async (req) => {
     additionalUrls.push({ loc: new URL(withRequestBasePath(req, '/menu'), origin).toString(), priority: '0.8', changefreq: 'weekly' });
   }
 
-  const routeUrls = [
+  const urls = [
     { loc: new URL(withRequestBasePath(req, '/'), origin).toString(), priority: '1.0', changefreq: 'weekly' },
     ...additionalUrls,
   ];
-  const urls = routeUrls.flatMap((url) => {
-    const routePath = new URL(url.loc).pathname.slice(getActiveBasePath(req).length) || '/';
-    return PUBLIC_LOCALES.map(([locale]) => ({
-      ...url,
-      loc: new URL(withRequestBasePath(req, localizedPublicPath(locale, routePath)), origin).toString(),
-    }));
-  });
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -2711,8 +2686,7 @@ app.get('/go/:campaignSlug', async (req, res) => {
     if (destination === null) return res.status(404).send('Campaign link not found.');
     const [pathName, query = ''] = destination.split('?', 2);
     const routePath = pathName ? `/${pathName}` : '/';
-    const targetPath = localizedPublicPath('en', routePath);
-    const target = new URL(withRequestBasePath(req, targetPath), getRequestOrigin(req));
+    const target = new URL(withRequestBasePath(req, routePath), getRequestOrigin(req));
     if (query) target.search = query;
     res.set('Cache-Control', 'private, max-age=0, no-store');
     res.set('X-Robots-Tag', 'noindex');
@@ -5735,11 +5709,13 @@ app.get('*', spaLimiter, async (req, res) => {
     isActivePersonalPageRoute = false;
   }
   const statusCode = isAdminSpaRoute(req.path) || ((PUBLIC_SPA_ROUTES.has(publicRoutePath) || isConfiguredPrimaryPage || isConfiguredSubpage) && isActivePersonalPageRoute) ? 200 : 404;
-  if (statusCode === 200 && legacyLocalizedAlias) {
-    return res.redirect(302, withRequestBasePath(req, localizedPublicPath(localizedRoute.slug)));
+  if (statusCode === 200 && localizedRoute && !isAdminSpaRoute(req.path)) {
+    const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(302, `${withRequestBasePath(req, publicRoutePath)}${query}`);
   }
   if (statusCode === 200 && configuredPageSlug && isConfiguredPrimaryPage && !localizedRoute && req.path === `/${configuredPageSlug}`) {
-    return res.redirect(302, withRequestBasePath(req, localizedPublicPath(preferredPublicLocale(req).slug)));
+    const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(302, `${withRequestBasePath(req, '/')}${query}`);
   }
   serveSpaIndex(req, res, { statusCode });
 });

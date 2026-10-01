@@ -42,13 +42,15 @@ describe('tenant public paths', () => {
     expect(withPageRootPath('/links')).toBe('/orbitpage/links');
   });
 
-  it('keeps navigation inside the localized self-hosted route', () => {
+  it.each([false, true])('keeps public navigation independent of dashboard language with hosted snapshot=%s', (hosted) => {
     vi.stubGlobal('window', {
       __ORBITPAGE_BASE_PATH__: '/orbitpage',
-      location: { pathname: '/orbitpage/it-IT/services' },
+      ...(hosted ? { __ORBITPAGE_STATIC_SNAPSHOT__: {} } : {}),
+      location: { pathname: '/orbitpage/it-IT/dashboard/account/general' },
     });
-    expect(withPageRootPath('/menu')).toBe('/orbitpage/it-IT/menu');
-    expect(withTenantBasePath('/privacy')).toBe('/orbitpage/it-IT/privacy');
+    expect(withPageRootPath('/')).toBe('/orbitpage/');
+    expect(withPageRootPath('/menu')).toBe('/orbitpage/menu');
+    expect(withTenantBasePath('/privacy')).toBe('/orbitpage/privacy');
   });
 
   it('loads shared brand files from the hosted runtime instead of the tenant slug', () => {

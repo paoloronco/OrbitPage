@@ -141,7 +141,7 @@ It:
 - starts the container with `no-new-privileges` and a health check;
 - installs the `orbitpage` and `orbitpage-update` management commands.
 
-The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks and create the fixed `admin` password. The main page then uses locale-prefixed URLs such as `http://SERVER_IP:8080/en-US` and `http://SERVER_IP:8080/it-IT`; the installation root remains a compatibility alias.
+The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks and create the fixed `admin` password. The main page uses `http://SERVER_IP:8080/` without a language prefix. The dashboard includes the interface language, for example `/it-IT/dashboard/profile`; older localized public URLs redirect to the unprefixed destination.
 
 ### Installation options
 

@@ -1,6 +1,5 @@
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
 import { isHostedRuntime } from './runtime-mode';
-import { parseLocalizedPublicPath } from './public-routing';
 
 declare global {
   interface Window {
@@ -69,11 +68,6 @@ export const withPageRootPath = (path = '/'): string => {
   if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const activeBase = getActiveBasePath();
-  const localizedRoute = typeof window === 'undefined' ? null : parseLocalizedPublicPath(window.location.pathname, activeBase);
-  if (localizedRoute) {
-    const localizedRoot = `${activeBase}/${localizedRoute.localeSlug}`;
-    return normalizedPath === '/' ? localizedRoot : `${localizedRoot}${normalizedPath}`;
-  }
   const scope = getConsentScope();
   if (!activeBase || !scope) return normalizedPath;
   const tenantBase = activeBase === `/${scope}` || activeBase.startsWith(`/${scope}/`)

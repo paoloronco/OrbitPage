@@ -17,6 +17,8 @@ Tabs also have their own URLs, prefixed by the dashboard language, for example `
 
 Opening, refreshing or using browser Back/Forward restores the selected tab. Changing tabs keeps the current in-memory Menu or Theme draft; refreshing still discards unsaved changes. Existing workspace URLs remain valid. Shop URLs preserve the shared navigation contract; commerce remains a managed-service capability and is shown as unavailable in OSS.
 
+The dashboard language stays in its URL and follows browser Back/Forward. Public page, menu, policy, newsletter and subpage URLs have no language prefix in either edition; old localized self-hosted public URLs redirect to their unprefixed destination.
+
 ## A reliable editing workflow
 
 Use this sequence to avoid leaving related changes half-finished:
@@ -52,9 +54,9 @@ Profile-card overrides take precedence over the active theme. Use **Use theme** 
 **Content** groups four destinations:
 
 - **Link** contains the profile and ordered content blocks.
-- **Menu** creates the native venue menu below the localized public prefix, for example `/en-US/menu`.
+- **Menu** creates the native venue menu at `/menu`.
 - **Shop** publishes the Stripe-powered product and service catalog at `/shop` on OrbitPage SaaS.
-- **Pages** creates focused public subpages below the same locale prefix, for example `/it-IT/services`.
+- **Pages** creates focused public subpages, for example `/services`.
 
 One active destination is always selected as the homepage. Choose a different homepage before deactivating the current one. Deactivation requires confirmation and keeps the destination's content saved for later reactivation.
 
