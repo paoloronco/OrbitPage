@@ -173,9 +173,11 @@ function minimumLocalScheduleValue(date = new Date()) {
     .slice(0, 16);
 }
 
-export default function NewsletterWorkspace({ user }: { user: NewsletterUser }) {
+export default function NewsletterWorkspace({ user, selectedView, onViewChange }: { user: NewsletterUser; selectedView?: NewsletterView; onViewChange?: (view: NewsletterView) => void }) {
   const [data, setData] = useState<NewsletterDashboardData | null>(null);
-  const [view, setView] = useState<NewsletterView>("overview");
+  const [localView, setLocalView] = useState<NewsletterView>("overview");
+  const view = selectedView ?? localView;
+  const setView = (next: NewsletterView) => { setLocalView(next); onViewChange?.(next); };
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<string | null>(null);
   const [error, setError] = useState("");

@@ -29,6 +29,35 @@ export const ADMIN_CONTENT_SECTION_IDS = ["link", "menu", "shop", "pages"] as co
 export type AdminContentSection = (typeof ADMIN_CONTENT_SECTION_IDS)[number];
 export type AdminEditorSection = "profile" | AdminContentSection;
 
+export const ADMIN_SUBSECTIONS = {
+  menu: ["settings", "content", "design"],
+  shop: ["legal", "payments", "design", "products", "orders", "customers"],
+  theme: ["page", "card"],
+  publish: ["QR", "Sitemap", "TXT"],
+  newsletter: ["overview", "campaigns", "subscribers", "settings"],
+  account: ["general", "security"],
+} as const;
+export type AdminSubsectionScope = keyof typeof ADMIN_SUBSECTIONS;
+
+export function adminSubsectionFromLocation(pathname: string): string | null {
+  const segments = pathname.split("/").filter(Boolean);
+  const index = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");
+  const editor = segments[index + 1] === "editor";
+  const scope = segments[index + (editor ? 2 : 1)];
+  const subsection = segments[index + (editor ? 3 : 2)];
+  if (index < 0 || segments.length !== index + (editor ? 4 : 3)
+    || (editor ? scope !== "menu" && scope !== "shop" : scope === "menu" || scope === "shop")) return null;
+  const options = Object.prototype.hasOwnProperty.call(ADMIN_SUBSECTIONS, scope) ? ADMIN_SUBSECTIONS[scope as AdminSubsectionScope] : [];
+  return options.find((value) => value.toLowerCase() === subsection?.toLowerCase()) || null;
+}
+
+export function adminSubsectionPath(scope: AdminSubsectionScope, subsection: string, locale?: string | null) {
+  const slug = ADMIN_SUBSECTIONS[scope].find((value) => value.toLowerCase() === subsection.toLowerCase());
+  if (!slug) throw new Error("Unknown dashboard subsection");
+  const base = scope === "menu" || scope === "shop" ? adminEditorPath(scope, locale) : adminDashboardPath(scope, "link", locale);
+  return `${base}/${slug}`;
+}
+
 function adminLocalePrefix(locale?: string | null) {
   return locale ? `/${publicLocaleSlug(locale)}` : "";
 }
@@ -86,11 +115,12 @@ export function adminContentSectionFromLocation(pathname: string, fallback: Admi
 
 export function adminTabFromLocation(pathname: string, search = "") {
   if (adminEditorSectionFromLocation(pathname)) return "profile";
-  const queryTab = new URLSearchParams(search).get("section");
-  if (isAdminTab(queryTab)) return canonicalAdminTab(queryTab);
-
   const segments = pathname.split("/").filter(Boolean);
   const routeIndex = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");
   const pathTab = routeIndex >= 0 ? segments[routeIndex + 1] : null;
+  if (adminSubsectionFromLocation(pathname) && isAdminTab(pathTab)) return canonicalAdminTab(pathTab);
+  const queryTab = new URLSearchParams(search).get("section");
+  if (isAdminTab(queryTab)) return canonicalAdminTab(queryTab);
+
   return isAdminTab(pathTab) ? canonicalAdminTab(pathTab) : "profile";
 }

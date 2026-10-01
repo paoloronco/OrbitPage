@@ -7,9 +7,32 @@ import {
   adminTabFromLocation,
   isAdminLocation,
   isAdminTab,
+  ADMIN_SUBSECTIONS,
+  adminSubsectionFromLocation,
+  adminSubsectionPath,
+  type AdminSubsectionScope,
 } from "./admin-navigation";
 
 describe("admin navigation", () => {
+  it("round trips every dashboard subsection, locale and publishing alias", () => {
+    for (const scope of Object.keys(ADMIN_SUBSECTIONS) as AdminSubsectionScope[]) {
+      for (const subsection of ADMIN_SUBSECTIONS[scope]) {
+        for (const locale of [undefined, "en", "it"]) {
+          const path = adminSubsectionPath(scope, subsection, locale);
+          expect(path).toContain(`/dashboard/${scope === "menu" || scope === "shop" ? "editor/" : ""}${scope}/${subsection}`);
+          expect(adminSubsectionFromLocation(path)).toBe(subsection);
+          expect(adminSubsectionFromLocation(path.toLowerCase())).toBe(subsection);
+        }
+      }
+    }
+    for (const path of ["/dashboard/account", "/dashboard/account/unknown", "/dashboard/account/security/extra", "/dashboard/toString/security", "/dashboard/editor/theme/card", "/dashboard/editor/menu/payments"]) {
+      expect(adminSubsectionFromLocation(path)).toBeNull();
+    }
+    expect(() => adminSubsectionPath("account", "unknown")).toThrow();
+    expect(adminTabFromLocation("/dashboard/account/security", "?section=theme")).toBe("account");
+    expect(adminSubsectionFromLocation("/dashboard/menu/settings")).toBeNull();
+    expect(adminSubsectionFromLocation("/dashboard/shop/legal")).toBeNull();
+  });
   it("maps standalone dashboard paths to tabs", () => {
     expect(adminTabFromLocation("/dashboard/profile")).toBe("profile");
     expect(adminTabFromLocation("/dashboard/links")).toBe("content");

@@ -28,6 +28,58 @@ const navigationIcons = {
   Plan: 'credit-card-outlined',
 } as const;
 
+test('opens dashboard subsections directly and keeps tabs, history and menu drafts in sync', async ({ page }) => {
+  test.setTimeout(90_000);
+  await openAuthenticatedAdmin(page);
+  for (const [path, selector] of [
+    ['editor/menu/settings', '#menu-name'],
+    ['editor/menu/content', '.menu-content-shell'],
+    ['editor/menu/design', '.menu-design-layout'],
+    ['theme/page', '.admin-theme-preset-rail'],
+    ['theme/card', '.admin-theme-card-preset'],
+    ['publish/QR', '#publish-tool-qr'],
+    ['publish/Sitemap', '#publish-tool-sitemap'],
+    ['publish/TXT', '#publish-tool-txt'],
+    ['newsletter/overview', '.newsletter-workspace'],
+    ['newsletter/campaigns', '.newsletter-workspace'],
+    ['newsletter/subscribers', '.newsletter-workspace'],
+    ['newsletter/settings', '.newsletter-workspace'],
+    ['account/general', '.account-instance-card'],
+    ['account/security', '.oss-account-mfa-card'],
+    ...['legal', 'payments', 'design', 'products', 'orders', 'customers'].map(view => [`editor/shop/${view}`, '.visual-site-editor__inspector']),
+  ]) {
+    await page.goto(`/en-US/dashboard/${path}`);
+    const shell = await page.request.get(`/en-US/dashboard/${path}`);
+    expect(shell.status()).toBe(200);
+    expect(shell.headers()['cache-control']).toContain('no-store');
+    await expect(page).toHaveURL(new RegExp(`/en-US/dashboard/${path}$`));
+    await expect(page.locator(selector).first()).toBeVisible();
+    if (path.startsWith('newsletter/')) {
+      const view = path.split('/')[1];
+      await expect(page.locator('.newsletter-tabs button.active')).toHaveText(view[0].toUpperCase() + view.slice(1));
+    }
+  }
+  await page.goto('/en-US/dashboard/editor/menu');
+  const menuTabs = page.getByRole('navigation', { name: 'Menu setup workflow' });
+  await menuTabs.getByRole('button', { name: /Settings/ }).click();
+  await expect(page).toHaveURL(/\/editor\/menu\/settings$/);
+  await page.locator('#menu-name').fill('Unsaved route draft');
+  await menuTabs.getByRole('button', { name: /Design/ }).click();
+  await expect(page).toHaveURL(/\/editor\/menu\/design$/);
+  await page.goBack();
+  await expect(page.locator('#menu-name')).toHaveValue('Unsaved route draft');
+  await page.goForward();
+  await expect(page.locator('.menu-design-layout')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.menu-design-layout')).toBeVisible();
+  await page.goto('/it-IT/dashboard/account/security');
+  await expect(page.locator('.account-tabs .active')).toHaveText('Sicurezza');
+  await page.reload();
+  await expect(page).toHaveURL(/\/it-IT\/dashboard\/account\/security$/);
+  await page.goto('/en-US/dashboard/account/unknown');
+  await expect(page.locator('.admin-dashboard-shell')).toHaveCount(0);
+});
+
 test('checks OSS updates and explains when the host update service is not enabled', async ({ page }) => {
   let tag = 'v99.0.0';
   let status = 200;
@@ -53,6 +105,11 @@ test('checks OSS updates and explains when the host update service is not enable
   const initialCards = await Promise.all([details.boundingBox(), instance.boundingBox()]);
   expect(initialCards.every(Boolean)).toBe(true);
   expect(Math.abs(initialCards[0]!.height - initialCards[1]!.height)).toBeLessThanOrEqual(1);
+  for (let index = 0; index < 4; index += 1) {
+    const rows = await Promise.all([details, instance].map(card => card.locator('.account-detail-row').nth(index).boundingBox()));
+    expect(Math.abs(rows[0]!.y - rows[1]!.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(rows[0]!.height - rows[1]!.height)).toBeLessThanOrEqual(1);
+  }
   const initialSupport = await page.locator('.oss-account-support-card').boundingBox();
   const check = instance.getByRole('button', { name: 'Check for updates', exact: true });
   const install = instance.getByRole('button', { name: 'Install update…', exact: true });
@@ -104,7 +161,18 @@ test('keeps the update modal locked through a restart and shows logs and the con
   await page.getByRole('button', { name: 'Install update…', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
   await expect(dialog.getByRole('status')).toContainText('Ready to install');
-  await dialog.getByLabel('Current password', { exact: true }).fill('Current123!');
+  await page.evaluate(() => document.fonts.ready);
+  await dialog.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
+  const updatePassword = dialog.getByLabel('Admin dashboard password', { exact: true });
+  const beforeFocus = await Promise.all([dialog.boundingBox(), updatePassword.boundingBox()]);
+  await updatePassword.click();
+  expect(await Promise.all([dialog.boundingBox(), updatePassword.boundingBox()])).toEqual(beforeFocus);
+  expect(await updatePassword.evaluate(element => {
+    const style = getComputedStyle(element);
+    return Number.parseFloat(style.outlineOffset) + Number.parseFloat(style.outlineWidth) <= 0 && style.boxShadow === 'none';
+  })).toBe(true);
+  await page.screenshot({ path: 'output/playwright/oss-update-password.png' });
+  await dialog.getByLabel('Admin dashboard password', { exact: true }).fill('Current123!');
   await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Checking the release');
   await page.keyboard.press('Escape');
@@ -133,7 +201,7 @@ test('keeps the update modal locked through a restart and shows logs and the con
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
   await page.getByRole('button', { name: 'Install update…', exact: true }).click();
-  await dialog.getByLabel('Current password', { exact: true }).fill('Current123!');
+  await dialog.getByLabel('Admin dashboard password', { exact: true }).fill('Current123!');
   await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
   await expect(dialog.getByRole('alert')).toContainText('Host updater unavailable.');
   await expect(dialog.getByRole('status')).toHaveText('Ready to install v100.0.0');
@@ -181,7 +249,7 @@ test('does not claim installation when the start is rejected or cannot be confir
   await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
   await page.getByRole('button', { name: 'Install update…', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
-  await dialog.getByLabel('Current password', { exact: true }).fill('Incorrect123!');
+  await dialog.getByLabel('Admin dashboard password', { exact: true }).fill('Incorrect123!');
   await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
   await expect(dialog.getByRole('alert').first()).toBeVisible();
   await expect(dialog.locator('progress')).toHaveCount(0);
@@ -190,7 +258,7 @@ test('does not claim installation when the start is rejected or cannot be confir
 
   unavailable = false; rejected = false;
   await page.getByRole('button', { name: 'Install update…', exact: true }).click();
-  await dialog.getByLabel('Current password', { exact: true }).fill('Current123!');
+  await dialog.getByLabel('Admin dashboard password', { exact: true }).fill('Current123!');
   await expect(dialog.getByRole('button', { name: 'Install update', exact: true })).toBeEnabled();
   await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
   await expect(dialog.getByRole('status')).toHaveText('Update start has not been confirmed');

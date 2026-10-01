@@ -816,6 +816,14 @@ PUBLIC_SPA_ROUTES.add('/newsletter/status');
 const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'team', 'account', 'plan', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const ADMIN_CONTENT_SECTIONS = new Set(['link', 'menu', 'shop', 'pages']);
 const ADMIN_EDITOR_SECTIONS = new Set(['page', 'content', 'menu', 'shop', 'pages']);
+const ADMIN_SPA_SUBSECTIONS = new Map([
+  ['menu', ['settings', 'content', 'design']],
+  ['shop', ['legal', 'payments', 'design', 'products', 'orders', 'customers']],
+  ['theme', ['page', 'card']],
+  ['publish', ['qr', 'sitemap', 'txt']],
+  ['newsletter', ['overview', 'campaigns', 'subscribers', 'settings']],
+  ['account', ['general', 'security']],
+]);
 function isAdminSpaRoute(pathName) {
   const localizedRoute = parseLocalizedPublicPath(pathName);
   const segments = String(localizedRoute?.routePath || pathName || '').split('/').filter(Boolean);
@@ -823,6 +831,13 @@ function isAdminSpaRoute(pathName) {
   if (segments.length === 2
     && (segments[0] === 'admin' || segments[0] === 'dashboard')
     && ADMIN_SPA_SECTIONS.has(segments[1])) return true;
+  if (segments[0] === 'dashboard') {
+    const editor = segments[1] === 'editor';
+    const scope = segments[editor ? 2 : 1];
+    const subsection = segments[editor ? 3 : 2];
+    if (segments.length === (editor ? 4 : 3) && (editor ? scope === 'menu' || scope === 'shop' : scope !== 'menu' && scope !== 'shop')
+      && ADMIN_SPA_SUBSECTIONS.get(scope)?.includes(subsection?.toLowerCase())) return true;
+  }
   if (segments.length !== 3) return false;
   if ((segments[0] === 'admin' || segments[0] === 'dashboard')
     && segments[1] === 'content') return ADMIN_CONTENT_SECTIONS.has(segments[2]);

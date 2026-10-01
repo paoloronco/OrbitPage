@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Copy, Download, ExternalLink, RefreshCw } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { applicationUpdatesApi, type ApplicationUpdateStatus } from '@/lib/api-client';
@@ -94,10 +94,9 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   };
 
   return <Dialog open={open} onOpenChange={value => { if (!value && !active) { setShowResult(false); setError(''); setPassword(''); onClose(); } }}>
-    <DialogContent className={`orbitpage-admin oss-account-delete-dialog account-update-dialog${active ? ' account-update-dialog--locked' : ''}`} overlayClassName="oss-account-delete-overlay"
+    <DialogContent className={`orbitpage-admin oss-account-delete-dialog account-update-dialog${active ? ' account-update-dialog--locked' : ''}`} overlayClassName="oss-account-delete-overlay" aria-describedby={undefined}
       onEscapeKeyDown={event => { if (active) event.preventDefault(); }} onPointerDownOutside={event => { if (active) event.preventDefault(); }}>
       <DialogHeader className="account-delete-header"><DialogTitle>{tr('Install OrbitPage update', 'Installa l’aggiornamento di OrbitPage')}</DialogTitle></DialogHeader>
-      <DialogDescription>{tr('The host updater backs up your data, installs the release and checks the running application. The dashboard stays locked until the update ends.', 'L’updater sul server salva un backup, installa la versione e verifica l’applicazione. La dashboard resta bloccata fino al termine.')}</DialogDescription>
       <div className={`account-update-status${job?.state === 'failed' ? ' account-update-status--failed' : ''}`} role="status" aria-live="polite">
         <strong>{uncertain ? tr('Connection lost — update status unknown', 'Connessione persa — stato aggiornamento sconosciuto')
           : starting ? tr('Starting update…', 'Avvio aggiornamento…')
@@ -122,7 +121,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       {job?.error && <p className="oss-account-error" role="alert">{job.error}</p>}
       {error && <p className="oss-account-error" role="alert">{error}</p>}
       {!active && job?.state !== 'completed' && status?.enabled && canInstall && requestedVersion && <div className="field">
-        <Label htmlFor="update-current-password">{tr('Current password', 'Password attuale')}</Label>
+        <Label htmlFor="update-current-password">{tr('Admin dashboard password', 'Password della dashboard amministratore')}</Label>
         <Input id="update-current-password" type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} />
       </div>}
       {!active && status && !status.enabled && <>

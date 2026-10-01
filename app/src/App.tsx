@@ -6,7 +6,7 @@ import { Component, lazy, Suspense, useLayoutEffect, useRef, type ErrorInfo, typ
 import { getActiveBasePath, withBasePath } from "@/lib/base-path";
 import { AppI18nProvider, resolveApplicationErrorLocale, type AppLocale } from "@/lib/i18n";
 import { parseLocalizedPublicPath, publicLocaleFromSlug } from "@/lib/public-routing";
-import { adminDashboardPath, isAdminLocation } from "@/lib/admin-navigation";
+import { adminDashboardPath, adminSubsectionFromLocation, isAdminLocation } from "@/lib/admin-navigation";
 
 const Index = lazy(() => import("./pages/Index"));
 const Admin = lazy(() => import("./pages/Admin"));
@@ -19,6 +19,14 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const routerBaseName = getActiveBasePath();
 
 const queryClient = new QueryClient();
+
+function AdminDashboardRoute() {
+  const { pathname } = useLocation();
+  const segments = pathname.split("/").filter(Boolean);
+  const index = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");
+  const nested = segments[index + 1] !== "content" && segments.length === index + (segments[index + 1] === "editor" ? 4 : 3);
+  return !nested || adminSubsectionFromLocation(pathname) ? <Admin /> : <NotFound />;
+}
 
 function storedApplicationLocale() {
   try {
@@ -143,17 +151,21 @@ function RoutedApplication() {
           <Route path="/" element={<Index />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/cookies" element={<Cookies />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/:section" element={<Admin />} />
-          <Route path="/admin/content/:contentSection" element={<Admin />} />
-          <Route path="/dashboard" element={<Admin />} />
-          <Route path="/dashboard/:section" element={<Admin />} />
-          <Route path="/dashboard/content/:contentSection" element={<Admin />} />
-          <Route path="/dashboard/editor/:editorSection" element={<Admin />} />
-          <Route path="/:locale/dashboard" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
-          <Route path="/:locale/dashboard/:section" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
-          <Route path="/:locale/dashboard/content/:contentSection" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
-          <Route path="/:locale/dashboard/editor/:editorSection" element={<LocalizedPublicRoute><Admin /></LocalizedPublicRoute>} />
+          <Route path="/admin" element={<AdminDashboardRoute />} />
+          <Route path="/admin/:section" element={<AdminDashboardRoute />} />
+          <Route path="/admin/content/:contentSection" element={<AdminDashboardRoute />} />
+          <Route path="/dashboard" element={<AdminDashboardRoute />} />
+          <Route path="/dashboard/:section" element={<AdminDashboardRoute />} />
+          <Route path="/dashboard/content/:contentSection" element={<AdminDashboardRoute />} />
+          <Route path="/dashboard/editor/:editorSection" element={<AdminDashboardRoute />} />
+          <Route path="/dashboard/:section/:subsection" element={<AdminDashboardRoute />} />
+          <Route path="/dashboard/editor/:editorSection/:subsection" element={<AdminDashboardRoute />} />
+          <Route path="/:locale/dashboard" element={<LocalizedPublicRoute><AdminDashboardRoute /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/:section" element={<LocalizedPublicRoute><AdminDashboardRoute /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/content/:contentSection" element={<LocalizedPublicRoute><AdminDashboardRoute /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/editor/:editorSection" element={<LocalizedPublicRoute><AdminDashboardRoute /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/:section/:subsection" element={<LocalizedPublicRoute><AdminDashboardRoute /></LocalizedPublicRoute>} />
+          <Route path="/:locale/dashboard/editor/:editorSection/:subsection" element={<LocalizedPublicRoute><AdminDashboardRoute /></LocalizedPublicRoute>} />
           <Route path="/links" element={<Index />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/about" element={<About />} />

@@ -23,10 +23,13 @@ import {
   adminEditorPath,
   adminEditorSectionFromLocation,
   adminTabFromLocation,
+  adminSubsectionFromLocation,
+  adminSubsectionPath,
   isAdminTab,
   type AdminContentSection,
   type AdminEditorSection,
   type AdminTab,
+  type AdminSubsectionScope,
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
 import { getHostedSurfaceConfig, HOSTED_SECTION_CHANGED_EVENT, HOSTED_SECTION_NAVIGATE_EVENT } from "@/lib/hosted-surface";
@@ -81,6 +84,7 @@ const Admin = () => {
   const locationTab = adminTabFromLocation(location.pathname, location.search);
   const locationContentSection = adminContentSectionFromLocation(location.pathname);
   const locationEditorSection = adminEditorSectionFromLocation(location.pathname);
+  const locationSubsection = adminSubsectionFromLocation(location.pathname);
   const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,11 +123,12 @@ const Admin = () => {
 
   useEffect(() => {
     if (hostedSurface) return;
-    const expectedPath = locationEditorSection
+    const subsectionScope = locationEditorSection === "menu" || locationEditorSection === "shop" ? locationEditorSection : locationTab as AdminSubsectionScope;
+    const expectedPath = locationSubsection ? adminSubsectionPath(subsectionScope, locationSubsection, locale) : locationEditorSection
       ? adminEditorPath(locationEditorSection, locale)
       : adminDashboardPath(locationTab, locationContentSection, locale);
     if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
-  }, [hostedSurface, locale, location.pathname, locationTab, locationContentSection, locationEditorSection, navigate]);
+  }, [hostedSurface, locale, location.pathname, locationTab, locationContentSection, locationEditorSection, locationSubsection, navigate]);
 
   useEffect(() => {
     if (!hostedSurface) return;
@@ -558,6 +563,8 @@ const Admin = () => {
       requestedTab={requestedTab}
       requestedContentSection={requestedContentSection}
       requestedEditorSection={requestedEditorSection}
+      requestedSubsection={locationSubsection}
+      onSubsectionChange={(scope, subsection) => navigate(adminSubsectionPath(scope, subsection, locale))}
       onTabChange={handleTabChange}
       onContentSectionChange={handleContentSectionChange}
       onEditorSectionChange={handleEditorSectionChange}

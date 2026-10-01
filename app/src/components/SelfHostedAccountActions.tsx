@@ -108,7 +108,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
 
       <Card className="glass-card p-6 account-panel account-instance-card">
         <div className="account-section-heading">
-          <div><p className="oss-account-kicker">{tr('Installation', 'Installazione')}</p><h2>{tr('Instance details', 'Dettagli istanza')}</h2><p className="muted">{tr('Information about this OrbitPage environment.', 'Informazioni su questo ambiente OrbitPage.')}</p></div>
+          <div><p className="oss-account-kicker">{tr('Installation', 'Installazione')}</p><h2>{tr('Instance details', 'Dettagli istanza')}</h2></div>
           <Database className="h-6 w-6" aria-hidden="true" />
         </div>
         <dl className="account-details">
@@ -129,7 +129,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
             <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
             <Button type="button" className="account-primary-action" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canDeleteInstallation} onClick={() => update && onInstallUpdate(update.version)}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
           </div>
-          {update && <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Release notes', 'Note di rilascio')}</a>}
+          {update && <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" />{tr('Release notes', 'Note di rilascio')}</a>}
         </div>
       </Card>
     </div>
