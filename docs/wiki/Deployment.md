@@ -486,8 +486,9 @@ In **Account → General → Instance details**, OrbitPage shows the running
 version. **Check for updates** contacts the official GitHub latest-release API
 only when clicked, without login credentials, and compares stable versions.
 If a newer version is available, administrators can open **Install update…**
-for the host command, release notes and this guide. The browser does not run
-the update: execute the command on the server, then reload the dashboard.
+for the installation dialog, release notes and this guide. With the optional
+[host service](#web-updates), the dialog starts the update and shows its logs
+and result. Otherwise it clearly offers the terminal command instead.
 Failed checks remain retryable and are never reported as an up-to-date result.
 Demo installations do not offer the installation action.
 
@@ -549,6 +550,52 @@ docker compose -f compose.production.yaml up -d --remove-orphans
 ```
 
 Run the same health and smoke test after recreation.
+
+### Web updates
+
+Account → General → Instance details can install an update and show its live
+logs when the host update service is enabled. Without that service the dialog
+explicitly offers the terminal command; opening it does not install anything.
+
+On a Linux host with systemd and a local Docker engine, enable the service once
+for the intended container (replace `orbitpage` with its actual name):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh | sudo bash -s -- --enable-web-updates orbitpage
+```
+
+Install the current release through `sudo orbitpage-update` and reload Account
+if the dashboard predates this feature. Web updates support official Docker
+Run and Compose installations using `:latest` and a writable persistent
+`/app/data` mount. Source installations, custom images and pinned releases
+continue to use their documented operator update procedure.
+
+Only a dashboard administrator with their current password can start a web
+update. The root-owned systemd service accepts only the latest official stable
+version and updates its configured container. It uses a private local Unix
+socket in the data mount; the application does not get a Docker socket, sudo
+access or a new network listener. Disabling the service revokes web updates.
+
+The modal blocks dashboard interactions and the API rejects writes while the
+job is queued or running, including writes from other browser sessions. Logs
+and the final result persist on the host through container recreation and
+dashboard reloads. Completion requires both the updater's health check and
+the expected installed application version. Errors, an updater-service restart
+and the 30-minute installation deadline produce an explicit failure; a lost
+browser connection instead reports an unconfirmed result and keeps checking.
+If the server cannot reconnect, inspect the service and retained backup before
+retrying. Docker Run restores the previous container on failed startup/health;
+Compose restores the previous image without rewriting the project files.
+
+```bash
+sudo systemctl status orbitpage-updates-orbitpage.service
+sudo journalctl -u orbitpage-updates-orbitpage.service
+sudo systemctl disable --now orbitpage-updates-orbitpage.service
+```
+
+The retained job and update log live under `/var/lib/orbitpage-updates/` on the
+host; data archives remain under `/var/backups/orbitpage/`. Do not include logs
+or backup contents in public bug reports without reviewing them.
 
 ## Post-change health and smoke test
 

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import path, { dirname, join } from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
+import { updateAgentRequest, isUpdateActive } from './services/application-updates.js';
 import { initializeDatabase, dbGet, dbAll, dbRun, withTransaction, withImmediateTransaction } from './database.js';
 import {
   isFirstTimeSetup,
@@ -1944,6 +1945,16 @@ const aiAgentLimiter = rateLimit({
 
 // Apply rate limiting
 app.use('/api', apiLimiter);
+app.use('/api', async (req, res, next) => {
+  if (DEMO_MODE || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)
+    || ['/account/updates', '/auth/login', '/auth/verify', '/auth/2fa/verify'].includes(req.path)) return next();
+  try {
+    if (isUpdateActive((await updateAgentRequest(DATA_DIR)).job)) {
+      return res.status(423).json({ error: 'OrbitPage is updating. Wait for the update to finish.' });
+    }
+    next();
+  } catch { res.status(503).json({ error: 'Cannot verify the host updater status. Try again shortly.' }); }
+});
 app.use('/api/newsletter', createNewsletterRouter({
   publicBase: (req) => `${getRequestOrigin(req)}${getActiveBasePath(req)}`,
   demoMode: DEMO_MODE,
@@ -4460,6 +4471,31 @@ const rejectPersonalTokenSession = (req, res, next) => (
     ? res.status(403).json({ error: 'A dashboard session is required.' })
     : next()
 );
+
+app.get('/api/account/updates', authenticateToken, rejectPersonalTokenSession, async (req, res) => {
+  if (DEMO_MODE) return res.json({ enabled: false, job: null });
+  try {
+    const status = await updateAgentRequest(DATA_DIR);
+    if (!(req.user.permissions || []).includes('users:manage') && status.job) {
+      status.job = { ...status.job, logs: '', error: status.job.state === 'failed' ? 'Contact your instance administrator.' : null };
+    }
+    res.set('Cache-Control', 'private, no-store').json(status);
+  } catch { res.status(503).json({ error: 'Host updater unavailable. Check the updater service on the server.' }); }
+});
+
+app.post('/api/account/updates', authLimiter, authenticateToken, rejectPersonalTokenSession, requirePermission('users:manage'), async (req, res) => {
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  const input = z.object({ version: z.string().regex(/^\d+\.\d+\.\d+$/), currentPassword: z.string().min(1).max(1024) }).strict().safeParse(req.body);
+  if (!input.success) return res.status(400).json({ error: 'Enter a valid version and your current password.' });
+  try {
+    if (!await authenticateUser(input.data.currentPassword, req.user.username)) {
+      return res.status(400).json({ error: 'Current password is incorrect.' });
+    }
+    res.status(202).json(await updateAgentRequest(DATA_DIR, input.data.version));
+  } catch (error) {
+    res.status(error.status === 409 ? 409 : 503).json({ error: error.status === 409 ? error.message : 'Host updater unavailable. Check the updater service on the server.' });
+  }
+});
 
 app.get('/api/account/api-tokens', authenticateToken, rejectPersonalTokenSession, async (req, res) => {
   try {

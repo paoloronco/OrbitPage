@@ -74,6 +74,7 @@ import { PublishTools } from "./PublishTools";
 import { SelfHostedAiPanel } from "./SelfHostedAiPanel";
 import { SelfHostedAiAgent } from "./SelfHostedAiAgent";
 import { SelfHostedAccountActions } from "./SelfHostedAccountActions";
+import { SelfHostedUpdateDialog } from "./SelfHostedUpdateDialog";
 import { OpenSourcePlan } from "./OpenSourcePlan";
 import { VisualSiteEditor, type VisualSiteEditorSection } from "./VisualSiteEditor";
 import { MenuView } from "./MenuView";
@@ -243,6 +244,7 @@ export const AdminView = ({
   const [gaSaving, setGaSaving] = useState(false);
   const [gaSetupOpen, setGaSetupOpen] = useState(false);
   const [accountView, setAccountView] = useState<AccountView>("general");
+  const [updateDialogVersion, setUpdateDialogVersion] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
   const [contentSection, setContentSection] = useState<ContentDestination>(() => (
     getHostedSurfaceConfig()?.contentSection
@@ -1106,6 +1108,7 @@ export const AdminView = ({
                 </nav>
                 {accountView === "general" ? (
                   <SelfHostedAccountActions
+                    onInstallUpdate={setUpdateDialogVersion}
                     version={appVersion}
                     canDeleteInstallation={canManageUsers}
                     publicPageHref={publicPageHref}
@@ -1210,6 +1213,7 @@ export const AdminView = ({
           )}
         </footer>
       </div>
+      {!isHostedAdmin && !DEMO_MODE && <SelfHostedUpdateDialog requestedVersion={updateDialogVersion} canInstall={canManageUsers} onClose={() => setUpdateDialogVersion(null)} />}
       {!isHostedAdmin && !isProspectReadOnly && activeTab !== "ai" && <SelfHostedAiAgent historyKey={currentUser?.username} onApplied={onAiApplied} />}
     </div>
   );

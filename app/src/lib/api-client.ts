@@ -704,6 +704,18 @@ export type AiPageProposal = {
   };
 };
 
+export type ApplicationUpdateJob = {
+  id: string; state: 'queued' | 'running' | 'completed' | 'failed'; version: string;
+  startedAt: number; updatedAt: number; logs: string; error: string | null;
+};
+export type ApplicationUpdateStatus = { enabled: boolean; job: ApplicationUpdateJob | null };
+export const applicationUpdatesApi = {
+  status: () => apiRequest<ApplicationUpdateStatus>('/account/updates', { signal: AbortSignal.timeout(8000) }),
+  install: (version: string, currentPassword: string) => apiRequest<ApplicationUpdateStatus>('/account/updates', {
+    method: 'POST', body: JSON.stringify({ version, currentPassword }), signal: AbortSignal.timeout(8000),
+  }),
+};
+
 export type AiPagePlanResponse = {
   reply: string;
   proposal: AiPageProposal | null;

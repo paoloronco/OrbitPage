@@ -13,7 +13,7 @@ for arg in "$@"; do
 done
 
 # The official Linux and Proxmox installers already own backups and Compose state.
-if [[ -x /usr/local/bin/orbitpage && -f /opt/orbitpage/compose.yaml ]]; then
+if [[ -x /usr/local/bin/orbitpage && -f /opt/orbitpage/compose.yaml && "${args[0]:-}" != --enable-web-updates && "${args[0]:-}" != --serve-web-updates ]]; then
   exec /usr/local/bin/orbitpage update "${args[@]}"
 fi
 

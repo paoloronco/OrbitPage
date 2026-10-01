@@ -7,6 +7,8 @@ These scripts support installation, updates, Git hooks, and installer verificati
 - `install-git-hooks.sh` and `install-git-hooks.ps1`: point Git at the tracked `.githooks/` directory.
 - `orbitpage-update.sh` and `orbitpage-update.py`: host update command for existing Docker, Compose, and source installations.
 - `install-updater.sh`: installs the host command and registers source checkouts.
+  Its optional `--enable-web-updates CONTAINER` installs the host systemd monitor
+  implemented by `orbitpage-update.py`; see [Web updates](../docs/wiki/Deployment.md#web-updates).
 - `check-markdown-links.mjs`: validates repository-local documentation links;
   CI runs it before application checks.
 - `test-installer.sh`: isolated Linux-installer checks.

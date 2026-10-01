@@ -65,10 +65,15 @@ import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './s
 import { authenticateUser, isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withImmediateTransaction, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
+import { updateAgentRequest } from './services/application-updates.js';
+vi.mock('./services/application-updates.js', async importOriginal => ({
+  ...await importOriginal(), updateAgentRequest: vi.fn(),
+}));
 
 describe('API Endpoints', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(updateAgentRequest).mockReset().mockResolvedValue({ enabled: false, job: null });
     authMockState.username = 'admin';
     authMockState.permissions = [
       'links:write', 'links:style', 'links:images', 'theme:write', 'profile:write',
@@ -102,6 +107,28 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('ok');
     expect(response.body.distributionImage).toBe('docker.io/paueron/orbitpage');
+  });
+
+  it('requires administrator permission and password for host updates, and locks writes across dashboard sessions', async () => {
+    const endpoint = '/orbitpage/api/account/updates';
+    const input = { version: '4.21.35', currentPassword: 'Current123!' };
+    authMockState.permissions = ['analytics:read'];
+    expect((await request(app).post(endpoint).send(input)).status).toBe(403);
+    authMockState.permissions = ['users:manage'];
+    vi.mocked(authenticateUser).mockResolvedValueOnce(false);
+    expect((await request(app).post(endpoint).send(input)).status).toBe(400);
+    expect(updateAgentRequest).not.toHaveBeenCalled();
+    expect((await request(app).post(endpoint).send({ ...input, command: 'rm -rf /' })).status).toBe(400);
+    const job = { state: 'running', version: input.version, logs: 'Backup created', error: null };
+    vi.mocked(updateAgentRequest).mockResolvedValue({ enabled: true, job });
+    expect((await request(app).post(endpoint).send(input)).status).toBe(202);
+    expect(updateAgentRequest).toHaveBeenCalledWith(expect.any(String), input.version);
+    expect((await request(app).put('/orbitpage/api/profile').send({ name: 'While updating' })).status).toBe(423);
+    expect((await request(app).get(endpoint)).body.job.logs).toBe('Backup created');
+    authMockState.permissions = ['analytics:read'];
+    expect((await request(app).get(endpoint)).body.job.logs).toBe('');
+    vi.mocked(updateAgentRequest).mockResolvedValue({ enabled: true, job: { ...job, state: 'completed' } });
+    expect((await request(app).put('/orbitpage/api/profile').send({ name: 'After updating' })).status).not.toBe(423);
   });
 
   it('serves unused-media inspection as JSON under the configured base path', async () => {

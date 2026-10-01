@@ -9,16 +9,6 @@ source_root="${2:-}"
 temp="$(mktemp -d)"
 trap 'rm -rf -- "$temp"' EXIT
 
-if [[ -x /usr/local/bin/orbitpage && -f /opt/orbitpage/compose.yaml ]]; then
-  cat > "$temp/orbitpage-update" <<'EOF'
-#!/usr/bin/env bash
-exec /usr/local/bin/orbitpage update "$@"
-EOF
-  install -m 0755 "$temp/orbitpage-update" "$cli"
-  echo "Installed $cli for the managed OrbitPage installation."
-  exit 0
-fi
-
 local_scripts="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 if [[ "${1:-}" == source ]]; then
   [[ -n "$source_root" && -f "$source_root/scripts/orbitpage-update.sh" && -f "$source_root/scripts/orbitpage-update.py" ]] \
@@ -42,6 +32,8 @@ install -m 0755 "$temp/orbitpage-update.sh" "$cli"
 
 if [[ "${1:-}" == source ]]; then
   "$cli" --register-source "$source_root"
+elif [[ "${1:-}" == --enable-web-updates ]]; then
+  "$cli" --enable-web-updates "$source_root"
 fi
 
 echo "Installed $cli. Run: sudo orbitpage-update"
