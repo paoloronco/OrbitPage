@@ -46,6 +46,10 @@ class UpdatePlanTests(unittest.TestCase):
             restarted = updater.WebUpdateState('orbitpage-test', Path(directory))
             self.assertEqual(restarted.job['state'], 'failed')
             self.assertIn('service restarted', restarted.job['error'])
+            previous = restarted.job
+            with patch.object(restarted, 'save', side_effect=OSError('Disk full')):
+                with self.assertRaisesRegex(RuntimeError, 'Cannot persist'): restarted.start('4.21.35')
+                self.assertEqual(restarted.job, previous)
 
     def test_web_job_reports_logs_and_completes_only_after_version_verification(self):
         release = SimpleNamespace(read=lambda size: json.dumps({'tag_name': 'v4.21.35', 'draft': False, 'prerelease': False}).encode())
