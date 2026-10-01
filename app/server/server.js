@@ -1446,7 +1446,7 @@ const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
 // Rate limit for serving SPA index.html (to mitigate file system abuse / DoS)
 const spaLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'test' ? 1000 : 100,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => req.ip,
