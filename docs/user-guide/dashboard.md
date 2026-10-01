@@ -13,6 +13,8 @@ Tabs also have their own URLs, prefixed by the dashboard language, for example `
 | `/dashboard/newsletter` | `overview`, `campaigns`, `subscribers`, `settings` |
 | `/dashboard/account` | `general`, `security` |
 
+**Account > Your public OrbitPage** shows the installation root URL, including any configured mount path, without a dashboard language suffix.
+
 Opening, refreshing or using browser Back/Forward restores the selected tab. Changing tabs keeps the current in-memory Menu or Theme draft; refreshing still discards unsaved changes. Existing workspace URLs remain valid. Shop URLs preserve the shared navigation contract; commerce remains a managed-service capability and is shown as unavailable in OSS.
 
 ## A reliable editing workflow

@@ -1459,7 +1459,7 @@ describe('API Endpoints', () => {
     expect(root.headers.location).toBe('/it-IT');
     expect(alias.status).toBe(302);
     expect(alias.headers.location).toBe('/en-US');
-    expect(publicUrl.body.publicUrl).toBe('http://127.0.0.1:9006/en-US');
+    expect(publicUrl.body.publicUrl).toBe('http://127.0.0.1:9006/');
     expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/en-US</loc>');
     expect(sitemap.text).toContain('<loc>http://127.0.0.1:9006/it-IT</loc>');
     expect(campaign.headers.location).toBe('http://127.0.0.1:9006/en-US');

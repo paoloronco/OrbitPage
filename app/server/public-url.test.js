@@ -41,16 +41,16 @@ vi.mock('./services/backup-service.js', () => ({
 import { app } from './server.js';
 
 describe('public URL endpoint', () => {
-  it('returns the installed public page URL and ignores arbitrary URL input', async () => {
+  it.each(['', '&locale=en', '&locale=it', '&locale=ko'])('returns the installed public page URL without a language suffix (%s)', async (localeQuery) => {
     const response = await request(app)
-      .get('/orbitpage/api/public-url?url=https://evil.example.test/')
+      .get(`/orbitpage/api/public-url?url=https://evil.example.test/${localeQuery}`)
       .set('Host', 'links.example.test')
       .set('X-Forwarded-Proto', 'https');
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       success: true,
-      publicUrl: 'https://links.example.test/orbitpage/en-US',
+      publicUrl: 'https://links.example.test/orbitpage/',
       source: 'request',
       slug: null,
     });
