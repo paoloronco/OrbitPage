@@ -220,7 +220,7 @@ def update_docker_run(container):
             verify_container(name, image_id)
     except Exception:
         if subprocess.run(['docker', 'inspect', name], stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL, check=False).returncode == 0:
+                          stderr=subprocess.DEVNULL, check=False, timeout=30).returncode == 0:
             run('docker', 'rm', '-f', name)
         run('docker', 'rename', old_name, name)
         if was_running:
@@ -406,9 +406,14 @@ class WebUpdateState:
         with self.lock:
             if self.job and self.job['state'] in ('queued', 'running'):
                 raise RuntimeError('An update is already in progress.')
+            previous = self.job
             self.job = dict(id=str(uuid.uuid4()), state='queued', version=version,
                             startedAt=time.time(), logs='', error=None)
-            self.save()
+            try:
+                self.save()
+            except OSError as error:
+                self.job = previous
+                raise RuntimeError(f'Cannot persist update status: {error}') from error
             threading.Thread(target=self.install, args=(version,), daemon=True).start()
 
     def install(self, version):
@@ -483,7 +488,7 @@ def serve_web_updates(name):
 
     class Handler(BaseHTTPRequestHandler):
         def respond(self, code, body):
-            payload = json.dumps(body).encode()
+            payload = json.dumps(body, ensure_ascii=False).encode()
             self.send_response(code)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', str(len(payload)))
