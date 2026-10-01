@@ -93,7 +93,7 @@ describe('self-hosted AI page agent', () => {
   it('applies a coordinated card-theme edit and removes block overrides', () => {
     const result = applyAiPageOperations({
       page,
-      permissions: ['theme:write'],
+      permissions: ['theme:write', 'links:write'],
       operations: [
         operation({ kind: 'theme.set', field: 'card', value: '#13213a' }),
         operation({ kind: 'theme.set', field: 'contentCard.backgroundSecondary', value: '#1f3356' }),
@@ -128,6 +128,16 @@ describe('self-hosted AI page agent', () => {
       foreground: '#05070a',
       muted: '#05070a',
     });
+  });
+
+  it('keeps link overrides unchanged for theme-only proposals', () => {
+    const result = applyAiPageOperations({
+      page,
+      permissions: ['theme:write'],
+      operations: [operation({ kind: 'theme.set', field: 'card', value: '#13213a' })],
+    });
+    expect(result.changes.theme.card).toBe('#13213a');
+    expect(result.changes).not.toHaveProperty('links');
   });
 
   it('rejects unsafe URLs before a proposal can be stored', () => {

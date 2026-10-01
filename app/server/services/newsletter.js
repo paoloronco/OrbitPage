@@ -332,29 +332,36 @@ export async function subscribe(raw) {
   const input = publicSubscriberSchema.parse(raw);
   const setting = await settings();
   if (!setting?.verified_at || !newsletterComplianceReady(setting)) throw new NewsletterError(409, 'NEWSLETTER_UNAVAILABLE', 'This newsletter is not accepting subscriptions right now.');
-  const existing = await dbGet('SELECT * FROM newsletter_subscribers WHERE email = ?', [input.email]);
-  if (existing?.status === 'active') return { pending: false, alreadySubscribed: true };
-  const id = existing?.id || randomUUID();
-  const date = now();
-  await dbRun(`INSERT INTO newsletter_subscribers
+  // ponytail: in-process delivery; use a durable queue if confirmation mail must survive a crash.
+  setImmediate(async () => {
+    try {
+      const existing = await dbGet('SELECT * FROM newsletter_subscribers WHERE email = ?', [input.email]);
+      if (existing?.status === 'active') return;
+      const id = existing?.id || randomUUID();
+      const date = now();
+      await dbRun(`INSERT INTO newsletter_subscribers
     (id, email, name, status, source, consent_at, confirmed_at, unsubscribed_at, created_at, updated_at)
     VALUES (?, ?, ?, 'pending', 'public', ?, NULL, NULL, ?, ?)
     ON CONFLICT(email) DO UPDATE SET name=excluded.name, status='pending', source='public',
     consent_at=excluded.consent_at, confirmed_at=NULL, unsubscribed_at=NULL, updated_at=excluded.updated_at`,
-  [id, input.email, input.name || null, date, existing?.created_at || date, date]);
-  const token = signNewsletterToken({ action: 'confirm', subscriberId: id }, 48 * 3600);
-  const confirmUrl = `${setting.public_origin}/api/newsletter/public/confirm?token=${encodeURIComponent(token)}`;
-  const footer = newsletterFooter(setting);
-  const client = await transport(setting);
-  try {
-    await client.sendMail({
+      [id, input.email, input.name || null, date, existing?.created_at || date, date]);
+      const token = signNewsletterToken({ action: 'confirm', subscriberId: id }, 48 * 3600);
+      const confirmUrl = `${setting.public_origin}/api/newsletter/public/confirm?token=${encodeURIComponent(token)}`;
+      const footer = newsletterFooter(setting);
+      const client = await transport(setting);
+      try {
+        await client.sendMail({
       from: { name: setting.from_name, address: setting.from_email }, to: input.email,
       replyTo: setting.reply_to || undefined,
       subject: `Confirm your subscription to ${setting.from_name}`,
       text: `Confirm your subscription: ${confirmUrl}\n\nIf you did not request this, ignore this message.\n\n${footer.text}`,
       html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px"><h1 style="font-size:24px">Confirm your subscription</h1><p>One click confirms that you want to receive updates from ${escapeHtml(setting.from_name)}.</p><p><a href="${escapeHtml(confirmUrl)}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700">Confirm subscription</a></p><p style="color:#667085;font-size:12px">If you did not request this, ignore this message.</p><p style="color:#667085;font-size:12px;line-height:1.55">${footer.html}</p></div>`,
-    });
-  } finally { client.close(); }
+        });
+      } finally { client.close(); }
+    } catch (error) {
+      console.error('Newsletter confirmation email failed:', error);
+    }
+  });
   return { pending: true, alreadySubscribed: false };
 }
 

@@ -277,17 +277,6 @@ def update_source(root):
     run('npm', 'ci', '--prefix', str(app), user=owner)
     run('npm', 'ci', '--prefix', str(app / 'server'), user=owner)
     run('npm', 'run', 'build', '--prefix', str(app), user=owner)
-    script = root / 'scripts' / 'orbitpage-update.py'
-    if script.is_file():
-        destination = Path('/usr/local/lib/orbitpage/orbitpage-update.py')
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(script.read_bytes())
-        os.chmod(destination, 0o644)
-    shell_script = root / 'scripts' / 'orbitpage-update.sh'
-    if shell_script.is_file():
-        destination = Path('/usr/local/bin/orbitpage-update')
-        destination.write_bytes(shell_script.read_bytes())
-        os.chmod(destination, 0o755)
     if shutil.which('systemctl') and subprocess.run(['systemctl', 'is-active', '--quiet', 'orbitpage'], check=False).returncode == 0:
         run('systemctl', 'restart', 'orbitpage')
         print('Source updated; orbitpage systemd service restarted.')

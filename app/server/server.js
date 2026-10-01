@@ -23,6 +23,7 @@ import {
   createPersonalApiToken,
   listPersonalApiTokens,
   revokePersonalApiToken,
+  isStrongJwtSecret,
 } from './auth.js';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -2352,8 +2353,7 @@ const getSetupDependencies = async () => {
   );
 
   const configuredSecret = String(process.env.JWT_SECRET || '');
-  const knownPlaceholder = configuredSecret === 'change-me-to-a-long-random-string';
-  const secureSessionConfig = configuredSecret.length >= 32 && !knownPlaceholder;
+  const secureSessionConfig = isStrongJwtSecret(configuredSecret);
   const developmentFallback = process.env.NODE_ENV !== 'production' && !configuredSecret;
   addCheck(
     'sessions',
@@ -3456,7 +3456,7 @@ app.post('/api/links/:id/click', apiLimiter, async (req, res) => {
 });
 
 // Export links as JSON
-app.get('/api/links/export', authenticateToken, requireAnyPermission('links:write', 'analytics:read'), async (req, res) => {
+app.get('/api/links/export', authenticateToken, requirePermission('links:write'), async (req, res) => {
   try {
     const links = await dbAll('SELECT * FROM links ORDER BY sort_order');
     const payload = links.map((link) => ({
@@ -3739,15 +3739,17 @@ app.get('/api/theme', async (req, res) => {
   }
 });
 
+const ThemeColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i);
+const ThemeDirectionSchema = z.string().regex(/^(?:[0-9]{1,3}(?:\.[0-9]+)?deg|to (?:top|bottom|left|right)(?: (?:top|bottom|left|right))?)$/);
 const ThemeSurfaceSchema = z.object({
-  background: z.string().max(100),
-  backgroundSecondary: z.string().max(100),
-  foreground: z.string().max(100),
-  muted: z.string().max(100),
-  border: z.string().max(100),
-  accent: z.string().max(100),
-  accentForeground: z.string().max(100).optional(),
-  direction: z.string().max(100),
+  background: ThemeColorSchema,
+  backgroundSecondary: ThemeColorSchema,
+  foreground: ThemeColorSchema,
+  muted: ThemeColorSchema,
+  border: ThemeColorSchema,
+  accent: ThemeColorSchema,
+  accentForeground: ThemeColorSchema.optional(),
+  direction: ThemeDirectionSchema,
 });
 
 const ThemeSchema = z.object({
@@ -3756,24 +3758,27 @@ const ThemeSchema = z.object({
     presetId: z.string().max(80).nullable().optional(),
     cardPresetId: z.string().max(80).nullable().optional(),
   }).optional(),
-  primary: z.string().max(100).optional(),
-  primaryGlow: z.string().max(100).optional(),
-  background: z.string().max(100).optional(),
-  backgroundSecondary: z.string().max(100).optional(),
-  card: z.string().max(100).optional(),
-  foreground: z.string().max(100).optional(),
-  muted: z.string().max(100).optional(),
-  accent: z.string().max(100).optional(),
-  border: z.string().max(100).optional(),
+  primary: ThemeColorSchema.optional(),
+  primaryColor: ThemeColorSchema.optional(),
+  primaryGlow: ThemeColorSchema.optional(),
+  background: ThemeColorSchema.optional(),
+  backgroundColor: ThemeColorSchema.optional(),
+  backgroundSecondary: ThemeColorSchema.optional(),
+  card: ThemeColorSchema.optional(),
+  foreground: ThemeColorSchema.optional(),
+  textColor: ThemeColorSchema.optional(),
+  muted: ThemeColorSchema.optional(),
+  accent: ThemeColorSchema.optional(),
+  border: ThemeColorSchema.optional(),
   backgroundGradient: z.object({
-    from: z.string().max(100).optional(),
-    to: z.string().max(100).optional(),
-    direction: z.string().max(100).optional(),
+    from: ThemeColorSchema.optional(),
+    to: ThemeColorSchema.optional(),
+    direction: ThemeDirectionSchema.optional(),
   }).optional(),
   cardGradient: z.object({
-    from: z.string().max(100).optional(),
-    to: z.string().max(100).optional(),
-    direction: z.string().max(100).optional(),
+    from: ThemeColorSchema.optional(),
+    to: ThemeColorSchema.optional(),
+    direction: ThemeDirectionSchema.optional(),
   }).optional(),
   profileCard: ThemeSurfaceSchema.omit({ accentForeground: true }).optional(),
   contentCard: ThemeSurfaceSchema.optional(),
@@ -3789,9 +3794,9 @@ const ThemeSchema = z.object({
   maxWidth: z.string().max(50).optional(),
   glowIntensity: z.number().optional(),
   blurIntensity: z.number().optional(),
-  cardBlurTint: z.string().max(100).nullable().optional(),
+  cardBlurTint: ThemeColorSchema.nullable().optional(),
   cardShadow: z.object({
-    color: z.string().max(100),
+    color: ThemeColorSchema,
     offsetX: z.number().min(-32).max(32),
     offsetY: z.number().min(-32).max(48),
     blur: z.number().min(0).max(96),
@@ -3812,7 +3817,7 @@ const ThemeSchema = z.object({
     mediaUrl: z.string().max(500).optional().nullable(),
     opacity: z.number().min(0).max(1).optional(),
     blur: z.number().min(0).max(100).optional(),
-    overlayColor: z.string().max(100).optional(),
+    overlayColor: ThemeColorSchema.optional(),
     overlayOpacity: z.number().min(0).max(1).optional(),
     brightness: z.number().min(0).max(3).optional(),
     saturation: z.number().min(0).max(3).optional(),
@@ -3862,7 +3867,7 @@ app.put('/api/theme', authenticateToken, requirePermission('theme:write'), async
 const AI_PREVIEW_TTL_MS = 10 * 60 * 1000;
 const AI_PREVIEW_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
-const getAiPageSnapshot = async () => {
+const getAiPageSnapshot = async (permissions = []) => {
   const [profile, linkRows, theme, state] = await Promise.all([
     getPublicProfilePayload(),
     dbAll('SELECT * FROM links ORDER BY sort_order'),
@@ -3872,7 +3877,9 @@ const getAiPageSnapshot = async () => {
   return {
     page: {
       profile,
-      links: linkRows.map(formatLinkPayload),
+      links: permissions.includes('links:write')
+        ? linkRows.map(formatLinkPayload)
+        : linkRows.filter(isLinkPubliclyVisible).map(formatPublicLinkPayload),
       theme,
     },
     revision: Number.isSafeInteger(state?.revision) && state.revision >= 0 ? state.revision : 0,
@@ -4113,7 +4120,7 @@ app.post(
     if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
     try {
       setNoStoreHeaders(res);
-      const snapshot = await getAiPageSnapshot();
+      const snapshot = await getAiPageSnapshot(req.user.permissions || []);
       const result = await planAiPageChanges({
         username: req.user.username,
         permissions: req.user.permissions || [],
@@ -4142,7 +4149,7 @@ app.post(
         throw new AiPageAgentError(400, 'LAUNCH_KIT_ATTESTATION_REQUIRED', 'Confirm that you can use the screenshot content.');
       }
       const screenshot = launchKitScreenshotDataUrl(req.file);
-      const snapshot = await getAiPageSnapshot();
+      const snapshot = await getAiPageSnapshot(req.user.permissions || []);
       const result = await planAiPageChanges({
         username: req.user.username,
         permissions: req.user.permissions || [],
@@ -4803,19 +4810,13 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
 
 // Internal function to reset the application (used by both endpoints)
 const resetApplicationData = async () => {
-  // Start a transaction to ensure all or nothing
-  await dbRun('BEGIN TRANSACTION');
-  
-  try {
+  return withTransaction(async () => {
     console.log('Starting application reset...');
     
     // Get list of all tables
     const tables = await dbAll(
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'migrations'"
     );
-    
-    // Disable foreign key constraints temporarily
-    await dbRun('PRAGMA foreign_keys = OFF');
     
     // Clear all data from all tables
     for (const table of tables) {
@@ -4826,9 +4827,6 @@ const resetApplicationData = async () => {
         console.warn(`Could not clear table ${table.name}:`, error.message);
       }
     }
-    
-    // Re-enable foreign key constraints
-    await dbRun('PRAGMA foreign_keys = ON');
     
     // Reset SQLite sequences
     try {
@@ -4871,9 +4869,6 @@ const resetApplicationData = async () => {
       VALUES (1, '', '', '', '{}', 1)
     `);
     
-    // Commit the transaction
-    await dbRun('COMMIT');
-    
     console.log('Application reset completed successfully');
     
     return { 
@@ -4881,16 +4876,7 @@ const resetApplicationData = async () => {
       message: 'Application reset successful. All data has been cleared and default settings have been restored.'
     };
     
-  } catch (error) {
-    // Rollback in case of any error
-    console.error('Error in resetApplicationData:', error);
-    try {
-      await dbRun('ROLLBACK');
-    } catch (rollbackError) {
-      console.error('Error during transaction rollback:', rollbackError);
-    }
-    throw error;
-  }
+  }, { foreignKeys: false });
 };
 
 // Reset authentication - clear ALL data and reset to initial state.
@@ -5022,7 +5008,7 @@ app.post('/api/admin/restore', authenticateToken, requirePermission('users:manag
       const restoreResult = await restoreApplicationBackup(restoreOptions);
       mediaRestore = restoreResult?.mediaRestore || null;
       mediaRestore?.activate();
-    });
+    }, { foreignKeys: false });
     try {
       mediaRestore?.finalize();
     } catch (cleanupError) {
@@ -5495,6 +5481,8 @@ const validateConsentConfigDomain = (config, legalUrls = {}) => {
 };
 
 const getExecutableConsentState = (config = {}) => {
+  const providerConfig = config.builder?.providerConfig || {};
+  const provider = String(config.builder?.provider || 'custom').trim();
   const builderHead = String(config.builder?.providerConfig?.headSnippet || '').trim();
   const builderBody = String(config.builder?.providerConfig?.bodySnippet || '').trim();
   const privacyCode = String(config.legalPolicies?.privacyPolicy?.embeddedCode || '').trim();
@@ -5502,9 +5490,13 @@ const getExecutableConsentState = (config = {}) => {
   return {
     builderHead,
     builderBody,
+    provider,
+    siteId: String(providerConfig.siteId || '').trim(),
+    cookiePolicyId: String(providerConfig.cookiePolicyId || '').trim(),
+    scriptId: String(providerConfig.scriptId || '').trim(),
     privacyCode,
     cookieCode,
-    builderActive: Boolean(config.enabled && config.mode === 'builder' && (builderHead || builderBody)),
+    builderActive: Boolean(config.enabled && config.mode === 'builder' && (builderHead || builderBody || providerConfig.siteId || providerConfig.cookiePolicyId || providerConfig.scriptId)),
     privacyActive: Boolean(config.legalPolicies?.privacyPolicy?.mode === 'embedded' && privacyCode),
     cookieActive: Boolean(config.legalPolicies?.cookiePolicy?.mode === 'embedded' && cookieCode),
   };
@@ -5513,17 +5505,28 @@ const getExecutableConsentState = (config = {}) => {
 const canUpdateExecutableConsent = (existingConfig, nextConfig) => {
   const previous = getExecutableConsentState(existingConfig);
   const next = getExecutableConsentState(nextConfig);
-  const codeKeys = ['builderHead', 'builderBody', 'privacyCode', 'cookieCode'];
+  const codeKeys = ['builderHead', 'builderBody', 'siteId', 'cookiePolicyId', 'scriptId', 'privacyCode', 'cookieCode'];
   const activationKeys = ['builderActive', 'privacyActive', 'cookieActive'];
   const writesExecutableCode = codeKeys.some((key) => next[key] && next[key] !== previous[key]);
-  const activatesExecutableCode = activationKeys.some((key) => next[key] && !previous[key]);
+  const activatesExecutableCode = activationKeys.some((key) => next[key] && !previous[key]) ||
+    (next.builderActive && next.provider !== previous.provider);
   return !writesExecutableCode && !activatesExecutableCode;
 };
 
 const getPublicConsentConfig = (config, mode, enabled, legalUrls) => {
   const safeConfig = applyProfileLegalUrlsToConsentConfig(config, legalUrls);
+  const publicPolicy = (policy) => ({
+    mode: policy.mode,
+    externalUrl: policy.externalUrl,
+    ...(policy.mode === 'hosted' ? { hostedText: policy.hostedText, hostedFileName: policy.hostedFileName } : {}),
+    ...(policy.mode === 'embedded' ? { embeddedCode: policy.embeddedCode } : {}),
+  });
   const publicConfig = {
-    legalPolicies: safeConfig.legalPolicies,
+    legalPolicies: {
+      showFooterLinks: safeConfig.legalPolicies.showFooterLinks,
+      privacyPolicy: publicPolicy(safeConfig.legalPolicies.privacyPolicy),
+      cookiePolicy: publicPolicy(safeConfig.legalPolicies.cookiePolicy),
+    },
     hardcoded: safeConfig.hardcoded,
     mode: enabled ? mode : 'disabled',
     enabled: Boolean(enabled),

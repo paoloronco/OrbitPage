@@ -46,12 +46,19 @@ describe('self-hosted newsletter', () => {
     expect(setting).toMatchObject({ sender_type: 'restaurant', sender_address: '1 Test Street, Rome' });
 
     await newsletter.testSmtp('sender@example.com');
-    await newsletter.subscribe({ email: 'reader@example.com', name: 'Reader', consent: true });
-    const pending = await db.dbGet('SELECT * FROM newsletter_subscribers WHERE email = ?', ['reader@example.com']);
+    const firstSignup = await newsletter.subscribe({ email: 'reader@example.com', name: 'Reader', consent: true });
+    let pending;
+    await vi.waitFor(async () => {
+      pending = await db.dbGet('SELECT * FROM newsletter_subscribers WHERE email = ?', ['reader@example.com']);
+      expect(pending?.status).toBe('pending');
+      expect(smtp.messages.at(-1)?.text).toContain('Confirm your subscription:');
+    });
     expect(pending.status).toBe('pending');
     const confirmUrl = smtp.messages.at(-1).text.match(/https:\/\/\S+/)[0];
     const confirmToken = new URL(confirmUrl).searchParams.get('token');
     await newsletter.confirmSubscription(confirmToken);
+    expect((await db.dbGet('SELECT status FROM newsletter_subscribers WHERE id = ?', [pending.id])).status).toBe('active');
+    expect(await newsletter.subscribe({ email: 'reader@example.com', name: 'Reader', consent: true })).toEqual(firstSignup);
     expect((await db.dbGet('SELECT status FROM newsletter_subscribers WHERE id = ?', [pending.id])).status).toBe('active');
     await expect(newsletter.confirmSubscription(confirmToken)).rejects.toMatchObject({ code: 'NEWSLETTER_LINK_INVALID' });
 

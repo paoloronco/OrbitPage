@@ -267,7 +267,7 @@ export const normalizeTheme = (input?: ThemeInput | Record<string, unknown> | nu
       }))
     : [];
 
-  return {
+  const normalized: ThemeConfig = {
     ...defaultTheme,
     ...themeData,
     ...legacyColors,
@@ -316,6 +316,34 @@ export const normalizeTheme = (input?: ThemeInput | Record<string, unknown> | nu
       ...(themeData.content || {}),
     },
   };
+  const safeColor = (value: string, fallback: string) => /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
+  const safeDirection = (value: string, fallback: string) =>
+    /^(?:[0-9]{1,3}(?:\.[0-9]+)?deg|to (?:top|bottom|left|right)(?: (?:top|bottom|left|right))?)$/.test(value) ? value : fallback;
+  const colorKeys = ['primary', 'primaryGlow', 'background', 'backgroundSecondary', 'card', 'foreground', 'muted', 'accent', 'border'] as const;
+  for (const key of colorKeys) normalized[key] = safeColor(normalized[key], defaultTheme[key]);
+  for (const key of ['backgroundGradient', 'cardGradient'] as const) {
+    normalized[key].from = safeColor(normalized[key].from, defaultTheme[key].from);
+    normalized[key].to = safeColor(normalized[key].to, defaultTheme[key].to);
+    normalized[key].direction = safeDirection(normalized[key].direction, defaultTheme[key].direction);
+  }
+  for (const key of ['profileCard', 'contentCard'] as const) {
+    for (const colorKey of ['background', 'backgroundSecondary', 'foreground', 'muted', 'border', 'accent'] as const) {
+      normalized[key][colorKey] = safeColor(normalized[key][colorKey], defaultTheme[key][colorKey]);
+    }
+    normalized[key].direction = safeDirection(normalized[key].direction, defaultTheme[key].direction);
+  }
+  normalized.contentCard.accentForeground = safeColor(normalized.contentCard.accentForeground, defaultTheme.contentCard.accentForeground);
+  normalized.contentCardVariants = normalized.contentCardVariants.map((variant) => ({
+    ...variant,
+    ...Object.fromEntries(['background', 'backgroundSecondary', 'foreground', 'muted', 'border', 'accent', 'accentForeground']
+      .map((key) => [key, safeColor(variant[key as keyof typeof variant], normalized.contentCard[key as keyof typeof variant])])),
+    direction: safeDirection(variant.direction, normalized.contentCard.direction),
+  }));
+  normalized.cardShadow.color = safeColor(normalized.cardShadow.color, defaultTheme.cardShadow.color);
+  normalized.backgroundMedia.overlayColor = safeColor(normalized.backgroundMedia.overlayColor, defaultTheme.backgroundMedia.overlayColor);
+  const tint = (normalized as ThemeInput).cardBlurTint;
+  if (tint) (normalized as ThemeInput).cardBlurTint = safeColor(tint, normalized.card);
+  return normalized;
 };
 
 const clampNumber = (value: unknown, fallback: number, min: number, max: number) => {

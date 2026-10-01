@@ -6,6 +6,7 @@ import { createHash, randomBytes, randomInt, randomUUID } from 'crypto';
 const KNOWN_INSECURE_JWT_SECRETS = new Set([
   'change-me',
   'change-me-to-a-long-random-string',
+  'replace-with-a-long-random-secret',
   'secret',
   'your-secret-key',
 ]);

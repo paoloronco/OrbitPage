@@ -35,5 +35,8 @@ configured="$(JWT_SECRET="$explicit" DATA_DIR="${test_dir}/explicit" sh "$entryp
 if JWT_SECRET=short DATA_DIR="${test_dir}/invalid" sh "$entrypoint" true 2>/dev/null; then
   fail "weak explicit secret was accepted"
 fi
+if JWT_SECRET=replace-with-a-long-random-secret DATA_DIR="${test_dir}/placeholder" sh "$entrypoint" true 2>/dev/null; then
+  fail "published placeholder was accepted"
+fi
 
 printf 'Docker entrypoint JWT secret test passed.\n'
