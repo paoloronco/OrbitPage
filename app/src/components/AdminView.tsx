@@ -488,9 +488,11 @@ export const AdminView = ({
       : tabLabel(tab)
   );
   const displayedTabDescription = (tab: AdminTab) => (
-    tab === "profile"
-      ? tr("Edit identity and content directly on your real page.", "Modifica identità e contenuti direttamente sulla pagina reale.")
-      : tabDescription(tab)
+    (hostedSurfaceConfig?.section === tab ? hostedSurfaceConfig.sectionDescription : undefined) || (
+      tab === "profile"
+        ? tr("Edit identity and content directly on your real page.", "Modifica identità e contenuti direttamente sulla pagina reale.")
+        : tabDescription(tab)
+    )
   );
 
   const selectTab = (tab: AdminTab) => {

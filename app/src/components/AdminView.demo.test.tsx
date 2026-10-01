@@ -363,6 +363,33 @@ describe('AdminView demo mode', () => {
     mockState.integratedHostedSurface = false;
   });
 
+  it.each([false, true])('respects the host-provided section description for hosted=%s', (hosted) => {
+    const description = 'Localized hosted section description';
+    mockState.integratedHostedSurface = hosted;
+    mockState.hostedConfig = hosted ? { section: 'profile', sectionDescription: description } : null;
+    try {
+      const html = renderToStaticMarkup(
+        <AdminView
+          profile={{ name: 'Plan', bio: '', avatar: '' }}
+          links={[]}
+          theme={defaultTheme}
+          currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
+          saasUsage={hosted ? { blocks: 0 } : undefined}
+          onProfileUpdate={vi.fn()}
+          onLinksUpdate={vi.fn()}
+          onMenuUpdate={vi.fn()}
+          onThemeChange={vi.fn()}
+          onLogout={vi.fn()}
+        />
+      );
+      expect(html).toContain(hosted ? description : 'Edit identity and content directly on your real page.');
+      if (!hosted) expect(html).not.toContain(description);
+    } finally {
+      mockState.hostedConfig = null;
+      mockState.integratedHostedSurface = false;
+    }
+  });
+
   it('identifies Pro as the required Shop plan in a hosted workspace', () => {
     mockState.integratedHostedSurface = true;
     mockState.hostedConfig = {

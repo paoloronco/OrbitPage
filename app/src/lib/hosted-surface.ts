@@ -13,6 +13,7 @@ export type HostedSurfaceConfig = {
     appCheckToken?: string | null;
   }>;
   section: AdminTab;
+  sectionDescription?: string;
   locale: string;
   extensions?: {
     panels?: AdminTab[];
