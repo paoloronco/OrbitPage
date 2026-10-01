@@ -22,12 +22,12 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [lastContact, setLastContact] = useState(Date.now());
+  const lastContact = useRef(Date.now());
+  const [uncertain, setUncertain] = useState(false);
   const wasActive = useRef(false);
   const acceptedJobId = useRef<string | null>(null);
   const logs = useRef<HTMLPreElement>(null);
   const active = starting || awaitingConfirmation || ['queued', 'running'].includes(status?.job?.state || '');
-  const uncertain = connectionError && Date.now() - lastContact > 90_000;
   const job = status?.job && (active || showResult || status.job.version === requestedVersion) ? status.job : null;
   const open = requestedVersion !== null || active || showResult;
 
@@ -44,9 +44,9 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       acceptedJobId.current = next.job?.id || null;
       setAwaitingConfirmation(false);
       setStatus(next);
-      setLastContact(Date.now());
+      lastContact.current = Date.now(); setUncertain(false);
       setConnectionError(false);
-    } catch { setConnectionError(true); }
+    } catch { setConnectionError(true); setUncertain(Date.now() - lastContact.current >= 90_000); }
   };
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       setStatus(next); wasActive.current = ['queued', 'running'].includes(next.job?.state || '');
       acceptedJobId.current = next.job?.id || null;
       setAwaitingConfirmation(false);
-      setPassword(''); setShowResult(true); setConnectionError(false); setLastContact(Date.now());
+      setPassword(''); setShowResult(true); setConnectionError(false); lastContact.current = Date.now(); setUncertain(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : tr('Could not start the update.', 'Impossibile avviare l’aggiornamento.'));
       await readStatus();

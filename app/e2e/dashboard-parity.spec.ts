@@ -107,6 +107,10 @@ test('keeps the update modal locked through a restart and shows logs and the con
   disconnected = true;
   await expect(dialog.getByRole('alert')).toContainText('Waiting for the server', { timeout: 10000 });
   await expect(dialog).toBeVisible();
+  await page.clock.setSystemTime(new Date(Date.now() + 91_000));
+  await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('Connection lost — update status unknown');
+  await expect(dialog.locator('progress')).toHaveCount(0);
   disconnected = false;
   job = { ...job, state: 'completed', logs: 'Health check passed\nUpdate completed. OrbitPage v99.0.0 is running.' };
   await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
