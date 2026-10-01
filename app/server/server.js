@@ -1944,7 +1944,7 @@ const aiAgentLimiter = rateLimit({
 });
 
 // Apply rate limiting
-app.use('/api', apiLimiter);
+app.use('/api', (req, res, next) => req.method === 'GET' && req.path === '/account/updates' ? next() : apiLimiter(req, res, next));
 app.use('/api', async (req, res, next) => {
   if (DEMO_MODE || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)
     || ['/account/updates', '/auth/login', '/auth/verify', '/auth/2fa/verify'].includes(req.path)) return next();
@@ -4472,7 +4472,9 @@ const rejectPersonalTokenSession = (req, res, next) => (
     : next()
 );
 
-app.get('/api/account/updates', authenticateToken, rejectPersonalTokenSession, async (req, res) => {
+app.get('/api/account/updates', rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many update status requests. Try again shortly.' },
+}), authenticateToken, rejectPersonalTokenSession, async (req, res) => {
   if (DEMO_MODE) return res.json({ enabled: false, job: null });
   try {
     const status = await updateAgentRequest(DATA_DIR);
