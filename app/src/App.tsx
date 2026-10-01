@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { Component, lazy, Suspense, useLayoutEffect, useRef, type ErrorInfo, type ReactNode } from "react";
 import { getActiveBasePath, withBasePath } from "@/lib/base-path";
 import { AppI18nProvider, resolveApplicationErrorLocale, type AppLocale } from "@/lib/i18n";
@@ -190,8 +190,13 @@ function RoutedApplication() {
 
 function LocalizedPublicRoute({ children }: { children: ReactNode }) {
   const { locale } = useParams();
+  const location = useLocation();
   if (!publicLocaleFromSlug(locale)) {
     return <NotFound />;
+  }
+  if (!isAdminLocation(location.pathname)) {
+    const route = parseLocalizedPublicPath(location.pathname);
+    return <Navigate replace to={`${route?.routePath || "/"}${location.search}${location.hash}`} />;
   }
   return children;
 }

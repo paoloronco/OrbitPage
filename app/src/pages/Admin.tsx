@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { parseLocalizedPublicPath } from "@/lib/public-routing";
 import { AdminView } from "@/components/AdminView";
 import { LoginForm } from "@/components/LoginForm";
 import { InitialSetup } from "@/components/InitialSetup";
@@ -76,8 +77,9 @@ export interface CurrentUser {
 
 const Admin = () => {
   const { toast } = useToast();
-  const { locale, tr } = useAppI18n();
+  const { locale, setLocale, tr } = useAppI18n();
   const location = useLocation();
+  const previousPathname = useRef(location.pathname);
   const navigate = useNavigate();
   const integratedHostedSurface = isIntegratedHostedSurface();
   const hostedSurface = integratedHostedSurface;
@@ -123,12 +125,19 @@ const Admin = () => {
 
   useEffect(() => {
     if (hostedSurface) return;
+    const pathChanged = previousPathname.current !== location.pathname;
+    previousPathname.current = location.pathname;
+    const pathLocale = parseLocalizedPublicPath(location.pathname)?.locale;
+    if (pathChanged && pathLocale && pathLocale !== locale) {
+      setLocale(pathLocale);
+      return;
+    }
     const subsectionScope = locationEditorSection === "menu" || locationEditorSection === "shop" ? locationEditorSection : locationTab as AdminSubsectionScope;
     const expectedPath = locationSubsection ? adminSubsectionPath(subsectionScope, locationSubsection, locale) : locationEditorSection
       ? adminEditorPath(locationEditorSection, locale)
       : adminDashboardPath(locationTab, locationContentSection, locale);
-    if (location.pathname !== expectedPath) navigate(expectedPath, { replace: true });
-  }, [hostedSurface, locale, location.pathname, locationTab, locationContentSection, locationEditorSection, locationSubsection, navigate]);
+    if (location.pathname !== expectedPath) navigate({ pathname: expectedPath, search: location.search, hash: location.hash }, { replace: true });
+  }, [hostedSurface, locale, setLocale, location.pathname, location.search, location.hash, locationTab, locationContentSection, locationEditorSection, locationSubsection, navigate]);
 
   useEffect(() => {
     if (!hostedSurface) return;

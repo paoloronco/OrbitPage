@@ -25,7 +25,6 @@ import { generateSecurePassword, isPasswordStrong, setupInitialCredentials } fro
 import { withBasePath } from "@/lib/base-path";
 import { useAppI18n } from "@/lib/i18n";
 import { OrbitPageBrand } from "./OrbitPageBrand";
-import { localizedPublicPath } from "@/lib/public-routing";
 
 interface InitialSetupProps {
   onSetupComplete: () => void | Promise<void>;
@@ -60,9 +59,8 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
 
   const passwordReady = requirements.every((requirement) => requirement.test(password));
   const passwordsMatch = password.length > 0 && password === confirmPassword;
-  const publicPagePreview = (locale: string) => typeof window === "undefined"
-    ? localizedPublicPath(locale)
-    : `${window.location.origin}${withBasePath(localizedPublicPath(locale))}`;
+  const publicPagePreview = typeof window === "undefined" ? withBasePath('/')
+    : `${window.location.origin}${withBasePath('/')}`;
 
   const refreshChecks = async () => {
     setChecksLoading(true);
@@ -204,12 +202,11 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
           {step === 2 && (
             <div className="initial-setup-content">
               <p className="initial-setup-kicker">03 / {tr("Public URL", "URL pubblico")}</p>
-              <h1 id="setup-title">{tr("Your localized page addresses are ready.", "Gli indirizzi localizzati della pagina sono pronti.")}</h1>
-              <p className="initial-setup-lead">{tr("OrbitPage serves the main page directly below each language prefix.", "OrbitPage pubblica la pagina principale direttamente sotto il prefisso di ogni lingua.")}</p>
+              <h1 id="setup-title">{tr("Your public page address is ready.", "L'indirizzo della tua pagina pubblica è pronto.")}</h1>
+              <p className="initial-setup-lead">{tr("Your public page uses this address. Language selection applies to the dashboard.", "La pagina pubblica usa questo indirizzo. La scelta della lingua riguarda la dashboard.")}</p>
               <div className="setup-url-preview">
                 <span>{tr("Public page", "Pagina pubblica")}</span>
-                <strong>{publicPagePreview("en")}</strong>
-                <strong>{publicPagePreview("it")}</strong>
+                <strong>{publicPagePreview}</strong>
               </div>
               <div className="initial-setup-summary"><CheckCircle2 aria-hidden="true" size={22} /><div><strong>{tr("Ready to create OrbitPage", "Pronto per creare OrbitPage")}</strong></div></div>
             </div>

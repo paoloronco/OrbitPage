@@ -209,7 +209,7 @@ The current dashboard keeps related work together:
 | **Team** | Additional users and permissions |
 | **Account** | Password and two-factor authentication |
 
-The visual editor changes URL with the active section: <code>/dashboard/editor/page</code>, <code>/dashboard/editor/content</code>, <code>/dashboard/editor/menu</code>, <code>/dashboard/editor/shop</code>, and <code>/dashboard/editor/pages</code>. Classic dashboard routes include <code>/dashboard/profile</code>, <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>. Public pages use locale prefixes such as <code>/en-US</code> and <code>/it-IT</code>; menus, legal pages, newsletters, and subpages stay below that prefix. The installation root and older page-slug URLs remain compatibility aliases.
+The visual editor changes URL with the active section: <code>/dashboard/editor/page</code>, <code>/dashboard/editor/content</code>, <code>/dashboard/editor/menu</code>, <code>/dashboard/editor/shop</code>, and <code>/dashboard/editor/pages</code>. Classic dashboard routes include <code>/dashboard/profile</code>, <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>. Dashboard URLs include the interface language, for example <code>/it-IT/dashboard/account</code>. Public pages use the installation root; menus, legal pages, newsletters, and subpages have no language prefix. Older localized and page-slug public URLs remain redirect aliases.
 
 Read the [dashboard guide](./docs/user-guide/dashboard.md) for the complete route map and editing workflow.
 
@@ -249,9 +249,9 @@ See [app/README.md](./app/README.md) for application development boundaries.
 2. Open <code>/dashboard/profile</code>.
 3. Review the runtime, SQLite, storage, frontend, and session checks.
 4. Create the password for the fixed first username, <code>admin</code>.
-5. Confirm the localized public URLs, complete setup, and follow the dashboard guide.
+5. Confirm the public URL, complete setup, and follow the dashboard guide.
 
-The administrator and starter profile are created atomically. Canonical public URLs are locale-prefixed, for example <code>/en-US</code> and <code>/it-IT</code>. The installation root redirects to the preferred language; older page-slug URLs remain aliases after an upgrade.
+The administrator and starter profile are created atomically. The canonical public URL is the installation root. Language prefixes apply to the dashboard; older localized and page-slug public URLs redirect to the unprefixed destination after an upgrade.
 
 ## Configuration
 
