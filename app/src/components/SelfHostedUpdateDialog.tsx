@@ -38,7 +38,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       const next = await applicationUpdatesApi.status();
       if (submitting.current) return;
       // A lost socket is not proof that a previously accepted update has stopped.
-      if (wasActive.current && !next.enabled) throw new Error('Updater disconnected.');
+      if (wasActive.current && acceptedJobId.current && !next.enabled) throw new Error('Updater disconnected.');
       if (wasActive.current && acceptedJobId.current && next.job?.id !== acceptedJobId.current) throw new Error('Waiting for the accepted update.');
       const busy = ['queued', 'running'].includes(next.job?.state || '');
       if (wasActive.current && !busy && next.job
