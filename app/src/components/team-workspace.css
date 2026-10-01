@@ -11,6 +11,9 @@
   grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   font-family: var(--orbitpage-dashboard-font, Inter, Arial, sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: 0;
   gap: 18px;
   max-width: 1180px;
   width: 100%;
@@ -22,6 +25,7 @@
   border-radius: 8px;
   color: var(--team-ink);
   display: grid;
+  align-content: start;
   gap: 18px;
   padding: 24px;
   min-width: 0;

@@ -387,11 +387,7 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
                     <PasswordFields label="Confirm password" value={editConfirm} onChange={setEditConfirm} disabled={editLoading} />
                     {editMsg && (
                       <div
-                        className={`text-xs p-2 rounded flex items-center gap-1.5 ${
-                          editMsg.type === 'success'
-                            ? 'bg-green-500/10 text-green-400'
-                            : 'bg-destructive/10 text-destructive'
-                        }`}
+                        className={`team-feedback ${editMsg.type}`}
                       >
                         {editMsg.type === 'success' ? (
                           <CheckCircle className="w-3.5 h-3.5 shrink-0" />
@@ -401,14 +397,14 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
                         {editMsg.text}
                       </div>
                     )}
-                    <div className="flex gap-2">
-                      <Button aria-busy={editLoading} type="submit" variant="gradient" size="sm" className="flex-1" disabled={editLoading}>
+                    <div className="team-form-actions">
+                      <button aria-busy={editLoading} type="submit" className="team-button primary" disabled={editLoading}>
                         {editLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                         {editLoading ? 'Saving password' : 'Save password'}
-                      </Button>
-                      <Button type="button" variant="outline" size="sm" onClick={cancelEdit} disabled={editLoading}>
+                      </button>
+                      <button type="button" className="team-button secondary" onClick={cancelEdit} disabled={editLoading}>
                         Cancel
-                      </Button>
+                      </button>
                     </div>
                   </form>
                 )}
