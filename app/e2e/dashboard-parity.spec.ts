@@ -75,7 +75,10 @@ test('checks OSS updates and explains when the host update service is not enable
 test('keeps the update modal locked through a restart and shows logs and the confirmed result', async ({ page }) => {
   let job: Record<string, unknown> | null = null;
   let disconnected = false;
+  let rejectInstall = false;
+  let latestTag = 'v99.0.0';
   await page.route('**/api/account/updates*', route => {
+    if (rejectInstall && route.request().method() === 'POST') return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Host updater unavailable.' }) });
     if (disconnected) return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Restarting' }) });
     if (route.request().method() === 'POST') {
       expect(route.request().postDataJSON()).toEqual({ version: '99.0.0', currentPassword: 'Current123!' });
@@ -84,7 +87,7 @@ test('keeps the update modal locked through a restart and shows logs and the con
     return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true, job }) });
   });
   await page.route('https://api.github.com/repos/paoloronco/OrbitPage/releases/latest', route => route.fulfill({
-    contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ tag_name: 'v99.0.0', draft: false, prerelease: false }),
+    contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ tag_name: latestTag, draft: false, prerelease: false }),
   }));
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Account', exact: true }).click();
@@ -113,6 +116,15 @@ test('keeps the update modal locked through a restart and shows logs and the con
   await dialog.locator('.account-delete-actions').getByRole('button', { name: 'Close', exact: true }).click();
   await expect(dialog).toBeHidden();
   await page.getByRole('button', { name: 'Theme', exact: true }).click();
+  latestTag = 'v100.0.0'; rejectInstall = true;
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
+  await page.getByRole('button', { name: 'Install update…', exact: true }).click();
+  await dialog.getByLabel('Current password', { exact: true }).fill('Current123!');
+  await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toContainText('Host updater unavailable.');
+  await expect(dialog.getByRole('status')).toHaveText('Ready to install v100.0.0');
+  await expect(dialog.locator('progress')).toHaveCount(0);
 });
 
 test('resumes an active host update after a dashboard reload and reports failure without an endless spinner', async ({ page }) => {
