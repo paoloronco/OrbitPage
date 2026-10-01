@@ -189,12 +189,16 @@ test('does not claim installation when the start is rejected or cannot be confir
   await expect(dialog.getByLabel('Update logs', { exact: true })).toContainText('Waiting for the host updater');
   await page.keyboard.press('Escape');
   await expect(dialog).toBeVisible();
+  await page.unroute('**/api/account/updates*');
+  await page.route('**/api/account/updates*', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: false, job: null }) }));
+  await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
+  await expect(dialog.getByRole('status')).toHaveText('Web updates are not enabled');
+  await expect(dialog.locator('.account-delete-actions').getByRole('button', { name: 'Close', exact: true })).toBeVisible();
   // An accepted job may exist even if the POST response was lost.
   await page.unroute('**/api/account/updates*');
   await page.route('**/api/account/updates*', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true,
     job: { id: 'accepted-after-disconnect', state: 'running', version: '99.0.0', startedAt: 1, updatedAt: 2, logs: '[update] Downloading image', error: null },
   }) }));
-  await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Installing update');
   await expect(dialog.getByLabel('Update logs', { exact: true })).toContainText('Downloading image');
 });

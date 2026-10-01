@@ -9,7 +9,10 @@ source_root="${2:-}"
 temp="$(mktemp -d)"
 trap 'rm -rf -- "$temp"' EXIT
 
-local_scripts="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+local_scripts=''
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  local_scripts="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+fi
 if [[ "${1:-}" == source ]]; then
   [[ -n "$source_root" && -f "$source_root/scripts/orbitpage-update.sh" && -f "$source_root/scripts/orbitpage-update.py" ]] \
     || { echo 'Pass the absolute OrbitPage source checkout path.' >&2; exit 1; }
