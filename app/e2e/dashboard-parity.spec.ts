@@ -28,7 +28,7 @@ const navigationIcons = {
   Plan: 'credit-card-outlined',
 } as const;
 
-test('checks OSS updates and opens the host installation guide without executing an update', async ({ page }) => {
+test('checks OSS updates and explains when the host update service is not enabled', async ({ page }) => {
   let tag = 'v99.0.0';
   let status = 200;
   await page.route('https://api.github.com/repos/paoloronco/OrbitPage/releases/latest', route => route.fulfill({
@@ -59,7 +59,8 @@ test('checks OSS updates and opens the host installation guide without executing
   await expect(dialog.getByRole('heading')).toHaveCSS('color', 'rgb(17, 27, 45)');
   await expect(dialog.getByRole('button', { name: 'Copy command', exact: true })).toHaveCSS('color', 'rgb(15, 23, 41)');
   await expect(dialog.locator('code')).toHaveText('sudo orbitpage-update');
-  await expect(dialog.getByRole('link', { name: 'Update guide' })).toHaveAttribute('href', /#update-safely$/);
+  await expect(dialog.getByRole('status')).toContainText('Web updates are not enabled');
+  await expect(dialog.getByRole('link', { name: 'Update guide' })).toHaveAttribute('href', /#web-updates$/);
   await page.keyboard.press('Escape');
   tag = currentVersion;
   await check.click();
@@ -69,6 +70,67 @@ test('checks OSS updates and opens the host installation guide without executing
   await check.click();
   await expect(instance.getByRole('status')).toHaveText('Could not check for updates. Try again.');
   await expect(install).toBeDisabled();
+});
+
+test('keeps the update modal locked through a restart and shows logs and the confirmed result', async ({ page }) => {
+  let job: Record<string, unknown> | null = null;
+  let disconnected = false;
+  await page.route('**/api/account/updates*', route => {
+    if (disconnected) return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Restarting' }) });
+    if (route.request().method() === 'POST') {
+      expect(route.request().postDataJSON()).toEqual({ version: '99.0.0', currentPassword: 'Current123!' });
+      job = { id: 'isolated-update', state: 'queued', version: '99.0.0', startedAt: Date.now() / 1000, updatedAt: Date.now() / 1000, logs: '', error: null };
+    }
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true, job }) });
+  });
+  await page.route('https://api.github.com/repos/paoloronco/OrbitPage/releases/latest', route => route.fulfill({
+    contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ tag_name: 'v99.0.0', draft: false, prerelease: false }),
+  }));
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
+  await page.getByRole('button', { name: 'Install update…', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
+  await expect(dialog.getByRole('status')).toContainText('Ready to install');
+  await dialog.getByLabel('Current password', { exact: true }).fill('Current123!');
+  await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('Checking the release');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeHidden();
+  job = { ...job, state: 'running', logs: '[update] Downloading image\n[update] Backing up persistent data\nBackup created\n[update] Checking application health' };
+  await expect(dialog.getByLabel('Update logs', { exact: true })).toContainText('Backup created', { timeout: 10000 });
+  await page.screenshot({ path: 'output/playwright/oss-update-running.png' });
+  disconnected = true;
+  await expect(dialog.getByRole('alert')).toContainText('Waiting for the server', { timeout: 10000 });
+  await expect(dialog).toBeVisible();
+  disconnected = false;
+  job = { ...job, state: 'completed', logs: 'Health check passed\nUpdate completed. OrbitPage v99.0.0 is running.' };
+  await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('Update completed · v99.0.0');
+  await expect(dialog.getByRole('button', { name: 'Reload dashboard' })).toBeVisible();
+  await page.screenshot({ path: 'output/playwright/oss-update-completed.png' });
+  await dialog.locator('.account-delete-actions').getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await page.getByRole('button', { name: 'Theme', exact: true }).click();
+});
+
+test('resumes an active host update after a dashboard reload and reports failure without an endless spinner', async ({ page }) => {
+  let state = 'running';
+  await page.route('**/api/account/updates*', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true,
+    job: { id: 'resumed-update', state, version: '99.0.0', startedAt: 1, updatedAt: 2, logs: 'Backup created\nChecking application health', error: state === 'failed' ? 'Host updater failed (exit 1). Review the logs before retrying.' : null },
+  }) }));
+  await openAuthenticatedAdmin(page);
+  const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
+  await expect(dialog.getByRole('status')).toContainText('Installing update');
+  await page.reload();
+  await expect(dialog.getByRole('status')).toContainText('Installing update');
+  state = 'failed';
+  await expect(dialog.getByRole('status')).toContainText('Update failed', { timeout: 10000 });
+  await expect(dialog.getByRole('alert')).toContainText('Host updater failed');
+  await expect(dialog.locator('progress')).toHaveCount(0);
+  await dialog.locator('.account-delete-actions').getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(dialog).toBeHidden();
 });
 
 test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit', async ({ page }) => {

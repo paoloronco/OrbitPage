@@ -82,7 +82,7 @@ Self-hosted **Analytics** shows the same 7/30-day visit and content dashboard as
 
 - **Newsletter** connects your own SMTP server, manages confirmed subscribers, and creates, schedules, and reports on email campaigns. See [Newsletters](./newsletters.md).
 - **Team** manages additional local users and their roles.
-- **Account → General** contains identity, instance version and update guidance, support, and personal-page actions. **Security** contains the signed-in user's password and TOTP authenticator. On narrow screens, protected password recovery follows the authenticator.
+- **Account → General** contains identity, instance version and updates, support, and personal-page actions. The [optional host update service](../wiki/Deployment.md#web-updates) enables installation with a blocking progress/log dialog and a confirmed final result. Without it, Account explicitly provides the terminal command. **Security** contains the signed-in user's password and TOTP authenticator. On narrow screens, protected password recovery follows the authenticator.
 
 The first `admin` account always has full access. Every signed-in user can manage their own Account; the additional roles below control access to page and installation tools:
 
