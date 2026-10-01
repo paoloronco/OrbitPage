@@ -39,12 +39,21 @@ test('checks OSS updates and explains when the host update service is not enable
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   const instance = page.locator('.account-instance-card');
   const details = page.locator('.oss-account-details-card');
+  const currentVersion = await instance.locator('.account-detail-row').filter({ hasText: 'Current version' }).locator('dd').innerText();
+  expect(currentVersion).toMatch(/^v\d+\.\d+\.\d+$/);
+  const shell = await page.request.get('/en-US/dashboard/account');
+  const shellHtml = await shell.text();
+  for (const extension of ['js', 'css']) {
+    const asset = shellHtml.match(new RegExp(`/assets/orbitpage-[\\w-]+\\.${extension}`))?.[0];
+    expect(asset).toBeTruthy();
+    expect((await page.request.get(asset!)).ok()).toBe(true);
+  }
+  await expect(page.getByRole('heading', { name: "We couldn't open this page." })).toBeHidden();
+  await page.evaluate(() => document.fonts.ready);
   const initialCards = await Promise.all([details.boundingBox(), instance.boundingBox()]);
   expect(initialCards.every(Boolean)).toBe(true);
   expect(Math.abs(initialCards[0]!.height - initialCards[1]!.height)).toBeLessThanOrEqual(1);
   const initialSupport = await page.locator('.oss-account-support-card').boundingBox();
-  const currentVersion = await instance.locator('.account-detail-row').filter({ hasText: 'Current version' }).locator('dd').innerText();
-  expect(currentVersion).toMatch(/^v\d+\.\d+\.\d+$/);
   const check = instance.getByRole('button', { name: 'Check for updates', exact: true });
   const install = instance.getByRole('button', { name: 'Install update…', exact: true });
   await expect(install).toBeDisabled();
