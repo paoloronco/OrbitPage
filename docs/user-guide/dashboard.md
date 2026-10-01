@@ -37,6 +37,8 @@ See [Getting started](../wiki/Getting-started.md) for the fresh-install sequence
 
 ## Page tools
 
+Each section header shows its title, description and **Public page** link. The page slug appears in the sidebar.
+
 ### Page
 
 Use **Page** to define the identity visitors see first: profile type, image, name, description, role or activity, location, social links, browser metadata, footer, and optional profile-card overrides.

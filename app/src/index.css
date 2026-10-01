@@ -8050,33 +8050,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   font-size: 11px;
   line-height: 1.42;
 }
-.admin-dashboard-context-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 6px;
-  color: #64758d;
-  font-size: 10px;
-  font-weight: 700;
-}
-.admin-dashboard-context-row > span {
-  display: inline-flex;
-  min-height: 20px;
-  align-items: center;
-  padding: 1px 6px;
-  border: 1px solid var(--admin-line);
-  border-radius: 999px;
-  background: #fff;
-}
-.admin-dashboard-context-slug { color: var(--admin-accent-strong); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-.admin-dashboard-page-state i {
-  width: 6px;
-  height: 6px;
-  margin-right: 5px;
-  border-radius: 50%;
-  background: #22a879;
-  box-shadow: 0 0 0 3px rgb(34 168 121 / 12%);
-}
 .admin-dashboard-header-actions { align-self: center; }
 .admin-dashboard-header-actions .admin-action { min-height: 36px; padding: 7px 12px; border-radius: 6px; font-size: 12px; box-shadow: none; }
 
@@ -8395,8 +8368,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-dashboard-header { position: static; min-height: 0; margin: 0 -10px 10px; padding: 13px 11px 12px; background: #fff; backdrop-filter: none; }
   .admin-dashboard-heading-row h1 { font-size: 22px; }
   .admin-dashboard-section-description { max-width: 32rem; font-size: 11px; }
-  .admin-dashboard-context-row { flex-wrap: wrap; gap: 5px; margin-top: 7px; font-size: 9px; }
-  .admin-dashboard-context-row > span { min-height: 19px; padding: 1px 6px; }
   .admin-dashboard-header-actions { width: auto; align-self: flex-start; }
   .admin-dashboard-header-actions .admin-action,
   .admin-dashboard-public-page { width: 40px; min-width: 40px; min-height: 40px; padding: 0; font-size: 0; }
@@ -9323,8 +9294,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-dashboard-heading-row h1 { font-size: clamp(21px, 1.8vw, 23px); line-height: 1.03; }
   .admin-dashboard-kicker { margin-bottom: 2px; font-size: 9px; line-height: 1.1; }
   .admin-dashboard-section-description { margin-top: 2px; font-size: 10px; line-height: 1.2; }
-  .admin-dashboard-context-row { gap: 4px; margin-top: 4px; font-size: 9px; }
-  .admin-dashboard-context-row > span { min-height: 16px; padding: 0 5px; }
   .admin-dashboard-public-page,
   .admin-dashboard-header-actions .admin-action { min-height: 34px; }
   .orbitpage-admin .admin-panel,
@@ -11049,17 +11018,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   line-height: 1.45;
 }
 
-.admin-dashboard-context-row {
-  gap: 6px;
-  margin-top: 8px;
-  font-size: .6875rem;
-}
-
-.admin-dashboard-context-row > span {
-  min-height: 22px;
-  padding-inline: 8px;
-}
-
 .admin-dashboard-nav-heading,
 .admin-dashboard-nav-heading-workspace {
   font-size: .6875rem;
@@ -11991,7 +11949,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   }
 
   .admin-dashboard-kicker,
-  .admin-dashboard-context-row,
   .admin-metric-label,
   .admin-metric-detail {
     font-size: .6875rem;
@@ -13988,17 +13945,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   flex: 0 1 130px;
 }
 
-.admin-dashboard-logo-copy small,
-.admin-dashboard-context-slug {
+.admin-dashboard-logo-copy small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.admin-dashboard-context-slug {
-  width: 14ch;
-  max-width: 14ch;
-  flex: 0 0 14ch;
 }
 
 .admin-dashboard-sidebar-footer {
