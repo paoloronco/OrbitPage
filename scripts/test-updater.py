@@ -16,6 +16,20 @@ spec.loader.exec_module(updater)
 
 
 class UpdatePlanTests(unittest.TestCase):
+    def test_source_update_never_installs_checkout_owned_helpers_as_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / '.git').mkdir()
+            (root / 'app').mkdir()
+            (root / 'app/package.json').write_text('{}')
+            (root / 'scripts').mkdir()
+            (root / 'scripts/orbitpage-update.py').write_text('malicious checkout helper')
+            (root / 'scripts/orbitpage-update.sh').write_text('malicious checkout command')
+            with patch.object(updater, 'run'), patch.object(updater.shutil, 'which', return_value=None), \
+                 patch.object(Path, 'mkdir', side_effect=AssertionError('host helper directory touched')), \
+                 patch.object(Path, 'write_bytes', side_effect=AssertionError('host helper overwritten')):
+                updater.update_source(root)
+
     @unittest.skipUnless(updater.sys.platform == 'linux', 'Installer runs on Linux')
     def test_updater_bootstrap_accepts_stdin_without_touching_host_paths(self):
         with tempfile.TemporaryDirectory() as directory:

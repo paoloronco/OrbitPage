@@ -26,7 +26,7 @@ import {
 } from './auth.js';
 
 describe('JWT secret policy', () => {
-  it.each(['', 'short', 'change-me', 'change-me-to-a-long-random-string', 'your-secret-key'])(
+  it.each(['', 'short', 'change-me', 'change-me-to-a-long-random-string', 'replace-with-a-long-random-secret', 'your-secret-key'])(
     'rejects insecure value %j',
     (value) => expect(isStrongJwtSecret(value)).toBe(false),
   );

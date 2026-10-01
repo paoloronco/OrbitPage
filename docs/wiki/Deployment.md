@@ -550,7 +550,9 @@ The updater discovers official OrbitPage Docker containers and Compose labels. I
 
 Compose uses its recorded project directory and files, then runs `pull` and `up` for the OrbitPage service. A pinned image tag remains pinned until you change the tag in the Compose file. Custom `--env-file` arguments that are not recorded in the Compose project labels must be supplied through the project configuration before updating.
 
-For an existing source checkout, run `sudo ./scripts/install-updater.sh source "$PWD"` from the repository root. The update command uses `git pull --ff-only`, `npm ci`, and a fresh frontend build. It restarts an active `orbitpage` systemd service; otherwise restart the source process yourself. Python 3 is required for the manual Docker, Compose, and source updater.
+For an existing source checkout, run `sudo ./scripts/install-updater.sh source "$PWD"` from a trusted repository root. The update command uses `git pull --ff-only`, `npm ci`, and a fresh frontend build. It restarts an active `orbitpage` systemd service; otherwise restart the source process yourself. Python 3 is required for the manual Docker, Compose, and source updater.
+
+Source installations with an updater installed before v4.21.45 must replace the privileged helper from the official v4.21.45 release **before** their next `sudo orbitpage-update` run. The previous helper copies scripts from the writable checkout into root-owned command paths during that first update. Install the reviewed `scripts/orbitpage-update.py` and `scripts/orbitpage-update.sh` from the official release into `/usr/local/lib/orbitpage/orbitpage-update.py` and `/usr/local/bin/orbitpage-update`, respectively, then run the updater. Later source updates intentionally leave the privileged helper unchanged; install future helper updates separately from a trusted release.
 
 Keep the updater's archive under `/var/backups/orbitpage` until the new version has completed an acceptance period. A plain `docker restart` does not load changes from an environment file.
 

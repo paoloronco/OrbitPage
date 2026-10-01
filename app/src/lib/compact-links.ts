@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { SocialLinkPlatform } from './link-blocks';
+import { resolveSafePublicHref } from './browser-network-policy';
 
 const brandColors: Partial<Record<SocialLinkPlatform, string>> = {
   instagram: '#d62976', facebook: '#1877f2', tiktok: '#111111', x: '#111111',
@@ -64,14 +65,8 @@ export function getCompactLinkBrandStyle(platform: SocialLinkPlatform, url: stri
 
 export function getSafeCompactLinkHref(url: string): string | null {
   const value = url.trim();
-  if (value.startsWith('/') || value.startsWith('#')) return value;
-
-  try {
-    const parsed = new URL(value);
-    return ['http:', 'https:', 'mailto:', 'tel:'].includes(parsed.protocol) ? parsed.href : null;
-  } catch {
-    return null;
-  }
+  const safeHref = resolveSafePublicHref(value);
+  return safeHref && /^https?:/i.test(safeHref) ? new URL(safeHref).href : safeHref;
 }
 
 export type CompactLinkInputKind = 'username' | 'phone' | 'email' | 'url';

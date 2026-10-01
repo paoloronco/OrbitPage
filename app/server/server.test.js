@@ -28,6 +28,7 @@ vi.mock('./database.js', () => ({
 
 // Mock auth.js
 vi.mock('./auth.js', () => ({
+  isStrongJwtSecret: vi.fn((value) => typeof value === 'string' && value.length >= 32 && value !== 'replace-with-a-long-random-secret'),
   isFirstTimeSetup: vi.fn(),
   setupInitialCredentials: vi.fn(),
   authenticateUser: vi.fn(),
@@ -1201,6 +1202,53 @@ describe('API Endpoints', () => {
     expect(response.body.data).not.toHaveProperty('builder');
   });
 
+  it('POST /api/ai/page/plan keeps draft links out of theme-only AI context and preview', async () => {
+    authMockState.permissions = ['theme:write'];
+    vi.stubEnv('OPENAI_API_KEY', 'sk-proj-server-test-key-123456789');
+    vi.mocked(dbGet).mockImplementation(async (sql) => String(sql).includes('FROM page_state') ? { revision: 2 } : null);
+    vi.mocked(dbAll).mockResolvedValue([{ id: 'draft', title: 'Private campaign', url: 'https://secret.example', is_active: 0, status: 'draft' }]);
+    const provider = vi.fn().mockResolvedValue({
+      ok: true, status: 200, headers: new Headers(),
+      json: async () => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify({
+        intent: 'propose_changes', answer: 'A new card color.', summary: 'Change card color.',
+        operations: [{ kind: 'theme.set', targetId: null, field: 'card', value: '#123456', blockType: null, title: null, description: null, url: null, content: null, index: null }],
+      }) }] }] }),
+    });
+    vi.stubGlobal('fetch', provider);
+
+    const response = await request(app).post('/orbitpage/api/ai/page/plan').send({ message: 'Change the card color', history: [] });
+    expect(response.status).toBe(200);
+    expect(JSON.stringify(provider.mock.calls[0][1].body)).not.toContain('Private campaign');
+    expect(JSON.stringify(response.body)).not.toContain('Private campaign');
+    expect(response.body.proposal.preview.before.links).toEqual([]);
+  });
+
+  it('GET /api/consent-config/public omits inactive policy drafts', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce({ mode: 'hardcoded', enabled: 1, full_config: JSON.stringify({
+        legalPolicies: { privacyPolicy: { mode: 'external', hostedText: 'unpublished', embeddedCode: '<script>draft()</script>' } },
+      }) })
+      .mockResolvedValueOnce({ privacy_policy_url: 'https://example.com/privacy', cookie_policy_url: '' });
+    const response = await request(app).get('/api/consent-config/public');
+    expect(response.status).toBe(200);
+    expect(response.body.data.legalPolicies.privacyPolicy).not.toHaveProperty('hostedText');
+    expect(response.body.data.legalPolicies.privacyPolicy).not.toHaveProperty('embeddedCode');
+  });
+
+  it('GET /api/links/export denies analytics-only users', async () => {
+    authMockState.permissions = ['analytics:read'];
+    expect((await request(app).get('/api/links/export')).status).toBe(403);
+    expect(dbAll).not.toHaveBeenCalled();
+    authMockState.permissions = ['links:write'];
+    expect((await request(app).get('/api/links/export')).status).toBe(200);
+  });
+
+  it('PUT /api/theme rejects CSS URLs while accepting normal colors', async () => {
+    expect((await request(app).put('/api/theme').send({ background: 'url(http://127.0.0.1/admin)' })).status).toBe(400);
+    expect(dbRun).not.toHaveBeenCalled();
+    expect((await request(app).put('/api/theme').send({ background: '#123456' })).status).toBe(200);
+  });
+
   it('GET /api/links omits analytics and campaign metadata for public callers', async () => {
     vi.mocked(dbAll).mockResolvedValueOnce([{
       id: 'public-link',
@@ -1262,7 +1310,7 @@ describe('API Endpoints', () => {
     expect(dbRun).not.toHaveBeenCalled();
   });
 
-  it('PUT /api/consent-config allows compliance editors to use structured CMP identifiers', async () => {
+  it('PUT /api/consent-config prevents compliance editors from activating provider scripts', async () => {
     authMockState.username = 'privacy-editor';
     authMockState.permissions = ['compliance:write'];
     vi.mocked(dbGet).mockResolvedValue(null);
@@ -1276,11 +1324,8 @@ describe('API Endpoints', () => {
         builder: { provider: 'cookieyes', providerConfig: { scriptId: 'site-123' } },
       });
 
-    expect(response.status).toBe(200);
-    expect(dbRun).toHaveBeenCalledWith(
-      'INSERT INTO cookie_consent_config (mode, enabled, full_config) VALUES (?, ?, ?)',
-      expect.arrayContaining(['builder', 1]),
-    );
+    expect(response.status).toBe(403);
+    expect(dbRun).not.toHaveBeenCalled();
   });
 
   it('GET /api/consent-config/public infers hosted legal policy mode from legacy local URLs', async () => {

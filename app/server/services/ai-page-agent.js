@@ -889,7 +889,7 @@ export function applyAiPageOperations({ page, operations, permissions }) {
     summaries.push(operationLabel(operation, target.title));
   }
 
-  if (resetBlockOverrides) {
+  if (resetBlockOverrides && permissions.includes('links:write')) {
     links = clearBlockThemeOverrides(links, resetSurfaceEffects);
     linksChanged = true;
   }

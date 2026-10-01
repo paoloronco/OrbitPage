@@ -174,12 +174,12 @@ OrbitPage AI uses the OpenAI Responses API with storage disabled and strict stru
 
 ## Example Production Environment
 
-Store explicit values in a protected environment file or platform secret store. Docker users may omit `JWT_SECRET` and use the generated value under persistent `DATA_DIR`; the line below is for source or managed-platform deployments and remains a placeholder.
+Store explicit values in a protected environment file or platform secret store. Docker users may omit `JWT_SECRET` and use the generated value under persistent `DATA_DIR`. For source or managed-platform deployments, generate a unique secret with `openssl rand -hex 32` and store its output as `JWT_SECRET`.
 
 ```bash
 NODE_ENV=production
 PORT=8080
-JWT_SECRET=replace-with-a-long-random-secret
+# Set JWT_SECRET to the unique value generated with openssl rand -hex 32.
 DATA_DIR=/app/data
 UPLOAD_STORAGE_QUOTA_MB=1024
 VIDEO_UPLOAD_LIMIT_MB=100
@@ -193,7 +193,7 @@ SEO_INDEXING=true
 ```bash
 NODE_ENV=production
 PORT=8080
-JWT_SECRET=replace-with-a-long-random-secret
+# Set JWT_SECRET to a different unique value generated with openssl rand -hex 32.
 DATA_DIR=/app/data
 UPLOAD_STORAGE_QUOTA_MB=256
 VIDEO_UPLOAD_LIMIT_MB=50

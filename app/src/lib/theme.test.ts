@@ -141,4 +141,15 @@ describe('theme normalization', () => {
     expect(getContentCardVariant(theme, 1).foreground).toBe('#111827');
     expect(getContentCardVariant(theme, 2).background).toBe('#102030');
   });
+
+  it('drops stored CSS network requests while preserving valid colors', () => {
+    const theme = normalizeTheme({
+      background: 'url(http://127.0.0.1/admin)',
+      backgroundGradient: { from: '#123456', to: 'url(http://127.0.0.1/admin)', direction: '90deg, url(http://127.0.0.1/admin)' },
+    });
+    expect(theme.background).toBe(normalizeTheme({}).background);
+    expect(theme.backgroundGradient.from).toBe('#123456');
+    expect(theme.backgroundGradient.to).toBe(normalizeTheme({}).backgroundGradient.to);
+    expect(theme.backgroundGradient.direction).toBe(normalizeTheme({}).backgroundGradient.direction);
+  });
 });

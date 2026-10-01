@@ -28,6 +28,8 @@ describe('map location helpers', () => {
 
   it('uses a safe OpenStreetMap search fallback and stable resolution signature', () => {
     expect(getSafeMapOpenUrl('javascript:alert(1)', 'Torino')).toBe('https://www.openstreetmap.org/search?query=Torino');
+    expect(getSafeMapOpenUrl('http://127.0.0.1/admin', 'Torino')).toBe('https://www.openstreetmap.org/search?query=Torino');
+    expect(getSafeMapOpenUrl('https://maps.example.com/place', 'Torino')).toBe('https://maps.example.com/place');
     expect(getMapResolutionSource('Venue', 'Torino', 'https://maps.example/test')).toBe('Venue|Torino|https://maps.example/test');
   });
 });

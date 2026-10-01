@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { logDatabaseError } from './database-errors.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -471,7 +472,10 @@ export const initializeDatabase = () => {
 };
 
 // Database query helpers with better error handling
+const transactionStorage = new AsyncLocalStorage();
 export const dbGet = (sql, params = []) => {
+  const transaction = transactionStorage.getStore();
+  if (transaction) return transaction.get(sql, params);
   return new Promise((resolve, reject) => {
     db.get(sql, params, (err, row) => {
       if (err) {
@@ -484,6 +488,8 @@ export const dbGet = (sql, params = []) => {
 };
 
 export const dbAll = (sql, params = []) => {
+  const transaction = transactionStorage.getStore();
+  if (transaction) return transaction.all(sql, params);
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {
       if (err) {
@@ -496,6 +502,8 @@ export const dbAll = (sql, params = []) => {
 };
 
 export const dbRun = (sql, params = []) => {
+  const transaction = transactionStorage.getStore();
+  if (transaction) return transaction.run(sql, params);
   return new Promise((resolve, reject) => {
     db.run(sql, params, function(err) {
       if (err) {
@@ -508,22 +516,13 @@ export const dbRun = (sql, params = []) => {
 };
 
 // Transaction helper
-export const withTransaction = async (callback) => {
-  try {
-    await dbRun('BEGIN TRANSACTION');
-    const result = await callback();
-    await dbRun('COMMIT');
-    return result;
-  } catch (error) {
-    await dbRun('ROLLBACK');
-    throw error;
-  }
-};
+export const withTransaction = (callback, options) =>
+  withImmediateTransaction((transaction) => transactionStorage.run(transaction, callback), options);
 
 // AI confirmation needs a transaction on its own SQLite connection. BEGIN
 // IMMEDIATE prevents ordinary writes on the shared connection from interleaving
 // between the revision check and the final page update.
-export const withImmediateTransaction = async (callback) => {
+export const withImmediateTransaction = async (callback, { foreignKeys = true } = {}) => {
   const transactionDb = new sqlite3.Database(
     dbPath,
     sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE | sqlite3.OPEN_FULLMUTEX
@@ -549,7 +548,7 @@ export const withImmediateTransaction = async (callback) => {
   const close = () => new Promise((resolve) => transactionDb.close(() => resolve()));
 
   try {
-    await run('PRAGMA foreign_keys = ON');
+    await run(`PRAGMA foreign_keys = ${foreignKeys ? 'ON' : 'OFF'}`);
     await run('PRAGMA busy_timeout = 10000');
     await run('BEGIN IMMEDIATE');
     const result = await callback({ run, get, all });

@@ -39,6 +39,8 @@ describe('compact link platform detection', () => {
 
   it('keeps unsafe or incomplete compact destinations disabled', () => {
     expect(getCompactLinkHref('instagram', 'javascript:alert(1)')).toBeNull();
+    expect(getSafeCompactLinkHref('http://192.168.1.1/admin')).toBeNull();
+    expect(getSafeCompactLinkHref('https://example.com/profile')).toBe('https://example.com/profile');
     expect(getCompactLinkHref('whatsapp', '123')).toBeNull();
     expect(getCompactLinkHref('email', 'not-an-email')).toBeNull();
   });

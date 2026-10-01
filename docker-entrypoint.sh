@@ -27,7 +27,7 @@ fi
 
 # Reject explicitly configured or persisted weak secrets.
 case "${JWT_SECRET:-}" in
-  ""|change-me|change-me-to-a-long-random-string|secret|your-secret-key)
+  ""|change-me|change-me-to-a-long-random-string|replace-with-a-long-random-secret|secret|your-secret-key)
     echo >&2 "ERROR: JWT_SECRET uses a known placeholder."
     echo >&2 "Remove it to let OrbitPage generate one, or set at least 32 random characters."
     exit 1

@@ -1,3 +1,5 @@
+import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
+
 export interface MapCoordinates {
   lat: number;
   lon: number;
@@ -74,12 +76,8 @@ export const getMapResolutionSource = (placeName?: string, address?: string, map
 
 export const getSafeMapOpenUrl = (mapUrl?: string, query?: string): string => {
   if (mapUrl) {
-    try {
-      const parsed = new URL(mapUrl);
-      if (parsed.protocol === 'https:' || parsed.protocol === 'http:') return parsed.toString();
-    } catch {
-      // Fall through to the provider-neutral search URL.
-    }
+    const safeUrl = resolveSafeBrowserHttpUrl(mapUrl, typeof window !== 'undefined' ? window.location.href : 'https://orbitpage.invalid/');
+    if (safeUrl && /^https?:\/\//i.test(mapUrl)) return safeUrl.toString();
   }
   return query ? `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}` : '';
 };
