@@ -21,12 +21,12 @@ const MAX_LAUNCH_KIT_SCREENSHOT_BYTES = 4 * 1024 * 1024;
 export function launchKitScreenshotDataUrl(file) {
   const buffer = file?.buffer;
   const type = String(file?.mimetype || '');
-  const signatures = new Map([
-    ['image/jpeg', (value) => value[0] === 0xff && value[1] === 0xd8 && value[2] === 0xff],
-    ['image/png', (value) => value.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))],
-    ['image/webp', (value) => value.subarray(0, 4).toString('ascii') === 'RIFF' && value.subarray(8, 12).toString('ascii') === 'WEBP'],
-  ]);
-  if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > MAX_LAUNCH_KIT_SCREENSHOT_BYTES || !signatures.get(type)?.(buffer)) {
+  const validImage = Buffer.isBuffer(buffer) && buffer.length > 0 && buffer.length <= MAX_LAUNCH_KIT_SCREENSHOT_BYTES && (
+    (type === 'image/jpeg' && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) ||
+    (type === 'image/png' && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) ||
+    (type === 'image/webp' && buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP')
+  );
+  if (!validImage) {
     throw new AiPageAgentError(400, 'LAUNCH_KIT_SCREENSHOT_INVALID', 'Upload a valid PNG, JPEG, or WebP screenshot up to 4 MB.');
   }
   return `data:${type};base64,${buffer.toString('base64')}`;
