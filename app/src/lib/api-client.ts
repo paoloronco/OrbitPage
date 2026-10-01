@@ -523,12 +523,12 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
       // permission/product errors, for example demo-mode write protection.
       if (isAuthExpired) {
         removeAuthToken();
-        throw new Error('AUTH_EXPIRED');
+        throw Object.assign(new Error('AUTH_EXPIRED'), { status: response.status });
       }
       if (response.status === 429) {
-        throw new Error(typeof metadata.error === 'string' ? metadata.error : 'Too many requests. Please wait a moment and try again.');
+        throw Object.assign(new Error(typeof metadata.error === 'string' ? metadata.error : 'Too many requests. Please wait a moment and try again.'), { status: response.status });
       }
-      throw new Error(errorMessage);
+      throw Object.assign(new Error(errorMessage), { status: response.status });
     }
 
     const bodyRevision = typeof metadata.revision === 'number' ? metadata.revision : Number.NaN;
@@ -544,7 +544,7 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
     return data as T;
   } catch (error) {
     console.error(`API Request Error (${endpoint}):`, error);
-    throw new Error(error instanceof Error ? error.message : 'Failed to connect to the server');
+    throw error instanceof Error ? error : new Error('Failed to connect to the server');
   }
 };
 

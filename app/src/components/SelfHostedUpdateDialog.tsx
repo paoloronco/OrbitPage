@@ -26,14 +26,17 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   const [uncertain, setUncertain] = useState(false);
   const wasActive = useRef(false);
   const acceptedJobId = useRef<string | null>(null);
+  const submitting = useRef(false);
   const logs = useRef<HTMLPreElement>(null);
   const active = starting || awaitingConfirmation || ['queued', 'running'].includes(status?.job?.state || '');
-  const job = status?.job && (active || showResult || status.job.version === requestedVersion) ? status.job : null;
+  const job = status?.job && (['queued', 'running'].includes(status.job.state) || status.job.version === requestedVersion || (!requestedVersion && showResult)) ? status.job : null;
   const open = requestedVersion !== null || active || showResult;
 
   const readStatus = async () => {
+    if (submitting.current) return;
     try {
       const next = await applicationUpdatesApi.status();
+      if (submitting.current) return;
       // A lost socket is not proof that a previously accepted update has stopped.
       if (wasActive.current && !next.enabled) throw new Error('Updater disconnected.');
       if (wasActive.current && acceptedJobId.current && next.job?.id !== acceptedJobId.current) throw new Error('Waiting for the accepted update.');
@@ -54,7 +57,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
       await readStatus();
-      if (!stopped) timer = setTimeout(() => void poll(), wasActive.current || requestedVersion ? 5000 : 30000);
+      if (!stopped) timer = setTimeout(() => void poll(), wasActive.current || requestedVersion ? 2000 : 30000);
     };
     void poll();
     return () => { stopped = true; clearTimeout(timer); };
@@ -71,6 +74,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
 
   const install = async () => {
     if (!requestedVersion || !password || !canInstall || !status?.enabled) return;
+    submitting.current = true;
     setStarting(true); setAwaitingConfirmation(true); wasActive.current = true; acceptedJobId.current = null; setError('');
     try {
       const next = await applicationUpdatesApi.install(requestedVersion, password);
@@ -80,8 +84,13 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       setPassword(''); setShowResult(true); setConnectionError(false); lastContact.current = Date.now(); setUncertain(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : tr('Could not start the update.', 'Impossibile avviare l’aggiornamento.'));
+      // A rejected password/permission request never reached the host updater.
+      if (reason instanceof Error && 'status' in reason && [400, 401, 403, 429].includes(Number(reason.status))) {
+        wasActive.current = false; setAwaitingConfirmation(false);
+      }
+      submitting.current = false;
       await readStatus();
-    } finally { setStarting(false); }
+    } finally { submitting.current = false; setStarting(false); }
   };
 
   return <Dialog open={open} onOpenChange={value => { if (!value && !active) { setShowResult(false); setError(''); setPassword(''); onClose(); } }}>
@@ -94,18 +103,22 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
           : starting ? tr('Starting update…', 'Avvio aggiornamento…')
           : job?.state === 'queued' ? tr('Checking the release…', 'Verifica della versione…')
           : job?.state === 'running' ? tr('Installing update…', 'Installazione aggiornamento…')
+          : awaitingConfirmation ? tr('Update start has not been confirmed', 'Avvio aggiornamento non confermato')
           : job?.state === 'completed' ? tr(`Update completed · v${job.version}`, `Aggiornamento completato · v${job.version}`)
           : job?.state === 'failed' ? tr('Update failed', 'Aggiornamento non riuscito')
+          : connectionError ? tr('Host updater unavailable', 'Updater sul server non disponibile')
           : status?.enabled ? tr(`Ready to install v${requestedVersion}`, `Pronto per installare v${requestedVersion}`)
           : status ? tr('Web updates are not enabled', 'Gli aggiornamenti web non sono abilitati')
           : tr('Connecting to the host updater…', 'Connessione all’updater sul server…')}</strong>
         {job?.state === 'running' && job.logs.includes('[update] ') && <span>{job.logs.split('\n').filter(line => line.startsWith('[update] ')).at(-1)?.slice(9)}</span>}
-        {active && !uncertain && <progress aria-label={tr('Update in progress', 'Aggiornamento in corso')} />}
+        {(starting || ['queued', 'running'].includes(job?.state || '')) && !uncertain && <progress aria-label={tr('Update in progress', 'Aggiornamento in corso')} />}
       </div>
       {connectionError && <p role="alert">{uncertain
         ? tr('The result could not be confirmed. Check the updater service on the server; the dashboard remains locked while the last known update is active.', 'Non è possibile confermare l’esito. Controlla il servizio updater sul server; la dashboard resta bloccata mentre l’ultimo stato noto indica un aggiornamento attivo.')
+        : awaitingConfirmation && !acceptedJobId.current ? tr('Cannot reach the host updater. Checking whether the update started; installation is not confirmed.', 'Impossibile contattare l’updater sul server. Verifica dell’avvio in corso; l’installazione non è confermata.')
+        : !wasActive.current ? tr('Cannot reach the host updater. Check the service on the server before trying again.', 'Impossibile contattare l’updater. Controlla il servizio sul server prima di riprovare.')
         : tr('Waiting for the server to reconnect. This can happen while OrbitPage restarts.', 'In attesa della riconnessione al server. Può succedere durante il riavvio di OrbitPage.')}</p>}
-      {job?.logs && <div className="account-update-log"><Label htmlFor="orbitpage-update-log">{tr('Update logs', 'Log aggiornamento')}</Label><pre ref={logs} id="orbitpage-update-log" tabIndex={0} aria-label={tr('Update logs', 'Log aggiornamento')}>{job.logs}</pre></div>}
+      {(active || job?.logs) && <div className="account-update-log"><Label htmlFor="orbitpage-update-log">{tr('Update logs', 'Log aggiornamento')}</Label><pre ref={logs} id="orbitpage-update-log" tabIndex={0} aria-label={tr('Update logs', 'Log aggiornamento')}>{job?.logs || tr('Waiting for the host updater…', 'In attesa dell’updater sul server…')}</pre></div>}
       {job?.error && <p className="oss-account-error" role="alert">{job.error}</p>}
       {error && <p className="oss-account-error" role="alert">{error}</p>}
       {!active && job?.state !== 'completed' && status?.enabled && canInstall && requestedVersion && <div className="field">

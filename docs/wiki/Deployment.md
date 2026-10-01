@@ -593,12 +593,16 @@ socket in the data mount; the application does not get a Docker socket, sudo
 access or a new network listener. Disabling the service revokes web updates.
 
 The modal blocks dashboard interactions and the API rejects writes while the
-job is queued or running, including writes from other browser sessions. Logs
+job is queued or running, including writes from other browser sessions. The log
+panel opens immediately and refreshes every two seconds during installation. Logs
 and the final result persist on the host through container recreation and
 dashboard reloads. Completion requires both the updater's health check and
 the expected installed application version. Errors, an updater-service restart
 and the 30-minute installation deadline produce an explicit failure; a lost
 browser connection instead reports an unconfirmed result and keeps checking.
+A rejected password or permission request does not start an update or lock the
+dashboard. A lost start response is shown as unconfirmed, rather than installing,
+until the host reports the accepted job.
 If the server cannot reconnect, inspect the service and retained backup before
 retrying. Docker Run restores the previous container on failed startup/health;
 Compose restores the previous image without rewriting the project files.
