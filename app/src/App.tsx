@@ -171,7 +171,6 @@ function RoutedApplication() {
           <Route path="/about" element={<About />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/newsletter/status" element={<Newsletter />} />
-          <Route path="/:locale" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
           <Route path="/:locale/links" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
           <Route path="/:locale/menu" element={<LocalizedPublicRoute><Menu /></LocalizedPublicRoute>} />
           <Route path="/:locale/privacy" element={<LocalizedPublicRoute><Privacy /></LocalizedPublicRoute>} />
@@ -179,7 +178,7 @@ function RoutedApplication() {
           <Route path="/:locale/newsletter" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
           <Route path="/:locale/newsletter/status" element={<LocalizedPublicRoute><Newsletter /></LocalizedPublicRoute>} />
           <Route path="/:locale/:subpage" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
-          <Route path="/:subpage" element={<Index />} />
+          <Route path="/:subpage" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -189,9 +188,10 @@ function RoutedApplication() {
 }
 
 function LocalizedPublicRoute({ children }: { children: ReactNode }) {
-  const { locale } = useParams();
+  const { locale, subpage } = useParams();
   const location = useLocation();
-  if (!publicLocaleFromSlug(locale)) {
+  if (!locale && !publicLocaleFromSlug(subpage)) return children;
+  if (!publicLocaleFromSlug(locale || subpage)) {
     return <NotFound />;
   }
   if (!isAdminLocation(location.pathname)) {
