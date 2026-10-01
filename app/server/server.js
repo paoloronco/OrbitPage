@@ -2840,9 +2840,7 @@ app.get('/api/public-url', apiLimiter, async (req, res) => {
   try {
     setNoStoreHeaders(res);
     const origin = getRequestOrigin(req);
-    const locale = normalizePublicLocale(req.query.locale);
-    const publicPath = localizedPublicPath(locale.slug);
-    const publicUrl = new URL(withRequestBasePath(req, publicPath), origin).toString();
+    const publicUrl = new URL(withRequestBasePath(req, '/'), origin).toString();
     res.json({
       success: true,
       publicUrl,
