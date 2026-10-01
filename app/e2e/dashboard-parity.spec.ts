@@ -149,6 +149,56 @@ test('resumes an active host update after a dashboard reload and reports failure
   await expect(dialog).toBeHidden();
 });
 
+test('does not claim installation when the start is rejected or cannot be confirmed', async ({ page }) => {
+  let unavailable = false;
+  let rejected = true;
+  await page.route('**/api/account/updates*', route => {
+    if (route.request().method() === 'POST') {
+      unavailable = true;
+      return rejected
+        ? route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'Current password is incorrect.' }) })
+        : route.abort();
+    }
+    return route.fulfill({ status: unavailable ? 503 : 200, contentType: 'application/json',
+      body: JSON.stringify(unavailable ? { error: 'Host updater unavailable.' } : { enabled: true, job: null }),
+    });
+  });
+  await page.route('https://api.github.com/repos/paoloronco/OrbitPage/releases/latest', route => route.fulfill({
+    contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
+    body: JSON.stringify({ tag_name: 'v99.0.0', draft: false, prerelease: false }),
+  }));
+  await openAuthenticatedAdmin(page);
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
+  await page.getByRole('button', { name: 'Install update…', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
+  await dialog.getByLabel('Current password', { exact: true }).fill('Incorrect123!');
+  await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
+  await expect(dialog.getByRole('alert').first()).toBeVisible();
+  await expect(dialog.locator('progress')).toHaveCount(0);
+  await dialog.locator('.account-delete-actions').getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(dialog).toBeHidden();
+
+  unavailable = false; rejected = false;
+  await page.getByRole('button', { name: 'Install update…', exact: true }).click();
+  await dialog.getByLabel('Current password', { exact: true }).fill('Current123!');
+  await expect(dialog.getByRole('button', { name: 'Install update', exact: true })).toBeEnabled();
+  await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
+  await expect(dialog.getByRole('status')).toHaveText('Update start has not been confirmed');
+  await expect(dialog.locator('progress')).toHaveCount(0);
+  await expect(dialog.getByLabel('Update logs', { exact: true })).toContainText('Waiting for the host updater');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeVisible();
+  // An accepted job may exist even if the POST response was lost.
+  await page.unroute('**/api/account/updates*');
+  await page.route('**/api/account/updates*', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true,
+    job: { id: 'accepted-after-disconnect', state: 'running', version: '99.0.0', startedAt: 1, updatedAt: 2, logs: '[update] Downloading image', error: null },
+  }) }));
+  await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('Installing update');
+  await expect(dialog.getByLabel('Update logs', { exact: true })).toContainText('Downloading image');
+});
+
 test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await openAuthenticatedAdmin(page);
