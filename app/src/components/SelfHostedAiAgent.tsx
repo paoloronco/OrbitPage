@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Send, ShieldCheck, Sparkles, X } from "@/components/ui/material-icons";
+import { Check, Send, ShieldCheck, Sparkles, Trash2, X } from "@/components/ui/material-icons";
 import {
   aiPageAgentApi,
   type AiConversationMessage,
@@ -49,6 +49,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
     tagline: tr("Edit your page with confirmation", "Modifica la pagina con conferma"),
     launch: tr("Edit with AI", "Modifica con AI"),
     close: tr("Close AI assistant", "Chiudi assistente AI"),
+    clear: tr("Clear conversation", "Svuota chat"),
     welcome: tr(
       "Tell me what you want to change on the open page. I will show you the edits to review before you apply them.",
       "Dimmi cosa vuoi cambiare nella pagina aperta. Ti mostrerò le modifiche da controllare prima di applicarle.",
@@ -161,6 +162,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
           <header className="ai-page-agent-header">
             <span className="ai-page-agent-mark" aria-hidden="true"><Sparkles size={18} /></span>
             <div><strong>OrbitPage AI</strong><small>{labels.tagline}</small></div>
+            <button aria-label={labels.clear} disabled={sending || messages.some((item) => item.applying) || !messages.some((item) => item.persistent !== false)} onClick={() => { setMessages([]); setDraft(""); }} title={labels.clear} type="button"><Trash2 size={18} /></button>
             <button ref={closeRef} aria-label={labels.close} onClick={() => { setOpen(false); launcherRef.current?.focus(); }} type="button"><X size={18} /></button>
           </header>
 

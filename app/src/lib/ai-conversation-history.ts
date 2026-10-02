@@ -32,7 +32,8 @@ export function readAiConversationHistory(storageKey = AI_HISTORY_STORAGE_KEY) {
 
 export function writeAiConversationHistory(storageKey: string, messages: readonly AiHistoryMessage[]) {
   try {
-    window.localStorage.setItem(storageKey, JSON.stringify(messages.slice(-HISTORY_LIMIT)));
+    if (messages.length === 0) window.localStorage.removeItem(storageKey);
+    else window.localStorage.setItem(storageKey, JSON.stringify(messages.slice(-HISTORY_LIMIT)));
   } catch {
     // History is optional when browser storage is unavailable.
   }

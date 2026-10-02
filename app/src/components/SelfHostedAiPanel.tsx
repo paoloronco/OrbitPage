@@ -126,6 +126,13 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
       .map(({ role, content }) => ({ role, content }))
   ), [messages]);
 
+  const clearConversation = () => {
+    setMessages([entry("assistant", welcome, false, false)]);
+    setPrompt("");
+    setProposal(null);
+    setApplied(false);
+  };
+
   const saveSettings = async () => {
     if (!canManageSettings || savingSettings) return;
     setSavingSettings(true);
@@ -269,6 +276,14 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
               "Descrivi il risultato. L’assistente lavora sul profilo, sui contenuti e sul tema attuali di questa pagina.",
             )}</p>
           </div>
+          <button
+            aria-label={tr("Clear conversation", "Svuota chat")}
+            className="oss-ai-clear"
+            disabled={planning || applying || launching || !messages.some((message) => message.persistent !== false)}
+            onClick={clearConversation}
+            title={tr("Clear conversation", "Svuota chat")}
+            type="button"
+          ><Trash2 aria-hidden="true" /></button>
         </header>
 
         <div className="oss-ai-conversation" ref={conversationRef} aria-live="polite">

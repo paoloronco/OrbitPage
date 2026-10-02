@@ -6,6 +6,33 @@ const E2E_BIO = 'OrbitPage AI E2E verified this page update.';
 test.describe('OrbitPage AI API end-to-end', () => {
   test.describe.configure({ mode: 'serial', timeout: 60_000 });
 
+  test('keeps long history inside the chat and clears its saved copy', async ({ page }) => {
+    await openAuthenticatedAdmin(page);
+    const storageKey = 'orbitpage:ai-conversation:v1:admin';
+    await page.evaluate((key) => {
+      localStorage.setItem(key, JSON.stringify(Array.from({ length: 80 }, (_, index) => ({
+        role: index % 2 ? 'assistant' : 'user',
+        content: `Saved message ${index + 1}`,
+      }))));
+    }, storageKey);
+    await page.reload();
+    await openAdminSection(page, 'AI Assistant');
+
+    const conversation = page.locator('.oss-ai-conversation');
+    await expect(conversation.getByText('Saved message 80')).toBeVisible();
+    expect(await conversation.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+    expect(await conversation.evaluate((element) => element.closest('.oss-ai-workspace')!.getBoundingClientRect().height)).toBeLessThanOrEqual(760);
+
+    await page.getByRole('button', { name: 'Clear conversation' }).click();
+    await expect(conversation.getByText('Saved message 80')).toHaveCount(0);
+    await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), storageKey)).toBeNull();
+    await page.reload();
+    await expect(page.locator('.oss-ai-conversation').getByText('Saved message 80')).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole('button', { name: 'Clear conversation' })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  });
+
   test('keeps AI APIs private and does not grant arbitrary CORS access', async ({ request }) => {
     for (const endpoint of ['/api/ai/settings', '/api/ai/page/plan', '/api/ai/page/commit']) {
       const response = endpoint.endsWith('/settings')
