@@ -1,17 +1,17 @@
 # Dashboard guide
 
-The self-hosted dashboard opens at `/dashboard/profile` after initial setup. In the visual site editor, **Page**, **Content**, **Menu**, **Shop**, and **Pages** use `/dashboard/editor/page`, `/dashboard/editor/content`, `/dashboard/editor/menu`, `/dashboard/editor/shop`, and `/dashboard/editor/pages`. Refreshing or bookmarking one of these URLs returns to the same section. The classic dashboard keeps its existing `/dashboard/profile` and `/dashboard/content/*` URLs.
+The self-hosted dashboard opens at `/dashboard/profile` after initial setup. In the visual site editor, **Page**, **Content**, **Menu**, **Shop**, and **Pages** use `/dashboard/editor/page`, `/dashboard/editor/content`, `/dashboard/editor/menu/content`, `/dashboard/editor/shop/products`, and `/dashboard/editor/pages`. Refreshing or bookmarking one of these URLs returns to the same section. The classic dashboard keeps its existing `/dashboard/profile` and `/dashboard/content/*` URLs.
 
 Tabs also have their own URLs, prefixed by the dashboard language, for example `/en-US/dashboard/account/security`:
 
 | Workspace path | Tab slugs |
 | --- | --- |
-| `/dashboard/editor/menu` | `settings`, `content`, `design` |
-| `/dashboard/editor/shop` | `legal`, `payments`, `design`, `products`, `orders`, `customers` |
-| `/dashboard/theme` | `page`, `card` |
-| `/dashboard/publish` | `QR`, `Sitemap`, `TXT` |
-| `/dashboard/newsletter` | `overview`, `campaigns`, `subscribers`, `settings` |
-| `/dashboard/account` | `general`, `security` |
+| `/dashboard/editor/menu/content` | `settings`, `content`, `design` |
+| `/dashboard/editor/shop/products` | `legal`, `payments`, `design`, `products`, `orders`, `customers` |
+| `/dashboard/theme/page` | `page`, `card` |
+| `/dashboard/publish/QR` | `QR`, `Sitemap`, `TXT` |
+| `/dashboard/newsletter/overview` | `overview`, `campaigns`, `subscribers`, `settings` |
+| `/dashboard/account/general` | `general`, `security` |
 
 **Account > Your public OrbitPage** shows the installation root URL, including any configured mount path, without a dashboard language suffix.
 

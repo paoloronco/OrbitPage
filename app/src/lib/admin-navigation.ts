@@ -39,6 +39,14 @@ export const ADMIN_SUBSECTIONS = {
 } as const;
 export type AdminSubsectionScope = keyof typeof ADMIN_SUBSECTIONS;
 
+export function adminDefaultSubsection(scope: string, canUseQr = true): string | null {
+  if (!Object.prototype.hasOwnProperty.call(ADMIN_SUBSECTIONS, scope)) return null;
+  if (scope === "menu") return "content";
+  if (scope === "shop") return "products";
+  if (scope === "publish" && !canUseQr) return "Sitemap";
+  return ADMIN_SUBSECTIONS[scope as AdminSubsectionScope][0];
+}
+
 export function adminSubsectionFromLocation(pathname: string): string | null {
   const segments = pathname.split("/").filter(Boolean);
   const index = segments.findIndex((segment) => segment === "dashboard" || segment === "admin");

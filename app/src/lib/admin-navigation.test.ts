@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   adminContentSectionFromLocation,
   adminDashboardPath,
+  adminDefaultSubsection,
   adminEditorPath,
   adminEditorSectionFromLocation,
   adminTabFromLocation,
@@ -14,6 +15,16 @@ import {
 } from "./admin-navigation";
 
 describe("admin navigation", () => {
+  it("opens sections on the subsection they display by default", () => {
+    expect(adminDefaultSubsection("menu")).toBe("content");
+    expect(adminDefaultSubsection("shop")).toBe("products");
+    expect(adminDefaultSubsection("theme")).toBe("page");
+    expect(adminDefaultSubsection("publish")).toBe("QR");
+    expect(adminDefaultSubsection("publish", false)).toBe("Sitemap");
+    expect(adminDefaultSubsection("newsletter")).toBe("overview");
+    expect(adminDefaultSubsection("account")).toBe("general");
+    expect(adminDefaultSubsection("backup")).toBeNull();
+  });
   it("round trips every dashboard subsection, locale and publishing alias", () => {
     for (const scope of Object.keys(ADMIN_SUBSECTIONS) as AdminSubsectionScope[]) {
       for (const subsection of ADMIN_SUBSECTIONS[scope]) {
