@@ -11,7 +11,7 @@ const avatar = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZlVAAAAAASUVORK5CYII=',
   'base64',
 );
-const e2eDataRoot = path.resolve('e2e-data');
+const e2eDataRoot = path.resolve(process.env.ORBITPAGE_E2E_DATA_DIR || 'e2e-data');
 const uploadRoot = path.resolve(e2eDataRoot, 'uploads');
 
 test.beforeEach(async ({ page }) => {
