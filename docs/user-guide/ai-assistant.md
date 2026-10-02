@@ -24,6 +24,8 @@ Keep `JWT_SECRET` stable and at least 32 characters, or set a separate stable `O
 
 Generation does not write page data. OrbitPage validates the proposed operations again during confirmation, checks the editor's current permissions and page revision, then applies the accepted plan. Proposals expire after ten minutes and fail if the page changed in the meantime.
 
+The conversation is saved in this browser for the current page. Use the trash button at the top right of the assistant to clear the visible conversation and its saved browser history. Long conversations scroll inside the assistant panel.
+
 ## Privacy and cost
 
 - Prompts and the bounded current-page context are sent to the configured OpenAI API.
