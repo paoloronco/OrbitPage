@@ -255,6 +255,7 @@ describe('API Endpoints', () => {
       expect.objectContaining({ id: 'frontend', ok: true }),
     ]));
     expect(response.headers['cache-control']).toContain('no-store');
+
   });
 
   it('POST /api/auth/reset rejects users without user-management permission', async () => {
@@ -712,6 +713,12 @@ describe('API Endpoints', () => {
     expect(new URL(response.headers.location).pathname).toBe('/orbitpage/menu');
     expect(new URL(response.headers.location).search).toBe('?section=lunch');
     expect(response.headers['cache-control']).toContain('no-store');
+
+    const qrResponse = await request(app).get('/orbitpage/go/today-menu?utm_source=qr&utm_medium=qr');
+    const qrTarget = new URL(qrResponse.headers.location);
+    expect(qrTarget.searchParams.get('section')).toBe('lunch');
+    expect(qrTarget.searchParams.get('utm_medium')).toBe('qr');
+    expect(qrTarget.searchParams.get('utm_campaign')).toBe('today-menu');
   });
 
   it('returns a removed-page response without exposing old public content', async () => {
@@ -1675,7 +1682,7 @@ describe('API Endpoints', () => {
 
   it('returns the shared 7-day analytics report from local events', async () => {
     vi.mocked(dbAll)
-      .mockResolvedValueOnce([{ visits: 12, visitors: 8, clicks: 4 }])
+      .mockResolvedValueOnce([{ visits: 12, visitors: 8, clicks: 4, qr_visits: 3 }])
       .mockResolvedValueOnce([{ visits: 6, visitors: 4, clicks: 2 }])
       .mockResolvedValueOnce([{ date: '2026-09-27', visits: 12, visitors: 8, clicks: 4 }])
       .mockResolvedValueOnce([{ label: 'Direct', value: 12 }])
@@ -1684,7 +1691,8 @@ describe('API Endpoints', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ label: 'Homepage', value: 4 }])
-      .mockResolvedValueOnce([{ label: '/', value: 12 }]);
+      .mockResolvedValueOnce([{ label: '/', value: 12 }])
+      .mockResolvedValueOnce([{ label: '/menu', value: 3 }]);
 
     const response = await request(app).get('/api/analytics?days=7');
 
@@ -1695,9 +1703,10 @@ describe('API Endpoints', () => {
       detailed: true,
       periodDays: 7,
       maxPeriodDays: 30,
-      summary: { visits: 12, visitors: 8, clicks: 4, ctr: 33.3 },
+      summary: { visits: 12, visitors: 8, clicks: 4, qrVisits: 3, ctr: 33.3 },
       comparison: { changes: { visits: 100, visitors: 100, clicks: 100, ctr: 0 } },
       links: [{ label: 'Homepage', value: 4 }],
+      qrPaths: [{ label: '/menu', value: 3 }],
     });
   });
 

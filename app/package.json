@@ -1,7 +1,7 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.21.48",
+  "version": "4.21.49",
   "type": "module",
   "scripts": {
     "dev": "vite",

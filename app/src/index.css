@@ -10679,6 +10679,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   padding-top: 2px;
 }
 
+.managed-analytics-qr-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .managed-analytics-breakdown--priority .managed-analytics-section-heading {
   align-items: center;
   padding-bottom: 7px;

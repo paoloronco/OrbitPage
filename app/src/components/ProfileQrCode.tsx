@@ -12,7 +12,7 @@ import { Slider } from "@/components/ui/slider";
 import { publicUrlApi, type SubpageItem } from "@/lib/api-client";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import { useAppI18n } from "@/lib/i18n";
-import { buildLockedQrUrl, qrContrastRatio } from "@/lib/qr-code";
+import { buildTrackedQrUrl, qrContrastRatio } from "@/lib/qr-code";
 import { createDefaultMenu, type MenuCatalog } from "@/lib/menu";
 import { CampaignLinksManager } from "./CampaignLinksManager";
 
@@ -72,8 +72,8 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
   const [campaignBaseUrl, setCampaignBaseUrl] = useState("");
   const selectedPath = settings.destination === "menu" ? "menu" : settings.destination === "custom" ? settings.customPath : "";
   const qrTarget = useMemo(() => settings.destination === "campaign"
-    ? buildLockedQrUrl(campaignBaseUrl, settings.campaignSlug)
-    : buildLockedQrUrl(publicUrl, selectedPath), [campaignBaseUrl, publicUrl, selectedPath, settings.campaignSlug, settings.destination]);
+    ? buildTrackedQrUrl(campaignBaseUrl, settings.campaignSlug)
+    : buildTrackedQrUrl(publicUrl, selectedPath), [campaignBaseUrl, publicUrl, selectedPath, settings.campaignSlug, settings.destination]);
   const contrast = qrContrastRatio(settings.foreground, settings.background);
   const contrastError = contrast < 4.5
     ? tr("Increase the contrast between the QR colors before downloading.", "Aumenta il contrasto tra i colori del QR prima di scaricarlo.")

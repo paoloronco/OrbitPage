@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 
-import { buildLockedQrUrl, qrContrastRatio } from "@/lib/qr-code";
+import { buildLockedQrUrl, buildTrackedQrUrl, qrContrastRatio } from "@/lib/qr-code";
 
 describe("ProfileQrCode", () => {
   it("uses the shared Sitemap and TXT panel typography", () => {
@@ -37,6 +37,15 @@ describe("ProfileQrCode", () => {
   it("blocks external and parent-directory targets", () => {
     expect(buildLockedQrUrl("https://orbitpage.net/alice", "https://example.com").url).toBe("");
     expect(buildLockedQrUrl("https://orbitpage.net/alice", "../bob").url).toBe("");
+  });
+
+  it("tags generated QR targets without replacing an existing campaign source", () => {
+    expect(buildTrackedQrUrl("https://orbitpage.net/alice", "").url).toBe("https://orbitpage.net/alice?utm_source=qr&utm_medium=qr");
+    expect(buildTrackedQrUrl("https://orbitpage.net/alice", "menu?utm_source=poster#hours").url)
+      .toBe("https://orbitpage.net/alice/menu?utm_source=poster&utm_medium=qr#hours");
+    expect(buildTrackedQrUrl("https://orbitpage.net/alice", "../bob").url).toBe("");
+    expect(buildTrackedQrUrl("invalid", "").url).toBe("");
+    expect(buildTrackedQrUrl("javascript:alert(1)", "").url).toBe("");
   });
 
   it("detects QR palettes with insufficient contrast", () => {

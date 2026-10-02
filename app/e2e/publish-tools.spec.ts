@@ -1,5 +1,26 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin } from './helpers';
+import { openAdminSection, openAuthenticatedAdmin } from './helpers';
+
+test('tracks new QR links and shows QR, Acquisition and Audience reports without disclosures', async ({ page }) => {
+  await openAuthenticatedAdmin(page);
+  await openAdminSection(page, 'Publish');
+  const target = page.getByRole('link', { name: 'Test target' });
+  await expect(target).toHaveAttribute('href', /utm_source=qr&utm_medium=qr/);
+
+  const event = await page.request.post('/api/analytics/events', { data: {
+    event: 'view', visitorId: 'visitor-qr-e2e', path: '/qr-e2e-destination', utmSource: 'qr', utmMedium: 'qr',
+  } });
+  expect(event.status()).toBe(204);
+
+  await openAdminSection(page, 'Analytics');
+  const analytics = page.getByTestId('managed-analytics');
+  await expect(analytics.getByText('QR codes', { exact: true })).toBeVisible();
+  await expect(analytics.locator('.managed-analytics-qr-metrics')).toContainText('QR visits');
+  await expect(analytics.locator('.managed-analytics-qr-breakdown')).toContainText('/qr-e2e-destination');
+  await expect(analytics.getByText('Acquisition', { exact: true })).toBeVisible();
+  await expect(analytics.getByText('Audience', { exact: true })).toBeVisible();
+  await expect(analytics.locator('details.managed-analytics-disclosure')).toHaveCount(0);
+});
 
 test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ page }) => {
   test.setTimeout(60_000);
