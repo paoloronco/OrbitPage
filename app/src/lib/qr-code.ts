@@ -25,6 +25,20 @@ export function buildLockedQrUrl(baseUrl: string, path: string) {
   }
 }
 
+export function buildTrackedQrUrl(baseUrl: string, path: string) {
+  const target = buildLockedQrUrl(baseUrl, path);
+  if (!target.url) return target;
+  try {
+    const url = new URL(target.url);
+    if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Invalid URL scheme");
+    if (!url.searchParams.has("utm_source")) url.searchParams.set("utm_source", "qr");
+    url.searchParams.set("utm_medium", "qr");
+    return { url: url.toString(), error: "" };
+  } catch {
+    return { url: "", error: "Enter a valid public URL." };
+  }
+}
+
 const colorLuminance = (hex: string) => {
   const channels = hex.slice(1).match(/.{2}/g)?.map((value) => Number.parseInt(value, 16) / 255) || [];
   if (channels.length !== 3 || channels.some(Number.isNaN)) return 0;

@@ -8,6 +8,8 @@ The self-hosted application records first-party page visits and content clicks i
 
 Use **Dashboard > Analytics** to switch between the latest 7 and 30 days and review visits, visitors, clicks, trends, content, referrers, devices, and tagged campaigns. Empty states are expected on a new page, and collection starts after the version that introduced period-based analytics is installed. Admin activity is excluded from public-page tracking.
 
+New QR codes generated under **Dashboard > Publish > QR** include a QR campaign marker. Analytics shows QR visits, their share of visits, and (where detailed reporting is available) the destinations opened. The Acquisition and Audience panels remain visible without expanding them. A QR visit is recorded when the destination page loads after analytics consent; it is not a count of camera scans. Previously downloaded QR codes without the marker cannot be distinguished from ordinary links and should be regenerated for this report.
+
 Visit-level details are collected only after analytics consent. Click totals continue to work without consent, but OrbitPage does not attach a visitor identifier, referrer, device, or campaign values to those clicks. Raw IP addresses and user-agent strings are not stored. Local event rows are retained for 62 days so the dashboard can compare a 30-day period with the preceding 30 days. Approximate country reporting remains available only where the deployment infrastructure provides it.
 
 ## Google Analytics 4

@@ -2024,7 +2024,8 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
   const summarySql = `SELECT
     SUM(CASE WHEN event = 'view' THEN 1 ELSE 0 END) AS visits,
     COUNT(DISTINCT CASE WHEN event = 'view' AND visitor_id != '' THEN visitor_id END) AS visitors,
-    SUM(CASE WHEN event = 'click' THEN 1 ELSE 0 END) AS clicks
+    SUM(CASE WHEN event = 'click' THEN 1 ELSE 0 END) AS clicks,
+    SUM(CASE WHEN event = 'view' AND utm_medium = 'qr' THEN 1 ELSE 0 END) AS qr_visits
     FROM analytics_events WHERE created_at >= datetime('now', ?)`;
   const dimension = (field, event = 'view') => dbAll(
     `SELECT ${field} AS label, COUNT(*) AS value FROM analytics_events
@@ -2034,7 +2035,7 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
   );
 
   try {
-    const [currentRows, previousRows, trendRows, sources, devices, utmSources, utmMediums, campaigns, links, paths] = await Promise.all([
+    const [currentRows, previousRows, trendRows, sources, devices, utmSources, utmMediums, campaigns, links, paths, qrPaths] = await Promise.all([
       dbAll(summarySql, [currentStart]),
       dbAll(`${summarySql} AND created_at < datetime('now', ?)`, [previousStart, currentStart]),
       dbAll(`SELECT date(created_at) AS date,
@@ -2053,6 +2054,9 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
         WHERE event = 'click' AND analytics_events.created_at >= datetime('now', ?) AND link_id IS NOT NULL AND link_id != ''
         GROUP BY label ORDER BY value DESC LIMIT 10`, [currentStart]),
       dimension('path'),
+      dbAll(`SELECT path AS label, COUNT(*) AS value FROM analytics_events
+        WHERE event = 'view' AND utm_medium = 'qr' AND created_at >= datetime('now', ?)
+        GROUP BY path ORDER BY value DESC LIMIT 10`, [currentStart]),
     ]);
     const current = analyticsSummary(currentRows[0]);
     const previous = analyticsSummary(previousRows[0]);
@@ -2064,6 +2068,7 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
       maxPeriodDays: 30,
       summary: {
         ...current,
+        qrVisits: analyticsNumber(currentRows[0]?.qr_visits),
         visitsPerVisitor: current.visitors > 0 ? Math.round((current.visits / current.visitors) * 100) / 100 : 0,
         clicksPerVisitor: current.visitors > 0 ? Math.round((current.clicks / current.visitors) * 100) / 100 : 0,
       },
@@ -2085,6 +2090,7 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
       campaigns: mapDimension(campaigns),
       links: mapDimension(links),
       paths: mapDimension(paths),
+      qrPaths: mapDimension(qrPaths),
     });
   } catch (error) {
     console.error('Failed to load analytics:', error);
@@ -2688,6 +2694,11 @@ app.get('/go/:campaignSlug', async (req, res) => {
     const routePath = pathName ? `/${pathName}` : '/';
     const target = new URL(withRequestBasePath(req, routePath), getRequestOrigin(req));
     if (query) target.search = query;
+    if (req.query.utm_medium === 'qr') {
+      target.searchParams.set('utm_medium', 'qr');
+      if (!target.searchParams.has('utm_source')) target.searchParams.set('utm_source', 'qr');
+      if (!target.searchParams.has('utm_campaign')) target.searchParams.set('utm_campaign', link.slug);
+    }
     res.set('Cache-Control', 'private, max-age=0, no-store');
     res.set('X-Robots-Tag', 'noindex');
     return res.redirect(302, target.toString());

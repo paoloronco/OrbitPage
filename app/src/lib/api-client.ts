@@ -842,6 +842,7 @@ export type ManagedAnalyticsReport = {
     visits: number;
     visitors: number;
     clicks: number;
+    qrVisits: number;
     ctr: number;
     visitsPerVisitor: number;
     clicksPerVisitor: number;
@@ -859,6 +860,7 @@ export type ManagedAnalyticsReport = {
   campaigns: ManagedAnalyticsDimension[];
   links: ManagedAnalyticsDimension[];
   paths: ManagedAnalyticsDimension[];
+  qrPaths: ManagedAnalyticsDimension[];
 };
 
 export const managedAnalyticsApi = {

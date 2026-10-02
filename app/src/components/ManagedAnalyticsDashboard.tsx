@@ -6,6 +6,7 @@ import {
   Eye,
   Globe2,
   MousePointerClick,
+  QrCode,
   RefreshCw,
   TrendingDown,
   TrendingUp,
@@ -20,7 +21,7 @@ const EMPTY: ManagedAnalyticsReport = {
   detailed: true,
   periodDays: 30,
   maxPeriodDays: 90,
-  summary: { visits: 0, visitors: 0, clicks: 0, ctr: 0, visitsPerVisitor: 0, clicksPerVisitor: 0 },
+  summary: { visits: 0, visitors: 0, clicks: 0, qrVisits: 0, ctr: 0, visitsPerVisitor: 0, clicksPerVisitor: 0 },
   comparison: {
     previous: { visits: 0, visitors: 0, clicks: 0, ctr: 0 },
     changes: { visits: 0, visitors: 0, clicks: 0, ctr: 0 },
@@ -34,6 +35,7 @@ const EMPTY: ManagedAnalyticsReport = {
   campaigns: [],
   links: [],
   paths: [],
+  qrPaths: [],
 };
 
 function Ranking({
@@ -121,9 +123,6 @@ export function ManagedAnalyticsDashboard({ headerAction }: { headerAction?: Rea
     : item);
   const number = (value: number) => value.toLocaleString(locale);
   const decimal = (value: number) => value.toLocaleString(locale, { maximumFractionDigits: 2 });
-  const dataGroupsLabel = (count: number) => count === 1
-    ? tr('1 data group', '1 gruppo di dati')
-    : `${number(count)} ${tr('data groups', 'gruppi di dati')}`;
   const bestDay = useMemo(() => report.trend.reduce<ManagedAnalyticsReport['trend'][number] | null>(
     (best, day) => !best || day.visits > best.visits ? day : best,
     null,
@@ -224,6 +223,18 @@ export function ManagedAnalyticsDashboard({ headerAction }: { headerAction?: Rea
       {report.trend.length ? <ResponsiveContainer height={230} width="100%"><AreaChart data={report.trend} margin={{ left: -18, right: 8, top: 8, bottom: 0 }}><defs><linearGradient id="visits-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#2563eb" stopOpacity=".22"/><stop offset="100%" stopColor="#2563eb" stopOpacity="0"/></linearGradient></defs><CartesianGrid stroke="#e5eaf1" strokeDasharray="3 5" vertical={false}/><XAxis axisLine={false} dataKey="date" fontSize={11} tickFormatter={formatDate} tickLine={false}/><YAxis allowDecimals={false} axisLine={false} fontSize={11} tickLine={false}/><Tooltip labelFormatter={(value) => formatDate(String(value))}/><Legend align="right" iconSize={8} iconType="circle" verticalAlign="top"/><Area dataKey="visits" fill="url(#visits-fill)" name={tr('Visits', 'Visite')} stroke="#2563eb" strokeWidth={2}/><Area dataKey="visitors" fill="transparent" name={tr('Visitors', 'Visitatori')} stroke="#7c3aed" strokeWidth={2}/><Area dataKey="clicks" fill="transparent" name={tr('Clicks', 'Clic')} stroke="#0f766e" strokeWidth={2}/></AreaChart></ResponsiveContainer> : <div className="managed-analytics-empty">{tr('The first data will appear after someone visits the public page.', 'I primi dati compariranno dopo una visita alla pagina pubblica.')}</div>}
     </div>
 
+    <section className="managed-analytics-breakdown managed-analytics-qr-breakdown">
+      <div className="managed-analytics-section-heading">
+        <span>{tr('QR codes', 'Codici QR')}</span>
+        <p>{tr('Visits from tracked QR links after analytics consent.', 'Visite dai link QR tracciati dopo il consenso analytics.')}</p>
+      </div>
+      <div className="managed-analytics-metrics managed-analytics-qr-metrics">
+        <Metric icon={QrCode} label={tr('QR visits', 'Visite da QR')} tr={tr} value={number(report.summary.qrVisits)} />
+        <Metric icon={Activity} label={tr('Share of visits', 'Quota delle visite')} tr={tr} value={`${report.summary.visits ? Math.round(report.summary.qrVisits / report.summary.visits * 1000) / 10 : 0}%`} />
+      </div>
+      {report.detailed && <Ranking denominator={report.summary.qrVisits} empty={tr('No QR visits yet.', 'Nessuna visita da QR per ora.')} items={report.qrPaths} title={tr('QR destinations', 'Destinazioni QR')} />}
+    </section>
+
     {report.detailed ? <>
       <div className="managed-analytics-quick-insights" aria-label={tr('Quick insights', 'Insight rapidi')}>
         <section className="managed-analytics-insight managed-analytics-insight--traffic">
@@ -251,26 +262,16 @@ export function ManagedAnalyticsDashboard({ headerAction }: { headerAction?: Rea
         </div>
         {contentGroups.length ? <div className="managed-analytics-details managed-analytics-details--content">{contentGroups.map((group) => <Ranking denominator={group.denominator} empty={group.empty} items={group.items} key={group.key} title={group.title} />)}</div> : <p className="managed-analytics-section-empty">{tr('Content performance will appear after visitors open or click a destination.', 'Il rendimento dei contenuti comparirà dopo che i visitatori avranno aperto o cliccato una destinazione.')}</p>}
       </section>
-
-      <details className="managed-analytics-disclosure managed-analytics-disclosure--acquisition">
-        <summary className="managed-analytics-disclosure-summary">
-          <span><strong>{tr('Acquisition', 'Acquisizione')}</strong><small>{tr('Referrers and campaigns that bring traffic.', 'Siti di provenienza e campagne che portano traffico.')}</small></span>
-          <em>{acquisitionGroups.length ? dataGroupsLabel(acquisitionGroups.length) : tr('No data yet', 'Nessun dato')}</em>
-        </summary>
-        <div className="managed-analytics-disclosure-body">
-          {acquisitionGroups.length ? <div className="managed-analytics-details managed-analytics-details--acquisition">{acquisitionGroups.map((group) => <Ranking denominator={group.denominator} empty={group.empty} items={group.items} key={group.key} title={group.title} />)}</div> : <p className="managed-analytics-section-empty">{tr('No referrer or campaign data is available for this period.', 'Nessun dato su provenienza o campagne disponibile per questo periodo.')}</p>}
-        </div>
-      </details>
-
-      <details className="managed-analytics-disclosure managed-analytics-disclosure--audience">
-        <summary className="managed-analytics-disclosure-summary">
-          <span><strong>{tr('Audience', 'Pubblico')}</strong><small>{tr('Devices and approximate countries, with privacy in mind.', 'Dispositivi e paesi indicativi, nel rispetto della privacy.')}</small></span>
-          <em>{audienceGroups.length ? dataGroupsLabel(audienceGroups.length) : tr('No data yet', 'Nessun dato')}</em>
-        </summary>
-        <div className="managed-analytics-disclosure-body">
-          {audienceGroups.length ? <div className="managed-analytics-details managed-analytics-details--audience">{audienceGroups.map((group) => <Ranking denominator={group.denominator} empty={group.empty} items={group.items} key={group.key} title={group.title} />)}</div> : <p className="managed-analytics-section-empty">{tr('No device or country data is available for this period.', 'Nessun dato su dispositivi o paesi disponibile per questo periodo.')}</p>}
-        </div>
-      </details>
     </> : <div className="managed-analytics-locked"><strong>{tr('Details available on Starter', 'Dettagli disponibili con Starter')}</strong><span>{tr('Comparisons, sources, devices, countries, UTM and content performance unlock on a paid plan.', 'Confronti, sorgenti, dispositivi, paesi, UTM e rendimento dei contenuti si sbloccano con un piano a pagamento.')}</span></div>}
+
+      <section className="managed-analytics-breakdown managed-analytics-breakdown--acquisition">
+        <div className="managed-analytics-section-heading"><span>{tr('Acquisition', 'Acquisizione')}</span><p>{tr('Referrers and campaigns that bring traffic.', 'Siti di provenienza e campagne che portano traffico.')}</p></div>
+        {report.detailed ? acquisitionGroups.length ? <div className="managed-analytics-details managed-analytics-details--acquisition">{acquisitionGroups.map((group) => <Ranking denominator={group.denominator} empty={group.empty} items={group.items} key={group.key} title={group.title} />)}</div> : <p className="managed-analytics-section-empty">{tr('No referrer or campaign data is available for this period.', 'Nessun dato su provenienza o campagne disponibile per questo periodo.')}</p> : <p className="managed-analytics-section-empty">{tr('Available on Starter and above.', 'Disponibile da Starter in su.')}</p>}
+      </section>
+
+      <section className="managed-analytics-breakdown managed-analytics-breakdown--audience">
+        <div className="managed-analytics-section-heading"><span>{tr('Audience', 'Pubblico')}</span><p>{tr('Devices and approximate countries, with privacy in mind.', 'Dispositivi e paesi indicativi, nel rispetto della privacy.')}</p></div>
+        {report.detailed ? audienceGroups.length ? <div className="managed-analytics-details managed-analytics-details--audience">{audienceGroups.map((group) => <Ranking denominator={group.denominator} empty={group.empty} items={group.items} key={group.key} title={group.title} />)}</div> : <p className="managed-analytics-section-empty">{tr('No device or country data is available for this period.', 'Nessun dato su dispositivi o paesi disponibile per questo periodo.')}</p> : <p className="managed-analytics-section-empty">{tr('Available on Starter and above.', 'Disponibile da Starter in su.')}</p>}
+      </section>
   </section>;
 }
