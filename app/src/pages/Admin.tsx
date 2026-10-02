@@ -21,6 +21,7 @@ import { createDefaultMenu, normalizeMenuCatalog, type MenuCatalog } from "@/lib
 import {
   adminContentSectionFromLocation,
   adminDashboardPath,
+  adminDefaultSubsection,
   adminEditorPath,
   adminEditorSectionFromLocation,
   adminTabFromLocation,
@@ -133,11 +134,13 @@ const Admin = () => {
       return;
     }
     const subsectionScope = locationEditorSection === "menu" || locationEditorSection === "shop" ? locationEditorSection : locationTab as AdminSubsectionScope;
-    const expectedPath = locationSubsection ? adminSubsectionPath(subsectionScope, locationSubsection, locale) : locationEditorSection
+    const defaultSubsection = currentUser ? adminDefaultSubsection(subsectionScope, currentUser.permissions.includes("profile:write")) : null;
+    const selectedSubsection = locationSubsection || defaultSubsection;
+    const expectedPath = selectedSubsection ? adminSubsectionPath(subsectionScope, selectedSubsection, locale) : locationEditorSection
       ? adminEditorPath(locationEditorSection, locale)
       : adminDashboardPath(locationTab, locationContentSection, locale);
     if (location.pathname !== expectedPath) navigate({ pathname: expectedPath, search: location.search, hash: location.hash }, { replace: true });
-  }, [hostedSurface, locale, setLocale, location.pathname, location.search, location.hash, locationTab, locationContentSection, locationEditorSection, locationSubsection, navigate]);
+  }, [hostedSurface, locale, setLocale, location.pathname, location.search, location.hash, locationTab, locationContentSection, locationEditorSection, locationSubsection, currentUser, navigate]);
 
   useEffect(() => {
     if (!hostedSurface) return;
@@ -155,7 +158,8 @@ const Admin = () => {
       window.dispatchEvent(new CustomEvent(HOSTED_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
       return;
     }
-    navigate(adminDashboardPath(tab, locationContentSection, locale));
+    const subsection = adminDefaultSubsection(tab, currentUser?.permissions.includes("profile:write"));
+    navigate(subsection ? adminSubsectionPath(tab as AdminSubsectionScope, subsection, locale) : adminDashboardPath(tab, locationContentSection, locale));
   };
 
   const handleContentSectionChange = (section: AdminContentSection) => {
@@ -165,7 +169,8 @@ const Admin = () => {
 
   const handleEditorSectionChange = (section: AdminEditorSection) => {
     if (hostedSurface) return;
-    const path = adminEditorPath(section, locale);
+    const subsection = adminDefaultSubsection(section);
+    const path = subsection ? adminSubsectionPath(section as AdminSubsectionScope, subsection, locale) : adminEditorPath(section, locale);
     if (location.pathname !== path) navigate(path);
   };
 
