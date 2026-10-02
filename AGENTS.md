@@ -14,6 +14,9 @@ This repository contains the open-source, self-hosted OrbitPage application. Kee
 
 Read the nearest README before working in a major directory.
 
+Keep this file at the repository root: its instructions apply to the whole
+checkout. Product, design and architecture explanations belong under `docs/`.
+
 ## Commands
 
 Run application commands from `app/`:
@@ -49,10 +52,18 @@ When tests need SQLite data, create isolated fixtures under ignored E2E or tempo
 
 - `README.md` is the concise product overview and quick start.
 - `docs/README.md` is the task-oriented documentation index.
+- `docs/product-requirements.md` owns OSS product behavior; `docs/design-system.md`
+  owns shared UI rules; `docs/architecture.md` owns runtime boundaries.
 - `SECURITY.md` is authoritative for vulnerability reporting and the supported security model.
 - `CONTRIBUTING.md` is authoritative for contribution workflow and checks.
 
 Update documentation whenever a route, environment variable, setup command, public behavior, or security boundary changes. Prefer one canonical explanation and link to it instead of copying long operational sections between files.
+
+Use `rg` and Git to trace the owning code, package scripts for local checks,
+Playwright for browser behavior, and `gh` for CI or release evidence. Use
+provider tools only for the task at hand and do not print secrets or customer
+data. Preserve unrelated working-tree edits and stage exact paths before a
+commit, particularly when this repository is checked out as a SaaS submodule.
 
 ## Releases
 

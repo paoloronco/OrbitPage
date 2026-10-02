@@ -328,7 +328,11 @@ See [Development](./docs/wiki/Development.md) and [CONTRIBUTING.md](./CONTRIBUTI
 
 ## Documentation
 
-Start from the task-oriented [documentation index](./docs/README.md).
+Start from the task-oriented [documentation index](./docs/README.md). The
+[product requirements](./docs/product-requirements.md),
+[design system](./docs/design-system.md) and
+[architecture](./docs/architecture.md) describe the shared OSS product;
+repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
 
 | Task | Guide |
 | --- | --- |

@@ -20,6 +20,7 @@ The server is currently a modularizing monolith. New independent behavior should
 ```text
 orbitpage.db
 uploads/
+.jwt-secret  # Docker only, when JWT_SECRET is generated automatically
 ```
 
 Local development falls back to this directory only when `DATA_DIR` is not set. Prefer an isolated directory such as `app/.orbitpage-data` for development and tests.

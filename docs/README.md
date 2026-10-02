@@ -2,6 +2,15 @@
 
 This documentation covers the open-source, self-hosted OrbitPage application. For the managed service, plans, billing, and hosted automation API, use [orbitpage.com](https://orbitpage.com).
 
+## Product and engineering contracts
+
+| Question | Document |
+| --- | --- |
+| What problem does OSS solve and what behavior is required? | [Product requirements](./product-requirements.md) |
+| Which visual rules and components are shared? | [Design system](./design-system.md) |
+| How do the app, API and durable data fit together? | [Architecture](./architecture.md) |
+| How should repository agents work? | [Root agent instructions](../AGENTS.md) |
+
 ## Start or install OrbitPage
 
 | Goal | Guide |

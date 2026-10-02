@@ -12,6 +12,9 @@ Useful starting points:
   schema and block contracts.
 - [`app/server/README.md`](../app/server/README.md) for the Express boundary.
 - [`docs/README.md`](../docs/README.md) for user and operator documentation.
+- [`docs/product-requirements.md`](../docs/product-requirements.md) for OSS
+  behavior, [`docs/design-system.md`](../docs/design-system.md) for shared UI,
+  and [`docs/architecture.md`](../docs/architecture.md) for runtime ownership.
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md) for the contribution workflow and
   verification commands.
 
