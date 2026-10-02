@@ -157,7 +157,7 @@ test("Visual editor restores the selected section from its URL", async ({ page }
   await openAuthenticatedAdmin(page);
 
   const sections = page.getByRole("navigation", { name: "Site sections" });
-  for (const [name, slug] of [["Page", "page"], ["Content", "content"], ["Menu", "menu"], ["Shop", "shop"], ["Pages", "pages"]] as const) {
+  for (const [name, slug] of [["Page", "page"], ["Content", "content"], ["Menu", "menu/content"], ["Shop", "shop/products"], ["Pages", "pages"]] as const) {
     const destination = sections.getByRole("button", { name, exact: true });
     await destination.click();
     await expect(page).toHaveURL(new RegExp(`/dashboard/editor/${slug}$`));
@@ -165,7 +165,7 @@ test("Visual editor restores the selected section from its URL", async ({ page }
   }
 
   await page.goBack();
-  await expect(page).toHaveURL(/\/dashboard\/editor\/shop$/);
+  await expect(page).toHaveURL(/\/dashboard\/editor\/shop\/products$/);
   await expect(sections.getByRole("button", { name: "Shop", exact: true })).toHaveAttribute("aria-current", "page");
   await page.reload();
   await expect(sections.getByRole("button", { name: "Shop", exact: true })).toHaveAttribute("aria-current", "page");
