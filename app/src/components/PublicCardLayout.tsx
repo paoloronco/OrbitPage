@@ -19,6 +19,7 @@ import {
   normalizeCardLayout,
   PROFILE_CARD_LAYOUT_ID,
   snapCardLayoutSize,
+  stepCardLayoutWidth,
   updateCardContentLayoutItem,
   updateCardLayoutItem,
   type CardContentLayoutItem,
@@ -115,10 +116,10 @@ export function PublicCardLayout({
   const activeLayout = layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout;
 
   useEffect(() => {
-    if (gestureRef.current) return;
+    if (layoutEditing || gestureRef.current) return;
     latestLayoutRef.current = savedLayout;
     setWorkingLayout(savedLayout);
-  }, [savedLayout]);
+  }, [layoutEditing, savedLayout]);
 
   const applyWorkingLayout = (next: NormalizedCardLayout) => {
     latestLayoutRef.current = next;
@@ -180,9 +181,10 @@ export function PublicCardLayout({
     event.stopPropagation();
     const deltaX = (event.clientX - gesture.startX) / gesture.bounds.width * 100;
     const deltaY = (event.clientY - gesture.startY) / gesture.scale;
+    const defaultWidth = gesture.scope === "card" ? layoutCards.find((card) => card.id === gesture.cardId)?.defaultRect?.width : undefined;
     const rect = gesture.mode === "move"
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
-      : snapCardLayoutSize({ ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY });
+      : snapCardLayoutSize({ ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY }, defaultWidth);
     const positions = gesture.scope === "content" ? gesture.contentLayout!.positions : gesture.layout.positions;
     const height = gesture.scope === "content" ? gesture.contentLayout!.height : gesture.layout.height;
     const itemId = gesture.scope === "content" ? gesture.item! : gesture.cardId;
@@ -191,10 +193,10 @@ export function PublicCardLayout({
       ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, nextRect, allowOverlap)
       : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, nextRect, allowOverlap);
     const liveLayout = gesture.scope === "card" ? update(rect) : update(rect, true);
-    pendingLayoutRef.current = update(
-      snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect,
-    );
-    setGuides({ ...snapped.guides, scope: gesture.scope, cardId: gesture.cardId });
+    const alignedRect = snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect;
+    const keepCardSize = gesture.scope === "card" && gesture.mode === "resize";
+    pendingLayoutRef.current = update(keepCardSize ? { ...alignedRect, width: rect.width, height: rect.height } : alignedRect);
+    setGuides({ ...snapped.guides, ...(keepCardSize ? { x: undefined, y: undefined } : {}), scope: gesture.scope, cardId: gesture.cardId });
     applyWorkingLayout(liveLayout);
   };
 
@@ -238,15 +240,18 @@ export function PublicCardLayout({
     event.preventDefault();
     event.stopPropagation();
     const step = event.shiftKey ? 4 : 1;
+    const defaultWidth = scope === "card" ? layoutCards.find((card) => card.id === cardId)?.defaultRect?.width : undefined;
     const rect = mode === "move" ? {
       ...currentRect,
       x: currentRect.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
       y: currentRect.y + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
     } : snapCardLayoutSize({
       ...currentRect,
-      width: currentRect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
+      width: scope === "card" && (event.key === "ArrowLeft" || event.key === "ArrowRight")
+        ? stepCardLayoutWidth(currentRect.width, event.key === "ArrowLeft" ? -1 : 1, defaultWidth)
+        : currentRect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
       height: currentRect.height + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
-    });
+    }, defaultWidth);
     const next = scope === "content"
       ? updateCardContentLayoutItem(activeLayout, layoutCards, viewport, cardId, item!, rect)
       : updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, rect);

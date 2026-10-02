@@ -106,12 +106,52 @@ test("Arrange uses preset sizes, compact handles and persistent text alignment",
   await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
   await expect.poll(async () => {
     const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
-    return [25, 33.25, 40, 50, 66.75, 75, 100].includes(resized[2]);
+    return [25, 33.25, 39, 40, 50, 66.75, 75, 100].includes(resized[2]);
   }).toBe(true);
 
   await contentSaveButton(page).click();
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect(page.locator('[data-profile-layout-item="work"]')).toHaveAttribute("data-profile-layout-align", "left");
+});
+
+test("card resize returns to its default width and Reset restores Arrange", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await openAuthenticatedAdmin(page);
+  await page.getByRole("button", { name: "Content", exact: true }).click();
+  await page.getByRole("button", { name: "Add content" }).click();
+  await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
+  await contentSaveButton(page).click();
+  const cardId = await page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last().getAttribute('data-public-editor-link-id');
+
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
+  const card = page.locator(`[data-card-layout-item="${cardId}"]`);
+  const width = async () => Number((await card.getAttribute("data-card-layout-position"))!.split(",")[2]);
+  const defaultWidth = await width();
+  const resize = card.getByRole("button", { name: /^Resize card/ });
+  await resize.press("ArrowRight");
+  await expect.poll(width).not.toBe(defaultWidth);
+  await resize.press("ArrowLeft");
+  await expect.poll(width).toBe(defaultWidth);
+
+  const dragToWidth = async (targetWidth: number) => {
+    const handle = (await resize.boundingBox())!;
+    const canvasWidth = await page.locator('.public-card-stack--layout').evaluate((element) => element.getBoundingClientRect().width);
+    const x = handle.x + handle.width / 2;
+    const y = handle.y + handle.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + (targetWidth - await width()) / 100 * canvasWidth, y, { steps: 4 });
+    await page.mouse.up();
+  };
+  await dragToWidth(50);
+  await expect.poll(width).toBe(50);
+  await dragToWidth(defaultWidth);
+  await expect.poll(width).toBe(defaultWidth);
+
+  await resize.press("ArrowRight");
+  await page.locator(".admin-profile-save-float").getByRole("button", { name: "Reset" }).click();
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
+  await expect.poll(width).toBe(defaultWidth);
 });
 
 test("Visual editor keeps mobile navigation and destinations explicit", async ({ page }) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignCardLayoutRect, normalizeCardContentLayout, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, reflowCardLayoutPositions, snapCardLayoutSize, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, normalizeCardContentLayout, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, reflowCardLayoutPositions, snapCardLayoutSize, stepCardLayoutWidth, updateCardContentLayoutItem, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -90,6 +90,13 @@ describe("responsive card layout", () => {
       width: 50,
       height: 144,
     });
+  });
+
+  it("keeps the actual default width among resize stops", () => {
+    const initial = { x: 30.5, y: 0, width: 39, height: 100 };
+    expect(stepCardLayoutWidth(39, 1, 38.89)).toBe(40);
+    expect(stepCardLayoutWidth(40, -1, 38.89)).toBe(39);
+    expect(snapCardLayoutSize({ ...initial, width: 39 }, 38.89).width).toBe(39);
   });
 
   it("rejects overlap while still allowing movement on a free axis", () => {

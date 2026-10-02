@@ -44,6 +44,10 @@ export const PROFILE_CARD_LAYOUT_ID = ORBITPAGE_PROFILE_CARD_LAYOUT_ID;
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value));
 const round = (value: number) => Math.round(value * 4) / 4;
 const finite = (value: number | undefined, fallback: number) => Number.isFinite(value) ? Number(value) : fallback;
+const cardWidths = (defaultWidth?: number) => [...new Set([
+  ...CARD_WIDTH_PRESETS,
+  ...(defaultWidth === undefined ? [] : [defaultWidth]),
+].map(round))].sort((left, right) => left - right);
 
 function closestSnap(anchors: number[], targets: number[], threshold: number) {
   let best: { shift: number; guide: number } | null = null;
@@ -105,11 +109,16 @@ export function reflowCardLayoutPositions(
   return next;
 }
 
-export function snapCardLayoutSize(rect: CardLayoutRect): CardLayoutRect {
-  const width = CARD_WIDTH_PRESETS.reduce((closest, preset) => (
+export function snapCardLayoutSize(rect: CardLayoutRect, defaultWidth?: number): CardLayoutRect {
+  const width = cardWidths(defaultWidth).reduce((closest, preset) => (
     Math.abs(preset - rect.width) < Math.abs(closest - rect.width) ? preset : closest
   ));
   return { ...rect, width: round(width), height: Math.max(48, Math.round(rect.height / 24) * 24) };
+}
+
+export function stepCardLayoutWidth(width: number, direction: -1 | 1, defaultWidth?: number) {
+  const presets = cardWidths(defaultWidth);
+  return (direction === 1 ? presets.find((preset) => preset > width) : presets.reverse().find((preset) => preset < width)) ?? width;
 }
 
 export function alignCardLayoutRect(
