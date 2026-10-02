@@ -193,6 +193,40 @@ test("Visual editor keeps mobile navigation and destinations explicit", async ({
   expect(compactOverflow).toBeLessThanOrEqual(1);
 });
 
+test("Content buttons reorder selected cards only in the mobile preview", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAuthenticatedAdmin(page);
+  await page.getByRole("button", { name: "Content", exact: true }).click();
+  const addLink = async () => {
+    await page.getByRole("button", { name: "Content", exact: true }).click();
+    await page.getByRole("button", { name: "Add content" }).click();
+    await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
+    await contentSaveButton(page).click();
+    return (await page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last().getAttribute('data-public-editor-link-id'))!;
+  };
+  const firstId = await addLink();
+  const secondId = await addLink();
+  const visibleOrder = () => page.locator('.visual-site-editor__canvas [data-public-editor-link-id]')
+    .evaluateAll((cards) => cards.map((card) => card.getAttribute('data-public-editor-link-id')));
+  expect((await visibleOrder()).slice(-2)).toEqual([firstId, secondId]);
+
+  await page.locator(`.visual-site-editor__canvas [data-public-editor-link-id="${secondId}"]`).click();
+  const actions = page.locator('.visual-site-editor__inspector-heading-actions');
+  await actions.getByRole('button', { name: 'Move up' }).click();
+  await expect.poll(async () => (await visibleOrder()).slice(-2)).toEqual([secondId, firstId]);
+  await page.reload();
+  await page.getByRole("button", { name: "Content", exact: true }).click();
+  await expect.poll(async () => (await visibleOrder()).slice(-2)).toEqual([secondId, firstId]);
+  await page.getByRole('button', { name: 'Desktop preview' }).click();
+  await expect.poll(async () => (await visibleOrder()).slice(-2)).toEqual([firstId, secondId]);
+  await page.getByRole('button', { name: 'Mobile preview' }).click();
+  await page.locator(`.visual-site-editor__canvas [data-public-editor-link-id="${secondId}"]`).click();
+  await actions.getByRole('button', { name: 'Move down' }).click();
+  await expect.poll(async () => (await visibleOrder()).slice(-2)).toEqual([firstId, secondId]);
+  await page.setViewportSize({ width: 320, height: 740 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+});
+
 test("Visual editor restores the selected section from its URL", async ({ page }) => {
   await openAuthenticatedAdmin(page);
 

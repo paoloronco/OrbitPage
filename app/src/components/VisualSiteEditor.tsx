@@ -64,6 +64,7 @@ interface VisualSiteEditorProps {
   onSelect: (section: VisualSiteEditorSection, linkId?: string) => void;
   onProfileLayoutChange?: (layout: ProfileLayout, viewport: ProfileLayoutViewport) => void;
   onCardLayoutChange?: (layout: CardLayout | null, viewport: ProfileLayoutViewport) => void;
+  onDeviceChange?: (device: PreviewDevice) => void;
   layoutEditing: boolean;
   onLayoutEditingChange: (editing: boolean) => void;
   previewHint?: string;
@@ -87,6 +88,7 @@ export function VisualSiteEditor({
   onSelect,
   onProfileLayoutChange,
   onCardLayoutChange,
+  onDeviceChange,
   layoutEditing,
   onLayoutEditingChange,
   previewHint,
@@ -116,6 +118,10 @@ export function VisualSiteEditor({
     : section === "links" && selectedLinkId
       ? { kind: "link", id: selectedLinkId }
       : null;
+
+  useEffect(() => {
+    onDeviceChange?.(device);
+  }, [device, onDeviceChange]);
 
   const selectFromPreview = (target: PublicEditorTarget) => {
     if (target.kind === "profile") {

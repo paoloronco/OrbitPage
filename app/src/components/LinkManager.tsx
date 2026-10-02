@@ -2,7 +2,7 @@ import { type ComponentType, type CSSProperties, type UIEvent, useCallback, useE
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MailPlus, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarClock, Check, Code2, Download, FileText, Film, Image, LayoutGrid, Link, List, LockKeyhole, MailPlus, MapPin, Minus, MousePointerClick, Palette, Plus, Search, Share2, Save, ShoppingBag, Tag, Trash2, Type, Upload, UserCircle2, UtensilsCrossed, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,6 +45,8 @@ interface LinkManagerProps {
   visualFocusLinkId?: string | null;
   visualEditRequest?: number;
   onVisualFocusChange?: (linkId: string | null) => void;
+  mobilePreviewActive?: boolean;
+  onMoveMobileCard?: (id: string, direction: -1 | 1) => Promise<void>;
 }
 
 type BlockLibraryCategoryId = "essential" | "services" | "structure" | "media" | "engagement";
@@ -96,6 +98,8 @@ export const LinkManager = ({
   visualFocusLinkId = null,
   visualEditRequest,
   onVisualFocusChange,
+  mobilePreviewActive = false,
+  onMoveMobileCard,
 }: LinkManagerProps) => {
   const { tr } = useAppI18n();
   const [busy, setBusy] = useState(false);
@@ -793,6 +797,19 @@ export const LinkManager = ({
     }
   };
 
+  const moveSelectedMobileCard = async (direction: -1 | 1) => {
+    if (!focusedLink || !onMoveMobileCard || busy || hasUnsavedChanges) return;
+    setBusy(true);
+    setSaveError("");
+    try {
+      await onMoveMobileCard(String(focusedLink.id), direction);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : tr("Changes could not be saved. Try again.", "Impossibile salvare le modifiche. Riprova."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleRevertSavedContent = async () => {
     if (!savedNotice || busy) return;
     const previousLinks = cloneLinks(savedNotice.previousLinks);
@@ -954,18 +971,26 @@ export const LinkManager = ({
       {tr("Add content", "Aggiungi contenuto")}
     </Button>
   ) : null;
-  const deleteFocusedAction = isFullEdit && focusedLink ? (
-    <Button
-      aria-label={tr("Delete card", "Elimina card")}
-      className="admin-action"
-      onClick={() => deleteLink(focusedLink.id)}
-      disabled={busy}
-      size="icon"
-      title={tr("Delete card", "Elimina card")}
-      variant="destructive"
-    >
-      <Trash2 className="h-4 w-4" />
-    </Button>
+  const focusedActions = isFullEdit && focusedLink ? (
+    <>
+      {mobilePreviewActive && onMoveMobileCard && (
+        <>
+          <Button aria-label={tr("Move up", "Sposta su")} className="admin-action" disabled={busy || hasUnsavedChanges} onClick={() => void moveSelectedMobileCard(-1)} size="icon" title={tr("Move up", "Sposta su")} variant="outline"><ArrowUp className="h-4 w-4" /></Button>
+          <Button aria-label={tr("Move down", "Sposta giù")} className="admin-action" disabled={busy || hasUnsavedChanges} onClick={() => void moveSelectedMobileCard(1)} size="icon" title={tr("Move down", "Sposta giù")} variant="outline"><ArrowDown className="h-4 w-4" /></Button>
+        </>
+      )}
+      <Button
+        aria-label={tr("Delete card", "Elimina card")}
+        className="admin-action"
+        onClick={() => deleteLink(focusedLink.id)}
+        disabled={busy}
+        size="icon"
+        title={tr("Delete card", "Elimina card")}
+        variant="destructive"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </>
   ) : null;
 
   return (
@@ -1014,7 +1039,7 @@ export const LinkManager = ({
             </Button>
           )}
           {addContentAction}
-          {deleteFocusedAction}
+          {focusedActions}
           <Button onClick={exportLinks} variant="outline" size="icon" className="admin-action" disabled={busy} aria-label={tr("Export links", "Esporta link")} title={tr("Export links", "Esporta link")}>
             <Download className="h-4 w-4" />
           </Button>
@@ -1030,7 +1055,7 @@ export const LinkManager = ({
       {visualMode && visualHeaderSlot ? createPortal(
         <div className="admin-link-actions">
           {addContentAction}
-          {deleteFocusedAction}
+          {focusedActions}
         </div>,
         visualHeaderSlot,
       ) : null}
