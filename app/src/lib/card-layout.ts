@@ -241,6 +241,30 @@ export function updateCardLayoutItem(
   };
 }
 
+export function moveMobileCard(
+  layout: CardLayout | null | undefined,
+  cards: CardLayoutSource[],
+  visibleIds: string[],
+  cardId: string,
+  direction: -1 | 1,
+): NormalizedCardLayout | null {
+  const index = visibleIds.indexOf(cardId);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= visibleIds.length) return null;
+  const normalized = normalizeCardLayout(layout, cards, "mobile");
+  const order = [...visibleIds];
+  [order[index], order[target]] = [order[target], order[index]];
+  const positions = { ...layout?.positions, ...normalized.positions };
+  let y = normalized.positions[visibleIds[0]]?.y ?? 0;
+  for (const id of order) {
+    const rect = normalized.positions[id];
+    if (!rect) return null;
+    positions[id] = { ...rect, y };
+    y += rect.height + CARD_GAP;
+  }
+  return { ...normalized, positions, height: Math.max(normalized.height, y - CARD_GAP) };
+}
+
 const DEFAULT_CARD_CONTENT_LAYOUT: NormalizedCardContentLayout = {
   positions: {
     icon: { x: 0, y: 14, width: 12, height: 36 },

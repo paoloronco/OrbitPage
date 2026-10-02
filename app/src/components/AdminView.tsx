@@ -46,7 +46,7 @@ import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
-import { LivePreview, PreviewDeviceFrame } from "./LivePreview";
+import { LivePreview, PreviewDeviceFrame, type PreviewDevice } from "./LivePreview";
 import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
 import {
   getHostedSurfaceConfig,
@@ -58,7 +58,7 @@ import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
-import type { CardLayout } from "@/lib/card-layout";
+import { moveMobileCard, PROFILE_CARD_LAYOUT_ID, type CardLayout, type CardLayoutSource } from "@/lib/card-layout";
 import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
 import { canonicalAdminTab, type AdminContentSection, type AdminEditorSection, type AdminTab, type AdminSubsectionScope } from "@/lib/admin-navigation";
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
@@ -273,6 +273,9 @@ export const AdminView = ({
     return requestedContent ? visualSectionForContent(requestedContent) : "profile";
   });
   const [visualLinkId, setVisualLinkId] = useState<string | null>(null);
+  const [visualPreviewDevice, setVisualPreviewDevice] = useState<PreviewDevice>(() => (
+    typeof window !== "undefined" && window.matchMedia("(min-width: 900px)").matches ? "desktop" : "mobile"
+  ));
   const [visualEditRequest, setVisualEditRequest] = useState(0);
   const [visualProfileLayoutCommand, setVisualProfileLayoutCommand] = useState<{ id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null>(null);
   const [visualCardLayoutCommand, setVisualCardLayoutCommand] = useState<{ id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null>(null);
@@ -605,6 +608,35 @@ export const AdminView = ({
     setVisualCardLayoutCommand((current) => ({ id: (current?.id || 0) + 1, layout, viewport }));
   };
 
+  const moveVisualMobileCard = async (cardId: string, direction: -1 | 1) => {
+    const visibleIds = Array.from(document.querySelectorAll<HTMLElement>(
+      '.visual-site-editor__canvas[data-device="mobile"] [data-public-editor-link-id]'
+    )).map((item) => item.dataset.publicEditorLinkId!).filter(Boolean);
+    const cards: CardLayoutSource[] = visibleIds.flatMap((id) => {
+      const link = previewLinks.find((item) => String(item.id) === id);
+      return link ? [{ ...link, id }] : [];
+    });
+    const currentLayout = profile.appearance?.cardLayouts?.mobile;
+    const profileRect = currentLayout?.positions?.[PROFILE_CARD_LAYOUT_ID];
+    if (profileRect) cards.unshift({ id: PROFILE_CARD_LAYOUT_ID, type: "profile", prepend: true, defaultRect: profileRect });
+    const nextLayout = moveMobileCard(currentLayout, cards, visibleIds, cardId, direction);
+    if (!nextLayout) return;
+    const nextProfile = {
+      ...profile,
+      appearance: {
+        ...profile.appearance,
+        cardLayouts: { ...profile.appearance?.cardLayouts, mobile: nextLayout },
+      },
+    };
+    setPreviewProfile(nextProfile);
+    try {
+      await onProfileUpdate(nextProfile);
+    } catch (error) {
+      setPreviewProfile(profile);
+      throw error;
+    }
+  };
+
   const gaDirty = gaId.trim() !== (profile.googleAnalyticsId || "");
 
   const handleSaveIntegrations = async () => {
@@ -744,6 +776,8 @@ export const AdminView = ({
       visualFocusLinkId={visualLinkId}
       visualEditRequest={visualEditRequest}
       onVisualFocusChange={setVisualLinkId}
+      mobilePreviewActive={visualPreviewDevice === "mobile"}
+      onMoveMobileCard={canEditProfile ? moveVisualMobileCard : undefined}
     />
   ) : visualSection === "menu" ? (
     <Suspense fallback={<OrbitLoader size={24} state="composing" />}><MenuEditor
@@ -1029,6 +1063,7 @@ export const AdminView = ({
                 onSelect={selectVisualSection}
                 onProfileLayoutChange={canEditProfile ? updateVisualProfileLayout : undefined}
                 onCardLayoutChange={canEditProfile ? updateVisualCardLayout : undefined}
+                onDeviceChange={setVisualPreviewDevice}
                 layoutEditing={visualLayoutEditing}
                 onLayoutEditingChange={setVisualLayoutEditing}
                 previewHint={visualSection === "pages" && previewSubpage
