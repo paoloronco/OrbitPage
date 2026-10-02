@@ -5751,8 +5751,7 @@ app.listen(PORT, '0.0.0.0', async () => {
       const mod = await import('selfsigned');
       const selfsigned = mod.default || mod;
       const attrs = [{ name: 'commonName', value: 'localhost' }];
-      const pems = selfsigned.generate(attrs, {
-        days: 365,
+      const pems = await selfsigned.generate(attrs, {
         keySize: 2048,
         algorithm: 'sha256'
       });
