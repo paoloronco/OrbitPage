@@ -17,12 +17,12 @@ import {
   ChevronDown,
   CircleUserRound,
   Cookie,
-  CreditCard,
   Database,
   ExternalLink,
   Globe2,
   HelpCircle,
   Languages,
+  Layers3,
   LockKeyhole,
   LogOut,
   Mail,
@@ -163,7 +163,7 @@ const workspaceTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName:
   { value: "newsletter", icon: Mail, iconName: "mail-outline" },
   { value: "team", icon: UsersRound, iconName: "group-outlined" },
   { value: "account", icon: CircleUserRound, iconName: "account-circle-outlined" },
-  { value: "plan", icon: CreditCard, iconName: "credit-card-outlined" },
+  { value: "plan", icon: Layers3, iconName: "layers-outlined" },
 ];
 
 const tabs = [...pageTabs, ...workspaceTabs];
@@ -218,7 +218,7 @@ export const AdminView = ({
   const tabLabel = (tab: AdminTab) => ({
     profile: "Page", content: "Content", links: "Content", pages: "Content", ai: tr("AI Assistant", "Assistente AI"), theme: "Theme", menu: "Content",
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
-    newsletter: "Newsletter", team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Plan", "Piano"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
+    newsletter: "Newsletter", team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Edition", "Edizione"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
   const tabDescription = (tab: AdminTab) => ({
     profile: tr("Shape the identity people see first.", "Definisci l'identità che le persone vedono per prima."),
@@ -235,7 +235,7 @@ export const AdminView = ({
     newsletter: tr("Create, schedule and review campaigns in one place.", "Crea, programma e controlla le campagne in un unico posto."),
     team: tr("Give each collaborator the access they actually need.", "Assegna a ogni collaboratore solo l'accesso necessario."),
     account: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
-    plan: tr("Review what is included in this open-source edition.", "Scopri cosa include questa edizione open source."),
+    plan: tr("Open-source software on your server.", "Software open source sul tuo server."),
     access: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
     backup: tr("Keep portable copies and restore with confidence.", "Mantieni copie portabili e ripristina in sicurezza."),
     analytics: tr("Read the signals behind visits and interactions.", "Controlla visite, clic e sorgenti di traffico."),

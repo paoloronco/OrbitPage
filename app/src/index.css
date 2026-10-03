@@ -8580,261 +8580,51 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   }
 }
 
-/* OSS edition and managed SaaS comparison. */
-.oss-plan-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
-  align-items: start;
-  gap: 16px;
+/* Account > Plan: the current OSS edition, its tools and operator responsibilities. */
+.oss-plan-layout { display: grid; gap: 18px; max-width: 1120px; }
+.oss-plan-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 270px); align-items: center; gap: 36px; padding: 30px 32px; border: 1px solid var(--admin-line); border-left: 4px solid var(--admin-accent); border-radius: var(--admin-card-radius); background: var(--admin-surface); }
+.oss-plan-kicker { margin: 0 0 8px; color: var(--admin-accent-strong); font-size: 11px; font-weight: 800; letter-spacing: .08em; line-height: 1.4; text-transform: uppercase; }
+.oss-plan-intro h2 { margin: 0; color: var(--admin-ink); font-size: 24px; font-weight: 750; letter-spacing: -.03em; line-height: 1.2; }
+.oss-plan-intro-copy > p:last-child { max-width: 58ch; margin: 11px 0 0; color: var(--admin-secondary-copy); font-size: 14px; line-height: 1.6; }
+.oss-plan-summary { display: grid; gap: 13px; margin: 0; padding: 4px 0 4px 23px; border-left: 1px solid var(--admin-line); }
+.oss-plan-summary > div + div { padding-top: 13px; border-top: 1px solid var(--admin-soft-line); }
+.oss-plan-summary dt { color: var(--admin-muted-copy); font-size: 12px; line-height: 1.4; }
+.oss-plan-summary dd { margin: 3px 0 0; color: var(--admin-ink); font-size: 14px; font-weight: 700; line-height: 1.4; }
+.oss-plan-columns { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: stretch; gap: 18px; }
+.oss-plan-panel { min-width: 0; padding: 26px 28px; border: 1px solid var(--admin-line); border-radius: var(--admin-card-radius); background: var(--admin-surface); }
+.oss-plan-included { display: flex; flex-direction: column; }
+.oss-plan-management { display: flex; flex-direction: column; background: var(--admin-surface-soft, #f8fafc); }
+.oss-plan-section-heading h3 { margin: 0; color: var(--admin-ink); font-size: 17px; font-weight: 750; letter-spacing: -.02em; line-height: 1.3; }
+.oss-plan-feature-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 22px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--admin-soft-line); }
+.oss-plan-feature { display: grid; align-content: start; gap: 6px; min-width: 0; padding: 18px 16px 18px 0; border-bottom: 1px solid var(--admin-soft-line); }
+.oss-plan-feature:nth-child(even) { padding-right: 0; padding-left: 16px; border-left: 1px solid var(--admin-soft-line); }
+.oss-plan-feature strong, .oss-plan-responsibilities dt { color: var(--admin-ink); font-size: 13px; font-weight: 700; line-height: 1.4; }
+.oss-plan-feature span, .oss-plan-responsibilities dd { margin: 0; color: var(--admin-secondary-copy); font-size: 12px; line-height: 1.55; }
+.oss-plan-responsibilities { display: grid; margin: 22px 0 0; }
+.oss-plan-responsibilities > div { display: grid; gap: 4px; padding: 13px 0; border-top: 1px solid var(--admin-soft-line); }
+.oss-plan-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: auto; padding-top: 22px; }
+.oss-plan-source-link { align-self: flex-start; margin-top: auto; padding-top: 16px; }
+.oss-plan-primary-link, .oss-plan-text-link { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; font-size: 12px; font-weight: 700; line-height: 1.4; text-decoration: none; }
+.oss-plan-primary-link { justify-content: center; padding: 8px 13px; border: 1px solid var(--admin-accent); border-radius: 6px; background: var(--admin-accent); color: #fff; }
+.oss-plan-primary-link:hover { background: var(--admin-accent-strong); color: #fff; }
+.oss-plan-text-link { color: var(--admin-accent-strong); }
+.oss-plan-text-link:hover { text-decoration: underline; }
+.oss-plan-layout a:focus-visible { outline: 2px solid var(--admin-accent); outline-offset: 3px; }
+.oss-plan-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 14px; padding: 3px 2px 0; color: var(--admin-muted-copy); font-size: 12px; line-height: 1.5; }
+.oss-plan-footer p { margin: 0; }
+@media (max-width: 960px) {
+  .oss-plan-columns { grid-template-columns: minmax(0, 1fr); }
 }
-
-.oss-plan-panel,
-.oss-saas-promo {
-  border: 1px solid var(--admin-line);
-  border-radius: 8px;
-}
-
-.oss-plan-panel {
-  overflow: hidden;
-  background: #fff;
-}
-
-.oss-plan-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 20px;
-  padding: 22px;
-  border-bottom: 1px solid var(--admin-soft-line);
-  background: #fff;
-}
-
-.oss-plan-eyebrow,
-.oss-saas-promo-heading > span {
-  margin: 0 0 8px;
-  color: var(--admin-accent-strong);
-  font-size: .68rem;
-  font-weight: 850;
-  letter-spacing: .09em;
-  text-transform: uppercase;
-}
-
-.oss-plan-hero h2,
-.oss-saas-promo h2 {
-  margin: 0;
-  color: var(--admin-ink);
-  font-size: 1.3rem;
-  font-weight: 820;
-  letter-spacing: -.025em;
-  line-height: 1.2;
-}
-
-.oss-plan-hero > div:first-child > p:last-child,
-.oss-saas-promo > p {
-  max-width: 54ch;
-  margin: 7px 0 0;
-  color: var(--admin-muted-copy);
-  font-size: .8rem;
-  line-height: 1.5;
-}
-
-.oss-plan-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  border: 1px solid #b9e6ce;
-  border-radius: 999px;
-  background: #f0fbf5;
-  color: #155f3c;
-  font-size: .72rem;
-  font-weight: 800;
-}
-
-.oss-plan-section-heading {
-  padding: 18px 22px 10px;
-}
-
-.oss-plan-section-heading h3 {
-  margin: 0;
-  color: var(--admin-ink);
-  font-size: .9rem;
-  font-weight: 800;
-}
-
-.oss-plan-section-heading p {
-  margin: 4px 0 0;
-  color: var(--admin-muted-copy);
-  font-size: .75rem;
-  line-height: 1.45;
-}
-
-.oss-plan-feature-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.oss-plan-feature {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  gap: 10px;
-  min-height: 92px;
-  padding: 16px 22px;
-  border-right: 1px solid var(--admin-soft-line);
-  border-bottom: 1px solid var(--admin-soft-line);
-}
-
-.oss-plan-feature:nth-child(2n) {
-  border-right: 0;
-}
-
-.oss-plan-feature:nth-last-child(-n + 2) {
-  border-bottom: 0;
-}
-
-.oss-plan-feature > svg {
-  margin-top: 1px;
-  color: var(--admin-accent);
-}
-
-.oss-plan-feature h3 {
-  margin: 0;
-  color: var(--admin-ink);
-  font-size: .9rem;
-  font-weight: 800;
-}
-
-.oss-plan-feature p,
-.oss-plan-operations p {
-  margin: 4px 0 0;
-  color: var(--admin-muted-copy);
-  font-size: .78rem;
-  line-height: 1.45;
-}
-
-.oss-plan-operations {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  gap: 10px;
-  margin: 0;
-  padding: 16px 22px;
-  border-top: 1px solid var(--admin-soft-line);
-  background: #f8fafc;
-  color: var(--admin-muted-copy);
-}
-
-.oss-plan-operations strong {
-  color: var(--admin-ink);
-  font-size: .82rem;
-}
-
-.oss-plan-operations p {
-  color: var(--admin-muted-copy);
-}
-
-.oss-saas-promo {
-  position: sticky;
-  top: 132px;
-  padding: 22px;
-  background: #fff;
-}
-
-.oss-saas-promo-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.oss-saas-promo-heading > span {
-  margin: 0;
-  color: var(--admin-accent-strong);
-}
-
-.oss-saas-promo-heading > svg {
-  color: var(--admin-accent);
-}
-
-.oss-saas-promo h2 {
-  margin-top: 14px;
-}
-
-.oss-saas-promo > p {
-  color: var(--admin-muted-copy);
-}
-
-.oss-saas-promo ul {
-  display: grid;
-  gap: 9px;
-  margin: 18px 0 0;
-  padding: 16px 0 0;
-  border-top: 1px solid var(--admin-soft-line);
-  list-style: none;
-}
-
-.oss-saas-promo li {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
-  gap: 7px;
-  color: var(--admin-copy);
-  font-size: .78rem;
-  line-height: 1.45;
-}
-
-.oss-saas-promo li svg {
-  margin-top: 2px;
-  color: var(--admin-accent);
-}
-
-.oss-saas-actions {
-  display: grid;
-  gap: 8px;
-  margin-top: 24px;
-}
-
-.oss-saas-primary,
-.oss-saas-secondary {
-  display: inline-flex;
-  min-height: 42px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  font-size: .78rem;
-  font-weight: 800;
-  text-decoration: none;
-  transition: transform 170ms cubic-bezier(.22, 1, .36, 1), border-color 170ms ease, background-color 170ms ease;
-}
-
-.oss-saas-primary {
-  background: var(--admin-accent);
-  color: #fff;
-}
-
-.oss-saas-secondary {
-  border-color: var(--admin-line);
-  color: var(--admin-ink);
-}
-
-.oss-saas-primary:hover,
-.oss-saas-secondary:hover {
-  transform: translateY(-1px);
-}
-
-.oss-saas-secondary:hover {
-  border-color: var(--admin-accent);
-  background: var(--admin-accent-soft);
-}
-
-@media (max-width: 1080px) {
-  .oss-plan-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .oss-saas-promo {
-    position: static;
-  }
+@media (max-width: 640px) {
+  .oss-plan-layout, .oss-plan-columns { gap: 12px; }
+  .oss-plan-intro { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 24px 20px; }
+  .oss-plan-intro h2 { font-size: 21px; }
+  .oss-plan-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 15px 0 0; border-top: 1px solid var(--admin-line); border-left: 0; }
+  .oss-plan-summary > div + div { padding-top: 0; border-top: 0; }
+  .oss-plan-panel { padding: 22px 20px; }
+  .oss-plan-feature-list { grid-template-columns: minmax(0, 1fr); margin-top: 17px; }
+  .oss-plan-feature, .oss-plan-feature:nth-child(even) { padding: 13px 0; border-right: 0; border-left: 0; }
+  .oss-plan-links { align-items: flex-start; flex-direction: column; gap: 3px; }
 }
 
 @media (max-width: 767px) {
@@ -9110,48 +8900,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     display: none;
   }
 
-  .oss-plan-layout {
-    gap: 10px;
-  }
 
-  .oss-plan-hero {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 20px 17px;
-  }
-
-  .oss-plan-status {
-    justify-self: start;
-  }
-
-  .oss-plan-section-heading {
-    padding: 17px 17px 9px;
-  }
-
-  .oss-plan-feature-list {
-    grid-template-columns: 1fr;
-  }
-
-  .oss-plan-feature,
-  .oss-plan-feature:nth-child(2n),
-  .oss-plan-feature:nth-last-child(-n + 2) {
-    min-height: 0;
-    padding: 17px;
-    border-right: 0;
-    border-bottom: 1px solid var(--admin-soft-line);
-  }
-
-  .oss-plan-feature:last-child {
-    border-bottom: 0;
-  }
-
-  .oss-plan-operations {
-    padding: 17px;
-  }
-
-  .oss-saas-promo {
-    padding: 20px 17px;
-  }
 }
 
 @media (max-width: 359px) {

@@ -11,7 +11,7 @@ for (const width of [390, 768, 1440]) {
       if (new URL(response.url()).origin === new URL(page.url()).origin && new URL(response.url()).pathname.startsWith('/api/') && response.status() >= 500) errors.push(`${response.status()} ${new URL(response.url()).pathname}`);
     });
     await openAuthenticatedAdmin(page);
-    for (const section of ['Page', 'Content', 'Menu', 'Shop', 'Pages', 'AI Assistant', 'Theme', 'Publish', 'Backup', 'Analytics', 'Privacy', 'Newsletter', 'Team', 'Account', 'Plan']) {
+    for (const section of ['Page', 'Content', 'Menu', 'Shop', 'Pages', 'AI Assistant', 'Theme', 'Publish', 'Backup', 'Analytics', 'Privacy', 'Newsletter', 'Team', 'Account', 'Edition']) {
       await openAdminSection(page, section);
       if (width < 768) await expect(page.locator('.admin-dashboard-nav-stack')).toBeHidden();
       await expect(page.locator('.admin-dashboard-heading-row h1')).toBeVisible();
