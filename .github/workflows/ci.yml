@@ -83,7 +83,15 @@ jobs:
             GHSA-vfj7-8cjw-p6xm
 
       - name: Audit backend dependencies
-        run: npm --prefix server audit --audit-level=high
+        run: |
+          npm --prefix server audit --audit-level=high --json > backend-audit.json || true
+          # sqlite3 includes node-gyp for native-addon installation. Its
+          # make-fetch-happen cache is not loaded by the running HTTP server.
+          # GHSA-ch52-4w7c-c8xp has no patched release; keep all other high
+          # and critical backend advisories blocking.
+          node ../.github/scripts/check-npm-audit.mjs \
+            backend-audit.json \
+            GHSA-ch52-4w7c-c8xp
 
       - name: Run ESLint
         run: npm run lint
