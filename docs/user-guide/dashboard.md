@@ -11,7 +11,7 @@ Tabs also have their own URLs, prefixed by the dashboard language, for example `
 | `/dashboard/theme/page` | `page`, `card` |
 | `/dashboard/publish/QR` | `QR`, `Sitemap`, `TXT` |
 | `/dashboard/newsletter/overview` | `overview`, `campaigns`, `subscribers`, `settings` |
-| `/dashboard/account/general` | `general`, `security` |
+| `/dashboard/account/general` | `general`, `security`, `audit` |
 
 **Account > Your public OrbitPage** shows the installation root URL, including any configured mount path, without a dashboard language suffix.
 
@@ -102,6 +102,7 @@ Self-hosted **Analytics** shows the same 7/30-day visit and content dashboard as
 - **Newsletter** connects your own SMTP server, manages confirmed subscribers, and creates, schedules, and reports on email campaigns. See [Newsletters](./newsletters.md).
 - **Team** manages additional local users and their roles.
 - **Account → General** contains identity, instance version and updates, support, and personal-page actions. The [optional host update service](../wiki/Deployment.md#web-updates) enables installation with a blocking progress/log dialog and a confirmed final result. Without it, Account explicitly provides the terminal command. **Security** contains the signed-in user's password and TOTP authenticator. On narrow screens, protected password recovery follows the authenticator.
+- **Account → Audit log** is available to administrators. It lists successful authenticated changes with time, user and action, and supports text, user, action and date filters. Events contain metadata only, remain in the installation SQLite database until the installation is reset or removed, and are included in infrastructure backups. The log starts recording after upgrade; older changes cannot be reconstructed.
 
 The first `admin` account always has full access. Every signed-in user can manage their own Account; the additional roles below control access to page and installation tools:
 

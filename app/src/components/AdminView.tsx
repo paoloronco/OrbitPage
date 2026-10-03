@@ -40,6 +40,7 @@ import {
 import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
+import { AuditLog } from "./AuditLog";
 import { UserManager } from "./UserManager";
 import { PersonalApiTokens } from "./PersonalApiTokens";
 import { OrbitPageBrand } from "./OrbitPageBrand";
@@ -301,7 +302,7 @@ export const AdminView = ({
   );
   const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
   const subsection = isIntegratedHostedAdmin ? hostedSurfaceConfig?.subsection : requestedSubsection;
-  const accountView = subsection === "security" ? "security" : "general";
+  const accountView = subsection === "security" ? "security" : subsection === "audit" ? "audit" : "general";
   const selectSubsection = (scope: AdminSubsectionScope, value: string) => {
     if (isIntegratedHostedAdmin) hostedSurfaceConfig?.onSubsectionChange?.(scope, value);
     else onSubsectionChange?.(scope, value);
@@ -1151,6 +1152,7 @@ export const AdminView = ({
                 <nav aria-label={tr("Account sections", "Sezioni account")} className="account-tabs">
                   <button aria-current={accountView === "general" ? "page" : undefined} className={accountView === "general" ? "active" : ""} onClick={() => selectSubsection("account", "general")} type="button"><CircleUserRound aria-hidden="true" />{tr("General", "Generale")}</button>
                   <button aria-current={accountView === "security" ? "page" : undefined} className={accountView === "security" ? "active" : ""} onClick={() => selectSubsection("account", "security")} type="button"><ShieldCheck aria-hidden="true" />{tr("Security", "Sicurezza")}</button>
+                  {canManageUsers && <button aria-current={accountView === "audit" ? "page" : undefined} className={accountView === "audit" ? "active" : ""} onClick={() => selectSubsection("account", "audit")} type="button">{tr("Audit log", "Registro attività")}</button>}
                 </nav>
                 {accountView === "general" ? (
                   <SelfHostedAccountActions
@@ -1161,12 +1163,12 @@ export const AdminView = ({
                     role={currentUser?.role || "-"}
                     username={currentUser?.username || "admin"}
                   />
-                ) : (
+                ) : accountView === "security" ? (
                   <div className="account-security-stack">
                     <PasswordManager />
                     <TwoFactorManager username={currentUser?.username} />
                   </div>
-                )}
+                ) : canManageUsers ? <AuditLog tr={tr} /> : null}
               </div>
             </TabsContent>
           )}

@@ -8134,6 +8134,17 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .account-tabs button.active { border-bottom-color: #3158d8; color: #111b2d; }
 .account-tabs button:focus-visible { border-radius: 4px; outline: 2px solid var(--admin-accent-strong); outline-offset: -2px; }
 .account-tabs svg { height: 16px; width: 16px; }
+
+.audit-log-panel { min-width: 0; }
+.audit-log-filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.audit-log-filters label { display: grid; gap: 5px; min-width: 130px; flex: 1 1 150px; font-size: 13px; }
+.audit-log-filters label:first-child { flex: 2 1 220px; }
+.audit-log-filters .button { flex: 0 0 auto; }
+.audit-log-table-wrap { max-width: 100%; overflow-x: auto; }
+.audit-log-table { width: 100%; min-width: 520px; border-collapse: collapse; text-align: left; }
+.audit-log-table th, .audit-log-table td { padding: 12px; border-bottom: 1px solid var(--admin-border, #dce3ef); vertical-align: top; }
+.audit-log-table th { font-size: 12px; }
+.audit-log-table td small { display: block; opacity: .65; margin-top: 3px; }
 .account-info-stack,
 .account-security-stack { align-self: start; display: grid; gap: 18px; min-width: 0; }
 .account-general-info,
