@@ -1,3 +1,4 @@
+import './services/instance-details.js';
 import express from 'express';
 import https from 'https';
 import cors from 'cors';
@@ -96,6 +97,7 @@ import {
 import { createNewsletterRouter } from './routes/newsletter.js';
 import { startNewsletterDispatcher } from './services/newsletter.js';
 import { normalizePublicLocale, parseLocalizedPublicPath } from './public-locale.js';
+import { dataDir as instanceDataDir, databasePath, uploadsPath as instanceUploadsPath, environmentSummary, saveEnvironmentChanges, storageUsage, writableDirectory } from './services/instance-details.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1957,6 +1959,12 @@ app.use('/api', (req, res, next) => {
   });
   next();
 });
+const rejectPersonalTokenSession = (req, res, next) => (
+  req.user?.authType === 'personal_token'
+    ? res.status(403).json({ error: 'A dashboard session is required.' })
+    : next()
+);
+
 app.get('/api/account/audit-log', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   try {
     res.set('Cache-Control', 'private, no-store');
@@ -1964,6 +1972,42 @@ app.get('/api/account/audit-log', authenticateToken, requirePermission('users:ma
   } catch (error) {
     console.error('Audit log query failed:', error?.message || error);
     res.status(503).json({ error: 'Audit log is unavailable.' });
+  }
+});
+
+app.get('/api/account/instance-details', authenticateToken, rejectPersonalTokenSession, requirePermission('users:manage'), async (_req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const [usage, database, dataDirectory, uploads] = await Promise.all([
+      storageUsage().catch(() => null),
+      dbGet('SELECT 1 AS ok').then(() => true, () => false),
+      writableDirectory(instanceDataDir),
+      writableDirectory(instanceUploadsPath),
+    ]);
+    res.json({
+      databasePath, dataDir: instanceDataDir, usedBytes: usage?.usedBytes ?? null,
+      uploadBytes: usage?.uploadBytes ?? null, measuredAt: usage?.measuredAt ?? null,
+      services: { api: true, database, dataDirectory, uploads },
+      environment: environmentSummary(),
+    });
+  } catch { res.status(503).json({ error: 'Instance details are unavailable.' }); }
+});
+
+app.put('/api/account/instance-environment', authLimiter, authenticateToken, rejectPersonalTokenSession, requirePermission('users:manage'), async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  if (DEMO_MODE) return res.status(403).json({ error: 'Disabled in demo mode.' });
+  const input = z.object({
+    currentPassword: z.string().min(1).max(1024),
+    changes: z.record(z.string(), z.string().max(2048).nullable()),
+  }).strict().safeParse(req.body);
+  if (!input.success) return res.status(400).json({ error: 'Invalid environment changes.' });
+  if (!await authenticateUser(input.data.currentPassword, req.user.username)) return res.status(400).json({ error: 'Current password is incorrect.' });
+  try {
+    res.json({ environment: await saveEnvironmentChanges(input.data.changes), restartRequired: true });
+  } catch (error) {
+    if (error.message?.startsWith('Invalid')) return res.status(400).json({ error: error.message });
+    console.error('Instance environment save failed:', error?.code || 'unavailable');
+    res.status(503).json({ error: 'Could not save instance environment.' });
   }
 });
 app.use('/api/newsletter', createNewsletterRouter({
@@ -4490,12 +4534,6 @@ app.post('/api/validate-password', (req, res) => {
   const isStrong = isPasswordStrong(password);
   res.json({ isStrong });
 });
-
-const rejectPersonalTokenSession = (req, res, next) => (
-  req.user?.authType === 'personal_token'
-    ? res.status(403).json({ error: 'A dashboard session is required.' })
-    : next()
-);
 
 app.get('/api/account/updates', rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false,
   message: { error: 'Too many update status requests. Try again shortly.' },

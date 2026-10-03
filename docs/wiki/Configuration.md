@@ -2,6 +2,12 @@
 
 OrbitPage is configured through environment variables. Frontend `VITE_*` values are build-time settings; backend values are runtime settings.
 
+## Dashboard environment overrides
+
+An administrator can open **Account > General > Instance details > Environment variables** to replace these runtime values: `PUBLIC_SITE_URL`, `PUBLIC_SITE_NAME`, `SEO_INDEXING`, `UPLOAD_STORAGE_QUOTA_MB`, `VIDEO_UPLOAD_LIMIT_MB`, `MEDIA_CLEANUP_ENABLED`, `TZ`, and `OPENAI_API_KEY`. The dashboard only shows whether a value is set and whether it comes from a saved override. It never returns an existing value to the browser. Replacing or removing an override requires the current password.
+
+Overrides are stored in `DATA_DIR/.instance-env.json` with owner-only permissions and loaded before the backend starts. They take precedence over the host environment after a restart; removing one returns to the host value after a restart. Keep `DATA_DIR` persistent and protect its backups because the file may contain a plaintext API key. A restart is required after each change. Infrastructure and authentication settings such as `DATA_DIR`, `PORT`, `JWT_SECRET`, `RESET_TOKEN`, proxy trust, and encryption keys remain host-managed; change them with the deployment procedure instead of the dashboard.
+
 ## Production Essentials
 
 | Variable | Default | Recommendation |

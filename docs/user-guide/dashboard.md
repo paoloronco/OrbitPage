@@ -15,6 +15,8 @@ Tabs also have their own URLs, prefixed by the dashboard language, for example `
 
 **Account > Your public OrbitPage** shows the installation root URL, including any configured mount path, without a dashboard language suffix.
 
+**Account > General > Instance details** shows the SQLite database path, `DATA_DIR`, total bytes stored there, bytes in `uploads`, and local checks for the API, SQLite, and writable data/upload directories. The storage values measure files inside `DATA_DIR`; they are not free disk capacity. Only administrators can see these details. **Environment variables** opens a dialog that reports whether selected runtime variables are configured without revealing their values. Enter replacements, confirm with the current password, and restart the instance to apply them. See [Configuration](../wiki/Configuration.md#dashboard-environment-overrides) for the supported keys and persistence rules.
+
 Opening, refreshing or using browser Back/Forward restores the selected tab. Changing tabs keeps the current in-memory Menu or Theme draft; refreshing still discards unsaved changes. Existing workspace URLs remain valid. Shop URLs preserve the shared navigation contract; commerce remains a managed-service capability and is shown as unavailable in OSS.
 
 The dashboard language stays in its URL and follows browser Back/Forward. Public page, menu, policy, newsletter and subpage URLs have no language prefix in either edition; old localized self-hosted public URLs redirect to their unprefixed destination.

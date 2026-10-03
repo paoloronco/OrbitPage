@@ -16,6 +16,8 @@ build/
 .env
 .env.local
 .env.*.local
+.instance-env.json
+.instance-env.json.*.tmp
 
 # Database files
 *.db
