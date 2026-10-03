@@ -12,7 +12,36 @@ const primaryNavigation = [
   'Privacy',
 ];
 
-const secondaryNavigation = ['Newsletter', 'Team', 'Account', 'Plan'];
+test('keeps public URLs at the root and dashboard language in the URL with a responsive edition overview', async ({ page }) => {
+  await openAuthenticatedAdmin(page);
+  await openAdminSection(page, 'Edition');
+  const plan = page.getByTestId('open-source-plan');
+  await expect(plan.getByRole('heading', { name: 'OrbitPage Open Source', exact: true })).toBeVisible();
+  await expect(plan.locator('.oss-plan-feature')).toHaveCount(4);
+  await expect(plan.getByText('No subscription or paid feature tiers.', { exact: false })).toBeVisible();
+  await expect(plan.getByRole('link', { name: 'Open account settings' })).toHaveAttribute('href', '/en-US/dashboard/account/general');
+  await page.getByLabel('Language', { exact: true }).selectOption('it');
+  await expect(page).toHaveURL(/\/it-IT\/dashboard\/plan$/);
+  await expect(plan.getByRole('link', { name: 'Apri le impostazioni account' })).toHaveAttribute('href', '/it-IT/dashboard/account/general');
+  await expect(plan.getByRole('link', { name: 'Scopri OrbitPage SaaS' })).toHaveAttribute('href', 'https://orbitpage.com/it-IT/pricing');
+  await page.reload();
+  await expect(plan.getByRole('heading', { name: 'Cosa gestisci tu', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Pagina pubblica', exact: true })).toHaveAttribute('href', /^http:\/\/localhost:\d+\/$/);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(plan).toHaveCSS('gap', '12px');
+  await expect(plan.locator('.oss-plan-feature-list')).toHaveCSS('grid-template-columns', /^\d+(\.\d+)?px$/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  const publicUrl = await page.request.get('/api/public-url?locale=it');
+  expect((await publicUrl.json()).publicUrl).toMatch(/^http:\/\/localhost:\d+\/$/);
+  const alias = await page.request.get('/it-IT?source=bookmark', { maxRedirects: 0 });
+  expect(alias.status()).toBe(302);
+  expect(alias.headers().location).toBe('/?source=bookmark');
+  await page.goto('/');
+  await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/$/);
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+const secondaryNavigation = ['Newsletter', 'Team', 'Account', 'Edition'];
 
 const navigationIcons = {
   'Site editor': 'person-outline',
@@ -25,7 +54,7 @@ const navigationIcons = {
   Newsletter: 'mail-outline',
   Team: 'group-outlined',
   Account: 'account-circle-outlined',
-  Plan: 'credit-card-outlined',
+  Edition: 'layers-outlined',
 } as const;
 
 test('opens dashboard subsections directly and keeps tabs, history and menu drafts in sync', async ({ page }) => {
@@ -397,7 +426,7 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
 
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(page.getByRole('button', { name: 'AI Assistant', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Plan', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Edition', exact: true })).toBeVisible();
   await expect(page.locator('.admin-dashboard-language')).toHaveCSS('width', '44px');
   await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCSS('width', '44px');
 
