@@ -397,6 +397,18 @@ export const initializeDatabase = () => {
         )
       `);
       db.run(`CREATE INDEX IF NOT EXISTS idx_page_versions_created_at ON page_versions(created_at DESC)`);
+      // Small, append-only account activity records survive revision pruning.
+      // They contain action metadata only; request bodies and secrets are never stored.
+      db.run(`CREATE TABLE IF NOT EXISTS audit_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        created_at TEXT NOT NULL,
+        actor TEXT NOT NULL,
+        action TEXT NOT NULL,
+        description TEXT NOT NULL
+      )`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_created_at ON audit_events(created_at DESC, id DESC)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_actor_created_at ON audit_events(actor, created_at DESC)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_audit_events_action_created_at ON audit_events(action, created_at DESC)`);
       db.run(`CREATE TABLE IF NOT EXISTS newsletter_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         host TEXT NOT NULL, port INTEGER NOT NULL, username TEXT NOT NULL,

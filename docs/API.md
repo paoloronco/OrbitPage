@@ -29,6 +29,9 @@ and CI.
   AI-provider keys.
 - Personal API tokens are shown once, stored as SHA-256 hashes, limited to the
   creator's current role, and can never receive user-management permission.
+- `GET /api/account/audit-log` requires `users:manage` and returns pages of
+  successful authenticated change metadata. The `q`, `actor`, `action`, `from`,
+  `to` and `before` filters are parameterized; arbitrary SQL is not accepted.
 
 Deployment hardening, CORS, rate limits, HTTPS, and recovery controls are
 documented in [Security](./wiki/Security.md) and

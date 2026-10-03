@@ -890,6 +890,15 @@ export const versionHistoryApi = {
   }),
 };
 
+export type AuditEvent = { id: number; createdAt: string; actor: string; action: string; description: string };
+export type AuditLogPage = { events: AuditEvent[]; nextCursor: number | null };
+export const auditLogApi = {
+  list: (filters: Record<string, string>): Promise<AuditLogPage> => {
+    const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value.trim()));
+    return apiRequest<AuditLogPage>(`/account/audit-log?${params.toString()}`);
+  },
+};
+
 export type MapPreviewResolution = {
   lat: string;
   lon: string;

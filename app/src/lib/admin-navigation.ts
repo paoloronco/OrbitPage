@@ -35,7 +35,7 @@ export const ADMIN_SUBSECTIONS = {
   theme: ["page", "card"],
   publish: ["QR", "Sitemap", "TXT"],
   newsletter: ["overview", "campaigns", "subscribers", "settings"],
-  account: ["general", "security"],
+  account: ["general", "security", "audit"],
 } as const;
 export type AdminSubsectionScope = keyof typeof ADMIN_SUBSECTIONS;
 

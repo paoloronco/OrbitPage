@@ -64,6 +64,7 @@ import {
   restoreApplicationBackup,
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
+import { auditActionForRequest, listAuditEvents, recordAuditEvent } from './services/audit-log.js';
 import {
   captureApplicationVersion,
   listApplicationVersions,
@@ -1945,6 +1946,25 @@ app.use('/api', async (req, res, next) => {
     }
     next();
   } catch { res.status(503).json({ error: 'Cannot verify the host updater status. Try again shortly.' }); }
+});
+app.use('/api', (req, res, next) => {
+  const event = auditActionForRequest(req.method, `/api${req.path}`);
+  if (event) res.once('finish', () => {
+    if (res.statusCode < 200 || res.statusCode >= 300 || !req.user?.username) return;
+    void recordAuditEvent({ actor: req.user.username, ...event }).catch((error) => {
+      console.error('Audit event persistence failed:', error?.message || error);
+    });
+  });
+  next();
+});
+app.get('/api/account/audit-log', authenticateToken, requirePermission('users:manage'), async (req, res) => {
+  try {
+    res.set('Cache-Control', 'private, no-store');
+    res.json(await listAuditEvents(req.query));
+  } catch (error) {
+    console.error('Audit log query failed:', error?.message || error);
+    res.status(503).json({ error: 'Audit log is unavailable.' });
+  }
 });
 app.use('/api/newsletter', createNewsletterRouter({
   publicBase: (req) => `${getRequestOrigin(req)}${getActiveBasePath(req)}`,

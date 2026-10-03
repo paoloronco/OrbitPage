@@ -1209,6 +1209,17 @@ describe('API Endpoints', () => {
     expect(response.body.data).not.toHaveProperty('builder');
   });
 
+  it('limits the audit log to administrators and returns a private paginated response', async () => {
+    authMockState.permissions = ['analytics:read'];
+    expect((await request(app).get('/orbitpage/api/account/audit-log')).status).toBe(403);
+    authMockState.permissions = ['users:manage'];
+    vi.mocked(dbAll).mockResolvedValueOnce([{ id: 4, createdAt: '2026-10-03T12:00:00.000Z', actor: 'admin', action: 'profile.put', description: 'Updated page profile' }]);
+    const response = await request(app).get('/orbitpage/api/account/audit-log?q=profile');
+    expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(response.body).toMatchObject({ events: [{ actor: 'admin', action: 'profile.put' }], nextCursor: null });
+  });
+
   it('POST /api/ai/page/plan keeps draft links out of theme-only AI context and preview', async () => {
     authMockState.permissions = ['theme:write'];
     vi.stubEnv('OPENAI_API_KEY', 'sk-proj-server-test-key-123456789');
