@@ -10,6 +10,7 @@ vi.hoisted(() => {
 
 const authMockState = vi.hoisted(() => ({
   username: 'admin',
+  authType: null,
   permissions: [
     'links:write', 'links:style', 'links:images', 'theme:write', 'profile:write',
     'menu:write', 'analytics:read', 'compliance:write', 'users:manage',
@@ -37,6 +38,7 @@ vi.mock('./auth.js', () => ({
   authenticateToken: (req, res, next) => {
     req.user = {
       username: authMockState.username,
+      authType: authMockState.authType,
       permissions: [...authMockState.permissions],
     };
     next();
@@ -61,12 +63,18 @@ vi.mock('./services/backup-service.js', () => ({
   restoreApplicationBackup: vi.fn(),
 }));
 
+vi.mock('./services/instance-details.js', async (importOriginal) => ({
+  ...await importOriginal(),
+  saveEnvironmentChanges: vi.fn().mockResolvedValue([{ key: 'PUBLIC_SITE_NAME', label: 'Public site name', configured: true, overridden: true }]),
+}));
+
 // Now import app
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
 import { authenticateUser, isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withImmediateTransaction, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
 import { updateAgentRequest } from './services/application-updates.js';
+import { saveEnvironmentChanges } from './services/instance-details.js';
 vi.mock('./services/application-updates.js', async importOriginal => ({
   ...await importOriginal(), updateAgentRequest: vi.fn(),
 }));
@@ -76,6 +84,7 @@ describe('API Endpoints', () => {
     vi.clearAllMocks();
     vi.mocked(updateAgentRequest).mockReset().mockResolvedValue({ enabled: false, job: null });
     authMockState.username = 'admin';
+    authMockState.authType = null;
     authMockState.permissions = [
       'links:write', 'links:style', 'links:images', 'theme:write', 'profile:write',
       'menu:write', 'analytics:read', 'compliance:write', 'users:manage',
@@ -1207,6 +1216,38 @@ describe('API Endpoints', () => {
     expect(response.body.data.legalPolicies.cookiePolicy.mode).toBe('embedded');
     expect(response.body.data.legalPolicies.cookiePolicy.embeddedCode).toBe('<div>Cookie policy</div>');
     expect(response.body.data).not.toHaveProperty('builder');
+  });
+
+  it('limits instance details and masked environment settings to administrators', async () => {
+    authMockState.permissions = ['analytics:read'];
+    expect((await request(app).get('/orbitpage/api/account/instance-details')).status).toBe(403);
+    authMockState.permissions = ['users:manage'];
+    authMockState.authType = 'personal_token';
+    expect((await request(app).get('/orbitpage/api/account/instance-details')).status).toBe(403);
+    authMockState.authType = null;
+    const response = await request(app).get('/orbitpage/api/account/instance-details');
+    expect(response.status).toBe(200);
+    expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(response.body.databasePath).toMatch(/orbitpage\.db$/);
+    expect(response.body.services).toHaveProperty('database', true);
+    expect(response.body.environment).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'OPENAI_API_KEY' })]));
+    expect(response.body.environment.every((entry) => Object.keys(entry).every((key) => ['key', 'label', 'configured', 'overridden'].includes(key)))).toBe(true);
+  });
+
+  it('requires password and validates environment changes without returning values', async () => {
+    const endpoint = '/orbitpage/api/account/instance-environment';
+    const input = { currentPassword: 'Current123!', changes: { PUBLIC_SITE_NAME: 'Example' } };
+    authMockState.permissions = ['analytics:read'];
+    expect((await request(app).put(endpoint).send(input)).status).toBe(403);
+    authMockState.permissions = ['users:manage'];
+    vi.mocked(authenticateUser).mockResolvedValueOnce(false);
+    expect((await request(app).put(endpoint).send(input)).status).toBe(400);
+    expect((await request(app).put(endpoint).send({ ...input, extra: true })).status).toBe(400);
+    const response = await request(app).put(endpoint).send(input);
+    expect(response.status).toBe(200);
+    expect(saveEnvironmentChanges).toHaveBeenCalledWith(input.changes);
+    expect(response.text).not.toContain('Example');
+    expect(response.body.restartRequired).toBe(true);
   });
 
   it('limits the audit log to administrators and returns a private paginated response', async () => {

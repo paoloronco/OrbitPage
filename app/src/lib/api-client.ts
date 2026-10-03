@@ -704,6 +704,18 @@ export type AiPageProposal = {
   };
 };
 
+export type InstanceEnvironmentEntry = { key: string; label: string; configured: boolean; overridden: boolean };
+export type InstanceDetails = {
+  databasePath: string; dataDir: string; usedBytes: number | null; uploadBytes: number | null; measuredAt: string | null;
+  services: { api: boolean; database: boolean; dataDirectory: boolean; uploads: boolean };
+  environment: InstanceEnvironmentEntry[];
+};
+export const instanceDetailsApi = {
+  get: (): Promise<InstanceDetails> => apiRequest<InstanceDetails>('/account/instance-details'),
+  saveEnvironment: (changes: Record<string, string | null>, currentPassword: string): Promise<{ environment: InstanceEnvironmentEntry[]; restartRequired: boolean }> =>
+    apiRequest('/account/instance-environment', { method: 'PUT', body: JSON.stringify({ changes, currentPassword }) }),
+};
+
 export type ApplicationUpdateJob = {
   id: string; state: 'queued' | 'running' | 'completed' | 'failed'; version: string;
   startedAt: number; updatedAt: number; logs: string; error: string | null;
