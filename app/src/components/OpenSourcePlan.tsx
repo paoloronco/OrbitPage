@@ -26,7 +26,7 @@ export function OpenSourcePlan() {
         <div className="oss-plan-intro-copy">
           <p className="oss-plan-kicker">{tr("Current edition", "Edizione attuale")}</p>
           <h2 id="oss-plan-title">OrbitPage Open Source</h2>
-          <p>{tr("No subscription or paid feature tiers. The app and its data stay on your server.", "Nessun abbonamento né funzioni a pagamento. L'app e i suoi dati restano sul tuo server.")}</p>
+          <p>{tr("No subscription or paid feature tiers. You manage the app, its data and any services you connect.", "Nessun abbonamento né funzioni a pagamento. Gestisci tu l'app, i dati e i servizi che colleghi.")}</p>
         </div>
         <dl className="oss-plan-summary">
           <div><dt>{tr("Software", "Software")}</dt><dd>{tr("Free · MIT license", "Gratuito · licenza MIT")}</dd></div>
