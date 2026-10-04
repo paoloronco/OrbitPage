@@ -3491,8 +3491,7 @@ app.get('/api/links', optionalAuthenticateToken, async (req, res) => {
     res.set('Vary', '*');
     res.set('Last-Modified', new Date().toUTCString());
     
-    const canManageLinks = ['links:write', 'links:style', 'links:images']
-      .some((permission) => (req.user?.permissions || []).includes(permission));
+    const canManageLinks = (req.user?.permissions || []).includes('links:write');
 
     let links;
     if (canManageLinks) {

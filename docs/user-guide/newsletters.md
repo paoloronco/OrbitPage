@@ -1,5 +1,7 @@
 # Self-hosted newsletters
 
+A saved SMTP password is reused only while the host, port and username stay the same. Changing any of those fields requires entering the password for the new connection. Sender-name and footer changes can keep the password field blank.
+
 Open **Dashboard > Newsletter** with an administrator account. Enter your SMTP host, port (465, 587, or 2525), username, password, sender name, and sender email, then save and send a test message. OrbitPage requires a successful test before a campaign can be queued. Ports 587 and 2525 require STARTTLS; port 465 uses TLS from connection start. The SMTP password is encrypted in the local SQLite database and is never returned by the API.
 
 Set `PUBLIC_SITE_URL` to the externally reachable HTTPS origin before sharing the signup link or sending email. When OrbitPage is mounted under `BASE_PATH`, the generated link includes that path. Confirmation, unsubscribe, and tracking links use the saved public URL, so update and retest SMTP settings if the public address changes. Keep `JWT_SECRET` stable, or set a separate stable `NEWSLETTER_SECRET_KEY` of at least 32 characters. Losing the encryption secret makes the saved SMTP password unreadable and invalidates outstanding email links.

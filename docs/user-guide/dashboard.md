@@ -114,13 +114,15 @@ The first `admin` account always has full access. Every signed-in user can manag
 | Admin | Full access, including users, backups, and recovery tools |
 | Editor | Profile, Link blocks, menu, and built-in analytics |
 | Link Editor | Full Link-block editing and built-in analytics |
-| Style Editor | Card colors, fonts, and size only |
-| Image Editor | Card icons and cover images only |
+| Style Editor | Colors, fonts, and size of publicly visible cards |
+| Image Editor | Icons and cover images of publicly visible cards |
 | Theme Editor | Shared theme and background only |
 | Compliance | Privacy, consent, and discovery settings only |
 | Viewer | Read-only analytics |
 
 Assign the narrowest role that fits the person's task. Account security is per user; Team permissions do not replace unique passwords or two-factor authentication.
+
+Style and Image Editors cannot read draft, inactive, future or expired cards, campaign schedules, or private analytics through the card list. Full content access requires the Link Editor or Editor role.
 
 The legacy `/dashboard/access` path remains an alias for Account.
 
