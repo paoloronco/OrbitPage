@@ -4,7 +4,6 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 
 readonly SCRIPT_VERSION="4.18.5"
-readonly GUEST_INSTALLER_URL="https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh"
 
 CTID="${ORBITPAGE_PVE_CTID:-}"
 HOSTNAME="${ORBITPAGE_PVE_HOSTNAME:-orbitpage}"
@@ -72,6 +71,8 @@ require_integer() {
 
 validate_inputs() {
   [[ ${EUID} -eq 0 ]] || die "Run this installer as root on the Proxmox VE host."
+  [[ -f "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/install.sh" ]] \
+    || die 'Run install-pve.sh alongside install.sh in a trusted local checkout.'
 
   for command in pveversion pvesh pvesm pveam pct ip awk grep sed sort tail; do
     require_command "$command"
@@ -241,18 +242,28 @@ install_orbitpage() {
   local -a guest_env=(
     "ORBITPAGE_IMAGE=${IMAGE}"
     "ORBITPAGE_HTTP_PORT=${HTTP_PORT}"
+    "ORBITPAGE_BIND_ADDRESS=127.0.0.1"
   )
   if [[ -n "$PUBLIC_SITE_URL" ]]; then
     guest_env+=("ORBITPAGE_PUBLIC_SITE_URL=${PUBLIC_SITE_URL}")
   fi
 
+  local installer_path
+  installer_path="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/install.sh"
+  [[ -f "$installer_path" ]] || die 'Run install-pve.sh alongside install.sh in a trusted local checkout.'
   info "Installing prerequisites inside LXC $CTID..."
   pct exec "$CTID" -- bash -lc \
     'apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ca-certificates curl'
 
+  if [[ -n "$SSH_PUBLIC_KEY" ]]; then
+    pct exec "$CTID" -- bash -lc \
+      'DEBIAN_FRONTEND=noninteractive apt-get install -y -qq openssh-server && systemctl enable --now ssh'
+  fi
+
   info "Installing OrbitPage inside LXC $CTID..."
+  pct push "$CTID" "$installer_path" /root/orbitpage-install.sh
   pct exec "$CTID" -- env "${guest_env[@]}" bash -lc \
-    "curl -fsSL '${GUEST_INSTALLER_URL}' | bash"
+    'bash /root/orbitpage-install.sh'
 }
 
 main() {
@@ -266,13 +277,17 @@ main() {
   create_container
   wait_for_container
 
-  local address
-  address="$(wait_for_network)"
+  wait_for_network >/dev/null
   install_orbitpage
 
   success "OrbitPage is ready in unprivileged LXC $CTID."
-  printf '\nPublic page:  http://%s:%s\n' "$address" "$HTTP_PORT"
-  printf 'First setup:  http://%s:%s/dashboard/profile\n\n' "$address" "$HTTP_PORT"
+  printf '\nLocal health check: pct exec %s -- curl -fsS http://127.0.0.1:%s/health\n' "$CTID" "$HTTP_PORT"
+  printf 'Local setup token: pct exec %s -- cat /var/lib/orbitpage/.setup-token\n' "$CTID"
+  if [[ -n "$SSH_PUBLIC_KEY" ]]; then
+    printf 'Open an SSH tunnel from your browser machine: ssh -L %s:127.0.0.1:%s root@%s\n' "$HTTP_PORT" "$HTTP_PORT" "$(container_ipv4)"
+    printf 'Then open http://localhost:%s/dashboard/profile in that browser.\n' "$HTTP_PORT"
+  fi
+  printf 'Connect a trusted HTTPS reverse proxy before opening the dashboard from another machine.\n\n'
   printf 'The public page shows Under construction until the first-run wizard is completed.\n\n'
   printf 'Manage from the PVE host:\n'
   printf '  pct exec %s -- orbitpage status\n' "$CTID"

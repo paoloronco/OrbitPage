@@ -1,4 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 export const E2E_ADMIN_PASSWORD = 'OrbitPageE2E123!';
 
@@ -16,6 +18,7 @@ export async function openAuthenticatedAdmin(page: Page) {
 
     await page.locator('#setup-password').fill(E2E_ADMIN_PASSWORD);
     await page.locator('#setup-confirm-password').fill(E2E_ADMIN_PASSWORD);
+    await page.locator('#setup-token').fill(readFileSync(path.resolve('e2e-data', '.setup-token'), 'utf8').trim());
     await expect(page.locator('#setup-slug')).toHaveCount(0);
     await expect(setupContinueButton).toBeEnabled();
     await setupContinueButton.click();

@@ -236,7 +236,7 @@ async function insertRows({ dbRun, tableName, rows }) {
   }
 }
 
-function stageUploads({ uploadsPath, uploads }) {
+export function stageUploads({ uploadsPath, uploads }) {
   const resolvedUploadsPath = path.resolve(uploadsPath);
   const parentPath = path.dirname(resolvedUploadsPath);
   fs.mkdirSync(parentPath, { recursive: true });

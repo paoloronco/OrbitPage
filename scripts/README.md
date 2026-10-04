@@ -15,7 +15,7 @@ These scripts support installation, updates, Git hooks, and installer verificati
 - `test-pve-installer.sh`: isolated Proxmox-installer checks with mocked host commands.
 - `test-docker-entrypoint.sh`: verifies automatic JWT secret creation and reuse.
 
-The public installers themselves live at repository root as `install.sh` and `install-pve.sh` because users invoke them directly from raw GitHub URLs.
+The public installers themselves live at repository root as `install.sh` and `install-pve.sh`. Run them from a trusted local checkout; the PVE installer copies that checkout's guest installer into the new container.
 
 Run the documentation link check from the repository root:
 

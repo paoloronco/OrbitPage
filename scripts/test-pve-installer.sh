@@ -88,6 +88,9 @@ case "${1:-}" in
   start)
     exit 0
     ;;
+  push)
+    exit 0
+    ;;
   exec)
     arguments=" $* "
     if [[ "$arguments" == *" ip -4 -o addr show dev eth0 scope global "* ]]; then
@@ -132,9 +135,10 @@ grep -Fq '<--net0> <name=eth0,bridge=vmbr0,ip=dhcp,ip6=auto,firewall=1>' "$CALLS
 grep -Fq '<ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.18.5>' "$CALLS" \
   || fail "pinned image was not forwarded"
 grep -Fq '<ORBITPAGE_HTTP_PORT=18080>' "$CALLS" || fail "HTTP port was not forwarded"
+grep -Fq '<ORBITPAGE_BIND_ADDRESS=127.0.0.1>' "$CALLS" || fail "guest HTTP listener is not loopback-only"
 grep -Fq '<ORBITPAGE_PUBLIC_SITE_URL=https://page.example.test>' "$CALLS" \
   || fail "public URL was not forwarded"
-grep -Fq "curl -fsSL 'https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh' | bash" "$CALLS" \
-  || fail "guest installer was not invoked"
+grep -Fq '<push> <123>' "$CALLS" || fail "local guest installer was not copied"
+grep -Fq '<bash /root/orbitpage-install.sh>' "$CALLS" || fail "local guest installer was not invoked"
 
 printf 'OrbitPage PVE installer integration test passed.\n'

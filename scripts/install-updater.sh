@@ -22,9 +22,8 @@ elif [[ -f "$local_scripts/orbitpage-update.sh" && -f "$local_scripts/orbitpage-
   cp "$local_scripts/orbitpage-update.sh" "$temp/orbitpage-update.sh"
   cp "$local_scripts/orbitpage-update.py" "$temp/orbitpage-update.py"
 else
-  base=https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts
-  curl -fsSL "$base/orbitpage-update.sh" -o "$temp/orbitpage-update.sh"
-  curl -fsSL "$base/orbitpage-update.py" -o "$temp/orbitpage-update.py"
+  echo 'Run this installer from a trusted local OrbitPage source checkout.' >&2
+  exit 1
 fi
 
 bash -n "$temp/orbitpage-update.sh"

@@ -45,9 +45,9 @@ export const isFirstTimeSetup = async (): Promise<boolean> => {
 };
 
 // Setup initial admin credentials
-export const setupInitialCredentials = async (password: string): Promise<boolean> => {
+export const setupInitialCredentials = async (password: string, setupToken: string): Promise<boolean> => {
   try {
-    await authApi.setup(password);
+    await authApi.setup(password, setupToken);
     return true;
   } catch (error) {
     console.error('Error in setupInitialCredentials:', error);

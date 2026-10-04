@@ -55,26 +55,6 @@ def backup_container(name):
     return archive
 
 
-def refresh_helpers(image):
-    targets = (
-        ('/app/orbitpage-update.py', Path('/usr/local/lib/orbitpage/orbitpage-update.py'), 0o644),
-        ('/app/orbitpage-update.sh', Path('/usr/local/bin/orbitpage-update'), 0o755),
-    )
-    for source, target, mode in targets:
-        try:
-            result = subprocess.run(['docker', 'run', '--rm', '--entrypoint', 'cat', image, source],
-                                    check=True, capture_output=True, timeout=120)
-            if source.endswith('.py'):
-                compile(result.stdout, source, 'exec')
-            with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as temp:
-                temp.write(result.stdout)
-                temporary = Path(temp.name)
-            os.chmod(temporary, mode)
-            temporary.replace(target)
-        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired, SyntaxError) as error:
-            print(f'Could not refresh {target}: {error}', file=sys.stderr)
-
-
 def compose_command(container):
     labels = container['Config'].get('Labels') or {}
     project = labels.get('com.docker.compose.project')
@@ -193,7 +173,6 @@ def update_docker_run(container):
     image_id = docker_json('image', 'inspect', image)[0]['Id']
     if container['Image'] == image_id:
         print(f'{name}: already uses the latest image')
-        refresh_helpers(image)
         return
     was_running = container['State']['Running']
     old_name = f'{name}-before-update-{int(time.time())}'
@@ -229,7 +208,6 @@ def update_docker_run(container):
     if not was_running:
         print(f'{name}: updated; container remains stopped')
     run('docker', 'rm', old_name)
-    refresh_helpers(image)
 
 
 def update_compose(containers):
@@ -243,7 +221,6 @@ def update_compose(containers):
     image_id = docker_json('image', 'inspect', containers[0]['Config']['Image'])[0]['Id']
     if all(container['Image'] == image_id for container in containers):
         print(f'Compose {service}: already uses the latest image')
-        refresh_helpers(containers[0]['Config']['Image'])
         return
     try:
         for container in containers:
@@ -265,7 +242,6 @@ def update_compose(containers):
             override.flush()
             run(*command, '--file', override.name, 'up', '-d', '--no-deps', '--pull', 'never', '--no-build', service)
         raise
-    refresh_helpers(docker_json('inspect', containers[0]['Name'].lstrip('/'))[0]['Config']['Image'])
 
 
 def update_source(root):

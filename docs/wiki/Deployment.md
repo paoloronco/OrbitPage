@@ -7,8 +7,8 @@ Docker is the recommended production deployment path for OrbitPage. It keeps the
 | Model | Use it when | Operational owner |
 | --- | --- | --- |
 | [Docker image or Compose](#docker-image-recommended) | You already operate Docker and want the shortest supported path | You own the secret file, persistent data, backups, updates, and rollback |
-| [Linux installer](#one-command-linux-install) | You have a supported Debian or Ubuntu server, VM, or LXC | `orbitpage` manages the container, backups, updates, and removal |
-| [Proxmox VE installer](#one-command-proxmox-ve-install) | You want the installer to create a new unprivileged LXC | Proxmox manages the guest; `orbitpage` manages the app inside it |
+| [Linux installer](#linux-installer) | You have a supported Debian or Ubuntu server, VM, or LXC | `orbitpage` manages the container, backups, updates, and removal |
+| [Proxmox VE installer](#proxmox-ve-installer) | You want the installer to create a new unprivileged LXC | Proxmox manages the guest; `orbitpage` manages the app inside it |
 | [Container platform](#generic-cloud-and-container-platforms) | The platform provides a durable POSIX volume and secret store | The platform owns HTTPS and scheduling; you still own SQLite backups |
 
 OrbitPage uses SQLite and local uploads. Run exactly one application replica against a given `DATA_DIR`. Do not place `/app/data` on an ephemeral or eventually consistent filesystem, and do not share it between replicas.
@@ -48,16 +48,13 @@ On first start the image generates a 256-bit `JWT_SECRET` in `/app/data/.jwt-sec
 ```bash
 sudo docker run -d --name orbitpage \
   --restart unless-stopped \
-  -p 8080:8080 \
+  -p 127.0.0.1:8080:8080 \
   -v /var/lib/orbitpage:/app/data \
   --security-opt no-new-privileges:true \
   paoloronco/orbitpage:latest
 
-updater_setup_dir="$(mktemp -d)"
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
-sudo bash "$updater_setup_dir/install-updater.sh"
-rm -f -- "$updater_setup_dir/install-updater.sh"
-rmdir -- "$updater_setup_dir"
+git clone https://github.com/paoloronco/OrbitPage.git
+sudo ./OrbitPage/scripts/install-updater.sh
 ```
 
 `--restart unless-stopped` restarts OrbitPage after a failure or host reboot but respects an explicit `docker stop`. Replace it with `--restart always` only when the container must return after a Docker daemon restart even if it was stopped manually.
@@ -70,7 +67,7 @@ sudo docker logs --tail 100 orbitpage
 curl -fsS http://127.0.0.1:8080/health
 ```
 
-Open `http://SERVER_IP:8080/dashboard/profile` for first setup. A fresh public URL shows **Under construction** until setup is complete.
+Open `http://localhost:8080/dashboard/profile` on the host for first setup and enter the token from `sudo cat /var/lib/orbitpage/.setup-token`. A fresh public URL shows **Under construction** until setup is complete. Use a trusted HTTPS reverse proxy for remote access.
 
 ### Start with Docker Compose
 
@@ -95,11 +92,8 @@ Save the file as `compose.production.yaml` and start it. Use `latest` for update
 ```bash
 sudo docker compose -f compose.production.yaml pull
 sudo docker compose -f compose.production.yaml up -d
-updater_setup_dir="$(mktemp -d)"
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
-sudo bash "$updater_setup_dir/install-updater.sh"
-rm -f -- "$updater_setup_dir/install-updater.sh"
-rmdir -- "$updater_setup_dir"
+git clone https://github.com/paoloronco/OrbitPage.git
+sudo ./OrbitPage/scripts/install-updater.sh
 ```
 
 The repository `docker-compose.yml` binds to localhost, persists `./orbitpage-data`, and lets the image create the secret there automatically.
@@ -122,12 +116,14 @@ PUBLIC_SITE_NAME=Example Links
 
 Docker environment variables remain visible to users with Docker-daemon or root access. Restrict that access. See [Configuration](./Configuration.md) for every runtime setting and the `RESET_TOKEN` recovery lifecycle, then follow [Persistent data and backup types](#persistent-data-and-backup-types) before going live.
 
-## One-command Linux install
+## Linux installer
 
 The repository includes a production installer for an existing x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | sudo bash
+git clone https://github.com/paoloronco/OrbitPage.git
+cd OrbitPage
+sudo ./install.sh
 ```
 
 It:
@@ -141,36 +137,34 @@ It:
 - starts the container with `no-new-privileges` and a health check;
 - installs the `orbitpage` and `orbitpage-update` management commands.
 
-The default endpoint is `http://SERVER_IP:8080`. A fresh public URL shows **Under construction**. Open `/dashboard/profile` to run dependency checks and create the fixed `admin` password. The main page uses `http://SERVER_IP:8080/` without a language prefix. The dashboard includes the interface language, for example `/it-IT/dashboard/profile`; older localized public URLs redirect to the unprefixed destination.
+The installer binds HTTP to `127.0.0.1:8080` by default. Open `http://localhost:8080/dashboard/profile` on the host, read the local setup token with `sudo cat /var/lib/orbitpage/.setup-token`, and enter it with the new `admin` password. For another machine, use a trusted HTTPS reverse proxy. A fresh public URL shows **Under construction** until setup is complete.
 
 ### Installation options
 
 Set overrides before the installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
-  sudo ORBITPAGE_HTTP_PORT=8090 \
+sudo ORBITPAGE_HTTP_PORT=8090 \
   ORBITPAGE_BIND_ADDRESS=127.0.0.1 \
   ORBITPAGE_PUBLIC_SITE_URL=https://links.example.com \
-  bash
+  ./install.sh
 ```
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `ORBITPAGE_HTTP_PORT` | `8080` | Host HTTP port |
-| `ORBITPAGE_BIND_ADDRESS` | `0.0.0.0` | Host interface; use `127.0.0.1` behind a local reverse proxy |
+| `ORBITPAGE_BIND_ADDRESS` | `127.0.0.1` | Host HTTP interface; keep it on loopback behind a trusted HTTPS reverse proxy |
 | `ORBITPAGE_PUBLIC_SITE_URL` | Empty | Canonical HTTPS URL |
-| `ORBITPAGE_IMAGE` | `ghcr.io/paoloronco/orbitpage:latest` | Image or immutable version tag to deploy |
+| `ORBITPAGE_IMAGE` | `ghcr.io/paoloronco/orbitpage:latest` | Image to deploy; use a reviewed digest for release integrity |
 | `ORBITPAGE_DATA_DIR` | `/var/lib/orbitpage` | Persistent database and media path |
 
-Pin an immutable release tag when deterministic updates and rollback are required:
+Pin a reviewed image digest for release integrity and deterministic rollback. A version tag is easier to read but can be retargeted in a registry:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | \
-  sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:X.Y.Z bash
+sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage@sha256:DIGEST ./install.sh
 ```
 
-Use the release number from [GitHub Releases](https://github.com/paoloronco/OrbitPage/releases) without the Git tag's leading `v`. Do not copy the literal `X.Y.Z` placeholder.
+Obtain and review the manifest digest for the intended release from the registry or a trusted release record. Do not copy the literal `DIGEST` placeholder. Automatic updates that follow `latest` still trust the current registry tag and are not release-integrity verified.
 
 ### Management commands
 
@@ -189,12 +183,14 @@ orbitpage uninstall
 
 `orbitpage config` prints paths and non-secret settings. It does not print `JWT_SECRET` or `RESET_TOKEN`.
 
-## One-command Proxmox VE install
+## Proxmox VE installer
 
 Run this command as `root` on an x86-64 Proxmox VE 8 or newer node:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | bash
+git clone https://github.com/paoloronco/OrbitPage.git
+cd OrbitPage
+./install-pve.sh
 ```
 
 The host installer:
@@ -219,15 +215,14 @@ Docker, the database, media, and OrbitPage secrets stay inside the LXC. The PVE 
 Pass overrides before `bash`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | \
-  ORBITPAGE_PVE_CTID=250 \
+ORBITPAGE_PVE_CTID=250 \
   ORBITPAGE_PVE_HOSTNAME=orbitpage \
   ORBITPAGE_PVE_CORES=4 \
   ORBITPAGE_PVE_MEMORY=4096 \
   ORBITPAGE_PVE_DISK_GB=24 \
   ORBITPAGE_PVE_BRIDGE=vmbr0 \
   ORBITPAGE_HTTP_PORT=8080 \
-  bash
+  ./install-pve.sh
 ```
 
 | Variable | Default | Purpose |
@@ -254,12 +249,11 @@ curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-p
 Example with a static address and VLAN:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install-pve.sh | \
-  ORBITPAGE_PVE_IP=192.0.2.50/24 \
+ORBITPAGE_PVE_IP=192.0.2.50/24 \
   ORBITPAGE_PVE_GATEWAY=192.0.2.1 \
   ORBITPAGE_PVE_VLAN=30 \
   ORBITPAGE_PVE_SSH_PUBLIC_KEY=/root/.ssh/id_ed25519.pub \
-  bash
+  ./install-pve.sh
 ```
 
 After installation, use the printed CT ID:
@@ -273,7 +267,7 @@ pct exec CTID -- orbitpage-update
 pct enter CTID
 ```
 
-Open `http://LXC_IP:8080/dashboard/profile` for first setup.
+The LXC installer binds OrbitPage HTTP to guest loopback. Read the setup token with `pct exec CTID -- cat /var/lib/orbitpage/.setup-token`. If you supplied `ORBITPAGE_PVE_SSH_PUBLIC_KEY`, the installer enables SSH in the guest: from your browser machine run `ssh -L 8080:127.0.0.1:8080 root@GUEST_IP`, then open `http://localhost:8080/dashboard/profile`. For normal remote access, install a trusted HTTPS reverse proxy **inside the guest** and proxy to guest loopback; a proxy on the PVE host cannot reach that listener. Without an SSH key or guest HTTPS proxy, the dashboard remains accessible only inside the guest.
 
 ### Existing Proxmox guests and failed installs
 
@@ -291,7 +285,8 @@ For an existing stopped LXC:
 ```bash
 pct set CTID -features nesting=1,keyctl=1
 pct start CTID
-pct exec CTID -- bash -lc "curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh | bash"
+pct push CTID ./install.sh /root/orbitpage-install.sh
+pct exec CTID -- bash /root/orbitpage-install.sh
 ```
 
 Review any third-party guest defaults before production use. OrbitPage does not maintain external community provisioning scripts.
@@ -481,7 +476,7 @@ This procedure replaces the current data, configuration, and installer definitio
 ### Restore to a replacement host
 
 1. Provision a supported Debian or Ubuntu host with the same architecture.
-2. Install OrbitPage with the archived `ORBITPAGE_DATA_DIR` and the immutable image tag used by the backup.
+2. Install OrbitPage with the archived `ORBITPAGE_DATA_DIR` and the exact image digest used by the backup.
 3. Stop the new empty instance.
 4. Follow the in-place restore procedure on that host.
 5. Keep production DNS and proxy traffic pointed at the old host until the replacement passes health, public-page, dashboard, login, and upload checks.
@@ -523,10 +518,10 @@ Demo installations do not offer the installation action.
      reference to `paoloronco/orbitpage:latest` before pulling. Explicitly
      pinned legacy version tags are not changed automatically.
 
-   - If releases are pinned, install the new immutable tag:
+   - If releases are pinned, install the reviewed new digest:
 
      ```bash
-     sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:vA.B.C orbitpage install
+     sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage@sha256:NEW_DIGEST orbitpage install
      ```
 
    Both commands create another consistent backup. The explicit verified backup remains the rollback checkpoint.
@@ -538,11 +533,8 @@ Demo installations do not offer the installation action.
 Install the host updater once on an existing manual deployment, then use the same command as new installations:
 
 ```bash
-updater_setup_dir="$(mktemp -d)"
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
-sudo bash "$updater_setup_dir/install-updater.sh"
-rm -f -- "$updater_setup_dir/install-updater.sh"
-rmdir -- "$updater_setup_dir"
+git clone https://github.com/paoloronco/OrbitPage.git
+sudo ./OrbitPage/scripts/install-updater.sh
 sudo orbitpage-update
 ```
 
@@ -578,11 +570,8 @@ On a Linux host with systemd and a local Docker engine, enable the service once
 for the intended container (replace `orbitpage` with its actual name):
 
 ```bash
-updater_setup_dir="$(mktemp -d)"
-curl -fsSL https://raw.githubusercontent.com/paoloronco/OrbitPage/main/scripts/install-updater.sh -o "$updater_setup_dir/install-updater.sh"
-sudo bash "$updater_setup_dir/install-updater.sh" --enable-web-updates orbitpage
-rm -f -- "$updater_setup_dir/install-updater.sh"
-rmdir -- "$updater_setup_dir"
+git clone https://github.com/paoloronco/OrbitPage.git
+sudo ./OrbitPage/scripts/install-updater.sh --enable-web-updates orbitpage
 ```
 
 Install the current release through `sudo orbitpage-update` and reload Account
@@ -646,17 +635,17 @@ For a restore or migration, also compare the user list, upload count, and recent
 
 ## Roll back an update
 
-Application code and persisted data are a pair. Do not start an older image against a database already migrated by a newer version. Roll back with both the verified pre-update archive and the previous immutable image tag.
+Application code and persisted data are a pair. Do not start an older image against a database already migrated by a newer version. Roll back with both the verified pre-update archive and the previous image digest.
 
 1. Remove the instance from public traffic or enable a maintenance response at the proxy.
 2. Follow [Restore in place](#restore-in-place) with the verified pre-update archive, but stop after extraction and permission repair. Do not run its ordinary start step.
-3. Select the previous immutable image and let the installer repair and start the restored configuration:
+3. Select the previous image digest and let the installer repair and start the restored configuration:
 
    ```bash
-   sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:W.X.Y orbitpage install
+   sudo ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage@sha256:PREVIOUS_DIGEST orbitpage install
    ```
 
-   Use the exact tag recorded before the update. Do not use `latest` for rollback.
+   Use the exact digest recorded before the update. Do not use `latest` for rollback.
 
 4. Complete the health and smoke test and confirm that `/health` reports the expected previous version.
 5. Return traffic only after login, content, and uploads are confirmed.
@@ -763,11 +752,11 @@ pct exec CTID -- bash -lc '
 '
 ```
 
-For a pinned deployment, provide the next immutable tag explicitly instead of expecting `orbitpage update` to change it:
+For a pinned deployment, provide the next reviewed digest explicitly instead of expecting `orbitpage update` to change it:
 
 ```bash
 pct exec CTID -- env \
-  ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:vA.B.C \
+  ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage@sha256:NEW_DIGEST \
   orbitpage install
 ```
 

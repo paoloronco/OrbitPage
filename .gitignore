@@ -18,6 +18,8 @@ build/
 .env.*.local
 .instance-env.json
 .instance-env.json.*.tmp
+.setup-token
+.setup-token.*.tmp
 
 # Database files
 *.db

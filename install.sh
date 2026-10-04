@@ -4,7 +4,6 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 
 readonly SCRIPT_VERSION="4.18.5"
-readonly SCRIPT_URL="https://raw.githubusercontent.com/paoloronco/OrbitPage/main/install.sh"
 
 INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"
@@ -38,7 +37,7 @@ CONTAINER_NAME="${CONTAINER_NAME:-$PERSISTED_CONTAINER_NAME}"
 DATA_DIR="${DATA_DIR:-$PERSISTED_DATA_DIR}"
 IMAGE="${IMAGE:-ghcr.io/paoloronco/orbitpage:latest}"
 HTTP_PORT="${HTTP_PORT:-8080}"
-BIND_ADDRESS="${BIND_ADDRESS:-0.0.0.0}"
+BIND_ADDRESS="${BIND_ADDRESS:-127.0.0.1}"
 CONTAINER_NAME="${CONTAINER_NAME:-orbitpage}"
 DATA_DIR="${DATA_DIR:-/var/lib/orbitpage}"
 
@@ -295,10 +294,11 @@ install_cli() {
   local cli_tmp
 
   cli_tmp="$(mktemp)"
-  if [[ -n "$source_path" && -r "$source_path" && "$source_path" != "/dev/stdin" ]]; then
+  if [[ -n "$source_path" && -f "$source_path" && -r "$source_path" ]]; then
     cp "$source_path" "$cli_tmp"
   else
-    curl --fail --silent --show-error --location "$SCRIPT_URL" --output "$cli_tmp"
+    rm -f "$cli_tmp"
+    die 'Run install.sh from a trusted local checkout so the installed root command matches the reviewed script.'
   fi
   bash -n "$cli_tmp"
   install -m 0755 "$cli_tmp" "$CLI_PATH"
@@ -343,13 +343,15 @@ check_container_ownership() {
 print_access_details() {
   local address
 
-  address="$(hostname -I 2>/dev/null | awk '{print $1}')"
+  address="$BIND_ADDRESS"
+  [[ "$address" == "0.0.0.0" ]] && address="$(hostname -I 2>/dev/null | awk '{print $1}')"
   [[ -n "$address" ]] || address="localhost"
   printf '\nOrbitPage is ready.\n'
   printf 'Public page:     http://%s:%s/\n' "$address" "$HTTP_PORT"
   printf 'Admin workspace: http://%s:%s/dashboard/profile\n' "$address" "$HTTP_PORT"
   printf 'Health check:    http://%s:%s/health\n' "$address" "$HTTP_PORT"
-  printf '\nCreate the first admin password from the Admin workspace.\n'
+  printf '\nRead the local setup token with: sudo cat %s/.setup-token\n' "$DATA_DIR"
+  printf 'Complete first setup from a local browser or a trusted HTTPS reverse proxy.\n'
   printf 'Manage the installation with: orbitpage status|logs|backup|restart or sudo orbitpage-update\n\n'
 }
 
@@ -400,16 +402,9 @@ backup_app() {
 }
 
 update_app() {
-  local cli_tmp
-
   require_root
   require_installed
-  cli_tmp="$(mktemp)"
-  curl --fail --silent --show-error --location "$SCRIPT_URL" --output "$cli_tmp"
-  bash -n "$cli_tmp"
-  install -m 0755 "$cli_tmp" "$CLI_PATH"
-  rm -f "$cli_tmp"
-  exec "$CLI_PATH" _update
+  perform_update
 }
 
 perform_update() {
@@ -480,7 +475,7 @@ Usage:
 
 Installation overrides:
   ORBITPAGE_HTTP_PORT=8080
-  ORBITPAGE_BIND_ADDRESS=0.0.0.0
+  ORBITPAGE_BIND_ADDRESS=127.0.0.1
   ORBITPAGE_PUBLIC_SITE_URL=https://links.example.com
   ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:latest
 EOF
@@ -489,6 +484,10 @@ EOF
 main() {
   local command="${1:-install}"
   shift || true
+
+  if [[ "$command" == install && ! -f "${BASH_SOURCE[0]:-}" ]]; then
+    die 'Run install.sh from a trusted local checkout; streaming it into bash cannot install a reviewed management command.'
+  fi
 
   case "$command" in
     install) install_app "$@" ;;

@@ -61,6 +61,14 @@ vi.mock('./services/backup-service.js', () => ({
   SELECTIVE_BACKUP_SCHEMA_VERSION: 2,
   createApplicationBackup: vi.fn(),
   restoreApplicationBackup: vi.fn(),
+  stageUploads: vi.fn(() => ({ activate: vi.fn(), rollback: vi.fn(), finalize: vi.fn() })),
+}));
+
+vi.mock('./services/setup-token.js', () => ({
+  ensureSetupToken: vi.fn(() => 'a'.repeat(64)),
+  verifySetupToken: vi.fn((token) => token === 'a'.repeat(64)),
+  rotateSetupToken: vi.fn(),
+  consumeSetupToken: vi.fn(),
 }));
 
 vi.mock('./services/instance-details.js', async (importOriginal) => ({
@@ -72,7 +80,8 @@ vi.mock('./services/instance-details.js', async (importOriginal) => ({
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
 import { authenticateUser, isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withImmediateTransaction, withTransaction } from './database.js';
-import { createApplicationBackup, restoreApplicationBackup } from './services/backup-service.js';
+import { createApplicationBackup, restoreApplicationBackup, stageUploads } from './services/backup-service.js';
+import { consumeSetupToken, rotateSetupToken } from './services/setup-token.js';
 import { updateAgentRequest } from './services/application-updates.js';
 import { saveEnvironmentChanges } from './services/instance-details.js';
 vi.mock('./services/application-updates.js', async importOriginal => ({
@@ -293,6 +302,46 @@ describe('API Endpoints', () => {
     expect(dbRun).not.toHaveBeenCalled();
   });
 
+  it('POST /api/auth/change-password never upgrades a personal token into a session', async () => {
+    authMockState.authType = 'personal_token';
+    const response = await request(app)
+      .post('/api/auth/change-password')
+      .send({ currentPassword: 'Current123!', newPassword: 'NewPassword123!' });
+
+    expect(response.status).toBe(403);
+    expect(dbGet).not.toHaveBeenCalled();
+    expect(dbRun).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/auth/reset replaces public uploads after the database reset', async () => {
+    const response = await request(app)
+      .post('/api/auth/reset')
+      .set('X-Forwarded-For', '203.0.113.21')
+      .send({ currentPassword: 'Current123!' });
+
+    expect(response.status).toBe(200);
+    expect(stageUploads).toHaveBeenCalledWith({ uploadsPath: expect.any(String), uploads: [] });
+    expect(rotateSetupToken).toHaveBeenCalledOnce();
+    const mediaReset = vi.mocked(stageUploads).mock.results[0].value;
+    expect(mediaReset.activate).toHaveBeenCalledOnce();
+    expect(mediaReset.finalize).toHaveBeenCalledOnce();
+    expect(mediaReset.rollback).not.toHaveBeenCalled();
+  });
+
+  it('POST /api/auth/reset restores uploads when database deletion fails', async () => {
+    vi.mocked(dbAll).mockResolvedValueOnce([{ name: 'admin_users' }]);
+    vi.mocked(dbRun).mockRejectedValueOnce(new Error('write failed'));
+    const response = await request(app)
+      .post('/api/auth/reset')
+      .set('X-Forwarded-For', '203.0.113.22')
+      .send({ currentPassword: 'Current123!' });
+
+    expect(response.status).toBe(500);
+    const mediaReset = vi.mocked(stageUploads).mock.results[0].value;
+    expect(mediaReset.rollback).toHaveBeenCalledOnce();
+    expect(mediaReset.activate).not.toHaveBeenCalled();
+  });
+
   it('POST /api/auth/reset-via-token rejects whitespace-only reset credentials', async () => {
     const whitespaceToken = ' '.repeat(32);
     vi.stubEnv('RESET_TOKEN', whitespaceToken);
@@ -381,12 +430,13 @@ describe('API Endpoints', () => {
 
     const response = await request(app)
       .post('/api/auth/setup')
-      .send({ password: 'StrongPassword1!' });
+      .send({ password: 'StrongPassword1!', setupToken: 'a'.repeat(64) });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: null });
     expect(withTransaction).toHaveBeenCalledOnce();
     expect(setupInitialCredentials).toHaveBeenCalledWith('StrongPassword1!');
+    expect(consumeSetupToken).toHaveBeenCalledOnce();
     expect(dbRun).not.toHaveBeenCalledWith(expect.stringContaining("VALUES ('page_slug'"), expect.anything());
     expect(dbRun).toHaveBeenCalledWith(expect.stringContaining('admin_onboarding_enabled'));
   });
@@ -1004,6 +1054,48 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('/privacy');
+  });
+
+  it('POST /api/auth/setup rejects a caller without the local setup token', async () => {
+    const response = await request(app)
+      .post('/api/auth/setup')
+      .send({ password: 'StrongPassword1!', setupToken: 'b'.repeat(64) });
+
+    expect(response.status).toBe(403);
+    expect(setupInitialCredentials).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/profile rejects policy URL changes from profile editors', async () => {
+    authMockState.permissions = ['profile:write'];
+    vi.mocked(dbGet).mockResolvedValueOnce({ id: 1, privacy_policy_url: '/privacy', cookie_policy_url: '/cookies' });
+    const response = await request(app).put('/api/profile').send({
+      name: 'Paolo', privacy_policy_url: 'https://example.com/other', cookie_policy_url: '/cookies',
+    });
+
+    expect(response.status).toBe(403);
+    expect(dbRun).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/profile keeps unchanged policy URLs for profile editors', async () => {
+    authMockState.permissions = ['profile:write'];
+    vi.mocked(dbGet).mockResolvedValueOnce({ id: 1, privacy_policy_url: '/privacy', cookie_policy_url: '/cookies' });
+    const response = await request(app).put('/api/profile').send({
+      name: 'Paolo', privacyPolicyUrl: '/privacy', cookiePolicyUrl: '/cookies',
+    });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('/privacy');
+  });
+
+  it('PUT /api/profile accepts an unchanged legacy URL after URL normalization', async () => {
+    authMockState.permissions = ['profile:write'];
+    vi.mocked(dbGet).mockResolvedValueOnce({ id: 1, privacy_policy_url: 'https://example.com', cookie_policy_url: null });
+    const response = await request(app).put('/api/profile').send({
+      name: 'Paolo', privacyPolicyUrl: 'https://example.com', cookiePolicyUrl: null,
+    });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(dbRun).mock.calls[0][1]).toContain('https://example.com');
   });
 
   it('PUT /api/profile keeps the public OrbitPage badge enabled', async () => {
