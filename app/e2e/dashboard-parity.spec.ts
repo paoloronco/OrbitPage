@@ -54,7 +54,7 @@ const navigationIcons = {
   Newsletter: 'mail-outline',
   Team: 'group-outlined',
   Account: 'account-circle-outlined',
-  Edition: 'layers-outlined',
+  Edition: 'credit-card-outlined',
 } as const;
 
 test('opens dashboard subsections directly and keeps tabs, history and menu drafts in sync', async ({ page }) => {
