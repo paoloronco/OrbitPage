@@ -147,6 +147,14 @@ export const initializeDatabase = () => {
       db.run(`ALTER TABLE admin_users ADD COLUMN totp_pending_expires_at TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE admin_users ADD COLUMN recovery_codes TEXT`, (err) => { /* ignore if exists */ });
       db.run(`ALTER TABLE admin_users ADD COLUMN auth_version INTEGER DEFAULT 0`, (err) => { /* ignore if exists */ });
+      db.run(`ALTER TABLE admin_users ADD COLUMN session_id TEXT`, (err) => { /* ignore if exists */ });
+      db.run(`UPDATE admin_users SET session_id = lower(hex(randomblob(32))) WHERE session_id IS NULL OR session_id = ''`, (err) => { if (err) reject(err); });
+      // A username is reusable; a login identity must never be. Imported values
+      // are also replaced so account restores cannot resurrect old sessions.
+      db.run(`CREATE TRIGGER IF NOT EXISTS admin_users_new_session_identity
+        AFTER INSERT ON admin_users BEGIN
+          UPDATE admin_users SET session_id = lower(hex(randomblob(32))) WHERE id = NEW.id;
+        END`, (err) => { if (err) reject(err); });
 
       // Links table
       db.run(`

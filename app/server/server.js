@@ -1,5 +1,7 @@
 import './services/instance-details.js';
 import express from 'express';
+import { assertEmbedChangesAllowed } from './services/embed-authorization.js';
+import { suppressUnreviewedPrivacy } from './services/privacy-restore.js';
 import https from 'https';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
@@ -160,6 +162,7 @@ function safeJsonParse(jsonString, defaultValue = {}) {
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '127.0.0.1';
 const ENABLE_HTTPS = String(process.env.ENABLE_HTTPS || '').toLowerCase() === 'true' || process.env.ENABLE_HTTPS === '1';
 const SSL_PORT = Number.parseInt(process.env.SSL_PORT || '', 10) || 8443;
 const PUBLIC_SITE_URL = String(process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '').trim();
@@ -403,7 +406,7 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.use('/api/admin/restore', express.json({ limit: '300mb' }));
+app.use('/api/admin/restore', (req, res, next) => apiLimiter(req, res, next), authenticateToken, requirePermission('users:manage'), express.json({ limit: '300mb' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Serve static files with proper path resolution
@@ -2503,7 +2506,8 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
          WHERE NOT EXISTS (SELECT 1 FROM profile_data)`,
       );
     });
-    const token = generateToken('admin');
+    const initialUser = await dbGet('SELECT auth_version, session_id FROM admin_users WHERE username = ?', ['admin']);
+    const token = generateToken('admin', Number(initialUser?.auth_version || 0), initialUser?.session_id);
     try { consumeSetupToken(); } catch (error) { console.error('Could not remove used setup token:', error); }
     
     res.json({ 
@@ -2530,22 +2534,21 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     const { password, username } = LoginBodySchema.parse(req.body || {});
 
     console.log('Login attempt received for:', username);
-    const isValid = await authenticateUser(password, username);
+    const state = await authenticateUser(password, username, true);
 
-    if (!isValid) {
+    if (!state) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const state = await dbGet('SELECT totp_enabled, auth_version FROM admin_users WHERE username = ?', [username]);
     if (state?.totp_enabled) {
       return res.json({
         success: true,
         requiresTwoFactor: true,
-        challengeToken: generateTwoFactorChallenge(username, Number(state.auth_version || 0)),
+        challengeToken: generateTwoFactorChallenge(username, Number(state.auth_version || 0), state.session_id),
       });
     }
 
-    const token = generateToken(username, Number(state?.auth_version || 0));
+    const token = generateToken(username, Number(state?.auth_version || 0), state?.session_id);
     res.json({ success: true, token });
     return;
   } catch (error) {
@@ -2589,13 +2592,13 @@ app.post('/api/auth/2fa/verify', loginLimiter, async (req, res) => {
     const { challengeToken, code } = TwoFactorVerifyBodySchema.parse(req.body || {});
     const challenge = verifyTwoFactorChallenge(challengeToken);
     if (!challenge) return res.status(401).json({ error: 'The two-factor challenge expired. Sign in again.' });
-    const verification = await verifySecondFactor(challenge.username, code);
+    const verification = await verifySecondFactor(challenge.username, code, challenge);
     if (!verification.valid || Number(verification.authVersion) !== Number(challenge.authVersion || 0)) {
       return res.status(401).json({ error: 'The authentication or recovery code is not valid.' });
     }
     return res.json({
       success: true,
-      token: generateToken(challenge.username, verification.authVersion),
+      token: generateToken(challenge.username, verification.authVersion, verification.sessionId),
       recoveryCodeUsed: verification.recoveryCodeUsed,
       recoveryCodesRemaining: verification.remaining,
     });
@@ -2617,7 +2620,7 @@ app.post('/api/auth/2fa/setup', authLimiter, authenticateToken, async (req, res)
   try {
     const currentPassword = z.string().min(1).max(256).parse(req.body?.currentPassword);
     if (!(await authenticateUser(currentPassword, req.user.username))) return res.status(401).json({ error: 'Current password is incorrect.' });
-    res.json({ success: true, ...(await beginTwoFactorSetup(req.user.username)) });
+    res.json({ success: true, ...(await beginTwoFactorSetup(req.user.username, req.user)) });
   } catch (error) {
     const validationMessage = getZodErrorMessage(error);
     res.status(validationMessage ? 400 : 400).json({ error: validationMessage || error.message || 'Two-factor setup failed.' });
@@ -2627,7 +2630,8 @@ app.post('/api/auth/2fa/setup', authLimiter, authenticateToken, async (req, res)
 app.post('/api/auth/2fa/confirm', authLimiter, authenticateToken, async (req, res) => {
   try {
     const { code } = TwoFactorCodeBodySchema.parse(req.body || {});
-    res.json({ success: true, recoveryCodes: await confirmTwoFactorSetup(req.user.username, code) });
+    const state = await confirmTwoFactorSetup(req.user.username, code, req.user);
+    res.json({ success: true, recoveryCodes: state.recoveryCodes, token: generateToken(req.user.username, state.authVersion, state.sessionId) });
   } catch (error) {
     const validationMessage = getZodErrorMessage(error);
     res.status(400).json({ error: validationMessage || error.message || 'Two-factor setup failed.' });
@@ -2649,8 +2653,8 @@ app.delete('/api/auth/2fa', authLimiter, authenticateToken, async (req, res) => 
   try {
     const { currentPassword, code } = TwoFactorManageBodySchema.parse(req.body || {});
     if (!(await authenticateUser(currentPassword, req.user.username))) return res.status(401).json({ error: 'Current password is incorrect.' });
-    const authVersion = await disableTwoFactor(req.user.username, code);
-    res.json({ success: true, token: generateToken(req.user.username, authVersion), message: 'Two-factor authentication disabled.' });
+    const authVersion = await disableTwoFactor(req.user.username, code, req.user);
+    res.json({ success: true, token: generateToken(req.user.username, authVersion, req.user.sessionId), message: 'Two-factor authentication disabled.' });
   } catch (error) {
     const validationMessage = getZodErrorMessage(error);
     res.status(400).json({ error: validationMessage || error.message || 'Two-factor authentication could not be disabled.' });
@@ -2818,6 +2822,13 @@ app.put('/api/subpages', authenticateToken, requirePermission('links:write'), as
       createdAt: page.createdAt || now,
       updatedAt: now,
     }));
+    const previous = await getSubpagesPayload();
+    for (const page of pages) {
+      const oldPage = previous.find((item) => item.id === page.id);
+      const oldLinks = (oldPage?.links || []).map((link) => oldPage.enabled === false ? { ...link, isActive: false } : link);
+      const nextLinks = (page.links || []).map((link) => page.enabled === false ? { ...link, isActive: false } : link);
+      assertEmbedChangesAllowed(oldLinks, nextLinks, req.user.permissions);
+    }
     await dbRun(
       `INSERT INTO subpages_config (id, full_config, updated_at)
        VALUES (1, ?, CURRENT_TIMESTAMP)
@@ -3634,6 +3645,7 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
     }
 
     const links = validationResult.data;
+    if (!req.user.permissions.includes('users:manage')) assertEmbedChangesAllowed(await dbAll('SELECT * FROM links'), links, req.user.permissions);
 
     await withTransaction(async () => {
       // Clear existing links
@@ -3714,6 +3726,7 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
     }
 
     const links = parseResult.data;
+    if (!req.user.permissions.includes('users:manage')) assertEmbedChangesAllowed(await dbAll('SELECT * FROM links'), links, req.user.permissions);
 
     // Snapshot current click counts BEFORE deleting so analytics are never wiped.
     // Prefer the live DB value over the (potentially stale) frontend value.
@@ -4048,8 +4061,9 @@ const persistAiProfile = async (transaction, profile) => {
   }
 };
 
-const persistAiLinks = async (transaction, input) => {
+const persistAiLinks = async (transaction, input, permissions) => {
   const links = LinksPayloadSchema.parse(input);
+  if (!permissions.includes('users:manage')) assertEmbedChangesAllowed(await transaction.all('SELECT * FROM links'), links, permissions);
   const existingRows = await transaction.all('SELECT id, click_count, cta_click_count FROM links');
   const savedClicks = new Map(existingRows.map((row) => [String(row.id), row.click_count || 0]));
   const savedCtaClicks = new Map(existingRows.map((row) => [String(row.id), row.cta_click_count || 0]));
@@ -4331,7 +4345,7 @@ app.post(
           if (!(req.user.permissions || []).includes('links:write')) {
             throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot apply content changes.');
           }
-          await persistAiLinks(transaction, changes.links);
+          await persistAiLinks(transaction, changes.links, req.user.permissions);
         }
         if (changes.theme !== undefined) {
           if (!(req.user.permissions || []).includes('theme:write')) {
@@ -4690,8 +4704,8 @@ app.put('/api/users/:username', authenticateToken, requirePermission('users:mana
     const passwordHash = await bcrypt.hash(password, salt);
     await dbRun('UPDATE admin_users SET password_hash = ?, salt = ?, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ?', [passwordHash, salt, username]);
     // Issue a fresh token if an administrator explicitly resets their own account.
-    const updatedUser = await dbGet('SELECT auth_version FROM admin_users WHERE username = ?', [username]);
-    const newToken = req.user.username === username ? generateToken(username, Number(updatedUser?.auth_version || 0)) : undefined;
+    const updatedUser = await dbGet('SELECT auth_version, session_id FROM admin_users WHERE username = ?', [username]);
+    const newToken = req.user.username === username ? generateToken(username, Number(updatedUser?.auth_version || 0), updatedUser?.session_id) : undefined;
     res.json({ success: true, ...(newToken ? { token: newToken } : {}) });
   } catch (error) {
     const validationMessage = getZodErrorMessage(error);
@@ -4846,7 +4860,7 @@ app.post('/api/auth/change-password', authLimiter, authenticateToken, rejectPers
     );
 
     // Issue a fresh token
-    const token = generateToken(callerUsername, Number(user.auth_version || 0) + 1);
+    const token = generateToken(callerUsername, Number(user.auth_version || 0) + 1, req.user.sessionId);
 
     return res.json({ success: true, message: 'Password changed successfully', token });
   } catch (error) {
@@ -5128,7 +5142,7 @@ app.post('/api/admin/restore', authenticateToken, requirePermission('users:manag
       console.warn('Backup restore cleanup warning:', cleanupError?.message || cleanupError);
     }
 
-    res.json({ success: true, message: 'Backup restored successfully.' });
+    res.json({ success: true, message: 'Backup restored successfully. Restored privacy scripts remain blocked until an administrator reviews and saves Privacy settings.' });
   } catch (error) {
     try {
       mediaRestore?.rollback();
@@ -5627,7 +5641,7 @@ const canUpdateExecutableConsent = (existingConfig, nextConfig) => {
 };
 
 const getPublicConsentConfig = (config, mode, enabled, legalUrls) => {
-  const safeConfig = applyProfileLegalUrlsToConsentConfig(config, legalUrls);
+  const safeConfig = applyProfileLegalUrlsToConsentConfig(suppressUnreviewedPrivacy(config), legalUrls);
   const publicPolicy = (policy) => ({
     mode: policy.mode,
     externalUrl: policy.externalUrl,
@@ -5771,7 +5785,7 @@ app.put('/api/consent-config', authenticateToken, apiLimiter, requireAnyPermissi
       return res.status(400).json({ success: false, error: domainErrors.join(' ') });
     }
 
-    const fullConfig = JSON.stringify(stripDuplicateLegalUrlsFromConsentConfig({ legalPolicies, hardcoded, builder }));
+    const fullConfig = JSON.stringify({ ...stripDuplicateLegalUrlsFromConsentConfig({ legalPolicies, hardcoded, builder }), ...(!canManageUsers && existingConfig.restoreReviewRequired ? { restoreReviewRequired: true } : {}) });
     if (existing) {
       await dbRun(
         'UPDATE cookie_consent_config SET mode = ?, enabled = ?, full_config = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
@@ -5839,7 +5853,7 @@ app.get('*', spaLimiter, async (req, res) => {
 export { app, stripStaticSeoTags, buildStructuredData, renderSeoTags };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-app.listen(PORT, '0.0.0.0', async () => {
+app.listen(PORT, HOST, async () => {
   if (!DEMO_MODE && process.env.NODE_ENV !== 'test') startNewsletterDispatcher();
   console.log(`HTTP server running on port ${PORT}`);
   if (DISTRIBUTION_IMAGE.replace(/^docker\.io\//, '') === 'paueron/orbitpage') {
@@ -5870,7 +5884,7 @@ app.listen(PORT, '0.0.0.0', async () => {
       });
 
       const httpsServer = https.createServer({ key: pems.private, cert: pems.cert }, app);
-      httpsServer.listen(SSL_PORT, '0.0.0.0', () => {
+      httpsServer.listen(SSL_PORT, HOST, () => {
         console.log(`HTTPS server running on port ${SSL_PORT}`);
         console.log('HTTPS: Enabled (self-signed certificate)');
       });

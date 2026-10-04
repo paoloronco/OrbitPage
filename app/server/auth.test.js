@@ -37,9 +37,24 @@ describe('JWT secret policy', () => {
 });
 
 describe('JWT purpose boundaries', () => {
+  it('rejects sessions across enrollment and account replacement', async () => {
+    const token = generateToken('admin', 0, 'original');
+    for (const state of [{ auth_version: 1, session_id: 'original' }, { auth_version: 0, session_id: 'replacement' }]) {
+      dbGet.mockResolvedValueOnce({ username: 'admin', role: 'admin', ...state });
+      const next = vi.fn();
+      const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+      await authenticateToken({ headers: { authorization: `Bearer ${token}` } }, res, next);
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(403);
+    }
+    dbGet.mockResolvedValueOnce({ username: 'admin', role: 'admin', auth_version: 0, session_id: 'original' });
+    const next = vi.fn();
+    await authenticateToken({ headers: { authorization: `Bearer ${token}` } }, { status: vi.fn().mockReturnThis(), json: vi.fn() }, next);
+    expect(next).toHaveBeenCalledOnce();
+  });
   it('accepts sessions and restricts two-factor challenges to their verifier', () => {
-    const session = generateToken('admin', 3);
-    const challenge = generateTwoFactorChallenge('admin', 3);
+    const session = generateToken('admin', 3, 'identity');
+    const challenge = generateTwoFactorChallenge('admin', 3, 'identity');
     const legacyChallenge = jwt.sign(
       { username: 'admin', authVersion: 3, purpose: 'two-factor-login' },
       TEST_JWT_SECRET,
