@@ -39,6 +39,55 @@ test("Page and Content keep the same editor and preview geometry", async ({ page
   expect(contentGeometry).toEqual(pageGeometry);
 });
 
+test("Site section navigation stays in place across Page, Content, Menu, Shop and Pages", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await openAuthenticatedAdmin(page);
+  const sections = page.getByRole("navigation", { name: "Site sections" });
+  const geometry = () => sections.evaluate((navigation) => {
+    const bounds = (element: Element) => {
+      const { x, y, width, height } = element.getBoundingClientRect();
+      return { x, y, width, height };
+    };
+    return {
+      navigation: bounds(navigation),
+      buttons: [...navigation.querySelectorAll(":scope > button")].map(bounds),
+    };
+  });
+  const measurements = [];
+  for (const label of ["Page", "Content", "Menu", "Shop", "Pages"]) {
+    await sections.getByRole("button", { name: label, exact: true }).click();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    measurements.push({ label, ...(await geometry()) });
+  }
+  for (const measurement of measurements.slice(1)) {
+    expect(measurement.navigation).toEqual(measurements[0].navigation);
+    expect(measurement.buttons).toEqual(measurements[0].buttons);
+  }
+});
+
+test("Site section navigation keeps its size on phones", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAuthenticatedAdmin(page);
+  const sections = page.getByRole("navigation", { name: "Site sections" });
+  const geometry = () => sections.evaluate((navigation) => {
+    const { x, y, width, height } = navigation.getBoundingClientRect();
+    return {
+      x, y, width, height,
+      buttonSizes: [...navigation.querySelectorAll(":scope > button")].map((button) => {
+        const bounds = button.getBoundingClientRect();
+        return { width: bounds.width, height: bounds.height };
+      }),
+    };
+  });
+  const measurements = [];
+  for (const label of ["Page", "Content", "Menu", "Shop", "Pages"]) {
+    await sections.getByRole("button", { name: label, exact: true }).click();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    measurements.push(await geometry());
+  }
+  for (const measurement of measurements.slice(1)) expect(measurement).toEqual(measurements[0]);
+});
+
 test("Visual editor persists profile and content selected on the real preview", async ({ browserName, page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);

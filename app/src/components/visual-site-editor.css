@@ -99,7 +99,7 @@ html:has(.admin-visual-editor-enabled) {
   box-sizing: border-box;
   display: flex;
   width: 100%;
-  min-height: 49px;
+  min-height: 58px;
   align-items: center;
   gap: 4px;
   overflow-x: auto;

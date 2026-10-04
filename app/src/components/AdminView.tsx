@@ -22,7 +22,7 @@ import {
   Globe2,
   HelpCircle,
   Languages,
-  Layers3,
+  CreditCard,
   LockKeyhole,
   LogOut,
   Mail,
@@ -163,7 +163,7 @@ const workspaceTabs: Array<{ value: AdminTab; icon: React.ElementType; iconName:
   { value: "newsletter", icon: Mail, iconName: "mail-outline" },
   { value: "team", icon: UsersRound, iconName: "group-outlined" },
   { value: "account", icon: CircleUserRound, iconName: "account-circle-outlined" },
-  { value: "plan", icon: Layers3, iconName: "layers-outlined" },
+  { value: "plan", icon: CreditCard, iconName: "credit-card-outlined" },
 ];
 
 const tabs = [...pageTabs, ...workspaceTabs];
