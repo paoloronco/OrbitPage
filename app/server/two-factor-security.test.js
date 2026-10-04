@@ -10,7 +10,7 @@ describe('self-hosted two-factor security boundaries', () => {
     expect(auth).toContain("purpose: 'two-factor-login'");
     expect(auth).toContain("expiresIn: '5m'");
     expect(server).toContain('requiresTwoFactor: true');
-    expect(server).toContain('verifySecondFactor(challenge.username, code)');
+    expect(server).toContain('verifySecondFactor(challenge.username, code, challenge)');
   });
 
   it('encrypts TOTP secrets and stores recovery codes as salted hashes', () => {

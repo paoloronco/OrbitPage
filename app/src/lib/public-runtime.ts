@@ -42,6 +42,7 @@ function managedAnalyticsPayload(event: ManagedAnalyticsEvent, linkId?: string) 
   const params = new URLSearchParams(window.location.search);
   return {
     event,
+    capability: (window as Window & { __ORBITPAGE_ANALYTICS_CAPABILITY__?: string }).__ORBITPAGE_ANALYTICS_CAPABILITY__ || '',
     visitorId: consentManager.isGranted('analytics') ? visitorId() : '',
     linkId: linkId || '',
     referrer: document.referrer || '',

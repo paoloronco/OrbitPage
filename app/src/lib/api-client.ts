@@ -818,7 +818,11 @@ export const backupApi = {
 export const twoFactorApi = {
   status: () => apiRequest<{ success: boolean; enabled: boolean; recoveryCodesRemaining: number }>('/auth/2fa'),
   setup: (currentPassword: string) => apiRequest<{ success: boolean; uri: string; secretKey: string; expiresAt: string }>('/auth/2fa/setup', { method: 'POST', body: JSON.stringify({ currentPassword }) }),
-  confirm: (code: string) => apiRequest<{ success: boolean; recoveryCodes: string[] }>('/auth/2fa/confirm', { method: 'POST', body: JSON.stringify({ code }) }),
+  confirm: async (code: string) => {
+    const response = await apiRequest<{ success: boolean; recoveryCodes: string[]; token: string }>('/auth/2fa/confirm', { method: 'POST', body: JSON.stringify({ code }) });
+    await setAuthToken(response.token);
+    return response;
+  },
   regenerateRecoveryCodes: (currentPassword: string, code: string) => apiRequest<{ success: boolean; recoveryCodes: string[] }>('/auth/2fa/recovery-codes', { method: 'POST', body: JSON.stringify({ currentPassword, code }) }),
   disable: async (currentPassword: string, code: string) => {
     const response = await apiRequest<{ success: boolean; token?: string; message?: string }>('/auth/2fa', { method: 'DELETE', body: JSON.stringify({ currentPassword, code }) });

@@ -89,6 +89,27 @@ vi.mock('./services/application-updates.js', async importOriginal => ({
 }));
 
 describe('API Endpoints', () => {
+  it.each(['/api/admin/restore', '/api/ADMIN/restore/', '/orbitpage/api/admin/restore/'])('checks restore permission before parsing large JSON at %s', async (endpoint) => {
+    authMockState.permissions = ['links:write'];
+    const response = await request(app).post(endpoint).set('Content-Type', 'application/json').send('{broken JSON');
+    expect(response.status).toBe(403);
+    expect(restoreApplicationBackup).not.toHaveBeenCalled();
+  });
+  it('suppresses restored privacy scripts even with consent disabled and preserves quarantine on compliance saves', async () => {
+    const config = { restoreReviewRequired: true, builder: { provider: 'custom', providerConfig: { headSnippet: '<script>evil()</script>' } }, legalPolicies: { privacyPolicy: { mode: 'embedded', embeddedCode: '<script>evil()</script>' } } };
+    vi.mocked(dbGet).mockResolvedValue({ id: 1, mode: 'builder', enabled: 0, full_config: JSON.stringify(config) });
+    const publicResponse = await request(app).get('/api/consent-config/public');
+    expect(publicResponse.body.data.builder).toBeUndefined();
+    expect(publicResponse.body.data.legalPolicies.privacyPolicy.embeddedCode).toBe('');
+    authMockState.permissions = ['compliance:write'];
+    const response = await request(app).put('/api/consent-config').send({ ...config, mode: 'builder', enabled: false });
+    expect(response.status).toBe(200);
+    expect(JSON.parse(vi.mocked(dbRun).mock.calls[0][1][2]).restoreReviewRequired).toBe(true);
+    authMockState.permissions = ['users:manage'];
+    const approved = await request(app).put('/api/consent-config').send({ ...config, mode: 'builder', enabled: false });
+    expect(approved.status).toBe(200);
+    expect(JSON.parse(vi.mocked(dbRun).mock.calls.filter(([sql]) => sql.startsWith('UPDATE cookie_consent_config')).at(-1)[1][2]).restoreReviewRequired).toBeUndefined();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(updateAgentRequest).mockReset().mockResolvedValue({ enabled: false, job: null });

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { quarantineRestoredPrivacy } from './privacy-restore.js';
 
 export const BACKUP_SCHEMA_VERSION = 1;
 export const SELECTIVE_BACKUP_SCHEMA_VERSION = 2;
@@ -329,6 +330,9 @@ export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sec
   const restorableTables = new Set([...includedTables].filter((tableName) => (
     !OPTIONAL_COMPAT_TABLES.has(tableName) || Array.isArray(normalizedBackup.tables[tableName])
   )));
+  // Validate before replacing data. Imported review flags never grant trust.
+  const privacyRows = restorableTables.has('cookie_consent_config')
+    ? (normalizedBackup.tables.cookie_consent_config || []).map(quarantineRestoredPrivacy) : [];
   let mediaRestore = null;
 
   if (sections.includes('media')) {
@@ -337,13 +341,14 @@ export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sec
 
   try {
     await dbRun('PRAGMA foreign_keys = OFF');
+    if (restorableTables.has('admin_users')) await dbRun('DELETE FROM personal_api_tokens');
     for (const tableName of BACKUP_TABLES) {
       if (restorableTables.has(tableName)) await dbRun(`DELETE FROM ${tableName}`);
     }
 
     for (const tableName of BACKUP_TABLES) {
       if (!restorableTables.has(tableName)) continue;
-      const rows = Array.isArray(normalizedBackup.tables[tableName])
+      const rows = tableName === 'cookie_consent_config' ? privacyRows : Array.isArray(normalizedBackup.tables[tableName])
         ? normalizedBackup.tables[tableName]
         : [];
 

@@ -91,6 +91,7 @@ describe('backup service', () => {
     });
 
     expect(dbRun).toHaveBeenCalledWith('DELETE FROM admin_users');
+    expect(dbRun).toHaveBeenCalledWith('DELETE FROM personal_api_tokens');
     expect(dbRun).toHaveBeenCalledWith(
       'INSERT INTO profile_data (id, name) VALUES (?, ?)',
       [1, 'Restored'],
@@ -158,6 +159,7 @@ describe('backup service', () => {
     expect(dbRun).toHaveBeenCalledWith('DELETE FROM profile_data');
     expect(dbRun).not.toHaveBeenCalledWith('DELETE FROM links');
     expect(dbRun).not.toHaveBeenCalledWith('DELETE FROM admin_users');
+    expect(dbRun).not.toHaveBeenCalledWith('DELETE FROM personal_api_tokens');
     expect(fs.readFileSync(path.join(uploadsPath, 'keep.png'), 'utf8')).toBe('keep');
 
     fs.rmSync(uploadsPath, { recursive: true, force: true });

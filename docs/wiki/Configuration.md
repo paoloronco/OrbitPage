@@ -15,6 +15,7 @@ Overrides are stored in `DATA_DIR/.instance-env.json` with owner-only permission
 | `JWT_SECRET` | Generated once under `DATA_DIR` by Docker; ephemeral only in development/test source runs | Optional Docker override. Production source runs must set a stable random value of at least 32 characters. Known placeholders are rejected. |
 | `NODE_ENV` | unset | Set to `production` in production. |
 | `PORT` | `3001` local, `8080` Docker | Set to the port your platform expects. |
+| `HOST` | `127.0.0.1` source, `0.0.0.0` Docker | Bind both HTTP and optional self-signed HTTPS. Set `0.0.0.0` explicitly for remote source deployments behind a trusted HTTPS proxy. |
 | `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production; keep its `.setup-token` owner-only during first setup. |
 | `UPLOAD_STORAGE_QUOTA_MB` | `1024` | Keep local uploads bounded. Raise this only when the data volume is sized accordingly. |
 | `VIDEO_UPLOAD_LIMIT_MB` | `100` | Maximum size for one uploaded MP4/WebM/GIF media file. |

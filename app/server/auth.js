@@ -107,10 +107,10 @@ export const setupInitialCredentials = async (password) => {
 };
 
 // Authenticate user against database
-export const authenticateUser = async (password, username = 'admin') => {
+export const authenticateUser = async (password, username = 'admin', includeSession = false) => {
   try {
     const user = await dbGet(
-      'SELECT username, password_hash, salt FROM admin_users WHERE username = ?',
+      'SELECT username, password_hash, salt, auth_version, session_id, totp_enabled FROM admin_users WHERE username = ?',
       [username]
     );
 
@@ -119,7 +119,7 @@ export const authenticateUser = async (password, username = 'admin') => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
-    return isMatch;
+    return isMatch ? (includeSession ? user : true) : false;
   } catch (error) {
     console.error('Error in authenticateUser:', error);
     return false;
@@ -127,9 +127,10 @@ export const authenticateUser = async (password, username = 'admin') => {
 };
 
 // Generate JWT token
-export const generateToken = (username, authVersion = 0) => {
+export const generateToken = (username, authVersion, sessionId) => {
+  if (!sessionId) throw new Error('Account session identity is required.');
   return jwt.sign(
-    { username, authVersion, timestamp: Date.now() },
+    { username, authVersion, sessionId, timestamp: Date.now() },
     JWT_SECRET,
     { algorithm: JWT_ALGORITHM, expiresIn: '12h' }
   );
@@ -193,8 +194,8 @@ export const revokePersonalApiToken = async (username, tokenId) => {
   return personalApiTokenRecord(await dbGet('SELECT * FROM personal_api_tokens WHERE id = ?', [tokenId]));
 };
 
-export const generateTwoFactorChallenge = (username, authVersion = 0) => jwt.sign(
-  { username, authVersion, purpose: 'two-factor-login' },
+export const generateTwoFactorChallenge = (username, authVersion, sessionId) => jwt.sign(
+  { username, authVersion, sessionId, purpose: 'two-factor-login' },
   TWO_FACTOR_JWT_SECRET,
   { algorithm: JWT_ALGORITHM, expiresIn: '5m', audience: 'orbitpage-two-factor', issuer: 'orbitpage' },
 );
@@ -325,14 +326,14 @@ export const authenticateToken = async (req, res, next) => {
     const decoded = verifyToken(token);
     if (!decoded) return res.status(403).json({ error: 'Invalid or expired token' });
     const user = await dbGet(
-      'SELECT username, role, auth_version FROM admin_users WHERE username = ?',
+      'SELECT username, role, auth_version, session_id FROM admin_users WHERE username = ?',
       [decoded.username]
     );
 
     if (!user) {
       return res.status(403).json({ error: 'User not found' });
     }
-    if (Number(decoded.authVersion || 0) !== Number(user.auth_version || 0)) {
+    if (!decoded.sessionId || decoded.sessionId !== user.session_id || Number(decoded.authVersion || 0) !== Number(user.auth_version || 0)) {
       return res.status(403).json({ error: 'Session has been revoked' });
     }
 

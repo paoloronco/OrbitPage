@@ -7,6 +7,7 @@ This page summarizes how OrbitPage handles security-sensitive behavior. For vuln
 - Admin users authenticate with username and password.
 - Passwords are hashed with `bcryptjs` using 12 salt rounds.
 - Sessions use signed JWTs with a 12-hour expiry.
+- Sessions and 2FA challenges carry a random account lifetime identity. Deleting, resetting or restoring accounts invalidates previous credentials; account restores also revoke all personal API tokens.
 - The first username is `admin`; creating it requires the owner-only token in `DATA_DIR/.setup-token`.
 - Additional users can be managed from **Dashboard > Team**.
 
@@ -31,6 +32,10 @@ When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage keeps the 
 
 Privacy editors can configure consent categories, legal text, and structured identifiers for supported CMP providers. Adding or activating raw CMP snippets or embedded policy code requires the administrator-level `users:manage` permission because that content executes in the public page origin.
 
+Restored privacy configuration is validated and quarantined, including inactive CMP drafts and embedded legal policies. Executable content remains blocked until an administrator reviews and saves **Privacy** settings. A compliance editor cannot clear this review requirement. This also applies to privacy restored from version history.
+
+Content editors can configure HTTPS URLs from supported embed providers with visitor consent. Adding, changing or activating arbitrary embed code, or marking third-party content as necessary, requires `users:manage`. The same rule applies to imports, subpages and AI changes; cosmetic edits to existing approved embeds remain available.
+
 ### Two-factor authentication
 
 Each self-hosted administrator can enable time-based one-time passwords under **Dashboard > Account**. OrbitPage uses the standard TOTP format supported by Google Authenticator, Microsoft Authenticator, 1Password and compatible password managers.
@@ -41,7 +46,7 @@ Each self-hosted administrator can enable time-based one-time passwords under **
 - Cross-origin browser access is denied by default. Use `ORBITPAGE_ALLOWED_ORIGINS` only for explicitly trusted separate frontends.
 - Ten single-use recovery codes are generated at enrollment and displayed once. Only salted scrypt hashes are stored.
 - A successful recovery-code login consumes that code atomically.
-- Disabling 2FA, changing a password or using the operator reset increments the account authentication version and invalidates older sessions.
+- Enabling or disabling 2FA, changing a password or using the operator reset increments the account authentication version and invalidates older sessions. Enrollment returns a replacement session to the browser that completed setup.
 - The short-lived pre-authentication challenge uses a separate signing domain, cannot access application APIs and expires after five minutes.
 
 Keep `JWT_SECRET` stable and backed up. Losing it makes encrypted TOTP secrets unreadable. If both the authenticator and recovery codes are lost, the instance owner can enable the controlled `RESET_TOKEN` recovery flow; this resets the `admin` password, removes its 2FA configuration, and revokes its active sessions.

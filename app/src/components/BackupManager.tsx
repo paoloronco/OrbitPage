@@ -272,6 +272,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
       if (!hosted) {
         await backupApi.restore(prepareSelfHostedRestoreBackup(pendingRestore.backup, selected), selected);
         setState("success");
+        if (selected.includes('privacy')) window.alert('Privacy scripts remain blocked until an administrator reviews and saves Privacy settings.');
         setMessage("Selected sections restored. Reloading...");
         window.setTimeout(() => window.location.reload(), 800);
         return;

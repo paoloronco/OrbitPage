@@ -67,38 +67,43 @@ export async function getTwoFactorStatus(username) {
   return { enabled: Boolean(user.totp_enabled), recoveryCodesRemaining: remaining };
 }
 
-export async function beginTwoFactorSetup(username) {
+export async function beginTwoFactorSetup(username, session) {
   encryptionKey();
-  const current = await dbGet('SELECT totp_enabled FROM admin_users WHERE username = ?', [username]);
+  const current = await dbGet('SELECT totp_enabled, totp_secret, totp_pending_expires_at, auth_version, session_id FROM admin_users WHERE username = ?', [username]);
   if (!current) throw new Error('User not found.');
   if (current.totp_enabled) throw new Error('Two-factor authentication is already active. Disable it before replacing the authenticator.');
+  if (session && (session.sessionId !== current.session_id || Number(session.authVersion) !== Number(current.auth_version || 0))) throw new Error('The session changed. Sign in again.');
   const secret = new OTPAuth.Secret({ size: 20 });
   const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
-  await dbRun('UPDATE admin_users SET totp_secret = ?, totp_enabled = 0, totp_pending_expires_at = ?, recovery_codes = NULL WHERE username = ?', [encryptSecret(secret.base32), expiresAt, username]);
+  const update = await dbRun('UPDATE admin_users SET totp_secret = ?, totp_pending_expires_at = ?, recovery_codes = NULL WHERE username = ? AND totp_enabled = 0 AND session_id = ? AND auth_version = ? AND totp_secret IS ? AND totp_pending_expires_at IS ?', [encryptSecret(secret.base32), expiresAt, username, current.session_id, current.auth_version, current.totp_secret, current.totp_pending_expires_at]);
+  if (update.changes !== 1) throw new Error('The setup session changed. Start again.');
   return { secretKey: secret.base32, uri: totp(username, secret.base32).toString(), expiresAt };
 }
 
-export async function confirmTwoFactorSetup(username, token) {
-  const user = await dbGet('SELECT totp_secret, totp_pending_expires_at FROM admin_users WHERE username = ?', [username]);
+export async function confirmTwoFactorSetup(username, token, session) {
+  const user = await dbGet('SELECT totp_secret, totp_pending_expires_at, auth_version, session_id FROM admin_users WHERE username = ?', [username]);
+  if (!user || session.sessionId !== user.session_id || Number(session.authVersion) !== Number(user.auth_version || 0)) throw new Error('The session changed. Sign in again.');
   if (!user?.totp_secret || !user.totp_pending_expires_at || Date.parse(user.totp_pending_expires_at) < Date.now()) throw new Error('The setup session expired. Start again.');
   if (!verifyTotp(username, user.totp_secret, token)) throw new Error('The authentication code is not valid.');
   const recovery = createRecoveryCodeSet();
-  await dbRun('UPDATE admin_users SET totp_enabled = 1, totp_pending_expires_at = NULL, recovery_codes = ? WHERE username = ?', [JSON.stringify(recovery.stored), username]);
-  return recovery.codes;
+  const result = await dbRun('UPDATE admin_users SET totp_enabled = 1, totp_pending_expires_at = NULL, recovery_codes = ?, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ? AND totp_enabled = 0 AND totp_secret = ? AND totp_pending_expires_at = ? AND session_id = ? AND auth_version = ?', [JSON.stringify(recovery.stored), username, user.totp_secret, user.totp_pending_expires_at, user.session_id, user.auth_version]);
+  if (result.changes !== 1) throw new Error('The setup session changed. Start again.');
+  return { recoveryCodes: recovery.codes, authVersion: Number(user.auth_version || 0) + 1, sessionId: user.session_id };
 }
 
-export async function verifySecondFactor(username, token) {
-  const user = await dbGet('SELECT totp_secret, totp_enabled, recovery_codes, auth_version FROM admin_users WHERE username = ?', [username]);
+export async function verifySecondFactor(username, token, challenge) {
+  const user = await dbGet('SELECT totp_secret, totp_enabled, recovery_codes, auth_version, session_id FROM admin_users WHERE username = ?', [username]);
   if (!user?.totp_enabled || !user.totp_secret) return { valid: false };
-  if (verifyTotp(username, user.totp_secret, token)) return { valid: true, authVersion: Number(user.auth_version || 0), recoveryCodeUsed: false };
+  if (challenge && (!challenge.sessionId || challenge.sessionId !== user.session_id || Number(challenge.authVersion) !== Number(user.auth_version || 0))) return { valid: false };
+  if (verifyTotp(username, user.totp_secret, token)) return { valid: true, authVersion: Number(user.auth_version || 0), sessionId: user.session_id, recoveryCodeUsed: false };
 
   let stored = [];
   try { stored = JSON.parse(user.recovery_codes || '[]'); } catch { stored = []; }
   const index = stored.findIndex((candidate) => recoveryCodeMatches(token, candidate));
   if (index < 0) return { valid: false };
   const next = stored.filter((_, candidateIndex) => candidateIndex !== index);
-  const update = await dbRun('UPDATE admin_users SET recovery_codes = ? WHERE username = ? AND recovery_codes = ?', [JSON.stringify(next), username, user.recovery_codes]);
-  return { valid: Number(update.changes || 0) === 1, authVersion: Number(user.auth_version || 0), recoveryCodeUsed: true, remaining: next.length };
+  const update = await dbRun('UPDATE admin_users SET recovery_codes = ? WHERE username = ? AND recovery_codes = ? AND session_id = ? AND auth_version = ?', [JSON.stringify(next), username, user.recovery_codes, user.session_id, user.auth_version]);
+  return { valid: Number(update.changes || 0) === 1, authVersion: Number(user.auth_version || 0), sessionId: user.session_id, recoveryCodeUsed: true, remaining: next.length };
 }
 
 export async function regenerateRecoveryCodes(username, token) {
@@ -109,11 +114,10 @@ export async function regenerateRecoveryCodes(username, token) {
   return recovery.codes;
 }
 
-export async function disableTwoFactor(username, token) {
-  const verification = await verifySecondFactor(username, token);
+export async function disableTwoFactor(username, token, session) {
+  const verification = await verifySecondFactor(username, token, session);
   if (!verification.valid) throw new Error('The authentication or recovery code is not valid.');
-  const update = await dbRun('UPDATE admin_users SET totp_secret = NULL, totp_enabled = 0, totp_pending_expires_at = NULL, recovery_codes = NULL, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ?', [username]);
+  const update = await dbRun('UPDATE admin_users SET totp_secret = NULL, totp_enabled = 0, totp_pending_expires_at = NULL, recovery_codes = NULL, auth_version = COALESCE(auth_version, 0) + 1 WHERE username = ? AND session_id = ? AND auth_version = ?', [username, verification.sessionId, verification.authVersion]);
   if (!update.changes) throw new Error('User not found.');
-  const user = await dbGet('SELECT auth_version FROM admin_users WHERE username = ?', [username]);
-  return Number(user.auth_version || 0);
+  return verification.authVersion + 1;
 }
