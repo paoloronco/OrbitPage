@@ -11,14 +11,25 @@ const __dirname = dirname(__filename);
 // DATA_DIR is set to /app/data in Docker (see Dockerfile ENV).
 // When running locally without the env var, data lives next to server.js.
 const dataDir = process.env.DATA_DIR || __dirname;
+// SQLite and its WAL/SHM sidecars must inherit owner-only permissions.
+if (process.platform !== 'win32') process.umask(0o077);
 try {
-  fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+  if (process.platform !== 'win32' && dataDir !== __dirname) fs.chmodSync(dataDir, 0o700);
 } catch (error) {
   throw new Error(`OrbitPage could not create DATA_DIR (${dataDir}): ${error.message}`);
 }
 const dbPath = join(dataDir, 'orbitpage.db');
 const legacySourceDbPath = join(__dirname, 'lynx.db');
 const legacyDataDirDbPath = join(dataDir, 'lynx.db');
+
+if (process.platform !== 'win32') {
+  for (const legacyPath of [legacySourceDbPath, legacyDataDirDbPath]) {
+    for (const file of [legacyPath, `${legacyPath}-wal`, `${legacyPath}-shm`]) {
+      if (fs.existsSync(file)) fs.chmodSync(file, 0o600);
+    }
+  }
+}
 
 // If the app is configured to use a separate persistent data directory,
 // preserve any existing legacy database stored next to the server source.
@@ -38,6 +49,12 @@ if (fs.existsSync(legacyDataDirDbPath) && !fs.existsSync(dbPath)) {
     console.log('Copied legacy database from', legacyDataDirDbPath, 'to', dbPath);
   } catch (copyErr) {
     console.error('Failed to migrate legacy database name:', copyErr);
+  }
+}
+
+if (process.platform !== 'win32') {
+  for (const file of [dbPath, `${dbPath}-wal`, `${dbPath}-shm`]) {
+    if (fs.existsSync(file)) fs.chmodSync(file, 0o600);
   }
 }
 

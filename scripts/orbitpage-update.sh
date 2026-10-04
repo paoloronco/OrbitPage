@@ -19,17 +19,8 @@ fi
 
 helper=/usr/local/lib/orbitpage/orbitpage-update.py
 if [[ ! -f "$helper" ]]; then
-  install -d -m 0755 "$(dirname "$helper")"
-  source_script="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/orbitpage-update.py"
-  temp="$(mktemp)"
-  trap 'rm -f "$temp"' EXIT
-  if [[ -f "$source_script" ]]; then
-    cp "$source_script" "$temp"
-  else
-    docker run --rm --entrypoint cat paoloronco/orbitpage:latest /app/orbitpage-update.py > "$temp"
-  fi
-  python3 -m py_compile "$temp"
-  install -m 0644 "$temp" "$helper"
+  printf 'The host updater helper is missing. Reinstall it from a trusted OrbitPage source checkout.\n' >&2
+  exit 1
 fi
 
 exec python3 "$helper" "${args[@]}"

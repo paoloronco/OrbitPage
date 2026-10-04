@@ -69,6 +69,7 @@ These are targets, not contractual guarantees.
 - Auth, reset, API, and SPA routes are rate-limited.
 - The Content Security Policy permits `blob:` URLs only for local image and media previews; scripts and workers remain restricted.
 - Docker generates `JWT_SECRET` once under persistent `DATA_DIR`; production Node deployments must set it explicitly.
+- Initial administrator setup requires the owner-only `DATA_DIR/.setup-token`; full reset rotates it.
 - Optional `RESET_TOKEN` enables protected recovery endpoints and should be at least 32 characters.
 - Uploaded files are written under `DATA_DIR/uploads` and served from `/uploads`.
 - AI screenshot input accepts only supported image MIME types with matching file signatures.
@@ -76,10 +77,11 @@ These are targets, not contractual guarantees.
 
 ## Deployment Recommendations
 
-- Run behind HTTPS in production.
+- Keep the HTTP listener on loopback and run behind HTTPS in production. The installer defaults to `127.0.0.1:8080`.
 - Persist and back up `DATA_DIR`; it contains the generated `JWT_SECRET`, SQLite database, and uploads. Keep any explicit secret override stable across restarts.
 - Never bake databases, database backups or sidecars, uploads, logs, or environment files into an image or source archive.
 - Keep Docker images, Node.js, npm dependencies, and host packages updated.
+- For deployments that require release integrity, install from a reviewed local source checkout and pin an independently reviewed OCI image digest. The optional `:latest` update path still follows a mutable registry tag and does not verify a signed release attestation.
 - Limit admin access to trusted users.
 - Disable indexing on staging/private deployments with `SEO_INDEXING=false`.
 - Do not reuse the public demo password on a real deployment.

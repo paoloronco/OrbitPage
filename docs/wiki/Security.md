@@ -7,7 +7,7 @@ This page summarizes how OrbitPage handles security-sensitive behavior. For vuln
 - Admin users authenticate with username and password.
 - Passwords are hashed with `bcryptjs` using 12 salt rounds.
 - Sessions use signed JWTs with a 12-hour expiry.
-- The first username is `admin`.
+- The first username is `admin`; creating it requires the owner-only token in `DATA_DIR/.setup-token`.
 - Additional users can be managed from **Dashboard > Team**.
 
 ## Browser Token Storage
@@ -24,6 +24,8 @@ When Web Crypto is unavailable on non-secure HTTP contexts, OrbitPage keeps the 
 - Docker generates a stable 256-bit `JWT_SECRET` under persistent `DATA_DIR`; production source runtimes require an explicit value of at least 32 characters. Known placeholders are rejected.
 - Optional `RESET_TOKEN` protects an administrator-recovery endpoint and a separate destructive full-reset endpoint. Leave it unset outside a controlled recovery window.
 - Destructive in-dashboard instance reset requires `users:manage` and re-authentication with the current password.
+- Full reset removes previously uploaded media and rotates the first-run setup token.
+- Personal API tokens cannot change the password or obtain a dashboard session.
 - Forwarded client/protocol headers are ignored unless the socket peer is explicitly trusted with `ORBITPAGE_TRUST_PROXY`.
 - Public content APIs return only enabled content and omit editing, scheduling, campaign, and analytics metadata.
 

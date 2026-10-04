@@ -9,6 +9,7 @@ import {
   createApplicationBackup,
   listBackupImages,
   restoreApplicationBackup,
+  stageUploads,
 } from './backup-service.js';
 
 const makeTempUploadsDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'orbitpage-backup-'));
@@ -233,6 +234,25 @@ describe('backup service', () => {
     result.mediaRestore.rollback();
     expect(fs.existsSync(path.join(uploadsPath, 'new.png'))).toBe(false);
     expect(fs.readFileSync(path.join(uploadsPath, 'keep.png'))).toEqual(pngBytes('keep'));
+
+    fs.rmSync(uploadsPath, { recursive: true, force: true });
+  });
+
+  it('replaces old public uploads with an empty tree and can roll back', () => {
+    const uploadsPath = makeTempUploadsDir();
+    fs.writeFileSync(path.join(uploadsPath, 'old.png'), pngBytes('old'));
+
+    const rolledBack = stageUploads({ uploadsPath, uploads: [] });
+    rolledBack.activate();
+    expect(fs.existsSync(path.join(uploadsPath, 'old.png'))).toBe(false);
+    rolledBack.rollback();
+    expect(fs.existsSync(path.join(uploadsPath, 'old.png'))).toBe(true);
+
+    const committed = stageUploads({ uploadsPath, uploads: [] });
+    committed.activate();
+    committed.finalize();
+    expect(fs.existsSync(path.join(uploadsPath, 'old.png'))).toBe(false);
+    expect(fs.readdirSync(uploadsPath)).toEqual([]);
 
     fs.rmSync(uploadsPath, { recursive: true, force: true });
   });

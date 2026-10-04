@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide is for evaluating OrbitPage locally without Docker. For a complete production-style installation on an existing Debian or Ubuntu server, use the [one-command Linux installer](./Deployment.md#one-command-linux-install).
+This guide is for evaluating OrbitPage locally without Docker. For a complete production-style installation on an existing Debian or Ubuntu server, use the [Linux installer](./Deployment.md#linux-installer).
 
 ## What OrbitPage Runs
 
@@ -11,7 +11,7 @@ OrbitPage has two surfaces:
 | Public page | The public page visitors see | None |
 | Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
 
-Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` checks the runtime, SQLite database, persistent storage, frontend build, and session security. When all checks pass, set the admin password and confirm the public address. Public routes have no language prefix, for example `http://SERVER_IP:8080/` and `/menu`. The dashboard includes the interface language, for example `/it-IT/dashboard/profile`. Classic dashboard paths remain valid; older localized and page-slug public URLs redirect to their unprefixed destination.
+Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` checks the runtime, SQLite database, persistent storage, frontend build, and session security. Read the owner-only `.setup-token` file in `DATA_DIR` on the host and enter it with the admin password. The installer binds HTTP to loopback; use a trusted HTTPS reverse proxy for remote access. Public routes have no language prefix, for example `/` and `/menu`. The dashboard includes the interface language, for example `/it-IT/dashboard/profile`. Classic dashboard paths remain valid; older localized and page-slug public URLs redirect to their unprefixed destination.
 
 ## Requirements
 

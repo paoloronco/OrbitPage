@@ -44,6 +44,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [checksLoading, setChecksLoading] = useState(true);
   const [password, setPassword] = useState("");
+  const [setupToken, setSetupToken] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -97,7 +98,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
       if (!(await isPasswordStrong(password))) {
         throw new Error(tr("Please meet all password requirements before continuing.", "Soddisfa tutti i requisiti della password prima di continuare."));
       }
-      await setupInitialCredentials(password);
+      await setupInitialCredentials(password, setupToken);
       await onSetupComplete();
     } catch (setupError) {
       setError(setupError instanceof Error ? setupError.message : tr("Setup failed. Please try again.", "Configurazione non riuscita. Riprova."));
@@ -170,6 +171,11 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
                   <p>{tr("Username", "Nome utente")}</p>
                   <div className="setup-locked-field"><LockKeyhole aria-hidden="true" size={17} /><strong>admin</strong><span>{tr("Fixed", "Fisso")}</span></div>
                 </div>
+                <div className="setup-field setup-field-full">
+                  <Label htmlFor="setup-token">{tr("Local setup token", "Token di configurazione locale")}</Label>
+                  <Input id="setup-token" type="password" autoComplete="off" value={setupToken} onChange={(event) => setSetupToken(event.target.value.trim())} />
+                  <small>{tr("Read .setup-token from the server's DATA_DIR. This file is only available to the host operator.", "Leggi .setup-token nella DATA_DIR del server. Il file è accessibile solo all'operatore dell'host.")}</small>
+                </div>
                 <div className="setup-field">
                   <div className="setup-field-heading">
                     <Label htmlFor="setup-password">Password</Label>
@@ -222,7 +228,7 @@ export const InitialSetup = ({ onSetupComplete }: InitialSetupProps) => {
             )}
 
             {step < 2 ? (
-              <Button className="setup-primary-button" disabled={step === 0 ? !setupStatus?.ready : !passwordReady || !passwordsMatch} onClick={() => { setError(""); setStep((value) => value + 1); }} type="button">{tr("Continue", "Continua")}<ArrowRight size={16} /></Button>
+              <Button className="setup-primary-button" disabled={step === 0 ? !setupStatus?.ready : !passwordReady || !passwordsMatch || setupToken.length !== 64} onClick={() => { setError(""); setStep((value) => value + 1); }} type="button">{tr("Continue", "Continua")}<ArrowRight size={16} /></Button>
             ) : (
               <Button className="setup-primary-button" disabled={isLoading} type="submit">{isLoading ? <RefreshCw className="setup-spinner" size={16} /> : <ShieldCheck size={16} />}{isLoading ? tr("Creating workspace", "Creazione workspace") : tr("Complete setup", "Completa configurazione")}</Button>
             )}

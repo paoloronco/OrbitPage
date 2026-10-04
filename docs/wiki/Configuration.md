@@ -15,7 +15,7 @@ Overrides are stored in `DATA_DIR/.instance-env.json` with owner-only permission
 | `JWT_SECRET` | Generated once under `DATA_DIR` by Docker; ephemeral only in development/test source runs | Optional Docker override. Production source runs must set a stable random value of at least 32 characters. Known placeholders are rejected. |
 | `NODE_ENV` | unset | Set to `production` in production. |
 | `PORT` | `3001` local, `8080` Docker | Set to the port your platform expects. |
-| `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production. |
+| `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production; keep its `.setup-token` owner-only during first setup. |
 | `UPLOAD_STORAGE_QUOTA_MB` | `1024` | Keep local uploads bounded. Raise this only when the data volume is sized accordingly. |
 | `VIDEO_UPLOAD_LIMIT_MB` | `100` | Maximum size for one uploaded MP4/WebM/GIF media file. |
 | `ORBITPAGE_BACKUP_MEDIA_LIMIT_MB` | `128` | Maximum decoded media size in one backup export or restore. |
@@ -29,7 +29,7 @@ Overrides are stored in `DATA_DIR/.instance-env.json` with owner-only permission
 | --- | --- |
 | `JWT_SECRET` | Signs admin JWT sessions. Docker generates and persists it in `DATA_DIR/.jwt-secret` when omitted. Explicit values shorter than 32 characters or known placeholders are rejected. |
 | `PORT` | HTTP listener port. |
-| `DATA_DIR` | Stores `orbitpage.db`, uploads, and Docker's generated `.jwt-secret`. |
+| `DATA_DIR` | Stores `orbitpage.db`, uploads, the first-run `.setup-token`, and Docker's generated `.jwt-secret`. The setup token is consumed after administrator creation and rotated on full reset. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
 | `VIDEO_UPLOAD_LIMIT_MB` | Per-file limit for uploaded video/background media. Content is also validated by MIME, extension, and binary signature. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |

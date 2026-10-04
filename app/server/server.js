@@ -63,8 +63,10 @@ import {
   createApplicationBackup,
   listBackupImages,
   restoreApplicationBackup,
+  stageUploads,
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
+import { consumeSetupToken, ensureSetupToken, rotateSetupToken, verifySetupToken } from './services/setup-token.js';
 import { auditActionForRequest, listAuditEvents, recordAuditEvent } from './services/audit-log.js';
 import {
   captureApplicationVersion,
@@ -422,6 +424,9 @@ const normalizePolicyUrl = (value, fieldName) => {
   if (value == null) return null;
   const trimmed = String(value).trim();
   if (!trimmed) return null;
+  if (/[\x00-\x1f\x7f\\]/.test(trimmed)) {
+    throw new Error(`${fieldName} contains unsafe characters.`);
+  }
 
   if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
     return trimmed;
@@ -436,6 +441,9 @@ const normalizePolicyUrl = (value, fieldName) => {
 
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
     throw new Error(`${fieldName} must start with http:// or https://.`);
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error(`${fieldName} must not contain credentials.`);
   }
 
   return parsed.toString();
@@ -1878,7 +1886,8 @@ app.use(express.static(distPath, {
 // Serve uploaded files from the uploads directory
 app.use('/uploads', express.static(uploadsPath, {
   setHeaders: (res) => {
-    res.set('Cache-Control', 'public, max-age=31536000');
+    // A reset revokes prior upload URLs, so caches must revalidate each request.
+    res.set('Cache-Control', 'no-store');
     res.set('X-Content-Type-Options', 'nosniff');
     res.set('Accept-Ranges', 'bytes');
   }
@@ -2294,6 +2303,7 @@ const initializeDemoReset = async () => {
 
 // Initialize database
 await initializeDatabase();
+if (await isFirstTimeSetup()) ensureSetupToken();
 if (DEMO_MODE) {
   await initializeDemoReset();
 }
@@ -2450,6 +2460,7 @@ app.get('/api/auth/setup-status', async (req, res) => {
       getSetupDependencies(),
       getInstancePageSlug(),
     ]);
+    if (firstTime) ensureSetupToken();
     res.json({
       isFirstTimeSetup: firstTime,
       username: 'admin',
@@ -2474,7 +2485,10 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
 
   setupInProgress = true;
   try {
-    const { password } = SetupBodySchema.parse(req.body || {});
+    const { password, setupToken } = SetupBodySchema.parse(req.body || {});
+    if (!verifySetupToken(setupToken)) {
+      return res.status(403).json({ error: 'Invalid local setup token.' });
+    }
     const dependencies = await getSetupDependencies();
     if (dependencies.some((dependency) => !dependency.ok)) {
       return res.status(503).json({ success: false, error: 'Resolve the failed installation checks before continuing.', dependencies });
@@ -2490,6 +2504,7 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
       );
     });
     const token = generateToken('admin');
+    try { consumeSetupToken(); } catch (error) { console.error('Could not remove used setup token:', error); }
     
     res.json({ 
       success: true, 
@@ -3400,6 +3415,25 @@ app.put('/api/profile', authenticateToken, requirePermission('profile:write'), a
     // Check if profile exists. In demo mode, privacy/compliance fields are read-only,
     // so profile saves preserve the original legal policy URLs.
     const existing = await dbGet('SELECT id, privacy_policy_url, cookie_policy_url, machine_readable_enabled, admin_onboarding_enabled, appearance FROM profile_data LIMIT 1');
+    if (!(req.user.permissions || []).includes('compliance:write') && !DEMO_MODE) {
+      const privacySupplied = body.privacyPolicyUrl !== undefined || body.privacy_policy_url !== undefined;
+      const cookieSupplied = body.cookiePolicyUrl !== undefined || body.cookie_policy_url !== undefined;
+      const unchangedPolicy = (submitted, stored) => {
+        if (submitted === (stored ?? null)) return true;
+        if (submitted === null || stored == null) return false;
+        try {
+          return submitted === normalizePolicyUrl(stored, 'Stored policy URL');
+        } catch {
+          return false;
+        }
+      };
+      if ((privacySupplied && !unchangedPolicy(privacyPolicyUrl, existing?.privacy_policy_url)) ||
+          (cookieSupplied && !unchangedPolicy(cookiePolicyUrl, existing?.cookie_policy_url))) {
+        return res.status(403).json({ error: 'Compliance permission is required to change legal policy URLs.' });
+      }
+      privacyPolicyUrl = existing?.privacy_policy_url ?? null;
+      cookiePolicyUrl = existing?.cookie_policy_url ?? null;
+    }
     const appearance = body.appearance ?? safeJsonParse(existing?.appearance, {});
     const showOrbitPageBadge = true;
     const adminOnboardingEnabled = typeof onboardingRaw === 'number'
@@ -4768,7 +4802,7 @@ app.patch('/api/links/:id/icon', authenticateToken, requireAnyPermission('links:
   }
 });
 
-app.post('/api/auth/change-password', authLimiter, authenticateToken, async (req, res) => {
+app.post('/api/auth/change-password', authLimiter, authenticateToken, rejectPersonalTokenSession, async (req, res) => {
   if (DEMO_MODE) {
     return res.status(403).json({ success: false, error: 'Change password is disabled in demo mode.' });
   }
@@ -4879,7 +4913,10 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
 
 // Internal function to reset the application (used by both endpoints)
 const resetApplicationData = async () => {
-  return withTransaction(async () => {
+  rotateSetupToken();
+  const mediaReset = stageUploads({ uploadsPath, uploads: [] });
+  try {
+    const result = await withTransaction(async () => {
     console.log('Starting application reset...');
     
     // Get list of all tables
@@ -4889,12 +4926,8 @@ const resetApplicationData = async () => {
     
     // Clear all data from all tables
     for (const table of tables) {
-      try {
-        console.log(`Clearing table: ${table.name}`);
-        await dbRun(`DELETE FROM ${table.name}`);
-      } catch (error) {
-        console.warn(`Could not clear table ${table.name}:`, error.message);
-      }
+      console.log(`Clearing table: ${table.name}`);
+      await dbRun(`DELETE FROM ${table.name}`);
     }
     
     // Reset SQLite sequences
@@ -4938,6 +4971,7 @@ const resetApplicationData = async () => {
       VALUES (1, '', '', '', '{}', 1)
     `);
     
+    mediaReset.activate();
     console.log('Application reset completed successfully');
     
     return { 
@@ -4945,7 +4979,17 @@ const resetApplicationData = async () => {
       message: 'Application reset successful. All data has been cleared and default settings have been restored.'
     };
     
-  }, { foreignKeys: false });
+    }, { foreignKeys: false });
+    try {
+      mediaReset.finalize();
+    } catch (error) {
+      console.error('Reset completed but old media cleanup failed:', error);
+    }
+    return result;
+  } catch (error) {
+    mediaReset.rollback();
+    throw error;
+  }
 };
 
 // Reset authentication - clear ALL data and reset to initial state.
@@ -5803,7 +5847,7 @@ app.listen(PORT, '0.0.0.0', async () => {
   }
   if (IS_PRODUCTION) {
     console.log(`Production mode: Frontend and API served from same origin`);
-    console.log(`Access your OrbitPage instance at: http://your-domain:${PORT}`);
+    console.log(`HTTP listener on port ${PORT}; use a trusted HTTPS reverse proxy for remote access`);
   } else {
     console.log(`Frontend: ${FRONTEND_URL}`);
     console.log(`API: ${FRONTEND_URL}/api`);

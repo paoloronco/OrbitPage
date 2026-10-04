@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { consentConfigPublicApi, type ConsentConfigData } from "@/lib/api-client";
 import { withBasePath, withTenantBasePath } from "@/lib/base-path";
+import { resolveSafePublicHref } from "@/lib/browser-network-policy";
 
 type PolicyKind = "privacy" | "cookie";
 type PolicyState = NonNullable<ConsentConfigData["legalPolicies"]>["privacyPolicy"];
@@ -76,8 +77,13 @@ export function LegalPolicyPage({ kind }: { kind: PolicyKind }) {
 
         const externalUrl = nextPolicy?.externalUrl?.trim();
         if (nextPolicy?.mode === "external" && externalUrl && externalUrl !== path && externalUrl !== withBasePath(path)) {
+          const safeUrl = resolveSafePublicHref(externalUrl);
+          if (!safeUrl) {
+            setError("This policy URL is unavailable.");
+            return;
+          }
           setRedirecting(true);
-          window.location.replace(withBasePath(externalUrl));
+          window.location.replace(withBasePath(safeUrl));
           return;
         }
       } catch (err) {

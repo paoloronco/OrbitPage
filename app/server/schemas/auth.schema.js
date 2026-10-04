@@ -35,6 +35,7 @@ export const PageSlugSchema = z
 
 export const SetupBodySchema = z.object({
   password: RequiredPasswordSchema,
+  setupToken: z.string({ required_error: 'Local setup token is required' }).trim().length(64),
 });
 
 export const LoginBodySchema = z.object({

@@ -583,10 +583,10 @@ export const authApi = {
     return apiRequest<SetupStatus>('/auth/setup-status');
   },
 
-  setup: async (password: string): Promise<SetupResponse> => {
+  setup: async (password: string, setupToken: string): Promise<SetupResponse> => {
     const response = await apiRequest<SetupResponse>('/auth/setup', {
       method: 'POST',
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ password, setupToken }),
     });
     if (response.token) {
       await setAuthToken(response.token);

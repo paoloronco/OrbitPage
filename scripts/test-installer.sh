@@ -76,7 +76,6 @@ chmod 0755 "${FAKE_BIN}/docker"
 
 PATH="${FAKE_BIN}:${PATH}" \
 ORBITPAGE_HTTP_PORT=18080 \
-ORBITPAGE_BIND_ADDRESS=127.0.0.1 \
 ORBITPAGE_DATA_DIR="$DATA_DIR" \
 ORBITPAGE_PUBLIC_SITE_URL=https://links.example.test \
 bash "${REPO_ROOT}/install.sh"
@@ -86,6 +85,7 @@ bash "${REPO_ROOT}/install.sh"
 grep -Fq 'exec /usr/local/bin/orbitpage update "$@"' "$UPDATE_CLI_PATH" || fail "update command does not delegate to the installer"
 [[ -f "${INSTALL_DIR}/compose.yaml" ]] || fail "Compose definition was not created"
 [[ -f "${INSTALL_DIR}/.env" ]] || fail "installer settings were not persisted"
+grep -Fxq 'ORBITPAGE_BIND_ADDRESS=127.0.0.1' "${INSTALL_DIR}/.env" || fail "default HTTP bind is not loopback"
 [[ -f "${CONFIG_DIR}/orbitpage.env" ]] || fail "application environment was not created"
 [[ -d "$DATA_DIR" ]] || fail "persistent data directory was not created"
 [[ "$(stat -c '%a' "${CONFIG_DIR}/orbitpage.env")" == "600" ]] || fail "secret file permissions are not 0600"
