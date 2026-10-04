@@ -38,7 +38,7 @@ These examples describe current source values, not a second token registry.
 
 | Pattern | Rule |
 | --- | --- |
-| Navigation and tabs | Mark the active item and keep the selected subsection in the dashboard URL. |
+| Navigation and tabs | Mark the active item and keep the selected subsection in the dashboard URL. Keep the site-section strip at a consistent height when section controls appear or disappear. |
 | Form fields | Use existing primitives and visible labels; attach validation to the relevant control. |
 | Save and Publish | Separate draft persistence from public publication and show the outcome of each action. |
 | Cards and panels | Group a task or related data; preserve a readable hierarchy on narrow screens. |
