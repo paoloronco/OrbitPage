@@ -3,12 +3,12 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const smtp = vi.hoisted(() => ({ messages: [], verify: vi.fn(async () => true) }));
-vi.mock('nodemailer', () => ({ default: { createTransport: () => ({
+const smtp = vi.hoisted(() => ({ messages: [], options: [], verify: vi.fn(async () => true) }));
+vi.mock('nodemailer', () => ({ default: { createTransport: (options) => { smtp.options.push(options); return ({
   verify: smtp.verify,
   sendMail: async (message) => { smtp.messages.push(message); return { accepted: [message.to], messageId: 'test-message' }; },
   close: () => undefined,
-}) } }));
+}); } } }));
 
 const dataDir = mkdtempSync(join(tmpdir(), 'orbitpage-newsletter-'));
 process.env.DATA_DIR = dataDir;
@@ -27,6 +27,37 @@ afterAll(async () => {
 });
 
 describe('self-hosted newsletter', () => {
+  const connection = {
+    host: 'smtp.example.com', port: 587, username: 'sender', password: 'original-password',
+    fromName: 'Sender', fromEmail: 'sender@example.com', replyTo: '', senderType: 'business',
+    footerText: '', senderAddress: '1 Test Street', privacyPolicyUrl: 'https://example.com/privacy',
+    termsUrl: 'https://example.com/terms',
+  };
+
+  it.each([{ host: 'replacement.example.com' }, { port: 465 }, { username: 'replacement' }])(
+    'requires a new password when connection identity changes: %j', async (change) => {
+      await newsletter.saveSmtpSettings(connection, 'https://example.com');
+      const before = await db.dbGet('SELECT * FROM newsletter_settings WHERE id = 1');
+      for (const password of ['', undefined]) {
+        await expect(newsletter.saveSmtpSettings({ ...connection, ...change, password }, 'https://example.com'))
+          .rejects.toMatchObject({ status: 400, code: 'SMTP_PASSWORD_REQUIRED' });
+        expect(await db.dbGet('SELECT * FROM newsletter_settings WHERE id = 1')).toEqual(before);
+      }
+      await newsletter.saveSmtpSettings({ ...connection, ...change, password: 'replacement-password' }, 'https://example.com');
+      expect((await db.dbGet('SELECT * FROM newsletter_settings WHERE id = 1')).verified_at).toBeNull();
+      await newsletter.testSmtp('sender@example.com');
+      expect(smtp.options.at(-1)).toMatchObject({ ...Object.fromEntries(Object.entries(change).filter(([key]) => key !== 'username')), auth: { user: change.username || 'sender', pass: 'replacement-password' } });
+    }
+  );
+
+  it('retains the secret for the same normalized connection and metadata-only changes', async () => {
+    await newsletter.saveSmtpSettings(connection, 'https://example.com');
+    const before = await db.dbGet('SELECT * FROM newsletter_settings WHERE id = 1');
+    await newsletter.saveSmtpSettings({ ...connection, host: ' SMTP.EXAMPLE.COM. ', username: ' sender ', password: '', fromName: 'New name' }, 'https://example.com');
+    expect((await db.dbGet('SELECT * FROM newsletter_settings WHERE id = 1')).password_enc).toBe(before.password_enc);
+    await newsletter.testSmtp('sender@example.com');
+    expect(smtp.options.at(-1)).toMatchObject({ host: 'smtp.example.com', auth: { user: 'sender', pass: 'original-password' } });
+  });
   it('requires complete compliance data', () => {
     expect(newsletter.newsletterComplianceReady({ sender_address: 'Via Roma 1', privacy_policy_url: 'https://example.com/privacy', terms_url: '' })).toBe(false);
     expect(newsletter.newsletterComplianceReady({ sender_address: 'Via Roma 1', privacy_policy_url: 'https://example.com/privacy', terms_url: 'https://example.com/terms' })).toBe(true);

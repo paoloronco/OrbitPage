@@ -1421,6 +1421,27 @@ describe('API Endpoints', () => {
     expect((await request(app).put('/api/theme').send({ background: '#123456' })).status).toBe(200);
   });
 
+  it.each([['links:style'], ['links:images'], ['links:style', 'links:images'], ['profile:write'], []].map(permissions => ({ permissions })))(
+    'restricts link reads to published content for $permissions', async ({ permissions }) => {
+      authMockState.permissions = permissions;
+      const visible = { id: 'visible', title: 'Visible', url: 'https://example.com', type: 'link',
+        status: 'live', is_active: 1, click_count: 42, cta_click_count: 7, campaign_name: 'Private',
+        created_at: '2026-01-01', updated_at: '2026-01-02' };
+      vi.mocked(dbAll).mockResolvedValue([
+        visible, { ...visible, id: 'inactive', is_active: 0 }, { ...visible, id: 'draft', status: 'draft' },
+        { ...visible, id: 'future', start_date: '2099-01-01' },
+        { ...visible, id: 'expired', end_date: '2000-01-01' },
+      ]);
+      const response = await request(app).get('/api/links').set('Authorization', 'Bearer restricted');
+      expect(response.status).toBe(200);
+      expect(response.body.map(({ id }) => id)).toEqual(['visible']);
+      for (const field of ['clickCount', 'ctaClicks', 'campaignName', 'createdAt', 'updatedAt', 'startDate', 'endDate']) {
+        expect(response.body[0]).not.toHaveProperty(field);
+      }
+      expect((await request(app).get('/api/links/export').set('Authorization', 'Bearer restricted')).status).toBe(403);
+    }
+  );
+
   it('GET /api/links omits analytics and campaign metadata for public callers', async () => {
     vi.mocked(dbAll).mockResolvedValueOnce([{
       id: 'public-link',
@@ -1443,6 +1464,21 @@ describe('API Endpoints', () => {
     for (const field of ['clickCount', 'ctaClicks', 'campaignName', 'createdAt', 'updatedAt']) {
       expect(response.body[0]).not.toHaveProperty(field);
     }
+  });
+
+  it.each([
+    { permission: 'links:style', endpoint: 'style', patch: { backgroundColor: '#123456' } },
+    { permission: 'links:images', endpoint: 'icon', patch: { coverImage: '/uploads/cover.png' } },
+  ])('allows $permission to save its published-card fields after a restricted read', async ({ permission, endpoint, patch }) => {
+    authMockState.permissions = [permission];
+    vi.mocked(dbAll).mockResolvedValue([{ id: 'visible', title: 'Visible', url: 'https://example.com', status: 'live', is_active: 1 }]);
+    vi.mocked(dbGet).mockResolvedValue({ id: 'visible' });
+    const listed = await request(app).get('/api/links').set('Authorization', 'Bearer scoped');
+    expect(listed.body.map(({ id }) => id)).toEqual(['visible']);
+    const saved = await request(app).patch(`/api/links/visible/${endpoint}`).set('Authorization', 'Bearer scoped').send(patch);
+    expect(saved.status).toBe(200);
+    expect(saved.body).toEqual({ success: true });
+    expect((await request(app).put('/api/links').set('Authorization', 'Bearer scoped').send([{ id: 'visible', title: 'Changed' }])).status).toBe(403);
   });
 
   it('GET /api/profile keeps dashboard onboarding state private', async () => {

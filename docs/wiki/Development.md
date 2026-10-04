@@ -95,6 +95,14 @@ Schema migrations are additive and run on startup. Avoid destructive migrations 
 
 ## Commit Format
 
+### Gitea mirror credential
+
+The mirror runs trusted workflow code from `main` and copies other branches and tags as Git data. Main pushes, release completion and ref deletion trigger synchronization; the hourly schedule covers other branch changes. No source checkout or build runs with the mirror credential.
+
+Store `GITEA_TOKEN` only in the `gitea-mirror` GitHub environment. Its deployment branch policy must allow the branch `main` only, with no tag rule. Remove any repository or organization secret of the same name that is accessible to this repository; workflow trigger restrictions cannot protect such a copy from another branch-authored workflow. Use a token restricted to writing this mirror repository. If exposure is suspected, rotate and revoke it at Gitea as well.
+
+The temporary `Restrict mirror credential` workflow seals the existing secret to the fixed GitHub environment public key for a one-time migration. Remove it after storing the sealed value in the environment and deleting the repository-scoped secret. Verify environment restrictions and a successful mirror run before considering the credential migration complete.
+
 ```text
 type(scope): description
 ```

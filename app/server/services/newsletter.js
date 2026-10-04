@@ -154,6 +154,11 @@ export async function saveSmtpSettings(raw, publicBase) {
   const input = smtpSchema.parse(raw);
   const previous = await settings();
   if (!input.password && !previous?.password_enc) throw new NewsletterError(400, 'SMTP_PASSWORD_REQUIRED', 'Enter the SMTP password.');
+  const connectionChanged = previous && (previous.host !== input.host
+    || previous.port !== input.port || previous.username !== input.username);
+  if (connectionChanged && !input.password) {
+    throw new NewsletterError(400, 'SMTP_PASSWORD_REQUIRED', 'Enter the password for the new SMTP host, port or username.');
+  }
   const changed = !previous || previous.host !== input.host || previous.port !== input.port
     || previous.username !== input.username || previous.from_email !== input.fromEmail || Boolean(input.password);
   const updatedAt = now();

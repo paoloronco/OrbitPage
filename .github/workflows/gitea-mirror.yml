@@ -2,54 +2,57 @@ name: Mirror to Gitea
 
 on:
   push:
-    branches: [ "**" ]
-    tags: [ "**" ]
+    branches: [main]
   delete:
-    branches: [ "**" ]
+  workflow_run:
+    workflows: ["Publish versioned release"]
+    types: [completed]
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: gitea-mirror
+  cancel-in-progress: false
+
 jobs:
   mirror:
-    # GitHub withholds Actions secrets from Dependabot-triggered runs. Those
-    # temporary branches do not need mirroring; their merged changes are
-    # mirrored by the subsequent push to the target branch.
-    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/heads/dependabot/')
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # GITEA_TOKEN must exist ONLY here, with deployment branches restricted to
+    # main. A repository-scoped copy is accessible to branch-authored workflows.
+    environment: gitea-mirror
     steps:
-      - name: Checkout full history
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
+      - name: Fetch refs as data without executing repository code
+        run: git -c core.hooksPath=/dev/null clone --bare https://github.com/paoloronco/OrbitPage.git mirror.git
 
-      - name: Push mirror to Gitea
-        if: github.event_name == 'push'
+      - name: Synchronize branches and tags
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GIT_TERMINAL_PROMPT: "0"
+        shell: bash
         run: |
-          git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/OrbitPage.git
+          set -euo pipefail
+          test -n "$GITEA_TOKEN"
+          askpass="$RUNNER_TEMP/gitea-askpass"
+          trap 'rm -f "$askpass"' EXIT
+          cat > "$askpass" <<'ASKPASS'
+          #!/bin/sh
+          case "$1" in
+            *Username*) printf '%s\n' 'paoloronco' ;;
+            *Password*) printf '%s\n' "$GITEA_TOKEN" ;;
+            *) exit 1 ;;
+          esac
+          ASKPASS
+          chmod 700 "$askpass"
+          export GIT_ASKPASS="$askpass"
           for attempt in 1 2 3; do
-            if git push gitea "${GITHUB_REF}:${GITHUB_REF}"; then
+            if git -C mirror.git -c core.hooksPath=/dev/null -c credential.helper= push --prune --force https://gitea.com/paoloronco/OrbitPage.git '+refs/heads/*:refs/heads/*' '+refs/tags/*:refs/tags/*'; then
               exit 0
             fi
-
-            if [ "$attempt" -lt 3 ]; then
-              delay=$((attempt * 20))
-              echo "Gitea mirror attempt $attempt failed; retrying in ${delay}s."
-              sleep "$delay"
-            fi
+            sleep "$((attempt * 10))"
           done
-
-          echo "Gitea mirror failed after 3 attempts."
           exit 1
-
-      - name: Delete mirrored branch from Gitea
-        if: github.event_name == 'delete'
-        env:
-          DELETED_BRANCH: ${{ github.event.ref }}
-        run: |
-          git remote add gitea https://paoloronco:${{ secrets.GITEA_TOKEN }}@gitea.com/paoloronco/OrbitPage.git
-          if git ls-remote --exit-code --heads gitea "refs/heads/${DELETED_BRANCH}" >/dev/null; then
-            git push gitea --delete "refs/heads/${DELETED_BRANCH}"
-          else
-            echo "Branch ${DELETED_BRANCH} is already absent from Gitea."
-          fi

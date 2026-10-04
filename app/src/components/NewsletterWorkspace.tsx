@@ -201,6 +201,10 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
     name: "",
     consentConfirmed: false,
   });
+  const smtpPasswordRequired = !data?.settings.passwordConfigured
+    || smtp.host.trim().toLowerCase().replace(/\.$/, "") !== data.settings.host
+    || smtp.port !== data.settings.port
+    || smtp.username.trim() !== data.settings.username;
   const [campaign, setCampaign] = useState<CampaignDraft>({
     ...EMPTY_CAMPAIGN,
     content: { ...EMPTY_CAMPAIGN.content },
@@ -646,11 +650,11 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
                     }))
                   }
                   placeholder={
-                    data.settings.passwordConfigured
+                    !smtpPasswordRequired
                       ? "Leave blank to keep it"
                       : "SMTP password"
                   }
-                  required={!data.settings.passwordConfigured}
+                  required={smtpPasswordRequired}
                   type="password"
                   value={smtp.password}
                 />
