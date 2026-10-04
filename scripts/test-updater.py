@@ -4,7 +4,6 @@ import tempfile
 import json
 import socketserver
 import threading
-import shlex
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -31,25 +30,20 @@ class UpdatePlanTests(unittest.TestCase):
                 updater.update_source(root)
 
     @unittest.skipUnless(updater.sys.platform == 'linux', 'Installer runs on Linux')
-    def test_updater_bootstrap_accepts_stdin_without_touching_host_paths(self):
+    def test_updater_bootstrap_rejects_stdin_without_touching_host_paths(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             cli, helper = root / 'bin/orbitpage-update', root / 'lib/orbitpage-update.py'
             cli.parent.mkdir()
-            curl = root / 'bin/curl'
-            curl.write_text('#!/bin/sh\nset -eu\ncase "$2" in\n'
-                            f'*/orbitpage-update.sh) cp {shlex.quote(str(script.with_suffix(".sh")))} "$4";;\n'
-                            f'*/orbitpage-update.py) cp {shlex.quote(str(script))} "$4";;\n'
-                            '*) exit 1;;\nesac\n')
-            curl.chmod(0o755)
             installer = script.with_name('install-updater.sh').read_text()
             installer = installer.replace('[[ ${EUID} -eq 0 ]]', '[[ 0 -eq 0 ]]')
             installer = installer.replace('/usr/local/bin/orbitpage-update', str(cli))
             installer = installer.replace('/usr/local/lib/orbitpage/orbitpage-update.py', str(helper))
-            environment = {**updater.os.environ, 'PATH': f'{cli.parent}:{updater.os.environ["PATH"]}'}
-            updater.subprocess.run(['bash', '-s'], input=installer, text=True, check=True, cwd=root, env=environment, capture_output=True)
-            self.assertEqual(helper.read_bytes(), script.read_bytes())
-            self.assertEqual(cli.read_bytes(), script.with_suffix('.sh').read_bytes())
+            result = updater.subprocess.run(['bash', '-s'], input=installer, text=True, cwd=root, capture_output=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('trusted local OrbitPage source checkout', result.stderr)
+            self.assertFalse(helper.exists())
+            self.assertFalse(cli.exists())
 
     @unittest.skipUnless(hasattr(socketserver, 'UnixStreamServer'), 'Linux host service uses Unix sockets')
     def test_real_host_socket_protocol_is_readable_and_rejects_commands(self):
