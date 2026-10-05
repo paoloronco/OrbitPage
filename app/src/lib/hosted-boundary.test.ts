@@ -47,9 +47,9 @@ const jsonResponse = (body: unknown, status = 200) => ({
 });
 
 describe('hosted runtime boundary', () => {
-  afterEach(() => {
+  afterEach(async () => {
     try {
-      authApi.logout();
+      await authApi.logout();
     } catch {
       // Some assertions intentionally run without browser storage.
     }

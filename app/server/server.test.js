@@ -33,6 +33,7 @@ vi.mock('./auth.js', () => ({
   isFirstTimeSetup: vi.fn(),
   setupInitialCredentials: vi.fn(),
   authenticateUser: vi.fn(),
+  revokeSession: vi.fn(),
   generateToken: vi.fn(() => 'mock-token'),
   verifyToken: vi.fn(),
   authenticateToken: (req, res, next) => {

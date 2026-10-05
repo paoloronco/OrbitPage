@@ -290,6 +290,14 @@ export const generateSecurePassword = () => {
   return arr.join('');
 };
 
+export async function revokeSession(user) {
+  if (user.authType !== 'session') throw new Error('A dashboard session is required');
+  await dbRun(
+    'UPDATE admin_users SET session_id = lower(hex(randomblob(32))) WHERE username = ? AND session_id = ? AND auth_version = ?',
+    [user.username, user.sessionId, Number(user.authVersion || 0)],
+  );
+}
+
 // Middleware to verify authentication and attach role + permissions to req.user
 export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];

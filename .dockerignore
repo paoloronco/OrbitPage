@@ -29,6 +29,11 @@ build/
 *.sqlite3-journal
 
 # Environment
+**/.instance-env.json
+**/.instance-env.json.*.tmp
+**/.setup-token
+**/.setup-token.*.tmp
+**/.jwt-secret
 .env
 .env.local
 .env.*.local

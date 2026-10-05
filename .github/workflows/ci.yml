@@ -62,6 +62,10 @@ jobs:
         working-directory: .
         run: bash scripts/test-docker-entrypoint.sh
 
+      - name: Test Docker context secret exclusions
+        working-directory: .
+        run: node scripts/test-docker-context.mjs
+
       - name: Install backend dependencies
         run: npm --prefix server ci --prefer-offline --no-audit
 

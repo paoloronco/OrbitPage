@@ -18,6 +18,7 @@ import {
   generateTwoFactorChallenge,
   verifyTwoFactorChallenge,
   authenticateToken,
+  revokeSession,
   isPasswordStrong,
   generateSecurePassword,
   requirePermission,
@@ -1953,7 +1954,7 @@ const aiAgentLimiter = rateLimit({
 app.use('/api', (req, res, next) => req.method === 'GET' && req.path === '/account/updates' ? next() : apiLimiter(req, res, next));
 app.use('/api', async (req, res, next) => {
   if (DEMO_MODE || ['GET', 'HEAD', 'OPTIONS'].includes(req.method)
-    || ['/account/updates', '/auth/login', '/auth/verify', '/auth/2fa/verify'].includes(req.path)) return next();
+    || ['/account/updates', '/auth/login', '/auth/logout', '/auth/verify', '/auth/2fa/verify'].includes(req.path)) return next();
   try {
     if (isUpdateActive((await updateAgentRequest(DATA_DIR)).job)) {
       return res.status(423).json({ error: 'OrbitPage is updating. Wait for the update to finish.' });
@@ -2584,6 +2585,16 @@ app.post('/api/auth/verify', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error verifying user:', error);
     res.status(500).json({ valid: false, error: 'Verification failed' });
+  }
+});
+
+app.post('/api/auth/logout', authenticateToken, async (req, res) => {
+  if (req.user.authType !== 'session') return res.status(403).json({ error: 'A dashboard session is required' });
+  try {
+    await revokeSession(req.user);
+    return res.json({ success: true });
+  } catch {
+    return res.status(503).json({ error: 'Server session revocation could not be completed.' });
   }
 });
 
