@@ -4,7 +4,7 @@
 | --- | --- |
 | Scope | Open-source, self-hosted OrbitPage |
 | Status | Implemented product contract; code and tests define exact behavior |
-| Sources | [Product overview](../README.md), [dashboard guide](./user-guide/dashboard.md), [application layout](../app/README.md) |
+| Sources | [Product overview](../../README.md), [dashboard guide](./dashboard.md), [application layout](../../app/README.md) |
 
 ## Problem and users
 
@@ -40,10 +40,10 @@ that opens directly on a phone or desktop and makes the next action clear.
 | O-08 | Support additional users with bounded roles. | The server checks permissions for reads and writes, regardless of UI visibility. |
 | O-09 | Persist and recover installation data. | SQLite, uploads and the stable instance secret survive container recreation; backup and restore have documented validation. |
 
-The [dashboard guide](./user-guide/dashboard.md) owns the workspace and save
-workflow; [content and design](./user-guide/content-and-design.md) owns the
+The [dashboard guide](./dashboard.md) owns the workspace and save
+workflow; [content and design](./content-and-design.md) owns the
 editor details. The Express `/api` routes serve this bundled application and
-are not a versioned public automation API; see [API boundary](./API.md).
+are not a versioned public automation API; see [API boundary](./api.md).
 
 ## Quality requirements
 
@@ -60,4 +60,4 @@ Hosted-only tenancy, plans, managed storage, commerce and provider policy are
 outside this repository; the private SaaS platform consumes this editor and
 renderer as a Git submodule. [Architecture](./architecture.md) explains that
 boundary. The current deployment and release procedure is in
-[Deployment](./wiki/Deployment.md).
+[Deployment](./Deployment.md).

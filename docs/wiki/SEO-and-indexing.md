@@ -65,7 +65,9 @@ Without `PUBLIC_SITE_URL`, OrbitPage derives canonical URLs from the incoming re
 OrbitPage includes:
 
 - the public home page
+- enabled public subpages and the enabled native menu
 - local legal pages when `/privacy` or `/cookies` are configured as profile policy URLs
+- the About page when the installation runs in demo mode
 
 Open **Admin > Publish > Sitemap** and select **Generate sitemap** to create the sitemap state and expose its public URL. The XML is derived from current public data on request, so hostname changes and later page publications stay aligned without accepting raw XML from the browser. Use **Regenerate sitemap** when you want to record a new explicit generation time.
 

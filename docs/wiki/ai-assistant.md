@@ -13,7 +13,7 @@ A dashboard-saved key takes precedence until it is removed. It is encrypted with
 
 Keep `JWT_SECRET` stable and at least 32 characters, or set a separate stable `ORBITPAGE_SECRET_ENCRYPTION_KEY`. Losing the encryption secret makes the saved provider key unreadable.
 
-`OPENAI_PAGE_AGENT_MODEL` sets the default model when the dashboard has not saved a supported selection. See [Configuration](../wiki/Configuration.md) for the current variables.
+`OPENAI_PAGE_AGENT_MODEL` sets the default model when the dashboard has not saved a supported selection. See [Configuration](./Configuration.md) for the current variables.
 
 ## Plan, review, confirm
 

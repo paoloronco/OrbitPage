@@ -4,7 +4,7 @@
 | --- | --- |
 | Scope | Self-hosted dashboard, shared editor and public renderer |
 | Status | Implemented rules; components, CSS and theme schema are authoritative |
-| Sources | [Dashboard stylesheet](../app/src/index.css), [UI primitives](../app/src/components/ui/), [theme model](../app/src/lib/theme.ts), [brand assets](./brand/README.md) |
+| Sources | [Dashboard stylesheet](../../app/src/index.css), [UI primitives](../../app/src/components/ui), [theme model](../../app/src/lib/theme.ts), [brand assets](./design-system.md#brand) |
 
 ## Two visual contexts
 
@@ -13,8 +13,7 @@ surfaces, clear section headings and visible save actions. The public page is
 creator-controlled: theme colors, typography, cards and background can differ
 from the dashboard. Do not force dashboard chrome onto published content.
 
-The open-orbit `O/P` monogram and its source SVGs are defined in the
-[brand guide](./brand/README.md). Do not redraw the mark in a component.
+Use the checked-in brand SVGs described below. Do not redraw the mark in a component.
 
 ## Semantic tokens
 
@@ -46,8 +45,8 @@ These examples describe current source values, not a second token registry.
 | Feedback | State loading, success and failure in words; do not rely on color or a transient toast for critical errors. |
 | Preview | Show the shared renderer and distinguish unsaved or unpublished state from the live page. |
 
-The [UI components](../app/src/components/ui/) and
-[visual editor stylesheet](../app/src/components/visual-site-editor.css) are
+The [UI components](../../app/src/components/ui) and
+[visual editor stylesheet](../../app/src/components/visual-site-editor.css) are
 the component baseline. Extend an existing primitive or workspace pattern
 before introducing a parallel one.
 
@@ -67,3 +66,21 @@ before introducing a parallel one.
 When changing shared UI, verify the OSS editor and the hosted adapter that
 embeds it. SaaS-specific framing belongs in the private repository; the
 reusable component remains here. See [architecture](./architecture.md).
+
+## Brand
+
+The source mark is a deep-blue page crossed by a bright blue orbit, with a
+white highlight. Its existing gradients are part of the asset.
+
+| Asset | Use |
+| --- | --- |
+| [orbitpage-mark.svg](../../app/public/brand/orbitpage-mark.svg) | Icon and compact branding |
+| [orbitpage-lockup.svg](../../app/public/brand/orbitpage-lockup.svg) | Mark and OrbitPage wordmark |
+
+Reuse these SVGs at their original aspect ratio. Keep clear space and sufficient
+contrast; do not recolor, stretch or invent an alternative mark. The current
+source uses deep blue `#223B70`/`#101828`, orbit blue `#2456D8`/`#3568F4` and
+light blue `#7BA2FF`. These describe the assets, not public-page theme limits.
+
+Product screenshots must come from the current application with fictional
+content; see [screenshot provenance](../screenshots/README.md).

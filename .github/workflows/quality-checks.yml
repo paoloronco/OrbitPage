@@ -1,4 +1,4 @@
-name: Continuous Integration (CI)
+name: OSS - Quality checks
 
 on:
   push:

@@ -52,8 +52,8 @@ npm run start
 1. Open the public URL and confirm the **Under construction** screen appears.
 2. Open `/dashboard/profile`.
 3. Wait for every dependency row to show a green check. Correct any failed row and use **Run again**.
-4. Create the password for the fixed `admin` account.
-5. Choose a lowercase slug such as `my-page`.
+4. Enter the owner-only setup token and create the password for the fixed `admin` account.
+5. Confirm the installation public URL. Set `PUBLIC_SITE_URL` when running behind a reverse proxy; the self-hosted page is served at the installation root.
 6. Select **Complete setup** to open the dashboard.
 
 No partially configured account is kept if setup fails. Before completion, the placeholder page is noindexed, excluded from analytics, and omitted from `sitemap.xml`.

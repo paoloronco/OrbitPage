@@ -1,11 +1,11 @@
-name: Mirror to Gitea
+name: OSS - Sync Gitea mirror
 
 on:
   push:
     branches: [main]
   delete:
   workflow_run:
-    workflows: ["Publish versioned release"]
+    workflows: ["OSS - Publish release"]
     types: [completed]
   schedule:
     - cron: "17 * * * *"

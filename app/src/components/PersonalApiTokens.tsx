@@ -94,7 +94,7 @@ export function PersonalApiTokens() {
           <pre>{curlExample}</pre>
           <div className="api-token-example-actions">
             <button className="team-button secondary compact" onClick={() => void copy(curlExample, tr("Example copied.", "Esempio copiato."))} type="button"><Copy size={15} /> {tr("Copy example", "Copia esempio")}</button>
-            <a className="team-button secondary compact" href="https://github.com/paoloronco/OrbitPage/blob/main/docs/API.md" rel="noreferrer" target="_blank"><ExternalLink size={15} /> {tr("Open REST API guide", "Apri la guida API REST")}</a>
+            <a className="team-button secondary compact" href="https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/api.md" rel="noreferrer" target="_blank"><ExternalLink size={15} /> {tr("Open REST API guide", "Apri la guida API REST")}</a>
           </div>
         </div>
 

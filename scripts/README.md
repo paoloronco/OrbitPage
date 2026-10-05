@@ -1,14 +1,19 @@
 # Repository scripts
 
-These scripts support installation, updates, Git hooks, and installer verification. They are not application runtime modules.
+These public helpers are part of the supported self-hosted installation and
+maintenance path. Keep them in GitHub so Linux/PVE installs, host updates and CI
+use the same reviewed version. Do not move their published paths casually.
 
-## Tracked helpers
+## Host operations and contributor tools
 
 - `install-git-hooks.sh` and `install-git-hooks.ps1`: point Git at the tracked `.githooks/` directory.
 - `orbitpage-update.sh` and `orbitpage-update.py`: host update command for existing Docker, Compose, and source installations.
 - `install-updater.sh`: installs the host command and registers source checkouts.
   Its optional `--enable-web-updates CONTAINER` installs the host systemd monitor
   implemented by `orbitpage-update.py`; see [Web updates](../docs/wiki/Deployment.md#web-updates).
+
+## Isolated verification helpers
+
 - `check-markdown-links.mjs`: validates repository-local documentation links;
   CI runs it before application checks.
 - `test-installer.sh`: isolated Linux-installer checks.
@@ -33,3 +38,10 @@ node scripts/check-markdown-links.mjs
 - Use the dedicated test scripts and temporary directories.
 - Quote paths and environment values, fail on errors, and verify resolved deletion targets before cleanup.
 - Update [Deployment](../docs/wiki/Deployment.md) whenever an installer option or management command changes.
+
+CI invokes the applicable checks in [quality-checks.yml](../.github/workflows/quality-checks.yml).
+Shell installer tests require a disposable Linux environment; the PVE test mocks
+host commands and does not create a real guest. Run `python scripts/test-updater.py`
+from the repository root for mocked updater tests; the container variant needs
+its dedicated Docker fixture. The separate [npm advisory gate](../.github/README.md)
+lives under `.github/scripts/` because it is CI-only.

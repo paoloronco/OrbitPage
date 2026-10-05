@@ -234,7 +234,7 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
           <div className="team-title-row">
             <h2>{tr("Workspace members", "Membri del workspace")}</h2>
             <span className="team-doc-help">
-              <a aria-describedby="team-doc-tooltip" aria-label={tr("Teams and permissions in OrbitPage", "Team e permessi in OrbitPage")} className="team-doc-help-trigger" href="https://orbitpage.com/docs/team-and-permissions" rel="noreferrer" target="_blank"><Info aria-hidden="true" size={15} /></a>
+              <a aria-describedby="team-doc-tooltip" aria-label={tr("Teams and permissions in OrbitPage", "Team e permessi in OrbitPage")} className="team-doc-help-trigger" href="https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/account-and-team.md" rel="noreferrer" target="_blank"><Info aria-hidden="true" size={15} /></a>
               <span className="team-doc-tooltip" id="team-doc-tooltip" role="tooltip">{tr("Teams and permissions in OrbitPage", "Team e permessi in OrbitPage")}</span>
             </span>
           </div>

@@ -9,6 +9,7 @@ const entries = [
   'CONTRIBUTING.md',
   'SECURITY.md',
   'docs',
+  '.github',
   'app/README.md',
   'app/server/README.md',
   'app/packages/README.md',
