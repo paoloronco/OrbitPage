@@ -30,6 +30,10 @@ npm run install:server
 
 Node.js `^20.19.0` or `>=22.12.0` is required.
 
+The [Tailwind 4 toolchain](https://tailwindcss.com/docs/upgrade-guide#browser-requirements) targets Safari 16.4+, Chrome 111+ and Firefox 128+.
+Keep vendor-prefixed CSS declarations before their standard declaration so
+optimization retains the standard property in the public and hosted builds.
+
 ## Development
 
 Start the API and frontend in separate terminals:

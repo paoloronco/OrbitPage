@@ -1,12 +1,11 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
 /* One stylesheet owns the cascade in both the self-hosted and embedded editor. */
 @import './components/profile-save-overlay.css';
 @import './components/menu-editor-redesign.css';
 @import './components/newsletter-workspace.css';
 @import './components/team-workspace.css';
 @import './components/visual-site-editor.css';
+@config '../tailwind.config.ts';
 
 :focus-visible {
   outline: 3px solid hsl(var(--ring)) !important;
@@ -933,12 +932,12 @@
 }
 
 /* Custom utility classes */
-@layer utilities {
+
   .glass-card {
     /* Use a layered approach: tint overlay + semi-transparent card background */
     background: linear-gradient(180deg, color-mix(in srgb, var(--glass-tint) 12%, transparent), transparent), var(--glass-bg);
-    backdrop-filter: blur(var(--blur-intensity, 20px));
     -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
+    backdrop-filter: blur(var(--blur-intensity, 20px));
     border: var(--glass-border);
     box-shadow: var(--card-glow, var(--shadow-card));
   }
@@ -1042,8 +1041,8 @@
     background:
       linear-gradient(145deg, color-mix(in srgb, rgb(248 252 255) var(--profile-card-glass-highlight-percent, 34%), transparent), transparent 42%),
       linear-gradient(135deg, color-mix(in srgb, var(--profile-card-surface-tint) var(--profile-card-glass-tint-percent, 38%), transparent), color-mix(in srgb, var(--profile-card-surface-tint) var(--profile-card-glass-tint-soft-percent, 16%), transparent));
-    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.2);
     -webkit-backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.2);
+    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.2);
   }
 
   .profile-card--has-background-image > :not(.profile-card__background-image):not(.profile-card__background-overlay) {
@@ -1056,8 +1055,8 @@
   .profile-card[data-surface-effect="transparent"] {
     background: transparent !important;
     box-shadow: none !important;
-    backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 
   .profile-card[data-surface-effect="liquid-glass"] {
@@ -1067,8 +1066,8 @@
       color-mix(in srgb, rgb(255 255 255) var(--profile-card-glass-base-percent, 8%), transparent) !important;
     border-color: var(--profile-card-glass-border, color-mix(in srgb, var(--profile-card-foreground) 16%, rgb(244 250 255 / 0.78))) !important;
     box-shadow: var(--profile-card-shadow, 0 14px 38px rgb(15 23 42 / 0.14)), inset 0 1px 0 rgb(248 252 255 / 0.58), inset 0 -1px 0 rgb(15 23 42 / 0.1) !important;
-    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
     -webkit-backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
+    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
   }
 
   .profile-card__title {
@@ -1231,8 +1230,8 @@
     background: transparent !important;
     border-color: transparent !important;
     box-shadow: none !important;
-    backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
   }
 
   .public-card-stack [data-surface-effect="liquid-glass"]:not(.profile-card) > :not(.public-unboxed-block),
@@ -1245,8 +1244,8 @@
     border-color: color-mix(in srgb, var(--content-card-foreground) 16%, rgb(244 250 255 / 0.78)) !important;
     box-shadow: 0 14px 38px rgb(15 23 42 / 0.14), inset 0 1px 0 rgb(248 252 255 / 0.56), inset 0 -1px 0 rgb(15 23 42 / 0.1), var(--card-glow, var(--shadow-card)) !important;
     background-clip: padding-box !important;
-    backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
     -webkit-backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
+    backdrop-filter: blur(max(12px, var(--blur-intensity, 20px))) saturate(1.42) contrast(1.04) !important;
   }
 
   .admin-block-editor-shell {
@@ -1995,8 +1994,8 @@
     background: rgb(255 255 255 / 0.98);
     border: 1px solid rgb(216 225 237);
     box-shadow: 0 8px 22px rgb(15 23 42 / 0.06);
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   .orbitpage-admin .public-block-preview .glass-card {
@@ -2004,8 +2003,8 @@
     border-color: var(--content-card-border);
     box-shadow: var(--card-glow, var(--shadow-card));
     color: var(--content-card-foreground);
-    backdrop-filter: blur(var(--blur-intensity, 20px));
     -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
+    backdrop-filter: blur(var(--blur-intensity, 20px));
   }
 
   .orbitpage-admin .public-profile-preview.glass-card {
@@ -2898,8 +2897,8 @@
     border-color: var(--content-card-border);
     color: var(--content-card-foreground);
     box-shadow: var(--card-glow, var(--shadow-card));
-    backdrop-filter: blur(var(--blur-intensity, 20px));
     -webkit-backdrop-filter: blur(var(--blur-intensity, 20px));
+    backdrop-filter: blur(var(--blur-intensity, 20px));
   }
 
   .orbitpage-admin .admin-live-preview .profile-card.glass-card {
@@ -2907,8 +2906,8 @@
     border-color: var(--profile-card-border);
     color: var(--profile-card-foreground);
     box-shadow: var(--profile-card-shadow, var(--card-glow, var(--shadow-card)));
-    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px)));
     -webkit-backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px)));
+    backdrop-filter: blur(var(--profile-card-blur, var(--blur-intensity, 20px)));
   }
 
   .orbitpage-admin .admin-live-preview .gradient-text {
@@ -4895,7 +4894,7 @@
       max-width: 100%;
     }
   }
-}
+
 
 #root:has(> .orbitpage-menu) {
   max-width: none;

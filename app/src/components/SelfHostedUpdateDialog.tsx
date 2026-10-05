@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Copy, Download, ExternalLink, RefreshCw } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -32,7 +32,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   const job = status?.job && (['queued', 'running'].includes(status.job.state) || status.job.version === requestedVersion || (!requestedVersion && showResult)) ? status.job : null;
   const open = requestedVersion !== null || active || showResult;
 
-  const readStatus = async () => {
+  const readStatus = useCallback(async () => {
     if (submitting.current) return;
     try {
       const next = await applicationUpdatesApi.status();
@@ -50,7 +50,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       lastContact.current = Date.now(); setUncertain(false);
       setConnectionError(false);
     } catch { setConnectionError(true); setUncertain(Date.now() - lastContact.current >= 90_000); }
-  };
+  }, [requestedVersion]);
 
   useEffect(() => {
     let stopped = false;
@@ -62,7 +62,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
     void poll();
     return () => { stopped = true; clearTimeout(timer); };
     // The host status owns the lifecycle, including dashboard reloads and server restarts.
-  }, [requestedVersion]);
+  }, [readStatus, requestedVersion]);
 
   useEffect(() => {
     if (!active) return;
