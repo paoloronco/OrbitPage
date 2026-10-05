@@ -8,7 +8,8 @@ export async function openAuthenticatedAdmin(page: Page) {
   // Embedded maps and service players must not make local tests depend on providers.
   await page.context().route('**/*', route => {
     const url = new URL(route.request().url());
-    return ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) ? route.fallback() : route.abort();
+    return ['blob:', 'data:'].includes(url.protocol)
+      || ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) ? route.fallback() : route.abort();
   });
   await page.goto('/admin');
 
