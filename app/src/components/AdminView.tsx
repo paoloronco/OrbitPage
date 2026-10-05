@@ -586,13 +586,18 @@ export const AdminView = ({
     setGaId(profile.googleAnalyticsId || "");
   }, [profile.googleAnalyticsId]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (isIntegratedHostedAdmin && hostedSurfaceConfig?.onSignOut) {
       hostedSurfaceConfig.onSignOut();
       return;
     }
-    logout();
-    onLogout();
+    try {
+      await logout();
+    } catch {
+      window.alert("You have signed out locally, but the server session could not be revoked. Sign in again and retry signing out.");
+    } finally {
+      onLogout();
+    }
   };
 
   useEffect(() => {

@@ -7,6 +7,11 @@ docker-compose*.yml
 .env
 
 # Local application state must never enter an image context.
+**/.instance-env.json
+**/.instance-env.json.*.tmp
+**/.setup-token
+**/.setup-token.*.tmp
+**/.jwt-secret
 *.db
 *.db-shm
 *.db-wal

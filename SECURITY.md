@@ -63,6 +63,7 @@ These are targets, not contractual guarantees.
 
 - Passwords are hashed with `bcryptjs` using 12 salt rounds.
 - Admin sessions use purpose-isolated signed JWTs with a 12-hour expiry.
+- Dashboard logout rotates the account's server session identity, revoking all existing dashboard tokens for that account. Personal API tokens keep their separate revocation lifecycle.
 - In secure browser contexts, the frontend stores the JWT encrypted with AES-GCM in session-scoped `sessionStorage` and removes legacy persistent copies.
 - On non-secure HTTP contexts where Web Crypto is unavailable, the frontend keeps the JWT in memory for the current document instead of writing a plaintext fallback.
 - SQLite queries use parameterized statements through server-side helpers.

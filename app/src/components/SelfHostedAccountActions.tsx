@@ -102,7 +102,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     try {
       const result = await authApi.reset(accountPassword);
       if (!result.success) throw new Error(result.error || tr('Account deletion failed.', 'Eliminazione account non riuscita.'));
-      authApi.logout();
+      await authApi.logout();
       window.location.href = withBasePath('/dashboard/account');
     } catch (reason) {
       setAccountError(reason instanceof Error ? reason.message : tr('The account could not be deleted.', 'Non è stato possibile eliminare l’account.'));

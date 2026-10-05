@@ -19,6 +19,19 @@ const storage = () => {
 };
 
 describe('auth token presence', () => {
+  it.each([200, 503])('clears local tokens after server logout, including failures (%s)', async (status) => {
+    vi.stubGlobal('localStorage', storage());
+    vi.stubGlobal('sessionStorage', storage());
+    vi.stubGlobal('crypto', {});
+    vi.stubGlobal('window', { location: { hash: '', search: '', href: 'http://example.test/', origin: 'http://example.test' }, history: { replaceState: vi.fn(), state: null } });
+    window.__orbitpageTokenCache = { iv: '', ct: '', val: 'copied-token' };
+    const fetcher = vi.fn(async () => new Response(JSON.stringify(status === 200 ? { success: true } : { error: 'Unavailable' }), { status, headers: { 'content-type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetcher);
+    if (status === 200) await authApi.logout();
+    else await expect(authApi.logout()).rejects.toThrow('Unavailable');
+    expect(fetcher).toHaveBeenCalledWith('/api/auth/logout', expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ Authorization: 'Bearer copied-token' }) }));
+    expect(authApi.hasStoredToken()).toBe(false);
+  });
   afterEach(() => {
     if (typeof window !== 'undefined') delete window.__orbitpageTokenCache;
     vi.unstubAllGlobals();

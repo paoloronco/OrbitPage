@@ -81,9 +81,7 @@ export const hasStoredAuthToken = (): boolean => {
 export const setAuthenticated = (_username: string): void => { /* no-op */ };
 
 // Logout user
-export const logout = (): void => {
-  authApi.logout();
-};
+export const logout = (): Promise<void> => authApi.logout();
 
 // Enhanced password validation
 export const isPasswordStrong = async (password: string): Promise<boolean> => {

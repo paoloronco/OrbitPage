@@ -80,6 +80,7 @@ scripts/*
 !scripts/test-installer.sh
 !scripts/test-pve-installer.sh
 !scripts/test-docker-entrypoint.sh
+!scripts/test-docker-context.mjs
 docs/superpowers/
 
 # Local private workspace

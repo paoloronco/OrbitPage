@@ -609,8 +609,14 @@ export const authApi = {
     return apiRequest<VerifyResponse>('/auth/verify', { method: 'POST' });
   },
 
-  logout: (): void => {
-    removeAuthToken();
+  logout: async (): Promise<void> => {
+    try {
+      if (!isHostedRuntime() && hasStoredAuthToken()) await apiRequest('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      if (![401, 403].includes(Number((error as { status?: number }).status))) throw error;
+    } finally {
+      removeAuthToken();
+    }
   },
 
   hasStoredToken: (): boolean => {

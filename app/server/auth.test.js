@@ -17,6 +17,7 @@ import { dbGet, dbRun } from './database.js';
 
 import {
   authenticateToken,
+  revokeSession,
   createPersonalApiToken,
   generateToken,
   generateTwoFactorChallenge,
@@ -37,6 +38,27 @@ describe('JWT secret policy', () => {
 });
 
 describe('JWT purpose boundaries', () => {
+  it('revokes copied session tokens on logout without revoking personal API tokens', async () => {
+    let sessionId = 'before-logout';
+    dbGet.mockImplementation(async () => ({ username: 'admin', role: 'admin', auth_version: 0, session_id: sessionId }));
+    dbRun.mockImplementation(async (_query, [username, expectedSession]) => {
+      if (username === 'admin' && expectedSession === sessionId) sessionId = 'after-logout';
+      return { changes: 1 };
+    });
+    const token = generateToken('admin', 0, sessionId);
+    const req = { headers: { authorization: `Bearer ${token}` } };
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+    const next = vi.fn();
+    await authenticateToken(req, res, next);
+    expect(next).toHaveBeenCalledOnce();
+    await revokeSession(req.user);
+    next.mockClear();
+    await authenticateToken({ headers: req.headers }, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    await expect(revokeSession({ username: 'admin', authType: 'personal_token' })).rejects.toThrow('dashboard session');
+    dbGet.mockReset(); dbRun.mockReset();
+  });
   it('rejects sessions across enrollment and account replacement', async () => {
     const token = generateToken('admin', 0, 'original');
     for (const state of [{ auth_version: 1, session_id: 'original' }, { auth_version: 0, session_id: 'replacement' }]) {
