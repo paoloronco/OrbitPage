@@ -46,5 +46,5 @@ CI invokes the applicable checks in [quality-checks.yml](../.github/workflows/qu
 Shell installer tests require a disposable Linux environment; the PVE test mocks
 host commands and does not create a real guest. Run `python scripts/test-updater.py`
 from the repository root for mocked updater tests; the container variant needs
-its dedicated Docker fixture. The [npm advisory gates](../.github/README.md)
+its dedicated Docker fixture. The [npm advisory gates](../docs/wiki/github-automation.md)
 run directly in the quality workflow.
