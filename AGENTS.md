@@ -25,6 +25,7 @@ Run application commands from `app/`:
 npm ci
 npm run install:server
 npm run lint
+npm run typecheck
 npm run test:unit
 npm run build
 npm run test:e2e:chromium

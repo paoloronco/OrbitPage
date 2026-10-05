@@ -176,18 +176,22 @@ OrbitPage uses SQLite through `app/server/database.js`.
 - [ ] Documentation is updated when needed.
 - [ ] Tests are added or updated for behavior changes.
 - [ ] `npm run lint` has been run from `app/`.
+- [ ] `npm run typecheck` has been run from `app/`.
 - [ ] `npm run test:unit` has been run from `app/`.
 - [ ] `npm run build` has been run from `app/`.
 - [ ] E2E tests are run or explicitly called out as not applicable.
 
 ## Release Notes
 
-Every green `main` CI publishes the same Linux amd64 image to Docker Hub and
-GHCR as `latest`, `main`, and `sha-<commit>`. Maintainers separately handle
-version bumps and GitHub releases: an exact `vX.Y.Z` tag matching both package
-versions verifies the commit's complete CI, smoke-tests the image, publishes
-immutable version tags, and creates the release. Pull requests should describe
-user-visible changes clearly so release notes can be written without archaeology.
+Normal `main` commits run the quality gate, browser checks and native Linux
+amd64/arm64 Docker build/smoke tests; they do not publish images or releases.
+An exact `vX.Y.Z` tag matching both package versions requires that commit's
+complete main CI, then publishes multi-architecture images to Docker Hub and
+GHCR as `latest` and the complete version tag and creates the GitHub release.
+Runtime, schema, installer and deployment changes require a patch release after
+green main CI; documentation-only and test-only changes do not. Never move an
+existing version tag. The canonical workflow is
+[release.yml](./.github/workflows/release.yml).
 
 ## License
 

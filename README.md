@@ -325,6 +325,7 @@ Quality checks:
 
 ~~~bash
 npm run lint
+npm run typecheck
 npm run test:unit
 npm run build
 npm run test:e2e:chromium
