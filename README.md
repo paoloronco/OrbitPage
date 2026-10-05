@@ -28,6 +28,10 @@ OrbitPage is a free, MIT-licensed Linktree alternative for building link-in-bio 
 
 This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
 
+<p align="center">
+  <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="Illustrated OrbitPage product walkthrough" width="800" />
+</p>
+
 > **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; follow the [migration guide](./docs/wiki/Docker-Hub-migration.md).
 
 ## Why OrbitPage
@@ -44,12 +48,10 @@ This repository is the self-hosted edition. The optional managed service is avai
 - [Updates](#updates)
 - [What you can build](#what-you-can-build)
 - [Dashboard workspaces](#dashboard-workspaces)
-- [How it runs](#how-it-runs)
 - [First run](#first-run)
 - [Configuration](#configuration)
 - [Data and backups](#data-and-backups)
 - [Production checklist](#production-checklist)
-- [Development](#development)
 - [Documentation](#documentation)
 - [Security and contributing](#security-and-contributing)
 
@@ -215,36 +217,6 @@ The visual editor changes URL with the active section: <code>/dashboard/editor/p
 
 Read the [dashboard guide](./docs/wiki/dashboard.md) for the complete route map and editing workflow.
 
-## How it runs
-
-~~~text
-Browser
-  ├─ public OrbitPage
-  └─ /dashboard/* React workspace
-           │
-           ▼
-      Express application
-       ├─ internal dashboard API
-       ├─ SQLite database
-       └─ local uploads
-~~~
-
-Repository layout:
-
-~~~text
-app/
-  src/                  React + TypeScript frontend
-  server/               Express backend and SQLite
-  packages/page-schema/ Shared page-data schemas
-  e2e/                  Playwright browser tests
-docs/                   User and operations guides
-scripts/                Installer and repository helpers
-.github/                CI, release, and image workflows
-Dockerfile              Canonical production image
-~~~
-
-See [app/README.md](./app/README.md) for application development boundaries.
-
 ## First run
 
 1. Open the public URL. A fresh instance shows **Under construction** and is excluded from indexing and analytics.
@@ -301,41 +273,9 @@ The dashboard creates complete or selective JSON exports by default. When images
 
 Read [Deployment](./docs/wiki/Deployment.md) before configuring a reverse proxy, base path, cloud platform, update, or rollback.
 
-## Development
-
-From <code>app/</code>:
-
-~~~bash
-npm ci
-npm run install:server
-~~~
-
-Run the API and frontend in separate terminals:
-
-~~~bash
-npm run server:dev
-npm run dev
-~~~
-
-Quality checks:
-
-~~~bash
-npm run lint
-npm run typecheck
-npm run test:unit
-npm run build
-npm run test:e2e:chromium
-~~~
-
-See [Development](./docs/wiki/Development.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
-
 ## Documentation
 
-Start from the task-oriented [documentation index](./docs/README.md). The
-[product requirements](./docs/wiki/product-requirements.md),
-[design system](./docs/wiki/design-system.md) and
-[architecture](./docs/wiki/architecture.md) describe the shared OSS product;
-repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
+Explore the [user guides](./docs/wiki/README.md) for installation, editing, publishing, backups and troubleshooting.
 
 | Task | Guide |
 | --- | --- |
@@ -343,7 +283,7 @@ repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
 | Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
 | Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
 | Navigate the editor | [Dashboard guide](./docs/wiki/dashboard.md) |
-| Manage users, security and personal tokens | [Account and team](./docs/wiki/account-and-team.md) |
+| Manage users, passwords and two-factor authentication | [Account and team](./docs/wiki/account-and-team.md) |
 | Share or print a QR code | [Publishing and QR](./docs/wiki/publishing.md) |
 | Build content, menus, subpages, and themes | [Content and design](./docs/wiki/content-and-design.md) |
 | Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/wiki/backups-and-demo-mode.md) |
@@ -352,8 +292,6 @@ repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
 | Configure SMTP and send newsletters | [Newsletters](./docs/wiki/newsletters.md) |
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
-
-The self-hosted Express API is an internal boundary used by the bundled dashboard, not a stable external SDK. Read the [self-hosted API boundary](./docs/wiki/api.md). The separate [OrbitPage community node for n8n](https://github.com/paoloronco/n8n-nodes-orbitpage) connects to the managed Automation API; it does not expose the bundled self-hosted API as a public contract.
 
 ## Security and contributing
 
