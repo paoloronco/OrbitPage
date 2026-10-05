@@ -92,6 +92,7 @@ test("Visual editor persists profile and content selected on the real preview", 
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
   const pageName = `Visual editor ${browserName} ${Date.now()}`;
+  const cardName = `${pageName} saved card`;
   const inspector = page.locator(".visual-site-editor__inspector");
   const profile = page.locator('[data-public-editor-target="profile"]');
   await page.getByRole("button", { name: "Page", exact: true }).click();
@@ -107,22 +108,22 @@ test("Visual editor persists profile and content selected on the real preview", 
   const card = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
   const { editor, id } = await openPreviewContentCard(page, card);
   await expect(card).toHaveClass(/is-selected/);
-  await editor.getByPlaceholder("Link title").fill("Visual editor saved card");
+  await editor.getByPlaceholder("Link title").fill(cardName);
   await editor.getByPlaceholder("https://example.com", { exact: true }).fill("https://example.com/visual-editor");
-  await expect(card).toContainText("Visual editor saved card");
+  await expect(card).toContainText(cardName);
   await saveEditorChanges(page);
 
   await page.reload();
   const savedCard = page.locator(`.visual-site-editor__canvas [data-public-editor-link-id="${id}"]`);
   const { editor: savedEditor } = await openPreviewContentCard(page, savedCard);
-  await expect(savedEditor.getByPlaceholder("Link title")).toHaveValue("Visual editor saved card");
+  await expect(savedEditor.getByPlaceholder("Link title")).toHaveValue(cardName);
   await expect(savedEditor.getByPlaceholder("https://example.com", { exact: true })).toHaveValue("https://example.com/visual-editor");
   await page.getByRole("button", { name: "Page", exact: true }).click();
   await expect(inspector.getByLabel("Page name")).toHaveValue(pageName);
 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: pageName, exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Visual editor saved card/ })).toHaveAttribute("href", "https://example.com/visual-editor");
+  await expect(page.getByRole("link", { name: `Open ${cardName}`, exact: true })).toHaveAttribute("href", "https://example.com/visual-editor");
 });
 
 test("Arrange uses preset sizes, compact handles and persistent text alignment", async ({ page }) => {

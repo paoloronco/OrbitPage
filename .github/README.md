@@ -10,11 +10,9 @@ Job check names remain `Quality Gate`, `E2E (browser)` and
 `Build and smoke Docker (architecture)` because the release gate queries them.
 These names are also relevant to repository protection rules.
 
-[scripts/check-npm-audit.mjs](./scripts/check-npm-audit.mjs) is an active CI helper.
-It rejects unapproved high/critical advisories and validates the exact exceptions
-in the quality workflow. It belongs with GitHub automation; it is neither a
-private SaaS script nor part of the installed application. Review exception
-expiry and upstream fixes rather than disabling the check.
+Frontend and backend npm audits reject all high/critical advisories without
+exceptions. The former advisory-filter script was removed after updating the
+toolchain and native-installation dependencies.
 
 See [release procedure](../CONTRIBUTING.md#release-notes),
 [mirror credential rules](../docs/wiki/Development.md#gitea-mirror-credential),

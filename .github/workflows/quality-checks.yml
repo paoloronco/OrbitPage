@@ -32,6 +32,10 @@ jobs:
         working-directory: .
         run: node scripts/check-markdown-links.mjs
 
+      - name: Reject tracked runtime data and local configuration
+        working-directory: .
+        run: node scripts/check-tracked-runtime-data.mjs
+
       - name: Validate one-command installer
         working-directory: .
         run: |
@@ -73,29 +77,10 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       - name: Audit frontend dependencies
-        run: |
-          npm audit --audit-level=high --json > npm-audit.json || true
-          # OrbitPage uses React Router as a client-only SPA, without RSC action
-          # endpoints. Remove this narrow exception once npm publishes a version
-          # that resolves GHSA-qwww-vcr4-c8h2 without reopening older advisories.
-          # braces is reachable only through the build-time Tailwind toolchain.
-          # GHSA-vfj7-8cjw-p6xm has no patched braces release; the production
-          # audit above must stay green while this exception is in place.
-          node ../.github/scripts/check-npm-audit.mjs \
-            npm-audit.json \
-            GHSA-qwww-vcr4-c8h2 \
-            GHSA-vfj7-8cjw-p6xm
+        run: npm audit --audit-level=high
 
       - name: Audit backend dependencies
-        run: |
-          npm --prefix server audit --audit-level=high --json > backend-audit.json || true
-          # sqlite3 includes node-gyp for native-addon installation. Its
-          # make-fetch-happen cache is not loaded by the running HTTP server.
-          # GHSA-ch52-4w7c-c8xp has no patched release; keep all other high
-          # and critical backend advisories blocking.
-          node ../.github/scripts/check-npm-audit.mjs \
-            backend-audit.json \
-            GHSA-ch52-4w7c-c8xp
+        run: npm --prefix server audit --audit-level=high
 
       - name: Run ESLint
         run: npm run lint

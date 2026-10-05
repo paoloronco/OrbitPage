@@ -16,6 +16,9 @@ use the same reviewed version. Do not move their published paths casually.
 
 - `check-markdown-links.mjs`: validates repository-local documentation links;
   CI runs it before application checks.
+- `check-tracked-runtime-data.mjs`: rejects tracked databases, sidecars and local
+  credential/configuration files in CI, before push and before release. It
+  checks the current Git index; it neither reads nor rewrites historical data.
 - `test-installer.sh`: isolated Linux-installer checks.
 - `test-pve-installer.sh`: isolated Proxmox-installer checks with mocked host commands.
 - `test-docker-entrypoint.sh`: verifies automatic JWT secret creation and reuse.
@@ -43,5 +46,5 @@ CI invokes the applicable checks in [quality-checks.yml](../.github/workflows/qu
 Shell installer tests require a disposable Linux environment; the PVE test mocks
 host commands and does not create a real guest. Run `python scripts/test-updater.py`
 from the repository root for mocked updater tests; the container variant needs
-its dedicated Docker fixture. The separate [npm advisory gate](../.github/README.md)
-lives under `.github/scripts/` because it is CI-only.
+its dedicated Docker fixture. The [npm advisory gates](../.github/README.md)
+run directly in the quality workflow.

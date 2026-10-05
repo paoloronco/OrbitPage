@@ -9,6 +9,8 @@ echo "========================================================="
 set -e
 
 ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+node scripts/check-tracked-runtime-data.mjs
 cd "$ROOT/app"
 
 # 1. Linting

@@ -219,8 +219,8 @@ test('keeps the update modal locked through a restart and shows logs and the con
   await expect(dialog.locator('progress')).toHaveCount(0);
   disconnected = false;
   job = { ...job, state: 'completed', logs: 'Health check passed\nUpdate completed. OrbitPage v99.0.0 is running.' };
-  await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
-  await expect(dialog.getByRole('status')).toContainText('Update completed · v99.0.0');
+  // Reconnection must complete through the recurring poll, without a manual refresh.
+  await expect(dialog.getByRole('status')).toContainText('Update completed · v99.0.0', { timeout: 10000 });
   await expect(dialog.getByRole('button', { name: 'Reload dashboard' })).toBeVisible();
   await page.screenshot({ path: 'output/playwright/oss-update-completed.png' });
   await dialog.locator('.account-delete-actions').getByRole('button', { name: 'Close', exact: true }).click();

@@ -18,11 +18,16 @@ function contrastRatio(foreground: number[], background: number[]) {
 
 async function findLowContrastCopy(page: import('@playwright/test').Page) {
   return page.locator('.orbitpage-admin *').evaluateAll((elements) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d', { willReadFrequently: true })!;
     const parseColor = (value: string) => {
-      const channels = value.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
-      return channels.length >= 3
-        ? [channels[0], channels[1], channels[2], channels[3] ?? 1]
-        : null;
+      // Let the browser convert CSS colors (including OKLCH) to sRGB.
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = value;
+      context.fillRect(0, 0, 1, 1);
+      const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
+      return [red, green, blue, alpha / 255];
     };
     const luminance = (channels: number[]) => {
       const values = channels.slice(0, 3).map((channel) => {
@@ -111,7 +116,16 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
     '.menu-category-group__toggle small',
     '.menu-category-editor-empty span',
   ].join(',')).evaluateAll((elements) => {
-    const colorChannels = (value: string) => value.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext('2d', { willReadFrequently: true })!;
+    const colorChannels = (value: string) => {
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = value;
+      context.fillRect(0, 0, 1, 1);
+      const [red, green, blue, alpha] = context.getImageData(0, 0, 1, 1).data;
+      return [red, green, blue, alpha / 255];
+    };
     const backgroundFor = (element: Element) => {
       let current: Element | null = element;
       while (current) {

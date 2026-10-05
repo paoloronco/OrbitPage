@@ -5,6 +5,11 @@ import path from 'node:path';
 export const E2E_ADMIN_PASSWORD = 'OrbitPageE2E123!';
 
 export async function openAuthenticatedAdmin(page: Page) {
+  // Embedded maps and service players must not make local tests depend on providers.
+  await page.context().route('**/*', route => {
+    const url = new URL(route.request().url());
+    return ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) ? route.fallback() : route.abort();
+  });
   await page.goto('/admin');
 
   const setupContinueButton = page.getByRole('button', { name: 'Continue', exact: true });
