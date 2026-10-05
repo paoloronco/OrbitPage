@@ -14,6 +14,9 @@ These scripts support installation, updates, Git hooks, and installer verificati
 - `test-installer.sh`: isolated Linux-installer checks.
 - `test-pve-installer.sh`: isolated Proxmox-installer checks with mocked host commands.
 - `test-docker-entrypoint.sh`: verifies automatic JWT secret creation and reuse.
+- `test-docker-context.mjs`: checks that runtime secrets and data stay outside the Docker build context.
+- `test-updater.py`: exercises updater decisions against isolated mocked host commands.
+- `test-updater-docker.py`: checks container recreation preserves mounts, ports and environment in the dedicated CI Docker fixture; never run against an ordinary installation.
 
 The public installers themselves live at repository root as `install.sh` and `install-pve.sh`. Run them from a trusted local checkout; the PVE installer copies that checkout's guest installer into the new container.
 

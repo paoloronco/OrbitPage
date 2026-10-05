@@ -46,6 +46,7 @@ For a production-style local run, set a stable `JWT_SECRET` and an isolated `DAT
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test:unit
 npm run build
 npm run test:e2e:chromium
