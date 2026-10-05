@@ -31,4 +31,4 @@ Privacy settings can use OrbitPage's consent controls or an explicitly configure
 
 For staging or private deployments, also set `SEO_INDEXING=false`. Indexing controls and analytics consent solve different problems and should both be configured deliberately.
 
-See [Security](../wiki/Security.md) for deployment hardening and [SEO and indexing](../wiki/SEO-and-indexing.md) for canonical URLs and crawler controls.
+See [Security](./Security.md) for deployment hardening and [SEO and indexing](./SEO-and-indexing.md) for canonical URLs and crawler controls.

@@ -1,4 +1,4 @@
-name: Publish versioned release
+name: OSS - Publish release
 
 on:
   push:

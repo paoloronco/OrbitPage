@@ -15,7 +15,7 @@ Tabs also have their own URLs, prefixed by the dashboard language, for example `
 
 **Account > Your public OrbitPage** shows the installation root URL, including any configured mount path, without a dashboard language suffix.
 
-**Account > General > Instance details** shows the SQLite database path, `DATA_DIR`, total bytes stored there, bytes in `uploads`, and local checks for the API, SQLite, and writable data/upload directories. The storage values measure files inside `DATA_DIR`; they are not free disk capacity. Only administrators can see these details. **Environment variables** opens a dialog that reports whether selected runtime variables are configured without revealing their values. Enter replacements, confirm with the current password, and restart the instance to apply them. See [Configuration](../wiki/Configuration.md#dashboard-environment-overrides) for the supported keys and persistence rules.
+**Account > General > Instance details** shows the SQLite database path, `DATA_DIR`, total bytes stored there, bytes in `uploads`, and local checks for the API, SQLite, and writable data/upload directories. The storage values measure files inside `DATA_DIR`; they are not free disk capacity. Only administrators can see these details. **Environment variables** opens a dialog that reports whether selected runtime variables are configured without revealing their values. Enter replacements, confirm with the current password, and restart the instance to apply them. See [Configuration](./Configuration.md#dashboard-environment-overrides) for the supported keys and persistence rules.
 
 Opening, refreshing or using browser Back/Forward restores the selected tab. Changing tabs keeps the current in-memory Menu or Theme draft; refreshing still discards unsaved changes. Existing workspace URLs remain valid. Shop URLs preserve the shared navigation contract; commerce remains a managed-service capability and is shown as unavailable in OSS.
 
@@ -39,7 +39,7 @@ Page, Link blocks, subpage details, each subpage's blocks, Menu, Theme, Privacy,
 
 After the initial system, administrator, and public-URL setup, OrbitPage opens the dashboard directly. Use this guide as a reference for the available workspaces and their save boundaries.
 
-See [Getting started](../wiki/Getting-started.md) for the fresh-install sequence.
+See [Getting started](./Getting-started.md) for the fresh-install sequence.
 
 ## Page tools
 
@@ -87,7 +87,7 @@ Prefer theme-level changes for consistency. Keep individual profile or block ove
 - edit `robots.txt`, `llms.txt`, `humans.txt`, `ai.txt`, and `security.txt`;
 - create safe custom `.txt` and `/.well-known/*.txt` endpoints.
 
-Set `PUBLIC_SITE_URL` before distributing QR codes or canonical discovery links behind a proxy or custom domain. See [SEO and indexing](../wiki/SEO-and-indexing.md).
+Follow [Publishing and QR](./publishing.md) for save boundaries, destinations, campaign scheduling and export checks. Set `PUBLIC_SITE_URL` before distributing QR codes; [SEO and indexing](./SEO-and-indexing.md) covers discovery.
 
 ### Backup
 
@@ -102,8 +102,8 @@ Self-hosted **Analytics** shows the same 7/30-day visit and content dashboard as
 ## Workspace tools
 
 - **Newsletter** connects your own SMTP server, manages confirmed subscribers, and creates, schedules, and reports on email campaigns. See [Newsletters](./newsletters.md).
-- **Team** manages additional local users and their roles.
-- **Account → General** contains identity, instance version and updates, support, and personal-page actions. The [optional host update service](../wiki/Deployment.md#web-updates) enables installation with a blocking progress/log dialog and a confirmed final result. Without it, Account explicitly provides the terminal command. **Security** contains the signed-in user's password and TOTP authenticator. On narrow screens, protected password recovery follows the authenticator.
+- **Team** manages additional local users, roles and personal API tokens. See [Account and team](./account-and-team.md) for creation, revocation and security procedures.
+- **Account → General** contains identity, instance version and updates, support, and personal-page actions. The [optional host update service](./Deployment.md#web-updates) enables installation with a blocking progress/log dialog and a confirmed final result. Without it, Account explicitly provides the terminal command. **Security** contains the signed-in user's password and TOTP authenticator. On narrow screens, protected password recovery follows the authenticator.
 - **Account → Audit log** is available to administrators. It lists successful authenticated changes with time, user and action, and supports text, user, action and date filters. Events contain metadata only, remain in the installation SQLite database until the installation is reset or removed, and are included in infrastructure backups. The log starts recording after upgrade; older changes cannot be reconstructed.
 - **Edition** explains what the open-source installation includes and which server, backup and optional provider settings you manage. There are no paid feature tiers in the self-hosted edition. The existing `/dashboard/plan` URL remains valid.
 

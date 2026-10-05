@@ -44,7 +44,7 @@ describe('deployment configuration', () => {
   });
 
   it('creates releases only from an exact version tag after the main CI succeeds', () => {
-    const workflow = read('.github/workflows/release.yml');
+    const workflow = read('.github/workflows/publish-release.yml');
 
     expect(workflow).toContain('tags: ["v*.*.*"]');
     expect(workflow).not.toContain('branches: ["main"]');
@@ -60,7 +60,7 @@ describe('deployment configuration', () => {
   });
 
   it('publishes Docker images to both Docker Hub and GitHub Container Registry', () => {
-    const workflow = read('.github/workflows/release.yml');
+    const workflow = read('.github/workflows/publish-release.yml');
 
     expect(workflow).toContain('DOCKERHUB_IMAGE: docker.io/paoloronco/orbitpage');
     expect(workflow).toContain('LEGACY_DOCKERHUB_IMAGE: docker.io/paueron/orbitpage');
@@ -73,7 +73,7 @@ describe('deployment configuration', () => {
   });
 
   it('publishes only latest and complete version Docker tags', () => {
-    const workflow = read('.github/workflows/release.yml');
+    const workflow = read('.github/workflows/publish-release.yml');
     const publishedTags = workflow
       .match(/^\s+\$\{\{ env\.(?:DOCKERHUB_IMAGE|GHCR_IMAGE|LEGACY_DOCKERHUB_IMAGE) \}\}:[^\r\n]+/gm)
       ?.map((tag) => tag.trim());
@@ -89,7 +89,7 @@ describe('deployment configuration', () => {
   });
 
   it('runs a blocking CI quality gate for pull requests and main pushes', () => {
-    const workflow = read('.github/workflows/ci.yml');
+    const workflow = read('.github/workflows/quality-checks.yml');
 
     expect(workflow).toContain('pull_request:');
     expect(workflow).toContain('branches: [ "main" ]');
@@ -103,7 +103,7 @@ describe('deployment configuration', () => {
   });
 
   it('tests native Docker architectures on main without publishing registry tags', () => {
-    const workflow = read('.github/workflows/ci.yml');
+    const workflow = read('.github/workflows/quality-checks.yml');
 
     expect(workflow).toContain("github.event_name == 'push' && github.ref == 'refs/heads/main'");
     expect(workflow).toContain('needs: [test, e2e]');
@@ -118,14 +118,14 @@ describe('deployment configuration', () => {
   });
 
   it('builds the frontend before server tests that exercise SPA rendering', () => {
-    const workflow = read('.github/workflows/ci.yml');
+    const workflow = read('.github/workflows/quality-checks.yml');
 
     expect(workflow.indexOf('npm run build')).toBeLessThan(workflow.indexOf('npm run test:unit'));
   });
 
   it('keeps read-only GitHub token permissions on workflows that only need checkout', () => {
-    const ciWorkflow = read('.github/workflows/ci.yml');
-    const mirrorWorkflow = read('.github/workflows/gitea-mirror.yml');
+    const ciWorkflow = read('.github/workflows/quality-checks.yml');
+    const mirrorWorkflow = read('.github/workflows/sync-gitea-mirror.yml');
 
     for (const workflow of [ciWorkflow, mirrorWorkflow]) {
       expect(workflow).toContain('permissions:');

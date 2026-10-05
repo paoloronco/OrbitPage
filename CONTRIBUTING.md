@@ -191,7 +191,7 @@ GHCR as `latest` and the complete version tag and creates the GitHub release.
 Runtime, schema, installer and deployment changes require a patch release after
 green main CI; documentation-only and test-only changes do not. Never move an
 existing version tag. The canonical workflow is
-[release.yml](./.github/workflows/release.yml).
+[publish-release.yml](.github/workflows/publish-release.yml).
 
 ## License
 

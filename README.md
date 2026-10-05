@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/paoloronco/OrbitPage/actions/workflows/ci.yml"><img src="https://github.com/paoloronco/OrbitPage/actions/workflows/ci.yml/badge.svg?branch=main" alt="OrbitPage continuous integration status" /></a>
+  <a href="https://github.com/paoloronco/OrbitPage/actions/workflows/quality-checks.yml"><img src="https://github.com/paoloronco/OrbitPage/actions/workflows/quality-checks.yml/badge.svg?branch=main" alt="OrbitPage continuous integration status" /></a>
   <a href="https://github.com/paoloronco/OrbitPage/releases"><img src="https://img.shields.io/github/v/release/paoloronco/OrbitPage?label=version&amp;color=2563EB" alt="Latest OrbitPage version" /></a>
   <a href="./LICENSE.txt"><img src="https://img.shields.io/badge/license-MIT-111827" alt="MIT License" /></a>
   <a href="https://hub.docker.com/r/paoloronco/orbitpage"><img src="https://img.shields.io/docker/pulls/paoloronco/orbitpage?logo=docker&amp;label=Docker%20pulls" alt="OrbitPage Docker Hub pulls" /></a>
@@ -27,10 +27,6 @@
 OrbitPage is a free, MIT-licensed Linktree alternative for building link-in-bio pages, digital business cards, portfolios, creator profiles, venue menus, event pages, and small-business websites. It combines a visual editing dashboard with responsive public rendering, built-in SEO and analytics, an Express backend, SQLite, and local file storage. No external database is required.
 
 This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
-
-<p align="center">
-  <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="Animated OrbitPage editor showing content, style, shop, and publishing workflows" width="800" />
-</p>
 
 > **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; follow the [migration guide](./docs/wiki/Docker-Hub-migration.md).
 
@@ -190,7 +186,7 @@ The version check applies to a container named <code>orbitpage</code>; use your 
 ### Operations, privacy, and security
 
 - Built-in self-hosted 7/30-day visit and content analytics, plus optional GA4 integration on the public page.
-- Self-hosted newsletters with your own SMTP server, confirmed subscriptions, scheduled campaigns, and delivery reports ([guide](./docs/user-guide/newsletters.md)).
+- Self-hosted newsletters with your own SMTP server, confirmed subscriptions, scheduled campaigns, and delivery reports ([guide](./docs/wiki/newsletters.md)).
 - Consent controls, policy links, Google Consent Mode, and optional external CMP integration.
 - Complete or selective JSON backup and restore, with optional portable image ZIP for OSS/SaaS transfers.
 - Upload quotas, validated image and video uploads, and unused-media cleanup.
@@ -217,7 +213,7 @@ The current dashboard keeps related work together:
 
 The visual editor changes URL with the active section: <code>/dashboard/editor/page</code>, <code>/dashboard/editor/content</code>, <code>/dashboard/editor/menu/content</code>, <code>/dashboard/editor/shop/products</code>, and <code>/dashboard/editor/pages</code>. Classic dashboard routes include <code>/dashboard/profile</code>, <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>. Dashboard URLs include the interface language, for example <code>/it-IT/dashboard/account/general</code>. Public pages use the installation root; menus, legal pages, newsletters, and subpages have no language prefix. Older localized and page-slug public URLs remain redirect aliases.
 
-Read the [dashboard guide](./docs/user-guide/dashboard.md) for the complete route map and editing workflow.
+Read the [dashboard guide](./docs/wiki/dashboard.md) for the complete route map and editing workflow.
 
 ## How it runs
 
@@ -277,7 +273,7 @@ The essential production settings are:
 
 Set <code>PUBLIC_SITE_URL</code> to the externally reachable HTTPS origin in the protected environment file before starting a production container, especially when using newsletters. If you change a container's environment file later, recreate the container or Compose service; <code>docker restart</code> does not reload those values.
 
-Configure your own SMTP host, port, credentials, and sender in **Dashboard > Newsletter**, then send a test message before a campaign. Copy the public signup link from that workspace; subscribers must confirm their address. Campaigns can be sent immediately or scheduled. Newsletter settings, subscribers, and delivery history live in <code>DATA_DIR/orbitpage.db</code>. The dashboard's selective JSON export excludes newsletter records and SMTP credentials, so include the SQLite database in infrastructure backups. See the [newsletter guide](./docs/user-guide/newsletters.md) and the complete [Configuration reference](./docs/wiki/Configuration.md) for AI providers, cleanup, rate limiting, HTTPS, base paths, CORS, reset recovery, and other settings.
+Configure your own SMTP host, port, credentials, and sender in **Dashboard > Newsletter**, then send a test message before a campaign. Copy the public signup link from that workspace; subscribers must confirm their address. Campaigns can be sent immediately or scheduled. Newsletter settings, subscribers, and delivery history live in <code>DATA_DIR/orbitpage.db</code>. The dashboard's selective JSON export excludes newsletter records and SMTP credentials, so include the SQLite database in infrastructure backups. See the [newsletter guide](./docs/wiki/newsletters.md) and the complete [Configuration reference](./docs/wiki/Configuration.md) for AI providers, cleanup, rate limiting, HTTPS, base paths, CORS, reset recovery, and other settings.
 
 ## Data and backups
 
@@ -336,9 +332,9 @@ See [Development](./docs/wiki/Development.md) and [CONTRIBUTING.md](./CONTRIBUTI
 ## Documentation
 
 Start from the task-oriented [documentation index](./docs/README.md). The
-[product requirements](./docs/product-requirements.md),
-[design system](./docs/design-system.md) and
-[architecture](./docs/architecture.md) describe the shared OSS product;
+[product requirements](./docs/wiki/product-requirements.md),
+[design system](./docs/wiki/design-system.md) and
+[architecture](./docs/wiki/architecture.md) describe the shared OSS product;
 repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
 
 | Task | Guide |
@@ -346,16 +342,18 @@ repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
 | Install or evaluate | [Getting started](./docs/wiki/Getting-started.md) |
 | Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
 | Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
-| Navigate the editor | [Dashboard guide](./docs/user-guide/dashboard.md) |
-| Build content, menus, subpages, and themes | [Content and design](./docs/user-guide/content-and-design.md) |
-| Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/user-guide/backups-and-demo-mode.md) |
-| Configure AI safely | [AI assistant](./docs/user-guide/ai-assistant.md) |
-| Configure analytics and consent | [Analytics and privacy](./docs/user-guide/analytics-and-privacy.md) |
-| Configure SMTP and send newsletters | [Newsletters](./docs/user-guide/newsletters.md) |
+| Navigate the editor | [Dashboard guide](./docs/wiki/dashboard.md) |
+| Manage users, security and personal tokens | [Account and team](./docs/wiki/account-and-team.md) |
+| Share or print a QR code | [Publishing and QR](./docs/wiki/publishing.md) |
+| Build content, menus, subpages, and themes | [Content and design](./docs/wiki/content-and-design.md) |
+| Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/wiki/backups-and-demo-mode.md) |
+| Configure AI safely | [AI assistant](./docs/wiki/ai-assistant.md) |
+| Configure analytics and consent | [Analytics and privacy](./docs/wiki/analytics-and-privacy.md) |
+| Configure SMTP and send newsletters | [Newsletters](./docs/wiki/newsletters.md) |
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 
-The self-hosted Express API is an internal boundary used by the bundled dashboard, not a stable external SDK. Read the [self-hosted API boundary](./docs/API.md). The separate [OrbitPage community node for n8n](https://github.com/paoloronco/n8n-nodes-orbitpage) connects to the managed Automation API; it does not expose the bundled self-hosted API as a public contract.
+The self-hosted Express API is an internal boundary used by the bundled dashboard, not a stable external SDK. Read the [self-hosted API boundary](./docs/wiki/api.md). The separate [OrbitPage community node for n8n](https://github.com/paoloronco/n8n-nodes-orbitpage) connects to the managed Automation API; it does not expose the bundled self-hosted API as a public contract.
 
 ## Security and contributing
 

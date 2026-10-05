@@ -9,12 +9,15 @@ src/                  React and TypeScript frontend
 server/               Express API and SQLite persistence
 packages/page-schema/ Shared page, theme, menu, and block schemas
 e2e/                  Playwright browser tests
-public/               Static assets copied into the frontend build
+public/               Static and canonical brand assets copied into the build
+src/hosted-entry.tsx   Shared editor entry consumed by the managed adapter
 scripts/              App-local development and test helpers
 dist/                 Generated production build; never commit it
 ```
 
-The root [Dockerfile](../Dockerfile) is the canonical container build. See the repository [documentation index](../docs/README.md) for installation and operations.
+The root [Dockerfile](../Dockerfile) is the canonical container build.
+[app/Dockerfile](./Dockerfile) retains the application-directory build context
+for compatible source deployments; it is exercised by deployment contract tests. See the repository [documentation index](../docs/README.md) for installation and operations.
 
 ## Install
 
@@ -58,7 +61,11 @@ npm run test:e2e:chromium
 
 - Frontend API calls belong in `src/lib/api-client.ts` or compatible domain modules exported through that boundary.
 - Public page data must conform to `packages/page-schema`.
-- The Express `/api` routes are an internal application contract for the bundled dashboard, not a public automation API.
+- Personal API tokens use the bundled Express application API; see the
+  [API contract](../docs/wiki/api.md). The managed versioned API is a separate service.
+- `npm run build:hosted` builds the hosted-mode frontend;
+  `npm run build:hosted-library` exports the shared editor consumed by SaaS.
+  Hosted billing, tenant management and managed storage belong to the private adapter.
 - Runtime databases, uploads, E2E state, build output, reports, and logs are ignored and must not be committed.
 
 Read [server/README.md](./server/README.md) before backend or database work and [packages/README.md](./packages/README.md) before changing shared schemas.

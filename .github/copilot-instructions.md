@@ -1,24 +1,8 @@
 # OrbitPage Copilot instructions
 
-Read and follow [`AGENTS.md`](../AGENTS.md) before changing this repository. It
-is the canonical source for repository boundaries, engineering rules, required
-checks, documentation ownership, data safety, and release policy. Do not copy
-or reinterpret those rules here.
+Read and follow [AGENTS.md](../AGENTS.md), the canonical repository instructions,
+and the README owning the code before editing.
 
-Useful starting points:
-
-- [`app/README.md`](../app/README.md) for the application layout.
-- [`app/packages/README.md`](../app/packages/README.md) for the shared page
-  schema and block contracts.
-- [`app/server/README.md`](../app/server/README.md) for the Express boundary.
-- [`docs/README.md`](../docs/README.md) for user and operator documentation.
-- [`docs/product-requirements.md`](../docs/product-requirements.md) for OSS
-  behavior, [`docs/design-system.md`](../docs/design-system.md) for shared UI,
-  and [`docs/architecture.md`](../docs/architecture.md) for runtime ownership.
-- [`CONTRIBUTING.md`](../CONTRIBUTING.md) for the contribution workflow and
-  verification commands.
-
-For a new or changed block, update the shared `app/packages/page-schema`
-contract first, then the editor, public renderer, server validation, tests, and
-user documentation. Never introduce a second schema inside a component or the
-main server file.
+Use the [unified wiki](../docs/wiki/README.md) for product, architecture, design,
+API and user guides, and [CONTRIBUTING.md](../CONTRIBUTING.md) for contributor
+commands. GitHub automation is documented in [.github/README.md](./README.md).

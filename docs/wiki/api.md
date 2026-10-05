@@ -34,20 +34,20 @@ and CI.
   `to` and `before` filters are parameterized; arbitrary SQL is not accepted.
 
 Deployment hardening, CORS, rate limits, HTTPS, and recovery controls are
-documented in [Security](./wiki/Security.md) and
-[Configuration](./wiki/Configuration.md).
+documented in [Security](./Security.md) and
+[Configuration](./Configuration.md).
 
 ## Implementation sources of truth
 
-- [`app/src/lib/api-client.ts`](../app/src/lib/api-client.ts) defines the
+- [`app/src/lib/api-client.ts`](../../app/src/lib/api-client.ts) defines the
   bundled frontend client and session handling.
-- [`app/server/server.js`](../app/server/server.js) registers the Express
+- [`app/server/server.js`](../../app/server/server.js) registers the Express
   routes and middleware.
-- [`app/server/auth.js`](../app/server/auth.js) implements the self-hosted
+- [`app/server/auth.js`](../../app/server/auth.js) implements the self-hosted
   authentication boundary.
-- [`app/server/schemas/`](../app/server/schemas/) contains request validation
+- [`app/server/schemas/`](../../app/server/schemas) contains request validation
   schemas.
-- [`app/packages/page-schema/`](../app/packages/page-schema/) contains the
+- [`app/packages/page-schema/`](../../app/packages/page-schema) contains the
   shared page and block contracts.
 
 When an internal route changes, update both sides of the application, retain

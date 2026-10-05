@@ -4,7 +4,7 @@
 | --- | --- |
 | Scope | Open-source self-hosted runtime and its shared product code |
 | Status | Implemented architecture contract |
-| Sources | [Application layout](../app/README.md), [server layout](../app/server/README.md), [page schema](../app/packages/page-schema/), [Dockerfile](../Dockerfile) |
+| Sources | [Application layout](../../app/README.md), [server layout](../../app/server/README.md), [page schema](../../app/packages/page-schema), [Dockerfile](../../Dockerfile) |
 
 ## System shape
 
@@ -51,11 +51,11 @@ private files. Dashboard locale prefixes do not become public URL prefixes.
 **Upload and backup:** accepted media lives under persistent uploads. Backup
 and restore operate on selected durable sections and must not treat generated
 frontend files as application data. Back up SQLite and uploads consistently;
-see [backup guidance](./user-guide/backups-and-demo-mode.md).
+see [backup guidance](./backups-and-demo-mode.md).
 
 **Update:** a release is built from the exact tagged source; container
 recreation retains `DATA_DIR` and the instance secret. The
-[deployment guide](./wiki/Deployment.md) owns install, update and rollback
+[deployment guide](./Deployment.md) owns install, update and rollback
 steps. A source commit is not evidence that an operator has updated a host.
 
 ## Boundary with hosted SaaS
@@ -68,5 +68,5 @@ moderation, managed storage and edge routing do not belong in this repository.
 The hosted adapter does not use this SQLite database.
 
 See [product requirements](./product-requirements.md) for expected behavior,
-[design system](./design-system.md) for UI rules, [security](./wiki/Security.md)
-for trust boundaries, and [AGENTS.md](../AGENTS.md) for contributor-agent rules.
+[design system](./design-system.md) for UI rules, [security](./Security.md)
+for trust boundaries, and [AGENTS.md](../../AGENTS.md) for contributor-agent rules.
