@@ -52,4 +52,4 @@ This documentation covers the open-source, self-hosted OrbitPage application. Fo
 
 Personal API tokens use the self-hosted application API described above. It ships with the dashboard and server; it has no separate API-version compatibility contract. The managed Automation API is documented on orbitpage.com.
 
-See [GitHub automation](../../.github/README.md) for quality checks, release publication, advisory policy and mirror ownership.
+See [GitHub automation](./github-automation.md) for quality checks, release publication, advisory policy and mirror ownership.

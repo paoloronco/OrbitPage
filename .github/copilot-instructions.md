@@ -5,4 +5,5 @@ and the README owning the code before editing.
 
 Use the [unified wiki](../docs/wiki/README.md) for product, architecture, design,
 API and user guides, and [CONTRIBUTING.md](../CONTRIBUTING.md) for contributor
-commands. GitHub automation is documented in [.github/README.md](./README.md).
+commands. See the [GitHub automation guide](../docs/wiki/github-automation.md)
+for workflows and release publication.
