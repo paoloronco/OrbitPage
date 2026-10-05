@@ -11,7 +11,7 @@ on:
         type: string
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -125,12 +125,12 @@ jobs:
           fi
 
   publish-images:
-    name: Publish versioned multi-arch manifests
+    name: Publish images and GitHub release
     needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -171,8 +171,9 @@ jobs:
             ${{ env.DOCKERHUB_IMAGE }}:latest
             ${{ env.GHCR_IMAGE }}:${{ needs.validate.outputs.version }}
             ${{ env.GHCR_IMAGE }}:latest
-          cache-from: type=gha,scope=release
-          cache-to: type=gha,mode=max,scope=release
+          cache-from: |
+            type=gha,scope=rolling-amd64
+            type=gha,scope=rolling-arm64
 
       - name: Verify stable multi-arch images
         env:
@@ -221,16 +222,10 @@ jobs:
           tags: |
             ${{ env.LEGACY_DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}
             ${{ env.LEGACY_DOCKERHUB_IMAGE }}:latest
-          cache-from: type=gha,scope=release
+          cache-from: |
+            type=gha,scope=rolling-amd64
+            type=gha,scope=rolling-arm64
 
-  github-release:
-    name: Create GitHub release
-    needs: [validate, publish-images]
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-
-    steps:
       - name: Create release for the existing tag
         env:
           GH_TOKEN: ${{ github.token }}
