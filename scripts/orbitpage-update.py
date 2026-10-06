@@ -43,6 +43,12 @@ def target_image(image):
     return f'{name}:latest'
 
 
+def follows_latest(image):
+    image = image.removeprefix('docker.io/')
+    target = target_image(image)
+    return image in (target, target.removesuffix(':latest'))
+
+
 def backup_container(name):
     print('[update] Backing up persistent data', flush=True)
     BACKUP_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -214,7 +220,7 @@ def update_compose(containers):
     command, service = compose_command(containers[0])
     for container in containers:
         image = container['Config']['Image']
-        if image.removeprefix('docker.io/') != target_image(image):
+        if not follows_latest(image):
             raise RuntimeError(f'Compose image {image!r} is pinned or legacy. Change it to the current :latest image in the Compose file first.')
     print(f'[update] Downloading the configured image for {service}', flush=True)
     run(*command, 'pull', service)
@@ -318,7 +324,7 @@ def web_update_directory(name):
         raise RuntimeError('Web updates require Docker on this Linux host.')
     container = docker_json('inspect', name)[0]
     image = container['Config']['Image'].removeprefix('docker.io/')
-    if image != target_image(image):
+    if not follows_latest(image):
         raise RuntimeError('Web updates require an official :latest image. Pinned images stay under operator control.')
     mount = next((m for m in container.get('Mounts', []) if m.get('Destination') == '/app/data' and m.get('RW')), None)
     if not mount or mount.get('Type') not in ('bind', 'volume'):

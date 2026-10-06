@@ -152,8 +152,7 @@ test('checks OSS updates and explains when the host update service is not enable
   const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('heading')).toHaveCSS('color', 'rgb(17, 27, 45)');
-  await expect(dialog.getByRole('button', { name: 'Copy command', exact: true })).toHaveCSS('color', 'rgb(15, 23, 41)');
-  await expect(dialog.locator('code')).toHaveText('sudo orbitpage-update');
+  await expect(dialog).toContainText('Update with Docker Run or Compose');
   await expect(dialog.getByRole('status')).toContainText('Web updates are not enabled');
   await expect(dialog.getByRole('link', { name: 'Update guide' })).toHaveAttribute('href', /#web-updates$/);
   await page.keyboard.press('Escape');

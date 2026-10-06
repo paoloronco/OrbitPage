@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Copy, Download, ExternalLink, RefreshCw } from '@/components/ui/material-icons';
+import { Download, ExternalLink, RefreshCw } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { applicationUpdatesApi, type ApplicationUpdateStatus } from '@/lib/api-client';
 import { useAppI18n } from '@/lib/i18n';
 
-const UPDATE_COMMAND = 'sudo orbitpage-update';
 const UPDATE_GUIDE = 'https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Deployment.md#web-updates';
 
 export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }: {
@@ -21,7 +20,6 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   const [starting, setStarting] = useState(false);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [checking, setChecking] = useState(false);
   const [reloading, setReloading] = useState(false);
   const lastContact = useRef(Date.now());
@@ -139,11 +137,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
         <Input id="update-current-password" type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} />
       </div>}
       {!active && status && !status.enabled && <>
-        <p>{tr('Enable the host update service once using the update guide. Until then, run this command on the server; this dialog does not start a terminal update.', 'Abilita una volta il servizio updater seguendo la guida. Fino ad allora esegui questo comando sul server; questo popup non avvia l’aggiornamento da terminale.')}</p>
-        <div className="account-update-command"><code>{UPDATE_COMMAND}</code><Button type="button" variant="outline" size="sm" onClick={async () => {
-          try { await navigator.clipboard.writeText(UPDATE_COMMAND); setCopied(true); }
-          catch { setError(tr('Select and copy the command manually.', 'Seleziona e copia il comando manualmente.')); }
-        }}><Copy className="h-4 w-4" />{copied ? tr('Copied', 'Copiato') : tr('Copy command', 'Copia comando')}</Button></div>
+        <p>{tr('Update with Docker Run or Compose using the guide below. Dashboard installation requires the host service, included in Linux and Proxmox installations or enabled once for an existing Docker container.', 'Aggiorna con Docker Run o Compose seguendo la guida. L’installazione dalla dashboard richiede il servizio host, incluso nelle installazioni Linux e Proxmox o attivato una volta per un container Docker esistente.')}</p>
         <a className="account-instance-release-link" href={UPDATE_GUIDE} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />{tr('Update guide', 'Guida agli aggiornamenti')}</a>
       </>}
       <DialogFooter className="account-delete-actions">

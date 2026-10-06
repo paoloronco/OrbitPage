@@ -3,13 +3,14 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="4.18.5"
+readonly SCRIPT_VERSION="4.21.64"
 
 INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"
 BACKUP_DIR="/var/backups/orbitpage"
 CLI_PATH="/usr/local/bin/orbitpage"
 UPDATE_CLI_PATH="/usr/local/bin/orbitpage-update"
+UPDATE_HELPER_PATH="/usr/local/lib/orbitpage/orbitpage-update.py"
 COMPOSE_FILE="${INSTALL_DIR}/compose.yaml"
 COMPOSE_ENV_FILE="${INSTALL_DIR}/.env"
 APP_ENV_FILE="${CONFIG_DIR}/orbitpage.env"
@@ -173,6 +174,10 @@ ensure_docker() {
 
   docker info >/dev/null 2>&1 || die "Docker is installed but unavailable. In an LXC, enable nesting/keyctl or use a VM."
   docker compose version >/dev/null 2>&1 || die "Docker Compose v2 is required."
+  if ! command -v python3 >/dev/null 2>&1; then
+    apt-get update -qq
+    apt-get install -y -qq python3
+  fi
 }
 
 compose() {
@@ -308,6 +313,30 @@ install_cli() {
 exec /usr/local/bin/orbitpage update "$@"
 EOF
   chmod 0755 "$UPDATE_CLI_PATH"
+  install_update_helper
+}
+
+install_update_helper() {
+  local script_path="${BASH_SOURCE[0]:-}"
+  local source_path
+  [[ -n "$script_path" && -f "$script_path" ]] || die 'Run install.sh from a trusted local checkout to install the dashboard update service.'
+  source_path="$(dirname "$(readlink -f "$script_path")")/scripts/orbitpage-update.py"
+  if [[ -f "$source_path" ]]; then
+    command -v python3 >/dev/null 2>&1 || die 'Python 3 is required for dashboard updates. Install python3 on the host first.'
+    python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' "$source_path"
+    install -d -m 0755 "$(dirname "$UPDATE_HELPER_PATH")"
+    install -m 0644 "$source_path" "$UPDATE_HELPER_PATH"
+  elif [[ ! -f "$UPDATE_HELPER_PATH" ]]; then
+    die 'Run install.sh from a trusted local checkout to install the dashboard update service.'
+  fi
+}
+
+enable_web_updates() {
+  local target="${1:-$CONTAINER_NAME}"
+  require_root
+  # This mode only attaches the host service; it does not install or recreate the app.
+  install_update_helper
+  python3 "$UPDATE_HELPER_PATH" --enable-web-updates "$target"
 }
 
 wait_for_health() {
@@ -371,6 +400,15 @@ install_app() {
   compose pull
   compose up -d --remove-orphans
   wait_for_health
+  case "${IMAGE#docker.io/}" in
+    paoloronco/orbitpage | paoloronco/orbitpage:latest | ghcr.io/paoloronco/orbitpage | ghcr.io/paoloronco/orbitpage:latest)
+      if [[ -d /run/systemd/system ]] && command -v systemctl >/dev/null 2>&1; then
+        enable_web_updates "$CONTAINER_NAME"
+      else
+        log 'Dashboard updates require systemd; use the Docker update commands on this host.'
+      fi
+      ;;
+  esac
   print_access_details
 }
 
@@ -425,6 +463,11 @@ uninstall_app() {
 
   require_root
   require_installed
+  if [[ -f "/etc/systemd/system/orbitpage-updates-${CONTAINER_NAME}.service" ]]; then
+    systemctl disable --now "orbitpage-updates-${CONTAINER_NAME}.service"
+    rm -f -- "/etc/systemd/system/orbitpage-updates-${CONTAINER_NAME}.service"
+    systemctl daemon-reload
+  fi
   compose down
 
   if [[ "$purge" == "--purge" ]]; then
@@ -468,6 +511,7 @@ Usage:
   orbitpage logs                 Follow application logs
   orbitpage start|stop|restart   Control the application
   orbitpage update               Backup and update OrbitPage
+  orbitpage web-updates [NAME]   Enable dashboard updates for an existing container
   orbitpage backup [FILE]        Create a consistent backup
   orbitpage config               Show installation paths and settings
   orbitpage uninstall            Remove the app but preserve its data
@@ -493,6 +537,7 @@ main() {
     install) install_app "$@" ;;
     update) update_app "$@" ;;
     _update) perform_update "$@" ;;
+    web-updates) enable_web_updates "$@" ;;
     backup) backup_app "$@" ;;
     status) require_root; require_installed; compose ps ;;
     logs) require_root; require_installed; compose logs --follow --tail 100 ;;

@@ -8,6 +8,7 @@ readonly DATA_DIR="/var/lib/orbitpage-installer-test"
 readonly BACKUP_DIR="/var/backups/orbitpage"
 readonly CLI_PATH="/usr/local/bin/orbitpage"
 readonly UPDATE_CLI_PATH="/usr/local/bin/orbitpage-update"
+readonly UPDATE_HELPER_PATH="/usr/local/lib/orbitpage/orbitpage-update.py"
 readonly DOCKER_STATE="/tmp/orbitpage-installer-docker-state"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -21,12 +22,12 @@ fail() {
 
 cleanup() {
   rm -rf -- "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$TEST_DIR"
-  rm -f -- "$CLI_PATH" "$UPDATE_CLI_PATH" "$DOCKER_STATE"
+  rm -f -- "$CLI_PATH" "$UPDATE_CLI_PATH" "$UPDATE_HELPER_PATH" "$DOCKER_STATE"
 }
 
 [[ ${EUID} -eq 0 ]] || fail "run this test as root"
 
-for path in "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$CLI_PATH" "$UPDATE_CLI_PATH"; do
+for path in "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$CLI_PATH" "$UPDATE_CLI_PATH" "$UPDATE_HELPER_PATH"; do
   [[ ! -e "$path" ]] || fail "test path already exists: ${path}"
 done
 
@@ -74,6 +75,21 @@ exit 1
 EOF
 chmod 0755 "${FAKE_BIN}/docker"
 
+cat > "${FAKE_BIN}/python3" <<EOF
+#!/usr/bin/env bash
+if [[ \${2:-} == --enable-web-updates ]]; then
+  printf '%s\\n' "\$*" > "$TEST_DIR/web-updates-command"
+else
+  exec /usr/bin/python3 "\$@"
+fi
+EOF
+chmod 0755 "${FAKE_BIN}/python3"
+
+PATH="${FAKE_BIN}:${PATH}" bash "${REPO_ROOT}/install.sh" web-updates orbitpage-existing
+grep -Fq -- '--enable-web-updates orbitpage-existing' "$TEST_DIR/web-updates-command" || fail "standalone service activation did not target the existing container"
+[[ ! -e "${INSTALL_DIR}/compose.yaml" && ! -e "${CONFIG_DIR}/orbitpage.env" ]] || fail "standalone service activation installed the application"
+rm -f "$TEST_DIR/web-updates-command"
+
 PATH="${FAKE_BIN}:${PATH}" \
 ORBITPAGE_HTTP_PORT=18080 \
 ORBITPAGE_DATA_DIR="$DATA_DIR" \
@@ -83,6 +99,11 @@ bash "${REPO_ROOT}/install.sh"
 [[ -x "$CLI_PATH" ]] || fail "management command was not installed"
 [[ -x "$UPDATE_CLI_PATH" ]] || fail "update command was not installed"
 grep -Fq 'exec /usr/local/bin/orbitpage update "$@"' "$UPDATE_CLI_PATH" || fail "update command does not delegate to the installer"
+[[ -f "$UPDATE_HELPER_PATH" ]] || fail "dashboard update helper was not installed"
+[[ "$(stat -c '%a' "$UPDATE_HELPER_PATH")" == "644" ]] || fail "dashboard update helper permissions are not 0644"
+if [[ -d /run/systemd/system ]]; then
+  grep -Fq -- '--enable-web-updates orbitpage' "$TEST_DIR/web-updates-command" || fail "latest installation did not automatically enable dashboard updates"
+fi
 [[ -f "${INSTALL_DIR}/compose.yaml" ]] || fail "Compose definition was not created"
 [[ -f "${INSTALL_DIR}/.env" ]] || fail "installer settings were not persisted"
 grep -Fxq 'ORBITPAGE_BIND_ADDRESS=127.0.0.1' "${INSTALL_DIR}/.env" || fail "default HTTP bind is not loopback"
@@ -106,6 +127,12 @@ bash "${REPO_ROOT}/install.sh"
 secret_after="$(grep '^JWT_SECRET=' "${CONFIG_DIR}/orbitpage.env")"
 [[ "$secret_before" == "$secret_after" ]] || fail "idempotent install replaced the JWT secret"
 grep -Fq 'PUBLIC_SITE_URL=https://updated.example.test' "${CONFIG_DIR}/orbitpage.env" || fail "idempotent install did not update the public URL"
+
+compose_before="$(sha256sum "${INSTALL_DIR}/compose.yaml")"
+PATH="${FAKE_BIN}:${PATH}" "$CLI_PATH" web-updates orbitpage-existing
+grep -Fq -- '--enable-web-updates orbitpage-existing' "$TEST_DIR/web-updates-command" || fail "web updates did not attach to the requested container"
+[[ "$compose_before" == "$(sha256sum "${INSTALL_DIR}/compose.yaml")" ]] || fail "web update activation rewrote the Compose definition"
+[[ "$secret_before" == "$(grep '^JWT_SECRET=' "${CONFIG_DIR}/orbitpage.env")" ]] || fail "web update activation replaced the JWT secret"
 
 config_output="$(PATH="${FAKE_BIN}:${PATH}" "$CLI_PATH" config)"
 grep -Fq '127.0.0.1:18080' <<< "$config_output" || fail "management command did not load persisted network settings"

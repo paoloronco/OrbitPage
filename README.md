@@ -53,7 +53,6 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 - [Why OrbitPage](#why-orbitpage)
 - [Quick start](#quick-start)
 - [Updates](#updates)
-- [Optional host updater](#optional-host-updater)
 - [What you can build](#what-you-can-build)
 - [Dashboard workspaces](#dashboard-workspaces)
 - [How it runs](#how-it-runs)
@@ -108,7 +107,7 @@ cd OrbitPage
 sudo ./install.sh
 ~~~
 
-The installer automates the same Docker deployment, generates a private JWT secret, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> and <code>orbitpage-update</code> management commands.
+The installer automates the same Docker deployment, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command. On Linux with systemd, official <code>latest</code> installations also get dashboard updates automatically. See [web updates](./docs/wiki/Deployment.md#web-updates) for existing Docker containers.
 
 For a Proxmox VE 8+ host, use the dedicated host-to-LXC installer instead:
 
@@ -180,21 +179,6 @@ npm run start
 ~~~
 
 Keep the same <code>DATA_DIR</code> and <code>JWT_SECRET</code>. For a systemd-managed source installation, rebuild with <code>npm run build</code> and restart the owning service instead of starting another foreground process. See [update procedures](./docs/wiki/Deployment.md#update-safely) for backups, health checks, and rollback.
-
-## Optional host updater
-
-The Docker commands above are sufficient for normal updates. On Linux, <code>orbitpage-update</code> is an optional convenience: it preserves container settings, creates a protected pre-update data archive, and checks the replacement image and health. It requires Python 3. The Linux and Proxmox installers already install it automatically.
-
-For a manual Docker installation, install it once from a trusted repository checkout if you want these additional checks:
-
-~~~bash
-git clone https://github.com/paoloronco/OrbitPage.git
-cd OrbitPage
-sudo ./scripts/install-updater.sh
-sudo orbitpage-update
-~~~
-
-The helper discovers official Docker Run containers and Compose projects. For a source checkout, register its root once with <code>sudo ./scripts/install-updater.sh source "$PWD"</code>. Source updates restart an active <code>orbitpage</code> systemd service; restart a foreground process yourself. Pinned Compose releases stay under your control. See [update procedures](./docs/wiki/Deployment.md#update-safely) for supported layouts, and [web updates](./docs/wiki/Deployment.md#web-updates) if you want to enable installation from the dashboard.
 
 ## What you can build
 

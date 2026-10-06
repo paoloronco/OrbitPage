@@ -15,6 +15,17 @@ spec.loader.exec_module(updater)
 
 
 class UpdatePlanTests(unittest.TestCase):
+    def test_web_updates_accept_untagged_official_images_and_reject_pins(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for image in ['paoloronco/orbitpage', 'docker.io/paoloronco/orbitpage', 'ghcr.io/paoloronco/orbitpage:latest']:
+                container = {'Config': {'Image': image}, 'Mounts': [{'Type': 'volume', 'Destination': '/app/data', 'Source': directory, 'RW': True}]}
+                with patch.object(updater, 'run', return_value=SimpleNamespace(stdout='unix:///var/run/docker.sock')), \
+                     patch.object(updater, 'docker_json', return_value=[container]):
+                    self.assertEqual(updater.web_update_directory('orbitpage-test'), Path(directory).resolve())
+                    container['Config']['Image'] = 'paoloronco/orbitpage:4.21.63'
+                    with self.assertRaisesRegex(RuntimeError, 'Pinned images'):
+                        updater.web_update_directory('orbitpage-test')
+
     def test_source_update_never_installs_checkout_owned_helpers_as_root(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -35,13 +46,13 @@ class UpdatePlanTests(unittest.TestCase):
             root = Path(directory)
             cli, helper = root / 'bin/orbitpage-update', root / 'lib/orbitpage-update.py'
             cli.parent.mkdir()
-            installer = script.with_name('install-updater.sh').read_text()
+            installer = script.parent.parent.joinpath('install.sh').read_text()
             installer = installer.replace('[[ ${EUID} -eq 0 ]]', '[[ 0 -eq 0 ]]')
             installer = installer.replace('/usr/local/bin/orbitpage-update', str(cli))
             installer = installer.replace('/usr/local/lib/orbitpage/orbitpage-update.py', str(helper))
-            result = updater.subprocess.run(['bash', '-s'], input=installer, text=True, cwd=root, capture_output=True)
+            result = updater.subprocess.run(['bash', '-s', '--', 'web-updates', 'orbitpage-test'], input=installer, text=True, cwd=root, capture_output=True)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn('trusted local OrbitPage source checkout', result.stderr)
+            self.assertIn('trusted local checkout', result.stderr)
             self.assertFalse(helper.exists())
             self.assertFalse(cli.exists())
 
