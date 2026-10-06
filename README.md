@@ -109,6 +109,8 @@ cd OrbitPage
 sudo ./install.sh
 ~~~
 
+If you are already root, omit <code>sudo</code>. Supported Linux distributions and advanced options are in the [deployment guide](./docs/wiki/Deployment.md#linux-installer).
+
 The installer automates the same Docker deployment, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command. On Linux with systemd, official <code>latest</code> installations also get dashboard updates automatically. See [web updates](./docs/wiki/Deployment.md#web-updates) for existing Docker containers.
 
 On a Proxmox VE 8+ host, run the dedicated host-to-LXC installer as root:

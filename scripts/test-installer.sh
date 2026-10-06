@@ -166,6 +166,10 @@ grep -Fq 'PUBLIC_SITE_URL=https://updated.example.test' "${CONFIG_DIR}/orbitpage
 expect_failure 'manual data migration' ORBITPAGE_DATA_DIR=/var/lib/orbitpage-moved
 expect_failure 'not supported' ORBITPAGE_CONTAINER_NAME=orbitpage-moved
 expect_failure 'not managed by this installer' ORBITPAGE_TEST_PROJECT=other-project
+mv "${INSTALL_DIR}/.env" "$TEST_DIR/settings.saved"
+expect_failure 'incomplete installer configuration'
+mv "$TEST_DIR/settings.saved" "${INSTALL_DIR}/.env"
+[[ "$secret_before" == "$(grep '^JWT_SECRET=' "${CONFIG_DIR}/orbitpage.env")" ]] || fail 'incomplete configuration recovery changed the secret'
 for health in unhealthy exited dead starting; do
   expect_failure 'did not become healthy' ORBITPAGE_TEST_HEALTH="$health"
 done

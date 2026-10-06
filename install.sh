@@ -196,7 +196,7 @@ compose() {
 }
 
 is_installed() {
-  [[ -f "$COMPOSE_FILE" && -f "$APP_ENV_FILE" ]]
+  [[ -f "$COMPOSE_FILE" && -f "$APP_ENV_FILE" && -f "$COMPOSE_ENV_FILE" ]]
 }
 
 require_installed() {
@@ -378,6 +378,7 @@ check_container_ownership() {
 
   project_label="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$CONTAINER_NAME" 2>/dev/null || true)"
   [[ "$project_label" == "orbitpage" ]] || die "A container named '${CONTAINER_NAME}' already exists and is not managed by this installer."
+  is_installed || die 'The existing container has incomplete installer configuration. Restore the Compose files and application environment before reinstalling.'
 }
 
 print_access_details() {
