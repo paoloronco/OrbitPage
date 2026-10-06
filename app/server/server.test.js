@@ -39,6 +39,8 @@ vi.mock('./auth.js', () => ({
   authenticateToken: (req, res, next) => {
     req.user = {
       username: authMockState.username,
+      authVersion: 7,
+      sessionId: 'test-session-id',
       authType: authMockState.authType,
       permissions: [...authMockState.permissions],
     };
@@ -79,7 +81,7 @@ vi.mock('./services/instance-details.js', async (importOriginal) => ({
 
 // Now import app
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
-import { authenticateUser, isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
+import { authenticateUser, generateToken, isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withImmediateTransaction, withTransaction } from './database.js';
 import { createApplicationBackup, restoreApplicationBackup, stageUploads } from './services/backup-service.js';
 import { consumeSetupToken, rotateSetupToken } from './services/setup-token.js';
@@ -162,7 +164,10 @@ describe('API Endpoints', () => {
     expect((await request(app).post(endpoint).send({ ...input, command: 'rm -rf /' })).status).toBe(400);
     const job = { state: 'running', version: input.version, logs: 'Backup created', error: null };
     vi.mocked(updateAgentRequest).mockResolvedValue({ enabled: true, job });
-    expect((await request(app).post(endpoint).send(input)).status).toBe(202);
+    const accepted = await request(app).post(endpoint).send(input);
+    expect(accepted.status).toBe(202);
+    expect(accepted.body.token).toBe('mock-token');
+    expect(generateToken).toHaveBeenLastCalledWith('admin', 7, 'test-session-id');
     expect(updateAgentRequest).toHaveBeenCalledWith(expect.any(String), input.version);
     expect((await request(app).put('/orbitpage/api/profile').send({ name: 'While updating' })).status).toBe(423);
     expect((await request(app).get(endpoint)).body.job.logs).toBe('Backup created');

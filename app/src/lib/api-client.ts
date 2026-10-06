@@ -449,7 +449,7 @@ export interface WorkspaceBootstrapResponse {
 }
 
 // API request helper with auth
-const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+const apiRequest = async <T>(endpoint: string, options: RequestInit = {}, preserveSession = false): Promise<T> => {
   const method = (options.method || 'GET').toUpperCase();
   const performRequest = async (authHeaders: Record<string, string>) => {
     const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -522,7 +522,7 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}): Promi
       // Only auth failures should clear the token. Other 403 responses are real
       // permission/product errors, for example demo-mode write protection.
       if (isAuthExpired) {
-        removeAuthToken();
+        if (!preserveSession) removeAuthToken();
         throw Object.assign(new Error('AUTH_EXPIRED'), { status: response.status });
       }
       if (response.status === 429) {
@@ -728,10 +728,15 @@ export type ApplicationUpdateJob = {
 };
 export type ApplicationUpdateStatus = { enabled: boolean; job: ApplicationUpdateJob | null };
 export const applicationUpdatesApi = {
-  status: () => apiRequest<ApplicationUpdateStatus>('/account/updates', { signal: AbortSignal.timeout(8000) }),
-  install: (version: string, currentPassword: string) => apiRequest<ApplicationUpdateStatus>('/account/updates', {
-    method: 'POST', body: JSON.stringify({ version, currentPassword }), signal: AbortSignal.timeout(8000),
-  }),
+  // Restart/proxy authentication failures must not destroy the session used to reconnect.
+  status: () => apiRequest<ApplicationUpdateStatus>('/account/updates', { signal: AbortSignal.timeout(8000) }, true),
+  install: async (version: string, currentPassword: string) => {
+    const response = await apiRequest<ApplicationUpdateStatus & { token?: string }>('/account/updates', {
+      method: 'POST', body: JSON.stringify({ version, currentPassword }), signal: AbortSignal.timeout(8000),
+    });
+    if (response.token) await setAuthToken(response.token);
+    return response;
+  },
 };
 
 export type AiPagePlanResponse = {

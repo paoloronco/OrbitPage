@@ -167,14 +167,19 @@ test('checks OSS updates and explains when the host update service is not enable
   await expect(install).toBeDisabled();
 });
 
-test('keeps the update modal locked through a restart and shows logs and the confirmed result', async ({ page }) => {
+test('reconnects after an update restart and transient 401, then reloads once with the session intact', async ({ page }) => {
   let job: Record<string, unknown> | null = null;
   let disconnected = false;
+  let unauthorized = false;
+  let dashboardLoads = 0;
+  page.on('load', () => dashboardLoads++);
   let rejectInstall = false;
   let latestTag = 'v99.0.0';
   await page.route('**/api/account/updates*', route => {
     if (rejectInstall && route.request().method() === 'POST') return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Host updater unavailable.' }) });
     if (disconnected) return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'Restarting' }) });
+    if (unauthorized) return route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: 'Restarting proxy' }) });
+    if (job) expect(route.request().headers().authorization).toMatch(/^Bearer .+/);
     if (route.request().method() === 'POST') {
       expect(route.request().postDataJSON()).toEqual({ version: '99.0.0', currentPassword: 'Current123!' });
       job = { id: 'isolated-update', state: 'queued', version: '99.0.0', startedAt: Date.now() / 1000, updatedAt: Date.now() / 1000, logs: '', error: null };
@@ -218,13 +223,20 @@ test('keeps the update modal locked through a restart and shows logs and the con
   await expect(dialog.getByRole('status')).toContainText('Connection lost — update status unknown');
   await expect(dialog.locator('progress')).toHaveCount(0);
   disconnected = false;
+  unauthorized = true;
+  await dialog.getByRole('button', { name: 'Check status', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => sessionStorage.getItem('orbitpage-auth-token'))).toBeTruthy();
+  unauthorized = false;
+  const loadsBeforeCompletion = dashboardLoads;
   job = { ...job, state: 'completed', logs: 'Health check passed\nUpdate completed. OrbitPage v99.0.0 is running.' };
   // Reconnection must complete through the recurring poll, without a manual refresh.
-  await expect(dialog.getByRole('status')).toContainText('Update completed · v99.0.0', { timeout: 10000 });
-  await expect(dialog.getByRole('button', { name: 'Reload dashboard' })).toBeVisible();
+  await expect(dialog.getByRole('status')).toContainText('Update complete — reopening your dashboard', { timeout: 10000 });
   await page.screenshot({ path: 'output/playwright/oss-update-completed.png' });
-  await dialog.locator('.account-delete-actions').getByRole('button', { name: 'Close', exact: true }).click();
+  await expect.poll(() => dashboardLoads).toBe(loadsBeforeCompletion + 1);
+  await expect(page.locator('.admin-dashboard-shell')).toBeVisible();
   await expect(dialog).toBeHidden();
+  await page.waitForTimeout(2500);
+  expect(dashboardLoads).toBe(loadsBeforeCompletion + 1);
   await page.getByRole('button', { name: 'Theme', exact: true }).click();
   latestTag = 'v100.0.0'; rejectInstall = true;
   await page.getByRole('button', { name: 'Account', exact: true }).click();

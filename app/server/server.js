@@ -4614,7 +4614,9 @@ app.post('/api/account/updates', authLimiter, authenticateToken, rejectPersonalT
     if (!await authenticateUser(input.data.currentPassword, req.user.username)) {
       return res.status(400).json({ error: 'Current password is incorrect.' });
     }
-    res.status(202).json(await updateAgentRequest(DATA_DIR, input.data.version));
+    const status = await updateAgentRequest(DATA_DIR, input.data.version);
+    // Password confirmation renews the existing session through the installation.
+    res.set('Cache-Control', 'private, no-store').status(202).json({ ...status, token: generateToken(req.user.username, req.user.authVersion, req.user.sessionId) });
   } catch (error) {
     res.status(error.status === 409 ? 409 : 503).json({ error: error.status === 409 ? error.message : 'Host updater unavailable. Check the updater service on the server.' });
   }

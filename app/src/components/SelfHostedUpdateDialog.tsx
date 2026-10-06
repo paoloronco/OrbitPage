@@ -22,6 +22,8 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [reloading, setReloading] = useState(false);
   const lastContact = useRef(Date.now());
   const [uncertain, setUncertain] = useState(false);
   const wasActive = useRef(false);
@@ -42,7 +44,11 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       if (wasActive.current && acceptedJobId.current && next.job?.id !== acceptedJobId.current) throw new Error('Waiting for the accepted update.');
       const busy = ['queued', 'running'].includes(next.job?.state || '');
       if (wasActive.current && !busy && next.job
-        && (next.job.id === acceptedJobId.current || next.job.version === requestedVersion || requestedVersion === null)) setShowResult(true);
+        && (next.job.id === acceptedJobId.current || next.job.version === requestedVersion || requestedVersion === null)) {
+        setShowResult(true);
+        // HTTP-only sessions live in memory; retain them rather than forcing a new login.
+        if (next.job.state === 'completed' && next.job.id === acceptedJobId.current && window.crypto?.subtle) setReloading(true);
+      }
       wasActive.current = busy;
       acceptedJobId.current = next.job?.id || null;
       setAwaitingConfirmation(false);
@@ -65,6 +71,12 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   }, [readStatus, requestedVersion]);
 
   useEffect(() => {
+    if (!reloading) return;
+    const timer = setTimeout(() => window.location.reload(), 1500);
+    return () => clearTimeout(timer);
+  }, [reloading]);
+
+  useEffect(() => {
     if (!active) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
     window.addEventListener('beforeunload', warn);
@@ -75,7 +87,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   const install = async () => {
     if (!requestedVersion || !password || !canInstall || !status?.enabled) return;
     submitting.current = true;
-    setStarting(true); setAwaitingConfirmation(true); wasActive.current = true; acceptedJobId.current = null; setError('');
+    setStarting(true); setAwaitingConfirmation(true); wasActive.current = false; acceptedJobId.current = null; setError('');
     try {
       const next = await applicationUpdatesApi.install(requestedVersion, password);
       setStatus(next); wasActive.current = ['queued', 'running'].includes(next.job?.state || '');
@@ -98,7 +110,9 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       onEscapeKeyDown={event => { if (active) event.preventDefault(); }} onPointerDownOutside={event => { if (active) event.preventDefault(); }}>
       <DialogHeader className="account-delete-header"><DialogTitle>{tr('Install OrbitPage update', 'Installa l’aggiornamento di OrbitPage')}</DialogTitle></DialogHeader>
       <div className={`account-update-status${job?.state === 'failed' ? ' account-update-status--failed' : ''}`} role="status" aria-live="polite">
-        <strong>{uncertain ? tr('Connection lost — update status unknown', 'Connessione persa — stato aggiornamento sconosciuto')
+        <strong>{reloading ? tr('Update complete — reopening your dashboard…', 'Aggiornamento completato — riapertura della dashboard…')
+          : connectionError && wasActive.current && !uncertain ? tr('Restarting OrbitPage — reconnecting automatically…', 'Riavvio di OrbitPage — riconnessione automatica…')
+          : uncertain ? tr('Connection lost — update status unknown', 'Connessione persa — stato aggiornamento sconosciuto')
           : starting ? tr('Starting update…', 'Avvio aggiornamento…')
           : job?.state === 'queued' ? tr('Checking the release…', 'Verifica della versione…')
           : job?.state === 'running' ? tr('Installing update…', 'Installazione aggiornamento…')
@@ -116,7 +130,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
         ? tr('The result could not be confirmed. Check the updater service on the server; the dashboard remains locked while the last known update is active.', 'Non è possibile confermare l’esito. Controlla il servizio updater sul server; la dashboard resta bloccata mentre l’ultimo stato noto indica un aggiornamento attivo.')
         : awaitingConfirmation && !acceptedJobId.current ? tr('Cannot reach the host updater. Checking whether the update started; installation is not confirmed.', 'Impossibile contattare l’updater sul server. Verifica dell’avvio in corso; l’installazione non è confermata.')
         : !wasActive.current ? tr('Cannot reach the host updater. Check the service on the server before trying again.', 'Impossibile contattare l’updater. Controlla il servizio sul server prima di riprovare.')
-        : tr('Waiting for the server to reconnect. This can happen while OrbitPage restarts.', 'In attesa della riconnessione al server. Può succedere durante il riavvio di OrbitPage.')}</p>}
+        : tr('Waiting for the server to reconnect. We keep checking automatically; leave this tab open.', 'In attesa della riconnessione al server. La verifica continua automaticamente; lascia aperta questa scheda.')}</p>}
       {(active || job?.logs) && <div className="account-update-log"><Label htmlFor="orbitpage-update-log">{tr('Update logs', 'Log aggiornamento')}</Label><pre ref={logs} id="orbitpage-update-log" tabIndex={0} aria-label={tr('Update logs', 'Log aggiornamento')}>{job?.logs || tr('Waiting for the host updater…', 'In attesa dell’updater sul server…')}</pre></div>}
       {job?.error && <p className="oss-account-error" role="alert">{job.error}</p>}
       {error && <p className="oss-account-error" role="alert">{error}</p>}
@@ -134,8 +148,8 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
       </>}
       <DialogFooter className="account-delete-actions">
         {!active && <Button className="account-secondary-action" type="button" variant="outline" onClick={() => { setShowResult(false); setPassword(''); onClose(); }}>{tr('Close', 'Chiudi')}</Button>}
-        {connectionError && <Button className="account-secondary-action" type="button" variant="outline" onClick={() => void readStatus()}><RefreshCw className="h-4 w-4" />{tr('Check status', 'Verifica stato')}</Button>}
-        {!active && job?.state === 'completed' && <Button className="account-primary-action" type="button" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" />{tr('Reload dashboard', 'Ricarica dashboard')}</Button>}
+        {connectionError && <Button className="account-secondary-action" type="button" variant="outline" disabled={checking} onClick={async () => { setChecking(true); try { await readStatus(); } finally { setChecking(false); } }}><RefreshCw className="h-4 w-4" />{checking ? tr('Checking…', 'Verifica…') : tr('Check status', 'Verifica stato')}</Button>}
+        {!active && job?.state === 'completed' && !reloading && <Button className="account-primary-action" type="button" onClick={() => window.location.reload()}><RefreshCw className="h-4 w-4" />{tr('Reload dashboard', 'Ricarica dashboard')}</Button>}
         {!active && job?.state !== 'completed' && status?.enabled && requestedVersion && canInstall && <Button className="account-primary-action" type="button" disabled={!password || connectionError} onClick={() => void install()}><Download className="h-4 w-4" />{tr('Install update', 'Installa aggiornamento')}</Button>}
       </DialogFooter>
     </DialogContent>
