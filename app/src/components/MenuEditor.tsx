@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { parseOrbitPageMenu } from '@orbitpage/page-schema';
 import {
   ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, Edit, Eye, EyeOff, GripVertical,
   ImagePlus, Layers3, ListTree, Palette, Plus, RotateCcw, Save, Trash2,
@@ -303,7 +304,7 @@ export function MenuEditor({
     setSaveError('');
     try {
       const normalized = normalizeMenuCatalog(draft, maxItems ?? 250);
-      await onSave(normalized);
+      await onSave(parseOrbitPageMenu(normalized));
       setDraft(normalized);
       showSavedNotice(previousMenu);
     } catch (error) {

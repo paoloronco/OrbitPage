@@ -1,96 +1,28 @@
 import {
   DEFAULT_ORBITPAGE_CONTENT_ROUTING,
+  DEFAULT_ORBITPAGE_MENU_FOOTER,
+  ORBITPAGE_MENU_THEME_PRESETS,
+  type OrbitPageMenu,
   type OrbitPageContentRouting,
 } from '@orbitpage/page-schema';
 
-export type MenuVenueType = 'restaurant' | 'bar' | 'cafe';
-export type MenuThemePreset = 'editorial' | 'bistro' | 'espresso' | 'coastal';
+export type MenuVenueType = OrbitPageMenu['venueType'];
+export type MenuThemePreset = OrbitPageMenu['theme']['preset'];
 export type ContentRouting = OrbitPageContentRouting;
 export type ContentDestination = ContentRouting['homepage'];
 export const DEFAULT_CONTENT_ROUTING: ContentRouting = DEFAULT_ORBITPAGE_CONTENT_ROUTING;
 
-export interface MenuVariant {
-  id: string;
-  name: string;
-  priceMinor: number;
-}
-
-export interface MenuSection {
-  id: string;
-  parentId?: string;
-  name: string;
-  description?: string;
-  visible: boolean;
-  position: number;
-}
-
-export interface MenuItem {
-  id: string;
-  sectionId: string;
-  name: string;
-  description?: string;
-  priceMinor: number;
-  details?: string;
-  imageUrl?: string;
-  imageAlt?: string;
-  variants: MenuVariant[];
-  allergens: string[];
-  dietaryTags: string[];
-  available: boolean;
-  featured: boolean;
-  position: number;
-}
-
-export interface MenuTheme {
-  preset: MenuThemePreset;
-  background: string;
-  surface: string;
-  text: string;
-  muted: string;
-  accent: string;
-  border: string;
-  radius: number;
-  imageLayout: 'compact' | 'cover';
-}
-
-export interface MenuCatalog {
-  version: 1;
-  enabled: boolean;
-  venueType: MenuVenueType;
-  name: string;
-  description: string;
-  footerText: string;
-  currency: string;
-  locale: string;
-  sections: MenuSection[];
-  items: MenuItem[];
-  theme: MenuTheme;
-  routing: ContentRouting;
-  updatedAt?: string;
-}
+export type MenuCatalog = OrbitPageMenu;
+export type MenuTheme = MenuCatalog['theme'];
+export type MenuItem = MenuCatalog['items'][number];
+export type MenuVariant = MenuItem['variants'][number];
+export type MenuSection = MenuCatalog['sections'][number];
 
 export interface NormalizeMenuCatalogOptions {
   preserveTextEdges?: boolean;
 }
 
-export const MENU_THEME_PRESETS: Record<MenuThemePreset, MenuTheme> = {
-  editorial: {
-    preset: 'editorial', background: '#eee7dc', surface: '#fffaf2', text: '#1f1a17', muted: '#665c52',
-    accent: '#9c3025', border: '#c9baa7', radius: 0, imageLayout: 'compact',
-  },
-  bistro: {
-    preset: 'bistro', background: '#e8c98f', surface: '#fff8e8', text: '#2a211a', muted: '#62513f',
-    accent: '#185944', border: '#c5a166', radius: 14, imageLayout: 'cover',
-  },
-  espresso: {
-    preset: 'espresso', background: '#15120f', surface: '#28221c', text: '#fff8ea', muted: '#c9bba5',
-    accent: '#efc36f', border: '#584b3d', radius: 10, imageLayout: 'compact',
-  },
-  coastal: {
-    preset: 'coastal', background: '#c8e8ee', surface: '#f8feff', text: '#0b3040', muted: '#3f626e',
-    accent: '#006f83', border: '#8fc4ce', radius: 24, imageLayout: 'cover',
-  },
-};
+export const MENU_THEME_PRESETS = ORBITPAGE_MENU_THEME_PRESETS;
 
 const DEFAULT_SECTIONS: Record<MenuVenueType, Array<Pick<MenuSection, 'name' | 'description'>>> = {
   restaurant: [
@@ -154,7 +86,7 @@ export function createDefaultMenu(venueType: MenuVenueType = 'restaurant'): Menu
     venueType,
     name: venueType === 'restaurant' ? 'Our menu' : venueType === 'bar' ? 'Drinks menu' : 'Café menu',
     description: 'A concise selection, updated by the venue.',
-    footerText: 'Prices and availability may change. Ask the venue about allergens and dietary requirements.',
+    footerText: DEFAULT_ORBITPAGE_MENU_FOOTER,
     currency: 'EUR',
     locale: 'en-GB',
     sections,
@@ -235,7 +167,7 @@ export function normalizeMenuCatalog(
 
   const rawTheme = input.theme && typeof input.theme === 'object' && !Array.isArray(input.theme)
     ? input.theme as Record<string, unknown> : {};
-  const preset = Object.prototype.hasOwnProperty.call(MENU_THEME_PRESETS, rawTheme.preset)
+  const preset = typeof rawTheme.preset === 'string' && Object.prototype.hasOwnProperty.call(MENU_THEME_PRESETS, rawTheme.preset)
     ? rawTheme.preset as MenuThemePreset : fallback.theme.preset;
   const presetTheme = MENU_THEME_PRESETS[preset];
   const rawRouting = input.routing && typeof input.routing === 'object' && !Array.isArray(input.routing)

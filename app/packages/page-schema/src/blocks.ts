@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  OrbitPageValidationError,
   OrbitPageBlockIdSchema,
   OrbitPageHrefCandidateSchema,
   OrbitPageHexColorSchema,
@@ -297,12 +298,12 @@ function structuredContent(
 ): string | undefined {
   if (content === undefined || content === null || content === "") return undefined;
   if (type === "text") {
-    if (typeof content !== "string") throw new Error("Text block content must be plain text.");
+    if (typeof content !== "string") throw new OrbitPageValidationError("Text block content must be plain text.");
     return content.slice(0, 20_000);
   }
 
   if (["menu", "cta", "heading", "image", "newsletter"].includes(type)) {
-    throw new Error(`${type} blocks do not support structured content.`);
+    throw new OrbitPageValidationError(`${type} blocks do not support structured content.`);
   }
 
   const input = parseJsonObject(content, type);
@@ -356,7 +357,7 @@ function structuredContent(
       parsed = parseOrThrow(schemaFor(OrbitPageServiceLinkContentSchema), input, "Invalid service-link block content.");
     }
   } else {
-    throw new Error(`Unsupported block type: ${type}`);
+    throw new OrbitPageValidationError(`Unsupported block type: ${type}`);
   }
   return stableJsonObject(parsed);
 }
@@ -427,7 +428,7 @@ function canonicalBlock(value: unknown, position: number, strict: boolean): Orbi
   const type = ORBITPAGE_BLOCK_TYPES.includes(requestedType as OrbitPageBlockType)
     ? requestedType as OrbitPageBlockType
     : strict
-      ? (() => { throw new Error(`Unsupported block type: ${requestedType}`); })()
+      ? (() => { throw new OrbitPageValidationError(`Unsupported block type: ${requestedType}`); })()
       : "link";
   const requestedId = String(input.id ?? "");
   const id = OrbitPageBlockIdSchema.safeParse(requestedId).success ? requestedId : generatedId();
@@ -487,7 +488,7 @@ function canonicalBlock(value: unknown, position: number, strict: boolean): Orbi
 function assertUniqueIds(blocks: OrbitPageBlock[]) {
   const ids = new Set<string>();
   for (const block of blocks) {
-    if (ids.has(block.id)) throw new Error(`Block IDs must be unique: ${block.id}`);
+    if (ids.has(block.id)) throw new OrbitPageValidationError(`Block IDs must be unique: ${block.id}`);
     ids.add(block.id);
   }
   return blocks;
@@ -508,7 +509,7 @@ export const OrbitPageBlocksSchema = z.array(OrbitPageBlockSchema)
   });
 
 export function parseOrbitPageBlocks(value: unknown) {
-  if (!Array.isArray(value)) throw new Error("Blocks must be provided as a list.");
+  if (!Array.isArray(value)) throw new OrbitPageValidationError("Blocks must be provided as a list.");
   return assertUniqueIds(value.map((block, index) => canonicalBlock(block, index, true)));
 }
 

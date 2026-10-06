@@ -1,6 +1,47 @@
 import { expect, test } from '@playwright/test';
 import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
+test('preserves the menu draft after validation failures and saves a corrected retry', async ({ page }) => {
+  await openAuthenticatedAdmin(page);
+  await openAdminSection(page, 'Menu');
+  const editor = page.locator('.menu-editor-stack--visual');
+  await editor.locator('.menu-unified-toolbar').getByRole('button', { name: 'Add item', exact: true }).click();
+  const name = editor.locator('.menu-product-editor').getByRole('textbox', { name: 'Name', exact: true });
+  const save = page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true });
+  let requests = 0;
+  let rejectNextSave = true;
+  await page.route('**/api/menu', async (route) => {
+    if (route.request().method() !== 'PUT') return route.fallback();
+    requests += 1;
+    if (rejectNextSave) {
+      rejectNextSave = false;
+      return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: 'Menu name must not be empty.', code: 'MENU_INVALID' }) });
+    }
+    return route.fallback();
+  });
+  await name.fill('');
+  await save.click();
+  await expect(page.locator('.admin-profile-save-float').getByRole('alert')).toContainText('name');
+  expect(requests).toBe(0);
+  await expect(name).toHaveValue('');
+  await expect(save).toBeEnabled();
+
+  const itemName = `Validation retry ${Date.now()}`;
+  await name.fill(itemName);
+  await save.click();
+  await expect(page.locator('.admin-profile-save-float').getByRole('alert')).toContainText('Menu name');
+  await expect(name).toHaveValue(itemName);
+  await expect(save).toBeEnabled();
+  expect(requests).toBe(1);
+  await save.click();
+  await expect(page.locator('.admin-profile-saved-notice')).toContainText('Saved');
+  expect(requests).toBe(2);
+  await page.reload();
+  await openAdminSection(page, 'Menu');
+  await page.getByRole('button', { name: `Edit ${itemName}` }).click();
+  await expect(editor.locator('.menu-product-editor').getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(itemName);
+});
+
 
 test('accepts localized menu prices without rewriting the field while typing', async ({ page }, testInfo) => {
   const priceByProject: Record<string, string> = {

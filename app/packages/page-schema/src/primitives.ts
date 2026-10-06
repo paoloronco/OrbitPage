@@ -148,6 +148,8 @@ export const OrbitPageHrefCandidateSchema = z.string().max(2_048)
     "Use a safe public destination."
   );
 
+export class OrbitPageValidationError extends Error {}
+
 export function parseJsonObject(value: unknown, label: string): Record<string, unknown> {
   if (isPlainObject(value)) return value;
   if (typeof value !== "string" || !value.trim()) return {};
@@ -156,7 +158,7 @@ export function parseJsonObject(value: unknown, label: string): Record<string, u
     if (!isPlainObject(parsed)) throw new Error();
     return parsed;
   } catch {
-    throw new Error(`${label} content must be a JSON object.`);
+    throw new OrbitPageValidationError(`${label} content must be a JSON object.`);
   }
 }
 
@@ -168,11 +170,11 @@ export function zodMessage(error: z.ZodError, fallback: string) {
   const first = error.issues[0];
   if (!first) return fallback;
   const path = first.path.length ? `${first.path.join(".")}: ` : "";
-  return `${path}${first.message}`;
+  return `${path}${first.message === "Invalid input" ? fallback : first.message}`;
 }
 
 export function parseOrThrow<T>(schema: z.ZodType<T>, value: unknown, fallback: string): T {
   const result = schema.safeParse(value);
-  if (!result.success) throw new Error(zodMessage(result.error, fallback));
+  if (!result.success) throw new OrbitPageValidationError(zodMessage(result.error, fallback));
   return result.data;
 }

@@ -51,6 +51,13 @@ export const OrbitPageMenuThemeSchema = z.object({
 }).strict();
 
 export const ORBITPAGE_CONTENT_DESTINATIONS = ["link", "menu", "shop", "pages"] as const;
+export const ORBITPAGE_MENU_THEME_PRESETS: Record<z.infer<typeof OrbitPageMenuThemeSchema>["preset"], z.infer<typeof OrbitPageMenuThemeSchema>> = {
+  editorial: { preset: "editorial", background: "#eee7dc", surface: "#fffaf2", text: "#1f1a17", muted: "#665c52", accent: "#9c3025", border: "#c9baa7", radius: 0, imageLayout: "compact" },
+  bistro: { preset: "bistro", background: "#e8c98f", surface: "#fff8e8", text: "#2a211a", muted: "#62513f", accent: "#185944", border: "#c5a166", radius: 14, imageLayout: "cover" },
+  espresso: { preset: "espresso", background: "#15120f", surface: "#28221c", text: "#fff8ea", muted: "#c9bba5", accent: "#efc36f", border: "#584b3d", radius: 10, imageLayout: "compact" },
+  coastal: { preset: "coastal", background: "#c8e8ee", surface: "#f8feff", text: "#0b3040", muted: "#3f626e", accent: "#006f83", border: "#8fc4ce", radius: 24, imageLayout: "cover" }
+};
+export const DEFAULT_ORBITPAGE_MENU_FOOTER = "Prices and availability may change. Ask the venue about allergens and dietary requirements.";
 
 export const OrbitPageContentRoutingSchema = z.object({
   homepage: z.enum(ORBITPAGE_CONTENT_DESTINATIONS),
@@ -71,6 +78,7 @@ export const OrbitPageMenuSchema = z.object({
   venueType: z.enum(["restaurant", "bar", "cafe"]),
   name: boundedString(120).trim().min(1),
   description: boundedString(500).trim(),
+  footerText: boundedString(500).trim().default(DEFAULT_ORBITPAGE_MENU_FOOTER),
   currency: z.string().regex(/^[A-Z]{3}$/),
   locale: z.string().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/),
   sections: z.array(MenuSectionSchema).min(1).max(30),
@@ -112,6 +120,7 @@ export const DEFAULT_ORBITPAGE_MENU: OrbitPageMenu = {
   venueType: "restaurant",
   name: "Our menu",
   description: "A concise selection, updated by the venue.",
+  footerText: DEFAULT_ORBITPAGE_MENU_FOOTER,
   currency: "EUR",
   locale: "en-GB",
   sections: [
