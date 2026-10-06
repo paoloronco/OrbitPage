@@ -68,25 +68,18 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 
 ### Docker image (recommended)
 
-OrbitPage publishes one multi-architecture Linux image for amd64 and arm64 on Docker Hub and GitHub Container Registry. Docker automatically selects the matching image for the host. The commands below use Docker Hub:
+With Docker installed, pull the image and start OrbitPage:
 
 ~~~bash
-sudo install -d -m 0750 /var/lib/orbitpage
-
-sudo docker pull paoloronco/orbitpage:latest
-sudo docker run -d --name orbitpage \
-  --restart unless-stopped \
-  -p 127.0.0.1:8080:8080 \
-  -v /var/lib/orbitpage:/app/data \
-  --security-opt no-new-privileges:true \
-  paoloronco/orbitpage:latest
-
-git clone https://github.com/paoloronco/OrbitPage.git
-cd OrbitPage
-sudo ./scripts/install-updater.sh
+docker pull paoloronco/orbitpage
+docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
 ~~~
 
-Open the public page at <http://localhost:8080>, the dashboard at <http://localhost:8080/dashboard/profile>, and the health check at <http://localhost:8080/health>. Read the first-run token with <code>sudo cat /var/lib/orbitpage/.setup-token</code> and enter it in the setup wizard. Place a trusted HTTPS reverse proxy in front before remote access. The last command installs the host updater; run <code>sudo orbitpage-update</code> for later updates. Python 3 is required on the host for manual Docker and Compose installations.
+Docker automatically creates the persistent <code>orbitpage-data</code> volume. OrbitPage initializes the database, uploads, and private secret there; no host directory, environment file, or repository checkout is needed. The image works on amd64 and arm64. Use <code>sudo docker</code> on Linux if your account requires it.
+
+Open the public page at <http://localhost:8080> or the dashboard at <http://localhost:8080/dashboard/profile>. Read the first-run token with <code>docker exec orbitpage cat /app/data/.setup-token</code> and enter it in the setup wizard. Place a trusted HTTPS reverse proxy in front before remote access.
+
+Docker requires the restart policy, host port, data mount, and security option at container creation; an image cannot supply them. For a **startup without flags**, use [Docker Compose](#docker-compose-automatic-defaults) below. To customize Docker Run, change the host port to <code>127.0.0.1:8090:8080</code>, or replace <code>orbitpage-data</code> with your existing volume or an absolute host directory. Existing installations must keep their current data mount.
 
 ### Automatic JWT secret
 
@@ -96,18 +89,19 @@ The same multi-architecture image is available as <code>ghcr.io/paoloronco/orbit
 
 See the complete [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended) for image selection, Compose, verification, updates, backups, and rollback.
 
-### Docker Compose (local evaluation)
+### Docker Compose (automatic defaults)
 
-Clone the repository and start the local evaluation service:
+For an automatic setup without Docker Run flags, use the included Compose file:
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage
 docker compose up -d
-sudo ./scripts/install-updater.sh
 ~~~
 
-The tracked Compose file binds only to <code>127.0.0.1:8080</code> and persists the database, uploads, and generated JWT secret in <code>./orbitpage-data</code>. For production, use the [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended).
+This command pulls the image, starts OrbitPage on <code>localhost:8080</code>, creates <code>./orbitpage-data</code> automatically, and sets <code>restart: unless-stopped</code>. Read the setup token with <code>docker compose exec orbitpage cat /app/data/.setup-token</code>. Later, run <code>docker compose pull</code> followed by <code>docker compose up -d</code> to update while keeping the data. Keep this checkout and its data directory together; <code>docker compose down</code> stops and removes the container but leaves that directory in place.
+
+Edit the port mapping or data mount in <code>docker-compose.yml</code> only if you need different settings. For production hardening, backups, and reverse proxies, use the [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended).
 
 ### Linux install
 
@@ -157,9 +151,11 @@ Run <code>sudo orbitpage-update</code> from any directory to pull a fast-forward
 
 ## Updates
 
-The Linux and Proxmox installers install <code>orbitpage-update</code> automatically. For an existing manual Docker Run or Docker Compose installation on Linux, install the host command once, then update:
+The Linux and Proxmox installers install <code>orbitpage-update</code> automatically. For a manual Docker Run or Docker Compose installation on Linux, the host updater is optional and requires Python 3. Install it once from a trusted repository checkout, then update:
 
 ~~~bash
+git clone https://github.com/paoloronco/OrbitPage.git
+cd OrbitPage
 sudo ./scripts/install-updater.sh
 sudo orbitpage-update
 sudo docker exec orbitpage node -p "require('./package.json').version"
