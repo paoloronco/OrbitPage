@@ -105,6 +105,7 @@ for port in 0 65536 invalid 999999999999999999999999; do
 done
 expect_failure 'IPv4 address' ORBITPAGE_BIND_ADDRESS=256.0.0.1
 expect_failure 'invalid characters' ORBITPAGE_CONTAINER_NAME=-orbitpage
+expect_failure 'ORBITPAGE_REQUIRE_SETUP_TOKEN' ORBITPAGE_REQUIRE_SETUP_TOKEN=typo
 expect_failure 'HTTP(S)' ORBITPAGE_PUBLIC_SITE_URL=javascript:alert
 expect_failure 'absolute single-line' ORBITPAGE_DATA_DIR=relative/orbitpage
 expect_failure 'resolved ORBITPAGE_DATA_DIR' ORBITPAGE_DATA_DIR=/tmp/orbitpage/..
@@ -143,6 +144,7 @@ fi
 grep -Fxq 'ORBITPAGE_BIND_ADDRESS=127.0.0.1' "${INSTALL_DIR}/.env" || fail "default HTTP bind is not loopback"
 grep -Fxq 'ORBITPAGE_HTTP_PORT=18080' "${INSTALL_DIR}/.env" || fail 'leading-zero port was not normalized to decimal'
 [[ -f "${CONFIG_DIR}/orbitpage.env" ]] || fail "application environment was not created"
+grep -Fxq 'REQUIRE_SETUP_TOKEN=false' "${CONFIG_DIR}/orbitpage.env" || fail 'fresh installation requires a setup token'
 [[ -d "$DATA_DIR" ]] || fail "persistent data directory was not created"
 [[ "$(stat -c '%a' "${CONFIG_DIR}/orbitpage.env")" == "600" ]] || fail "secret file permissions are not 0600"
 [[ "$(stat -c '%a' "$DATA_DIR")" == "700" ]] || fail "persistent data directory permissions are not 0700"
@@ -156,11 +158,18 @@ if [[ -x /usr/bin/docker ]] && /usr/bin/docker compose version >/dev/null 2>&1; 
 fi
 
 secret_before="$(grep '^JWT_SECRET=' "${CONFIG_DIR}/orbitpage.env")"
+PATH="${FAKE_BIN}:${PATH}" bash "${REPO_ROOT}/install.sh" --require-setup-token > "$TEST_DIR/result"
+grep -Fxq 'REQUIRE_SETUP_TOKEN=true' "${CONFIG_DIR}/orbitpage.env" || fail 'setup token flag was not persisted'
+grep -Fq '.setup-token' "$TEST_DIR/result" || fail 'protected setup has no token instructions'
 PATH="${FAKE_BIN}:${PATH}" \
 ORBITPAGE_PUBLIC_SITE_URL=https://updated.example.test \
 bash "${REPO_ROOT}/install.sh"
 secret_after="$(grep '^JWT_SECRET=' "${CONFIG_DIR}/orbitpage.env")"
 [[ "$secret_before" == "$secret_after" ]] || fail "idempotent install replaced the JWT secret"
+grep -Fxq 'REQUIRE_SETUP_TOKEN=true' "${CONFIG_DIR}/orbitpage.env" || fail 'reinstall disabled explicit setup protection'
+PATH="${FAKE_BIN}:${PATH}" ORBITPAGE_REQUIRE_SETUP_TOKEN=false bash "${REPO_ROOT}/install.sh" > "$TEST_DIR/result"
+grep -Fxq 'REQUIRE_SETUP_TOKEN=false' "${CONFIG_DIR}/orbitpage.env" || fail 'explicit disable was not persisted'
+! grep -Fq '.setup-token' "$TEST_DIR/result" || fail 'direct setup still prints token instructions'
 grep -Fq 'PUBLIC_SITE_URL=https://updated.example.test' "${CONFIG_DIR}/orbitpage.env" || fail "idempotent install did not update the public URL"
 
 expect_failure 'manual data migration' ORBITPAGE_DATA_DIR=/var/lib/orbitpage-moved

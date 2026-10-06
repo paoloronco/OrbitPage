@@ -77,7 +77,7 @@ docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -
 
 Docker automatically creates the persistent <code>orbitpage-data</code> volume. OrbitPage initializes the database, uploads, and private secret there; no host directory, environment file, or repository checkout is needed. The image works on amd64 and arm64. Use <code>sudo docker</code> on Linux if your account requires it.
 
-Open the public page at <http://localhost:8080> or the dashboard at <http://localhost:8080/dashboard/profile>. Read the first-run token with <code>docker exec orbitpage cat /app/data/.setup-token</code> and enter it in the setup wizard. Place a trusted HTTPS reverse proxy in front before remote access.
+Open the public page at <http://localhost:8080> or the dashboard at <http://localhost:8080/dashboard/profile> and create the administrator in the setup wizard. No setup token is required by default: the first person to complete the wizard takes control of the instance. Place a trusted HTTPS reverse proxy in front before remote access. [Token protection is optional](./docs/wiki/Deployment.md#optional-setup-token).
 
 Docker requires the restart policy, host port, data mount, and security option at container creation; an image cannot supply them. For a **startup without flags**, use [Docker Compose](#docker-compose-automatic-defaults) below. To customize Docker Run, change the host port to <code>127.0.0.1:8090:8080</code>, or replace <code>orbitpage-data</code> with your existing volume or an absolute host directory. Existing installations must keep their current data mount.
 
@@ -93,7 +93,7 @@ cd OrbitPage
 docker compose up -d
 ~~~
 
-This command pulls the image, starts OrbitPage on <code>localhost:8080</code>, creates <code>./orbitpage-data</code> automatically, and sets <code>restart: unless-stopped</code>. Read the setup token with <code>docker compose exec orbitpage cat /app/data/.setup-token</code>. Later, run <code>docker compose pull</code> followed by <code>docker compose up -d</code> to update while keeping the data. Keep this checkout and its data directory together; <code>docker compose down</code> stops and removes the container but leaves that directory in place.
+This command pulls the image, starts OrbitPage on <code>localhost:8080</code>, creates <code>./orbitpage-data</code> automatically, and sets <code>restart: unless-stopped</code>. Complete setup in the browser. Later, run <code>docker compose pull</code> followed by <code>docker compose up -d</code> to update while keeping the data. Keep this checkout and its data directory together; <code>docker compose down</code> stops and removes the container but leaves that directory in place.
 
 Edit the port mapping or data mount in <code>docker-compose.yml</code> only if you need different settings. For production hardening, backups, and reverse proxies, use the [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended).
 
@@ -144,7 +144,7 @@ export DATA_DIR="$PWD/.orbitpage-data"
 npm run start
 ~~~
 
-The production-style source run is available at <http://localhost:3001>. Read <code>$DATA_DIR/.setup-token</code> on the host for first setup. Source mode makes SQLite storage owner-only on POSIX hosts; keep <code>DATA_DIR</code> on a private volume.
+The production-style source run is available at <http://localhost:3001>. Complete setup in the browser. Source mode makes SQLite storage owner-only on POSIX hosts; keep <code>DATA_DIR</code> on a private volume.
 
 ## Updates
 

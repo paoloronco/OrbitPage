@@ -69,7 +69,7 @@ import {
   stageUploads,
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
-import { consumeSetupToken, ensureSetupToken, rotateSetupToken, verifySetupToken } from './services/setup-token.js';
+import { consumeSetupToken, ensureSetupToken, isSetupTokenRequired, rotateSetupToken, verifySetupToken } from './services/setup-token.js';
 import { auditActionForRequest, listAuditEvents, recordAuditEvent } from './services/audit-log.js';
 import {
   captureApplicationVersion,
@@ -2307,7 +2307,7 @@ const initializeDemoReset = async () => {
 
 // Initialize database
 await initializeDatabase();
-if (await isFirstTimeSetup()) ensureSetupToken();
+if (isSetupTokenRequired() && await isFirstTimeSetup()) ensureSetupToken();
 if (DEMO_MODE) {
   await initializeDemoReset();
 }
@@ -2464,9 +2464,11 @@ app.get('/api/auth/setup-status', async (req, res) => {
       getSetupDependencies(),
       getInstancePageSlug(),
     ]);
-    if (firstTime) ensureSetupToken();
+    const requiresSetupToken = isSetupTokenRequired();
+    if (firstTime && requiresSetupToken) ensureSetupToken();
     res.json({
       isFirstTimeSetup: firstTime,
+      requiresSetupToken,
       username: 'admin',
       usernameLocked: true,
       pageSlug,
@@ -2489,8 +2491,11 @@ app.post('/api/auth/setup', authLimiter, async (req, res) => {
 
   setupInProgress = true;
   try {
+    if (!(await isFirstTimeSetup())) {
+      return res.status(409).json({ error: 'Initial setup has already been completed.' });
+    }
     const { password, setupToken } = SetupBodySchema.parse(req.body || {});
-    if (!verifySetupToken(setupToken)) {
+    if (isSetupTokenRequired() && !verifySetupToken(setupToken)) {
       return res.status(403).json({ error: 'Invalid local setup token.' });
     }
     const dependencies = await getSetupDependencies();
@@ -4939,7 +4944,8 @@ app.post('/api/auth/reset-via-token', resetLimiter, async (req, res) => {
 
 // Internal function to reset the application (used by both endpoints)
 const resetApplicationData = async () => {
-  rotateSetupToken();
+  if (isSetupTokenRequired()) rotateSetupToken();
+  else consumeSetupToken();
   const mediaReset = stageUploads({ uploadsPath, uploads: [] });
   try {
     const result = await withTransaction(async () => {

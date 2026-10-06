@@ -150,6 +150,7 @@ grep -Fq '<ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.18.5>' "$CALLS" \
   || fail "pinned image was not forwarded"
 grep -Fq '<ORBITPAGE_HTTP_PORT=18080>' "$CALLS" || fail "HTTP port was not forwarded"
 grep -Fq '<ORBITPAGE_BIND_ADDRESS=127.0.0.1>' "$CALLS" || fail "guest HTTP listener is not loopback-only"
+grep -Fq '<ORBITPAGE_REQUIRE_SETUP_TOKEN=false>' "$CALLS" || fail 'default setup mode was not forwarded'
 grep -Fq '<ORBITPAGE_PUBLIC_SITE_URL=https://page.example.test>' "$CALLS" \
   || fail "public URL was not forwarded"
 grep -Fq '<push> <123>' "$CALLS" || fail "local guest installer was not copied"
@@ -166,11 +167,16 @@ awk '
 ' "$CALLS" || fail 'guest creation, copy, installation and health checks ran in the wrong order'
 
 run_case() {
+  local -a flags=()
+  if [[ "${1:-}" == --require-setup-token ]]; then
+    flags=(--require-setup-token)
+    shift
+  fi
   rm -f "$CT_STATE" "$TEMPLATE_STATE" "$CALLS"
   env PATH="${FAKE_BIN}:${PATH}" ORBITPAGE_TEST_CALLS="$CALLS" \
     ORBITPAGE_TEST_CT_STATE="$CT_STATE" ORBITPAGE_TEST_TEMPLATE_STATE="$TEMPLATE_STATE" \
     ORBITPAGE_PVE_TEST_MODE=1 ORBITPAGE_PVE_WAIT_SECONDS=0 ORBITPAGE_PVE_WAIT_ATTEMPTS=2 \
-    "$@" bash "${REPO_ROOT}/install-pve.sh" > "$TEST_DIR/result" 2>&1
+    "$@" bash "${REPO_ROOT}/install-pve.sh" "${flags[@]}" > "$TEST_DIR/result" 2>&1
 }
 
 expect_rejected() {
@@ -186,6 +192,7 @@ expect_rejected 'Invalid IPv4' ORBITPAGE_PVE_IP=192.0.2.25/24 ORBITPAGE_PVE_GATE
 expect_rejected 'IPv4 CIDR' ORBITPAGE_PVE_IP=192.0.2.25/33
 expect_rejected 'static IP' ORBITPAGE_PVE_GATEWAY=192.0.2.1
 expect_rejected 'ORBITPAGE_HTTP_PORT' ORBITPAGE_HTTP_PORT=65536
+expect_rejected 'ORBITPAGE_REQUIRE_SETUP_TOKEN' ORBITPAGE_REQUIRE_SETUP_TOKEN=typo
 expect_rejected 'ORBITPAGE_PVE_MEMORY' ORBITPAGE_PVE_MEMORY=1
 expect_rejected 'ORBITPAGE_PVE_VLAN' ORBITPAGE_PVE_VLAN=4095
 expect_rejected 'ORBITPAGE_PVE_CORES' ORBITPAGE_PVE_CORES=999999999999999999999999
@@ -202,7 +209,11 @@ grep -Fq 'ip=192.0.2.25/24,ip6=auto,firewall=1,gw=192.0.2.1,tag=30' "$CALLS" || 
 grep -Fq '<--rootfs> <local-lvm:8>' "$CALLS" || fail 'leading-zero disk size was not normalized'
 ! grep -Fq 'pveam download' "$CALLS" || fail 'cached template was downloaded again'
 run_case ORBITPAGE_IMAGE=paoloronco/orbitpage
+! grep -Fq 'Local setup token:' "$TEST_DIR/result" || fail 'direct setup prints token instructions'
 grep -Fq '<getent> <hosts> <download.docker.com> <registry-1.docker.io>' "$CALLS" || fail 'Docker Hub registry DNS was not checked'
+run_case --require-setup-token
+grep -Fq '<ORBITPAGE_REQUIRE_SETUP_TOKEN=true>' "$CALLS" || fail 'setup token flag was not forwarded'
+grep -Fq 'Local setup token:' "$TEST_DIR/result" || fail 'protected setup has no token instructions'
 
 for stage in start ready ip dns push install health; do
   if run_case ORBITPAGE_TEST_FAIL="$stage"; then fail "failed $stage was reported as ready"; fi

@@ -16,7 +16,8 @@ Overrides are stored in `DATA_DIR/.instance-env.json` with owner-only permission
 | `NODE_ENV` | unset | Set to `production` in production. |
 | `PORT` | `3001` local, `8080` Docker | Set to the port your platform expects. |
 | `HOST` | `127.0.0.1` source, `0.0.0.0` Docker | Bind both HTTP and optional self-signed HTTPS. Set `0.0.0.0` explicitly for remote source deployments behind a trusted HTTPS proxy. |
-| `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production; keep its `.setup-token` owner-only during first setup. |
+| `DATA_DIR` | server directory local, `/app/data` Docker | Persist this directory in production. |
+| `REQUIRE_SETUP_TOKEN` | `false` | Set to `true` to require the owner-only `.setup-token` for initial administrator creation. Otherwise, the first person to complete browser setup takes control. |
 | `UPLOAD_STORAGE_QUOTA_MB` | `1024` | Keep local uploads bounded. Raise this only when the data volume is sized accordingly. |
 | `VIDEO_UPLOAD_LIMIT_MB` | `100` | Maximum size for one uploaded MP4/WebM/GIF media file. |
 | `ORBITPAGE_BACKUP_MEDIA_LIMIT_MB` | `128` | Maximum decoded media size in one backup export or restore. |
@@ -30,7 +31,7 @@ Overrides are stored in `DATA_DIR/.instance-env.json` with owner-only permission
 | --- | --- |
 | `JWT_SECRET` | Signs admin JWT sessions. Docker generates and persists it in `DATA_DIR/.jwt-secret` when omitted. Explicit values shorter than 32 characters or known placeholders are rejected. |
 | `PORT` | HTTP listener port. |
-| `DATA_DIR` | Stores `orbitpage.db`, uploads, the first-run `.setup-token`, and Docker's generated `.jwt-secret`. The setup token is consumed after administrator creation and rotated on full reset. |
+| `DATA_DIR` | Stores `orbitpage.db`, uploads, Docker's generated `.jwt-secret`, and the optional `.setup-token`. The token is consumed after administrator creation and rotated on full reset only when protection is enabled. |
 | `UPLOAD_STORAGE_QUOTA_MB` | Maximum total upload storage in MB. New uploads are rejected with `413` when exceeded. |
 | `VIDEO_UPLOAD_LIMIT_MB` | Per-file limit for uploaded video/background media. Content is also validated by MIME, extension, and binary signature. |
 | `FRONTEND_URL` | Optional development CORS/CSP origin. Leave unset for same-origin production. |

@@ -317,6 +317,7 @@ export interface SetupDependency {
 
 export interface SetupStatus {
   isFirstTimeSetup: boolean;
+  requiresSetupToken?: boolean;
   username: 'admin';
   usernameLocked: true;
   pageSlug: string | null;
@@ -583,7 +584,7 @@ export const authApi = {
     return apiRequest<SetupStatus>('/auth/setup-status');
   },
 
-  setup: async (password: string, setupToken: string): Promise<SetupResponse> => {
+  setup: async (password: string, setupToken?: string): Promise<SetupResponse> => {
     const response = await apiRequest<SetupResponse>('/auth/setup', {
       method: 'POST',
       body: JSON.stringify({ password, setupToken }),
