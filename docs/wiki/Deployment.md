@@ -33,9 +33,13 @@ Both registries receive the same manifest only after a release commit passes the
 
 Registry pages may also show `sha256:...` platform manifests and provenance attestations beneath those tags. They are required OCI internals, not additional pullable tag aliases; the public tag list remains `latest` plus complete versions.
 
+The `latest` tag remains mutable. For release integrity and deterministic rollback, review and pin an image digest from either registry, such as `paoloronco/orbitpage@sha256:DIGEST`; replace `DIGEST` with the reviewed manifest digest rather than using that placeholder literally.
+
 ### Automatic persistent data
 
 For a new Docker Run installation, use the named volume `orbitpage-data` in the command below. Docker creates it automatically; no host directory or `install -d` command is required. The image uses port `8080` and `DATA_DIR=/app/data` by default, creates the database and uploads directory, and generates a 256-bit `JWT_SECRET` in `/app/data/.jwt-secret` with mode `0600`. Later starts reuse it. An explicit `JWT_SECRET` still takes precedence and must contain at least 32 random characters.
+
+Docker users do not need to configure `JWT_SECRET`. Persist and back up all of `/app/data`, including `.jwt-secret`: losing or changing the secret invalidates active sessions and can make encrypted TOTP and saved provider credentials unreadable. Keep an explicit override stable and private as well; see [Configuration](./Configuration.md) for separate encryption keys.
 
 The volume survives container removal. Reuse the same named volume when replacing a container, and include the whole volume in backups. Do not remove it with `docker volume rm` or prune it while the container is absent. Do not switch an existing installation to the new example volume: keep its current mount so its database, uploads, and secret remain available.
 
@@ -62,7 +66,7 @@ Open `http://localhost:8080/dashboard/profile` and enter that token with the new
 
 Docker controls the published host port, restart policy, mount, and privilege restrictions; a Dockerfile cannot set those Docker Run options. `EXPOSE` describes the container listener but does not publish a port on the host. Compose supplies these settings from a file, so its startup command needs no flags.
 
-`--restart unless-stopped` restarts OrbitPage after a failure or host reboot while respecting an explicit `docker stop`. Keep the Docker service enabled on the host. Change the mapping to `127.0.0.1:8090:8080` for another host port. To choose a different data location, replace `orbitpage-data` with your own named volume or an absolute host directory; bind-mounted host directories should have restrictive permissions. The image cannot create an arbitrary directory on the host during its build.
+`--restart unless-stopped` restarts OrbitPage after a failure or host reboot while respecting an explicit `docker stop`. Use `--restart always` only when an explicit stop must not survive a Docker daemon restart. Keep the Docker service enabled on the host. Change the mapping to `127.0.0.1:8090:8080` for another host port. To choose a different data location, replace `orbitpage-data` with your own named volume or an absolute host directory; bind-mounted host directories should have restrictive permissions. The image cannot create an arbitrary directory on the host during its build.
 
 ### Start with Docker Compose
 
