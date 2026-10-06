@@ -553,7 +553,11 @@ Run the same health and smoke test after recreation.
 Account → General → Instance details can install an update and show its live
 logs when the host update service is enabled. Without that service the dialog
 explicitly offers the terminal command; opening it does not install anything.
-After updating, reload the dashboard. Self-hosted builds use content hashes in
+The dashboard reconnects automatically during the restart and reloads itself
+after the host confirms successful installation, keeping the authenticated
+session on HTTPS or localhost. HTTP-only sessions remain in the current tab
+because their credentials cannot be securely persisted across a reload.
+Self-hosted builds use content hashes in
 their JavaScript and CSS filenames so browsers and reverse proxies load the
 matching interface instead of retaining an older cached dashboard.
 
