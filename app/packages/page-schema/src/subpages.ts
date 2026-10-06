@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  OrbitPageValidationError,
   ORBITPAGE_MAX_SUBPAGES,
   OrbitPageBlockIdSchema,
   OrbitPageIsoDateSchema,
@@ -74,11 +75,11 @@ const LegacySubpageInputSchema = z.object(SubpageInputShape);
 
 function normalizeSubpages(value: unknown, strict: boolean) {
   if (!Array.isArray(value)) {
-    if (strict) throw new Error("Pages must be provided as a list.");
+    if (strict) throw new OrbitPageValidationError("Pages must be provided as a list.");
     return [];
   }
   if (value.length > ORBITPAGE_MAX_SUBPAGES) {
-    throw new Error(`A workspace cannot contain more than ${ORBITPAGE_MAX_SUBPAGES} pages.`);
+    throw new OrbitPageValidationError(`A workspace cannot contain more than ${ORBITPAGE_MAX_SUBPAGES} pages.`);
   }
   const now = new Date().toISOString();
   const ids = new Set<string>();
@@ -90,13 +91,13 @@ function normalizeSubpages(value: unknown, strict: boolean) {
       "One of the pages contains invalid or unsupported data."
     );
     const slug = normalizeOrbitPageSubpageSlug(input.slug);
-    if (!slug) throw new Error("Use a page slug made of letters, numbers and hyphens.");
-    if (slugs.has(slug)) throw new Error(`The page slug "${slug}" is already in use.`);
+    if (!slug) throw new OrbitPageValidationError("Use a page slug made of letters, numbers and hyphens.");
+    if (slugs.has(slug)) throw new OrbitPageValidationError(`The page slug "${slug}" is already in use.`);
     slugs.add(slug);
     const requestedId = String(input.id ?? "");
     let id = OrbitPageBlockIdSchema.safeParse(requestedId).success ? requestedId : generatedId("page");
     if (ids.has(id)) {
-      if (strict) throw new Error(`Page IDs must be unique: ${id}`);
+      if (strict) throw new OrbitPageValidationError(`Page IDs must be unique: ${id}`);
       id = generatedId("page");
     }
     ids.add(id);

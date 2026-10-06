@@ -15,3 +15,9 @@ When changing the schema:
 5. Keep hosted-only fields out of the public self-hosted contract unless the shared renderer genuinely needs them.
 
 Do not create a second copy of page or block types in another directory. Import or derive from this package so validation and rendering remain aligned.
+
+The menu schema also owns the curated theme catalog and footer default.
+Parsing invalid content throws `OrbitPageValidationError` (an `Error` subclass),
+so adapters can return actionable validation feedback while keeping unexpected
+infrastructure failures private. Validation must still reject unsupported
+fields, unsafe URLs, duplicate IDs and broken hierarchies.

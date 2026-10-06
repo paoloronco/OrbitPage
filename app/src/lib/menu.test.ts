@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { parseOrbitPageMenu } from '@orbitpage/page-schema';
+// The standalone Node backend consumes JavaScript schemas; verify the same wire contract.
+import { parseMenuCatalog } from '../../server/schemas/menu.schema.js';
 import {
   MENU_THEME_PRESETS, createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
 } from './menu';
@@ -15,6 +18,17 @@ const contrast = (foreground: string, background: string) => {
 };
 
 describe('menu catalog normalization', () => {
+  it.each(['restaurant', 'bar', 'cafe'] as const)('round-trips the %s editor through both server contracts', (venue) => {
+    const draft = createDefaultMenu(venue);
+    draft.footerText = ' Seasonal availability. ';
+    const payload = JSON.parse(JSON.stringify(normalizeMenuCatalog(draft)));
+    expect(parseOrbitPageMenu(payload)).toEqual(parseMenuCatalog(payload));
+    expect(parseOrbitPageMenu(payload).footerText).toBe('Seasonal availability.');
+    const { footerText: _footer, routing: _routing, ...legacy } = payload;
+    expect(parseOrbitPageMenu(legacy)).toEqual(parseMenuCatalog(legacy));
+    expect(parseOrbitPageMenu({ ...payload, footerText: '' }).footerText).toBe('');
+  });
+
   it('preserves one level of menu subsections without changing existing roots', () => {
     const menu = createDefaultMenu('bar');
     menu.sections = [

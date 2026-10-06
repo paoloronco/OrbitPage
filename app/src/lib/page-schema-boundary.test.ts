@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_ORBITPAGE_PROFILE,
   DEFAULT_ORBITPAGE_THEME,
+  DEFAULT_ORBITPAGE_CONSENT_CONFIG,
+  OrbitPageValidationError,
   ORBITPAGE_CARD_PRESETS,
   ORBITPAGE_PROFILE_CARD_LAYOUT_ID,
   ORBITPAGE_THEME_PRESETS,
@@ -14,12 +16,29 @@ import {
   parseOrbitPageBlockStylePatch,
   parseOrbitPageBlocks,
   parseOrbitPageTheme,
+  parseOrbitPageSubpages,
+  parseOrbitPageConsentConfig,
   isOrbitPageThemePresetConfiguration,
 } from '@orbitpage/page-schema';
 import { themePresets } from './theme-presets';
 import { cardThemePresets } from './card-theme-presets';
 
 describe('canonical page schema boundary', () => {
+  it.each([
+    () => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, { ownerUid: 'unexpected' }),
+    () => parseOrbitPageTheme({ ...DEFAULT_ORBITPAGE_THEME, background: 'invalid' }),
+    () => parseOrbitPageBlocks([{ id: 'video', type: 'video', content: '{broken' }]),
+    () => parseOrbitPageBlocks([{ id: 'duplicate', type: 'link' }, { id: 'duplicate', type: 'link' }]),
+    () => parseOrbitPageBlocks({ links: [] }),
+    () => parseOrbitPageSubpages([{ slug: 'menu', title: 'Reserved' }]),
+    () => parseOrbitPageSubpages([{ slug: 'about', title: 'About' }, { slug: 'about', title: 'Duplicate' }]),
+    () => parseOrbitPageSubpages({ pages: [] }),
+    () => parseOrbitPageConsentConfig({ ...DEFAULT_ORBITPAGE_CONSENT_CONFIG, unexpected: true }),
+    () => parseOrbitPageBlockStylePatch({ backgroundColor: 'invalid' }),
+  ])('identifies invalid editor input with a recoverable validation error (%#)', (parse) => {
+    expect(parse).toThrow(OrbitPageValidationError);
+  });
+
   it('accepts more than 150 blocks without a count quota', () => {
     const blocks = Array.from({ length: 201 }, (_, index) => ({ id: `block-${index}`, type: 'link', title: `Block ${index}` }));
     expect(parseOrbitPageBlocks(blocks)).toHaveLength(201);

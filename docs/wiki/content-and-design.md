@@ -103,6 +103,10 @@ Use the category filter and item search to keep large menus manageable. Products
 
 Enable the menu and select **Save** to publish it at `/menu` under the configured public page URL. The menu editor has no second publish step. Use **Add menu link to main page** to create or refresh the native menu card in Link, then save the Link blocks as well.
 
+Menu, category, item and option names must not be empty. If validation fails,
+the editor shows the field to correct and keeps your unsaved changes; correct
+it and select **Save** again. The footer accepts your own note or an empty value.
+
 ## Focused subpages
 
 Use **Content > Pages** for destinations that need their own URL and block list, such as services, an event program, or a portfolio section. Every subpage has:

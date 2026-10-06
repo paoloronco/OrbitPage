@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { OrbitPageIsoDateSchema, boundedString } from "./primitives";
+import { OrbitPageIsoDateSchema, boundedString, parseOrThrow } from "./primitives";
 
 const CAMPAIGN_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?$/;
 const CAMPAIGN_DESTINATION_PATTERN = /^(?:[a-z0-9](?:[a-z0-9-]{0,46}[a-z0-9])?)(?:\?section=[a-zA-Z0-9_-]{1,80})?$/;
@@ -47,7 +47,7 @@ export type OrbitPageCampaignLink = z.infer<typeof OrbitPageCampaignLinkSchema>;
 export type OrbitPageCampaignRule = z.infer<typeof OrbitPageCampaignRuleSchema>;
 
 export function parseOrbitPageCampaignLinks(value: unknown) {
-  return OrbitPageCampaignLinksSchema.parse(value);
+  return parseOrThrow(OrbitPageCampaignLinksSchema, value, "Campaign links contain invalid or unsupported data.");
 }
 
 export const OrbitPageTextFileSchema = z.object({
