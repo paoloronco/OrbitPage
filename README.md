@@ -9,7 +9,8 @@
 </p>
 
 <p align="center">
-  Create your public page, digital business card, portfolio, venue page, or small-business microsite - and self-host it with Docker.
+  <strong>Build your corner of the web. Make it unmistakably yours.</strong><br />
+  Design visually. Publish on your domain. Keep control of your data.
 </p>
 
 <p align="center">
@@ -28,9 +29,11 @@
   <a href="./SECURITY.md">Security</a>
 </p>
 
-OrbitPage is a free, MIT-licensed public page builder for digital business cards, portfolios, creator profiles, venue menus, event pages, and small-business websites. It combines a visual editing dashboard with responsive public rendering, built-in SEO and analytics, an Express backend, SQLite, and local file storage. No external database is required.
+**OrbitPage is an open-source visual page builder for creators, professionals, venues, and small businesses.** Create a portfolio, introduce your services, share a venue menu, or give an event its own home on the web. Combine images, video, links, contact details, maps, and calls to action; shape the layout, colors, and typography with a live preview.
 
-This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
+Your page adapts to phones and desktops, with SEO, QR codes, analytics, and newsletters built in. The self-hosted edition is free, MIT-licensed, and runs in one Docker container, keeping your content and data on your own server.
+
+Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This repository contains the self-hosted application.
 
 <p align="center">
   <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="OrbitPage dashboard walkthrough: profile, content blocks, themes and the public page" width="800" />
