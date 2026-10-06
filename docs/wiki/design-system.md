@@ -74,13 +74,30 @@ white highlight. Its existing gradients are part of the asset.
 
 | Asset | Use |
 | --- | --- |
-| [orbitpage-mark.svg](../../app/public/brand/orbitpage-mark.svg) | Icon and compact branding |
-| [orbitpage-lockup.svg](../../app/public/brand/orbitpage-lockup.svg) | Mark and OrbitPage wordmark |
+| [orbitpage-mark.svg](../../app/public/brand/orbitpage-mark.svg) | Icon on white and light backgrounds |
+| [orbitpage-lockup.svg](../../app/public/brand/orbitpage-lockup.svg) | Mark and wordmark on white and light backgrounds |
+| [orbitpage-mark-on-dark.svg](../brand/orbitpage-mark-on-dark.svg) | Same icon geometry, with a light-blue page for dark backgrounds |
+| [orbitpage-lockup-on-dark.svg](../brand/orbitpage-lockup-on-dark.svg) | Same lockup geometry, with a light-blue page and pale wordmark for dark backgrounds |
 
-Reuse these SVGs at their original aspect ratio. Keep clear space and sufficient
-contrast; do not recolor, stretch or invent an alternative mark. The current
+Reuse the approved light/dark SVGs at their original aspect ratio. Keep clear
+space and sufficient contrast; do not recolor ad hoc, stretch or invent an
+alternative mark. The original
 source uses deep blue `#223B70`/`#101828`, orbit blue `#2456D8`/`#3568F4` and
 light blue `#7BA2FF`. These describe the assets, not public-page theme limits.
+
+The dark variant replaces the page's deepest colors with `#7BA2FF` and
+`#E8F0FF`, keeping the orbit, highlight, typography and proportions. The README
+uses `<picture>` with `prefers-color-scheme` to select the appropriate lockup;
+the original is the fallback for viewers without theme selection.
+
+README variants and transparent PNG exports live in `docs/brand`; the original
+SVGs in `app/public/brand` remain the application source assets. PNGs are
+available for tools that cannot use SVG:
+
+| Background | Icon, 512 × 512 | Lockup, 1224 × 256 |
+| --- | --- | --- |
+| White/light | [PNG icon](../brand/orbitpage-mark-on-light.png) | [PNG lockup](../brand/orbitpage-lockup-on-light.png) |
+| Dark | [PNG icon](../brand/orbitpage-mark-on-dark.png) | [PNG lockup](../brand/orbitpage-lockup-on-dark.png) |
 
 Product screenshots must come from the current application with fictional
 content; see [screenshot provenance](../screenshots/README.md).
