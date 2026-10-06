@@ -1,7 +1,11 @@
 # OrbitPage - Open-source, self-hosted link-in-bio and public page builder
 
 <p align="center">
-  <img src="./app/public/brand/orbitpage-lockup.svg" alt="OrbitPage open-source self-hosted public page builder" width="420" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/paoloronco/OrbitPage/main/docs/brand/orbitpage-lockup-on-dark.svg" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/paoloronco/OrbitPage/main/app/public/brand/orbitpage-lockup.svg" />
+    <img src="./app/public/brand/orbitpage-lockup.svg" alt="OrbitPage open-source self-hosted public page builder" width="420" />
+  </picture>
 </p>
 
 <p align="center">
@@ -29,7 +33,7 @@ OrbitPage is a free, MIT-licensed Linktree alternative for building link-in-bio 
 This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
 
 <p align="center">
-  <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="Illustrated OrbitPage product walkthrough" width="800" />
+  <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="OrbitPage dashboard walkthrough: profile, content blocks, themes and the public page" width="800" />
 </p>
 
 > **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; follow the [migration guide](./docs/wiki/Docker-Hub-migration.md).
