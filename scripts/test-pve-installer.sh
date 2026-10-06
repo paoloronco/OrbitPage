@@ -139,6 +139,7 @@ grep -Fq '<ORBITPAGE_BIND_ADDRESS=127.0.0.1>' "$CALLS" || fail "guest HTTP liste
 grep -Fq '<ORBITPAGE_PUBLIC_SITE_URL=https://page.example.test>' "$CALLS" \
   || fail "public URL was not forwarded"
 grep -Fq '<push> <123>' "$CALLS" || fail "local guest installer was not copied"
-grep -Fq '<bash /root/orbitpage-install.sh>' "$CALLS" || fail "local guest installer was not invoked"
+grep -Fq '<bash /root/orbitpage-installer/install.sh>' "$CALLS" || fail "local guest installer was not invoked"
+grep -Fq '</root/orbitpage-installer/scripts/orbitpage-update.py>' "$CALLS" || fail "dashboard update helper was not copied into the guest"
 
 printf 'OrbitPage PVE installer integration test passed.\n'

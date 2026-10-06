@@ -279,8 +279,10 @@ For an existing stopped LXC:
 ```bash
 pct set CTID -features nesting=1,keyctl=1
 pct start CTID
-pct push CTID ./install.sh /root/orbitpage-install.sh
-pct exec CTID -- bash /root/orbitpage-install.sh
+pct exec CTID -- install -d -m 0700 /root/orbitpage-installer/scripts
+pct push CTID ./install.sh /root/orbitpage-installer/install.sh
+pct push CTID ./scripts/orbitpage-update.py /root/orbitpage-installer/scripts/orbitpage-update.py
+pct exec CTID -- bash /root/orbitpage-installer/install.sh
 ```
 
 Review any third-party guest defaults before production use. OrbitPage does not maintain external community provisioning scripts.
