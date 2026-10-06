@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="4.18.5"
+readonly SCRIPT_VERSION="4.21.64"
 
 CTID="${ORBITPAGE_PVE_CTID:-}"
 HOSTNAME="${ORBITPAGE_PVE_HOSTNAME:-orbitpage}"
@@ -73,6 +73,8 @@ validate_inputs() {
   [[ ${EUID} -eq 0 ]] || die "Run this installer as root on the Proxmox VE host."
   [[ -f "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/install.sh" ]] \
     || die 'Run install-pve.sh alongside install.sh in a trusted local checkout.'
+  [[ -f "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/scripts/orbitpage-update.py" ]] \
+    || die 'The trusted checkout must include scripts/orbitpage-update.py for dashboard updates.'
 
   for command in pveversion pvesh pvesm pveam pct ip awk grep sed sort tail; do
     require_command "$command"
@@ -261,9 +263,11 @@ install_orbitpage() {
   fi
 
   info "Installing OrbitPage inside LXC $CTID..."
-  pct push "$CTID" "$installer_path" /root/orbitpage-install.sh
+  pct exec "$CTID" -- install -d -m 0700 /root/orbitpage-installer/scripts
+  pct push "$CTID" "$installer_path" /root/orbitpage-installer/install.sh
+  pct push "$CTID" "$(dirname "$installer_path")/scripts/orbitpage-update.py" /root/orbitpage-installer/scripts/orbitpage-update.py
   pct exec "$CTID" -- env "${guest_env[@]}" bash -lc \
-    'bash /root/orbitpage-install.sh'
+    'bash /root/orbitpage-installer/install.sh'
 }
 
 main() {
