@@ -33,70 +33,59 @@ Both registries receive the same manifest only after a release commit passes the
 
 Registry pages may also show `sha256:...` platform manifests and provenance attestations beneath those tags. They are required OCI internals, not additional pullable tag aliases; the public tag list remains `latest` plus complete versions.
 
-### Prepare persistent data
+### Automatic persistent data
 
-Create the persistent data directory:
+For a new Docker Run installation, use the named volume `orbitpage-data` in the command below. Docker creates it automatically; no host directory or `install -d` command is required. The image uses port `8080` and `DATA_DIR=/app/data` by default, creates the database and uploads directory, and generates a 256-bit `JWT_SECRET` in `/app/data/.jwt-secret` with mode `0600`. Later starts reuse it. An explicit `JWT_SECRET` still takes precedence and must contain at least 32 random characters.
 
-```bash
-sudo install -d -m 0750 /var/lib/orbitpage
-```
-
-On first start the image generates a 256-bit `JWT_SECRET` in `/app/data/.jwt-secret` with mode `0600`; later starts reuse it. Persist and back up the whole data directory. An explicitly configured `JWT_SECRET` still takes precedence and must contain at least 32 random characters.
+The volume survives container removal. Reuse the same named volume when replacing a container, and include the whole volume in backups. Do not remove it with `docker volume rm` or prune it while the container is absent. Do not switch an existing installation to the new example volume: keep its current mount so its database, uploads, and secret remain available.
 
 ### Start with Docker Run
 
-```bash
-sudo docker run -d --name orbitpage \
-  --restart unless-stopped \
-  -p 127.0.0.1:8080:8080 \
-  -v /var/lib/orbitpage:/app/data \
-  --security-opt no-new-privileges:true \
-  paoloronco/orbitpage:latest
+Two commands are sufficient for a new installation:
 
-git clone https://github.com/paoloronco/OrbitPage.git
-sudo ./OrbitPage/scripts/install-updater.sh
+```bash
+docker pull paoloronco/orbitpage
+docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
 ```
 
-`--restart unless-stopped` restarts OrbitPage after a failure or host reboot but respects an explicit `docker stop`. Replace it with `--restart always` only when the container must return after a Docker daemon restart even if it was stopped manually.
+Use `sudo docker` on Linux if your account requires it. Docker defaults an omitted image tag to `latest`; replace the image with a reviewed release tag or digest to pin it.
 
-Verify the running container:
+Verify the container and read the first-run token locally:
 
 ```bash
-sudo docker ps --filter name=orbitpage
-sudo docker logs --tail 100 orbitpage
+docker ps --filter name=orbitpage
 curl -fsS http://127.0.0.1:8080/health
+docker exec orbitpage cat /app/data/.setup-token
 ```
 
-Open `http://localhost:8080/dashboard/profile` on the host for first setup and enter the token from `sudo cat /var/lib/orbitpage/.setup-token`. A fresh public URL shows **Under construction** until setup is complete. Use a trusted HTTPS reverse proxy for remote access.
+Open `http://localhost:8080/dashboard/profile` and enter that token with the new administrator password. A fresh public URL shows **Under construction** until setup is complete. Use a trusted HTTPS reverse proxy for remote access.
+
+Docker controls the published host port, restart policy, mount, and privilege restrictions; a Dockerfile cannot set those Docker Run options. `EXPOSE` describes the container listener but does not publish a port on the host. Compose supplies these settings from a file, so its startup command needs no flags.
+
+`--restart unless-stopped` restarts OrbitPage after a failure or host reboot while respecting an explicit `docker stop`. Keep the Docker service enabled on the host. Change the mapping to `127.0.0.1:8090:8080` for another host port. To choose a different data location, replace `orbitpage-data` with your own named volume or an absolute host directory; bind-mounted host directories should have restrictive permissions. The image cannot create an arbitrary directory on the host during its build.
 
 ### Start with Docker Compose
 
-Mount the persistent data directory in the production Compose definition:
-
-```yaml
-services:
-  orbitpage:
-    image: paoloronco/orbitpage:latest
-    container_name: orbitpage
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    volumes:
-      - /var/lib/orbitpage:/app/data
-    security_opt:
-      - no-new-privileges:true
-```
-
-Save the file as `compose.production.yaml` and start it. Use `latest` for updates through `sudo orbitpage-update`; if you pin a numbered release instead, change the tag and redeploy manually when you choose to update:
+The tracked `docker-compose.yml` already contains the defaults. With Docker Compose installed:
 
 ```bash
-sudo docker compose -f compose.production.yaml pull
-sudo docker compose -f compose.production.yaml up -d
 git clone https://github.com/paoloronco/OrbitPage.git
-sudo ./OrbitPage/scripts/install-updater.sh
+cd OrbitPage
+docker compose up -d
 ```
 
-The repository `docker-compose.yml` binds to localhost, persists `./orbitpage-data`, and lets the image create the secret there automatically.
+Compose pulls the image when needed, publishes `127.0.0.1:8080`, applies `restart: unless-stopped`, and automatically creates `./orbitpage-data` beside the Compose file. That directory stores the database, uploads, and generated secret. Read the setup token with `docker compose exec orbitpage cat /app/data/.setup-token`. Keep the checkout and data directory together. `docker compose down` leaves this bind-mounted data intact.
+
+Change the port mapping or data mount in that file only when needed. Existing deployments must retain their current file and mount. Updates do not require installing a host helper:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Back up the persistent data before updating. For the optional host updater, including protected pre-update archives, see [Manual Docker or Compose deployment](#manual-docker-or-compose-deployment).
+
+For a production definition, retain the same loopback binding and data mount and add `security_opt: ["no-new-privileges:true"]` to the OrbitPage service. Use trusted HTTPS before remote access. A numbered image tag or digest remains pinned until explicitly changed.
 
 ### Container defaults
 
@@ -548,12 +537,14 @@ Source installations with an updater installed before v4.21.45 must replace the 
 
 Keep the updater's archive under `/var/backups/orbitpage` until the new version has completed an acceptance period. A plain `docker restart` does not load changes from an environment file.
 
-For Compose:
+For the repository Compose file:
 
 ```bash
-docker compose -f compose.production.yaml pull
-docker compose -f compose.production.yaml up -d --remove-orphans
+docker compose pull
+docker compose up -d
 ```
+
+For an existing custom Compose definition, keep using its original file with `-f`; do not switch its data mount to the repository defaults.
 
 Run the same health and smoke test after recreation.
 
