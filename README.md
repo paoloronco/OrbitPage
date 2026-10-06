@@ -99,9 +99,11 @@ Edit the port mapping or data mount in <code>docker-compose.yml</code> only if y
 
 ### Linux install
 
-On a clean x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC:
+On a clean x86-64 Linux system:
 
 ~~~bash
+sudo apt-get update
+sudo apt-get install -y git
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage
 sudo ./install.sh
@@ -109,12 +111,14 @@ sudo ./install.sh
 
 The installer automates the same Docker deployment, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command. On Linux with systemd, official <code>latest</code> installations also get dashboard updates automatically. See [web updates](./docs/wiki/Deployment.md#web-updates) for existing Docker containers.
 
-For a Proxmox VE 8+ host, use the dedicated host-to-LXC installer instead:
+On a Proxmox VE 8+ host, run the dedicated host-to-LXC installer as root:
 
 ~~~bash
+apt-get update
+apt-get install -y git
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage
-sudo ./install-pve.sh
+./install-pve.sh
 ~~~
 
 Do not run the Linux guest installer directly on a Proxmox host. See [Deployment](./docs/wiki/Deployment.md) for supported options, static networking, image pinning, backups, updates, and removal.

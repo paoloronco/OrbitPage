@@ -18,8 +18,8 @@ use the same reviewed version. Do not move their published paths casually.
 - `check-tracked-runtime-data.mjs`: rejects tracked databases, sidecars and local
   credential/configuration files in CI, before push and before release. It
   checks the current Git index; it neither reads nor rewrites historical data.
-- `test-installer.sh`: isolated Linux-installer checks.
-- `test-pve-installer.sh`: isolated Proxmox-installer checks with mocked host commands.
+- `test-installer.sh`: isolated Linux-installer checks, including dependency branches, supported OS detection, invalid input, failed pulls/health checks, repeat installs, backups and cancellation of a purge.
+- `test-pve-installer.sh`: isolated Proxmox-installer checks with mocked host commands, including patched LXC versions, cluster ID collisions, storage/network validation, cached templates, static networking and failures throughout guest creation/start/install/health checks.
 - `test-docker-entrypoint.sh`: verifies automatic JWT secret creation and reuse.
 - `test-docker-context.mjs`: checks that runtime secrets and data stay outside the Docker build context.
 - `test-updater.py`: exercises updater decisions against isolated mocked host commands.
