@@ -1067,11 +1067,11 @@ export function MenuEditor({
       </div>
       {typeof document !== 'undefined' && (isDirty || saving || savedNotice) ? createPortal(
         <div className="admin-profile-save-layer">
+          {saveError && <p className="pointer-events-auto rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{saveError}</p>}
           {(isDirty || saving) && (
             <div className="admin-profile-save-float">
-              {saveError && <span className="max-w-72 text-xs text-red-700" role="alert">{saveError}</span>}
               <Button type="button" variant="outline" size="sm" onClick={revertUnsavedChanges} disabled={saving}>
-                <RotateCcw className="h-4 w-4" /> {tr('Revert', 'Ripristina')}
+                <RotateCcw className="h-4 w-4" /> {tr('Reset', 'Ripristina')}
               </Button>
               <Button type="button" size="sm" onClick={() => void save()} disabled={!isDirty || saving}>
                 {saving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}
