@@ -21,7 +21,7 @@ test('preserves the menu draft after validation failures and saves a corrected r
   });
   await name.fill('');
   await save.click();
-  await expect(page.locator('.admin-profile-save-float').getByRole('alert')).toContainText('name');
+  await expect(page.locator('.admin-profile-save-layer').getByRole('alert')).toContainText('name');
   expect(requests).toBe(0);
   await expect(name).toHaveValue('');
   await expect(save).toBeEnabled();
@@ -29,7 +29,7 @@ test('preserves the menu draft after validation failures and saves a corrected r
   const itemName = `Validation retry ${Date.now()}`;
   await name.fill(itemName);
   await save.click();
-  await expect(page.locator('.admin-profile-save-float').getByRole('alert')).toContainText('Menu name');
+  await expect(page.locator('.admin-profile-save-layer').getByRole('alert')).toContainText('Menu name');
   await expect(name).toHaveValue(itemName);
   await expect(save).toBeEnabled();
   expect(requests).toBe(1);
