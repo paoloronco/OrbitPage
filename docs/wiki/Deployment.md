@@ -128,7 +128,8 @@ It:
 - stores runtime secrets in `/etc/orbitpage/orbitpage.env` with mode `0600`;
 - persists SQLite and uploads under `/var/lib/orbitpage`;
 - starts the container with `no-new-privileges` and a health check;
-- installs the `orbitpage` and `orbitpage-update` management commands.
+- installs the `orbitpage` management command and dashboard update helper;
+- enables dashboard updates automatically for official `latest` images on a systemd host.
 
 The installer binds HTTP to `127.0.0.1:8080` by default. Open `http://localhost:8080/dashboard/profile` on the host, read the local setup token with `sudo cat /var/lib/orbitpage/.setup-token`, and enter it with the new `admin` password. For another machine, use a trusted HTTPS reverse proxy. A fresh public URL shows **Under construction** until setup is complete.
 
@@ -525,19 +526,13 @@ Demo installations do not offer the installation action.
 
 Docker Run and Compose can update with standard Docker commands; no host updater is required. Follow the [manual update commands in the README](../../README.md#updates), preserving the existing data mount and container settings, and create a verified backup before replacement.
 
-For the optional host updater, including automatic pre-update archives and replacement checks, install it once on the Linux host:
-
-```bash
-git clone https://github.com/paoloronco/OrbitPage.git
-sudo ./OrbitPage/scripts/install-updater.sh
-sudo orbitpage-update
-```
+To enable dashboard updates on an existing Docker container, follow [Web updates](#web-updates). There is no separate updater installer. Existing host update commands remain compatible, but new manual Docker installations can update directly with Docker Run or Compose.
 
 The updater discovers official OrbitPage Docker containers and Compose labels. It preserves Docker Run container settings, makes a protected data archive, pulls `paoloronco/orbitpage:latest` or the matching GHCR image, recreates the container, and checks its image ID and health. Old `paueron/orbitpage:latest` Docker Run containers migrate to the current Docker Hub namespace. Docker Run containers without a persistent `/app/data` mount, with `VolumesFrom`, or with a static container IP require a reviewed manual migration; the command stops before replacing them. Pass a container name to update only one instance, for example `sudo orbitpage-update orbitpage`.
 
 Compose uses its recorded project directory and files, then runs `pull` and `up` for the OrbitPage service. A pinned image tag remains pinned until you change the tag in the Compose file. Custom `--env-file` arguments that are not recorded in the Compose project labels must be supplied through the project configuration before updating.
 
-For an existing source checkout, run `sudo ./scripts/install-updater.sh source "$PWD"` from a trusted repository root. The update command uses `git pull --ff-only`, `npm ci`, and a fresh frontend build. It restarts an active `orbitpage` systemd service; otherwise restart the source process yourself. Python 3 is required for the manual Docker, Compose, and source updater.
+For source installations, follow the [source update commands](../../README.md#source-checkout). Existing registered host updaters still use `git pull --ff-only`, `npm ci`, and a fresh frontend build; they restart an active `orbitpage` systemd service. New source installations do not install a privileged updater.
 
 Source installations with an updater installed before v4.21.45 must replace the privileged helper from the official v4.21.45 release **before** their next `sudo orbitpage-update` run. The previous helper copies scripts from the writable checkout into root-owned command paths during that first update. Install the reviewed `scripts/orbitpage-update.py` and `scripts/orbitpage-update.sh` from the official release into `/usr/local/lib/orbitpage/orbitpage-update.py` and `/usr/local/bin/orbitpage-update`, respectively, then run the updater. Later source updates intentionally leave the privileged helper unchanged; install future helper updates separately from a trusted release.
 
@@ -558,7 +553,7 @@ Run the same health and smoke test after recreation.
 
 Account → General → Instance details can install an update and show its live
 logs when the host update service is enabled. Without that service the dialog
-explicitly offers the terminal command; opening it does not install anything.
+links to manual Docker updates and service activation; opening it does not install anything.
 The dashboard reconnects automatically during the restart and reloads itself
 after the host confirms successful installation, keeping the authenticated
 session on HTTPS or localhost. HTTP-only sessions remain in the current tab
@@ -567,15 +562,22 @@ Self-hosted builds use content hashes in
 their JavaScript and CSS filenames so browsers and reverse proxies load the
 matching interface instead of retaining an older cached dashboard.
 
-On a Linux host with systemd and a local Docker engine, enable the service once
-for the intended container (replace `orbitpage` with its actual name):
+The main Linux installer, also used inside Proxmox guests, enables this service
+for official `latest` deployments on systemd hosts. For an existing Docker Run
+or Compose container, attach the service once through the same installer:
 
 ```bash
 git clone https://github.com/paoloronco/OrbitPage.git
-sudo ./OrbitPage/scripts/install-updater.sh --enable-web-updates orbitpage
+sudo ./OrbitPage/install.sh web-updates orbitpage
 ```
 
-Install the current release through `sudo orbitpage-update` and reload Account
+This mode installs only the host helper and service; it does not recreate the
+application or change its ports, mounts, data, or secret. For an installer-managed
+instance, `sudo orbitpage web-updates` enables or repairs the service using the
+persisted container name. Python 3 is required on the host; the full Linux
+installation installs it automatically.
+
+Use the [manual Docker update commands](../../README.md#updates) and reload Account
 if the dashboard predates this feature. Web updates support official Docker
 Run and Compose installations using `:latest` and a writable persistent
 `/app/data` mount. Source installations, custom images and pinned releases

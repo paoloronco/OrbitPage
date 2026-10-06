@@ -44,8 +44,8 @@ jobs:
           bash -n docker-entrypoint.sh app/docker-entrypoint.sh scripts/test-docker-entrypoint.sh
           bash -n scripts/test-installer.sh
           bash -n scripts/test-pve-installer.sh
-          bash -n scripts/install-updater.sh scripts/orbitpage-update.sh
-          shellcheck install.sh install-pve.sh docker-entrypoint.sh app/docker-entrypoint.sh scripts/test-docker-entrypoint.sh scripts/test-installer.sh scripts/test-pve-installer.sh scripts/install-updater.sh scripts/orbitpage-update.sh
+          bash -n scripts/orbitpage-update.sh
+          shellcheck install.sh install-pve.sh docker-entrypoint.sh app/docker-entrypoint.sh scripts/test-docker-entrypoint.sh scripts/test-installer.sh scripts/test-pve-installer.sh scripts/orbitpage-update.sh
           python3 scripts/test-updater.py
           sudo bash scripts/test-installer.sh
           sudo bash scripts/test-pve-installer.sh
