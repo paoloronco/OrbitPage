@@ -4,7 +4,7 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
 
-readonly SCRIPT_VERSION="4.21.65"
+readonly SCRIPT_VERSION="4.21.66"
 
 INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"
@@ -21,6 +21,7 @@ HTTP_PORT="${ORBITPAGE_HTTP_PORT:-}"
 BIND_ADDRESS="${ORBITPAGE_BIND_ADDRESS:-}"
 DATA_DIR="${ORBITPAGE_DATA_DIR:-}"
 PUBLIC_SITE_URL="${ORBITPAGE_PUBLIC_SITE_URL:-}"
+REQUIRE_SETUP_TOKEN="${ORBITPAGE_REQUIRE_SETUP_TOKEN:-}"
 REQUESTED_CONTAINER_NAME="$CONTAINER_NAME"
 REQUESTED_DATA_DIR="$DATA_DIR"
 
@@ -71,6 +72,8 @@ require_root() {
 validate_settings() {
   local octet
   local -a address_parts
+  [[ -z "$REQUIRE_SETUP_TOKEN" || "$REQUIRE_SETUP_TOKEN" == true || "$REQUIRE_SETUP_TOKEN" == false ]] \
+    || die 'ORBITPAGE_REQUIRE_SETUP_TOKEN must be true or false.'
 
   [[ "$HTTP_PORT" =~ ^[0-9]{1,9}$ ]] || die "ORBITPAGE_HTTP_PORT must be a number."
   HTTP_PORT=$((10#$HTTP_PORT))
@@ -245,6 +248,7 @@ write_configuration() {
       printf 'NODE_ENV=production\n'
       printf 'PORT=8080\n'
       printf 'DATA_DIR=/app/data\n'
+      printf 'REQUIRE_SETUP_TOKEN=%s\n' "${REQUIRE_SETUP_TOKEN:-false}"
       printf 'JWT_SECRET=%s\n' "$jwt_secret"
       if [[ -n "$PUBLIC_SITE_URL" ]]; then
         printf 'PUBLIC_SITE_URL=%s\n' "$PUBLIC_SITE_URL"
@@ -264,6 +268,14 @@ write_configuration() {
       chmod 0600 "$env_tmp"
       mv "$env_tmp" "$APP_ENV_FILE"
     fi
+  fi
+
+  if [[ -n "$REQUIRE_SETUP_TOKEN" ]]; then
+    env_tmp="$(mktemp "${CONFIG_DIR}/orbitpage.env.XXXXXX")"
+    awk '$0 !~ /^REQUIRE_SETUP_TOKEN=/' "$APP_ENV_FILE" > "$env_tmp"
+    printf 'REQUIRE_SETUP_TOKEN=%s\n' "$REQUIRE_SETUP_TOKEN" >> "$env_tmp"
+    chmod 0600 "$env_tmp"
+    mv "$env_tmp" "$APP_ENV_FILE"
   fi
 
   cat > "$COMPOSE_ENV_FILE" <<EOF
@@ -391,7 +403,9 @@ print_access_details() {
   printf 'Public page:     http://%s:%s/\n' "$address" "$HTTP_PORT"
   printf 'Admin workspace: http://%s:%s/dashboard/profile\n' "$address" "$HTTP_PORT"
   printf 'Health check:    http://%s:%s/health\n' "$address" "$HTTP_PORT"
-  printf '\nRead the local setup token with: sudo cat %s/.setup-token\n' "$DATA_DIR"
+  if grep -Eq '^REQUIRE_SETUP_TOKEN=(true|1)$' "$APP_ENV_FILE"; then
+    printf '\nRead the local setup token with: sudo cat %s/.setup-token\n' "$DATA_DIR"
+  fi
   printf 'Complete first setup from a local browser or a trusted HTTPS reverse proxy.\n'
   printf 'Manage the installation with: orbitpage status|logs|backup|restart or sudo orbitpage-update\n\n'
 }
@@ -518,7 +532,7 @@ show_help() {
 OrbitPage self-hosted installer and management command
 
 Usage:
-  orbitpage install              Install or repair OrbitPage
+  orbitpage install [--require-setup-token]  Install or repair OrbitPage
   orbitpage status               Show container and health status
   orbitpage logs                 Follow application logs
   orbitpage start|stop|restart   Control the application
@@ -534,12 +548,24 @@ Installation overrides:
   ORBITPAGE_BIND_ADDRESS=127.0.0.1
   ORBITPAGE_PUBLIC_SITE_URL=https://links.example.com
   ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:latest
+  ORBITPAGE_REQUIRE_SETUP_TOKEN=true  Require the local token for first setup
 EOF
 }
 
 main() {
   local command="${1:-install}"
   shift || true
+
+  if [[ "$command" == --require-setup-token ]]; then
+    command=install
+    REQUIRE_SETUP_TOKEN=true
+  elif [[ "$command" == install && "${1:-}" == --require-setup-token ]]; then
+    REQUIRE_SETUP_TOKEN=true
+    shift
+  fi
+  if [[ "$command" == install && $# -gt 0 ]]; then
+    die 'Unknown installation option. Use --require-setup-token or help.'
+  fi
 
   if [[ "$command" == install && ! -f "${BASH_SOURCE[0]:-}" ]]; then
     die 'Run install.sh from a trusted local checkout; streaming it into bash cannot install a reviewed management command.'

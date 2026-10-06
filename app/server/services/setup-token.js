@@ -5,6 +5,12 @@ import { fileURLToPath } from 'node:url';
 
 const tokenPath = path.join(process.env.DATA_DIR || path.dirname(fileURLToPath(new URL('../server.js', import.meta.url))), '.setup-token');
 
+export function isSetupTokenRequired() {
+  const value = (process.env.REQUIRE_SETUP_TOKEN || 'false').trim().toLowerCase();
+  if (!['true', 'false', '1', '0'].includes(value)) throw new Error('REQUIRE_SETUP_TOKEN must be true or false');
+  return value === 'true' || value === '1';
+}
+
 export function ensureSetupToken() {
   try {
     const entry = fs.lstatSync(tokenPath);

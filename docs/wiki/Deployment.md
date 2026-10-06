@@ -54,15 +54,14 @@ docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -
 
 Use `sudo docker` on Linux if your account requires it. Docker defaults an omitted image tag to `latest`; replace the image with a reviewed release tag or digest to pin it.
 
-Verify the container and read the first-run token locally:
+Verify the container:
 
 ```bash
 docker ps --filter name=orbitpage
 curl -fsS http://127.0.0.1:8080/health
-docker exec orbitpage cat /app/data/.setup-token
 ```
 
-Open `http://localhost:8080/dashboard/profile` and enter that token with the new administrator password. A fresh public URL shows **Under construction** until setup is complete. Use a trusted HTTPS reverse proxy for remote access.
+Open `http://localhost:8080/dashboard/profile` and create the administrator in the wizard. By default, the first person to complete setup controls the instance; no host token is needed. A fresh public URL shows **Under construction** until setup is complete. Use a trusted HTTPS reverse proxy for remote access.
 
 Docker controls the published host port, restart policy, mount, and privilege restrictions; a Dockerfile cannot set those Docker Run options. `EXPOSE` describes the container listener but does not publish a port on the host. Compose supplies these settings from a file, so its startup command needs no flags.
 
@@ -78,7 +77,7 @@ cd OrbitPage
 docker compose up -d
 ```
 
-Compose pulls the image when needed, publishes `127.0.0.1:8080`, applies `restart: unless-stopped`, and automatically creates `./orbitpage-data` beside the Compose file. That directory stores the database, uploads, and generated secret. Read the setup token with `docker compose exec orbitpage cat /app/data/.setup-token`. Keep the checkout and data directory together. `docker compose down` leaves this bind-mounted data intact.
+Compose pulls the image when needed, publishes `127.0.0.1:8080`, applies `restart: unless-stopped`, and automatically creates `./orbitpage-data` beside the Compose file. That directory stores the database, uploads, and generated secret. Complete setup in the browser. Keep the checkout and data directory together. `docker compose down` leaves this bind-mounted data intact.
 
 Change the port mapping or data mount in that file only when needed. Existing deployments must retain their current file and mount. Updates do not require installing a host helper:
 
@@ -90,6 +89,29 @@ docker compose up -d
 Back up the persistent data before updating. For the optional host updater, including protected pre-update archives, see [Manual Docker or Compose deployment](#manual-docker-or-compose-deployment).
 
 For a production definition, retain the same loopback binding and data mount and add `security_opt: ["no-new-privileges:true"]` to the OrbitPage service. Use trusted HTTPS before remote access. A numbered image tag or digest remains pinned until explicitly changed.
+
+### Optional setup token
+
+Direct browser setup is the default for local and LAN installations. To require proof of access to the host before the first administrator can be created, enable `REQUIRE_SETUP_TOKEN=true` before starting the instance:
+
+```bash
+docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data -e REQUIRE_SETUP_TOKEN=true --security-opt no-new-privileges:true paoloronco/orbitpage
+docker exec orbitpage cat /app/data/.setup-token
+```
+
+Enter that token in the wizard along with your new password. For Compose, add `REQUIRE_SETUP_TOKEN: "true"` under the service's `environment` and recreate the service. For source installs, export `REQUIRE_SETUP_TOKEN=true` before starting the server.
+
+The Linux and Proxmox installers accept the same option:
+
+```bash
+sudo ./install.sh --require-setup-token
+# On the Proxmox host:
+./install-pve.sh --require-setup-token
+```
+
+Read the token with `sudo cat /var/lib/orbitpage/.setup-token` on Linux, or `pct exec CTID -- cat /var/lib/orbitpage/.setup-token` on Proxmox. `ORBITPAGE_REQUIRE_SETUP_TOKEN=true` is the equivalent installer environment override. Reinstalls preserve an explicitly configured setting; `sudo ORBITPAGE_REQUIRE_SETUP_TOKEN=false ./install.sh` disables it.
+
+The token stays in an owner-only file, is consumed after setup, and is rotated on a full reset when protection is enabled. It is never returned by the API. Setup always requires a strong password and cannot replace an existing administrator, with or without token protection.
 
 ### Container defaults
 
@@ -135,7 +157,7 @@ It:
 
 OpenSSL and Python 3 are installed when missing, including on hosts that already have Docker. Re-running the installer preserves the existing secret and data and takes a backup first. It rejects invalid settings, unsafe resolved data paths and containers owned by another Compose project. Failed pulls or health checks return an error instead of reporting a ready installation. Cancelling a data purge leaves the running application intact.
 
-The installer binds HTTP to `127.0.0.1:8080` by default. Open `http://localhost:8080/dashboard/profile` on the host, read the local setup token with `sudo cat /var/lib/orbitpage/.setup-token`, and enter it with the new `admin` password. For another machine, use a trusted HTTPS reverse proxy. A fresh public URL shows **Under construction** until setup is complete.
+The installer binds HTTP to `127.0.0.1:8080` by default. Open `http://localhost:8080/dashboard/profile` on the host and create the `admin` account in the wizard. [Token protection](#optional-setup-token) is optional. For another machine, use a trusted HTTPS reverse proxy. A fresh public URL shows **Under construction** until setup is complete.
 
 ### Installation options
 
@@ -155,6 +177,7 @@ sudo ORBITPAGE_HTTP_PORT=8090 \
 | `ORBITPAGE_PUBLIC_SITE_URL` | Empty | Canonical HTTPS URL |
 | `ORBITPAGE_IMAGE` | `ghcr.io/paoloronco/orbitpage:latest` | Image to deploy; use a reviewed digest for release integrity |
 | `ORBITPAGE_DATA_DIR` | `/var/lib/orbitpage` | Persistent database and media path |
+| `ORBITPAGE_REQUIRE_SETUP_TOKEN` | `false` on new installs; existing setting preserved | Require the host token during first setup; also enabled by `--require-setup-token` |
 
 Pin a reviewed image digest for release integrity and deterministic rollback. A version tag is easier to read but can be retargeted in a registry:
 
@@ -271,7 +294,7 @@ pct exec CTID -- orbitpage-update
 pct enter CTID
 ```
 
-The LXC installer binds OrbitPage HTTP to guest loopback. Read the setup token with `pct exec CTID -- cat /var/lib/orbitpage/.setup-token`. If you supplied `ORBITPAGE_PVE_SSH_PUBLIC_KEY`, the installer enables SSH in the guest: from your browser machine run `ssh -L 8080:127.0.0.1:8080 root@GUEST_IP`, then open `http://localhost:8080/dashboard/profile`. For normal remote access, install a trusted HTTPS reverse proxy **inside the guest** and proxy to guest loopback; a proxy on the PVE host cannot reach that listener. Without an SSH key or guest HTTPS proxy, the dashboard remains accessible only inside the guest.
+The LXC installer binds OrbitPage HTTP to guest loopback. Setup is completed in the browser; [token protection](#optional-setup-token) is optional. If you supplied `ORBITPAGE_PVE_SSH_PUBLIC_KEY`, the installer enables SSH in the guest: from your browser machine run `ssh -L 8080:127.0.0.1:8080 root@GUEST_IP`, then open `http://localhost:8080/dashboard/profile`. For normal remote access, install a trusted HTTPS reverse proxy **inside the guest** and proxy to guest loopback; a proxy on the PVE host cannot reach that listener. Without an SSH key or guest HTTPS proxy, the dashboard remains accessible only inside the guest.
 
 ### Existing Proxmox guests and failed installs
 

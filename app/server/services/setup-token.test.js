@@ -12,6 +12,17 @@ afterEach(() => {
 });
 
 describe('local setup token', () => {
+  it('defaults to direct setup and validates explicit token protection', async () => {
+    const { isSetupTokenRequired } = await import('./setup-token.js');
+    vi.stubEnv('REQUIRE_SETUP_TOKEN', undefined);
+    expect(isSetupTokenRequired()).toBe(false);
+    for (const [value, required] of [['false', false], ['0', false], ['true', true], ['1', true]]) {
+      vi.stubEnv('REQUIRE_SETUP_TOKEN', value);
+      expect(isSetupTokenRequired()).toBe(required);
+    }
+    vi.stubEnv('REQUIRE_SETUP_TOKEN', 'typo');
+    expect(() => isSetupTokenRequired()).toThrow('REQUIRE_SETUP_TOKEN');
+  });
   it('requires possession of the owner-only file and rotates after reset', async () => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'orbitpage-setup-'));
     directories.push(directory);

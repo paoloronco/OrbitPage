@@ -67,7 +67,8 @@ vi.mock('./services/backup-service.js', () => ({
   stageUploads: vi.fn(() => ({ activate: vi.fn(), rollback: vi.fn(), finalize: vi.fn() })),
 }));
 
-vi.mock('./services/setup-token.js', () => ({
+vi.mock('./services/setup-token.js', async (importOriginal) => ({
+  ...await importOriginal(),
   ensureSetupToken: vi.fn(() => 'a'.repeat(64)),
   verifySetupToken: vi.fn((token) => token === 'a'.repeat(64)),
   rotateSetupToken: vi.fn(),
@@ -291,6 +292,7 @@ describe('API Endpoints', () => {
     const response = await request(app).get('/api/auth/setup-status');
     expect(response.status).toBe(200);
     expect(response.body.isFirstTimeSetup).toBe(true);
+    expect(response.body.requiresSetupToken).toBe(false);
     expect(response.body.username).toBe('admin');
     expect(response.body.usernameLocked).toBe(true);
     expect(response.body.dependencies).toEqual(expect.arrayContaining([
@@ -341,6 +343,7 @@ describe('API Endpoints', () => {
   });
 
   it('POST /api/auth/reset replaces public uploads after the database reset', async () => {
+    vi.stubEnv('REQUIRE_SETUP_TOKEN', 'true');
     const response = await request(app)
       .post('/api/auth/reset')
       .set('X-Forwarded-For', '203.0.113.21')
@@ -453,11 +456,12 @@ describe('API Endpoints', () => {
   });
 
   it('POST /api/auth/setup creates the administrator without a page slug', async () => {
+    vi.mocked(isFirstTimeSetup).mockResolvedValue(true);
     vi.mocked(dbGet).mockResolvedValue(null);
 
     const response = await request(app)
       .post('/api/auth/setup')
-      .send({ password: 'StrongPassword1!', setupToken: 'a'.repeat(64) });
+      .send({ password: 'StrongPassword1!' });
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ success: true, token: 'mock-token', pageSlug: null });
@@ -1084,11 +1088,29 @@ describe('API Endpoints', () => {
   });
 
   it('POST /api/auth/setup rejects a caller without the local setup token', async () => {
+    vi.stubEnv('REQUIRE_SETUP_TOKEN', 'true');
+    vi.mocked(isFirstTimeSetup).mockResolvedValue(true);
     const response = await request(app)
       .post('/api/auth/setup')
       .send({ password: 'StrongPassword1!', setupToken: 'b'.repeat(64) });
 
     expect(response.status).toBe(403);
+    expect(setupInitialCredentials).not.toHaveBeenCalled();
+  });
+
+  it('requires the token only when enabled and never returns it from setup status', async () => {
+    vi.stubEnv('REQUIRE_SETUP_TOKEN', 'true');
+    vi.mocked(isFirstTimeSetup).mockResolvedValue(true);
+    const status = await request(app).get('/api/auth/setup-status');
+    expect(status.body.requiresSetupToken).toBe(true);
+    expect(JSON.stringify(status.body)).not.toContain('a'.repeat(64));
+    expect((await request(app).post('/api/auth/setup').send({ password: 'StrongPassword1!' })).status).toBe(403);
+    expect(setupInitialCredentials).not.toHaveBeenCalled();
+    expect((await request(app).post('/api/auth/setup').send({ password: 'StrongPassword1!', setupToken: 'a'.repeat(64) })).status).toBe(200);
+  });
+
+  it('rejects setup after an administrator exists even without token protection', async () => {
+    expect((await request(app).post('/api/auth/setup').send({ password: 'StrongPassword1!' })).status).toBe(409);
     expect(setupInitialCredentials).not.toHaveBeenCalled();
   });
 

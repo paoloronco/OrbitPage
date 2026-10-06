@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="4.21.65"
+readonly SCRIPT_VERSION="4.21.66"
 
 CTID="${ORBITPAGE_PVE_CTID:-}"
 HOSTNAME="${ORBITPAGE_PVE_HOSTNAME:-orbitpage}"
@@ -23,6 +23,7 @@ SSH_PUBLIC_KEY="${ORBITPAGE_PVE_SSH_PUBLIC_KEY:-}"
 HTTP_PORT="${ORBITPAGE_HTTP_PORT:-8080}"
 PUBLIC_SITE_URL="${ORBITPAGE_PUBLIC_SITE_URL:-}"
 IMAGE="${ORBITPAGE_IMAGE:-ghcr.io/paoloronco/orbitpage:latest}"
+REQUIRE_SETUP_TOKEN="${ORBITPAGE_REQUIRE_SETUP_TOKEN:-false}"
 WAIT_ATTEMPTS="${ORBITPAGE_PVE_WAIT_ATTEMPTS:-90}"
 WAIT_SECONDS="${ORBITPAGE_PVE_WAIT_SECONDS:-2}"
 CT_CREATED=0
@@ -85,6 +86,8 @@ validate_ipv4() {
 }
 
 validate_inputs() {
+  [[ "$REQUIRE_SETUP_TOKEN" == true || "$REQUIRE_SETUP_TOKEN" == false ]] \
+    || die 'ORBITPAGE_REQUIRE_SETUP_TOKEN must be true or false.'
   [[ ${EUID} -eq 0 ]] || die "Run this installer as root on the Proxmox VE host."
   [[ -f "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/install.sh" ]] \
     || die 'Run install-pve.sh alongside install.sh in a trusted local checkout.'
@@ -280,6 +283,7 @@ install_orbitpage() {
     "ORBITPAGE_IMAGE=${IMAGE}"
     "ORBITPAGE_HTTP_PORT=${HTTP_PORT}"
     "ORBITPAGE_BIND_ADDRESS=127.0.0.1"
+    "ORBITPAGE_REQUIRE_SETUP_TOKEN=${REQUIRE_SETUP_TOKEN}"
   )
   if [[ -n "$PUBLIC_SITE_URL" ]]; then
     guest_env+=("ORBITPAGE_PUBLIC_SITE_URL=${PUBLIC_SITE_URL}")
@@ -306,6 +310,11 @@ install_orbitpage() {
 }
 
 main() {
+  if [[ "${1:-}" == --require-setup-token ]]; then
+    REQUIRE_SETUP_TOKEN=true
+    shift
+  fi
+  [[ $# -eq 0 ]] || die 'Unknown option. Use --require-setup-token to protect first setup.'
   printf '\nOrbitPage Proxmox VE installer v%s\n\n' "$SCRIPT_VERSION"
   validate_inputs
   select_resources
@@ -322,7 +331,9 @@ main() {
 
   success "OrbitPage is ready in unprivileged LXC $CTID."
   printf '\nLocal health check: pct exec %s -- curl -fsS http://127.0.0.1:%s/health\n' "$CTID" "$HTTP_PORT"
-  printf 'Local setup token: pct exec %s -- cat /var/lib/orbitpage/.setup-token\n' "$CTID"
+  if [[ "$REQUIRE_SETUP_TOKEN" == true ]]; then
+    printf 'Local setup token: pct exec %s -- cat /var/lib/orbitpage/.setup-token\n' "$CTID"
+  fi
   if [[ -n "$SSH_PUBLIC_KEY" ]]; then
     printf 'Open an SSH tunnel from your browser machine: ssh -L %s:127.0.0.1:%s root@%s\n' "$HTTP_PORT" "$HTTP_PORT" "$(container_ipv4)"
     printf 'Then open http://localhost:%s/dashboard/profile in that browser.\n' "$HTTP_PORT"

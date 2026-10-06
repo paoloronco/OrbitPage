@@ -11,7 +11,7 @@ OrbitPage has two surfaces:
 | Public page | The public page visitors see | None |
 | Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
 
-Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` checks the runtime, SQLite database, persistent storage, frontend build, and session security. Read the owner-only `.setup-token` file in `DATA_DIR` on the host and enter it with the admin password. The installer binds HTTP to loopback; use a trusted HTTPS reverse proxy for remote access. Public routes have no language prefix, for example `/` and `/menu`. The dashboard includes the interface language, for example `/it-IT/dashboard/profile`. Classic dashboard paths remain valid; older localized and page-slug public URLs redirect to their unprefixed destination.
+Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` checks the runtime, SQLite database, persistent storage, frontend build, and session security. Create the admin password directly in the browser. The first person to complete the wizard takes control; [token protection](./Deployment.md#optional-setup-token) is optional. The installer binds HTTP to loopback; use a trusted HTTPS reverse proxy for remote access. Public routes have no language prefix, for example `/` and `/menu`. The dashboard includes the interface language, for example `/it-IT/dashboard/profile`. Classic dashboard paths remain valid; older localized and page-slug public URLs redirect to their unprefixed destination.
 
 ## Requirements
 

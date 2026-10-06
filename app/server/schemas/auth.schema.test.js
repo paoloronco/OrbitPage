@@ -35,7 +35,8 @@ describe('auth schemas', () => {
     const setup = { password: 'Secret123!', setupToken: 'a'.repeat(64) };
     expect(SetupBodySchema.parse(setup)).toEqual(setup);
     expect(SetupBodySchema.parse({ ...setup, slug: 'legacy-page' })).toEqual(setup);
-    expect(() => SetupBodySchema.parse({ password: 'Secret123!' })).toThrow();
+    expect(SetupBodySchema.parse({ password: 'Secret123!' })).toEqual({ password: 'Secret123!' });
+    expect(() => SetupBodySchema.parse({ password: 'Secret123!', setupToken: 'invalid' })).toThrow();
   });
 
   it('validates personal page creation and destructive confirmation separately', () => {

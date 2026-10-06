@@ -70,7 +70,7 @@ These are targets, not contractual guarantees.
 - Auth, reset, API, and SPA routes are rate-limited.
 - The Content Security Policy permits `blob:` URLs only for local image and media previews; scripts and workers remain restricted.
 - Docker generates `JWT_SECRET` once under persistent `DATA_DIR`; production Node deployments must set it explicitly.
-- Initial administrator setup requires the owner-only `DATA_DIR/.setup-token`; full reset rotates it.
+- Initial administrator setup is claimed by the first person to complete the browser wizard. Operators can require the owner-only `DATA_DIR/.setup-token` with `REQUIRE_SETUP_TOKEN=true`; full reset rotates the token when enabled.
 - Optional `RESET_TOKEN` enables protected recovery endpoints and should be at least 32 characters.
 - Uploaded files are written under `DATA_DIR/uploads` and served from `/uploads`.
 - AI screenshot input accepts only supported image MIME types with matching file signatures.

@@ -24,15 +24,16 @@ export async function openAuthenticatedAdmin(page: Page) {
 
     await page.locator('#setup-password').fill(E2E_ADMIN_PASSWORD);
     await page.locator('#setup-confirm-password').fill(E2E_ADMIN_PASSWORD);
-    await page.locator('#setup-token').fill(readFileSync(path.resolve('e2e-data', '.setup-token'), 'utf8').trim());
+    if (await page.locator('#setup-token').count()) {
+      await page.locator('#setup-token').fill(readFileSync(path.resolve('e2e-data', '.setup-token'), 'utf8').trim());
+    }
     await expect(page.locator('#setup-slug')).toHaveCount(0);
     await expect(setupContinueButton).toBeEnabled();
     await setupContinueButton.click();
 
     const completeSetupButton = page.getByRole('button', { name: 'Complete setup' });
-    const dashboard = page.locator('.admin-dashboard-shell');
-    await expect(completeSetupButton.or(dashboard)).toBeVisible();
-    if (await completeSetupButton.isVisible()) await completeSetupButton.click();
+    await expect(completeSetupButton).toBeVisible();
+    await completeSetupButton.click();
   } else {
     await page.locator('#password').fill(E2E_ADMIN_PASSWORD);
     await loginButton.click();
