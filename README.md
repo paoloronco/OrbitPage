@@ -148,43 +148,18 @@ The production-style source run is available at <http://localhost:3001>. Read <c
 
 ## Updates
 
-### Docker Run
+Update directly from **Dashboard → Account → General → Instance details**: click **Check for updates**, then **Install update…** as an administrator. Linux and Proxmox installations enable dashboard updates automatically for official <code>latest</code> images; manual Docker installations need [one-time activation](./docs/wiki/Deployment.md#web-updates).
 
-Update with Docker directly; no updater or repository checkout is needed. Back up the persistent data before updating. The example below matches the [Docker quick start](#docker-image-recommended); if you customized the installation, reuse its original ports, mounts, environment variables, and other options when recreating the container.
+### Terminal (optional)
 
-~~~bash
-docker pull paoloronco/orbitpage
-docker stop orbitpage
-docker rm orbitpage
-docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
-curl -fsS http://localhost:8080/health
-~~~
-
-The same <code>orbitpage-data</code> volume keeps the database, uploads, and secret across container replacement. Keep your existing volume or host directory if it has a different name; do not remove it during the update. Wait for the new container to start before checking health. A plain <code>docker restart</code> does not load a newly pulled image.
-
-### Docker Compose
-
-From the directory containing your Compose file, after backing up the data:
+For Docker installations with the host update command already installed, including legacy setups:
 
 ~~~bash
-docker compose pull
-docker compose up -d
+sudo orbitpage-update
+sudo docker exec orbitpage node -p "require('./package.json').version"
 ~~~
 
-Compose recreates the service while retaining its configured data mount and settings. A pinned image tag or digest must be changed explicitly when you choose a new release.
-
-### Source checkout
-
-Stop a foreground OrbitPage process, then run these commands from the existing <code>app/</code> directory:
-
-~~~bash
-git pull --ff-only
-npm ci
-npm run install:server
-npm run start
-~~~
-
-Keep the same <code>DATA_DIR</code> and <code>JWT_SECRET</code>. For a systemd-managed source installation, rebuild with <code>npm run build</code> and restart the owning service instead of starting another foreground process. See [update procedures](./docs/wiki/Deployment.md#update-safely) for backups, health checks, and rollback.
+Back up your data before updating. See the [update guide](./docs/wiki/Deployment.md#update-safely) for manual Docker, Compose, source installations, and rollback.
 
 ## What you can build
 
