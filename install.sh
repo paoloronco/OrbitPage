@@ -2,8 +2,9 @@
 
 set -Eeuo pipefail
 IFS=$'\n\t'
+umask 077
 
-readonly SCRIPT_VERSION="4.21.64"
+readonly SCRIPT_VERSION="4.21.65"
 
 INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"
@@ -71,7 +72,8 @@ validate_settings() {
   local octet
   local -a address_parts
 
-  [[ "$HTTP_PORT" =~ ^[0-9]+$ ]] || die "ORBITPAGE_HTTP_PORT must be a number."
+  [[ "$HTTP_PORT" =~ ^[0-9]{1,9}$ ]] || die "ORBITPAGE_HTTP_PORT must be a number."
+  HTTP_PORT=$((10#$HTTP_PORT))
   ((HTTP_PORT >= 1 && HTTP_PORT <= 65535)) || die "ORBITPAGE_HTTP_PORT must be between 1 and 65535."
   [[ "$BIND_ADDRESS" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || die "ORBITPAGE_BIND_ADDRESS must be an IPv4 address."
   IFS=. read -r -a address_parts <<< "$BIND_ADDRESS"
@@ -80,7 +82,6 @@ validate_settings() {
   done
   [[ "$CONTAINER_NAME" =~ ^[A-Za-z0-9][A-Za-z0-9_.-]*$ ]] || die "ORBITPAGE_CONTAINER_NAME contains invalid characters."
   [[ "$IMAGE" =~ ^[A-Za-z0-9][A-Za-z0-9._/:@-]*$ ]] || die "ORBITPAGE_IMAGE contains invalid characters."
-  [[ "${DATA_DIR,,}" == *orbitpage* ]] || die "ORBITPAGE_DATA_DIR must contain 'orbitpage' to protect against unsafe deletion."
 
   if [[ -n "$PERSISTED_DATA_DIR" && -n "$REQUESTED_DATA_DIR" && "$REQUESTED_DATA_DIR" != "$PERSISTED_DATA_DIR" ]]; then
     die "Changing ORBITPAGE_DATA_DIR on an existing installation requires a manual data migration."
@@ -92,6 +93,11 @@ validate_settings() {
   for path in "$INSTALL_DIR" "$CONFIG_DIR" "$DATA_DIR" "$BACKUP_DIR" "$CLI_PATH" "$UPDATE_CLI_PATH"; do
     [[ "$path" == /* && "$path" != *$'\n'* && "$path" != *$'\r'* ]] || die "Installation paths must be absolute single-line paths."
   done
+  DATA_DIR="$(realpath -m -- "$DATA_DIR")"
+  case "$DATA_DIR" in
+    *'$'* | *'#'* | *':'* | *'"'* | *"'"* | *\\*) die "ORBITPAGE_DATA_DIR contains characters unsupported by Compose." ;;
+  esac
+  [[ "${DATA_DIR,,}" == *orbitpage* ]] || die "The resolved ORBITPAGE_DATA_DIR must contain 'orbitpage' to protect against unsafe deletion."
 
   if [[ -n "$PUBLIC_SITE_URL" ]]; then
     [[ "$PUBLIC_SITE_URL" =~ ^https?://[^[:space:]]+$ ]] || die "ORBITPAGE_PUBLIC_SITE_URL must be an HTTP(S) URL without spaces."
@@ -118,7 +124,7 @@ detect_platform() {
 
   case "$(dpkg --print-architecture 2>/dev/null || uname -m)" in
     amd64 | x86_64) ;;
-    *) die "The published OrbitPage image currently supports x86-64/amd64 only." ;;
+    *) die "The Linux installer currently supports x86-64/amd64 only; use the Docker guide for arm64." ;;
   esac
 
   if command -v pveversion >/dev/null 2>&1 || [[ -d /etc/pve ]]; then
@@ -154,6 +160,8 @@ EOF
 }
 
 ensure_docker() {
+  local dependency
+  local -a missing_packages=()
   if ! command -v docker >/dev/null 2>&1; then
     log "Installing Docker Engine from Docker's official repository..."
     setup_docker_repository
@@ -174,9 +182,12 @@ ensure_docker() {
 
   docker info >/dev/null 2>&1 || die "Docker is installed but unavailable. In an LXC, enable nesting/keyctl or use a VM."
   docker compose version >/dev/null 2>&1 || die "Docker Compose v2 is required."
-  if ! command -v python3 >/dev/null 2>&1; then
+  for dependency in openssl python3; do
+    command -v "$dependency" >/dev/null 2>&1 || missing_packages+=("$dependency")
+  done
+  if ((${#missing_packages[@]})); then
     apt-get update -qq
-    apt-get install -y -qq python3
+    apt-get install -y -qq "${missing_packages[@]}"
   fi
 }
 
@@ -386,7 +397,6 @@ print_access_details() {
 
 install_app() {
   require_root
-  validate_settings
   detect_platform
   ensure_docker
   check_container_ownership
@@ -419,8 +429,9 @@ backup_app() {
   require_root
   require_installed
   [[ "$destination" == /* ]] || destination="$(pwd)/$destination"
+  destination="$(realpath -m -- "$destination")"
   [[ "$destination" != "$DATA_DIR"/* && "$destination" != "$CONFIG_DIR"/* && "$destination" != "$INSTALL_DIR"/* ]] || die "Store backups outside the application, configuration and data directories."
-  [[ ! -e "$destination" ]] || die "The backup destination already exists: ${destination}"
+  [[ ! -e "$destination" && ! -L "$destination" ]] || die "The backup destination already exists: ${destination}"
   install -d -m 0750 "$(dirname "$destination")"
 
   if [[ "$(docker inspect --format '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null || true)" == "true" ]]; then
@@ -463,6 +474,11 @@ uninstall_app() {
 
   require_root
   require_installed
+  if [[ "$purge" == "--purge" && "${ORBITPAGE_CONFIRM_PURGE:-}" != "YES" ]]; then
+    [[ -t 0 ]] || die "Set ORBITPAGE_CONFIRM_PURGE=YES to purge data non-interactively."
+    read -r -p "Delete all OrbitPage data, configuration and backups? Type DELETE: " confirmation
+    [[ "$confirmation" == "DELETE" ]] || die "Purge cancelled."
+  fi
   if [[ -f "/etc/systemd/system/orbitpage-updates-${CONTAINER_NAME}.service" ]]; then
     systemctl disable --now "orbitpage-updates-${CONTAINER_NAME}.service"
     rm -f -- "/etc/systemd/system/orbitpage-updates-${CONTAINER_NAME}.service"
@@ -471,11 +487,6 @@ uninstall_app() {
   compose down
 
   if [[ "$purge" == "--purge" ]]; then
-    if [[ "${ORBITPAGE_CONFIRM_PURGE:-}" != "YES" ]]; then
-      [[ -t 0 ]] || die "Set ORBITPAGE_CONFIRM_PURGE=YES to purge data non-interactively."
-      read -r -p "Delete all OrbitPage data, configuration and backups? Type DELETE: " confirmation
-      [[ "$confirmation" == "DELETE" ]] || die "Purge cancelled."
-    fi
     [[ "${DATA_DIR,,}" == *orbitpage* && "$DATA_DIR" != "/" ]] || die "Refusing to purge an unsafe data path: ${DATA_DIR}"
     rm -rf -- "$DATA_DIR" "$CONFIG_DIR" "$BACKUP_DIR"
     log "Application data and configuration removed."
@@ -532,6 +543,14 @@ main() {
   if [[ "$command" == install && ! -f "${BASH_SOURCE[0]:-}" ]]; then
     die 'Run install.sh from a trusted local checkout; streaming it into bash cannot install a reviewed management command.'
   fi
+  if [[ "$command" == install ]]; then
+    [[ -f "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/scripts/orbitpage-update.py" || -f "$UPDATE_HELPER_PATH" ]] \
+      || die 'The trusted checkout must include scripts/orbitpage-update.py for dashboard updates.'
+  fi
+  case "$command" in
+    help | --help | -h) ;;
+    *) validate_settings ;;
+  esac
 
   case "$command" in
     install) install_app "$@" ;;

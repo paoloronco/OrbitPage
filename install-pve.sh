@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="4.21.64"
+readonly SCRIPT_VERSION="4.21.65"
 
 CTID="${ORBITPAGE_PVE_CTID:-}"
 HOSTNAME="${ORBITPAGE_PVE_HOSTNAME:-orbitpage}"
@@ -45,15 +45,19 @@ on_error() {
   local line_number="${1:-unknown}"
 
   printf '\033[1;31m[OrbitPage PVE]\033[0m Installation failed at line %s.\n' "$line_number" >&2
-  if [[ "$CT_CREATED" == "1" ]]; then
+  exit "$exit_code"
+}
+
+report_incomplete_container() {
+  if [[ "$1" != "0" && "$CT_CREATED" == "1" ]]; then
     printf 'The incomplete container %s was kept for diagnostics.\n' "$CTID" >&2
     printf 'Inspect it with: pct config %s && pct console %s\n' "$CTID" "$CTID" >&2
     printf 'Remove it after inspection with: pct stop %s 2>/dev/null || true; pct destroy %s --purge\n' "$CTID" "$CTID" >&2
   fi
-  exit "$exit_code"
 }
 
 trap 'on_error $LINENO' ERR
+trap 'report_incomplete_container $?' EXIT
 
 require_command() {
   command -v "$1" >/dev/null 2>&1 || die "Required Proxmox command not found: $1"
@@ -65,8 +69,19 @@ require_integer() {
   local minimum="$3"
   local maximum="$4"
 
-  [[ "$value" =~ ^[0-9]+$ ]] || die "$name must be an integer."
-  (( value >= minimum && value <= maximum )) || die "$name must be between $minimum and $maximum."
+  [[ "$value" =~ ^[0-9]{1,9}$ ]] || die "$name must be an integer."
+  (( 10#$value >= minimum && 10#$value <= maximum )) || die "$name must be between $minimum and $maximum."
+}
+
+validate_ipv4() {
+  local address="$1"
+  local octet
+  local -a parts
+  [[ "$address" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || die "Invalid IPv4 address: $address"
+  IFS=. read -r -a parts <<< "$address"
+  for octet in "${parts[@]}"; do
+    (( 10#$octet <= 255 )) || die "Invalid IPv4 address: $address"
+  done
 }
 
 validate_inputs() {
@@ -76,7 +91,7 @@ validate_inputs() {
   [[ -f "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/scripts/orbitpage-update.py" ]] \
     || die 'The trusted checkout must include scripts/orbitpage-update.py for dashboard updates.'
 
-  for command in pveversion pvesh pvesm pveam pct ip awk grep sed sort tail; do
+  for command in pveversion pvesh pvesm pveam pct ip awk grep sed sort tail dpkg dpkg-query; do
     require_command "$command"
   done
 
@@ -88,6 +103,11 @@ validate_inputs() {
   pve_major="$(pveversion | sed -nE 's#^pve-manager/([0-9]+).*#\1#p' | head -n 1)"
   [[ "$pve_major" =~ ^[0-9]+$ ]] || die "Could not determine the Proxmox VE version."
   (( pve_major >= 8 )) || die "Proxmox VE 8 or newer is required."
+  local lxc_version lxc_minimum=6.0.5-2
+  (( pve_major == 8 )) && lxc_minimum=6.0.0-2
+  lxc_version="$(dpkg-query -W -f='${Version}' lxc-pve)"
+  dpkg --compare-versions "$lxc_version" ge "$lxc_minimum" \
+    || die "Update the Proxmox host's lxc-pve package to $lxc_minimum or newer before nesting Docker (installed: $lxc_version)."
 
   [[ "$HOSTNAME" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]] || die "Invalid container hostname: $HOSTNAME"
   [[ "$BRIDGE" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || die "Invalid bridge name: $BRIDGE"
@@ -95,9 +115,11 @@ validate_inputs() {
 
   if [[ "$IP_ADDRESS" != "dhcp" ]]; then
     [[ "$IP_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[12][0-9]|3[0-2])$ ]] || die "ORBITPAGE_PVE_IP must be 'dhcp' or an IPv4 CIDR."
+    validate_ipv4 "${IP_ADDRESS%/*}"
   fi
   if [[ -n "$GATEWAY" ]]; then
     [[ "$GATEWAY" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || die "ORBITPAGE_PVE_GATEWAY must be an IPv4 address."
+    validate_ipv4 "$GATEWAY"
     [[ "$IP_ADDRESS" != "dhcp" ]] || die "A gateway can only be set with a static IP."
   fi
   if [[ -n "$VLAN_TAG" ]]; then
@@ -111,6 +133,11 @@ validate_inputs() {
   require_integer "ORBITPAGE_HTTP_PORT" "$HTTP_PORT" 1 65535
   require_integer "ORBITPAGE_PVE_WAIT_ATTEMPTS" "$WAIT_ATTEMPTS" 1 600
   require_integer "ORBITPAGE_PVE_WAIT_SECONDS" "$WAIT_SECONDS" 0 30
+  local setting
+  for setting in CORES MEMORY SWAP DISK_GB HTTP_PORT WAIT_ATTEMPTS WAIT_SECONDS; do
+    printf -v "$setting" '%d' "$((10#${!setting}))"
+  done
+  [[ -z "$VLAN_TAG" ]] || VLAN_TAG=$((10#$VLAN_TAG))
   [[ "$FIREWALL" == "0" || "$FIREWALL" == "1" ]] || die "ORBITPAGE_PVE_FIREWALL must be 0 or 1."
 
   if [[ -n "$SSH_PUBLIC_KEY" ]]; then
@@ -140,9 +167,12 @@ select_resources() {
     CTID="$(pvesh get /cluster/nextid --output-format json | tr -dc '0-9')"
   fi
   require_integer "ORBITPAGE_PVE_CTID" "$CTID" 100 999999999
+  CTID=$((10#$CTID))
   if pct status "$CTID" >/dev/null 2>&1; then
     die "Container ID $CTID is already in use. Choose another ORBITPAGE_PVE_CTID."
   fi
+  pvesh get /cluster/nextid --vmid "$CTID" >/dev/null \
+    || die "Guest ID $CTID is already in use in the cluster. Choose another ORBITPAGE_PVE_CTID."
 
   ROOTFS_STORAGE="${ROOTFS_STORAGE:-$(active_storage_for rootdir)}"
   TEMPLATE_STORAGE="${TEMPLATE_STORAGE:-$(active_storage_for vztmpl)}"
@@ -229,9 +259,14 @@ container_ipv4() {
 wait_for_network() {
   local attempt
   local address
+  local registry="${IMAGE%%/*}"
+  if [[ "$IMAGE" != */* || ( "$registry" != *.* && "$registry" != *:* && "$registry" != localhost ) ]]; then
+    registry="registry-1.docker.io"
+  fi
+  registry="${registry%%:*}"
   for (( attempt=1; attempt<=WAIT_ATTEMPTS; attempt++ )); do
     address="$(container_ipv4 || true)"
-    if [[ -n "$address" ]] && pct exec "$CTID" -- getent hosts raw.githubusercontent.com >/dev/null 2>&1; then
+    if [[ -n "$address" ]] && pct exec "$CTID" -- getent hosts download.docker.com "$registry" >/dev/null 2>&1; then
       printf '%s\n' "$address"
       return 0
     fi
@@ -283,6 +318,7 @@ main() {
 
   wait_for_network >/dev/null
   install_orbitpage
+  pct exec "$CTID" -- curl --fail --silent --show-error "http://127.0.0.1:${HTTP_PORT}/health" >/dev/null
 
   success "OrbitPage is ready in unprivileged LXC $CTID."
   printf '\nLocal health check: pct exec %s -- curl -fsS http://127.0.0.1:%s/health\n' "$CTID" "$HTTP_PORT"

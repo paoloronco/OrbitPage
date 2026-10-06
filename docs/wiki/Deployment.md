@@ -114,6 +114,8 @@ Docker environment variables remain visible to users with Docker-daemon or root 
 The repository includes a production installer for an existing x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC:
 
 ```bash
+sudo apt-get update
+sudo apt-get install -y git
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage
 sudo ./install.sh
@@ -130,6 +132,8 @@ It:
 - starts the container with `no-new-privileges` and a health check;
 - installs the `orbitpage` management command and dashboard update helper;
 - enables dashboard updates automatically for official `latest` images on a systemd host.
+
+OpenSSL and Python 3 are installed when missing, including on hosts that already have Docker. Re-running the installer preserves the existing secret and data and takes a backup first. It rejects invalid settings, unsafe resolved data paths and containers owned by another Compose project. Failed pulls or health checks return an error instead of reporting a ready installation. Cancelling a data purge leaves the running application intact.
 
 The installer binds HTTP to `127.0.0.1:8080` by default. Open `http://localhost:8080/dashboard/profile` on the host, read the local setup token with `sudo cat /var/lib/orbitpage/.setup-token`, and enter it with the new `admin` password. For another machine, use a trusted HTTPS reverse proxy. A fresh public URL shows **Under construction** until setup is complete.
 
@@ -182,10 +186,14 @@ orbitpage uninstall
 Run this command as `root` on an x86-64 Proxmox VE 8 or newer node:
 
 ```bash
+apt-get update
+apt-get install -y git
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage
 ./install-pve.sh
 ```
+
+Keep the node updated before running the installer. Docker nesting requires the patched host package `lxc-pve`: at least `6.0.0-2` on PVE 8 or `6.0.5-2` on PVE 9 and newer. The installer checks this before creating a guest. These patches address the host AppArmor restrictions described in the [PVE 8 backport](https://www.mail-archive.com/pve-devel@lists.proxmox.com/msg32905.html) and the [runc compatibility issue](https://github.com/opencontainers/runc/issues/4968); the installer keeps the guest unprivileged and does not disable AppArmor.
 
 The host installer:
 
@@ -199,6 +207,8 @@ The host installer:
 - enables automatic startup with a controlled startup/shutdown order;
 - runs the tested Linux installer inside the guest;
 - waits for guest networking and the OrbitPage health check.
+
+Guest IDs are checked across the cluster, including VMs and guests on other nodes. Invalid IPs, unavailable storage and missing bridges are rejected before creation. A cached template is reused. After the guest installer returns, the host also verifies the guest's HTTP health endpoint before reporting success; failures retain the new guest and print recovery instructions.
 
 The firewall flag does not enable the Datacenter, Node, or CT firewall and does not create rules. The Proxmox operator remains responsible for enabling the firewall layers and defining an allowlist policy.
 
