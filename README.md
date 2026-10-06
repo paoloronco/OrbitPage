@@ -1,4 +1,4 @@
-# OrbitPage - Open-source, self-hosted link-in-bio and public page builder
+# OrbitPage - Open-source, self-hosted public page builder
 
 <p align="center">
   <picture>
@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  Create a link-in-bio, digital business card, portfolio, venue page, or small-business microsite - and self-host it with Docker.
+  Create your public page, digital business card, portfolio, venue page, or small-business microsite - and self-host it with Docker.
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
   <a href="./SECURITY.md">Security</a>
 </p>
 
-OrbitPage is a free, MIT-licensed Linktree alternative for building link-in-bio pages, digital business cards, portfolios, creator profiles, venue menus, event pages, and small-business websites. It combines a visual editing dashboard with responsive public rendering, built-in SEO and analytics, an Express backend, SQLite, and local file storage. No external database is required.
+OrbitPage is a free, MIT-licensed public page builder for digital business cards, portfolios, creator profiles, venue menus, event pages, and small-business websites. It combines a visual editing dashboard with responsive public rendering, built-in SEO and analytics, an Express backend, SQLite, and local file storage. No external database is required.
 
 This repository is the self-hosted edition. The optional managed service is available at [orbitpage.com](https://orbitpage.com), but its control plane, billing, managed storage, and hosted-only features are not part of this repository.
 
@@ -42,7 +42,7 @@ This repository is the self-hosted edition. The optional managed service is avai
 
 - **Own the stack and the data.** Run one Docker container with SQLite and local storage, on your server or homelab.
 - **Edit visually.** Manage content, design, menus, subpages, privacy, analytics, and publishing from the responsive dashboard.
-- **Publish more than a list of links.** Combine profiles, media, contact details, events, maps, menus, calls to action, and focused subpages.
+- **Build your public page.** Combine profiles, media, contact details, events, maps, menus, calls to action, and focused subpages.
 - **Ship a discoverable public page.** Configure canonical URLs, Open Graph and Twitter cards, Schema.org data, sitemaps, robots directives, QR codes, and consent-aware analytics.
 
 ## Contents
