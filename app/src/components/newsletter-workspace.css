@@ -59,6 +59,7 @@
 
 .newsletter-workspace {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   max-width: 1240px;
   min-width: 0;
