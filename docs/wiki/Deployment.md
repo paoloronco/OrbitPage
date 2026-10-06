@@ -519,7 +519,9 @@ Demo installations do not offer the installation action.
 
 ### Manual Docker or Compose deployment
 
-Install the host updater once on an existing manual deployment, then use the same command as new installations:
+Docker Run and Compose can update with standard Docker commands; no host updater is required. Follow the [manual update commands in the README](../../README.md#updates), preserving the existing data mount and container settings, and create a verified backup before replacement.
+
+For the optional host updater, including automatic pre-update archives and replacement checks, install it once on the Linux host:
 
 ```bash
 git clone https://github.com/paoloronco/OrbitPage.git

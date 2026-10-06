@@ -53,6 +53,7 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 - [Why OrbitPage](#why-orbitpage)
 - [Quick start](#quick-start)
 - [Updates](#updates)
+- [Optional host updater](#optional-host-updater)
 - [What you can build](#what-you-can-build)
 - [Dashboard workspaces](#dashboard-workspaces)
 - [How it runs](#how-it-runs)
@@ -132,12 +133,10 @@ Requirements:
 - Node.js <code>^20.19.0</code> or <code>>=22.12.0</code>
 - npm
 - Git
-- Python 3 (for <code>orbitpage-update</code> on a source checkout)
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage
-sudo ./scripts/install-updater.sh source "$PWD"
 cd app
 npm ci
 npm run install:server
@@ -147,21 +146,61 @@ npm run start
 ~~~
 
 The production-style source run is available at <http://localhost:3001>. Read <code>$DATA_DIR/.setup-token</code> on the host for first setup. Source mode makes SQLite storage owner-only on POSIX hosts; keep <code>DATA_DIR</code> on a private volume.
-Run <code>sudo orbitpage-update</code> from any directory to pull a fast-forward release, reinstall dependencies, and rebuild. Restart a foreground <code>npm run start</code> process afterward; an active <code>orbitpage</code> systemd service is restarted automatically.
 
 ## Updates
 
-The Linux and Proxmox installers install <code>orbitpage-update</code> automatically. For a manual Docker Run or Docker Compose installation on Linux, the host updater is optional and requires Python 3. Install it once from a trusted repository checkout, then update:
+### Docker Run
+
+Update with Docker directly; no updater or repository checkout is needed. Back up the persistent data before updating. The example below matches the [Docker quick start](#docker-image-recommended); if you customized the installation, reuse its original ports, mounts, environment variables, and other options when recreating the container.
+
+~~~bash
+docker pull paoloronco/orbitpage
+docker stop orbitpage
+docker rm orbitpage
+docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
+curl -fsS http://localhost:8080/health
+~~~
+
+The same <code>orbitpage-data</code> volume keeps the database, uploads, and secret across container replacement. Keep your existing volume or host directory if it has a different name; do not remove it during the update. Wait for the new container to start before checking health. A plain <code>docker restart</code> does not load a newly pulled image.
+
+### Docker Compose
+
+From the directory containing your Compose file, after backing up the data:
+
+~~~bash
+docker compose pull
+docker compose up -d
+~~~
+
+Compose recreates the service while retaining its configured data mount and settings. A pinned image tag or digest must be changed explicitly when you choose a new release.
+
+### Source checkout
+
+Stop a foreground OrbitPage process, then run these commands from the existing <code>app/</code> directory:
+
+~~~bash
+git pull --ff-only
+npm ci
+npm run install:server
+npm run start
+~~~
+
+Keep the same <code>DATA_DIR</code> and <code>JWT_SECRET</code>. For a systemd-managed source installation, rebuild with <code>npm run build</code> and restart the owning service instead of starting another foreground process. See [update procedures](./docs/wiki/Deployment.md#update-safely) for backups, health checks, and rollback.
+
+## Optional host updater
+
+The Docker commands above are sufficient for normal updates. On Linux, <code>orbitpage-update</code> is an optional convenience: it preserves container settings, creates a protected pre-update data archive, and checks the replacement image and health. It requires Python 3. The Linux and Proxmox installers already install it automatically.
+
+For a manual Docker installation, install it once from a trusted repository checkout if you want these additional checks:
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage
 sudo ./scripts/install-updater.sh
 sudo orbitpage-update
-sudo docker exec orbitpage node -p "require('./package.json').version"
 ~~~
 
-The version check applies to a container named <code>orbitpage</code>; use your own container name if different. The updater discovers existing official Docker containers and Compose projects, preserves their configuration and data mount, pulls the current <code>:latest</code> image, recreates the service, and checks its image ID and health. For an existing source checkout, run <code>sudo ./scripts/install-updater.sh source "$PWD"</code> from its root once; the updater then updates that registered directory. Restart a foreground source process afterward. A Compose file pinned to a numbered image tag must be changed and redeployed manually; the updater leaves it in place. See [update procedures](./docs/wiki/Deployment.md#update-safely) for unsupported container layouts and recovery steps.
+The helper discovers official Docker Run containers and Compose projects. For a source checkout, register its root once with <code>sudo ./scripts/install-updater.sh source "$PWD"</code>. Source updates restart an active <code>orbitpage</code> systemd service; restart a foreground process yourself. Pinned Compose releases stay under your control. See [update procedures](./docs/wiki/Deployment.md#update-safely) for supported layouts, and [web updates](./docs/wiki/Deployment.md#web-updates) if you want to enable installation from the dashboard.
 
 ## What you can build
 
