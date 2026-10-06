@@ -536,7 +536,19 @@ Demo installations do not offer the installation action.
 
 ### Manual Docker or Compose deployment
 
-Docker Run and Compose can update with standard Docker commands; no host updater is required. Follow the [manual update commands in the README](../../README.md#updates), preserving the existing data mount and container settings, and create a verified backup before replacement.
+Docker Run and Compose can update with standard Docker commands; no host updater is required. Create a verified backup before replacement and preserve the existing data mount and container settings.
+
+For Docker Run, this example matches the [README quick start](../../README.md#docker-image-recommended). If you customized the installation, reuse its original ports, mounts, environment variables, and other options:
+
+```bash
+docker pull paoloronco/orbitpage
+docker stop orbitpage
+docker rm orbitpage
+docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
+curl -fsS http://localhost:8080/health
+```
+
+The same `orbitpage-data` volume keeps the database, uploads, and secret across container replacement. Keep your existing volume or host directory if it has a different name; do not remove it during the update. Wait for the new container to start before checking health. A plain `docker restart` does not load a newly pulled image.
 
 To enable dashboard updates on an existing Docker container, follow [Web updates](#web-updates). There is no separate updater installer. Existing host update commands remain compatible, but new manual Docker installations can update directly with Docker Run or Compose.
 
@@ -544,7 +556,16 @@ The updater discovers official OrbitPage Docker containers and Compose labels. I
 
 Compose uses its recorded project directory and files, then runs `pull` and `up` for the OrbitPage service. A pinned image tag remains pinned until you change the tag in the Compose file. Custom `--env-file` arguments that are not recorded in the Compose project labels must be supplied through the project configuration before updating.
 
-For source installations, follow the [source update commands](../../README.md#source-checkout). Existing registered host updaters still use `git pull --ff-only`, `npm ci`, and a fresh frontend build; they restart an active `orbitpage` systemd service. New source installations do not install a privileged updater.
+For source installations, stop a foreground OrbitPage process, then run these commands from the existing `app/` directory:
+
+```bash
+git pull --ff-only
+npm ci
+npm run install:server
+npm run start
+```
+
+Keep the same `DATA_DIR` and `JWT_SECRET`. For a systemd-managed source installation, rebuild with `npm run build` and restart the owning service instead of starting another foreground process. Existing registered host updaters still use `git pull --ff-only`, `npm ci`, and a fresh frontend build; they restart an active `orbitpage` systemd service. New source installations do not install a privileged updater.
 
 Source installations with an updater installed before v4.21.45 must replace the privileged helper from the official v4.21.45 release **before** their next `sudo orbitpage-update` run. The previous helper copies scripts from the writable checkout into root-owned command paths during that first update. Install the reviewed `scripts/orbitpage-update.py` and `scripts/orbitpage-update.sh` from the official release into `/usr/local/lib/orbitpage/orbitpage-update.py` and `/usr/local/bin/orbitpage-update`, respectively, then run the updater. Later source updates intentionally leave the privileged helper unchanged; install future helper updates separately from a trusted release.
 
@@ -589,7 +610,7 @@ instance, `sudo orbitpage web-updates` enables or repairs the service using the
 persisted container name. Python 3 is required on the host; the full Linux
 installation installs it automatically.
 
-Use the [manual Docker update commands](../../README.md#updates) and reload Account
+Use the [manual Docker update commands](#manual-docker-or-compose-deployment) and reload Account
 if the dashboard predates this feature. Web updates support official Docker
 Run and Compose installations using `:latest` and a writable persistent
 `/app/data` mount. Source installations, custom images and pinned releases
