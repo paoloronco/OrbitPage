@@ -36,7 +36,7 @@ Your page adapts to phones and desktops, with SEO, QR codes, analytics, and news
 Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This repository contains the self-hosted application.
 
 <p align="center">
-  <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="OrbitPage dashboard walkthrough: profile, content blocks, themes and the public page" width="800" />
+  <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="OrbitPage dashboard walkthrough: page, content, menu, additional pages, themes, newsletter, publishing and the public page" width="800" />
 </p>
 
 > **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; follow the [migration guide](./docs/wiki/Docker-Hub-migration.md).
