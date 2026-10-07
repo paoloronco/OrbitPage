@@ -53,6 +53,7 @@ test('closes the AI popup outside only when its composer has no draft', async ({
   const dialog = page.getByRole('dialog', { name: 'OrbitPage AI', exact: true });
   await open.click();
   await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Close AI assistant', exact: true })).toBeFocused();
   await page.mouse.click(2, 2);
   await expect(dialog).toBeHidden();
   await open.click();
