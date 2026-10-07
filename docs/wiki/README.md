@@ -29,6 +29,15 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/sections/backups-and-demo-mode.md) |
 | Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/sections/account-and-team.md) |
 
+## Integrations
+
+| Task | Guide |
+| --- | --- |
+| Add service links, video/audio players, scheduling and forms | [External modules](./integrations/external-modules.md) |
+| Configure iubenda, CookieYes, Cookiebot, OneTrust or a custom CMP | [Consent management](./integrations/consent-management.md) |
+
+See the [Integrations index](./integrations/README.md) for SMTP, AI and automation guides.
+
 ## Maintain an installation
 
 | Task | Guide |

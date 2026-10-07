@@ -32,7 +32,7 @@ The tag runs on public pages only and follows Google Consent Mode. It does not r
 
 ## Consent providers
 
-Use the built-in controls or configure an external consent-management provider. Avoid installing the same analytics tag in both OrbitPage and custom scripts or a tag manager.
+Use the built-in controls or configure iubenda, CookieYes, Cookiebot, OneTrust or a custom CMP. The [consent-management guide](../../integrations/consent-management.md) explains the fields, category mappings and public-page checks. Avoid installing the same analytics tag in both OrbitPage and custom scripts or a tag manager.
 
 Executable consent/policy snippets require administrator permission. Restored snippets stay blocked until an administrator reviews and saves Privacy settings. See [Security](../../administration/Security.md).
 
