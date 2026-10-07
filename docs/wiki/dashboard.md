@@ -8,6 +8,8 @@ Open `/dashboard/profile` to sign in or, on a new installation, choose the admin
 
 ### Site editor
 
+![Page, content, menu, additional pages, theme and AI Assistant](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-site-editor-4.21.75.gif)
+
 | Section | What you edit | URL |
 | --- | --- | --- |
 | **Page** | Profile, image, social links, browser title, metadata, and footer | `/dashboard/editor/page` |
@@ -23,6 +25,8 @@ See [Content and design](./content-and-design.md) for editing controls and [AI A
 
 ### Share and manage content options
 
+![Sharing, backups, analytics, privacy and newsletter](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-content-management-4.21.75.gif)
+
 | Workspace | Tools | URL |
 | --- | --- | --- |
 | **Publish** | QR codes, scheduled campaign links, sitemap, and text files | `/dashboard/publish/QR` |
@@ -34,6 +38,8 @@ See [Content and design](./content-and-design.md) for editing controls and [AI A
 Detailed guides: [Publishing](./publishing.md), [Backups](./backups-and-demo-mode.md), [Analytics and privacy](./analytics-and-privacy.md), [Newsletters](./newsletters.md).
 
 ### Account and installation
+
+![Team, account settings and the self-hosted edition](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-account-installation-4.21.75.gif)
 
 | Workspace | Tools | URL |
 | --- | --- | --- |
