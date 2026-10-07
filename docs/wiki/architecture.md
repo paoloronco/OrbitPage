@@ -1,72 +1,36 @@
-# OrbitPage OSS architecture
+# Architecture
 
-| Field | Value |
-| --- | --- |
-| Scope | Open-source self-hosted runtime and its shared product code |
-| Status | Implemented architecture contract |
-| Sources | [Application layout](../../app/README.md), [server layout](../../app/server/README.md), [page schema](../../app/packages/page-schema), [Dockerfile](../../Dockerfile) |
+This document explains the self-hosted runtime and its separation from the hosted service. [Application](./application.md) covers files, dependencies, builds, and commands.
 
-## System shape
+## Runtime
 
 ```text
-Visitor or administrator
-  -> Express HTTP server
-     -> public static assets and React/Vite application
-     -> internal /api routes
-        -> authentication, validation and domain services
-        -> SQLite database and local persistent uploads
+Browser → Express
+            ├─ public pages, React dashboard, and assets
+            ├─ /api → validation → permissions → services → SQLite
+            └─ uploaded media in DATA_DIR/uploads
 ```
 
-The same installation serves the dashboard and public page. `DATA_DIR` owns
-durable data; Docker persists it at `/app/data`. The frontend build is
-generated output and is not edited or committed. The bundled API is an
-application boundary, not a stable third-party SDK.
+One installation serves the public page and dashboard. SQLite and local uploads belong to the same persistent `DATA_DIR`. Run one application replica per directory.
 
-## Ownership
+Express remains one server application. Put domain logic in the existing service or schema and retain route paths and middleware order when extracting code.
 
-| Area | Canonical owner |
+## Data flows
+
+| Action | Flow |
 | --- | --- |
-| Dashboard and public React UI | `app/src/` |
-| Shared page, block, menu and theme schemas | `app/packages/page-schema/` |
-| HTTP routes, auth and runtime startup | `app/server/server.js` and `app/server/auth.js` |
-| SQLite connection and migrations | `app/server/database.js` |
-| Backup, media, AI and other domain operations | `app/server/services/` |
-| Browser regression checks | `app/e2e/` |
-| Image and installation flow | Root Docker/Compose files and `scripts/` |
+| Edit | Dashboard loads saved data, keeps a local draft, then sends a validated save request. Server permission checks precede SQLite writes. |
+| Public visit | Server selects visible/published content and generates metadata; the shared renderer displays the page. Private account and editing data are excluded. |
+| Upload | Server checks the media and quota, writes accepted files to uploads, and stores references in SQLite. |
+| Restore | Selected data and media are validated and replaced together; failed restoration rolls back the change. |
+| Update | A new image or source build starts against the same data and secret. Rollback uses both the old image and its pre-update backup. |
 
-The server is a modularizing monolith. Put validation and domain logic in
-the owning schema or service, then route through it; avoid a second copy of
-the same rule in a UI component or another endpoint.
+The bundled `/api` changes with the application release; it has no independent API-version guarantee. See [API](./api.md) and [Maintenance](./maintenance.md).
 
-## Main flows
+## Shared code and hosted service
 
-**Edit:** the authenticated dashboard reads through the internal API, edits
-local state, validates on save, then the server checks authorization and writes
-the relevant SQLite records. Reloading the editor reads committed state again.
+The public repository owns the editor, renderer, page schema, and self-hosted server. The hosted service builds the shared frontend and supplies its own authentication, persistence, and publication adapters.
 
-**Public visit:** Express serves only publishable content and static assets.
-Public routes must not expose drafts, account data, scheduling metadata or
-private files. Dashboard locale prefixes do not become public URL prefixes.
+Hosted tenants, plans, billing, managed storage, moderation, commerce, and custom-domain provisioning remain outside this repository. The hosted adapter does not use the self-hosted SQLite database.
 
-**Upload and backup:** accepted media lives under persistent uploads. Backup
-and restore operate on selected durable sections and must not treat generated
-frontend files as application data. Back up SQLite and uploads consistently;
-see [backup guidance](./backups-and-demo-mode.md).
-
-**Update:** a release is built from the exact tagged source; container
-recreation retains `DATA_DIR` and the instance secret. The
-[deployment guide](./Deployment.md) owns install, update and rollback
-steps. A source commit is not evidence that an operator has updated a host.
-
-## Boundary with hosted SaaS
-
-The public repository owns the reusable editor, renderer, schema and generic
-validation. The private hosted platform pins this repository as a Git
-submodule, builds the shared runtime and supplies same-origin adapters for
-tenant identity, managed persistence and publication. Hosted plans, billing,
-moderation, managed storage and edge routing do not belong in this repository.
-The hosted adapter does not use this SQLite database.
-
-See [product requirements](./product-requirements.md) for expected behavior,
-[design system](./design-system.md) for UI rules, [security](./Security.md)
-for trust boundaries, and [AGENTS.md](../../AGENTS.md) for contributor-agent rules.
+[Product requirements](./product-requirements.md) defines expected behavior; [Design system](./design-system.md) defines shared UI rules.

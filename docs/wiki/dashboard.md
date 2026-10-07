@@ -1,151 +1,88 @@
-# Dashboard guide
+# Dashboard
 
-The self-hosted dashboard opens at `/dashboard/profile` after initial setup. In the visual site editor, **Page**, **Content**, **Menu**, **Shop**, and **Pages** use `/dashboard/editor/page`, `/dashboard/editor/content`, `/dashboard/editor/menu/content`, `/dashboard/editor/shop/products`, and `/dashboard/editor/pages`. Refreshing or bookmarking one of these URLs returns to the same section. The classic dashboard keeps its existing `/dashboard/profile` and `/dashboard/content/*` URLs.
+Open `/dashboard/profile` to sign in or complete setup. The dashboard opens the visual editor, where **Page**, **Content**, **Menu**, and **Pages** share a live preview.
 
-Tabs also have their own URLs, prefixed by the dashboard language, for example `/en-US/dashboard/account/security`:
+## Edit your page
 
-| Workspace path | Tab slugs |
+| Section | What you edit | URL |
+| --- | --- | --- |
+| **Page** | Profile, image, social links, browser title, metadata, and footer | `/dashboard/editor/page` |
+| **Content** | Main-page blocks, order, visibility, and schedules | `/dashboard/editor/content` |
+| **Menu** | Menu settings, sections, items, prices, and appearance | `/dashboard/editor/menu/content` |
+| **Pages** | Additional pages, their URLs, publication state, and blocks | `/dashboard/editor/pages` |
+| **Theme** | Colors, fonts, cards, background, and responsive preview | `/dashboard/theme/page` |
+| **AI Assistant** | Suggested page changes to review and confirm | `/dashboard/ai` |
+
+The **Shop** section is unavailable in the self-hosted edition. Its shared route is `/dashboard/editor/shop/products`.
+
+See [Content and design](./content-and-design.md) for editing controls and [AI Assistant](./ai-assistant.md) for provider setup.
+
+## Share and manage content
+
+| Workspace | Tools | URL |
+| --- | --- | --- |
+| **Publish** | QR codes, scheduled campaign links, sitemap, and text files | `/dashboard/publish/QR` |
+| **Backup** | JSON/image ZIP export, selective restore, version history, and media cleanup | `/dashboard/backup` |
+| **Analytics** | Visit and click reports, QR traffic, and optional GA4 | `/dashboard/analytics` |
+| **Privacy** | Consent banner, policies, and external consent providers | `/dashboard/privacy` |
+| **Newsletter** | SMTP, subscribers, campaigns, schedules, and reports | `/dashboard/newsletter/overview` |
+
+Detailed guides: [Publishing](./publishing.md), [Backups](./backups-and-demo-mode.md), [Analytics and privacy](./analytics-and-privacy.md), [Newsletters](./newsletters.md).
+
+## Account and installation
+
+| Workspace | Tools | URL |
+| --- | --- | --- |
+| **Team** | Local users, roles, passwords, and personal API tokens | `/dashboard/team` |
+| **Account → General** | Instance version, health/storage details, updates, environment overrides, and public URL | `/dashboard/account/general` |
+| **Account → Security** | Your password, authenticator, and recovery codes | `/dashboard/account/security` |
+| **Account → Audit log** | Successful changes, with user, action, date, and text filters; administrators only | `/dashboard/account/audit` |
+| **Edition** | Self-hosted features and server responsibilities | `/dashboard/plan` |
+
+See [Account and team](./account-and-team.md), [Configuration](./Configuration.md#dashboard-environment-overrides), and [Updates](./Deployment.md#update-safely).
+
+## Save and preview
+
+1. Edit a section and use its **Save** action.
+2. Save each additional section you changed. Saving Theme does not save an unsaved Menu or Page.
+3. Open **Public page** to check the saved result.
+
+The preview can show unsaved changes. In the self-hosted edition, saved public content appears on the public page without a separate site-wide publish step. Additional pages must also be marked **Published**.
+
+Subpage settings and blocks have separate save controls. Theme, Menu, Privacy, and Publish keep their own drafts. Browser refresh discards unsaved work; switching a tab keeps a Menu or Theme draft.
+
+## URLs and tabs
+
+The tables omit the language prefix: `/dashboard/account/security` becomes `/en-US/dashboard/account/security` in an English dashboard. A configured `BASE_PATH` comes before that prefix. Public routes use neither the dashboard language nor its section paths.
+
+Tabs append these slugs to their workspace path:
+
+| Path | Tab slugs |
 | --- | --- |
-| `/dashboard/editor/menu/content` | `settings`, `content`, `design` |
-| `/dashboard/editor/shop/products` | `legal`, `payments`, `design`, `products`, `orders`, `customers` |
-| `/dashboard/theme/page` | `page`, `card` |
-| `/dashboard/publish/QR` | `QR`, `Sitemap`, `TXT` |
-| `/dashboard/newsletter/overview` | `overview`, `campaigns`, `subscribers`, `settings` |
-| `/dashboard/account/general` | `general`, `security`, `audit` |
+| `/dashboard/editor/menu` | `settings`, `content`, `design` |
+| `/dashboard/editor/shop` | `legal`, `payments`, `design`, `products`, `orders`, `customers`; hosted only |
+| `/dashboard/theme` | `page`, `card` |
+| `/dashboard/publish` | `QR`, `Sitemap`, `TXT` |
+| `/dashboard/newsletter` | `overview`, `campaigns`, `subscribers`, `settings` |
+| `/dashboard/account` | `general`, `security`, `audit` |
 
-**Account > Your public OrbitPage** shows the installation root URL, including any configured mount path, without a dashboard language suffix.
+Bookmarks, refresh, and browser Back/Forward restore the selected section and tab.
 
-**Account > General > Instance details** shows the SQLite database path, `DATA_DIR`, total bytes stored there, bytes in `uploads`, and local checks for the API, SQLite, and writable data/upload directories. The storage values measure files inside `DATA_DIR`; they are not free disk capacity. Only administrators can see these details. **Environment variables** opens a dialog that reports whether selected runtime variables are configured without revealing their values. Enter replacements, confirm with the current password, and restart the instance to apply them. See [Configuration](./Configuration.md#dashboard-environment-overrides) for the supported keys and persistence rules.
-
-Opening, refreshing or using browser Back/Forward restores the selected tab. Changing tabs keeps the current in-memory Menu or Theme draft; refreshing still discards unsaved changes. Existing workspace URLs remain valid. Shop URLs preserve the shared navigation contract; commerce remains a managed-service capability and is shown as unavailable in OSS.
-
-The dashboard language stays in its URL and follows browser Back/Forward. Public page, menu, policy, newsletter and subpage URLs have no language prefix in either edition; old localized self-hosted public URLs redirect to their unprefixed destination.
-
-## A reliable editing workflow
-
-Use this sequence to avoid leaving related changes half-finished:
-
-1. Complete the profile and browser identity in **Page**.
-2. Build the main-page order in **Content > Link**.
-3. Add the menu or subpages only when they need a distinct destination.
-4. Set shared colors, typography, spacing, cards, and background in **Theme**.
-5. Configure consent before enabling GA4 or third-party embeds.
-6. Review sharing and crawler files in **Publish**.
-7. Create a backup, then open **Public page** and test the result as a visitor.
-
-Page, Link blocks, subpage details, each subpage's blocks, Menu, Theme, Privacy, and Publish use their own save action. A save in one workspace does not commit an unsaved draft in another.
-
-## First login
-
-After the initial system, administrator, and public-URL setup, OrbitPage opens the dashboard directly. Use this guide as a reference for the available workspaces and their save boundaries.
-
-See [Getting started](./Getting-started.md) for the fresh-install sequence.
-
-## Page tools
-
-Each section header shows its title, description and **Public page** link. The page slug appears in the sidebar.
-
-### Page
-
-Use **Page** to define the identity visitors see first: profile type, image, name, description, role or activity, location, social links, browser metadata, footer, and optional profile-card overrides.
-
-Profile-card overrides take precedence over the active theme. Use **Use theme** to return an individual value to the shared design. See [Content and design](./content-and-design.md#page-identity) for the field hierarchy and save behavior.
-
-### Content
-
-**Content** groups four destinations:
-
-- **Link** contains the profile and ordered content blocks.
-- **Menu** creates the native venue menu at `/menu`.
-- **Shop** publishes the Stripe-powered product and service catalog at `/shop` on OrbitPage SaaS.
-- **Pages** creates focused public subpages, for example `/services`.
-
-One active destination is always selected as the homepage. Choose a different homepage before deactivating the current one. Deactivation requires confirmation and keeps the destination's content saved for later reactivation.
-
-The Link page and every additional page can include an **Internal page navigation** block. It links to Home, Menu, Shop or additional pages as full-width cards, side-by-side cards, compact buttons or a horizontal page menu while inheriting the page theme.
-
-Legacy URLs such as `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` continue to resolve to Content. The complete block, menu, subpage, scheduling, embed, and media workflows are in [Content and design](./content-and-design.md).
-
-### AI Assistant
-
-The self-hosted assistant proposes profile, content, and theme operations from the current page state. Generation never applies changes immediately; review and confirm the proposal first. See [AI assistant](./ai-assistant.md) for provider setup, data sent to the provider, and failure handling.
-
-### Theme
-
-Use **Theme** for the page-wide visual system: presets, colors, typography, card surfaces, borders, radius, shadow, blur, spacing, width, and background. The live preview uses the public renderer. Mobile and desktop mockups fill their screens with the selected background and remain scrollable.
-
-Prefer theme-level changes for consistency. Keep individual profile or block overrides for deliberate exceptions.
-
-### Publish
-
-**Publish** groups sharing and discovery tools:
-
-- generate a static page/menu QR or a stable smart campaign QR;
-- change a smart link's default destination, timezone, and lunch/dinner schedule without replacing the printed QR;
-- choose screen or print presets and download PNG or SVG;
-- generate and inspect `sitemap.xml`;
-- edit `robots.txt`, `llms.txt`, `humans.txt`, `ai.txt`, and `security.txt`;
-- create safe custom `.txt` and `/.well-known/*.txt` endpoints.
-
-Follow [Publishing and QR](./publishing.md) for save boundaries, destinations, campaign scheduling and export checks. Set `PUBLIC_SITE_URL` before distributing QR codes; [SEO and indexing](./SEO-and-indexing.md) covers discovery.
-
-### Backup
-
-Use **Backup** to export or restore selected application sections and to inspect or remove unused uploads. JSON exports are portable, but they do not replace a consistent backup of the SQLite database and uploads.
-
-Restoring replaces only the selected sections. Restoring Media replaces the uploads directory, and restoring Admin accounts can invalidate the active session. Read [Backups, media, and demo mode](./backups-and-demo-mode.md) before the first restore or cleanup.
-
-### Analytics and Privacy
-
-Self-hosted **Analytics** shows the same 7/30-day visit and content dashboard as the managed edition and can configure optional GA4. **Privacy** controls policy links, the consent banner, consent categories, and optional external consent integration. See [Analytics and privacy](./analytics-and-privacy.md) before enabling third-party tracking.
+Older `/dashboard/profile` and `/dashboard/content/{link,menu,shop,pages}` paths still work. `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` remain Content aliases; `/dashboard/access` opens Account, and `/admin` redirects to the dashboard.
 
 ## Workspace tools
 
-- **Newsletter** connects your own SMTP server, manages confirmed subscribers, and creates, schedules, and reports on email campaigns. See [Newsletters](./newsletters.md).
-- **Team** manages additional local users, roles and personal API tokens. See [Account and team](./account-and-team.md) for creation, revocation and security procedures.
-- **Account → General** contains identity, instance version and updates, support, and personal-page actions. The [optional host update service](./Deployment.md#web-updates) enables installation with a blocking progress/log dialog and a confirmed final result. Without it, Account explicitly provides the terminal command. **Security** contains the signed-in user's password and TOTP authenticator. On narrow screens, protected password recovery follows the authenticator.
-- **Account → Audit log** is available to administrators. It lists successful authenticated changes with time, user and action, and supports text, user, action and date filters. Events contain metadata only, remain in the installation SQLite database until the installation is reset or removed, and are included in infrastructure backups. The log starts recording after upgrade; older changes cannot be reconstructed.
-- **Edition** explains what the open-source installation includes and which server, backup and optional provider settings you manage. There are no paid feature tiers in the self-hosted edition. The existing `/dashboard/plan` URL remains valid.
-
-The first `admin` account always has full access. Every signed-in user can manage their own Account; the additional roles below control access to page and installation tools:
+Navigation depends on the signed-in user's role. Every user can manage their own Account.
 
 | Role | Access |
 | --- | --- |
-| Admin | Full access, including users, backups, and recovery tools |
-| Editor | Profile, Link blocks, menu, and built-in analytics |
-| Link Editor | Full Link-block editing and built-in analytics |
-| Style Editor | Colors, fonts, and size of publicly visible cards |
+| Admin | All tools, users, backups, and installation operations |
+| Editor | Profile, blocks, menu, and analytics |
+| Link Editor | Full block editing and analytics |
+| Style Editor | Appearance of publicly visible cards |
 | Image Editor | Icons and cover images of publicly visible cards |
-| Theme Editor | Shared theme and background only |
-| Compliance | Privacy, consent, and discovery settings only |
+| Theme Editor | Shared theme and background |
+| Compliance | Privacy, consent, and discovery settings |
 | Viewer | Read-only analytics |
 
-Assign the narrowest role that fits the person's task. Account security is per user; Team permissions do not replace unique passwords or two-factor authentication.
-
-Style and Image Editors cannot read draft, inactive, future or expired cards, campaign schedules, or private analytics through the card list. Full content access requires the Link Editor or Editor role.
-
-The legacy `/dashboard/access` path remains an alias for Account.
-
-## Canonical dashboard routes
-
-Only routes allowed by the signed-in user's permissions appear in navigation.
-
-| Area | Route |
-| --- | --- |
-| Visual editor · Page | `/dashboard/editor/page` |
-| Visual editor · Content | `/dashboard/editor/content` |
-| Visual editor · Menu | `/dashboard/editor/menu` |
-| Visual editor · Shop | `/dashboard/editor/shop` |
-| Visual editor · Pages | `/dashboard/editor/pages` |
-| AI Assistant | `/dashboard/ai` |
-| Theme | `/dashboard/theme` |
-| Publish | `/dashboard/publish` |
-| Backup | `/dashboard/backup` |
-| Analytics | `/dashboard/analytics` |
-| Privacy | `/dashboard/privacy` |
-| Newsletter | `/dashboard/newsletter` |
-| Team | `/dashboard/team` |
-| Account | `/dashboard/account` |
-| Edition | `/dashboard/plan` |
-
-The classic dashboard retains `/dashboard/profile` and `/dashboard/content/{link,menu,shop,pages}`. `/admin` remains a compatibility entry point and redirects to the dashboard.
+Style and Image Editors cannot read drafts, inactive or scheduled-out content, or private analytics. The first `admin` account keeps full access. User creation, API tokens, and security steps are in [Account and team](./account-and-team.md).

@@ -1,31 +1,10 @@
 # Development
 
-This page describes the local development workflow for OrbitPage.
+Use this workflow to change the source code. [Application](./application.md) maps the repository and main files; [Getting started](./Getting-started.md) runs the built application locally.
 
-## Repository Layout
+## Install
 
-```text
-app/
-  src/                  React frontend
-  server/               Express backend
-  packages/page-schema/ Shared page and block schemas
-  e2e/                  Playwright browser tests
-  public/               Static public files
-  dist/                 Generated frontend build
-```
-
-Important files:
-
-- `app/src/pages/Index.tsx`: public page
-- `app/src/pages/Admin.tsx`: admin shell
-- `app/src/lib/api-client.ts`: frontend API client and token storage
-- `app/src/lib/theme.ts`: theme configuration and CSS variable application
-- `app/packages/page-schema`: canonical schemas shared at page-data boundaries
-- `app/server/server.js`: Express app and API routes
-- `app/server/database.js`: SQLite helpers and migrations
-- `app/server/auth.js`: authentication, JWTs, password helpers, permissions
-
-## Install Dependencies
+Requirements: Node.js `^20.19.0` or `>=22.12.0`, npm, and Git.
 
 ```bash
 cd OrbitPage/app
@@ -33,85 +12,66 @@ npm ci
 npm run install:server
 ```
 
-## Run in Development
+## Run with live reload
 
-Terminal 1:
+In the backend terminal, generate one development secret and reuse it while working:
 
 ```bash
 cd OrbitPage/app
-npm run server:dev
+export JWT_SECRET="$(node -p "require('crypto').randomBytes(32).toString('hex')")"
+export DATA_DIR="$PWD/.orbitpage-data"
+NODE_ENV=development npm run server:dev
 ```
 
-Terminal 2:
+`DATA_DIR` keeps development data separate from an installed instance. The stable secret allows TOTP and encrypted provider settings to survive server restarts.
+
+In another terminal:
 
 ```bash
 cd OrbitPage/app
 npm run dev
 ```
 
-Open:
+| Service | URL |
+| --- | --- |
+| Frontend | <http://localhost:8080> |
+| Dashboard | <http://localhost:8080/dashboard/profile> |
+| Express health | <http://localhost:3001/health> |
 
-- Frontend: <http://localhost:8080>
-- Admin panel: <http://localhost:8080/dashboard/profile>
-- Backend health check: <http://localhost:3001/health>
-
-## Run Production-Style Locally
-
-```bash
-cd OrbitPage/app
-npm run start
-```
-
-This builds the frontend and starts the backend server.
+Vite proxies API requests to Express. Keep the frontend and backend running together.
 
 ## Checks
 
+Run from `app/`:
+
 ```bash
-cd OrbitPage/app
 npm run lint
 npm run typecheck
 npm run test:unit
 npm run build
+npm run test:e2e:chromium
 ```
 
-E2E:
+- `test:unit` runs frontend and server tests.
+- From `app/server/`, `npm test -- --run` runs server tests only.
+- `test:e2e` is the Chromium suite; `test:e2e:firefox` and `test:e2e:webkit` select other engines.
+- `test:e2e:ci` runs all three engines. Browser tests use isolated data, not the developer database.
+
+Repository checks run from the repository root:
 
 ```bash
-npm run test:e2e
+node scripts/check-markdown-links.mjs
+node scripts/check-tracked-runtime-data.mjs
 ```
 
-All frontend commands should be run from `app/`. Backend-only commands should be run from `app/server/`.
+Installer and updater checks are listed in [Scripts](../../scripts/README.md). Do not test host-changing installers against a real instance.
 
-## Database Notes
+## Make a change
 
-OrbitPage uses SQLite. Local data defaults to:
+1. Read the owning module and trace its callers.
+2. Reuse shared page schemas and API/permission helpers.
+3. Keep SQLite migrations compatible with existing data.
+4. Add a focused test for changed behavior and update its guide.
+5. Run the checks relevant to the change.
 
-```text
-app/server/orbitpage.db
-app/server/uploads/
-```
-
-Schema migrations are additive and run on startup. Avoid destructive migrations unless there is a clear migration path and backup guidance.
-
-## Gitea mirror credential
-
-The mirror runs trusted workflow code from `main` and copies other branches and tags as Git data. Main pushes, release completion and ref deletion trigger synchronization; the hourly schedule covers other branch changes. No source checkout or build runs with the mirror credential.
-
-Store `GITEA_TOKEN` only in the `gitea-mirror` GitHub environment. Its deployment branch policy must allow the branch `main` only, with no tag rule. Remove any repository or organization secret of the same name that is accessible to this repository; workflow trigger restrictions cannot protect such a copy from another branch-authored workflow. Use a token restricted to writing this mirror repository. If exposure is suspected, rotate and revoke it at Gitea as well.
-
-Verify the environment's branch restriction, absence of a repository-scoped copy, and a successful mirror run after migrating the credential.
-
-## Commit Format
-
-```text
-type(scope): description
-```
-
-Examples:
-
-```bash
-feat(links): add card scheduling
-fix(auth): handle expired session state
-docs(wiki): add deployment guide
-ci(docker): publish ghcr image
-```
+Build output, runtime data, logs, secrets, and E2E reports are ignored and must stay uncommitted. See [Contributing](../../CONTRIBUTING.md) for commit conventions and [GitHub automation](./github-automation.md) for releases and mirror settings.

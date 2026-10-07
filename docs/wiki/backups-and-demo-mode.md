@@ -1,13 +1,13 @@
 # Backups, media, and demo mode
 
-OrbitPage provides a portable JSON backup in the dashboard, but production recovery still requires a consistent copy of the complete `DATA_DIR`. Use both layers.
+Use dashboard exports to move selected content. Back up the complete data directory and host configuration to recover an installation.
 
 | Backup layer | Best use | What it contains |
 | --- | --- | --- |
 | Dashboard JSON or portable ZIP | Selective transfer, inspection, and application-level restore | The selected sections; the optional ZIP also contains images |
 | Infrastructure backup | Full disaster recovery | `orbitpage.db`, `uploads/`, and the deployment configuration needed to start the same instance |
 
-Follow the [infrastructure backup and restore runbook](./Deployment.md#create-and-verify-an-infrastructure-backup) for production recovery. A downloaded JSON file does not prove that the persistent volume, reverse proxy, or runtime configuration can be restored.
+Follow the [infrastructure backup and restore runbook](./maintenance.md#create-and-verify-an-infrastructure-backup) for production recovery.
 
 ## Export a dashboard backup
 
@@ -26,14 +26,14 @@ The self-hosted backup sections are:
 | Blocks and links | Home content, order, visibility, scheduling, counters, and block settings |
 | Subpages | Slugs, page descriptions, publication state, and subpage blocks |
 | Theme and appearance | Shared colors, typography, card system, layout, and background |
-| Venue menu | Menu identity, categories, items, prices, and independent appearance |
+| Menu | Menu identity, categories, items, prices, and independent appearance |
 | Privacy and consent | Cookie banner, policies, consent mode, and provider settings |
 | Discovery files | Sitemap state and built-in or custom text files |
 | Admin accounts | Self-hosted users, roles, and stored credential records |
 
 A complete JSON export includes every selectable data section. A selective export declares only the selected sections and leaves the rest out. Images are separate from section selection: enabling **Include images (ZIP)** creates an archive that both OrbitPage OSS and SaaS can restore. Videos remain excluded from this image archive.
 
-Treat every backup as sensitive. It can contain personal content, analytics counters, policy configuration, credential hashes and, for a portable ZIP, original uploaded images. The self-hosted AI provider key is intentionally excluded, but that does not make the backup safe to share.
+Keep exports private: they may contain page data, analytics, account hashes, and uploaded images. AI keys and newsletter/SMTP records are excluded; preserve them through an infrastructure backup.
 
 Managed OrbitPage SaaS backups with schema versions 1–3 can also be opened here. OrbitPage restores the supported page, block, subpage, theme, menu, privacy, and discovery data into the self-hosted schema. SaaS-only data such as tenants, plans, billing, managed accounts, and custom-domain state is not imported. For a transfer that must retain images, download the portable ZIP at the source and open that ZIP at the destination.
 
@@ -57,11 +57,11 @@ Restoring is a replacement operation for the selected sections, not a merge.
 
 Sections left unchecked remain unchanged. A portable ZIP exposes **Uploaded media** during restore; selecting it replaces the current uploads directory with the images in the archive. Selecting **Admin accounts** replaces the current local account records and can invalidate the active session.
 
-Never restore a file from an untrusted source. OrbitPage validates the format and paths, but a restore still changes public content and authentication data by design. If validation or the post-restore checks fail, stop editing and restore the pre-change infrastructure backup.
+Restore only trusted files: they can replace public content and accounts. If restoration or verification fails, stop editing and recover from the pre-change infrastructure backup.
 
-## Home-block export is different
+## Export only the main-page blocks
 
-The download and upload icons in **Content > Home** operate only on the main-page block list. Importing `links-export.json` replaces that list and does not restore profile, theme, menu, subpages, privacy settings, accounts, or uploaded-file contents.
+The download and upload icons in **Content** operate only on the main-page block list. Importing `links-export.json` replaces that list and does not restore profile, theme, menu, subpages, privacy settings, accounts, or uploaded-file contents.
 
 Use this small format to move a block layout between trusted instances. Use **Backup** when the destination also needs referenced media or other application sections.
 
@@ -83,6 +83,6 @@ Demo mode is part of the self-hosted application, but it is intended only for a 
 
 Assume that every change made in demo mode will be lost. Some editing actions can be explored temporarily, while high-risk or misleading actions are disabled, including backup restore, media cleanup, password and recovery changes, AI changes, menu and subpage changes, privacy configuration, sitemap generation, and discovery-file edits. The interface marks unavailable controls and keeps a persistent demo notice visible.
 
-Demo mode also fixes the public legal-policy routes and keeps OrbitPage attribution visible. It is not an access-control system, a staging strategy, or a substitute for backups. Do not enable it on an instance that contains durable user data.
+Demo mode uses fixed public policy pages and keeps OrbitPage attribution visible. Enable it only with disposable data.
 
 The server and frontend demo settings must describe the same deployment. Use the [Configuration reference](./Configuration.md) for `DEMO_MODE` and `VITE_DEMO_MODE`, then verify the reset with disposable content before making the instance reachable by others.

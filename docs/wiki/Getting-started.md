@@ -1,74 +1,46 @@
-# Getting Started
+# Getting started
 
-This guide is for evaluating OrbitPage locally without Docker. For a complete production-style installation on an existing Debian or Ubuntu server, use the [Linux installer](./Deployment.md#linux-installer).
-
-## What OrbitPage Runs
-
-OrbitPage has two surfaces:
-
-| Surface | Purpose | Authentication |
-| --- | --- | --- |
-| Public page | The public page visitors see | None |
-| Admin panel | The private editor for page content, links, theme, analytics, and settings | Username/password |
-
-Before setup, the public URL shows an **Under construction** welcome page. The first admin username is fixed to `admin`. On a fresh install, `/dashboard/profile` checks the runtime, SQLite database, persistent storage, frontend build, and session security. Create the admin password directly in the browser. The first person to complete the wizard takes control; [token protection](./Deployment.md#optional-setup-token) is optional. The installer binds HTTP to loopback; use a trusted HTTPS reverse proxy for remote access. Public routes have no language prefix, for example `/` and `/menu`. The dashboard includes the interface language, for example `/it-IT/dashboard/profile`. Classic dashboard paths remain valid; older localized and page-slug public URLs redirect to their unprefixed destination.
+Run OrbitPage locally from source with this guide. For Docker, Linux, Proxmox, or a remote server, use [Deployment](./Deployment.md).
 
 ## Requirements
 
 - Node.js `^20.19.0` or `>=22.12.0`
-- npm
-- Git
+- npm and Git
 
-## Local Production-Style Run
+## Start the application
 
 ```bash
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage/app
 npm ci
 npm run install:server
-export JWT_SECRET="$(openssl rand -hex 32)"
-export DATA_DIR="$PWD/.orbitpage-data"
-npm run start
+export JWT_SECRET="$(node -p "require('crypto').randomBytes(32).toString('hex')")"
+NODE_ENV=production npm run start
 ```
 
-Open:
+This builds the frontend and starts the server on port 3001.
 
-- Public page: <http://localhost:3001>
-- Dashboard: <http://localhost:3001/dashboard/profile>
-- Health check: <http://localhost:3001/health>
+| Destination | Local URL |
+| --- | --- |
+| Public page | <http://localhost:3001> |
+| Dashboard and setup | <http://localhost:3001/dashboard/profile> |
+| Health check | <http://localhost:3001/health> |
 
-`npm run start` builds the Vite frontend and starts the Express server, which serves both the frontend and API.
+## Browser setup
 
-Windows PowerShell equivalent:
+- Before setup, the public page shows **Under construction** and is excluded from indexing and analytics.
+- Open the dashboard. The wizard checks the server, database, storage, frontend, and session configuration.
+- Create a password for the first account, `admin`, and confirm the public URL.
+- Complete setup to open the editor. See [Dashboard](./dashboard.md) for navigation and saving.
 
-```powershell
-$env:JWT_SECRET = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLower()
-$env:DATA_DIR = "$PWD\.orbitpage-data"
-npm run start
-```
+Complete setup locally before allowing remote access. Use an HTTPS reverse proxy for a remote installation; optional host-token protection is described in [Deployment](./Deployment.md#optional-setup-token).
 
-## Complete the First Run
+## Data and later starts
 
-1. Open the public URL and confirm the **Under construction** screen appears.
-2. Open `/dashboard/profile`.
-3. Wait for every dependency row to show a green check. Correct any failed row and use **Run again**.
-4. Enter the owner-only setup token and create the password for the fixed `admin` account.
-5. Confirm the installation public URL. Set `PUBLIC_SITE_URL` when running behind a reverse proxy; the self-hosted page is served at the installation root.
-6. Select **Complete setup** to open the dashboard.
+The application creates `app/server/orbitpage.db` and `app/server/uploads/`. Set `DATA_DIR` only to choose another location.
 
-No partially configured account is kept if setup fails. Before completion, the placeholder page is noindexed, excluded from analytics, and omitted from `sitemap.xml`.
+Source installations still require `JWT_SECRET`. Save the generated value privately and reuse it on later starts; Docker generates and persists it through its entrypoint. Keep the data directory and secret when updating. See [Configuration](./Configuration.md).
 
-## Local Data
+Public URLs have no language prefix, such as `/` and `/menu`. Dashboard URLs include the selected language, such as `/it-IT/dashboard/editor/page`.
 
-Without custom configuration, local data is stored under:
-
-```text
-app/server/orbitpage.db
-app/server/uploads/
-```
-
-Set `DATA_DIR` if you want to store data somewhere else.
-
-## Managed Alternative
-
-This guide covers the open-source self-hosted edition. To use OrbitPage without operating a Node.js server, database, storage, backups, or updates, start from <https://orbitpage.com> instead.
+To work on the code with live reload, use [Development](./Development.md).

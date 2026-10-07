@@ -1,18 +1,18 @@
 # Content and design
 
-This guide covers the self-hosted Page, Content, and Theme workspaces. Use them in this order when building a new page:
+Edit your page in **Page**, **Content**, **Menu**, **Pages**, and **Theme**:
 
 1. Set the public identity in **Page**.
 2. Add and arrange the main-page blocks in **Content > Link**.
-3. Add a venue menu or focused subpages only when they make navigation clearer.
-4. Set the shared visual system in **Theme**.
+3. Add a menu or additional pages if needed.
+4. Set colors, fonts, and background in **Theme**.
 5. Save each workspace, then open **Public page** and check the result at mobile and desktop widths.
 
 The dashboard preview uses the public renderer, but the public URL is the final check for browser metadata, external embeds, consent behavior, and real navigation.
 
 ## Page identity
 
-Use **Page** for information that introduces the whole public destination:
+Use **Page** for profile and browser settings:
 
 - choose the creator, company, or studio profile type;
 - set the page name, description, role or activity, and location;
@@ -29,9 +29,23 @@ Most profile-card settings inherit from **Theme**. An explicit value in **Page**
 
 Changes in Page remain a draft in the browser until you select **Save** in the Page toolbar. **Reset** discards the current unsaved draft.
 
-While arranging the page, **Reset** appears in the top toolbar and restores the standard profile and card layout as an unsaved change.
+### Arrange the layout
 
-In **Site editor**, select **Arrange** (the pencil button) to compose the profile and content cards directly in the live preview. Mobile and desktop have independent layouts: use the device toggle while arranging and edit each composition separately. Profile elements move freely, as do content cards and the icon, title, description, and URL inside standard link cards. Desktop cards use proportional horizontal coordinates so they expand with the available page width; drag a card beside another to align them automatically on the same row. Full-width cards shrink to two columns, while cards already resized keep their custom widths. On mobile, regular cards remain full-width and can be reordered vertically; only cards set to **Small** can be narrowed and placed side by side. With mobile preview selected, select a card in **Content** and use **Move up** or **Move down** beside **Delete card** to save its mobile-only order immediately. Drag an item's lower corner to resize it, or use the arrow keys from its move and resize controls; the card's original width is one of the available resize stops. Temporary alignment guides provide light snapping without imposing a grid, and reduced-motion preferences disable the arranging animation. Select **Done**, then **Save page** to persist both layouts.
+Select **Arrange** (the pencil button) to move and resize elements in the preview.
+
+| Control | Behavior |
+| --- | --- |
+| Device toggle | Mobile and desktop have independent layouts; edit each separately |
+| Profile and link elements | Move profile elements, cards, and a standard link card's icon/title/description/URL |
+| Desktop card placement | Drag beside another card to align their row; full-width cards become two columns, custom widths are kept |
+| Mobile cards | Regular cards stay full-width; **Small** cards can sit side by side |
+| **Move up / Move down** | With mobile preview selected in Content, save that card's mobile order immediately |
+| Resize controls | Drag the lower corner or use arrow keys; the original width is an available stop |
+| **Reset** while arranging | Restore the standard layout as an unsaved change |
+
+Desktop horizontal coordinates scale with the available page width. Alignment guides help with placement; reduced-motion preferences disable arranging animation.
+
+Select **Done**, then **Save page** to keep both layouts.
 
 ## Main-page blocks
 
@@ -55,7 +69,7 @@ Use **Internal page navigation** to connect the current block-based page to any 
 
 Each navigation block can contain up to 12 destinations. Choose a horizontal menu, full-width cards, two or three side-by-side cards, or small wrapping buttons. Labels, supporting descriptions and symbols are editable; descriptions and icons can be hidden, while filled, outline and minimal appearances inherit the active theme and any block-level color overrides.
 
-Internal paths are resolved from the OrbitPage root, so navigation remains correct on custom domains, hosted username routes and self-hosted subfolder installations. If an additional-page slug changes, reopen any navigation block that points to it and select the renamed destination again.
+Internal paths are resolved from the OrbitPage root, so navigation remains correct on custom domains, self-hosted subfolder installations. If an additional-page slug changes, reopen any navigation block that points to it and select the renamed destination again.
 
 ### Edit and arrange blocks
 
@@ -88,16 +102,16 @@ After changing a schedule, test once before the start, once during the active wi
 
 Use a provider preset when one is available. OrbitPage converts supported public share URLs to the provider's official embedded form and rejects unrelated hosts. Custom snippets run in a sandbox.
 
-For any category other than **Necessary**, the provider is not contacted until the visitor grants that consent category. Mark an embed Necessary only when it performs no tracking and is genuinely required for the requested page function. See [Analytics and privacy](./analytics-and-privacy.md) before publishing third-party content.
+For any category other than **Necessary**, the provider is not contacted until the visitor grants that consent category. Mark an embed Necessary only when it performs no tracking and is required for the requested page function. See [Analytics and privacy](./analytics-and-privacy.md) before publishing third-party content.
 
-## Venue menu
+## Menu
 
-The self-hosted venue menu has its own public route and visual theme. Build it in four passes:
+The menu has its own public route and theme:
 
-1. Under **Identity**, choose restaurant, bar, or cafe, then set the public name, description, ISO currency, and locale. The locale controls number and price formatting.
+1. Under **Settings**, choose restaurant, bar, or cafe, then set the public name, description, ISO currency, and locale. The locale controls number and price formatting.
 2. Under **Content**, create visible categories. A category can have one level of subsections.
 3. Add items with name, description, price, optional image and details, dietary tags, allergens, availability, featured state, and up to eight priced options.
-4. Under **Appearance**, choose a menu preset or adjust its colors, radius, and image layout independently from the main-page theme.
+4. Under **Design**, choose a menu preset or adjust its colors, radius, and image layout independently from the main-page theme.
 
 Use the category filter and item search to keep large menus manageable. Products can be moved between a category and one of its subsections. Deleting a category also removes its subsections and all items inside them, so export a backup first if the content may be needed.
 
@@ -107,7 +121,7 @@ Menu, category, item and option names must not be empty. If validation fails,
 the editor shows the field to correct and keeps your unsaved changes; correct
 it and select **Save** again. The footer accepts your own note or an empty value.
 
-## Focused subpages
+## Additional pages
 
 Use **Content > Pages** for destinations that need their own URL and block list, such as services, an event program, or a portfolio section. Every subpage has:
 
@@ -116,7 +130,7 @@ Use **Content > Pages** for destinations that need their own URL and block list,
 - its own ordered blocks;
 - a Published or Hidden state.
 
-The main page is permanent and counts toward the plan's page limit. **Add page** creates a hidden draft, so it is not public until you publish it. Choose an additional page from the page cards, complete **Page settings**, then add blocks under **Build this page**. Its live preview appears only after a page exists and follows the selected page. Subpages reuse the installation's profile and theme, while their title, description, and blocks remain independent.
+The main page is permanent. The self-hosted edition has no plan-based page quota. **Add page** creates a hidden draft, so it is not public until you publish it. Choose an additional page from the page cards, complete **Page settings**, then add blocks under **Build this page**. Its live preview appears only after a page exists and follows the selected page. Subpages reuse the installation's profile and theme, while their title, description, and blocks remain independent.
 
 Select **Save settings** after changing the slug, title, description, or publication state. Select **Save** in the content toolbar after editing or reordering blocks; this also saves any pending page settings. If blocks have unsaved changes, save them before using **Save settings**. Switching pages asks for confirmation before discarding unsaved work. Deleting a subpage removes its public URL.
 

@@ -1,43 +1,34 @@
-# Self-hosted AI assistant
+# AI assistant
 
-OrbitPage AI can plan profile, content, and theme changes from the authenticated editor's current page context. It uses an OpenAI provider key supplied by the instance owner; it is separate from OrbitPage account credentials and from managed Automation API tokens.
+Use **AI Assistant** or **Edit with AI** to propose profile, content, and theme changes. Manual editing works without a provider.
 
-## Configure a provider key
+## Configure
 
-Open **Dashboard > AI Assistant** and either:
+Save an OpenAI API key in **AI Assistant**, or set `OPENAI_API_KEY` on the server. A dashboard-saved key takes precedence until removed.
 
-- save an OpenAI API key in the dashboard; or
-- set `OPENAI_API_KEY` in the server environment for immutable-container or secret-manager deployments.
+The dashboard key is encrypted in SQLite, never returned to the browser, and excluded from JSON exports. Keep `JWT_SECRET` stable, or set a separate stable `ORBITPAGE_SECRET_ENCRYPTION_KEY` of at least 32 characters.
 
-A dashboard-saved key takes precedence until it is removed. It is encrypted with AES-256-GCM before being stored in SQLite, is never returned to the browser, and is excluded from JSON backups.
+Choose a supported model in the workspace. `OPENAI_PAGE_AGENT_MODEL` supplies the default when no selection is saved; see [Configuration](./Configuration.md).
 
-Keep `JWT_SECRET` stable and at least 32 characters, or set a separate stable `ORBITPAGE_SECRET_ENCRYPTION_KEY`. Losing the encryption secret makes the saved provider key unreadable.
+## Review and apply
 
-`OPENAI_PAGE_AGENT_MODEL` sets the default model when the dashboard has not saved a supported selection. See [Configuration](./Configuration.md) for the current variables.
+1. Describe the change.
+2. Review the proposed operations.
+3. Confirm to apply them.
 
-## Plan, review, confirm
+Generation does not save page changes. Confirmation checks input, permissions, and the page revision again. Proposals expire after ten minutes or become invalid if the page changed; request a new proposal in that case.
 
-1. Describe the outcome you want.
-2. OrbitPage sends a bounded page representation to the provider and requests structured operations.
-3. Review the exact proposal in the dashboard.
-4. Confirm only when the operations match the intended result.
+The conversation is saved in this browser for the current page. Use the trash button to clear the visible conversation and saved history.
 
-Generation does not write page data. OrbitPage validates the proposed operations again during confirmation, checks the editor's current permissions and page revision, then applies the accepted plan. Proposals expire after ten minutes and fail if the page changed in the meantime.
+## Data sent to the provider
 
-The conversation is saved in this browser for the current page. Use the trash button at the top right of the assistant to clear the visible conversation and its saved browser history. Long conversations scroll inside the assistant panel.
+Prompts and a limited representation of the current page go to the OpenAI Responses API, with provider-side storage disabled. Usage charges belong to the API-key owner. Do not include secrets or sensitive private content.
 
-## Privacy and cost
+## Problems
 
-- Prompts and the bounded current-page context are sent to the configured OpenAI API.
-- OrbitPage requests the Responses API with provider-side storage disabled.
-- Provider usage and charges belong to the API-key owner.
-- Do not include secrets, private customer data, or unpublished sensitive material in prompts or page content sent to the assistant.
-
-## Troubleshooting
-
-- **Configuration unavailable:** verify `JWT_SECRET` or `ORBITPAGE_SECRET_ENCRYPTION_KEY` is stable and at least 32 characters.
-- **Provider error:** verify the key, supported model, provider account access, and outbound HTTPS connectivity.
-- **Proposal expired or page changed:** request a fresh proposal from the current page revision.
-- **Operation not allowed:** use an account with the required page permission or narrow the requested change.
-
-Manual editing remains available when the provider is not configured.
+| Message | Check |
+| --- | --- |
+| Configuration unavailable | Stable encryption secret of at least 32 characters |
+| Provider error | Key, supported model, provider access, and outbound HTTPS |
+| Proposal expired or page changed | Generate from the current page again |
+| Operation not allowed | Account permissions or the requested action |
