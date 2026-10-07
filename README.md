@@ -74,7 +74,9 @@ The image supports amd64 and arm64.
 
 Docker creates the <code>orbitpage-data</code> volume for the database, uploads, and generated instance secret. Keep this volume when updating or recreating the container.
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and create the administrator. Your public page is at <http://localhost:8080>. Configure an HTTPS reverse proxy before making the instance accessible remotely.
+Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.
+
+The public page is at [http://localhost:8080](http://localhost:8080).
 
 Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
 
