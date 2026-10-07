@@ -84,13 +84,15 @@ docker compose up -d
 
 | Setting | Default |
 | --- | --- |
-| HTTP endpoint | `http://127.0.0.1:8080` |
+| Published port | `8080:8080` (all host interfaces) |
 | Persistent data | `./orbitpage-data` |
 | Restart policy | `unless-stopped` |
 
 Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080).
 
 Edit `docker-compose.yml` to change the image, port, environment, or storage path.
+
+From another device, use the Docker host's LAN address instead of `localhost`. For local-only access, change the port mapping to `"127.0.0.1:8080:8080"`.
 
 ### Optional setup token
 

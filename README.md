@@ -68,6 +68,8 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 
 Docker is the recommended deployment method.
 
+Docker Run and Compose publish port 8080 on all host interfaces. From another device, use the Docker host's LAN address instead of `localhost`.
+
 | **Registry** | **Image** |
 | --- | --- |
 | Docker Hub | `paoloronco/orbitpage` |
