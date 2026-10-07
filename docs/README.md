@@ -31,18 +31,11 @@ Use this page as the main entry point for installing, configuring, using, mainta
 | Update OrbitPage with Docker Run or GHCR | [Docker Run updates](./wiki/Deployment.md#docker-run-updates) |
 | Verify the update | [Verification](./wiki/Deployment.md#verify-the-update) |
 
+If you encounter issues, see [Troubleshooting](./wiki/Troubleshooting.md).
+
 ---
 
 ## Documentation
-
-### Installation and configuration
-
-Everything needed to deploy and configure OrbitPage.
-
-- [Run from source](../README.md#run-from-source) — run OrbitPage locally from source.
-- [Deployment](./wiki/Deployment.md) — Docker, Linux, Proxmox, updates, and deployment options.
-- [Configuration](./wiki/Configuration.md) — environment variables, URLs, secrets, and runtime configuration.
-- [Troubleshooting](./wiki/Troubleshooting.md) — startup, login, proxy, networking, and indexing issues.
 
 ### Using OrbitPage
 
