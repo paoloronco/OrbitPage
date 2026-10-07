@@ -217,32 +217,50 @@ grep -Fq 'Store backups outside' "$TEST_DIR/result" || fail 'backup traversal fa
 # Exercise dependency installation without apt or Docker touching the host.
 sed '/^main "\$@"$/d' "${REPO_ROOT}/install.sh" > "$TEST_DIR/functions.sh"
 sed "s|/etc/os-release|$TEST_DIR/os-release|g" "$TEST_DIR/functions.sh" > "$TEST_DIR/platform-functions.sh"
-for platform in debian:bookworm debian:trixie ubuntu:jammy ubuntu:noble fedora:unknown ubuntu:unknown ubuntu:; do
-  printf 'ID=%s\nVERSION_CODENAME=%s\n' "${platform%:*}" "${platform#*:}" > "$TEST_DIR/os-release"
-  if env PATH="${FAKE_BIN}:${PATH}" bash -s "$TEST_DIR/platform-functions.sh" > "$TEST_DIR/platform-result" 2>&1 <<'EOF'
+for architecture in amd64 arm64; do
+  for platform in debian:bookworm debian:trixie ubuntu:jammy ubuntu:noble ubuntu:resolute fedora:unknown debian:unknown ubuntu:unknown ubuntu:; do
+    printf 'ID=%s\nVERSION_CODENAME=%s\n' "${platform%:*}" "${platform#*:}" > "$TEST_DIR/os-release"
+    if env PATH="${FAKE_BIN}:${PATH}" ORBITPAGE_TEST_ARCH="$architecture" \
+      bash -s "$TEST_DIR/platform-functions.sh" > "$TEST_DIR/platform-result" 2>&1 <<'EOF'
 source "$1"
+dpkg() { printf '%s\n' "$ORBITPAGE_TEST_ARCH"; }
 detect_platform
 EOF
-  then
-    [[ "$platform" == debian:* || "$platform" == ubuntu:jammy || "$platform" == ubuntu:noble ]] || fail "unsupported $platform was accepted"
-  else
-    [[ "$platform" == fedora:* || "$platform" == ubuntu:unknown || "$platform" == ubuntu: ]] || { cat "$TEST_DIR/platform-result"; fail "supported $platform was rejected"; }
-  fi
+    then
+      [[ "$platform" != fedora:* && "$platform" != *:unknown && "$platform" != ubuntu: ]] || fail "unsupported $platform/$architecture was accepted"
+    else
+      [[ "$platform" == fedora:* || "$platform" == *:unknown || "$platform" == ubuntu: ]] || { cat "$TEST_DIR/platform-result"; fail "supported $platform/$architecture was rejected"; }
+    fi
+  done
 done
 printf 'ID=ubuntu\nVERSION_CODENAME=noble\n' > "$TEST_DIR/os-release"
 if env PATH="${FAKE_BIN}:${PATH}" bash -s "$TEST_DIR/platform-functions.sh" > "$TEST_DIR/platform-result" 2>&1 <<'EOF'
 source "$1"
-dpkg() { printf 'arm64\n'; }
+dpkg() { printf 'armhf\n'; }
 detect_platform
 EOF
-then fail 'arm64 was accepted by the x86-64 Linux installer'; fi
-grep -Fq 'use the Docker guide for arm64' "$TEST_DIR/platform-result" || fail 'arm64 rejection suggested an unsupported image architecture'
+then fail '32-bit ARM was accepted by the Linux installer'; fi
+grep -Fq 'requires amd64 or arm64' "$TEST_DIR/platform-result" || fail 'unsupported architecture lost its prerequisite message'
 cat > "${FAKE_BIN}/apt-get" <<'EOF'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$ORBITPAGE_TEST_APT_CALLS"
 touch "$ORBITPAGE_TEST_PACKAGES_INSTALLED"
 EOF
 chmod 0755 "${FAKE_BIN}/apt-get"
+mkdir -p "$TEST_DIR/apt/sources.list.d"
+sed "s|/etc/apt|$TEST_DIR/apt|g" "$TEST_DIR/platform-functions.sh" > "$TEST_DIR/repository-functions.sh"
+for architecture in amd64 arm64; do
+  env PATH="${FAKE_BIN}:${PATH}" ORBITPAGE_TEST_ARCH="$architecture" \
+    ORBITPAGE_TEST_PACKAGES_INSTALLED="$TEST_DIR/packages-installed" \
+    ORBITPAGE_TEST_APT_CALLS="$TEST_DIR/apt-calls" \
+    bash -s "$TEST_DIR/repository-functions.sh" <<'EOF'
+source "$1"
+dpkg() { printf '%s\n' "$ORBITPAGE_TEST_ARCH"; }
+curl() { printf 'test-key\n' > "${@: -1}"; }
+setup_docker_repository
+EOF
+  grep -Fxq "Architectures: $architecture" "$TEST_DIR/apt/sources.list.d/docker.sources" || fail "Docker repository has the wrong architecture for $architecture"
+done
 for missing in openssl python3 docker compose; do
   rm -f "$TEST_DIR/packages-installed" "$TEST_DIR/apt-calls"
   env PATH="${FAKE_BIN}:${PATH}" ORBITPAGE_TEST_MISSING="$missing" \
