@@ -9,11 +9,7 @@ There are two main types of configuration:
 
 ## Configure from the dashboard (recommended)
 
-Administrators can open **Account → General → Instance details → Environment variables** to set:
-
-- `PUBLIC_SITE_URL`, `PUBLIC_SITE_NAME`, and `SEO_INDEXING`;
-- `UPLOAD_STORAGE_QUOTA_MB`, `VIDEO_UPLOAD_LIMIT_MB`, and `MEDIA_CLEANUP_ENABLED`;
-- `TZ` and `OPENAI_API_KEY`.
+Administrators can change optional settings under **Account → General → Instance details → Environment variables**.
 
 Existing values are hidden. Enter a replacement, or select **Use host** to remove a dashboard override. Save with your current password, then restart the instance to apply the changes.
 
