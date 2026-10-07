@@ -34,3 +34,26 @@ transitions to settle before each screenshot. Encode the eight 1600 × 1000
 frames at three seconds per frame with a shared palette, complete frames and infinite looping.
 Review the decoded GIF at its README display width of 800 pixels as well as at
 native resolution; text must remain legible in the final GIF.
+
+## Dashboard guide GIFs
+
+The [dashboard guide](../wiki/dashboard.md) embeds three GIFs hosted as GitHub
+release assets. The binaries stay outside Git.
+
+| GIF | Sections | Size |
+| --- | --- | --- |
+| [Site editor](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-site-editor-4.21.75.gif) | Page, Content, Menu, Pages, Theme, AI Assistant | 436 KiB |
+| [Content management](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-content-management-4.21.75.gif) | Publish, Backup, Analytics, Privacy, Newsletter | 305 KiB |
+| [Account and installation](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-account-installation-4.21.75.gif) | Team, Account, Edition | 156 KiB |
+
+Captured on 2026-10-07 from OSS 4.21.75 with fictional Studio North content,
+local users, a newsletter draft, and sample visits. Instance paths use the example
+values `/app/data` and `/app/data/orbitpage.db`. No real accounts, credentials or
+customer data appear. The AI view shows provider setup without a configured key.
+
+Use a 1280 × 800 viewport at device pixel ratio 1 and three seconds per frame.
+Encode each group with a shared 256-color palette, no dithering, infinite looping
+and disposal mode 2. Check the decoded frames against the encoded source images
+to catch rendering artifacts. To refresh them, follow the isolated capture
+procedure above, upload new versioned filenames, and update the guide's URLs.
+Keep published assets available for older documentation links.
