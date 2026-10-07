@@ -41,7 +41,7 @@ If you encounter issues, see [Troubleshooting](./wiki/Troubleshooting.md).
 
 Guides for everyday administration and content management.
 
-- [Dashboard](./wiki/dashboard.md) — workspaces, URLs, save controls, roles, and navigation.
+- [Dashboard](./wiki/dashboard.md) — main sections, URLs, save controls, and navigation.
 - [Content and design](./wiki/content-and-design.md) — profiles, blocks, menus, pages, themes, and media.
 - [Publishing and QR](./wiki/publishing.md) — publish pages and share them with QR codes.
 - [SEO and indexing](./wiki/SEO-and-indexing.md) — metadata, discovery files, and search-engine visibility.

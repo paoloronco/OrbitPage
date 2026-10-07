@@ -15,7 +15,7 @@ Guides for the open-source, self-hosted application. Start here to install Orbit
 
 | Task | Guide |
 | --- | --- |
-| Find workspaces, URLs, save controls, and roles | [Dashboard](./dashboard.md) |
+| Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard.md) |
 | Edit profiles, blocks, menus, pages, and themes | [Content and design](./content-and-design.md) |
 | Share a page or print a QR code | [Publishing and QR](./publishing.md) |
 | Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
