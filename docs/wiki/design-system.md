@@ -1,16 +1,13 @@
 # OrbitPage OSS design system
 
-| Field | Value |
-| --- | --- |
-| Scope | Self-hosted dashboard, shared editor and public renderer |
-| Status | Implemented rules; components, CSS and theme schema are authoritative |
-| Sources | [Dashboard stylesheet](../../app/src/index.css), [UI primitives](../../app/src/components/ui), [theme model](../../app/src/lib/theme.ts), [brand assets](./design-system.md#brand) |
+For UI changes, use the [dashboard stylesheet](../../app/src/index.css),
+[UI components](../../app/src/components/ui), and [theme model](../../app/src/lib/theme.ts).
 
 ## Two visual contexts
 
-The dashboard is a workbench with a dark navigation rail, light editing
+The dashboard has a dark navigation rail, light editing
 surfaces, clear section headings and visible save actions. The public page is
-creator-controlled: theme colors, typography, cards and background can differ
+configured by the page owner: theme colors, typography, cards and background can differ
 from the dashboard. Do not force dashboard chrome onto published content.
 
 Use the checked-in brand SVGs described below. Do not redraw the mark in a component.
@@ -18,7 +15,7 @@ Use the checked-in brand SVGs described below. Do not redraw the mark in a compo
 ## Semantic tokens
 
 Use the variables defined on `.orbitpage-admin` in `app/src/index.css` rather
-than copying colors into each workspace. Current workbench examples are:
+than copying colors into each workspace. Current values:
 
 | Role | CSS variable | Current value |
 | --- | --- | --- |
@@ -31,7 +28,7 @@ than copying colors into each workspace. Current workbench examples are:
 The dashboard font stack is `--orbitpage-dashboard-font`: Aptos, Avenir Next,
 Segoe UI Variable, Segoe UI and sans-serif. Public typefaces and colors come
 from `ThemeConfig`; preview and published rendering must use the same model.
-These examples describe current source values, not a second token registry.
+Check the stylesheet before changing a value.
 
 ## Components and interaction
 
@@ -39,7 +36,7 @@ These examples describe current source values, not a second token registry.
 | --- | --- |
 | Navigation and tabs | Mark the active item and keep the selected subsection in the dashboard URL. Keep the site-section strip at a consistent height when section controls appear or disappear. |
 | Form fields | Use existing primitives and visible labels; attach validation to the relevant control. |
-| Save and Publish | Separate draft persistence from public publication and show the outcome of each action. |
+| Save | Show unsaved state and save results. Self-hosted public content becomes visible when saved; additional pages also have a publication state. |
 | Cards and panels | Group a task or related data; preserve a readable hierarchy on narrow screens. |
 | Dialogs and sheets | Give them a name, keyboard focus management and a clear cancel or close path. |
 | Feedback | State loading, success and failure in words; do not rely on color or a transient toast for critical errors. |
@@ -60,7 +57,7 @@ before introducing a parallel one.
   horizontal document overflow.
 - Respect `prefers-reduced-motion`. Motion may clarify a transition but must
   not be required to understand a state or complete an action.
-- Localize dashboard chrome while leaving creator-authored page content as
+- Localize dashboard chrome while leaving saved page content as
   saved. Public URLs do not include a dashboard-language prefix.
 
 When changing shared UI, verify the OSS editor and the hosted adapter that
@@ -69,8 +66,7 @@ reusable component remains here. See [architecture](./architecture.md).
 
 ## Brand
 
-The source mark is a deep-blue page crossed by a bright blue orbit, with a
-white highlight. Its existing gradients are part of the asset.
+Use the checked-in brand files without redrawing or recoloring them.
 
 | Asset | Use |
 | --- | --- |

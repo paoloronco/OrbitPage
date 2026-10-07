@@ -1,14 +1,16 @@
 # Troubleshooting
 
-## Container Exits Immediately
+Use the section that matches the symptom. Installation commands are in [Deployment](./Deployment.md).
 
-Check the container log. Docker generates `JWT_SECRET` automatically, but startup fails when the persisted data directory is not writable or an explicit value is weak.
+## Container exits immediately
 
 ```bash
-docker logs orbitpage
+docker logs --tail 100 orbitpage
 ```
 
-For an installer-managed deployment, confirm that the protected environment file exists and repair the installation without replacing its secret:
+Check that the data mount is writable and that an explicit `JWT_SECRET` has at least 32 characters. Docker generates a secret when none is supplied.
+
+For an installer-managed instance, verify the protected environment file and repair with the installer:
 
 ```bash
 sudo test -s /etc/orbitpage/orbitpage.env
@@ -16,93 +18,68 @@ test "$(sudo stat -c '%a' /etc/orbitpage/orbitpage.env)" = '600'
 sudo orbitpage install
 ```
 
-For a manual deployment, confirm that the mounted data directory contains a non-empty `.jwt-secret` readable only by its owner. Do not replace it: recreate the container with the same data mount.
+Keep the existing secret and data. Do not replace them to make startup pass.
 
-## Data Disappeared After Updating
+## Source server rejects JWT_SECRET
 
-The container likely started without the same persisted data volume.
+The source server does not run Docker's secret-generating entrypoint. Configure a stable `JWT_SECRET` as shown in [Getting started](./Getting-started.md). `NODE_ENV=development` permits a temporary fallback, but a stable key is still needed for persistent TOTP/provider settings.
 
-Make sure `/app/data` is mounted:
+## Data disappeared after updating
 
-```bash
--v orbitpage_data:/app/data
-```
-
-For Compose, keep the `./orbitpage-data:/app/data` mount or migrate the old data directory before recreating the container.
-
-## Admin Login Stops Working After Restart
-
-If `JWT_SECRET` changes between restarts, existing JWTs become invalid. This means the container used a different data directory or an explicit override changed.
-
-If the change was accidental, restore the previous `.jwt-secret` from the data backup or the explicit `JWT_SECRET` from the protected configuration backup, recreate the container, and log in again. Do not rotate this secret merely to recover a login: it also protects encrypted TOTP and dashboard-saved provider secrets.
-
-A changed environment file requires container recreation; `docker restart` does not reload it. See [Configuration](./Configuration.md) and the [restore runbook](./Deployment.md#restore-an-infrastructure-backup).
-
-## Public Page Works but Admin/API Fails Behind a Proxy
-
-Check that the proxy forwards API requests and does not cache them.
-
-Do not cache:
-
-```text
-/api/*
-/admin
-/dashboard/*
-/health
-```
-
-Also set:
+Inspect the mounts:
 
 ```bash
-PUBLIC_SITE_URL=https://your-public-domain.example
+docker inspect orbitpage --format '{{json .Mounts}}'
 ```
 
-## Search Engines Index a Staging Site
+The replacement container must use the previous volume/directory at `/app/data`. The repository Compose file uses `./orbitpage-data`; run it from the original project directory. An empty new volume is a different installation.
 
-Set:
+If data was removed, use [Restore](./maintenance.md#restore-an-infrastructure-backup).
 
-```bash
-SEO_INDEXING=false
-```
+## Login stops working after restart
 
-Then check:
+A changed secret invalidates sessions and can make TOTP or provider credentials unreadable. Restore the previous `.jwt-secret` or explicit host value from its protected backup, recreate the container, and sign in again.
 
-- `/robots.txt`
-- page source for `noindex`
+Editing an environment file requires recreation; `docker restart` does not reload it. For a lost password/authenticator, use [Administrator recovery](./recovery.md) instead of rotating `JWT_SECRET`.
 
-## Social Preview Shows the Wrong Domain
+## Public page works but dashboard or API fails
 
-Set the canonical URL explicitly:
+Check the HTTPS proxy:
 
-```bash
-PUBLIC_SITE_URL=https://links.example.com
-PUBLIC_SITE_NAME="Your Name or Brand"
-```
+- forward `/api/*` and the dashboard paths;
+- do not cache API, dashboard, or health responses;
+- forward the public host and protocol;
+- set `PUBLIC_SITE_URL` to the public URL, including a mount path;
+- configure `ORBITPAGE_TRUST_PROXY` only for the actual proxy address/range.
 
-Then refresh the preview in the relevant social platform debugger.
+See [Configuration](./Configuration.md). In source mode, the listener defaults to loopback; a remote proxy needs a reachable listener.
 
-## Docker Image Pull Fails
+## Public page shows old changes
 
-Use one of the published image paths:
+Save the edited section before checking the public URL. A preview can show unsaved content. Check block visibility/schedules and additional-page publication state, then check any proxy cache.
 
-```bash
-docker pull paoloronco/orbitpage:latest
-docker pull ghcr.io/paoloronco/orbitpage:latest
-```
+## Wrong domain in sharing previews or QR
 
-Immutable version examples:
+Set `PUBLIC_SITE_URL` and restart or recreate as required. Regenerate QR images using the correct destination and refresh the social service's cached preview.
 
-```bash
-docker pull paoloronco/orbitpage:4.21.3
-docker pull ghcr.io/paoloronco/orbitpage:4.21.3
-```
+## A staging page is indexed
 
-## Local Development Ports
+Set `SEO_INDEXING=false`, then check `/robots.txt` and the page's robots meta tag. Search engines may take time to refresh their copy. Indexing controls do not restrict access.
 
-Expected ports:
+## Image pull or dashboard installation fails
 
-- Vite frontend: `8080`
-- Express backend: `3001`
-- Docker production: `8080`
+Use `paoloronco/orbitpage:latest` or `ghcr.io/paoloronco/orbitpage:latest`. For a pinned release, use a complete published version without a leading `v`.
 
-If a port is busy, stop the conflicting process or override the relevant port.
+Dashboard installation needs the [host update service](./Deployment.md#web-updates). If unavailable, follow the dialog's terminal instructions. Inspect the service and retained backup before retrying an update with an unknown result.
+
+## Ports
+
+| Mode | Default |
+| --- | --- |
+| Vite frontend | `8080` |
+| Source Express server | `3001` |
+| Docker | `8080` |
+
+Stop a conflicting process or change the listener/port mapping. Use [Development](./Development.md) for the two-server workflow.
+
+Before posting logs or screenshots, remove secrets and private page/account data.

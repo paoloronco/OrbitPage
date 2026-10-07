@@ -1,80 +1,48 @@
-# Self-hosted application API boundary
+# Self-hosted API
 
-The Express `/api` routes in this repository are the application boundary used
-by the bundled OrbitPage dashboard. Personal API tokens can also authenticate
-automation against the same installation. Routes are versioned with each
-OrbitPage release; self-hosted installations do not provide a separate stable
-API-version compatibility contract.
+The bundled Express `/api` serves the dashboard and accepts personal API tokens for scripts. It changes with OrbitPage releases; it has no separate stable API version.
 
-## Supported use
+Keep scripts aligned with the installed release. The managed-service API and n8n node use different credentials and endpoints.
 
-The React dashboard and Express server are shipped as one application. Keep
-them on the same trusted HTTPS origin and let the bundled API client manage the
-authenticated requests between them.
+## Authentication
 
-The routes may change when the dashboard changes. Do not build an external SDK
-against undocumented responses or expose the routes to unrelated origins. Use
-a personal API token instead of an interactive administrator session in scripts
-and CI.
+| Client | Credential |
+| --- | --- |
+| Bundled dashboard | Browser session managed by the frontend API client |
+| Scripts and CI | Personal API token |
+| OpenAI provider | Provider key; not an OrbitPage API credential |
 
-## Security boundary
-
-- Treat the self-hosted administrator session as a browser credential.
-- Keep the dashboard and `/api` behind the same reverse proxy and origin.
-- Preserve server-side authorization and input validation even when the
-  dashboard already validates a field.
-- Do not pass credentials in query strings, fragments, logs, screenshots, or
-  issue reports.
-- Do not interchange self-hosted credentials, managed-service credentials, or
-  AI-provider keys.
-- Personal API tokens are shown once, stored as SHA-256 hashes, limited to the
-  creator's current role, and can never receive user-management permission.
-- `GET /api/account/audit-log` requires `users:manage` and returns pages of
-  successful authenticated change metadata. The `q`, `actor`, `action`, `from`,
-  `to` and `before` filters are parameterized; arbitrary SQL is not accepted.
-
-Deployment hardening, CORS, rate limits, HTTPS, and recovery controls are
-documented in [Security](./Security.md) and
-[Configuration](./Configuration.md).
-
-## Implementation sources of truth
-
-- [`app/src/lib/api-client.ts`](../../app/src/lib/api-client.ts) defines the
-  bundled frontend client and session handling.
-- [`app/server/server.js`](../../app/server/server.js) registers the Express
-  routes and middleware.
-- [`app/server/auth.js`](../../app/server/auth.js) implements the self-hosted
-  authentication boundary.
-- [`app/server/schemas/`](../../app/server/schemas) contains request validation
-  schemas.
-- [`app/packages/page-schema/`](../../app/packages/page-schema) contains the
-  shared page and block contracts.
-
-When an internal route changes, update both sides of the application, retain
-server-side validation and permission checks, and add focused server and
-frontend tests. Document changes that affect configuration, deployment,
-public behavior, backup compatibility, or operator recovery.
-
-## Self-hosted automation
-
-Open **Team → Personal API tokens** in the dashboard. Choose the access level
-and expiry, enter the current account password, create the token, and copy it
-immediately. Send it as a bearer credential:
+Create a token under **Team → Personal API tokens**. Choose its access and expiry, enter the current password, and copy the secret once. See [Account and team](./account-and-team.md).
 
 ```sh
-curl https://your-orbitpage.example/api/links/export \
+curl https://page.example.com/api/links/export \
   --header "Authorization: Bearer $ORBITPAGE_TOKEN"
 ```
 
-Tokens can be revoked from the same panel. Role changes take effect on existing
-tokens immediately, and deleting a local account deletes its tokens.
+Use HTTPS and store the token privately. Do not put credentials in URLs, logs, screenshots, or issue reports.
+
+Tokens are stored as hashes. Their access cannot exceed the user's current role, and they cannot manage users or obtain dashboard sessions. Role changes apply immediately; deleting an account deletes its tokens.
+
+## Routes and implementation
+
+| Source | Defines |
+| --- | --- |
+| [api-client.ts](../../app/src/lib/api-client.ts) | Dashboard requests, request/response types, and sessions |
+| [server.js](../../app/server/server.js) | HTTP routes and middleware |
+| [auth.js](../../app/server/auth.js) | Authentication and permissions |
+| [schemas/](../../app/server/schemas) | Request validation |
+| [page-schema/](../../app/packages/page-schema) | Shared page and content structures |
+
+For example, `GET /api/account/audit-log` requires `users:manage` and supports `q`, `actor`, `action`, `from`, `to`, and `before` filters. It returns successful change metadata, not page contents.
+
+When changing a route, update its client and server together, retain validation and permissions, and test the changed behavior. Keep dashboard and API on the same origin unless additional trusted origins are configured.
+
+Network and recovery settings: [Configuration](./Configuration.md), [Security](./Security.md).
 
 ## Managed automation
 
-The managed OrbitPage service provides a separate, versioned API with its own
-credentials and compatibility contract. Its documentation does not redefine
-the self-hosted `/api` routes described here.
+The hosted service has its own versioned API:
 
 - [Managed API guide](https://orbitpage.com/en-US/docs/api-tokens)
-- [Managed OpenAPI document](https://orbitpage.com/api/openapi.json)
-- [Public OrbitPage n8n integration](https://github.com/paoloronco/n8n-nodes-orbitpage)
+- [Managed OpenAPI](https://orbitpage.com/api/openapi.json)
+- [n8n community node](https://github.com/paoloronco/n8n-nodes-orbitpage)

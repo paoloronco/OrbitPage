@@ -1,55 +1,51 @@
 # OrbitPage documentation
 
-This documentation covers the open-source, self-hosted OrbitPage application. For the managed service, plans, billing, and hosted automation API, use [orbitpage.com](https://orbitpage.com).
+Guides for the open-source, self-hosted application. Start here to install OrbitPage, edit your page, or work on the code. Managed-service documentation is at [orbitpage.com](https://orbitpage.com).
 
-## Product and engineering contracts
+## Install and configure
 
-| Question | Document |
+| Task | Guide |
 | --- | --- |
-| What problem does OSS solve and what behavior is required? | [Product requirements](./product-requirements.md) |
-| Which visual rules and components are shared? | [Design system](./design-system.md) |
-| How do the app, API and durable data fit together? | [Architecture](./architecture.md) |
-| How should repository agents work? | [Root agent instructions](../../AGENTS.md) |
+| Run locally from source | [Getting started](./Getting-started.md) |
+| Install with Docker, Linux, or Proxmox | [Deployment](./Deployment.md) |
+| Set environment variables and public URLs | [Configuration](./Configuration.md) |
+| Solve startup, login, proxy, or indexing problems | [Troubleshooting](./Troubleshooting.md) |
 
-## Start or install OrbitPage
+## Use OrbitPage
 
-| Goal | Guide |
+| Task | Guide |
 | --- | --- |
-| Evaluate OrbitPage from source | [Getting started](./Getting-started.md) |
-| Install on Linux, Proxmox, Docker, or a cloud host | [Deployment](./Deployment.md) |
-| Move from the former Docker Hub namespace | [Docker Hub migration](./Docker-Hub-migration.md) |
-| Configure runtime and build variables | [Configuration](./Configuration.md) |
-| Solve startup, proxy, login, or indexing problems | [Troubleshooting](./Troubleshooting.md) |
+| Find workspaces, URLs, save controls, and roles | [Dashboard](./dashboard.md) |
+| Edit profiles, blocks, menus, pages, and themes | [Content and design](./content-and-design.md) |
+| Share a page or print a QR code | [Publishing and QR](./publishing.md) |
+| Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
+| View analytics and configure consent | [Analytics and privacy](./analytics-and-privacy.md) |
+| Configure SMTP and send campaigns | [Newsletters](./newsletters.md) |
+| Configure AI and review suggested edits | [AI assistant](./ai-assistant.md) |
+| Export, restore, use version history, or clean media | [Backups and demo mode](./backups-and-demo-mode.md) |
+| Manage users, passwords, TOTP, and API tokens | [Account and team](./account-and-team.md) |
 
-## Use the dashboard
+## Maintain an installation
 
-| Goal | Guide |
+| Task | Guide |
 | --- | --- |
-| Manage users, passwords, authenticators and personal tokens | [Account and team](./account-and-team.md) |
-| Publish, share and print QR codes | [Publishing and QR](./publishing.md) |
-| Navigate the dashboard, roles, and save boundaries | [Dashboard guide](./dashboard.md) |
-| Build Home blocks, menus, subpages, themes, and backgrounds | [Content and design](./content-and-design.md) |
-| Export or restore data, clean media, and understand demo mode | [Backups, media, and demo mode](./backups-and-demo-mode.md) |
-| Configure the self-hosted AI assistant and review changes safely | [AI assistant](./ai-assistant.md) |
-| Configure SMTP and send newsletters from your own server | [Newsletters](./newsletters.md) |
-| Understand built-in analytics, GA4, and consent | [Analytics and privacy](./analytics-and-privacy.md) |
-| Configure metadata, sitemap, robots, and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
+| Update the application | [Deployment → Updates](./Deployment.md#update-safely) |
+| Back up, restore, roll back, or uninstall | [Maintenance](./maintenance.md) |
+| Recover the administrator account | [Administrator recovery](./recovery.md) |
+| Review protections and deployment settings | [Security](./Security.md) |
+| Report a vulnerability | [Security policy](../../SECURITY.md) |
 
-## Operate securely
+## Understand and develop
 
-- [Security model and deployment hardening](./Security.md)
-- [Repository security policy and vulnerability reporting](../../SECURITY.md)
-- [Verified backup, restore, update, rollback, removal, and reverse-proxy runbooks](./Deployment.md)
-
-## Develop and integrate
-
-- [Development workflow](./Development.md)
-- [Contributing](../../CONTRIBUTING.md)
-- [Application layout](../../app/README.md)
-- [Self-hosted application API boundary](./api.md)
-- [Repository scripts and installer checks](../../scripts/README.md)
-- [Brand assets](./design-system.md#brand)
-
-Personal API tokens use the self-hosted application API described above. It ships with the dashboard and server; it has no separate API-version compatibility contract. The managed Automation API is documented on orbitpage.com.
-
-See [GitHub automation](./github-automation.md) for quality checks, release publication, advisory policy and mirror ownership.
+| Topic | Document |
+| --- | --- |
+| Product goal and required behavior | [Product requirements](./product-requirements.md) |
+| Technical stack, files, data, and builds | [Application](./application.md) |
+| Runtime flows and OSS/hosted separation | [Architecture](./architecture.md) |
+| UI components, styles, accessibility, and brand assets | [Design system](./design-system.md) |
+| Local development and tests | [Development](./Development.md) |
+| API authentication and automation | [API](./api.md) |
+| CI, release publication, and mirror settings | [GitHub automation](./github-automation.md) |
+| Installer and repository checks | [Scripts](../../scripts/README.md) |
+| Contribution workflow | [Contributing](../../CONTRIBUTING.md) |
+| Repository instructions for agents | [AGENTS.md](../../AGENTS.md) |

@@ -11,7 +11,7 @@ This directory contains the Express backend used by the bundled self-hosted dash
 - `services/`: AI planning, backup, media, upload, and two-factor services.
 - `*.test.js` and `services/*.test.js`: Vitest backend coverage.
 
-The server is currently a modularizing monolith. New independent behavior should normally enter a schema or service first; extract routes incrementally without changing their paths or middleware order.
+The server is one Express application. Add domain logic to an existing schema or service; extract routes without changing their paths or middleware order.
 
 ## Runtime data
 
@@ -21,6 +21,7 @@ The server is currently a modularizing monolith. New independent behavior should
 orbitpage.db
 uploads/
 .jwt-secret  # Docker only, when JWT_SECRET is generated automatically
+.instance-env.json  # Saved dashboard environment overrides
 ```
 
 Local development falls back to this directory only when `DATA_DIR` is not set. Prefer an isolated directory such as `app/.orbitpage-data` for development and tests.
@@ -33,11 +34,10 @@ From `app/`:
 
 ```bash
 npm run install:server
-npm run server:dev
 npm run test:unit
 ```
 
-From this directory, `npm test -- --run` runs only backend tests.
+From this directory, `npm test -- --run` runs only backend tests. Follow [Development](../../docs/wiki/Development.md#run-with-live-reload) to configure an isolated data directory and stable secret before running the server.
 
 ## Compatibility and security
 

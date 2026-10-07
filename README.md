@@ -29,7 +29,7 @@
   <a href="./SECURITY.md">Security</a>
 </p>
 
-**OrbitPage is an open-source visual page builder for creators, professionals, venues, and small businesses.** Create portfolios, service pages, venue menus, or event pages. Add images, video, links, contact details, maps, and calls to action. Edit the layout, colors, and typography with a live preview.
+**OrbitPage is an open-source visual page builder for anyone who wants a public page on their own server.** Create portfolios, service pages, venue menus, or event pages. Add images, video, links, contact details, maps, and calls to action. Edit the layout, colors, and typography with a live preview.
 
 Your page adapts to phones and desktops, with SEO, QR codes, analytics, and newsletters built in. The self-hosted edition is free, MIT-licensed, and runs in one Docker container, keeping your content and data on your own server.
 
@@ -39,7 +39,7 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
   <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="OrbitPage dashboard walkthrough: page, content, menu, additional pages, themes, newsletter, publishing and the public page" width="800" />
 </p>
 
-> **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; follow the [migration guide](./docs/wiki/Docker-Hub-migration.md).
+> **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; see [Deployment](./docs/wiki/Deployment.md#older-docker-hub-images).
 
 ## Contents
 
@@ -223,7 +223,7 @@ uploads/
 
 Back up the whole data directory before upgrades or restores: <code>/app/data</code> in Docker, or your source installation's <code>DATA_DIR</code>. Keep any host-managed secrets backed up separately and private.
 
-The dashboard exports selected application data as JSON, with an optional **Include images (ZIP)** archive. Newsletter records, SMTP credentials, and provider secrets require an infrastructure backup. Follow the [backup and restore guide](./docs/wiki/Deployment.md#create-and-verify-an-infrastructure-backup) for a consistent copy of the database and uploads.
+The dashboard exports selected application data as JSON, with an optional **Include images (ZIP)** archive. Newsletter records, SMTP credentials, and provider secrets require an infrastructure backup. Follow the [backup and restore guide](./docs/wiki/maintenance.md#create-and-verify-an-infrastructure-backup) for a consistent copy of the database and uploads.
 
 ## Documentation
 
@@ -249,7 +249,7 @@ repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 
-The self-hosted Express API is an internal boundary used by the bundled dashboard, not a stable external SDK. Read the [self-hosted API boundary](./docs/wiki/api.md). The separate [OrbitPage community node for n8n](https://github.com/paoloronco/n8n-nodes-orbitpage) connects to the managed Automation API; it does not expose the bundled self-hosted API as a public contract.
+The [self-hosted API](./docs/wiki/api.md) serves the dashboard and accepts personal tokens for scripts; its routes change with application releases. The [n8n community node](https://github.com/paoloronco/n8n-nodes-orbitpage) connects to the managed-service API.
 
 ## Security and contributing
 

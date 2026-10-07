@@ -1,11 +1,8 @@
 # Publishing and QR codes
 
-The self-hosted application serves saved content directly at the installation
-URL. Save each edited workspace before checking **Public page**; an unsaved
-preview does not update the public page. Hosted draft/revision publication is
-a separate managed-service contract.
+Saved self-hosted content appears at the public URL. Save each section before opening **Public page**; an unsaved preview does not change the public page.
 
-## Prepare the public destination
+## Before sharing
 
 1. Set the production HTTPS URL in `PUBLIC_SITE_URL`, including any mount path.
 2. Save Page, Content, Menu/subpages, Theme and Privacy as applicable.
@@ -40,10 +37,9 @@ schedule choices against the preview before relying on them for opening hours.
 
 ## Sitemap and text files
 
-**Publish → Sitemap** generates the current public-route list. Disabled
-destinations are excluded; a sitemap is not a request for instant search indexing.
+**Publish → Sitemap** generates the current public-route list. Disabled destinations are excluded.
 **Publish → TXT** edits robots, humans, AI, LLM and security discovery files and
-safe custom text endpoints. Save the relevant editor, then inspect the public
+custom text endpoints. Save the relevant editor, then inspect the public
 endpoint. Machine-readable page Markdown is opt-in and distinct from `llms.txt`.
 Use the [SEO guide](./SEO-and-indexing.md) for paths, limits and indexing rules.
 

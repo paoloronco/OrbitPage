@@ -1,95 +1,64 @@
-# SEO and Indexing
+# SEO and indexing
 
-OrbitPage generates search and sharing metadata from the saved public page plus environment variables. Most deployments do not need source-code edits for SEO.
+OrbitPage generates search and sharing metadata from saved page data. Configure it in **Page** and **Publish**.
 
-## Recommended Production Settings
+## Set the public URL
 
-```bash
-PUBLIC_SITE_URL=https://links.example.com
-PUBLIC_SITE_NAME="Your Name or Brand"
+Set these runtime values through [Configuration](./Configuration.md):
+
+```dotenv
+PUBLIC_SITE_URL=https://page.example.com
+PUBLIC_SITE_NAME=My page
 SEO_INDEXING=true
 ```
 
-Then use the admin panel to configure:
+Include any mount path in `PUBLIC_SITE_URL`. Without it, the server derives the URL from the request host and protocol; proxies may supply an internal address.
 
-- page name
-- description
-- page title
-- meta description
-- avatar
-- social links
-- legal policy URLs
+In **Page**, set the page name, browser title, description, profile image, and social links.
 
-## What OrbitPage Generates
+## Generated metadata
 
-- HTML title
-- meta description
-- canonical URL
-- robots meta tag
-- Open Graph metadata
-- Twitter Card metadata
-- Schema.org JSON-LD
-- optional Markdown content negotiation for public pages
-- optional generated `/llms.txt` and `/llm.txt`
-- dynamic `/robots.txt`
-- generated `/sitemap.xml` with `lastmod` based on public content changes
-- no-JavaScript fallback links for crawlers
+| Output | Source |
+| --- | --- |
+| HTML title and description | Saved page/profile fields |
+| Canonical URL | Public URL and active public path |
+| Open Graph and Twitter cards | Page metadata and image |
+| Schema.org JSON-LD | Saved public profile/content |
+| Robots meta | Indexing setting and route |
+| No-JavaScript links | Public content for crawlers |
+| Sitemap | Enabled public destinations and content-change dates |
 
-## Staging and Private Deployments
+Dashboard, API, health, and unknown routes are excluded from indexing.
 
-Disable indexing without changing source code:
-
-```bash
-SEO_INDEXING=false
-```
-
-This makes OrbitPage:
-
-- emit `noindex, nofollow, noarchive`
-- serve a restrictive `robots.txt`
-- avoid exposing staging/private pages to search engines
-
-## Canonical URLs
-
-Set `PUBLIC_SITE_URL` when OrbitPage is behind:
-
-- a reverse proxy
-- a tunnel
-- a CDN
-- a managed platform that sends internal host headers
-
-Without `PUBLIC_SITE_URL`, OrbitPage derives canonical URLs from the incoming request host and protocol.
+For staging or a private instance, set `SEO_INDEXING=false`. It emits `noindex, nofollow, noarchive` and restrictive robots rules. This requests that crawlers stay away; it does not protect a page from visitors.
 
 ## Sitemap
 
-OrbitPage includes:
+Open **Publish → Sitemap** and select **Generate sitemap**. The XML at `/sitemap.xml` follows current saved data; regenerate to record a new generation time.
 
-- the public home page
-- enabled public subpages and the enabled native menu
-- local legal pages when `/privacy` or `/cookies` are configured as profile policy URLs
-- the About page when the installation runs in demo mode
+It includes the main page, published additional pages, the enabled menu, and local policy pages when configured. Demo mode also includes About.
 
-Open **Admin > Publish > Sitemap** and select **Generate sitemap** to create the sitemap state and expose its public URL. The XML is derived from current public data on request, so hostname changes and later page publications stay aligned without accepting raw XML from the browser. Use **Regenerate sitemap** when you want to record a new explicit generation time.
+The workspace shows the URL, route count, generation time, and copy/open controls. Sitemap settings are included in **Discovery files** exports.
 
-The section shows the public URL, included URL count, generation date, copy/open controls and current publication status. Sitemap state is included in the **Discovery files** backup section.
+## Text files and machine-readable pages
 
-Private routes such as admin, API, health, and unknown SPA routes are excluded and marked `noindex`.
+**Publish → TXT** edits:
 
-## TXT Files
+- `robots.txt`;
+- `llms.txt` (with `/llm.txt` as an alias);
+- `humans.txt`, `security.txt`, and `ai.txt`;
+- up to 20 custom `/name.txt` or `/.well-known/name.txt` paths.
 
-The **Admin > Publish > TXT** tool can edit `robots.txt`, `llms.txt`, `humans.txt`, `security.txt`, and `ai.txt`. The plural `llms.txt` is canonical; `/llm.txt` serves the same content as a compatibility alias.
+Custom paths are normalized to lowercase and cannot collide with reserved names or traverse directories. Text files are included in **Discovery files** exports.
 
-Enable **Machine-readable access** in **Profile > Online presence** to publish both the generated `llms.txt` and the Markdown representation of each public page. With the option enabled, `Accept: text/markdown` returns the current public content from the same URL; HTML remains the default and responses include `Vary: Accept`. Disabling the option returns `406` for Markdown negotiation and `404` for the AI discovery files. JSON-LD remains in HTML because it is standard search metadata.
+Enable **Machine-readable access** under **Page → Online presence** to expose generated LLM discovery and Markdown page representations:
 
-Machine-readable requests use only local application data and do not call an AI provider. The server stores daily aggregate counts by format and public path in SQLite without IP addresses, user agents, referrers, cookies, or page content. Administrators with `analytics:read` can retrieve the last 30 days from `/api/analytics/machine-readable`.
+| Request | Enabled | Disabled |
+| --- | --- | --- |
+| Public URL with `Accept: text/markdown` | Saved public content as Markdown, with `Vary: Accept` | `406` |
+| Generated AI discovery files | Served | `404` |
+| Normal public URL | HTML with JSON-LD | HTML with JSON-LD |
 
-You can also add up to 20 custom endpoints using `/name.txt` or `/.well-known/name.txt`. OrbitPage normalizes paths to lowercase, prevents reserved-name collisions and path traversal, and serves every file with browser sniffing disabled. `llms.txt` uses `text/markdown`; other TXT files use `text/plain`. TXT files and custom paths are included in the **Discovery files** backup section.
+These responses use local data and do not call an AI provider. SQLite stores daily counts by format and public path, without IP, user-agent, referrer, cookie, or page-content data. `GET /api/analytics/machine-readable` returns the latest 30 days to users with `analytics:read`.
 
-## Contributor Checklist
-
-- Public routes should have one canonical URL.
-- Admin, API, health, and private routes must stay `noindex`.
-- New public pages should enter the sitemap only when they contain durable public content.
-- Public links should remain real anchors when possible.
-- Do not block `/assets`, CSS, JavaScript, or public uploaded images in `robots.txt`.
-- Keep metadata configurable through page data or environment variables.
+Keep public links as real anchors and avoid blocking assets or public media in robots rules. See [Publishing](./publishing.md) for sharing tools.

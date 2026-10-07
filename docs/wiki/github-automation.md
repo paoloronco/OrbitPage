@@ -1,27 +1,25 @@
 # GitHub automation
 
-| Workflow file | GitHub Actions name | Purpose |
-| --- | --- | --- |
-| [quality-checks.yml](../../.github/workflows/quality-checks.yml) | OSS - Quality checks | Main/PR quality gate, Chromium/Firefox/WebKit tests and native Docker smoke checks |
-| [publish-release.yml](../../.github/workflows/publish-release.yml) | OSS - Publish release | Exact version tag, successful main checks, amd64/arm64 images and GitHub release |
-| [sync-gitea-mirror.yml](../../.github/workflows/sync-gitea-mirror.yml) | OSS - Sync Gitea mirror | Copy Git refs using the protected environment credential |
+| Workflow | Purpose |
+| --- | --- |
+| [quality-checks.yml](../../.github/workflows/quality-checks.yml) | Lint, types, unit tests, browser tests, and native amd64/arm64 Docker smoke checks |
+| [publish-release.yml](../../.github/workflows/publish-release.yml) | Publish versioned images and a GitHub release after main checks pass |
+| [sync-gitea-mirror.yml](../../.github/workflows/sync-gitea-mirror.yml) | Copy Git branches and tags to the Gitea mirror |
 
-Job check names remain `Quality Gate`, `E2E (browser)` and
-`Build and smoke Docker (architecture)` because the release gate queries them.
-These names are also relevant to repository protection rules.
+## Release checks
 
-Release publication reuses the `rolling-amd64` and `rolling-arm64` build caches
-from the successful main CI. CI owns cache writes; releases avoid exporting a
-duplicate tag-local cache. Images are still verified for both architectures.
-The GitHub release is created idempotently in the image-publishing job, so it
-does not need another hosted runner. Tag pushes and manual republishes of the
-same tag share one concurrency group and do not cancel an active publication.
+The release workflow queries `Quality Gate`, `E2E (browser)`, and `Build and smoke Docker (architecture)`; keep these job names aligned with the gate and repository protection.
 
-Frontend and backend npm audits reject all high/critical advisories without
-exceptions. The former advisory-filter script was removed after updating the
-toolchain and native-installation dependencies.
+Frontend and backend npm audits reject high/critical advisories. A release tag must match both application package versions. See [Contributing → Release notes](../../CONTRIBUTING.md#release-notes).
 
-See [release procedure](../../CONTRIBUTING.md#release-notes),
-[mirror credential rules](./Development.md#gitea-mirror-credential),
-[repository scripts](../../scripts/README.md) and
-[security policy](../../SECURITY.md).
+Publication reuses main CI's `rolling-amd64` and `rolling-arm64` build caches, verifies both architectures, and creates the release if it does not exist. Tag pushes and manual publication for the same tag share a concurrency group.
+
+## Gitea mirror credential
+
+The mirror runs from `main` and copies other refs as Git data, without building or executing their source. Main pushes, release completion, and ref deletion trigger it; an hourly schedule covers other ref changes.
+
+Store `GITEA_TOKEN` only in the `gitea-mirror` GitHub environment. Its deployment branch policy must allow only `main`, with no tag rule. Remove repository/organization copies accessible to this repository: branch-authored workflows could otherwise use them.
+
+Restrict the token to writing the mirror repository. After changing its placement, verify the environment policy and a mirror run. If exposed, rotate and revoke it at Gitea.
+
+See [Scripts](../../scripts/README.md) and [Security policy](../../SECURITY.md).

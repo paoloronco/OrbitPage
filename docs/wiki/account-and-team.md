@@ -1,8 +1,6 @@
 # Account and team
 
-This guide covers local self-hosted accounts. Hosted invitations, workspace
-seats and billing are managed-service features. For the role matrix, see
-[Dashboard permissions](./dashboard.md#workspace-tools).
+Manage local accounts under **Team** and your own security under **Account → Security**. Available tools depend on [your role](./dashboard.md#workspace-tools).
 
 ## Add or change a local user
 
@@ -16,8 +14,7 @@ seats and billing are managed-service features. For the role matrix, see
 
 The role selector saves a role change immediately. Use the pencil action to
 replace a user's password, or Delete and its confirmation to remove a user.
-Deletion cannot be undone. The fixed `admin` account cannot be removed or have
-its role changed through Team; newly created users cannot receive that role.
+Deletion cannot be undone. The first `admin` account cannot be deleted or reassigned; new users receive non-admin roles.
 Changing roles also changes the permissions of existing personal API tokens.
 
 ## Password and two-factor authentication
@@ -48,7 +45,7 @@ then confirm with the current password. Copy the token immediately: the secret
 is shown only once. Keep it in a secret store and send it only as an HTTPS bearer
 credential. There can be at most ten active tokens per local account.
 
-Full access remains bounded by the creator's current role and never permits
+Full access remains bounded by the account's current role and never permits
 user management. Read-only and Links-only further narrow it. Revoke a token
 from the same panel when it is no longer needed or might be exposed; deleting
 the account also deletes its tokens. See [the API guide](./api.md) for the
@@ -59,9 +56,9 @@ request example and supported automation boundaries.
 Administrators can filter **Account → Audit log** by text, actor, action and
 date. It records successful authenticated changes as metadata, not a copy of
 page contents. Records stay in SQLite and are included in infrastructure backups;
-events before the audit feature was installed cannot be reconstructed.
+recording starts when the feature is installed.
 
 **Account → General** exposes version, instance checks and update actions.
-See [Deployment](./Deployment.md) for update, backup, rollback and removal,
+See [Deployment](./Deployment.md#update-safely) for updates and [Maintenance](./maintenance.md) for backup, rollback, and removal,
 and [Configuration](./Configuration.md#dashboard-environment-overrides) before
-changing runtime environment overrides. An interface Save does not restart the host.
+changing runtime environment overrides. Restart after saving environment overrides.

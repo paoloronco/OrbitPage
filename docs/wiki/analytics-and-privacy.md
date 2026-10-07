@@ -1,34 +1,37 @@
 # Analytics and privacy
 
-OrbitPage separates its built-in self-hosted analytics from optional Google Analytics 4. Configure each only when it fits the deployment's privacy notice and consent requirements.
+Configure consent under **Privacy** and reports under **Analytics**. Built-in analytics uses the local database; GA4 is optional.
 
 ## Built-in analytics
 
-The self-hosted application records first-party page visits and content clicks in its local SQLite database. It does not require a third-party analytics account or send these events to OrbitPage.
+| Report | Details |
+| --- | --- |
+| Period | Last 7 or 30 days, compared with the previous period |
+| Traffic | Visits, visitors, clicks, trends, content, and referrers |
+| Acquisition | Tagged campaigns and QR visits |
+| Audience | Device breakdown; country data only when supplied by the infrastructure |
 
-Use **Dashboard > Analytics** to switch between the latest 7 and 30 days and review visits, visitors, clicks, trends, content, referrers, devices, and tagged campaigns. Empty states are expected on a new page, and collection starts after the version that introduced period-based analytics is installed. Admin activity is excluded from public-page tracking.
+Dashboard activity is excluded. Events stay in SQLite and are not sent to OrbitPage. New installations have no historical data.
 
-New QR codes generated under **Dashboard > Publish > QR** include a QR campaign marker. Analytics shows QR visits, their share of visits, and (where detailed reporting is available) the destinations opened. The Acquisition and Audience panels remain visible without expanding them. A QR visit is recorded when the destination page loads after analytics consent; it is not a count of camera scans. Previously downloaded QR codes without the marker cannot be distinguished from ordinary links and should be regenerated for this report.
+- Visit details require analytics consent.
+- Click totals work without consent, with no visitor identifier, referrer, device, or campaign attached.
+- Raw IP addresses and user-agent strings are not stored.
+- Event rows are retained for 62 days.
 
-Visit-level details are collected only after analytics consent. Click totals continue to work without consent, but OrbitPage does not attach a visitor identifier, referrer, device, or campaign values to those clicks. Raw IP addresses and user-agent strings are not stored. Local event rows are retained for 62 days so the dashboard can compare a 30-day period with the preceding 30 days. Approximate country reporting remains available only where the deployment infrastructure provides it.
+QR reporting counts consented visits when the destination loads, not camera scans. Newly generated QR codes include a campaign marker; regenerate older codes without it to distinguish their traffic.
 
 ## Google Analytics 4
 
-The self-hosted dashboard accepts a GA4 Measurement ID in the `G-XXXXXXXXXX` form. The tag is loaded on the public page only; dashboard activity is not sent to GA4.
+1. Configure privacy/cookie policies and consent behavior in **Privacy**.
+2. Enter the GA4 Measurement ID, such as `G-XXXXXXXXXX`, in **Analytics**.
+3. Use a fresh browser session to test accepting and rejecting analytics.
 
-Before enabling it:
+The tag runs on public pages only and follows Google Consent Mode. It does not replace your privacy policy.
 
-1. Add accurate privacy and cookie policy links under **Dashboard > Privacy**.
-2. Choose the appropriate consent behavior for the jurisdictions and audience involved.
-3. Enter the Measurement ID under **Dashboard > Analytics**.
-4. Test a fresh browser session and confirm that consent choices control analytics as intended.
+## Consent providers
 
-OrbitPage integrates GA4 with Google Consent Mode. A Measurement ID alone does not create a compliant privacy policy or determine the lawful basis for tracking.
+Use the built-in controls or configure an external consent-management provider. Avoid installing the same analytics tag in both OrbitPage and custom scripts or a tag manager.
 
-## Consent and external CMPs
+Executable consent/policy snippets require administrator permission. Restored snippets stay blocked until an administrator reviews and saves Privacy settings. See [Security](./Security.md).
 
-Privacy settings can use OrbitPage's consent controls or an explicitly configured external consent-management platform. Avoid loading the same analytics integration independently in custom scripts, a tag manager, and OrbitPage at the same time; duplicate tags can produce duplicate events and conflicting consent state.
-
-For staging or private deployments, also set `SEO_INDEXING=false`. Indexing controls and analytics consent solve different problems and should both be configured deliberately.
-
-See [Security](./Security.md) for deployment hardening and [SEO and indexing](./SEO-and-indexing.md) for canonical URLs and crawler controls.
+For staging, set `SEO_INDEXING=false` separately; consent settings do not control indexing.
