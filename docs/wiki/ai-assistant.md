@@ -8,7 +8,7 @@ Save an OpenAI API key in **AI Assistant**, or set `OPENAI_API_KEY` on the serve
 
 The dashboard key is encrypted in SQLite, never returned to the browser, and excluded from JSON exports. Keep `JWT_SECRET` stable, or set a separate stable `ORBITPAGE_SECRET_ENCRYPTION_KEY` of at least 32 characters.
 
-Choose a supported model in the workspace. `OPENAI_PAGE_AGENT_MODEL` supplies the default when no selection is saved; see [Configuration](./Configuration.md).
+Choose a supported model in the workspace. `OPENAI_PAGE_AGENT_MODEL` supplies the default when no selection is saved; see [Configuration](./administration/Configuration.md).
 
 ## Review and apply
 

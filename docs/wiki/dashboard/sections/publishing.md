@@ -47,4 +47,4 @@ Use the [SEO guide](../../SEO-and-indexing.md) for paths, limits and indexing ru
 
 If a QR points to localhost, the wrong hostname or a language-prefixed dashboard
 URL, correct the public URL configuration before exporting again. For proxy and
-mount-path problems, see [Troubleshooting](../../Troubleshooting.md).
+mount-path problems, see [Troubleshooting](../../administration/Troubleshooting.md).

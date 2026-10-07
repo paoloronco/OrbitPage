@@ -54,8 +54,8 @@ When tests need SQLite data, create isolated fixtures under ignored E2E or tempo
 - `README.md` is the concise product overview and quick start.
 - `docs/wiki/README.md` is the unified task-oriented documentation index;
   `docs/README.md` points readers there.
-- `docs/wiki/product-requirements.md` owns OSS product behavior; `docs/wiki/design-system.md`
-  owns shared UI rules; `docs/wiki/architecture.md` owns runtime boundaries.
+- `docs/wiki/development/product-requirements.md` owns OSS product behavior; `docs/wiki/development/design-system.md`
+  owns shared UI rules; `docs/wiki/development/architecture.md` owns runtime boundaries.
 - `SECURITY.md` is authoritative for vulnerability reporting and the supported security model.
 - `CONTRIBUTING.md` is authoritative for contribution workflow and checks.
 

@@ -1,6 +1,6 @@
 # Security
 
-This guide explains the implemented protections and installation settings. Report vulnerabilities using [SECURITY.md](../../SECURITY.md).
+This guide explains the implemented protections and installation settings. Report vulnerabilities using [SECURITY.md](../../../SECURITY.md).
 
 ## Accounts and sessions
 
@@ -17,7 +17,7 @@ Enable TOTP under **Account → Security**. Enrollment and later changes require
 
 TOTP secrets are encrypted with AES-256-GCM using a key derived from `JWT_SECRET`. Enrollment displays ten single-use recovery codes once; only salted scrypt hashes are stored. The sign-in challenge expires after five minutes and cannot access application APIs.
 
-Keep the instance secret and recovery codes private and backed up. See [Account and team](./dashboard/sections/account-and-team.md) for normal changes, or [Administrator recovery](./recovery.md) after a lockout.
+Keep the instance secret and recovery codes private and backed up. See [Account and team](../dashboard/sections/account-and-team.md) for normal changes, or [Administrator recovery](./recovery.md) after a lockout.
 
 ## API and public content
 

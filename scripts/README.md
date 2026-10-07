@@ -9,7 +9,7 @@ use the same reviewed version. Do not move their published paths casually.
 - `install-git-hooks.sh` and `install-git-hooks.ps1`: point Git at the tracked `.githooks/` directory.
 - `orbitpage-update.sh` and `orbitpage-update.py`: host update command for existing Docker, Compose, and source installations.
 - The root `install.sh` also owns dashboard update service activation through
-  `web-updates CONTAINER`; see [Web updates](../docs/wiki/Deployment.md#web-updates).
+  `web-updates CONTAINER`; see [Web updates](../docs/wiki/administration/Deployment.md#web-updates).
 
 ## Isolated verification helpers
 
@@ -39,11 +39,11 @@ node scripts/check-markdown-links.mjs
 - Never test an installer against the developer's real Docker state, host configuration, or production paths.
 - Use the dedicated test scripts and temporary directories.
 - Quote paths and environment values, fail on errors, and verify resolved deletion targets before cleanup.
-- Update [Deployment](../docs/wiki/Deployment.md) whenever an installer option or management command changes.
+- Update [Deployment](../docs/wiki/administration/Deployment.md) whenever an installer option or management command changes.
 
 CI invokes the applicable checks in [quality-checks.yml](../.github/workflows/quality-checks.yml).
 Shell installer tests require a disposable Linux environment; the PVE test mocks
 host commands and does not create a real guest. Run `python scripts/test-updater.py`
 from the repository root for mocked updater tests; the container variant needs
-its dedicated Docker fixture. The [npm advisory gates](../docs/wiki/github-automation.md)
+its dedicated Docker fixture. The [npm advisory gates](../docs/wiki/development/github-automation.md)
 run directly in the quality workflow.

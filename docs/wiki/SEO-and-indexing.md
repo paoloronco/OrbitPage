@@ -4,7 +4,7 @@ OrbitPage generates search and sharing metadata from saved page data. Configure 
 
 ## Set the public URL
 
-Set these runtime values through [Configuration](./Configuration.md):
+Set these runtime values through [Configuration](./administration/Configuration.md):
 
 ```dotenv
 PUBLIC_SITE_URL=https://page.example.com

@@ -39,7 +39,7 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
   <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="OrbitPage dashboard walkthrough: page, content, menu, additional pages, themes, newsletter, publishing and the public page" width="800" />
 </p>
 
-> **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; see [Deployment](./docs/wiki/Deployment.md#older-docker-hub-images).
+> **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; see [Deployment](./docs/wiki/administration/Deployment.md#older-docker-hub-images).
 
 ## Contents
 
@@ -91,7 +91,7 @@ docker run -d \
 
 Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
 The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
-Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
+Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/administration/Deployment.md#docker-image-recommended) for options.
 
 ### GHCR
 
@@ -109,7 +109,7 @@ docker run -d \
 
 Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
 The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
-Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
+Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/administration/Deployment.md#docker-image-recommended) for options.
 
 ### Docker Compose
 
@@ -140,7 +140,7 @@ sudo ./install.sh
 
 Open `http://SERVER_IP:8080/dashboard/profile` and choose a password for the admin.<br>
 The public page is at `http://SERVER_IP:8080`.<br>
-Replace `SERVER_IP` with the server's LAN address. For local-only access, see [LAN and loopback](./docs/wiki/Deployment.md#lan-and-loopback).
+Replace `SERVER_IP` with the server's LAN address. For local-only access, see [LAN and loopback](./docs/wiki/administration/Deployment.md#lan-and-loopback).
 
 ## Proxmox VE
 
@@ -158,7 +158,7 @@ cd OrbitPage
 
 Open `http://GUEST_IP:8080/dashboard/profile` and choose a password for the admin.<br>
 The public page is at `http://GUEST_IP:8080`.<br>
-Use the LXC's LAN address shown by the installer for `GUEST_IP`. For local-only access, see [LAN and loopback](./docs/wiki/Deployment.md#lan-and-loopback).
+Use the LXC's LAN address shown by the installer for `GUEST_IP`. For local-only access, see [LAN and loopback](./docs/wiki/administration/Deployment.md#lan-and-loopback).
 
 ## Run from source
 
@@ -246,7 +246,7 @@ curl -fsS http://127.0.0.1:8080/health
 
 Also verify dashboard login, the public page, and uploaded media.
 
-For backups and rollback procedures, see [Maintenance](./docs/wiki/maintenance.md).
+For backups and rollback procedures, see [Maintenance](./docs/wiki/administration/maintenance.md).
 
 ---
 
@@ -263,7 +263,7 @@ uploads/
 
 Back up the whole data directory before upgrades or restores: <code>/app/data</code> in Docker, or your source installation's <code>DATA_DIR</code>. Keep any host-managed secrets backed up separately and private.
 
-The dashboard exports selected application data as JSON, with an optional **Include images (ZIP)** archive. Newsletter records, SMTP credentials, and provider secrets require an infrastructure backup. Follow the [backup and restore guide](./docs/wiki/maintenance.md#create-and-verify-an-infrastructure-backup) for a consistent copy of the database and uploads.
+The dashboard exports selected application data as JSON, with an optional **Include images (ZIP)** archive. Newsletter records, SMTP credentials, and provider secrets require an infrastructure backup. Follow the [backup and restore guide](./docs/wiki/administration/maintenance.md#create-and-verify-an-infrastructure-backup) for a consistent copy of the database and uploads.
 
 ## Dashboard workspaces
 
@@ -317,7 +317,7 @@ Common runtime settings:
 
 Administrators can change instance settings under **Account → General → Instance details → Environment variables**.
 
-Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/dashboard/sections/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
+Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/dashboard/sections/newsletters.md) for setup and the [Configuration reference](./docs/wiki/administration/Configuration.md) for all variables, defaults, and examples.
 
 ## Documentation
 
@@ -325,8 +325,8 @@ Start from the [documentation index](./docs/README.md).
 
 | Task | Guide |
 | --- | --- |
-| Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
-| Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
+| Deploy, update, or use Proxmox | [Deployment](./docs/wiki/administration/Deployment.md) |
+| Configure environment variables | [Configuration](./docs/wiki/administration/Configuration.md) |
 | Navigate the editor | [Dashboard guide](./docs/wiki/dashboard/dashboard.md) |
 | Manage users, passwords and two-factor authentication | [Account and team](./docs/wiki/dashboard/sections/account-and-team.md) |
 | Share or print a QR code | [Publishing and QR](./docs/wiki/dashboard/sections/publishing.md) |
@@ -336,9 +336,9 @@ Start from the [documentation index](./docs/README.md).
 | Configure analytics and consent | [Analytics and privacy](./docs/wiki/dashboard/sections/analytics-and-privacy.md) |
 | Configure SMTP and send newsletters | [Newsletters](./docs/wiki/dashboard/sections/newsletters.md) |
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
-| Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
+| Troubleshoot | [Troubleshooting](./docs/wiki/administration/Troubleshooting.md) |
 
-To automate a self-hosted installation, see the [API guide](./docs/wiki/api.md). For pages hosted on [orbitpage.com](https://orbitpage.com), use the [n8n community node](https://github.com/paoloronco/n8n-nodes-orbitpage).
+To automate a self-hosted installation, see the [API guide](./docs/wiki/development/api.md). For pages hosted on [orbitpage.com](https://orbitpage.com), use the [n8n community node](https://github.com/paoloronco/n8n-nodes-orbitpage).
 
 ## Security and contributing
 

@@ -37,7 +37,7 @@ npm run install:server
 npm run test:unit
 ```
 
-From this directory, `npm test -- --run` runs only backend tests. Follow [Development](../../docs/wiki/Development.md#run-with-live-reload) to configure an isolated data directory and stable secret before running the server.
+From this directory, `npm test -- --run` runs only backend tests. Follow [Development](../../docs/wiki/development/Development.md#run-with-live-reload) to configure an isolated data directory and stable secret before running the server.
 
 ## Compatibility and security
 
@@ -48,4 +48,4 @@ From this directory, `npm test -- --run` runs only backend tests. Follow [Develo
 - The frontend sends the session token in the `Authorization` header. The internal API is not a stable external SDK contract.
 - Uploaded media is public when referenced by the public page; do not store private documents under `uploads/`.
 
-The complete runtime-variable reference is in [Configuration](../../docs/wiki/Configuration.md), and the supported security model is in [SECURITY.md](../../SECURITY.md).
+The complete runtime-variable reference is in [Configuration](../../docs/wiki/administration/Configuration.md), and the supported security model is in [SECURITY.md](../../SECURITY.md).

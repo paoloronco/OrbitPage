@@ -49,7 +49,7 @@ Detailed guides: [Publishing](./sections/publishing.md), [Backups](./sections/ba
 | **Account → Audit log** | Successful changes, with user, action, date, and text filters; administrators only | `/dashboard/account/audit` |
 | **Edition** | Self-hosted features and server responsibilities | `/dashboard/plan` |
 
-See [Account and team](./sections/account-and-team.md), [Configuration](../Configuration.md#dashboard-environment-overrides), and [Updates](../Deployment.md#update-safely).
+See [Account and team](./sections/account-and-team.md), [Configuration](../administration/Configuration.md#dashboard-environment-overrides), and [Updates](../administration/Deployment.md#update-safely).
 
 ## Save and preview
 
