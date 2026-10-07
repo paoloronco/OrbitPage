@@ -132,7 +132,7 @@ The installer:
 - installs the `orbitpage` management command;
 - preserves existing data and secrets and creates a backup when run again.
 
-After installation, open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080). These URLs are local to the server; use an SSH tunnel or [HTTPS proxy](#reverse-proxy-and-https) from another computer.
+Open `http://SERVER_IP:8080/dashboard/profile` and choose a password for the admin. The public page is at `http://SERVER_IP:8080`. Replace `SERVER_IP` with the server's LAN address shown by the installer.
 
 ### Paths
 
@@ -142,7 +142,7 @@ After installation, open the [dashboard](http://localhost:8080/dashboard/profile
 | Runtime secrets | `/etc/orbitpage/orbitpage.env`, mode `0600` |
 | Installer configuration | `/opt/orbitpage` |
 | Backups | `/var/backups/orbitpage` |
-| HTTP endpoint | `127.0.0.1:8080` |
+| HTTP listener | `0.0.0.0:8080` (all IPv4 interfaces) |
 
 ### Available commands
 
@@ -173,12 +173,32 @@ sudo ORBITPAGE_HTTP_PORT=8090 \
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `ORBITPAGE_HTTP_PORT` | `8080` | Host port |
-| `ORBITPAGE_BIND_ADDRESS` | `127.0.0.1` | Host listener address |
+| `ORBITPAGE_BIND_ADDRESS` | `0.0.0.0` | Host listener address; `127.0.0.1` limits access to the host |
 | `ORBITPAGE_PUBLIC_SITE_URL` | Empty | Public HTTPS URL |
 | `ORBITPAGE_IMAGE` | GHCR `latest` | Image tag or digest |
 | `ORBITPAGE_DATA_DIR` | `/var/lib/orbitpage` | Data directory |
 | `ORBITPAGE_CONTAINER_NAME` | `orbitpage` | Container name |
 | `ORBITPAGE_REQUIRE_SETUP_TOKEN` | `false` for new installs | Host token for setup |
+
+### LAN and loopback
+
+New Linux and Proxmox installations listen on all IPv4 interfaces. To limit HTTP access to the Linux host or the Proxmox guest, set `ORBITPAGE_BIND_ADDRESS=127.0.0.1`:
+
+```bash
+# Linux
+sudo ORBITPAGE_BIND_ADDRESS=127.0.0.1 ./install.sh
+
+# Proxmox host, when creating the LXC
+ORBITPAGE_BIND_ADDRESS=127.0.0.1 ./install-pve.sh
+```
+
+Existing Linux installations keep their saved bind address. To enable LAN access, rerun the current installer from its checkout:
+
+```bash
+sudo ORBITPAGE_BIND_ADDRESS=0.0.0.0 ./install.sh
+```
+
+Reinstalling keeps the data and secrets. In Proxmox, loopback refers to the LXC itself.
 
 ---
 
@@ -208,15 +228,9 @@ cd OrbitPage
 | Container | Unprivileged Debian 12 LXC |
 | Features | `nesting=1,keyctl=1` |
 
-Docker, the database, uploads, and application secrets remain inside the LXC. HTTP is bound to the guest's loopback address.
+Docker, the database, uploads, and application secrets remain inside the LXC. HTTP is reachable on the guest's LAN address.
 
-Use an HTTPS proxy inside the guest, or an SSH tunnel from your computer if you configured the guest's SSH public key:
-
-```bash
-ssh -L 8080:127.0.0.1:8080 root@GUEST_IP
-```
-
-With the tunnel open, use the [dashboard](http://localhost:8080/dashboard/profile) to choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080).
+Open `http://GUEST_IP:8080/dashboard/profile` and choose a password for the admin. The public page is at `http://GUEST_IP:8080`. Use the LXC address shown by the installer for `GUEST_IP`.
 
 ### Customize the LXC
 
@@ -246,13 +260,14 @@ ORBITPAGE_PVE_MEMORY=4096 \
 | `ORBITPAGE_PVE_FIREWALL` | `1` | Network-interface firewall flag |
 | `ORBITPAGE_PVE_SSH_PUBLIC_KEY` | Empty | Host path to a key authorized for guest root |
 | `ORBITPAGE_HTTP_PORT` | `8080` | OrbitPage port inside the guest |
+| `ORBITPAGE_BIND_ADDRESS` | `0.0.0.0` | Guest listener address; see [LAN and loopback](#lan-and-loopback) |
 | `ORBITPAGE_PUBLIC_SITE_URL` | Empty | Public HTTPS URL |
 | `ORBITPAGE_IMAGE` | GHCR `latest` | Image tag or digest |
 | `ORBITPAGE_REQUIRE_SETUP_TOKEN` | `false` for new installs | Host token for setup |
 | `ORBITPAGE_PVE_WAIT_ATTEMPTS` | `90` | Guest-start polling attempts |
 | `ORBITPAGE_PVE_WAIT_SECONDS` | `2` | Seconds between attempts |
 
-The firewall flag does not enable Proxmox firewall layers or add allow rules; configure those in Proxmox.
+The firewall flag does not enable Proxmox firewall layers or add allow rules. If the Proxmox firewall is enabled, allow your HTTP port for LAN access.
 
 ---
 
@@ -271,7 +286,7 @@ Point your HTTPS reverse proxy at OrbitPage's HTTP address, such as `http://127.
 | Cache | Exclude `/api/*`, `/dashboard/*`, `/health`, and localized dashboard paths such as `/en-US/dashboard/*` |
 | Uploaded media | Forward `/uploads/*` to OrbitPage |
 
-Keep the HTTP port on loopback when the proxy runs on the same host. In Proxmox, that means inside the LXC; a proxy on the PVE host cannot reach the guest's loopback address.
+For a proxy on the same host, you can restrict HTTP to [loopback](#lan-and-loopback). In Proxmox, a proxy inside the LXC can use `127.0.0.1`; a proxy on the PVE host uses the guest's LAN address.
 
 `ENABLE_HTTPS=true` enables a self-signed listener and is usually unnecessary behind the proxy. See [Configuration](./Configuration.md#public-url-and-networking) for proxy variables and subdirectory hosting.
 

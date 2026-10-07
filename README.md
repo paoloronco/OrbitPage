@@ -136,7 +136,9 @@ cd OrbitPage
 sudo ./install.sh
 ~~~
 
-After installation, open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080). These URLs are local to the server; use an SSH tunnel or [HTTPS proxy](./docs/wiki/Deployment.md#reverse-proxy-and-https) from another computer.
+Open `http://SERVER_IP:8080/dashboard/profile` and choose a password for the admin.<br>
+The public page is at `http://SERVER_IP:8080`.<br>
+Replace `SERVER_IP` with the server's LAN address. For local-only access, see [LAN and loopback](./docs/wiki/Deployment.md#lan-and-loopback).
 
 ## Proxmox VE
 
@@ -152,7 +154,9 @@ cd OrbitPage
 ./install-pve.sh
 ~~~
 
-With the [SSH tunnel](./docs/wiki/Deployment.md#proxmox-ve) open, use the [dashboard](http://localhost:8080/dashboard/profile) to choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080).
+Open `http://GUEST_IP:8080/dashboard/profile` and choose a password for the admin.<br>
+The public page is at `http://GUEST_IP:8080`.<br>
+Use the LXC's LAN address shown by the installer for `GUEST_IP`. For local-only access, see [LAN and loopback](./docs/wiki/Deployment.md#lan-and-loopback).
 
 ## Run from source
 
