@@ -47,7 +47,7 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 - [Quick start](#quick-start)
 - [Updates](#updates)
 - [Dashboard workspaces](#dashboard-workspaces)
-- [Configuration](#configuration)
+- [Configuration & Environment](#configuration--environment)
 - [Data and backups](#data-and-backups)
 - [Documentation](#documentation)
 - [Security and contributing](#security-and-contributing)
@@ -174,7 +174,7 @@ Dashboard URLs include the interface language, for example <code>/it-IT/dashboar
 
 See the [dashboard guide](./docs/wiki/dashboard.md) for tab URLs and editing instructions.
 
-## Configuration
+## Configuration & Environment
 
 Common runtime settings:
 
