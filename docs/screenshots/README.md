@@ -57,3 +57,21 @@ and disposal mode 2. Check the decoded frames against the encoded source images
 to catch rendering artifacts. To refresh them, follow the isolated capture
 procedure above, upload new versioned filenames, and update the guide's URLs.
 Keep published assets available for older documentation links.
+
+## Feature guide previews
+
+The [feature guides](../wiki/features/README.md) reuse the real dashboard captures
+from the same isolated OSS 4.21.75 session on 2026-10-07. Each guide embeds its
+own preview from GitHub release assets; these binaries also stay outside Git.
+
+| Guide | Preview | Size |
+| --- | --- | --- |
+| [Content and design](../wiki/features/content-and-design.md) | [GIF: Page, Content, Menu, Pages, Theme](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-content-and-design-4.21.75.gif) | 373 KiB |
+| [Publishing](../wiki/features/publishing.md) | [PNG: QR preview and export](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-publishing-4.21.75.png) | 83 KiB |
+| [Backups and demo mode](../wiki/features/backups-and-demo-mode.md) | [PNG: version history, export and restore](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-backups-and-demo-mode-4.21.75.png) | 129 KiB |
+| [Analytics and privacy](../wiki/features/analytics-and-privacy.md) | [GIF: reports and consent settings](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-analytics-and-privacy-4.21.75.gif) | 108 KiB |
+| [Newsletters](../wiki/features/newsletters.md) | [PNG: campaign editor and preview](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-newsletters-4.21.75.png) | 77 KiB |
+| [Account and team](../wiki/features/account-and-team.md) | [GIF: members and instance settings](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-account-and-team-4.21.75.gif) | 101 KiB |
+
+Dimensions and GIF encoding match the dashboard guide above. Preserve the
+fictional data and example paths when refreshing these previews.

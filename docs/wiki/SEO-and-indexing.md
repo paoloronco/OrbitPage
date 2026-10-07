@@ -61,4 +61,4 @@ Enable **Machine-readable access** under **Page → Online presence** to expose 
 
 These responses use local data and do not call an AI provider. SQLite stores daily counts by format and public path, without IP, user-agent, referrer, cookie, or page-content data. `GET /api/analytics/machine-readable` returns the latest 30 days to users with `analytics:read`.
 
-Keep public links as real anchors and avoid blocking assets or public media in robots rules. See [Publishing](./publishing.md) for sharing tools.
+Keep public links as real anchors and avoid blocking assets or public media in robots rules. See [Publishing](./features/publishing.md) for sharing tools.

@@ -1,6 +1,6 @@
 # Administrator recovery
 
-Use this procedure when the first `admin` account has lost its password, authenticator, and recovery codes. For a user's normal password or TOTP change, use [Account and team](./account-and-team.md).
+Use this procedure when the first `admin` account has lost its password, authenticator, and recovery codes. For a user's normal password or TOTP change, use [Account and team](./features/account-and-team.md).
 
 ## Reset operations
 
