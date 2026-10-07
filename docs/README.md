@@ -8,7 +8,9 @@ Use this page as the main entry point for installing, configuring, using, mainta
 
 ---
 
-## Install OrbitPage
+## Documentation
+
+### Install OrbitPage
 
 | Task | Guide |
 | --- | --- |
@@ -20,7 +22,7 @@ Use this page as the main entry point for installing, configuring, using, mainta
 | Install on Proxmox VE | [Proxmox VE](./wiki/Deployment.md#proxmox-ve) |
 | Set up a reverse proxy and HTTPS | [Reverse proxy and HTTPS](./wiki/Deployment.md#reverse-proxy-and-https) |
 
-## Update OrbitPage
+### Update OrbitPage
 
 | Task | Guide |
 | --- | --- |
@@ -32,10 +34,6 @@ Use this page as the main entry point for installing, configuring, using, mainta
 | Verify the update | [Verification](./wiki/Deployment.md#verify-the-update) |
 
 If you encounter issues, see [Troubleshooting](./wiki/Troubleshooting.md).
-
----
-
-## Documentation
 
 ### Using OrbitPage
 
