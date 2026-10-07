@@ -1,6 +1,6 @@
 # Account and team
 
-Manage local accounts under **Team** and your own security under **Account → Security**. Available tools depend on [your role](./dashboard.md#workspace-tools).
+Manage local accounts under **Team** and your own security under **Account → Security**. Available tools depend on your role.
 
 ## Add or change a local user
 

@@ -1,8 +1,12 @@
 # Dashboard
 
-Open `/dashboard/profile` to sign in or complete setup. The dashboard opens the visual editor, where **Page**, **Content**, **Menu**, and **Pages** share a live preview.
+The dashboard is where you edit your public page, manage sharing and newsletters, and change account or installation settings.
 
-## Edit your page
+Open `/dashboard/profile` to sign in or, on a new installation, choose the admin password.
+
+## Dashboard main sections
+
+### Site editor
 
 | Section | What you edit | URL |
 | --- | --- | --- |
@@ -17,7 +21,7 @@ The **Shop** section is unavailable in the self-hosted edition. Its shared route
 
 See [Content and design](./content-and-design.md) for editing controls and [AI Assistant](./ai-assistant.md) for provider setup.
 
-## Share and manage content
+### Share and manage content options
 
 | Workspace | Tools | URL |
 | --- | --- | --- |
@@ -29,7 +33,7 @@ See [Content and design](./content-and-design.md) for editing controls and [AI A
 
 Detailed guides: [Publishing](./publishing.md), [Backups](./backups-and-demo-mode.md), [Analytics and privacy](./analytics-and-privacy.md), [Newsletters](./newsletters.md).
 
-## Account and installation
+### Account and installation
 
 | Workspace | Tools | URL |
 | --- | --- | --- |
@@ -43,17 +47,27 @@ See [Account and team](./account-and-team.md), [Configuration](./Configuration.m
 
 ## Save and preview
 
+### Save changes
+
 1. Edit a section and use its **Save** action.
 2. Save each additional section you changed. Saving Theme does not save an unsaved Menu or Page.
 3. Open **Public page** to check the saved result.
 
+### Preview and publication
+
 The preview can show unsaved changes. In the self-hosted edition, saved public content appears on the public page without a separate site-wide publish step. Additional pages must also be marked **Published**.
+
+### Drafts
 
 Subpage settings and blocks have separate save controls. Theme, Menu, Privacy, and Publish keep their own drafts. Browser refresh discards unsaved work; switching a tab keeps a Menu or Theme draft.
 
 ## URLs and tabs
 
+### Language and base path
+
 The tables omit the language prefix: `/dashboard/account/security` becomes `/en-US/dashboard/account/security` in an English dashboard. A configured `BASE_PATH` comes before that prefix. Public routes use neither the dashboard language nor its section paths.
+
+### Tab paths
 
 Tabs append these slugs to their workspace path:
 
@@ -66,23 +80,8 @@ Tabs append these slugs to their workspace path:
 | `/dashboard/newsletter` | `overview`, `campaigns`, `subscribers`, `settings` |
 | `/dashboard/account` | `general`, `security`, `audit` |
 
+### Bookmarks and older URLs
+
 Bookmarks, refresh, and browser Back/Forward restore the selected section and tab.
 
 Older `/dashboard/profile` and `/dashboard/content/{link,menu,shop,pages}` paths still work. `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` remain Content aliases; `/dashboard/access` opens Account, and `/admin` redirects to the dashboard.
-
-## Workspace tools
-
-Navigation depends on the signed-in user's role. Every user can manage their own Account.
-
-| Role | Access |
-| --- | --- |
-| Admin | All tools, users, backups, and installation operations |
-| Editor | Profile, blocks, menu, and analytics |
-| Link Editor | Full block editing and analytics |
-| Style Editor | Appearance of publicly visible cards |
-| Image Editor | Icons and cover images of publicly visible cards |
-| Theme Editor | Shared theme and background |
-| Compliance | Privacy, consent, and discovery settings |
-| Viewer | Read-only analytics |
-
-Style and Image Editors cannot read drafts, inactive or scheduled-out content, or private analytics. The first `admin` account keeps full access. User creation, API tokens, and security steps are in [Account and team](./account-and-team.md).
