@@ -1,7 +1,7 @@
 # OrbitPage OSS design system
 
-For UI changes, use the [dashboard stylesheet](../../app/src/index.css),
-[UI components](../../app/src/components/ui), and [theme model](../../app/src/lib/theme.ts).
+For UI changes, use the [dashboard stylesheet](../../../app/src/index.css),
+[UI components](../../../app/src/components/ui), and [theme model](../../../app/src/lib/theme.ts).
 
 ## Two visual contexts
 
@@ -42,8 +42,8 @@ Check the stylesheet before changing a value.
 | Feedback | State loading, success and failure in words; do not rely on color or a transient toast for critical errors. |
 | Preview | Show the shared renderer and distinguish unsaved or unpublished state from the live page. |
 
-The [UI components](../../app/src/components/ui) and
-[visual editor stylesheet](../../app/src/components/visual-site-editor.css) are
+The [UI components](../../../app/src/components/ui) and
+[visual editor stylesheet](../../../app/src/components/visual-site-editor.css) are
 the component baseline. Extend an existing primitive or workspace pattern
 before introducing a parallel one.
 
@@ -70,10 +70,10 @@ Use the checked-in brand files without redrawing or recoloring them.
 
 | Asset | Use |
 | --- | --- |
-| [orbitpage-mark.svg](../../app/public/brand/orbitpage-mark.svg) | Icon on white and light backgrounds |
-| [orbitpage-lockup.svg](../../app/public/brand/orbitpage-lockup.svg) | Mark and wordmark on white and light backgrounds |
-| [orbitpage-mark-on-dark.svg](../brand/orbitpage-mark-on-dark.svg) | Same icon geometry, with a light-blue page for dark backgrounds |
-| [orbitpage-lockup-on-dark.svg](../brand/orbitpage-lockup-on-dark.svg) | Same lockup geometry, with a light-blue page and pale wordmark for dark backgrounds |
+| [orbitpage-mark.svg](../../../app/public/brand/orbitpage-mark.svg) | Icon on white and light backgrounds |
+| [orbitpage-lockup.svg](../../../app/public/brand/orbitpage-lockup.svg) | Mark and wordmark on white and light backgrounds |
+| [orbitpage-mark-on-dark.svg](../../brand/orbitpage-mark-on-dark.svg) | Same icon geometry, with a light-blue page for dark backgrounds |
+| [orbitpage-lockup-on-dark.svg](../../brand/orbitpage-lockup-on-dark.svg) | Same lockup geometry, with a light-blue page and pale wordmark for dark backgrounds |
 
 Reuse the approved light/dark SVGs at their original aspect ratio. Keep clear
 space and sufficient contrast; do not recolor ad hoc, stretch or invent an
@@ -92,8 +92,8 @@ available for tools that cannot use SVG:
 
 | Background | Icon, 512 × 512 | Lockup, 1224 × 256 |
 | --- | --- | --- |
-| White/light | [PNG icon](../brand/orbitpage-mark-on-light.png) | [PNG lockup](../brand/orbitpage-lockup-on-light.png) |
-| Dark | [PNG icon](../brand/orbitpage-mark-on-dark.png) | [PNG lockup](../brand/orbitpage-lockup-on-dark.png) |
+| White/light | [PNG icon](../../brand/orbitpage-mark-on-light.png) | [PNG lockup](../../brand/orbitpage-lockup-on-light.png) |
+| Dark | [PNG icon](../../brand/orbitpage-mark-on-dark.png) | [PNG lockup](../../brand/orbitpage-lockup-on-dark.png) |
 
 Product screenshots must come from the current application with fictional
-content; see [screenshot provenance](../screenshots/README.md).
+content; see [screenshot provenance](../../screenshots/README.md).

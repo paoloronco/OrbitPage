@@ -34,6 +34,6 @@ The tag runs on public pages only and follows Google Consent Mode. It does not r
 
 Use the built-in controls or configure an external consent-management provider. Avoid installing the same analytics tag in both OrbitPage and custom scripts or a tag manager.
 
-Executable consent/policy snippets require administrator permission. Restored snippets stay blocked until an administrator reviews and saves Privacy settings. See [Security](../../Security.md).
+Executable consent/policy snippets require administrator permission. Restored snippets stay blocked until an administrator reviews and saves Privacy settings. See [Security](../../administration/Security.md).
 
 For staging, set `SEO_INDEXING=false` separately; consent settings do not control indexing.

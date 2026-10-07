@@ -1,6 +1,6 @@
 # Development
 
-Use this workflow to change the source code. [Application](./application.md) maps the repository and main files; [Run from source](../../README.md#run-from-source) runs the built application locally.
+Use this workflow to change the source code. [Application](./application.md) maps the repository and main files; [Run from source](../../../README.md#run-from-source) runs the built application locally.
 
 ## Install
 
@@ -64,7 +64,7 @@ node scripts/check-markdown-links.mjs
 node scripts/check-tracked-runtime-data.mjs
 ```
 
-Installer and updater checks are listed in [Scripts](../../scripts/README.md). Do not test host-changing installers against a real instance.
+Installer and updater checks are listed in [Scripts](../../../scripts/README.md). Do not test host-changing installers against a real instance.
 
 ## Make a change
 
@@ -74,4 +74,4 @@ Installer and updater checks are listed in [Scripts](../../scripts/README.md). D
 4. Add a focused test for changed behavior and update its guide.
 5. Run the checks relevant to the change.
 
-Build output, runtime data, logs, secrets, and E2E reports are ignored and must stay uncommitted. See [Contributing](../../CONTRIBUTING.md) for commit conventions and [GitHub automation](./github-automation.md) for releases and mirror settings.
+Build output, runtime data, logs, secrets, and E2E reports are ignored and must stay uncommitted. See [Contributing](../../../CONTRIBUTING.md) for commit conventions and [GitHub automation](./github-automation.md) for releases and mirror settings.

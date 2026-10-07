@@ -25,7 +25,7 @@ Express remains one server application. Put domain logic in the existing service
 | Restore | Selected data and media are validated and replaced together; failed restoration rolls back the change. |
 | Update | A new image or source build starts against the same data and secret. Rollback uses both the old image and its pre-update backup. |
 
-The bundled `/api` changes with the application release; it has no independent API-version guarantee. See [API](./api.md) and [Maintenance](./maintenance.md).
+The bundled `/api` changes with the application release; it has no independent API-version guarantee. See [API](./api.md) and [Maintenance](../administration/maintenance.md).
 
 ## Shared code and hosted service
 

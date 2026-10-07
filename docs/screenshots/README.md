@@ -17,7 +17,7 @@ The GIF starts and loops automatically; GitHub's viewer animation preferences
 can pause animated images.
 Brand source assets live in
 [`app/public/brand`](../../app/public/brand); their usage is documented in the
-[design system](../wiki/design-system.md#brand).
+[design system](../wiki/development/design-system.md#brand).
 
 To refresh the image, build the current app, start it with a new isolated
 `DATA_DIR`, complete setup, save fictional profile and content, and capture the

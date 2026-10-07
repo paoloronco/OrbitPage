@@ -4,12 +4,14 @@ Guides for the open-source, self-hosted application. Start here to install Orbit
 
 ## Install and configure
 
+See [Administration](./administration/README.md) for installation and maintenance guides.
+
 | Task | Guide |
 | --- | --- |
 | Run locally from source | [Run from source](../../README.md#run-from-source) |
-| Install with Docker, Linux, or Proxmox | [Deployment](./Deployment.md) |
-| Set environment variables and public URLs | [Configuration](./Configuration.md) |
-| Solve startup, login, proxy, or indexing problems | [Troubleshooting](./Troubleshooting.md) |
+| Install with Docker, Linux, or Proxmox | [Deployment](./administration/Deployment.md) |
+| Set environment variables and public URLs | [Configuration](./administration/Configuration.md) |
+| Solve startup, login, proxy, or indexing problems | [Troubleshooting](./administration/Troubleshooting.md) |
 
 ## Use OrbitPage
 
@@ -31,23 +33,25 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 
 | Task | Guide |
 | --- | --- |
-| Update the application | [Deployment → Updates](./Deployment.md#update-safely) |
-| Back up, restore, roll back, or uninstall | [Maintenance](./maintenance.md) |
-| Recover the administrator account | [Administrator recovery](./recovery.md) |
-| Review protections and deployment settings | [Security](./Security.md) |
+| Update the application | [Deployment → Updates](./administration/Deployment.md#update-safely) |
+| Back up, restore, roll back, or uninstall | [Maintenance](./administration/maintenance.md) |
+| Recover the administrator account | [Administrator recovery](./administration/recovery.md) |
+| Review protections and deployment settings | [Security](./administration/Security.md) |
 | Report a vulnerability | [Security policy](../../SECURITY.md) |
 
 ## Understand and develop
 
+See [Development](./development/README.md) for the technical guides.
+
 | Topic | Document |
 | --- | --- |
-| Product goal and required behavior | [Product requirements](./product-requirements.md) |
-| Technical stack, files, data, and builds | [Application](./application.md) |
-| Runtime flows and OSS/hosted separation | [Architecture](./architecture.md) |
-| UI components, styles, accessibility, and brand assets | [Design system](./design-system.md) |
-| Local development and tests | [Development](./Development.md) |
-| API authentication and automation | [API](./api.md) |
-| CI, release publication, and mirror settings | [GitHub automation](./github-automation.md) |
+| Product goal and required behavior | [Product requirements](./development/product-requirements.md) |
+| Technical stack, files, data, and builds | [Application](./development/application.md) |
+| Runtime flows and OSS/hosted separation | [Architecture](./development/architecture.md) |
+| UI components, styles, accessibility, and brand assets | [Design system](./development/design-system.md) |
+| Local development and tests | [Development](./development/Development.md) |
+| API authentication and automation | [API](./development/api.md) |
+| CI, release publication, and mirror settings | [GitHub automation](./development/github-automation.md) |
 | Installer and repository checks | [Scripts](../../scripts/README.md) |
 | Contribution workflow | [Contributing](../../CONTRIBUTING.md) |
 | Repository instructions for agents | [AGENTS.md](../../AGENTS.md) |
