@@ -14,7 +14,7 @@ An installation serves a main page, optional additional pages, and a menu. It wo
 | --- | --- | --- |
 | Setup | Browser setup checks the instance, creates the first administrator, and opens the dashboard | [Deployment](../administration/Deployment.md) |
 | Visual editing | Saved profile, blocks, layouts, and theme survive reload and render on the public page | [Content and design](../dashboard/sections/content-and-design.md) |
-| Public destinations | Enabled menus and published additional pages resolve at their URLs; hidden content stays private | [Dashboard](../dashboard/dashboard.md) |
+| Public destinations | Enabled menus and published additional pages resolve at their URLs; hidden content stays private | [Dashboard](../dashboard/README.md) |
 | Sharing and discovery | QR codes, scheduled campaign links, metadata, sitemap, and text files use the configured public URL | [Publishing](../dashboard/sections/publishing.md), [SEO](../SEO-and-indexing.md) |
 | Analytics and consent | Visit details and third-party tracking follow consent; reports are available in the dashboard | [Analytics and privacy](../dashboard/sections/analytics-and-privacy.md) |
 | Newsletter | The owner can configure SMTP, verify it, manage confirmed subscribers, and send or schedule campaigns | [Newsletters](../dashboard/sections/newsletters.md) |

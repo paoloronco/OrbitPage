@@ -41,7 +41,7 @@ If you encounter issues, see [Troubleshooting](./wiki/administration/Troubleshoo
 
 The [Dashboard guides](./wiki/dashboard/README.md) cover everyday administration and content management.
 
-- [Dashboard](./wiki/dashboard/dashboard.md) — main sections, URLs, save controls, and navigation.
+- [Dashboard](./wiki/dashboard/README.md) — main sections, URLs, save controls, and navigation.
 - [Content and design](./wiki/dashboard/sections/content-and-design.md) — profiles, blocks, menus, pages, themes, and media.
 - [Publishing and QR](./wiki/dashboard/sections/publishing.md) — publish pages and share them with QR codes.
 - [SEO and indexing](./wiki/SEO-and-indexing.md) — metadata, discovery files, and search-engine visibility.
@@ -84,7 +84,7 @@ The [Development guides](./wiki/development/README.md) cover the application, ar
 1. Read [Deployment](./wiki/administration/Deployment.md).
 2. Complete the installation for your preferred platform.
 3. Review [Configuration](./wiki/administration/Configuration.md).
-4. Open the dashboard and continue with [Dashboard](./wiki/dashboard/dashboard.md).
+4. Open the dashboard and continue with [Dashboard](./wiki/dashboard/README.md).
 
 ### Existing installation
 
