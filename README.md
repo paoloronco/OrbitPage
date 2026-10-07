@@ -44,7 +44,10 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 ## Contents
 
 - [Why OrbitPage](#why-orbitpage)
-- [Quick start](#quick-start)
+- [Docker](#docker)
+- [Linux installer](#linux-installer)
+- [Proxmox VE](#proxmox-ve)
+- [Run from source](#run-from-source)
 - [Updates](#updates)
 - [Data and backups](#data-and-backups)
 - [Dashboard workspaces](#dashboard-workspaces)
@@ -59,21 +62,56 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 - **Flexible content.** Add images, video, links, contact details, events, maps, and venue menus.
 - **Sharing and discovery.** Generate QR codes, set search and social metadata, and track visits with consent-aware analytics.
 
-## Quick start
+<a id="quick-start"></a>
 
-### Docker image (recommended)
+## Docker
+
+Docker is the recommended deployment method.
+
+| **Registry** | **Image** |
+| --- | --- |
+| Docker Hub | `paoloronco/orbitpage` |
+| GitHub Container Registry | `ghcr.io/paoloronco/orbitpage` |
+
+### Docker Run (recommended)
 
 ~~~bash
-docker pull paoloronco/orbitpage
-docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
+docker pull paoloronco/orbitpage:latest
+
+docker run -d \
+  --name orbitpage \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  -v orbitpage-data:/app/data \
+  --security-opt no-new-privileges:true \
+  paoloronco/orbitpage:latest
 ~~~
 
-The image supports amd64 and arm64.<br>
+Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://localhost:8080](http://localhost:8080).<br>
+Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
+
+### GHCR
+
+~~~bash
+docker pull ghcr.io/paoloronco/orbitpage:latest
+
+docker run -d \
+  --name orbitpage \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  -v orbitpage-data:/app/data \
+  --security-opt no-new-privileges:true \
+  ghcr.io/paoloronco/orbitpage:latest
+~~~
+
 Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
 The public page is at [http://localhost:8080](http://localhost:8080).<br>
 Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
 
 ### Docker Compose
+
+Clone the repository and start the included configuration:
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
@@ -81,14 +119,14 @@ cd OrbitPage
 docker compose up -d
 ~~~
 
-Edit <code>docker-compose.yml</code> to change the port or storage location.<br>
 Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://localhost:8080](http://localhost:8080).<br>
-To update, run <code>docker compose pull</code>, then <code>docker compose up -d</code> from the same directory.
+The public page is at [http://localhost:8080](http://localhost:8080).
 
-### Linux install
+Edit `docker-compose.yml` to change the image, port, environment, or storage path.
 
-On a clean Debian or Ubuntu system (amd64 or arm64):
+## Linux installer
+
+Use a Debian 12/13 or Ubuntu 22.04/24.04/26.04 server, VM, or LXC on **amd64 or arm64**. Run the Proxmox installer below on a Proxmox host.
 
 ~~~bash
 sudo apt-get update
@@ -98,9 +136,13 @@ cd OrbitPage
 sudo ./install.sh
 ~~~
 
-The installer creates the Docker container and persistent data directory, starts OrbitPage, and installs the <code>orbitpage</code> management command. Supported distributions and options are in the [deployment guide](./docs/wiki/Deployment.md#linux-installer).
+After installation, open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080). These URLs are local to the server; use an SSH tunnel or [HTTPS proxy](./docs/wiki/Deployment.md#reverse-proxy-and-https) from another computer.
 
-On a Proxmox VE 8+ host, run the dedicated host-to-LXC installer as root:
+## Proxmox VE
+
+The installer creates a dedicated **unprivileged Debian 12 LXC** and installs OrbitPage inside it.
+
+Use an x86-64 Proxmox VE 8+ host with patched `lxc-pve`: at least `6.0.0-2` on PVE 8, or `6.0.5-2` on PVE 9+. Run as `root`:
 
 ~~~bash
 apt-get update
@@ -110,9 +152,9 @@ cd OrbitPage
 ./install-pve.sh
 ~~~
 
-Do not run the Linux guest installer directly on a Proxmox host. See [Deployment](./docs/wiki/Deployment.md) for supported options, static networking, image pinning, backups, updates, and removal.
+With the [SSH tunnel](./docs/wiki/Deployment.md#proxmox-ve) open, use the [dashboard](http://localhost:8080/dashboard/profile) to choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080).
 
-### Run from source
+## Run from source
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
@@ -182,7 +224,7 @@ docker rm orbitpage
 docker run -d \
   --name orbitpage \
   --restart unless-stopped \
-  -p 127.0.0.1:8080:8080 \
+  -p 8080:8080 \
   -v orbitpage-data:/app/data \
   --security-opt no-new-privileges:true \
   paoloronco/orbitpage:latest
