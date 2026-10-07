@@ -21,7 +21,7 @@ Open `/dashboard/profile` to sign in or, on a new installation, choose the admin
 
 The **Shop** section is unavailable in the self-hosted edition. Its shared route is `/dashboard/editor/shop/products`.
 
-See [Content and design](./sections/content-and-design.md) for editing controls and [AI Assistant](../ai-assistant.md) for provider setup.
+See [Content and design](./sections/content-and-design.md) for editing controls, [External modules](../integrations/external-modules.md) for connected services and [AI Assistant](../ai-assistant.md) for provider setup.
 
 ### Share and manage content options
 

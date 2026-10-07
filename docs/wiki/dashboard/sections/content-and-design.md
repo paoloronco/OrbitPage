@@ -104,6 +104,8 @@ After changing a schedule, test once before the start, once during the active wi
 
 Use a provider preset when one is available. OrbitPage converts supported public share URLs to the provider's official embedded form and rejects unrelated hosts. Custom snippets run in a sandbox.
 
+See [External modules](../../integrations/external-modules.md) for accepted URLs and provider settings, and [Consent management](../../integrations/consent-management.md) for CMP installation.
+
 For any category other than **Necessary**, the provider is not contacted until the visitor grants that consent category. Mark an embed Necessary only when it performs no tracking and is required for the requested page function. See [Analytics and privacy](./analytics-and-privacy.md) before publishing third-party content.
 
 ## Menu

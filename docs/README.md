@@ -51,6 +51,15 @@ The [Dashboard guides](./wiki/dashboard/README.md) cover everyday administration
 - [Account and team](./wiki/dashboard/sections/account-and-team.md) — users, passwords, TOTP, roles, teams, and API tokens.
 - [Backups and demo mode](./wiki/dashboard/sections/backups-and-demo-mode.md) — exports, version history, restore options, and demo data.
 
+### Integrations
+
+| Task | Guide |
+| --- | --- |
+| Add WhatsApp, GitHub, video/audio players, Calendly, Typeform or Google Forms | [External modules](./wiki/integrations/external-modules.md) |
+| Configure iubenda, CookieYes, Cookiebot, OneTrust or a custom CMP | [Consent management](./wiki/integrations/consent-management.md) |
+
+The [Integrations index](./wiki/integrations/README.md) also links to newsletter, AI and automation setup.
+
 ### Administration
 
 The [Administration guides](./wiki/administration/README.md) cover deployment, configuration, maintenance, and security.
