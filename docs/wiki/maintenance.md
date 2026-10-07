@@ -1,6 +1,6 @@
 # Backups and maintenance
 
-Use this guide for a complete data backup, restore, rollback, or removal. For installation and update commands, see [Deployment](./Deployment.md). For dashboard exports and local version history, see [Backups and media](./features/backups-and-demo-mode.md).
+Use this guide for a complete data backup, restore, rollback, or removal. For installation and update commands, see [Deployment](./Deployment.md). For dashboard exports and local version history, see [Backups and media](./dashboard/backups-and-demo-mode.md).
 
 | Task | Procedure |
 | --- | --- |

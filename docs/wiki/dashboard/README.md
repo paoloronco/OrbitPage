@@ -1,4 +1,4 @@
-# Features
+# Dashboard guides
 
 Guides to the tools available in the self-hosted dashboard.
 

@@ -237,7 +237,7 @@ Exclude API, dashboard, localized dashboard, and health responses from proxy cac
 | Social preview remains old | Refresh the social platform's cached preview after correcting the page metadata. |
 | A staging page appears in search results | Set `SEO_INDEXING=false`, then check `/robots.txt` and robots metadata. Existing results may take time to disappear. Indexing controls do not restrict access. |
 
-See [Publishing and QR](./features/publishing.md) and [SEO and indexing](./SEO-and-indexing.md).
+See [Publishing and QR](./dashboard/publishing.md) and [SEO and indexing](./SEO-and-indexing.md).
 
 ## Login and setup
 
@@ -278,7 +278,7 @@ Check that the mount is writable, with ownership and permissions suitable for th
 | Upload returns `413` | Check total upload quota, video size, and the proxy's request-body limit. For NGINX, check `client_max_body_size`. |
 | Upload is rejected before reaching OrbitPage | Check proxy logs and upload limits; the application may have no matching log entry. |
 | Backup import/export exceeds its media limit | Check `ORBITPAGE_BACKUP_MEDIA_LIMIT_MB`; see [Configuration](./Configuration.md). |
-| Files disappear after cleanup | Check whether the files were unused and eligible for [automatic cleanup](./features/backups-and-demo-mode.md#clean-unused-media). Restore from a verified backup if needed. |
+| Files disappear after cleanup | Check whether the files were unused and eligible for [automatic cleanup](./dashboard/backups-and-demo-mode.md#clean-unused-media). Restore from a verified backup if needed. |
 
 ## Updates
 
@@ -311,7 +311,7 @@ Host-updater backups are retained under `/var/backups/orbitpage`. Inspect them a
 | AI proposal expired or the page changed | Generate a new proposal from the current page. |
 | Newsletter connection or delivery fails | SMTP host, TLS port, credentials, authorized sender, provider limits, and outbound connectivity. Private-network SMTP destinations are blocked. Use **Newsletter → Settings → Verify and send test**. |
 
-See [AI assistant](./ai-assistant.md#problems) and [Newsletters](./features/newsletters.md#backups-and-problems).
+See [AI assistant](./ai-assistant.md#problems) and [Newsletters](./dashboard/newsletters.md#backups-and-problems).
 
 ## Report a problem
 
