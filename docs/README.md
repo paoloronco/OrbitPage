@@ -33,6 +33,8 @@ Use this page as the main entry point for installing, configuring, using, mainta
 | Update OrbitPage with Docker Run or GHCR | [Docker Run updates](./wiki/Deployment.md#docker-run-updates) |
 | Verify the update | [Verification](./wiki/Deployment.md#verify-the-update) |
 
+---
+
 If you encounter issues, see [Troubleshooting](./wiki/Troubleshooting.md).
 
 ### Using OrbitPage
