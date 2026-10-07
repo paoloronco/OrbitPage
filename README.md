@@ -133,6 +133,10 @@ Edit <code>app/.env</code> if needed.
 
 ## Updates
 
+<p align="center">
+  <img src="./docs/screenshots/orbitpage-update-controls.png" alt="Dashboard buttons: Check for updates and Install update" width="486" />
+</p>
+
 Open **Dashboard → Account → General → Instance details** and click **Check for updates**. When a release is available, click **Install update…** as an administrator. The dialog installs it through the host update service or shows terminal instructions if the service is unavailable.
 
 ### Terminal (optional)
