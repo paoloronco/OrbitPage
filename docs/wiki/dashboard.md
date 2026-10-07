@@ -91,3 +91,25 @@ Tabs append these slugs to their workspace path:
 Bookmarks, refresh, and browser Back/Forward restore the selected section and tab.
 
 Older `/dashboard/profile` and `/dashboard/content/{link,menu,shop,pages}` paths still work. `/dashboard/links`, `/dashboard/menu`, and `/dashboard/pages` remain Content aliases; `/dashboard/access` opens Account, and `/admin` redirects to the dashboard.
+
+## Languages and URL slugs
+
+Choose the interface language from the dashboard sidebar. Its slug appears before
+`/dashboard`, for example `/it-IT/dashboard/editor/page`.
+
+| Language | URL slug |
+| --- | --- |
+| English | `en-US` |
+| Italiano | `it-IT` |
+| Español | `es-ES` |
+| Français | `fr-FR` |
+| Deutsch | `de-DE` |
+| Português | `pt-PT` |
+| Nederlands | `nl-NL` |
+| Polski | `pl-PL` |
+| Türkçe | `tr-TR` |
+| Русский | `ru-RU` |
+| العربية | `ar-SA` |
+| 中文 | `zh-CN` |
+| 日本語 | `ja-JP` |
+| 한국어 | `ko-KR` |
