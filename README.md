@@ -63,26 +63,17 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 
 ### Docker image (recommended)
 
-With Docker installed, pull the image and start OrbitPage:
-
 ~~~bash
 docker pull paoloronco/orbitpage
 docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
 ~~~
 
-The image supports amd64 and arm64.
-
-Docker creates the <code>orbitpage-data</code> volume for the database, uploads, and generated instance secret. Keep this volume when updating or recreating the container.
-
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.
-
-The public page is at [http://localhost:8080](http://localhost:8080).
-
+The image supports amd64 and arm64.<br>
+Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://localhost:8080](http://localhost:8080).<br>
 Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
 
 ### Docker Compose
-
-Use the included Compose file:
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
@@ -90,9 +81,10 @@ cd OrbitPage
 docker compose up -d
 ~~~
 
-Compose starts OrbitPage at <http://localhost:8080> and stores data in <code>./orbitpage-data</code>. Open the [dashboard](http://localhost:8080/dashboard/profile) to complete setup.
-
-To update, run <code>docker compose pull</code>, then <code>docker compose up -d</code> from the same directory. Keep the existing data mount. Edit <code>docker-compose.yml</code> to change the port or storage location.
+Edit <code>docker-compose.yml</code> to change the port or storage location.<br>
+Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://localhost:8080](http://localhost:8080).<br>
+To update, run <code>docker compose pull</code>, then <code>docker compose up -d</code> from the same directory.
 
 ### Linux install
 
@@ -122,24 +114,22 @@ Do not run the Linux guest installer directly on a Proxmox host. See [Deployment
 
 ### Run from source
 
-Requirements:
-
-- Node.js <code>^20.19.0</code> or <code>>=22.12.0</code>
-- npm
-- Git
-
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage/app
 npm ci
 npm run install:server
-export JWT_SECRET="$(node -p "require('crypto').randomBytes(32).toString('hex')")"
-NODE_ENV=production npm run start
+cp .env.example .env
+chmod 600 .env
+printf '\nJWT_SECRET=%s\n' "$(node -p "require('crypto').randomBytes(32).toString('hex')")" >> .env
+npm run build
+cd server
+node --env-file=../.env server.js
 ~~~
 
-Open <http://localhost:3001/dashboard/profile> to complete setup. The database and uploads are created in <code>app/server</code>; set <code>DATA_DIR</code> to use another directory.
-
-Source runs still require <code>JWT_SECRET</code>. Generate it once, save it privately, and reuse the same value on later starts. Docker generates and saves it for you.
+Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://localhost:8080](http://localhost:8080).<br>
+Edit <code>app/.env</code> if needed.
 
 ## Updates
 

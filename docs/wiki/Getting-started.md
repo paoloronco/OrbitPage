@@ -14,17 +14,21 @@ git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage/app
 npm ci
 npm run install:server
-export JWT_SECRET="$(node -p "require('crypto').randomBytes(32).toString('hex')")"
-NODE_ENV=production npm run start
+cp .env.example .env
+chmod 600 .env
+printf '\nJWT_SECRET=%s\n' "$(node -p "require('crypto').randomBytes(32).toString('hex')")" >> .env
+npm run build
+cd server
+node --env-file=../.env server.js
 ```
 
-This builds the frontend and starts the server on port 3001.
+This creates a private `app/.env` with a unique session secret, builds the frontend, and starts the server on port 8080. Edit `app/.env` to change settings.
 
 | Destination | Local URL |
 | --- | --- |
-| Public page | <http://localhost:3001> |
-| Dashboard and setup | <http://localhost:3001/dashboard/profile> |
-| Health check | <http://localhost:3001/health> |
+| Public page | <http://localhost:8080> |
+| Dashboard and setup | <http://localhost:8080/dashboard/profile> |
+| Health check | <http://localhost:8080/health> |
 
 ## Browser setup
 
@@ -39,7 +43,7 @@ Complete setup locally before allowing remote access. Use an HTTPS reverse proxy
 
 The application creates `app/server/orbitpage.db` and `app/server/uploads/`. Set `DATA_DIR` only to choose another location.
 
-Source installations still require `JWT_SECRET`. Save the generated value privately and reuse it on later starts; Docker generates and persists it through its entrypoint. Keep the data directory and secret when updating. See [Configuration](./Configuration.md).
+Later starts use `cd OrbitPage/app/server`, then `node --env-file=../.env server.js`. Keep the existing `app/.env`, data directory, and secret when updating. Docker generates and persists its secret through its entrypoint. See [Configuration](./Configuration.md).
 
 Public URLs have no language prefix, such as `/` and `/menu`. Dashboard URLs include the selected language, such as `/it-IT/dashboard/editor/page`.
 

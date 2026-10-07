@@ -20,7 +20,7 @@ Browser
     → /api routes → validation and permissions → services → SQLite
 ```
 
-In development, Vite serves the frontend on port 8080 and proxies `/api` to Express on port 3001. In a source production run, Express serves the built frontend and API on port 3001. Docker uses port 8080.
+In development, Vite serves the frontend on port 8080 and proxies `/api` to Express on port 3001. In a source production run, Express serves the built frontend and API on port 3001 unless `PORT` is set; the source quick start configures port 8080 in `app/.env`. Docker uses port 8080.
 
 The dashboard loads saved data through the API and keeps edits in browser state until Save. The server checks permissions and input before writing. Public routes filter unpublished and unavailable content and generate metadata from saved data. See [API](./api.md) for authentication and route compatibility.
 
