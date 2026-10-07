@@ -68,7 +68,7 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 
 Docker is the recommended deployment method.
 
-Docker Run and Compose publish port 8080 on all host interfaces. From another device, use the Docker host's LAN address instead of `localhost`.
+Docker Run and Compose publish port 8080 on all host interfaces. Replace `device_ip` with the Docker host's LAN address.
 
 | **Registry** | **Image** |
 | --- | --- |
@@ -89,8 +89,8 @@ docker run -d \
   paoloronco/orbitpage:latest
 ~~~
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://localhost:8080](http://localhost:8080).<br>
+Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
 Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
 
 ### GHCR
@@ -107,8 +107,8 @@ docker run -d \
   ghcr.io/paoloronco/orbitpage:latest
 ~~~
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://localhost:8080](http://localhost:8080).<br>
+Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
 Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
 
 ### Docker Compose
@@ -121,8 +121,8 @@ cd OrbitPage
 docker compose up -d
 ~~~
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://localhost:8080](http://localhost:8080).
+Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://device_ip:8080](http://device_ip:8080).
 
 Edit `docker-compose.yml` to change the image, port, environment, or storage path.
 
@@ -175,9 +175,9 @@ cd server
 node --env-file=../.env server.js
 ~~~
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://localhost:8080](http://localhost:8080).<br>
-Edit <code>app/.env</code> if needed.
+Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
+Edit <code>app/.env</code> if needed; set `HOST=0.0.0.0` for LAN access.
 
 ## Updates
 

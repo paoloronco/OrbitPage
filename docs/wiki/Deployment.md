@@ -40,8 +40,8 @@ docker run -d \
   paoloronco/orbitpage:latest
 ```
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://localhost:8080](http://localhost:8080).<br>
+Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
 Change the port or data mount in the command if needed.
 
 #### Docker options
@@ -66,8 +66,8 @@ docker run -d \
   ghcr.io/paoloronco/orbitpage:latest
 ```
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://localhost:8080](http://localhost:8080).<br>
+Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
+The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
 Change the port or data mount in the command if needed.
 
 The [Docker options](#docker-options) are the same; only the image address changes.
@@ -88,11 +88,11 @@ docker compose up -d
 | Persistent data | `./orbitpage-data` |
 | Restart policy | `unless-stopped` |
 
-Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080).
+Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://device_ip:8080](http://device_ip:8080).
 
 Edit `docker-compose.yml` to change the image, port, environment, or storage path.
 
-From another device, use the Docker host's LAN address instead of `localhost`. For local-only access, change the port mapping to `"127.0.0.1:8080:8080"`.
+Replace `device_ip` with the Docker host's LAN address. For local-only access, change the port mapping to `"127.0.0.1:8080:8080"` and use `localhost` in the URLs.
 
 ### Optional setup token
 
