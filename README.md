@@ -70,7 +70,7 @@ docker pull paoloronco/orbitpage
 docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
 ~~~
 
-The image supports amd64 and arm64. On Linux, use <code>sudo docker</code> if required.
+The image supports amd64 and arm64.
 
 Docker creates the <code>orbitpage-data</code> volume for the database, uploads, and generated instance secret. Keep this volume when updating or recreating the container.
 
