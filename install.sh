@@ -4,7 +4,7 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
 
-readonly SCRIPT_VERSION="4.21.70"
+readonly SCRIPT_VERSION="4.21.71"
 
 INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"
@@ -40,7 +40,7 @@ CONTAINER_NAME="${CONTAINER_NAME:-$PERSISTED_CONTAINER_NAME}"
 DATA_DIR="${DATA_DIR:-$PERSISTED_DATA_DIR}"
 IMAGE="${IMAGE:-ghcr.io/paoloronco/orbitpage:latest}"
 HTTP_PORT="${HTTP_PORT:-8080}"
-BIND_ADDRESS="${BIND_ADDRESS:-127.0.0.1}"
+BIND_ADDRESS="${BIND_ADDRESS:-0.0.0.0}"
 CONTAINER_NAME="${CONTAINER_NAME:-orbitpage}"
 DATA_DIR="${DATA_DIR:-/var/lib/orbitpage}"
 
@@ -406,7 +406,7 @@ print_access_details() {
   if grep -Eq '^REQUIRE_SETUP_TOKEN=(true|1)$' "$APP_ENV_FILE"; then
     printf '\nRead the local setup token with: sudo cat %s/.setup-token\n' "$DATA_DIR"
   fi
-  printf 'Complete first setup from a local browser or a trusted HTTPS reverse proxy.\n'
+  printf 'Open the dashboard and choose a password for the admin.\n'
   printf 'Manage the installation with: orbitpage status|logs|backup|restart or sudo orbitpage-update\n\n'
 }
 
@@ -545,7 +545,7 @@ Usage:
 
 Installation overrides:
   ORBITPAGE_HTTP_PORT=8080
-  ORBITPAGE_BIND_ADDRESS=127.0.0.1
+  ORBITPAGE_BIND_ADDRESS=0.0.0.0
   ORBITPAGE_PUBLIC_SITE_URL=https://links.example.com
   ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:latest
   ORBITPAGE_REQUIRE_SETUP_TOKEN=true  Require the local token for first setup

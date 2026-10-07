@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="4.21.70"
+readonly SCRIPT_VERSION="4.21.71"
 
 CTID="${ORBITPAGE_PVE_CTID:-}"
 HOSTNAME="${ORBITPAGE_PVE_HOSTNAME:-orbitpage}"
@@ -21,6 +21,7 @@ TEMPLATE="${ORBITPAGE_PVE_TEMPLATE:-}"
 FIREWALL="${ORBITPAGE_PVE_FIREWALL:-1}"
 SSH_PUBLIC_KEY="${ORBITPAGE_PVE_SSH_PUBLIC_KEY:-}"
 HTTP_PORT="${ORBITPAGE_HTTP_PORT:-8080}"
+BIND_ADDRESS="${ORBITPAGE_BIND_ADDRESS:-0.0.0.0}"
 PUBLIC_SITE_URL="${ORBITPAGE_PUBLIC_SITE_URL:-}"
 IMAGE="${ORBITPAGE_IMAGE:-ghcr.io/paoloronco/orbitpage:latest}"
 REQUIRE_SETUP_TOKEN="${ORBITPAGE_REQUIRE_SETUP_TOKEN:-false}"
@@ -116,6 +117,7 @@ validate_inputs() {
   [[ "$BRIDGE" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]] || die "Invalid bridge name: $BRIDGE"
   ip link show "$BRIDGE" >/dev/null 2>&1 || die "Network bridge $BRIDGE does not exist."
 
+  validate_ipv4 "$BIND_ADDRESS"
   if [[ "$IP_ADDRESS" != "dhcp" ]]; then
     [[ "$IP_ADDRESS" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}/([0-9]|[12][0-9]|3[0-2])$ ]] || die "ORBITPAGE_PVE_IP must be 'dhcp' or an IPv4 CIDR."
     validate_ipv4 "${IP_ADDRESS%/*}"
@@ -282,7 +284,7 @@ install_orbitpage() {
   local -a guest_env=(
     "ORBITPAGE_IMAGE=${IMAGE}"
     "ORBITPAGE_HTTP_PORT=${HTTP_PORT}"
-    "ORBITPAGE_BIND_ADDRESS=127.0.0.1"
+    "ORBITPAGE_BIND_ADDRESS=${BIND_ADDRESS}"
     "ORBITPAGE_REQUIRE_SETUP_TOKEN=${REQUIRE_SETUP_TOKEN}"
   )
   if [[ -n "$PUBLIC_SITE_URL" ]]; then
@@ -310,6 +312,7 @@ install_orbitpage() {
 }
 
 main() {
+  local guest_ip health_address access_address
   if [[ "${1:-}" == --require-setup-token ]]; then
     REQUIRE_SETUP_TOKEN=true
     shift
@@ -325,20 +328,24 @@ main() {
   create_container
   wait_for_container
 
-  wait_for_network >/dev/null
+  guest_ip="$(wait_for_network)"
   install_orbitpage
-  pct exec "$CTID" -- curl --fail --silent --show-error "http://127.0.0.1:${HTTP_PORT}/health" >/dev/null
+  health_address="$BIND_ADDRESS"
+  [[ "$health_address" != 0.0.0.0 ]] || health_address=127.0.0.1
+  pct exec "$CTID" -- curl --fail --silent --show-error "http://${health_address}:${HTTP_PORT}/health" >/dev/null
 
   success "OrbitPage is ready in unprivileged LXC $CTID."
-  printf '\nLocal health check: pct exec %s -- curl -fsS http://127.0.0.1:%s/health\n' "$CTID" "$HTTP_PORT"
+  access_address="$BIND_ADDRESS"
+  [[ "$access_address" != 0.0.0.0 ]] || access_address="$guest_ip"
+  printf '\nPublic page: http://%s:%s/\n' "$access_address" "$HTTP_PORT"
+  printf 'Dashboard:   http://%s:%s/dashboard/profile\n' "$access_address" "$HTTP_PORT"
+  printf 'Local health check: pct exec %s -- curl -fsS http://%s:%s/health\n' "$CTID" "$health_address" "$HTTP_PORT"
   if [[ "$REQUIRE_SETUP_TOKEN" == true ]]; then
     printf 'Local setup token: pct exec %s -- cat /var/lib/orbitpage/.setup-token\n' "$CTID"
   fi
-  if [[ -n "$SSH_PUBLIC_KEY" ]]; then
-    printf 'Open an SSH tunnel from your browser machine: ssh -L %s:127.0.0.1:%s root@%s\n' "$HTTP_PORT" "$HTTP_PORT" "$(container_ipv4)"
-    printf 'Then open http://localhost:%s/dashboard/profile in that browser.\n' "$HTTP_PORT"
+  if [[ "$BIND_ADDRESS" == 127.0.0.1 ]]; then
+    printf 'Loopback access is limited to processes inside LXC %s.\n' "$CTID"
   fi
-  printf 'Connect a trusted HTTPS reverse proxy before opening the dashboard from another machine.\n\n'
   printf 'The public page shows Under construction until the first-run wizard is completed.\n\n'
   printf 'Manage from the PVE host:\n'
   printf '  pct exec %s -- orbitpage status\n' "$CTID"

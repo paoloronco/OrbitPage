@@ -135,7 +135,8 @@ ORBITPAGE_PVE_WAIT_SECONDS=0 \
 ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.18.5 \
 ORBITPAGE_HTTP_PORT=18080 \
 ORBITPAGE_PUBLIC_SITE_URL=https://page.example.test \
-bash "${REPO_ROOT}/install-pve.sh"
+bash "${REPO_ROOT}/install-pve.sh" > "$TEST_DIR/result"
+cat "$TEST_DIR/result"
 
 [[ -f "$TEMPLATE_STATE" ]] || fail "Debian template was not downloaded"
 grep -Fq 'pct <create> <123> <local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst>' "$CALLS" \
@@ -149,7 +150,8 @@ grep -Fq '<--net0> <name=eth0,bridge=vmbr0,ip=dhcp,ip6=auto,firewall=1>' "$CALLS
 grep -Fq '<ORBITPAGE_IMAGE=ghcr.io/paoloronco/orbitpage:4.18.5>' "$CALLS" \
   || fail "pinned image was not forwarded"
 grep -Fq '<ORBITPAGE_HTTP_PORT=18080>' "$CALLS" || fail "HTTP port was not forwarded"
-grep -Fq '<ORBITPAGE_BIND_ADDRESS=127.0.0.1>' "$CALLS" || fail "guest HTTP listener is not loopback-only"
+grep -Fq '<ORBITPAGE_BIND_ADDRESS=0.0.0.0>' "$CALLS" || fail "guest HTTP listener does not allow LAN access"
+grep -Fq 'http://192.0.2.25:18080/dashboard/profile' "$TEST_DIR/result" || fail 'guest LAN dashboard URL was not printed'
 grep -Fq '<ORBITPAGE_REQUIRE_SETUP_TOKEN=false>' "$CALLS" || fail 'default setup mode was not forwarded'
 grep -Fq '<ORBITPAGE_PUBLIC_SITE_URL=https://page.example.test>' "$CALLS" \
   || fail "public URL was not forwarded"
@@ -192,6 +194,7 @@ expect_rejected 'Invalid IPv4' ORBITPAGE_PVE_IP=192.0.2.25/24 ORBITPAGE_PVE_GATE
 expect_rejected 'IPv4 CIDR' ORBITPAGE_PVE_IP=192.0.2.25/33
 expect_rejected 'static IP' ORBITPAGE_PVE_GATEWAY=192.0.2.1
 expect_rejected 'ORBITPAGE_HTTP_PORT' ORBITPAGE_HTTP_PORT=65536
+expect_rejected 'Invalid IPv4' ORBITPAGE_BIND_ADDRESS=256.0.0.1
 expect_rejected 'ORBITPAGE_REQUIRE_SETUP_TOKEN' ORBITPAGE_REQUIRE_SETUP_TOKEN=typo
 expect_rejected 'ORBITPAGE_PVE_MEMORY' ORBITPAGE_PVE_MEMORY=1
 expect_rejected 'ORBITPAGE_PVE_VLAN' ORBITPAGE_PVE_VLAN=4095
@@ -204,10 +207,16 @@ expect_rejected 'Update the Proxmox' ORBITPAGE_TEST_PVE_MAJOR=9 ORBITPAGE_TEST_L
 
 run_case ORBITPAGE_TEST_PVE_MAJOR=9 ORBITPAGE_TEST_LXC_VERSION=6.0.5-2 \
   ORBITPAGE_TEST_TEMPLATE_CACHED=1 ORBITPAGE_PVE_CTID=250 ORBITPAGE_PVE_IP=192.0.2.25/24 \
-  ORBITPAGE_PVE_GATEWAY=192.0.2.1 ORBITPAGE_PVE_VLAN=30 ORBITPAGE_PVE_DISK_GB=08
+  ORBITPAGE_PVE_GATEWAY=192.0.2.1 ORBITPAGE_PVE_VLAN=30 ORBITPAGE_PVE_DISK_GB=08 \
+  ORBITPAGE_BIND_ADDRESS=192.0.2.25
 grep -Fq 'ip=192.0.2.25/24,ip6=auto,firewall=1,gw=192.0.2.1,tag=30' "$CALLS" || fail 'static network options were not passed'
 grep -Fq '<--rootfs> <local-lvm:8>' "$CALLS" || fail 'leading-zero disk size was not normalized'
 ! grep -Fq 'pveam download' "$CALLS" || fail 'cached template was downloaded again'
+grep -Fq '<http://192.0.2.25:8080/health>' "$CALLS" || fail 'health check did not use the chosen bind address'
+run_case ORBITPAGE_BIND_ADDRESS=127.0.0.1
+grep -Fq '<ORBITPAGE_BIND_ADDRESS=127.0.0.1>' "$CALLS" || fail 'loopback override was not forwarded'
+grep -Fq 'http://127.0.0.1:8080/dashboard/profile' "$TEST_DIR/result" || fail 'loopback dashboard URL was not printed'
+grep -Fq 'Loopback access is limited' "$TEST_DIR/result" || fail 'loopback access scope was not explained'
 run_case ORBITPAGE_IMAGE=paoloronco/orbitpage
 ! grep -Fq 'Local setup token:' "$TEST_DIR/result" || fail 'direct setup prints token instructions'
 grep -Fq '<getent> <hosts> <download.docker.com> <registry-1.docker.io>' "$CALLS" || fail 'Docker Hub registry DNS was not checked'

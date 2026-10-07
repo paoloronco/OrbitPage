@@ -78,7 +78,7 @@ These are targets, not contractual guarantees.
 
 ## Deployment Recommendations
 
-- Keep the HTTP listener on loopback and run behind HTTPS in production. The installer defaults to `127.0.0.1:8080`.
+- Linux and Proxmox installers default to `0.0.0.0:8080` for LAN access. Set `ORBITPAGE_BIND_ADDRESS=127.0.0.1` for local-only access; use HTTPS for public access. See [Deployment](./docs/wiki/Deployment.md#lan-and-loopback).
 - Persist and back up `DATA_DIR`; it contains the generated `JWT_SECRET`, SQLite database, and uploads. Keep any explicit secret override stable across restarts.
 - Never bake databases, database backups or sidecars, uploads, logs, or environment files into an image or source archive.
 - Keep Docker images, Node.js, npm dependencies, and host packages updated.

@@ -141,7 +141,7 @@ if [[ -d /run/systemd/system ]]; then
 fi
 [[ -f "${INSTALL_DIR}/compose.yaml" ]] || fail "Compose definition was not created"
 [[ -f "${INSTALL_DIR}/.env" ]] || fail "installer settings were not persisted"
-grep -Fxq 'ORBITPAGE_BIND_ADDRESS=127.0.0.1' "${INSTALL_DIR}/.env" || fail "default HTTP bind is not loopback"
+grep -Fxq 'ORBITPAGE_BIND_ADDRESS=0.0.0.0' "${INSTALL_DIR}/.env" || fail "default HTTP bind does not allow LAN access"
 grep -Fxq 'ORBITPAGE_HTTP_PORT=18080' "${INSTALL_DIR}/.env" || fail 'leading-zero port was not normalized to decimal'
 [[ -f "${CONFIG_DIR}/orbitpage.env" ]] || fail "application environment was not created"
 grep -Fxq 'REQUIRE_SETUP_TOKEN=false' "${CONFIG_DIR}/orbitpage.env" || fail 'fresh installation requires a setup token'
@@ -171,6 +171,12 @@ PATH="${FAKE_BIN}:${PATH}" ORBITPAGE_REQUIRE_SETUP_TOKEN=false bash "${REPO_ROOT
 grep -Fxq 'REQUIRE_SETUP_TOKEN=false' "${CONFIG_DIR}/orbitpage.env" || fail 'explicit disable was not persisted'
 ! grep -Fq '.setup-token' "$TEST_DIR/result" || fail 'direct setup still prints token instructions'
 grep -Fq 'PUBLIC_SITE_URL=https://updated.example.test' "${CONFIG_DIR}/orbitpage.env" || fail "idempotent install did not update the public URL"
+
+PATH="${FAKE_BIN}:${PATH}" ORBITPAGE_BIND_ADDRESS=127.0.0.1 bash "${REPO_ROOT}/install.sh" > "$TEST_DIR/result"
+grep -Fxq 'ORBITPAGE_BIND_ADDRESS=127.0.0.1' "${INSTALL_DIR}/.env" || fail 'explicit loopback bind was not saved'
+PATH="${FAKE_BIN}:${PATH}" bash "${REPO_ROOT}/install.sh" > "$TEST_DIR/result"
+grep -Fxq 'ORBITPAGE_BIND_ADDRESS=127.0.0.1' "${INSTALL_DIR}/.env" || fail 'reinstall replaced the saved loopback bind'
+[[ "$secret_before" == "$(grep '^JWT_SECRET=' "${CONFIG_DIR}/orbitpage.env")" ]] || fail 'changing the bind address replaced the secret'
 
 expect_failure 'manual data migration' ORBITPAGE_DATA_DIR=/var/lib/orbitpage-moved
 expect_failure 'not supported' ORBITPAGE_CONTAINER_NAME=orbitpage-moved
