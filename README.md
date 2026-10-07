@@ -158,11 +158,11 @@ Back up your data before updating. See the [update guide](./docs/wiki/Deployment
 
 | Workspace | Purpose | URL path |
 | --- | --- | --- |
-| **Page** | Profile, image, social links, browser metadata, and footer | <code>/dashboard/editor/page</code><br>Classic: <code>/dashboard/profile</code> |
-| **Content** | Main-page blocks, ordering, visibility, and scheduling | <code>/dashboard/editor/content</code><br>Classic: <code>/dashboard/content/link</code> |
-| **Menu** | Venue menu settings, sections, products, and design | <code>/dashboard/editor/menu/content</code><br>Classic: <code>/dashboard/content/menu</code> |
-| **Shop** | Catalog workspace; unavailable in the self-hosted edition | <code>/dashboard/editor/shop/products</code><br>Classic: <code>/dashboard/content/shop</code> |
-| **Pages** | Additional public pages and their blocks | <code>/dashboard/editor/pages</code><br>Classic: <code>/dashboard/content/pages</code> |
+| **Page** | Profile, image, social links, browser metadata, and footer | <code>/dashboard/editor/page</code> |
+| **Content** | Main-page blocks, ordering, visibility, and scheduling | <code>/dashboard/editor/content</code> |
+| **Menu** | Venue menu settings, sections, products, and design | <code>/dashboard/editor/menu/content</code> |
+| **Shop** | Catalog workspace; unavailable in the self-hosted edition | <code>/dashboard/editor/shop/products</code> |
+| **Pages** | Additional public pages and their blocks | <code>/dashboard/editor/pages</code> |
 | **AI Assistant** | Propose profile, content, and theme changes to review and confirm | <code>/dashboard/ai</code> |
 | **Theme** | Colors, typography, cards, background, and live preview | <code>/dashboard/theme/page</code> |
 | **Publish** | Static and scheduled QR links, sitemap, and discovery text files | <code>/dashboard/publish/QR</code> |
