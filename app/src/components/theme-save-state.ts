@@ -1,7 +1,7 @@
 import { defaultTheme, type ThemeConfig } from "@/lib/theme";
 import type { ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
-import type { HostedThemeAccess } from "@/lib/hosted-editor-contract";
+import type { EditorThemeAccess } from "@/lib/editor-capabilities";
 
 export type EditableTheme = ThemeConfig & { cardBlurTint?: string };
 
@@ -19,7 +19,7 @@ export const findMatchingCardPreset = (theme: ThemeConfig) => cardThemePresets.f
 export const buildPagePresetTheme = (
   pendingTheme: EditableTheme,
   preset: ThemePreset,
-  accessLevel?: HostedThemeAccess,
+  accessLevel?: EditorThemeAccess,
 ): EditableTheme => {
   const advanced = !accessLevel || accessLevel === "advanced";
   const premium = advanced || accessLevel === "premium";
@@ -42,7 +42,7 @@ export const buildPagePresetTheme = (
 export const buildCardPresetTheme = (
   pendingTheme: EditableTheme,
   preset: CardThemePreset,
-  accessLevel?: HostedThemeAccess,
+  accessLevel?: EditorThemeAccess,
 ): EditableTheme => {
   const advanced = !accessLevel || accessLevel === "advanced";
   const baseTheme = advanced || pendingTheme.orbitPageAccess?.mode === "preset"

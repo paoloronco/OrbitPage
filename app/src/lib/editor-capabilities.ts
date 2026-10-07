@@ -5,34 +5,34 @@
  * Plan identifiers, prices, billing-provider modes and other commercial data
  * deliberately stay outside this public contract.
  */
-export type HostedThemeAccess = 'essential' | 'premium' | 'advanced';
-export type HostedAnalyticsAccess = 'basic-clicks' | 'standard' | 'advanced-ga4';
-export type HostedSeoAccess = 'none' | 'basic' | 'advanced';
+export type EditorThemeAccess = 'essential' | 'premium' | 'advanced';
+export type EditorAnalyticsAccess = 'basic-clicks' | 'standard' | 'advanced-ga4';
+export type EditorSeoAccess = 'none' | 'basic' | 'advanced';
 
-export interface HostedEditorEntitlements {
+export interface EditorEntitlements {
   maxBlocks: number | null;
   maxUploadBytes: number | null;
   maxVideoUploadBytes: number | null;
   badgeRequired: boolean;
-  themes: HostedThemeAccess;
-  analytics: HostedAnalyticsAccess;
+  themes: EditorThemeAccess;
+  analytics: EditorAnalyticsAccess;
   scheduling: boolean;
-  seo: HostedSeoAccess;
+  seo: EditorSeoAccess;
   pages: number | null;
   videoUploads: boolean;
   nativeMenu: boolean;
   maxMenuItems: number | null;
 }
 
-export interface HostedEditorPlan {
+export interface EditorAccess {
   name: string;
-  entitlements: HostedEditorEntitlements;
+  entitlements: EditorEntitlements;
 }
 
-export interface HostedEditorUsage {
+export interface EditorUsage {
   blocks: number;
 }
 
-export interface HostedEditorBilling {
+export interface EditorActions {
   manageUrl: string;
 }

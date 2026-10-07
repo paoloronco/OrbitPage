@@ -1,4 +1,4 @@
-import { getHostedThemeRoot, isIntegratedHostedSurface } from './hosted-surface';
+import { getEditorThemeRoot, isEmbeddedEditor } from './editor-integration';
 
 export interface BackgroundMediaConfig {
   type: 'color' | 'gradient' | 'video' | 'gif';
@@ -628,8 +628,8 @@ export const getContentCardVariantCssVariables = (theme: ThemeConfig, index: num
 
 // Apply theme for public view (affects the entire page)
 export const applyTheme = (theme: ThemeConfig) => {
-  const root = getHostedThemeRoot();
-  const integrated = isIntegratedHostedSurface();
+  const root = getEditorThemeRoot();
+  const integrated = isEmbeddedEditor();
   const variables = getThemeCssVariables(theme);
 
   Object.entries(variables).forEach(([property, value]) => {
@@ -668,8 +668,8 @@ export const applyTheme = (theme: ThemeConfig) => {
 
 // Apply admin theme (maintains consistent admin styling)
 export const applyAdminTheme = () => {
-  const root = getHostedThemeRoot();
-  const integrated = isIntegratedHostedSurface();
+  const root = getEditorThemeRoot();
+  const integrated = isEmbeddedEditor();
   
   // Consistent admin theme — dark slate + electric blue
   const adminTheme = {

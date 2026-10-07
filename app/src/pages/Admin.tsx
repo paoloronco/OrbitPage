@@ -9,13 +9,13 @@ import { OrbitLoadingState } from "@/components/ui/orbit-loader";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, isHostedRuntime, isSaasMode, isIntegratedHostedSurface, workspaceBootstrapApi, type SubpageItem, type WorkspaceBootstrapResponse } from "@/lib/api-client";
+import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, type SubpageItem, type WorkspaceBootstrapResponse } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { parseOrbitPageBlocks } from "@orbitpage/page-schema";
 import { useToast } from "@/hooks/use-toast";
 import { Permission } from "@/lib/permissions";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
-import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
+import type { EditorActions, EditorAccess, EditorUsage } from "@/lib/editor-capabilities";
 import { hasCustomProfileAvatar, isBundledProfileAvatar, persistedProfileAvatar } from "@/lib/profile-avatar";
 import { createDefaultMenu, normalizeMenuCatalog, type MenuCatalog } from "@/lib/menu";
 import {
@@ -34,7 +34,7 @@ import {
   type AdminSubsectionScope,
 } from "@/lib/admin-navigation";
 import type { EditorSubpage } from "@/components/SubpageManager";
-import { getHostedSurfaceConfig, HOSTED_SECTION_CHANGED_EVENT, HOSTED_SECTION_NAVIGATE_EVENT } from "@/lib/hosted-surface";
+import { isEmbeddedEditor, getEditorIntegration, EDITOR_SECTION_CHANGED_EVENT, EDITOR_SECTION_NAVIGATE_EVENT } from "@/lib/editor-integration";
 import { useAppI18n } from "@/lib/i18n";
 
 interface ProfileData {
@@ -82,18 +82,18 @@ const Admin = () => {
   const location = useLocation();
   const previousPathname = useRef(location.pathname);
   const navigate = useNavigate();
-  const integratedHostedSurface = isIntegratedHostedSurface();
-  const hostedSurface = integratedHostedSurface;
+  const embeddedEditor = isEmbeddedEditor();
+  const embeddedSurface = embeddedEditor;
   const locationTab = adminTabFromLocation(location.pathname, location.search);
   const locationContentSection = adminContentSectionFromLocation(location.pathname);
   const locationEditorSection = adminEditorSectionFromLocation(location.pathname);
   const locationSubsection = adminSubsectionFromLocation(location.pathname);
-  const [hostedTab, setHostedTab] = useState<AdminTab>(locationTab);
+  const [embeddedTab, setEmbeddedTab] = useState<AdminTab>(locationTab);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [workspaceLoaded, setWorkspaceLoaded] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
-  const [hostedAccessDenied, setHostedAccessDenied] = useState(false);
+  const [sessionDenied, setSessionDenied] = useState(false);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   
   // Use empty/neutral profile while real data is loading
@@ -111,21 +111,21 @@ const Admin = () => {
 
   const [theme, setTheme] = useState<ThemeConfig>(defaultTheme);
   const [menu, setMenu] = useState<MenuCatalog>(() => createDefaultMenu());
-  const [saasPlan, setSaasPlan] = useState<HostedEditorPlan | null>(null);
-  const [saasUsage, setSaasUsage] = useState<HostedEditorUsage | null>(null);
-  const [saasBilling, setSaasBilling] = useState<HostedEditorBilling | null>(null);
+  const [editorAccess, setEditorAccess] = useState<EditorAccess | null>(null);
+  const [editorUsage, setEditorUsage] = useState<EditorUsage | null>(null);
+  const [editorActions, setEditorActions] = useState<EditorActions | null>(null);
   const [workspaceRefreshKey, setWorkspaceRefreshKey] = useState(0);
-  const hostedBootstrapRef = useRef<Promise<WorkspaceBootstrapResponse> | null>(null);
+  const bootstrapRef = useRef<Promise<WorkspaceBootstrapResponse> | null>(null);
 
-  const requestedTab = hostedSurface ? hostedTab : locationTab;
-  const requestedContentSection = hostedSurface
-    ? getHostedSurfaceConfig()?.contentSection || "link"
+  const requestedTab = embeddedSurface ? embeddedTab : locationTab;
+  const requestedContentSection = embeddedSurface
+    ? getEditorIntegration()?.contentSection || "link"
     : locationContentSection;
-  const requestedEditorSection: AdminEditorSection | null = hostedSurface ? null
+  const requestedEditorSection: AdminEditorSection | null = embeddedSurface ? null
     : locationEditorSection || (locationTab === "profile" ? "profile" : locationTab === "content" ? locationContentSection : null);
 
   useEffect(() => {
-    if (hostedSurface) return;
+    if (embeddedSurface) return;
     const pathChanged = previousPathname.current !== location.pathname;
     previousPathname.current = location.pathname;
     const pathLocale = parseLocalizedPublicPath(location.pathname)?.locale;
@@ -140,22 +140,22 @@ const Admin = () => {
       ? adminEditorPath(locationEditorSection, locale)
       : adminDashboardPath(locationTab, locationContentSection, locale);
     if (location.pathname !== expectedPath) navigate({ pathname: expectedPath, search: location.search, hash: location.hash }, { replace: true });
-  }, [hostedSurface, locale, setLocale, location.pathname, location.search, location.hash, locationTab, locationContentSection, locationEditorSection, locationSubsection, currentUser, navigate]);
+  }, [embeddedSurface, locale, setLocale, location.pathname, location.search, location.hash, locationTab, locationContentSection, locationEditorSection, locationSubsection, currentUser, navigate]);
 
   useEffect(() => {
-    if (!hostedSurface) return;
+    if (!embeddedSurface) return;
     const receiveNavigation = (event: Event) => {
       const section = (event as CustomEvent<{ section?: unknown }>).detail?.section;
-      if (isAdminTab(section)) setHostedTab(section);
+      if (isAdminTab(section)) setEmbeddedTab(section);
     };
-    window.addEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
-    return () => window.removeEventListener(HOSTED_SECTION_NAVIGATE_EVENT, receiveNavigation);
-  }, [hostedSurface]);
+    window.addEventListener(EDITOR_SECTION_NAVIGATE_EVENT, receiveNavigation);
+    return () => window.removeEventListener(EDITOR_SECTION_NAVIGATE_EVENT, receiveNavigation);
+  }, [embeddedSurface]);
 
   const handleTabChange = (tab: AdminTab) => {
-    if (hostedSurface) {
-      setHostedTab(tab);
-      window.dispatchEvent(new CustomEvent(HOSTED_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
+    if (embeddedSurface) {
+      setEmbeddedTab(tab);
+      window.dispatchEvent(new CustomEvent(EDITOR_SECTION_CHANGED_EVENT, { detail: { section: tab } }));
       return;
     }
     const subsection = adminDefaultSubsection(tab, currentUser?.permissions.includes("profile:write"));
@@ -163,12 +163,12 @@ const Admin = () => {
   };
 
   const handleContentSectionChange = (section: AdminContentSection) => {
-    if (hostedSurface) return;
+    if (embeddedSurface) return;
     navigate(adminDashboardPath("content", section, locale));
   };
 
   const handleEditorSectionChange = (section: AdminEditorSection) => {
-    if (hostedSurface) return;
+    if (embeddedSurface) return;
     const subsection = adminDefaultSubsection(section);
     const path = subsection ? adminSubsectionPath(section as AdminSubsectionScope, subsection, locale) : adminEditorPath(section, locale);
     if (location.pathname !== path) navigate(path);
@@ -181,36 +181,21 @@ const Admin = () => {
   // from localStorage and confirms it with the server.
   useEffect(() => {
     const checkAuth = async () => {
-      const hosted = isSaasMode();
+      const integration = getEditorIntegration();
+      const embedded = Boolean(integration);
 
-      // The SaaS editor is an authenticated dashboard surface, never a second
-      // login destination. Standalone visits return to the Firebase dashboard.
-      if (isHostedRuntime() && !integratedHostedSurface) {
-        window.location.replace('/dashboard/profile');
-        return;
-      }
-
-      const firstTime = hosted ? false : await isFirstTimeSetup();
+      const firstTime = embedded ? false : await isFirstTimeSetup();
       setShowSetup(firstTime);
 
-      if (hosted) {
-        if (!authApi.hasStoredToken()) {
-          setHostedAccessDenied(true);
-          setIsLoading(false);
-          return;
-        }
-
-        const bootstrapPromise = workspaceBootstrapApi.get();
-        // The editor data and token verification are independent authenticated
-        // reads. Start them together so the hosted dashboard does not pay for
-        // two sequential network round trips.
+      if (embedded) {
+        const bootstrapPromise = integration.bootstrap();
         void bootstrapPromise.catch(() => undefined);
-        hostedBootstrapRef.current = bootstrapPromise;
+        bootstrapRef.current = bootstrapPromise;
 
         try {
-          const result = await authApi.verify();
+          const result = await (integration ? integration.verify() : authApi.verify());
           setIsLoggedIn(result.valid);
-          setHostedAccessDenied(!result.valid);
+          setSessionDenied(!result.valid);
           if (result.valid && result.user) {
             setCurrentUser({
               username: result.user.username,
@@ -219,11 +204,11 @@ const Admin = () => {
               readOnly: result.user.readOnly === true,
             });
           }
-          if (!result.valid) hostedBootstrapRef.current = null;
+          if (!result.valid) bootstrapRef.current = null;
         } catch {
-          hostedBootstrapRef.current = null;
+          bootstrapRef.current = null;
           setIsLoggedIn(false);
-          setHostedAccessDenied(true);
+          setSessionDenied(true);
         }
       } else if (hasStoredAuthToken()) {
         try {
@@ -246,24 +231,24 @@ const Admin = () => {
       setIsLoading(false);
     };
     checkAuth();
-  }, [integratedHostedSurface]);
+  }, [embeddedEditor]);
 
   // Load data from database and apply theme
   useEffect(() => {
     const loadData = async () => {
-      const pendingHostedBootstrap = hostedBootstrapRef.current;
+      const pendingBootstrap = bootstrapRef.current;
       try {
-        const bootstrap = isSaasMode()
-          ? await (pendingHostedBootstrap || workspaceBootstrapApi.get())
+        const bootstrap = getEditorIntegration()
+          ? await (pendingBootstrap || getEditorIntegration().bootstrap())
           : null;
         const [profileData, linksData, subpagesData, themeData, menuData] = bootstrap
           ? [bootstrap.profile, bootstrap.links, bootstrap.subpages || [], bootstrap.theme, bootstrap.menu]
           : await Promise.all([profileApi.get(), linksApi.get(), subpagesApi.get(), themeApi.get(), menuApi.get()]);
 
         if (bootstrap) {
-          setSaasPlan(bootstrap.plan || null);
-          setSaasUsage(bootstrap.usage || null);
-          setSaasBilling(bootstrap.billing || null);
+          setEditorAccess(bootstrap.access || null);
+          setEditorUsage(bootstrap.usage || null);
+          setEditorActions(bootstrap.actions || null);
         }
         
         if (profileData) {
@@ -282,7 +267,7 @@ const Admin = () => {
             tabTitle: profileData.tab_title || profileData.tabTitle || undefined,
             metaDescription: profileData.meta_description || profileData.metaDescription || undefined,
             footerText: profileData.footer_text || profileData.footerText || undefined,
-            showOrbitPageBadge: !bootstrap || bootstrap.plan?.entitlements.badgeRequired === true
+            showOrbitPageBadge: !bootstrap || bootstrap.access?.entitlements.badgeRequired === true
               ? true
               : (profileData.show_orbitpage_badge ?? profileData.showOrbitPageBadge ?? false),
             favicon: isBundledProfileAvatar(profileData.favicon) ? undefined : (profileData.favicon || undefined),
@@ -312,7 +297,7 @@ const Admin = () => {
         console.error('Error loading data:', error);
         applyTheme(defaultTheme);
       } finally {
-        if (hostedBootstrapRef.current === pendingHostedBootstrap) hostedBootstrapRef.current = null;
+        if (bootstrapRef.current === pendingBootstrap) bootstrapRef.current = null;
         setWorkspaceLoaded(true);
       }
     };
@@ -323,9 +308,9 @@ const Admin = () => {
   }, [isLoggedIn, workspaceRefreshKey]);
 
   useEffect(() => {
-    if (!integratedHostedSurface || isLoading || !isLoggedIn || !workspaceLoaded) return;
-    getHostedSurfaceConfig()?.onReady?.();
-  }, [integratedHostedSurface, isLoading, isLoggedIn, workspaceLoaded]);
+    if (!embeddedEditor || isLoading || !isLoggedIn || !workspaceLoaded) return;
+    getEditorIntegration()?.onReady?.();
+  }, [embeddedEditor, isLoading, isLoggedIn, workspaceLoaded]);
 
 
   // Save data changes to database
@@ -420,7 +405,7 @@ const Admin = () => {
       const reloaded = await linksApi.get();
       const normalizedLinks = normalizeLinkDtos(reloaded);
       setLinks(normalizedLinks);
-      setSaasUsage((current) => current ? { ...current, blocks: normalizedLinks.length } : current);
+      setEditorUsage((current) => current ? { ...current, blocks: normalizedLinks.length } : current);
     } catch (error) {
       if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);
@@ -477,7 +462,7 @@ const Admin = () => {
     try {
       await menuApi.update(newMenu);
       const reloaded = await menuApi.get();
-      setMenu(normalizeMenuCatalog(reloaded, saasPlan?.entitlements.maxMenuItems ?? 250));
+      setMenu(normalizeMenuCatalog(reloaded, editorAccess?.entitlements.maxMenuItems ?? 250));
     } catch (error) {
       if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') setIsLoggedIn(false);
       throw error instanceof Error ? error : new Error('Menu changes could not be saved.');
@@ -522,7 +507,7 @@ const Admin = () => {
       <main className="orbit-loading-screen">
         <OrbitLoadingState
           description={tr("Loading profile, content and theme.", "Caricamento di profilo, contenuti e tema.")}
-          state={integratedHostedSurface ? "connecting" : "weaving"}
+          state={embeddedEditor ? "connecting" : "weaving"}
           title={tr("Preparing your workspace", "Preparazione del workspace")}
         />
       </main>
@@ -530,14 +515,14 @@ const Admin = () => {
   }
 
   if (!isLoggedIn) {
-    if (isSaasMode() || hostedAccessDenied) {
+    if (isEmbeddedEditor() || sessionDenied) {
       return (
         <main className="min-h-screen bg-slate-50 px-5 py-10 text-slate-950">
           <section className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center text-center">
             <OrbitPageBrand size="lg" />
             <h1 className="mt-8 text-2xl font-bold">Open the editor from your dashboard</h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
-              This hosted editor requires an active OrbitPage session. No separate admin username or password is used.
+              Your session has expired. Open the editor again from the application dashboard.
             </p>
             <a
               className="mt-7 inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
@@ -564,9 +549,9 @@ const Admin = () => {
       theme={theme}
       menu={menu}
       currentUser={currentUser}
-      saasPlan={saasPlan}
-      saasUsage={saasUsage}
-      saasBilling={saasBilling}
+      editorAccess={editorAccess}
+      editorUsage={editorUsage}
+      editorActions={editorActions}
       onProfileUpdate={saveProfile}
       onLinksUpdate={saveLinks}
       onSubpagesUpdate={saveSubpages}

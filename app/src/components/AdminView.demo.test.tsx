@@ -17,8 +17,6 @@ vi.mock('@/lib/config', () => ({
 }));
 
 vi.mock('@/lib/api-client', () => ({
-  isIntegratedHostedSurface: () => mockState.integratedHostedSurface,
-  isSaasMode: () => false,
   utilityApi: {
     getHealth: vi.fn(),
   },
@@ -52,9 +50,10 @@ vi.mock('./LivePreview', () => ({
   },
 }));
 
-vi.mock('@/lib/hosted-surface', () => ({
-  getHostedSurfaceConfig: () => mockState.hostedConfig,
-  HOSTED_CONFIG_CHANGED_EVENT: 'orbitpage:hosted-config-changed',
+vi.mock('@/lib/editor-integration', () => ({
+  isEmbeddedEditor: () => mockState.integratedHostedSurface,
+  getEditorIntegration: () => mockState.hostedConfig,
+  EDITOR_CONFIG_CHANGED_EVENT: 'orbitpage:hosted-config-changed',
 }));
 vi.mock('./PasswordManager', () => ({ PasswordManager: () => <div>PasswordManager</div> }));
 vi.mock('./UserManager', () => ({ UserManager: () => <div>UserManager</div> }));
@@ -183,7 +182,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasUsage={{ blocks: 0 }}
+        editorUsage={{ blocks: 0 }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}
@@ -242,7 +241,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'demo', role: 'admin', permissions: [...allPermissions], readOnly: true }}
-        saasUsage={{ blocks: 0 }}
+        editorUsage={{ blocks: 0 }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}
@@ -303,7 +302,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: true } }}
+        editorAccess={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: true } }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}
@@ -321,7 +320,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasPlan={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: false } }}
+        editorAccess={{ ...basePlan, entitlements: { ...basePlan.entitlements, badgeRequired: false } }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}
@@ -347,7 +346,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasUsage={{ blocks: 0 }}
+        editorUsage={{ blocks: 0 }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}
@@ -375,7 +374,7 @@ describe('AdminView demo mode', () => {
           links={[]}
           theme={defaultTheme}
           currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-          saasUsage={hosted ? { blocks: 0 } : undefined}
+          editorUsage={hosted ? { blocks: 0 } : undefined}
           onProfileUpdate={vi.fn()}
           onLinksUpdate={vi.fn()}
           onMenuUpdate={vi.fn()}
@@ -403,7 +402,7 @@ describe('AdminView demo mode', () => {
         links={[]}
         theme={defaultTheme}
         currentUser={{ username: 'admin', role: 'admin', permissions: [...allPermissions] }}
-        saasUsage={{ blocks: 0 }}
+        editorUsage={{ blocks: 0 }}
         onProfileUpdate={vi.fn()}
         onLinksUpdate={vi.fn()}
         onMenuUpdate={vi.fn()}

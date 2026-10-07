@@ -15,9 +15,9 @@ Technical reference for the self-hosted source code. For the system boundaries, 
 
 ```text
 Browser
-  → Express
-    → public HTML, frontend assets, and uploaded media
-    → /api routes → validation and permissions → services → SQLite
+  â†’ Express
+    â†’ public HTML, frontend assets, and uploaded media
+    â†’ /api routes â†’ validation and permissions â†’ services â†’ SQLite
 ```
 
 In development, Vite serves the frontend on port 8080 and proxies `/api` to Express on port 3001. In a source production run, Express serves the built frontend and API on port 3001 unless `PORT` is set; the source quick start configures port 8080 in `app/.env`. Docker uses port 8080.
@@ -53,8 +53,8 @@ install-pve.sh          Proxmox guest installer
 | [src/pages/Admin.tsx](../../app/src/pages/Admin.tsx) | Dashboard state, navigation, and loading |
 | [src/components/AdminView.tsx](../../app/src/components/AdminView.tsx) | Dashboard workspaces and permissions in the UI |
 | [src/components/VisualSiteEditor.tsx](../../app/src/components/VisualSiteEditor.tsx) | Editor sections and responsive preview |
-| [src/hosted-entry.tsx](../../app/src/hosted-entry.tsx) | Shared editor entry for the hosted adapter |
 | [src/lib/admin-navigation.ts](../../app/src/lib/admin-navigation.ts) | Dashboard paths, tabs, and aliases |
+| [src/lib/editor-integration.ts](../../app/src/lib/editor-integration.ts) | Callbacks for embedding the editor in another application |
 | [src/lib/api-client.ts](../../app/src/lib/api-client.ts) | API requests and browser session handling |
 | [src/lib/theme.ts](../../app/src/lib/theme.ts) | Theme values and CSS application |
 | [server/server.js](../../app/server/server.js) | Startup, middleware, public routes, and application API |
@@ -85,8 +85,6 @@ Run from `app/`:
 | --- | --- |
 | `npm run build` | Self-hosted frontend in `dist/` |
 | `npm run start` | Build, then start Express |
-| `npm run build:hosted` | Frontend configured for the hosted adapter |
-| `npm run build:hosted-library` | Shared editor library for the hosted platform |
 
 Self-hosted assets have content hashes. Vite builds with relative asset URLs; Express adapts the entry HTML to the configured `BASE_PATH`. Generated output is rebuilt, never edited by hand.
 

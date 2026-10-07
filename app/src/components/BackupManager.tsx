@@ -155,7 +155,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
     setMessage("");
 
     try {
-      const { blob, extension } = await backupApi.download(exportSections, includeImages, hosted);
+      const { blob, extension } = await backupApi.download(exportSections, includeImages);
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;

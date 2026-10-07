@@ -3,7 +3,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-readonly SCRIPT_VERSION="4.21.73"
+readonly SCRIPT_VERSION="4.21.74"
 
 CTID="${ORBITPAGE_PVE_CTID:-}"
 HOSTNAME="${ORBITPAGE_PVE_HOSTNAME:-orbitpage}"

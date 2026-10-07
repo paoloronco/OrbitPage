@@ -1,10 +1,9 @@
-import { getHostedSurfaceConfig } from "./hosted-surface";
-import { isHostedRuntime } from "./runtime-mode";
+import { getEditorIntegration } from "./editor-integration";
 
 export const getPublicUrlOverride = (): string | null => {
-  if (!isHostedRuntime() || typeof window === "undefined") return null;
+  if (typeof window === "undefined") return null;
 
-  const value = getHostedSurfaceConfig()?.publicUrl;
+  const value = getEditorIntegration()?.publicUrl;
   if (!value) return null;
 
   try {

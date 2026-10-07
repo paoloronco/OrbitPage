@@ -46,7 +46,7 @@ import { resolveProfileSurfaceOpacity, type ProfileAppearance } from "@/lib/prof
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import type { CardLayout } from "@/lib/card-layout";
 import { uploadApi } from "@/lib/api-client";
-import type { HostedSeoAccess } from "@/lib/hosted-editor-contract";
+import type { EditorSeoAccess } from "@/lib/editor-capabilities";
 import { useAppI18n } from "@/lib/i18n";
 
 interface ProfileData {
@@ -71,7 +71,7 @@ interface ProfileSectionProps {
   theme: ThemeConfig;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onProfilePreview?: (profile: ProfileData) => void;
-  seoAccess?: HostedSeoAccess;
+  seoAccess?: EditorSeoAccess;
   managePlanHref?: string;
   orbitPageBadgeEditable?: boolean;
   profileLayoutCommand?: { id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null;

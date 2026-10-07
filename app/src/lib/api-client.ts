@@ -1,9 +1,7 @@
 import type { ThemeInput } from './theme';
 import { apiPath, getActiveBasePath, getConsentScope } from './base-path';
-import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
-import { getHostedSurfaceConfig, isIntegratedHostedSurface } from './hosted-surface';
-import { isHostedRuntime } from './runtime-mode';
-import { createPortableBackupArchive, embeddedBackupImages, type PortableImage } from './portable-backup';
+import { getEditorIntegration } from './editor-integration';
+import { createPortableBackupArchive, embeddedBackupImages } from './portable-backup';
 import type { OrbitPageCampaignLink } from '@orbitpage/page-schema';
 import { parseLocalizedPublicPath } from './public-routing';
 
@@ -22,59 +20,14 @@ let capturedPageRevision: number | null = null;
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-export { isHostedRuntime };
-
-export const getSaasApiBase = (): string | null => {
-  if (!isHostedRuntime() || typeof window === 'undefined') return null;
-  const value = getHostedSurfaceConfig()?.apiBase;
-  if (!value) return null;
-  const resolved = resolveSafeBrowserHttpUrl(value, window.location.href);
-  if (!resolved) return null;
-
-  // The hosted build may only send credentials back to its own origin.
-  if (resolved.origin !== window.location.origin) return null;
-  return resolved.toString().replace(/\/$/, '');
-};
-
-export const isSaasMode = (): boolean => isHostedRuntime();
-
-export { isIntegratedHostedSurface };
-
-const getSaasPublicSlug = (): string | null => {
-  if (!isHostedRuntime() || typeof window === 'undefined') return null;
-  const value = getHostedSurfaceConfig()?.publicSlug;
-  return value ? value.trim() : null;
-};
-
-const getSaasAuthToken = (): string | null => {
-  if (!isHostedRuntime() || typeof window === 'undefined') return null;
-  return getHostedSurfaceConfig()?.apiToken || null;
-};
-
-const getSaasAppCheckToken = (): string | null => {
-  if (!isHostedRuntime() || typeof window === 'undefined') return null;
-  return getHostedSurfaceConfig()?.appCheckToken || null;
-};
-
-const resolveApiUrl = (endpoint: string): string => {
-  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const saasApiBase = getSaasApiBase();
-  if (!saasApiBase) return apiPath(normalizedEndpoint);
-
-  const url = new URL(`${saasApiBase}${normalizedEndpoint}`);
-  if (normalizedEndpoint === '/public-page') {
-    const slug = getSaasPublicSlug();
-    if (slug) url.searchParams.set('slug', slug);
-  }
-  return url.toString();
-};
+const resolveApiUrl = (endpoint: string): string => apiPath(endpoint);
 
 const resolveAuthenticatedApiUrl = (
   endpoint: string,
   headers: Record<string, string>,
 ): string => {
   const url = resolveApiUrl(endpoint);
-  const carriesCredentials = Boolean(headers.Authorization || headers['X-Firebase-AppCheck']);
+  const carriesCredentials = new Headers(headers).has('Authorization');
   if (!carriesCredentials || typeof window === 'undefined') return url;
 
   const resolved = new URL(url, window.location.href);
@@ -200,9 +153,6 @@ const hasStoredAuthToken = (): boolean => {
 
 // Async variant for flows that can await (API calls)
 const getAuthTokenAsync = async (): Promise<string | null> => {
-  const saasToken = getSaasAuthToken();
-  if (saasToken) return saasToken;
-
   if (!isCryptoAvailable()) {
     return getAuthToken();
   }
@@ -220,12 +170,9 @@ const getAuthTokenAsync = async (): Promise<string | null> => {
 };
 
 const getAuthenticatedRequestHeaders = async (): Promise<Record<string, string>> => {
+  if (getEditorIntegration()) return {};
   const token = await getAuthTokenAsync();
-  const appCheckToken = getSaasAppCheckToken();
-  return {
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(appCheckToken ? { 'X-Firebase-AppCheck': appCheckToken } : {}),
-  };
+  return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
 // Set auth token.
@@ -444,13 +391,20 @@ export interface WorkspaceBootstrapResponse {
   consentConfig?: ConsentConfigData;
   campaignLinks?: OrbitPageCampaignLink[];
   publicUrl?: string;
-  plan?: import('./hosted-editor-contract').HostedEditorPlan;
-  usage?: import('./hosted-editor-contract').HostedEditorUsage;
-  billing?: import('./hosted-editor-contract').HostedEditorBilling;
+  access?: import('./editor-capabilities').EditorAccess;
+  usage?: import('./editor-capabilities').EditorUsage;
+  actions?: import('./editor-capabilities').EditorActions;
 }
 
+const requestApi = async (endpoint: string, options: RequestInit = {}): Promise<Response> => {
+  const integration = getEditorIntegration();
+  if (integration) return integration.request(endpoint, options);
+  const headers = Object.fromEntries(new Headers(options.headers).entries());
+  return fetch(resolveAuthenticatedApiUrl(endpoint, headers), options);
+};
+
 // API request helper with auth
-const apiRequest = async <T>(endpoint: string, options: RequestInit = {}, preserveSession = false): Promise<T> => {
+export const apiRequest = async <T>(endpoint: string, options: RequestInit = {}, preserveSession = false): Promise<T> => {
   const method = (options.method || 'GET').toUpperCase();
   const performRequest = async (authHeaders: Record<string, string>) => {
     const isMultipart = typeof FormData !== 'undefined' && options.body instanceof FormData;
@@ -463,42 +417,13 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}, preser
       ...options.headers,
     };
 
-    // Prevent any caching of API responses and bust caches for GETs.
-    let url = resolveAuthenticatedApiUrl(endpoint, authHeaders);
-    if (method === 'GET') {
-      const sep = url.includes('?') ? '&' : '?';
-      url = `${url}${sep}_ts=${Date.now()}`;
-    }
-
-    return fetch(url, {
-      ...options,
-      headers,
-      cache: 'no-store',
-    });
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const requestEndpoint = method === 'GET' ? `${endpoint}${separator}_ts=${Date.now()}` : endpoint;
+    return requestApi(requestEndpoint, { ...options, headers, cache: 'no-store' });
   };
 
   try {
-    let response = await performRequest(await getAuthenticatedRequestHeaders());
-
-    // Firebase ID tokens rotate while the dashboard can stay open for hours.
-    // The hosted shell owns that session, so ask it for fresh credentials and
-    // retry the untouched request once instead of ejecting the user from the editor.
-    if (response.status === 401 && isIntegratedHostedSurface()) {
-      const refreshCredentials = getHostedSurfaceConfig()?.refreshCredentials;
-      if (refreshCredentials) {
-        try {
-          const refreshed = await refreshCredentials();
-          if (refreshed.apiToken) {
-            response = await performRequest({
-              Authorization: `Bearer ${refreshed.apiToken}`,
-              ...(refreshed.appCheckToken ? { 'X-Firebase-AppCheck': refreshed.appCheckToken } : {}),
-            });
-          }
-        } catch {
-          // Parse and surface the original authentication response below.
-        }
-      }
-    }
+    const response = await performRequest(getEditorIntegration() ? {} : await getAuthenticatedRequestHeaders());
 
     // Safely parse JSON — proxies (Cloudflare, nginx) and rate limiters may return
     // plain text (e.g. "Too many requests"), which would throw on response.json().
@@ -515,15 +440,14 @@ const apiRequest = async <T>(endpoint: string, options: RequestInit = {}, preser
     const metadata = data && typeof data === 'object' ? data as Record<string, unknown> : {};
     if (!response.ok) {
       const errorMessage = typeof metadata.error === 'string' ? metadata.error : typeof metadata.message === 'string' ? metadata.message : 'Request failed';
-      const isAppCheckError = metadata.code === 'APP_CHECK_REQUIRED' || metadata.code === 'APP_CHECK_INVALID';
       const isAuthExpired =
-        (!isAppCheckError && response.status === 401) ||
+        response.status === 401 ||
         (response.status === 403 && /invalid or expired token|user not found|access token required/i.test(errorMessage));
 
       // Only auth failures should clear the token. Other 403 responses are real
       // permission/product errors, for example demo-mode write protection.
       if (isAuthExpired) {
-        if (!preserveSession) removeAuthToken();
+        if (!preserveSession && !getEditorIntegration()) removeAuthToken();
         throw Object.assign(new Error('AUTH_EXPIRED'), { status: response.status });
       }
       if (response.status === 429) {
@@ -562,12 +486,6 @@ export const publicPageApi = {
       }
     }
     return apiRequest<PublicPageResponse>(endpoint);
-  },
-};
-
-export const workspaceBootstrapApi = {
-  get: async (): Promise<WorkspaceBootstrapResponse> => {
-    return apiRequest<WorkspaceBootstrapResponse>('/workspace/bootstrap');
   },
 };
 
@@ -612,7 +530,7 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     try {
-      if (!isHostedRuntime() && hasStoredAuthToken()) await apiRequest('/auth/logout', { method: 'POST' });
+      if (!getEditorIntegration() && hasStoredAuthToken()) await apiRequest('/auth/logout', { method: 'POST' });
     } catch (error) {
       if (![401, 403].includes(Number((error as { status?: number }).status))) throw error;
     } finally {
@@ -621,7 +539,6 @@ export const authApi = {
   },
 
   hasStoredToken: (): boolean => {
-    if (getSaasAuthToken()) return true;
     return hasStoredAuthToken();
   },
 
@@ -635,7 +552,6 @@ export const authApi = {
   },
 
   isAuthenticated: (): boolean => {
-    if (getSaasAuthToken()) return true;
     return !!getAuthToken();
   },
 
@@ -773,7 +689,7 @@ export const aiPageAgentApi = {
 export const backupApi = {
   images: async (includeData = false): Promise<Array<{ key?: string; path?: string; fileName?: string; contentType?: string; sizeBytes: number; data?: string }>> => {
     const authHeaders = await getAuthenticatedRequestHeaders();
-    const response = await fetch(resolveAuthenticatedApiUrl(`/admin/backup/images${includeData ? '?data=1' : ''}`, authHeaders), { headers: authHeaders });
+    const response = await requestApi(`/admin/backup/images${includeData ? '?data=1' : ''}`, { headers: authHeaders });
     if (!response.ok) throw new Error('Backup images could not be inspected.');
     const result = await response.json() as { images?: Array<{ key?: string; path?: string; fileName?: string; contentType?: string; sizeBytes: number; data?: string }> };
     return Array.isArray(result.images) ? result.images : [];
@@ -782,11 +698,10 @@ export const backupApi = {
   download: async (
     sections?: readonly string[],
     includeImages = false,
-    hosted = false,
   ): Promise<{ blob: Blob; extension: 'json' | 'zip' }> => {
     const authHeaders = await getAuthenticatedRequestHeaders();
     const query = sections?.length ? `?sections=${encodeURIComponent(sections.join(','))}` : '';
-    const response = await fetch(resolveAuthenticatedApiUrl(`/admin/backup${query}`, authHeaders), {
+    const response = await requestApi(`/admin/backup${query}`, {
       headers: authHeaders,
     });
 
@@ -798,23 +713,10 @@ export const backupApi = {
     if (!includeImages) return { blob: await response.blob(), extension: 'json' };
 
     const backup = await response.json() as unknown;
-    let images: PortableImage[];
-    if (hosted) {
-      const available = await backupApi.images();
-      images = await Promise.all(available.map(async (asset) => {
-        const key = asset.key as string;
-        const assetPath = key.split('/').map(encodeURIComponent).join('/');
-        const assetResponse = await fetch(resolveAuthenticatedApiUrl(`/assets/${assetPath}`, authHeaders), { headers: authHeaders });
-        if (!assetResponse.ok) throw new Error(`Backup image could not be downloaded: ${asset.fileName || key.split('/').at(-1)}`);
-        return {
-          path: asset.fileName || key.split('/').at(-1) || 'image',
-          reference: key,
-          bytes: new Uint8Array(await assetResponse.arrayBuffer()),
-        };
-      }));
-    } else {
-      images = embeddedBackupImages({ uploads: await backupApi.images(true) });
-    }
+    const integration = getEditorIntegration();
+    const images = integration?.backupImages
+      ? await integration.backupImages()
+      : embeddedBackupImages({ uploads: await backupApi.images(true) });
     const archive = await createPortableBackupArchive(backup, images);
     return { blob: new Blob([new Uint8Array(archive)], { type: 'application/zip' }), extension: 'zip' };
   },
@@ -1117,7 +1019,7 @@ export const linksApi = {
   export: async (): Promise<Blob> => {
     try {
       const authHeaders = await getAuthenticatedRequestHeaders();
-      const resp = await fetch(resolveAuthenticatedApiUrl('/links/export', authHeaders), {
+      const resp = await requestApi('/links/export', {
         headers: authHeaders,
       });
       
@@ -1147,7 +1049,7 @@ export const linksApi = {
 
   trackClick: async (id: string): Promise<void> => {
     try {
-      await fetch(resolveApiUrl(`/links/${encodeURIComponent(id)}/click`), { method: 'POST' });
+      await requestApi(`/links/${encodeURIComponent(id)}/click`, { method: 'POST' });
     } catch { /* fire-and-forget, don't break the UI */ }
   },
 
@@ -1199,7 +1101,7 @@ export const uploadApi = {
     formData.append('file', file);
     if (slot) formData.append('slot', slot);
     const authHeaders = await getAuthenticatedRequestHeaders();
-    const response = await fetch(resolveAuthenticatedApiUrl('/upload', authHeaders), {
+    const response = await requestApi('/upload', {
       method: 'POST',
       headers: authHeaders,
       body: formData,
@@ -1213,13 +1115,13 @@ export const uploadApi = {
 
   uploadBackgroundMedia: async (file: File, slot = 'background-media'): Promise<{ filePath: string; fullUrl: string; fileName: string }> => {
     if (file.type.startsWith('video/')) {
-      return uploadVideoWithDirectFallback(file, slot, 'background');
+      return uploadVideoFile(file, slot, 'background');
     }
     const formData = new FormData();
     formData.append('file', file);
     formData.append('slot', slot);
     const authHeaders = await getAuthenticatedRequestHeaders();
-    const response = await fetch(resolveAuthenticatedApiUrl('/upload/background', authHeaders), {
+    const response = await requestApi('/upload/background', {
       method: 'POST',
       headers: authHeaders,
       body: formData,
@@ -1236,7 +1138,7 @@ export const uploadApi = {
     slot: string,
     onProgress?: (percentage: number) => void,
   ): Promise<{ filePath: string; fullUrl: string; fileName: string }> => (
-    uploadVideoWithDirectFallback(file, slot, 'upload', onProgress)
+    uploadVideoFile(file, slot, 'upload', onProgress)
   ),
 };
 
@@ -1258,94 +1160,20 @@ export const menuApi = {
   }),
 };
 
-type DirectUploadReservation = {
-  uploadToken: string;
-  slot: string;
-  uploadUrl: string;
-  headers?: Record<string, string>;
-};
-
-const putFileWithProgress = (
-  uploadUrl: string,
-  file: File,
-  headers: Record<string, string>,
-  onProgress?: (percentage: number) => void,
-) => new Promise<void>((resolve, reject) => {
-  const request = new XMLHttpRequest();
-  request.open('PUT', uploadUrl, true);
-  Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
-  request.upload.onprogress = (event) => {
-    if (event.lengthComputable) onProgress?.(Math.min(99, Math.round((event.loaded / event.total) * 100)));
-  };
-  request.onerror = () => reject(new Error('The video upload was interrupted. Check the connection and retry.'));
-  request.onabort = () => reject(new Error('The video upload was cancelled.'));
-  request.onload = () => {
-    if (request.status >= 200 && request.status < 300) resolve();
-    else reject(new Error(`Storage rejected the video upload (${request.status}).`));
-  };
-  request.send(file);
-});
-
-async function uploadVideoWithDirectFallback(
+async function uploadVideoFile(
   file: File,
   slot: string,
   purpose: 'background' | 'upload',
   onProgress?: (percentage: number) => void,
 ): Promise<{ filePath: string; fullUrl: string; fileName: string }> {
+  const integration = getEditorIntegration();
+  if (integration?.uploadVideo) return integration.uploadVideo(file, slot, purpose, onProgress);
   const authHeaders = await getAuthenticatedRequestHeaders();
-  const reserveResponse = await fetch(resolveAuthenticatedApiUrl('/upload/direct/reserve', authHeaders), {
-    method: 'POST',
-    headers: { ...authHeaders, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      filename: file.name,
-      contentType: file.type,
-      sizeBytes: file.size,
-      purpose,
-      slot,
-    }),
-  });
-
-  if (reserveResponse.ok) {
-    const reservation = await reserveResponse.json() as DirectUploadReservation;
-    try {
-      await putFileWithProgress(
-        reservation.uploadUrl,
-        file,
-        reservation.headers || { 'Content-Type': file.type },
-        onProgress,
-      );
-      const finalizeResponse = await fetch(resolveAuthenticatedApiUrl('/upload/direct/finalize', authHeaders), {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadToken: reservation.uploadToken, slot: reservation.slot }),
-      });
-      const result = await finalizeResponse.json().catch(() => ({})) as { error?: string; filePath?: string; fullUrl?: string; fileName?: string };
-      if (!finalizeResponse.ok || !result.filePath) throw new Error(result.error || 'The uploaded video could not be verified.');
-      onProgress?.(100);
-      return result as { filePath: string; fullUrl: string; fileName: string };
-    } catch (error) {
-      await fetch(resolveAuthenticatedApiUrl('/upload/direct/abort', authHeaders), {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uploadToken: reservation.uploadToken, slot: reservation.slot }),
-      }).catch(() => undefined);
-      throw error;
-    }
-  }
-
-  // The self-hosted OSS backend does not expose the R2 reservation protocol.
-  if (reserveResponse.status !== 404 && reserveResponse.status !== 405) {
-    const error = await reserveResponse.json().catch(() => ({})) as { error?: string };
-    throw new Error(error.error || 'Video upload could not be started.');
-  }
-
   const formData = new FormData();
   formData.append('file', file);
   formData.append('slot', slot);
-  const response = await fetch(resolveAuthenticatedApiUrl(
-    purpose === 'background' ? '/upload/background' : '/upload/video',
-    authHeaders,
-  ), {
+  const response = await requestApi(
+    purpose === 'background' ? '/upload/background' : '/upload/video', {
     method: 'POST',
     headers: authHeaders,
     body: formData,

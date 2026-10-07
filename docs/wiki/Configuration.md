@@ -118,7 +118,6 @@ Defaults below are the application's fallback values. The source `.env.example` 
 | `RESET_TOKEN` | Unset | Temporary administrator recovery token; at least 32 random characters. Also authorizes destructive resets. Set only during [recovery](./recovery.md). |
 | `VITE_BASE_PATH` | Empty | Frontend base path for development. Production uses server `BASE_PATH`. |
 | `VITE_DEMO_MODE` | Disabled | Enables the demo UI; must match server `DEMO_MODE`. |
-| `VITE_ORBITPAGE_HOSTED_MODE` | Disabled | Hosted frontend mode. Leave disabled for self-hosted use; hosted builds use the dedicated package scripts. |
 
 Keep `DATA_DIR` persistent and signing/encryption secrets unchanged across restarts and updates.
 
