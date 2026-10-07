@@ -164,7 +164,7 @@ test("Arrange uses preset sizes, compact handles and persistent text alignment",
   await expect(page.locator('[data-profile-layout-item="work"]')).toHaveAttribute("data-profile-layout-align", "left");
 });
 
-test("card resize returns to its default width and Reset restores Arrange", async ({ page }) => {
+test("card resize returns to its default width and Revert restores Arrange", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
   await page.getByRole("button", { name: "Content", exact: true }).click();
@@ -199,7 +199,7 @@ test("card resize returns to its default width and Reset restores Arrange", asyn
   await expect.poll(width).toBe(defaultWidth);
 
   await resize.press("ArrowRight");
-  await page.locator(".admin-profile-save-float").getByRole("button", { name: "Reset" }).click();
+  await page.locator(".admin-profile-save-float").getByRole("button", { name: "Revert" }).click();
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect.poll(width).toBe(defaultWidth);
 });

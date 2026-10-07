@@ -31,6 +31,6 @@ test('keeps information text editable and identical in the live preview', async 
   const { editor: savedCard } = await openPreviewContentCard(page, savedPreview);
   await savedCard.getByLabel('Information text').fill('Temporary change');
   await expect(saveContent).toBeEnabled();
-  await page.locator('.admin-profile-save-float').getByRole('button', { name: 'Cancel' }).click();
+  await page.locator('.admin-profile-save-float').getByRole('button', { name: 'Revert' }).click();
   await expect(saveContent).toHaveCount(0);
 });
