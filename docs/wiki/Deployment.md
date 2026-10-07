@@ -5,10 +5,9 @@ OrbitPage can be deployed with **Docker**, the **Linux installer**, or the **Pro
 ---
 
 <a id="docker-image-recommended"></a>
+<a id="docker"></a>
 
-## Docker
-
-Docker is the recommended deployment method.
+## Docker (recommended)
 
 | Registry | Image |
 | --- | --- |
@@ -71,7 +70,7 @@ Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a passw
 The public page is at [http://localhost:8080](http://localhost:8080).<br>
 Change the port or data mount in the command if needed.
 
-The [Docker options](#docker-options) are the same; only the image address changes. Use `ghcr.io/paoloronco/orbitpage:X.Y.Z` or `ghcr.io/paoloronco/orbitpage@sha256:DIGEST` to pin a release or digest.
+The [Docker options](#docker-options) are the same; only the image address changes.
 
 ### Docker Compose
 
@@ -91,15 +90,20 @@ docker compose up -d
 
 Open the [dashboard](http://localhost:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://localhost:8080](http://localhost:8080).
 
-Edit `docker-compose.yml` to change the image, port, environment, or storage path. Add `security_opt: ["no-new-privileges:true"]` for the same restriction as the Docker Run examples.
+Edit `docker-compose.yml` to change the image, port, environment, or storage path.
 
 ### Optional setup token
 
-To require proof of host access during first setup, set `REQUIRE_SETUP_TOKEN=true` before startup. Add it to Compose under `environment`, or pass `-e REQUIRE_SETUP_TOKEN=true` to Docker Run.
+To add a token to the first admin setup:
 
-Read the token with `docker exec orbitpage cat /app/data/.setup-token`, or `docker compose exec orbitpage cat /app/data/.setup-token`, and enter it with the new admin password. It is consumed after setup.
+| Installation | Enable before startup | Read the token |
+| --- | --- | --- |
+| Docker Run | Add `-e REQUIRE_SETUP_TOKEN=true` | `docker exec orbitpage cat /app/data/.setup-token` |
+| Docker Compose | Set `REQUIRE_SETUP_TOKEN: "true"` under `environment` | `docker compose exec orbitpage cat /app/data/.setup-token` |
+| Linux installer | Add `--require-setup-token` | `sudo cat /var/lib/orbitpage/.setup-token` |
+| Proxmox installer | Add `--require-setup-token` | `pct exec CTID -- cat /var/lib/orbitpage/.setup-token` |
 
-For the installers, add `--require-setup-token` to `install.sh` or `install-pve.sh`. Read `/var/lib/orbitpage/.setup-token` on Linux, or `pct exec CTID -- cat /var/lib/orbitpage/.setup-token` from Proxmox.
+Enter the token when choosing the admin password. It can be used once.
 
 ### Older Docker Hub images
 
@@ -109,7 +113,7 @@ The former `paueron/orbitpage` feed stops receiving updates on October 9, 2026. 
 
 ## Linux installer
 
-Use an x86-64 Debian 12/13 or Ubuntu 22.04/24.04 server, VM, or LXC. Run the Proxmox installer below on a Proxmox host.
+Use a Debian 12/13 or Ubuntu 22.04/24.04/26.04 server, VM, or LXC on **amd64 or arm64**. For other Linux distributions, Windows, or macOS, use [Docker](#docker-recommended) with Linux containers.
 
 ```bash
 sudo apt-get update
@@ -249,32 +253,6 @@ ORBITPAGE_PVE_MEMORY=4096 \
 | `ORBITPAGE_PVE_WAIT_SECONDS` | `2` | Seconds between attempts |
 
 The firewall flag does not enable Proxmox firewall layers or add allow rules; configure those in Proxmox.
-
-### Manage OrbitPage from Proxmox
-
-Replace `CTID` with the guest ID:
-
-```bash
-pct exec CTID -- orbitpage status
-pct exec CTID -- orbitpage logs
-pct exec CTID -- orbitpage backup
-pct exec CTID -- orbitpage update
-```
-
-To enter the guest:
-
-```bash
-pct enter CTID
-```
-
-For an existing Debian/Ubuntu VM, run `install.sh` inside the VM. For an existing supported LXC, stop it before enabling the required features:
-
-```bash
-pct set CTID -features nesting=1,keyctl=1
-pct start CTID
-```
-
-Then run the Linux installer inside the guest. A failed new-guest installation leaves the guest available for inspection. Guest backup and removal are in [Maintenance](./maintenance.md#proxmox-backup-and-restore).
 
 ---
 

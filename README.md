@@ -88,7 +88,7 @@ To update, run <code>docker compose pull</code>, then <code>docker compose up -d
 
 ### Linux install
 
-On a clean x86-64 Linux system:
+On a clean Debian or Ubuntu system (amd64 or arm64):
 
 ~~~bash
 sudo apt-get update

@@ -4,7 +4,7 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
 
-readonly SCRIPT_VERSION="4.21.69"
+readonly SCRIPT_VERSION="4.21.70"
 
 INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"
@@ -115,19 +115,19 @@ detect_platform() {
 
   case "${ID:-}" in
     debian | ubuntu) ;;
-    *) die "Unsupported operating system: ${ID:-unknown}. Use Debian 12/13 or Ubuntu 22.04/24.04." ;;
+    *) die "Unsupported operating system: ${ID:-unknown}. Use Debian 12/13 or Ubuntu 22.04/24.04/26.04; use Docker on other distributions." ;;
   esac
 
   [[ -n "${VERSION_CODENAME:-}" ]] || die "The operating-system codename could not be detected."
   [[ "${VERSION_CODENAME}" =~ ^[a-z0-9.-]+$ ]] || die "The operating-system codename is invalid."
   case "${ID}:${VERSION_CODENAME}" in
-    debian:bookworm | debian:trixie | ubuntu:jammy | ubuntu:noble) ;;
-    *) die "Unsupported release: ${ID} ${VERSION_CODENAME}. Use Debian 12/13 or Ubuntu 22.04/24.04." ;;
+    debian:bookworm | debian:trixie | ubuntu:jammy | ubuntu:noble | ubuntu:resolute) ;;
+    *) die "Unsupported release: ${ID} ${VERSION_CODENAME}. Use Debian 12/13 or Ubuntu 22.04/24.04/26.04." ;;
   esac
 
   case "$(dpkg --print-architecture 2>/dev/null || uname -m)" in
-    amd64 | x86_64) ;;
-    *) die "The Linux installer currently supports x86-64/amd64 only; use the Docker guide for arm64." ;;
+    amd64 | x86_64 | arm64 | aarch64) ;;
+    *) die "The Linux installer requires amd64 or arm64; official OrbitPage images support these architectures." ;;
   esac
 
   if command -v pveversion >/dev/null 2>&1 || [[ -d /etc/pve ]]; then
@@ -155,7 +155,7 @@ Types: deb
 URIs: https://download.docker.com/linux/${docker_os}
 Suites: ${VERSION_CODENAME}
 Components: stable
-Architectures: amd64
+Architectures: $(dpkg --print-architecture)
 Signed-By: /etc/apt/keyrings/docker.asc
 EOF
 
