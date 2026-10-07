@@ -19,7 +19,7 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 
 | Task | Guide |
 | --- | --- |
-| Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard/dashboard.md) |
+| Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard/README.md) |
 | Edit profiles, blocks, menus, pages, and themes | [Content and design](./dashboard/sections/content-and-design.md) |
 | Share a page or print a QR code | [Publishing and QR](./dashboard/sections/publishing.md) |
 | Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |

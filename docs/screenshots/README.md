@@ -37,7 +37,7 @@ native resolution; text must remain legible in the final GIF.
 
 ## Dashboard guide GIFs
 
-The [dashboard guide](../wiki/dashboard/dashboard.md) embeds three GIFs hosted as GitHub
+The [dashboard guide](../wiki/dashboard/README.md) embeds three GIFs hosted as GitHub
 release assets. The binaries stay outside Git.
 
 | GIF | Sections | Size |

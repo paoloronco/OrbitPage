@@ -287,7 +287,7 @@ The dashboard exports selected application data as JSON, with an optional **Incl
 
 Dashboard URLs include the interface language, for example <code>/it-IT/dashboard/account/general</code>. The paths above omit that prefix for readability. Navigation shows only the tools your role can access.
 
-See the [dashboard guide](./docs/wiki/dashboard/dashboard.md) for tab URLs and editing instructions.
+See the [dashboard guide](./docs/wiki/dashboard/README.md) for tab URLs and editing instructions.
 
 ## Configuration & Environment
 
@@ -327,7 +327,7 @@ Start from the [documentation index](./docs/README.md).
 | --- | --- |
 | Deploy, update, or use Proxmox | [Deployment](./docs/wiki/administration/Deployment.md) |
 | Configure environment variables | [Configuration](./docs/wiki/administration/Configuration.md) |
-| Navigate the editor | [Dashboard guide](./docs/wiki/dashboard/dashboard.md) |
+| Navigate the editor | [Dashboard guide](./docs/wiki/dashboard/README.md) |
 | Manage users, passwords and two-factor authentication | [Account and team](./docs/wiki/dashboard/sections/account-and-team.md) |
 | Share or print a QR code | [Publishing and QR](./docs/wiki/dashboard/sections/publishing.md) |
 | Build content, menus, subpages, and themes | [Content and design](./docs/wiki/dashboard/sections/content-and-design.md) |
