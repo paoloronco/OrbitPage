@@ -4,7 +4,7 @@ set -Eeuo pipefail
 IFS=$'\n\t'
 umask 077
 
-readonly SCRIPT_VERSION="4.21.72"
+readonly SCRIPT_VERSION="4.21.73"
 
 INSTALL_DIR="/opt/orbitpage"
 CONFIG_DIR="/etc/orbitpage"

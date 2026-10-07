@@ -659,7 +659,7 @@ export const AdminView = ({
 
   const googleAnalyticsDialog = (
     <Dialog open={gaSetupOpen} onOpenChange={setGaSetupOpen}>
-      <DialogContent className="managed-analytics-integration-dialog" data-testid="google-analytics-settings">
+      <DialogContent dirty={gaDirty || gaSaving} className="managed-analytics-integration-dialog" data-testid="google-analytics-settings">
         <DialogHeader className="managed-analytics-integration-dialog-header">
           <span className="admin-panel-icon" aria-hidden="true"><GoogleAnalyticsIcon size={17} /></span>
           <div>

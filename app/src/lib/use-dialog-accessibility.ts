@@ -6,10 +6,13 @@ export function useDialogAccessibility<T extends HTMLElement>(
   open: boolean,
   onClose: () => void,
   initialFocusRef?: RefObject<HTMLElement | null>,
+  canDismissOutside = true,
 ) {
   const dialogRef = useRef<T>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const outsideRef = useRef(canDismissOutside);
+  outsideRef.current = canDismissOutside;
 
   useEffect(() => {
     if (!open || !dialogRef.current) return;
@@ -17,7 +20,10 @@ export function useDialogAccessibility<T extends HTMLElement>(
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
       .filter((element) => element.getClientRects().length > 0);
-    const frame = requestAnimationFrame(() => (initialFocusRef?.current || focusable()[0] || dialog).focus());
+    const frame = requestAnimationFrame(() => {
+      (initialFocusRef?.current || focusable()[0] || dialog).focus();
+      document.addEventListener("click", onOutsideClick);
+    });
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -39,10 +45,14 @@ export function useDialogAccessibility<T extends HTMLElement>(
         first.focus();
       }
     };
+    const onOutsideClick = (event: MouseEvent) => {
+      if (outsideRef.current && event.button === 0 && event.target instanceof Node && !dialog.contains(event.target)) closeRef.current();
+    };
     document.addEventListener("keydown", onKeyDown);
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("click", onOutsideClick);
       requestAnimationFrame(() => previousFocus?.isConnected && previousFocus.focus());
     };
   }, [initialFocusRef, open]);
