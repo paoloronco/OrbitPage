@@ -44,7 +44,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
   const listRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useDialogAccessibility<HTMLElement>(open, () => setOpen(false), closeRef);
+  const panelRef = useDialogAccessibility<HTMLElement>(open, () => setOpen(false), closeRef, !draft && !sending && !messages.some((item) => item.applying || (item.proposal && !item.applied)));
   const labels = useMemo(() => ({
     tagline: tr("Edit your page with confirmation", "Modifica la pagina con conferma"),
     launch: tr("Edit with AI", "Modifica con AI"),

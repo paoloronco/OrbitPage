@@ -15,7 +15,7 @@
  */
 
 import { createPortal } from 'react-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   consentManager,
   type ConsentCategory,
@@ -158,7 +158,8 @@ function PreferencesModal({
   const toggle = (cat: ConsentCategory) =>
     setSelected((prev) => ({ ...prev, [cat]: !prev[cat] }));
 
-  const modalRef = useDialogAccessibility<HTMLDivElement>(true, onClose);
+  const dirty = Object.entries(selected).some(([category, value]) => value !== (existing?.categories[category as ConsentCategory] ?? false));
+  const modalRef = useDialogAccessibility<HTMLDivElement>(true, onClose, undefined, !dirty);
 
   const optionalCats = (
     ['preferences', 'analytics', 'marketing'] as ConsentCategory[]
@@ -181,7 +182,7 @@ function PreferencesModal({
       role="dialog"
       aria-modal="true"
       aria-label="Cookie preferences"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget && !dirty) onClose(); }}
     >
       <div
         ref={modalRef}
@@ -440,8 +441,17 @@ function BannerBody({ cfg, colors, onAcceptAll, onRejectAll, onOpenPrefs, hasOpt
 export function CookieBanner({ config }: CookieBannerProps) {
   const [bannerVisible, setBannerVisible] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   const cfg = config.hardcoded;
+  useEffect(() => {
+    if (!bannerVisible || prefsOpen || !cfg || cfg.layout === 'centered-modal') return;
+    const onOutsideClick = (event: MouseEvent) => {
+      if (event.button === 0 && event.target instanceof Node && bannerRef.current && !bannerRef.current.contains(event.target)) setBannerVisible(false);
+    };
+    const frame = requestAnimationFrame(() => document.addEventListener('click', onOutsideClick));
+    return () => { cancelAnimationFrame(frame); document.removeEventListener('click', onOutsideClick); };
+  }, [bannerVisible, prefsOpen, cfg]);
   const centeredDialogRef = useDialogAccessibility<HTMLDivElement>(
     Boolean(cfg && bannerVisible && !prefsOpen && cfg.layout === 'centered-modal'),
     () => setBannerVisible(false),
@@ -491,6 +501,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
 
   const renderBottomBar = () => (
     <div
+      ref={bannerRef}
       role="dialog"
       aria-label="Cookie consent"
       aria-live="polite"
@@ -524,6 +535,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
   const renderCenteredModal = () => (
     <div
       ref={centeredDialogRef}
+      onClick={(event) => { if (event.target === event.currentTarget) setBannerVisible(false); }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -565,6 +577,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
 
   const renderCornerPopup = () => (
     <div
+      ref={bannerRef}
       role="dialog"
       aria-label="Cookie consent"
       style={{
@@ -643,8 +656,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
           colors={colors}
           onClose={() => {
             setPrefsOpen(false);
-            // Re-show banner if user closes prefs without saving and consent is still needed
-            if (consentManager.needsBanner()) setBannerVisible(true);
+            setBannerVisible(false);
           }}
           onAcceptAll={handleAcceptAll}
           onRejectAll={handleRejectAll}

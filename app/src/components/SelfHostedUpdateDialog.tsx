@@ -104,7 +104,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
   };
 
   return <Dialog open={open} onOpenChange={value => { if (!value && !active) { setShowResult(false); setError(''); setPassword(''); onClose(); } }}>
-    <DialogContent className={`orbitpage-admin oss-account-delete-dialog account-update-dialog${active ? ' account-update-dialog--locked' : ''}`} overlayClassName="oss-account-delete-overlay" aria-describedby={undefined}
+    <DialogContent dirty={active || Boolean(password)} className={`orbitpage-admin oss-account-delete-dialog account-update-dialog${active ? ' account-update-dialog--locked' : ''}`} overlayClassName="oss-account-delete-overlay" aria-describedby={undefined}
       onEscapeKeyDown={event => { if (active) event.preventDefault(); }} onPointerDownOutside={event => { if (active) event.preventDefault(); }}>
       <DialogHeader className="account-delete-header"><DialogTitle>{tr('Install OrbitPage update', 'Installa l’aggiornamento di OrbitPage')}</DialogTitle></DialogHeader>
       <div className={`account-update-status${job?.state === 'failed' ? ' account-update-status--failed' : ''}`} role="status" aria-live="polite">

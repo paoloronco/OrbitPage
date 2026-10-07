@@ -16,10 +16,16 @@ test('shows installation diagnostics and edits masked runtime variables', async 
   await card.getByRole('button', { name: 'Environment variables…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Environment variables' });
   await expect(dialog).toBeVisible();
+  await page.mouse.click(2, 2);
+  await expect(dialog).toBeHidden();
+  await card.getByRole('button', { name: 'Environment variables…' }).click();
   const field = dialog.locator('.instance-environment-field').filter({ hasText: 'PUBLIC_SITE_NAME' });
   await expect(field.locator('input')).toHaveAttribute('type', 'password');
   await expect(field.locator('input')).toBeEmpty();
   await field.locator('input').fill('OrbitPage test name');
+  await page.mouse.click(2, 2);
+  await expect(dialog).toBeVisible();
+  await expect(field.locator('input')).toHaveValue('OrbitPage test name');
   await dialog.getByLabel('Current password').fill(E2E_ADMIN_PASSWORD);
   await dialog.getByRole('button', { name: 'Save changes' }).click();
   await expect(dialog).toBeHidden();

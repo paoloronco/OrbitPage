@@ -38,7 +38,7 @@ Check the stylesheet before changing a value.
 | Form fields | Use existing primitives and visible labels; attach validation to the relevant control. |
 | Save | Show unsaved state and save results. Self-hosted public content becomes visible when saved; additional pages also have a publication state. |
 | Cards and panels | Group a task or related data; preserve a readable hierarchy on narrow screens. |
-| Dialogs and sheets | Give them a name, keyboard focus management and a clear cancel or close path. |
+| Dialogs and sheets | Give them a name, keyboard focus management and a clear cancel or close path. Clicking outside closes a popup only when it has no unsaved changes or operation in progress; drafts elsewhere on the page do not block a read-only popup. |
 | Feedback | State loading, success and failure in words; do not rely on color or a transient toast for critical errors. |
 | Preview | Show the shared renderer and distinguish unsaved or unpublished state from the live page. |
 

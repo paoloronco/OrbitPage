@@ -207,6 +207,7 @@ export const ProfileSection = ({
   const [pendingFaviconPreviewUrl, setPendingFaviconPreviewUrl] = useState<string | null>(null);
   const [pendingCardBackgroundPreviewUrl, setPendingCardBackgroundPreviewUrl] = useState<string | null>(null);
   const [faviconDialogOpen, setFaviconDialogOpen] = useState(false);
+  const [preparingFavicon, setPreparingFavicon] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
   const [savedNotice, setSavedNotice] = useState<SavedProfileNotice | null>(null);
@@ -348,6 +349,7 @@ export const ProfileSection = ({
 
   const prepareImage = async (file: File, target: "logo" | "favicon" | "card-background") => {
     setUploadError(null);
+    if (target === "favicon") setPreparingFavicon(true);
     try {
       const optimized = await optimizeImageForUpload(file, target === "card-background" ? "cover" : "profile");
       const previewUrl = URL.createObjectURL(optimized);
@@ -372,6 +374,8 @@ export const ProfileSection = ({
       }
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "The selected image could not be processed.");
+    } finally {
+      if (target === "favicon") setPreparingFavicon(false);
     }
   };
 
@@ -874,7 +878,7 @@ export const ProfileSection = ({
       ) : null}
 
       <Dialog open={faviconDialogOpen} onOpenChange={setFaviconDialogOpen}>
-        <DialogContent>
+        <DialogContent dirty={preparingFavicon || Boolean(pendingFaviconFile) || draft.favicon !== profile.favicon || isSaving}>
           <DialogHeader>
             <DialogTitle>{tr("Browser favicon", "Favicon del browser")}</DialogTitle>
             <DialogDescription>{tr("Upload a square image for browser tabs and saved shortcuts. It can be different from the public profile image.", "Carica un'immagine quadrata per le schede del browser e i collegamenti salvati. Può essere diversa dall'immagine profilo pubblica.")}</DialogDescription>

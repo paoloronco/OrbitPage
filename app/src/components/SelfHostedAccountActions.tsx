@@ -227,7 +227,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
 
 
     <Dialog open={environmentOpen} onOpenChange={(open) => { if (!environmentBusy) { setEnvironmentOpen(open); if (!open) { setEnvironmentChanges({}); setEnvironmentPassword(''); } } }}>
-      <DialogContent className="orbitpage-admin oss-account-delete-dialog instance-environment-dialog" overlayClassName="oss-account-delete-overlay">
+      <DialogContent dirty={environmentBusy || Object.keys(environmentChanges).length > 0 || Boolean(environmentPassword)} className="orbitpage-admin oss-account-delete-dialog instance-environment-dialog" overlayClassName="oss-account-delete-overlay">
         <DialogHeader className="account-delete-header"><DialogTitle>{tr('Environment variables', 'Variabili ambiente')}</DialogTitle></DialogHeader>
         <DialogDescription>{tr('Existing values are hidden. Enter a new value to replace one, or remove an override to use the host setting. Changes take effect after a restart.', 'I valori esistenti sono nascosti. Inserisci un nuovo valore per sostituirlo, oppure rimuovi una modifica per usare il valore del server. Le modifiche hanno effetto dopo un riavvio.')}</DialogDescription>
         <div className="instance-environment-fields">
@@ -246,7 +246,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     </Dialog>
 
     <Dialog open={dialogOpen} onOpenChange={(open) => { if (!busy) setDialogOpen(open); }}>
-      <DialogContent className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
+      <DialogContent dirty={busy || Boolean(confirmation || currentPassword)} className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
         <DialogHeader className="account-delete-header">
           <DialogTitle>{tr('Remove your personal OrbitPage?', 'Rimuovere la tua OrbitPage personale?')}</DialogTitle>
         </DialogHeader>
@@ -264,7 +264,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     </Dialog>
 
     <Dialog open={accountDialogOpen} onOpenChange={(open) => { if (!accountBusy) setAccountDialogOpen(open); }}>
-      <DialogContent className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
+      <DialogContent dirty={accountBusy || Boolean(accountConfirmation || accountPassword)} className="orbitpage-admin oss-account-delete-dialog" overlayClassName="oss-account-delete-overlay">
         <DialogHeader className="account-delete-header">
           <DialogTitle>{tr("Delete your OrbitPage account?", "Eliminare l'account OrbitPage?")}</DialogTitle>
         </DialogHeader>
