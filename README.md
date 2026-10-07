@@ -139,16 +139,68 @@ Edit <code>app/.env</code> if needed.
 
 Open **Dashboard → Account → General → Instance details** and click **Check for updates**. When a release is available, click **Install update…** as an administrator. The dialog installs it through the host update service or shows terminal instructions if the service is unavailable.
 
-### Terminal (optional)
+### Updating OrbitPage
 
-For Docker installations with the host update command already installed, including legacy setups:
+<details>
+<summary><strong>Linux and Proxmox</strong></summary>
+
+For installer-managed deployments using `latest`:
 
 ~~~bash
-sudo orbitpage-update
-sudo docker exec orbitpage node -p "require('./package.json').version"
+sudo orbitpage update
 ~~~
 
-Back up your data before updating. See the [update guide](./docs/wiki/Deployment.md#update-safely) for manual Docker, Compose, source installations, and rollback.
+From the Proxmox host:
+
+~~~bash
+pct exec CTID -- orbitpage update
+~~~
+
+</details>
+
+<details>
+<summary><strong>Docker Compose</strong></summary>
+
+~~~bash
+docker compose pull
+docker compose up -d
+~~~
+
+</details>
+
+<details>
+<summary><strong>Docker Run</strong></summary>
+
+Pull the new image and recreate the container with the **same volume, ports, and environment**:
+
+~~~bash
+docker pull paoloronco/orbitpage:latest
+
+docker stop orbitpage
+docker rm orbitpage
+
+docker run -d \
+  --name orbitpage \
+  --restart unless-stopped \
+  -p 127.0.0.1:8080:8080 \
+  -v orbitpage-data:/app/data \
+  --security-opt no-new-privileges:true \
+  paoloronco/orbitpage:latest
+~~~
+
+</details>
+
+After every update, verify on the Docker host or inside the Proxmox guest:
+
+~~~bash
+curl -fsS http://127.0.0.1:8080/health
+~~~
+
+Also verify dashboard login, the public page, and uploaded media.
+
+For backups and rollback procedures, see [Maintenance](./docs/wiki/maintenance.md).
+
+---
 
 ## Data and backups
 
