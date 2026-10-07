@@ -8,17 +8,28 @@ Use this page as the main entry point for installing, configuring, using, mainta
 
 ---
 
-## Start here
+## Install OrbitPage
 
-| I want to... | Go to |
+| Task | Guide |
 | --- | --- |
 | Install OrbitPage | [Deployment](./wiki/Deployment.md) |
-| Run it locally from source | [Getting started](./wiki/Getting-started.md) |
-| Configure environment variables and public URLs | [Configuration](./wiki/Configuration.md) |
-| Learn how the dashboard works | [Dashboard](./wiki/dashboard.md) |
-| Edit profiles, pages, blocks, menus, and themes | [Content and design](./wiki/content-and-design.md) |
-| Publish a page or generate a QR code | [Publishing](./wiki/publishing.md) |
-| Troubleshoot an installation | [Troubleshooting](./wiki/Troubleshooting.md) |
+| Install with Docker Run | [Docker Run](./wiki/Deployment.md#docker-run-recommended) |
+| Install with GHCR Docker Run | [GHCR](./wiki/Deployment.md#ghcr) |
+| Install with Docker Compose | [Docker Compose](./wiki/Deployment.md#docker-compose) |
+| Install with the Linux installer | [Linux installer](./wiki/Deployment.md#linux-installer) |
+| Install on Proxmox VE | [Proxmox VE](./wiki/Deployment.md#proxmox-ve) |
+| Set up a reverse proxy and HTTPS | [Reverse proxy and HTTPS](./wiki/Deployment.md#reverse-proxy-and-https) |
+
+## Update OrbitPage
+
+| Task | Guide |
+| --- | --- |
+| Update guide | [Updating OrbitPage](./wiki/Deployment.md#updating-orbitpage) |
+| Web updates | [Web updates](./wiki/Deployment.md#web-updates) |
+| Update OrbitPage on Linux and Proxmox | [Linux and Proxmox](./wiki/Deployment.md#linux-and-proxmox) |
+| Update OrbitPage with Docker Compose | [Docker Compose updates](./wiki/Deployment.md#docker-compose-updates) |
+| Update OrbitPage with Docker Run or GHCR | [Docker Run updates](./wiki/Deployment.md#docker-run-updates) |
+| Verify the update | [Verification](./wiki/Deployment.md#verify-the-update) |
 
 ---
 
