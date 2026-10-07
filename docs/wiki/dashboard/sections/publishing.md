@@ -11,7 +11,7 @@ Saved self-hosted content appears at the public URL. Save each section before op
 3. Open the public URL in a signed-out browser and check navigation, media,
    contact destinations, consent and mobile layout.
 4. Review metadata, indexing and discovery in
-   [SEO and indexing](../SEO-and-indexing.md).
+   [SEO and indexing](../../SEO-and-indexing.md).
 
 ## Static QR
 
@@ -43,8 +43,8 @@ schedule choices against the preview before relying on them for opening hours.
 **Publish → TXT** edits robots, humans, AI, LLM and security discovery files and
 custom text endpoints. Save the relevant editor, then inspect the public
 endpoint. Machine-readable page Markdown is opt-in and distinct from `llms.txt`.
-Use the [SEO guide](../SEO-and-indexing.md) for paths, limits and indexing rules.
+Use the [SEO guide](../../SEO-and-indexing.md) for paths, limits and indexing rules.
 
 If a QR points to localhost, the wrong hostname or a language-prefixed dashboard
 URL, correct the public URL configuration before exporting again. For proxy and
-mount-path problems, see [Troubleshooting](../Troubleshooting.md).
+mount-path problems, see [Troubleshooting](../../Troubleshooting.md).

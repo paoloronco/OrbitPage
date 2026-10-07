@@ -41,15 +41,15 @@ If you encounter issues, see [Troubleshooting](./wiki/Troubleshooting.md).
 
 The [Dashboard guides](./wiki/dashboard/README.md) cover everyday administration and content management.
 
-- [Dashboard](./wiki/dashboard.md) — main sections, URLs, save controls, and navigation.
-- [Content and design](./wiki/dashboard/content-and-design.md) — profiles, blocks, menus, pages, themes, and media.
-- [Publishing and QR](./wiki/dashboard/publishing.md) — publish pages and share them with QR codes.
+- [Dashboard](./wiki/dashboard/dashboard.md) — main sections, URLs, save controls, and navigation.
+- [Content and design](./wiki/dashboard/sections/content-and-design.md) — profiles, blocks, menus, pages, themes, and media.
+- [Publishing and QR](./wiki/dashboard/sections/publishing.md) — publish pages and share them with QR codes.
 - [SEO and indexing](./wiki/SEO-and-indexing.md) — metadata, discovery files, and search-engine visibility.
-- [Analytics and privacy](./wiki/dashboard/analytics-and-privacy.md) — analytics, privacy settings, and consent.
-- [Newsletters](./wiki/dashboard/newsletters.md) — SMTP setup and campaigns.
+- [Analytics and privacy](./wiki/dashboard/sections/analytics-and-privacy.md) — analytics, privacy settings, and consent.
+- [Newsletters](./wiki/dashboard/sections/newsletters.md) — SMTP setup and campaigns.
 - [AI assistant](./wiki/ai-assistant.md) — AI configuration and suggested edits.
-- [Account and team](./wiki/dashboard/account-and-team.md) — users, passwords, TOTP, roles, teams, and API tokens.
-- [Backups and demo mode](./wiki/dashboard/backups-and-demo-mode.md) — exports, version history, restore options, and demo data.
+- [Account and team](./wiki/dashboard/sections/account-and-team.md) — users, passwords, TOTP, roles, teams, and API tokens.
+- [Backups and demo mode](./wiki/dashboard/sections/backups-and-demo-mode.md) — exports, version history, restore options, and demo data.
 
 ### Operations and security
 
@@ -84,7 +84,7 @@ Technical documentation for contributors and developers.
 1. Read [Deployment](./wiki/Deployment.md).
 2. Complete the installation for your preferred platform.
 3. Review [Configuration](./wiki/Configuration.md).
-4. Open the dashboard and continue with [Dashboard](./wiki/dashboard.md).
+4. Open the dashboard and continue with [Dashboard](./wiki/dashboard/dashboard.md).
 
 ### Existing installation
 
@@ -92,7 +92,7 @@ For routine administration, start with:
 
 - [Maintenance](./wiki/maintenance.md)
 - [Troubleshooting](./wiki/Troubleshooting.md)
-- [Backups and demo mode](./wiki/dashboard/backups-and-demo-mode.md)
+- [Backups and demo mode](./wiki/dashboard/sections/backups-and-demo-mode.md)
 - [Security](./wiki/Security.md)
 
 ### Contributor

@@ -36,7 +36,7 @@ To enable TOTP:
 **Replace recovery codes** needs the current password and an authentication or
 recovery code; replacement invalidates the previous set. **Disable 2FA** needs
 the same checks and confirmation and revokes older sessions. If all access is
-lost, follow the host-owner recovery procedure in [Security](../Security.md).
+lost, follow the host-owner recovery procedure in [Security](../../Security.md).
 Never send setup keys or recovery codes in support requests.
 
 ## Personal API tokens
@@ -50,7 +50,7 @@ credential. There can be at most ten active tokens per local account.
 Full access remains bounded by the account's current role and never permits
 user management. Read-only and Links-only further narrow it. Revoke a token
 from the same panel when it is no longer needed or might be exposed; deleting
-the account also deletes its tokens. See [the API guide](../api.md) for the
+the account also deletes its tokens. See [the API guide](../../api.md) for the
 request example and supported automation boundaries.
 
 ## Audit and instance operations
@@ -61,6 +61,6 @@ page contents. Records stay in SQLite and are included in infrastructure backups
 recording starts when the feature is installed.
 
 **Account → General** exposes version, instance checks and update actions.
-See [Deployment](../Deployment.md#update-safely) for updates and [Maintenance](../maintenance.md) for backup, rollback, and removal,
-and [Configuration](../Configuration.md#dashboard-environment-overrides) before
+See [Deployment](../../Deployment.md#update-safely) for updates and [Maintenance](../../maintenance.md) for backup, rollback, and removal,
+and [Configuration](../../Configuration.md#dashboard-environment-overrides) before
 changing runtime environment overrides. Restart after saving environment overrides.

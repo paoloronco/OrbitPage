@@ -17,15 +17,15 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 
 | Task | Guide |
 | --- | --- |
-| Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard.md) |
-| Edit profiles, blocks, menus, pages, and themes | [Content and design](./dashboard/content-and-design.md) |
-| Share a page or print a QR code | [Publishing and QR](./dashboard/publishing.md) |
+| Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard/dashboard.md) |
+| Edit profiles, blocks, menus, pages, and themes | [Content and design](./dashboard/sections/content-and-design.md) |
+| Share a page or print a QR code | [Publishing and QR](./dashboard/sections/publishing.md) |
 | Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
-| View analytics and configure consent | [Analytics and privacy](./dashboard/analytics-and-privacy.md) |
-| Configure SMTP and send campaigns | [Newsletters](./dashboard/newsletters.md) |
+| View analytics and configure consent | [Analytics and privacy](./dashboard/sections/analytics-and-privacy.md) |
+| Configure SMTP and send campaigns | [Newsletters](./dashboard/sections/newsletters.md) |
 | Configure AI and review suggested edits | [AI assistant](./ai-assistant.md) |
-| Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/backups-and-demo-mode.md) |
-| Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/account-and-team.md) |
+| Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/sections/backups-and-demo-mode.md) |
+| Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/sections/account-and-team.md) |
 
 ## Maintain an installation
 

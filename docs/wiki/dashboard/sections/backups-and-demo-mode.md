@@ -9,7 +9,7 @@ Use dashboard exports to move selected content. Back up the complete data direct
 | Dashboard JSON or portable ZIP | Selective transfer, inspection, and application-level restore | The selected sections; the optional ZIP also contains images |
 | Infrastructure backup | Full disaster recovery | `orbitpage.db`, `uploads/`, and the deployment configuration needed to start the same instance |
 
-Follow the [infrastructure backup and restore runbook](../maintenance.md#create-and-verify-an-infrastructure-backup) for production recovery.
+Follow the [infrastructure backup and restore runbook](../../maintenance.md#create-and-verify-an-infrastructure-backup) for production recovery.
 
 ## Export a dashboard backup
 
@@ -77,7 +77,7 @@ Removing an image or video from the editor removes its database reference but do
 4. Select **Clean now** only when the unused count is expected.
 5. Reload the public page and check images, video blocks, menu images, and the background.
 
-Cleanup deletes files from storage and cannot be undone in the dashboard. Recovery requires a backup. The grace period and automatic cleanup can be configured with `MEDIA_CLEANUP_ENABLED` and `MEDIA_CLEANUP_GRACE_HOURS`; see [Configuration](../Configuration.md).
+Cleanup deletes files from storage and cannot be undone in the dashboard. Recovery requires a backup. The grace period and automatic cleanup can be configured with `MEDIA_CLEANUP_ENABLED` and `MEDIA_CLEANUP_GRACE_HOURS`; see [Configuration](../../Configuration.md).
 
 ## Demo mode
 
@@ -87,4 +87,4 @@ Assume that every change made in demo mode will be lost. Some editing actions ca
 
 Demo mode uses fixed public policy pages and keeps OrbitPage attribution visible. Enable it only with disposable data.
 
-The server and frontend demo settings must describe the same deployment. Use the [Configuration reference](../Configuration.md) for `DEMO_MODE` and `VITE_DEMO_MODE`, then verify the reset with disposable content before making the instance reachable by others.
+The server and frontend demo settings must describe the same deployment. Use the [Configuration reference](../../Configuration.md) for `DEMO_MODE` and `VITE_DEMO_MODE`, then verify the reset with disposable content before making the instance reachable by others.
