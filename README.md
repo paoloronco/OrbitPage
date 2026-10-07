@@ -317,7 +317,7 @@ Common runtime settings:
 
 Administrators can change instance settings under **Account → General → Instance details → Environment variables**.
 
-Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
+Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/features/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
 
 ## Documentation
 
@@ -328,13 +328,13 @@ Start from the [documentation index](./docs/README.md).
 | Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
 | Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
 | Navigate the editor | [Dashboard guide](./docs/wiki/dashboard.md) |
-| Manage users, passwords and two-factor authentication | [Account and team](./docs/wiki/account-and-team.md) |
-| Share or print a QR code | [Publishing and QR](./docs/wiki/publishing.md) |
-| Build content, menus, subpages, and themes | [Content and design](./docs/wiki/content-and-design.md) |
-| Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/wiki/backups-and-demo-mode.md) |
+| Manage users, passwords and two-factor authentication | [Account and team](./docs/wiki/features/account-and-team.md) |
+| Share or print a QR code | [Publishing and QR](./docs/wiki/features/publishing.md) |
+| Build content, menus, subpages, and themes | [Content and design](./docs/wiki/features/content-and-design.md) |
+| Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/wiki/features/backups-and-demo-mode.md) |
 | Configure AI safely | [AI assistant](./docs/wiki/ai-assistant.md) |
-| Configure analytics and consent | [Analytics and privacy](./docs/wiki/analytics-and-privacy.md) |
-| Configure SMTP and send newsletters | [Newsletters](./docs/wiki/newsletters.md) |
+| Configure analytics and consent | [Analytics and privacy](./docs/wiki/features/analytics-and-privacy.md) |
+| Configure SMTP and send newsletters | [Newsletters](./docs/wiki/features/newsletters.md) |
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 

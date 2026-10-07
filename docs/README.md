@@ -39,17 +39,17 @@ If you encounter issues, see [Troubleshooting](./wiki/Troubleshooting.md).
 
 ### Using OrbitPage
 
-Guides for everyday administration and content management.
+The [Features folder](./wiki/features/README.md) contains guides and dashboard previews for everyday administration and content management.
 
 - [Dashboard](./wiki/dashboard.md) — main sections, URLs, save controls, and navigation.
-- [Content and design](./wiki/content-and-design.md) — profiles, blocks, menus, pages, themes, and media.
-- [Publishing and QR](./wiki/publishing.md) — publish pages and share them with QR codes.
+- [Content and design](./wiki/features/content-and-design.md) — profiles, blocks, menus, pages, themes, and media.
+- [Publishing and QR](./wiki/features/publishing.md) — publish pages and share them with QR codes.
 - [SEO and indexing](./wiki/SEO-and-indexing.md) — metadata, discovery files, and search-engine visibility.
-- [Analytics and privacy](./wiki/analytics-and-privacy.md) — analytics, privacy settings, and consent.
-- [Newsletters](./wiki/newsletters.md) — SMTP setup and campaigns.
+- [Analytics and privacy](./wiki/features/analytics-and-privacy.md) — analytics, privacy settings, and consent.
+- [Newsletters](./wiki/features/newsletters.md) — SMTP setup and campaigns.
 - [AI assistant](./wiki/ai-assistant.md) — AI configuration and suggested edits.
-- [Account and team](./wiki/account-and-team.md) — users, passwords, TOTP, roles, teams, and API tokens.
-- [Backups and demo mode](./wiki/backups-and-demo-mode.md) — exports, version history, restore options, and demo data.
+- [Account and team](./wiki/features/account-and-team.md) — users, passwords, TOTP, roles, teams, and API tokens.
+- [Backups and demo mode](./wiki/features/backups-and-demo-mode.md) — exports, version history, restore options, and demo data.
 
 ### Operations and security
 
@@ -92,7 +92,7 @@ For routine administration, start with:
 
 - [Maintenance](./wiki/maintenance.md)
 - [Troubleshooting](./wiki/Troubleshooting.md)
-- [Backups and demo mode](./wiki/backups-and-demo-mode.md)
+- [Backups and demo mode](./wiki/features/backups-and-demo-mode.md)
 - [Security](./wiki/Security.md)
 
 ### Contributor
