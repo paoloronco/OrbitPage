@@ -204,11 +204,9 @@ Common runtime settings:
 | <code>ORBITPAGE_TRUST_PROXY</code> | Disabled | Trusted proxy IPs or CIDRs; see the configuration reference before enabling |
 | <code>BASE_PATH</code> | Empty | Mount path when serving under a subdirectory |
 
-Administrators can change the public URL and name, indexing, upload limits, cleanup toggle, timezone, and environment-based OpenAI key under **Account → General → Instance details → Environment variables**. Changes require the current password and an instance restart. Saved overrides take precedence over host values. Infrastructure and authentication settings remain host-managed.
+Administrators can change instance settings under **Account → General → Instance details → Environment variables**.
 
-Set <code>PUBLIC_SITE_URL</code> to your public HTTPS URL before sharing QR codes or sending newsletters. If you edit a Docker environment file, recreate the container or Compose service to apply it; <code>docker restart</code> does not reload the file.
-
-Configure SMTP and send a test message under **Newsletter**. Subscribers confirm their address before receiving campaigns. See the [newsletter guide](./docs/wiki/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
+Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
 
 ## Data and backups
 
@@ -227,11 +225,7 @@ The dashboard exports selected application data as JSON, with an optional **Incl
 
 ## Documentation
 
-Start from the task-oriented [documentation index](./docs/README.md). The
-[product requirements](./docs/wiki/product-requirements.md),
-[design system](./docs/wiki/design-system.md) and
-[architecture](./docs/wiki/architecture.md) describe the shared OSS product;
-repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
+Start from the [documentation index](./docs/README.md).
 
 | Task | Guide |
 | --- | --- |
@@ -249,7 +243,7 @@ repository-wide agent instructions remain in [AGENTS.md](./AGENTS.md).
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 
-The [self-hosted API](./docs/wiki/api.md) serves the dashboard and accepts personal tokens for scripts; its routes change with application releases. The [n8n community node](https://github.com/paoloronco/n8n-nodes-orbitpage) connects to the managed-service API.
+To automate a self-hosted installation, see the [API guide](./docs/wiki/api.md). For pages hosted on [orbitpage.com](https://orbitpage.com), use the [n8n community node](https://github.com/paoloronco/n8n-nodes-orbitpage).
 
 ## Security and contributing
 
