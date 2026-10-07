@@ -13,15 +13,15 @@ An installation serves a main page, optional additional pages, and a menu. It wo
 | Area | Expected result | Guide |
 | --- | --- | --- |
 | Setup | Browser setup checks the instance, creates the first administrator, and opens the dashboard | [Deployment](./Deployment.md) |
-| Visual editing | Saved profile, blocks, layouts, and theme survive reload and render on the public page | [Content and design](./features/content-and-design.md) |
+| Visual editing | Saved profile, blocks, layouts, and theme survive reload and render on the public page | [Content and design](./dashboard/content-and-design.md) |
 | Public destinations | Enabled menus and published additional pages resolve at their URLs; hidden content stays private | [Dashboard](./dashboard.md) |
-| Sharing and discovery | QR codes, scheduled campaign links, metadata, sitemap, and text files use the configured public URL | [Publishing](./features/publishing.md), [SEO](./SEO-and-indexing.md) |
-| Analytics and consent | Visit details and third-party tracking follow consent; reports are available in the dashboard | [Analytics and privacy](./features/analytics-and-privacy.md) |
-| Newsletter | The owner can configure SMTP, verify it, manage confirmed subscribers, and send or schedule campaigns | [Newsletters](./features/newsletters.md) |
+| Sharing and discovery | QR codes, scheduled campaign links, metadata, sitemap, and text files use the configured public URL | [Publishing](./dashboard/publishing.md), [SEO](./SEO-and-indexing.md) |
+| Analytics and consent | Visit details and third-party tracking follow consent; reports are available in the dashboard | [Analytics and privacy](./dashboard/analytics-and-privacy.md) |
+| Newsletter | The owner can configure SMTP, verify it, manage confirmed subscribers, and send or schedule campaigns | [Newsletters](./dashboard/newsletters.md) |
 | AI editing | With an optional provider key, the assistant proposes changes and applies them only after confirmation | [AI assistant](./ai-assistant.md) |
-| Accounts | Roles restrict reads and changes on the server; each user can manage their password and TOTP | [Account and team](./features/account-and-team.md) |
+| Accounts | Roles restrict reads and changes on the server; each user can manage their password and TOTP | [Account and team](./dashboard/account-and-team.md) |
 | Automation | Personal API tokens have limited access and expiry and can be revoked | [API](./api.md) |
-| Recovery | Data and secrets survive updates; exports, version history, infrastructure backups, and admin recovery have documented procedures | [Backups](./features/backups-and-demo-mode.md), [Maintenance](./maintenance.md), [Recovery](./recovery.md) |
+| Recovery | Data and secrets survive updates; exports, version history, infrastructure backups, and admin recovery have documented procedures | [Backups](./dashboard/backups-and-demo-mode.md), [Maintenance](./maintenance.md), [Recovery](./recovery.md) |
 
 ## Requirements across features
 

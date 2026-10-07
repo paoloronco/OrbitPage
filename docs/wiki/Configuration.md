@@ -117,4 +117,4 @@ Defaults below are the application's fallback values. The source `.env.example` 
 
 Keep `DATA_DIR` persistent and signing/encryption secrets unchanged across restarts and updates.
 
-Configure SMTP in **Newsletter → Settings**. See [Newsletters](./features/newsletters.md) and [AI assistant](./ai-assistant.md) for their setup. For staging, use a separate data directory and secret and set `SEO_INDEXING=false`.
+Configure SMTP in **Newsletter → Settings**. See [Newsletters](./dashboard/newsletters.md) and [AI assistant](./ai-assistant.md) for their setup. For staging, use a separate data directory and secret and set `SEO_INDEXING=false`.

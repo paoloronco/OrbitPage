@@ -13,19 +13,19 @@ Guides for the open-source, self-hosted application. Start here to install Orbit
 
 ## Use OrbitPage
 
-The [Features folder](./features/README.md) groups the dashboard guides and their previews.
+See [Dashboard guides](./dashboard/README.md) for section instructions and previews.
 
 | Task | Guide |
 | --- | --- |
 | Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard.md) |
-| Edit profiles, blocks, menus, pages, and themes | [Content and design](./features/content-and-design.md) |
-| Share a page or print a QR code | [Publishing and QR](./features/publishing.md) |
+| Edit profiles, blocks, menus, pages, and themes | [Content and design](./dashboard/content-and-design.md) |
+| Share a page or print a QR code | [Publishing and QR](./dashboard/publishing.md) |
 | Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
-| View analytics and configure consent | [Analytics and privacy](./features/analytics-and-privacy.md) |
-| Configure SMTP and send campaigns | [Newsletters](./features/newsletters.md) |
+| View analytics and configure consent | [Analytics and privacy](./dashboard/analytics-and-privacy.md) |
+| Configure SMTP and send campaigns | [Newsletters](./dashboard/newsletters.md) |
 | Configure AI and review suggested edits | [AI assistant](./ai-assistant.md) |
-| Export, restore, use version history, or clean media | [Backups and demo mode](./features/backups-and-demo-mode.md) |
-| Manage users, passwords, TOTP, and API tokens | [Account and team](./features/account-and-team.md) |
+| Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/backups-and-demo-mode.md) |
+| Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/account-and-team.md) |
 
 ## Maintain an installation
 
