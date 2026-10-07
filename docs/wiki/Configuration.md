@@ -2,6 +2,8 @@
 
 Backend environment variables apply when the server starts. Frontend `VITE_*` variables apply during the build.
 
+For source installations, copy [app/.env.example](../../app/.env.example) to `app/.env` and follow [Getting started](./Getting-started.md). Vite reads it during the frontend build; `node --env-file=../.env server.js`, run from `app/server`, loads it before server initialization. Values already set in the host environment take precedence. Restart after editing server settings; `npm run start` does not load this file automatically.
+
 ## Dashboard environment overrides
 
 Administrators can open **Account → General → Instance details → Environment variables** to change:
