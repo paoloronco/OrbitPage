@@ -1,5 +1,5 @@
 import { resolveSafeBrowserHttpUrl } from './browser-network-policy';
-import { isHostedRuntime } from './runtime-mode';
+import { getEditorIntegration } from './editor-integration';
 
 declare global {
   interface Window {
@@ -83,9 +83,10 @@ export const withTenantBasePath = withPageRootPath;
 export const apiPath = (path = ''): string => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   if (typeof window !== 'undefined') {
-    const hosted = isHostedRuntime();
+    const integration = getEditorIntegration();
+    if (integration) return integration.apiPath(normalizedPath);
     const staticSnapshot = Boolean(window.__ORBITPAGE_STATIC_SNAPSHOT__);
-    const apiBase = hosted || staticSnapshot
+    const apiBase = staticSnapshot
       ? window.__ORBITPAGE_API_BASE__
       : null;
     if (apiBase) {

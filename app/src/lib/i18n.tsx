@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { getHostedThemeRoot, isIntegratedHostedSurface } from "./hosted-surface";
+import { getEditorThemeRoot, isEmbeddedEditor } from "./editor-integration";
 import { parseLocalizedPublicPath } from "./public-routing";
 
 export const APP_LOCALES = ["en", "it", "es", "fr", "de", "pt", "nl", "pl", "tr", "ru", "ar", "zh", "ja", "ko"] as const;
@@ -128,7 +128,7 @@ export function AppI18nProvider({ children, mode = "editor" }: { children: React
   }, [mode]);
 
   useEffect(() => {
-    const root = isIntegratedHostedSurface() ? getHostedThemeRoot() : document.documentElement;
+    const root = isEmbeddedEditor() ? getEditorThemeRoot() : document.documentElement;
     root.lang = locale;
     root.dir = RTL_APP_LOCALES.has(locale) ? "rtl" : "ltr";
   }, [locale]);

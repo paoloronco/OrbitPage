@@ -29,7 +29,7 @@ The bundled `/api` changes with the application release; it has no independent A
 
 ## Shared code and hosted service
 
-The public repository owns the editor, renderer, page schema, and self-hosted server. The hosted service builds the shared frontend and supplies its own authentication, persistence, and publication adapters.
+The public repository owns the editor, renderer, page schema, and self-hosted server. Applications can reuse the editor through generic callbacks. The hosted service maintains its entry point, build configuration, authentication, persistence, and publication adapters separately.
 
 Hosted tenants, plans, billing, managed storage, moderation, commerce, and custom-domain provisioning remain outside this repository. The hosted adapter does not use the self-hosted SQLite database.
 

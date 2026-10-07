@@ -4,7 +4,6 @@ import path from "path";
 import { readFileSync } from "fs";
 
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf-8"));
-const hostedBuild = process.env.VITE_ORBITPAGE_HOSTED_MODE === "true";
 
 export function vendorChunk(id: string) {
   if (!id.includes("node_modules/")) return;
@@ -44,11 +43,11 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: vendorChunk,
-        entryFileNames: hostedBuild ? "assets/orbitpage.js" : "assets/orbitpage-[hash].js",
+        entryFileNames: "assets/orbitpage-[hash].js",
         chunkFileNames: "assets/[name]-[hash].js",
         assetFileNames: (assetInfo) =>
           assetInfo.name?.endsWith(".css")
-            ? hostedBuild ? "assets/orbitpage.css" : "assets/orbitpage-[hash].css"
+            ? "assets/orbitpage-[hash].css"
             : "assets/[name]-[hash][extname]",
       },
     },

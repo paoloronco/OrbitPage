@@ -3,7 +3,7 @@ import { Check, LoaderCircle, Mail } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import type { LinkData } from "./LinkCard";
 import { apiPath } from "@/lib/base-path";
-import { getHostedSurfaceConfig } from "@/lib/hosted-surface";
+import { getEditorIntegration } from "@/lib/editor-integration";
 import { useAppI18n } from "@/lib/i18n";
 import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
 
@@ -19,7 +19,7 @@ export function PublicNewsletterCard({ link }: { link: LinkData }) {
     setState("sending");
     setError("");
     try {
-      const username = window.__ORBITPAGE_STATIC_SNAPSHOT__?.page.pageSlug || getHostedSurfaceConfig()?.publicSlug || "";
+      const username = window.__ORBITPAGE_STATIC_SNAPSHOT__?.page.pageSlug || getEditorIntegration()?.publicSlug || "";
       const response = await fetch(apiPath("/newsletter/public/subscribe"), {
         method: "POST",
         headers: { "content-type": username ? "text/plain;charset=UTF-8" : "application/json" },

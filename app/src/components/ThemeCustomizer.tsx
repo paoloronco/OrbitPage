@@ -37,7 +37,7 @@ import { themePresets, type ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
 import { commitPendingTheme, buildPagePresetTheme, buildCardPresetTheme, findMatchingCardPreset, type EditableTheme } from "./theme-save-state";
-import type { HostedThemeAccess } from "@/lib/hosted-editor-contract";
+import type { EditorThemeAccess } from "@/lib/editor-capabilities";
 import { PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { useAppI18n } from "@/lib/i18n";
 import { Comparison, ComparisonHandle, ComparisonItem } from "@/components/ui/comparison";
@@ -48,7 +48,7 @@ interface ThemeCustomizerProps {
   onThemePreview?: (theme: ThemeConfig) => void;
   renderPreview?: (theme: ThemeConfig, device: PreviewDevice) => ReactNode;
   showEmbeddedPreview?: boolean;
-  accessLevel?: HostedThemeAccess;
+  accessLevel?: EditorThemeAccess;
   videoUploadsEnabled?: boolean;
   maxUploadBytes?: number | null;
   maxVideoUploadBytes?: number | null;

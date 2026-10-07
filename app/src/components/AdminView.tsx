@@ -48,19 +48,20 @@ import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
 import { LivePreview, PreviewDeviceFrame, type PreviewDevice } from "./LivePreview";
-import { isIntegratedHostedSurface, isSaasMode, publicUrlApi, utilityApi } from "@/lib/api-client";
+import { publicUrlApi, utilityApi } from "@/lib/api-client";
 import {
-  getHostedSurfaceConfig,
-  HOSTED_CONFIG_CHANGED_EVENT,
-  type HostedSurfaceConfig,
-} from "@/lib/hosted-surface";
+  isEmbeddedEditor,
+  getEditorIntegration,
+  EDITOR_CONFIG_CHANGED_EVENT,
+  type EditorIntegration,
+} from "@/lib/editor-integration";
 import { withBasePath } from "@/lib/base-path";
 import { DEMO_MODE } from "@/lib/config";
 import { getPublicUrlOverride } from "@/lib/public-url-override";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import type { ProfileLayout, ProfileLayoutViewport } from "@/lib/profile-layout";
 import { moveMobileCard, PROFILE_CARD_LAYOUT_ID, type CardLayout, type CardLayoutSource } from "@/lib/card-layout";
-import type { HostedEditorBilling, HostedEditorPlan, HostedEditorUsage } from "@/lib/hosted-editor-contract";
+import type { EditorActions, EditorAccess, EditorUsage } from "@/lib/editor-capabilities";
 import { canonicalAdminTab, type AdminContentSection, type AdminEditorSection, type AdminTab, type AdminSubsectionScope } from "@/lib/admin-navigation";
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
 import type { InternalDestinationOption } from "@/lib/link-blocks";
@@ -129,9 +130,9 @@ interface AdminViewProps {
   theme: ThemeConfig;
   menu?: MenuCatalog;
   currentUser: CurrentUser | null;
-  saasPlan?: HostedEditorPlan | null;
-  saasUsage?: HostedEditorUsage | null;
-  saasBilling?: HostedEditorBilling | null;
+  editorAccess?: EditorAccess | null;
+  editorUsage?: EditorUsage | null;
+  editorActions?: EditorActions | null;
   onProfileUpdate: (profile: ProfileData) => void | Promise<void>;
   onLinksUpdate: (links: LinkData[]) => void | Promise<void>;
   onSubpagesUpdate?: (pages: EditorSubpage[]) => Promise<void>;
@@ -195,9 +196,9 @@ export const AdminView = ({
   theme,
   menu = createDefaultMenu(),
   currentUser,
-  saasPlan,
-  saasUsage,
-  saasBilling,
+  editorAccess,
+  editorUsage,
+  editorActions,
   onProfileUpdate,
   onLinksUpdate,
   onSubpagesUpdate = async () => undefined,
@@ -250,13 +251,13 @@ export const AdminView = ({
   const [updateDialogVersion, setUpdateDialogVersion] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
   const [contentSection, setContentSection] = useState<ContentDestination>(() => (
-    getHostedSurfaceConfig()?.contentSection
-      || (getHostedSurfaceConfig()?.extensions?.shop?.selected ? "shop" : null)
+    getEditorIntegration()?.contentSection
+      || (getEditorIntegration()?.extensions?.shop?.selected ? "shop" : null)
       || requestedContentSection
       || contentSectionForTab(requestedTab)
       || "link"
   ));
-  const [hostedSurfaceConfig, setHostedSurfaceConfig] = useState<HostedSurfaceConfig | null>(() => getHostedSurfaceConfig());
+  const [editorIntegration, setEditorIntegration] = useState<EditorIntegration | null>(() => getEditorIntegration());
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
@@ -265,7 +266,7 @@ export const AdminView = ({
   const [previewSubpage, setPreviewSubpage] = useState<{ page: EditorSubpage; links: LinkData[] } | null>(null);
   const onSubpagePreviewChange = useCallback((preview: { page: EditorSubpage; links: LinkData[] } | null) => setPreviewSubpage(preview), []);
   const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>(() => {
-    const config = getHostedSurfaceConfig();
+    const config = getEditorIntegration();
     if (config?.extensions?.shop?.selected) return "shop";
     if (requestedEditorSection) return requestedEditorSection === "profile" ? "profile" : visualSectionForContent(requestedEditorSection);
     const requestedContent = canonicalViewTab(config?.section || requestedTab) === "content"
@@ -293,28 +294,28 @@ export const AdminView = ({
   const publicUrlOverride = getPublicUrlOverride();
   const [publicPageHref, setPublicPageHref] = useState(publicUrlOverride || withBasePath('/'));
   const [publicPageSlug, setPublicPageSlug] = useState<string | null>(null);
-  const entitlements = saasPlan?.entitlements;
-  const managePlanHref = saasBilling?.manageUrl || "/dashboard/billing";
-  const isHostedAdmin = isSaasMode() || Boolean(
-    saasPlan ||
-    saasUsage ||
-    saasBilling
+  const entitlements = editorAccess?.entitlements;
+  const managePlanHref = editorActions?.manageUrl || "/dashboard/billing";
+  const hasEditorIntegration = isEmbeddedEditor() || Boolean(
+    editorAccess ||
+    editorUsage ||
+    editorActions
   );
-  const isIntegratedHostedAdmin = isHostedAdmin && isIntegratedHostedSurface();
-  const subsection = isIntegratedHostedAdmin ? hostedSurfaceConfig?.subsection : requestedSubsection;
+  const embeddedEditor = hasEditorIntegration && isEmbeddedEditor();
+  const subsection = embeddedEditor ? editorIntegration?.subsection : requestedSubsection;
   const accountView = subsection === "security" ? "security" : subsection === "audit" ? "audit" : "general";
   const selectSubsection = (scope: AdminSubsectionScope, value: string) => {
-    if (isIntegratedHostedAdmin) hostedSurfaceConfig?.onSubsectionChange?.(scope, value);
+    if (embeddedEditor) editorIntegration?.onSubsectionChange?.(scope, value);
     else onSubsectionChange?.(scope, value);
   };
-  const hostedShop = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.shop : undefined;
-  const hostedPanelTabs = isIntegratedHostedAdmin ? hostedSurfaceConfig?.extensions?.panels || [] : [];
-  const usesDashboardShell = !isHostedAdmin || isIntegratedHostedAdmin;
-  const dashboardSlug = hostedSurfaceConfig?.publicSlug || publicPageSlug || currentUser?.username || "admin";
+  const extensionShop = embeddedEditor ? editorIntegration?.extensions?.shop : undefined;
+  const extensionPanelTabs = embeddedEditor ? editorIntegration?.extensions?.panels || [] : [];
+  const usesDashboardShell = !hasEditorIntegration || embeddedEditor;
+  const dashboardSlug = editorIntegration?.publicSlug || publicPageSlug || currentUser?.username || "admin";
   const isProspectReadOnly = currentUser?.readOnly === true;
-  const orbitPageBadgeEditable = isHostedAdmin && entitlements?.badgeRequired !== true && !isProspectReadOnly;
+  const orbitPageBadgeEditable = hasEditorIntegration && entitlements?.badgeRequired !== true && !isProspectReadOnly;
   const resolveOrbitPageBadgeVisibility = (preference: boolean | undefined) => (
-    orbitPageBadgeEditable ? (preference ?? !saasPlan) : true
+    orbitPageBadgeEditable ? (preference ?? !editorAccess) : true
   );
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
@@ -326,10 +327,10 @@ export const AdminView = ({
   }, []);
 
   useEffect(() => {
-    if (!isIntegratedHostedAdmin) return;
+    if (!embeddedEditor) return;
     const syncHostedConfig = () => {
-      const nextConfig = getHostedSurfaceConfig();
-      setHostedSurfaceConfig(nextConfig);
+      const nextConfig = getEditorIntegration();
+      setEditorIntegration(nextConfig);
       setContentSection((current) => {
         if (nextConfig?.contentSection) return nextConfig.contentSection;
         if (nextConfig?.extensions?.shop?.selected) return "shop";
@@ -343,16 +344,16 @@ export const AdminView = ({
         setVisualSection("profile");
       }
     };
-    window.addEventListener(HOSTED_CONFIG_CHANGED_EVENT, syncHostedConfig);
+    window.addEventListener(EDITOR_CONFIG_CHANGED_EVENT, syncHostedConfig);
     syncHostedConfig();
-    return () => window.removeEventListener(HOSTED_CONFIG_CHANGED_EVENT, syncHostedConfig);
-  }, [isIntegratedHostedAdmin]);
+    return () => window.removeEventListener(EDITOR_CONFIG_CHANGED_EVENT, syncHostedConfig);
+  }, [embeddedEditor]);
 
   const selectContentSection = (section: ContentDestination) => {
     setContentSection(section);
     onContentSectionChange?.(section);
-    if (!isIntegratedHostedAdmin) return;
-    const config = getHostedSurfaceConfig();
+    if (!embeddedEditor) return;
+    const config = getEditorIntegration();
     if (config?.onContentSectionChange) {
       config.onContentSectionChange(section);
     } else if (section === "shop") {
@@ -365,7 +366,7 @@ export const AdminView = ({
       setPublicPageHref(publicUrlOverride);
       return;
     }
-    if (isHostedAdmin) return;
+    if (hasEditorIntegration) return;
 
     let cancelled = false;
     void publicUrlApi.get(locale)
@@ -381,7 +382,7 @@ export const AdminView = ({
     return () => {
       cancelled = true;
     };
-  }, [isHostedAdmin, locale, publicUrlOverride]);
+  }, [hasEditorIntegration, locale, publicUrlOverride]);
 
   useEffect(() => {
     setPreviewProfile(profile);
@@ -416,9 +417,9 @@ export const AdminView = ({
   const contentRouting: ContentRouting = menu.routing || DEFAULT_CONTENT_ROUTING;
   const firstEnabledSubpage = subpages.find((page) => page.enabled) || null;
   useEffect(() => {
-    if (!isIntegratedHostedAdmin) return;
-    getHostedSurfaceConfig()?.onContentRoutingChange?.(contentRouting);
-  }, [contentRouting, isIntegratedHostedAdmin]);
+    if (!embeddedEditor) return;
+    getEditorIntegration()?.onContentRoutingChange?.(contentRouting);
+  }, [contentRouting, embeddedEditor]);
 
   const internalDestinations: InternalDestinationOption[] = [
     ...(contentRouting.linkEnabled ? [{
@@ -435,7 +436,7 @@ export const AdminView = ({
       title: tr("Menu", "Menu"),
       description: menu.description || tr("Browse food and drinks", "Scopri piatti e bevande"),
     }] : []),
-    ...(hostedShop?.enabled ? [{
+    ...(extensionShop?.enabled ? [{
       id: "shop",
       kind: "shop" as const,
       path: "/shop",
@@ -465,17 +466,17 @@ export const AdminView = ({
   }, []);
 
   const visibleTabs = tabs.filter(tab => {
-    if (isProspectReadOnly && !isHostedAdmin) return tab.value === "plan";
+    if (isProspectReadOnly && !hasEditorIntegration) return tab.value === "plan";
     switch (tab.value) {
       case 'profile':   return canEditProfile;
       case 'content':   return canEditLinks || canEditMenu;
-      case 'ai':        return hostedPanelTabs.includes('ai') || (!isHostedAdmin && (canEditProfile || canEditLinks || canEditTheme));
+      case 'ai':        return extensionPanelTabs.includes('ai') || (!hasEditorIntegration && (canEditProfile || canEditLinks || canEditTheme));
       case 'theme':     return canEditTheme;
       case 'publish':   return canEditProfile || canEditCompliance;
-      case 'team':      return hostedPanelTabs.includes('team') || (!isHostedAdmin && canManageUsers);
-      case 'newsletter': return hostedPanelTabs.includes('newsletter') || (!isHostedAdmin && canManageUsers);
-      case 'account':   return hostedPanelTabs.includes('account') || !isHostedAdmin;
-      case 'plan':      return hostedPanelTabs.includes('plan') || !isHostedAdmin;
+      case 'team':      return extensionPanelTabs.includes('team') || (!hasEditorIntegration && canManageUsers);
+      case 'newsletter': return extensionPanelTabs.includes('newsletter') || (!hasEditorIntegration && canManageUsers);
+      case 'account':   return extensionPanelTabs.includes('account') || !hasEditorIntegration;
+      case 'plan':      return extensionPanelTabs.includes('plan') || !hasEditorIntegration;
       case 'access':    return false;
       case 'backup':    return canManageUsers;
       case 'analytics': return canViewAnalytics;
@@ -492,7 +493,7 @@ export const AdminView = ({
       : tabLabel(tab)
   );
   const displayedTabDescription = (tab: AdminTab) => (
-    (hostedSurfaceConfig?.section === tab ? hostedSurfaceConfig.sectionDescription : undefined) || (
+    (editorIntegration?.section === tab ? editorIntegration.sectionDescription : undefined) || (
       tab === "profile"
         ? tr("Edit identity and content directly on your real page.", "Modifica identità e contenuti direttamente sulla pagina reale.")
         : tabDescription(tab)
@@ -506,7 +507,7 @@ export const AdminView = ({
     const canonicalTab = requestedCanonicalTab === "content" ? "profile" : requestedCanonicalTab;
     setActiveTab(canonicalTab);
     setMobileNavOpen(false);
-    if (canonicalTab === "profile" && !isIntegratedHostedAdmin) onEditorSectionChange?.("profile");
+    if (canonicalTab === "profile" && !embeddedEditor) onEditorSectionChange?.("profile");
     else onTabChange?.(canonicalTab);
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -516,7 +517,7 @@ export const AdminView = ({
 
   const selectVisualSection = (section: VisualSiteEditorSection, linkId?: string) => {
     setVisualSection(section);
-    if (isIntegratedHostedAdmin) {
+    if (embeddedEditor) {
       if (section === "profile") onTabChange?.("profile");
       else selectContentSection(section === "links" ? "link" : section);
     } else {
@@ -574,21 +575,21 @@ export const AdminView = ({
   }, [requestedTab, requestedContentSection, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
 
   useEffect(() => {
-    if (isHostedAdmin || !mobileNavOpen) return;
+    if (hasEditorIntegration || !mobileNavOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobileNavOpen(false);
     };
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [isHostedAdmin, mobileNavOpen]);
+  }, [hasEditorIntegration, mobileNavOpen]);
 
   useEffect(() => {
     setGaId(profile.googleAnalyticsId || "");
   }, [profile.googleAnalyticsId]);
 
   const handleLogout = async () => {
-    if (isIntegratedHostedAdmin && hostedSurfaceConfig?.onSignOut) {
-      hostedSurfaceConfig.onSignOut();
+    if (embeddedEditor && editorIntegration?.onSignOut) {
+      editorIntegration.onSignOut();
       return;
     }
     try {
@@ -601,10 +602,10 @@ export const AdminView = ({
   };
 
   useEffect(() => {
-    if (!requestedEditorSection || isIntegratedHostedAdmin) return;
+    if (!requestedEditorSection || embeddedEditor) return;
     setVisualSection(requestedEditorSection === "profile" ? "profile" : visualSectionForContent(requestedEditorSection));
     if (requestedEditorSection !== "profile") setContentSection(requestedEditorSection);
-  }, [requestedEditorSection, isIntegratedHostedAdmin]);
+  }, [requestedEditorSection, embeddedEditor]);
 
   const updateVisualProfileLayout = (layout: ProfileLayout, viewport: ProfileLayoutViewport) => {
     setVisualProfileLayoutCommand((current) => ({ id: (current?.id || 0) + 1, layout, viewport }));
@@ -667,7 +668,7 @@ export const AdminView = ({
             <DialogDescription>{tr("Connect Google Analytics to your public page.", "Collega Google Analytics alla tua pagina pubblica.")}</DialogDescription>
           </div>
         </DialogHeader>
-        {(!saasPlan || entitlements?.analytics === "advanced-ga4") ? (
+        {(!editorAccess || entitlements?.analytics === "advanced-ga4") ? (
       <div className="managed-analytics-integration-body">
         <p>
           {tr("Tracking runs on the public page only. Admin activity stays out of analytics.", "Il monitoraggio viene eseguito solo sulla pagina pubblica. L'attività nell'Admin resta esclusa dalle analytics.")}
@@ -766,12 +767,12 @@ export const AdminView = ({
       onLinksPreview={setPreviewLinks}
       editMode={linkEditMode}
       maxBlocks={entitlements?.maxBlocks}
-      planName={saasPlan?.name}
+      planName={editorAccess?.name}
       schedulingEnabled={entitlements?.scheduling ?? true}
       videoUploadsEnabled={entitlements?.videoUploads ?? true}
       maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
       managePlanHref={managePlanHref}
-      nativeMenuEnabled={!saasPlan || entitlements?.nativeMenu === true}
+      nativeMenuEnabled={!editorAccess || entitlements?.nativeMenu === true}
       publicPageHref={publicPageHref}
       availablePages={subpages.filter((page) => page.enabled).map((page) => ({
         title: page.title || page.slug,
@@ -797,9 +798,9 @@ export const AdminView = ({
         </div>
       </PreviewDeviceFrame>}
       presentation="visual"
-      enabled={!saasPlan || entitlements?.nativeMenu === true}
+      enabled={!editorAccess || entitlements?.nativeMenu === true}
       maxItems={entitlements?.maxMenuItems ?? null}
-      advancedTheme={!saasPlan || entitlements?.themes === "advanced"}
+      advancedTheme={!editorAccess || entitlements?.themes === "advanced"}
       onSave={onMenuUpdate}
     /></Suspense>
   ) : visualSection === "pages" ? (
@@ -812,7 +813,7 @@ export const AdminView = ({
       editMode={linkEditMode}
       maxPages={entitlements?.pages}
       maxBlocks={entitlements?.maxBlocks}
-      planName={saasPlan?.name}
+      planName={editorAccess?.name}
       schedulingEnabled={entitlements?.scheduling ?? true}
       videoUploadsEnabled={entitlements?.videoUploads ?? true}
       maxVideoUploadBytes={entitlements?.maxVideoUploadBytes}
@@ -820,13 +821,13 @@ export const AdminView = ({
       internalDestinations={internalDestinations}
     />
   ) : (
-    isIntegratedHostedAdmin && hostedShop?.entitled
+    embeddedEditor && extensionShop?.entitled
       ? <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
       : <PlanLockedFeature
-          title={isIntegratedHostedAdmin
+          title={embeddedEditor
             ? tr("Shop is included with Pro", "Lo Shop è incluso nel piano Pro")
             : tr("Shop is available on OrbitPage SaaS", "Shop è disponibile su OrbitPage SaaS")}
-          description={isIntegratedHostedAdmin
+          description={embeddedEditor
             ? tr("Upgrade to Pro to connect Stripe and sell products and services from your page.", "Passa a Pro per collegare Stripe e vendere prodotti e servizi dalla tua pagina.")
             : tr("Connect Stripe and manage products from a hosted workspace.", "Collega Stripe e gestisci i prodotti da un workspace hosted.")}
           managePlanHref={managePlanHref}
@@ -836,7 +837,7 @@ export const AdminView = ({
   return (
     <div
       className={`orbitpage-admin min-h-screen${usesDashboardShell ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : ""} admin-visual-editor-enabled`}
-      data-orbitpage-workspace-ready={isIntegratedHostedAdmin ? "true" : undefined}
+      data-orbitpage-workspace-ready={embeddedEditor ? "true" : undefined}
     >
       {usesDashboardShell && (
         <aside className="admin-dashboard-sidebar">
@@ -940,7 +941,7 @@ export const AdminView = ({
                 <select aria-label={tr("Language", "Lingua")} value={locale} onChange={(event) => {
                   const nextLocale = event.target.value as AppLocale;
                   setLocale(nextLocale);
-                  hostedSurfaceConfig?.onLocaleChange?.(nextLocale);
+                  editorIntegration?.onLocaleChange?.(nextLocale);
                 }}>
                   {APP_LOCALES.map((supportedLocale) => <option key={supportedLocale} value={supportedLocale}>{APP_LOCALE_LABELS[supportedLocale]}</option>)}
                 </select>
@@ -949,7 +950,7 @@ export const AdminView = ({
                 <LogOut aria-hidden="true" size={16} />
                 <span>{tr("Sign out", "Esci")}</span>
               </button>
-              <a aria-label={tr("Back to site", "Torna al sito")} className="admin-dashboard-footer-action" href={hostedSurfaceConfig?.siteUrl || publicPageHref} title={tr("Back to site", "Torna al sito")}>
+              <a aria-label={tr("Back to site", "Torna al sito")} className="admin-dashboard-footer-action" href={editorIntegration?.siteUrl || publicPageHref} title={tr("Back to site", "Torna al sito")}>
                 <Globe2 aria-hidden="true" size={16} />
                 <span>{tr("Back to site", "Torna al sito")}</span>
               </a>
@@ -959,16 +960,16 @@ export const AdminView = ({
       )}
 
       <div className={usesDashboardShell ? "admin-dashboard-main" : "admin-app-shell"}>
-        {isHostedAdmin && !isIntegratedHostedAdmin ? <header className="admin-topbar">
+        {hasEditorIntegration && !embeddedEditor ? <header className="admin-topbar">
           <div className="admin-heading min-w-0">
             <OrbitPageBrand showName={false} size="md" />
             <div className="min-w-0">
               <div className="admin-title-row">
                 <h1 className="admin-title">OrbitPage <span>Admin</span></h1>
                 {appVersion && <span className="admin-version" title={tr("Embedded OrbitPage OSS runtime version", "Versione del runtime OrbitPage OSS incorporato")}>OSS v{appVersion}</span>}
-                {saasPlan && (isProspectReadOnly
-                  ? <span className="admin-plan-badge" title={tr("Demo plan", "Piano demo")}>{saasPlan.name}</span>
-                  : <a className="admin-plan-badge" href={managePlanHref} target="_top" title={tr("Manage plan", "Gestisci piano")}>{saasPlan.name}</a>
+                {editorAccess && (isProspectReadOnly
+                  ? <span className="admin-plan-badge" title={tr("Demo plan", "Piano demo")}>{editorAccess.name}</span>
+                  : <a className="admin-plan-badge" href={managePlanHref} target="_top" title={tr("Manage plan", "Gestisci piano")}>{editorAccess.name}</a>
                 )}
               </div>
               <p className="admin-subtitle">
@@ -1009,7 +1010,7 @@ export const AdminView = ({
           </div>
         </header> : null}
 
-        {!isHostedAdmin && distributionImage === "paueron/orbitpage" && (
+        {!hasEditorIntegration && distributionImage === "paueron/orbitpage" && (
           <section className="admin-docker-migration-banner" role="status">
             <AlertTriangle aria-hidden="true" size={19} />
             <div>
@@ -1035,8 +1036,8 @@ export const AdminView = ({
           </section>
         )}
 
-        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={isHostedAdmin && !isIntegratedHostedAdmin ? "mt-5 flex-1" : "admin-dashboard-tabs flex-1"}>
-          {isHostedAdmin && !isIntegratedHostedAdmin && <div className="admin-nav-shell">
+        <Tabs value={activeTab} onValueChange={(value) => selectTab(value as AdminTab)} className={hasEditorIntegration && !embeddedEditor ? "mt-5 flex-1" : "admin-dashboard-tabs flex-1"}>
+          {hasEditorIntegration && !embeddedEditor && <div className="admin-nav-shell">
             <TabsList className="admin-tabs">
               {visibleNavigationTabs.map(({ value, icon: Icon }) => (
                 <TabsTrigger key={value} value={value} className="admin-tab" data-onboarding={`${value}-tab`}>
@@ -1064,7 +1065,7 @@ export const AdminView = ({
                 inspectorDescription={visualInspectorDescription}
                 inspector={visualInspector}
                 menuStatus={menu.enabled ? "active" : "inactive"}
-                shopStatus={!isIntegratedHostedAdmin || !hostedShop?.entitled ? "locked" : hostedShop.enabled ? "active" : "inactive"}
+                shopStatus={!embeddedEditor || !extensionShop?.entitled ? "locked" : extensionShop.enabled ? "active" : "inactive"}
                 pagesStatus={firstEnabledSubpage ? "active" : "inactive"}
                 onSelect={selectVisualSection}
                 onProfileLayoutChange={canEditProfile ? updateVisualProfileLayout : undefined}
@@ -1088,7 +1089,7 @@ export const AdminView = ({
             />
           </TabsContent>
 
-          {!isHostedAdmin && (
+          {!hasEditorIntegration && (
             <TabsContent value="ai" className="admin-tab-content">
               <SelfHostedAiPanel
                 canManageSettings={canManageUsers}
@@ -1136,7 +1137,7 @@ export const AdminView = ({
             />
           </TabsContent>
 
-          {!isHostedAdmin && canManageUsers && (
+          {!hasEditorIntegration && canManageUsers && (
             <TabsContent value="team" className="admin-tab-content">
               <div className="team-workspace" data-onboarding="team-section">
                 <UserManager currentUsername={currentUser?.username} />
@@ -1145,13 +1146,13 @@ export const AdminView = ({
             </TabsContent>
           )}
 
-          {!isHostedAdmin && canManageUsers && (
+          {!hasEditorIntegration && canManageUsers && (
             <TabsContent value="newsletter" className="admin-tab-content">
               <Suspense fallback={<OrbitLoader size={24} state="composing" />}><NewsletterWorkspace user={{ uid: currentUser?.username || 'admin' }} selectedView={subsection === "settings" ? "smtp" : subsection === "campaigns" || subsection === "subscribers" ? subsection : "overview"} onViewChange={(view) => selectSubsection("newsletter", view === "smtp" ? "settings" : view)} /></Suspense>
             </TabsContent>
           )}
 
-          {!isHostedAdmin && (
+          {!hasEditorIntegration && (
             <TabsContent value="account" className="admin-tab-content">
               <div className="oss-account-layout account-layout account-workspace" data-onboarding="account-section">
                 <nav aria-label={tr("Account sections", "Sezioni account")} className="account-tabs">
@@ -1182,18 +1183,18 @@ export const AdminView = ({
             <TabsContent value="backup" className="admin-tab-content">
               <div className="admin-backup-workspace admin-backup-workspace--managed" data-onboarding="backup-section">
                 <VersionHistory />
-                <BackupManager hosted={isHostedAdmin} />
+                <BackupManager hosted={hasEditorIntegration} />
               </div>
             </TabsContent>
           )}
 
-          {!isHostedAdmin && (
+          {!hasEditorIntegration && (
             <TabsContent value="plan" className="admin-tab-content">
               <OpenSourcePlan />
             </TabsContent>
           )}
 
-          {isIntegratedHostedAdmin && hostedPanelTabs.map((tab) => (
+          {embeddedEditor && extensionPanelTabs.map((tab) => (
             <TabsContent value={tab} className="admin-tab-content" key={tab}>
               <div data-orbitpage-hosted-panel-slot={tab} />
             </TabsContent>
@@ -1255,7 +1256,7 @@ export const AdminView = ({
               {profile.footerText}
             </p>
           )}
-          {!isHostedAdmin && (
+          {!hasEditorIntegration && (
             <p>
               {tr("Powered by", "Realizzato con")}{" "}
               <a href="https://github.com/paoloronco/OrbitPage" target="_blank" rel="noopener noreferrer">
@@ -1266,8 +1267,8 @@ export const AdminView = ({
           )}
         </footer>
       </div>
-      {!isHostedAdmin && !DEMO_MODE && <SelfHostedUpdateDialog requestedVersion={updateDialogVersion} canInstall={canManageUsers} onClose={() => setUpdateDialogVersion(null)} />}
-      {!isHostedAdmin && !isProspectReadOnly && activeTab !== "ai" && <SelfHostedAiAgent historyKey={currentUser?.username} onApplied={onAiApplied} />}
+      {!hasEditorIntegration && !DEMO_MODE && <SelfHostedUpdateDialog requestedVersion={updateDialogVersion} canInstall={canManageUsers} onClose={() => setUpdateDialogVersion(null)} />}
+      {!hasEditorIntegration && !isProspectReadOnly && activeTab !== "ai" && <SelfHostedAiAgent historyKey={currentUser?.username} onApplied={onAiApplied} />}
     </div>
   );
 };
