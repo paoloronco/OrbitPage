@@ -325,7 +325,6 @@ Start from the [documentation index](./docs/README.md).
 
 | Task | Guide |
 | --- | --- |
-| Install or evaluate | [Getting started](./docs/wiki/Getting-started.md) |
 | Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
 | Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
 | Navigate the editor | [Dashboard guide](./docs/wiki/dashboard.md) |

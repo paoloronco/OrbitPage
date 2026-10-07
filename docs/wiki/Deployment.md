@@ -380,4 +380,4 @@ Use your configured port if it differs. Also check dashboard login, the public p
 - [Configuration](./Configuration.md): environment variables and application settings.
 - [Maintenance](./maintenance.md): backups, restore, rollback, and removal.
 - [Troubleshooting](./Troubleshooting.md): deployment and proxy issues.
-- [Getting started](./Getting-started.md): source installation.
+- [Run from source](../../README.md#run-from-source): source installation.
