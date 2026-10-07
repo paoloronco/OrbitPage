@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong>Build your corner of the web. Make it unmistakably yours.</strong><br />
+  <strong>Create your page. Host it on your server.</strong><br />
   Design visually. Publish on your domain. Keep control of your data.
 </p>
 
@@ -23,13 +23,13 @@
 
 <p align="center">
   <a href="#quick-start">Quick start</a> ·
-  <a href="#what-you-can-build">Features</a> ·
+  <a href="#dashboard-workspaces">Dashboard</a> ·
   <a href="./docs/README.md">Documentation</a> ·
   <a href="./CONTRIBUTING.md">Contributing</a> ·
   <a href="./SECURITY.md">Security</a>
 </p>
 
-**OrbitPage is an open-source visual page builder for creators, professionals, venues, and small businesses.** Create a portfolio, introduce your services, share a venue menu, or give an event its own home on the web. Combine images, video, links, contact details, maps, and calls to action; shape the layout, colors, and typography with a live preview.
+**OrbitPage is an open-source visual page builder for creators, professionals, venues, and small businesses.** Create portfolios, service pages, venue menus, or event pages. Add images, video, links, contact details, maps, and calls to action. Edit the layout, colors, and typography with a live preview.
 
 Your page adapts to phones and desktops, with SEO, QR codes, analytics, and newsletters built in. The self-hosted edition is free, MIT-licensed, and runs in one Docker container, keeping your content and data on your own server.
 
@@ -41,28 +41,23 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
 
 > **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; follow the [migration guide](./docs/wiki/Docker-Hub-migration.md).
 
-## Why OrbitPage
-
-- **Own the stack and the data.** Run one Docker container with SQLite and local storage, on your server or homelab.
-- **Edit visually.** Manage content, design, menus, subpages, privacy, analytics, and publishing from the responsive dashboard.
-- **Build your public page.** Combine profiles, media, contact details, events, maps, menus, calls to action, and focused subpages.
-- **Ship a discoverable public page.** Configure canonical URLs, Open Graph and Twitter cards, Schema.org data, sitemaps, robots directives, QR codes, and consent-aware analytics.
-
 ## Contents
 
 - [Why OrbitPage](#why-orbitpage)
 - [Quick start](#quick-start)
 - [Updates](#updates)
-- [What you can build](#what-you-can-build)
 - [Dashboard workspaces](#dashboard-workspaces)
-- [How it runs](#how-it-runs)
-- [First run](#first-run)
 - [Configuration](#configuration)
 - [Data and backups](#data-and-backups)
-- [Production checklist](#production-checklist)
-- [Development](#development)
 - [Documentation](#documentation)
 - [Security and contributing](#security-and-contributing)
+
+## Why OrbitPage
+
+- **Self-hosted.** Run one Docker container with SQLite and local storage on your server or homelab.
+- **Visual editing.** Manage content, design, menus, subpages, and publishing from the dashboard.
+- **Flexible content.** Add images, video, links, contact details, events, maps, and venue menus.
+- **Sharing and discovery.** Generate QR codes, set search and social metadata, and track visits with consent-aware analytics.
 
 ## Quick start
 
@@ -75,17 +70,17 @@ docker pull paoloronco/orbitpage
 docker run -d --name orbitpage --restart unless-stopped -p 127.0.0.1:8080:8080 -v orbitpage-data:/app/data --security-opt no-new-privileges:true paoloronco/orbitpage
 ~~~
 
-Docker automatically creates the persistent <code>orbitpage-data</code> volume. OrbitPage initializes the database, uploads, and private secret there; no host directory, environment file, or repository checkout is needed. The image works on amd64 and arm64. Use <code>sudo docker</code> on Linux if your account requires it.
+The image supports amd64 and arm64. On Linux, use <code>sudo docker</code> if required.
 
-Open the public page at <http://localhost:8080> or the dashboard at <http://localhost:8080/dashboard/profile> and create the administrator in the setup wizard. No setup token is required by default: the first person to complete the wizard takes control of the instance. Place a trusted HTTPS reverse proxy in front before remote access. [Token protection is optional](./docs/wiki/Deployment.md#optional-setup-token).
+Docker creates the <code>orbitpage-data</code> volume for the database, uploads, and generated instance secret. Keep this volume when updating or recreating the container.
 
-Docker requires the restart policy, host port, data mount, and security option at container creation; an image cannot supply them. For a **startup without flags**, use [Docker Compose](#docker-compose-automatic-defaults) below. To customize Docker Run, change the host port to <code>127.0.0.1:8090:8080</code>, or replace <code>orbitpage-data</code> with your existing volume or an absolute host directory. Existing installations must keep their current data mount.
+Open the [dashboard](http://localhost:8080/dashboard/profile) and create the administrator. Your public page is at <http://localhost:8080>. Configure an HTTPS reverse proxy before making the instance accessible remotely.
 
-More options: [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended).
+Change the port or data mount in the command if needed. See the [Docker deployment guide](./docs/wiki/Deployment.md#docker-image-recommended) for options.
 
-### Docker Compose (automatic defaults)
+### Docker Compose
 
-For an automatic setup without Docker Run flags, use the included Compose file:
+Use the included Compose file:
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
@@ -93,9 +88,9 @@ cd OrbitPage
 docker compose up -d
 ~~~
 
-This command pulls the image, starts OrbitPage on <code>localhost:8080</code>, creates <code>./orbitpage-data</code> automatically, and sets <code>restart: unless-stopped</code>. Complete setup in the browser. Later, run <code>docker compose pull</code> followed by <code>docker compose up -d</code> to update while keeping the data. Keep this checkout and its data directory together; <code>docker compose down</code> stops and removes the container but leaves that directory in place.
+Compose starts OrbitPage at <http://localhost:8080> and stores data in <code>./orbitpage-data</code>. Open the [dashboard](http://localhost:8080/dashboard/profile) to complete setup.
 
-Edit the port mapping or data mount in <code>docker-compose.yml</code> only if you need different settings. For production hardening, backups, and reverse proxies, use the [Docker deployment procedure](./docs/wiki/Deployment.md#docker-image-recommended).
+To update, run <code>docker compose pull</code>, then <code>docker compose up -d</code> from the same directory. Keep the existing data mount. Edit <code>docker-compose.yml</code> to change the port or storage location.
 
 ### Linux install
 
@@ -109,9 +104,7 @@ cd OrbitPage
 sudo ./install.sh
 ~~~
 
-If you are already root, omit <code>sudo</code>. Supported Linux distributions and advanced options are in the [deployment guide](./docs/wiki/Deployment.md#linux-installer).
-
-The installer automates the same Docker deployment, persists application data, starts OrbitPage, and installs the <code>orbitpage</code> management command. On Linux with systemd, official <code>latest</code> installations also get dashboard updates automatically. See [web updates](./docs/wiki/Deployment.md#web-updates) for existing Docker containers.
+The installer creates the Docker container and persistent data directory, starts OrbitPage, and installs the <code>orbitpage</code> management command. Supported distributions and options are in the [deployment guide](./docs/wiki/Deployment.md#linux-installer).
 
 On a Proxmox VE 8+ host, run the dedicated host-to-LXC installer as root:
 
@@ -135,20 +128,20 @@ Requirements:
 
 ~~~bash
 git clone https://github.com/paoloronco/OrbitPage.git
-cd OrbitPage
-cd app
+cd OrbitPage/app
 npm ci
 npm run install:server
-export JWT_SECRET="$(openssl rand -hex 32)"
-export DATA_DIR="$PWD/.orbitpage-data"
-npm run start
+export JWT_SECRET="$(node -p "require('crypto').randomBytes(32).toString('hex')")"
+NODE_ENV=production npm run start
 ~~~
 
-The production-style source run is available at <http://localhost:3001>. Complete setup in the browser. Source mode makes SQLite storage owner-only on POSIX hosts; keep <code>DATA_DIR</code> on a private volume.
+Open <http://localhost:3001/dashboard/profile> to complete setup. The database and uploads are created in <code>app/server</code>; set <code>DATA_DIR</code> to use another directory.
+
+Source runs still require <code>JWT_SECRET</code>. Generate it once, save it privately, and reuse the same value on later starts. Docker generates and saves it for you.
 
 ## Updates
 
-Update directly from **Dashboard → Account → General → Instance details**: click **Check for updates**, then **Install update…** as an administrator. Linux and Proxmox installations enable dashboard updates automatically for official <code>latest</code> images; manual Docker installations need [one-time activation](./docs/wiki/Deployment.md#web-updates).
+Open **Dashboard → Account → General → Instance details** and click **Check for updates**. When a release is available, click **Install update…** as an administrator. The dialog installs it through the host update service or shows terminal instructions if the service is unavailable.
 
 ### Terminal (optional)
 
@@ -161,178 +154,76 @@ sudo docker exec orbitpage node -p "require('./package.json').version"
 
 Back up your data before updating. See the [update guide](./docs/wiki/Deployment.md#update-safely) for manual Docker, Compose, source installations, and rollback.
 
-## What you can build
-
-### Public pages and content
-
-- A main public page plus focused subpages with independent slugs, titles, descriptions, and blocks.
-- Link, internal OrbitPage navigation, text, heading, separator, image, native video, social, contact, map, event, callout, and consent-aware embed blocks, with presets for media, scheduling, and forms.
-- Venue menus with locale, sections, one-level subsections, products, variants, images, prices, and availability.
-- Per-block visibility, ordering, scheduling, icons, cover media, calls to action, and layout controls.
-- Responsive public rendering for mobile, laptop, and desktop layouts.
-
-### Identity and design
-
-- Creator, company, and studio profile structures.
-- Profile image or logo, shape and size, favicon, social profiles, browser title, SEO description, and footer.
-- Ready-made themes plus colors, typography, spacing, surfaces, borders, radius, shadow, blur, and per-card overrides.
-- Live preview using the same public renderer.
-- Dashboard localization in 14 languages with Arabic RTL layout.
-
-### Publishing and discovery
-
-- A unified Publish workspace for QR codes, sitemap state, and discovery files.
-- Screen and print QR presets with PNG and SVG downloads.
-- Stable smart campaign QR links whose destination can change by local time, including lunch/dinner menu-section presets.
-- Canonical URL, Open Graph, Twitter Card, Schema.org, and <code>noindex</code> controls.
-- Generated <code>sitemap.xml</code>.
-- Editable <code>robots.txt</code>, <code>llms.txt</code>, <code>humans.txt</code>, <code>ai.txt</code>, <code>security.txt</code>, and safe custom text endpoints.
-
-### Operations, privacy, and security
-
-- Built-in self-hosted 7/30-day visit and content analytics, plus optional GA4 integration on the public page.
-- Self-hosted newsletters with your own SMTP server, confirmed subscriptions, scheduled campaigns, and delivery reports ([guide](./docs/wiki/newsletters.md)).
-- Consent controls, policy links, Google Consent Mode, and optional external CMP integration.
-- Complete or selective JSON backup and restore, with optional portable image ZIP for OSS/SaaS transfers.
-- Upload quotas, validated image and video uploads, and unused-media cleanup.
-- Multiple dashboard users, scoped permissions, password management, and TOTP two-factor authentication.
-- Health checks, persistent local data, Docker support, and additive SQLite migrations.
-
 ## Dashboard workspaces
 
-The current dashboard keeps related work together:
+| Workspace | Purpose | URL path |
+| --- | --- | --- |
+| **Page** | Profile, image, social links, browser metadata, and footer | <code>/dashboard/editor/page</code><br>Classic: <code>/dashboard/profile</code> |
+| **Content** | Main-page blocks, ordering, visibility, and scheduling | <code>/dashboard/editor/content</code><br>Classic: <code>/dashboard/content/link</code> |
+| **Menu** | Venue menu settings, sections, products, and design | <code>/dashboard/editor/menu/content</code><br>Classic: <code>/dashboard/content/menu</code> |
+| **Shop** | Catalog workspace; unavailable in the self-hosted edition | <code>/dashboard/editor/shop/products</code><br>Classic: <code>/dashboard/content/shop</code> |
+| **Pages** | Additional public pages and their blocks | <code>/dashboard/editor/pages</code><br>Classic: <code>/dashboard/content/pages</code> |
+| **AI Assistant** | Propose profile, content, and theme changes to review and confirm | <code>/dashboard/ai</code> |
+| **Theme** | Colors, typography, cards, background, and live preview | <code>/dashboard/theme/page</code> |
+| **Publish** | Static and scheduled QR links, sitemap, and discovery text files | <code>/dashboard/publish/QR</code> |
+| **Backup** | JSON or image ZIP export, selective restore, and unused-media cleanup | <code>/dashboard/backup</code> |
+| **Analytics** | Visit and content reports, plus optional GA4 | <code>/dashboard/analytics</code> |
+| **Privacy** | Consent banner, legal policies, and external CMP settings | <code>/dashboard/privacy</code> |
+| **Newsletter** | SMTP settings, subscribers, campaigns, scheduling, and reports | <code>/dashboard/newsletter/overview</code> |
+| **Team** | Users, roles, permissions, and personal API tokens | <code>/dashboard/team</code> |
+| **Account** | Instance details, updates, environment settings, password, TOTP, and admin audit log | <code>/dashboard/account/general</code> |
+| **Edition** | Self-hosted features and server responsibilities | <code>/dashboard/plan</code> |
 
-| Workspace | Purpose |
-| --- | --- |
-| **Page** | Identity, profile image, role, browser presence, and profile-card settings |
-| **Content** | Home blocks, venue menu, and public subpages |
-| **AI Assistant** | Propose profile, content, and theme changes for explicit review and confirmation |
-| **Theme** | Page-wide visual system and responsive live preview |
-| **Publish** | QR downloads, sitemap, robots, and discovery text files |
-| **Backup** | Portable exports, selective restore, and unused-media tools |
-| **Analytics** | Built-in performance and optional GA4 settings |
-| **Privacy** | Consent behavior, legal policies, and external CMP settings |
-| **Newsletter** | Your SMTP server, subscribers, campaigns, scheduling, and delivery reports |
-| **Team** | Additional users and permissions |
-| **Account** | Password and two-factor authentication |
+Dashboard URLs include the interface language, for example <code>/it-IT/dashboard/account/general</code>. The paths above omit that prefix for readability. Navigation shows only the tools your role can access.
 
-The visual editor changes URL with the active section: <code>/dashboard/editor/page</code>, <code>/dashboard/editor/content</code>, <code>/dashboard/editor/menu/content</code>, <code>/dashboard/editor/shop/products</code>, and <code>/dashboard/editor/pages</code>. Classic dashboard routes include <code>/dashboard/profile</code>, <code>/dashboard/content/link</code>, <code>/dashboard/content/menu</code>, <code>/dashboard/content/shop</code>, and <code>/dashboard/content/pages</code>. Dashboard URLs include the interface language, for example <code>/it-IT/dashboard/account/general</code>. Public pages use the installation root; menus, legal pages, newsletters, and subpages have no language prefix. Older localized and page-slug public URLs remain redirect aliases.
-
-Read the [dashboard guide](./docs/wiki/dashboard.md) for the complete route map and editing workflow.
-
-## How it runs
-
-~~~text
-Browser
-  ├─ public OrbitPage
-  └─ /dashboard/* React workspace
-           │
-           ▼
-      Express application
-       ├─ internal dashboard API
-       ├─ SQLite database
-       └─ local uploads
-~~~
-
-Repository layout:
-
-~~~text
-app/
-  src/                  React + TypeScript frontend
-  server/               Express backend and SQLite
-  packages/page-schema/ Shared page-data schemas
-  e2e/                  Playwright browser tests
-docs/                   User and operations guides
-scripts/                Installer and repository helpers
-.github/                CI, release, and image workflows
-Dockerfile              Canonical production image
-~~~
-
-See [app/README.md](./app/README.md) for application development boundaries.
-
-## First run
-
-1. Open the public URL. A fresh instance shows **Under construction** and is excluded from indexing and analytics.
-2. Open <code>/dashboard/profile</code>.
-3. Review the runtime, SQLite, storage, frontend, and session checks.
-4. Create the password for the fixed first username, <code>admin</code>.
-5. Confirm the public URL, complete setup, and follow the dashboard guide.
-
-The administrator and starter profile are created atomically. The canonical public URL is the installation root. Language prefixes apply to the dashboard; older localized and page-slug public URLs redirect to the unprefixed destination after an upgrade.
+See the [dashboard guide](./docs/wiki/dashboard.md) for tab URLs and editing instructions.
 
 ## Configuration
 
-The essential production settings are:
+Common runtime settings:
 
-| Variable | Required | Default | Purpose |
-| --- | --- | --- | --- |
-| <code>JWT_SECRET</code> | No in Docker; production source runs only | Generated and persisted in Docker | Optional explicit override for the session and encryption secret |
-| <code>DATA_DIR</code> | Recommended | Server directory; <code>/app/data</code> in Docker | Stores SQLite and uploads |
-| <code>PORT</code> | No | <code>3001</code>; <code>8080</code> in Docker | HTTP listener |
-| <code>PUBLIC_SITE_URL</code> | Recommended; set for newsletters | Request origin | Public HTTPS URL for sharing, QR, sitemap, confirmation, unsubscribe, and tracking links |
-| <code>NEWSLETTER_SECRET_KEY</code> | No | <code>JWT_SECRET</code> | Separate stable secret of at least 32 characters for SMTP encryption and email links |
-| <code>PUBLIC_SITE_NAME</code> | No | <code>OrbitPage</code> | Site name in generated metadata |
-| <code>SEO_INDEXING</code> | No | <code>true</code> | Set to <code>false</code> for staging or private deployments |
-| <code>UPLOAD_STORAGE_QUOTA_MB</code> | No | <code>1024</code> | Total upload quota |
-| <code>VIDEO_UPLOAD_LIMIT_MB</code> | No | <code>100</code> | Per-file video limit |
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| <code>DATA_DIR</code> | <code>app/server</code> from source; <code>/app/data</code> in Docker | Database, uploads, and saved instance settings |
+| <code>JWT_SECRET</code> | Generated and saved in Docker; required from source | Stable session and encryption secret; explicit values must be at least 32 characters |
+| <code>NODE_ENV</code> | Unset from source; <code>production</code> in Docker | Use <code>production</code> for deployed source installations |
+| <code>PORT</code> | <code>3001</code> from source; <code>8080</code> in Docker | HTTP port |
+| <code>HOST</code> | <code>127.0.0.1</code> from source; <code>0.0.0.0</code> in Docker | Listener address |
+| <code>PUBLIC_SITE_URL</code> | Request origin | Public URL for metadata, QR codes, sitemap, and newsletter links |
+| <code>PUBLIC_SITE_NAME</code> | <code>OrbitPage</code> | Site name in generated metadata |
+| <code>SEO_INDEXING</code> | <code>true</code> | Set to <code>false</code> for staging or private instances |
+| <code>UPLOAD_STORAGE_QUOTA_MB</code> | <code>1024</code> | Total upload quota in MB |
+| <code>VIDEO_UPLOAD_LIMIT_MB</code> | <code>100</code> | Per-file video limit in MB |
+| <code>ORBITPAGE_BACKUP_MEDIA_LIMIT_MB</code> | <code>128</code> | Total decoded media limit per backup export or restore in MB |
+| <code>MEDIA_CLEANUP_ENABLED</code> | <code>true</code> outside tests and demo mode | Automatic unused-upload cleanup |
+| <code>MEDIA_CLEANUP_GRACE_HOURS</code> | <code>24</code> | Minimum age of an unused upload before cleanup |
+| <code>TZ</code> | <code>UTC</code> | Fallback timezone for scheduled content |
+| <code>OPENAI_API_KEY</code> | Unset | Optional AI key; a key saved in AI Assistant takes precedence |
+| <code>ORBITPAGE_SECRET_ENCRYPTION_KEY</code> | <code>JWT_SECRET</code> | Optional separate stable secret of at least 32 characters for the saved AI key |
+| <code>NEWSLETTER_SECRET_KEY</code> | <code>JWT_SECRET</code> | Optional separate stable secret of at least 32 characters for SMTP encryption and newsletter links |
+| <code>ORBITPAGE_TRUST_PROXY</code> | Disabled | Trusted proxy IPs or CIDRs; see the configuration reference before enabling |
+| <code>BASE_PATH</code> | Empty | Mount path when serving under a subdirectory |
 
-Set <code>PUBLIC_SITE_URL</code> to the externally reachable HTTPS origin in the protected environment file before starting a production container, especially when using newsletters. If you change a container's environment file later, recreate the container or Compose service; <code>docker restart</code> does not reload those values.
+Administrators can change the public URL and name, indexing, upload limits, cleanup toggle, timezone, and environment-based OpenAI key under **Account → General → Instance details → Environment variables**. Changes require the current password and an instance restart. Saved overrides take precedence over host values. Infrastructure and authentication settings remain host-managed.
 
-Configure your own SMTP host, port, credentials, and sender in **Dashboard > Newsletter**, then send a test message before a campaign. Copy the public signup link from that workspace; subscribers must confirm their address. Campaigns can be sent immediately or scheduled. Newsletter settings, subscribers, and delivery history live in <code>DATA_DIR/orbitpage.db</code>. The dashboard's selective JSON export excludes newsletter records and SMTP credentials, so include the SQLite database in infrastructure backups. See the [newsletter guide](./docs/wiki/newsletters.md) and the complete [Configuration reference](./docs/wiki/Configuration.md) for AI providers, cleanup, rate limiting, HTTPS, base paths, CORS, reset recovery, and other settings.
+Set <code>PUBLIC_SITE_URL</code> to your public HTTPS URL before sharing QR codes or sending newsletters. If you edit a Docker environment file, recreate the container or Compose service to apply it; <code>docker restart</code> does not reload the file.
+
+Configure SMTP and send a test message under **Newsletter**. Subscribers confirm their address before receiving campaigns. See the [newsletter guide](./docs/wiki/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
 
 ## Data and backups
 
-Everything that must survive a restart belongs under <code>DATA_DIR</code>:
+The data directory contains:
 
 ~~~text
 orbitpage.db
 uploads/
 .jwt-secret (Docker-generated installations)
+.instance-env.json (dashboard environment overrides, when saved)
 ~~~
 
-Persist and back up all of <code>/app/data</code> before upgrades or restores. Never commit a database, database backup or sidecar, uploads, generated secret, logs, environment file, or real user content.
+Back up the whole data directory before upgrades or restores: <code>/app/data</code> in Docker, or your source installation's <code>DATA_DIR</code>. Keep any host-managed secrets backed up separately and private.
 
-The dashboard creates complete or selective JSON exports by default. When images are available, **Include images (ZIP)** creates an archive that can be restored by OrbitPage OSS or SaaS. These exports do not replace a consistent infrastructure backup. Follow the [verified backup and restore runbook](./docs/wiki/Deployment.md#create-and-verify-an-infrastructure-backup), copy recovery archives off-host, and test a restore periodically.
-
-## Production checklist
-
-1. Persist <code>DATA_DIR</code> so the Docker-generated <code>.jwt-secret</code> survives updates; if overriding <code>JWT_SECRET</code>, keep that value stable and private.
-2. Put OrbitPage behind trusted HTTPS.
-3. Set <code>PUBLIC_SITE_URL</code> to the final public origin.
-4. Enable TOTP for privileged users under **Dashboard > Account**.
-5. Create a verified off-host backup and complete a restore drill before relying on it.
-6. Verify <code>/health</code> and the public, dashboard, login, edit, and upload paths after deployment.
-7. Set <code>SEO_INDEXING=false</code> on staging and private instances.
-
-Read [Deployment](./docs/wiki/Deployment.md) before configuring a reverse proxy, base path, cloud platform, update, or rollback.
-
-## Development
-
-From <code>app/</code>:
-
-~~~bash
-npm ci
-npm run install:server
-~~~
-
-Run the API and frontend in separate terminals:
-
-~~~bash
-npm run server:dev
-npm run dev
-~~~
-
-Quality checks:
-
-~~~bash
-npm run lint
-npm run typecheck
-npm run test:unit
-npm run build
-npm run test:e2e:chromium
-~~~
-
-See [Development](./docs/wiki/Development.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
+The dashboard exports selected application data as JSON, with an optional **Include images (ZIP)** archive. Newsletter records, SMTP credentials, and provider secrets require an infrastructure backup. Follow the [backup and restore guide](./docs/wiki/Deployment.md#create-and-verify-an-infrastructure-backup) for a consistent copy of the database and uploads.
 
 ## Documentation
 
