@@ -9020,9 +9020,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     width: 16px;
     height: 16px;
   }
-  .orbitpage-admin [role="switch"][data-state="checked"]:not(.admin-live-preview *, .oss-account-layout *, .oss-account-delete-dialog *, .team-workspace *) > span {
-    transform: translateX(16px);
-  }
 
   .admin-profile-section .admin-profile-identity-fields {
     grid-template-columns: 10rem minmax(0, 1fr);
