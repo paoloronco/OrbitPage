@@ -39,7 +39,7 @@ Use this page as the main entry point for installing, configuring, using, mainta
 
 Everything needed to deploy and configure OrbitPage.
 
-- [Getting started](./wiki/Getting-started.md) — run OrbitPage locally from source.
+- [Run from source](../README.md#run-from-source) — run OrbitPage locally from source.
 - [Deployment](./wiki/Deployment.md) — Docker, Linux, Proxmox, updates, and deployment options.
 - [Configuration](./wiki/Configuration.md) — environment variables, URLs, secrets, and runtime configuration.
 - [Troubleshooting](./wiki/Troubleshooting.md) — startup, login, proxy, networking, and indexing issues.

@@ -12,7 +12,7 @@ An installation serves a main page, optional additional pages, and a menu. It wo
 
 | Area | Expected result | Guide |
 | --- | --- | --- |
-| Setup | Browser setup checks the instance, creates the first administrator, and opens the dashboard | [Getting started](./Getting-started.md) |
+| Setup | Browser setup checks the instance, creates the first administrator, and opens the dashboard | [Deployment](./Deployment.md) |
 | Visual editing | Saved profile, blocks, layouts, and theme survive reload and render on the public page | [Content and design](./content-and-design.md) |
 | Public destinations | Enabled menus and published additional pages resolve at their URLs; hidden content stays private | [Dashboard](./dashboard.md) |
 | Sharing and discovery | QR codes, scheduled campaign links, metadata, sitemap, and text files use the configured public URL | [Publishing](./publishing.md), [SEO](./SEO-and-indexing.md) |

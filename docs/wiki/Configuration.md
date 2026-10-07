@@ -46,7 +46,7 @@ app/.env
 
 Keep environment files containing secrets private and out of Git.
 
-See [Getting started](./Getting-started.md) for the complete installation procedure, including the required source `JWT_SECRET`.
+See [Run from source](../../README.md#run-from-source) for the complete installation procedure, including the required source `JWT_SECRET`.
 
 ### How `.env` is loaded
 

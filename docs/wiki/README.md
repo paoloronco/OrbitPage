@@ -6,7 +6,7 @@ Guides for the open-source, self-hosted application. Start here to install Orbit
 
 | Task | Guide |
 | --- | --- |
-| Run locally from source | [Getting started](./Getting-started.md) |
+| Run locally from source | [Run from source](../../README.md#run-from-source) |
 | Install with Docker, Linux, or Proxmox | [Deployment](./Deployment.md) |
 | Set environment variables and public URLs | [Configuration](./Configuration.md) |
 | Solve startup, login, proxy, or indexing problems | [Troubleshooting](./Troubleshooting.md) |

@@ -22,7 +22,7 @@ Keep the existing secret and data. Do not replace them to make startup pass.
 
 ## Source server rejects JWT_SECRET
 
-The source server does not run Docker's secret-generating entrypoint. Configure a stable `JWT_SECRET` as shown in [Getting started](./Getting-started.md). `NODE_ENV=development` permits a temporary fallback, but a stable key is still needed for persistent TOTP/provider settings.
+The source server does not run Docker's secret-generating entrypoint. Configure a stable `JWT_SECRET` as shown in [Run from source](../../README.md#run-from-source). `NODE_ENV=development` permits a temporary fallback, but a stable key is still needed for persistent TOTP/provider settings.
 
 ## Data disappeared after updating
 
