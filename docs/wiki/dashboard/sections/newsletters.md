@@ -44,7 +44,7 @@ Only eligible non-active campaigns can be deleted. Deletion removes the campaign
 
 ## Backups and problems
 
-Newsletter data and SMTP settings live in `DATA_DIR/orbitpage.db`. Dashboard JSON exports exclude them; use an [infrastructure backup](../maintenance.md). Newsletter changes are disabled in demo mode.
+Newsletter data and SMTP settings live in `DATA_DIR/orbitpage.db`. Dashboard JSON exports exclude them; use an [infrastructure backup](../../maintenance.md). Newsletter changes are disabled in demo mode.
 
 | Problem | Check |
 | --- | --- |
@@ -53,4 +53,4 @@ Newsletter data and SMTP settings live in `DATA_DIR/orbitpage.db`. Dashboard JSO
 | Schedule not delivered | Running instance, logs, and provider limits; avoid re-queuing an existing send |
 | Missing opens or poor delivery | Image blocking and the provider's SPF/DKIM/DMARC setup |
 
-See [Configuration](../Configuration.md) for public URLs and encryption keys.
+See [Configuration](../../Configuration.md) for public URLs and encryption keys.

@@ -12,7 +12,7 @@ Keep scripts aligned with the installed release. The managed-service API and n8n
 | Scripts and CI | Personal API token |
 | OpenAI provider | Provider key; not an OrbitPage API credential |
 
-Create a token under **Team → Personal API tokens**. Choose its access and expiry, enter the current password, and copy the secret once. See [Account and team](./dashboard/account-and-team.md).
+Create a token under **Team → Personal API tokens**. Choose its access and expiry, enter the current password, and copy the secret once. See [Account and team](./dashboard/sections/account-and-team.md).
 
 ```sh
 curl https://page.example.com/api/links/export \

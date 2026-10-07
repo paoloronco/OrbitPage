@@ -37,7 +37,7 @@ native resolution; text must remain legible in the final GIF.
 
 ## Dashboard guide GIFs
 
-The [dashboard guide](../wiki/dashboard.md) embeds three GIFs hosted as GitHub
+The [dashboard guide](../wiki/dashboard/dashboard.md) embeds three GIFs hosted as GitHub
 release assets. The binaries stay outside Git.
 
 | GIF | Sections | Size |
@@ -66,12 +66,12 @@ own preview from GitHub release assets; these binaries also stay outside Git.
 
 | Guide | Preview | Size |
 | --- | --- | --- |
-| [Content and design](../wiki/dashboard/content-and-design.md) | [GIF: Page, Content, Menu, Pages, Theme](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-content-and-design-4.21.75.gif) | 373 KiB |
-| [Publishing](../wiki/dashboard/publishing.md) | [PNG: QR preview and export](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-publishing-4.21.75.png) | 83 KiB |
-| [Backups and demo mode](../wiki/dashboard/backups-and-demo-mode.md) | [PNG: version history, export and restore](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-backups-and-demo-mode-4.21.75.png) | 129 KiB |
-| [Analytics and privacy](../wiki/dashboard/analytics-and-privacy.md) | [GIF: reports and consent settings](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-analytics-and-privacy-4.21.75.gif) | 108 KiB |
-| [Newsletters](../wiki/dashboard/newsletters.md) | [PNG: campaign editor and preview](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-newsletters-4.21.75.png) | 77 KiB |
-| [Account and team](../wiki/dashboard/account-and-team.md) | [GIF: members and instance settings](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-account-and-team-4.21.75.gif) | 101 KiB |
+| [Content and design](../wiki/dashboard/sections/content-and-design.md) | [GIF: Page, Content, Menu, Pages, Theme](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-content-and-design-4.21.75.gif) | 373 KiB |
+| [Publishing](../wiki/dashboard/sections/publishing.md) | [PNG: QR preview and export](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-publishing-4.21.75.png) | 83 KiB |
+| [Backups and demo mode](../wiki/dashboard/sections/backups-and-demo-mode.md) | [PNG: version history, export and restore](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-backups-and-demo-mode-4.21.75.png) | 129 KiB |
+| [Analytics and privacy](../wiki/dashboard/sections/analytics-and-privacy.md) | [GIF: reports and consent settings](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-analytics-and-privacy-4.21.75.gif) | 108 KiB |
+| [Newsletters](../wiki/dashboard/sections/newsletters.md) | [PNG: campaign editor and preview](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-newsletters-4.21.75.png) | 77 KiB |
+| [Account and team](../wiki/dashboard/sections/account-and-team.md) | [GIF: members and instance settings](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-account-and-team-4.21.75.gif) | 101 KiB |
 
 Dimensions and GIF encoding match the dashboard guide above. Preserve the
 fictional data and example paths when refreshing these previews.

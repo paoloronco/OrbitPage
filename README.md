@@ -287,7 +287,7 @@ The dashboard exports selected application data as JSON, with an optional **Incl
 
 Dashboard URLs include the interface language, for example <code>/it-IT/dashboard/account/general</code>. The paths above omit that prefix for readability. Navigation shows only the tools your role can access.
 
-See the [dashboard guide](./docs/wiki/dashboard.md) for tab URLs and editing instructions.
+See the [dashboard guide](./docs/wiki/dashboard/dashboard.md) for tab URLs and editing instructions.
 
 ## Configuration & Environment
 
@@ -317,7 +317,7 @@ Common runtime settings:
 
 Administrators can change instance settings under **Account → General → Instance details → Environment variables**.
 
-Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/dashboard/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
+Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/dashboard/sections/newsletters.md) for setup and the [Configuration reference](./docs/wiki/Configuration.md) for all variables, defaults, and examples.
 
 ## Documentation
 
@@ -327,14 +327,14 @@ Start from the [documentation index](./docs/README.md).
 | --- | --- |
 | Deploy, update, or use Proxmox | [Deployment](./docs/wiki/Deployment.md) |
 | Configure environment variables | [Configuration](./docs/wiki/Configuration.md) |
-| Navigate the editor | [Dashboard guide](./docs/wiki/dashboard.md) |
-| Manage users, passwords and two-factor authentication | [Account and team](./docs/wiki/dashboard/account-and-team.md) |
-| Share or print a QR code | [Publishing and QR](./docs/wiki/dashboard/publishing.md) |
-| Build content, menus, subpages, and themes | [Content and design](./docs/wiki/dashboard/content-and-design.md) |
-| Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/wiki/dashboard/backups-and-demo-mode.md) |
+| Navigate the editor | [Dashboard guide](./docs/wiki/dashboard/dashboard.md) |
+| Manage users, passwords and two-factor authentication | [Account and team](./docs/wiki/dashboard/sections/account-and-team.md) |
+| Share or print a QR code | [Publishing and QR](./docs/wiki/dashboard/sections/publishing.md) |
+| Build content, menus, subpages, and themes | [Content and design](./docs/wiki/dashboard/sections/content-and-design.md) |
+| Export, restore, clean media, or evaluate demo mode | [Backups, media, and demo mode](./docs/wiki/dashboard/sections/backups-and-demo-mode.md) |
 | Configure AI safely | [AI assistant](./docs/wiki/ai-assistant.md) |
-| Configure analytics and consent | [Analytics and privacy](./docs/wiki/dashboard/analytics-and-privacy.md) |
-| Configure SMTP and send newsletters | [Newsletters](./docs/wiki/dashboard/newsletters.md) |
+| Configure analytics and consent | [Analytics and privacy](./docs/wiki/dashboard/sections/analytics-and-privacy.md) |
+| Configure SMTP and send newsletters | [Newsletters](./docs/wiki/dashboard/sections/newsletters.md) |
 | Configure search and discovery | [SEO and indexing](./docs/wiki/SEO-and-indexing.md) |
 | Troubleshoot | [Troubleshooting](./docs/wiki/Troubleshooting.md) |
 

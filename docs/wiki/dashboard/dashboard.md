@@ -21,7 +21,7 @@ Open `/dashboard/profile` to sign in or, on a new installation, choose the admin
 
 The **Shop** section is unavailable in the self-hosted edition. Its shared route is `/dashboard/editor/shop/products`.
 
-See [Content and design](./dashboard/content-and-design.md) for editing controls and [AI Assistant](./ai-assistant.md) for provider setup.
+See [Content and design](./sections/content-and-design.md) for editing controls and [AI Assistant](../ai-assistant.md) for provider setup.
 
 ### Share and manage content options
 
@@ -35,7 +35,7 @@ See [Content and design](./dashboard/content-and-design.md) for editing controls
 | **Privacy** | Consent banner, policies, and external consent providers | `/dashboard/privacy` |
 | **Newsletter** | SMTP, subscribers, campaigns, schedules, and reports | `/dashboard/newsletter/overview` |
 
-Detailed guides: [Publishing](./dashboard/publishing.md), [Backups](./dashboard/backups-and-demo-mode.md), [Analytics and privacy](./dashboard/analytics-and-privacy.md), [Newsletters](./dashboard/newsletters.md).
+Detailed guides: [Publishing](./sections/publishing.md), [Backups](./sections/backups-and-demo-mode.md), [Analytics and privacy](./sections/analytics-and-privacy.md), [Newsletters](./sections/newsletters.md).
 
 ### Account and installation
 
@@ -49,7 +49,7 @@ Detailed guides: [Publishing](./dashboard/publishing.md), [Backups](./dashboard/
 | **Account → Audit log** | Successful changes, with user, action, date, and text filters; administrators only | `/dashboard/account/audit` |
 | **Edition** | Self-hosted features and server responsibilities | `/dashboard/plan` |
 
-See [Account and team](./dashboard/account-and-team.md), [Configuration](./Configuration.md#dashboard-environment-overrides), and [Updates](./Deployment.md#update-safely).
+See [Account and team](./sections/account-and-team.md), [Configuration](../Configuration.md#dashboard-environment-overrides), and [Updates](../Deployment.md#update-safely).
 
 ## Save and preview
 
