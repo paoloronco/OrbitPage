@@ -60,11 +60,11 @@ describe('Shop link shortcut', () => {
     expect(source).not.toContain('!isViewOnly && !isMobile');
   });
 
-  it('uses the full editor width and lets the user cancel editing', () => {
+  it('uses the full editor width and lets the user revert editing', () => {
     expect(source).toContain("editingLinkId ? ' is-editing' : ''");
     expect(source).toContain('onClick={revertUnsavedChanges}');
     expect(source).not.toContain('cancelEditingLink');
-    expect(source).toContain('tr("Cancel", "Annulla")');
+    expect(source).toContain('tr("Revert", "Ripristina")');
   });
 
   it('offers a ten-second saved notice that can restore the previous content', () => {

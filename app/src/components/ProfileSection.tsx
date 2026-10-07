@@ -843,7 +843,7 @@ export const ProfileSection = ({
           {(isDirty || isSaving) && (
             <div className="admin-profile-save-float" data-onboarding="profile-actions">
               <Button type="button" variant="outline" size="sm" onClick={resetDraft} disabled={isSaving}>
-                <RotateCcw className="h-4 w-4" /> {tr("Reset", "Ripristina")}
+                <RotateCcw className="h-4 w-4" /> {tr("Revert", "Ripristina")}
               </Button>
               <Button type="button" size="sm" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}

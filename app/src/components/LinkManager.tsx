@@ -1352,7 +1352,7 @@ export const LinkManager = ({
           {(editingLinkId || hasUnsavedChanges) && (
             <div className="admin-profile-save-float">
               <Button type="button" variant="outline" size="sm" onClick={revertUnsavedChanges} disabled={busy}>
-                <X className="h-4 w-4" /> {tr("Cancel", "Annulla")}
+                <X className="h-4 w-4" /> {tr("Revert", "Ripristina")}
               </Button>
               <Button type="button" size="sm" onClick={handleSave} disabled={!hasUnsavedChanges || preparingLinks.size > 0 || busy} data-onboarding="links-save">
                 {busy ? <OrbitLoader size={16} state="composing" /> : <Save className="h-4 w-4" />}

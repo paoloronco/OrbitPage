@@ -27,7 +27,7 @@ In **Social links**, enter the username for each network; OrbitPage builds the p
 
 Most profile-card settings inherit from **Theme**. An explicit value in **Page** takes precedence. Use **Use theme** or reset the card appearance when you want it to inherit the shared design again.
 
-Changes in Page remain a draft in the browser until you select **Save** in the Page toolbar. **Reset** discards the current unsaved draft.
+Changes in Page remain a draft in the browser until you select **Save** in the Page toolbar. **Revert** discards the current unsaved draft.
 
 ### Arrange the layout
 
@@ -82,7 +82,7 @@ Each block has its own edit panel. The available fields depend on the block type
 - CTA intent such as booking, contact, download, subscription, or purchase;
 - visibility, availability, status, campaign label, and schedule.
 
-Drag blocks to change their public order, or use the move controls when dragging is inconvenient. The single **Save** button above **Content cards** saves edits from open cards together with additions and reordering. **Cancel** inside a card discards that card's unsaved edits. The **Unsaved changes** badge identifies pending work.
+The floating **Save** button in Content saves edits from open cards together with additions and reordering. **Revert** discards the current unsaved content changes. The **Unsaved changes** badge identifies pending work.
 
 The toolbar can also export only the Link blocks to `links-export.json`. Importing that format validates the file and replaces the current Link block list. Create a full backup before importing if the existing list may be needed later.
 
