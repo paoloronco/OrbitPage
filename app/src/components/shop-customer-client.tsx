@@ -85,20 +85,20 @@ export default function ShopCustomerClient({ initialAccess, basePath = "" }: { i
     }
   }
 
-  if (error && !data) return <main className="shop-customer-shell"><section className="shop-customer-card"><Mail size={28} /><h1>Your purchases</h1><p>{error}</p></section></main>;
-  if (!data) return <main className="shop-customer-shell"><section className="shop-customer-card"><LoadingIndicator size={28} /><h1>Loading your purchases</h1></section></main>;
+  if (error && !data) return <main className="shop-customer-shell" lang="en-US" dir="ltr"><section className="shop-customer-card"><Mail size={28} /><h1>Your purchases</h1><p>{error}</p></section></main>;
+  if (!data) return <main className="shop-customer-shell" lang="en-US" dir="ltr"><section className="shop-customer-card"><LoadingIndicator size={28} /><h1>Loading your purchases</h1></section></main>;
 
-  return <main className="shop-customer-shell">
+  return <main className="shop-customer-shell" lang="en-US" dir="ltr">
     <header className="shop-customer-hero"><div>{data.customer.shopUrl && <a className="shop-customer-back" href={data.customer.shopUrl}><ArrowLeft size={16} /> {data.customer.shopName}</a>}<h1>Your purchases</h1><p>Download your files and manage your appointments.</p></div><p className="shop-customer-email">{data.customer.email}</p></header>
     {error && <p className="shop-feedback error">{error}</p>}
     <section className="shop-customer-grid">
       {data.orders.map((order) => <article className="shop-customer-card" key={order.orderId}>
-        <div className="shop-customer-card-heading"><span className="shop-customer-product-icon">{order.productType === "digital" ? <FileText size={22} /> : <CalendarDays size={22} />}</span><div><h2>{order.productTitle}</h2><small>{order.paidAt && <>{new Date(order.paidAt).toLocaleDateString()} · </>}Order {order.orderId.slice(0, 8)}</small></div></div>
+        <div className="shop-customer-card-heading"><span className="shop-customer-product-icon">{order.productType === "digital" ? <FileText size={22} /> : <CalendarDays size={22} />}</span><div><h2>{order.productTitle}</h2><small>{order.paidAt && <>{new Date(order.paidAt).toLocaleDateString("en-US", { dateStyle: "medium" })} · </>}Order {order.orderId.slice(0, 8)}</small></div></div>
         {order.productType === "digital" && <div className="shop-customer-files">
           {order.downloadsRemaining > 0 && (!order.expiresAt || Date.parse(order.expiresAt) > Date.now()) ? <>
             {(order.files || []).map((file, index) => <div className="shop-customer-file" key={`${file.filename}-${index}`}><div><strong>{file.filename}</strong><small>{file.sizeBytes < 1024 * 1024 ? `${Math.ceil(file.sizeBytes / 1024)} KB` : `${(file.sizeBytes / (1024 * 1024)).toFixed(1)} MB`}</small></div><a className="button primary" href={file.url} download={file.filename} aria-label={`Download ${file.filename}`}><Download size={17} /> Download</a></div>)}
             {!order.files?.length && order.deliveryUrl && <a className="button primary" href={order.deliveryUrl}><Download size={17} /> Open downloads</a>}
-            <p className="shop-customer-download-note">{order.downloadsRemaining} downloads remaining{order.expiresAt && <> · Available until {new Date(order.expiresAt).toLocaleDateString()}</>}</p>
+            <p className="shop-customer-download-note">{order.downloadsRemaining} downloads remaining{order.expiresAt && <> · Available until {new Date(order.expiresAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</>}</p>
           </> : <p className="shop-customer-download-note">{order.downloadsRemaining === 0 ? "Download limit reached." : "Your download link has expired."} Contact the seller if you need another copy.</p>}
         </div>}
         {order.productType === "service" && <><div className="shop-customer-stats"><span><small>Appointment</small><strong>{({ awaiting_booking: "Choose a time", scheduled: "Booked", rescheduled: "Rescheduled", cancelled: "Cancelled", completed: "Completed", no_show: "Missed appointment" } as Record<string, string>)[order.bookingStatus || "awaiting_booking"] || "Choose a time"}</strong></span><span><small>Sessions remaining</small><strong>{order.sessionsRemaining} of {order.sessionsIncluded}</strong></span></div>
@@ -108,7 +108,7 @@ export default function ShopCustomerClient({ initialAccess, basePath = "" }: { i
       </article>)}
     </section>
     {data.orders.length === 0 && <section className="shop-customer-card"><h2>No purchases available</h2><p>Open the link from your most recent purchase email.</p></section>}
-    {data.bookings.length > 0 && <section className="shop-customer-card shop-customer-bookings"><h2>Appointments</h2>{data.bookings.map((booking) => <article key={booking.bookingId}><CalendarDays size={18} /><div><strong>{booking.productTitle}</strong><span>{booking.startAt ? new Date(booking.startAt).toLocaleString() : booking.status.replaceAll("_", " ")}</span></div>{booking.meetingUrl && <a aria-label="Open meeting" href={booking.meetingUrl} rel="noreferrer" target="_blank"><ExternalLink size={17} /></a>}</article>)}</section>}
+    {data.bookings.length > 0 && <section className="shop-customer-card shop-customer-bookings"><h2>Appointments</h2>{data.bookings.map((booking) => <article key={booking.bookingId}><CalendarDays size={18} /><div><strong>{booking.productTitle}</strong><span>{booking.startAt ? new Date(booking.startAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : booking.status.replaceAll("_", " ")}</span></div>{booking.meetingUrl && <a aria-label="Open meeting" href={booking.meetingUrl} rel="noreferrer" target="_blank"><ExternalLink size={17} /></a>}</article>)}</section>}
     <footer className="shop-customer-footer"><p>Keep your personal purchase link to return here. No account or password needed.</p>{data.customer.supportEmail && <a href={`mailto:${data.customer.supportEmail}`}>Contact the seller</a>}</footer>
   </main>;
 }

@@ -11,6 +11,13 @@ The editor uses the same toolbar, typography and dialogs in both editions.
 The Test/Live payment badge and publication actions sit below the workspace;
 Stripe setup differs because self-hosted installations use their owner's keys.
 
+Public Shop interfaces use English in both editions, including catalog controls,
+Stripe Checkout, order delivery, purchase history and appointment emails. Dates
+and prices use English formatting regardless of the browser language. Product
+descriptions, seller policies, custom checkout fields and service instructions
+remain in the language written by the seller; external booking pages set their
+own language.
+
 Only administrators with `users:manage` can manage commerce. Demo mode permits
 viewing the editor and blocks changes, uploads and checkout.
 
