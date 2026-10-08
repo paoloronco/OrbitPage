@@ -84,6 +84,11 @@ The local worker runs while the application is running, retries temporary
 failures and uses stable message IDs. SMTP acceptance cannot guarantee inbox
 delivery or exactly-once delivery after a connection failure.
 
+The receipt verifies Stripe immediately on return from Checkout; email delivery
+does not delay downloads or booking access. Receipts and emails include a personal
+purchase-area link: no registration, password or OTP is required. The purchase
+area lists files with Download buttons and service booking/questionnaire actions.
+Keep the link private; it is a bearer credential and expires after seven days.
 Receipts link to private downloads and the customer portal. Digital download
 capabilities expire after thirty days with a combined download budget of ten
 times the number of purchased files, matching hosted OrbitPage. Customer

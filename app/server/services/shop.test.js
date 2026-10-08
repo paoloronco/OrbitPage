@@ -201,7 +201,11 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     await shop.testShopEmail('seller@example.com');
     const id = await newProduct(), session = await newCheckout(id); await webhook('checkout.session.completed', session);
     const order = await shop.shopOrder(session.metadata.orbitpageOrderId), customer = await shop.shopCustomer(order.customerId);
-    const token = shop.customerPortalToken(customer, [order.orderId]); expect((await lifecycle.getShopCustomerPortal(token)).orders).toHaveLength(1);
+    const token = shop.customerPortalToken(customer, [order.orderId]);
+    const portal = await lifecycle.getShopCustomerPortal(token);
+    expect(portal.orders).toHaveLength(1);
+    expect(portal.orders[0]).toMatchObject({ downloadsRemaining: 10, files: [{ filename: 'synthetic.pdf', sizeBytes: expect.any(Number), url: expect.stringContaining('/api/shop/download/') }] });
+    expect((await request(app).get(new URL(portal.orders[0].files[0].url).pathname + '?file=0')).status).toBe(200);
     const before = provider.messages.length; await shop.dispatchShopEmails(); const sent = provider.messages.length; expect(sent).toBeGreaterThan(before);
     await shop.dispatchShopEmails(); expect(provider.messages).toHaveLength(sent);
     await shop.deleteShopCustomer(order.customerId, base);

@@ -532,7 +532,8 @@ export async function shopReceipt(orderId, sessionId) {
   uuid.parse(orderId); const order = await shopOrder(orderId);
   if (!order || !sessionId || order.stripeCheckoutSessionId !== sessionId) fail(404, 'SHOP_ORDER_NOT_FOUND', 'Order not found.');
   const current = await reconcileShopPayment(orderId, sessionId);
-  if (!['paid', 'partially_refunded'].includes(current.status) || current.customerDataErasedAt) fail(409, 'SHOP_ORDER_NOT_READY', 'Order is not ready for delivery.');
+  if (['refunded', 'disputed', 'expired', 'payment_failed'].includes(current.status) || current.customerDataErasedAt) fail(410, 'SHOP_ORDER_UNAVAILABLE', 'This purchase link is no longer available.');
+  if (!['paid', 'partially_refunded'].includes(current.status)) fail(409, 'SHOP_ORDER_NOT_READY', 'Payment has not been confirmed yet.');
   return shopDeliveryInfo(current, deliveryTokenForOrder(orderId));
 }
 async function shopDeliveryInfo(order, token) {

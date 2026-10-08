@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, ClipboardList, ExternalLink, PackageCheck, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CalendarDays, CheckCircle2, ClipboardList, Download, ExternalLink, FileText, Mail } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { OrbitLoader as LoadingIndicator } from "./ui/orbit-loader";
 
@@ -17,9 +17,14 @@ type PortalOrder = {
   intakeQuestions: Question[];
   intakeAnswers: Array<{ questionId: string; answer: string }>;
   intakeSubmittedAt: string | null;
+  fulfillmentText: string;
+  files: Array<{ filename: string; sizeBytes: number; url: string }>;
+  deliveryUrl: string;
+  downloadsRemaining: number;
+  expiresAt: string | null;
 };
 type PortalData = {
-  customer: { email: string; shopName: string };
+  customer: { email: string; shopName: string; shopUrl: string; supportEmail: string };
   orders: PortalOrder[];
   bookings: Array<{ bookingId: string; orderId: string; productTitle: string; status: string; startAt: string | null; endAt: string | null; meetingUrl: string | null }>;
 };
@@ -34,7 +39,7 @@ export default function ShopCustomerClient({ initialAccess, basePath = "" }: { i
   async function load() {
     const response = await fetch(`${basePath}/api/shop/customer?access=${encodeURIComponent(access)}`, { cache: "no-store", referrerPolicy: "no-referrer" });
     const body = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(body?.error || "Customer area is unavailable.");
+    if (!response.ok) throw new Error(body?.error?.includes("expired") ? "This link has expired. Open the download link in your purchase email, or contact the seller." : body?.error || "Your purchases are unavailable.");
     setData(body as PortalData);
   }
 
@@ -45,7 +50,7 @@ export default function ShopCustomerClient({ initialAccess, basePath = "" }: { i
         setAccess(stored);
         return;
       }
-      setError("Use the private customer link received after your Shop purchase.");
+      setError("Open the personal link in your purchase email. You don’t need an account or password.");
       return;
     }
     void load().then(() => {
@@ -80,20 +85,30 @@ export default function ShopCustomerClient({ initialAccess, basePath = "" }: { i
     }
   }
 
-  if (error && !data) return <main className="shop-customer-shell"><section className="shop-customer-card"><ShieldCheck size={34} /><h1>Private customer area</h1><p>{error}</p></section></main>;
-  if (!data) return <main className="shop-customer-shell"><section className="shop-customer-card"><LoadingIndicator size={32} /><h1>Opening your customer area</h1></section></main>;
+  if (error && !data) return <main className="shop-customer-shell"><section className="shop-customer-card"><Mail size={28} /><h1>Your purchases</h1><p>{error}</p></section></main>;
+  if (!data) return <main className="shop-customer-shell"><section className="shop-customer-card"><LoadingIndicator size={28} /><h1>Loading your purchases</h1></section></main>;
 
   return <main className="shop-customer-shell">
-    <header className="shop-customer-hero"><div><p className="dashboard-kicker">{data.customer.shopName}</p><h1>Your customer area</h1><p>{data.customer.email}</p></div><span><ShieldCheck size={18} /> Purchase-verified access</span></header>
+    <header className="shop-customer-hero"><div>{data.customer.shopUrl && <a className="shop-customer-back" href={data.customer.shopUrl}><ArrowLeft size={16} /> {data.customer.shopName}</a>}<h1>Your purchases</h1><p>Download your files and manage your appointments.</p></div><p className="shop-customer-email">{data.customer.email}</p></header>
     {error && <p className="shop-feedback error">{error}</p>}
     <section className="shop-customer-grid">
       {data.orders.map((order) => <article className="shop-customer-card" key={order.orderId}>
-        <div className="shop-customer-card-heading"><PackageCheck size={22} /><div><h2>{order.productTitle}</h2><small>Order {order.orderId.slice(0, 8)}</small></div></div>
-        {order.productType === "service" && <><div className="shop-customer-stats"><span><small>Booking</small><strong>{(order.bookingStatus || "awaiting booking").replaceAll("_", " ")}</strong></span><span><small>Sessions</small><strong>{order.sessionsRemaining}/{order.sessionsIncluded} available</strong></span></div>
-        {order.bookingUrl && <a className="button primary" href={order.bookingUrl} rel="noreferrer" target="_blank"><CalendarDays size={17} /> Choose date and time</a>}
+        <div className="shop-customer-card-heading"><span className="shop-customer-product-icon">{order.productType === "digital" ? <FileText size={22} /> : <CalendarDays size={22} />}</span><div><h2>{order.productTitle}</h2><small>{order.paidAt && <>{new Date(order.paidAt).toLocaleDateString()} · </>}Order {order.orderId.slice(0, 8)}</small></div></div>
+        {order.productType === "digital" && <div className="shop-customer-files">
+          {order.downloadsRemaining > 0 && (!order.expiresAt || Date.parse(order.expiresAt) > Date.now()) ? <>
+            {(order.files || []).map((file, index) => <div className="shop-customer-file" key={`${file.filename}-${index}`}><div><strong>{file.filename}</strong><small>{file.sizeBytes < 1024 * 1024 ? `${Math.ceil(file.sizeBytes / 1024)} KB` : `${(file.sizeBytes / (1024 * 1024)).toFixed(1)} MB`}</small></div><a className="button primary" href={file.url} download={file.filename} aria-label={`Download ${file.filename}`}><Download size={17} /> Download</a></div>)}
+            {!order.files?.length && order.deliveryUrl && <a className="button primary" href={order.deliveryUrl}><Download size={17} /> Open downloads</a>}
+            <p className="shop-customer-download-note">{order.downloadsRemaining} downloads remaining{order.expiresAt && <> · Available until {new Date(order.expiresAt).toLocaleDateString()}</>}</p>
+          </> : <p className="shop-customer-download-note">{order.downloadsRemaining === 0 ? "Download limit reached." : "Your download link has expired."} Contact the seller if you need another copy.</p>}
+        </div>}
+        {order.productType === "service" && <><div className="shop-customer-stats"><span><small>Appointment</small><strong>{({ awaiting_booking: "Choose a time", scheduled: "Booked", rescheduled: "Rescheduled", cancelled: "Cancelled", completed: "Completed", no_show: "Missed appointment" } as Record<string, string>)[order.bookingStatus || "awaiting_booking"] || "Choose a time"}</strong></span><span><small>Sessions remaining</small><strong>{order.sessionsRemaining} of {order.sessionsIncluded}</strong></span></div>
+        {order.fulfillmentText && <p className="shop-service-copy">{order.fulfillmentText}</p>}
+        {order.bookingUrl && order.sessionsRemaining > 0 && <a className="button primary" href={order.bookingUrl} rel="noreferrer" target="_blank"><CalendarDays size={17} /> Book an appointment</a>}
         {order.intakeQuestions.length > 0 && <form className="shop-intake-form" onSubmit={(event) => void submit(event, order)}><div><ClipboardList size={18} /><strong>Pre-consultation questionnaire</strong></div>{order.intakeQuestions.map((question) => <label key={question.id}><span>{question.prompt}{question.required ? " *" : ""}</span><textarea defaultValue={order.intakeAnswers.find((item) => item.questionId === question.id)?.answer || ""} maxLength={2000} onChange={(event) => setAnswers((current) => ({ ...current, [`${order.orderId}:${question.id}`]: event.target.value }))} required={question.required} rows={3} /></label>)}<button className="button secondary" disabled={saving === order.orderId} type="submit">{saving === order.orderId ? <LoadingIndicator size={16} /> : order.intakeSubmittedAt ? <CheckCircle2 size={16} /> : <ClipboardList size={16} />}{order.intakeSubmittedAt ? "Update answers" : "Send answers"}</button></form>}</>}
       </article>)}
     </section>
+    {data.orders.length === 0 && <section className="shop-customer-card"><h2>No purchases available</h2><p>Open the link from your most recent purchase email.</p></section>}
     {data.bookings.length > 0 && <section className="shop-customer-card shop-customer-bookings"><h2>Appointments</h2>{data.bookings.map((booking) => <article key={booking.bookingId}><CalendarDays size={18} /><div><strong>{booking.productTitle}</strong><span>{booking.startAt ? new Date(booking.startAt).toLocaleString() : booking.status.replaceAll("_", " ")}</span></div>{booking.meetingUrl && <a aria-label="Open meeting" href={booking.meetingUrl} rel="noreferrer" target="_blank"><ExternalLink size={17} /></a>}</article>)}</section>}
+    <footer className="shop-customer-footer"><p>Keep your personal purchase link to return here. No account or password needed.</p>{data.customer.supportEmail && <a href={`mailto:${data.customer.supportEmail}`}>Contact the seller</a>}</footer>
   </main>;
 }
