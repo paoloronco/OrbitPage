@@ -54,6 +54,9 @@ inherits the public page's theme. Click the preview title, introduction, logo
 or back link to edit it. Save inside the title/introduction dialog saves that
 dialog; other pending drafts have their own Save/Reset controls.
 
+The grid uses three columns when space permits, then two or one as its container
+narrows. Cards fill each column's available width. The list layout stays in one column.
+
 The receipt, delivery and **Your purchases** pages use the Shop's logo, colors,
 font and card style, including inherited page styling. They show direct Download
 buttons, order details, service instructions and appointment actions on mobile

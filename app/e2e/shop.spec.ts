@@ -1,7 +1,34 @@
 import { expect, test } from '@playwright/test';
+import { z } from 'zod';
+import { createShopSchemas } from '../packages/shop/schema.js';
+import { renderShopHtml } from '../packages/shop/render.js';
 import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test.use({ locale: 'it-IT' });
+
+test('the shared storefront grid fills three, two or one columns according to available space', async ({ page }, testInfo) => {
+  const { normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z, () => false);
+  const products = Array.from({ length: 4 }, (_, index) => ({ productId: `print-${index}`, type: 'digital' as const, title: `Illustration ${index + 1}`, description: 'Printable artwork for your studio.', priceCents: 1000, cardStyle: normalizeShopProductCardStyle({}), file: { filename: 'artwork.pdf' } }));
+  const cover = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="230"%3E%3Crect width="400" height="230" fill="%23215d94"/%3E%3C/svg%3E';
+  await page.route('**/*', route => route.abort());
+  const html = (layout: 'grid' | 'list') => renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.invalid/shop', products, appearance: normalizeShopAppearance({ title: 'Studio prints', layout }), previewOnly: true, previewCoverUrls: Object.fromEntries(products.map(product => [product.productId, cover])), apiBaseUrl: '/api/shop', newsletterEndpoint: '/newsletter', coverUrlPrefix: '/covers/' });
+  await page.setContent(html('grid'));
+  const grid = page.locator('.grid');
+  for (const [width, columns] of [[1440, 3], [1024, 3], [768, 2], [650, 2], [640, 1], [390, 1], [320, 1]]) {
+    await page.setViewportSize({ width, height: 980 });
+    await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(columns);
+    const geometry = await grid.evaluate(element => ({ width: element.clientWidth, card: element.querySelector('article')!.getBoundingClientRect().width, overflow: element.scrollWidth > element.clientWidth }));
+    expect(geometry.card).toBeCloseTo((geometry.width - (columns - 1) * 12) / columns, 0);
+    expect(geometry.overflow).toBe(false);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    if (width === 1440 || width === 390) await page.screenshot({ path: testInfo.outputPath(`storefront-grid-${width}.png`), fullPage: true });
+  }
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await page.locator('.shell').evaluate(element => element.style.maxWidth = '560px');
+  await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
+  await page.setContent(html('list'));
+  await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
+});
 
 test('the self-hosted Shop saves private digital products and offers owner Stripe settings', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
