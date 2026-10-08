@@ -15,6 +15,7 @@ const About = lazy(() => import("./pages/About"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cookies = lazy(() => import("./pages/Cookies"));
 const Newsletter = lazy(() => import("./pages/Newsletter"));
+const ShopPurchase = lazy(() => import("./pages/ShopPurchase"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const routerBaseName = getActiveBasePath();
 
@@ -171,6 +172,9 @@ function RoutedApplication() {
           <Route path="/about" element={<About />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/newsletter/status" element={<Newsletter />} />
+          <Route path="/shop/success" element={<ShopPurchase />} />
+          <Route path="/shop/download" element={<ShopPurchase />} />
+          <Route path="/shop/customer" element={<ShopPurchase />} />
           <Route path="/:locale/links" element={<LocalizedPublicRoute><Index /></LocalizedPublicRoute>} />
           <Route path="/:locale/menu" element={<LocalizedPublicRoute><Menu /></LocalizedPublicRoute>} />
           <Route path="/:locale/privacy" element={<LocalizedPublicRoute><Privacy /></LocalizedPublicRoute>} />

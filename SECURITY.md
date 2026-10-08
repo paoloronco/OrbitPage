@@ -78,6 +78,16 @@ These are targets, not contractual guarantees.
 
 ## Deployment Recommendations
 
+Shop admin APIs require `users:manage`; demo mode blocks commerce mutations.
+Digital files live outside public uploads and require verified payments and
+expiring, bounded delivery capabilities. Raw Stripe and Cal.com webhooks verify
+signatures before changing orders. Original subtotal, Stripe discounts, captured
+funds, session/metadata/account/mode and payment bindings are checked server-side.
+Owner Stripe and Shop SMTP credentials are encrypted with a stable server key;
+changing the account or mode is blocked once orders exist. Dashboard Shop backups
+contain customer data, encrypted settings and private files and must be protected.
+See [Shop operations](./docs/wiki/dashboard/sections/shop.md).
+
 - Linux and Proxmox installers default to `0.0.0.0:8080` for LAN access. Set `ORBITPAGE_BIND_ADDRESS=127.0.0.1` for local-only access; use HTTPS for public access. See [Deployment](./docs/wiki/administration/Deployment.md#lan-and-loopback).
 - Persist and back up `DATA_DIR`; it contains the generated `JWT_SECRET`, SQLite database, and uploads. Keep any explicit secret override stable across restarts.
 - Never bake databases, database backups or sidecars, uploads, logs, or environment files into an image or source archive.

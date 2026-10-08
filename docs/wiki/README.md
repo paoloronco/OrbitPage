@@ -25,6 +25,7 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
 | View analytics and configure consent | [Analytics and privacy](./dashboard/sections/analytics-and-privacy.md) |
 | Configure SMTP and send campaigns | [Newsletters](./dashboard/sections/newsletters.md) |
+| Sell digital products or services with owner Stripe | [Shop](./dashboard/sections/shop.md) |
 | Configure AI and review suggested edits | [AI assistant](./ai-assistant.md) |
 | Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/sections/backups-and-demo-mode.md) |
 | Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/sections/account-and-team.md) |

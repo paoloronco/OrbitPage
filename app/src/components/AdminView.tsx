@@ -1,3 +1,5 @@
+import type { ShopView } from "./shop-client";
+import { shopRequest } from "@/lib/api-client";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
@@ -69,6 +71,7 @@ import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/li
 import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
 const ThemeCustomizer = lazy(() => import("./ThemeCustomizer").then(module => ({ default: module.ThemeCustomizer })));
 const MenuEditor = lazy(() => import("./MenuEditor").then(module => ({ default: module.MenuEditor })));
+const SelfHostedShop = lazy(() => import("./SelfHostedShop"));
 const NewsletterWorkspace = lazy(() => import("./NewsletterWorkspace"));
 import { VersionHistory } from "./VersionHistory";
 import { SubpageManager, type EditorSubpage } from "./SubpageManager";
@@ -308,6 +311,7 @@ export const AdminView = ({
     if (embeddedEditor) editorIntegration?.onSubsectionChange?.(scope, value);
     else onSubsectionChange?.(scope, value);
   };
+  const [selfHostedShopEnabled, setSelfHostedShopEnabled] = useState(false);
   const extensionShop = embeddedEditor ? editorIntegration?.extensions?.shop : undefined;
   const extensionPanelTabs = embeddedEditor ? editorIntegration?.extensions?.panels || [] : [];
   const usesDashboardShell = !hasEditorIntegration || embeddedEditor;
@@ -407,6 +411,12 @@ export const AdminView = ({
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
+  useEffect(() => {
+    if (embeddedEditor || !canManageUsers) return;
+    let active = true;
+    void shopRequest<{ shop: { enabled: boolean } }>("/api/shop").then(result => { if (active) setSelfHostedShopEnabled(result.shop.enabled); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [embeddedEditor, canManageUsers]);
   const canEditProfile = hasPermission(userPerms, 'profile:write');
   const canEditLinks = hasAnyPermission(userPerms, 'links:write', 'links:style', 'links:images');
   const canEditTheme = hasPermission(userPerms, 'theme:write');
@@ -436,7 +446,7 @@ export const AdminView = ({
       title: tr("Menu", "Menu"),
       description: menu.description || tr("Browse food and drinks", "Scopri piatti e bevande"),
     }] : []),
-    ...(extensionShop?.enabled ? [{
+    ...((embeddedEditor ? extensionShop?.enabled : selfHostedShopEnabled) ? [{
       id: "shop",
       kind: "shop" as const,
       path: "/shop",
@@ -821,15 +831,17 @@ export const AdminView = ({
       internalDestinations={internalDestinations}
     />
   ) : (
-    embeddedEditor && extensionShop?.entitled
+    !embeddedEditor && canManageUsers
+      ? <Suspense fallback={null}><SelfHostedShop onBackToContent={() => selectVisualSection("links")} onViewPlans={() => setActiveTab("plan")} onStatusChange={setSelfHostedShopEnabled} selectedView={(subsection || "products") as ShopView | "legal"} onViewChange={view => selectSubsection("shop", view === "settings" ? "legal" : view)} /></Suspense>
+      : embeddedEditor && extensionShop?.entitled
       ? <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
       : <PlanLockedFeature
           title={embeddedEditor
             ? tr("Shop is included with Pro", "Lo Shop è incluso nel piano Pro")
-            : tr("Shop is available on OrbitPage SaaS", "Shop è disponibile su OrbitPage SaaS")}
+            : tr("Shop requires an administrator", "Lo Shop richiede un amministratore")}
           description={embeddedEditor
             ? tr("Upgrade to Pro to connect Stripe and sell products and services from your page.", "Passa a Pro per collegare Stripe e vendere prodotti e servizi dalla tua pagina.")
-            : tr("Connect Stripe and manage products from a hosted workspace.", "Collega Stripe e gestisci i prodotti da un workspace hosted.")}
+            : tr("An administrator can configure payments and manage this installation’s Shop.", "Un amministratore può configurare i pagamenti e gestire lo Shop di questa installazione.")}
           managePlanHref={managePlanHref}
         />
   );
@@ -1065,7 +1077,7 @@ export const AdminView = ({
                 inspectorDescription={visualInspectorDescription}
                 inspector={visualInspector}
                 menuStatus={menu.enabled ? "active" : "inactive"}
-                shopStatus={!embeddedEditor || !extensionShop?.entitled ? "locked" : extensionShop.enabled ? "active" : "inactive"}
+                shopStatus={!embeddedEditor ? canManageUsers ? selfHostedShopEnabled ? "active" : "inactive" : "locked" : !extensionShop?.entitled ? "locked" : extensionShop.enabled ? "active" : "inactive"}
                 pagesStatus={firstEnabledSubpage ? "active" : "inactive"}
                 onSelect={selectVisualSection}
                 onProfileLayoutChange={canEditProfile ? updateVisualProfileLayout : undefined}
@@ -1293,6 +1305,5 @@ function PlanLockedFeature({
     </Card>
   );
 }
-
 
 

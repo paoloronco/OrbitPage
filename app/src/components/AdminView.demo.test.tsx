@@ -159,7 +159,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('>90d</button>');
     expect(html).not.toContain('Smart CTA clicks will appear here separately');
     expect(html).toContain('admin-dashboard-mobile-nav-button');
-    expect(html).toContain('data-status="locked"');
+    expect(html).toContain('data-status="inactive"');
     expect(html).toContain('Edit with AI');
     expect(html).not.toContain('Classic UI');
     expect(html).toContain('>English</option>');
@@ -418,6 +418,5 @@ describe('AdminView demo mode', () => {
     mockState.integratedHostedSurface = false;
   });
 });
-
 
 

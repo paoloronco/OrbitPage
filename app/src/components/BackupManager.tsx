@@ -46,6 +46,7 @@ const SECTION_COPY: Record<BackupSectionId, { label: string; description: string
   discovery: { label: "Discovery files", description: "robots.txt, llms.txt, custom TXT files and sitemap state" },
   accounts: { label: "Admin accounts", description: "Self-hosted users, roles and credentials" },
   media: { label: "Uploaded media", description: "Images, video and other uploaded assets" },
+  shop: { label: "Shop", description: "Catalog, private files, orders, customers and encrypted settings. Keep this backup private." },
 };
 
 function mediaFileFromBackup(media: HostedBackupMedia) {
@@ -95,6 +96,7 @@ function SectionSelector({
           discovery: { label: tr("Discovery files", "File di indicizzazione"), description: tr("robots.txt, llms.txt, custom TXT files and sitemap state", "robots.txt, llms.txt, file TXT personalizzati e stato sitemap") },
           accounts: { label: tr("Admin accounts", "Account amministratori"), description: tr("Self-hosted users, roles and credentials", "Utenti self-hosted, ruoli e credenziali") },
           media: { label: tr("Uploaded media", "Media caricati"), description: tr("Images, video and other uploaded assets", "Immagini, video e altre risorse caricate") },
+          shop: { label: tr("Shop", "Shop"), description: tr("Catalog, private files, orders, customers and encrypted settings. Keep this backup private.", "Catalogo, file privati, ordini, clienti e impostazioni cifrate. Conserva questo backup in modo privato.") },
         };
         const copy = translated[section] || sourceCopy;
         const id = `${idPrefix}-backup-section-${section}`;

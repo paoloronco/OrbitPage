@@ -42,6 +42,13 @@ app/.env
 
 Keep environment files containing secrets private and out of Git.
 
+Shop's optional server settings are `SHOP_STRIPE_SECRET_KEY`,
+`SHOP_STRIPE_WEBHOOK_SECRET` and `SHOP_DELIVERY_SECRET` (defaults to stable
+`JWT_SECRET`). Prefer its encrypted dashboard configuration; environment Stripe
+overrides are read-only there. Set canonical `PUBLIC_SITE_URL` before publishing.
+See [Shop](../dashboard/sections/shop.md#connect-stripe) for verification,
+webhook events, SMTP and storage.
+
 See [Run from source](../../../README.md#run-from-source) for the complete installation procedure, including the required source `JWT_SECRET`.
 
 ### How `.env` is loaded

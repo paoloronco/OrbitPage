@@ -380,8 +380,8 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(publicPage).toHaveCSS('font-size', '13px');
   await expect(publicPage.locator('button')).toHaveCount(0);
 
-  const lockedShop = page.getByRole('navigation', { name: 'Site sections' }).getByRole('button', { name: 'Shop', exact: true });
-  await expect(lockedShop).toHaveAttribute('data-status', 'locked');
+  const shopNavigation = page.getByRole('navigation', { name: 'Site sections' }).getByRole('button', { name: 'Shop', exact: true });
+  await expect(shopNavigation).toHaveAttribute('data-status', 'inactive');
 
   await page.getByRole('button', { name: 'Mobile preview' }).click();
   const mobilePreview = page.locator('.visual-site-editor__canvas .admin-preview-device--mobile');

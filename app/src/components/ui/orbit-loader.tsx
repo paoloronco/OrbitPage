@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { OrbState } from "thinking-orbs";
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils";
 
 type OrbitLoaderProps = {
   className?: string;

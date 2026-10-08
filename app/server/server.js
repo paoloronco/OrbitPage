@@ -1,3 +1,6 @@
+import { createShopRouter, createShopWebhookRouter, createShopPublicRouter } from "./routes/shop.js";
+import { cleanupShopFiles, dispatchShopEmails, shopFilesPath } from "./services/shop.js";
+import { dispatchShopBookingReminders } from "./services/shop-lifecycle.js";
 import './services/instance-details.js';
 import express from 'express';
 import { assertEmbedChangesAllowed } from './services/embed-authorization.js';
@@ -67,6 +70,7 @@ import {
   listBackupImages,
   restoreApplicationBackup,
   stageUploads,
+  stageShopFiles,
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
 import { consumeSetupToken, ensureSetupToken, isSetupTokenRequired, rotateSetupToken, verifySetupToken } from './services/setup-token.js';
@@ -402,12 +406,23 @@ app.use((req, res, next) => {
   next();
 });
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api') || isAdminSpaRoute(req.path) || req.path === '/health') {
+  const shopPurchase = SHOP_PURCHASE_ROUTES.has(parseLocalizedPublicPath(req.path)?.routePath || req.path);
+  if (shopPurchase || req.path.startsWith('/api/shop')) {
+    res.set({ 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'private, no-store' });
+  }
+  if (shopPurchase || req.path.startsWith('/api') || isAdminSpaRoute(req.path) || req.path === '/health') {
     res.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
   }
   next();
 });
 app.use('/api/admin/restore', (req, res, next) => apiLimiter(req, res, next), authenticateToken, requirePermission('users:manage'), express.json({ limit: '300mb' }));
+app.use('/api/shop', createShopWebhookRouter({ demoMode: DEMO_MODE, updateGuard: async (req, res, next) => {
+  if (!['POST', 'PUT'].includes(req.method)) return next();
+  try {
+    if (isUpdateActive((await updateAgentRequest(DATA_DIR)).job)) return res.status(503).json({ error: 'OrbitPage is updating. Retry shortly.' });
+    next();
+  } catch { res.status(503).json({ error: 'Cannot verify the host updater status.' }); }
+} }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Serve static files with proper path resolution
@@ -829,6 +844,8 @@ const PUBLIC_SPA_ROUTES = new Set(['/', '/links', '/menu', '/privacy', '/cookies
 const PERSONAL_PAGE_SPA_ROUTES = new Set(PUBLIC_SPA_ROUTES);
 PUBLIC_SPA_ROUTES.add('/newsletter');
 PUBLIC_SPA_ROUTES.add('/newsletter/status');
+const SHOP_PURCHASE_ROUTES = new Set(['/shop/success', '/shop/download', '/shop/customer']);
+SHOP_PURCHASE_ROUTES.forEach(route => PUBLIC_SPA_ROUTES.add(route));
 const ADMIN_SPA_SECTIONS = new Set(['profile', 'content', 'links', 'pages', 'ai', 'theme', 'menu', 'publish', 'qr', 'team', 'account', 'plan', 'access', 'backup', 'analytics', 'privacy', 'txt', 'sitemap']);
 const ADMIN_CONTENT_SECTIONS = new Set(['link', 'menu', 'shop', 'pages']);
 const ADMIN_EDITOR_SECTIONS = new Set(['page', 'content', 'menu', 'shop', 'pages']);
@@ -1329,7 +1346,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const locale = (isAdminSpaRoute(requestPath) && localizedRequest) || normalizePublicLocale('en');
   const newsletterRoute = requestPath === '/newsletter' || requestPath === '/newsletter/status';
   let pathName = canonicalPathForRequest(requestPath);
-  const pageKind = newsletterRoute ? 'admin' : getPageKind(pathName);
+  const pageKind = newsletterRoute || SHOP_PURCHASE_ROUTES.has(requestPath) ? 'admin' : getPageKind(pathName);
   let [profile, links] = pageKind === 'admin'
     ? [{ name: PUBLIC_SITE_NAME, social_links: {} }, []]
     : pageKind === 'about'
@@ -1357,7 +1374,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const canonicalUrl = new URL(withRequestBasePath(req, canonicalPath), origin).toString();
   const alternates = { 'x-default': canonicalUrl };
 
-  const title = newsletterRoute ? `Newsletter | ${PUBLIC_SITE_NAME}` : setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
+  const title = SHOP_PURCHASE_ROUTES.has(requestPath) ? `Order | ${PUBLIC_SITE_NAME}` : newsletterRoute ? `Newsletter | ${PUBLIC_SITE_NAME}` : setupRequired ? `Page under construction | ${PUBLIC_SITE_NAME}` : getSeoTitle(profile, pageKind);
   const description = setupRequired
     ? 'This self-hosted OrbitPage installation is ready and waiting for its owner to complete the initial setup.'
     : getSeoDescription(profile, pageKind);
@@ -2023,6 +2040,8 @@ app.put('/api/account/instance-environment', authLimiter, authenticateToken, rej
     res.status(503).json({ error: 'Could not save instance environment.' });
   }
 });
+app.use('/api/shop', createShopRouter({ publicBase: req => `${getRequestOrigin(req)}${getActiveBasePath(req)}`, demoMode: DEMO_MODE }));
+app.use('/shop', createShopPublicRouter({ publicBase: req => `${getRequestOrigin(req)}${getActiveBasePath(req)}` }));
 app.use('/api/newsletter', createNewsletterRouter({
   publicBase: (req) => `${getRequestOrigin(req)}${getActiveBasePath(req)}`,
   demoMode: DEMO_MODE,
@@ -2383,7 +2402,7 @@ const setInstancePageActive = async (active) => {
 
 const EMPTY_PERSONAL_PAGE_BACKUP = {
   schemaVersion: SELECTIVE_BACKUP_SCHEMA_VERSION,
-  includedSections: ['profile', 'links', 'pages', 'theme', 'menu', 'privacy', 'discovery', 'media'],
+  includedSections: ['profile', 'links', 'pages', 'theme', 'menu', 'privacy', 'discovery', 'media', 'shop'],
   tables: {
     profile_data: [],
     links: [],
@@ -2394,8 +2413,10 @@ const EMPTY_PERSONAL_PAGE_BACKUP = {
     cookie_consent_config: [],
     text_files: [],
     sitemap_config: [],
+    shop_settings: [], shop_products: [], shop_files: [], shop_orders: [], shop_customers: [], shop_bookings: [], shop_events: [], shop_emails: [],
   },
   uploads: [],
+  shopFiles: [],
 };
 
 const supportedNodeRuntime = () => {
@@ -4947,7 +4968,9 @@ const resetApplicationData = async () => {
   if (isSetupTokenRequired()) rotateSetupToken();
   else consumeSetupToken();
   const mediaReset = stageUploads({ uploadsPath, uploads: [] });
+  let shopReset;
   try {
+    shopReset = stageShopFiles(shopFilesPath);
     const result = await withTransaction(async () => {
     console.log('Starting application reset...');
     
@@ -5004,6 +5027,7 @@ const resetApplicationData = async () => {
     `);
     
     mediaReset.activate();
+    shopReset.activate();
     console.log('Application reset completed successfully');
     
     return { 
@@ -5014,12 +5038,14 @@ const resetApplicationData = async () => {
     }, { foreignKeys: false });
     try {
       mediaReset.finalize();
+      shopReset.finalize();
     } catch (error) {
       console.error('Reset completed but old media cleanup failed:', error);
     }
     return result;
   } catch (error) {
     mediaReset.rollback();
+    shopReset?.rollback();
     throw error;
   }
 };
@@ -5300,6 +5326,7 @@ app.post('/api/upload', authenticateToken, requireAnyPermission('profile:write',
         uploadsPath,
         filePath: resolvedFilePath,
         quotaBytes: uploadStorageQuotaBytes,
+        privateFilesPath: shopFilesPath,
       });
     } catch (error) {
       if (error instanceof UploadQuotaExceededError) {
@@ -5413,6 +5440,7 @@ const handleMediaUpload = async (req, res) => {
         uploadsPath,
         filePath: resolvedFilePath,
         quotaBytes: uploadStorageQuotaBytes,
+        privateFilesPath: shopFilesPath,
       });
     } catch (error) {
       if (error instanceof UploadQuotaExceededError) {
@@ -5856,7 +5884,7 @@ app.get('*', spaLimiter, async (req, res) => {
     isConfiguredPrimaryPage = false;
     isActivePersonalPageRoute = false;
   }
-  const statusCode = isAdminSpaRoute(req.path) || ((PUBLIC_SPA_ROUTES.has(publicRoutePath) || isConfiguredPrimaryPage || isConfiguredSubpage) && isActivePersonalPageRoute) ? 200 : 404;
+  const statusCode = isAdminSpaRoute(req.path) || SHOP_PURCHASE_ROUTES.has(publicRoutePath) || ((PUBLIC_SPA_ROUTES.has(publicRoutePath) || isConfiguredPrimaryPage || isConfiguredSubpage) && isActivePersonalPageRoute) ? 200 : 404;
   if (statusCode === 200 && localizedRoute && !isAdminSpaRoute(req.path)) {
     const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
     return res.redirect(302, `${withRequestBasePath(req, publicRoutePath)}${query}`);
@@ -5872,7 +5900,19 @@ export { app, stripStaticSeoTags, buildStructuredData, renderSeoTags };
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
 app.listen(PORT, HOST, async () => {
-  if (!DEMO_MODE && process.env.NODE_ENV !== 'test') startNewsletterDispatcher();
+  if (!DEMO_MODE && process.env.NODE_ENV !== 'test') {
+    startNewsletterDispatcher();
+    let shopTickActive = false;
+    const shopTick = async () => {
+      if (shopTickActive) return;
+      shopTickActive = true;
+      try { if (!isUpdateActive((await updateAgentRequest(DATA_DIR)).job)) { await cleanupShopFiles(); await dispatchShopBookingReminders(); await dispatchShopEmails(); } }
+      catch { console.error('Shop dispatcher failed; it will retry.'); }
+      finally { shopTickActive = false; }
+    };
+    void shopTick();
+    setInterval(() => void shopTick(), 10_000).unref();
+  }
   console.log(`HTTP server running on port ${PORT}`);
   if (DISTRIBUTION_IMAGE.replace(/^docker\.io\//, '') === 'paueron/orbitpage') {
     console.warn('[OrbitPage] Docker Hub image moved to paoloronco/orbitpage. The paueron/orbitpage compatibility feed stops on 2026-10-09.');

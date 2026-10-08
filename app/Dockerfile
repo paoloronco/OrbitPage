@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22-alpine AS builder
 
-LABEL org.opencontainers.image.version="4.21.75"
+LABEL org.opencontainers.image.version="4.21.76"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Self-hosted public page manager"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -30,7 +30,7 @@ RUN npm ci --omit=dev --omit=optional
 # ---------- STAGE 2: runtime ----------
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.version="4.21.75"
+LABEL org.opencontainers.image.version="4.21.76"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Self-hosted public page manager"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -41,6 +41,7 @@ RUN npm uninstall -g npm
 WORKDIR /app
 COPY --from=builder /app/source/dist /app/dist
 COPY --from=builder /app/source/server /app/server
+COPY --from=builder /app/source/packages /app/packages
 
 COPY docker-entrypoint.sh /app/server/docker-entrypoint.sh
 RUN chmod +x /app/server/docker-entrypoint.sh

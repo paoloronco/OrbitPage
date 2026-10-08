@@ -50,6 +50,8 @@ export function ColorPicker({
     setDraft(normalizeHexColor(value, "#000000"));
   }, [value]);
 
+  useEffect(() => { if (disabled) setOpen(false); }, [disabled]);
+
   useEffect(() => {
     setEyeDropperSupported(typeof window !== "undefined" && "EyeDropper" in window);
   }, []);
@@ -76,6 +78,7 @@ export function ColorPicker({
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         setOpen(false);
         window.requestAnimationFrame(() => triggerRef.current?.focus());
       }
@@ -159,6 +162,7 @@ export function ColorPicker({
           onChange={handleDraftChange}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
+              event.preventDefault();
               commitColor(draft);
               setOpen(false);
               window.requestAnimationFrame(() => triggerRef.current?.focus());
@@ -170,7 +174,7 @@ export function ColorPicker({
       </div>
       <p className="orbit-color-picker__hint">Opacity is kept at 100% for theme compatibility.</p>
     </div>,
-    document.body,
+    triggerRef.current?.closest("dialog") || document.body,
   ) : null;
 
   return (

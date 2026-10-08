@@ -19,7 +19,7 @@ Open `/dashboard/profile` to sign in or, on a new installation, choose the admin
 | **Theme** | Colors, fonts, cards, background, and responsive preview | `/dashboard/theme/page` |
 | **AI Assistant** | Suggested page changes to review and confirm | `/dashboard/ai` |
 
-The **Shop** section is unavailable in the self-hosted edition. Its shared route is `/dashboard/editor/shop/products`.
+The **Shop** section sells digital products and services through the owner's Stripe account. See [Shop](./sections/shop.md); its shared route is `/dashboard/editor/shop/products`.
 
 See [Content and design](./sections/content-and-design.md) for editing controls, [External modules](../integrations/external-modules.md) for connected services and [AI Assistant](../ai-assistant.md) for provider setup.
 
@@ -80,7 +80,7 @@ Tabs append these slugs to their workspace path:
 | Path | Tab slugs |
 | --- | --- |
 | `/dashboard/editor/menu` | `settings`, `content`, `design` |
-| `/dashboard/editor/shop` | `legal`, `payments`, `design`, `products`, `orders`, `customers`; hosted only |
+| `/dashboard/editor/shop` | `legal`, `payments`, `design`, `products`, `orders`, `customers` |
 | `/dashboard/theme` | `page`, `card` |
 | `/dashboard/publish` | `QR`, `Sitemap`, `TXT` |
 | `/dashboard/newsletter` | `overview`, `campaigns`, `subscribers`, `settings` |

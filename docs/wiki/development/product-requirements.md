@@ -6,7 +6,7 @@ This document defines what the self-hosted OrbitPage application must support. U
 
 Anyone can create and maintain a public page without writing code, regardless of their job or intended use. The owner runs the application on their own server and controls its content, data, and access.
 
-An installation serves a main page, optional additional pages, and a menu. It works without an OrbitPage SaaS account or cloud database.
+An installation serves a main page, optional additional pages, a menu and an optional shop. It works without an OrbitPage SaaS account or cloud database.
 
 ## Required behavior
 
@@ -18,6 +18,7 @@ An installation serves a main page, optional additional pages, and a menu. It wo
 | Sharing and discovery | QR codes, scheduled campaign links, metadata, sitemap, and text files use the configured public URL | [Publishing](../dashboard/sections/publishing.md), [SEO](../SEO-and-indexing.md) |
 | Analytics and consent | Visit details and third-party tracking follow consent; reports are available in the dashboard | [Analytics and privacy](../dashboard/sections/analytics-and-privacy.md) |
 | Newsletter | The owner can configure SMTP, verify it, manage confirmed subscribers, and send or schedule campaigns | [Newsletters](../dashboard/sections/newsletters.md) |
+| Shop | Shared catalog/editor, private digital delivery, services, orders and customers use owner Stripe, SQLite and local SMTP without an OrbitPage fee | [Shop](../dashboard/sections/shop.md) |
 | AI editing | With an optional provider key, the assistant proposes changes and applies them only after confirmation | [AI assistant](../ai-assistant.md) |
 | Accounts | Roles restrict reads and changes on the server; each user can manage their password and TOTP | [Account and team](../dashboard/sections/account-and-team.md) |
 | Automation | Personal API tokens have limited access and expiry and can be revoked | [API](./api.md) |
@@ -32,6 +33,6 @@ An installation serves a main page, optional additional pages, and a menu. It wo
 - Translate dashboard controls without changing saved page content. Public URLs have no dashboard-language prefix.
 - Keep external providers optional: normal editing works without AI, GA4, or SMTP.
 
-The OSS edition has no paid feature tiers or plan quotas for pages and blocks. Storage and request limits still apply. Hosted billing, tenants, managed storage, moderation, commerce, and custom-domain provisioning belong to the managed service.
+The OSS edition has no paid feature tiers or plan quotas for pages and blocks. Storage and request limits still apply. Hosted billing, tenants, managed storage, moderation, Stripe Connect platform policy and custom-domain provisioning belong to the managed service. Owner commerce belongs to the self-hosted application.
 
 For implementation details, see [Application](./application.md), [Architecture](./architecture.md), and [Design system](./design-system.md).
