@@ -11,7 +11,8 @@ The editor uses the same toolbar, typography and dialogs in both editions.
 The Test/Live payment badge and publication actions sit below the workspace;
 Stripe setup differs because self-hosted installations use their owner's keys.
 
-Public Shop interfaces use English in both editions, including catalog controls,
+Shop interfaces use English in both editions, including the dashboard editor,
+catalog controls,
 Stripe Checkout, order delivery, purchase history and appointment emails. Dates
 and prices use English formatting regardless of the browser language. Product
 descriptions, seller policies, custom checkout fields and service instructions
