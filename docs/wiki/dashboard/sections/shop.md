@@ -7,6 +7,10 @@ SQLite, private files and your SMTP server. It needs no OrbitPage account,
 Firebase, R2 or OrbitPage Stripe Connect account; OrbitPage charges no platform
 fee. Stripe's own fees and account eligibility still apply.
 
+The editor uses the same toolbar, typography and dialogs in both editions.
+The Test/Live payment badge and publication actions sit below the workspace;
+Stripe setup differs because self-hosted installations use their owner's keys.
+
 Only administrators with `users:manage` can manage commerce. Demo mode permits
 viewing the editor and blocks changes, uploads and checkout.
 

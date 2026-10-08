@@ -832,7 +832,7 @@ export const AdminView = ({
     />
   ) : (
     !embeddedEditor && canManageUsers
-      ? <Suspense fallback={null}><SelfHostedShop onBackToContent={() => selectVisualSection("links")} onViewPlans={() => setActiveTab("plan")} onStatusChange={setSelfHostedShopEnabled} selectedView={(subsection || "products") as ShopView | "legal"} onViewChange={view => selectSubsection("shop", view === "settings" ? "legal" : view)} /></Suspense>
+      ? <Suspense fallback={null}><SelfHostedShop embedded onBackToContent={() => selectVisualSection("links")} onViewPlans={() => setActiveTab("plan")} onStatusChange={setSelfHostedShopEnabled} selectedView={(subsection || "products") as ShopView | "legal"} onViewChange={view => selectSubsection("shop", view === "settings" ? "legal" : view)} /></Suspense>
       : embeddedEditor && extensionShop?.entitled
       ? <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
       : <PlanLockedFeature
@@ -1305,5 +1305,4 @@ function PlanLockedFeature({
     </Card>
   );
 }
-
 

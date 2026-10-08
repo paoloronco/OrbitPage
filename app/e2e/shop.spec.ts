@@ -7,6 +7,8 @@ test('the self-hosted Shop saves private digital products and offers owner Strip
   await openAdminSection(page, 'Shop');
   const shop = page.locator('.orbitpage-selfhosted-shop');
   await expect(shop.locator('.shop-workspace')).toBeVisible();
+  await expect(shop.locator('.shop-workspace')).toHaveClass(/embedded/);
+  await expect(shop.locator('.shop-command-bar')).toHaveCount(0);
   await expect(shop.getByRole('button', { name: 'Connect Stripe', exact: true })).toHaveCount(0);
   await shop.getByRole('button', { name: 'Add product', exact: true }).first().click();
   const editor = shop.locator('#shop-catalog');

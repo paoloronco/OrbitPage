@@ -1229,8 +1229,10 @@ export default function ShopClient({
   const productChanged = productEditorOpen && Boolean(deleteProductPending || files.length || cover || JSON.stringify(draft) !== JSON.stringify(originalProduct ? productDraft(originalProduct) : EMPTY_PRODUCT));
   const emailChanged = emailDraftChanged(smtpDraft, data.shop?.emailSettings);
   const changed = appearanceChanged || productChanged || emailChanged;
+  const paymentMode = data.shop?.stripeConnected && <span className={`shop-mode-badge ${data.shop.stripeLivemode ? "live" : "test"}`}>{data.shop.stripeLivemode ? "Live payments" : "Test mode"}</span>;
   const shopActions = (
     <div className="shop-command-actions">
+      {embedded && paymentMode}
       {data.shop?.enabled && <a className="button secondary" href={data.shop.publicUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Open shop</a>}
       {(data.shop?.enabled || (hasAvailableProduct && shopReady)) && <button
         className="button primary"
@@ -1414,7 +1416,7 @@ export default function ShopClient({
       {!embedded && <header className="shop-command-bar">
         <div className="shop-command-copy">
           {!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"><ChevronLeft size={16} /> Content</button>}
-          <div className="shop-command-title"><ShoppingBag size={18} /><strong>Shop</strong>{data.shop?.stripeConnected && <span className={`shop-mode-badge ${data.shop.stripeLivemode ? "live" : "test"}`}>{data.shop.stripeLivemode ? "Live payments" : "Test mode"}</span>}</div>
+          <div className="shop-command-title"><ShoppingBag size={18} /><strong>Shop</strong>{paymentMode}</div>
           <p>Sell downloads and services. Stripe verifies the seller, processes payments and pays out directly.</p>
         </div>
         {shopActions}
