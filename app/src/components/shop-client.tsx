@@ -647,6 +647,8 @@ export default function ShopClient({
   selfHosted = false,
 }: ShopClientProps) {
   const [data, setData] = useState<ShopDashboard | null>(null);
+  const dashboardRef = useRef(data);
+  const [stripeCheckFailed, setStripeCheckFailed] = useState(false);
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_PRODUCT);
   const [productEditorOpen, setProductEditorOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -725,6 +727,38 @@ export default function ShopClient({
       setView("payments");
     }
   }, [load, setView]);
+
+  useEffect(() => { dashboardRef.current = data; }, [data]);
+
+  useEffect(() => {
+    if (view !== "settings" || settingsTab !== "stripe" || !data?.shop?.stripeConnected || action !== null) return;
+    let cancelled = false, pending = false;
+    const refresh = async () => {
+      if (cancelled || pending || document.visibilityState !== "visible") return;
+      pending = true;
+      const snapshot = dashboardRef.current;
+      try {
+        const next = await request<ShopDashboard>("/api/shop?refresh=1");
+        // A status response must not overwrite a newer save.
+        if (!cancelled && dashboardRef.current === snapshot) {
+          setData(current => current === snapshot && current ? { ...current, mode: next.mode, shop: next.shop } : current);
+          setStripeCheckFailed(false);
+        }
+      } catch {
+        if (!cancelled && dashboardRef.current === snapshot) setStripeCheckFailed(true);
+      } finally { pending = false; }
+    };
+    void refresh();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    const interval = window.setInterval(refresh, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [request, view, settingsTab, action, data?.shop?.stripeConnected]);
 
   useEffect(() => {
     if (data?.shop?.enabled !== undefined) onStatusChange?.(data.shop.enabled);
@@ -829,6 +863,7 @@ export default function ShopClient({
     try {
       const next = await request<ShopDashboard>("/api/shop?refresh=1");
       setData(next);
+      setStripeCheckFailed(false);
       setFeedback(next.shop?.stripeReady
         ? { type: "success", text: "Stripe is ready. You can publish the shop." }
         : { type: "error", text: "Stripe is still completing the account verification. Check again shortly." });
@@ -1165,7 +1200,7 @@ export default function ShopClient({
     </section>
   );
 
-  const shopReady = data.mode === "stripe" && data.shop?.stripeReady;
+  const shopReady = data.mode === "stripe" && data.shop?.stripeReady && typeof data.shop.stripeLivemode === "boolean" && !stripeCheckFailed;
   const calCom = data.shop?.calCom;
   const hasAvailableProduct = data.products.some((product) => product.active);
   const sellerAcknowledged = Boolean(appearance?.sellerSelfCertified);
@@ -1226,17 +1261,13 @@ export default function ShopClient({
     liveDraftProduct?.productId === product.productId ? liveDraftProduct : product
   ));
   if (liveDraftProduct && !draft.productId) previewProducts = [liveDraftProduct, ...previewProducts];
-  const addProductButton = <button aria-controls="shop-catalog" aria-expanded={productEditorOpen} className="button primary compact" disabled={action !== null || data.products.length >= data.limits.maxProducts} onClick={openNewProduct} type="button"><PackagePlus size={16} /> Add product</button>;
+  const addProductButton = <button aria-controls="shop-catalog" aria-expanded={productEditorOpen} aria-label="Add product" className="button primary compact shop-add-product-button" disabled={action !== null || data.products.length >= data.limits.maxProducts} onClick={openNewProduct} type="button"><PackagePlus size={16} /><span>Add product</span></button>;
   const appearanceChanged = Boolean(logoFile || deleteProfilePending || (appearance && JSON.stringify(appearance) !== JSON.stringify(data.shop?.appearance)));
   const productChanged = productEditorOpen && Boolean(deleteProductPending || files.length || cover || JSON.stringify(draft) !== JSON.stringify(originalProduct ? productDraft(originalProduct) : EMPTY_PRODUCT));
   const emailChanged = emailDraftChanged(smtpDraft, data.shop?.emailSettings);
   const changed = appearanceChanged || productChanged || emailChanged;
-  const paymentMode = data.shop?.stripeConnected && <span className={`shop-mode-badge ${data.shop.stripeLivemode ? "live" : "test"}`}>{data.shop.stripeLivemode ? "Live payments" : "Test mode"}</span>;
-  const shopActions = (
-    <div className="shop-command-actions">
-      {embedded && paymentMode}
-      {data.shop?.enabled && <a className="button secondary" href={data.shop.publicUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Open shop</a>}
-      {(data.shop?.enabled || (hasAvailableProduct && shopReady)) && <button
+  const paymentMode = data.shop?.stripeConnected && typeof data.shop.stripeLivemode === "boolean" && <span className={`shop-mode-badge ${data.shop.stripeLivemode ? "live" : "test"}`}>{data.shop.stripeLivemode ? "Live payments" : "Test mode"}</span>;
+  const publicationButton = (data.shop?.enabled || (hasAvailableProduct && shopReady)) && <button
         className="button primary"
         disabled={action !== null || changed}
         title={changed ? "Save or revert your changes first." : undefined}
@@ -1255,7 +1286,11 @@ export default function ShopClient({
       >
         {action === "publish" ? <LoadingIndicator size={16} /> : data.shop?.enabled ? <Download size={16} /> : <UploadCloud size={16} />}
         {data.shop?.enabled ? "Unpublish" : "Publish shop"}
-      </button>}
+      </button>;
+  const shopActions = (
+    <div className="shop-command-actions">
+      {embedded && paymentMode}
+      {data.shop?.enabled && <a className="button secondary" href={data.shop.publicUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Open shop</a>}
     </div>
   );
   const productEditor = productEditorOpen ? <>
@@ -1434,7 +1469,10 @@ export default function ShopClient({
           <button aria-label="Orders and customers" aria-pressed={view === "orders" || view === "customers"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("orders")} title="Orders and customers" type="button"><ReceiptText size={18} /></button>
           {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={action !== null} onClick={() => setView(view === "design" ? "products" : "design")} title="Personalize" type="button"><Palette size={18} /><span>Personalize</span></button>}
         </div>
-        {!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"><ChevronLeft size={16} /> Back to shop</button>}
+        <div className="shop-toolbar-publication">
+          {!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"><ChevronLeft size={16} /> Back to shop</button>}
+          {publicationButton}
+        </div>
         <div className="shop-toolbar-right">{editingStorefront && data.products.length > 0 && <button aria-label="View catalog" className="button secondary compact shop-catalog-button" onClick={() => setCatalogOpen(true)} title="View catalog" type="button"><Search size={14} /><span>View catalog</span></button>}{editingStorefront && addProductButton}</div>
       </div>
 
@@ -1550,8 +1588,8 @@ export default function ShopClient({
         <section className="shop-payments-view">
           {settingsTab === "stripe" && <section aria-labelledby="shop-stripe-title" className="shop-provider-panel">
             <header className="shop-provider-heading">
-              <h3 id="shop-stripe-title">{shopReady ? "Payments are ready" : selfHosted ? "Configure your Stripe account" : data.shop?.stripeConnected ? "Finish your Stripe setup" : "Connect Stripe to start selling"}</h3>
-              <p>{shopReady ? data.shop?.stripeLivemode === false ? "Test mode is active. Checkout uses test payments, not real charges." : "Your account can accept payments and receive payouts." : selfHosted ? "Use Test Mode to verify checkout before enabling live payments." : "Stripe collects your business, identity and bank details on its secure site."}</p>
+              <h3 id="shop-stripe-title" aria-live="polite">{stripeCheckFailed ? "Stripe status could not be verified" : shopReady ? <>Stripe payments are {data.shop?.stripeLivemode === false ? <>in Test mode <span className="shop-stripe-ready shop-stripe-ready-note">ready and configured</span></> : <span className="shop-stripe-ready">ready and configured</span>}</> : selfHosted ? "Configure your Stripe account" : data.shop?.stripeConnected ? "Finish your Stripe setup" : "Connect Stripe to start selling"}</h3>
+              {(stripeCheckFailed || !shopReady) && <p>{stripeCheckFailed ? "Check your connection. Stripe status will be checked again automatically." : selfHosted ? "Use Test Mode to verify checkout before enabling live payments." : "Stripe collects your business, identity and bank details on its secure site."}</p>}
               <a className="shop-provider-docs" href={documentationUrl("connect")} rel="noreferrer" target="_blank"><HelpCircle aria-hidden="true" size={14} /> Shop and Stripe documentation</a>
             </header>
             <div className="shop-connect-actions">
@@ -1559,7 +1597,7 @@ export default function ShopClient({
               {data.shop?.stripeConnected && !shopReady && <button className="button secondary" disabled={action !== null} onClick={() => void refreshStripeConnection()} type="button">{action === "refresh-status" ? <LoadingIndicator size={16} /> : <RefreshCw size={16} />} Check status</button>}
               {!selfHosted && <button className="button primary" disabled={action !== null || data.mode !== "stripe"} onClick={() => void connectStripe()} type="button">{action === "connect" ? <LoadingIndicator size={16} /> : <ArrowUpRight size={16} />}{data.shop?.stripeConnected ? "Update Stripe details" : "Connect Stripe"}</button>}
             </div>
-            {selfHosted && <OwnerStripeSettings onSaved={setData} request={request} saved={data.shop?.stripeSettings} />}
+            {selfHosted && <OwnerStripeSettings onSaved={next => { setStripeCheckFailed(false); setData(next); }} request={request} saved={data.shop?.stripeSettings} />}
             {data.mode !== "stripe" && <p className="shop-feedback error">Shop is not configured on this OrbitPage deployment yet.</p>}
             <div className="shop-payment-notes">
               <div><Euro size={20} /><span><strong>{selfHosted ? "No OrbitPage fee" : `${data.limits.feePercent}% OrbitPage fee`}</strong><small>{selfHosted ? "Stripe’s own fees apply to your account." : "Applied only to successful sales and returned proportionally on refunds."}</small></span></div>

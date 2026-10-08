@@ -111,6 +111,13 @@ Once orders exist, their account and test/live mode cannot be changed: rotate
 keys within the same account/mode, or use another installation. A test card does
 not turn a live checkout into a test checkout.
 
+Stripe settings refresh on opening, when you return to the tab and every 30
+seconds while visible. Green **ready and configured** requires verified Stripe
+readiness and a configured webhook; the heading identifies Test mode or live
+payments. An unavailable check removes the green confirmation until verification
+succeeds. Switching modes in Stripe Dashboard alone does not change this
+installation's credentials or payment mode.
+
 ## Customer details
 
 **Shop settings → Checkout** controls information collected by Stripe. Name and
@@ -128,8 +135,9 @@ or email. Card details are entered on Stripe, not stored by OrbitPage.
 ## Publish or unpublish
 
 Save the catalog/design, make a complete product available, verify Stripe and its
-webhook, and acknowledge seller responsibility. Select **Publish shop** below
-the workspace and open `/shop` in a private window. Check policies and mobile
+webhook, and acknowledge seller responsibility. Select **Publish shop** in the
+center of the top toolbar; in Settings and Orders/Customers it sits beside
+**Back to shop**. Open `/shop` in a private window. Check policies and mobile
 layout. Add Shop to Home can expose a card from your main page; newsletter signup
 uses the separate Newsletter audience and compliance settings.
 
