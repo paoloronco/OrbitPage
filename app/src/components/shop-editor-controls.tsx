@@ -25,7 +25,7 @@ export function ShopDialog({ title, help, children, onClose, busy = false, dirty
     dialog?.showModal();
     return () => { dialog?.close(); previous?.focus({ preventScroll: true }); };
   }, []);
-  return createPortal(<dialog aria-labelledby={id} className={`shop-editor-dialog ${className}`} onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} onPointerDown={(event) => { outsidePointerDown.current = event.button === 0 && isBackdrop(event); }} onClick={(event) => { if (outsidePointerDown.current && isBackdrop(event) && !busy && !dirty) onClose(); }} ref={ref} style={style}>
+  return createPortal(<dialog lang="en-US" dir="ltr" aria-labelledby={id} className={`shop-editor-dialog ${className}`} onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }} onPointerDown={(event) => { outsidePointerDown.current = event.button === 0 && isBackdrop(event); }} onClick={(event) => { if (outsidePointerDown.current && isBackdrop(event) && !busy && !dirty) onClose(); }} ref={ref} style={style}>
     <header><div className="shop-dialog-title"><h2 id={id}>{title}</h2>{help && <ShopHelp disablePortal label={`About ${title}`} text={help} />}</div><button aria-label={`Close ${title}`} disabled={busy} onClick={onClose} type="button"><X size={18} /></button></header>
     {children}
   </dialog>, document.body);

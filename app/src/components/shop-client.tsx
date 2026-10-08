@@ -172,6 +172,8 @@ const EMPTY_CUSTOMER_FILTERS = { query: "", purchases: "all", from: "", to: "" }
 type ShopPreviewProduct = Pick<ShopProduct, "productId" | "type" | "title" | "description" | "summary" | "priceCents" | "cardStyle" | "coverUrl" | "file" | "files">;
 
 type PhraseTranslator = (english: string, italian?: string) => string;
+const tr: PhraseTranslator = (english) => english;
+const locale = "en-US";
 
 function storefrontCopy(tr: PhraseTranslator) {
   return {
@@ -233,7 +235,7 @@ const EMPTY_PRODUCT: ProductDraft = {
   },
 };
 
-function money(cents: number, locale?: Locale) {
+function money(cents: number, locale: Locale = "en-US") {
   const language = locale;
   return new Intl.NumberFormat(language, { style: "currency", currency: "EUR" }).format(cents / 100);
 }
@@ -601,7 +603,7 @@ const SHOP_THEMES = [
 
 export type ShopRequest = <T>(input: string, init?: RequestInit) => Promise<T>;
 export type ShopClientProps = {
-  request: ShopRequest; tr: PhraseTranslator; locale: string;
+  request: ShopRequest;
   documentationUrl: (section: string) => string;
   onBackToContent: () => void; onViewPlans: () => void;
   embedded?: boolean; onStatusChange?: (enabled: boolean) => void;
@@ -640,7 +642,7 @@ function OwnerStripeSettings({ request, saved, onSaved }: { request: ShopRequest
 }
 
 export default function ShopClient({
-  request, tr, locale, documentationUrl, onBackToContent, onViewPlans,
+  request, documentationUrl, onBackToContent, onViewPlans,
   embedded = false, onStatusChange, isHomepage = false, selectedView, onViewChange,
   selfHosted = false,
 }: ShopClientProps) {
@@ -1154,10 +1156,10 @@ export default function ShopClient({
     } : current);
   }
 
-  if (loading && !data) return <div className="shop-loading"><LoadingIndicator size={20} /> Loading your shop…</div>;
-  if (!data) return <div className="shop-empty"><ShoppingBag size={30} /><h2>Shop unavailable</h2><p>Reload the page to try again.</p></div>;
+  if (loading && !data) return <div className="shop-loading" lang="en-US" dir="ltr"><LoadingIndicator size={20} /> Loading your shop…</div>;
+  if (!data) return <div className="shop-empty" lang="en-US" dir="ltr"><ShoppingBag size={30} /><h2>Shop unavailable</h2><p>Reload the page to try again.</p></div>;
   if (!data.entitled) return (
-    <section className="shop-plan-lock">
+    <section className="shop-plan-lock" lang="en-US" dir="ltr">
       <div>{!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"><ChevronLeft size={16} /> Content</button>}<p className="dashboard-kicker">Digital commerce</p><h2>Sell from your OrbitPage</h2><p>Add digital downloads or bookable services without configuring Stripe keys. Shop is included with Pro.</p><ul><li>Secure Stripe checkout</li><li>Private file delivery</li><li>Orders and refunds kept in sync</li></ul><button className="button primary" onClick={onViewPlans} type="button">View Pro</button></div>
       <div className="shop-lock-visual"><ShoppingBag size={46} /><span>Your page, your shop</span><small>OrbitPage keeps 5% per successful sale.</small></div>
     </section>
@@ -1412,7 +1414,7 @@ export default function ShopClient({
 
   </fieldset></form>;
   return (
-    <section className={embedded ? "shop-workspace embedded" : "shop-workspace"}>
+    <section className={embedded ? "shop-workspace embedded" : "shop-workspace"} lang="en-US" dir="ltr">
       {!embedded && <header className="shop-command-bar">
         <div className="shop-command-copy">
           {!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"><ChevronLeft size={16} /> Content</button>}
