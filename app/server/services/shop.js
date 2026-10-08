@@ -381,7 +381,7 @@ export async function createShopCheckout(raw, base) {
   });
   try {
     const metadata = { orbitpageOrderId: orderId, orbitpageProductId: product.productId };
-    const session = await client.checkout.sessions.create({ mode: 'payment', customer_creation: 'always',
+    const session = await client.checkout.sessions.create({ mode: 'payment', locale: 'en', customer_creation: 'always',
       name_collection: stripeNameCollection(appearance.checkout.businessName),
       phone_number_collection: { enabled: appearance.checkout.phone }, billing_address_collection: appearance.checkout.billingAddress,
       tax_id_collection: stripeTaxIdCollection(appearance.checkout.taxId),

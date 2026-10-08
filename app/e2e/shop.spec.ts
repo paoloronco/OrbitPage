@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { openAdminSection, openAuthenticatedAdmin } from './helpers';
 
+test.use({ locale: 'it-IT' });
+
 test('the self-hosted Shop saves private digital products and offers owner Stripe settings', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
@@ -45,13 +47,14 @@ test('the self-hosted Shop saves private digital products and offers owner Strip
 
 test('a confirmed purchase opens downloads and appointments without registration and survives refresh', async ({ page }) => {
   const orderId = '11111111-1111-4111-8111-111111111111';
-  const expiresAt = new Date(Date.now() + 86400_000).toISOString();
+  const expiresAt = '2100-10-08T12:00:00.000Z';
+  const paidAt = '2026-10-08T12:00:00.000Z';
   const receipt = { orderId, productTitle: 'Photography toolkit', productType: 'digital', amountTotal: 1000, currency: 'eur', downloadable: true,
     files: [{ filename: 'guide.pdf', sizeBytes: 1024 }], downloadCount: 0, maxDownloads: 10, expiresAt, deliveryToken: 'browser-fixture',
     customerPortalUrl: '/shop/customer?access=browser-fixture', intakeQuestions: [], sessionsIncluded: 0, sessionsRemaining: 0 };
-  const portal = { customer: { shopName: 'Studio Store', shopUrl: '/shop', supportEmail: 'studio@example.invalid', email: 'buyer@example.invalid' }, bookings: [], orders: [
-    { ...receipt, paidAt: new Date().toISOString(), files: [{ filename: 'guide.pdf', sizeBytes: 1024, url: '/api/shop/download/browser-fixture?file=0' }], downloadsRemaining: 10, deliveryUrl: '/shop/download?token=browser-fixture' },
-    { orderId: '22222222-2222-4222-8222-222222222222', productTitle: 'Studio consultation', productType: 'service', paidAt: new Date().toISOString(), bookingUrl: 'https://cal.com/studio/consultation', bookingStatus: 'awaiting_booking', sessionsRemaining: 2, sessionsIncluded: 2, intakeQuestions: [], intakeAnswers: [] }
+  const portal = { customer: { shopName: 'Studio Store', shopUrl: '/shop', supportEmail: 'studio@example.invalid', email: 'buyer@example.invalid' }, bookings: [{ bookingId: 'booking-fixture', orderId, productTitle: 'Studio consultation', status: 'scheduled', startAt: paidAt, endAt: null, meetingUrl: null }], orders: [
+    { ...receipt, paidAt, files: [{ filename: 'guide.pdf', sizeBytes: 1024, url: '/api/shop/download/browser-fixture?file=0' }], downloadsRemaining: 10, deliveryUrl: '/shop/download?token=browser-fixture' },
+    { orderId: '22222222-2222-4222-8222-222222222222', productTitle: 'Studio consultation', productType: 'service', paidAt, bookingUrl: 'https://cal.com/studio/consultation', bookingStatus: 'awaiting_booking', sessionsRemaining: 2, sessionsIncluded: 2, intakeQuestions: [], intakeAnswers: [] }
   ] };
   await page.route('**/api/shop/order?*', route => route.fulfill({ json: receipt }));
   await page.route('**/api/shop/delivery/browser-fixture', route => route.fulfill({ json: receipt }));
@@ -59,11 +62,17 @@ test('a confirmed purchase opens downloads and appointments without registration
   await page.route('**/api/shop/download/browser-fixture?*', route => route.fulfill({ contentType: 'application/pdf', headers: { 'Content-Disposition': 'attachment; filename="guide.pdf"' }, body: '%PDF-1.7\nbrowser fixture' }));
   await page.goto(`/shop/success?order=${orderId}&session_id=cs_test_browser_fixture`);
   await expect(page.getByRole('heading', { name: 'Your order is ready' })).toBeVisible();
+  await expect(page.locator('.shop-success-shell')).toHaveAttribute('lang', 'en-US');
+  await expect(page.locator('.shop-success-product')).toContainText('€10.00');
+  await expect(page.locator('.shop-success-card')).toContainText('Oct 8, 2100');
   await expect(page.getByText('Preparing your order', { exact: true })).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toBeVisible();
   await page.getByRole('link', { name: 'View your purchases' }).click();
   await expect(page.getByRole('heading', { name: 'Your purchases', exact: true })).toBeVisible();
+  await expect(page.locator('.shop-customer-shell')).toHaveAttribute('lang', 'en-US');
+  await expect(page.locator('.shop-customer-card-heading').first()).toContainText('Oct 8, 2026');
+  await expect(page.locator('.shop-customer-bookings')).toContainText('Oct 8, 2026');
   await expect(page.getByText('Purchase-verified access', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Book an appointment' })).toHaveAttribute('href', 'https://cal.com/studio/consultation');
   const downloaded = page.waitForEvent('download');

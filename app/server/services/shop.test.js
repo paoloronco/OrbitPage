@@ -113,6 +113,7 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     expect((await db.dbGet('SELECT url FROM links WHERE id = ?', ['orbitpage-shop'])).url).toBe(`${base}/shop`);
     const checkout = await request(app).post('/api/shop/checkout').type('form').send({ productId: id, priceCents: 1, sellerNoticeAcknowledged: 'accepted', digitalContentConsent: 'accepted' });
     expect(checkout.status).toBe(303); expect(provider.creates.at(-1).input.line_items[0].price_data.unit_amount).toBe(1000);
+    expect(provider.creates.at(-1).input.locale).toBe('en');
     expect(provider.creates.at(-1).input.payment_intent_data).not.toHaveProperty('application_fee_amount');
     const product = (await shop.shopProducts()).find(p => p.productId === id); expect(existsSync(shop.shopFilePath(product.files[0].id))).toBe(true);
     await expect(shop.reserveShopUpload({ productId: id, filename: '../../secret.pdf', contentType: 'application/pdf', sizeBytes: 20, kind: 'file' }, base)).rejects.toThrow('valid filename');

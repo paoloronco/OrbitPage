@@ -25,7 +25,7 @@ type Delivery = {
 };
 
 function money(cents: number) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" }).format(cents / 100);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(cents / 100);
 }
 export default function ShopSuccessClient({
   deliveryToken: initialDeliveryToken,
@@ -84,7 +84,7 @@ export default function ShopSuccessClient({
   }, [checkout, initialDeliveryToken, basePath]);
 
   if (status !== "ready" || !delivery) return (
-    <main className="shop-success-shell">
+    <main className="shop-success-shell" lang="en-US" dir="ltr">
       <section className="shop-success-card">
         <span className="shop-success-icon waiting">{status === "error" ? <Hourglass size={32} /> : <LoadingIndicator size={32} />}</span>
         <p className="dashboard-kicker">Order confirmation</p>
@@ -96,14 +96,14 @@ export default function ShopSuccessClient({
   );
 
   return (
-    <main className="shop-success-shell">
+    <main className="shop-success-shell" lang="en-US" dir="ltr">
       <section className="shop-success-card">
         <span className="shop-success-icon"><CheckCircle2 size={34} /></span>
         <p className="dashboard-kicker">Payment confirmed</p>
         <h1>Your order is ready</h1>
         <p className="shop-success-product">{delivery.productTitle} <strong>{money(delivery.amountTotal)}</strong></p>
         {delivery.downloadable ? (
-          <><div className="shop-download-list">{(delivery.files?.length ? delivery.files : [{ filename: "file", sizeBytes: 0 }]).map((file, index) => <a className="button primary shop-download-action" href={`${basePath}/api/shop/download/${encodeURIComponent(deliveryToken)}?file=${index}`} download={file.filename} key={`${file.filename}-${index}`}><Download size={17} /> Download {file.filename}</a>)}</div><small>{delivery.maxDownloads - delivery.downloadCount} downloads remaining · available until {new Date(delivery.expiresAt).toLocaleDateString()}</small></>
+          <><div className="shop-download-list">{(delivery.files?.length ? delivery.files : [{ filename: "file", sizeBytes: 0 }]).map((file, index) => <a className="button primary shop-download-action" href={`${basePath}/api/shop/download/${encodeURIComponent(deliveryToken)}?file=${index}`} download={file.filename} key={`${file.filename}-${index}`}><Download size={17} /> Download {file.filename}</a>)}</div><small>{delivery.maxDownloads - delivery.downloadCount} downloads remaining · available until {new Date(delivery.expiresAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</small></>
         ) : (
           <div className="shop-service-instructions">
             <strong>{delivery.bookingUrl ? "Book your appointment" : "Next steps"}</strong>
