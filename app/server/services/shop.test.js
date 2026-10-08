@@ -2,11 +2,11 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createHmac, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 import express from 'express';
 import request from 'supertest';
 
-const provider = vi.hoisted(() => ({ sessions: new Map(), intents: new Map(), charges: new Map(), disputes: new Map(), creates: [], messages: [], signing: null }));
+const provider = vi.hoisted(() => ({ sessions: new Map(), intents: new Map(), charges: new Map(), disputes: new Map(), creates: [], messages: [], signing: null, emailFailureFor: null }));
 vi.mock('stripe', async () => {
   const { default: Stripe } = await vi.importActual('stripe');
   const webhooks = new Stripe('sk_test_fixture').webhooks;
@@ -33,7 +33,13 @@ vi.mock('stripe', async () => {
   } };
 });
 vi.mock('nodemailer', () => ({ default: { createTransport: () => ({ verify: async () => true,
-  sendMail: async message => { provider.messages.push(message); return { accepted: [message.to] }; }, close() {},
+  sendMail: async message => {
+    provider.messages.push(message);
+    if (provider.emailFailureFor && message.messageId === provider.emailFailureFor) {
+      provider.emailFailureFor = null; throw new Error('Synthetic temporary SMTP failure');
+    }
+    return { accepted: [message.to] };
+  }, close() {},
 }) } }));
 
 const dataDir = mkdtempSync(join(tmpdir(), 'orbitpage-shop-'));
@@ -206,8 +212,20 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     expect(portal.orders).toHaveLength(1);
     expect(portal.orders[0]).toMatchObject({ downloadsRemaining: 10, files: [{ filename: 'synthetic.pdf', sizeBytes: expect.any(Number), url: expect.stringContaining('/api/shop/download/') }] });
     expect((await request(app).get(new URL(portal.orders[0].files[0].url).pathname + '?file=0')).status).toBe(200);
-    const before = provider.messages.length; await shop.dispatchShopEmails(); const sent = provider.messages.length; expect(sent).toBeGreaterThan(before);
-    await shop.dispatchShopEmails(); expect(provider.messages).toHaveLength(sent);
+    const emailId = `${order.orderId}:buyer`, messageId = `<${createHash('sha256').update(emailId).digest('hex')}@shop.example.com>`;
+    provider.emailFailureFor = messageId;
+    await Promise.all([shop.dispatchShopEmails(), shop.dispatchShopEmails()]);
+    const failed = await db.dbGet('SELECT * FROM shop_emails WHERE id = ?', [emailId]);
+    expect(failed).toMatchObject({ status: 'pending', attempts: 1, lease_until: 0 });
+    expect(failed.next_run).toBeGreaterThan(Date.now());
+    const buyerAttempts = () => provider.messages.filter(message => message.messageId === messageId);
+    await shop.dispatchShopEmails(); expect(buyerAttempts()).toHaveLength(1);
+    await db.dbRun('UPDATE shop_emails SET next_run = ? WHERE id = ?', [Date.now() - 1, emailId]);
+    await Promise.all([shop.dispatchShopEmails(), shop.dispatchShopEmails()]);
+    expect(await db.dbGet('SELECT status, attempts, lease_until FROM shop_emails WHERE id = ?', [emailId]))
+      .toMatchObject({ status: 'sent', attempts: 2, lease_until: 0 });
+    expect(buyerAttempts()).toHaveLength(2);
+    const sent = provider.messages.length; await shop.dispatchShopEmails(); expect(provider.messages).toHaveLength(sent);
     await shop.deleteShopCustomer(order.customerId, base);
     await expect(lifecycle.getShopCustomerPortal(token)).rejects.toThrow('no longer active');
     await webhook('checkout.session.completed', session); expect((await shop.shopOrder(order.orderId)).buyerEmail).toBeNull();
@@ -227,7 +245,13 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     };
     await call('BOOKING_CREATED'); await call('BOOKING_CREATED'); expect((await shop.shopOrder(order.orderId)).sessionsRemaining).toBe(1);
     expect((await lifecycle.getShopCustomerPortal(access)).bookings[0].meetingUrl).toBeNull();
-    await call('BOOKING_RESCHEDULED', { uid: 'replacement-booking', rescheduleUid: 'fixture-booking' }); expect((await shop.shopOrder(order.orderId)).sessionsRemaining).toBe(1);
+    expect((await lifecycle.dispatchShopBookingReminders()).queued).toBe(1);
+    expect((await lifecycle.dispatchShopBookingReminders()).queued).toBe(0);
+    expect((await db.dbGet("SELECT COUNT(*) AS count FROM shop_emails WHERE order_id = ? AND id LIKE 'reminder:%'", [order.orderId])).count).toBe(2);
+    await call('BOOKING_RESCHEDULED', { uid: 'replacement-booking', rescheduleUid: 'fixture-booking', startTime: new Date(Date.now() + 24 * 3600_000).toISOString() }); expect((await shop.shopOrder(order.orderId)).sessionsRemaining).toBe(1);
+    expect((await lifecycle.dispatchShopBookingReminders()).queued).toBe(1);
+    expect((await lifecycle.dispatchShopBookingReminders()).queued).toBe(0);
+    expect((await db.dbGet("SELECT COUNT(*) AS count FROM shop_emails WHERE order_id = ? AND id LIKE 'reminder:%'", [order.orderId])).count).toBe(4);
     await call('BOOKING_CANCELLED', { uid: 'replacement-booking' }); expect((await shop.shopOrder(order.orderId)).sessionsRemaining).toBe(2);
     await call('BOOKING_CREATED', { uid: 'replacement-booking' }); expect((await shop.shopOrder(order.orderId)).sessionsRemaining).toBe(2);
   });
