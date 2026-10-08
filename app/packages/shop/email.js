@@ -27,7 +27,7 @@ export function buildShopBuyerEmail(input) {
     const bookingText = order.productType === "service" && order.bookingUrl
         ? `\n\nBook your appointment: ${order.bookingUrl}`
         : "";
-    const portalText = input.customerPortalUrl ? `\n\nYour private customer area: ${input.customerPortalUrl}` : "";
+    const portalText = input.customerPortalUrl ? `\n\nView your purchases (no account or password needed): ${input.customerPortalUrl}` : "";
     const legalText = [
         order.sellerName ? `Seller: ${order.sellerName}` : "",
         order.sellerType && order.sellerType !== "unset" ? `Seller status: ${order.sellerType === "trader" ? "professional / trader" : "private seller"}` : "",
@@ -57,7 +57,7 @@ export function buildShopBuyerEmail(input) {
         ...(input.sellerEmail ? { replyTo: input.sellerEmail } : {}),
         subject: `Your order: ${order.productTitle}`,
         text: `Payment confirmed for ${order.productTitle} (${money(order.amountTotal, order.currency)}).\n\n${action}${bookingText}${portalText}\n\nOrder: ${order.orderId}\n\n${legalText}\n`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:28px;color:#0c1528"><h1 style="font-size:26px">Payment confirmed</h1><p>Your order for <strong>${escapeEmailHtml(order.productTitle)}</strong> is ready.</p><p style="color:#5f6d83">${escapeEmailHtml(money(order.amountTotal, order.currency))}</p>${actionHtml}${input.customerPortalUrl ? `<p><a href="${escapeEmailHtml(input.customerPortalUrl)}" style="display:inline-block;border:1px solid #b9c5d9;color:#17346d;text-decoration:none;padding:11px 17px;border-radius:6px;font-weight:700">Open your private customer area</a></p><p style="color:#5f6d83;font-size:13px">This personal link is available only to customers with a verified Shop purchase. Keep it private.</p>` : ""}<p style="color:#5f6d83;font-size:13px">Order ${escapeEmailHtml(order.orderId)}</p>${legalHtml}${digitalLicenseHtml}</div>`
+        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:28px;color:#0c1528"><h1 style="font-size:26px">Payment confirmed</h1><p>Your order for <strong>${escapeEmailHtml(order.productTitle)}</strong> is ready.</p><p style="color:#5f6d83">${escapeEmailHtml(money(order.amountTotal, order.currency))}</p>${actionHtml}${input.customerPortalUrl ? `<p><a href="${escapeEmailHtml(input.customerPortalUrl)}" style="display:inline-block;border:1px solid #b9c5d9;color:#17346d;text-decoration:none;padding:11px 17px;border-radius:6px;font-weight:700">View your purchases</a></p><p style="color:#5f6d83;font-size:13px">Keep this personal link to return to your files and appointments. No account or password needed.</p>` : ""}<p style="color:#5f6d83;font-size:13px">Order ${escapeEmailHtml(order.orderId)}</p>${legalHtml}${digitalLicenseHtml}</div>`
     };
 }
 export function buildShopSellerEmail(input) {

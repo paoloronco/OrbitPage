@@ -29,6 +29,7 @@
 :where(.orbitpage-selfhosted-shop, body:has(.orbitpage-selfhosted-shop) .shop-editor-dialog, .shop-success-shell, .shop-customer-shell) .button.secondary { background: #e7edf5; color: var(--ink); }
 :where(.orbitpage-selfhosted-shop, body:has(.orbitpage-selfhosted-shop) .shop-editor-dialog, .shop-success-shell, .shop-customer-shell) .button.compact { min-height: 38px; padding: 9px 12px; }
 :where(.orbitpage-selfhosted-shop, body:has(.orbitpage-selfhosted-shop) .shop-editor-dialog, .shop-success-shell, .shop-customer-shell) .button:disabled { cursor: default; opacity: .55; }
+:where(.shop-success-shell, .shop-customer-shell) .button.primary { background: var(--brand); font-weight: 700; }
 :where(.orbitpage-selfhosted-shop, .shop-success-shell, .shop-customer-shell) .dashboard-kicker { color: #3568f4; font-size: 10px; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
 .orbitpage-selfhosted-shop .panel { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 20px; }
 .orbitpage-selfhosted-shop button { cursor: pointer; }
@@ -73,10 +74,12 @@
   .shop-success-card { padding: 30px 22px; }
   .shop-success-card h1 { font-size: 28px; }
 }
+.shop-purchase-access { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 12px; }
+.shop-purchase-access p { color: var(--muted); font-size: 13px; line-height: 1.5; }
 .shop-customer-shell {
   min-height: 100vh;
   padding: clamp(28px, 6vw, 72px) 20px;
-  background: #f4f7fb;
+  background: #f7f8fa;
   color: #0c1528;
 }
 
@@ -95,24 +98,17 @@
 
 .shop-customer-hero h1 {
   margin: 5px 0;
-  font-size: clamp(30px, 5vw, 48px);
+  font-size: clamp(28px, 4vw, 38px);
+  letter-spacing: -.03em;
 }
-
-.shop-customer-hero > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 12px;
-  border: 1px solid #cbd5e5;
-  border-radius: 999px;
-  background: #fff;
-  color: #39506f;
-  font-size: 13px;
-}
+.shop-customer-hero p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 8px 0 0; }
+.shop-customer-email { overflow-wrap: anywhere; }
+.shop-customer-back { align-items: center; color: var(--ink-soft); display: inline-flex; font-size: 14px; gap: 8px; margin-bottom: 20px; text-decoration: none; }
+.shop-customer-back:hover { text-decoration: underline; }
 
 .shop-customer-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 18px;
 }
 
@@ -121,7 +117,7 @@
   border: 1px solid #d8dfeb;
   border-radius: 12px;
   background: #fff;
-  box-shadow: 0 14px 35px rgba(27, 44, 73, .07);
+  box-shadow: 0 2px 5px rgba(27, 44, 73, .03);
 }
 
 .shop-customer-card-heading {
@@ -140,6 +136,20 @@
 .shop-customer-card-heading small {
   color: #65738a;
 }
+.shop-customer-product-icon { align-items: center; background: #edf3ff; border-radius: 10px; color: var(--brand); display: inline-flex; flex-shrink: 0; height: 48px; justify-content: center; width: 48px; }
+.shop-customer-card-heading h2 { font-size: 19px; line-height: 1.35; margin-bottom: 5px; overflow-wrap: anywhere; }
+.shop-customer-files { border-top: 1px solid var(--line); padding-top: 4px; }
+.shop-customer-file { align-items: center; display: flex; gap: 16px; justify-content: space-between; padding: 16px 0; }
+.shop-customer-file > div { display: grid; gap: 4px; min-width: 0; }
+.shop-customer-file strong { font-size: 14px; overflow-wrap: anywhere; }
+.shop-customer-file small, .shop-customer-download-note, .shop-customer-footer { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.shop-customer-file .button { flex-shrink: 0; }
+.shop-customer-download-note { margin: 4px 0 0; }
+.shop-customer-footer { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; margin-top: 24px; }
+.shop-customer-footer p { margin: 0; }
+.shop-customer-footer a { color: var(--ink-soft); }
+.shop-service-copy { color: var(--ink-soft); line-height: 1.5; white-space: pre-line; }
+.shop-customer-shell :is(a, button, textarea):focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
 
 .shop-customer-stats {
   display: grid;

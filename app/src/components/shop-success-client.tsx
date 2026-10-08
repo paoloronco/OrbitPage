@@ -44,30 +44,35 @@ export default function ShopSuccessClient({
     let cancelled = false;
     let attempts = 0;
     let retry: number | undefined;
+    const storedToken = initialDeliveryToken || window.sessionStorage.getItem(`orbitpage-shop-delivery:${basePath}`) || "";
+    if (!checkout && !storedToken) { setStatus("error"); return; }
     async function check() {
       if (cancelled) return;
       attempts += 1;
       try {
         const endpoint = checkout
           ? `/api/shop/order?order=${encodeURIComponent(checkout.orderId)}&session_id=${encodeURIComponent(checkout.sessionId)}`
-          : `/api/shop/delivery/${encodeURIComponent(initialDeliveryToken || "")}`;
+          : `/api/shop/delivery/${encodeURIComponent(storedToken)}`;
         const response = await fetch(`${basePath}${endpoint}`, { cache: "no-store", referrerPolicy: "no-referrer" });
         const body = await response.json().catch(() => null);
         if (response.ok) {
           if (!cancelled) {
             const next = body as Delivery;
             setDelivery(next);
-            setDeliveryToken(next.deliveryToken || initialDeliveryToken || "");
+            const token = next.deliveryToken || storedToken;
+            setDeliveryToken(token);
+            if (token) window.sessionStorage.setItem(`orbitpage-shop-delivery:${basePath}`, token);
             setStatus("ready");
             if (checkout) window.history.replaceState({}, "", `${basePath}/shop/success`);
           }
           return;
         }
-        if ((response.status === 409 || response.status === 404) && attempts < 20) {
+        if (checkout && response.status === 409) {
           if (!cancelled) setStatus("waiting");
-          retry = window.setTimeout(() => void check(), 1_500);
+          if (attempts < 20) retry = window.setTimeout(() => void check(), 1_500);
           return;
         }
+        if (response.status >= 500 && attempts < 20) { retry = window.setTimeout(() => void check(), 1_500); return; }
         if (!cancelled) setStatus("error");
       } catch {
         if (!cancelled && attempts < 20) retry = window.setTimeout(() => void check(), 1_500);
@@ -83,9 +88,9 @@ export default function ShopSuccessClient({
       <section className="shop-success-card">
         <span className="shop-success-icon waiting">{status === "error" ? <Hourglass size={32} /> : <LoadingIndicator size={32} />}</span>
         <p className="dashboard-kicker">Order confirmation</p>
-        <h1>{status === "error" ? "Your order is still processing" : "Preparing your order"}</h1>
-        <p>Stripe is confirming the payment securely. Keep this page open while the order is prepared.</p>
-        {status === "error" && <button className="button secondary" onClick={() => window.location.reload()} type="button">Check again</button>}
+        <h1>{status === "error" ? checkout ? "We couldn’t confirm your payment yet" : "This purchase link is unavailable" : status === "waiting" ? "Waiting for payment confirmation" : "Checking your payment"}</h1>
+        <p>{status === "checking" ? "Your purchase will appear as soon as Stripe confirms the payment." : status === "waiting" ? "Your payment is still pending. Your files or booking will become available once it completes." : "Try again, or open the download link in your purchase email. Contact the seller if you need help."}</p>
+        {(status === "error" || status === "waiting") && <button className="button secondary" onClick={() => window.location.reload()} type="button">Check again</button>}
       </section>
     </main>
   );
@@ -98,7 +103,7 @@ export default function ShopSuccessClient({
         <h1>Your order is ready</h1>
         <p className="shop-success-product">{delivery.productTitle} <strong>{money(delivery.amountTotal)}</strong></p>
         {delivery.downloadable ? (
-          <><div className="shop-download-list">{(delivery.files?.length ? delivery.files : [{ filename: "Download file", sizeBytes: 0 }]).map((file, index) => <a className="button primary shop-download-action" href={`${basePath}/api/shop/download/${encodeURIComponent(deliveryToken)}?file=${index}`} key={`${file.filename}-${index}`}><Download size={17} /> {file.filename}</a>)}</div><small>{delivery.maxDownloads - delivery.downloadCount} downloads remaining · available until {new Date(delivery.expiresAt).toLocaleDateString()}</small></>
+          <><div className="shop-download-list">{(delivery.files?.length ? delivery.files : [{ filename: "file", sizeBytes: 0 }]).map((file, index) => <a className="button primary shop-download-action" href={`${basePath}/api/shop/download/${encodeURIComponent(deliveryToken)}?file=${index}`} download={file.filename} key={`${file.filename}-${index}`}><Download size={17} /> Download {file.filename}</a>)}</div><small>{delivery.maxDownloads - delivery.downloadCount} downloads remaining · available until {new Date(delivery.expiresAt).toLocaleDateString()}</small></>
         ) : (
           <div className="shop-service-instructions">
             <strong>{delivery.bookingUrl ? "Book your appointment" : "Next steps"}</strong>
@@ -109,9 +114,9 @@ export default function ShopSuccessClient({
               !delivery.fulfillmentText && <p>The seller will contact you with the next steps.</p>
             )}
             {delivery.sessionsIncluded > 1 && <small>{delivery.sessionsRemaining} of {delivery.sessionsIncluded} sessions available in this package.</small>}
-            {delivery.customerPortalUrl && <a className="button secondary shop-customer-action" href={delivery.customerPortalUrl}><ClipboardList size={17} /> {delivery.intakeQuestions.length ? "Complete questionnaire and manage booking" : "Open your customer area"}</a>}
           </div>
         )}
+        {delivery.customerPortalUrl && <div className="shop-purchase-access"><a className="button secondary shop-customer-action" href={delivery.customerPortalUrl}><ClipboardList size={17} /> View your purchases</a><p>Use this personal link to return to your files and appointments. No account or password needed.</p></div>}
         <div className="shop-secure-note"><ShieldCheck size={17} /><span>Payment handled securely by Stripe. Order {delivery.orderId.slice(0, 8)}.</span></div>
       </section>
     </main>
