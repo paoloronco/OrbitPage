@@ -100,6 +100,12 @@ The receipt verifies Stripe immediately on return from Checkout; email delivery
 does not delay downloads or booking access. Receipts and emails include a personal
 purchase-area link: no registration, password or OTP is required. The purchase
 area lists files with Download buttons and service booking/questionnaire actions.
+The receipt, delivery and purchase area use the Shop's logo, colors, font and card
+style, including the page theme when inheritance is enabled. Files have direct
+Download buttons; service purchases show session availability, questionnaires
+and appointment details. These buyer interfaces stay in English on desktop and
+mobile. The validated customer access token is sent in a request header, removed
+from the visible URL and kept only for the current browser tab.
 Keep the link private; it is a bearer credential and expires after seven days.
 Receipts link to private downloads and the customer portal. Digital download
 capabilities expire after thirty days with a combined download budget of ten

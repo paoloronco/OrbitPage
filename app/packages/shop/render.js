@@ -91,6 +91,17 @@ function shopCardSurface(effect, color, opacity) {
     }
     return `background:${hexToRgba(color, opacity)};backdrop-filter:none`;
 }
+export function shopPurchasePresentation({ appearance, theme = {}, shopUrl, title = "Shop" }) {
+    return {
+        name: appearance.title || title,
+        url: shopUrl,
+        logoUrl: appearance.logoUrl ? new URL(appearance.logoUrl, shopUrl).toString() : "",
+        supportEmail: appearance.sellerEmail,
+        design: resolvedShopDesign(appearance, theme),
+        cardEffect: appearance.cardEffect,
+        cardOpacity: appearance.cardOpacity
+    };
+}
 export function renderShopHtml(input) {
     const appearance = input.appearance;
     const title = appearance.showTitle ? appearance.title : "";

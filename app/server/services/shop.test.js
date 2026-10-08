@@ -126,7 +126,14 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     const order = await shop.shopOrder(session.metadata.orbitpageOrderId); expect(order).toMatchObject({ status: 'paid', amountTotal: 500, amountSubtotal: 1000, amountDiscount: 500, applicationFeeAmount: 0 });
     expect((await db.dbGet('SELECT COUNT(*) AS count FROM shop_emails WHERE order_id = ?', [order.orderId])).count).toBe(2);
     const token = shop.deliveryTokenForOrder(order.orderId);
-    expect((await shop.shopDelivery(token)).downloadable).toBe(true);
+    const originalTheme = await db.dbGet('SELECT full_config FROM theme_config WHERE id = 1');
+    await db.dbRun('UPDATE theme_config SET full_config = ? WHERE id = 1', [JSON.stringify({ background: '#101a2c', fontFamily: 'Georgia, serif' })]);
+    const delivery = await shop.shopDelivery(token);
+    expect(delivery).toMatchObject({ downloadable: true, paidAt: order.paidAt, shop: { supportEmail: 'seller@example.com', design: { pageBackground: '#101a2c', fontFamily: 'Georgia, serif' } } });
+    const portal = await lifecycle.getShopCustomerPortal(new URL(delivery.customerPortalUrl).searchParams.get('access'));
+    expect(portal.shop).toEqual(delivery.shop);
+    expect(JSON.stringify(delivery.shop)).not.toContain('sk_test_');
+    await db.dbRun('UPDATE theme_config SET full_config = ? WHERE id = 1', [originalTheme.full_config]);
     await shop.saveShopProduct({ ...digitalInput(), productId: id, priceCents: 2200, removedFileIds: order.deliveryFiles.map(file => file.id) }, base);
     await shop.deleteShopProduct(id, base); expect(existsSync(shop.shopFilePath(order.deliveryFiles[0].id))).toBe(true);
     const downloads = await Promise.allSettled(Array.from({ length: 12 }, () => shop.shopDelivery(token, 0, true)));

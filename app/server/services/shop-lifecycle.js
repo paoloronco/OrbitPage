@@ -1,7 +1,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { dbAll, dbGet, dbRun, withTransaction } from '../database.js';
-import { ShopError, shopOrder, shopCustomer, shopSettings, saveShopOrder, shopSign, shopSafeEqual, bookingUrlForOrder, queueShopEmail, deliveryTokenForOrder } from './shop.js';
+import { ShopError, shopOrder, shopCustomer, shopSettings, saveShopOrder, shopSign, shopSafeEqual, bookingUrlForOrder, queueShopEmail, deliveryTokenForOrder, getShopPurchasePresentation } from './shop.js';
 
 const decode = row => row ? JSON.parse(row.data) : null;
 const now = () => new Date().toISOString();
@@ -40,7 +40,7 @@ export async function getShopCustomerPortal(raw) {
     downloadsRemaining: Math.max(0, 10 * Math.max(1, order.deliveryFiles?.length || 1) - (order.downloadCount || 0)), expiresAt: order.deliveryExpiresAt,
     intakeQuestions: order.intakeQuestions || [], intakeAnswers: order.intakeAnswers || [], intakeSubmittedAt: order.intakeSubmittedAt || null,
   })).sort((a, b) => String(b.paidAt).localeCompare(String(a.paidAt)));
-  return { customer: { email: customer.email, shopName: setting.appearance.title || 'Shop', shopUrl: `${setting.publicBase}/shop`, supportEmail: setting.appearance.sellerEmail || '' }, orders,
+  return { shop: await getShopPurchasePresentation(setting), customer: { email: customer.email, shopName: setting.appearance.title || 'Shop', shopUrl: `${setting.publicBase}/shop`, supportEmail: setting.appearance.sellerEmail || '' }, orders,
     bookings: bookings.map(decode).filter(booking => orders.some(order => order.orderId === booking.orderId))
       .map(({ bookingId, orderId, productTitle, status, startAt, endAt, meetingUrl }) => ({ bookingId, orderId, productTitle, status, startAt, endAt, meetingUrl })) };
 }
