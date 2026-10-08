@@ -612,7 +612,7 @@ export type ShopClientProps = {
   selfHosted?: boolean;
 };
 
-function OwnerStripeSettings({ request, saved, onSaved }: { request: ShopRequest; saved: NonNullable<ShopDashboard["shop"]>["stripeSettings"]; onSaved: (data: ShopDashboard) => void }) {
+function OwnerStripeSettings({ request, saved, onSaved, dashboardUrl }: { request: ShopRequest; saved: NonNullable<ShopDashboard["shop"]>["stripeSettings"]; onSaved: (data: ShopDashboard) => void; dashboardUrl: string }) {
   const [secretKey, setSecretKey] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
   const [busy, setBusy] = useState(false);
@@ -625,18 +625,21 @@ function OwnerStripeSettings({ request, saved, onSaved }: { request: ShopRequest
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Stripe settings could not be saved."); }
     finally { setBusy(false); }
   }
-  return <form className="shop-provider-form" onSubmit={event => void save(event)}>
-    <p>Use your own Stripe account. Payments and payouts stay with that account, with no OrbitPage fee.</p>
-    {saved?.environmentManaged ? <p>Stripe credentials are configured through server environment variables.</p> : <fieldset disabled={busy}>
-      <div className="shop-option-grid">
+  return <form className="shop-provider-form shop-stripe-configuration" onSubmit={event => void save(event)}>
+    <header className="shop-stripe-configuration-heading">
+      <div><h4>Your Stripe account</h4><p className="shop-provider-muted">Payments and payouts stay with your account, with no OrbitPage fee.</p></div>
+      <a className="button secondary compact" href={dashboardUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Stripe Dashboard</a>
+    </header>
+    <fieldset disabled={busy}>
+      {saved?.environmentManaged ? <p className="shop-provider-muted">Stripe credentials are configured through server environment variables.</p> : <div className="shop-option-grid">
         <label>Stripe secret API key<input autoComplete="new-password" maxLength={300} onChange={event => setSecretKey(event.target.value)} placeholder={saved?.configured ? "Saved key · leave blank to keep" : "sk_test_… or sk_live_…"} required={!saved?.configured} spellCheck={false} type="password" value={secretKey} /></label>
         <label>Webhook signing secret<input autoComplete="new-password" maxLength={300} onChange={event => setWebhookSecret(event.target.value)} placeholder={saved?.webhookConfigured ? "Saved secret · leave blank to keep" : "whsec_…"} spellCheck={false} type="password" value={webhookSecret} /></label>
-      </div>
-      <button className="button primary" disabled={busy} type="submit">{busy ? <LoadingIndicator size={16} /> : <Save size={16} />} Save and verify Stripe</button>
-    </fieldset>}
-    {saved?.webhookUrl && <div className="shop-calendar-field"><label htmlFor="shop-stripe-webhook-url">Stripe webhook endpoint</label><input id="shop-stripe-webhook-url" onFocus={event => event.currentTarget.select()} readOnly value={saved.webhookUrl} /></div>}
-    <p className="shop-provider-muted">Create a webhook in the same Stripe account and mode. Subscribe to checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created and charge.dispute.closed.</p>
-    {saved?.accountId && <small>Account: {saved.accountId}</small>}
+      </div>}
+      {saved?.webhookUrl && <div className="shop-calendar-field"><label htmlFor="shop-stripe-webhook-url">Stripe webhook endpoint</label><input id="shop-stripe-webhook-url" onFocus={event => event.currentTarget.select()} readOnly value={saved.webhookUrl} /></div>}
+      <p className="shop-provider-muted">Create a webhook in the same Stripe account and mode using this endpoint{!saved?.environmentManaged && ", then enter its signing secret above"}. Subscribe to checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created and charge.dispute.closed.</p>
+      {saved?.accountId && <small>Account: {saved.accountId}</small>}
+      {!saved?.environmentManaged && <button className="button primary" disabled={busy} type="submit">{busy ? <LoadingIndicator size={16} /> : <Save size={16} />} Save and verify Stripe</button>}
+    </fieldset>
     {error && <p className="shop-feedback error" role="alert">{error}</p>}
   </form>;
 }
@@ -1592,12 +1595,12 @@ export default function ShopClient({
               {(stripeCheckFailed || !shopReady) && <p>{stripeCheckFailed ? "Check your connection. Stripe status will be checked again automatically." : selfHosted ? "Use Test Mode to verify checkout before enabling live payments." : "Stripe collects your business, identity and bank details on its secure site."}</p>}
               <a className="shop-provider-docs" href={documentationUrl("connect")} rel="noreferrer" target="_blank"><HelpCircle aria-hidden="true" size={14} /> Shop and Stripe documentation</a>
             </header>
-            <div className="shop-connect-actions">
-              {data.shop?.stripeConnected && <a className="button secondary" href={stripeDashboardUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Stripe Dashboard</a>}
+            {(!selfHosted || (data.shop?.stripeConnected && !shopReady)) && <div className="shop-connect-actions">
+              {!selfHosted && data.shop?.stripeConnected && <a className="button secondary" href={stripeDashboardUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Stripe Dashboard</a>}
               {data.shop?.stripeConnected && !shopReady && <button className="button secondary" disabled={action !== null} onClick={() => void refreshStripeConnection()} type="button">{action === "refresh-status" ? <LoadingIndicator size={16} /> : <RefreshCw size={16} />} Check status</button>}
               {!selfHosted && <button className="button primary" disabled={action !== null || data.mode !== "stripe"} onClick={() => void connectStripe()} type="button">{action === "connect" ? <LoadingIndicator size={16} /> : <ArrowUpRight size={16} />}{data.shop?.stripeConnected ? "Update Stripe details" : "Connect Stripe"}</button>}
-            </div>
-            {selfHosted && <OwnerStripeSettings onSaved={next => { setStripeCheckFailed(false); setData(next); }} request={request} saved={data.shop?.stripeSettings} />}
+            </div>}
+            {selfHosted && <OwnerStripeSettings dashboardUrl={stripeDashboardUrl} onSaved={next => { setStripeCheckFailed(false); setData(next); }} request={request} saved={data.shop?.stripeSettings} />}
             {data.mode !== "stripe" && <p className="shop-feedback error">Shop is not configured on this OrbitPage deployment yet.</p>}
             <div className="shop-payment-notes">
               <div><Euro size={20} /><span><strong>{selfHosted ? "No OrbitPage fee" : `${data.limits.feePercent}% OrbitPage fee`}</strong><small>{selfHosted ? "Stripe’s own fees apply to your account." : "Applied only to successful sales and returned proportionally on refunds."}</small></span></div>

@@ -552,6 +552,12 @@
 .shop-workspace .shop-provider-panel :is(input:not([type="checkbox"]), textarea, select):focus { box-shadow: 0 0 0 3px #3568f422; outline: 2px solid #3568f4; outline-offset: 0; }
 .shop-provider-form select:disabled { cursor: not-allowed; opacity: .55; }
 .shop-provider-form small { color: var(--muted); font-size: 11px; font-weight: 400; }
+.shop-stripe-configuration { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 18px; min-width: 0; padding: 18px; }
+.shop-stripe-configuration-heading { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
+.shop-stripe-configuration-heading > div { flex: 1 1 260px; min-width: 0; }
+.shop-stripe-configuration-heading h4 { font-size: 14px; font-weight: 700; margin: 0 0 4px; }
+.shop-stripe-configuration .button { justify-self: start; max-width: 100%; width: fit-content; }
+.shop-stripe-configuration .shop-provider-muted { overflow-wrap: anywhere; }
 .shop-workspace .shop-checkout-custom-field.shop-option-grid { align-items: end; background: #fff; border: 1px solid var(--line); border-radius: 8px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto; padding: 14px; }
 .shop-checkout-custom-field .shop-delete-button { min-height: 44px; min-width: 44px; }
 .shop-checkout-add { justify-self: start; }
