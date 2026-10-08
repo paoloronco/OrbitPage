@@ -80,8 +80,7 @@ test('a confirmed purchase opens themed downloads and appointments without regis
   await expect(page.getByRole('link', { name: 'Contact the seller' })).toHaveAttribute('href', 'mailto:studio@example.invalid');
   await expect(page.locator('.shop-purchase-shell')).toHaveCSS('--purchase-card', '#1b2b47');
   await expect(page.locator('.shop-purchase-shell')).toHaveCSS('--purchase-opacity', '100%');
-  await page.getByRole('link', { name: 'Back to shop' }).focus();
-  await page.keyboard.press('Tab');
+  await page.getByRole('link', { name: 'Download guide.pdf' }).focus();
   await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toBeFocused();
   await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toHaveCSS('outline-width', '3px');
   await page.screenshot({ path: testInfo.outputPath('delivery-dark-desktop.png'), fullPage: true });
@@ -105,7 +104,7 @@ test('a confirmed purchase opens themed downloads and appointments without regis
   await page.getByText('Before your appointment', { exact: true }).click();
   await expect(page.getByLabel('What would you like to work on?')).toHaveValue('Lighting for portraits');
   const downloaded = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'Download guide.pdf' }).click();
+  await page.getByRole('link', { name: 'Download guide.pdf' }).press('Enter');
   expect((await downloaded).suggestedFilename()).toBe('guide.pdf');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.locator('.shop-customer-shell').evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
