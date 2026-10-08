@@ -11,7 +11,7 @@ import { encryptSmtpPassword, decryptSmtpPassword, newsletterComplianceReady } f
 import { createShopSchemas } from '../../packages/shop/schema.js';
 import { checkoutAmounts, assertCheckoutCharge, stripeObjectId, stripeTaxIdCollection, stripeNameCollection } from '../../packages/shop/payments.js';
 import { validateShopFile, matchesShopFileSignature } from '../../packages/shop/files.js';
-import { renderShopHtml, renderShopMarkdown, shopPolicyLinks, resolvedShopDesign, buildShopHomeLinks } from '../../packages/shop/render.js';
+import { renderShopHtml, renderShopMarkdown, shopPolicyLinks, resolvedShopDesign, buildShopHomeLinks, shopPurchasePresentation } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail, buildShopSellerEmail } from '../../packages/shop/email.js';
 
 export const SHOP_FILE_BYTES = 50 * 1024 * 1024;
@@ -36,6 +36,13 @@ export const shopSettings = async () => decode(await dbGet('SELECT data FROM sho
 };
 const productFor = async id => decode(await dbGet('SELECT data FROM shop_products WHERE id = ?', [id]));
 export const shopProducts = async () => (await dbAll('SELECT data FROM shop_products ORDER BY rowid')).map(decode);
+export async function getShopPurchasePresentation(setting) {
+  const [profile, theme] = await Promise.all([
+    dbGet('SELECT name FROM profile_data WHERE id = 1'), dbGet('SELECT full_config FROM theme_config WHERE id = 1'),
+  ]);
+  return shopPurchasePresentation({ appearance: normalizeShopAppearance(setting.appearance),
+    theme: theme?.full_config ? JSON.parse(theme.full_config) : {}, shopUrl: `${setting.publicBase}/shop`, title: profile?.name || 'Shop' });
+}
 export async function saveShopSettings(record) {
   await dbRun('INSERT INTO shop_settings (id, data) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET data = excluded.data', [JSON.stringify(record)]);
 }
@@ -538,7 +545,7 @@ export async function shopReceipt(orderId, sessionId) {
 }
 async function shopDeliveryInfo(order, token) {
   const customer = order.customerId ? await shopCustomer(order.customerId) : null, setting = await shopSettings();
-  return { orderId: order.orderId, productTitle: order.productTitle, productType: order.productType,
+  return { shop: await getShopPurchasePresentation(setting), paidAt: order.paidAt, orderId: order.orderId, productTitle: order.productTitle, productType: order.productType,
     amountTotal: order.amountTotal, currency: order.currency, fulfillmentText: order.fulfillmentText, bookingUrl: bookingUrlForOrder(order),
     downloadable: order.productType === 'digital', files: (order.deliveryFiles || []).map(({ filename, sizeBytes }) => ({ filename, sizeBytes })),
     downloadCount: order.downloadCount, maxDownloads: 10 * Math.max(1, order.deliveryFiles?.length || 1), expiresAt: order.deliveryExpiresAt, deliveryToken: token,

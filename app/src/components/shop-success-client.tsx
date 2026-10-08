@@ -1,10 +1,13 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, ClipboardList, Download, Hourglass, ShieldCheck } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, FileText, Hourglass } from "lucide-react";
 import { useEffect, useState } from "react";
 import { OrbitLoader as LoadingIndicator } from "./ui/orbit-loader";
+import { ShopPurchaseFiles, ShopPurchaseLayout, type ShopPurchasePresentation } from "./shop-purchase-layout";
 
 type Delivery = {
+  shop?: ShopPurchasePresentation;
+  paidAt?: string | null;
   orderId: string;
   productTitle: string;
   productType: "digital" | "service";
@@ -84,41 +87,43 @@ export default function ShopSuccessClient({
   }, [checkout, initialDeliveryToken, basePath]);
 
   if (status !== "ready" || !delivery) return (
-    <main className="shop-success-shell" lang="en-US" dir="ltr">
-      <section className="shop-success-card">
-        <span className="shop-success-icon waiting">{status === "error" ? <Hourglass size={32} /> : <LoadingIndicator size={32} />}</span>
-        <p className="dashboard-kicker">Order confirmation</p>
+    <ShopPurchaseLayout className="shop-success-shell" basePath={basePath}>
+      <section className="shop-purchase-state" aria-live="polite">
+        <span className="shop-purchase-state-icon">{status === "error" ? <Hourglass size={28} /> : <LoadingIndicator size={28} />}</span>
         <h1>{status === "error" ? checkout ? "We couldn’t confirm your payment yet" : "This purchase link is unavailable" : status === "waiting" ? "Waiting for payment confirmation" : "Checking your payment"}</h1>
         <p>{status === "checking" ? "Your purchase will appear as soon as Stripe confirms the payment." : status === "waiting" ? "Your payment is still pending. Your files or booking will become available once it completes." : "Try again, or open the download link in your purchase email. Contact the seller if you need help."}</p>
-        {(status === "error" || status === "waiting") && <button className="button secondary" onClick={() => window.location.reload()} type="button">Check again</button>}
+        {(status === "error" || status === "waiting") && <button className="shop-purchase-button secondary" onClick={() => window.location.reload()} type="button">Check again</button>}
       </section>
-    </main>
+    </ShopPurchaseLayout>
   );
 
   return (
-    <main className="shop-success-shell" lang="en-US" dir="ltr">
-      <section className="shop-success-card">
-        <span className="shop-success-icon"><CheckCircle2 size={34} /></span>
-        <p className="dashboard-kicker">Payment confirmed</p>
-        <h1>Your order is ready</h1>
-        <p className="shop-success-product">{delivery.productTitle} <strong>{money(delivery.amountTotal)}</strong></p>
-        {delivery.downloadable ? (
-          <><div className="shop-download-list">{(delivery.files?.length ? delivery.files : [{ filename: "file", sizeBytes: 0 }]).map((file, index) => <a className="button primary shop-download-action" href={`${basePath}/api/shop/download/${encodeURIComponent(deliveryToken)}?file=${index}`} download={file.filename} key={`${file.filename}-${index}`}><Download size={17} /> Download {file.filename}</a>)}</div><small>{delivery.maxDownloads - delivery.downloadCount} downloads remaining · available until {new Date(delivery.expiresAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</small></>
-        ) : (
+    <ShopPurchaseLayout shop={delivery.shop} className="shop-success-shell" basePath={basePath}>
+      <header className="shop-purchase-hero">
+        <p className="shop-purchase-confirmed"><CheckCircle2 size={18} aria-hidden="true" /> Payment confirmed</p>
+        <h1>Your order is ready</h1><p>{delivery.downloadable ? "Your files are ready to download." : "Book an appointment and view your service details."}</p>
+      </header>
+      <div className="shop-purchase-columns">
+        <section className="shop-purchase-card shop-success-card">
+          <div className="shop-customer-card-heading"><span className="shop-purchase-product-icon" aria-hidden="true">{delivery.downloadable ? <FileText size={24} /> : <CalendarDays size={24} />}</span><div><p className="shop-purchase-kind">{delivery.downloadable ? "Digital download" : "Service"}</p><h2>{delivery.productTitle}</h2></div></div>
+          {delivery.downloadable ? <ShopPurchaseFiles files={(delivery.files?.length ? delivery.files : [{ filename: "file", sizeBytes: 0 }]).map((file, index) => ({ ...file, url: `${basePath}/api/shop/download/${encodeURIComponent(deliveryToken)}?file=${index}` }))} remaining={Math.max(0, delivery.maxDownloads - delivery.downloadCount)} expiresAt={delivery.expiresAt} /> : (
           <div className="shop-service-instructions">
-            <strong>{delivery.bookingUrl ? "Book your appointment" : "Next steps"}</strong>
+            <h3>{delivery.bookingUrl ? "Choose your appointment" : "Next steps"}</h3>
             {delivery.fulfillmentText && <p>{delivery.fulfillmentText}</p>}
-            {delivery.bookingUrl ? (
-              <a className="button primary shop-booking-action" href={delivery.bookingUrl} rel="noreferrer" target="_blank"><CalendarDays size={17} /> Choose date and time</a>
+            {delivery.bookingUrl && delivery.sessionsRemaining > 0 ? (
+              <a className="shop-purchase-button primary shop-booking-action" href={delivery.bookingUrl} rel="noreferrer" target="_blank"><CalendarDays size={17} aria-hidden="true" /> Choose date and time</a>
             ) : (
               !delivery.fulfillmentText && <p>The seller will contact you with the next steps.</p>
             )}
-            {delivery.sessionsIncluded > 1 && <small>{delivery.sessionsRemaining} of {delivery.sessionsIncluded} sessions available in this package.</small>}
+            {delivery.sessionsIncluded > 0 && <p className="shop-purchase-note">{delivery.sessionsRemaining} of {delivery.sessionsIncluded} sessions available.</p>}
           </div>
         )}
-        {delivery.customerPortalUrl && <div className="shop-purchase-access"><a className="button secondary shop-customer-action" href={delivery.customerPortalUrl}><ClipboardList size={17} /> View your purchases</a><p>Use this personal link to return to your files and appointments. No account or password needed.</p></div>}
-        <div className="shop-secure-note"><ShieldCheck size={17} /><span>Payment handled securely by Stripe. Order {delivery.orderId.slice(0, 8)}.</span></div>
-      </section>
-    </main>
+        </section>
+        <aside className="shop-purchase-sidebar">
+          <section className="shop-purchase-card"><h2>Order details</h2><dl className="shop-purchase-details shop-success-product"><div><dt>Order</dt><dd>{delivery.orderId.slice(0, 8)}</dd></div>{delivery.paidAt && <div><dt>Date</dt><dd>{new Date(delivery.paidAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</dd></div>}<div className="shop-purchase-total"><dt>Total paid</dt><dd>{money(delivery.amountTotal)}</dd></div></dl><p className="shop-purchase-note">Payment processed by Stripe.</p></section>
+          {delivery.customerPortalUrl && <section className="shop-purchase-card shop-purchase-access"><h2>Your purchases</h2><p>Find your files, appointments and service details here.</p><a className="shop-purchase-button secondary" href={delivery.customerPortalUrl}>View your purchases <ArrowRight size={17} aria-hidden="true" /></a>{delivery.intakeQuestions.length > 0 && <p className="shop-purchase-note">Your service includes a questionnaire. Complete it before your appointment.</p>}</section>}
+        </aside>
+      </div>
+    </ShopPurchaseLayout>
   );
 }

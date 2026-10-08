@@ -42,23 +42,34 @@ test('the self-hosted Shop saves private digital products and offers owner Strip
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await shop.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
   await page.goto('/shop/success');
-  await expect(page.getByText(/Order|order/).first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'This purchase link is unavailable' })).toBeVisible();
 });
 
-test('a confirmed purchase opens downloads and appointments without registration and survives refresh', async ({ page }) => {
+test('a confirmed purchase opens themed downloads and appointments without registration and survives refresh', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
   const orderId = '11111111-1111-4111-8111-111111111111';
   const expiresAt = '2100-10-08T12:00:00.000Z';
   const paidAt = '2026-10-08T12:00:00.000Z';
-  const receipt = { orderId, productTitle: 'Photography toolkit', productType: 'digital', amountTotal: 1000, currency: 'eur', downloadable: true,
+  const shop = { name: 'Studio Store', url: '/shop', logoUrl: '/brand/orbitpage-mark.svg', supportEmail: 'studio@example.invalid', cardEffect: 'solid', cardOpacity: 1,
+    design: { pageBackground: '#101a2c', pageBackgroundSecondary: '#152442', textColor: '#edf2ff', mutedColor: '#a4b4d1', accentColor: '#86aaff', buttonTextColor: '#101a2c', cardBackground: '#1b2b47', cardTextColor: '#edf2ff', borderColor: '#35486a', cardRadius: 20, fontFamily: 'Inter, sans-serif' } };
+  const receipt = { shop, paidAt, orderId, productTitle: 'Photography toolkit', productType: 'digital', amountTotal: 1000, currency: 'eur', downloadable: true,
     files: [{ filename: 'guide.pdf', sizeBytes: 1024 }], downloadCount: 0, maxDownloads: 10, expiresAt, deliveryToken: 'browser-fixture',
     customerPortalUrl: '/shop/customer?access=browser-fixture', intakeQuestions: [], sessionsIncluded: 0, sessionsRemaining: 0 };
-  const portal = { customer: { shopName: 'Studio Store', shopUrl: '/shop', supportEmail: 'studio@example.invalid', email: 'buyer@example.invalid' }, bookings: [{ bookingId: 'booking-fixture', orderId, productTitle: 'Studio consultation', status: 'scheduled', startAt: paidAt, endAt: null, meetingUrl: null }], orders: [
+  const portal = { shop, customer: { shopName: 'Studio Store', shopUrl: '/shop', supportEmail: 'studio@example.invalid', email: 'buyer@example.invalid' }, bookings: [{ bookingId: 'booking-fixture', orderId, productTitle: 'Studio consultation', status: 'scheduled', startAt: paidAt, endAt: null, meetingUrl: 'https://meeting.example.invalid/studio' }], orders: [
     { ...receipt, paidAt, files: [{ filename: 'guide.pdf', sizeBytes: 1024, url: '/api/shop/download/browser-fixture?file=0' }], downloadsRemaining: 10, deliveryUrl: '/shop/download?token=browser-fixture' },
-    { orderId: '22222222-2222-4222-8222-222222222222', productTitle: 'Studio consultation', productType: 'service', paidAt, bookingUrl: 'https://cal.com/studio/consultation', bookingStatus: 'awaiting_booking', sessionsRemaining: 2, sessionsIncluded: 2, intakeQuestions: [], intakeAnswers: [] }
+    { orderId: '22222222-2222-4222-8222-222222222222', productTitle: 'Studio consultation', productType: 'service', paidAt, bookingUrl: 'https://cal.com/studio/consultation', bookingStatus: 'awaiting_booking', sessionsRemaining: 2, sessionsIncluded: 2, intakeQuestions: [{ id: 'goal', prompt: 'What would you like to work on?', required: true }], intakeAnswers: [] as Array<{ questionId: string; answer: string }>, intakeSubmittedAt: null as string | null, fulfillmentText: 'Choose a time for your first session. We will discuss your next photography project.' }
   ] };
   await page.route('**/api/shop/order?*', route => route.fulfill({ json: receipt }));
   await page.route('**/api/shop/delivery/browser-fixture', route => route.fulfill({ json: receipt }));
-  await page.route('**/api/shop/customer?*', route => route.fulfill({ json: portal }));
+  await page.route('**/api/shop/customer', async route => {
+    expect(route.request().headers()['x-shop-customer-access']).toBe('browser-fixture');
+    if (route.request().method() === 'POST') {
+      const service = portal.orders[1];
+      service.intakeAnswers = route.request().postDataJSON().answers;
+      service.intakeSubmittedAt = paidAt;
+    }
+    await route.fulfill({ json: portal });
+  });
   await page.route('**/api/shop/download/browser-fixture?*', route => route.fulfill({ contentType: 'application/pdf', headers: { 'Content-Disposition': 'attachment; filename="guide.pdf"' }, body: '%PDF-1.7\nbrowser fixture' }));
   await page.goto(`/shop/success?order=${orderId}&session_id=cs_test_browser_fixture`);
   await expect(page.getByRole('heading', { name: 'Your order is ready' })).toBeVisible();
@@ -66,24 +77,65 @@ test('a confirmed purchase opens downloads and appointments without registration
   await expect(page.locator('.shop-success-product')).toContainText('€10.00');
   await expect(page.locator('.shop-success-card')).toContainText('Oct 8, 2100');
   await expect(page.getByText('Preparing your order', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Contact the seller' })).toHaveAttribute('href', 'mailto:studio@example.invalid');
+  await expect(page.locator('.shop-purchase-shell')).toHaveCSS('--purchase-card', '#1b2b47');
+  await expect(page.locator('.shop-purchase-shell')).toHaveCSS('--purchase-opacity', '100%');
+  await page.getByRole('link', { name: 'Back to shop' }).focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toBeFocused();
+  await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toHaveCSS('outline-width', '3px');
+  await page.screenshot({ path: testInfo.outputPath('delivery-dark-desktop.png'), fullPage: true });
   await page.reload();
   await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toBeVisible();
   await page.getByRole('link', { name: 'View your purchases' }).click();
   await expect(page.getByRole('heading', { name: 'Your purchases', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/shop\/customer$/);
   await expect(page.locator('.shop-customer-shell')).toHaveAttribute('lang', 'en-US');
   await expect(page.locator('.shop-customer-card-heading').first()).toContainText('Oct 8, 2026');
   await expect(page.locator('.shop-customer-bookings')).toContainText('Oct 8, 2026');
   await expect(page.getByText('Purchase-verified access', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Book an appointment' })).toHaveAttribute('href', 'https://cal.com/studio/consultation');
+  await expect(page.getByRole('link', { name: 'Join meeting' })).toHaveAttribute('href', 'https://meeting.example.invalid/studio');
+  await expect(page.locator('.shop-purchase-nav')).toContainText('Studio Store');
+  await expect(page.locator('.shop-customer-card').first()).toHaveCSS('border-radius', '20px');
+  await page.screenshot({ path: testInfo.outputPath('customer-dark-desktop.png'), fullPage: true });
+  await page.getByLabel('What would you like to work on?').fill('Lighting for portraits');
+  await page.getByRole('button', { name: 'Send answers' }).click();
+  await expect(page.getByRole('status')).toContainText('Your answers have been saved.');
+  await page.getByText('Before your appointment', { exact: true }).click();
+  await expect(page.getByLabel('What would you like to work on?')).toHaveValue('Lighting for portraits');
   const downloaded = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download guide.pdf' }).click();
   expect((await downloaded).suggestedFilename()).toBe('guide.pdf');
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.locator('.shop-customer-shell').evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('customer-dark-mobile.png'), fullPage: true });
   await page.reload();
   await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toBeVisible();
   portal.orders[0].downloadsRemaining = 0;
   await page.reload();
   await expect(page.getByText(/Download limit reached/)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toHaveCount(0);
+  portal.orders[0].downloadsRemaining = 10;
+  portal.orders[0].expiresAt = '2000-01-01T00:00:00.000Z';
+  await page.reload();
+  await expect(page.getByText('Your download link has expired.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download guide.pdf' })).toHaveCount(0);
+  Object.assign(shop.design, { pageBackground: '#f8f6f2', pageBackgroundSecondary: '#f8f6f2', textColor: '#26221e', mutedColor: '#625c54', accentColor: '#8d482b', buttonTextColor: '#ffffff', cardBackground: '#ffffff', cardTextColor: '#26221e', borderColor: '#e5ded3', cardRadius: 0, fontFamily: 'Georgia, serif' });
+  await page.reload();
+  await expect(page.locator('.shop-customer-card').first()).toHaveCSS('border-radius', '0px');
+  await expect(page.locator('.shop-customer-shell')).toHaveCSS('font-family', 'Georgia, serif');
+  await expect(page.getByRole('link', { name: 'Book an appointment' })).toHaveCSS('background-color', 'rgb(141, 72, 43)');
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await page.screenshot({ path: testInfo.outputPath('customer-light-desktop.png'), fullPage: true });
+  await page.route('**/api/shop/customer', route => route.fulfill({ status: 401, json: { error: 'Customer access link expired' } }));
+  await page.reload();
+  await expect(page.getByText(/This link has expired/)).toBeVisible();
+  await expect(page.getByRole('link', { name: /Download/ })).toHaveCount(0);
+  Object.assign(receipt, { productType: 'service', productTitle: 'Studio consultation', downloadable: false, bookingUrl: 'https://cal.com/studio/consultation', fulfillmentText: 'Choose a time for your first session.', sessionsIncluded: 2, sessionsRemaining: 2 });
+  await page.goto('/shop/download?token=browser-fixture');
+  await expect(page.getByRole('heading', { name: 'Your order is ready' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Choose date and time' })).toHaveAttribute('href', 'https://cal.com/studio/consultation');
+  await expect(page.getByText('2 of 2 sessions available.')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('delivery-light-service.png'), fullPage: true });
 });

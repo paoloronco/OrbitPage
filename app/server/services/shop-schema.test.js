@@ -2,11 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createShopSchemas } from '../../packages/shop/schema.js';
 import { renderShopDescription } from '../../packages/shop/description.js';
+import { shopPurchasePresentation } from '../../packages/shop/render.js';
 
 const { shopAppearanceInputSchema: appearance, shopProductInputSchema: product, normalizeShopAppearance } =
   createShopSchemas(z, value => /^\/uploads\/[a-zA-Z0-9._-]+$/.test(value));
 
 describe('self-hosted shared Shop contracts', () => {
+  it('shares the merchant theme with buyer pages without exposing private configuration', () => {
+    const settings = normalizeShopAppearance({ title: 'Studio', logoUrl: '/uploads/logo.png', sellerEmail: 'studio@example.test' });
+    const result = shopPurchasePresentation({ appearance: settings, shopUrl: 'https://studio.example.test/shop', theme: { background: '#101a2c', fontFamily: 'Georgia, serif', privateField: 'must-not-leak' } });
+    expect(result).toMatchObject({ name: 'Studio', url: 'https://studio.example.test/shop', logoUrl: 'https://studio.example.test/uploads/logo.png', supportEmail: 'studio@example.test' });
+    expect(result.design).toMatchObject({ pageBackground: '#101a2c', fontFamily: 'Georgia, serif' });
+    expect(Object.keys(result).sort()).toEqual(['cardEffect', 'cardOpacity', 'design', 'logoUrl', 'name', 'supportEmail', 'url']);
+    expect(JSON.stringify(result)).not.toContain('must-not-leak');
+  });
   it('preserves complete defaults and legacy appearance normalization', () => {
     const defaults = normalizeShopAppearance(null);
     expect(defaults.checkout).toEqual({ phone: false, billingAddress: 'auto', businessName: 'off', taxId: 'off', customFields: [] });
