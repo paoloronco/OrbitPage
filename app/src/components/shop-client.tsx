@@ -1622,7 +1622,7 @@ export default function ShopClient({
           </div>
           {data.orders.length >= 100 && <p className="shop-sales-scope">The latest 100 orders are loaded. Filters apply to these records.</p>}
         </>}
-        <p className="shop-fee-note">Stripe processing fees are charged separately to the seller. OrbitPage retains 5% only on successful sales and returns its fee proportionally when a payment is refunded.</p>
+        <p className="shop-fee-note">{selfHosted ? "Stripe processing fees apply to your account. OrbitPage does not charge a fee." : "Stripe processing fees are charged separately to the seller. OrbitPage retains 5% only on successful sales and returns its fee proportionally when a payment is refunded."}</p>
       </section>}
 
       {view === "customers" && <section className="panel shop-orders-panel">
