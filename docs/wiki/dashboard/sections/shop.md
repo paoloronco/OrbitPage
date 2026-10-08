@@ -85,15 +85,17 @@ Tax ID collection is not automatic tax calculation or invoice generation.
 1. Choose a Stripe sandbox/test account and open **Shop settings → Stripe**.
 2. Create an appropriately scoped restricted key (`rk_test_`), or use the supported
    secret key (`sk_test_`), in that account's API keys settings. Enter it in
-   **Stripe secret API key** and select **Save and verify Stripe**. A publishable
+   **Stripe secret API key**. A publishable
    `pk_` key is insufficient. Saved keys are encrypted and not returned to the browser.
 3. Create an HTTPS webhook in the same account and mode using the endpoint
    shown in the form (`/api/shop/webhook`). Subscribe to
    `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
    `checkout.session.async_payment_failed`, `checkout.session.expired`,
    `charge.refunded`, `charge.dispute.created` and `charge.dispute.closed`.
-4. Copy that endpoint's `whsec_` signing secret into the form and check status.
+4. Copy that endpoint's `whsec_` signing secret into **Webhook signing secret**,
+   then select **Save and verify Stripe** below the webhook endpoint.
    This is separate from the API key and the customer-link signing secret.
+   **Stripe Dashboard** opens your account in the currently configured mode.
 5. Verify the payment-mode badge and complete the test checklist. For live sales,
    use a separate live installation with matching live keys and webhook.
 
