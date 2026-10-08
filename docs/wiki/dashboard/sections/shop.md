@@ -1,169 +1,310 @@
 # Shop
 
-One installation runs one shop, with the owner's Stripe account. The catalog,
-editor, design, checkout fields, seller policies, order details and customer
-portal share the same components as hosted OrbitPage. Self-hosting uses local
-SQLite, private files and your SMTP server. It needs no OrbitPage account,
-Firebase, R2 or OrbitPage Stripe Connect account; OrbitPage charges no platform
-fee. Stripe's own fees and account eligibility still apply.
+One installation runs one shop with the owner's Stripe account. Self-hosting
+uses SQLite, private files and the instance's configured Shop SMTP server. It
+needs no OrbitPage account, Firebase, R2 or OrbitPage Stripe Connect account.
+OrbitPage charges no platform fee; Stripe's fees and account eligibility apply.
+The catalog, editor, delivery and customer pages share the hosted implementation.
 
-The editor uses the same toolbar, typography and dialogs in both editions.
-The Test/Live payment badge and publication actions sit below the workspace;
-Stripe setup differs because self-hosted installations use their owner's keys.
+Only administrators with `users:manage` can manage commerce. Demo mode allows
+previewing the editor and blocks changes, uploads and checkout. A customer
+purchase link never grants dashboard or administrator access.
 
-Shop interfaces use English in both editions, including the dashboard editor,
-catalog controls,
-Stripe Checkout, order delivery, purchase history and appointment emails. Dates
-and prices use English formatting regardless of the browser language. Product
-descriptions, seller policies, custom checkout fields and service instructions
-remain in the language written by the seller; external booking pages set their
-own language.
+## Before you start
 
-Only administrators with `users:manage` can manage commerce. Demo mode permits
-viewing the editor and blocks changes, uploads and checkout.
+1. Run a supported installation with a persistent `DATA_DIR` and a backup.
+2. Set an absolute, canonical HTTPS `PUBLIC_SITE_URL`; preserve any `BASE_PATH`.
+   Your reverse proxy must allow Stripe and calendar webhook requests.
+3. Open **Site editor → Shop** (`/dashboard/editor/shop/products`). The gear
+   button opens Compliance, Checkout, Stripe, Email and Calendar settings.
+4. Configure Stripe, seller information and SMTP, then save a complete product.
+5. Check desktop/mobile previews and complete the [test checklist](#test-checklist)
+   before accepting live payments.
+
+See [Configuration](../../administration/Configuration.md) for server settings.
 
 ## Create a catalog
 
-Open **Site editor → Shop** (`/dashboard/editor/shop/products`). Add a digital
-product or service, enter its title, full description and EUR price, and save.
-New products start as drafts: enable **Available for purchase** when ready.
+Select **Add product**, choose Digital product or Service, enter its title,
+short/full descriptions, EUR price and optional cover, then save. New products
+are drafts; enable **Available for purchase** when ready. **View catalog** offers
+search, filtering and sorting. Product cards open details; Buy is disabled in
+the editor preview. Save must succeed before leaving; failed uploads can retry.
 
-Digital products support up to ten files, 50 MB each, in the editor's allowed
-document, archive, ebook, image, audio and video formats. **Manage files** handles
-uploads, retry and removal. Files are stored under `DATA_DIR/shop-files`, outside
-public `/uploads`. Covers and logos are public images. A digital product needs
-at least one file before it can be sold. The catalog allows twenty products,
-one product per Checkout Session, and no cart. Prices and file limits are
-validated on the server.
+| Limit | Supported value |
+| --- | --- |
+| Catalog | 20 digital or service products |
+| Product price | EUR 1–10,000 before discounts |
+| Purchase | One product per Stripe Checkout Session; no cart |
+| Digital attachments | Up to 10 files, 50 MB each, in the allowed formats |
+| Service package | 1–50 sessions; instructions, an HTTPS booking link, or both |
+| Service questionnaire | Up to 12 questions; optional or required |
 
-Services support post-payment instructions, an HTTPS booking link, intake
-questions and a package of sessions. **Design** controls colors, typography,
-cards, background, logo and navigation. **Legal** stores the seller's details
-and hosted policy text or external HTTPS links. Hosted policies appear at
-`/shop/legal`; unconfigured policy URLs return 404. Review your seller disclosures
-and acknowledge seller responsibility before enabling the shop.
+**Manage files** handles allowed documents, archives, ebooks, images, audio and
+video. Digital products need at least one file before sale. Files live in
+`DATA_DIR/shop-files`, outside public `/uploads`; covers and logos are public.
+Uploads share the instance's storage quota. Physical shipping, recurring
+subscriptions, multi-seller marketplaces and a multi-product cart are not
+implemented. Editing a product does not change an existing order's snapshot.
+
+## Appearance and language
+
+**Personalize** controls layout, colors, font and cards. **Use the page theme**
+inherits the public page's theme. Click the preview title, introduction, logo
+or back link to edit it. Save inside the title/introduction dialog saves that
+dialog; other pending drafts have their own Save/Reset controls.
+
+The receipt, delivery and **Your purchases** pages use the Shop's logo, colors,
+font and card style, including inherited page styling. They show direct Download
+buttons, order details, service instructions and appointment actions on mobile
+and desktop. They do not use the administrator dashboard's theme.
+
+Shop controls, Stripe Checkout, delivery, customer pages and appointment emails
+use English in both editions, including dates and prices. Seller-written
+descriptions, policies, checkout labels, questions and instructions keep their
+original language. External booking pages choose their own language.
+
+## Seller details and policies
+
+Open **Shop settings → Compliance** or the Legal button. Enter your public seller
+identity, contact details and applicable business information. Stripe verification
+does not fill this profile. Each policy supports text hosted by OrbitPage or an
+external HTTPS URL: Terms, Digital Product & License Terms, Privacy, Cookies,
+Refunds, and Withdrawal and contact. Hosted text appears on `/shop/legal`;
+unconfigured policy destinations return 404. Test the footer links.
+
+Confirm seller responsibility before publication. You remain responsible for
+the products, delivery, customer support, taxes, invoicing and applicable seller
+disclosures. A checkbox or Stripe verification does not establish legal compliance.
+Tax ID collection is not automatic tax calculation or invoice generation.
 
 <a id="connect"></a>
-<a id="customer-details"></a>
 
 ## Connect Stripe
 
-1. Start with a Stripe test account or sandbox. Open **Shop settings → Stripe**.
-2. Enter its secret API key (`sk_test_` or an appropriately scoped `rk_test_`)
-   and choose **Save and verify Stripe**. The form verifies the owner and mode;
-   saved keys are encrypted and are never returned to the browser.
-3. In the same Stripe account and mode, create an HTTPS webhook using the
-   endpoint shown in the form (`/api/shop/webhook`). Subscribe to
+1. Choose a Stripe sandbox/test account and open **Shop settings → Stripe**.
+2. Create an appropriately scoped restricted key (`rk_test_`), or use the supported
+   secret key (`sk_test_`), in that account's API keys settings. Enter it in
+   **Stripe secret API key** and select **Save and verify Stripe**. A publishable
+   `pk_` key is insufficient. Saved keys are encrypted and not returned to the browser.
+3. Create an HTTPS webhook in the same account and mode using the endpoint
+   shown in the form (`/api/shop/webhook`). Subscribe to
    `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
    `checkout.session.async_payment_failed`, `checkout.session.expired`,
    `charge.refunded`, `charge.dispute.created` and `charge.dispute.closed`.
-4. Save its `whsec_` signing secret in the Stripe form and check status.
-5. Enable the shop and open `/shop`. Set an absolute, canonical HTTPS
-   `PUBLIC_SITE_URL` before using it publicly; retain any configured `BASE_PATH`.
-6. Test an undiscounted purchase, a promotion code, the receipt, private download
-   and a test refund. Stripe promotion codes are managed in the owner's account.
+4. Copy that endpoint's `whsec_` signing secret into the form and check status.
+   This is separate from the API key and the customer-link signing secret.
+5. Verify the payment-mode badge and complete the test checklist. For live sales,
+   use a separate live installation with matching live keys and webhook.
 
-Restricted keys need account and balance reads, Checkout Session creation and
-retrieval, and reads of PaymentIntents, charges and disputes. Checkout's enabled
-customer and inline price/product features may require their corresponding
-permissions. Follow [Stripe key guidance](https://docs.stripe.com/keys) and
-[webhook guidance](https://docs.stripe.com/webhooks).
+Restricted keys need account/balance reads, Checkout Session creation/retrieval,
+and PaymentIntent, charge and dispute reads. Customer creation and inline
+price/product features may need their corresponding permissions. Check Stripe's
+request logs for a missing permission rather than granting unrelated access.
+See [Stripe API keys](https://docs.stripe.com/keys) and
+[webhooks](https://docs.stripe.com/webhooks).
 
-Alternatively, set `SHOP_STRIPE_SECRET_KEY` and `SHOP_STRIPE_WEBHOOK_SECRET` on
+Alternatively set `SHOP_STRIPE_SECRET_KEY` and `SHOP_STRIPE_WEBHOOK_SECRET` on
 the server and restart. These overrides make the form read-only; **Check status**
-verifies a changed key. Never use `VITE_*` for secrets. Once orders exist, the
-account and test/live mode cannot be changed: rotate keys within the same
-account and mode, or start a separate installation. Use a separate test instance
-for testing a live shop.
+verifies a changed key. Never put secrets in `VITE_*`, Git or public pages.
+Once orders exist, their account and test/live mode cannot be changed: rotate
+keys within the same account/mode, or use another installation. A test card does
+not turn a live checkout into a test checkout.
 
-Checkout is hosted by Stripe. The server snapshots the original price, seller
-policies, file references and service details, verifies the exact session and
-captured payment, and records Stripe's discount and net amount. Returning from
-Checkout alone does not authorize delivery. A completed 100% discount is
-supported without a PaymentIntent. Signed webhooks and receipt reconciliation
-handle asynchronous payments and repeated events; refunds and disputes update
-access using authoritative provider state.
+## Customer details
+
+**Shop settings → Checkout** controls information collected by Stripe. Name and
+email are required. Phone can be off/required; billing address auto/required;
+business name and supported tax IDs off/optional/required. Payment methods may
+require additional billing details. Add up to three text or numeric fields with
+labels of at most 50 characters and answers of at most 255 characters/digits.
+Do not request passwords, card data or sensitive information in custom fields.
+
+Save applies to new checkouts. Existing orders retain their original field labels,
+answers, product/files, service instructions, seller policies and consent record.
+Verified buyer details appear in **Orders → View**, with customer search by name
+or email. Card details are entered on Stripe, not stored by OrbitPage.
+
+## Publish or unpublish
+
+Save the catalog/design, make a complete product available, verify Stripe and its
+webhook, and acknowledge seller responsibility. Select **Publish shop** below
+the workspace and open `/shop` in a private window. Check policies and mobile
+layout. Add Shop to Home can expose a card from your main page; newsletter signup
+uses the separate Newsletter audience and compliance settings.
+
+**Unpublish** stops new storefront sales and keeps products, orders and customers.
+It does not erase purchases, refund payments or revoke existing paid links. If
+Shop is the homepage, choose another homepage before removing it. Hiding a product
+also stops new sales without erasing its previous purchases.
+
+## Checkout and immediate delivery
+
+The buyer reviews product details and seller terms, acknowledges the seller notice
+and, for digital products, explicitly consents to immediate delivery. Stripe
+hosts Checkout and accepts eligible promotion codes configured in your account.
+A 100% discount is supported without a PaymentIntent; the completed Checkout
+must still be verified. The server checks account, mode, order/session binding,
+currency, original subtotal, discounts and paid amount.
+
+After verified payment, the receipt immediately offers downloads or service
+instructions/booking and a **Your purchases** link. Email is an additional route;
+waiting for an email is not required. A return URL alone never proves payment.
+Pending/asynchronous payments show a waiting state until Stripe confirms them;
+failed or expired checkouts grant no delivery. Signed webhooks and receipt
+reconciliation handle repeated events without granting a second purchase.
+
+## Customer access and signed links
+
+The customer opens **Your purchases** on the verified receipt or the personal link
+in the purchase email. There is no registration, password login or email OTP.
+Entering an email address alone cannot open purchases; the signed link is required.
+
+The link contains a token signed server-side with HMAC-SHA256. The server verifies
+its signature, issue/expiry times, customer access version and explicit order IDs,
+then checks that those orders still belong to that customer and remain eligible.
+It permits viewing only the included purchases, downloading their available files,
+opening their booking/meeting links and submitting their service questionnaires.
+It grants no administrator, dashboard, Stripe or other customer access, and does
+not automatically include future purchases. A receipt renews access for its own order.
+
+This is a **bearer link**, reusable until expiry or revocation, not a one-time link.
+Anyone holding it can exercise its limited access. Keep it private, including
+booking and download links: do not publish, forward or put it in shared screenshots.
+The signature prevents alteration; it does not encrypt the token or make a leaked
+link harmless. Use HTTPS and protect mailbox, server logs and backups accordingly.
+
+After successful validation, the customer token is removed from the visible URL
+and stored in `sessionStorage` for the current browser tab; API requests send it
+in the `x-shop-customer-access` header. Refresh can reuse that tab's access. Another
+device or a closed tab needs the original personal link again; bookmarking the
+clean `/shop/customer` address is not a login. Storage does not extend token validity.
+
+| Access | Validity and limits |
+| --- | --- |
+| Customer-area token | Seven days from issue; only the explicit included orders |
+| Digital delivery | 30-day window recorded when Checkout is created |
+| Downloads | Combined order allowance of 10 × purchased file count, not a separate per-file allowance |
+| Renewal | Open a still-valid receipt/delivery link for a fresh seven-day customer token for that order; download expiry/count are unchanged |
+| Full refund or customer erasure | The affected purchase is no longer accessible |
+
+For example, three files share 30 download requests; downloading one file repeatedly
+uses the same total. A new customer link does not restore expired or refunded
+downloads. If both access routes are unavailable, contact the seller with the order
+reference, not a public copy of the token. There is no email-only recovery/OTP form.
 
 <a id="email"></a>
 
 ## Transactional email
 
-Configure **Shop settings → Email** with your SMTP host, port (465, 587 or 2525),
-username, password, sender and reply address. Shop SMTP is independent of
-Newsletter SMTP. TLS is required; test the sender before selling. Buyer receipts,
-seller notifications, intake and booking notices use a persistent retry queue.
-The local worker runs while the application is running, retries temporary
-failures and uses stable message IDs. SMTP acceptance cannot guarantee inbox
-delivery or exactly-once delivery after a connection failure.
+**OSS sends through the SMTP configured on your instance in Shop settings → Email.**
+It does not use OrbitPage's managed mail service or automatically reuse Newsletter
+SMTP. Enter host, port, username, password/app password, sender and reply-to, save,
+then **Send test email**. Port 465 uses TLS; 587/2525 require STARTTLS and a valid
+certificate. An owner-controlled private relay is supported. Authorize the sender
+with your provider and configure its recommended SPF, DKIM and DMARC records.
 
-The receipt verifies Stripe immediately on return from Checkout; email delivery
-does not delay downloads or booking access. Receipts and emails include a personal
-purchase-area link: no registration, password or OTP is required. The purchase
-area lists files with Download buttons and service booking/questionnaire actions.
-The receipt, delivery and purchase area use the Shop's logo, colors, font and card
-style, including the page theme when inheritance is enabled. Files have direct
-Download buttons; service purchases show session availability, questionnaires
-and appointment details. These buyer interfaces stay in English on desktop and
-mobile. The validated customer access token is sent in a request header, removed
-from the visible URL and kept only for the current browser tab.
-Keep the link private; it is a bearer credential and expires after seven days.
-Receipts link to private downloads and the customer portal. Digital download
-capabilities expire after thirty days with a combined download budget of ten
-times the number of purchased files, matching hosted OrbitPage. Customer
-portal links expire after seven days and can be renewed through the verified
-purchase receipt. Do not publish or share these bearer links. Customer erasure
-anonymizes saved orders, clears intake/contact details and revokes access.
+The test recipient is the configured sender address. Changing the server/account
+requires re-entering the password; changed connection/sender settings clear the
+test status. Credentials are encrypted server-side and not returned to the browser.
+
+Buyer confirmations include the purchase details, delivery/booking instructions
+and signed customer-area link. Seller sale notifications, questionnaire updates,
+booking changes and reminders use the same Shop SMTP. The persistent retry queue
+runs while the application is running and retries temporary failures with stable
+message IDs. Without configured SMTP, messages cannot leave the instance; the
+verified receipt still provides immediate access. Provider acceptance does not
+prove inbox delivery or exactly-once delivery after a connection failure.
+
+In **hosted SaaS**, the seller can choose **Use OrbitPage email** or **Use custom
+SMTP** for these same messages and personal links. See the
+[hosted Shop email guide](https://orbitpage.com/en-US/docs/shop#email).
 
 <a id="calendar"></a>
 
 ## Calendar and reminders
 
-Services work with an ordinary HTTPS booking link. For Cal.com booking updates,
-copy the endpoint and signing secret from **Shop settings → Calendar** to the
-same Cal.com webhook configuration. Enable the events shown in the form.
-The purchased booking link carries order-specific metadata. Only correctly
-signed bookings tied to that order and buyer can consume sessions; duplicate
-events, rescheduling and cancellation update the same record. The local worker
-queues twenty-four-hour and one-hour reminders. Keep the server running and
-SMTP configured. Other booking providers remain links without Cal.com webhook
-synchronization.
+Add the service instructions, session count, optional questions and HTTPS booking
+URL to the Service product. Buyers can submit/update answers from **Your purchases**;
+answers are attached to their order and shared with the seller. Use a booking event
+that does not charge again. External booking URLs are not protected by OrbitPage;
+configure access/availability rules at the provider.
+
+For Cal.com synchronization, copy the endpoint/signing secret from **Shop settings
+→ Calendar** into the owning Cal.com account's webhook. Enable `BOOKING_CREATED`,
+`BOOKING_RESCHEDULED` and `BOOKING_CANCELLED`. No Cal.com API key is required.
+Customers must use the complete order-specific delivered URL, including its
+metadata. A bare public calendar URL cannot bind a new booking to a paid order.
+
+Signed, matching bookings consume one session; rescheduling consumes no additional
+session and cancellation restores it. Duplicate events update the same booking.
+The customer area displays synchronized dates, status and meeting links. The local
+worker queues 24-hour and 1-hour reminders; keep the server and SMTP running.
+Other booking providers work as links without this synchronization. Cancelled
+appointments do not issue a Stripe refund; handle that separately.
+
+## Orders, refunds and customer erasure
+
+Use **Orders → View** for payment, delivery, buyer details, answers and booking
+state; **Customers** groups saved buyer records. Financial status follows verified
+Stripe state, not a manual claim that payment succeeded. Issue refunds and handle
+disputes in the owner's Stripe Dashboard, then check the confirmed update in Shop.
+
+Partial refunds preserve downloads and remaining service sessions within their
+existing limits. Full refunds block delivery, clear service entitlement and local
+booking/reminder access. They do not retract a file already downloaded or cancel
+an external appointment: manage that in the calendar provider. A disputed purchase
+is unavailable while its order is not eligible for delivery.
+
+Customer erasure removes saved identity/contact details, questionnaire answers,
+local bookings and related emails, anonymizes financial orders and revokes access.
+It is not a refund and does not erase Stripe's independent payment records. Do not
+delete customer data merely to retry a payment or remove a draft product.
 
 ## Storage, backup and updates
 
-Persist the complete `DATA_DIR`, including `orbitpage.db`, `shop-files`, public
-uploads and hidden secret/configuration files. Keep `JWT_SECRET`, your encryption
-key and any separate `SHOP_DELIVERY_SECRET` stable across restarts and restores.
-The default delivery secret is `JWT_SECRET`. The shared upload quota includes
-public media and private Shop files; removed purchased files remain until their
-delivery expires. Startup adds Shop tables without changing existing content.
-Docker and supported installers use the same server and persistent directory.
+Persist the complete `DATA_DIR`: `orbitpage.db`, `shop-files`, public uploads and
+hidden secret/configuration files. Keep `JWT_SECRET`, the encryption key and any
+separate `SHOP_DELIVERY_SECRET` stable across restarts/restores. Customer/delivery
+signing defaults to `JWT_SECRET`; changing it invalidates existing links. Stripe's
+webhook secret is a different secret. Removed purchased files remain until delivery
+expiry. Startup adds Shop tables without changing existing content.
 
-Dashboard **Backup → Shop** contains commerce records, encrypted settings and
-private file bytes, independently of the optional public-image ZIP. Protect it
-as sensitive customer data. Restoring Shop replaces the whole selected commerce
-section and file store; preserve the original signing/encryption secrets for
-credentials and existing access links. Older backups without Shop leave it
-unchanged. Page version history excludes commerce. A full reset or personal-page
-deletion also removes commerce records and files. A rollback needs the previous
-runtime and its matching pre-update data backup.
+**Backup → Shop** contains commerce records, encrypted settings and private files,
+independently of the optional public-image ZIP. Protect exports as sensitive data.
+Restoring Shop replaces the selected commerce section/file store; preserve the
+original secrets for saved credentials and links. Old backups without Shop leave
+it unchanged. Page version history excludes commerce; full reset/personal-page
+deletion removes it. Rollback needs the old runtime and matching pre-update backup.
+Large catalogs may need an infrastructure backup instead of dashboard media export.
+See [Backups](./backups-and-demo-mode.md) and [Maintenance](../../administration/maintenance.md).
 
-Large catalogs may exceed the configured dashboard backup media limit. Use a
-full infrastructure backup instead of raising limits blindly. See
-[Backups](./backups-and-demo-mode.md) and
-[Maintenance](../../administration/maintenance.md).
+## Test checklist
+
+On a separate test installation using a Stripe sandbox/test account:
+
+1. Check the Test mode badge, matching webhook, public URL and persisted data.
+2. Send an SMTP test; inspect inbox/spam and sender identity.
+3. Publish a fictional digital product; pay with Stripe's documented test card
+   `4242 4242 4242 4242`, a future expiry and test CVC. Never use real card data here.
+4. Check immediate receipt, actual file bytes, personal-link access, mobile layout
+   and refresh. Test a service's instructions, questionnaire and booking separately.
+5. Check a promotion and 100% discount, then partial/full refunds and revoked access.
+6. Verify signed webhook deliveries and, if used, Cal.com reschedule/cancel/reminders.
+7. Unpublish/hide fixtures; keep test credentials separate from live sales.
+
+See [Stripe testing](https://docs.stripe.com/testing). Test payments do not verify
+live merchant eligibility, payout readiness or real email inbox delivery.
 
 ## Troubleshooting
 
-- **Shop cannot accept payments:** verify Stripe and webhook mode, seller
-  acknowledgment, product availability and file attachments. Recheck status
-  after changing an environment key.
-- **Receipt is waiting:** inspect Stripe's payment status and webhook delivery.
-  An asynchronous or failed payment grants no files; retry the verified receipt
-  after Stripe confirms it.
-- **Download unavailable:** check refund/dispute status, customer erasure,
-  capability expiry, download limit and the persistent private file volume.
-- **Email queued:** check SMTP TLS, sender authorization, server uptime and the
-  provider's delivery logs. A payment remains recorded while mail is retried.
-- **Restore cannot decrypt settings:** restore the original secret configuration
-  from the infrastructure backup or replace credentials deliberately. Do not
-  create a new signing secret while expecting old receipt links to work.
+| Symptom | Check |
+| --- | --- |
+| Cannot publish/accept payments | Stripe status, matching account/mode/webhook, seller acknowledgment, available product/files and canonical URL |
+| Receipt waiting | Stripe payment state and webhook deliveries; pending or failed payment grants no files |
+| Customer link expired | Open the still-valid purchase receipt/delivery link, or contact the seller; plain email is insufficient |
+| New purchase missing | Use that purchase's recent link; older tokens do not gain future orders |
+| Download unavailable | Refund/dispute/erasure, expiry, shared download allowance and persistent private file volume |
+| Email queued/missing | Shop SMTP, TLS, sender authorization, server uptime, provider logs and spam folder |
+| Booking absent | Complete paid-order URL, signed Cal.com webhook, event triggers and remaining sessions |
+| Settings cannot decrypt after restore | Restore the original secrets, or deliberately replace credentials; new secrets do not preserve old access links |
