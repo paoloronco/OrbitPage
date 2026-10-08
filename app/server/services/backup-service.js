@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { quarantineRestoredPrivacy } from './privacy-restore.js';
+import { validateShopFile, matchesShopFileSignature } from '../../packages/shop/files.js';
+
+export const SHOP_BACKUP_TABLES = ['shop_settings', 'shop_products', 'shop_files', 'shop_orders', 'shop_customers', 'shop_bookings', 'shop_events', 'shop_emails'];
 
 export const BACKUP_SCHEMA_VERSION = 1;
 export const SELECTIVE_BACKUP_SCHEMA_VERSION = 2;
@@ -15,6 +18,7 @@ export const BACKUP_TABLES = [
   'cookie_consent_config',
   'text_files',
   'sitemap_config',
+  ...SHOP_BACKUP_TABLES,
 ];
 export const BACKUP_SECTIONS = [
   'profile',
@@ -26,6 +30,7 @@ export const BACKUP_SECTIONS = [
   'discovery',
   'accounts',
   'media',
+  'shop',
 ];
 
 const SECTION_TABLES = {
@@ -38,6 +43,7 @@ const SECTION_TABLES = {
   discovery: ['text_files', 'sitemap_config'],
   accounts: ['admin_users'],
   media: [],
+  shop: SHOP_BACKUP_TABLES,
 };
 
 const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -191,7 +197,7 @@ function normalizeBackupPayload(backup) {
     throw new Error('Selective backup is missing its included sections');
   }
   const availableSections = schemaVersion === BACKUP_SCHEMA_VERSION
-    ? [...BACKUP_SECTIONS]
+    ? BACKUP_SECTIONS.filter(section => section !== 'shop' || Array.isArray(tables.shop_settings))
     : normalizeBackupSections(backup.includedSections, []);
 
   if (schemaVersion === SELECTIVE_BACKUP_SCHEMA_VERSION) {
@@ -217,7 +223,16 @@ function normalizeBackupPayload(backup) {
     uploadPaths.add(collisionKey);
   }
 
-  return { tables, uploads: normalizedUploads, availableSections };
+  if (availableSections.includes('shop')) {
+    if (!Array.isArray(backup.shopFiles) || SHOP_BACKUP_TABLES.some(table => !Array.isArray(tables[table]))) throw new Error('Backup section is incomplete: shop');
+    const ids = new Set();
+    for (const file of backup.shopFiles) {
+      if (!/^[a-f0-9]{64}$/.test(file?.path) || ids.has(file.path)) throw new Error('Unsafe or duplicate Shop backup file');
+      ids.add(file.path);
+    }
+    for (const row of tables.shop_files) if (!ids.has(row.id)) throw new Error('Shop backup is missing a private file');
+  }
+  return { tables, uploads: normalizedUploads, shopFiles: backup.shopFiles || [], availableSections };
 }
 
 async function insertRows({ dbRun, tableName, rows }) {
@@ -237,7 +252,7 @@ async function insertRows({ dbRun, tableName, rows }) {
   }
 }
 
-export function stageUploads({ uploadsPath, uploads }) {
+export function stageUploads({ uploadsPath, uploads, decodeFile = decodeBackupMedia }) {
   const resolvedUploadsPath = path.resolve(uploadsPath);
   const parentPath = path.dirname(resolvedUploadsPath);
   fs.mkdirSync(parentPath, { recursive: true });
@@ -253,7 +268,7 @@ export function stageUploads({ uploadsPath, uploads }) {
       if (totalBytes + estimatedBytes > backupMediaLimitBytes()) {
         throw new Error('Backup media exceeds the configured size limit');
       }
-      const buffer = decodeBackupMedia(upload);
+      const buffer = decodeFile(upload);
       totalBytes += buffer.length;
       if (totalBytes > backupMediaLimitBytes()) throw new Error('Backup media exceeds the configured size limit');
       const destination = path.resolve(stagingPath, ...upload.path.split('/'));
@@ -299,6 +314,15 @@ export function stageUploads({ uploadsPath, uploads }) {
   };
 }
 
+function decodeShopBackupFile(file) {
+  if (!/^[a-f0-9]{64}$/.test(file.path) || typeof file.data !== 'string' || file.data.length % 4 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(file.data)) throw new Error('Invalid Shop backup file');
+  const buffer = Buffer.from(file.data, 'base64');
+  validateShopFile({ filename: file.path, contentType: file.contentType, sizeBytes: buffer.length, maximumBytes: 50 * 1024 * 1024 });
+  if (!matchesShopFileSignature(file.contentType, buffer.subarray(0, 32))) throw new Error('Invalid Shop backup file content');
+  return buffer;
+}
+export const stageShopFiles = (shopFilesPath, files = []) => stageUploads({ uploadsPath: shopFilesPath, uploads: files, decodeFile: decodeShopBackupFile });
+
 export async function createApplicationBackup({ appVersion, dbAll, uploadsPath, sections: requestedSections }) {
   const sections = normalizeBackupSections(requestedSections);
   const includedTables = tablesForSections(sections);
@@ -311,6 +335,15 @@ export async function createApplicationBackup({ appVersion, dbAll, uploadsPath, 
   }
 
   const isComplete = BACKUP_SECTIONS.every((section) => sections.includes(section));
+  const shopFilesPath = path.join(path.dirname(uploadsPath), 'shop-files');
+  let privateBytes = 0;
+  const shopFiles = sections.includes('shop') ? tables.shop_files.map(row => {
+    if (!/^[a-f0-9]{64}$/.test(row.id)) throw new Error('Invalid Shop file identifier');
+    const data = fs.readFileSync(path.join(shopFilesPath, row.id));
+    privateBytes += data.length;
+    if (privateBytes > backupMediaLimitBytes()) throw new Error('Shop backup files exceed the configured size limit');
+    return { path: row.id, contentType: JSON.parse(row.data).contentType, data: data.toString('base64') };
+  }) : [];
   return {
     schemaVersion: isComplete ? BACKUP_SCHEMA_VERSION : SELECTIVE_BACKUP_SCHEMA_VERSION,
     appVersion,
@@ -318,6 +351,7 @@ export async function createApplicationBackup({ appVersion, dbAll, uploadsPath, 
     ...(!isComplete ? { includedSections: sections } : {}),
     tables,
     uploads: sections.includes('media') ? readUploadFiles(uploadsPath) : [],
+    ...(sections.includes('shop') ? { shopFiles } : {}),
   };
 }
 
@@ -334,14 +368,17 @@ export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sec
   const privacyRows = restorableTables.has('cookie_consent_config')
     ? (normalizedBackup.tables.cookie_consent_config || []).map(quarantineRestoredPrivacy) : [];
   let mediaRestore = null;
+  let shopRestore = null;
 
   if (sections.includes('media')) {
     mediaRestore = stageUploads({ uploadsPath, uploads: normalizedBackup.uploads });
   }
 
   try {
+    if (sections.includes('shop')) shopRestore = stageShopFiles(path.join(path.dirname(uploadsPath), 'shop-files'), normalizedBackup.shopFiles);
     await dbRun('PRAGMA foreign_keys = OFF');
     if (restorableTables.has('admin_users')) await dbRun('DELETE FROM personal_api_tokens');
+    if (sections.includes('shop')) await dbRun('DELETE FROM shop_uploads');
     for (const tableName of BACKUP_TABLES) {
       if (restorableTables.has(tableName)) await dbRun(`DELETE FROM ${tableName}`);
     }
@@ -359,10 +396,18 @@ export async function restoreApplicationBackup({ backup, dbRun, uploadsPath, sec
       mediaRestore.activate();
     }
     await dbRun('PRAGMA foreign_keys = ON');
+    if (shopRestore && !deferMediaCommit) shopRestore.activate();
     if (mediaRestore && !deferMediaCommit) mediaRestore.finalize();
-    return { mediaRestore: deferMediaCommit ? mediaRestore : null };
+    if (shopRestore && !deferMediaCommit) shopRestore.finalize();
+    const staged = [mediaRestore, shopRestore].filter(Boolean);
+    return { mediaRestore: deferMediaCommit && staged.length ? {
+      activate() { for (const files of staged) files.activate(); },
+      rollback() { for (const files of [...staged].reverse()) files.rollback(); },
+      finalize() { for (const files of staged) files.finalize(); },
+    } : null };
   } catch (error) {
     mediaRestore?.rollback();
+    shopRestore?.rollback();
     try {
       await dbRun('PRAGMA foreign_keys = ON');
     } catch {

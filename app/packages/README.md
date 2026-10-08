@@ -2,6 +2,11 @@
 
 This directory contains packages shared across OrbitPage application boundaries.
 
+## `shop`
+
+[Shared Shop](./shop/README.md) owns portable commerce behavior. Its payment
+validation is used by both the self-hosted server and the hosted adapter.
+
 ## `page-schema`
 
 `@orbitpage/page-schema` defines the canonical public content structures for blocks, menus, subpages, discovery settings, profiles, and themes. It intentionally excludes hosted tenant, owner, billing, provider and persistence metadata. The application consumes it through the local dependency declared in `app/package.json`.

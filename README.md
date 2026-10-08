@@ -272,7 +272,7 @@ The dashboard exports selected application data as JSON, with an optional **Incl
 | **Page** | Profile, image, social links, browser metadata, and footer | <code>/dashboard/editor/page</code> |
 | **Content** | Main-page blocks, ordering, visibility, and scheduling | <code>/dashboard/editor/content</code> |
 | **Menu** | Venue menu settings, sections, products, and design | <code>/dashboard/editor/menu/content</code> |
-| **Shop** | Catalog workspace; unavailable in the self-hosted edition | <code>/dashboard/editor/shop/products</code> |
+| **Shop** | Digital products, services, orders and owner Stripe payments; [setup guide](./docs/wiki/dashboard/sections/shop.md) | <code>/dashboard/editor/shop/products</code> |
 | **Pages** | Additional public pages and their blocks | <code>/dashboard/editor/pages</code> |
 | **AI Assistant** | Propose profile, content, and theme changes to review and confirm | <code>/dashboard/ai</code> |
 | **Theme** | Colors, typography, cards, background, and live preview | <code>/dashboard/theme/page</code> |

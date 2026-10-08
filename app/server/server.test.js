@@ -65,6 +65,7 @@ vi.mock('./services/backup-service.js', () => ({
   createApplicationBackup: vi.fn(),
   restoreApplicationBackup: vi.fn(),
   stageUploads: vi.fn(() => ({ activate: vi.fn(), rollback: vi.fn(), finalize: vi.fn() })),
+  stageShopFiles: vi.fn(() => ({ activate: vi.fn(), rollback: vi.fn(), finalize: vi.fn() })),
 }));
 
 vi.mock('./services/setup-token.js', async (importOriginal) => ({
@@ -84,7 +85,7 @@ vi.mock('./services/instance-details.js', async (importOriginal) => ({
 import { app, buildStructuredData, renderSeoTags, stripStaticSeoTags } from './server.js';
 import { authenticateUser, generateToken, isFirstTimeSetup, setupInitialCredentials, verifyToken } from './auth.js';
 import { dbAll, dbGet, dbRun, withImmediateTransaction, withTransaction } from './database.js';
-import { createApplicationBackup, restoreApplicationBackup, stageUploads } from './services/backup-service.js';
+import { createApplicationBackup, restoreApplicationBackup, stageUploads, stageShopFiles } from './services/backup-service.js';
 import { consumeSetupToken, rotateSetupToken } from './services/setup-token.js';
 import { updateAgentRequest } from './services/application-updates.js';
 import { saveEnvironmentChanges } from './services/instance-details.js';
@@ -2320,6 +2321,16 @@ describe('API Endpoints', () => {
     expect(response.status).toBe(200);
     expect(response.headers['x-robots-tag']).toContain('noindex');
     expect(response.headers['content-language']).toBe('it-IT');
+  });
+
+  it.each(['success', 'download', 'customer'])('Shop %s keeps buyer capabilities private even with the personal page inactive', async section => {
+    vi.mocked(dbGet).mockResolvedValue({ page_active: 0 });
+    const response = await request(app).get(`/orbitpage/shop/${section}`);
+    expect(response.status).toBe(200);
+    expect(response.headers['referrer-policy']).toBe('no-referrer');
+    expect(response.headers['cache-control']).toContain('no-store');
+    expect(response.headers['x-robots-tag']).toContain('noindex');
+    expect(response.text).toContain('<meta name="robots" content="noindex, nofollow, noarchive"');
   });
 
   it.each(['links', 'menu'])('GET /orbitpage/en-US/%s redirects to the public destination', async (destination) => {

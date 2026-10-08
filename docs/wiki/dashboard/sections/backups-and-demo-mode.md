@@ -7,7 +7,7 @@ Use dashboard exports to move selected content. Back up the complete data direct
 | Backup layer | Best use | What it contains |
 | --- | --- | --- |
 | Dashboard JSON or portable ZIP | Selective transfer, inspection, and application-level restore | The selected sections; the optional ZIP also contains images |
-| Infrastructure backup | Full disaster recovery | `orbitpage.db`, `uploads/`, and the deployment configuration needed to start the same instance |
+| Infrastructure backup | Full disaster recovery | Entire `DATA_DIR`, including `orbitpage.db`, `uploads/`, private `shop-files/`, and the deployment configuration/secrets needed to start the same instance |
 
 Follow the [infrastructure backup and restore runbook](../../administration/maintenance.md#create-and-verify-an-infrastructure-backup) for production recovery.
 
@@ -32,10 +32,11 @@ The self-hosted backup sections are:
 | Privacy and consent | Cookie banner, policies, consent mode, and provider settings |
 | Discovery files | Sitemap state and built-in or custom text files |
 | Admin accounts | Self-hosted users, roles, and stored credential records |
+| Shop | Catalog, orders, customers, bookings, queued emails, encrypted settings and private file bytes |
 
 A complete JSON export includes every selectable data section. A selective export declares only the selected sections and leaves the rest out. Images are separate from section selection: enabling **Include images (ZIP)** creates an archive that both OrbitPage OSS and SaaS can restore. Videos remain excluded from this image archive.
 
-Keep exports private: they may contain page data, analytics, account hashes, and uploaded images. AI keys and newsletter/SMTP records are excluded; preserve them through an infrastructure backup.
+Keep exports private: they may contain page data, analytics, account hashes, customer details, encrypted Shop credentials and private purchased files. Shop file bytes are included when Shop is selected, independently of the image ZIP. AI keys and Newsletter SMTP records are excluded; preserve them through an infrastructure backup. Preserve signing/encryption secrets separately for a working Shop restore. Page version history excludes commerce; older backups without Shop leave current Shop data intact. SaaS imports exclude OSS commerce records. See [Shop](./shop.md#storage-backup-and-updates).
 
 Managed OrbitPage SaaS backups with schema versions 1–3 can also be opened here. OrbitPage restores the supported page, block, subpage, theme, menu, privacy, and discovery data into the self-hosted schema. SaaS-only data such as tenants, plans, billing, managed accounts, and custom-domain state is not imported. For a transfer that must retain images, download the portable ZIP at the source and open that ZIP at the destination.
 

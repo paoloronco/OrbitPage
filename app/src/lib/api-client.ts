@@ -453,7 +453,7 @@ export const apiRequest = async <T>(endpoint: string, options: RequestInit = {},
       if (response.status === 429) {
         throw Object.assign(new Error(typeof metadata.error === 'string' ? metadata.error : 'Too many requests. Please wait a moment and try again.'), { status: response.status });
       }
-      throw Object.assign(new Error(errorMessage), { status: response.status });
+      throw Object.assign(new Error(errorMessage), { status: response.status, code: typeof metadata.code === 'string' ? metadata.code : undefined });
     }
 
     const bodyRevision = typeof metadata.revision === 'number' ? metadata.revision : Number.NaN;
@@ -575,6 +575,9 @@ export const authApi = {
 };
 
 export const newsletterRequest = <T>(endpoint: string, options: RequestInit = {}): Promise<T> =>
+  apiRequest<T>(endpoint.replace(/^\/api(?=\/)/, ''), options);
+
+export const shopRequest = <T>(endpoint: string, options: RequestInit = {}): Promise<T> =>
   apiRequest<T>(endpoint.replace(/^\/api(?=\/)/, ''), options);
 
 export const campaignLinksApi = {

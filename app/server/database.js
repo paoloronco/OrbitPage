@@ -498,6 +498,19 @@ export const initializeDatabase = () => {
         }
       }
 
+      // Shop records are immutable snapshots where needed; provider credentials stay encrypted.
+      db.run(`CREATE TABLE IF NOT EXISTS shop_settings (id INTEGER PRIMARY KEY CHECK (id = 1), data TEXT NOT NULL)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_products (id TEXT PRIMARY KEY, data TEXT NOT NULL)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_files (id TEXT PRIMARY KEY, product_id TEXT NOT NULL, data TEXT NOT NULL)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_uploads (id TEXT PRIMARY KEY, data TEXT NOT NULL)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_orders (id TEXT PRIMARY KEY, customer_id TEXT, session_id TEXT UNIQUE, payment_intent_id TEXT, data TEXT NOT NULL)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_shop_orders_customer ON shop_orders(customer_id)`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_shop_orders_payment ON shop_orders(payment_intent_id)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_customers (id TEXT PRIMARY KEY, data TEXT NOT NULL)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_bookings (id TEXT PRIMARY KEY, order_id TEXT NOT NULL, data TEXT NOT NULL)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_events (id TEXT PRIMARY KEY, status TEXT NOT NULL, lease_until INTEGER NOT NULL DEFAULT 0)`);
+      db.run(`CREATE TABLE IF NOT EXISTS shop_emails (id TEXT PRIMARY KEY, order_id TEXT, data TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0, next_run INTEGER NOT NULL DEFAULT 0, lease_until INTEGER NOT NULL DEFAULT 0)`);
+
       // This is the final schema statement queued by serialize(), so resolving
       // here guarantees that the AI tables and revision triggers are available.
       db.run(`DELETE FROM ai_page_previews WHERE expires_at <= datetime('now')`, (err) => {
@@ -559,7 +572,15 @@ export const withTransaction = (callback, options) =>
 // AI confirmation needs a transaction on its own SQLite connection. BEGIN
 // IMMEDIATE prevents ordinary writes on the shared connection from interleaving
 // between the revision check and the final page update.
-export const withImmediateTransaction = async (callback, { foreignKeys = true } = {}) => {
+// SQLite has one writer. Serializing connection acquisition also avoids busy
+// waits exhausting libuv's worker pool before an active COMMIT can execute.
+let transactionQueue = Promise.resolve();
+export const withImmediateTransaction = (callback, options) => {
+  const operation = transactionQueue.then(() => runImmediateTransaction(callback, options));
+  transactionQueue = operation.catch(() => undefined);
+  return operation;
+};
+const runImmediateTransaction = async (callback, { foreignKeys = true } = {}) => {
   const transactionDb = new sqlite3.Database(
     dbPath,
     sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE | sqlite3.OPEN_FULLMUTEX

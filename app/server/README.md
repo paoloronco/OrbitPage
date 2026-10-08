@@ -20,13 +20,14 @@ The server is one Express application. Add domain logic to an existing schema or
 ```text
 orbitpage.db
 uploads/
+shop-files/  # Private purchased files; never mounted as public static files
 .jwt-secret  # Docker only, when JWT_SECRET is generated automatically
 .instance-env.json  # Saved dashboard environment overrides
 ```
 
 Local development falls back to this directory only when `DATA_DIR` is not set. Prefer an isolated directory such as `app/.orbitpage-data` for development and tests.
 
-Never commit SQLite databases, backups, WAL/SHM sidecars, uploaded files, logs, tokens, or real user content. Back up the database and uploads together.
+Never commit SQLite databases, backups, WAL/SHM sidecars, uploaded files, logs, tokens, or real user content. Back up the full data directory and signing/encryption configuration together. [Shop](../../docs/wiki/dashboard/sections/shop.md) documents owner Stripe, private files, SMTP, migrations and recovery.
 
 ## Run and test
 

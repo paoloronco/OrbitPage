@@ -38,8 +38,9 @@ export function getVideoUploadLimitBytes(env = process.env) {
   return Math.floor(value * 1024 * 1024);
 }
 
-function getDirectorySizeBytes(directoryPath) {
+export function getDirectorySizeBytes(directoryPath) {
   let total = 0;
+  if (!fs.existsSync(directoryPath)) return total;
 
   for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
     const fullPath = path.join(directoryPath, entry.name);
@@ -54,8 +55,8 @@ function getDirectorySizeBytes(directoryPath) {
   return total;
 }
 
-export function enforceUploadStorageQuota({ uploadsPath, filePath, quotaBytes }) {
-  const totalBytes = getDirectorySizeBytes(uploadsPath);
+export function enforceUploadStorageQuota({ uploadsPath, filePath, quotaBytes, privateFilesPath }) {
+  const totalBytes = getDirectorySizeBytes(uploadsPath) + (privateFilesPath ? getDirectorySizeBytes(privateFilesPath) : 0);
 
   if (totalBytes <= quotaBytes) {
     return { totalBytes, quotaBytes };

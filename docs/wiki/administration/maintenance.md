@@ -13,7 +13,7 @@ Use this guide for a complete data backup, restore, rollback, or removal. For in
 
 ## Persistent data and backup types
 
-Back up the whole `DATA_DIR` (`/app/data` in Docker): SQLite and its sidecars, `uploads/`, the generated `.jwt-secret`, and saved `.instance-env.json` overrides. Include host-managed secrets and configuration separately.
+Back up the whole `DATA_DIR` (`/app/data` in Docker): SQLite and its sidecars, `uploads/`, private `shop-files/`, the generated `.jwt-secret`, and saved `.instance-env.json` overrides. Include host-managed secrets and configuration separately. Shop credentials and delivery links require the original encryption/signing secrets after restore; see [Shop recovery](../dashboard/sections/shop.md#storage-backup-and-updates).
 
 There are two distinct backup types:
 

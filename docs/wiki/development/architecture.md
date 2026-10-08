@@ -8,7 +8,8 @@ This document explains the self-hosted runtime and its separation from the hoste
 Browser → Express
             ├─ public pages, React dashboard, and assets
             ├─ /api → validation → permissions → services → SQLite
-            └─ uploaded media in DATA_DIR/uploads
+            ├─ public media in DATA_DIR/uploads
+            └─ private purchases in DATA_DIR/shop-files
 ```
 
 One installation serves the public page and dashboard. SQLite and local uploads belong to the same persistent `DATA_DIR`. Run one application replica per directory.
@@ -31,6 +32,14 @@ The bundled `/api` changes with the application release; it has no independent A
 
 The public repository owns the editor, renderer, page schema, and self-hosted server. Applications can reuse the editor through generic callbacks. The hosted service maintains its entry point, build configuration, authentication, persistence, and publication adapters separately.
 
-Hosted tenants, plans, billing, managed storage, moderation, commerce, and custom-domain provisioning remain outside this repository. The hosted adapter does not use the self-hosted SQLite database.
+Hosted tenants, plans, billing, managed storage, moderation, Stripe Connect platform policy and custom-domain provisioning remain outside this repository. The hosted adapter does not use the self-hosted SQLite database.
+
+Shop schemas, payment binding/discount checks, rendering, file validation and
+email templates live in `app/packages/shop`. The catalog, controls, receipt and
+customer UI are shared with hosted adapters. OSS `server/services/shop.js` and
+`shop-lifecycle.js` use additive SQLite tables, local private files, encrypted
+owner Stripe/SMTP settings and local workers. Raw webhook routes precede JSON
+parsing. One transaction queue serializes SQLite writes, webhook leases and
+download counters. See [Shop](../dashboard/sections/shop.md) for setup and limits.
 
 [Product requirements](./product-requirements.md) defines expected behavior; [Design system](./design-system.md) defines shared UI rules.

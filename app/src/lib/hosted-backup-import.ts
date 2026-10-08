@@ -12,6 +12,7 @@ export const BACKUP_SECTION_IDS = [
   'discovery',
   'accounts',
   'media',
+  'shop',
 ] as const;
 const LEGACY_MANAGED_BACKUP_SECTION_IDS = ['profile', 'links', 'theme', 'privacy'] as const;
 export const MANAGED_BACKUP_SECTION_IDS = [...LEGACY_MANAGED_BACKUP_SECTION_IDS, 'pages', 'menu', 'discovery'] as const;
@@ -329,7 +330,7 @@ export function inspectOrbitPageBackup(input: unknown): OrbitPageBackupInspectio
     return {
       source: 'self-hosted',
       sections: input.schemaVersion === 1
-        ? [...BACKUP_SECTION_IDS]
+        ? BACKUP_SECTION_IDS.filter(section => section !== 'shop' || (isRecord(input.tables) && Array.isArray(input.tables.shop_settings)))
         : normalizeDeclaredSections(input.includedSections, []),
     };
   }
