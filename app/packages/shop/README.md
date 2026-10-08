@@ -7,7 +7,8 @@ Express and Next.js can execute the same source without a separate build.
 
 `payments.js` verifies the immutable Checkout binding and reconciles the original
 subtotal with Stripe's discount and paid total. Call it only with a Session
-retrieved server-side using the owning Stripe account, after signature validation.
+retrieved server-side using the owning Stripe account. Webhook callers must also
+verify the event signature; Checkout-return callers verify the stored order/session binding.
 
 `schema.js` supplies the same bounded product and appearance validators to both
 backends. Each adapter supplies its installed Zod and validates logos against
