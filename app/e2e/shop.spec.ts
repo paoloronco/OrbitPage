@@ -48,6 +48,7 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Shop');
   const shop = page.locator('.orbitpage-selfhosted-shop');
+  await shop.getByRole('button', { name: 'Shop settings', exact: true }).click();
   const publish = shop.getByRole('button', { name: 'Publish shop', exact: true });
   await expect(publish).toBeVisible();
   await expect(publish).toBeDisabled();
@@ -76,6 +77,24 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
   await expect(testMode).toHaveCSS('border-top-width', '0px');
   await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toHaveCount(0);
   expect(await shop.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 980 });
+    for (const section of ['Shop settings', 'Orders and customers', 'Customers']) {
+      if (section === 'Customers') await shop.getByRole('button', { name: 'Orders and customers', exact: true }).click();
+      await shop.getByRole('button', { name: section, exact: true }).click();
+      const back = shop.getByRole('button', { name: 'Back to shop', exact: true });
+      await back.focus();
+      await back.press('Enter');
+      await expect(shop.getByRole('region', { name: 'Shop preview', exact: true })).toBeVisible();
+      await expect(page).toHaveURL(/\/shop\/products$/);
+      await expect(shop.getByRole('button', { name: 'Personalize', exact: true })).toBeDisabled();
+      await expect(shop.getByRole('button', { name: 'Edit shop logo', exact: true })).toBeDisabled();
+      await expect(shop.locator('.shop-view-toolbar').getByRole('button', { name: 'Add product', exact: true })).toBeDisabled();
+      await expect(publish).toBeDisabled();
+    }
+  }
+  await page.reload();
+  await expect(shop.getByRole('region', { name: 'Shop preview', exact: true })).toBeVisible();
 });
 
 test('a confirmed purchase opens themed downloads and appointments without registration and survives refresh', async ({ page }, testInfo) => {
