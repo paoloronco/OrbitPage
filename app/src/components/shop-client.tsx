@@ -48,6 +48,7 @@ import RangeSlider from "./ui/range-slider";
 import ToggleSwitch from "./ui/toggle-switch";
 import { Save } from "./ui/material-icons";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
+import Tooltip from "@mui/material/Tooltip";
 
 type ShopProduct = {
   productId: string;
@@ -1273,9 +1274,18 @@ export default function ShopClient({
   const productChanged = productEditorOpen && Boolean(deleteProductPending || files.length || cover || JSON.stringify(draft) !== JSON.stringify(originalProduct ? productDraft(originalProduct) : EMPTY_PRODUCT));
   const emailChanged = emailDraftChanged(smtpDraft, data.shop?.emailSettings);
   const changed = appearanceChanged || productChanged || emailChanged;
-  const publicationButton = (data.shop?.enabled || (hasAvailableProduct && shopReady)) && <button
+  const missingPublicationSetup = selfHosted ? [
+    !shopComplianceReady(data.shop?.appearance) && "Compliance",
+    !shopReady && "Stripe",
+    !data.shop?.emailSettings?.verifiedAt && "Email",
+  ].filter(Boolean) : [];
+  const publicationBlockReason = selfHosted && !data.shop?.enabled
+    ? missingPublicationSetup.length ? `Configure ${missingPublicationSetup.join(", ")} before publishing your Shop.`
+      : !hasAvailableProduct ? "Make at least one complete product available before publishing your Shop." : ""
+    : "";
+  const publicationButton = (selfHosted || data.shop?.enabled || (hasAvailableProduct && shopReady)) && <button
         className="button primary"
-        disabled={action !== null || changed}
+        disabled={action !== null || changed || Boolean(publicationBlockReason)}
         title={changed ? "Save or revert your changes first." : undefined}
         onClick={() => {
           if (data.shop?.enabled) return void togglePublication();
@@ -1475,7 +1485,7 @@ export default function ShopClient({
         </div>
         <div className="shop-toolbar-publication">
           {!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"><ChevronLeft size={16} /> Back to shop</button>}
-          {publicationButton}
+          {publicationBlockReason ? <Tooltip describeChild title={publicationBlockReason}><span className="shop-publication-tooltip" tabIndex={0}>{publicationButton}</span></Tooltip> : publicationButton}
         </div>
         <div className="shop-toolbar-right">{editingStorefront && data.products.length > 0 && <button aria-label="View catalog" className="button secondary compact shop-catalog-button" onClick={() => setCatalogOpen(true)} title="View catalog" type="button"><Search size={14} /><span>View catalog</span></button>}{editingStorefront && addProductButton}</div>
       </div>
