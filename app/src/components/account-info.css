@@ -1,0 +1,24 @@
+.account-info-workspace { display: grid; grid-column: 1 / -1; gap: 18px; width: 100%; min-width: 0; }
+.account-info-panel { padding: 24px; border: 1px solid var(--admin-line, #dbe3ef); border-radius: 16px; background: var(--admin-surface, #fff); color: var(--admin-ink, #16304d); }
+.account-info-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.account-info-heading h2 { margin: 0; font-size: 20px; font-weight: 750; }
+.account-info-heading p, .account-info-timestamp { margin: 6px 0 0; color: #61758c; font-size: 12px; }
+.account-info-refresh { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #dbe3ef; border-radius: 9px; padding: 9px 12px; background: #f4f7fc; color: inherit; cursor: pointer; font-size: 12px; white-space: nowrap; }
+.account-info-refresh:disabled { opacity: .55; cursor: default; }
+.account-info-workspace svg { flex-shrink: 0; width: 17px; height: 17px; }
+.account-info-details { margin: 0; }
+.account-info-details > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; padding: 13px 0; border-bottom: 1px solid #edf1f7; }
+.account-info-details dt { font-size: 13px; font-weight: 650; }
+.account-info-details dd { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.account-info-details small { display: block; margin-top: 4px; font-size: 11px; color: #61758c; }
+.account-info-test-mode { color: #b45309; }
+.account-info-status, .account-info-loading { display: inline-flex; align-items: center; gap: 7px; }
+.account-info-status.is-ok { color: #15703c; }
+.account-info-status.is-warning, .account-info-status.is-unavailable { color: #b45309; }
+.account-info-status.is-error { color: #b42318; }
+.account-info-note { display: flex; align-items: start; gap: 8px; margin: 18px 0 0; font-size: 12px; line-height: 1.6; color: #61758c; }
+.account-info-timestamp { margin-top: 14px; }
+.account-info-support { display: flex; flex-wrap: wrap; gap: 22px; }
+.account-info-support a { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #2456d3; }
+.account-info-workspace :is(button, a):focus-visible { outline: 3px solid #3568f4; outline-offset: 3px; }
+@media (max-width: 480px) { .account-info-panel { padding: 18px; } .account-info-details > div { grid-template-columns: minmax(0, 1fr); gap: 5px; } }

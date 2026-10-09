@@ -200,6 +200,21 @@ export async function shopDashboard(base) {
     newsletterComplianceReady: newsletterComplianceReady(newsletter),
     limits: { maxProducts: SHOP_MAX_PRODUCTS, maxFileBytes: SHOP_FILE_BYTES, feePercent: 0 } };
 }
+export async function shopInfo() {
+  const [setting, products, bookings] = await Promise.all([
+    shopSettings(), shopProducts(), dbGet('SELECT COUNT(*) AS total FROM shop_bookings'),
+  ]);
+  let stripeVerified = false;
+  try { stripeVerified = (await stripeConfiguration()).verified; } catch { /* Report unreadable or missing credentials as unverified. */ }
+  return {
+    published: Boolean(setting.enabled),
+    stripe: { connected: Boolean(process.env.SHOP_STRIPE_SECRET_KEY || setting.stripe?.secret),
+      ready: Boolean(stripeVerified && setting.stripe?.ready && (process.env.SHOP_STRIPE_WEBHOOK_SECRET || setting.stripe?.webhookSecret)),
+      livemode: setting.stripe?.livemode ?? null },
+    email: { mode: 'custom', configured: Boolean(setting.email?.password), verifiedAt: setting.email?.verifiedAt || null },
+    calendar: { configured: products.some(product => product.type === 'service' && product.bookingUrl), webhookVerified: Boolean(bookings?.total) },
+  };
+}
 export async function syncShopHome(base, previousAppearance) {
   const setting = await shopSettings(), rows = await dbAll('SELECT * FROM links ORDER BY sort_order');
   const links = rows.map(row => ({ ...row, isActive: Boolean(row.is_active), hideUrl: Boolean(row.hide_url), iconType: row.icon_type, surfaceEffect: row.surface_effect }));

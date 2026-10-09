@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22-alpine AS builder
 
-LABEL org.opencontainers.image.version="4.21.87"
+LABEL org.opencontainers.image.version="4.21.88"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -45,7 +45,7 @@ COPY app/server/routes ./routes
 # ---------- STAGE 2: runtime ----------
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.version="4.21.87"
+LABEL org.opencontainers.image.version="4.21.88"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -64,6 +64,7 @@ WORKDIR /app
 
 # Copia build frontend (Vite -> dist) e server già pronto con node_modules
 COPY --from=builder /app/source/dist /app/dist
+COPY --from=builder /app/source/package-lock.json /app/package-lock.json
 COPY --from=builder /app/source/server /app/server
 COPY --from=builder /app/source/packages /app/packages
 
@@ -98,5 +99,4 @@ EXPOSE 8080 8443
 WORKDIR /app/server
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]
-
 

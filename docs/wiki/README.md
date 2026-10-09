@@ -30,6 +30,7 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | Configure AI and review suggested edits | [AI assistant](./ai-assistant.md) |
 | Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/sections/backups-and-demo-mode.md) |
 | Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/sections/account-and-team.md) |
+| Check instance status or find frequently asked questions | [INFO and FAQ](./faq.md) |
 
 ## Integrations
 

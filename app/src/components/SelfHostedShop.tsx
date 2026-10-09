@@ -1,5 +1,6 @@
 import ShopClient, { ShopRequestError, type ShopClientProps, type ShopRequest } from './shop-client';
 import { shopRequest } from '../lib/api-client';
+import { useAppI18n } from '../lib/i18n';
 
 const request: ShopRequest = async <T,>(input: string, init?: RequestInit): Promise<T> => {
   try { return await shopRequest<T>(input, init); }
@@ -9,6 +10,7 @@ const request: ShopRequest = async <T,>(input: string, init?: RequestInit): Prom
   }
 };
 export default function SelfHostedShop(props: Omit<ShopClientProps, 'request' | 'documentationUrl' | 'selfHosted'>) {
+  const { tr } = useAppI18n();
   return <div className="orbitpage-selfhosted-shop"><ShopClient {...props} documentationUrl={section => `https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/dashboard/sections/shop.md#${section}`}
-    request={request} selfHosted /></div>;
+    request={request} infoTranslator={tr} selfHosted /></div>;
 }

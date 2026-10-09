@@ -35,6 +35,8 @@ Tokens are stored as hashes. Their access cannot exceed the user's current role,
 
 For example, `GET /api/account/audit-log` requires `users:manage` and supports `q`, `actor`, `action`, `from`, `to`, and `before` filters. It returns successful change metadata, not page contents.
 
+`GET /api/shop/info` serves **Shop settings → INFO**. It requires an administrator dashboard session (`users:manage`); personal API tokens cannot access it. It returns a minimal service summary and instance health results with private, non-cacheable responses. See [INFO and health-check FAQ](../faq.md).
+
 When changing a route, update its client and server together, retain validation and permissions, and test the changed behavior. Keep dashboard and API on the same origin unless additional trusted origins are configured.
 
 Network and recovery settings: [Configuration](../administration/Configuration.md), [Security](../administration/Security.md).

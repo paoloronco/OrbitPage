@@ -32,6 +32,7 @@ import {
   X,
   RotateCcw,
   HelpCircle,
+  Info,
 } from "lucide-react";
 import { CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -49,6 +50,7 @@ import ToggleSwitch from "./ui/toggle-switch";
 import { Save } from "./ui/material-icons";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import Tooltip from "@mui/material/Tooltip";
+import AccountInfo, { type AccountInfoData } from "./account-info";
 
 type ShopProduct = {
   productId: string;
@@ -614,6 +616,7 @@ export type ShopClientProps = {
   isHomepage?: boolean; selectedView?: ShopView | "legal";
   onViewChange?: (view: ShopView | "legal") => void;
   selfHosted?: boolean;
+  infoTranslator?: (english: string, italian: string) => string;
 };
 
 function OwnerStripeSettings({ request, saved, onSaved, dashboardUrl }: { request: ShopRequest; saved: NonNullable<ShopDashboard["shop"]>["stripeSettings"]; onSaved: (data: ShopDashboard) => void; dashboardUrl: string }) {
@@ -651,8 +654,9 @@ function OwnerStripeSettings({ request, saved, onSaved, dashboardUrl }: { reques
 export default function ShopClient({
   request, documentationUrl, onBackToContent, onViewPlans,
   embedded = false, onStatusChange, isHomepage = false, selectedView, onViewChange,
-  selfHosted = false,
+  selfHosted = false, infoTranslator = tr,
 }: ShopClientProps) {
+  const requestInfo = useCallback(() => request<AccountInfoData>("/api/shop/info"), [request]);
   const [data, setData] = useState<ShopDashboard | null>(null);
   const dashboardRef = useRef(data);
   const [stripeCheckFailed, setStripeCheckFailed] = useState(false);
@@ -675,7 +679,7 @@ export default function ShopClient({
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; text: string; code?: string } | null>(null);
   const [copiedCalendarField, setCopiedCalendarField] = useState<"url" | "secret" | null>(null);
   const [calendarCopyError, setCalendarCopyError] = useState("");
-  const [settingsTab, setSettingsTab] = useState<"compliance" | "stripe" | "calendar" | "checkout" | "email">("compliance");
+  const [settingsTab, setSettingsTab] = useState<"compliance" | "stripe" | "calendar" | "checkout" | "email" | "info">("compliance");
   const [smtpDraft, setSmtpDraft] = useState<ShopEmailDraft | null>(null);
   const [themeMode, setThemeMode] = useState<"presets" | "custom">("presets");
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
@@ -1499,7 +1503,8 @@ export default function ShopClient({
         {view === "design" ? <aside aria-label="Personalization" id="shop-personalization">{customizationPanel}</aside> : productEditorOpen && <aside aria-label="Product editor" className="panel shop-catalog-panel is-editing" id="shop-catalog">{productEditor}</aside>}
       </div>}
 
-      {view === "settings" && <nav aria-label="Shop settings sections" className="shop-settings-tabs"><button aria-current={settingsTab === "compliance" ? "page" : undefined} onClick={() => setSettingsTab("compliance")} type="button"><ShieldCheck size={15} /> Compliance</button><button aria-current={settingsTab === "checkout" ? "page" : undefined} onClick={() => setSettingsTab("checkout")} type="button"><ShoppingCart size={15} /> Checkout</button><button aria-current={settingsTab === "stripe" ? "page" : undefined} onClick={() => setSettingsTab("stripe")} type="button"><CreditCard size={15} /> Stripe</button><button aria-current={settingsTab === "email" ? "page" : undefined} onClick={() => setSettingsTab("email")} type="button"><Mail size={15} /> Email</button><button aria-current={settingsTab === "calendar" ? "page" : undefined} onClick={() => setSettingsTab("calendar")} type="button"><CalendarDays size={15} /> Calendar</button></nav>}
+      {view === "settings" && <nav aria-label="Shop settings sections" className="shop-settings-tabs"><button aria-current={settingsTab === "compliance" ? "page" : undefined} onClick={() => setSettingsTab("compliance")} type="button"><ShieldCheck size={15} /> Compliance</button><button aria-current={settingsTab === "checkout" ? "page" : undefined} onClick={() => setSettingsTab("checkout")} type="button"><ShoppingCart size={15} /> Checkout</button><button aria-current={settingsTab === "stripe" ? "page" : undefined} onClick={() => setSettingsTab("stripe")} type="button"><CreditCard size={15} /> Stripe</button><button aria-current={settingsTab === "email" ? "page" : undefined} onClick={() => setSettingsTab("email")} type="button"><Mail size={15} /> Email</button><button aria-current={settingsTab === "calendar" ? "page" : undefined} onClick={() => setSettingsTab("calendar")} type="button"><CalendarDays size={15} /> Calendar</button><button aria-current={settingsTab === "info" ? "page" : undefined} onClick={() => setSettingsTab("info")} type="button"><Info size={15} /> INFO</button></nav>}
+      {view === "settings" && settingsTab === "info" && <AccountInfo request={requestInfo} tr={infoTranslator} documentationUrl={documentationUrl("info")} faqUrl={selfHosted ? "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/faq.md" : "/en-US/#faq"} />}
       {(view === "orders" || view === "customers") && <nav aria-label="Sales" className="shop-sales-tabs"><button aria-current={view === "orders" ? "page" : undefined} onClick={() => setView("orders")} type="button"><ReceiptText size={16} /> Orders</button><button aria-current={view === "customers" ? "page" : undefined} onClick={() => setView("customers")} type="button">Customers</button></nav>}
 
       {view === "settings" && settingsTab === "compliance" && appearance && <form aria-labelledby="shop-legal-profile-title" className="shop-provider-panel shop-provider-form shop-legal-settings" id="shop-legal-profile" onSubmit={(event) => { event.preventDefault(); void saveChanges(); }}>

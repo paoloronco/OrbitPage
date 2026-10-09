@@ -6,6 +6,7 @@
 @import './components/team-workspace.css';
 @import './components/visual-site-editor.css';
 @import './components/shop.css';
+@import './components/account-info.css';
 @config '../tailwind.config.ts';
 
 :focus-visible {

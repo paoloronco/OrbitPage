@@ -16,13 +16,22 @@ purchase link never grants dashboard or administrator access.
 2. Set an absolute, canonical HTTPS `PUBLIC_SITE_URL`; preserve any `BASE_PATH`.
    Your reverse proxy must allow Stripe and calendar webhook requests.
 3. Open **Site editor → Shop** (`/dashboard/editor/shop/products`). The gear
-   button opens Compliance, Checkout, Stripe, Email and Calendar settings.
+   button opens Compliance, Checkout, Stripe, Email, Calendar and INFO settings.
 4. Save Compliance, verify Stripe/webhook and send a successful SMTP test.
    These three saved prerequisites unlock products and storefront design.
 5. Check desktop/mobile previews and complete the [test checklist](#test-checklist)
    before accepting live payments.
 
 See [Configuration](../../administration/Configuration.md) for server settings.
+
+## INFO
+
+Open **Shop settings → INFO** for Shop publication, saved Stripe readiness/mode,
+the selected Shop SMTP sender and calendar configuration. A calendar booking
+link and a verified signed webhook are shown separately. The same panel checks
+instance health and links to documentation and [FAQ](../../faq.md).
+See the FAQ for check coverage, npm audit caching and unavailable checks.
+Refresh is read-only: it does not send emails or create bookings.
 
 ## Create a catalog
 

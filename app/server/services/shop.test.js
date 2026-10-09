@@ -92,6 +92,14 @@ async function webhook(type, object, id = `evt_${randomUUID()}`, override = {}) 
   return request(app).post('/api/shop/webhook').set('Content-Type', 'application/json').set('stripe-signature', signature).send(payload);
 }
 describe('Shop SQLite integration with signed webhooks and simulated provider responses', () => {
+  it('reports only saved Shop configuration without generating mail, calendar or payment activity', async () => {
+    const messages = provider.messages.length, payments = provider.creates.length;
+    const info = await shop.shopInfo();
+    expect(info).toEqual({ published: false, stripe: { connected: false, ready: false, livemode: null },
+      email: { mode: 'custom', configured: false, verifiedAt: null }, calendar: { configured: false, webhookVerified: false } });
+    expect(provider.messages).toHaveLength(messages); expect(provider.creates).toHaveLength(payments);
+    expect(JSON.stringify(info)).not.toContain(process.env.JWT_SECRET);
+  });
   it('requires an administrator and never returns encrypted or clear credentials', async () => {
     expect((await request(app).get('/api/shop')).status).toBe(401);
     await db.dbRun('INSERT INTO admin_users (username, password_hash, salt, role) VALUES (?, ?, ?, ?)', ['viewer', 'unused', 'unused', 'viewer']);
