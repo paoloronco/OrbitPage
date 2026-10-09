@@ -24,6 +24,7 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | Share a page or print a QR code | [Publishing and QR](./dashboard/sections/publishing.md) |
 | Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
 | View analytics and configure consent | [Analytics and privacy](./dashboard/sections/analytics-and-privacy.md) |
+| Understand SMTP, choose a provider and configure email | [SMTP email setup](./integrations/smtp.md) |
 | Configure SMTP and send campaigns | [Newsletters](./dashboard/sections/newsletters.md) |
 | Configure Shop, Stripe, delivery, signed customer access and SMTP | [Shop](./dashboard/sections/shop.md) |
 | Configure AI and review suggested edits | [AI assistant](./ai-assistant.md) |

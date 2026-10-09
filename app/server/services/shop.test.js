@@ -102,12 +102,24 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     expect(result.status).toBe(200); expect(JSON.stringify(result.body)).not.toContain(hookSecret); expect(JSON.stringify(result.body)).not.toContain('sk_test_');
     const persisted = await db.dbGet('SELECT data FROM shop_settings'); expect(persisted.data).not.toContain(hookSecret); expect(persisted.data).not.toContain('sk_test_');
   });
+  it('requires saved Compliance, verified Stripe and tested SMTP before catalog setup', async () => {
+    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_COMPLIANCE_REQUIRED' });
+    await shop.saveShopAppearance({ ...(await shop.shopSettings()).appearance, sellerSelfCertified: true, sellerType: 'private', sellerName: 'Synthetic Seller', sellerEmail: 'seller@example.com', termsText: 'Seller terms', privacyText: 'Privacy policy', refundPolicyText: 'Refund policy', withdrawalText: 'Withdrawal policy' }, base);
+    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_EMAIL_REQUIRED' });
+    await shop.configureShopEmail({ mode: 'custom', host: 'smtp.example.com', port: 587, username: 'sender', password: 'synthetic-password', fromName: 'Shop', fromEmail: 'seller@example.com', replyTo: '' });
+    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_EMAIL_REQUIRED' });
+    await shop.testShopEmail();
+    const setting = await shop.shopSettings();
+    await shop.saveShopSettings({ ...setting, stripe: { ...setting.stripe, ready: false } });
+    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_NOT_READY' });
+    await shop.saveShopSettings(setting);
+  });
   it('persists catalog and private uploads, renders the shared storefront, and keeps checkout pricing on the server', async () => {
     const id = await newProduct();
     const appearance = { ...(await shop.shopSettings()).appearance, sellerSelfCertified: true, sellerEmail: 'seller@example.com', homeLinkEnabled: true };
     await shop.saveShopAppearance(appearance, base); await shop.setShopPublished(true, base);
     const page = await request(app).get('/shop'); expect(page.status).toBe(200); expect(page.text).toContain('Synthetic PDF');
-    expect((await request(app).get('/shop/legal/privacy')).status).toBe(404);
+    expect((await request(app).get('/shop/legal/privacy')).status).toBe(200);
     expect((await request(app).get('/shop/legal/unknown')).status).toBe(404);
     expect(page.headers['content-security-policy']).toContain('sha256-'); expect(page.headers['content-security-policy']).toContain('https://checkout.stripe.com');
     expect((await db.dbGet('SELECT url FROM links WHERE id = ?', ['orbitpage-shop'])).url).toBe(`${base}/shop`);
@@ -237,6 +249,19 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     await shop.deleteShopCustomer(order.customerId, base);
     await expect(lifecycle.getShopCustomerPortal(token)).rejects.toThrow('no longer active');
     await webhook('checkout.session.completed', session); expect((await shop.shopOrder(order.orderId)).buyerEmail).toBeNull();
+  });
+  it('allocates consecutive order numbers for simultaneous checkouts and keeps AI drafts private', async () => {
+    const id = await newProduct({ type: 'service', title: 'Number fixture', description: 'Test order sequence', fulfillmentText: 'Contact the seller', priceCents: 1000, active: true });
+    const before = (await shop.shopSettings()).lastOrderNumber;
+    await Promise.all(Array.from({ length: 3 }, () => shop.createShopCheckout({ productId: id, sellerNoticeAcknowledged: true, digitalContentConsent: false }, base)));
+    const orders = (await shop.shopDashboard(base)).orders.filter(order => order.productTitle === 'Number fixture');
+    expect(orders.map(order => order.orderNumber).sort((a, b) => a - b)).toEqual([before + 1, before + 2, before + 3]);
+    const draft = { productId: randomUUID(), type: 'service', title: 'AI draft', description: 'Not available for purchase', priceCents: 1000 };
+    await db.withImmediateTransaction(transaction => shop.persistShopAiDrafts(transaction, [draft]));
+    const product = (await shop.shopDashboard(base)).products.find(item => item.productId === draft.productId);
+    expect(product).toMatchObject({ active: false, bookingUrl: '', fulfillmentText: '', files: [] });
+    await expect(shop.createShopCheckout({ productId: draft.productId, sellerNoticeAcknowledged: true, digitalContentConsent: false }, base)).rejects.toThrow();
+    await expect(db.withImmediateTransaction(transaction => shop.persistShopAiDrafts(transaction, [{ ...draft, productId: randomUUID(), active: true }]))).rejects.toThrow();
   });
   it('enforces paid service intake and Cal.com access, duplicate events, session counts, rescheduling and cancellation', async () => {
     const id = await newProduct({ type: 'service', title: 'Synthetic Session', description: 'Test booking', fulfillmentText: 'Choose a time.', bookingUrl: 'https://cal.com/example/session', sessionsIncluded: 2,

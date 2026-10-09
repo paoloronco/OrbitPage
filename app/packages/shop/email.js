@@ -1,3 +1,4 @@
+import { shopOrderLabel } from "./orders.js";
 const escapeEmailHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;").replaceAll("\'", "&#39;");
 function money(cents, currency) {
     return new Intl.NumberFormat("en", { style: "currency", currency: currency.toUpperCase() }).format(cents / 100);
@@ -56,8 +57,8 @@ export function buildShopBuyerEmail(input) {
         to: order.buyerEmail,
         ...(input.sellerEmail ? { replyTo: input.sellerEmail } : {}),
         subject: `Your order: ${order.productTitle}`,
-        text: `Payment confirmed for ${order.productTitle} (${money(order.amountTotal, order.currency)}).\n\n${action}${bookingText}${portalText}\n\nOrder: ${order.orderId}\n\n${legalText}\n`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:28px;color:#0c1528"><h1 style="font-size:26px">Payment confirmed</h1><p>Your order for <strong>${escapeEmailHtml(order.productTitle)}</strong> is ready.</p><p style="color:#5f6d83">${escapeEmailHtml(money(order.amountTotal, order.currency))}</p>${actionHtml}${input.customerPortalUrl ? `<p><a href="${escapeEmailHtml(input.customerPortalUrl)}" style="display:inline-block;border:1px solid #b9c5d9;color:#17346d;text-decoration:none;padding:11px 17px;border-radius:6px;font-weight:700">View your purchases</a></p><p style="color:#5f6d83;font-size:13px">Keep this personal link to return to your files and appointments. No account or password needed.</p>` : ""}<p style="color:#5f6d83;font-size:13px">Order ${escapeEmailHtml(order.orderId)}</p>${legalHtml}${digitalLicenseHtml}</div>`
+        text: `Payment confirmed for ${order.productTitle} (${money(order.amountTotal, order.currency)}).\n\n${action}${bookingText}${portalText}\n\nOrder: ${shopOrderLabel(order)}\n\n${legalText}\n`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:28px;color:#0c1528"><h1 style="font-size:26px">Payment confirmed</h1><p>Your order for <strong>${escapeEmailHtml(order.productTitle)}</strong> is ready.</p><p style="color:#5f6d83">${escapeEmailHtml(money(order.amountTotal, order.currency))}</p>${actionHtml}${input.customerPortalUrl ? `<p><a href="${escapeEmailHtml(input.customerPortalUrl)}" style="display:inline-block;border:1px solid #b9c5d9;color:#17346d;text-decoration:none;padding:11px 17px;border-radius:6px;font-weight:700">View your purchases</a></p><p style="color:#5f6d83;font-size:13px">Keep this personal link to return to your files and appointments. No account or password needed.</p>` : ""}<p style="color:#5f6d83;font-size:13px">Order ${escapeEmailHtml(shopOrderLabel(order))}</p>${legalHtml}${digitalLicenseHtml}</div>`
     };
 }
 export function buildShopSellerEmail(input) {
@@ -73,7 +74,7 @@ export function buildShopSellerEmail(input) {
             `Product: ${order.productTitle}`,
             `Customer: ${order.buyerEmail}`,
             `Total: ${money(order.amountTotal, order.currency)}`,
-            `Order: ${order.orderId}`,
+            `Order: ${shopOrderLabel(order)}`,
             "",
             order.productType === "service"
                 ? order.bookingUrl
@@ -83,6 +84,6 @@ export function buildShopSellerEmail(input) {
             "",
             `Open Shop orders: ${input.dashboardUrl}`
         ].join("\n"),
-        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:28px;color:#0c1528"><p style="margin:0 0 8px;color:#3568f4;font-size:12px;font-weight:700;text-transform:uppercase">${escapeEmailHtml(input.shopName)} Shop</p><h1 style="font-size:26px;margin:0 0 20px">New sale</h1><p>You received a new ${label} order.</p><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;line-height:1.6;margin:20px 0"><tr><td style="padding:4px 12px 4px 0;color:#66728a">Product</td><td>${escapeEmailHtml(order.productTitle)}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#66728a">Customer</td><td><a href="mailto:${escapeEmailHtml(order.buyerEmail)}">${escapeEmailHtml(order.buyerEmail)}</a></td></tr><tr><td style="padding:4px 12px 4px 0;color:#66728a">Total</td><td>${escapeEmailHtml(money(order.amountTotal, order.currency))}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#66728a">Order</td><td>${escapeEmailHtml(order.orderId)}</td></tr></table><p>${order.productType === "service" ? order.bookingUrl ? "The customer received the calendar link. Reply to this email if you need to contact them directly." : "Reply to this email to contact the customer and arrange the service." : "The customer received the private delivery instructions automatically."}</p><p><a href="${escapeEmailHtml(input.dashboardUrl)}" style="display:inline-block;background:#3568f4;color:white;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700">Open Shop orders</a></p></div>`
+        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;padding:28px;color:#0c1528"><p style="margin:0 0 8px;color:#3568f4;font-size:12px;font-weight:700;text-transform:uppercase">${escapeEmailHtml(input.shopName)} Shop</p><h1 style="font-size:26px;margin:0 0 20px">New sale</h1><p>You received a new ${label} order.</p><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size:14px;line-height:1.6;margin:20px 0"><tr><td style="padding:4px 12px 4px 0;color:#66728a">Product</td><td>${escapeEmailHtml(order.productTitle)}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#66728a">Customer</td><td><a href="mailto:${escapeEmailHtml(order.buyerEmail)}">${escapeEmailHtml(order.buyerEmail)}</a></td></tr><tr><td style="padding:4px 12px 4px 0;color:#66728a">Total</td><td>${escapeEmailHtml(money(order.amountTotal, order.currency))}</td></tr><tr><td style="padding:4px 12px 4px 0;color:#66728a">Order</td><td>${escapeEmailHtml(shopOrderLabel(order))}</td></tr></table><p>${order.productType === "service" ? order.bookingUrl ? "The customer received the calendar link. Reply to this email if you need to contact them directly." : "Reply to this email to contact the customer and arrange the service." : "The customer received the private delivery instructions automatically."}</p><p><a href="${escapeEmailHtml(input.dashboardUrl)}" style="display:inline-block;background:#3568f4;color:white;text-decoration:none;padding:12px 18px;border-radius:6px;font-weight:700">Open Shop orders</a></p></div>`
     };
 }

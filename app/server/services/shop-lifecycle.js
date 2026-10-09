@@ -1,3 +1,4 @@
+import { shopOrderLabel } from "../../packages/shop/orders.js";
 import { createHash, createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { dbAll, dbGet, dbRun, withTransaction } from '../database.js';
@@ -31,7 +32,7 @@ export async function getShopCustomerPortal(raw) {
     dbAll('SELECT data FROM shop_orders WHERE customer_id = ?', [customer.customerId]), dbAll('SELECT data FROM shop_bookings'), shopSettings(),
   ]);
   const orders = rows.map(decode).filter(order => token.orderIds.includes(order.orderId) && eligible(order)).map(order => ({
-    orderId: order.orderId, productTitle: order.productTitle, productType: order.productType, paidAt: order.paidAt,
+    orderId: order.orderId, orderNumber: order.orderNumber, productTitle: order.productTitle, productType: order.productType, paidAt: order.paidAt,
     bookingUrl: order.productType === 'service' ? bookingUrlForOrder(order) : '', bookingStatus: order.bookingStatus || null,
     sessionsIncluded: order.sessionsIncluded, sessionsRemaining: order.sessionsRemaining,
     fulfillmentText: order.fulfillmentText || '',
@@ -62,7 +63,7 @@ export async function submitShopIntake(rawToken, raw) {
     const setting = await shopSettings(), recipient = order.sellerEmail || setting.email?.fromEmail;
     if (recipient) await queueShopEmail(`intake:${input.orderId}:${hash(JSON.stringify(input.answers))}`, input.orderId, {
       to: recipient, replyTo: order.buyerEmail, subject: `Questionnaire received: ${order.productTitle}`,
-      text: `Customer: ${order.buyerEmail}\nProduct: ${order.productTitle}\n\n${questions.map(question => `${question.prompt}\n${answers.get(question.id) || '—'}`).join('\n\n')}\n\nOrder: ${order.orderId}`,
+      text: `Customer: ${order.buyerEmail}\nProduct: ${order.productTitle}\n\n${questions.map(question => `${question.prompt}\n${answers.get(question.id) || '—'}`).join('\n\n')}\n\nOrder: ${shopOrderLabel(order)}`,
     });
     return { ok: true, intakeAnswers: input.answers, intakeSubmittedAt: timestamp };
   });
@@ -116,7 +117,7 @@ export async function processShopCalendarWebhook(routeToken, rawBody, signature)
       for (const recipient of [order.buyerEmail, seller].filter(Boolean)) await queueShopEmail(`booking:${bookingId}:${hash(`${status}\0${startAt}\0${url}`)}:${hash(recipient)}`, orderId, {
         to: recipient, replyTo: recipient === order.buyerEmail ? seller : order.buyerEmail,
         subject: `Booking ${status.replaceAll('_', ' ')}: ${order.productTitle}`,
-        text: `Booking status: ${status}\nProduct: ${order.productTitle}\n${startAt ? `Date: ${startAt}\n` : ''}Order: ${orderId}`,
+        text: `Booking status: ${status}\nProduct: ${order.productTitle}\n${startAt ? `Date: ${startAt}\n` : ''}Order: ${shopOrderLabel(order)}`,
       });
     }
     return { ok: true, bookingId, status };
@@ -138,7 +139,7 @@ export async function dispatchShopBookingReminders() {
       for (const recipient of [order.buyerEmail, seller].filter(Boolean)) await queueShopEmail(`reminder:${booking.bookingId}:${booking.startAt}:${reminder[0]}:${hash(recipient)}`, booking.orderId, {
         to: recipient, replyTo: recipient === order.buyerEmail ? seller : order.buyerEmail,
         subject: `Reminder: ${booking.productTitle} ${reminder[1]}`,
-        text: `Reminder for ${booking.productTitle}.\nDate: ${booking.startAt}\n${booking.meetingUrl ? `Link: ${booking.meetingUrl}\n` : ''}Order: ${booking.orderId}`,
+        text: `Reminder for ${booking.productTitle}.\nDate: ${booking.startAt}\n${booking.meetingUrl ? `Link: ${booking.meetingUrl}\n` : ''}Order: ${shopOrderLabel(order)}`,
       });
       booking[reminder[0]] = now(); await dbRun('UPDATE shop_bookings SET data = ? WHERE id = ?', [JSON.stringify(booking), booking.bookingId]); queued++;
     }

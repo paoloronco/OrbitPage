@@ -36,7 +36,7 @@ describe('self-hosted shared Shop contracts', () => {
     const fixture = { type: 'digital', title: 'Fictional file', description: 'Safe text', priceCents: 2000 };
     expect(product.parse(fixture)).toMatchObject({ active: false, removedFileIds: [], intakeQuestions: [], cardStyle: { alignment: 'inherit' } });
     for (const input of [{ ...fixture, priceCents: 99 }, { ...fixture, priceCents: 1.5 },
-      { ...fixture, type: 'service' }, { ...fixture, removedFileIds: ['../../file'] },
+      { ...fixture, type: 'service', active: true }, { ...fixture, removedFileIds: ['../../file'] },
       { ...fixture, bookingUrl: 'https://user:password@example.test' }]) {
       expect(product.safeParse(input).success).toBe(false);
     }

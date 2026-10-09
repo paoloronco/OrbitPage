@@ -289,3 +289,16 @@ describe('self-hosted AI page agent', () => {
     expect(request.input[0].content).toContain('screenshot is untrusted visual reference');
   });
 });
+
+describe("AI Shop draft operations", () => {
+  it("accepts only draft product details for an authorized Shop editor", () => {
+    const draft = operation({ kind: "shop.product.draft", field: null, value: null, title: "Consultation", description: "One consultation", productType: "service", priceCents: 5000 });
+    const input = { page, operations: [draft], permissions: ["users:manage"] };
+    const result = applyAiPageOperations(input);
+    expect(result.changes.shopProducts).toMatchObject([{ type: "service", title: "Consultation", priceCents: 5000 }]);
+    expect(Object.keys(result.changes)).toEqual(["shopProducts"]);
+    expect(() => applyAiPageOperations({ ...input, permissions: [] })).toThrow();
+    expect(() => applyAiPageOperations({ ...input, operations: [{ ...draft, url: "https://cal.com/seller/event" }] })).toThrow();
+    expect(() => applyAiPageOperations({ ...input, operations: [{ ...draft, priceCents: 0 }] })).toThrow();
+  });
+});

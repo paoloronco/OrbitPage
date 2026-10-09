@@ -11,8 +11,15 @@ test('the shared storefront grid fills three, two or one columns according to av
   const products = Array.from({ length: 4 }, (_, index) => ({ productId: `print-${index}`, type: 'digital' as const, title: `Illustration ${index + 1}`, description: 'Printable artwork for your studio.', priceCents: 1000, cardStyle: normalizeShopProductCardStyle({}), file: { filename: 'artwork.pdf' } }));
   const cover = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="230"%3E%3Crect width="400" height="230" fill="%23215d94"/%3E%3C/svg%3E';
   await page.route('**/*', route => route.abort());
-  const html = (layout: 'grid' | 'list') => renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.invalid/shop', products, appearance: normalizeShopAppearance({ title: 'Studio prints', layout }), previewOnly: true, previewCoverUrls: Object.fromEntries(products.map(product => [product.productId, cover])), apiBaseUrl: '/api/shop', newsletterEndpoint: '/newsletter', coverUrlPrefix: '/covers/' });
+  const html = (layout: 'grid' | 'list') => renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.invalid/shop', products, appearance: normalizeShopAppearance({ title: 'Studio prints', layout, sellerName: 'Studio Seller', sellerEmail: 'seller@example.invalid' }), previewOnly: true, previewCoverUrls: Object.fromEntries(products.map(product => [product.productId, cover])), apiBaseUrl: '/api/shop', newsletterEndpoint: '/newsletter', coverUrlPrefix: '/covers/' });
   await page.setContent(html('grid'));
+  const seller = page.getByRole('region', { name: 'Seller information' });
+  await expect(seller).toBeVisible();
+  await expect(seller).toContainText('Studio Seller');
+  await expect(seller.getByRole('link')).toHaveCount(1);
+  await expect(seller.locator('details, summary')).toHaveCount(0);
+  await expect(seller).toHaveCSS('border-top-width', '0px');
+  expect(await seller.evaluate(element => element.nextElementSibling?.tagName)).toBe('FOOTER');
   const grid = page.locator('.grid');
   for (const [width, columns] of [[1440, 3], [1024, 3], [768, 2], [650, 2], [640, 1], [390, 1], [320, 1]]) {
     await page.setViewportSize({ width, height: 980 });
@@ -30,46 +37,20 @@ test('the shared storefront grid fills three, two or one columns according to av
   await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
 });
 
-test('the self-hosted Shop saves private digital products and offers owner Stripe settings', async ({ page }) => {
+test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog setup', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Shop');
   const shop = page.locator('.orbitpage-selfhosted-shop');
-  await expect(shop.locator('.shop-workspace')).toBeVisible();
-  await expect(shop.locator('.shop-workspace')).toHaveClass(/embedded/);
-  await expect(shop.locator('.shop-command-bar')).toHaveCount(0);
-  await expect(shop.getByRole('button', { name: 'Connect Stripe', exact: true })).toHaveCount(0);
-  await shop.getByRole('button', { name: 'Add product', exact: true }).first().click();
-  const editor = shop.locator('#shop-catalog');
-  const title = `Synthetic OSS download ${Date.now()}`;
-  await editor.getByLabel('Name', { exact: true }).fill(title);
-  await editor.getByLabel('Full description', { exact: true }).fill('Synthetic digital delivery for the OSS browser test.');
-  await editor.getByLabel('Price', { exact: true }).fill('10');
-  await editor.getByRole('switch', { name: 'Available for purchase' }).click();
-  await editor.getByRole('button', { name: 'Manage files' }).click();
-  const files = page.getByRole('dialog', { name: 'Product files' });
-  await files.getByLabel('Add files').setInputFiles({ name: 'synthetic.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.7\nsynthetic OSS browser fixture') });
-  await files.getByRole('button', { name: 'Done', exact: true }).click();
-  const saved = page.waitForResponse(response => response.url().endsWith('/api/shop/uploads/finalize'));
-  await page.getByRole('group', { name: 'Unsaved Shop changes' }).getByRole('button', { name: 'Save', exact: true }).click();
-  const dashboard = await (await saved).json();
-  const product = dashboard.products.find((item: { title: string }) => item.title === title);
-  expect(product.priceCents).toBe(1000);
-  expect(product.files).toHaveLength(1);
-  expect(product.files[0].id).toMatch(/^[a-f0-9]{64}$/);
-  expect((await page.request.get(`/uploads/${product.files[0].id}`)).status()).toBe(404);
-  await expect(page.getByRole('group', { name: 'Unsaved Shop changes' })).toBeHidden();
-  await page.reload();
-  await expect(shop.getByText(title, { exact: true }).first()).toBeVisible();
-  await shop.getByRole('button', { name: 'Shop settings', exact: true }).click();
+  await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toBeVisible();
+  await expect(shop.getByRole('button', { name: 'Add product', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Public Shop', exact: true })).toHaveAttribute('href', /\/shop$/);
   await shop.getByRole('button', { name: 'Stripe', exact: true }).click();
   await expect(shop.getByLabel('Stripe secret API key')).toHaveAttribute('type', 'password');
   await expect(shop.getByLabel('Stripe webhook endpoint')).toHaveValue(/\/api\/shop\/webhook$/);
-  await expect(shop.getByText(/no OrbitPage fee/)).toBeVisible();
+  await expect(shop.getByRole('link', { name: 'Open shop', exact: true })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await shop.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
-  await page.goto('/shop/success');
-  await expect(page.getByRole('heading', { name: 'This purchase link is unavailable' })).toBeVisible();
 });
 
 test('a confirmed purchase opens themed downloads and appointments without registration and survives refresh', async ({ page }, testInfo) => {
@@ -79,7 +60,7 @@ test('a confirmed purchase opens themed downloads and appointments without regis
   const paidAt = '2026-10-08T12:00:00.000Z';
   const shop = { name: 'Studio Store', url: '/shop', logoUrl: '/brand/orbitpage-mark.svg', supportEmail: 'studio@example.invalid', cardEffect: 'solid', cardOpacity: 1,
     design: { pageBackground: '#101a2c', pageBackgroundSecondary: '#152442', textColor: '#edf2ff', mutedColor: '#a4b4d1', accentColor: '#86aaff', buttonTextColor: '#101a2c', cardBackground: '#1b2b47', cardTextColor: '#edf2ff', borderColor: '#35486a', cardRadius: 20, fontFamily: 'Inter, sans-serif' } };
-  const receipt = { shop, paidAt, orderId, productTitle: 'Photography toolkit', productType: 'digital', amountTotal: 1000, currency: 'eur', downloadable: true,
+  const receipt = { shop, paidAt, orderId, orderNumber: 1, productTitle: 'Photography toolkit', productType: 'digital', amountTotal: 1000, currency: 'eur', downloadable: true,
     files: [{ filename: 'guide.pdf', sizeBytes: 1024 }], downloadCount: 0, maxDownloads: 10, expiresAt, deliveryToken: 'browser-fixture',
     customerPortalUrl: '/shop/customer?access=browser-fixture', intakeQuestions: [], sessionsIncluded: 0, sessionsRemaining: 0 };
   const portal = { shop, customer: { shopName: 'Studio Store', shopUrl: '/shop', supportEmail: 'studio@example.invalid', email: 'buyer@example.invalid' }, bookings: [{ bookingId: 'booking-fixture', orderId, productTitle: 'Studio consultation', status: 'scheduled', startAt: paidAt, endAt: null, meetingUrl: 'https://meeting.example.invalid/studio' }], orders: [
@@ -102,6 +83,7 @@ test('a confirmed purchase opens themed downloads and appointments without regis
   await expect(page.getByRole('heading', { name: 'Your order is ready' })).toBeVisible();
   await expect(page.locator('.shop-success-shell')).toHaveAttribute('lang', 'en-US');
   await expect(page.locator('.shop-success-product')).toContainText('€10.00');
+  await expect(page.locator('.shop-success-product')).toContainText('#000001');
   await expect(page.locator('.shop-success-card')).toContainText('Oct 8, 2100');
   await expect(page.getByText('Preparing your order', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Contact the seller' })).toHaveAttribute('href', 'mailto:studio@example.invalid');

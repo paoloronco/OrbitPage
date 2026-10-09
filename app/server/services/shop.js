@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { dbAll, dbGet, dbRun, withTransaction } from '../database.js';
 import { getDirectorySizeBytes, getUploadStorageQuotaBytes } from './upload-policy.js';
 import { encryptSmtpPassword, decryptSmtpPassword, newsletterComplianceReady } from './newsletter.js';
-import { createShopSchemas } from '../../packages/shop/schema.js';
+import { createShopSchemas, shopComplianceReady } from '../../packages/shop/schema.js';
 import { checkoutAmounts, assertCheckoutCharge, stripeObjectId, stripeTaxIdCollection, stripeNameCollection } from '../../packages/shop/payments.js';
 import { validateShopFile, matchesShopFileSignature } from '../../packages/shop/files.js';
 import { renderShopHtml, renderShopMarkdown, shopPolicyLinks, resolvedShopDesign, buildShopHomeLinks, shopPurchasePresentation } from '../../packages/shop/render.js';
@@ -18,7 +18,7 @@ export const SHOP_FILE_BYTES = 50 * 1024 * 1024;
 export const SHOP_MAX_PRODUCTS = 20;
 export const shopDataDir = process.env.DATA_DIR || dirname(fileURLToPath(new URL('../server.js', import.meta.url)));
 export const shopFilesPath = join(shopDataDir, 'shop-files');
-export const { shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z,
+export const { shopAiDraftSchema, shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z,
   value => /^\/uploads\/shop-logo-[a-f0-9-]{36}\.(png|jpg|webp|avif|gif)$/.test(value));
 const uuid = z.string().uuid();
 const now = () => new Date().toISOString();
@@ -230,6 +230,7 @@ export async function setShopPublished(enabled, base) {
   await withTransaction(async () => {
     const setting = await shopSettings(), products = await shopProducts();
     if (enabled) {
+      await assertShopSetup(setting);
       if (!setting.appearance.sellerSelfCertified) fail(409, 'SHOP_SELLER_ACKNOWLEDGMENT_REQUIRED', 'Acknowledge your seller responsibilities before publishing.');
       if (!setting.stripe?.ready || !(process.env.SHOP_STRIPE_WEBHOOK_SECRET || setting.stripe.webhookSecret)) fail(409, 'SHOP_NOT_READY', 'Configure Stripe and its webhook before publishing.');
       if (!products.some(p => p.active && (p.type === 'service' || p.files?.length))) fail(409, 'SHOP_PRODUCTS_REQUIRED', 'Add an active product with a delivery file or service instructions.');
@@ -238,9 +239,28 @@ export async function setShopPublished(enabled, base) {
   });
   return shopDashboard(base);
 }
+export async function assertShopSetup(setting = null) {
+  setting ||= await shopSettings();
+  if (!shopComplianceReady(normalizeShopAppearance(setting.appearance))) fail(409, 'SHOP_COMPLIANCE_REQUIRED', 'Complete Shop Compliance before adding products.');
+  const config = await stripeConfiguration();
+  if (!config.verified || !setting.stripe?.ready || !config.webhookSecret) fail(409, 'SHOP_NOT_READY', 'Verify Stripe and configure its webhook before adding products.');
+  if (!setting.email?.verifiedAt) fail(409, 'SHOP_EMAIL_REQUIRED', 'Configure SMTP and send a successful test email before adding products.');
+}
+export async function persistShopAiDrafts(transaction, drafts) {
+  const setting = decode(await transaction.get('SELECT data FROM shop_settings WHERE id = 1'));
+  await assertShopSetup(setting);
+  const count = (await transaction.get('SELECT COUNT(*) AS count FROM shop_products')).count;
+  if (count + drafts.length > SHOP_MAX_PRODUCTS) fail(409, 'SHOP_PRODUCT_LIMIT', 'The catalog supports up to 20 products.');
+  for (const raw of drafts) {
+    const draft = shopAiDraftSchema.parse(raw), timestamp = now();
+    const fields = shopProductInputSchema.parse({ ...draft, active: false });
+    await transaction.run('INSERT INTO shop_products (id, data) VALUES (?, ?)', [draft.productId, JSON.stringify({ ...fields, currency: 'eur', files: [], file: null, cover: null, createdAt: timestamp, updatedAt: timestamp })]);
+  }
+}
 export async function saveShopProduct(raw, base) {
   const input = shopProductInputSchema.parse(raw), productId = input.productId || randomUUID();
   await withTransaction(async () => {
+    await assertShopSetup();
     const previous = await productFor(productId), products = await shopProducts();
     if (input.productId && !previous) fail(404, 'PRODUCT_NOT_FOUND', 'Product not found.');
     if (!previous && products.length >= SHOP_MAX_PRODUCTS) fail(409, 'SHOP_PRODUCT_LIMIT', 'The catalog supports up to 20 products.');
@@ -260,6 +280,7 @@ export async function deleteShopProduct(id, base) {
 }
 const uploadSchema = z.object({ productId: uuid, filename: z.string().trim().max(240), contentType: z.string().max(100), sizeBytes: z.number().int(), kind: z.enum(['file', 'cover']) }).strict();
 export async function reserveShopUpload(raw, base) {
+  await assertShopSetup();
   const input = uploadSchema.parse(raw); validateShopFile({ ...input, maximumBytes: input.kind === 'cover' ? 5 * 1024 * 1024 : SHOP_FILE_BYTES });
   if (input.kind === 'cover' && !['image/png', 'image/jpeg', 'image/webp', 'image/avif', 'image/gif'].includes(input.contentType)) fail(400, 'INVALID_SHOP_COVER', 'Choose a supported image.');
   const id = randomUUID(), token = `${id}.${shopSign('upload', id)}`;
@@ -360,6 +381,7 @@ export async function createShopCheckout(raw, base) {
   if (product.type === 'digital' && !input.digitalContentConsent) fail(400, 'DIGITAL_CONTENT_CONSENT_REQUIRED', 'Consent to immediate digital delivery before checkout.');
   const { client, config } = await shopStripe();
   if (!config.webhookSecret || !setting.stripe?.ready || config.livemode !== setting.stripe.livemode) fail(409, 'SHOP_NOT_READY', 'This shop cannot accept payments yet.');
+  await assertShopSetup(setting);
   const orderId = randomUUID(), timestamp = now(), policy = shopPolicyLinks(appearance, `${base}/shop`);
   const order = { orderId, productId: product.productId, productType: product.type, productTitle: product.title,
     amountTotal: product.priceCents, amountSubtotal: product.priceCents, amountDiscount: 0, amountRefunded: 0,
@@ -384,6 +406,10 @@ export async function createShopCheckout(raw, base) {
     const current = await stripeConfiguration(), currentSetting = await shopSettings();
     if (current.version !== config.version || current.secret !== config.secret) fail(409, 'STRIPE_SETTINGS_CHANGED', 'Stripe settings changed. Retry checkout.');
     if (!currentSetting.enabled) fail(404, 'SHOP_NOT_FOUND', 'Shop not found.');
+    const totals = await dbGet("SELECT COUNT(*) AS count, MAX(json_extract(data, '$.orderNumber')) AS maximum FROM shop_orders");
+    order.orderNumber = Math.max(currentSetting.lastOrderNumber || 0, totals.maximum || 0, totals.count) + 1;
+    currentSetting.lastOrderNumber = order.orderNumber;
+    await saveShopSettings(currentSetting);
     await saveShopOrder(order);
   });
   try {
@@ -545,7 +571,7 @@ export async function shopReceipt(orderId, sessionId) {
 }
 async function shopDeliveryInfo(order, token) {
   const customer = order.customerId ? await shopCustomer(order.customerId) : null, setting = await shopSettings();
-  return { shop: await getShopPurchasePresentation(setting), paidAt: order.paidAt, orderId: order.orderId, productTitle: order.productTitle, productType: order.productType,
+  return { shop: await getShopPurchasePresentation(setting), paidAt: order.paidAt, orderId: order.orderId, orderNumber: order.orderNumber, productTitle: order.productTitle, productType: order.productType,
     amountTotal: order.amountTotal, currency: order.currency, fulfillmentText: order.fulfillmentText, bookingUrl: bookingUrlForOrder(order),
     downloadable: order.productType === 'digital', files: (order.deliveryFiles || []).map(({ filename, sizeBytes }) => ({ filename, sizeBytes })),
     downloadCount: order.downloadCount, maxDownloads: 10 * Math.max(1, order.deliveryFiles?.length || 1), expiresAt: order.deliveryExpiresAt, deliveryToken: token,

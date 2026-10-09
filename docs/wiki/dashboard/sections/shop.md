@@ -17,7 +17,8 @@ purchase link never grants dashboard or administrator access.
    Your reverse proxy must allow Stripe and calendar webhook requests.
 3. Open **Site editor → Shop** (`/dashboard/editor/shop/products`). The gear
    button opens Compliance, Checkout, Stripe, Email and Calendar settings.
-4. Configure Stripe, seller information and SMTP, then save a complete product.
+4. Save Compliance, verify Stripe/webhook and send a successful SMTP test.
+   These three saved prerequisites unlock products and storefront design.
 5. Check desktop/mobile previews and complete the [test checklist](#test-checklist)
    before accepting live payments.
 
@@ -51,8 +52,8 @@ implemented. Editing a product does not change an existing order's snapshot.
 
 **Personalize** controls layout, colors, font and cards. **Use the page theme**
 inherits the public page's theme. Click the preview title, introduction, logo
-or back link to edit it. Save inside the title/introduction dialog saves that
-dialog; other pending drafts have their own Save/Reset controls.
+or back link to edit it. Apply inside the title/introduction dialog joins the shared Save/Reset flow.
+Save persists all pending Shop settings; Reset restores the saved values.
 
 The grid uses three columns when space permits, then two or one as its container
 narrows. Cards fill each column's available width. The list layout stays in one column.
@@ -99,7 +100,7 @@ Tax ID collection is not automatic tax calculation or invoice generation.
    then select **Save and verify Stripe** below the webhook endpoint.
    This is separate from the API key and the customer-link signing secret.
    **Stripe Dashboard** opens your account in the currently configured mode.
-5. Verify the payment-mode badge and complete the test checklist. For live sales,
+5. Verify the Stripe payment-status heading and complete the test checklist. For live sales,
    use a separate live installation with matching live keys and webhook.
 
 Restricted keys need account/balance reads, Checkout Session creation/retrieval,
@@ -321,3 +322,31 @@ live merchant eligibility, payout readiness or real email inbox delivery.
 | Email queued/missing | Shop SMTP, TLS, sender authorization, server uptime, provider logs and spam folder |
 | Booking absent | Complete paid-order URL, signed Cal.com webhook, event triggers and remaining sessions |
 | Settings cannot decrypt after restore | Restore the original secrets, or deliberately replace credentials; new secrets do not preserve old access links |
+
+## Required setup and AI drafts
+
+Before product/catalog setup, save **Compliance** (seller status, name, email,
+address for traders, Terms, Privacy, Refunds and Withdrawal policies, and seller
+acknowledgment), verify **Stripe** and its webhook, then configure **Email** and
+send a successful SMTP test. The dashboard opens required settings until all
+three are complete; the server enforces the same prerequisites.
+
+[SMTP email setup](../../integrations/smtp.md) explains providers and each field.
+OSS uses only your SMTP; Shop and Newsletter use separate configurations.
+
+An administrator can ask **AI Assistant** to add digital or service products.
+Provide the title, description, type and EUR price, review the proposal, then
+confirm. Products are saved only as drafts, with no product files, booking link
+or fulfillment instructions. Add delivery details manually before making them
+available. The catalog limit and setup requirements still apply.
+
+Stripe displays **Stripe payments are ready and configured** or
+**Stripe payments are in test mode**, with the test status in orange. Opening
+Stripe Dashboard's test/live view does not change configured credentials.
+
+The dashboard header opens **Public Shop**. Seller information is always expanded
+above the public footer, without a border or disclosure control; only configured
+fields are shown. Orders have references such as **#000001**, allocated in order
+of Checkout creation, including abandoned/failed attempts. Refunds do not reuse
+numbers. Older orders retain a short ID reference; purchase URLs and internal IDs
+remain valid. OSS Orders has no OrbitPage fee column.

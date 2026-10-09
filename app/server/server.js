@@ -1,5 +1,5 @@
 import { createShopRouter, createShopWebhookRouter, createShopPublicRouter } from "./routes/shop.js";
-import { cleanupShopFiles, dispatchShopEmails, shopFilesPath } from "./services/shop.js";
+import { cleanupShopFiles, dispatchShopEmails, shopFilesPath, persistShopAiDrafts } from "./services/shop.js";
 import { dispatchShopBookingReminders } from "./services/shop-lifecycle.js";
 import './services/instance-details.js';
 import express from 'express';
@@ -4274,7 +4274,7 @@ app.post(
   '/api/ai/page/plan',
   authenticateToken,
   aiAgentLimiter,
-  requireAnyPermission('profile:write', 'links:write', 'theme:write'),
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
   async (req, res) => {
     if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
     try {
@@ -4298,7 +4298,7 @@ app.post(
   '/api/ai/launch-kit',
   authenticateToken,
   aiAgentLimiter,
-  requireAnyPermission('profile:write', 'links:write', 'theme:write'),
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
   launchKitUpload.single('screenshot'),
   async (req, res) => {
     if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
@@ -4331,7 +4331,7 @@ app.post(
 app.post(
   '/api/ai/page/commit',
   authenticateToken,
-  requireAnyPermission('profile:write', 'links:write', 'theme:write'),
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
   async (req, res) => {
     if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
     const previewToken = String(req.body?.previewToken || '');
@@ -4388,6 +4388,12 @@ app.post(
             throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot apply theme changes.');
           }
           await persistAiTheme(transaction, changes.theme);
+        }
+        if (changes.shopProducts?.length) {
+          if (!(req.user.permissions || []).includes('users:manage')) throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot add Shop products.');
+          try { await persistShopAiDrafts(transaction, changes.shopProducts); }
+          catch (error) { throw new AiPageAgentError(error.status || 422, error.code || 'AI_PLAN_INVALID', error.message); }
+          await transaction.run('UPDATE page_state SET revision = revision + 1 WHERE id = 1');
         }
         const nextState = await transaction.get('SELECT revision FROM page_state WHERE id = 1');
         const committedRevision = Number.isSafeInteger(nextState?.revision)
