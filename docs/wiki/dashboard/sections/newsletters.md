@@ -4,6 +4,8 @@
 
 Send newsletters through your own SMTP server. An administrator manages settings, subscribers, and campaigns under **Newsletter**.
 
+Read [SMTP email setup](../../integrations/smtp.md) for provider examples, authentication, DNS and troubleshooting. OSS has no managed email service.
+
 ## Configure SMTP
 
 1. Open **Settings**.

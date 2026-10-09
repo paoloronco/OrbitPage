@@ -1,5 +1,7 @@
 "use client";
 
+import { shopOrderLabel } from "../../packages/shop/orders.js";
+
 import { CalendarDays, CheckCircle2, ChevronDown, ClipboardList, ExternalLink, FileText, Mail } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { OrbitLoader as LoadingIndicator } from "./ui/orbit-loader";
@@ -8,6 +10,7 @@ import { ShopPurchaseFiles, ShopPurchaseLayout, type ShopPurchasePresentation } 
 type Question = { id: string; prompt: string; required: boolean };
 type PortalOrder = {
   orderId: string;
+  orderNumber?: number;
   productTitle: string;
   productType: "digital" | "service";
   paidAt: string | null;
@@ -98,7 +101,7 @@ export default function ShopCustomerClient({ initialAccess, basePath = "" }: { i
     <div className={`shop-purchase-columns${data.bookings.length ? "" : " single-column"}`}>
     <section className="shop-customer-grid" aria-label="Purchases">
       {data.orders.map((order) => <article className="shop-purchase-card shop-customer-card" key={order.orderId}>
-        <div className="shop-customer-card-heading"><span className="shop-purchase-product-icon" aria-hidden="true">{order.productType === "digital" ? <FileText size={24} /> : <CalendarDays size={24} />}</span><div><p className="shop-purchase-kind">{order.productType === "digital" ? "Digital download" : "Service"}</p><h2>{order.productTitle}</h2><small>{order.paidAt && <>{new Date(order.paidAt).toLocaleDateString("en-US", { dateStyle: "medium" })} · </>}Order {order.orderId.slice(0, 8)}</small></div></div>
+        <div className="shop-customer-card-heading"><span className="shop-purchase-product-icon" aria-hidden="true">{order.productType === "digital" ? <FileText size={24} /> : <CalendarDays size={24} />}</span><div><p className="shop-purchase-kind">{order.productType === "digital" ? "Digital download" : "Service"}</p><h2>{order.productTitle}</h2><small>{order.paidAt && <>{new Date(order.paidAt).toLocaleDateString("en-US", { dateStyle: "medium" })} · </>}Order {shopOrderLabel(order)}</small></div></div>
         {order.productType === "digital" && <div className="shop-customer-files">
           <ShopPurchaseFiles files={order.files || []} remaining={order.downloadsRemaining} expiresAt={order.expiresAt} />
           {!order.files?.length && order.deliveryUrl && order.downloadsRemaining > 0 && (!order.expiresAt || Date.parse(order.expiresAt) > Date.now()) && <a className="shop-purchase-button primary" href={order.deliveryUrl}>Open downloads</a>}

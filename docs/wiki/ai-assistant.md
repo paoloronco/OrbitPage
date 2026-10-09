@@ -1,6 +1,6 @@
 # AI assistant
 
-Use **AI Assistant** or **Edit with AI** to propose profile, content, and theme changes. Manual editing works without a provider.
+Use **AI Assistant** or **Edit with AI** to propose profile, content, theme changes, and draft Shop products. Manual editing works without a provider.
 
 ## Configure
 
@@ -32,3 +32,12 @@ Prompts and a limited representation of the current page go to the OpenAI Respon
 | Provider error | Key, supported model, provider access, and outbound HTTPS |
 | Proposal expired or page changed | Generate from the current page again |
 | Operation not allowed | Account permissions or the requested action |
+
+## Draft Shop products
+
+Administrators can propose digital or service products with a title, description
+and price in EUR. Confirming creates drafts only: no files, booking/Cal.com URL
+or delivery instructions are added, and products cannot be bought. Complete
+[Shop setup](./dashboard/sections/shop.md#required-setup-and-ai-drafts) first,
+then finish delivery details manually and make the product available when ready.
+Proposals still check permission, catalog limits and revision on confirmation.

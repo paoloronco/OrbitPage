@@ -1,3 +1,4 @@
+export type ShopAiDraft = { productId: string; type: "digital" | "service"; title: string; description: string; priceCents: number };
 export type ShopLocale = 'en' | 'it' | 'es' | 'fr' | 'de' | 'pt' | 'nl' | 'pl' | 'tr' | 'ru' | 'ar' | 'zh' | 'ja' | 'ko';
 export type ShopProductCardStyle = {
   backgroundColor: string | null; textColor: string | null;
@@ -54,9 +55,12 @@ type InputSchema<T> = {
 };
 // Each runtime supplies its installed Zod and its own uploaded-logo boundary.
 export function createShopSchemas(zod: unknown, isOwnedLogo: (value: string) => boolean): {
+  shopAiDraftSchema: InputSchema<ShopAiDraft>;
   shopProductInputSchema: InputSchema<ShopProductInput>;
   shopAppearanceInputSchema: InputSchema<ShopAppearance>;
   normalizeShopAppearance(value: unknown): ShopAppearance;
   normalizeShopProductCardStyle(value: unknown): ShopProductCardStyle;
 };
 export function isSafeShopBookingUrl(value: string): boolean;
+
+export function shopComplianceReady(appearance?: ShopAppearance | null): boolean;

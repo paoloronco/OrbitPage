@@ -557,6 +557,7 @@ const Admin = () => {
       onSubpagesUpdate={saveSubpages}
       onThemeChange={saveTheme}
       onMenuUpdate={saveMenu}
+      workspaceRefreshKey={workspaceRefreshKey}
       onAiApplied={() => setWorkspaceRefreshKey((current) => current + 1)}
       onLogout={handleLogout}
       requestedTab={requestedTab}

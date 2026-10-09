@@ -15,6 +15,11 @@ export function isSafeShopBookingUrl(value) {
 }
 // Keep both backends on one contract while preserving their Zod errors and upload policy.
 export function createShopSchemas(z, isOwnedLogo) {
+    const shopAiDraftSchema = z.object({
+        productId: z.string().uuid(), type: z.enum(["digital", "service"]),
+        title: z.string().trim().min(2).max(90), description: z.string().trim().min(2).max(SHOP_DESCRIPTION_LIMIT),
+        priceCents: z.number().int().min(100).max(1_000_000)
+    }).strict();
     const shopProductCardStyleStorageSchema = z.object({
         backgroundColor: z.string().regex(/^#[0-9a-f]{6}$/i).nullable().default(null),
         textColor: z.string().regex(/^#[0-9a-f]{6}$/i).nullable().default(null),
@@ -46,7 +51,7 @@ export function createShopSchemas(z, isOwnedLogo) {
             alignment: "inherit"
         })
     }).strict().superRefine((input, context) => {
-        if (input.type === "service" && !input.fulfillmentText && !input.bookingUrl) {
+        if (input.active && input.type === "service" && !input.fulfillmentText && !input.bookingUrl) {
             context.addIssue({
                 code: "custom",
                 path: ["bookingUrl"],
@@ -182,5 +187,15 @@ export function createShopSchemas(z, isOwnedLogo) {
         const parsed = shopProductCardStyleStorageSchema.safeParse(candidate);
         return parsed.success ? parsed.data : shopProductCardStyleStorageSchema.parse({});
     }
-    return { shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle };
+    return { shopAiDraftSchema, shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle };
+}
+
+export function shopComplianceReady(appearance) {
+    return Boolean(appearance?.sellerSelfCertified && appearance.sellerType !== "unset"
+        && appearance.sellerName?.trim() && appearance.sellerEmail?.trim()
+        && (appearance.sellerType !== "trader" || appearance.sellerAddress?.trim())
+        && (appearance.termsText?.trim() || appearance.termsUrl?.trim())
+        && (appearance.privacyText?.trim() || appearance.privacyUrl?.trim())
+        && (appearance.refundPolicyText?.trim() || appearance.refundPolicyUrl?.trim())
+        && (appearance.withdrawalText?.trim() || appearance.withdrawalUrl?.trim()));
 }

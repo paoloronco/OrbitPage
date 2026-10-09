@@ -142,6 +142,7 @@ interface AdminViewProps {
   onThemeChange: (theme: ThemeConfig) => void | Promise<void>;
   onMenuUpdate: (menu: MenuCatalog) => Promise<void>;
   onAiApplied?: () => void;
+  workspaceRefreshKey?: number;
   onLogout: () => void;
   requestedTab?: AdminTab;
   requestedContentSection?: AdminContentSection;
@@ -208,6 +209,7 @@ export const AdminView = ({
   onThemeChange,
   onMenuUpdate,
   onAiApplied,
+  workspaceRefreshKey,
   onLogout,
   requestedTab = "profile",
   requestedContentSection = "link",
@@ -832,7 +834,7 @@ export const AdminView = ({
     />
   ) : (
     !embeddedEditor && canManageUsers
-      ? <Suspense fallback={null}><SelfHostedShop embedded onBackToContent={() => selectVisualSection("links")} onViewPlans={() => setActiveTab("plan")} onStatusChange={setSelfHostedShopEnabled} selectedView={(subsection || "products") as ShopView | "legal"} onViewChange={view => selectSubsection("shop", view === "settings" ? "legal" : view)} /></Suspense>
+      ? <Suspense fallback={null}><SelfHostedShop key={workspaceRefreshKey} embedded onBackToContent={() => selectVisualSection("links")} onViewPlans={() => setActiveTab("plan")} onStatusChange={setSelfHostedShopEnabled} selectedView={(subsection || "products") as ShopView | "legal"} onViewChange={view => selectSubsection("shop", view === "settings" ? "legal" : view)} /></Suspense>
       : embeddedEditor && extensionShop?.entitled
       ? <div className="hosted-shop-slot" data-orbitpage-hosted-shop-slot />
       : <PlanLockedFeature
@@ -1015,9 +1017,9 @@ export const AdminView = ({
             <p className="admin-dashboard-section-description">{displayedTabDescription(activeTab)}</p>
           </div>
           <div className="admin-dashboard-header-actions">
-            <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
+            <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={activeTab === "profile" && visualSection === "shop" ? `${publicPageHref.replace(/\/$/, "")}/shop` : publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
               <ExternalLink aria-hidden="true" size={17} />
-              {tr("Public page", "Pagina pubblica")}
+              {activeTab === "profile" && visualSection === "shop" ? tr("Public Shop", "Shop pubblico") : tr("Public page", "Pagina pubblica")}
             </a>
           </div>
         </header> : null}
