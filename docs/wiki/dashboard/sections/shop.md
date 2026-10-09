@@ -19,6 +19,9 @@ purchase link never grants dashboard or administrator access.
    button opens Compliance, Checkout, Stripe, Email, Calendar and INFO settings.
 4. Save Compliance, verify Stripe/webhook and send a successful SMTP test.
    These three saved prerequisites unlock products and storefront design.
+   **Back to shop** always returns to the preview, including from settings,
+   orders and customers. The preview stays read-only until setup is complete;
+   you can still switch between desktop and mobile previews and view the catalog.
 5. Check desktop/mobile previews and complete the [test checklist](#test-checklist)
    before accepting live payments.
 
