@@ -89,6 +89,8 @@ import { createApplicationBackup, restoreApplicationBackup, stageUploads, stageS
 import { consumeSetupToken, rotateSetupToken } from './services/setup-token.js';
 import { updateAgentRequest } from './services/application-updates.js';
 import { saveEnvironmentChanges } from './services/instance-details.js';
+import { instanceHealth } from './services/instance-health.js';
+vi.mock('./services/instance-health.js', () => ({ instanceHealth: vi.fn() }));
 vi.mock('./services/application-updates.js', async importOriginal => ({
   ...await importOriginal(), updateAgentRequest: vi.fn(),
 }));
@@ -1374,6 +1376,19 @@ describe('API Endpoints', () => {
     expect(response.body.services).toHaveProperty('database', true);
     expect(response.body.environment).toEqual(expect.arrayContaining([expect.objectContaining({ key: 'OPENAI_API_KEY' })]));
     expect(response.body.environment.every((entry) => Object.keys(entry).every((key) => ['key', 'label', 'configured', 'overridden'].includes(key)))).toBe(true);
+  });
+  it('protects instance health from non-admins and personal tokens', async () => {
+    authMockState.permissions = ['analytics:read'];
+    expect((await request(app).get('/orbitpage/api/shop/info')).status).toBe(403);
+    authMockState.permissions = ['users:manage']; authMockState.authType = 'personal_token';
+    expect((await request(app).get('/orbitpage/api/shop/info')).status).toBe(403);
+    expect(instanceHealth).not.toHaveBeenCalled();
+    authMockState.authType = null;
+    vi.mocked(instanceHealth).mockResolvedValue({ checks: [{ id: 'database', status: 'error' }] });
+    const response = await request(app).get('/orbitpage/api/shop/info').set('X-Forwarded-Proto', 'https');
+    expect(response.status).toBe(200); expect(response.headers['cache-control']).toBe('private, no-store');
+    expect(response.body.instance.checks).toEqual([{ id: 'database', status: 'error' }]);
+    expect(instanceHealth).toHaveBeenCalledWith({ secure: true, securityHeaders: true });
   });
 
   it('requires password and validates environment changes without returning values', async () => {

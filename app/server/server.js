@@ -12,6 +12,8 @@ import path, { dirname, join } from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import { updateAgentRequest, isUpdateActive } from './services/application-updates.js';
+import { instanceHealth } from './services/instance-health.js';
+import { shopInfo } from './services/shop.js';
 import { initializeDatabase, dbGet, dbAll, dbRun, withTransaction, withImmediateTransaction } from './database.js';
 import {
   isFirstTimeSetup,
@@ -2021,6 +2023,14 @@ app.get('/api/account/instance-details', authenticateToken, rejectPersonalTokenS
       environment: environmentSummary(),
     });
   } catch { res.status(503).json({ error: 'Instance details are unavailable.' }); }
+});
+app.get('/api/shop/info', authLimiter, authenticateToken, rejectPersonalTokenSession, requirePermission('users:manage'), async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    const [shop, instance] = await Promise.all([shopInfo().catch(() => null), instanceHealth({ secure: req.secure,
+      securityHeaders: Boolean(res.getHeader('Content-Security-Policy') && res.getHeader('X-Frame-Options') && res.getHeader('X-Content-Type-Options') === 'nosniff') })]);
+    res.json({ checkedAt: new Date().toISOString(), shop, instance });
+  } catch { res.status(503).json({ error: 'Instance information is unavailable.' }); }
 });
 
 app.put('/api/account/instance-environment', authLimiter, authenticateToken, rejectPersonalTokenSession, requirePermission('users:manage'), async (req, res) => {
@@ -5964,5 +5974,4 @@ app.listen(PORT, HOST, async () => {
   }
 });
 }
-
 

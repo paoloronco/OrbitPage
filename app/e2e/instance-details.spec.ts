@@ -1,6 +1,38 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin } from './helpers';
 
+test('INFO shows saved service status, honest health results and support links on mobile', async ({ page }, testInfo) => {
+  let reads = 0;
+  const info = { checkedAt: '2026-10-09T00:00:00Z', shop: { published: true, stripe: { connected: true, ready: true, livemode: false },
+    email: { mode: 'custom', configured: true, verifiedAt: '2026-10-09T00:00:00Z' }, calendar: { configured: true, webhookVerified: false } },
+    instance: { version: '4.21.88', node: 'v22.23.3', uptime: 120, checks: [{ id: 'database', status: 'ok' }, { id: 'vulnerabilities', status: 'unavailable' }],
+      audit: { status: 'unavailable', counts: null, checkedAt: '2026-10-09T00:00:00Z' } } };
+  await page.route('**/api/shop/info?*', route => { reads++; return route.fulfill({ json: info }); });
+  await openAuthenticatedAdmin(page);
+  await page.goto('/en-US/dashboard/editor/shop/legal');
+  await page.getByRole('navigation', { name: 'Shop settings sections' }).getByRole('button', { name: 'INFO', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'INFO', exact: true })).toBeVisible();
+  const panel = page.locator('.account-info-workspace');
+  await expect(panel.getByText('Published', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Own SMTP server', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Test mode', { exact: true })).toHaveCSS('color', 'rgb(180, 83, 9)');
+  await expect(panel.getByText('Calendar webhook not yet verified', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Not verified', { exact: true })).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Documentation' })).toHaveAttribute('href', /shop\.md#info$/);
+  await expect(panel.getByRole('link', { name: 'FAQ' })).toHaveAttribute('href', /docs\/wiki\/faq\.md$/);
+  expect((await page.request.get('/api/shop/info')).status()).toBe(401);
+  await panel.getByRole('button', { name: 'Refresh' }).click();
+  await expect.poll(() => reads).toBe(2);
+  await page.reload();
+  await page.getByRole('navigation', { name: 'Shop settings sections' }).getByRole('button', { name: 'INFO', exact: true }).click();
+  await expect(panel.getByText('Own SMTP server', { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await panel.getByRole('button', { name: 'Refresh' }).focus();
+  await expect(panel.getByRole('button', { name: 'Refresh' })).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('oss-info-mobile.png'), fullPage: true });
+});
+
 test('shows installation diagnostics and edits masked runtime variables', async ({ page }) => {
   await openAuthenticatedAdmin(page);
   await page.goto('/en-US/dashboard/account/general');
