@@ -139,6 +139,7 @@ test('Personalize opens and closes in the configured OSS dashboard and survives 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(panel).toBeVisible();
   await shop.getByRole('button', { name: 'Close personalization', exact: true }).click();
+  await page.unrouteAll({ behavior: 'wait' });
 });
 
 test('a confirmed purchase opens themed downloads and appointments without registration and survives refresh', async ({ page }, testInfo) => {
