@@ -670,7 +670,6 @@ export default function ShopClient({
   const [action, setAction] = useState<string | null>(null);
   const [localView, setLocalView] = useState<ShopView>("products");
   const requestedView = selectedView || localView;
-  const setupRequired = selfHosted && (!shopComplianceReady(data?.shop?.appearance) || !data?.shop?.stripeReady || !data?.shop?.emailSettings?.verifiedAt);
   const view = requestedView === "legal" || requestedView === "payments" ? "settings" : requestedView;
   const setView = useCallback((next: ShopView) => { setLocalView(next); onViewChange?.(next); }, [onViewChange]);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
@@ -816,7 +815,7 @@ export default function ShopClient({
   }
 
   function selectProduct(productId: string) {
-    if (setupRequired || action !== null) return;
+    if (action !== null) return;
     if (productEditorOpen && (draft.productId || "draft-product") === productId) { setView("products"); setCatalogOpen(false); return; }
     const product = data?.products.find((item) => item.productId === productId);
     if (!product || !canSwitchProduct()) return;
@@ -831,7 +830,7 @@ export default function ShopClient({
   }
 
   function openNewProduct() {
-    if (setupRequired || action !== null || !data || data.products.length >= data.limits.maxProducts) return;
+    if (action !== null || !data || data.products.length >= data.limits.maxProducts) return;
     if (!canSwitchProduct()) return;
     setView("products");
     setDraft(EMPTY_PRODUCT);
@@ -1274,7 +1273,7 @@ export default function ShopClient({
     liveDraftProduct?.productId === product.productId ? liveDraftProduct : product
   ));
   if (liveDraftProduct && !draft.productId) previewProducts = [liveDraftProduct, ...previewProducts];
-  const addProductButton = <button aria-controls="shop-catalog" aria-expanded={productEditorOpen} aria-label="Add product" className="button primary compact shop-add-product-button" disabled={setupRequired || action !== null || data.products.length >= data.limits.maxProducts} onClick={openNewProduct} type="button"><PackagePlus size={16} /><span>Add product</span></button>;
+  const addProductButton = <button aria-controls="shop-catalog" aria-expanded={productEditorOpen} aria-label="Add product" className="button primary compact shop-add-product-button" disabled={action !== null || data.products.length >= data.limits.maxProducts} onClick={openNewProduct} type="button"><PackagePlus size={16} /><span>Add product</span></button>;
   const appearanceChanged = Boolean(logoFile || deleteProfilePending || (appearance && JSON.stringify(appearance) !== JSON.stringify(data.shop?.appearance)));
   const productChanged = productEditorOpen && Boolean(deleteProductPending || files.length || cover || JSON.stringify(draft) !== JSON.stringify(originalProduct ? productDraft(originalProduct) : EMPTY_PRODUCT));
   const emailChanged = emailDraftChanged(smtpDraft, data.shop?.emailSettings);
@@ -1422,13 +1421,12 @@ export default function ShopClient({
   const customizationPanel = appearance && <form className="panel shop-customization" onSubmit={(event) => { event.preventDefault(); void saveChanges(); }}><fieldset disabled={action !== null}>
     <section className="shop-design-panel">
       <div className="shop-section-heading"><div><h3>Personalize</h3></div><button aria-label="Close personalization" className="shop-delete-button" disabled={action !== null} onClick={() => setView("products")} type="button"><X size={18} /></button></div>
-      {setupRequired && <p className="shop-platform-note">Configure {missingPublicationSetup.join(", ")} before customizing your Shop.</p>}
 
       <label className="shop-setting-toggle">
-        <ToggleSwitch aria-label="Use the page theme" checked={appearance.inheritPageTheme} disabled={setupRequired} onCheckedChange={(inheritPageTheme) => setAppearance((current) => current ? { ...current, inheritPageTheme } : current)} />
+        <ToggleSwitch aria-label="Use the page theme" checked={appearance.inheritPageTheme} onCheckedChange={(inheritPageTheme) => setAppearance((current) => current ? { ...current, inheritPageTheme } : current)} />
         <span><strong>Use the page theme</strong><small>Keep colors and typography consistent with your main OrbitPage.</small></span>
       </label>
-      <fieldset aria-label="Shop customization options" className="shop-customization-options" disabled={setupRequired || appearance.inheritPageTheme}>
+      <fieldset aria-label="Shop customization options" className="shop-customization-options" disabled={appearance.inheritPageTheme}>
       <nav aria-label="Theme options" className="shop-settings-tabs"><button aria-current={themeMode === "presets" ? "page" : undefined} onClick={() => setThemeMode("presets")} type="button">Themes</button><button aria-current={themeMode === "custom" ? "page" : undefined} onClick={() => setThemeMode("custom")} type="button">Custom theme</button></nav>
       {themeMode === "presets" ? <div className="shop-theme-presets">{SHOP_THEMES.map(({ name, ...colors }) => <button aria-label={`${name} theme`} key={name} onClick={() => setAppearance((current) => current ? { ...current, ...colors, inheritPageTheme: false } : current)} type="button"><span style={{ background: colors.pageBackground, color: colors.textColor }}><i style={{ background: colors.cardBackground, borderColor: colors.borderColor }} /><i style={{ background: colors.accentColor }} /></span><strong>{name}</strong></button>)}</div> : <>
       <div className="shop-color-grid">
@@ -1496,13 +1494,13 @@ export default function ShopClient({
         <div className="shop-toolbar-right">{editingStorefront && data.products.length > 0 && <button aria-label="View catalog" className="button secondary compact shop-catalog-button" onClick={() => setCatalogOpen(true)} title="View catalog" type="button"><Search size={14} /><span>View catalog</span></button>}{editingStorefront && addProductButton}</div>
       </div>
 
-      {editingStorefront && appearance && previewDesign && <div className={"shop-storefront-workspace" + (view === "design" || (!setupRequired && productEditorOpen) ? " has-inspector" : "")}>
+      {editingStorefront && appearance && previewDesign && <div className={"shop-storefront-workspace" + (view === "design" || productEditorOpen ? " has-inspector" : "")}>
         <section aria-label="Shop preview" className="shop-storefront-canvas">
-          <div className="shop-preview-controls"><span title={setupRequired ? undefined : previewInstructions}>{!setupRequired && previewInstructions}</span><div aria-label="Preview device" className="shop-device-toggle" role="group"><button aria-label="Mobile preview" aria-pressed={device === "mobile"} onClick={() => setDevice("mobile")} title="Mobile preview" type="button"><Smartphone size={17} /></button><button aria-label="Desktop preview" aria-pressed={device === "desktop"} onClick={() => setDevice("desktop")} title="Desktop preview" type="button"><Monitor size={17} /></button></div></div>
-          <ShopStorefrontPreview appearance={{ ...appearance, logoUrl: logoPreviewUrl || appearance.logoUrl }} canAddProduct={data.products.length < data.limits.maxProducts} copy={previewCopy} design={previewDesign} device={device} disabled={setupRequired || action !== null} onAddProduct={openNewProduct} onEditLogo={() => setLogoDialogOpen(true)} onEditBackLink={() => { setBackLinkDraft(appearance.backLinkLabel || previewCopy.back); setBackLinkDialogOpen(true); }} onEditIdentity={() => setIdentityDialogOpen(true)} onSelectProduct={selectProduct} products={previewProducts} publicUrl={data.shop?.publicUrl || window.location.origin} selectedProductId={productEditorOpen ? draft.productId || "draft-product" : undefined} surface={previewSurface} />
+          <div className="shop-preview-controls"><span title={previewInstructions}>{previewInstructions}</span><div aria-label="Preview device" className="shop-device-toggle" role="group"><button aria-label="Mobile preview" aria-pressed={device === "mobile"} onClick={() => setDevice("mobile")} title="Mobile preview" type="button"><Smartphone size={17} /></button><button aria-label="Desktop preview" aria-pressed={device === "desktop"} onClick={() => setDevice("desktop")} title="Desktop preview" type="button"><Monitor size={17} /></button></div></div>
+          <ShopStorefrontPreview appearance={{ ...appearance, logoUrl: logoPreviewUrl || appearance.logoUrl }} canAddProduct={data.products.length < data.limits.maxProducts} copy={previewCopy} design={previewDesign} device={device} disabled={action !== null} onAddProduct={openNewProduct} onEditLogo={() => setLogoDialogOpen(true)} onEditBackLink={() => { setBackLinkDraft(appearance.backLinkLabel || previewCopy.back); setBackLinkDialogOpen(true); }} onEditIdentity={() => setIdentityDialogOpen(true)} onSelectProduct={selectProduct} products={previewProducts} publicUrl={data.shop?.publicUrl || window.location.origin} selectedProductId={productEditorOpen ? draft.productId || "draft-product" : undefined} surface={previewSurface} />
 
         </section>
-        {view === "design" ? <aside aria-label="Personalization" id="shop-personalization">{customizationPanel}</aside> : !setupRequired && productEditorOpen && <aside aria-label="Product editor" className="panel shop-catalog-panel is-editing" id="shop-catalog">{productEditor}</aside>}
+        {view === "design" ? <aside aria-label="Personalization" id="shop-personalization">{customizationPanel}</aside> : productEditorOpen && <aside aria-label="Product editor" className="panel shop-catalog-panel is-editing" id="shop-catalog">{productEditor}</aside>}
       </div>}
 
       {view === "settings" && <nav aria-label="Shop settings sections" className="shop-settings-tabs"><button aria-current={settingsTab === "compliance" ? "page" : undefined} onClick={() => setSettingsTab("compliance")} type="button"><ShieldCheck size={15} /> Compliance</button><button aria-current={settingsTab === "checkout" ? "page" : undefined} onClick={() => setSettingsTab("checkout")} type="button"><ShoppingCart size={15} /> Checkout</button><button aria-current={settingsTab === "stripe" ? "page" : undefined} onClick={() => setSettingsTab("stripe")} type="button"><CreditCard size={15} /> Stripe</button><button aria-current={settingsTab === "email" ? "page" : undefined} onClick={() => setSettingsTab("email")} type="button"><Mail size={15} /> Email</button><button aria-current={settingsTab === "calendar" ? "page" : undefined} onClick={() => setSettingsTab("calendar")} type="button"><CalendarDays size={15} /> Calendar</button><button aria-current={settingsTab === "info" ? "page" : undefined} onClick={() => setSettingsTab("info")} type="button"><Info size={15} /> INFO</button></nav>}
@@ -1766,7 +1764,7 @@ export default function ShopClient({
               <td><span className={`shop-catalog-status ${product.active ? "visible" : "hidden"}`}><span aria-hidden="true" />{product.active ? "Visible" : "Hidden"}</span></td>
               <td className="shop-catalog-price">{money(product.priceCents)}</td>
               <td>{product.type === "digital" ? product.files?.length || (product.file ? 1 : 0) : "—"}</td>
-              <td><button aria-label={`Edit ${product.title}`} className="shop-catalog-edit" disabled={setupRequired || action !== null} onClick={() => selectProduct(product.productId)} type="button">Edit<ArrowUpRight size={14} /></button></td>
+              <td><button aria-label={`Edit ${product.title}`} className="shop-catalog-edit" disabled={action !== null} onClick={() => selectProduct(product.productId)} type="button">Edit<ArrowUpRight size={14} /></button></td>
             </tr>)}</tbody>
           </table>
           {!catalogProducts.length && <div className="shop-catalog-empty"><Search size={24} /><strong>No products match these filters.</strong><span>Try another search or reset the filters.</span></div>}

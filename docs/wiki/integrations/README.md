@@ -12,5 +12,6 @@ Connect external content and services to your self-hosted page.
 
 Native [Shop](../dashboard/sections/shop.md) supports owner Stripe payments,
 private digital delivery and signed Cal.com booking synchronization. Configure
-Compliance, Stripe and SMTP before creating products. External payment and
+Compliance, Stripe and SMTP before publishing or accepting payments. Products
+and storefront design can be prepared first. External payment and
 booking URLs can also be ordinary Link blocks.

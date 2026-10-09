@@ -45,10 +45,11 @@ enabled. The OrbitPage server/container needs outbound access to the chosen port
 3. Open **Email**, enter your SMTP and sender fields, then **Save**.
 4. Select **Send test email**. OSS uses the configured sender as test recipient;
    inspect its inbox and spam folder.
-5. After the test succeeds, continue with products and storefront design.
+5. After the test succeeds, publish the prepared Shop when its other requirements are complete.
 
 Compliance, verified Stripe/webhook and a successful SMTP test are required
-before catalog setup or publication. Changing connection/sender settings clears
+before publication or accepting payments. Products and storefront design can be
+prepared before setup. Changing connection/sender settings clears
 the test status; test again. The sender handles buyer confirmations, seller
 notifications, questionnaire updates, booking changes and reminders. Purchase
 access remains available through the verified receipt if an email is delayed.

@@ -110,17 +110,22 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     expect(result.status).toBe(200); expect(JSON.stringify(result.body)).not.toContain(hookSecret); expect(JSON.stringify(result.body)).not.toContain('sk_test_');
     const persisted = await db.dbGet('SELECT data FROM shop_settings'); expect(persisted.data).not.toContain(hookSecret); expect(persisted.data).not.toContain('sk_test_');
   });
-  it('requires saved Compliance, verified Stripe and tested SMTP before catalog setup', async () => {
-    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_COMPLIANCE_REQUIRED' });
+  it('allows catalog editing and uploads before setup but requires saved Compliance, Stripe and tested SMTP for publication', async () => {
+    const id = await newProduct();
+    const edited = await shop.saveShopProduct({ ...digitalInput(), productId: id, title: 'Editable before setup' }, base);
+    expect(edited.products.find(product => product.productId === id)).toMatchObject({ title: 'Editable before setup', active: true });
+    await expect(shop.setShopPublished(true, base)).rejects.toMatchObject({ code: 'SHOP_COMPLIANCE_REQUIRED' });
     await shop.saveShopAppearance({ ...(await shop.shopSettings()).appearance, sellerSelfCertified: true, sellerType: 'private', sellerName: 'Synthetic Seller', sellerEmail: 'seller@example.com', termsText: 'Seller terms', privacyText: 'Privacy policy', refundPolicyText: 'Refund policy', withdrawalText: 'Withdrawal policy' }, base);
-    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_EMAIL_REQUIRED' });
+    await expect(shop.setShopPublished(true, base)).rejects.toMatchObject({ code: 'SHOP_EMAIL_REQUIRED' });
     await shop.configureShopEmail({ mode: 'custom', host: 'smtp.example.com', port: 587, username: 'sender', password: 'synthetic-password', fromName: 'Shop', fromEmail: 'seller@example.com', replyTo: '' });
-    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_EMAIL_REQUIRED' });
+    await expect(shop.setShopPublished(true, base)).rejects.toMatchObject({ code: 'SHOP_EMAIL_REQUIRED' });
     await shop.testShopEmail();
     const setting = await shop.shopSettings();
     await shop.saveShopSettings({ ...setting, stripe: { ...setting.stripe, ready: false } });
-    await expect(shop.saveShopProduct(digitalInput(), base)).rejects.toMatchObject({ code: 'SHOP_NOT_READY' });
+    await expect(shop.assertShopSetup()).rejects.toMatchObject({ code: 'SHOP_NOT_READY' });
+    await expect(shop.saveShopProduct({ ...digitalInput(), productId: id, active: false }, base)).resolves.toHaveProperty('savedProductId', id);
     await shop.saveShopSettings(setting);
+    await shop.deleteShopProduct(id, base);
   });
   it('persists catalog and private uploads, renders the shared storefront, and keeps checkout pricing on the server', async () => {
     const id = await newProduct();

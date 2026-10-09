@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { z } from 'zod';
 import { createShopSchemas } from '../packages/shop/schema.js';
 import { renderShopHtml } from '../packages/shop/render.js';
-import { openAdminSection, openAuthenticatedAdmin } from './helpers';
+import { contentSaveButton, openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test.use({ locale: 'it-IT' });
 
@@ -37,11 +37,14 @@ test('the shared storefront grid fills three, two or one columns according to av
   await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
 });
 
-test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog setup', async ({ page }) => {
+test('OSS edits products and storefront before setup while requiring Compliance, Stripe and SMTP to publish', async ({ page }, testInfo) => {
+  const draftTitle = `Editable OSS draft ${testInfo.project.name}`;
+  const updatedTitle = `Updated OSS draft ${testInfo.project.name}`;
   await page.route(/\/api\/shop(?:\?|$)/, async route => {
     const response = await route.fetch();
     const data = await response.json();
     Object.assign(data.shop, { stripeConnected: true, stripeReady: true, stripeLivemode: false });
+    Object.assign(data.shop.appearance, { title: 'Fixture shop', description: 'Fixture introduction' });
     await route.fulfill({ response, json: data });
   });
   await page.setViewportSize({ width: 1440, height: 980 });
@@ -92,22 +95,51 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
       await personalize.click();
       const panel = shop.getByRole('complementary', { name: 'Personalization', exact: true });
       await expect(panel).toBeVisible();
-      await expect(panel).toContainText('Configure Compliance, Email before customizing your Shop.');
-      await expect(panel.getByRole('switch', { name: 'Use the page theme', exact: true })).toBeDisabled();
-      expect(await panel.getByRole('group', { name: 'Shop customization options', exact: true }).locator('button,input,select').evaluateAll(controls => controls.every(control => control.matches(':disabled')))).toBe(true);
+      await expect(panel.getByRole('switch', { name: 'Use the page theme', exact: true })).toBeEnabled();
       if (width === 390 && section === 'Customers') {
         await page.reload({ waitUntil: 'domcontentloaded' });
         await expect(panel).toBeVisible();
       }
       await shop.getByRole('button', { name: 'Close personalization', exact: true }).click();
       await expect(panel).toHaveCount(0);
-      await expect(shop.getByRole('button', { name: 'Edit shop logo', exact: true })).toBeDisabled();
-      await expect(shop.locator('.shop-view-toolbar').getByRole('button', { name: 'Add product', exact: true })).toBeDisabled();
+      await expect(shop.getByRole('button', { name: 'Edit shop logo', exact: true })).toBeEnabled();
+      await expect(shop.locator('.shop-view-toolbar').getByRole('button', { name: 'Add product', exact: true })).toBeEnabled();
       await expect(publish).toBeDisabled();
+    }
+    for (const [button, title] of [['Edit back link', 'Back to page'], ['Edit Shop title', 'Shop title and description'], ['Edit Shop description', 'Shop title and description'], ['Edit shop logo', 'Shop logo']]) {
+      await shop.getByRole('button', { name: button, exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: title, exact: true });
+      await expect(dialog).toBeVisible();
+      await dialog.getByRole('button', { name: `Close ${title}`, exact: true }).click();
+      await expect(dialog).toHaveCount(0);
     }
   }
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(shop.getByRole('region', { name: 'Shop preview', exact: true })).toBeVisible();
+  await shop.locator('.shop-view-toolbar').getByRole('button', { name: 'Add product', exact: true }).click();
+  const editor = shop.getByRole('complementary', { name: 'Product editor', exact: true });
+  await expect(editor).toBeVisible();
+  await editor.getByRole('textbox', { name: 'Name', exact: true }).fill(draftTitle);
+  await editor.getByRole('textbox', { name: 'Full description', exact: true }).fill('A draft prepared before Shop configuration.');
+  await editor.getByLabel(/^Price/).fill('10');
+  await contentSaveButton(page).click();
+  await expect(editor).toHaveCount(0);
+  await shop.getByRole('button', { name: 'View catalog', exact: true }).click();
+  await page.getByRole('button', { name: `Edit ${draftTitle}`, exact: true }).click();
+  await expect(editor).toBeVisible();
+  await editor.getByRole('textbox', { name: 'Name', exact: true }).fill(updatedTitle);
+  await contentSaveButton(page).click();
+  await expect(editor).toHaveCount(0);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await shop.getByRole('button', { name: 'View catalog', exact: true }).click();
+  await page.getByRole('button', { name: `Edit ${updatedTitle}`, exact: true }).click();
+  await expect(editor.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue(updatedTitle);
+  await editor.getByRole('button', { name: 'Delete product', exact: true }).click();
+  page.once('dialog', dialog => dialog.accept());
+  await contentSaveButton(page).click();
+  await expect(editor).toHaveCount(0);
+  await expect(publish).toBeDisabled();
+  await page.unrouteAll({ behavior: 'wait' });
 });
 
 test('Personalize opens and closes in the configured OSS dashboard and survives refresh', async ({ page }) => {
