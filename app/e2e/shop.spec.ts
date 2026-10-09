@@ -38,6 +38,12 @@ test('the shared storefront grid fills three, two or one columns according to av
 });
 
 test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog setup', async ({ page }) => {
+  await page.route(/\/api\/shop(?:\?|$)/, async route => {
+    const response = await route.fetch();
+    const data = await response.json();
+    Object.assign(data.shop, { stripeConnected: true, stripeReady: true, stripeLivemode: false });
+    await route.fulfill({ response, json: data });
+  });
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Shop');
@@ -49,8 +55,18 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
   await shop.getByRole('button', { name: 'Stripe', exact: true }).click();
   await expect(shop.getByLabel('Stripe secret API key')).toHaveAttribute('type', 'password');
   await expect(shop.getByLabel('Stripe webhook endpoint')).toHaveValue(/\/api\/shop\/webhook$/);
+  const heading = shop.getByRole('heading', { name: 'Stripe payments are in test mode', exact: true });
+  const testMode = heading.getByText('test mode', { exact: true });
+  await expect(testMode).toBeVisible();
+  await expect(testMode).toHaveCSS('color', 'rgb(180, 83, 9)');
+  await expect(testMode).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(testMode).toHaveCSS('border-top-width', '0px');
+  await expect(testMode).toHaveCSS('text-transform', 'none');
+  await expect(testMode).toHaveCSS('font-size', await heading.evaluate(element => getComputedStyle(element).fontSize));
   await expect(shop.getByRole('link', { name: 'Open shop', exact: true })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(testMode).toBeVisible();
+  await expect(testMode).toHaveCSS('border-top-width', '0px');
   await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toHaveCount(0);
   expect(await shop.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
 });
