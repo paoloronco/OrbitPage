@@ -143,11 +143,15 @@ or email. Card details are entered on Stripe, not stored by OrbitPage.
 Save the catalog/design, make a complete product available, verify Stripe and its
 webhook, and acknowledge seller responsibility. Select **Publish shop** in the
 center of the top toolbar; in Settings and Orders/Customers it sits beside
-**Back to shop**. Open `/shop` in a private window. Check policies and mobile
+**Back to shop**. In OSS, the button is always visible: **Publish shop** stays dimmed
+and disabled until Compliance, Stripe and Email are configured and a complete
+product is available. Hover over it or focus it with the keyboard to see what is
+missing. Open `/shop` in a private window. Check policies and mobile
 layout. Add Shop to Home can expose a card from your main page; newsletter signup
 uses the separate Newsletter audience and compliance settings.
 
-**Unpublish** stops new storefront sales and keeps products, orders and customers.
+**Unpublish** remains available if setup becomes incomplete. It stops new
+storefront sales and keeps products, orders and customers.
 It does not erase purchases, refund payments or revoke existing paid links. If
 Shop is the homepage, choose another homepage before removing it. Hiding a product
 also stops new sales without erasing its previous purchases.

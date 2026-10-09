@@ -48,6 +48,13 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Shop');
   const shop = page.locator('.orbitpage-selfhosted-shop');
+  const publish = shop.getByRole('button', { name: 'Publish shop', exact: true });
+  await expect(publish).toBeVisible();
+  await expect(publish).toBeDisabled();
+  await expect(publish).toHaveCSS('opacity', '0.55');
+  await publish.locator('..').hover();
+  await expect(page.getByRole('tooltip')).toHaveText('Configure Compliance, Email before publishing your Shop.');
+  await shop.getByRole('button', { name: 'Stripe', exact: true }).focus();
   await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toHaveCount(0);
   await expect(shop.getByRole('navigation', { name: 'Shop settings sections' })).toBeVisible();
   await expect(shop.getByRole('button', { name: 'Add product', exact: true })).toHaveCount(0);

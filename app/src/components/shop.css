@@ -40,6 +40,8 @@
 :where(.shop-workspace, .shop-editor-dialog) .button.secondary { background: #e7edf5; color: var(--ink); }
 :where(.shop-workspace, .shop-editor-dialog) .button.compact { min-height: 38px; padding: 9px 12px; }
 :where(.shop-workspace, .shop-editor-dialog) .button:disabled { cursor: default; opacity: .55; }
+.shop-publication-tooltip { display: inline-flex; }
+.shop-publication-tooltip > button { pointer-events: none; }
 :is(.shop-workspace, .shop-editor-dialog) .button:hover { background: var(--admin-accent-strong, #2456d3); box-shadow: none; transform: none; }
 :is(.shop-workspace, .shop-editor-dialog) .button.secondary:hover { background: #dbe4ef; }
 :where(.orbitpage-selfhosted-shop, .shop-success-shell, .shop-customer-shell) .dashboard-kicker { color: #3568f4; font-size: 10px; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
