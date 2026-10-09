@@ -374,7 +374,6 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.shop-command-actions .shop-mode-badge { grid-column: 1 / -1; justify-self: start; }
 
 .shop-legal-fields {
   display: grid;
@@ -496,9 +495,6 @@
 
 .shop-title-row { align-items: center; display: flex; gap: 10px; }
 .shop-title-row .dashboard-kicker { margin: 0; }
-.shop-mode-badge { border: 1px solid; border-radius: 999px; font-size: 9px; font-weight: 900; padding: 4px 7px; text-transform: uppercase; }
-.shop-mode-badge.live { background: #e8f7ef; border-color: #b9dfca; color: #1d7047; }
-.shop-mode-badge.test { background: #fff6e8; border-color: #f1d6a7; color: #85550b; }
 
 .shop-heading-actions { gap: 9px; }
 
@@ -538,8 +534,9 @@
 .shop-workspace .shop-provider-panel .shop-section-heading h3 { font-size: 13px; font-weight: 700; line-height: 1.5; }
 .shop-provider-status { background: #f2f5fa; border-radius: 999px; color: var(--muted); flex: 0 0 auto; font-size: 11px; font-weight: 800; padding: 7px 10px; }
 .shop-stripe-ready { color: #15703c; }
+.shop-stripe-test { color: #b45309; }
 .shop-stripe-ready-note { background: #effaf3; border: 1px solid #bce5cb; border-radius: 999px; font-size: 11px; padding: 4px 8px; }
-.shop-provider-heading h3:has(.shop-stripe-ready) { flex-wrap: wrap; gap: 4px; }
+.shop-provider-heading h3:has(.shop-stripe-ready, .shop-stripe-test) { flex-wrap: wrap; gap: 4px; }
 .shop-provider-muted { color: var(--muted); font-size: 12px; margin: 0; }
 .shop-provider-docs { align-items: center; color: var(--brand); display: inline-flex; font-size: 12px; gap: 5px; grid-column: 1 / -1; justify-self: start; line-height: 1.5; margin-top: 8px; }
 .shop-provider-panel .shop-calendar-integration { background: transparent; padding: 0; }

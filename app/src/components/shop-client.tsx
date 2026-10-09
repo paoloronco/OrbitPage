@@ -1592,7 +1592,7 @@ export default function ShopClient({
         <section className="shop-payments-view">
           {settingsTab === "stripe" && <section aria-labelledby="shop-stripe-title" className="shop-provider-panel">
             <header className="shop-provider-heading">
-              <h3 id="shop-stripe-title" aria-live="polite">{stripeCheckFailed ? "Stripe status could not be verified" : shopReady ? <>Stripe payments are {data.shop?.stripeLivemode === false ? <span className="shop-mode-badge test">in test mode</span> : <span className="shop-stripe-ready">ready and configured</span>}</> : selfHosted ? "Configure your Stripe account" : data.shop?.stripeConnected ? "Finish your Stripe setup" : "Connect Stripe to start selling"}</h3>
+              <h3 id="shop-stripe-title" aria-live="polite">{stripeCheckFailed ? "Stripe status could not be verified" : shopReady ? <>Stripe payments are {data.shop?.stripeLivemode === false ? <>in <span className="shop-stripe-test">test mode</span></> : <span className="shop-stripe-ready">ready and configured</span>}</> : selfHosted ? "Configure your Stripe account" : data.shop?.stripeConnected ? "Finish your Stripe setup" : "Connect Stripe to start selling"}</h3>
               {(stripeCheckFailed || !shopReady) && <p>{stripeCheckFailed ? "Check your connection. Stripe status will be checked again automatically." : selfHosted ? "Use Test Mode to verify checkout before enabling live payments." : "Stripe collects your business, identity and bank details on its secure site."}</p>}
               <a className="shop-provider-docs" href={documentationUrl("connect")} rel="noreferrer" target="_blank"><HelpCircle aria-hidden="true" size={14} /> Shop and Stripe documentation</a>
             </header>
