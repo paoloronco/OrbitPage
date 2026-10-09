@@ -671,7 +671,7 @@ export default function ShopClient({
   const [localView, setLocalView] = useState<ShopView>("products");
   const requestedView = selectedView || localView;
   const setupRequired = selfHosted && (!shopComplianceReady(data?.shop?.appearance) || !data?.shop?.stripeReady || !data?.shop?.emailSettings?.verifiedAt);
-  const view = requestedView === "legal" || requestedView === "payments" || (setupRequired && requestedView === "design") ? "settings" : requestedView;
+  const view = requestedView === "legal" || requestedView === "payments" ? "settings" : requestedView;
   const setView = useCallback((next: ShopView) => { setLocalView(next); onViewChange?.(next); }, [onViewChange]);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [appearance, setAppearance] = useState<ShopAppearance | null>(null);
@@ -1422,12 +1422,13 @@ export default function ShopClient({
   const customizationPanel = appearance && <form className="panel shop-customization" onSubmit={(event) => { event.preventDefault(); void saveChanges(); }}><fieldset disabled={action !== null}>
     <section className="shop-design-panel">
       <div className="shop-section-heading"><div><h3>Personalize</h3></div><button aria-label="Close personalization" className="shop-delete-button" disabled={action !== null} onClick={() => setView("products")} type="button"><X size={18} /></button></div>
+      {setupRequired && <p className="shop-platform-note">Configure {missingPublicationSetup.join(", ")} before customizing your Shop.</p>}
 
       <label className="shop-setting-toggle">
-        <ToggleSwitch aria-label="Use the page theme" checked={appearance.inheritPageTheme} onCheckedChange={(inheritPageTheme) => setAppearance((current) => current ? { ...current, inheritPageTheme } : current)} />
+        <ToggleSwitch aria-label="Use the page theme" checked={appearance.inheritPageTheme} disabled={setupRequired} onCheckedChange={(inheritPageTheme) => setAppearance((current) => current ? { ...current, inheritPageTheme } : current)} />
         <span><strong>Use the page theme</strong><small>Keep colors and typography consistent with your main OrbitPage.</small></span>
       </label>
-      <fieldset aria-label="Shop customization options" className="shop-customization-options" disabled={appearance.inheritPageTheme}>
+      <fieldset aria-label="Shop customization options" className="shop-customization-options" disabled={setupRequired || appearance.inheritPageTheme}>
       <nav aria-label="Theme options" className="shop-settings-tabs"><button aria-current={themeMode === "presets" ? "page" : undefined} onClick={() => setThemeMode("presets")} type="button">Themes</button><button aria-current={themeMode === "custom" ? "page" : undefined} onClick={() => setThemeMode("custom")} type="button">Custom theme</button></nav>
       {themeMode === "presets" ? <div className="shop-theme-presets">{SHOP_THEMES.map(({ name, ...colors }) => <button aria-label={`${name} theme`} key={name} onClick={() => setAppearance((current) => current ? { ...current, ...colors, inheritPageTheme: false } : current)} type="button"><span style={{ background: colors.pageBackground, color: colors.textColor }}><i style={{ background: colors.cardBackground, borderColor: colors.borderColor }} /><i style={{ background: colors.accentColor }} /></span><strong>{name}</strong></button>)}</div> : <>
       <div className="shop-color-grid">
@@ -1486,7 +1487,7 @@ export default function ShopClient({
         <div className="shop-toolbar-left">
           <button aria-label="Shop settings" aria-pressed={view === "settings"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("settings")} title="Settings" type="button"><Settings size={18} /></button>
           <button aria-label="Orders and customers" aria-pressed={view === "orders" || view === "customers"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("orders")} title="Orders and customers" type="button"><ReceiptText size={18} /></button>
-          {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={setupRequired || action !== null} onClick={() => setView(view === "design" ? "products" : "design")} title="Personalize" type="button"><Palette size={18} /><span>Personalize</span></button>}
+          {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={action !== null} onClick={() => setView(view === "design" ? "products" : "design")} title="Personalize" type="button"><Palette size={18} /><span>Personalize</span></button>}
         </div>
         <div className="shop-toolbar-publication">
           {!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"><ChevronLeft size={16} /> Back to shop</button>}

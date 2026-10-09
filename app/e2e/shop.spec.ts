@@ -87,14 +87,58 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
       await back.press('Enter');
       await expect(shop.getByRole('region', { name: 'Shop preview', exact: true })).toBeVisible();
       await expect(page).toHaveURL(/\/shop\/products$/);
-      await expect(shop.getByRole('button', { name: 'Personalize', exact: true })).toBeDisabled();
+      const personalize = shop.getByRole('button', { name: 'Personalize', exact: true });
+      await expect(personalize).toBeEnabled();
+      await personalize.click();
+      const panel = shop.getByRole('complementary', { name: 'Personalization', exact: true });
+      await expect(panel).toBeVisible();
+      await expect(panel).toContainText('Configure Compliance, Email before customizing your Shop.');
+      await expect(panel.getByRole('switch', { name: 'Use the page theme', exact: true })).toBeDisabled();
+      expect(await panel.getByRole('group', { name: 'Shop customization options', exact: true }).locator('button,input,select').evaluateAll(controls => controls.every(control => control.matches(':disabled')))).toBe(true);
+      if (width === 390 && section === 'Customers') {
+        await page.reload({ waitUntil: 'domcontentloaded' });
+        await expect(panel).toBeVisible();
+      }
+      await shop.getByRole('button', { name: 'Close personalization', exact: true }).click();
+      await expect(panel).toHaveCount(0);
       await expect(shop.getByRole('button', { name: 'Edit shop logo', exact: true })).toBeDisabled();
       await expect(shop.locator('.shop-view-toolbar').getByRole('button', { name: 'Add product', exact: true })).toBeDisabled();
       await expect(publish).toBeDisabled();
     }
   }
-  await page.reload();
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(shop.getByRole('region', { name: 'Shop preview', exact: true })).toBeVisible();
+});
+
+test('Personalize opens and closes in the configured OSS dashboard and survives refresh', async ({ page }) => {
+  await page.route(/\/api\/shop(?:\?|$)/, async route => {
+    const response = await route.fetch();
+    const data = await response.json();
+    Object.assign(data.shop, { stripeConnected: true, stripeReady: true, stripeLivemode: false });
+    Object.assign(data.shop.appearance, { sellerSelfCertified: true, sellerType: 'private', sellerName: 'Fictional Studio', sellerEmail: 'studio@example.invalid', termsText: 'Terms', privacyText: 'Privacy', refundPolicyText: 'Refunds', withdrawalText: 'Withdrawal' });
+    data.shop.emailSettings.verifiedAt = '2026-10-09T00:00:00.000Z';
+    await route.fulfill({ response, json: data });
+  });
+  await openAuthenticatedAdmin(page);
+  await openAdminSection(page, 'Shop');
+  const shop = page.locator('.orbitpage-selfhosted-shop');
+  const personalize = shop.getByRole('button', { name: 'Personalize', exact: true });
+  const panel = shop.getByRole('complementary', { name: 'Personalization', exact: true });
+  for (const width of [1440, 1024, 390]) {
+    await page.setViewportSize({ width, height: 980 });
+    await expect(personalize).toBeEnabled();
+    await personalize.click();
+    await expect(page).toHaveURL(/\/shop\/design$/);
+    await expect(personalize).toHaveAttribute('aria-expanded', 'true');
+    await expect(panel).toBeVisible();
+    await shop.getByRole('button', { name: 'Close personalization', exact: true }).click();
+    await expect(page).toHaveURL(/\/shop\/products$/);
+    await expect(panel).toHaveCount(0);
+  }
+  await personalize.click();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(panel).toBeVisible();
+  await shop.getByRole('button', { name: 'Close personalization', exact: true }).click();
 });
 
 test('a confirmed purchase opens themed downloads and appointments without registration and survives refresh', async ({ page }, testInfo) => {
