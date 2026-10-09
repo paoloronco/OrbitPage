@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22-alpine AS builder
 
-LABEL org.opencontainers.image.version="4.21.84"
+LABEL org.opencontainers.image.version="4.21.85"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Self-hosted public page manager"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -30,7 +30,7 @@ RUN npm ci --omit=dev --omit=optional
 # ---------- STAGE 2: runtime ----------
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.version="4.21.84"
+LABEL org.opencontainers.image.version="4.21.85"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Self-hosted public page manager"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -59,5 +59,4 @@ EXPOSE 8080 8443
 WORKDIR /app/server
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]
-
 

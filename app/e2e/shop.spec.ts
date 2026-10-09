@@ -42,7 +42,8 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Shop');
   const shop = page.locator('.orbitpage-selfhosted-shop');
-  await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toBeVisible();
+  await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toHaveCount(0);
+  await expect(shop.getByRole('navigation', { name: 'Shop settings sections' })).toBeVisible();
   await expect(shop.getByRole('button', { name: 'Add product', exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Public Shop', exact: true })).toHaveAttribute('href', /\/shop$/);
   await shop.getByRole('button', { name: 'Stripe', exact: true }).click();
@@ -50,6 +51,7 @@ test('the self-hosted Shop requires Compliance, Stripe and SMTP before catalog s
   await expect(shop.getByLabel('Stripe webhook endpoint')).toHaveValue(/\/api\/shop\/webhook$/);
   await expect(shop.getByRole('link', { name: 'Open shop', exact: true })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toHaveCount(0);
   expect(await shop.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
 });
 
