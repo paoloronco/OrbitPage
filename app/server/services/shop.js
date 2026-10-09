@@ -256,14 +256,12 @@ export async function setShopPublished(enabled, base) {
 }
 export async function assertShopSetup(setting = null) {
   setting ||= await shopSettings();
-  if (!shopComplianceReady(normalizeShopAppearance(setting.appearance))) fail(409, 'SHOP_COMPLIANCE_REQUIRED', 'Complete Shop Compliance before adding products.');
+  if (!shopComplianceReady(normalizeShopAppearance(setting.appearance))) fail(409, 'SHOP_COMPLIANCE_REQUIRED', 'Complete Shop Compliance before publishing or accepting payments.');
   const config = await stripeConfiguration();
-  if (!config.verified || !setting.stripe?.ready || !config.webhookSecret) fail(409, 'SHOP_NOT_READY', 'Verify Stripe and configure its webhook before adding products.');
-  if (!setting.email?.verifiedAt) fail(409, 'SHOP_EMAIL_REQUIRED', 'Configure SMTP and send a successful test email before adding products.');
+  if (!config.verified || !setting.stripe?.ready || !config.webhookSecret) fail(409, 'SHOP_NOT_READY', 'Verify Stripe and configure its webhook before publishing or accepting payments.');
+  if (!setting.email?.verifiedAt) fail(409, 'SHOP_EMAIL_REQUIRED', 'Configure SMTP and send a successful test email before publishing or accepting payments.');
 }
 export async function persistShopAiDrafts(transaction, drafts) {
-  const setting = decode(await transaction.get('SELECT data FROM shop_settings WHERE id = 1'));
-  await assertShopSetup(setting);
   const count = (await transaction.get('SELECT COUNT(*) AS count FROM shop_products')).count;
   if (count + drafts.length > SHOP_MAX_PRODUCTS) fail(409, 'SHOP_PRODUCT_LIMIT', 'The catalog supports up to 20 products.');
   for (const raw of drafts) {
@@ -275,7 +273,6 @@ export async function persistShopAiDrafts(transaction, drafts) {
 export async function saveShopProduct(raw, base) {
   const input = shopProductInputSchema.parse(raw), productId = input.productId || randomUUID();
   await withTransaction(async () => {
-    await assertShopSetup();
     const previous = await productFor(productId), products = await shopProducts();
     if (input.productId && !previous) fail(404, 'PRODUCT_NOT_FOUND', 'Product not found.');
     if (!previous && products.length >= SHOP_MAX_PRODUCTS) fail(409, 'SHOP_PRODUCT_LIMIT', 'The catalog supports up to 20 products.');
@@ -295,7 +292,6 @@ export async function deleteShopProduct(id, base) {
 }
 const uploadSchema = z.object({ productId: uuid, filename: z.string().trim().max(240), contentType: z.string().max(100), sizeBytes: z.number().int(), kind: z.enum(['file', 'cover']) }).strict();
 export async function reserveShopUpload(raw, base) {
-  await assertShopSetup();
   const input = uploadSchema.parse(raw); validateShopFile({ ...input, maximumBytes: input.kind === 'cover' ? 5 * 1024 * 1024 : SHOP_FILE_BYTES });
   if (input.kind === 'cover' && !['image/png', 'image/jpeg', 'image/webp', 'image/avif', 'image/gif'].includes(input.contentType)) fail(400, 'INVALID_SHOP_COVER', 'Choose a supported image.');
   const id = randomUUID(), token = `${id}.${shopSign('upload', id)}`;

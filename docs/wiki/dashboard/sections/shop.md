@@ -17,13 +17,12 @@ purchase link never grants dashboard or administrator access.
    Your reverse proxy must allow Stripe and calendar webhook requests.
 3. Open **Site editor → Shop** (`/dashboard/editor/shop/products`). The gear
    button opens Compliance, Checkout, Stripe, Email, Calendar and INFO settings.
-4. Save Compliance, verify Stripe/webhook and send a successful SMTP test.
-   These three saved prerequisites unlock products and storefront design.
+4. Prepare products and storefront design before or after configuring payments.
    **Back to shop** always returns to the preview, including from settings,
-   orders and customers. The preview stays read-only until setup is complete;
-   you can still switch between desktop and mobile previews and view the catalog.
-   **Personalize** also opens before setup is complete; its options stay disabled
-   and the panel lists the missing prerequisites until you finish setup.
+   orders and customers. **Add product**, catalog **Edit**, **Personalize**, and
+   clicking the title, description, logo or back link work before setup is complete.
+   Save Compliance, verify Stripe/webhook and send a successful SMTP test
+   before publishing the Shop or accepting payments.
 5. Check desktop/mobile previews and complete the [test checklist](#test-checklist)
    before accepting live payments.
 
@@ -343,11 +342,13 @@ live merchant eligibility, payout readiness or real email inbox delivery.
 
 ## Required setup and AI drafts
 
-Before product/catalog setup, save **Compliance** (seller status, name, email,
+Before publication or accepting payments, save **Compliance** (seller status, name, email,
 address for traders, Terms, Privacy, Refunds and Withdrawal policies, and seller
 acknowledgment), verify **Stripe** and its webhook, then configure **Email** and
-send a successful SMTP test. The dashboard opens required settings until all
-three are complete; the server enforces the same prerequisites.
+send a successful SMTP test. Products, private uploads, AI drafts and storefront
+editing remain available during setup. **Publish shop** stays disabled and lists
+missing prerequisites; the server also enforces these requirements for publication
+and checkout.
 
 [SMTP email setup](../../integrations/smtp.md) explains providers and each field.
 OSS uses only your SMTP; Shop and Newsletter use separate configurations.
