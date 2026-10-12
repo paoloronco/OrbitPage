@@ -12,6 +12,16 @@ Edit your page in **Page**, **Content**, **Menu**, **Pages**, and **Theme**:
 
 The dashboard preview uses the public renderer, but the public URL is the final check for browser metadata, external embeds, consent behavior, and real navigation.
 
+**Arrange** starts from the card's rendered text positions. Moving a text region
+keeps its chosen text alignment. Card widths snap to quarter, half, three-quarter
+or full width, plus the page's standard width; heights resize in 48-pixel steps.
+Text regions resize freely. Arrow keys adjust position or move between card-size
+presets. Mobile and desktop layouts are independent drafts until saved.
+
+Content's quick-add shortcuts include Instagram, WhatsApp, Facebook and TikTok;
+Forms & tools includes Calendly, Google Forms, Typeform, Google Calendar, GitHub
+and Loom. The complete block library remains available through **Add content**.
+
 ## Page identity
 
 Use **Page** for profile and browser settings:

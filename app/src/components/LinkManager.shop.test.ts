@@ -28,8 +28,8 @@ describe('Shop link shortcut', () => {
     expect(source).toContain('className="admin-content-start__primary"');
     expect(source).toContain('className="admin-content-quick-add"');
     expect(source).toContain('itemIds: ["link", "internal-links", "heading", "text"]');
-    expect(source).toContain('itemIds: ["instagram", "whatsapp", "facebook"]');
-    expect(source).toContain('itemIds: ["calendly", "typeform", "github"]');
+    expect(source).toContain('itemIds: ["instagram", "whatsapp", "facebook", "tiktok"]');
+    expect(source).toContain('itemIds: ["calendly", "google-forms", "typeform", "google-calendar", "github", "loom"]');
   });
 
   it('keeps the category rail synchronized with block-library scrolling', () => {

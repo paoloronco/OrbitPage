@@ -286,7 +286,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       ) } : {}),
       title: (
         <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={contentLayoutEditing || unavailable ? -1 : undefined} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <h3 className="min-w-0 flex-1 truncate font-semibold" style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}>
+          <h3 className="min-w-0 flex-1 break-words font-semibold" style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}>
             {link.title || 'Untitled Link'}
           </h3>
           {safeHref && <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 text-primary opacity-0 transition-smooth group-hover:opacity-100" />}
@@ -295,7 +295,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
       ...(link.description ? {
         description: (
           <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <p className="line-clamp-2 text-sm" style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}>{link.description}</p>
+            <p className="break-words text-sm" style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}>{link.description}</p>
           </a>
         ),
       } : {}),
@@ -318,11 +318,10 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
           {Object.entries(content).map(([id, node]) => {
             const item = id as CardContentLayoutItem;
             const rect = contentLayout.positions[item];
-            const center = rect.x + rect.width / 2;
             return (
               <div
                 className="public-link-card__layout-item"
-                data-card-content-layout-align={item === 'icon' ? 'center' : center < 42 ? 'left' : center > 58 ? 'right' : 'center'}
+                data-card-content-layout-align={item === 'icon' ? 'center' : link.alignment || 'left'}
                 data-card-content-layout-item={item}
                 data-card-content-layout-position={`${rect.x},${rect.y},${rect.width},${rect.height}`}
                 key={item}
@@ -381,7 +380,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
           </div>
         </a>
       )}
-      <div className={hasCoverImage ? getSizeClasses(link.size) : ''}>
+      <div className={hasCoverImage ? getSizeClasses(link.size) : ''} data-card-content-layout={hasCoverImage ? undefined : link.id}>
         <div className="flex items-center justify-between gap-3">
           <a
             href={unavailable ? undefined : safeHref || undefined}
@@ -393,11 +392,11 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
             className={`flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed opacity-65' : ''}`}
             aria-label={link.title ? `Open ${link.title}` : 'Open link'}
           >
-            {renderedIcon ? <div className="flex-shrink-0">{renderedIcon}</div> : null}
+            {renderedIcon ? <div className="flex-shrink-0" data-card-content-layout-item="icon">{renderedIcon}</div> : null}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" data-card-content-layout-item="title">
                 <h3
-                  className="font-semibold truncate flex-1"
+                  className="min-w-0 break-words font-semibold flex-1"
                   style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}
                 >
                   {link.title || "Untitled Link"}
@@ -409,7 +408,8 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               </div>
               {link.description && (
                 <p
-                  className="text-sm line-clamp-2 mt-1"
+                  className="text-sm break-words mt-1"
+                  data-card-content-layout-item="description"
                   style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}
                 >
                   {link.description}
@@ -418,6 +418,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               {safeHref && !link.hideUrl && (
                 <p
                   className="text-xs mt-1 truncate text-muted-foreground"
+                  data-card-content-layout-item="url"
                   style={{ fontFamily: urlFontFamily, ...(effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : {}) }}
                 >
                   {link.url.replace(/^https?:\/\//, '')}

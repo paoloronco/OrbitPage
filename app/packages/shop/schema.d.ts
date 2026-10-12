@@ -55,12 +55,14 @@ type InputSchema<T> = {
 };
 // Each runtime supplies its installed Zod and its own uploaded-logo boundary.
 export function createShopSchemas(zod: unknown, isOwnedLogo: (value: string) => boolean): {
+  shopCouponInputSchema: InputSchema<ShopCouponInput>;
   shopAiDraftSchema: InputSchema<ShopAiDraft>;
   shopProductInputSchema: InputSchema<ShopProductInput>;
   shopAppearanceInputSchema: InputSchema<ShopAppearance>;
   normalizeShopAppearance(value: unknown): ShopAppearance;
   normalizeShopProductCardStyle(value: unknown): ShopProductCardStyle;
 };
+export type ShopCouponInput = { code: string; discountType: "percent" | "amount"; discount: number };
 export function isSafeShopBookingUrl(value: string): boolean;
 
 export function shopComplianceReady(appearance?: ShopAppearance | null): boolean;

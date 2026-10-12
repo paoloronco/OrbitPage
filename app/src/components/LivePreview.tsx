@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { Monitor, Smartphone } from "@/components/ui/material-icons";
+import type { PreviewDevice } from "./PreviewDeviceToggle";
+export { PreviewDeviceToggle, type PreviewDevice } from "./PreviewDeviceToggle";
 import { BackgroundLayer } from "./BackgroundLayer";
 import { PublicView, type PublicEditorTarget } from "./PublicView";
 import type { LinkData } from "./LinkCard";
@@ -48,8 +49,6 @@ interface LivePreviewProps {
   cardLayoutEditing?: boolean;
   onCardLayoutChange?: (layout: CardLayout) => void;
 }
-
-export type PreviewDevice = "mobile" | "desktop";
 
 export function PreviewDeviceFrame({
   device,
@@ -118,41 +117,6 @@ export function PreviewDeviceFrame({
         </div>
       </div>
       {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
-    </div>
-  );
-}
-
-export function PreviewDeviceToggle({
-  value,
-  onChange,
-  className = "",
-}: {
-  value: PreviewDevice;
-  onChange: (device: PreviewDevice) => void;
-  className?: string;
-}) {
-  return (
-    <div className={`admin-preview-device-toggle ${className}`} role="group" aria-label="Preview device">
-      <button
-        type="button"
-        className={value === "mobile" ? "active" : ""}
-        aria-pressed={value === "mobile"}
-        aria-label="Mobile preview"
-        title="Mobile preview"
-        onClick={() => onChange("mobile")}
-      >
-        <Smartphone className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        className={value === "desktop" ? "active" : ""}
-        aria-pressed={value === "desktop"}
-        aria-label="Desktop preview"
-        title="Desktop preview"
-        onClick={() => onChange("desktop")}
-      >
-        <Monitor className="h-4 w-4" />
-      </button>
     </div>
   );
 }
