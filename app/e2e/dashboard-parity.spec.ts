@@ -368,12 +368,9 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
 
   await expect(page.locator('.admin-dashboard-header .admin-dashboard-kicker')).toHaveCount(0);
   await expect(page.locator('.admin-dashboard-context-row')).toHaveCount(0);
-  const headerLeftEdges = await Promise.all([
-    page.locator('.admin-dashboard-heading-row h1').boundingBox(),
-    page.locator('.admin-dashboard-section-description').boundingBox(),
-  ]);
-  expect(headerLeftEdges.every(Boolean)).toBe(true);
-  expect(Math.max(...headerLeftEdges.map((bounds) => bounds!.x)) - Math.min(...headerLeftEdges.map((bounds) => bounds!.x))).toBeLessThanOrEqual(1);
+  await expect(page.locator('.admin-dashboard-header h1')).toHaveClass('sr-only');
+  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Site editor');
+  await expect(page.locator('.admin-dashboard-section-description')).toHaveCount(0);
 
   const publicPage = page.getByRole('link', { name: 'Public page' });
   await expect(publicPage).toHaveCSS('min-height', '40px');

@@ -226,27 +226,6 @@ export const AdminView = ({
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
     newsletter: "Newsletter", team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Edition", "Edizione"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
   })[tab];
-  const tabDescription = (tab: AdminTab) => ({
-    profile: tr("Shape the identity people see first.", "Definisci l'identità che le persone vedono per prima."),
-    content: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
-    links: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
-    pages: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
-    menu: tr("Organize links, pages, menu and selling tools.", "Organizza link, pagine, menu e strumenti di vendita."),
-    ai: tr("Ask for a change, review the proposal, then apply it.", "Chiedi una modifica, controlla la proposta e poi applicala."),
-    theme: tr("Adjust colors, type, background and card styles.", "Regola colori, caratteri, sfondo e stile delle card."),
-    publish: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
-    qr: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
-    txt: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
-    sitemap: tr("Control how your page is discovered and shared.", "Controlla come la pagina viene trovata e condivisa."),
-    newsletter: tr("Create, schedule and review campaigns in one place.", "Crea, programma e controlla le campagne in un unico posto."),
-    team: tr("Give each collaborator the access they actually need.", "Assegna a ogni collaboratore solo l'accesso necessario."),
-    account: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
-    plan: tr("Open-source software on your server.", "Software open source sul tuo server."),
-    access: tr("Manage identity, security and your active workspace.", "Gestisci identità, sicurezza e workspace attivo."),
-    backup: tr("Keep portable copies and restore with confidence.", "Mantieni copie portabili e ripristina in sicurezza."),
-    analytics: tr("Read the signals behind visits and interactions.", "Controlla visite, clic e sorgenti di traffico."),
-    privacy: tr("Manage consent, policies and visitor choices.", "Gestisci consenso, informative e scelte dei visitatori."),
-  })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [distributionImage, setDistributionImage] = useState("");
   const [gaId, setGaId] = useState<string>(profile.googleAnalyticsId || "");
@@ -503,13 +482,6 @@ export const AdminView = ({
     tab === "profile"
       ? tr("Site editor", "Editor sito")
       : tabLabel(tab)
-  );
-  const displayedTabDescription = (tab: AdminTab) => (
-    (editorIntegration?.section === tab ? editorIntegration.sectionDescription : undefined) || (
-      tab === "profile"
-        ? tr("Edit identity and content directly on your real page.", "Modifica identità e contenuti direttamente sulla pagina reale.")
-        : tabDescription(tab)
-    )
   );
 
   const selectTab = (tab: AdminTab) => {
@@ -1013,8 +985,7 @@ export const AdminView = ({
           </div>
         </header> : usesDashboardShell ? <header className="admin-dashboard-header">
           <div className="admin-dashboard-header-copy">
-            <div className="admin-dashboard-heading-row"><h1>{displayedTabLabel(activeTab)}</h1></div>
-            <p className="admin-dashboard-section-description">{displayedTabDescription(activeTab)}</p>
+            <h1 className="sr-only">{displayedTabLabel(activeTab)}</h1>
           </div>
           <div className="admin-dashboard-header-actions">
             <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={activeTab === "profile" && visualSection === "shop" ? `${publicPageHref.replace(/\/$/, "")}/shop` : publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">

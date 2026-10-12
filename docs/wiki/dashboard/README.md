@@ -4,6 +4,8 @@ The dashboard is where you edit your public page, manage sharing and newsletters
 
 Open `/dashboard/profile` to sign in or, on a new installation, choose the admin password.
 
+Section names appear in navigation; the workspace header keeps an accessible title for screen readers without repeating a visible title or introductory subtitle.
+
 ## Dashboard main sections
 
 ### Site editor
