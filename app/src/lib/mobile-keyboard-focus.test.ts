@@ -1,0 +1,21 @@
+import { afterEach, expect, it, vi } from 'vitest';
+import { keepMobileInputVisible } from './mobile-keyboard-focus';
+afterEach(() => vi.unstubAllGlobals());
+it('centers a focused mobile composer after the keyboard resizes the viewport and cleans up listeners', () => {
+  const input = Object.assign(new EventTarget(), { getBoundingClientRect: () => ({ top: 400, height: 60 }) });
+  const viewport = Object.assign(new EventTarget(), { height: 500, offsetTop: 0 });
+  const scrollBy = vi.fn();
+  vi.stubGlobal('document', { activeElement: input });
+  vi.stubGlobal('window', { visualViewport: viewport, matchMedia: () => ({ matches: true }), scrollBy });
+  vi.stubGlobal('cancelAnimationFrame', vi.fn());
+  vi.stubGlobal('requestAnimationFrame', (callback: () => void) => { callback(); return 1; });
+  const clean = keepMobileInputVisible(input as unknown as HTMLTextAreaElement);
+  input.dispatchEvent(new Event('focus'));
+  expect(scrollBy).toHaveBeenLastCalledWith({ top: 180, behavior: 'smooth' });
+  viewport.height = 300;
+  viewport.dispatchEvent(new Event('resize'));
+  expect(scrollBy).toHaveBeenLastCalledWith({ top: 280, behavior: 'smooth' });
+  clean();
+  viewport.dispatchEvent(new Event('resize'));
+  expect(scrollBy).toHaveBeenCalledTimes(2);
+});

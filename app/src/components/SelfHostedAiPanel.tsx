@@ -1,3 +1,4 @@
+import { keepMobileInputVisible } from "@/lib/mobile-keyboard-focus";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
@@ -80,6 +81,8 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState("");
   const conversationRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => composerRef.current ? keepMobileInputVisible(composerRef.current) : undefined, []);
   const launchScreenshotRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -347,6 +350,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             {tr("Ask OrbitPage AI", "Chiedi a OrbitPage AI")}
           </Label>
           <textarea
+              ref={composerRef}
             id="oss-ai-prompt"
             maxLength={4000}
             onChange={(event) => setPrompt(event.target.value)}

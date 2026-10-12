@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreviewDeviceSlot } from "../lib/use-preview-device-slot";
+
 import {
   ArrowUpRight,
   ArrowDown,
@@ -675,8 +677,7 @@ export default function ShopClient({
   const view = requestedView === "legal" || requestedView === "payments" ? "settings" : requestedView;
   const setView = useCallback((next: ShopView) => { setLocalView(next); onViewChange?.(next); }, [onViewChange]);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
-  const [previewDeviceSlot, setPreviewDeviceSlot] = useState<HTMLElement | null>(null);
-  useEffect(() => { setPreviewDeviceSlot(embedded ? document.querySelector<HTMLElement>("[data-orbitpage-shop-preview-device-slot]") : null); }, [embedded]);
+  const previewDeviceSlot = usePreviewDeviceSlot("[data-orbitpage-shop-preview-device-slot]", embedded);
   const [appearance, setAppearance] = useState<ShopAppearance | null>(null);
   const [policyDrafts, setPolicyDrafts] = useState<Partial<Record<typeof SHOP_POLICIES[number]["slug"], { source: "hosted" | "external"; text: string; url: string }>>>({});
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; text: string; code?: string } | null>(null);

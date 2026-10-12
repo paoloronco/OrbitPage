@@ -1,3 +1,4 @@
+import { useDialogAccessibility } from "@/lib/use-dialog-accessibility";
 import type { ShopView } from "./shop-client";
 import { shopRequest } from "@/lib/api-client";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
@@ -273,6 +274,16 @@ export const AdminView = ({
     return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
   });
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const mobileNavRef = useDialogAccessibility<HTMLDivElement>(mobileNavOpen, () => setMobileNavOpen(false));
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const wide = window.matchMedia('(min-width: 768px)');
+    const closeOnWide = () => { if (wide.matches) setMobileNavOpen(false); };
+    wide.addEventListener('change', closeOnWide);
+    return () => { document.body.style.overflow = previousOverflow; wide.removeEventListener('change', closeOnWide); };
+  }, [mobileNavOpen]);
   const publicUrlOverride = getPublicUrlOverride();
   const [publicPageHref, setPublicPageHref] = useState(publicUrlOverride || withBasePath('/'));
   const [publicPageSlug, setPublicPageSlug] = useState<string | null>(null);
@@ -772,13 +783,18 @@ export const AdminView = ({
     />
   ) : visualSection === "menu" ? (
     <Suspense fallback={<OrbitLoader size={24} state="composing" />}><MenuEditor
-      selectedPanel={subsection === "settings" ? "setup" : subsection === "design" ? "appearance" : "content"}
-      onPanelChange={(panel) => selectSubsection("menu", panel === "setup" ? "settings" : panel === "appearance" ? "design" : "content")}
+      selectedPanel={subsection === "design" ? "appearance" : "content"}
+      onPanelChange={(panel) => selectSubsection("menu", panel === "appearance" ? "design" : "content")}
       menu={menu}
       enabled={!editorAccess || entitlements?.nativeMenu === true}
       maxItems={entitlements?.maxMenuItems ?? null}
       advancedTheme={!editorAccess || entitlements?.themes === "advanced"}
-      onSave={onMenuUpdate}
+      showOrbitPageBadge={resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)}
+      brandingEditable={orbitPageBadgeEditable && canEditProfile}
+      onSave={async (nextMenu, showBadge) => {
+        await onMenuUpdate(nextMenu);
+        if (orbitPageBadgeEditable && canEditProfile && showBadge !== undefined && showBadge !== resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)) await onProfileUpdate({ ...profile, showOrbitPageBadge: showBadge });
+      }}
     /></Suspense>
   ) : visualSection === "pages" ? (
     <SubpageManager
@@ -867,16 +883,16 @@ export const AdminView = ({
           </div>
 
           <button
-            aria-hidden={!mobileNavOpen}
+            aria-hidden="true"
             aria-label={tr("Close navigation", "Chiudi navigazione")}
             className={`admin-dashboard-mobile-nav-backdrop${mobileNavOpen ? " open" : ""}`}
             onClick={() => setMobileNavOpen(false)}
-            tabIndex={mobileNavOpen ? 0 : -1}
+            tabIndex={-1}
             type="button"
           />
 
-          <div className={`admin-dashboard-nav-stack${mobileNavOpen ? " open" : ""}`} id="admin-dashboard-primary-navigation">
-            <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}</div>
+          <div ref={mobileNavRef} role={mobileNavOpen ? "dialog" : undefined} aria-modal={mobileNavOpen || undefined} aria-label={mobileNavOpen ? tr("Page tools", "Strumenti pagina") : undefined} tabIndex={-1} className={`admin-dashboard-nav-stack${mobileNavOpen ? " open" : ""}`} id="admin-dashboard-primary-navigation">
+            <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}<button className="admin-dashboard-nav-close" aria-label={tr("Close navigation", "Chiudi navigazione")} onClick={() => setMobileNavOpen(false)} type="button"><X aria-hidden="true" size={18} /></button></div>
             <nav className="admin-dashboard-nav admin-dashboard-nav-page" aria-label={tr("Page tools", "Strumenti pagina")}>
               {visiblePageTabs.map(({ value, icon: Icon, iconName }) => (
                 <button

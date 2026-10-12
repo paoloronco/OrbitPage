@@ -1,9 +1,15 @@
-import { defaultTheme, type ThemeConfig } from "@/lib/theme";
+import { parseOrbitPageTheme } from '@orbitpage/page-schema';
+import { defaultTheme, normalizeTheme, type ThemeConfig } from "@/lib/theme";
 import type { ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import type { EditorThemeAccess } from "@/lib/editor-capabilities";
 
 export type EditableTheme = ThemeConfig & { cardBlurTint?: string };
+
+export const themeHasChanges = (pending: ThemeConfig, saved: ThemeConfig) => {
+  const fingerprint = (theme: ThemeConfig) => JSON.stringify({ ...parseOrbitPageTheme(normalizeTheme(theme)), orbitPageAccess: undefined });
+  return fingerprint(pending) !== fingerprint(saved);
+};
 
 const sameCardSurface = (left: ThemeConfig['contentCard'], right: ThemeConfig['contentCard']) => (
   Object.keys(left).every((key) => left[key as keyof typeof left] === right[key as keyof typeof right])

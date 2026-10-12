@@ -8,6 +8,7 @@ import { consentManager } from '@/lib/consent-manager';
 import { CookieBanner } from '@/components/CookieBanner';
 
 export default function MenuPage() {
+  const [showOrbitPageBadge, setShowOrbitPageBadge] = useState(true);
   const [menu, setMenu] = useState<MenuCatalog | null>(null);
   const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
   useEffect(() => consentConfig ? startPublicPageEngagement() : undefined, [consentConfig]);
@@ -16,7 +17,10 @@ export default function MenuPage() {
     let active = true;
     const load = async () => {
       try {
-        const value = window.__ORBITPAGE_STATIC_SNAPSHOT__?.menu ?? (await publicPageApi.get()).menu;
+        const snapshot = window.__ORBITPAGE_STATIC_SNAPSHOT__;
+        const page = snapshot?.page ?? await publicPageApi.get();
+        const value = snapshot?.menu ?? page.menu;
+        if (active) setShowOrbitPageBadge(page.branding?.showOrbitPageBadge !== false);
         const normalized = normalizeMenuCatalog(value);
         if (active && normalized.enabled) {
           setMenu(normalized);
@@ -49,5 +53,5 @@ export default function MenuPage() {
   }
 
   const selectedSectionId = typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('section') || '';
-  return <><MenuView menu={menu} pageHref={withPageRootPath('/')} selectedSectionId={selectedSectionId} />{consentConfig?.mode === 'hardcoded' && consentConfig.enabled && <CookieBanner config={consentConfig} />}</>;
+  return <><MenuView menu={menu} showOrbitPageBadge={showOrbitPageBadge} pageHref={withPageRootPath('/')} selectedSectionId={selectedSectionId} />{consentConfig?.mode === 'hardcoded' && consentConfig.enabled && <CookieBanner config={consentConfig} />}</>;
 }

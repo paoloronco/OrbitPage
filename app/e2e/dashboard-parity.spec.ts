@@ -61,7 +61,7 @@ test('opens dashboard subsections directly and keeps tabs, history and menu draf
   test.setTimeout(90_000);
   await openAuthenticatedAdmin(page);
   for (const [path, selector] of [
-    ['editor/menu/settings', '#menu-name'],
+    ['editor/menu/settings', '.menu-preview-workspace'],
     ['editor/menu/content', '.menu-preview-canvas'],
     ['editor/menu/design', '.menu-personalize'],
     ['theme/page', '.admin-theme-preset-rail'],
@@ -89,17 +89,17 @@ test('opens dashboard subsections directly and keeps tabs, history and menu draf
     }
   }
   await page.goto('/en-US/dashboard/editor/menu');
-  await page.getByRole('button', { name: 'Menu settings', exact: true }).click();
-  await expect(page).toHaveURL(/\/editor\/menu\/settings$/);
+  await page.getByRole('button', { name: 'Edit menu title', exact: true }).click();
+  await expect(page).toHaveURL(/\/editor\/menu\/content$/);
   await page.locator('#menu-name').fill('Unsaved route draft');
-  await page.getByRole('dialog', { name: 'Menu settings', exact: true }).getByRole('button', { name: 'Apply', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Menu title and description', exact: true }).getByRole('button', { name: 'Apply', exact: true }).click();
   await page.getByRole('button', { name: 'Personalize', exact: true }).click();
   await expect(page).toHaveURL(/\/editor\/menu\/design$/);
   await page.goBack(); await expect(page.locator('.menu-personalize')).toBeHidden();
   await page.goForward(); await expect(page.locator('.menu-personalize')).toBeVisible();
-  await page.getByRole('button', { name: 'Menu settings', exact: true }).click(); await expect(page.locator('#menu-name')).toHaveValue('Unsaved route draft');
-  await page.getByRole('dialog', { name: 'Menu settings', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.getByRole('button', { name: 'Personalize', exact: true }).click(); await page.reload(); await expect(page.locator('.menu-personalize')).toBeVisible();
+  await page.getByRole('button', { name: 'Edit menu title', exact: true }).click(); await expect(page.locator('#menu-name')).toHaveValue('Unsaved route draft');
+  await page.getByRole('dialog', { name: 'Menu title and description', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.reload(); await expect(page.locator('.menu-personalize')).toBeVisible();
   await page.goto('/it-IT/dashboard/account/security');
   await expect(page.locator('.account-tabs .active')).toHaveText('Sicurezza');
   await page.reload();
@@ -434,8 +434,20 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await page.getByRole('button', { name: 'Open navigation' }).click();
   await expect(page.getByRole('button', { name: 'AI Assistant', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Edition', exact: true })).toBeVisible();
-  await expect(page.locator('.admin-dashboard-language')).toHaveCSS('width', '44px');
-  await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCSS('width', '44px');
+  const navigation = page.getByRole('dialog', { name: 'Page tools', exact: true });
+  await expect(navigation).toBeVisible();
+  await expect.poll(async () => (await navigation.boundingBox())!.x).toBe(0);
+  const menuBounds = (await navigation.boundingBox())!;
+  expect(menuBounds.x).toBe(0); expect(menuBounds.y).toBe(0);
+  expect(menuBounds.width).toBe(390); expect(menuBounds.height).toBe(844);
+  await expect(launcher).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Back to site' }).locator('span')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign out', exact: true }).locator('span')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Language' })).toHaveCSS('opacity', '1');
+  await expect(page.getByRole('link', { name: 'Back to site' }).locator('span')).toHaveCSS('clip-path', 'none');
+  await page.screenshot({ path: test.info().outputPath('mobile-navigation.png') });
+  const footer = await navigation.locator('.admin-dashboard-sidebar-footer > *').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().y));
+  expect(Math.max(...footer) - Math.min(...footer)).toBeLessThanOrEqual(1);
 
   await page.getByRole('button', { name: 'Close navigation' }).first().click();
   await launcher.click();
@@ -566,13 +578,13 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(themeHardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   await openAdminSection(page, 'Menu');
-  await page.getByRole('button', { name: 'Menu settings', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit menu title', exact: true }).click();
   const localeSelect = page.getByLabel('Locale', { exact: true });
   await expect(localeSelect).toHaveJSProperty('tagName', 'SELECT');
   await expect(localeSelect.locator('option')).toHaveCount(19);
   await localeSelect.selectOption('it-IT');
   await expect(localeSelect).toHaveValue('it-IT');
-  await page.getByRole('dialog', { name: 'Menu settings', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Menu title and description', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
 
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Email support' })).toHaveAttribute('href', /^mailto:contact@orbitpage\.com/);

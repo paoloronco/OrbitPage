@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
@@ -22,6 +23,7 @@ import {
   Layers3,
   LockKeyhole,
   Palette,
+  Save,
   RotateCcw,
   Type,
 } from "@/components/ui/material-icons";
@@ -36,7 +38,7 @@ import {
 import { themePresets, type ThemePreset } from "@/lib/theme-presets";
 import { cardThemePresets, type CardThemePreset } from "@/lib/card-theme-presets";
 import { BackgroundMediaCustomizer } from "@/components/BackgroundMediaCustomizer";
-import { commitPendingTheme, buildPagePresetTheme, buildCardPresetTheme, findMatchingCardPreset, type EditableTheme } from "./theme-save-state";
+import { commitPendingTheme, themeHasChanges, buildPagePresetTheme, buildCardPresetTheme, findMatchingCardPreset, type EditableTheme } from "./theme-save-state";
 import type { EditorThemeAccess } from "@/lib/editor-capabilities";
 import { PreviewDeviceToggle, type PreviewDevice } from "./LivePreview";
 import { useAppI18n } from "@/lib/i18n";
@@ -327,14 +329,15 @@ export const ThemeCustomizer = ({
   }, []);
 
   const previewTheme = (nextTheme: EditableTheme, presetId: string | null) => {
-    setPendingTheme(nextTheme);
+    const changed = themeHasChanges(nextTheme, theme);
+    setPendingTheme(changed ? nextTheme : theme);
     setSelectedPresetId(presetId);
-    setIsDirty(true);
+    setIsDirty(changed);
     setPreviewOpen(true);
     setComparisonPosition(50);
     setSaveError("");
     setSaveState("idle");
-    onThemePreview?.(nextTheme);
+    onThemePreview?.(changed ? nextTheme : theme);
   };
 
   const updatePendingTheme = (updates: Partial<EditableTheme>) => {
@@ -478,10 +481,7 @@ export const ThemeCustomizer = ({
                 {premiumThemesEnabled ? <Layers3 className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />} {tr("Card styles", "Stili card")}
               </button>
             </div>
-            <Button aria-busy={saveState === "saving"} type="button" onClick={saveTheme} disabled={!isDirty || saveState === "saving"} className="min-h-12 shrink-0 bg-blue-600 px-5 text-white hover:bg-blue-700">
-              {saveState === "saving" && <OrbitLoader size={16} state="shaping" />}
-              {saveState === "saving" ? tr("Saving theme", "Salvataggio tema") : saveState === "saved" ? tr("Saved", "Salvato") : tr("Save theme", "Salva tema")}
-            </Button>
+
           </div>
           {(isDirty || saveState === "saved" || saveState === "error") ? (
             <div className={`mb-5 flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${saveState === "error" ? "border-red-200 bg-red-50 text-red-700" : saveState === "saved" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800"}`} role={saveState === "error" ? "alert" : "status"}>
@@ -587,7 +587,7 @@ export const ThemeCustomizer = ({
               </div>
             ) : (
             <Tabs defaultValue="colors" className="w-full">
-              <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-slate-100 p-1 sm:grid-cols-4">
+              <TabsList className="admin-theme-control-tabs">
                 <TabsTrigger value="colors" className="gap-1.5 py-2.5"><Palette className="h-4 w-4" /> {tr("Colors", "Colori")}</TabsTrigger>
                 <TabsTrigger value="typography" className="gap-1.5 py-2.5"><Type className="h-4 w-4" /> {tr("Type", "Testo")}</TabsTrigger>
                 <TabsTrigger value="layout" className="gap-1.5 py-2.5"><Layout className="h-4 w-4" /> Layout</TabsTrigger>
@@ -948,6 +948,12 @@ export const ThemeCustomizer = ({
             </Tabs>
             )}</div>}
       </section>
-    </div>
+    {typeof document !== "undefined" && (isDirty || saveState === "saving") ? createPortal(
+        <div className="admin-profile-save-layer"><div className="admin-profile-save-float">
+          <Button variant="outline" size="sm" disabled={saveState === "saving"} onClick={() => { setPendingTheme(theme); setSelectedPresetId(findMatchingPreset(theme)); setSelectedCardPresetId(findMatchingCardPreset(theme)); setIsDirty(false); setSaveError(""); setSaveState("idle"); onThemePreview?.(theme); }}>{tr("Revert", "Ripristina")}</Button>
+          <Button aria-busy={saveState === "saving"} size="sm" disabled={saveState === "saving"} onClick={() => void saveTheme()}>{saveState === "saving" ? <OrbitLoader size={16} /> : <Save className="h-4 w-4" />}{saveState === "saving" ? tr("Saving", "Salvataggio") : tr("Save", "Salva")}</Button>
+        </div></div>, document.body
+      ) : null}
+      </div>
   );
 };

@@ -1,0 +1,63 @@
+import { expect, test } from '@playwright/test';
+import { openAuthenticatedAdmin, openAdminSection } from './helpers';
+
+test('moves phone preview controls below navigation and keeps menu forms and footer usable', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAuthenticatedAdmin(page);
+  const sections = page.getByRole('navigation', { name: 'Site sections' });
+  await expect(sections.getByRole('group', { name: 'Preview device' })).toHaveCount(0);
+  const controls = page.locator('.visual-site-editor__preview-controls');
+  await expect(controls.getByRole('button', { name: 'Hide Preview' })).toBeVisible();
+  await controls.getByRole('button', { name: 'Desktop preview' }).click();
+  const screen = page.locator('.visual-site-editor__canvas .admin-preview-device--desktop .admin-preview-device__screen');
+  await expect.poll(async () => { const box = (await screen.boundingBox())!; return Math.abs(box.width / box.height - 16 / 9); }).toBeLessThan(.03);
+  await openAdminSection(page, 'Menu');
+  await expect(sections.getByRole('group', { name: 'Preview device' })).toHaveCount(0);
+  await expect(controls.getByRole('group', { name: 'Preview device' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Menu settings', exact: true })).toHaveCount(0);
+  await expect(page.locator('.menu-preview-canvas .admin-preview-device__hardware')).toHaveCSS('border-top-width', '0px');
+  await page.getByRole('button', { name: 'Add item', exact: true }).click();
+  const item = page.getByRole('dialog', { name: 'Edit item', exact: true });
+  const name = item.getByRole('textbox', { name: 'Name', exact: true });
+  await name.focus();
+  expect(await name.evaluate(input => parseFloat(getComputedStyle(input).paddingLeft))).toBeGreaterThanOrEqual(10);
+  await expect.poll(async () => (await item.boundingBox())!.x).toBeGreaterThanOrEqual(0);
+  const bounds = (await item.boundingBox())!;
+  expect(bounds.x).toBeGreaterThanOrEqual(0); expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
+  await item.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit menu footer', exact: true }).click();
+  const footer = page.getByRole('dialog', { name: 'Footer', exact: true });
+  await expect(footer.getByRole('switch', { name: 'Made with OrbitPage' })).toBeDisabled();
+  const text = footer.getByLabel('Footer text');
+  const original = await text.inputValue();
+  await text.fill('Fictional footer change');
+  await footer.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Edit menu footer', exact: true }).click();
+  await expect(text).toHaveValue(original);
+});
+
+test('clears restored themes and keeps theme and publishing tabs on one scrolling row', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openAuthenticatedAdmin(page);
+  await openAdminSection(page, 'Theme');
+  await expect(page.getByRole('button', { name: 'Save theme', exact: true })).toHaveCount(0);
+  const themes = page.locator('.admin-theme-preset-card');
+  await themes.nth(0).getByRole('button').click();
+  const save = page.locator('.admin-profile-save-float').getByRole('button', { name: 'Save', exact: true });
+  if (await save.isVisible()) { await save.click(); await expect(page.getByRole('button', { name: 'Saving', exact: true })).toBeHidden(); await expect(save).toBeHidden(); }
+  await themes.nth(1).getByRole('button').click();
+  await expect(save).toBeVisible();
+  await themes.nth(0).getByRole('button').click();
+  await expect(save).toBeHidden();
+  await expect(page.locator('[data-theme-comparison]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open controls', exact: true }).click();
+  const themeTabs = page.locator('.admin-theme-control-tabs');
+  await expect(themeTabs).toBeVisible();
+  const ys = await themeTabs.getByRole('tab').evaluateAll(tabs => tabs.map(tab => tab.getBoundingClientRect().y));
+  expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(1);
+  await openAdminSection(page, 'Publish');
+  const tabs = page.getByRole('tablist', { name: 'Publishing tools' });
+  const publishYs = await tabs.getByRole('tab').evaluateAll(items => items.map(item => item.getBoundingClientRect().y));
+  expect(Math.max(...publishYs) - Math.min(...publishYs)).toBeLessThanOrEqual(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+});

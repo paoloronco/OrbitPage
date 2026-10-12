@@ -1,8 +1,9 @@
+import { usePreviewDeviceSlot } from "@/lib/use-preview-device-slot";
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { parseOrbitPageMenu } from '@orbitpage/page-schema';
 import {
-  ArrowDown, ArrowUp, Check, Eye, EyeOff,
+  ArrowDown, ArrowUp, Check,
   ImagePlus, ListTree, Palette, Plus, RotateCcw, Save, Trash2,
   UtensilsCrossed, X,
 } from '@/components/ui/material-icons';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { MenuView } from './MenuView';
 import { PreviewDeviceFrame } from './LivePreview';
+import { Download, UploadCloud } from 'lucide-react';
 import { PreviewDeviceToggle, type PreviewDevice } from './PreviewDeviceToggle';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { OrbitLoader } from '@/components/ui/orbit-loader';
@@ -32,13 +34,15 @@ interface MenuEditorProps {
   enabled: boolean;
   maxItems: number | null;
   advancedTheme: boolean;
-  onSave: (menu: MenuCatalog) => Promise<void>;
+  showOrbitPageBadge?: boolean;
+  brandingEditable?: boolean;
+  onSave: (menu: MenuCatalog, showOrbitPageBadge?: boolean) => Promise<void>;
   selectedPanel?: MenuEditorPanel;
   onPanelChange?: (panel: MenuEditorPanel) => void;
 }
 
-type MenuEditorPanel = 'setup' | 'content' | 'appearance';
-type SavedMenuNotice = { id: number; previousMenu: MenuCatalog };
+type MenuEditorPanel = 'content' | 'appearance';
+type SavedMenuNotice = { id: number; previousMenu: MenuCatalog; previousBadge: boolean };
 
 const MENU_SAVE_NOTICE_DURATION_MS = 10_000;
 
@@ -166,14 +170,17 @@ function PriceInput({
 
 export function MenuEditor({
   menu, enabled, maxItems, advancedTheme,
-  onSave, selectedPanel, onPanelChange,
+  onSave, selectedPanel, onPanelChange, showOrbitPageBadge = true, brandingEditable = false,
 }: MenuEditorProps) {
   const { tr } = useAppI18n();
   const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
   const [device, setDevice] = useState<PreviewDevice>('mobile');
-  const [deviceSlot, setDeviceSlot] = useState<HTMLElement | null>(null);
-  const [dialog, setDialog] = useState<'identity' | 'settings' | 'category' | 'item' | null>(selectedPanel === 'setup' ? 'settings' : null);
-  const dialogSnapshot = useRef<MenuCatalog | null>(selectedPanel === 'setup' ? normalizeMenuCatalog(menu, maxItems ?? 250) : null);
+  const deviceSlot = usePreviewDeviceSlot('[data-orbitpage-menu-preview-device-slot]');
+  const [dialog, setDialog] = useState<'identity' | 'footer' | 'category' | 'item' | null>(null);
+  const dialogSnapshot = useRef<MenuCatalog | null>(null);
+  const dialogBadgeSnapshot = useRef(showOrbitPageBadge);
+  const [draftBadge, setDraftBadge] = useState(showOrbitPageBadge);
+  useEffect(() => setDraftBadge(showOrbitPageBadge), [showOrbitPageBadge]);
   const [saving, setSaving] = useState(false);
   const [uploadingItem, setUploadingItem] = useState<string | null>(null);
   const [saveError, setSaveError] = useState('');
@@ -187,30 +194,21 @@ export function MenuEditor({
   );
   const savedNoticeTimerRef = useRef<number | null>(null);
   const persistedMenu = useMemo(() => normalizeMenuCatalog(menu, maxItems ?? 250), [maxItems, menu]);
-  const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu), [draft, persistedMenu]);
-  const popupDirty = Boolean(dialogSnapshot.current && menuFingerprint(draft) !== menuFingerprint(dialogSnapshot.current));
-  useEffect(() => { setDeviceSlot(document.querySelector<HTMLElement>('[data-orbitpage-menu-preview-device-slot]')); }, []);
-  const latestDraft = useRef(draft);
-  latestDraft.current = draft;
-  useEffect(() => {
-    if (selectedPanel === 'setup') {
-      dialogSnapshot.current = structuredClone(latestDraft.current);
-      setDialog('settings');
-    } else setDialog(current => current === 'settings' ? null : current);
-  }, [selectedPanel]);
-  const openDialog = (kind: 'identity' | 'settings' | 'category' | 'item') => {
+  const isDirty = useMemo(() => menuFingerprint(draft) !== menuFingerprint(persistedMenu) || draftBadge !== showOrbitPageBadge, [draft, persistedMenu, draftBadge, showOrbitPageBadge]);
+  const popupDirty = Boolean(dialogSnapshot.current && (menuFingerprint(draft) !== menuFingerprint(dialogSnapshot.current) || draftBadge !== dialogBadgeSnapshot.current));
+  const openDialog = (kind: 'identity' | 'footer' | 'category' | 'item') => {
     if (saving || uploadingItem) return;
     dialogSnapshot.current = structuredClone(draft);
+    dialogBadgeSnapshot.current = draftBadge;
     setDialog(kind);
   };
   const cancelDialog = () => {
     if (uploadingItem) return;
-    if (dialogSnapshot.current) setDraft(dialogSnapshot.current);
+    if (dialogSnapshot.current) { setDraft(dialogSnapshot.current); setDraftBadge(dialogBadgeSnapshot.current); }
     dialogSnapshot.current = null;
     setDialog(null);
-    if (activePanel === 'setup') setActivePanel('content');
   };
-  const applyDialog = () => { dialogSnapshot.current = null; setDialog(null); if (activePanel === 'setup') setActivePanel('content'); };
+  const applyDialog = () => { dialogSnapshot.current = null; setDialog(null); };
   const selectedSection = useMemo(
     () => draft.sections.find((section) => section.id === selectedCategoryId) || null,
     [draft.sections, selectedCategoryId],
@@ -256,21 +254,21 @@ useEffect(() => () => {
 
   const showSavedNotice = (previousMenu: MenuCatalog) => {
     if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
-    setSavedNotice({ id: Date.now(), previousMenu });
+    setSavedNotice({ id: Date.now(), previousMenu, previousBadge: showOrbitPageBadge });
     savedNoticeTimerRef.current = window.setTimeout(() => {
       savedNoticeTimerRef.current = null;
       setSavedNotice(null);
     }, MENU_SAVE_NOTICE_DURATION_MS);
   };
 
-  const save = async () => {
-    if (!isDirty || saving) return;
+  const save = async (menuToSave = draft) => {
+    if ((!isDirty && menuToSave.enabled === persistedMenu.enabled) || saving) return;
     const previousMenu = structuredClone(persistedMenu);
     setSaving(true);
     setSaveError('');
     try {
-      const normalized = normalizeMenuCatalog(draft, maxItems ?? 250);
-      await onSave(parseOrbitPageMenu(normalized));
+      const normalized = normalizeMenuCatalog(menuToSave, maxItems ?? 250);
+      await onSave(parseOrbitPageMenu(normalized), draftBadge);
       setDraft(normalized);
       showSavedNotice(previousMenu);
     } catch (error) {
@@ -282,6 +280,7 @@ useEffect(() => () => {
 
   const revertUnsavedChanges = () => {
     setDraft(persistedMenu);
+    setDraftBadge(showOrbitPageBadge);
     setSaveError('');
   };
 
@@ -291,7 +290,8 @@ useEffect(() => () => {
     setSaving(true);
     setSaveError('');
     try {
-      await onSave(previousMenu);
+      setDraftBadge(savedNotice.previousBadge);
+      await onSave(previousMenu, savedNotice.previousBadge);
       setDraft(previousMenu);
       dismissSavedNotice();
     } catch (error) {
@@ -600,9 +600,8 @@ useEffect(() => () => {
         </section>
 
   </>;
-  const setupFields = <>
+  const identityFields = <>
         <section className="admin-panel space-y-5">
-          <div className="menu-editor-section-title"><UtensilsCrossed /><div><h3>{tr("Menu details", "Dettagli del menu")}</h3><p>{tr("Choose the venue type and public heading.", "Scegli il tipo di locale e l'intestazione pubblica.")}</p></div></div>
           <div className="menu-venue-switch" role="group" aria-label={tr("Venue type", "Tipo di locale")}>
             {(['restaurant', 'bar', 'cafe'] as const).map((type) => (
               <button key={type} type="button" className={draft.venueType === type ? 'active' : ''} onClick={() => changeVenueType(type)}>
@@ -611,7 +610,7 @@ useEffect(() => () => {
             ))}
           </div>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2"><Label htmlFor="menu-name">{tr("Menu name", "Nome menu")}</Label><Input id="menu-name" value={draft.name} onChange={(e) => update((current) => ({ ...current, name: e.target.value }))} /></div>
+            <div className="space-y-2"><Label htmlFor="menu-name">{tr("Title", "Titolo")}</Label><Input id="menu-name" value={draft.name} onChange={(e) => update((current) => ({ ...current, name: e.target.value }))} /></div>
             <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3">
               <div className="space-y-2"><Label htmlFor="menu-currency">{tr("Currency", "Valuta")}</Label><Input id="menu-currency" maxLength={3} value={draft.currency} onChange={(e) => update((current) => ({ ...current, currency: e.target.value.toUpperCase() }))} /></div>
               <div className="min-w-0 space-y-2">
@@ -628,16 +627,7 @@ useEffect(() => () => {
               </div>
             </div>
           </div>
-          <div className="space-y-2"><Label htmlFor="menu-description">{tr("Introduction", "Introduzione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
-          <div className="space-y-2"><Label htmlFor="menu-footer">{tr("Footer text", "Testo del footer")}</Label><Textarea id="menu-footer" maxLength={500} value={draft.footerText} onChange={(e) => update((current) => ({ ...current, footerText: e.target.value }))} /></div>
-        </section>
-
-        <section className="admin-panel menu-settings-publishing">
-          <div className="menu-editor-section-title"><Eye /><div><h3>{tr('Publication', 'Pubblicazione')}</h3><p>{tr('Choose whether visitors can see your menu.', 'Scegli se i visitatori possono vedere il menu.')}</p></div></div>
-          <label className="menu-settings-visibility">
-            <span><strong>{draft.enabled ? tr('Published', 'Pubblicato') : tr('Unpublished', 'Non pubblicato')}</strong><small>{tr('Public menu visibility', 'Visibilità del menu pubblico')}</small></span>
-            <Switch aria-label={tr('Public menu visibility', 'Visibilità del menu pubblico')} checked={draft.enabled} onCheckedChange={(checked) => update((current) => ({ ...current, enabled: checked }))} />
-          </label>
+          <div className="space-y-2"><Label htmlFor="menu-description">{tr("Description", "Descrizione")}</Label><Textarea id="menu-description" value={draft.description} onChange={(e) => update((current) => ({ ...current, description: e.target.value }))} /></div>
         </section>
 
   </>;
@@ -656,27 +646,27 @@ useEffect(() => () => {
 
   return (
     <div className={"menu-editor-stack menu-editor-stack--visual"}>
-      <div className="menu-editor-main space-y-5">
+      <div className="menu-editor-main space-y-5 shop-workspace">
         <>
           {deviceSlot && createPortal(<PreviewDeviceToggle value={device} onChange={setDevice} />, deviceSlot)}
-          <fieldset disabled={saving || Boolean(uploadingItem)} className="menu-preview-toolbar">
-            <div><Button variant="outline" onClick={() => setActivePanel(activePanel === 'appearance' ? 'content' : 'appearance')} aria-expanded={activePanel === 'appearance'}><Palette className="h-4 w-4" />{tr('Personalize', 'Personalizza')}</Button><Button variant="outline" size="icon" aria-label={tr('Menu settings', 'Impostazioni menu')} onClick={() => { openDialog('settings'); setActivePanel('setup'); }}><UtensilsCrossed className="h-4 w-4" /></Button></div>
-            <Button variant="outline" onClick={() => update(current => ({ ...current, enabled: !current.enabled }))}>{draft.enabled ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}{draft.enabled ? tr('Unpublish', 'Rimuovi pubblicazione') : tr('Publish menu', 'Pubblica menu')}</Button>
-            <div><Button variant="outline" disabled={draft.sections.length >= 30} onClick={addSection}><Plus className="h-4 w-4" />{tr('Add section', 'Aggiungi sezione')}</Button><Button disabled={maxItems !== null && draft.items.length >= maxItems} onClick={() => addItem()}><Plus className="h-4 w-4" />{tr('Add item', 'Aggiungi elemento')}</Button>{!deviceSlot && <PreviewDeviceToggle value={device} onChange={setDevice} />}</div>
+          <fieldset disabled={saving || Boolean(uploadingItem)} className="menu-preview-toolbar shop-view-toolbar">
+            <div className="shop-toolbar-left"><button className="shop-tool-button shop-personalize-button" aria-label={tr('Personalize', 'Personalizza')} title={tr('Personalize', 'Personalizza')} type="button" onClick={() => setActivePanel(activePanel === 'appearance' ? 'content' : 'appearance')} aria-expanded={activePanel === 'appearance'}><Palette size={18} /><span>{tr('Personalize', 'Personalizza')}</span></button></div>
+            <div className="shop-toolbar-publication"><button className="button primary" disabled={isDirty || saving} title={isDirty ? tr('Save or revert your changes first.', 'Salva o annulla prima le modifiche.') : undefined} type="button" onClick={() => void save({ ...draft, enabled: !draft.enabled })}>{saving ? <OrbitLoader size={16} /> : draft.enabled ? <Download size={16} /> : <UploadCloud size={16} />}{draft.enabled ? tr('Unpublish', 'Rimuovi pubblicazione') : tr('Publish menu', 'Pubblica menu')}</button></div>
+            <div className="shop-toolbar-right"><button className="button secondary compact shop-catalog-button" aria-label={tr('Add section', 'Aggiungi sezione')} disabled={draft.sections.length >= 30} type="button" onClick={addSection}><ListTree size={14} /><span>{tr('Add section', 'Aggiungi sezione')}</span></button><button className="button primary compact shop-add-product-button" aria-label={tr('Add item', 'Aggiungi elemento')} disabled={maxItems !== null && draft.items.length >= maxItems} type="button" onClick={() => addItem()}><Plus size={16} /><span>{tr('Add item', 'Aggiungi elemento')}</span></button>{!deviceSlot && <PreviewDeviceToggle value={device} onChange={setDevice} />}</div>
           </fieldset>
           <div className={`menu-preview-workspace${activePanel === 'appearance' ? ' has-personalize' : ''}`}>
             <section className="menu-preview-canvas" aria-label={tr('Menu preview', 'Anteprima menu')}>
-              <PreviewDeviceFrame device={device} publicPageHref="/menu"><div className="admin-menu-live-preview"><MenuView menu={draft} onEditIdentity={() => openDialog('identity')} onEditSection={openCategoryEditor} onEditItem={id => { if (saving || uploadingItem) return; setSelectedItemId(id); openDialog('item'); }} /></div></PreviewDeviceFrame>
+              <PreviewDeviceFrame device={device} publicPageHref="/menu"><div className="admin-menu-live-preview"><MenuView menu={draft} showOrbitPageBadge={draftBadge} onEditFooter={() => openDialog('footer')} onEditIdentity={() => openDialog('identity')} onEditSection={openCategoryEditor} onEditItem={id => { if (saving || uploadingItem) return; setSelectedItemId(id); openDialog('item'); }} /></div></PreviewDeviceFrame>
             </section>
             {activePanel === 'appearance' && <aside className="menu-personalize" aria-label={tr('Personalize menu', 'Personalizza menu')}><header><h3>{tr('Personalize', 'Personalizza')}</h3><Button variant="ghost" size="icon" aria-label={tr('Close Personalize', 'Chiudi Personalizza')} onClick={() => setActivePanel('content')}><X className="h-4 w-4" /></Button></header><fieldset disabled={saving}>{appearanceFields}</fieldset></aside>}
           </div>
           <Dialog open={Boolean(dialog)} onOpenChange={open => { if (!open) cancelDialog(); }}>
             <DialogContent className="menu-editor-dialog orbitpage-admin" overlayClassName="menu-editor-dialog-overlay" dirty={popupDirty || Boolean(uploadingItem)} onEscapeKeyDown={event => { if (uploadingItem) event.preventDefault(); }}>
-              <DialogHeader><DialogTitle>{dialog === 'identity' ? tr('Menu title and description', 'Titolo e descrizione menu') : dialog === 'settings' ? tr('Menu settings', 'Impostazioni menu') : dialog === 'category' ? tr('Edit section', 'Modifica sezione') : tr('Edit item', 'Modifica elemento')}</DialogTitle><DialogDescription>{tr('Apply your edits to the preview, then save the menu.', 'Applica le modifiche all’anteprima, poi salva il menu.')}</DialogDescription></DialogHeader>
-              {saveError && <p className="menu-dialog-error" role="alert">{saveError}</p>}
+              <DialogHeader><DialogTitle>{dialog === 'identity' ? tr('Menu title and description', 'Titolo e descrizione menu') : dialog === 'footer' ? tr('Footer', 'Footer') : dialog === 'category' ? tr('Edit section', 'Modifica sezione') : tr('Edit item', 'Modifica elemento')}</DialogTitle><DialogDescription>{tr('Apply your edits to the preview, then save the menu.', 'Applica le modifiche all’anteprima, poi salva il menu.')}</DialogDescription></DialogHeader>
+              {saveError && dialog && <p className="menu-dialog-error" role="alert">{saveError}</p>}
               <div className="menu-editor-dialog-body"><fieldset disabled={saving || Boolean(uploadingItem)} className="menu-editor-dialog-fields">
-                {dialog === 'identity' && <><Label htmlFor="menu-preview-title">{tr('Title', 'Titolo')}</Label><Input id="menu-preview-title" maxLength={120} value={draft.name} onChange={event => update(current => ({ ...current, name: event.target.value }))} /><Label htmlFor="menu-preview-subtitle">{tr('Description', 'Descrizione')}</Label><Textarea id="menu-preview-subtitle" maxLength={500} value={draft.description} onChange={event => update(current => ({ ...current, description: event.target.value }))} /></>}
-                {dialog === 'settings' && setupFields}
+                {dialog === 'identity' && identityFields}
+                {dialog === 'footer' && <><Label htmlFor="menu-footer">{tr('Footer text', 'Testo del footer')}</Label><Textarea id="menu-footer" maxLength={500} value={draft.footerText} onChange={event => update(current => ({ ...current, footerText: event.target.value }))} /><label className="menu-footer-branding"><span>Made with OrbitPage</span><Switch aria-label="Made with OrbitPage" checked={draftBadge} disabled={!brandingEditable} onCheckedChange={setDraftBadge} /></label><small className="menu-footer-branding-note">{tr("Applies to every page in this workspace.", "Si applica a tutte le pagine di questo workspace.")}</small></>}
                 {dialog === 'category' && selectedSection && renderCategoryEditor(selectedSection)}
                 {dialog === 'item' && itemEditor}
               </fieldset></div>

@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import {
   Edit,
   Eye,
@@ -101,7 +100,6 @@ export function VisualSiteEditor({
   const [isPhone, setIsPhone] = useState(() => (
     typeof window !== "undefined" && window.matchMedia(PHONE_MEDIA_QUERY).matches
   ));
-  const [mobilePreviewSlot, setMobilePreviewSlot] = useState<HTMLElement | null>(null);
   const [previewVisible, setPreviewVisible] = useState(true);
   const previewEnabled = section === "menu" || section === "pages" ? Boolean(renderPreview) : section !== "shop";
   const previewCanCollapse = isPhone && previewEnabled && section !== "menu" && section !== "links";
@@ -154,11 +152,6 @@ export function VisualSiteEditor({
     return () => phoneQuery.removeEventListener("change", syncPhoneViewport);
   }, [onLayoutEditingChange]);
 
-  useEffect(() => {
-    setMobilePreviewSlot(isPhone
-      ? document.querySelector<HTMLElement>("[data-orbitpage-hosted-preview-device-slot]")
-      : null);
-  }, [isPhone]);
 
   const startLayoutEditing = () => {
     if (section !== "profile") onSelect("profile");
@@ -185,7 +178,7 @@ export function VisualSiteEditor({
             <span>{label}</span>
           </button>
         ))}
-        <div className="visual-site-editor__toolbar-actions visual-site-editor__section-actions">
+        {!isPhone && <div className="visual-site-editor__toolbar-actions visual-site-editor__section-actions">
           {section === "shop" && <div data-orbitpage-shop-preview-device-slot />}
           {section === "menu" && <div data-orbitpage-menu-preview-device-slot />}
           {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
@@ -199,15 +192,12 @@ export function VisualSiteEditor({
               <span>{tr("Arrange", "Disponi")}</span>
             </button>
           )}
-          {(!isPhone || !mobilePreviewSlot) && previewDeviceToggle}
-        </div>
+          {previewDeviceToggle}
+        </div>}
       </nav>
 
-      {isPhone && mobilePreviewSlot && previewDeviceToggle
-        ? createPortal(previewDeviceToggle, mobilePreviewSlot)
-        : null}
-
-      {previewCanCollapse && (
+      {isPhone && <div className="visual-site-editor__preview-controls">
+        {previewCanCollapse && (
         <button
           aria-controls="visual-site-editor-preview"
           aria-expanded={previewVisible}
@@ -219,6 +209,10 @@ export function VisualSiteEditor({
           <span>{previewVisible ? tr("Hide Preview", "Nascondi anteprima") : tr("Show Preview", "Mostra anteprima")}</span>
         </button>
       )}
+        {section === "shop" && <div data-orbitpage-shop-preview-device-slot />}
+        {section === "menu" && <div data-orbitpage-menu-preview-device-slot />}
+        {previewDeviceToggle}
+      </div>}
 
       {layoutEditing && (
         <div className="visual-site-editor__layout-bar">
