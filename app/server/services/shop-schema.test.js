@@ -9,6 +9,12 @@ const { shopAppearanceInputSchema: appearance, shopProductInputSchema: product, 
   createShopSchemas(z, value => /^\/uploads\/[a-zA-Z0-9._-]+$/.test(value));
 
 describe('self-hosted shared Shop contracts', () => {
+  it('keeps required policy links in a live Shop and omits them from fictional previews', () => {
+    const input = { username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: normalizeShopAppearance({}), products: [], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' };
+    expect(renderShopHtml(input)).toContain('href="https://studio.example.test/shop/legal/terms"');
+    expect(renderShopHtml({ ...input, previewOnly: true })).not.toMatch(/href="[^"]*\/shop\/legal/);
+  });
+
   it.each(['', '+39 011 1234567'])('shows only the explicitly configured seller phone in Shop and order emails (%s)', phone => {
     const settings = normalizeShopAppearance({ sellerName: 'Fictional Studio', sellerPhone: phone });
     const html = renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: settings, products: [], apiBaseUrl: '/api/shop', newsletterEndpoint: '/api/newsletter', coverUrlPrefix: '/shop/covers/' });

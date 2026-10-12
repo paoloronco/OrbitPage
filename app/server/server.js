@@ -985,8 +985,8 @@ const getSeoTitle = (profile, pageKind) => {
 };
 
 const getSeoDescription = (profile, pageKind) => {
-  if (pageKind === 'privacy') return 'Privacy information for this OrbitPage instance.';
-  if (pageKind === 'cookies') return 'Cookie policy information for this OrbitPage instance.';
+  if (pageKind === 'privacy') return 'Read the privacy policy provided by this page owner, including information about personal data, visitor rights and privacy contacts.';
+  if (pageKind === 'cookies') return 'Read the cookie policy provided by this page owner, including information about cookies, external services and visitor consent choices.';
   if (pageKind === 'admin') return 'Private OrbitPage administration area.';
   if (pageKind === 'about') return ABOUT_PAGE_DESCRIPTION;
   return compactText(
@@ -1315,7 +1315,7 @@ const rewriteViteAssetUrls = (html, req) => {
     .replace(/\b(src|href)=["'](?:\.\/|\/)?placeholder\.svg["']/g, (_match, attr) => `${attr}="${withRequestBasePath(req, '/placeholder.svg')}"`);
 };
 
-const buildNoScriptPublicContent = (profile, links, origin) => {
+const buildNoScriptPublicContent = (profile, links, origin, req) => {
   const visibleLinks = (links || [])
     .filter((link) => link?.type === 'link' && link?.title)
     .slice(0, 100);
@@ -1329,7 +1329,32 @@ const buildNoScriptPublicContent = (profile, links, origin) => {
     return `<li>${title}${description ? `<p>${escapeHtml(description)}</p>` : ''}</li>`;
   }).join('');
 
-  return `<noscript><main><h1>${escapeHtml(title)}</h1>${bio ? `<p>${escapeHtml(bio)}</p>` : ''}${items ? `<ul>${items}</ul>` : ''}</main></noscript>`;
+  const policies = [[profile?.privacy_policy_url, 'Privacy Policy'], [profile?.cookie_policy_url, 'Cookie Policy']]
+    .map(([url, label]) => {
+      const href = toAbsoluteHttpUrl(url?.startsWith('/') ? withRequestBasePath(req, url) : url, origin);
+      return href ? `<a href="${escapeHtml(href)}">${label}</a>` : '';
+    }).filter(Boolean).join(' · ');
+  return `<noscript><main><h1>${escapeHtml(title)}</h1>${bio ? `<p>${escapeHtml(bio)}</p>` : ''}${items ? `<ul>${items}</ul>` : ''}${policies ? `<nav aria-label="Policies">${policies}</nav>` : ''}</main></noscript>`;
+};
+
+const buildNoScriptPolicyContent = async (req, pageKind, title, description, profile) => {
+  const row = DEMO_MODE ? null : await dbGet('SELECT mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1');
+  const config = DEMO_MODE ? DEMO_CONSENT_CONFIG : row ? safeJsonParse(row.full_config, {}) : DEFAULT_CONSENT_CONFIG;
+  const { legalPolicies } = getPublicConsentConfig(config, row?.mode, row?.enabled, {
+    privacyPolicyUrl: profile?.privacy_policy_url || '', cookiePolicyUrl: profile?.cookie_policy_url || '',
+  });
+  const policy = pageKind === 'privacy' ? legalPolicies.privacyPolicy : legalPolicies.cookiePolicy;
+  let content = '';
+  if (policy.mode === 'hosted') content = `<p style="white-space:pre-wrap">${escapeHtml(policy.hostedText || '')}</p>`;
+  // Embedded providers need JavaScript; expose only their safe links in the fallback.
+  const links = policy.mode === 'embedded'
+    ? Array.from((policy.embeddedCode || '').matchAll(/<a\b[^>]*>/gi), ([tag]) => readTagAttributes(tag).href)
+    : policy.mode === 'external' ? [policy.externalUrl] : [];
+  for (const link of links) {
+    const href = toAbsoluteHttpUrl(link, getRequestOrigin(req));
+    if (href) content += `<p><a href="${escapeHtml(href)}">Read ${escapeHtml(title)}</a></p>`;
+  }
+  return `<noscript><main><a href="${escapeHtml(withRequestBasePath(req, '/'))}">Back to home</a><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p>${content}</main></noscript>`;
 };
 
 const injectSeoIntoHtml = (html, { seoTags, noScriptContent }) => {
@@ -1391,6 +1416,9 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
   const robots = shouldIndex ? 'index, follow, max-image-preview:large' : 'noindex, nofollow, noarchive';
   const structuredData = setupRequired ? null : buildStructuredData({ profile, links, origin, canonicalUrl, pageKind });
   const setupNoScript = '<noscript><main><h1>This page is under construction.</h1><p>Welcome to OrbitPage. Complete the private workspace setup to publish this page.</p></main></noscript>';
+  const policyNoScript = pageKind === 'privacy' || pageKind === 'cookies'
+    ? await buildNoScriptPolicyContent(req, pageKind, pageKind === 'privacy' ? 'Privacy Policy' : 'Cookie Policy', description, profile)
+    : '';
 
   return {
     seoTags: renderSeoTags({
@@ -1408,7 +1436,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
       locale: locale.slug,
       alternates,
     }),
-    noScriptContent: setupRequired ? setupNoScript : pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin) : '',
+    noScriptContent: setupRequired ? setupNoScript : pageKind === 'home' ? buildNoScriptPublicContent(profile, links, origin, req) : policyNoScript,
     robots,
     profile,
     links,
