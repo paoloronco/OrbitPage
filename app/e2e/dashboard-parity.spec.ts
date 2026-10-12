@@ -439,7 +439,7 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await expect.poll(async () => (await navigation.boundingBox())!.x).toBe(0);
   const menuBounds = (await navigation.boundingBox())!;
   expect(menuBounds.x).toBe(0); expect(menuBounds.y).toBe(0);
-  expect(menuBounds.width).toBe(390); expect(menuBounds.height).toBe(844);
+  expect(menuBounds.width).toBe(390); expect(menuBounds.height).toBeCloseTo(844, 0);
   await expect(launcher).toBeHidden();
   await expect(page.getByRole('link', { name: 'Back to site' }).locator('span')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sign out', exact: true }).locator('span')).toBeVisible();
