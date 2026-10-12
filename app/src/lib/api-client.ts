@@ -779,12 +779,16 @@ export type ManagedAnalyticsReport = {
     ctr: number;
     visitsPerVisitor: number;
     clicksPerVisitor: number;
+    durationSeconds?: number | null;
+    engagedVisits?: number;
+    aiVisits?: number;
+    aiSearchVisits?: number;
   };
   comparison: {
     previous: { visits: number; visitors: number; clicks: number; ctr: number };
     changes: { visits: number | null; visitors: number | null; clicks: number | null; ctr: number | null };
   };
-  trend: Array<{ date: string; visits: number; visitors: number; clicks: number }>;
+  trend: Array<{ date: string; visits: number; visitors: number; clicks: number; durationSeconds?: number | null; aiVisits?: number; aiSearchVisits?: number }>;
   sources: ManagedAnalyticsDimension[];
   devices: ManagedAnalyticsDimension[];
   countries: ManagedAnalyticsDimension[];
@@ -794,11 +798,12 @@ export type ManagedAnalyticsReport = {
   links: ManagedAnalyticsDimension[];
   paths: ManagedAnalyticsDimension[];
   qrPaths: ManagedAnalyticsDimension[];
+  aiSources?: ManagedAnalyticsDimension[];
 };
 
 export const managedAnalyticsApi = {
-  get: async (days: number): Promise<ManagedAnalyticsReport> => {
-    return apiRequest<ManagedAnalyticsReport>(`/analytics?days=${encodeURIComponent(String(days))}`);
+  get: async (days: number, signal?: AbortSignal): Promise<ManagedAnalyticsReport> => {
+    return apiRequest<ManagedAnalyticsReport>(`/analytics?days=${encodeURIComponent(String(days))}`, { signal });
   },
 };
 

@@ -47,7 +47,8 @@ export const OrbitPageMenuThemeSchema = z.object({
   accent: OrbitPageHexColorSchema,
   border: OrbitPageHexColorSchema,
   radius: z.number().int().min(0).max(28),
-  imageLayout: z.enum(["compact", "cover"])
+  imageLayout: z.enum(["compact", "cover"]),
+  fontFamily: z.enum(["editorial", "sans", "serif", "mono"]).optional()
 }).strict();
 
 export const ORBITPAGE_CONTENT_DESTINATIONS = ["link", "menu", "shop", "pages"] as const;

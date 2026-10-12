@@ -11,7 +11,7 @@ import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import { getActiveBasePath, internalAssetPath, withRuntimeAssetPath, withTenantBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { hasCustomProfileAvatar, isBundledProfileAvatar } from "@/lib/profile-avatar";
-import { trackPublicPageView } from "@/lib/public-runtime";
+import { trackPublicPageView, startPublicPageEngagement } from "@/lib/public-runtime";
 import { UnderConstruction } from "@/components/UnderConstruction";
 import { getEmbedData } from "@/lib/link-blocks";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
@@ -119,6 +119,7 @@ const Index = () => {
   const [theme, setTheme] = useState<ThemeConfig>(initialTheme);
   // Consent config drives whether CookieBanner is rendered
   const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
+  useEffect(() => consentConfig ? startPublicPageEngagement() : undefined, [consentConfig]);
   const [showOrbitPageBadge, setShowOrbitPageBadge] = useState(
     staticPage?.branding?.showOrbitPageBadge !== false
   );

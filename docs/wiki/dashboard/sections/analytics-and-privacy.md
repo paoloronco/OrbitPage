@@ -9,7 +9,9 @@ Configure consent under **Privacy** and reports under **Analytics**. Built-in an
 | Report | Details |
 | --- | --- |
 | Period | Last 7 or 30 days, compared with the previous period |
-| Traffic | Visits, visitors, clicks, trends, content, and referrers |
+| Traffic | Separate visitor, visit and card-click metrics, with interactive line and bar charts |
+| Duration | Estimated visible time per measured visit; hidden tabs and withdrawn consent stop collection |
+| AI discovery | Recognized AI referrers and UTM tags, with AI-search sources shown separately |
 | Acquisition | Tagged campaigns and QR visits |
 | Audience | Device breakdown; country data only when supplied by the infrastructure |
 
@@ -19,6 +21,10 @@ Dashboard activity is excluded. Events stay in SQLite and are not sent to OrbitP
 - Click totals work without consent, with no visitor identifier, referrer, device, or campaign attached.
 - Raw IP addresses and user-agent strings are not stored.
 - Event rows are retained for 62 days.
+
+Duration appears only for new consented visits and cannot be reconstructed for historical rows. It is capped at four hours per page session and requires browser session storage. Visits are deduplicated within the same tab, page and query. Country headers are accepted only from the installation's trusted proxy; missing countries stay unknown.
+
+AI discovery is a referrer/tag estimate, not a count of search prompts, AI answers or crawler reads. Untagged visits cannot reliably be identified. The table below the charts exposes the plotted values.
 
 QR reporting counts consented visits when the destination loads, not camera scans. Newly generated QR codes include a campaign marker; regenerate older codes without it to distinguish their traffic.
 
