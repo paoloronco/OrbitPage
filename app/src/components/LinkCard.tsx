@@ -686,20 +686,20 @@ export const LinkCard = ({
             </div>
           )}
           {link.title && (
-            <h3 className="font-semibold truncate" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+            <h3 className="font-semibold [overflow-wrap:anywhere]" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
               {link.title}
             </h3>
           )}
           {link.description && (
             <p
-              className="text-sm line-clamp-2"
+              className="text-sm [overflow-wrap:anywhere]"
               style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
             >
               {link.description}
             </p>
           )}
           {link.url && (
-            <p className="text-xs mt-1 truncate underline font-medium" style={link.textColor ? { color: link.textColor } : undefined}>
+            <p className="text-xs mt-1 [overflow-wrap:anywhere] underline font-medium" style={link.textColor ? { color: link.textColor } : undefined}>
               {link.url}
             </p>
           )}
@@ -770,11 +770,11 @@ export const LinkCard = ({
                 {calloutData.badge}
               </span>
             ) : null}
-            <h3 className="font-semibold truncate">{link.title || 'Callout'}</h3>
+            <h3 className="font-semibold [overflow-wrap:anywhere]">{link.title || 'Callout'}</h3>
           </div>
           {link.description && <p className="text-sm mt-1 text-muted-foreground">{link.description}</p>}
           {link.url && (
-            <p className="text-xs mt-1 truncate underline font-medium">
+            <p className="text-xs mt-1 [overflow-wrap:anywhere] underline font-medium">
               {calloutData.buttonLabel || 'Open'}
             </p>
           )}
@@ -794,7 +794,7 @@ export const LinkCard = ({
             </p>
           )}
           {mapData.mapUrl && (
-            <p className="text-xs mt-1 truncate underline font-medium" style={link.textColor ? { color: link.textColor } : undefined}>
+            <p className="text-xs mt-1 [overflow-wrap:anywhere] underline font-medium" style={link.textColor ? { color: link.textColor } : undefined}>
               {mapData.mapUrl}
             </p>
           )}
@@ -855,14 +855,14 @@ export const LinkCard = ({
               )}
             </div>
           )}
-          <h3 className="font-semibold truncate" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
+          <h3 className="font-semibold [overflow-wrap:anywhere]" style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>
             {link.title || "Untitled Link"}
           </h3>
           <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />
         </div>
         {link.description && (
           <p
-            className="text-sm line-clamp-2"
+            className="text-sm [overflow-wrap:anywhere]"
             style={{ ...(link.textColor ? { color: link.textColor } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}
           >
             {link.description}
@@ -870,7 +870,7 @@ export const LinkCard = ({
         )}
         {isActionable && link.url && !link.hideUrl && (
           <p
-            className="text-xs mt-1 truncate underline font-medium"
+            className="text-xs mt-1 [overflow-wrap:anywhere] underline font-medium"
             style={link.textColor ? { color: link.textColor } : undefined}
           >
             {link.url}
@@ -1014,7 +1014,7 @@ export const LinkCard = ({
                           </span>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold">Native menu</p>
-                            <p className="truncate text-xs text-blue-700">{editLink.url}</p>
+                            <p className="[overflow-wrap:anywhere] text-xs text-blue-700">{editLink.url}</p>
                           </div>
                         </div>
                       )}

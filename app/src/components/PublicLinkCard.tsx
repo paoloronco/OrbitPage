@@ -1,6 +1,6 @@
-import { useState, useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, GripVertical, Link2, Mail, MailPlus, MapPin, MoveDiagonal2, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, Link2, Mail, MailPlus, MapPin, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath, withPageRootPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
@@ -14,7 +14,6 @@ import { CompactLinkIcon } from './CompactLinkIcon';
 import type { SocialLinkPlatform } from '@/lib/link-blocks';
 import { getPublicBlockStyle, getPublicTextColor } from '@/lib/public-block-style';
 import { isNativeShopLink } from '@/lib/native-shop-link';
-import type { CardContentLayoutItem, NormalizedCardContentLayout } from '@/lib/card-layout';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
   const safeUrl = resolveSafePublicMediaUrl(src);
@@ -26,9 +25,6 @@ const resolveCoverImageUrl = (src?: string | null): string | null => {
 
 interface PublicLinkCardProps {
   link: LinkData;
-  contentLayout?: NormalizedCardContentLayout;
-  contentLayoutEditing?: boolean;
-  contentLayoutGuides?: { x?: number; y?: number };
 }
 
 const ctaActionConfig = {
@@ -71,7 +67,7 @@ function buildValidatedBlobUrl(blobUrl: string): string {
   }
 }
 
-export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = false, contentLayoutGuides }: PublicLinkCardProps) => {
+export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
   const { tr } = useAppI18n();
   const iconIsImage = link.iconType === 'image' || link.iconType === 'svg' || (!link.iconType && isPublicImageReference(link.icon));
   const semanticIconName = iconIsImage ? '' : String(link.icon || '').trim().toLowerCase();
@@ -239,7 +235,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
           onClick={handleLinkClick}
           aria-disabled={unavailable}
           tabIndex={unavailable ? -1 : undefined}
-          className={`public-cta-link flex min-h-[88px] items-center gap-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed' : ''}`}
+          className={`public-cta-link flex min-h-[88px] items-center gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed' : ''}`}
           aria-label={`${ctaConfig.label}: ${link.title || 'Open action'}`}
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/16 text-white ring-1 ring-white/25">
@@ -250,14 +246,14 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               {unavailable ? tr('Unavailable', 'Non disponibile') : ctaConfig.label}
             </span>
             <span
-              className="block line-clamp-2 text-base font-semibold leading-tight"
+              className="block [overflow-wrap:anywhere] text-base font-semibold leading-tight"
               style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}
             >
               {link.title || ctaConfig.label}
             </span>
             {link.description && (
               <span
-                className="mt-1 block line-clamp-2 text-sm text-white/78"
+                className="mt-1 block [overflow-wrap:anywhere] text-sm text-white/78"
                 style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(effectiveTextColor ? { opacity: 0.78 } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}
               >
                 {link.description}
@@ -270,87 +266,6 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
     );
   }
 
-  if (contentLayout && !hasCoverImage) {
-    const labels: Record<CardContentLayoutItem, string> = {
-      icon: tr('Icon', 'Icona'),
-      title: tr('Title', 'Titolo'),
-      description: tr('Description', 'Descrizione'),
-      url: 'URL',
-    };
-    const href = unavailable ? undefined : safeHref || undefined;
-    const content: Partial<Record<CardContentLayoutItem, ReactNode>> = {
-      ...(renderedIcon ? { icon: (
-        <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1}>
-          {renderedIcon}
-        </a>
-      ) } : {}),
-      title: (
-        <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={contentLayoutEditing || unavailable ? -1 : undefined} className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-          <h3 className="min-w-0 flex-1 break-words font-semibold" style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}>
-            {link.title || 'Untitled Link'}
-          </h3>
-          {safeHref && <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0 text-primary opacity-0 transition-smooth group-hover:opacity-100" />}
-        </a>
-      ),
-      ...(link.description ? {
-        description: (
-          <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} aria-disabled={unavailable} tabIndex={-1} className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <p className="break-words text-sm" style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}>{link.description}</p>
-          </a>
-        ),
-      } : {}),
-      ...(safeHref && !link.hideUrl ? {
-        url: (
-          <a href={href} target={linkTarget} rel="noopener noreferrer" onClick={handleLinkClick} tabIndex={-1} className="block truncate rounded-md text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" style={{ fontFamily: urlFontFamily, ...(effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : {}) }}>
-            {link.url.replace(/^https?:\/\//, '')}
-          </a>
-        ),
-      } : {}),
-    };
-
-    return (
-      <Card className={`public-link-card--free-layout glass-card ${getSizeClasses(link.size)} transition-smooth hover:glow-effect group${unavailable ? ' opacity-65' : ''}`} style={getPublicBlockStyle(link)}>
-        <div
-          className="public-link-card__layout"
-          data-card-content-layout={link.id}
-          style={{ '--card-content-layout-height': `${contentLayout.height}px` } as CSSProperties}
-        >
-          {Object.entries(content).map(([id, node]) => {
-            const item = id as CardContentLayoutItem;
-            const rect = contentLayout.positions[item];
-            return (
-              <div
-                className="public-link-card__layout-item"
-                data-card-content-layout-align={item === 'icon' ? 'center' : link.alignment || 'left'}
-                data-card-content-layout-item={item}
-                data-card-content-layout-position={`${rect.x},${rect.y},${rect.width},${rect.height}`}
-                key={item}
-                style={{
-                  '--card-content-layout-x': `${rect.x}%`,
-                  '--card-content-layout-y': `${rect.y}px`,
-                  '--card-content-layout-width': `${rect.width}%`,
-                  '--card-content-layout-item-height': `${rect.height}px`,
-                } as CSSProperties}
-              >
-                {contentLayoutEditing && (
-                  <button aria-label={`${tr('Move', 'Sposta')} ${labels[item]}`} className="public-link-card__layout-grip" data-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr('Drag freely. Use arrow keys for precise movement.', 'Trascina liberamente. Usa le frecce per movimenti precisi.')} type="button">
-                    <GripVertical aria-hidden="true" size={15} />
-                  </button>
-                )}
-                <div className="public-link-card__layout-content">{node}</div>
-                {contentLayoutEditing && (
-                  <button aria-label={`${tr('Resize', 'Ridimensiona')} ${labels[item]}`} className="public-link-card__layout-resize" data-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr('Drag to resize. Use arrow keys for precision.', 'Trascina per ridimensionare. Usa le frecce per la precisione.')} type="button"><MoveDiagonal2 aria-hidden="true" size={15} /></button>
-                )}
-              </div>
-            );
-          })}
-          {contentLayoutEditing && contentLayoutGuides?.x !== undefined && <i className="page-card-layout__guide page-card-layout__guide--x" style={{ left: `${contentLayoutGuides.x}%` }} />}
-          {contentLayoutEditing && contentLayoutGuides?.y !== undefined && <i className="page-card-layout__guide page-card-layout__guide--y" style={{ top: `${contentLayoutGuides.y}px` }} />}
-        </div>
-        {!unavailable && safeHref && <button aria-label={copied ? 'Link copied' : 'Copy link'} onClick={handleCopy} className="public-link-card__copy opacity-0 transition-smooth group-hover:opacity-100 focus-visible:opacity-100" title={copied ? 'Link copied' : 'Copy link'} type="button">{copied ? <Check aria-hidden="true" className="h-3 w-3 text-green-500" /> : <Copy aria-hidden="true" className="h-3 w-3 text-muted-foreground" />}</button>}
-      </Card>
-    );
-  }
 
   return (
     <Card
@@ -396,7 +311,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2" data-card-content-layout-item="title">
                 <h3
-                  className="min-w-0 break-words font-semibold flex-1"
+                  className="min-w-0 [overflow-wrap:anywhere] font-semibold flex-1"
                   style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}
                 >
                   {link.title || "Untitled Link"}
@@ -408,7 +323,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               </div>
               {link.description && (
                 <p
-                  className="text-sm break-words mt-1"
+                  className="text-sm [overflow-wrap:anywhere] mt-1"
                   data-card-content-layout-item="description"
                   style={{ ...effectiveTextStyle, fontFamily: descriptionFontFamily, ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}) }}
                 >
@@ -417,7 +332,7 @@ export const PublicLinkCard = ({ link, contentLayout, contentLayoutEditing = fal
               )}
               {safeHref && !link.hideUrl && (
                 <p
-                  className="text-xs mt-1 truncate text-muted-foreground"
+                  className="text-xs mt-1 [overflow-wrap:anywhere] text-muted-foreground"
                   data-card-content-layout-item="url"
                   style={{ fontFamily: urlFontFamily, ...(effectiveTextColor ? { color: effectiveTextColor, opacity: 0.8 } : {}) }}
                 >

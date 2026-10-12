@@ -143,14 +143,14 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                   event.stopPropagation();
                   trackClick();
                 }}
-                className="font-semibold truncate rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="font-semibold [overflow-wrap:anywhere] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
               </a>
             ) : (
               <h3
-                className="font-semibold truncate"
+                className="font-semibold [overflow-wrap:anywhere]"
                 style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
@@ -182,7 +182,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="block whitespace-nowrap overflow-x-auto hover:underline hover:text-primary transition-colors text-left"
+                        className="block [overflow-wrap:anywhere] hover:underline hover:text-primary transition-colors text-left"
                         title={item.url}
                         style={{ color: item.textColor || readableTextColor }}
                       >

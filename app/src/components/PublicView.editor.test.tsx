@@ -71,7 +71,7 @@ describe("PublicView visual editor targets", () => {
     expect(html).not.toContain('aria-label="Copy link"');
   });
 
-  it("renders saved desktop card and inner-content coordinates on the public page", () => {
+  it("renders saved card coordinates with automatic text layout on the public page", () => {
     const html = renderToStaticMarkup(
       <PublicView
         embedded
@@ -101,7 +101,8 @@ describe("PublicView visual editor targets", () => {
     expect(html).toContain("public-page-root--responsive-card-layout");
     expect(html).toContain('data-card-layout-viewport="desktop"');
     expect(html).toContain('data-card-layout-position="48,20,52,120"');
-    expect(html).toContain('data-card-content-layout-position="5,30,70,30"');
+    expect(html).not.toContain("data-card-content-layout-position");
+    expect(html).toContain('data-card-content-layout-item="title"');
   });
 
   it("renders the profile and a content card in the same saved desktop canvas", () => {
@@ -147,8 +148,8 @@ describe("PublicView visual editor targets", () => {
       />,
     );
 
-    expect(html.match(/data-card-layout-position="32,[^"]+,36,/g)).toHaveLength(2);
-    expect(html).toContain(`data-card-layout-item="${PROFILE_CARD_LAYOUT_ID}" data-card-layout-position="32,0,36,208"`);
+    expect(html.match(/data-card-layout-position="31.94,[^"]+,36.11,/g)).toHaveLength(2);
+    expect(html).toContain(`data-card-layout-item="${PROFILE_CARD_LAYOUT_ID}" data-card-layout-position="31.94,0,36.11,208"`);
     expect(html).not.toContain("Profile image");
     expect(html).toContain("lucide-move-diagonal2");
   });

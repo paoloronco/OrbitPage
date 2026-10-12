@@ -1,8 +1,6 @@
 import {
-  ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS,
   ORBITPAGE_PROFILE_CARD_LAYOUT_ID,
   type OrbitPageCardContentLayout,
-  type OrbitPageCardContentLayoutItem,
   type OrbitPageCardLayout,
 } from "@orbitpage/page-schema";
 
@@ -10,7 +8,6 @@ import type { ProfileLayoutRect, ProfileLayoutViewport } from "./profile-layout"
 
 export type CardLayout = OrbitPageCardLayout;
 export type CardContentLayout = OrbitPageCardContentLayout;
-export type CardContentLayoutItem = OrbitPageCardContentLayoutItem;
 export type CardLayoutViewport = ProfileLayoutViewport;
 export type CardLayoutRect = ProfileLayoutRect;
 export type CardLayoutSource = {
@@ -23,33 +20,22 @@ export type CardLayoutSource = {
   coverImage?: string;
   defaultRect?: Partial<CardLayoutRect>;
   prepend?: boolean;
-  hasIcon?: boolean;
 };
 export type NormalizedCardLayout = {
   positions: Record<string, CardLayoutRect>;
   contents?: Record<string, CardContentLayout>;
   height: number;
 };
-export type NormalizedCardContentLayout = {
-  positions: Record<CardContentLayoutItem, CardLayoutRect>;
-  height: number;
-};
 export type CardLayoutGuides = { x?: number; y?: number };
 
 const CARD_GAP = 24;
 const LEGACY_PROFILE_CARD_LAYOUT_ID = "__orbitpage_profile__";
-const CARD_WIDTH_PRESETS = [25, 50, 75, 100];
 
 export const PROFILE_CARD_LAYOUT_ID = ORBITPAGE_PROFILE_CARD_LAYOUT_ID;
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value));
-const round = (value: number) => Math.round(value * 4) / 4;
+const round = (value: number) => Math.round(value * 100) / 100;
 const finite = (value: number | undefined, fallback: number) => Number.isFinite(value) ? Number(value) : fallback;
-const cardWidths = (defaultWidth?: number) => [...new Set([
-  ...CARD_WIDTH_PRESETS,
-  ...(defaultWidth === undefined ? [] : [defaultWidth]),
-].map(round))].sort((left, right) => left - right);
-
 function closestSnap(anchors: number[], targets: number[], threshold: number) {
   let best: { shift: number; guide: number } | null = null;
   for (const anchor of anchors) {
@@ -83,44 +69,6 @@ export function preventCardLayoutOverlap(
   if (!collides(horizontalOnly)) return horizontalOnly;
   const verticalOnly = { ...previous, y: candidate.y, height: candidate.height };
   return collides(verticalOnly) ? previous : verticalOnly;
-}
-
-export function reflowCardLayoutPositions(
-  positions: Record<string, CardLayoutRect>,
-  item: string,
-  candidate: CardLayoutRect,
-  gap = CARD_GAP,
-) {
-  const next: Record<string, CardLayoutRect> = { [item]: candidate };
-  const placed: CardLayoutRect[] = [candidate];
-  const remaining = Object.entries(positions)
-    .filter(([id]) => id !== item)
-    .sort(([, left], [, right]) => left.y - right.y || left.x - right.x);
-
-  for (const [id, position] of remaining) {
-    let rect = { ...position };
-    while (true) {
-      const collisions = placed.filter((placedRect) => overlaps(rect, placedRect));
-      if (collisions.length === 0) break;
-      rect = { ...rect, y: Math.max(...collisions.map((placedRect) => placedRect.y + placedRect.height + gap)) };
-    }
-    next[id] = rect;
-    placed.push(rect);
-  }
-
-  return next;
-}
-
-export function snapCardLayoutSize(rect: CardLayoutRect, defaultWidth?: number, minimumHeight = 48): CardLayoutRect {
-  const width = cardWidths(defaultWidth).reduce((closest, preset) => (
-    Math.abs(preset - rect.width) < Math.abs(closest - rect.width) ? preset : closest
-  ));
-  return { ...rect, width: round(width), height: Math.max(Math.ceil(minimumHeight / 48) * 48, Math.round(rect.height / 48) * 48) };
-}
-
-export function stepCardLayoutWidth(width: number, direction: -1 | 1, defaultWidth?: number) {
-  const presets = cardWidths(defaultWidth);
-  return (direction === 1 ? presets.find((preset) => preset > width) : presets.reverse().find((preset) => preset < width)) ?? width;
 }
 
 export function alignCardLayoutRect(
@@ -157,24 +105,17 @@ export const defaultCardHeight = (card: CardLayoutSource) => {
   return card.size === "large" ? 120 : card.size === "small" ? 92 : 100;
 };
 
-export const isCompactMobileCard = (card: CardLayoutSource) => (
-  card.size === "small" && !["image", "video", "embed", "map", "menu", "text", "callout", "event"].includes(card.type || "link")
-);
-
 function normalizeCardRect(
   candidate: Partial<CardLayoutRect> | undefined,
   fallback: CardLayoutRect,
   card: CardLayoutSource,
   viewport: CardLayoutViewport,
 ): CardLayoutRect {
-  const compactMobile = viewport === "mobile" && isCompactMobileCard(card);
-  const minimumWidth = compactMobile ? 44 : viewport === "mobile" ? 100 : 20;
+  const minimumWidth = viewport === "mobile" ? 44 : 20;
   const minimumHeight = defaultCardHeight(card);
   const width = round(clamp(finite(candidate?.width, fallback.width), minimumWidth, 100));
   return {
-    x: viewport === "mobile" && !compactMobile
-      ? 0
-      : round(clamp(finite(candidate?.x, fallback.x), 0, 100 - width)),
+    x: round(clamp(finite(candidate?.x, fallback.x), 0, 100 - width)),
     y: Math.round(clamp(finite(candidate?.y, fallback.y), 0, 4_000)),
     width,
     height: Math.round(clamp(finite(candidate?.height, fallback.height), minimumHeight, 1_200)),
@@ -227,15 +168,12 @@ export function updateCardLayoutItem(
   viewport: CardLayoutViewport,
   cardId: string,
   rect: CardLayoutRect,
-  allowOverlap = false,
 ): NormalizedCardLayout {
   const normalized = normalizeCardLayout(layout, cards, viewport);
   const card = cards.find((candidate) => candidate.id === cardId);
   if (!card) return normalized;
   const candidate = normalizeCardRect(rect, normalized.positions[cardId], card, viewport);
-  const positions = allowOverlap
-    ? { ...normalized.positions, [cardId]: candidate }
-    : reflowCardLayoutPositions(normalized.positions, cardId, candidate);
+  const positions = { ...normalized.positions, [cardId]: candidate };
   return {
     positions,
     ...(normalized.contents ? { contents: normalized.contents } : {}),
@@ -267,68 +205,21 @@ export function moveMobileCard(
   return { ...normalized, positions, height: Math.max(normalized.height, y - CARD_GAP) };
 }
 
-const DEFAULT_CARD_CONTENT_LAYOUT: NormalizedCardContentLayout = {
-  positions: {
-    icon: { x: 0, y: 14, width: 12, height: 36 },
-    title: { x: 0, y: 0, width: 100, height: 28 },
-    description: { x: 0, y: 32, width: 100, height: 24 },
-    url: { x: 0, y: 60, width: 100, height: 24 },
-  },
-  height: 84,
-};
-
-function normalizeContentRect(candidate: Partial<CardLayoutRect> | undefined, fallback: CardLayoutRect): CardLayoutRect {
-  const width = round(clamp(finite(candidate?.width, fallback.width), 12, 100));
-  return {
-    x: round(clamp(finite(candidate?.x, fallback.x), 0, 100 - width)),
-    y: Math.round(clamp(finite(candidate?.y, fallback.y), 0, 1_000)),
-    width,
-    height: Math.round(clamp(finite(candidate?.height, fallback.height), 24, 600)),
-  };
-}
-
-export function normalizeCardContentLayout(layout?: CardContentLayout | null, hasIcon = false): NormalizedCardContentLayout {
-  const positions = Object.fromEntries(ORBITPAGE_CARD_CONTENT_LAYOUT_ITEMS.map((item) => [
-    item,
-    normalizeContentRect(layout?.positions?.[item], hasIcon && item !== "icon"
-      ? { ...DEFAULT_CARD_CONTENT_LAYOUT.positions[item], x: 16, width: 84 }
-      : DEFAULT_CARD_CONTENT_LAYOUT.positions[item]),
-  ])) as NormalizedCardContentLayout["positions"];
-  const contentHeight = Math.max(...Object.values(positions).map((rect) => rect.y + rect.height));
-  return {
-    positions,
-    height: Math.round(clamp(Math.max(layout?.height ?? DEFAULT_CARD_CONTENT_LAYOUT.height, contentHeight), 48, 1_200)),
-  };
-}
-
-export function updateCardContentLayoutItem(
-  layout: CardLayout | null | undefined,
-  cards: CardLayoutSource[],
-  viewport: CardLayoutViewport,
-  cardId: string,
-  item: CardContentLayoutItem,
-  rect: CardLayoutRect,
-  allowOverlap = false,
-): NormalizedCardLayout {
-  const normalized = normalizeCardLayout(layout, cards, viewport);
-  const card = cards.find((entry) => entry.id === cardId);
-  const content = normalizeCardContentLayout(layout?.contents?.[cardId], card?.hasIcon);
-  const candidate = normalizeContentRect(rect, content.positions[item]);
-  const visiblePositions = Object.fromEntries(Object.entries(content.positions).filter(([id]) => (
-    (id === "icon" && card?.hasIcon) || id === "title" || (id === "description" && card?.description) || (id === "url" && card?.url && !card.hideUrl)
-  )));
-  const positions = {
-    ...content.positions,
-    [item]: allowOverlap
-      ? candidate
-      : preventCardLayoutOverlap(visiblePositions, item, candidate, content.positions[item]),
-  };
-  const nextContent = {
-    positions,
-    height: Math.round(Math.max(48, ...Object.values(positions).map((position) => position.y + position.height))),
-  };
-  return {
-    ...normalized,
-    contents: { ...layout?.contents, [cardId]: nextContent },
-  };
+// Preserve saved gaps when wrapping text grows; intentional overlaps stay intentional.
+export function fitCardLayoutHeights(layout: NormalizedCardLayout, heights: Record<string, number>, moveFollowing = true): NormalizedCardLayout {
+  const positions: Record<string, CardLayoutRect> = {};
+  const ordered = Object.entries(layout.positions).sort(([, a], [, b]) => a.y - b.y);
+  for (const [id, rect] of ordered) {
+    let growth = 0;
+    if (moveFollowing) {
+      for (const [previousId, previous] of Object.entries(positions)) {
+        const original = layout.positions[previousId];
+        if (rect.y >= original.y + original.height && rect.x < original.x + original.width && rect.x + rect.width > original.x) {
+          growth = Math.max(growth, previous.y + previous.height - original.y - original.height);
+        }
+      }
+    }
+    positions[id] = { ...rect, y: rect.y + growth, height: Math.max(rect.height, heights[id] || 0) };
+  }
+  return { ...layout, positions, height: Math.max(layout.height, ...Object.values(positions).map(rect => rect.y + rect.height)) };
 }

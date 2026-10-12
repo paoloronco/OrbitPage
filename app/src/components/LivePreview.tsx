@@ -107,10 +107,11 @@ export function PreviewDeviceFrame({
             data-preview-source-width={sourceWidth}
             data-preview-viewport-ready={measuredViewport ? "true" : "false"}
             style={{
+              "--preview-scale": measuredViewport?.scale ?? 1,
               height: measuredViewport ? `${measuredViewport.height}px` : undefined,
               transform: measuredViewport ? `scale(${measuredViewport.scale})` : undefined,
               width: `${sourceWidth}px`,
-            }}
+            } as CSSProperties}
           >
             {children}
           </div>
