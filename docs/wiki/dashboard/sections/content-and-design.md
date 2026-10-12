@@ -126,15 +126,15 @@ For any category other than **Necessary**, the provider is not contacted until t
 
 ## Menu
 
-The menu opens with the mobile public preview. Use the device buttons to check desktop too. On a phone, device controls are below the site-section bar.
+The menu opens with the mobile public preview, using the same phone and desktop frames as Shop. Use the device buttons to check desktop too. On a phone, device controls are below the site-section bar.
 
 1. Click the title or introduction to edit them, venue type, currency and locale in a popup. The locale controls price formatting.
-2. Select **Add section** or **Add item** in the toolbar. Click an existing section or dish in the preview to edit, reorder or delete it.
+2. Select **Add section** or **Add item** in the toolbar. Click an existing section or dish in the preview to edit it. Hover or focus it for move up/down and delete controls; on touch screens these controls stay visible. Items move only within their own section, and sections move only among siblings.
 3. Select **Personalize** to open the side panel with preset themes, colors, typography, corner radius and image layout.
 4. Click the footer in the preview to edit its text. The Made with OrbitPage switch uses the page branding setting for every workspace page; SaaS plans and page permissions determine whether it can be changed. OSS keeps the badge visible.
-5. Select **Apply** to update the draft preview, then **Save** to persist it. **Cancel** restores the popup's starting values; **Reset** discards the unsaved menu draft.
+5. Select **Apply** to save popup edits automatically. Reordering and confirmed deletions also save immediately. Use **Save** for changes in Personalize or to retry a failed action. **Cancel** restores the popup's starting values; **Reset** discards the unsaved menu draft.
 
-Sections can have one level of subsections. Deleting a section also removes its subsections and items. Item popups include prices, images, dietary tags, allergens, availability and featured state. Invalid names and failed saves keep your draft available for correction or retry.
+Sections can have one level of subsections. Deletion asks for confirmation; deleting a section also removes its subsections and items. **Revert** in the saved notice restores the previous menu. Disable **Allow collapsing this section** in Edit section to keep that section open and hide its arrow. Item popups include prices, images, dietary tags, allergens, availability and featured state. Invalid names and failed saves keep your draft available for correction or retry.
 
 **Publish menu** and **Unpublish** save menu visibility immediately; save or revert other edits before using them. The menu is exposed at `/menu` under the configured public URL. Hosted publication follows the workspace publication flow. To link it from the main page, add an **Internal page navigation** or **Menu** block in Content. The menu theme remains independent from the main-page theme.
 

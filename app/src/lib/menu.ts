@@ -118,6 +118,7 @@ export function normalizeMenuCatalog(
       name: editableText(section.name, 80, `Section ${index + 1}`),
       description: editableText(section.description, 240) || undefined,
       visible: section.visible !== false,
+      ...(section.collapsible === false ? { collapsible: false } : {}),
       position: index,
     };
   });

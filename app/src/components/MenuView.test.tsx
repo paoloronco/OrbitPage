@@ -66,6 +66,12 @@ describe('MenuView subsections', () => {
     expect(html).toContain('placeholder="Search the menu"');
     expect(html).toContain('12 items');
     expect(html).toContain('aria-expanded="false"');
+
+    menu.sections.forEach(section => { section.collapsible = false; });
+    const expanded = renderToStaticMarkup(<MenuView menu={menu} />);
+    expect(expanded).not.toContain('aria-expanded=');
+    expect(expanded).not.toContain(' hidden=');
+    expect(expanded).toContain('Dish 12');
   });
 
   it('shows only the menu section selected by a smart campaign link', () => {

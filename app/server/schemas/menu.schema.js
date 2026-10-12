@@ -16,6 +16,7 @@ const MenuSectionSchema = z.object({
   name: Text(80).min(1),
   description: Text(240).optional(),
   visible: z.boolean(),
+  collapsible: z.boolean().optional(),
   position: z.number().int().min(0).max(29),
 }).strict();
 

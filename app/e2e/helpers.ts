@@ -105,12 +105,11 @@ export async function saveEditorChanges(page: Page) {
   if (previous) await expect.poll(() => progress.evaluate((element, old) => element !== old, previous)).toBe(true);
 }
 
-export async function preservePageData(page: Page) {
+export async function preservePageData(page: Page, paths = ['/api/profile', '/api/links']) {
   const login = await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } });
   expect(login.ok()).toBeTruthy();
   const { token } = await login.json();
   const headers = { Authorization: `Bearer ${token}` };
-  const paths = ['/api/profile', '/api/links'];
   const data = await Promise.all(paths.map(async path => {
     const response = await page.request.get(path, { headers });
     expect(response.ok()).toBeTruthy();

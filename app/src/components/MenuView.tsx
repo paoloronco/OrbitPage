@@ -1,6 +1,6 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, type ReactNode, type CSSProperties } from 'react';
 import { ArrowLeft, ChevronDown, Leaf, Search, Sparkles, X } from 'lucide-react';
-import { formatMenuPrice, type MenuCatalog } from '@/lib/menu';
+import { formatMenuPrice, type MenuSection, type MenuCatalog } from '@/lib/menu';
 import { withBasePath } from '@/lib/base-path';
 import { resolveSafePublicMediaUrl } from '@/lib/browser-network-policy';
 
@@ -13,9 +13,11 @@ interface MenuViewProps {
   onEditIdentity?: () => void;
   onEditSection?: (id: string) => void;
   onEditItem?: (id: string) => void;
+  renderItemActions?: (id: string) => ReactNode;
+  renderSectionActions?: (id: string) => ReactNode;
 }
 
-export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId = '', showOrbitPageBadge = true, onEditFooter, onEditIdentity, onEditSection, onEditItem }: MenuViewProps) {
+export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId = '', showOrbitPageBadge = true, onEditFooter, onEditIdentity, onEditSection, onEditItem, renderItemActions, renderSectionActions }: MenuViewProps) {
   const [query, setQuery] = useState('');
   const [sectionState, setSectionState] = useState<Record<string, boolean>>({});
   const sections = [...menu.sections]
@@ -53,9 +55,9 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
     : scopedItems;
   const isLongMenu = scopedItems.length >= 12 || navigableSections.length >= 7;
   const showDirectory = navigableSections.length > 1 || scopedItems.length >= 8;
-  const isOpen = (sectionId: string, defaultOpen: boolean) => normalizedQuery || onEditSection
+  const isOpen = (section: MenuSection, defaultOpen: boolean) => normalizedQuery || section.collapsible === false
     ? true
-    : sectionState[sectionId] ?? defaultOpen;
+    : sectionState[section.id] ?? (onEditSection ? true : defaultOpen);
   const setOpen = (sectionId: string, open: boolean) => {
     setSectionState((current) => ({ ...current, [sectionId]: open }));
   };
@@ -80,11 +82,22 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
     ...(menu.theme.fontFamily && menu.theme.fontFamily !== 'editorial' ? { '--menu-font': menu.theme.fontFamily === 'sans' ? 'Inter, system-ui, sans-serif' : menu.theme.fontFamily === 'serif' ? 'Georgia, serif' : 'ui-monospace, monospace' } : {}),
   } as CSSProperties;
 
+  const renderSectionTitle = (section: MenuSection, open: boolean) => {
+    const collapsible = section.collapsible !== false;
+    return <span className="orbitpage-menu__section-title">
+      {onEditSection || collapsible ? <button type="button" aria-expanded={!onEditSection ? open : undefined} aria-controls={!onEditSection ? `menu-content-${section.id}` : undefined} title={onEditSection ? 'Edit section' : open ? copy.collapse : copy.expand} onClick={() => onEditSection ? onEditSection(section.id) : setOpen(section.id, !open)}>
+        <span>{section.name}</span>{!onEditSection && <ChevronDown aria-hidden="true" />}
+      </button> : <span>{section.name}</span>}
+      {onEditSection && collapsible && <button className="orbitpage-menu__section-toggle" type="button" aria-label={`${open ? copy.collapse : copy.expand} ${section.name}`} aria-expanded={open} aria-controls={`menu-content-${section.id}`} onClick={() => setOpen(section.id, !open)}><ChevronDown aria-hidden="true" /></button>}
+    </span>;
+  };
+
   const renderItems = (items: MenuCatalog['items']) => (
     <div className="orbitpage-menu__items">
       {items.map((item) => (
+        <div key={item.id} className={renderItemActions ? "menu-preview-item" : undefined}>
+          {renderItemActions?.(item.id)}
         <article
-          key={item.id}
           className={`orbitpage-menu-item${item.featured ? ' orbitpage-menu-item--featured' : ''}${!item.available ? ' orbitpage-menu-item--unavailable' : ''}`}
           role={onEditItem ? 'button' : undefined}
           tabIndex={onEditItem ? 0 : undefined}
@@ -125,6 +138,7 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
             </div>
           </div>
         </article>
+        </div>
       ))}
     </div>
   );
@@ -196,24 +210,14 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
                 .sort((a, b) => a.position - b.position),
             })).filter((subsection) => subsection.items.length > 0 || onEditSection);
             if (directItems.length === 0 && subsections.length === 0 && !onEditSection) return null;
-            const sectionOpen = isOpen(section.id, !isLongMenu || sectionIndex === 0);
+            const sectionOpen = isOpen(section, !isLongMenu || sectionIndex === 0);
             return (
               <section key={section.id} id={`menu-${section.id}`} className="orbitpage-menu__section">
-                <div className="orbitpage-menu__section-heading">
+                <div className={`orbitpage-menu__section-heading${renderSectionActions ? ' menu-preview-section' : ''}`}>
+                  {renderSectionActions?.(section.id)}
                   <span>{String(sectionIndex + 1).padStart(2, '0')}</span>
                   <div>
-                    <h2>
-                      <button
-                        type="button"
-                        aria-expanded={onEditSection ? undefined : sectionOpen}
-                        aria-controls={`menu-content-${section.id}`}
-                        title={onEditSection ? 'Edit section' : sectionOpen ? copy.collapse : copy.expand}
-                        onClick={() => onEditSection ? onEditSection(section.id) : setOpen(section.id, !sectionOpen)}
-                      >
-                        <span>{section.name}</span>
-                        <ChevronDown aria-hidden="true" />
-                      </button>
-                    </h2>
+                    <h2>{renderSectionTitle(section, sectionOpen)}</h2>
                     {section.description && <p>{section.description}</p>}
                   </div>
                 </div>
@@ -224,22 +228,12 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
                 >
                   {directItems.length > 0 && renderItems(directItems)}
                   {subsections.map((subsection, subsectionIndex) => {
-                    const subsectionOpen = isOpen(subsection.id, !isLongMenu || subsectionIndex === 0);
+                    const subsectionOpen = isOpen(subsection, !isLongMenu || subsectionIndex === 0);
                     return (
                       <section className="orbitpage-menu__subsection" id={`menu-${subsection.id}`} key={subsection.id}>
-                        <header>
-                          <h3>
-                            <button
-                              type="button"
-                              aria-expanded={onEditSection ? undefined : subsectionOpen}
-                              aria-controls={`menu-content-${subsection.id}`}
-                              title={onEditSection ? 'Edit section' : subsectionOpen ? copy.collapse : copy.expand}
-                              onClick={() => onEditSection ? onEditSection(subsection.id) : setOpen(subsection.id, !subsectionOpen)}
-                            >
-                              <span>{subsection.name}</span>
-                              <ChevronDown aria-hidden="true" />
-                            </button>
-                          </h3>
+                        <header className={renderSectionActions ? 'menu-preview-section' : undefined}>
+                          {renderSectionActions?.(subsection.id)}
+                          <h3>{renderSectionTitle(subsection, subsectionOpen)}</h3>
                           {subsection.description && <p>{subsection.description}</p>}
                         </header>
                         <div

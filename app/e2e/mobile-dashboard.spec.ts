@@ -15,7 +15,8 @@ test('moves phone preview controls below navigation and keeps menu forms and foo
   await expect(sections.getByRole('group', { name: 'Preview device' })).toHaveCount(0);
   await expect(controls.getByRole('group', { name: 'Preview device' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Menu settings', exact: true })).toHaveCount(0);
-  await expect(page.locator('.menu-preview-canvas .admin-preview-device__hardware')).toHaveCSS('border-top-width', '0px');
+  await expect(page.locator('.menu-preview-canvas .shop-device-hardware')).toHaveCSS('border-top-width', '1px');
+  await expect(page.locator('.menu-preview-canvas')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await page.getByRole('button', { name: 'Add item', exact: true }).click();
   const item = page.getByRole('dialog', { name: 'Edit item', exact: true });
   const name = item.getByRole('textbox', { name: 'Name', exact: true });
