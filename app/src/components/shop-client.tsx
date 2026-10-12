@@ -129,6 +129,7 @@ type ShopDashboard = {
     enabled: boolean;
     reviewStatus: "approved" | "pending" | "rejected";
     stripeConnected: boolean;
+    stripeAccountId?: string | null;
     stripeToolsAvailable?: boolean;
     stripeReady: boolean;
     stripeCapabilityStatus: string;
@@ -1215,9 +1216,10 @@ export default function ShopClient({
     || !(appearance.refundPolicyText || appearance.refundPolicyUrl)
     || !(appearance.withdrawalText || appearance.withdrawalUrl)
   ));
-  const stripeDashboardUrl = data.shop?.stripeLivemode === false
-    ? "https://dashboard.stripe.com/test/dashboard"
-    : "https://dashboard.stripe.com";
+  const stripeAccountId = data.shop?.stripeAccountId || data.shop?.stripeSettings?.accountId;
+  const stripeDashboardBase = `https://dashboard.stripe.com${stripeAccountId ? `/${encodeURIComponent(stripeAccountId)}` : ""}${data.shop?.stripeLivemode === false ? "/test" : ""}`;
+  const stripeDashboardUrl = `${stripeDashboardBase}/dashboard`;
+  const stripePublicDetailsUrl = `${stripeDashboardBase}/settings/business-details`;
   const inheritedDesign = data.shop?.themePreview;
   const previewDesign = appearance
     ? appearance.inheritPageTheme && inheritedDesign
@@ -1527,6 +1529,8 @@ export default function ShopClient({
                 <label><span>Public email</span><input autoComplete="email" maxLength={254} onChange={(event) => setAppearance((current) => current ? { ...current, sellerEmail: event.target.value } : current)} type="email" value={appearance.sellerEmail} /></label>
                 <label><span>Public phone <small>Optional</small></span><input autoComplete="tel" maxLength={30} onChange={(event) => setAppearance((current) => current ? { ...current, sellerPhone: event.target.value } : current)} type="tel" value={appearance.sellerPhone} /></label>
               </div>
+              <p className="shop-provider-muted">Leave Public phone empty to hide it from your OrbitPage Shop and new order emails. Stripe does not fill these fields. Existing orders keep the seller details saved at purchase.</p>
+              <p className="shop-provider-muted">Stripe Checkout, receipts and invoices use Stripe's own public details. Keep them consistent with this profile; clearing a field here does not remove it from Stripe. <a href={stripePublicDetailsUrl} rel="noreferrer" target="_blank">Review public details in Stripe</a>.</p>
               <label className="shop-seller-address"><span>Geographic address <small>Provide where required by law</small></span><textarea maxLength={300} onChange={(event) => setAppearance((current) => current ? { ...current, sellerAddress: event.target.value } : current)} rows={3} value={appearance.sellerAddress} /></label>
               </div>
               {appearance.sellerType === "trader" && <label><span>VAT, tax or business registration ID <small>When applicable</small></span><input maxLength={120} onChange={(event) => setAppearance((current) => current ? { ...current, sellerBusinessId: event.target.value } : current)} value={appearance.sellerBusinessId} /></label>}
@@ -1611,6 +1615,13 @@ export default function ShopClient({
               {(stripeCheckFailed || !shopReady) && <p>{stripeCheckFailed ? "Check your connection. Stripe status will be checked again automatically." : selfHosted ? "Use Test Mode to verify checkout before enabling live payments." : "Stripe collects your business, identity and bank details on its secure site."}</p>}
               <a className="shop-provider-docs" href={documentationUrl("connect")} rel="noreferrer" target="_blank"><HelpCircle aria-hidden="true" size={14} /> Shop and Stripe documentation</a>
             </header>
+            <div className="shop-legal-intro">
+              <p><strong>Check your public contact details</strong></p>
+              <p>Save the contacts you want customers to see in <strong>Shop settings → Compliance</strong>. OrbitPage only shows the public phone you enter there.</p>
+              {!selfHosted && <p>For a new Stripe account, saved public email and phone are prefilled. During onboarding, review any details Stripe proposes from an existing account before confirming.</p>}
+              <p>In Stripe's public details, turn off “Show phone number on receipts and invoices” if you do not want it displayed. Stripe controls this setting separately. An account shared with other shops or apps uses the same Stripe public details.</p>
+              <a className="shop-provider-docs" href={stripePublicDetailsUrl} rel="noreferrer" target="_blank"><ArrowUpRight aria-hidden="true" size={14} /> Review public details in Stripe</a>
+            </div>
             {(!selfHosted || (data.shop?.stripeConnected && !shopReady)) && <div className="shop-connect-actions">
               {!selfHosted && data.shop?.stripeConnected && <a className="button secondary" href={stripeDashboardUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Stripe Dashboard</a>}
               {data.shop?.stripeConnected && !shopReady && <button className="button secondary" disabled={action !== null} onClick={() => void refreshStripeConnection()} type="button">{action === "refresh-status" ? <LoadingIndicator size={16} /> : <RefreshCw size={16} />} Check status</button>}

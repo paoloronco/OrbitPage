@@ -2,12 +2,27 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createShopSchemas } from '../../packages/shop/schema.js';
 import { renderShopDescription } from '../../packages/shop/description.js';
-import { shopPurchasePresentation } from '../../packages/shop/render.js';
+import { shopPurchasePresentation, renderShopHtml } from '../../packages/shop/render.js';
+import { buildShopBuyerEmail } from '../../packages/shop/email.js';
 
 const { shopAppearanceInputSchema: appearance, shopProductInputSchema: product, normalizeShopAppearance } =
   createShopSchemas(z, value => /^\/uploads\/[a-zA-Z0-9._-]+$/.test(value));
 
 describe('self-hosted shared Shop contracts', () => {
+  it.each(['', '+39 011 1234567'])('shows only the explicitly configured seller phone in Shop and order emails (%s)', phone => {
+    const settings = normalizeShopAppearance({ sellerName: 'Fictional Studio', sellerPhone: phone });
+    const html = renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: settings, products: [], apiBaseUrl: '/api/shop', newsletterEndpoint: '/api/newsletter', coverUrlPrefix: '/shop/covers/' });
+    const email = buildShopBuyerEmail({ order: { orderId: 'order-fixture', productTitle: 'Guide', productType: 'digital', amountTotal: 1000, currency: 'eur', buyerEmail: 'buyer@example.test', sellerName: settings.sellerName, sellerPhone: settings.sellerPhone }, deliveryUrl: 'https://studio.example.test/download' });
+    expect(html.includes('<dt>Phone</dt>')).toBe(Boolean(phone));
+    expect(email.text.includes('Seller phone:')).toBe(Boolean(phone));
+    if (phone) {
+      expect(html).toContain(phone);
+      expect(email.text).toContain(phone);
+      expect(email.html).toContain(phone);
+    } else {
+      expect(email.html).not.toContain('Seller phone');
+    }
+  });
   it('shares the merchant theme with buyer pages without exposing private configuration', () => {
     const settings = normalizeShopAppearance({ title: 'Studio', logoUrl: '/uploads/logo.png', sellerEmail: 'studio@example.test' });
     const result = shopPurchasePresentation({ appearance: settings, shopUrl: 'https://studio.example.test/shop', theme: { background: '#101a2c', fontFamily: 'Georgia, serif', privateField: 'must-not-leak' } });

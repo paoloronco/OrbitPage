@@ -80,6 +80,16 @@ Ask **AI Assistant** to draft a product with a title, description, type and EUR 
 
 Stripe account verification does not fill these fields. You remain responsible for your products, delivery, support, taxes, invoices and applicable disclosures. Collecting a tax ID does not calculate tax or generate an invoice.
 
+### Public phone and Stripe receipts
+
+- Leave **Public phone** empty to hide it from the OrbitPage Shop and new order emails. OrbitPage does not import your Stripe identity or support phone. Existing orders retain the seller details saved at purchase.
+- Stripe Checkout, receipts and invoices use **Stripe's public business details**, which are separate from this profile. Saving or clearing a field in OrbitPage does not change that account-wide setting.
+- In **Shop settings → Stripe**, select **Review public details in Stripe**. Check the selected account, then open **Business → Business details → Public details → Edit**.
+- Match the public name, email, phone and address to the details you intend to publish. Turn off **Show phone number on receipts and invoices** if you do not want Stripe to display it there. Stripe may still require a support phone; this switch does not remove identity-verification data or control bank statements and third-party receipts.
+- If one Stripe account serves several shops or apps, its public details apply to all of them. OrbitPage does not automatically overwrite that shared profile. Keep the same intended seller contacts across those installations.
+
+See Stripe's official [receipt customization and support requirements](https://docs.stripe.com/receipts#customize-receipts). Do not confuse the seller's public phone with **Checkout → Phone**, which collects the buyer's phone.
+
 <a id="connect"></a>
 
 ## Connect Stripe
