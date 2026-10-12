@@ -111,7 +111,7 @@ export function renderShopHtml(input) {
     const tr = (english, _italian = english) => english;
     const design = resolvedShopDesign(appearance, input.theme || {});
     const policyLinks = shopPolicyLinks(appearance, input.canonicalUrl);
-    const policyNav = shopPolicies(appearance, input.canonicalUrl)
+    const policyNav = (input.previewOnly ? [] : shopPolicies(appearance, input.canonicalUrl))
         .map(({ url, title }) => `<a href="${escapeHtml(url)}" rel="noreferrer" target="_blank">${escapeHtml(title)}</a>`).join("");
     const sellerNotice = appearance.sellerType === "private"
         ? "I understand that the page owner is the seller and has declared they are not a trader. EU consumer protection rights do not apply to this contract."

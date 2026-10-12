@@ -1657,6 +1657,30 @@ describe('API Endpoints', () => {
     expect(response.text).not.toContain('href="./brand/');
   });
 
+  it.each(['', '/orbitpage'])('serves crawlable policy content and navigation at %s', async (basePath) => {
+    vi.mocked(dbGet).mockImplementation(async (sql) => {
+      if (String(sql).includes('FROM profile_data')) return { name: 'Example', privacy_policy_url: '/privacy', cookie_policy_url: '/cookies' };
+      if (String(sql).includes('FROM cookie_consent_config')) return { enabled: 0, mode: 'disabled', full_config: JSON.stringify({ legalPolicies: {
+        privacyPolicy: { mode: 'hosted', hostedText: 'Policy text <script>not executable</script>' },
+        cookiePolicy: { mode: 'embedded', embeddedCode: '<a href="https://policy.example/cookies">Policy</a><a href="javascript:alert(1)">Unsafe</a><script>embedded-secret</script>' },
+      } }) };
+      return null;
+    });
+    vi.mocked(dbAll).mockResolvedValue([]);
+    const home = await request(app).get(`${basePath}/`).set('Host', 'links.example.test');
+    expect(home.text).toContain(`href="http://links.example.test${basePath}/privacy"`);
+    expect(home.text).toContain(`href="http://links.example.test${basePath}/cookies"`);
+    const privacy = await request(app).get(`${basePath}/privacy`);
+    expect(privacy.status).toBe(200);
+    expect(privacy.text).toContain('<h1>Privacy Policy</h1>');
+    expect(privacy.text).toContain('Policy text &lt;script&gt;not executable&lt;/script&gt;');
+    expect(privacy.text).toContain(`href="${basePath}/">Back to home</a>`);
+    const cookies = await request(app).get(`${basePath}/cookies`);
+    expect(cookies.text).toContain('<h1>Cookie Policy</h1>');
+    expect(cookies.text).toContain('href="https://policy.example/cookies"');
+    expect(cookies.text).not.toMatch(/javascript:alert|embedded-secret/);
+  });
+
   it('GET /orbitpage serves the SPA with base-path-aware metadata and runtime config', async () => {
     vi.mocked(dbGet).mockResolvedValueOnce({
       name: 'Paolo',

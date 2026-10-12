@@ -30,6 +30,10 @@ In **Page**, set the page name, browser title, description, profile image, and s
 
 Dashboard, API, health, and unknown routes are excluded from indexing.
 
+The no-JavaScript fallback includes configured policy links. Local privacy and
+cookie pages include a heading, a home link and escaped hosted policy text;
+embedded providers expose safe policy links without executing their scripts.
+
 For staging or a private instance, set `SEO_INDEXING=false`. It emits `noindex, nofollow, noarchive` and restrictive robots rules. This requests that crawlers stay away; it does not protect a page from visitors.
 
 ## Sitemap
