@@ -6,13 +6,20 @@ test('aggregates session duration without duplicate views and attributes AI refe
   await openAuthenticatedAdmin(page);
   const { token } = await (await login).json();
   const headers = { Authorization: 'Bearer ' + token };
+  const prior = { visitorId: 'fictional-prior-visitor', sessionId: 'fictional-prior-' + Date.now() };
+  expect((await page.request.post('/api/analytics/events', { data: { ...prior, event: 'view' } })).status()).toBe(204);
+  expect((await page.request.post('/api/analytics/events', { data: { ...prior, event: 'engagement', durationSeconds: 20, activeSeconds: 20 } })).status()).toBe(204);
   const before = await (await page.request.get('/api/analytics?days=7', { headers })).json();
   const sessionId = 'fictional-session-' + Date.now(), visitorId = 'fictional-analytics-' + Date.now();
   for (let i = 0; i < 2; i++) expect((await page.request.post('/api/analytics/events', { data: { event: 'view', visitorId, sessionId, path: '/analytics-fixture', referrer: 'https://chatgpt.com/', utmSource: 'unrelated-campaign' } })).status()).toBe(204);
   for (const durationSeconds of [30, 90, 30]) expect((await page.request.post('/api/analytics/events', { data: { event: 'engagement', visitorId, sessionId, durationSeconds, activeSeconds: 30 } })).status()).toBe(204);
   const report = await (await page.request.get('/api/analytics?days=7', { headers })).json();
   expect(report.summary.visits).toBe(before.summary.visits + 1);
-  expect(report.summary.durationSeconds).toBe(90);
+  const previousMeasured = before.summary.engagedVisits || 0;
+  expect(report.summary.engagedVisits).toBe(previousMeasured + 1);
+  const expectedAverage = ((before.summary.durationSeconds || 0) * previousMeasured + 90) / (previousMeasured + 1);
+  // Existing consented visits are included; the API rounds their average to seconds.
+  expect(Math.abs(report.summary.durationSeconds - expectedAverage)).toBeLessThanOrEqual(1);
   expect(report.summary.aiVisits).toBe(before.summary.aiVisits + 1);
   expect(report.aiSources).toContainEqual(expect.objectContaining({ label: 'chatgpt.com' }));
   expect(report.aiSources.some(item => item.label === 'unrelated-campaign')).toBe(false);
