@@ -73,8 +73,13 @@ async function stripeConfiguration() {
   const webhookSecret = process.env.SHOP_STRIPE_WEBHOOK_SECRET?.trim() || (setting.stripe?.webhookSecret ? decryptSmtpPassword(setting.stripe.webhookSecret) : '');
   if (!/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/.test(secret)) fail(503, 'SHOP_STRIPE_NOT_CONFIGURED', 'Configure the owner’s Stripe account in Shop payments.');
   const livemode = secret.includes('_live_');
-  return { secret, webhookSecret, livemode, accountId: setting.stripe?.accountId || null, version: setting.stripe?.version,
+  return { secret, webhookSecret, livemode, retiredTestWebhookSecret: setting.stripe?.retiredTestWebhookSecret,
+    accountId: setting.stripe?.accountId || null, version: setting.stripe?.version,
     verified: setting.stripe?.credentialFingerprint === hash(secret) };
+}
+async function assertStripeConfigurationCurrent(config) {
+  const current = await stripeConfiguration();
+  if (current.version !== config.version || current.secret !== config.secret) fail(409, 'STRIPE_SETTINGS_CHANGED', 'Stripe settings changed. Retry this request.');
 }
 export async function shopStripe() {
   const config = await stripeConfiguration();
@@ -111,8 +116,24 @@ async function verifyStripeOwner(secret) {
   return { accountId: account.id, livemode, ready: !livemode || Boolean(account.charges_enabled), credentialFingerprint: hash(secret), verifiedAt: now() };
 }
 async function assertStripeOrderOwnership(owner) {
-  const foreign = await dbGet("SELECT id FROM shop_orders WHERE json_extract(data, '$.stripeAccountId') != ? OR json_extract(data, '$.stripeLivemode') != ? LIMIT 1", [owner.accountId, Number(owner.livemode)]);
-  if (foreign) fail(409, 'STRIPE_ACCOUNT_CHANGE_BLOCKED', 'Existing orders belong to the configured account and mode. Rotate a key for the same account and mode, or use a separate installation.');
+  const foreign = await dbGet("SELECT id FROM shop_orders WHERE json_extract(data, '$.stripeAccountId') IS NOT ? OR json_extract(data, '$.stripeLivemode') IS NOT ? LIMIT 1", [owner.accountId, Number(owner.livemode)]);
+  if (foreign) fail(409, 'STRIPE_ACCOUNT_CHANGE_BLOCKED', 'Existing orders belong to a different Stripe account or mode. Keep their account and mode when rotating credentials; only verified test orders can be cleared for live payments.');
+}
+async function prepareStripeModeChange(setting, owner, webhookSecret) {
+  const previous = setting.stripe;
+  if (previous?.livemode !== false || !owner.livemode) return assertStripeOrderOwnership(owner);
+  if (!owner.ready) fail(409, 'STRIPE_LIVE_NOT_READY', 'Complete Stripe account activation before switching to live payments. Your test data has been kept.');
+  const previousSecret = previous.webhookSecret ? decryptSmtpPassword(previous.webhookSecret) : '';
+  const previousFingerprint = previous.webhookSecretFingerprint || (previousSecret && hash(previousSecret));
+  if (!/^whsec_[A-Za-z0-9]+$/.test(webhookSecret) || hash(webhookSecret) === previousFingerprint) {
+    fail(400, 'STRIPE_LIVE_WEBHOOK_REQUIRED', 'Enter the signing secret of your live Stripe webhook before switching to production. Your test data has been kept.');
+  }
+  // Only a fully verified test shop can be cleared; live or unclassified orders must survive.
+  await assertStripeOrderOwnership(previous);
+  for (const table of ['shop_emails', 'shop_bookings', 'shop_events', 'shop_customers', 'shop_orders']) await dbRun(`DELETE FROM ${table}`);
+  setting.lastOrderNumber = 0;
+  // Acknowledge delayed test deliveries without processing them after switching the live secret.
+  if (previous.webhookSecret) previous.retiredTestWebhookSecret = previous.webhookSecret;
 }
 export async function configureShopStripe(raw, base) {
   const input = stripeInput.parse(raw);
@@ -125,10 +146,11 @@ export async function configureShopStripe(raw, base) {
   await withTransaction(async () => {
     const setting = await shopSettings(), previous = setting.stripe || {};
     if (previous.version !== snapshot?.version) fail(409, 'STRIPE_SETTINGS_CHANGED', 'Stripe settings changed. Refresh and retry.');
-    await assertStripeOrderOwnership(owner);
+    await prepareStripeModeChange(setting, owner, input.webhookSecret);
     setting.stripe = { ...previous, ...owner,
       secret: input.secretKey ? encryptSmtpPassword(input.secretKey) : previous.secret,
       webhookSecret: input.webhookSecret ? encryptSmtpPassword(input.webhookSecret) : previous.webhookSecret,
+      webhookSecretFingerprint: input.webhookSecret ? hash(input.webhookSecret) : previous.webhookSecretFingerprint,
       version: randomUUID(),
     };
     setting.publicBase = base;
@@ -141,10 +163,11 @@ export async function refreshShopStripe(base) {
   await withTransaction(async () => {
     const current = await stripeConfiguration();
     if (current.version !== config.version || current.secret !== config.secret) fail(409, 'STRIPE_SETTINGS_CHANGED', 'Stripe settings changed. Refresh and retry.');
-    await assertStripeOrderOwnership(owner);
     const setting = await shopSettings();
+    await prepareStripeModeChange(setting, owner, config.webhookSecret);
     // Server-managed credentials are never copied into the database.
-    setting.stripe = { ...setting.stripe, ...owner };
+    const unchanged = setting.stripe?.credentialFingerprint === owner.credentialFingerprint && setting.stripe?.webhookSecretFingerprint === hash(config.webhookSecret);
+    setting.stripe = { ...setting.stripe, ...owner, webhookSecretFingerprint: hash(config.webhookSecret), version: unchanged ? setting.stripe.version : randomUUID() };
     setting.publicBase = base;
     await saveShopSettings(setting);
   });
@@ -436,8 +459,8 @@ export async function createShopCheckout(raw, base) {
     bookingStatus: product.type === 'service' ? 'awaiting_booking' : null, intakeQuestions: product.type === 'service' ? product.intakeQuestions : [],
     intakeAnswers: [], intakeSubmittedAt: null, createdAt: timestamp, updatedAt: timestamp, paidAt: null };
   await withTransaction(async () => {
-    const current = await stripeConfiguration(), currentSetting = await shopSettings();
-    if (current.version !== config.version || current.secret !== config.secret) fail(409, 'STRIPE_SETTINGS_CHANGED', 'Stripe settings changed. Retry checkout.');
+    await assertStripeConfigurationCurrent(config);
+    const currentSetting = await shopSettings();
     if (!currentSetting.enabled) fail(404, 'SHOP_NOT_FOUND', 'Shop not found.');
     const totals = await dbGet("SELECT COUNT(*) AS count, MAX(json_extract(data, '$.orderNumber')) AS maximum FROM shop_orders");
     order.orderNumber = Math.max(currentSetting.lastOrderNumber || 0, totals.maximum || 0, totals.count) + 1;
@@ -458,7 +481,12 @@ export async function createShopCheckout(raw, base) {
       custom_text: { submit: { message: 'The seller is responsible for this product or service. OrbitPage provides the shop software.' } },
     }, { idempotencyKey: `orbitpage-shop-${orderId}` });
     if (!session.url || session.livemode !== config.livemode) throw new Error('Stripe Checkout is unavailable.');
-    await withTransaction(async () => { const current = await shopOrder(orderId); await saveShopOrder({ ...current, status: 'open', stripeCheckoutSessionId: session.id, updatedAt: now() }); });
+    await withTransaction(async () => {
+      await assertStripeConfigurationCurrent(config);
+      const current = await shopOrder(orderId);
+      if (!current) fail(404, 'SHOP_ORDER_NOT_FOUND', 'Order not found.');
+      await saveShopOrder({ ...current, status: 'open', stripeCheckoutSessionId: session.id, updatedAt: now() });
+    });
     return session.url;
   } catch (error) {
     await withTransaction(async () => { const current = await shopOrder(orderId); if (current?.status === 'creating') await saveShopOrder({ ...current, status: 'payment_failed', updatedAt: now() }); });
@@ -500,8 +528,9 @@ export async function reconcileShopPayment(orderId, sessionId) {
     if (!Number.isSafeInteger(charge.amount_refunded) || charge.amount_refunded < 0 || charge.amount_refunded > charge.amount) throw new Error('Stripe refund amount mismatch.');
   }
   return withTransaction(async () => {
+    await assertStripeConfigurationCurrent(config);
     const current = await shopOrder(orderId);
-    if (current.stripeCheckoutSessionId !== session.id || (current.paidAt && current.amountTotal !== amounts.amountTotal)) throw new Error('Stripe payment snapshot mismatch.');
+    if (!current || current.stripeCheckoutSessionId !== session.id || (current.paidAt && current.amountTotal !== amounts.amountTotal)) throw new Error('Stripe payment snapshot mismatch.');
     const refunded = Math.max(current.amountRefunded || 0, charge?.amount_refunded || 0);
     const status = current.status === 'disputed' ? 'disputed' : amounts.amountTotal > 0 && refunded >= amounts.amountTotal ? 'refunded' : refunded > 0 ? 'partially_refunded' : 'paid';
     const update = { ...current, ...amounts, status, amountRefunded: refunded, stripePaymentIntentId: intentId, stripeChargeId: charge?.id || null,
@@ -542,10 +571,19 @@ export async function processShopWebhook(rawBody, signature) {
   if (!config.webhookSecret) fail(503, 'STRIPE_WEBHOOK_NOT_CONFIGURED', 'Stripe webhook is not configured.');
   let event;
   try { event = client.webhooks.constructEvent(rawBody, signature, config.webhookSecret); }
-  catch { fail(400, 'STRIPE_SIGNATURE_INVALID', 'Invalid Stripe webhook signature.'); }
+  catch {
+    if (config.livemode && config.retiredTestWebhookSecret) {
+      try {
+        const retired = client.webhooks.constructEvent(rawBody, signature, decryptSmtpPassword(config.retiredTestWebhookSecret));
+        if (retired.livemode === false && !retired.account) return { received: true, ignored: true };
+      } catch { /* Only signed events from the retired test webhook can be ignored. */ }
+    }
+    fail(400, 'STRIPE_SIGNATURE_INVALID', 'Invalid Stripe webhook signature.');
+  }
   if (event.livemode !== config.livemode || event.account) fail(400, 'STRIPE_EVENT_SCOPE_INVALID', 'Invalid Stripe account or mode.');
   const lease = Date.now() + 5 * 60_000;
   const claimed = await withTransaction(async () => {
+    await assertStripeConfigurationCurrent(config);
     const previous = await dbGet('SELECT * FROM shop_events WHERE id = ?', [event.id]);
     if (previous?.status === 'processed') return false;
     if (previous?.lease_until > Date.now()) fail(503, 'STRIPE_EVENT_IN_PROGRESS', 'Payment update is in progress. Retry this event.');
@@ -582,7 +620,9 @@ export async function processShopWebhook(rawBody, signature) {
           const dispute = await client.disputes.retrieve(object.id);
           if (stripeObjectId(dispute.payment_intent) !== intentId || stripeObjectId(dispute.charge) !== paid.stripeChargeId) throw new Error('Stripe dispute ownership mismatch.');
           await withTransaction(async () => {
+          await assertStripeConfigurationCurrent(config);
           const current = await shopOrder(order.orderId);
+          if (!current) fail(404, 'SHOP_ORDER_NOT_FOUND', 'Order not found.');
           const won = dispute.status === 'won';
           const status = won ? current.amountRefunded >= current.amountTotal ? 'refunded' : current.amountRefunded ? 'partially_refunded' : 'paid' : 'disputed';
           await saveShopOrder({ ...current, status, updatedAt: now() });

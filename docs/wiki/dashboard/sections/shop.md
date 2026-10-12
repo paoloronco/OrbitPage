@@ -119,8 +119,13 @@ Tax ID collection is not automatic tax calculation or invoice generation.
    then select **Save and verify Stripe** below the webhook endpoint.
    This is separate from the API key and the customer-link signing secret.
    **Stripe Dashboard** opens your account in the currently configured mode.
-5. Verify the Stripe payment-status heading and complete the test checklist. For live sales,
-   use a separate live installation with matching live keys and webhook.
+5. Verify the Stripe payment-status heading and complete the test checklist.
+   To go live on the same installation, enter the live API key and the signing
+   secret of a new live webhook, then select **Save and verify Stripe**.
+   After Stripe verifies the live account is ready, OrbitPage automatically clears
+   local test orders, customers, bookings, queued emails and webhook history.
+   Live order numbering starts at 1. Products, product files, page content, Shop
+   appearance, publication, seller and SMTP settings are preserved.
 
 Restricted keys need account/balance reads, Checkout Session creation/retrieval,
 and PaymentIntent, charge and dispute reads. Customer creation and inline
@@ -132,9 +137,22 @@ See [Stripe API keys](https://docs.stripe.com/keys) and
 Alternatively set `SHOP_STRIPE_SECRET_KEY` and `SHOP_STRIPE_WEBHOOK_SECRET` on
 the server and restart. These overrides make the form read-only; **Check status**
 verifies a changed key. Never put secrets in `VITE_*`, Git or public pages.
-Once orders exist, their account and test/live mode cannot be changed: rotate
-keys within the same account/mode, or use another installation. A test card does
-not turn a live checkout into a test checkout.
+For environment-managed credentials, replace both test credentials with their
+live equivalents and use **Check status** to perform the same transition.
+Invalid credentials, an inactive live account, a missing or known test webhook
+secret or an unsuccessful database update leave test data intact. Cleanup and
+credential activation commit together; existing live or unclassified orders
+are never automatically deleted. After real orders exist, account changes and
+switching back to test mode remain blocked; key rotation within the same account
+and mode preserves orders. A test card does not turn a live checkout into a test checkout.
+
+Old test purchase/customer links stop working. Delayed test events signed with
+the previous dashboard-saved webhook secret are acknowledged without changing
+live data; disable the old test destination in Stripe when testing is complete.
+For environment-managed secrets, disable that destination before switching,
+because OrbitPage does not retain server-managed secrets. Stripe's own test
+records are preserved; already sent emails cannot be recalled. Private files
+used only by deleted test orders follow the existing automatic file cleanup.
 
 Stripe settings refresh on opening, when you return to the tab and every 30
 seconds while visible. Green **ready and configured** requires verified Stripe
@@ -318,7 +336,7 @@ See [Backups](./backups-and-demo-mode.md) and [Maintenance](../../administration
 
 ## Test checklist
 
-On a separate test installation using a Stripe sandbox/test account:
+Before going live, use a Stripe sandbox/test account on this installation:
 
 1. Check the Test mode badge, matching webhook, public URL and persisted data.
 2. Send an SMTP test; inspect inbox/spam and sender identity.
@@ -328,7 +346,9 @@ On a separate test installation using a Stripe sandbox/test account:
    and refresh. Test a service's instructions, questionnaire and booking separately.
 5. Check a promotion and 100% discount, then partial/full refunds and revoked access.
 6. Verify signed webhook deliveries and, if used, Cal.com reschedule/cancel/reminders.
-7. Unpublish/hide fixtures; keep test credentials separate from live sales.
+7. Unpublish/hide test products, then save live credentials as described above.
+   Test order/customer history is cleared automatically; products remain available
+   for editing, so enable only the real catalog before accepting live payments.
 
 See [Stripe testing](https://docs.stripe.com/testing). Test payments do not verify
 live merchant eligibility, payout readiness or real email inbox delivery.
