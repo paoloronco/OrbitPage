@@ -1,5 +1,6 @@
 "use client";
 
+import { ShopDeviceFrame } from "./ShopDeviceFrame";
 import { usePreviewDeviceSlot } from "../lib/use-preview-device-slot";
 
 import {
@@ -428,30 +429,16 @@ function ShopStorefrontPreview({
   onEditBackLink: () => void;
   onEditIdentity: () => void;
 }) {
-  const screenRef = useRef<HTMLDivElement>(null);
   const [detailsProductId, setDetailsProductId] = useState<string | null>(null);
   const detailsProduct = products.find((product) => product.productId === detailsProductId);
   const digitalLicense = shopPolicies(appearance, publicUrl).find((policy) => policy.slug === "digital-license");
-  const [viewport, setViewport] = useState({ width: 0, height: 0 });
-  const sourceWidth = device === "desktop" ? 1280 : 390;
-  const scale = viewport.width / sourceWidth;
   const title = appearance.showTitle !== false ? appearance.title : "";
   const description = appearance.showDescription !== false ? appearance.description : "";
   const compactHeader = !title && !description;
   const search = products.length > 0 && <div aria-hidden="true" className="shop-preview-search"><Search size={15} />{copy.searchProducts}</div>;
-  useEffect(() => {
-    const screen = screenRef.current;
-    if (!screen) return;
-    const observer = new ResizeObserver(() => setViewport({ width: screen.clientWidth, height: screen.clientHeight }));
-    observer.observe(screen);
-    return () => observer.disconnect();
-  }, []);
   return (
-    <div className={`shop-device-frame ${device}`} data-preview-device={device}>
-      <div className="shop-device-hardware">
-        {device === "desktop" ? <div aria-hidden="true" className="shop-device-browser"><span>● ● ●</span><small>{publicUrl.replace(/^https?:\/\//, "")}</small></div> : <span aria-hidden="true" className="shop-device-island" />}
-        <div className="shop-device-screen" ref={screenRef}>
-          <div className="shop-device-viewport" data-preview-source-width={sourceWidth} style={{ width: sourceWidth, height: scale ? viewport.height / scale : undefined, transform: `scale(${scale})`, visibility: scale ? "visible" : "hidden" }}>
+    <>
+    <ShopDeviceFrame device={device} publicUrl={publicUrl}>
     <div
       className="shop-design-preview"
       data-shop-preview-locale="en"
@@ -525,9 +512,7 @@ function ShopStorefrontPreview({
       </section>}
       <footer className="shop-preview-footer"><nav aria-label="Shop policies">{shopPolicies(appearance, publicUrl).map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>{copy.securePayments} · OrbitPage</footer>
     </div>
-          </div>
-        </div>
-      </div>
+    </ShopDeviceFrame>
       {detailsProduct && <ShopDialog className="shop-product-preview-dialog" onClose={() => setDetailsProductId(null)} title={detailsProduct.title} style={{
         "--ink": design.cardTextColor, "--muted": `color-mix(in srgb, ${design.cardTextColor} 68%, transparent)`, "--line": design.borderColor,
         "--brand": design.accentColor, "--button-ink": design.buttonTextColor,
@@ -549,7 +534,7 @@ function ShopStorefrontPreview({
           <footer className="shop-product-detail-edit"><button disabled={disabled} onClick={() => { onSelectProduct(detailsProduct.productId); setDetailsProductId(null); }} type="button">Edit product<ArrowUpRight size={16} /></button></footer>
         </div>
       </ShopDialog>}
-    </div>
+    </>
   );
 }
 

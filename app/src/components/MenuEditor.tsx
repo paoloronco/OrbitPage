@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { MenuView } from './MenuView';
-import { PreviewDeviceFrame } from './LivePreview';
+import { ShopDeviceFrame } from './ShopDeviceFrame';
 import { Download, UploadCloud } from 'lucide-react';
 import { PreviewDeviceToggle, type PreviewDevice } from './PreviewDeviceToggle';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -203,12 +203,14 @@ export function MenuEditor({
     setDialog(kind);
   };
   const cancelDialog = () => {
-    if (uploadingItem) return;
+    if (saving || uploadingItem) return;
     if (dialogSnapshot.current) { setDraft(dialogSnapshot.current); setDraftBadge(dialogBadgeSnapshot.current); }
     dialogSnapshot.current = null;
     setDialog(null);
   };
-  const applyDialog = () => { dialogSnapshot.current = null; setDialog(null); };
+  const applyDialog = async () => {
+    if (await save()) { dialogSnapshot.current = null; setDialog(null); }
+  };
   const selectedSection = useMemo(
     () => draft.sections.find((section) => section.id === selectedCategoryId) || null,
     [draft.sections, selectedCategoryId],
@@ -217,14 +219,6 @@ export function MenuEditor({
     () => draft.items.find((item) => item.id === selectedItemId) || null,
     [draft.items, selectedItemId],
   );
-  const selectedItemSiblings = useMemo(
-    () => selectedItem ? draft.items.filter((item) => item.sectionId === selectedItem.sectionId) : [],
-    [draft.items, selectedItem],
-  );
-  const selectedItemIndex = selectedItem
-    ? selectedItemSiblings.findIndex((item) => item.id === selectedItem.id)
-    : -1;
-
   useEffect(() => {
     const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
     setDraft(normalized);
@@ -262,7 +256,8 @@ useEffect(() => () => {
   };
 
   const save = async (menuToSave = draft) => {
-    if ((!isDirty && menuToSave.enabled === persistedMenu.enabled) || saving) return;
+    if (saving) return false;
+    if (menuFingerprint(menuToSave) === menuFingerprint(persistedMenu) && draftBadge === showOrbitPageBadge) return true;
     const previousMenu = structuredClone(persistedMenu);
     setSaving(true);
     setSaveError('');
@@ -271,11 +266,20 @@ useEffect(() => () => {
       await onSave(parseOrbitPageMenu(normalized), draftBadge);
       setDraft(normalized);
       showSavedNotice(previousMenu);
+      return true;
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Menu could not be saved');
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const saveChange = (producer: (current: MenuCatalog) => MenuCatalog) => {
+    if (saving || uploadingItem) return;
+    const next = normalizeMenuCatalog({ ...producer(draft), updatedAt: new Date().toISOString() }, maxItems ?? 250);
+    setDraft(next);
+    void save(next);
   };
 
   const revertUnsavedChanges = () => {
@@ -344,7 +348,6 @@ useEffect(() => () => {
 
   const addSubsection = (parentId: string) => {
     if (draft.sections.length >= 30) return;
-    openDialog('category');
     const id = makeId('subsection');
     update((current) => ({
       ...current,
@@ -356,18 +359,15 @@ useEffect(() => () => {
   };
 
   const removeSection = (sectionId: string) => {
-    setDialog(null);
+    const section = draft.sections.find((candidate) => candidate.id === sectionId);
+    if (!section || saving || (!section.parentId && rootSections.length <= 1)) return;
+    if (!window.confirm(tr('Delete “{name}”, its subsections and all their items?', 'Eliminare “{name}”, le sue sottosezioni e tutti i loro elementi?').replace('{name}', section.name))) return;
     setSelectedCategoryId(null);
-    update((current) => {
-      const removedIds = new Set([
-        sectionId,
-        ...current.sections.filter((section) => section.parentId === sectionId).map((section) => section.id),
-      ]);
-      const sections = orderedSectionTree(current.sections.filter((section) => !removedIds.has(section.id)))
-        .map((section, position) => ({ ...section, position }));
+    saveChange((current) => {
+      const removedIds = new Set([sectionId, ...current.sections.filter((candidate) => candidate.parentId === sectionId).map((candidate) => candidate.id)]);
       return {
         ...current,
-        sections,
+        sections: orderedSectionTree(current.sections.filter((candidate) => !removedIds.has(candidate.id))).map((candidate, position) => ({ ...candidate, position })),
         items: current.items.filter((item) => !removedIds.has(item.sectionId)),
       };
     });
@@ -388,15 +388,9 @@ useEffect(() => () => {
   };
 
   const removeItem = (itemId: string) => {
-    setDialog(null);
-    const remaining = draft.items.filter((candidate) => candidate.id !== itemId);
-    setSelectedItemId(remaining[0]?.id || null);
-    update((current) => ({
-      ...current,
-      items: current.items
-        .filter((candidate) => candidate.id !== itemId)
-        .map((candidate, position) => ({ ...candidate, position })),
-    }));
+    const item = draft.items.find((candidate) => candidate.id === itemId);
+    if (!item || saving || !window.confirm(tr('Delete “{name}”?', 'Eliminare “{name}”?').replace('{name}', item.name))) return;
+    saveChange((current) => ({ ...current, items: current.items.filter((candidate) => candidate.id !== itemId).map((candidate, position) => ({ ...candidate, position })) }));
   };
 
   const rootSections = useMemo(() => sectionSiblings(draft.sections), [draft.sections]);
@@ -408,15 +402,11 @@ useEffect(() => () => {
   };
 
   const renderCategoryEditor = (section: MenuSection) => {
-    const siblings = sectionSiblings(draft.sections, section.parentId);
-    const sectionIndex = siblings.findIndex((candidate) => candidate.id === section.id);
     const nested = Boolean(section.parentId);
-    const canDelete = nested || rootSections.length > 1;
     return (
       <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
             <div className="menu-category-editor__heading">
               <div>
-                <span>{nested ? tr("Edit subcategory", "Modifica sottocategoria") : tr("Edit category", "Modifica categoria")}</span>
                 <strong>{section.name || tr("Untitled category", "Categoria senza nome")}</strong>
               </div>
               <label>
@@ -453,23 +443,11 @@ useEffect(() => () => {
                 }))}
               />
             </div>
+            <label className="menu-section-collapse-setting">
+              <Switch checked={section.collapsible !== false} aria-label={tr('Allow collapsing this section', 'Consenti di chiudere questa sezione')} onCheckedChange={(collapsible) => update((current) => ({ ...current, sections: current.sections.map((candidate) => candidate.id === section.id ? { ...candidate, collapsible } : candidate) }))} />
+              <span>{tr('Allow collapsing this section', 'Consenti di chiudere questa sezione')}</span>
+            </label>
             <div className="menu-category-editor__actions">
-              <div className="menu-category-editor__order">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={sectionIndex <= 0}
-                  onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, section.id, -1) }))}
-                ><ArrowUp className="h-4 w-4" />{tr("Up", "Su")}</Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={sectionIndex < 0 || sectionIndex >= siblings.length - 1}
-                  onClick={() => update((current) => ({ ...current, sections: moveMenuSection(current.sections, section.id, 1) }))}
-                ><ArrowDown className="h-4 w-4" />{tr("Down", "Giù")}</Button>
-              </div>
               <Button
                 type="button"
                 variant="outline"
@@ -479,22 +457,7 @@ useEffect(() => () => {
               >
                 <Plus className="h-4 w-4" />{nested ? tr("Another subcategory", "Altra sottocategoria") : tr("Subcategory", "Sottocategoria")}
               </Button>
-              {canDelete && (
-                <Button type="button" variant="ghost" size="sm" className="menu-danger-action" onClick={() => removeSection(section.id)}>
-                  <Trash2 className="h-4 w-4" />{tr("Delete", "Elimina")}
-                </Button>
-              )}
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="menu-category-editor__items"
-              onClick={() => addItem(section.id)}
-            >
-              <ListTree className="h-4 w-4" />
-              <span>{tr('Add item to this section', 'Aggiungi elemento a questa sezione')}</span>
-              <strong>{draft.items.filter((item) => item.sectionId === section.id).length}</strong>
-            </Button>
       </section>
     );
   };
@@ -505,7 +468,20 @@ useEffect(() => () => {
     const siblings = draft.items.filter((candidate) => candidate.sectionId === item.sectionId);
     const index = siblings.findIndex((candidate) => candidate.id === itemId);
     const target = siblings[index + direction];
-    if (target) update((current) => ({ ...current, items: reorderMenuItems(current.items, itemId, target.id) }));
+    if (target) saveChange((current) => ({ ...current, items: reorderMenuItems(current.items, itemId, target.id) }));
+  };
+
+  const renderActions = (kind: 'item' | 'section', id: string) => {
+    const entry = kind === 'item' ? draft.items.find((item) => item.id === id)! : draft.sections.find((section) => section.id === id)!;
+    const siblings = kind === 'item' ? draft.items.filter((item) => item.sectionId === (entry as MenuItem).sectionId) : sectionSiblings(draft.sections, (entry as MenuSection).parentId);
+    const index = siblings.findIndex((candidate) => candidate.id === id);
+    const move = (direction: -1 | 1) => kind === 'item' ? moveItem(id, direction) : saveChange((current) => ({ ...current, sections: moveMenuSection(current.sections, id, direction) }));
+    const canDelete = kind === 'item' || Boolean((entry as MenuSection).parentId) || rootSections.length > 1;
+    return <div className="menu-preview-actions" role="group" aria-label={tr('Actions for {name}', 'Azioni per {name}').replace('{name}', entry.name)}>
+      <button type="button" title={tr('Move up', 'Sposta su')} aria-label={tr('Move up', 'Sposta su')} disabled={saving || index <= 0} onClick={() => move(-1)}><ArrowUp /></button>
+      <button type="button" title={tr('Move down', 'Sposta giù')} aria-label={tr('Move down', 'Sposta giù')} disabled={saving || index >= siblings.length - 1} onClick={() => move(1)}><ArrowDown /></button>
+      <button type="button" title={tr('Delete', 'Elimina')} aria-label={kind === 'item' ? tr('Delete item', 'Elimina elemento') : tr('Delete section', 'Elimina sezione')} disabled={saving || !canDelete} onClick={() => kind === 'item' ? removeItem(id) : removeSection(id)}><Trash2 /></button>
+    </div>;
   };
 
   const itemEditor = selectedItem ? (
@@ -550,16 +526,6 @@ useEffect(() => () => {
                   <div className="menu-product-flags">
                   <label><Switch checked={selectedItem.available} onCheckedChange={(available) => updateItem(selectedItem.id, { available })} /><span><strong>{tr("Available", "Disponibile")}</strong><small>{tr('Show this item to visitors', 'Mostra questo elemento ai visitatori')}</small></span></label>
                   <label><Switch checked={selectedItem.featured} onCheckedChange={(featured) => updateItem(selectedItem.id, { featured })} /><span><strong>{tr("Featured", "In evidenza")}</strong><small>{tr('Highlight it in the menu', 'Mettilo in evidenza nel menu')}</small></span></label>
-                  </div>
-                </div>
-                <div className="menu-product-editor__actions">
-                  <div className="menu-item-order-actions" aria-label={tr('Item order in category', 'Ordine dell’elemento nella categoria')}>
-                    <span>{tr('Order in category', 'Ordine nella categoria')}</span>
-                    <Button type="button" variant="outline" size="sm" disabled={selectedItemIndex <= 0} onClick={() => moveItem(selectedItem.id, -1)}><ArrowUp aria-hidden="true" className="h-4 w-4" />{tr('Move up', 'Sposta su')}</Button>
-                    <Button type="button" variant="outline" size="sm" disabled={selectedItemIndex < 0 || selectedItemIndex >= selectedItemSiblings.length - 1} onClick={() => moveItem(selectedItem.id, 1)}><ArrowDown aria-hidden="true" className="h-4 w-4" />{tr('Move down', 'Sposta giù')}</Button>
-                  </div>
-                  <div className="menu-item-save-actions">
-                    <Button type="button" variant="ghost" size="sm" className="menu-danger-action" onClick={() => removeItem(selectedItem.id)}><Trash2 aria-hidden="true" className="h-4 w-4" />{tr('Delete item', 'Elimina elemento')}</Button>
                   </div>
                 </div>
                   </article>
@@ -655,14 +621,14 @@ useEffect(() => () => {
             <div className="shop-toolbar-right"><button className="button secondary compact shop-catalog-button" aria-label={tr('Add section', 'Aggiungi sezione')} disabled={draft.sections.length >= 30} type="button" onClick={addSection}><ListTree size={14} /><span>{tr('Add section', 'Aggiungi sezione')}</span></button><button className="button primary compact shop-add-product-button" aria-label={tr('Add item', 'Aggiungi elemento')} disabled={maxItems !== null && draft.items.length >= maxItems} type="button" onClick={() => addItem()}><Plus size={16} /><span>{tr('Add item', 'Aggiungi elemento')}</span></button>{!deviceSlot && <PreviewDeviceToggle value={device} onChange={setDevice} />}</div>
           </fieldset>
           <div className={`menu-preview-workspace${activePanel === 'appearance' ? ' has-personalize' : ''}`}>
-            <section className="menu-preview-canvas" aria-label={tr('Menu preview', 'Anteprima menu')}>
-              <PreviewDeviceFrame device={device} publicPageHref="/menu"><div className="admin-menu-live-preview"><MenuView menu={draft} showOrbitPageBadge={draftBadge} onEditFooter={() => openDialog('footer')} onEditIdentity={() => openDialog('identity')} onEditSection={openCategoryEditor} onEditItem={id => { if (saving || uploadingItem) return; setSelectedItemId(id); openDialog('item'); }} /></div></PreviewDeviceFrame>
+            <section className="menu-preview-canvas shop-storefront-canvas" aria-label={tr('Menu preview', 'Anteprima menu')}>
+              <ShopDeviceFrame device={device} publicUrl="/menu"><div className="admin-menu-live-preview"><MenuView renderItemActions={id => renderActions('item', id)} renderSectionActions={id => renderActions('section', id)} menu={draft} showOrbitPageBadge={draftBadge} onEditFooter={() => openDialog('footer')} onEditIdentity={() => openDialog('identity')} onEditSection={openCategoryEditor} onEditItem={id => { if (saving || uploadingItem) return; setSelectedItemId(id); openDialog('item'); }} /></div></ShopDeviceFrame>
             </section>
             {activePanel === 'appearance' && <aside className="menu-personalize" aria-label={tr('Personalize menu', 'Personalizza menu')}><header><h3>{tr('Personalize', 'Personalizza')}</h3><Button variant="ghost" size="icon" aria-label={tr('Close Personalize', 'Chiudi Personalizza')} onClick={() => setActivePanel('content')}><X className="h-4 w-4" /></Button></header><fieldset disabled={saving}>{appearanceFields}</fieldset></aside>}
           </div>
           <Dialog open={Boolean(dialog)} onOpenChange={open => { if (!open) cancelDialog(); }}>
-            <DialogContent className="menu-editor-dialog orbitpage-admin" overlayClassName="menu-editor-dialog-overlay" dirty={popupDirty || Boolean(uploadingItem)} onEscapeKeyDown={event => { if (uploadingItem) event.preventDefault(); }}>
-              <DialogHeader><DialogTitle>{dialog === 'identity' ? tr('Menu title and description', 'Titolo e descrizione menu') : dialog === 'footer' ? tr('Footer', 'Footer') : dialog === 'category' ? tr('Edit section', 'Modifica sezione') : tr('Edit item', 'Modifica elemento')}</DialogTitle><DialogDescription>{tr('Apply your edits to the preview, then save the menu.', 'Applica le modifiche all’anteprima, poi salva il menu.')}</DialogDescription></DialogHeader>
+            <DialogContent className="menu-editor-dialog orbitpage-admin" overlayClassName="menu-editor-dialog-overlay" dirty={popupDirty || Boolean(uploadingItem)} onEscapeKeyDown={event => { if (saving || uploadingItem) event.preventDefault(); }}>
+              <DialogHeader><DialogTitle>{dialog === 'identity' ? tr('Menu title and description', 'Titolo e descrizione menu') : dialog === 'footer' ? tr('Footer', 'Footer') : dialog === 'category' ? tr('Edit section', 'Modifica sezione') : tr('Edit item', 'Modifica elemento')}</DialogTitle><DialogDescription>{tr('Applying changes saves the menu automatically.', 'Applicando le modifiche, il menu viene salvato automaticamente.')}</DialogDescription></DialogHeader>
               {saveError && dialog && <p className="menu-dialog-error" role="alert">{saveError}</p>}
               <div className="menu-editor-dialog-body"><fieldset disabled={saving || Boolean(uploadingItem)} className="menu-editor-dialog-fields">
                 {dialog === 'identity' && identityFields}
@@ -670,7 +636,7 @@ useEffect(() => () => {
                 {dialog === 'category' && selectedSection && renderCategoryEditor(selectedSection)}
                 {dialog === 'item' && itemEditor}
               </fieldset></div>
-              <DialogFooter className="menu-editor-dialog-footer"><Button variant="outline" disabled={Boolean(uploadingItem)} onClick={cancelDialog}>{tr('Cancel', 'Annulla')}</Button><Button disabled={Boolean(uploadingItem) || !draft.name.trim() || (dialog === 'category' && !selectedSection?.name.trim()) || (dialog === 'item' && !selectedItem?.name.trim())} onClick={applyDialog}>{tr('Apply', 'Applica')}</Button></DialogFooter>
+              <DialogFooter className="menu-editor-dialog-footer"><Button variant="outline" disabled={saving || Boolean(uploadingItem)} onClick={cancelDialog}>{tr('Cancel', 'Annulla')}</Button><Button disabled={saving || Boolean(uploadingItem) || !draft.name.trim() || (dialog === 'category' && !selectedSection?.name.trim()) || (dialog === 'item' && !selectedItem?.name.trim())} onClick={() => void applyDialog()}>{tr('Apply', 'Applica')}</Button></DialogFooter>
             </DialogContent>
           </Dialog>
         </>

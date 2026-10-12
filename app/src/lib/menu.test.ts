@@ -18,6 +18,17 @@ const contrast = (foreground: string, background: string) => {
 };
 
 describe('menu catalog normalization', () => {
+  it('round-trips the optional collapse setting through both backend contracts', () => {
+    const menu = createDefaultMenu();
+    menu.sections[0].collapsible = false;
+    const payload = normalizeMenuCatalog(menu);
+    expect(parseOrbitPageMenu(payload)).toEqual(parseMenuCatalog(payload));
+    expect(parseMenuCatalog(payload).sections[0].collapsible).toBe(false);
+    expect(payload.sections[1]).not.toHaveProperty('collapsible');
+    for (const parse of [parseOrbitPageMenu, parseMenuCatalog]) {
+      expect(() => parse({ ...payload, sections: [{ ...payload.sections[0], collapsible: 'false' }] })).toThrow();
+    }
+  });
   it('round-trips supported fonts through both backend contracts', () => {
     const menu = createDefaultMenu();
     for (const fontFamily of ['editorial', 'sans', 'serif', 'mono'] as const) {
