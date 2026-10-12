@@ -75,3 +75,26 @@ own preview from GitHub release assets; these binaries also stay outside Git.
 
 Dimensions and GIF encoding match the dashboard guide above. Preserve the
 fictional data and example paths when refreshing these previews.
+
+## Shop setup guide
+
+The [Shop guide](../wiki/dashboard/sections/shop.md) uses three real OSS 4.21.99
+screenshots captured on 2026-10-12 from an isolated local installation:
+
+| View | Release asset |
+| --- | --- |
+| Catalog preview | [shop-guide-catalog-4.21.99.jpg](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-catalog-4.21.99.jpg) |
+| Stripe configuration | [shop-guide-stripe-4.21.99.jpg](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-stripe-4.21.99.jpg) |
+| Shop SMTP configuration | [shop-guide-email-4.21.99.jpg](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-email-4.21.99.jpg) |
+
+Studio North, the two products, the attached workbook and `shop.example.com`
+are fictional. No Stripe or SMTP provider was connected; secret fields are empty.
+These are unmodified browser JPEG captures at the default viewport, with full-page
+captures for the Stripe and email forms so their final controls remain visible.
+The binaries remain release assets rather than files in Git.
+
+Two additional screenshots are embedded directly from Stripe's official
+[Workbench guide](https://docs.stripe.com/workbench/event-destinations), with
+attribution beside each image. They show an older Stripe interface and sample
+values; the Shop guide explicitly identifies these differences. Do not replace
+them with screenshots of a real merchant account or revealed credentials.
