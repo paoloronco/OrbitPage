@@ -15,6 +15,11 @@ export function isSafeShopBookingUrl(value) {
 }
 // Keep both backends on one contract while preserving their Zod errors and upload policy.
 export function createShopSchemas(z, isOwnedLogo) {
+    const couponCode = z.string().trim().min(2).max(40).regex(/^[a-z0-9-]+$/i, "Use letters, numbers and dashes for the coupon code.").transform(value => value.toUpperCase());
+    const shopCouponInputSchema = z.discriminatedUnion("discountType", [
+        z.object({ code: couponCode, discountType: z.literal("percent"), discount: z.number().min(0.01).max(100) }).strict(),
+        z.object({ code: couponCode, discountType: z.literal("amount"), discount: z.number().int().min(1).max(1_000_000) }).strict(),
+    ]);
     const shopAiDraftSchema = z.object({
         productId: z.string().uuid(), type: z.enum(["digital", "service"]),
         title: z.string().trim().min(2).max(90), description: z.string().trim().min(2).max(SHOP_DESCRIPTION_LIMIT),
@@ -187,7 +192,7 @@ export function createShopSchemas(z, isOwnedLogo) {
         const parsed = shopProductCardStyleStorageSchema.safeParse(candidate);
         return parsed.success ? parsed.data : shopProductCardStyleStorageSchema.parse({});
     }
-    return { shopAiDraftSchema, shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle };
+    return { shopAiDraftSchema, shopCouponInputSchema, shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle };
 }
 
 export function shopComplianceReady(appearance) {

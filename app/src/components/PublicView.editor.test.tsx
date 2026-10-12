@@ -131,7 +131,8 @@ describe("PublicView visual editor targets", () => {
     expect(html).toContain(`data-card-layout-item="${PROFILE_CARD_LAYOUT_ID}"`);
     expect(html).toContain('data-card-layout-position="0,0,49,456"');
     expect(html).toContain('data-card-layout-position="51,0,49,120"');
-    expect(html).toContain('data-card-content-layout-position="16,0,68,24"');
+    expect(html).toContain('data-card-content-layout-item="title"');
+    expect(html).not.toContain('public-link-card--free-layout');
   });
 
   it("starts desktop arrangement at the same centered width as the public theme", () => {

@@ -933,8 +933,8 @@ export const LinkManager = ({
   const allBlockLibraryItems = blockLibraryCategories.flatMap((category) => category.items);
   const quickAddGroups = [
     { id: "basics", label: tr("Most used", "Più usati"), itemIds: ["link", "internal-links", "heading", "text"] },
-    { id: "social", label: tr("Social & contact", "Social e contatti"), itemIds: ["instagram", "whatsapp", "facebook"] },
-    { id: "tools", label: tr("Forms & tools", "Moduli e strumenti"), itemIds: ["calendly", "typeform", "github"] },
+    { id: "social", label: tr("Social & contact", "Social e contatti"), itemIds: ["instagram", "whatsapp", "facebook", "tiktok"] },
+    { id: "tools", label: tr("Forms & tools", "Moduli e strumenti"), itemIds: ["calendly", "google-forms", "typeform", "google-calendar", "github", "loom"] },
   ];
   const visibleBlockCount = visibleBlockLibraryCategories.reduce((total, category) => total + category.items.length, 0);
 

@@ -16,3 +16,8 @@ its own uploaded-media paths. This preserves backend error handling and prevents
 the self-hosted upload rule from widening the hosted media boundary.
 
 `description.js` and `policies.js` own public formatting and legal navigation.
+
+`stripe.js` supplies bounded account activity and coupon operations. The calling
+server verifies the owner, account and mode before passing its Stripe client and
+account-scoped options. Coupon creation uses stable idempotency keys; financial
+responses exclude customer identities and bank details.

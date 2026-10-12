@@ -8527,6 +8527,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   overflow: visible;
 }
 
+.public-card-stack--layout-editing .page-card-layout__surface > * {
+  transition: none;
+}
+
 .page-card-layout__surface--profile > .public-editor-target--profile,
 .page-card-layout__surface--profile .profile-card {
   width: 100%;

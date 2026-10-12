@@ -186,6 +186,7 @@ export function VisualSiteEditor({
           </button>
         ))}
         <div className="visual-site-editor__toolbar-actions visual-site-editor__section-actions">
+          {section === "shop" && <div data-orbitpage-shop-preview-device-slot />}
           {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
             <button
               className="visual-site-editor__layout-toggle"
@@ -223,7 +224,7 @@ export function VisualSiteEditor({
           <span role="status">
             <GripVertical aria-hidden="true" size={17} />
             <strong>{device === "mobile" ? tr("Mobile layout", "Layout mobile") : tr("Desktop layout", "Layout desktop")}</strong>
-            <span>{tr("Drag with the handles. Cards move out of the way automatically, sizes snap to presets, and text alignment is available on each text block.", "Trascina dalle maniglie. Le card si spostano automaticamente, le dimensioni seguono valori predefiniti e ogni testo può essere allineato direttamente.")}</span>
+            <span>{tr("Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.", "Trascina le card dalle maniglie. Ridimensiona a una larghezza predefinita; usa le frecce per regolazioni precise.")}</span>
           </span>
         </div>
       )}

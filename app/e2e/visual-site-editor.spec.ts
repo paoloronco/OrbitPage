@@ -57,6 +57,10 @@ test("Site section navigation stays in place across Page, Content, Menu, Shop an
   for (const label of ["Page", "Content", "Menu", "Shop", "Pages"]) {
     await sections.getByRole("button", { name: label, exact: true }).click();
     await page.evaluate(() => window.scrollTo(0, 0));
+    if (label === "Shop") {
+      await expect(page.locator('[data-orbitpage-shop-preview-device-slot]').getByRole("group", { name: "Preview device" })).toBeVisible();
+      await expect(page.locator('.shop-workspace .shop-preview-device-toolbar')).toHaveCount(0);
+    }
     measurements.push({ label, ...(await geometry()) });
   }
   for (const measurement of measurements.slice(1)) {
@@ -156,7 +160,7 @@ test("Arrange uses preset sizes, compact handles and persistent text alignment",
   await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
   await expect.poll(async () => {
     const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
-    return [25, 33.25, 39, 40, 50, 66.75, 75, 100].includes(resized[2]);
+    return [25, 39, 50, 75, 100].includes(resized[2]);
   }).toBe(true);
 
   await contentSaveButton(page).click();
@@ -202,6 +206,50 @@ test("card resize returns to its default width and Revert restores Arrange", asy
   await page.locator(".admin-profile-save-float").getByRole("button", { name: "Revert" }).click();
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
   await expect.poll(width).toBe(defaultWidth);
+});
+
+test("Arrange keeps long card text in its original alignment and full width", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await openAuthenticatedAdmin(page);
+  await page.getByRole("button", { name: "Content", exact: true }).click();
+  await page.getByRole("button", { name: "Add content" }).click();
+  await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
+  await saveEditorChanges(page);
+  const preview = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
+  const { editor, id } = await openPreviewContentCard(page, preview);
+  await editor.getByPlaceholder("Link title").fill("A long card title that uses all the available width and wraps onto more than one line");
+  await editor.getByPlaceholder("Block description").fill("A complete description with useful details for visitors. ".repeat(5));
+  await saveEditorChanges(page);
+  const textBounds = () => preview.locator('[data-card-content-layout-item="title"] h3').evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.x, width: rect.width, height: rect.height, align: getComputedStyle(element).textAlign, clamp: getComputedStyle(element).webkitLineClamp };
+  });
+  const before = await textBounds();
+  await page.getByRole("button", { name: "Arrange", exact: true }).click();
+  const card = page.locator(`[data-card-layout-item="${id}"]`);
+  const after = await card.locator('h3').evaluate(element => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.x, width: rect.width, height: rect.height, align: getComputedStyle(element).textAlign, clamp: getComputedStyle(element).webkitLineClamp };
+  });
+  expect(Math.abs(after.x - before.x)).toBeLessThan(2);
+  expect(Math.abs(after.width - before.width)).toBeLessThan(2);
+  expect(Math.abs(after.height - before.height)).toBeLessThan(2);
+  expect(after.align).toBe(before.align === "start" ? "left" : before.align);
+  expect(after.clamp).toBe("none");
+  const resize = card.getByRole("button", { name: /^Resize card/ });
+  await resize.press("ArrowLeft");
+  await resize.press("ArrowLeft");
+  await expect.poll(() => card.evaluate(element => {
+    const title = element.querySelector('h3')!.getBoundingClientRect();
+    const description = element.querySelector('[data-card-content-layout-item="description"] p')!.getBoundingClientRect();
+    return title.bottom <= description.top && description.bottom <= element.getBoundingClientRect().bottom;
+  })).toBe(true);
+  await resize.press("ArrowUp");
+  await expect.poll(() => card.evaluate(element => element.querySelector('[data-card-content-layout-item="description"] p')!.getBoundingClientRect().bottom <= element.getBoundingClientRect().bottom)).toBe(true);
+  await card.getByRole("button", { name: /^Move card/ }).press("ArrowRight");
+  await saveEditorChanges(page);
+  await page.reload();
+  await expect(page.locator(`[data-public-editor-link-id="${id}"] h3`)).toHaveText("A long card title that uses all the available width and wraps onto more than one line");
 });
 
 test("Visual editor keeps mobile navigation and destinations explicit", async ({ page }) => {

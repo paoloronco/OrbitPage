@@ -16,7 +16,6 @@ import {
   Link2,
   MailPlus,
   Mail,
-  Monitor,
   PackagePlus,
   Palette,
   RefreshCw,
@@ -24,7 +23,6 @@ import {
   Search,
   ShieldCheck,
   Settings,
-  Smartphone,
   ShoppingBag,
   ShoppingCart,
   Trash2,
@@ -51,6 +49,8 @@ import { Save } from "./ui/material-icons";
 import RestartAltRounded from "@mui/icons-material/RestartAltRounded";
 import Tooltip from "@mui/material/Tooltip";
 import AccountInfo, { type AccountInfoData } from "./account-info";
+import { ShopCoupons, ShopStripeAccount } from "./ShopStripeTools";
+import { PreviewDeviceToggle } from "./PreviewDeviceToggle";
 
 type ShopProduct = {
   productId: string;
@@ -126,6 +126,7 @@ type ShopDashboard = {
     enabled: boolean;
     reviewStatus: "approved" | "pending" | "rejected";
     stripeConnected: boolean;
+    stripeToolsAvailable?: boolean;
     stripeReady: boolean;
     stripeCapabilityStatus: string;
     stripeLivemode: boolean | null;
@@ -658,6 +659,7 @@ export default function ShopClient({
 }: ShopClientProps) {
   const requestInfo = useCallback(() => request<AccountInfoData>("/api/shop/info"), [request]);
   const [data, setData] = useState<ShopDashboard | null>(null);
+  const hasLegacyFees = !selfHosted && Boolean(data?.orders.some(order => order.applicationFeeAmount > 0 || (order.applicationFeeRefunded || 0) > 0));
   const dashboardRef = useRef(data);
   const [stripeCheckFailed, setStripeCheckFailed] = useState(false);
   const [draft, setDraft] = useState<ProductDraft>(EMPTY_PRODUCT);
@@ -673,12 +675,14 @@ export default function ShopClient({
   const view = requestedView === "legal" || requestedView === "payments" ? "settings" : requestedView;
   const setView = useCallback((next: ShopView) => { setLocalView(next); onViewChange?.(next); }, [onViewChange]);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [previewDeviceSlot, setPreviewDeviceSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setPreviewDeviceSlot(embedded ? document.querySelector<HTMLElement>("[data-orbitpage-shop-preview-device-slot]") : null); }, [embedded]);
   const [appearance, setAppearance] = useState<ShopAppearance | null>(null);
   const [policyDrafts, setPolicyDrafts] = useState<Partial<Record<typeof SHOP_POLICIES[number]["slug"], { source: "hosted" | "external"; text: string; url: string }>>>({});
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; text: string; code?: string } | null>(null);
   const [copiedCalendarField, setCopiedCalendarField] = useState<"url" | "secret" | null>(null);
   const [calendarCopyError, setCalendarCopyError] = useState("");
-  const [settingsTab, setSettingsTab] = useState<"compliance" | "stripe" | "calendar" | "checkout" | "email" | "info">("compliance");
+  const [settingsTab, setSettingsTab] = useState<"compliance" | "coupons" | "stripe" | "calendar" | "checkout" | "email" | "info">("compliance");
   const [smtpDraft, setSmtpDraft] = useState<ShopEmailDraft | null>(null);
   const [themeMode, setThemeMode] = useState<"presets" | "custom">("presets");
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
@@ -716,7 +720,6 @@ export default function ShopClient({
   const maxFileLabel = useMemo(() => fileSize(data?.limits.maxFileBytes || 0), [data?.limits.maxFileBytes]);
   const savedProductFiles = (data?.products.find(product => product.productId === draft.productId)?.files || []).filter(file => !draft.removedFileIds.includes(file.id));
   const previewCopy = storefrontCopy((english) => english);
-  const previewInstructions = "Click a product to preview its details. Click the title, description, logo or back link to edit.";
 
   const load = useCallback(async (refresh = false) => {
     setLoading(true);
@@ -1468,6 +1471,8 @@ export default function ShopClient({
   </fieldset></form>;
   return (
     <section className={embedded ? "shop-workspace embedded" : "shop-workspace"} lang="en-US" dir="ltr">
+      {editingStorefront && previewDeviceSlot && createPortal(<PreviewDeviceToggle value={device} onChange={setDevice} />, previewDeviceSlot)}
+      {editingStorefront && !previewDeviceSlot && <div className="shop-preview-device-toolbar"><PreviewDeviceToggle value={device} onChange={setDevice} /></div>}
       {!embedded && <header className="shop-command-bar">
         <div className="shop-command-copy">
           {!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"><ChevronLeft size={16} /> Content</button>}
@@ -1496,14 +1501,22 @@ export default function ShopClient({
 
       {editingStorefront && appearance && previewDesign && <div className={"shop-storefront-workspace" + (view === "design" || productEditorOpen ? " has-inspector" : "")}>
         <section aria-label="Shop preview" className="shop-storefront-canvas">
-          <div className="shop-preview-controls"><span title={previewInstructions}>{previewInstructions}</span><div aria-label="Preview device" className="shop-device-toggle" role="group"><button aria-label="Mobile preview" aria-pressed={device === "mobile"} onClick={() => setDevice("mobile")} title="Mobile preview" type="button"><Smartphone size={17} /></button><button aria-label="Desktop preview" aria-pressed={device === "desktop"} onClick={() => setDevice("desktop")} title="Desktop preview" type="button"><Monitor size={17} /></button></div></div>
           <ShopStorefrontPreview appearance={{ ...appearance, logoUrl: logoPreviewUrl || appearance.logoUrl }} canAddProduct={data.products.length < data.limits.maxProducts} copy={previewCopy} design={previewDesign} device={device} disabled={action !== null} onAddProduct={openNewProduct} onEditLogo={() => setLogoDialogOpen(true)} onEditBackLink={() => { setBackLinkDraft(appearance.backLinkLabel || previewCopy.back); setBackLinkDialogOpen(true); }} onEditIdentity={() => setIdentityDialogOpen(true)} onSelectProduct={selectProduct} products={previewProducts} publicUrl={data.shop?.publicUrl || window.location.origin} selectedProductId={productEditorOpen ? draft.productId || "draft-product" : undefined} surface={previewSurface} />
 
         </section>
         {view === "design" ? <aside aria-label="Personalization" id="shop-personalization">{customizationPanel}</aside> : productEditorOpen && <aside aria-label="Product editor" className="panel shop-catalog-panel is-editing" id="shop-catalog">{productEditor}</aside>}
       </div>}
 
-      {view === "settings" && <nav aria-label="Shop settings sections" className="shop-settings-tabs"><button aria-current={settingsTab === "compliance" ? "page" : undefined} onClick={() => setSettingsTab("compliance")} type="button"><ShieldCheck size={15} /> Compliance</button><button aria-current={settingsTab === "checkout" ? "page" : undefined} onClick={() => setSettingsTab("checkout")} type="button"><ShoppingCart size={15} /> Checkout</button><button aria-current={settingsTab === "stripe" ? "page" : undefined} onClick={() => setSettingsTab("stripe")} type="button"><CreditCard size={15} /> Stripe</button><button aria-current={settingsTab === "email" ? "page" : undefined} onClick={() => setSettingsTab("email")} type="button"><Mail size={15} /> Email</button><button aria-current={settingsTab === "calendar" ? "page" : undefined} onClick={() => setSettingsTab("calendar")} type="button"><CalendarDays size={15} /> Calendar</button><button aria-current={settingsTab === "info" ? "page" : undefined} onClick={() => setSettingsTab("info")} type="button"><Info size={15} /> INFO</button></nav>}
+      {view === "settings" && <nav aria-label="Shop settings sections" className="shop-settings-tabs">
+        <button aria-current={settingsTab === "compliance" ? "page" : undefined} onClick={() => setSettingsTab("compliance")} type="button"><ShieldCheck size={15} /> Compliance</button>
+        <button aria-current={settingsTab === "coupons" ? "page" : undefined} onClick={() => setSettingsTab("coupons")} type="button"><ReceiptText size={15} /> Coupons</button>
+        <button aria-current={settingsTab === "checkout" ? "page" : undefined} onClick={() => setSettingsTab("checkout")} type="button"><ShoppingCart size={15} /> Checkout</button>
+        <button aria-current={settingsTab === "stripe" ? "page" : undefined} onClick={() => setSettingsTab("stripe")} type="button"><CreditCard size={15} /> Stripe</button>
+        <button aria-current={settingsTab === "email" ? "page" : undefined} onClick={() => setSettingsTab("email")} type="button"><Mail size={15} /> Email</button>
+        <button aria-current={settingsTab === "calendar" ? "page" : undefined} onClick={() => setSettingsTab("calendar")} type="button"><CalendarDays size={15} /> Calendar</button>
+        <button aria-current={settingsTab === "info" ? "page" : undefined} onClick={() => setSettingsTab("info")} type="button"><Info size={15} /> INFO</button>
+      </nav>}
+      {view === "settings" && settingsTab === "coupons" && (data.shop?.stripeToolsAvailable === false ? <p className="shop-provider-muted">Stripe account management is available to Shop editors.</p> : <ShopCoupons request={request} connected={Boolean(data.shop?.stripeConnected)} onConnect={() => setSettingsTab("stripe")} dashboardUrl={stripeDashboardUrl} />)}
       {view === "settings" && settingsTab === "info" && <AccountInfo request={requestInfo} tr={infoTranslator} documentationUrl={documentationUrl("info")} faqUrl={selfHosted ? "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/faq.md" : "/en-US/#faq"} />}
       {(view === "orders" || view === "customers") && <nav aria-label="Sales" className="shop-sales-tabs"><button aria-current={view === "orders" ? "page" : undefined} onClick={() => setView("orders")} type="button"><ReceiptText size={16} /> Orders</button><button aria-current={view === "customers" ? "page" : undefined} onClick={() => setView("customers")} type="button">Customers</button></nav>}
 
@@ -1564,15 +1577,14 @@ export default function ShopClient({
             <label>Business name<select onChange={event => updateCheckout({ businessName: event.target.value as ShopAppearance["checkout"]["businessName"] })} value={appearance.checkout.businessName}><option value="off">Not collected</option><option value="optional">Optional</option><option value="required">Required</option></select><small>Stripe may also request a business name with tax IDs.</small></label>
             <label>Tax ID / VAT number<select onChange={event => updateCheckout({ taxId: event.target.value as ShopAppearance["checkout"]["taxId"] })} value={appearance.checkout.taxId}><option value="off">Not collected</option><option value="optional">Optional</option><option value="if_supported">Required where supported by Stripe</option></select><small>Collection follows Stripe's supported billing countries.</small></label>
           </div>
-          <div className="shop-section-heading"><h3>Additional fields</h3><span>{appearance.checkout.customFields.length} / 3</span></div>
-          <p className="shop-provider-muted">Add text or numbers needed for the order, such as a project or purchase reference. Stripe allows up to three custom fields; do not use them for sensitive or protected information.</p>
+          <div className="shop-checkout-fields-heading"><div><h4>Additional fields</h4><p className="shop-provider-muted">Up to three text or number fields for order references. Keep sensitive information out.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkout.customFields.length >= 3} onClick={() => updateCheckout({ customFields: [...appearance.checkout.customFields, { key: crypto.randomUUID().replaceAll("-", ""), label: "", type: "text", required: false }] })} type="button"><PackagePlus size={16} /> Add field</button></div>
+          {appearance.checkout.customFields.length === 0 && <p className="shop-checkout-fields-empty">No additional fields. Customers see only the checkout details selected above.</p>}
           {appearance.checkout.customFields.map((field, index) => <div className="shop-option-grid shop-checkout-custom-field" key={field.key}>
             <label>Field {index + 1} label<input maxLength={50} onChange={event => updateCheckout({ customFields: appearance.checkout.customFields.map(item => item.key === field.key ? { ...item, label: event.target.value } : item) })} placeholder="e.g. Project reference" required value={field.label} /></label>
             <label>Field {index + 1} type<select onChange={event => updateCheckout({ customFields: appearance.checkout.customFields.map(item => item.key === field.key ? { ...item, type: event.target.value as "text" | "numeric" } : item) })} value={field.type}><option value="text">Text</option><option value="numeric">Numbers only</option></select></label>
             <label>Field {index + 1} requirement<select onChange={event => updateCheckout({ customFields: appearance.checkout.customFields.map(item => item.key === field.key ? { ...item, required: event.target.value === "required" } : item) })} value={field.required ? "required" : "optional"}><option value="optional">Optional</option><option value="required">Required</option></select></label>
             <button aria-label={`Remove field ${index + 1}`} className="shop-delete-button" onClick={() => updateCheckout({ customFields: appearance.checkout.customFields.filter(item => item.key !== field.key) })} type="button"><Trash2 size={17} /></button>
           </div>)}
-          <button className="button secondary shop-checkout-add" disabled={appearance.checkout.customFields.length >= 3} onClick={() => updateCheckout({ customFields: [...appearance.checkout.customFields, { key: crypto.randomUUID().replaceAll("-", ""), label: "", type: "text", required: false }] })} type="button"><PackagePlus size={16} /> Add field</button>
           <p className="shop-provider-muted">Save to apply these settings to new checkouts. Existing orders keep the information collected at purchase.</p>
         </fieldset>
       </form>}
@@ -1618,11 +1630,7 @@ export default function ShopClient({
             </div>}
             {selfHosted && <OwnerStripeSettings dashboardUrl={stripeDashboardUrl} onSaved={next => { setStripeCheckFailed(false); setData(next); }} request={request} saved={data.shop?.stripeSettings} />}
             {data.mode !== "stripe" && <p className="shop-feedback error">Shop is not configured on this OrbitPage deployment yet.</p>}
-            <div className="shop-payment-notes">
-              {!selfHosted && <div><Euro size={20} /><span><strong>{data.limits.feePercent}% OrbitPage fee</strong><small>Applied only to successful sales and returned proportionally on refunds.</small></span></div>}
-              <div><ShieldCheck size={20} /><span><strong>Stripe-hosted verification</strong><small>Identity and bank details stay on Stripe. OrbitPage never stores your payout credentials.</small></span></div>
-              <div><ReceiptText size={20} /><span><strong>Coupons enabled</strong><small>Create promotion codes in Stripe Dashboard. Customers can enter them during Checkout.</small></span></div>
-            </div>
+            {data.shop?.stripeConnected && data.shop.stripeToolsAvailable !== false && <ShopStripeAccount request={request} dashboardUrl={stripeDashboardUrl} />}
           </section>}
           {settingsTab === "calendar" && <section aria-labelledby="shop-calendar-title" className="shop-provider-panel">
             <header className="shop-provider-heading">
@@ -1644,7 +1652,7 @@ export default function ShopClient({
 
 
       {view === "orders" && <section className="panel shop-orders-panel">
-        <div className="shop-section-heading"><div><h3>Recent sales <ShopHelp label="About recent sales" text="Completed Stripe payments will appear here automatically." /></h3></div>{!selfHosted && <span>OrbitPage fee: {data.limits.feePercent}%</span>}</div>
+        <div className="shop-section-heading"><div><h3>Recent sales <ShopHelp label="About recent sales" text="Completed Stripe payments will appear here automatically." /></h3></div></div>
         {data.orders.length === 0 ? <div className="shop-empty compact"><ShoppingBag size={24} /><strong>No orders yet</strong></div> : <>
           <div aria-label="Order filters" className="shop-catalog-filters shop-sales-filters" role="group">
             <label>Search orders<input onChange={event => setOrderFilters(current => ({ ...current, query: event.target.value }))} placeholder="Order, product, name or email" type="search" value={orderFilters.query} /></label>
@@ -1664,7 +1672,7 @@ export default function ShopClient({
                 <ShopSortHeader column="customer" label="Customer" onSort={sortOrders} sort={orderSort} />
                 <ShopSortHeader column="payment" label="Payment" onSort={sortOrders} sort={orderSort} />
                 <ShopSortHeader column="total" label="Total" numeric onSort={sortOrders} sort={orderSort} />
-                <th className="shop-catalog-price" scope="col">Refunded</th>{!selfHosted && <th className="shop-catalog-price" scope="col">OrbitPage fee</th>}<th scope="col">Delivery / booking</th><th scope="col">Details</th>
+                <th className="shop-catalog-price" scope="col">Refunded</th>{hasLegacyFees && <th className="shop-catalog-price" scope="col">Previous platform fee</th>}<th scope="col">Delivery / booking</th><th scope="col">Details</th>
               </tr></thead>
               <tbody>{orderRows.map(order => <tr key={order.orderId}>
                 <th scope="row"><code title={order.orderId}>{shopOrderLabel(order)}</code></th>
@@ -1674,7 +1682,7 @@ export default function ShopClient({
                 <td><span className={`shop-order-status ${order.status}`}>{order.status.replaceAll("_", " ")}</span></td>
                 <td className="shop-catalog-price">{money(order.amountTotal, locale)}</td>
                 <td className="shop-catalog-price">{money(order.amountRefunded || 0, locale)}</td>
-                {!selfHosted && <td className="shop-catalog-price">{money(order.applicationFeeAmount, locale)}{!!order.applicationFeeRefunded && <small>{money(order.applicationFeeRefunded, locale)} refunded</small>}</td>}
+                {hasLegacyFees && <td className="shop-catalog-price">{money(order.applicationFeeAmount, locale)}{!!order.applicationFeeRefunded && <small>{money(order.applicationFeeRefunded, locale)} refunded</small>}</td>}
                 <td>{order.productType === "service" ? <><span className="shop-sales-booking-status">{(order.bookingStatus || "awaiting_booking").replaceAll("_", " ")}</span><small>{order.sessionsRemaining} / {order.sessionsIncluded} sessions remaining</small>{order.scheduledStartAt && <small>{shopDate(order.scheduledStartAt, locale)}</small>}</> : `${order.downloadCount} ${order.downloadCount === 1 ? "download" : "downloads"}`}</td>
                 <td><button aria-label={`View order ${shopOrderLabel(order)}`} className="shop-catalog-edit" onClick={() => setSelectedOrder(order)} type="button">View<ArrowUpRight size={14} /></button>{order.intakeSubmittedAt && <small>Questionnaire received</small>}</td>
               </tr>)}</tbody>
@@ -1683,7 +1691,7 @@ export default function ShopClient({
           </div>
           {data.orders.length >= 100 && <p className="shop-sales-scope">The latest 100 orders are loaded. Filters apply to these records.</p>}
         </>}
-        {!selfHosted && <p className="shop-fee-note">Stripe processing fees are charged separately to the seller. OrbitPage retains 5% only on successful sales and returns its fee proportionally when a payment is refunded.</p>}
+        {!selfHosted && <p className="shop-fee-note">OrbitPage does not charge fees on Shop sales. Stripe processing fees still apply.</p>}
       </section>}
 
       {view === "customers" && <section className="panel shop-orders-panel">
@@ -1731,7 +1739,7 @@ export default function ShopClient({
           {selectedOrder.buyerDetails?.customFields.map(field => <div key={field.key}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}
           <div><dt>Created</dt><dd>{shopDate(selectedOrder.createdAt, locale)}</dd></div><div><dt>Paid</dt><dd>{shopDate(selectedOrder.paidAt, locale)}</dd></div>
           <div><dt>Original total</dt><dd>{money(selectedOrder.amountTotal, locale)}</dd></div><div><dt>Refunded</dt><dd>{money(selectedOrder.amountRefunded || 0, locale)}</dd></div>
-          {!selfHosted && <><div><dt>OrbitPage fee</dt><dd>{money(selectedOrder.applicationFeeAmount, locale)}</dd></div><div><dt>Fee refunded</dt><dd>{money(selectedOrder.applicationFeeRefunded || 0, locale)}</dd></div></>}
+          {!selfHosted && selectedOrder.applicationFeeAmount > 0 && <><div><dt>Previous platform fee</dt><dd>{money(selectedOrder.applicationFeeAmount, locale)}</dd></div><div><dt>Fee refunded</dt><dd>{money(selectedOrder.applicationFeeRefunded || 0, locale)}</dd></div></>}
           {selectedOrder.productType === "service" ? <><div><dt>Booking status</dt><dd className="shop-sales-booking-status">{(selectedOrder.bookingStatus || "awaiting_booking").replaceAll("_", " ")}</dd></div><div><dt>Scheduled start</dt><dd>{shopDate(selectedOrder.scheduledStartAt, locale)}</dd></div><div><dt>Sessions remaining</dt><dd>{selectedOrder.sessionsRemaining} / {selectedOrder.sessionsIncluded}</dd></div></> : <div><dt>Downloads</dt><dd>{selectedOrder.downloadCount}</dd></div>}
         </dl>
         {selectedOrder.intakeAnswers.length > 0 && <section className="shop-order-intake"><h3>Questionnaire</h3>{selectedOrder.intakeAnswers.map(answer => <p key={answer.questionId}><strong>{selectedOrder.intakeQuestions.find(question => question.id === answer.questionId)?.prompt || answer.questionId}</strong><span>{answer.answer}</span></p>)}</section>}

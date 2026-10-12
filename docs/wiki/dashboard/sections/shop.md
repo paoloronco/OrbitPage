@@ -4,6 +4,12 @@ One installation runs one shop with the owner's Stripe account. Self-hosting
 uses SQLite, private files and the instance's configured Shop SMTP server. It
 needs no OrbitPage account, Firebase, R2 or OrbitPage Stripe Connect account.
 OrbitPage charges no platform fee; Stripe's fees and account eligibility apply.
+The mobile/desktop preview switcher sits at the right of the site-section menu.
+Stripe settings show account balances and up to 50 recent transactions, including
+amounts, fees and net values, without exposing customer or bank details.
+**Coupons**, before **Checkout**, creates percentage or fixed-EUR discount codes
+for Stripe Checkout. Restricted keys need coupon/promotion-code write access and
+balance-transaction read access as well as the existing payment permissions.
 The catalog, editor, delivery and customer pages share the hosted implementation.
 
 Only administrators with `users:manage` can manage commerce. Demo mode allows

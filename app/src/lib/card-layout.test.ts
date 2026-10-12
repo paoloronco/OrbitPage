@@ -47,11 +47,12 @@ describe("responsive card layout", () => {
     expect(normalizeCardLayout(updated, cards, "desktop").contents?.large).toBeDefined();
   });
 
-  it("centers every default card text region", () => {
+  it("uses the full text width by default and reserves one column for icons", () => {
     const layout = normalizeCardContentLayout();
 
     for (const item of ["title", "description", "url"] as const) {
-      expect(layout.positions[item].x + layout.positions[item].width / 2).toBe(50);
+      expect(layout.positions[item]).toMatchObject({ x: 0, width: 100 });
+      expect(normalizeCardContentLayout(undefined, true).positions[item]).toMatchObject({ x: 16, width: 84 });
     }
   });
 
@@ -111,9 +112,10 @@ describe("responsive card layout", () => {
 
   it("keeps the actual default width among resize stops", () => {
     const initial = { x: 30.5, y: 0, width: 39, height: 100 };
-    expect(stepCardLayoutWidth(39, 1, 38.89)).toBe(40);
-    expect(stepCardLayoutWidth(40, -1, 38.89)).toBe(39);
+    expect(stepCardLayoutWidth(39, 1, 38.89)).toBe(50);
+    expect(stepCardLayoutWidth(50, -1, 38.89)).toBe(39);
     expect(snapCardLayoutSize({ ...initial, width: 39 }, 38.89).width).toBe(39);
+    expect(snapCardLayoutSize({ ...initial, height: 98 }, 38.89, 100).height).toBe(144);
   });
 
   it("rejects overlap while still allowing movement on a free axis", () => {

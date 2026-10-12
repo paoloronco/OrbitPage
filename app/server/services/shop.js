@@ -10,6 +10,7 @@ import { getDirectorySizeBytes, getUploadStorageQuotaBytes } from './upload-poli
 import { encryptSmtpPassword, decryptSmtpPassword, newsletterComplianceReady } from './newsletter.js';
 import { createShopSchemas, shopComplianceReady } from '../../packages/shop/schema.js';
 import { checkoutAmounts, assertCheckoutCharge, stripeObjectId, stripeTaxIdCollection, stripeNameCollection } from '../../packages/shop/payments.js';
+import { readStripeShopOverview, listStripeShopCoupons, createStripeShopCoupon, ShopCouponError } from '../../packages/shop/stripe.js';
 import { validateShopFile, matchesShopFileSignature } from '../../packages/shop/files.js';
 import { renderShopHtml, renderShopMarkdown, shopPolicyLinks, resolvedShopDesign, buildShopHomeLinks, shopPurchasePresentation } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail, buildShopSellerEmail } from '../../packages/shop/email.js';
@@ -18,7 +19,7 @@ export const SHOP_FILE_BYTES = 50 * 1024 * 1024;
 export const SHOP_MAX_PRODUCTS = 20;
 export const shopDataDir = process.env.DATA_DIR || dirname(fileURLToPath(new URL('../server.js', import.meta.url)));
 export const shopFilesPath = join(shopDataDir, 'shop-files');
-export const { shopAiDraftSchema, shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z,
+export const { shopAiDraftSchema, shopCouponInputSchema, shopProductInputSchema, shopAppearanceInputSchema, normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z,
   value => /^\/uploads\/shop-logo-[a-f0-9-]{36}\.(png|jpg|webp|avif|gif)$/.test(value));
 const uuid = z.string().uuid();
 const now = () => new Date().toISOString();
@@ -81,6 +82,27 @@ export async function shopStripe() {
   return { client: new Stripe(config.secret, { apiVersion: '2026-06-24.dahlia', maxNetworkRetries: 2, timeout: 20_000 }), config };
 }
 const stripeInput = z.object({ secretKey: z.string().max(300).default(''), webhookSecret: z.string().max(300).default('') }).strict();
+export async function shopStripeOverview() {
+  const { client, config } = await shopStripe();
+  const account = await client.accounts.retrieve();
+  if (account.id !== config.accountId) fail(409, 'STRIPE_SETTINGS_CHANGED', 'Verify the Stripe account before using it.');
+  const overview = await readStripeShopOverview(client, {}, account.id, account.business_profile?.name || account.company?.name || account.id);
+  if (overview.livemode !== config.livemode) fail(409, 'STRIPE_MODE_MISMATCH', 'Stripe returned financial data in the wrong mode.');
+  return overview;
+}
+export async function shopCoupons() {
+  const { client } = await shopStripe();
+  return listStripeShopCoupons(client, {});
+}
+export async function saveShopCoupon(raw) {
+  const input = shopCouponInputSchema.parse(raw);
+  const { client, config } = await shopStripe();
+  try { return await createStripeShopCoupon(client, {}, input, config.accountId); }
+  catch (error) {
+    if (error instanceof ShopCouponError) fail(error.status, error.code, error.message);
+    throw error;
+  }
+}
 async function verifyStripeOwner(secret) {
   const client = new Stripe(secret, { apiVersion: '2026-06-24.dahlia', maxNetworkRetries: 2, timeout: 20_000 });
   const [account, balance] = await Promise.all([client.accounts.retrieve(), client.balance.retrieve()]);
