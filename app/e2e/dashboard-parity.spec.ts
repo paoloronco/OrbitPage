@@ -643,18 +643,20 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await setupGrid.getByRole('button', { name: 'Cancel', exact: true }).click();
 });
 
-test('keeps product labels shared with SaaS while localizing section descriptions', async ({ page }) => {
+test('keeps product labels shared with SaaS without repeating localized section introductions', async ({ page }) => {
   await page.addInitScript(() => window.localStorage.setItem('orbitpage.locale', 'it'));
   await openAuthenticatedAdmin(page);
 
   await expect(page.getByRole('button', { name: 'Editor sito', exact: true })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Sezioni del sito' }).getByRole('button', { name: 'Contenuti', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Theme', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Editor sito', exact: true })).toBeVisible();
-  await expect(page.getByText('Modifica identità e contenuti direttamente sulla pagina reale.', { exact: true })).toBeVisible();
+  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Editor sito');
+  await expect(page.locator('.admin-dashboard-header h1')).toHaveClass('sr-only');
+  await expect(page.getByText('Modifica identità e contenuti direttamente sulla pagina reale.', { exact: true })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Team', exact: true }).click();
-  await expect(page.getByText("Assegna a ogni collaboratore solo l'accesso necessario.", { exact: true })).toBeVisible();
+  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Team');
+  await expect(page.getByText("Assegna a ogni collaboratore solo l'accesso necessario.", { exact: true })).toHaveCount(0);
   const members = page.locator('.team-overview-panel');
   const tokens = page.locator('.account-api-token-panel');
   await expect(members.getByRole('heading', { name: 'Membri del workspace', exact: true })).toHaveCSS('font-size', '16px');
@@ -672,5 +674,6 @@ test('keeps product labels shared with SaaS while localizing section description
   await page.setViewportSize({ width: 1280, height: 720 });
 
   await page.getByRole('button', { name: 'Account', exact: true }).click();
-  await expect(page.getByText('Gestisci identità, sicurezza e workspace attivo.', { exact: true })).toBeVisible();
+  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Account');
+  await expect(page.getByText('Gestisci identità, sicurezza e workspace attivo.', { exact: true })).toHaveCount(0);
 });
