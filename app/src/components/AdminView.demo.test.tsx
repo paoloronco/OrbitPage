@@ -363,7 +363,7 @@ describe('AdminView demo mode', () => {
     mockState.integratedHostedSurface = false;
   });
 
-  it.each([false, true])('respects the host-provided section description for hosted=%s', (hosted) => {
+  it.each([false, true])('omits visible section introductions for hosted=%s', (hosted) => {
     const description = 'Localized hosted section description';
     mockState.integratedHostedSurface = hosted;
     mockState.hostedConfig = hosted ? { section: 'profile', sectionDescription: description } : null;
@@ -382,8 +382,11 @@ describe('AdminView demo mode', () => {
           onLogout={vi.fn()}
         />
       );
-      expect(html).toContain(hosted ? description : 'Edit identity and content directly on your real page.');
-      if (!hosted) expect(html).not.toContain(description);
+      expect(html).toContain('<h1 class="sr-only">Site editor</h1>');
+      expect(html).not.toContain('admin-dashboard-heading-row');
+      expect(html).not.toContain('admin-dashboard-section-description');
+      expect(html).not.toContain('Edit identity and content directly on your real page.');
+      expect(html).not.toContain(description);
     } finally {
       mockState.hostedConfig = null;
       mockState.integratedHostedSurface = false;
