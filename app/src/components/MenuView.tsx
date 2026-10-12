@@ -8,12 +8,14 @@ interface MenuViewProps {
   menu: MenuCatalog;
   pageHref?: string;
   selectedSectionId?: string;
+  showOrbitPageBadge?: boolean;
+  onEditFooter?: () => void;
   onEditIdentity?: () => void;
   onEditSection?: (id: string) => void;
   onEditItem?: (id: string) => void;
 }
 
-export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId = '', onEditIdentity, onEditSection, onEditItem }: MenuViewProps) {
+export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId = '', showOrbitPageBadge = true, onEditFooter, onEditIdentity, onEditSection, onEditItem }: MenuViewProps) {
   const [query, setQuery] = useState('');
   const [sectionState, setSectionState] = useState<Record<string, boolean>>({});
   const sections = [...menu.sections]
@@ -271,8 +273,8 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
         )}
 
         <footer className="orbitpage-menu__footer">
-          {menu.footerText && <span>{menu.footerText}</span>}
-          <a href="https://orbitpage.com" rel="noopener noreferrer">Made with OrbitPage</a>
+          {onEditFooter ? <button className="menu-preview-edit" aria-label="Edit menu footer" onClick={onEditFooter} type="button">{menu.footerText || (isItalian ? 'Testo del footer' : 'Footer text')}</button> : menu.footerText && <span>{menu.footerText}</span>}
+          {showOrbitPageBadge && <a href="https://orbitpage.com" rel="noopener noreferrer" onClick={onEditFooter ? event => { event.preventDefault(); onEditFooter(); } : undefined}>Made with OrbitPage</a>}
         </footer>
       </div>
     </main>

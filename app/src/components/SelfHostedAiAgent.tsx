@@ -1,3 +1,5 @@
+
+import { keepMobileInputVisible } from '@/lib/mobile-keyboard-focus';
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Send, ShieldCheck, Sparkles, Trash2, X } from "@/components/ui/material-icons";
@@ -41,6 +43,8 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [loadedHistoryKey, setLoadedHistoryKey] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => composerRef.current ? keepMobileInputVisible(composerRef.current) : undefined, [open]);
   const listRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -189,6 +193,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
 
           <form className="ai-page-agent-composer" onSubmit={submit}>
             <textarea
+              ref={composerRef}
               aria-label={labels.placeholder}
               disabled={sending || settings?.configured !== true}
               maxLength={4000}

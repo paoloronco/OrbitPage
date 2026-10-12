@@ -1112,3 +1112,13 @@ html:has(.admin-visual-editor-enabled) {
     padding: 44px 12px 16px;
   }
 }
+
+.visual-site-editor__preview-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.visual-site-editor__preview-controls > :last-child { margin-left: auto; }
+
+.visual-site-editor__preview-controls > .visual-site-editor__preview-toggle { width: auto; flex: 0 1 auto; }

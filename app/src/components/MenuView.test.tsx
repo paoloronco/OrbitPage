@@ -4,6 +4,13 @@ import { createDefaultMenu } from '@/lib/menu';
 import { MenuView } from './MenuView';
 
 describe('MenuView subsections', () => {
+  it('uses the page branding choice and exposes editable footer text in the preview', () => {
+    const menu = createDefaultMenu();
+    const html = renderToStaticMarkup(<MenuView menu={menu} showOrbitPageBadge={false} onEditFooter={() => {}} />);
+    expect(html).not.toContain('Made with OrbitPage');
+    expect(html).toContain('Edit menu footer');
+    expect(html).toContain(menu.footerText);
+  });
   it('renders products beneath their subsection and exposes a direct section link', () => {
     const menu = createDefaultMenu('bar');
     menu.enabled = true;

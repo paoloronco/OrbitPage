@@ -615,6 +615,7 @@ export function CookieBanner({ config }: CookieBannerProps) {
       type="button"
       onClick={() => setPrefsOpen(true)}
       title={cfg.texts.reopenLabel || 'Cookie preferences'}
+      data-orbitpage-cookie-ui
       aria-label={cfg.texts.reopenLabel || 'Cookie preferences'}
       style={{
         position: 'fixed',
