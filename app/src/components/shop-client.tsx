@@ -622,11 +622,12 @@ export type ShopClientProps = {
   infoTranslator?: (english: string, italian: string) => string;
 };
 
-function OwnerStripeSettings({ request, saved, onSaved, dashboardUrl }: { request: ShopRequest; saved: NonNullable<ShopDashboard["shop"]>["stripeSettings"]; onSaved: (data: ShopDashboard) => void; dashboardUrl: string }) {
+function OwnerStripeSettings({ request, saved, livemode, onSaved, dashboardUrl }: { request: ShopRequest; saved: NonNullable<ShopDashboard["shop"]>["stripeSettings"]; livemode: boolean | null; onSaved: (data: ShopDashboard) => void; dashboardUrl: string }) {
   const [secretKey, setSecretKey] = useState("");
   const [webhookSecret, setWebhookSecret] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const goingLive = livemode === false && /^(sk|rk)_live_/.test(secretKey.trim());
   async function save(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {
@@ -643,10 +644,11 @@ function OwnerStripeSettings({ request, saved, onSaved, dashboardUrl }: { reques
     <fieldset disabled={busy}>
       {saved?.environmentManaged ? <p className="shop-provider-muted">Stripe credentials are configured through server environment variables.</p> : <div className="shop-option-grid">
         <label>Stripe secret API key<input autoComplete="new-password" maxLength={300} onChange={event => setSecretKey(event.target.value)} placeholder={saved?.configured ? "Saved key · leave blank to keep" : "sk_test_… or sk_live_…"} required={!saved?.configured} spellCheck={false} type="password" value={secretKey} /></label>
-        <label>Webhook signing secret<input autoComplete="new-password" maxLength={300} onChange={event => setWebhookSecret(event.target.value)} placeholder={saved?.webhookConfigured ? "Saved secret · leave blank to keep" : "whsec_…"} spellCheck={false} type="password" value={webhookSecret} /></label>
+        <label>Webhook signing secret<input autoComplete="new-password" maxLength={300} onChange={event => setWebhookSecret(event.target.value)} placeholder={goingLive ? "Signing secret of your live webhook" : saved?.webhookConfigured ? "Saved secret · leave blank to keep" : "whsec_…"} required={goingLive} spellCheck={false} type="password" value={webhookSecret} /></label>
       </div>}
       {saved?.webhookUrl && <div className="shop-calendar-field"><label htmlFor="shop-stripe-webhook-url">Stripe webhook endpoint</label><input id="shop-stripe-webhook-url" onFocus={event => event.currentTarget.select()} readOnly value={saved.webhookUrl} /></div>}
       <p className="shop-provider-muted">Create a webhook in the same Stripe account and mode using this endpoint{!saved?.environmentManaged && ", then enter its signing secret above"}. Subscribe to checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, checkout.session.expired, charge.refunded, charge.dispute.created and charge.dispute.closed.</p>
+      {goingLive && <p className="shop-feedback" role="status">Saving live credentials automatically clears test orders, customers, bookings and queued emails. Your products, files and shop settings are kept, and live order numbering starts at 1.</p>}
       {saved?.accountId && <small>Account: {saved.accountId}</small>}
       {!saved?.environmentManaged && <button className="button primary" disabled={busy} type="submit">{busy ? <LoadingIndicator size={16} /> : <Save size={16} />} Save and verify Stripe</button>}
     </fieldset>
@@ -1629,9 +1631,9 @@ export default function ShopClient({
               {data.shop?.stripeConnected && !shopReady && <button className="button secondary" disabled={action !== null} onClick={() => void refreshStripeConnection()} type="button">{action === "refresh-status" ? <LoadingIndicator size={16} /> : <RefreshCw size={16} />} Check status</button>}
               {!selfHosted && <button className="button primary" disabled={action !== null || data.mode !== "stripe"} onClick={() => void connectStripe()} type="button">{action === "connect" ? <LoadingIndicator size={16} /> : <ArrowUpRight size={16} />}{data.shop?.stripeConnected ? "Update Stripe details" : "Connect Stripe"}</button>}
             </div>}
-            {selfHosted && <OwnerStripeSettings dashboardUrl={stripeDashboardUrl} onSaved={next => { setStripeCheckFailed(false); setData(next); }} request={request} saved={data.shop?.stripeSettings} />}
+            {selfHosted && <OwnerStripeSettings dashboardUrl={stripeDashboardUrl} livemode={data.shop?.stripeLivemode ?? null} onSaved={next => { setStripeCheckFailed(false); setData(next); }} request={request} saved={data.shop?.stripeSettings} />}
             {data.mode !== "stripe" && <p className="shop-feedback error">Shop is not configured on this OrbitPage deployment yet.</p>}
-            {data.shop?.stripeConnected && data.shop.stripeToolsAvailable !== false && <ShopStripeAccount request={request} dashboardUrl={stripeDashboardUrl} />}
+            {data.shop?.stripeConnected && data.shop.stripeToolsAvailable !== false && <ShopStripeAccount key={`${data.shop.stripeSettings?.accountId}:${data.shop.stripeLivemode}`} request={request} dashboardUrl={stripeDashboardUrl} />}
           </section>}
           {settingsTab === "calendar" && <section aria-labelledby="shop-calendar-title" className="shop-provider-panel">
             <header className="shop-provider-heading">

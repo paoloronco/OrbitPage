@@ -77,6 +77,16 @@ test('OSS edits products and storefront before setup while requiring Compliance,
   await expect(shop.getByRole('link', { name: 'Open shop', exact: true })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(testMode).toBeVisible();
+  await shop.getByLabel('Stripe secret API key').fill('sk_live_syntheticfixture');
+  const transitionNotice = shop.getByRole('status').filter({ hasText: 'automatically clears test orders' });
+  await expect(transitionNotice).toBeVisible();
+  await expect(transitionNotice).toContainText('Your products, files and shop settings are kept');
+  await expect(shop.getByLabel('Webhook signing secret')).toHaveAttribute('required', '');
+  expect(await shop.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  await shop.getByLabel('Stripe secret API key').fill('sk_test_rotatedfixture');
+  await expect(transitionNotice).toHaveCount(0);
+  await expect(shop.getByLabel('Webhook signing secret')).not.toHaveAttribute('required', '');
+  await shop.getByLabel('Stripe secret API key').fill('');
   await expect(testMode).toHaveCSS('border-top-width', '0px');
   await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toHaveCount(0);
   expect(await shop.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -14,16 +14,16 @@ vi.mock('stripe', async () => {
   return { default: class {
     constructor(key) {
       this.webhooks = webhooks;
-      this.accounts = { retrieve: async () => { if (key === 'sk_test_invalid') throw new Error('Invalid credential'); return { id: key === 'sk_test_foreign' ? 'acct_other' : 'acct_owner', charges_enabled: true }; } };
+      this.accounts = { retrieve: async () => { if (key.endsWith('_invalid')) throw new Error('Invalid credential'); return { id: key.endsWith('_foreign') ? 'acct_other' : 'acct_owner', charges_enabled: key !== 'sk_live_inactive' }; } };
       this.balance = { retrieve: async () => ({ livemode: key.includes('_live_') }) };
       this.checkout = { sessions: {
-        create: async (input, options) => { provider.creates.push({ input, options }); const id = `cs_test_${randomUUID().replaceAll('-', '')}`;
-          const session = { id, livemode: false, url: `https://checkout.stripe.com/test/${id}`, mode: 'payment', status: 'open', payment_status: 'unpaid', metadata: input.metadata,
+        create: async (input, options) => { provider.creates.push({ input, options }); await provider.beforeCreate?.(); const id = `cs_${key.includes('_live_') ? 'live' : 'test'}_${randomUUID().replaceAll('-', '')}`;
+          const session = { id, livemode: key.includes('_live_'), url: `https://checkout.stripe.com/test/${id}`, mode: 'payment', status: 'open', payment_status: 'unpaid', metadata: input.metadata,
             amount_subtotal: input.line_items[0].price_data.unit_amount, amount_total: input.line_items[0].price_data.unit_amount,
             total_details: { amount_discount: 0, amount_tax: 0, amount_shipping: null }, currency: 'eur', payment_intent: null,
             customer_details: { email: 'synthetic@example.com', name: 'Synthetic Buyer' } };
           provider.sessions.set(id, session); return session; },
-        retrieve: async id => provider.sessions.get(id),
+        retrieve: async id => { await provider.beforeRetrieve?.(); return provider.sessions.get(id); },
         list: async input => ({ data: [...provider.sessions.values()].filter(session => session.payment_intent === input.payment_intent) }),
       } };
       this.paymentIntents = { retrieve: async id => provider.intents.get(id) };
@@ -50,6 +50,7 @@ delete process.env.SHOP_STRIPE_WEBHOOK_SECRET;
 let db, shop, lifecycle, app, auth, adminToken;
 const base = 'https://shop.example.com';
 const hookSecret = 'whsec_syntheticfixture';
+const liveHookSecret = 'whsec_livesyntheticfixture';
 beforeAll(async () => {
   db = await import('../database.js'); await db.initializeDatabase();
   shop = await import('./shop.js'); lifecycle = await import('./shop-lifecycle.js'); auth = await import('../auth.js');
@@ -60,6 +61,7 @@ beforeAll(async () => {
   app = express(); app.use('/api/shop', createShopWebhookRouter({ demoMode: false })); app.use(express.json()); app.use(express.urlencoded({ extended: true }));
   app.use('/api/shop', createShopRouter({ demoMode: false, publicBase: () => base })); app.use('/shop', createShopPublicRouter({ publicBase: () => base }));
 });
+
 afterAll(async () => {
   if (db) await new Promise(resolve => db.default.close(resolve)); rmSync(dataDir, { recursive: true, force: true });
 });
@@ -86,9 +88,9 @@ async function newCheckout(productId, discount = 0, paid = true) {
   }
   return session;
 }
-async function webhook(type, object, id = `evt_${randomUUID()}`, override = {}) {
+async function webhook(type, object, id = `evt_${randomUUID()}`, override = {}, secret = hookSecret) {
   const payload = JSON.stringify({ id, object: 'event', type, livemode: false, data: { object }, ...override });
-  const signature = provider.signing.generateTestHeaderString({ payload, secret: hookSecret });
+  const signature = provider.signing.generateTestHeaderString({ payload, secret });
   return request(app).post('/api/shop/webhook').set('Content-Type', 'application/json').set('stripe-signature', signature).send(payload);
 }
 describe('Shop SQLite integration with signed webhooks and simulated provider responses', () => {
@@ -210,7 +212,7 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     await expect(shop.configureShopStripe({ secretKey: 'sk_test_invalid' }, base)).rejects.toThrow();
     expect((await shop.shopSettings()).stripe).toEqual(before);
     await expect(shop.configureShopStripe({ secretKey: 'sk_test_foreign' }, base)).rejects.toMatchObject({ code: 'STRIPE_ACCOUNT_CHANGE_BLOCKED' });
-    await expect(shop.configureShopStripe({ secretKey: 'sk_live_syntheticfixture' }, base)).rejects.toMatchObject({ code: 'STRIPE_ACCOUNT_CHANGE_BLOCKED' });
+    await expect(shop.configureShopStripe({ secretKey: 'sk_live_syntheticfixture' }, base)).rejects.toMatchObject({ code: 'STRIPE_LIVE_WEBHOOK_REQUIRED' });
     await shop.configureShopStripe({ secretKey: 'sk_test_rotatedfixture' }, base);
     expect((await shop.shopSettings()).stripe.accountId).toBe('acct_owner');
     process.env.SHOP_STRIPE_SECRET_KEY = 'sk_test_foreign';
@@ -324,5 +326,125 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     await db.initializeDatabase();
     expect((await shop.shopSettings()).stripe.accountId).toBe('acct_owner');
     expect((await db.dbGet('SELECT COUNT(*) AS count FROM shop_orders')).count).toBe(ordersBefore);
+  });
+});
+
+describe('automatic Stripe test-to-live transition', () => {
+  const transactionTables = ['shop_orders', 'shop_customers', 'shop_bookings', 'shop_emails', 'shop_events'];
+  let productId, session, order, baseline;
+  const goLive = (input = {}) => shop.configureShopStripe({ secretKey: 'sk_live_syntheticfixture', webhookSecret: liveHookSecret, ...input }, base);
+  const snapshot = async () => Object.fromEntries(await Promise.all([...transactionTables, 'shop_settings'].map(async table => [table, await db.dbAll(`SELECT * FROM ${table} ORDER BY rowid`)])));
+  const expectEmpty = async () => {
+    for (const table of transactionTables) expect(await db.dbAll(`SELECT * FROM ${table}`), table).toEqual([]);
+  };
+  beforeAll(async () => {
+    productId = (await shop.shopProducts()).find(product => product.active && product.type === 'digital' && product.files.length)?.productId;
+    baseline = await shop.shopSettings();
+  });
+  beforeEach(async () => {
+    provider.beforeCreate = null; provider.beforeRetrieve = null;
+    for (const table of transactionTables) await db.dbRun(`DELETE FROM ${table}`);
+    await shop.saveShopSettings({ ...baseline, stripe: null, lastOrderNumber: 0, enabled: true });
+    await shop.configureShopStripe({ secretKey: 'sk_test_syntheticfixture', webhookSecret: hookSecret }, base);
+    session = await newCheckout(productId);
+    expect((await webhook('checkout.session.completed', session)).status).toBe(200);
+    order = await shop.shopOrder(session.metadata.orbitpageOrderId);
+    await db.dbRun('INSERT INTO shop_bookings (id, order_id, data) VALUES (?, ?, ?)', ['test-booking', order.orderId, JSON.stringify({ status: 'confirmed' })]);
+    for (const table of transactionTables) expect((await db.dbAll(`SELECT * FROM ${table}`)).length, table).toBeGreaterThan(0);
+  });
+  it('clears test commerce data atomically, retains the catalog and settings, and fulfills live order number one', async () => {
+    const customer = await shop.shopCustomer(order.customerId), portal = shop.customerPortalToken(customer, [order.orderId]);
+    const products = await shop.shopProducts(), settings = await shop.shopSettings();
+    const profile = await db.dbAll('SELECT * FROM profile_data'), files = await db.dbAll('SELECT * FROM shop_files');
+    const response = await request(app).post('/api/shop/stripe').auth(adminToken, { type: 'bearer' }).send({ secretKey: 'sk_live_syntheticfixture', webhookSecret: liveHookSecret });
+    expect(response.status).toBe(200);
+    expect(response.body.shop).toMatchObject({ stripeReady: true, stripeLivemode: true });
+    expect(response.body.orders).toEqual([]); expect(response.body.customers).toEqual([]);
+    await expectEmpty();
+    expect(await shop.shopSettings()).toMatchObject({ enabled: true, lastOrderNumber: 0, appearance: settings.appearance, email: settings.email });
+    expect(await shop.shopProducts()).toEqual(products);
+    expect(await db.dbAll('SELECT * FROM shop_files')).toEqual(files);
+    expect(await db.dbAll('SELECT * FROM profile_data')).toEqual(profile);
+    for (const product of products) for (const file of product.files) expect(existsSync(shop.shopFilePath(file.id))).toBe(true);
+    await expect(lifecycle.getShopCustomerPortal(portal)).rejects.toThrow('no longer active');
+    await expect(shop.shopDelivery(shop.deliveryTokenForOrder(order.orderId))).rejects.toThrow();
+    expect(JSON.stringify(response.body)).not.toMatch(/whsec_|sk_live_|retiredTestWebhookSecret/);
+    expect((await db.dbGet('SELECT data FROM shop_settings')).data).not.toMatch(/whsec_|sk_live_/);
+    const liveSession = await newCheckout(productId);
+    expect((await webhook('checkout.session.completed', liveSession, undefined, { livemode: true }, liveHookSecret)).status).toBe(200);
+    const liveOrder = await shop.shopOrder(liveSession.metadata.orbitpageOrderId);
+    expect(liveOrder).toMatchObject({ status: 'paid', orderNumber: 1, stripeLivemode: true, stripeAccountId: 'acct_owner' });
+    const beforeRotation = await snapshot();
+    await shop.configureShopStripe({ secretKey: 'sk_live_rotatedfixture' }, base);
+    const version = (await shop.shopSettings()).stripe.version;
+    await shop.refreshShopStripe(base); await shop.refreshShopStripe(base);
+    expect((await shop.shopSettings()).stripe.version).toBe(version);
+    for (const table of transactionTables) expect((await snapshot())[table]).toEqual(beforeRotation[table]);
+    await expect(shop.configureShopStripe({ secretKey: 'sk_test_syntheticfixture' }, base)).rejects.toMatchObject({ code: 'STRIPE_ACCOUNT_CHANGE_BLOCKED' });
+    await expect(goLive({ secretKey: 'sk_live_foreign' })).rejects.toMatchObject({ code: 'STRIPE_ACCOUNT_CHANGE_BLOCKED' });
+    expect(await shop.shopOrder(liveOrder.orderId)).toEqual(liveOrder);
+  });
+  it.each([
+    ['invalid API key', { secretKey: 'sk_live_invalid' }],
+    ['inactive live account', { secretKey: 'sk_live_inactive' }],
+    ['missing live webhook', { webhookSecret: '' }],
+    ['reused test webhook', { webhookSecret: hookSecret }],
+  ])('keeps every test record and credential after %s', async (_name, input) => {
+    const before = await snapshot();
+    await expect(goLive(input)).rejects.toThrow();
+    expect(await snapshot()).toEqual(before);
+  });
+  it.each([{ stripeLivemode: true }, { stripeLivemode: undefined }, { stripeAccountId: 'acct_unrelated' }])('never clears live or unclassified orders (%j)', async change => {
+    await shop.saveShopOrder({ ...order, ...change });
+    const before = await snapshot();
+    await expect(goLive()).rejects.toMatchObject({ code: 'STRIPE_ACCOUNT_CHANGE_BLOCKED' });
+    expect(await snapshot()).toEqual(before);
+  });
+  it('rolls back all cleanup if persisting the live configuration fails', async () => {
+    const before = await snapshot();
+    await db.dbRun("CREATE TRIGGER fail_live_settings BEFORE UPDATE ON shop_settings WHEN json_extract(NEW.data, '$.stripe.livemode') = 1 BEGIN SELECT RAISE(ABORT, 'synthetic settings failure'); END");
+    try { await expect(goLive()).rejects.toThrow('synthetic settings failure'); }
+    finally { await db.dbRun('DROP TRIGGER fail_live_settings'); }
+    expect(await snapshot()).toEqual(before);
+  });
+  it('allows a different live account after clearing verified tests and ignores only correctly signed retired test events', async () => {
+    await goLive({ secretKey: 'sk_live_foreign' });
+    expect((await shop.shopSettings()).stripe.accountId).toBe('acct_other');
+    expect((await webhook('checkout.session.completed', session)).body).toEqual({ received: true, ignored: true });
+    expect((await webhook('checkout.session.completed', session, undefined, { livemode: true })).status).toBe(400);
+    expect((await webhook('checkout.session.completed', session, undefined, { account: 'acct_other' })).status).toBe(400);
+    expect((await webhook('checkout.session.completed', session, undefined, {}, 'whsec_invalid')).status).toBe(400);
+    await expectEmpty();
+  });
+  it('clears test data when verifying updated environment credentials without persisting those credentials', async () => {
+    process.env.SHOP_STRIPE_SECRET_KEY = 'sk_live_environmentfixture';
+    process.env.SHOP_STRIPE_WEBHOOK_SECRET = hookSecret;
+    try {
+      const before = await snapshot();
+      await expect(shop.refreshShopStripe(base)).rejects.toMatchObject({ code: 'STRIPE_LIVE_WEBHOOK_REQUIRED' });
+      expect(await snapshot()).toEqual(before);
+      process.env.SHOP_STRIPE_WEBHOOK_SECRET = liveHookSecret;
+      await shop.refreshShopStripe(base);
+      await expectEmpty();
+      expect((await shop.shopSettings()).stripe).toMatchObject({ accountId: 'acct_owner', livemode: true });
+      const { decryptSmtpPassword } = await import('./newsletter.js');
+      expect(decryptSmtpPassword((await shop.shopSettings()).stripe.secret)).toBe('sk_test_syntheticfixture');
+      expect((await db.dbGet('SELECT data FROM shop_settings')).data).not.toContain('sk_live_environmentfixture');
+    } finally { delete process.env.SHOP_STRIPE_SECRET_KEY; delete process.env.SHOP_STRIPE_WEBHOOK_SECRET; }
+  });
+  it.each(['checkout', 'payment'])('does not recreate test records when a %s request completes after the transition', async operation => {
+    let started, release;
+    const entered = new Promise(resolve => { started = resolve; }), pending = new Promise(resolve => { release = resolve; });
+    const hook = operation === 'checkout' ? 'beforeCreate' : 'beforeRetrieve';
+    provider[hook] = async () => { started(); await pending; };
+    const work = operation === 'checkout'
+      ? shop.createShopCheckout({ productId, sellerNoticeAcknowledged: true, digitalContentConsent: true }, base)
+      : shop.reconcileShopPayment(order.orderId, session.id);
+    const result = work.catch(error => error);
+    await entered;
+    try { await goLive(); }
+    finally { release(); provider[hook] = null; }
+    expect(await result).toMatchObject({ code: 'STRIPE_SETTINGS_CHANGED' });
+    await expectEmpty();
   });
 });
