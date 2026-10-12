@@ -1937,7 +1937,9 @@ describe('API Endpoints', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([{ label: 'Homepage', value: 4 }])
       .mockResolvedValueOnce([{ label: '/', value: 12 }])
-      .mockResolvedValueOnce([{ label: '/menu', value: 3 }]);
+      .mockResolvedValueOnce([{ label: '/menu', value: 3 }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([]);
 
     const response = await request(app).get('/api/analytics?days=7');
 
@@ -1959,6 +1961,7 @@ describe('API Endpoints', () => {
     const response = await request(app)
       .post('/api/analytics/events')
       .set('User-Agent', 'Mozilla/5.0 (iPhone; Mobile)')
+      .set('CF-IPCountry', 'IT')
       .send({
         event: 'view',
         visitorId: 'visitor-1',
@@ -1969,9 +1972,37 @@ describe('API Endpoints', () => {
 
     expect(response.status).toBe(204);
     expect(dbRun).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO analytics_events'),
-      ['view', 'visitor-1', null, 'instagram.com', 'Mobile', '/it-IT/', 'profile', null, null],
+      expect.stringContaining('INSERT OR IGNORE INTO analytics_events'),
+      ['view', 'visitor-1', null, 'instagram.com', 'Mobile', '/it-IT/', 'profile', null, null, null, 'IT'],
     );
+  });
+
+  it('updates the consented session duration cumulatively without inserting extra visits', async () => {
+    const event = { event: 'engagement', visitorId: 'visitor-1', sessionId: 'session-1', durationSeconds: 45, activeSeconds: 15 };
+    for (const durationSeconds of [45, 45, 30]) {
+      const response = await request(app).post('/api/analytics/events').send({ ...event, durationSeconds });
+      expect(response.status).toBe(204);
+      expect(dbRun).toHaveBeenLastCalledWith(expect.stringContaining('SET duration_seconds = MAX(duration_seconds, ?)'), [durationSeconds, 'session-1', 'visitor-1']);
+    }
+    expect(dbRun).toHaveBeenCalledTimes(3);
+  });
+
+  it('ignores forged country headers from an untrusted immediate peer', async () => {
+    const previous = app.get('trust proxy');
+    app.set('trust proxy', false);
+    try {
+      const response = await request(app).post('/api/analytics/events').set('CF-IPCountry', 'IT').send({ event: 'view', visitorId: 'visitor-1' });
+      expect(response.status).toBe(204);
+      expect(vi.mocked(dbRun).mock.calls.at(-1)[1].at(-1)).toBeNull();
+    } finally { app.set('trust proxy', previous); }
+  });
+
+  it.each([
+    { visitorId: '' }, { sessionId: '' }, { activeSeconds: 61 }, { durationSeconds: 14_401 }, { activeSeconds: 46 },
+  ])('rejects invalid engagement before writing: %j', async (override) => {
+    const response = await request(app).post('/api/analytics/events').send({ event: 'engagement', visitorId: 'visitor-1', sessionId: 'session-1', durationSeconds: 45, activeSeconds: 15, ...override });
+    expect(response.status).toBe(400);
+    expect(dbRun).not.toHaveBeenCalled();
   });
 
   it('GET text-discovery files exposes useful defaults', async () => {

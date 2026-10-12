@@ -1,19 +1,5 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { contentSaveButton, openAuthenticatedAdmin, openPreviewContentCard, saveEditorChanges } from "./helpers";
-
-async function protrudingMenuContent(editor: Locator) {
-  return editor.evaluate((element) => {
-    const edge = element.getBoundingClientRect();
-    return [...element.querySelectorAll('*')]
-      .filter((child) => {
-        const bounds = child.getBoundingClientRect();
-        return bounds.width > 0 && bounds.height > 0 && getComputedStyle(child).visibility !== 'hidden'
-          && (bounds.left < edge.left - 1 || bounds.right > edge.right + 1);
-      })
-      .slice(0, 8)
-      .map((child) => ({ tag: child.tagName, className: child.getAttribute('class') }));
-  });
-}
 
 test("Page and Content keep the same editor and preview geometry", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
@@ -343,128 +329,16 @@ test("Visual editor restores the selected section from its URL", async ({ page }
   await expect(sections.getByRole("button", { name: "Shop", exact: true })).toHaveAttribute("aria-current", "page");
 });
 
-test("Visual editor gives Menu a focused inspector without clipped labels", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 980 });
-  await openAuthenticatedAdmin(page);
-
+test("Menu opens a mobile preview with a Personalize panel beside it", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 }); await openAuthenticatedAdmin(page);
   await page.getByRole("navigation", { name: "Site sections" }).getByRole("button", { name: "Menu", exact: true }).click();
-
-  const inspector = page.locator(".visual-site-editor__inspector");
-  const editor = inspector.locator(".menu-editor-stack--visual");
-  const workflow = editor.getByRole("navigation", { name: "Menu setup workflow" });
-  const canvas = page.locator(".visual-site-editor__canvas");
-  await expect(editor).toBeVisible();
-  await expect(canvas.locator(".admin-menu-live-preview")).toHaveCount(0);
-  await expect(canvas.locator(".admin-live-preview")).toHaveCount(0);
-  await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
-  await expect(workflow).toBeVisible();
-  await expect(workflow.getByRole("button")).toHaveCount(3);
-  const workflowBeforeSettings = await workflow.boundingBox();
-  await workflow.getByRole("button", { name: /Settings/ }).click();
-  await expect(editor.getByRole("heading", { name: "Menu details" })).toBeVisible();
-  await expect(editor.getByRole("heading", { name: "Publication" })).toBeVisible();
-  const publicationSwitch = editor.getByRole("switch", { name: "Public menu visibility" });
-  const wasPublished = await publicationSwitch.isChecked();
-  await publicationSwitch.click();
-  await expect(publicationSwitch).toHaveAttribute("aria-checked", String(!wasPublished));
-  await publicationSwitch.click();
-  await expect(editor.getByText("Unsaved changes", { exact: true })).toBeHidden();
-  await workflow.getByRole("button", { name: "Menu", exact: true }).click();
-  const workflowAfterSettings = await workflow.boundingBox();
-  expect(workflowBeforeSettings && workflowAfterSettings).toBeTruthy();
-  expect(Math.abs(workflowAfterSettings!.y - workflowBeforeSettings!.y)).toBeLessThanOrEqual(1);
-  await expect(editor.getByText("Pro menu", { exact: true })).toHaveCount(0);
-  await expect(inspector.getByText("Selected element", { exact: true })).toHaveCount(0);
-  await expect(editor.locator(".menu-visual-context")).toHaveCount(0);
-  await expect(editor.locator(".menu-unified-panel")).toBeVisible();
-  await expect(editor.locator(".menu-unified-side .menu-category-editor-empty")).toBeVisible();
-  await expect(editor.locator(".menu-category-accordion")).toHaveCount(0);
-  await expect(editor.locator(".menu-category-editor")).toHaveCount(0);
-  const category = editor.locator(".menu-category-group").first();
-  await expect(category).toBeVisible();
-  await category.locator(".menu-category-group__edit").click();
-  await expect(editor.locator(".menu-category-editor").getByLabel("Name", { exact: true })).toBeVisible();
-  await editor.getByRole("button", { name: "Close category editor" }).click();
-  await expect(editor.getByPlaceholder("Search categories and items")).toHaveCSS("padding-left", "40px");
-  await category.locator(".menu-category-group__toggle").click();
-  await expect(category.locator(".menu-category-group__toggle")).toHaveAttribute("aria-expanded", "false");
-  await editor.getByPlaceholder("Search categories and items").fill("missing category");
-  await expect(editor.getByText("No results found")).toBeVisible();
-  await editor.getByPlaceholder("Search categories and items").fill("");
-  await editor.getByRole("combobox", { name: "Filter category visibility" }).selectOption("hidden");
-  await expect(editor.getByText("No results found")).toBeVisible();
-  await editor.getByRole("combobox", { name: "Filter category visibility" }).selectOption("all");
-
-  const clippedDesktopLabels = await workflow.locator("button").evaluateAll((buttons) => buttons.filter((button) => {
-    const label = button.querySelector<HTMLElement>(".menu-editor-tab-copy strong");
-    if (!label) return true;
-    const buttonBounds = button.getBoundingClientRect();
-    const labelBounds = label.getBoundingClientRect();
-    return labelBounds.left < buttonBounds.left || labelBounds.right > buttonBounds.right
-      || label.scrollWidth > label.clientWidth + 1;
-  }).length);
-  expect(clippedDesktopLabels).toBe(0);
-
-  await expect(workflow.getByRole("button", { name: /Items/ })).toHaveCount(0);
-  await editor.locator(".menu-unified-toolbar").getByRole("button", { name: "Add item", exact: true }).click();
-  await expect(editor.locator(".menu-unified-side .menu-product-editor")).toBeVisible();
-  await category.locator(".menu-category-group__edit").first().click();
-  await expect(editor.locator(".menu-unified-side .menu-category-editor")).toBeVisible();
-  await editor.getByRole("button", { name: "Close category editor" }).click();
-
-  const workflowBeforeDesign = await workflow.boundingBox();
-  await workflow.getByRole("button", { name: /Design/ }).click();
-  await expect(editor.locator(".menu-publish-tools")).toHaveCount(0);
-  const designSettings = editor.locator(".menu-design-settings");
-  const designPreview = editor.locator(".menu-design-preview");
-  await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
-  await expect(designPreview.locator('[data-preview-source-width="390"]')).toHaveAttribute('data-preview-viewport-ready', 'true');
-  await expect(canvas.locator(".admin-menu-live-preview")).toHaveCount(0);
-  const workflowInDesign = await workflow.boundingBox();
-  const settingsBox = await designSettings.boundingBox();
-  const previewBox = await designPreview.boundingBox();
-  expect(workflowBeforeDesign && workflowInDesign && settingsBox && previewBox).toBeTruthy();
-  expect(Math.abs(workflowInDesign!.x - workflowBeforeDesign!.x)).toBeLessThanOrEqual(1);
-  expect(Math.abs(workflowInDesign!.y - workflowBeforeDesign!.y)).toBeLessThanOrEqual(1);
-  expect(Math.abs(workflowInDesign!.width - workflowBeforeDesign!.width)).toBeLessThanOrEqual(1);
-  expect(previewBox!.x).toBeGreaterThanOrEqual(settingsBox!.x + settingsBox!.width);
-  expect(previewBox!.y).toBeGreaterThanOrEqual(workflowInDesign!.y + workflowInDesign!.height);
-  await workflow.getByRole("button", { name: "Menu", exact: true }).click();
-  await expect(editor.locator(".menu-design-preview")).toHaveCount(0);
-
+  const editor = page.getByRole("region", { name: "Visual site editor" });
+  await expect(editor.locator('.menu-preview-canvas')).toBeVisible();
+  await expect(editor.locator('[data-preview-source-width="390"]')).toHaveAttribute('data-preview-viewport-ready', 'true');
+  await expect(editor.getByRole('navigation', { name: 'Menu setup workflow' })).toHaveCount(0);
+  await editor.getByRole('button', { name: 'Personalize', exact: true }).click();
+  const personalize = editor.getByRole('complementary', { name: 'Personalize menu', exact: true }); await expect(personalize).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(workflow.getByRole("button", { name: /Settings/ })).toBeVisible();
-  await expect(workflow.getByRole("button", { name: /Design/ })).toBeVisible();
-  await workflow.getByRole("button", { name: /Settings/ }).click();
-  expect(await protrudingMenuContent(editor)).toEqual([]);
-  await workflow.getByRole("button", { name: /Design/ }).click();
-  await expect(designPreview.locator('.admin-preview-device--mobile')).toBeVisible();
-  const mobileSettingsBox = await designSettings.boundingBox();
-  const mobilePreviewBox = await designPreview.boundingBox();
-  expect(mobileSettingsBox && mobilePreviewBox).toBeTruthy();
-  expect(mobilePreviewBox!.y).toBeGreaterThanOrEqual(mobileSettingsBox!.y + mobileSettingsBox!.height);
-  expect(await protrudingMenuContent(editor)).toEqual([]);
-  await workflow.getByRole("button", { name: "Menu", exact: true }).click();
-  await editor.getByRole("button", { name: "Add item" }).first().click();
-  await expect(editor.locator(".menu-unified-panel")).toHaveClass(/is-editing/);
-  await expect(editor.getByRole("button", { name: "Back to items" })).toBeVisible();
-  await expect(editor.getByLabel("Item price")).toBeVisible();
-  await expect(editor.getByRole("button", { name: "Move up" })).toBeVisible();
-  expect(await protrudingMenuContent(editor)).toEqual([]);
+  expect(await editor.locator('.menu-preview-workspace').evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-  await editor.locator(".menu-product-editor").getByLabel("Name", { exact: true }).fill("Mobile menu item");
-  await editor.getByRole("button", { name: "Back to items" }).click();
-  await expect(editor.getByRole("button", { name: /Edit Mobile menu item/ })).toBeVisible();
-  const itemGroup = editor.locator(".menu-category-group").first();
-  await itemGroup.locator(".menu-category-group__toggle").first().click();
-  await expect(itemGroup.locator(".menu-category-group__toggle").first()).toHaveAttribute("aria-expanded", "false");
-  await expect(itemGroup.getByRole("button", { name: /Edit Mobile menu item/ })).toBeHidden();
-  await itemGroup.locator(".menu-category-group__toggle").first().click();
-  await editor.getByPlaceholder("Search categories and items").fill("no such item");
-  await expect(editor.getByText("No results found")).toBeVisible();
-  await editor.getByRole("button", { name: "Clear filters" }).click();
-  await expect(editor.getByRole("button", { name: /Edit Mobile menu item/ })).toBeVisible();
-  expect(await protrudingMenuContent(editor)).toEqual([]);
-  const pageOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(pageOverflow).toBeLessThanOrEqual(1);
 });

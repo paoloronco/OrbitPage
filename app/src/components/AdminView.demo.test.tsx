@@ -153,10 +153,10 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('/en-US/pricing');
     expect(html).toContain('data-testid="managed-analytics"');
     expect(html).toContain('managed-analytics-primary-kpis');
-    expect(html).toContain('Performance over time');
-    expect(html).toContain('>7d</button>');
-    expect(html).toContain('>30d</button>');
-    expect(html).not.toContain('>90d</button>');
+    expect(html).toContain('Audience over time');
+    expect(html).toContain('>7 days</button>');
+    expect(html).toContain('>30 days</button>');
+    expect(html).not.toContain('>90 days</button>');
     expect(html).not.toContain('Smart CTA clicks will appear here separately');
     expect(html).toContain('admin-dashboard-mobile-nav-button');
     expect(html).toContain('data-status="inactive"');

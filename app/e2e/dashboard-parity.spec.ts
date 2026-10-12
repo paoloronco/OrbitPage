@@ -62,8 +62,8 @@ test('opens dashboard subsections directly and keeps tabs, history and menu draf
   await openAuthenticatedAdmin(page);
   for (const [path, selector] of [
     ['editor/menu/settings', '#menu-name'],
-    ['editor/menu/content', '.menu-content-shell'],
-    ['editor/menu/design', '.menu-design-layout'],
+    ['editor/menu/content', '.menu-preview-canvas'],
+    ['editor/menu/design', '.menu-personalize'],
     ['theme/page', '.admin-theme-preset-rail'],
     ['theme/card', '.admin-theme-card-preset'],
     ['publish/QR', '#publish-tool-qr'],
@@ -89,18 +89,17 @@ test('opens dashboard subsections directly and keeps tabs, history and menu draf
     }
   }
   await page.goto('/en-US/dashboard/editor/menu');
-  const menuTabs = page.getByRole('navigation', { name: 'Menu setup workflow' });
-  await menuTabs.getByRole('button', { name: /Settings/ }).click();
+  await page.getByRole('button', { name: 'Menu settings', exact: true }).click();
   await expect(page).toHaveURL(/\/editor\/menu\/settings$/);
   await page.locator('#menu-name').fill('Unsaved route draft');
-  await menuTabs.getByRole('button', { name: /Design/ }).click();
+  await page.getByRole('dialog', { name: 'Menu settings', exact: true }).getByRole('button', { name: 'Apply', exact: true }).click();
+  await page.getByRole('button', { name: 'Personalize', exact: true }).click();
   await expect(page).toHaveURL(/\/editor\/menu\/design$/);
-  await page.goBack();
-  await expect(page.locator('#menu-name')).toHaveValue('Unsaved route draft');
-  await page.goForward();
-  await expect(page.locator('.menu-design-layout')).toBeVisible();
-  await page.reload();
-  await expect(page.locator('.menu-design-layout')).toBeVisible();
+  await page.goBack(); await expect(page.locator('.menu-personalize')).toBeHidden();
+  await page.goForward(); await expect(page.locator('.menu-personalize')).toBeVisible();
+  await page.getByRole('button', { name: 'Menu settings', exact: true }).click(); await expect(page.locator('#menu-name')).toHaveValue('Unsaved route draft');
+  await page.getByRole('dialog', { name: 'Menu settings', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('button', { name: 'Personalize', exact: true }).click(); await page.reload(); await expect(page.locator('.menu-personalize')).toBeVisible();
   await page.goto('/it-IT/dashboard/account/security');
   await expect(page.locator('.account-tabs .active')).toHaveText('Sicurezza');
   await page.reload();
@@ -450,32 +449,11 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(845);
 });
 
-test('keeps the menu workflow clear on mobile without truncated guidance', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await openAuthenticatedAdmin(page);
-
-  await page.getByRole('button', { name: 'Open navigation' }).click();
-  await openAdminSection(page, 'Menu');
-
-  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
-  const steps = workflow.getByRole('button');
-  const descriptions = workflow.locator('.menu-editor-tab-copy small');
-  await expect(steps).toHaveCount(3);
-  await expect(descriptions).toHaveCount(3);
-  for (let index = 0; index < 3; index += 1) {
-    const step = steps.nth(index);
-    const description = descriptions.nth(index);
-    await expect(step).toBeVisible();
-    await expect(description).toBeHidden();
-
-    const bounds = await step.boundingBox();
-    expect(bounds).not.toBeNull();
-    expect(bounds!.height).toBeGreaterThanOrEqual(48);
-
-  }
-
-  const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-  expect(horizontalOverflow).toBeLessThanOrEqual(1);
+test('keeps Menu actions and mobile preview usable on phones', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 }); await openAuthenticatedAdmin(page); await openAdminSection(page, 'Menu');
+  for(const label of ['Personalize','Add section','Add item']) await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
+  await expect(page.locator('.menu-preview-canvas .admin-preview-device--mobile')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 });
 
 test('keeps the real theme preview available without crowding tablet and mobile layouts', async ({ page }) => {
@@ -588,18 +566,13 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
   await expect(themeHardware).toHaveCSS('aspect-ratio', '6 / 13');
 
   await openAdminSection(page, 'Menu');
-  const workflow = page.getByRole('navigation', { name: 'Menu setup workflow' });
-  await expect(workflow.getByRole('button')).toHaveCount(3);
-  await expect(workflow.getByText('Settings', { exact: true })).toBeVisible();
-  await expect(workflow.getByText('Menu', { exact: true })).toBeVisible();
-  await expect(workflow.getByText('Design', { exact: true })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Menu content view' })).toHaveCount(0);
-  await workflow.getByRole('button', { name: /Settings/ }).click();
+  await page.getByRole('button', { name: 'Menu settings', exact: true }).click();
   const localeSelect = page.getByLabel('Locale', { exact: true });
   await expect(localeSelect).toHaveJSProperty('tagName', 'SELECT');
   await expect(localeSelect.locator('option')).toHaveCount(19);
   await localeSelect.selectOption('it-IT');
   await expect(localeSelect).toHaveValue('it-IT');
+  await page.getByRole('dialog', { name: 'Menu settings', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
 
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   await expect(page.getByRole('link', { name: 'Email support' })).toHaveAttribute('href', /^mailto:contact@orbitpage\.com/);

@@ -18,6 +18,16 @@ const contrast = (foreground: string, background: string) => {
 };
 
 describe('menu catalog normalization', () => {
+  it('round-trips supported fonts through both backend contracts', () => {
+    const menu = createDefaultMenu();
+    for (const fontFamily of ['editorial', 'sans', 'serif', 'mono'] as const) {
+      menu.theme.fontFamily = fontFamily;
+      const payload = normalizeMenuCatalog(menu);
+      expect(parseOrbitPageMenu(payload)).toEqual(parseMenuCatalog(payload));
+      expect(parseMenuCatalog(payload).theme.fontFamily).toBe(fontFamily);
+    }
+    expect(() => parseMenuCatalog({ ...menu, theme: { ...menu.theme, fontFamily: 'url(evil)' } })).toThrow();
+  });
   it.each(['restaurant', 'bar', 'cafe'] as const)('round-trips the %s editor through both server contracts', (venue) => {
     const draft = createDefaultMenu(venue);
     draft.footerText = ' Seasonal availability. ';

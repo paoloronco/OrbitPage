@@ -68,6 +68,7 @@ export const MenuCatalogSchema = z.object({
     border: Hex,
     radius: z.number().int().min(0).max(28),
     imageLayout: z.enum(['compact', 'cover']),
+    fontFamily: z.enum(['editorial', 'sans', 'serif', 'mono']).optional(),
   }).strict(),
   routing: ContentRoutingSchema.default(DEFAULT_CONTENT_ROUTING),
   updatedAt: z.string().datetime().optional(),

@@ -49,7 +49,7 @@ import { OrbitPageBrand } from "./OrbitPageBrand";
 import { PrivacySettings } from "./PrivacySettings";
 import { BackupManager } from "./BackupManager";
 import { TwoFactorManager } from "./TwoFactorManager";
-import { LivePreview, PreviewDeviceFrame, type PreviewDevice } from "./LivePreview";
+import { LivePreview, type PreviewDevice } from "./LivePreview";
 import { publicUrlApi, utilityApi } from "@/lib/api-client";
 import {
   isEmbeddedEditor,
@@ -82,7 +82,6 @@ import { SelfHostedAccountActions } from "./SelfHostedAccountActions";
 import { SelfHostedUpdateDialog } from "./SelfHostedUpdateDialog";
 import { OpenSourcePlan } from "./OpenSourcePlan";
 import { VisualSiteEditor, type VisualSiteEditorSection } from "./VisualSiteEditor";
-import { MenuView } from "./MenuView";
 
 function GoogleAnalyticsIcon({ size = 18 }: { size?: number }) {
   return (
@@ -246,7 +245,6 @@ export const AdminView = ({
   const [previewProfile, setPreviewProfile] = useState(profile);
   const [previewLinks, setPreviewLinks] = useState(links);
   const [previewTheme, setPreviewTheme] = useState(theme);
-  const [previewMenu, setPreviewMenu] = useState(menu);
   const [previewSubpage, setPreviewSubpage] = useState<{ page: EditorSubpage; links: LinkData[] } | null>(null);
   const onSubpagePreviewChange = useCallback((preview: { page: EditorSubpage; links: LinkData[] } | null) => setPreviewSubpage(preview), []);
   const [visualSection, setVisualSection] = useState<VisualSiteEditorSection>(() => {
@@ -382,7 +380,6 @@ export const AdminView = ({
   }, [theme]);
 
   useEffect(() => {
-    setPreviewMenu(menu);
   }, [menu]);
 
   useEffect(() => {
@@ -775,13 +772,6 @@ export const AdminView = ({
       selectedPanel={subsection === "settings" ? "setup" : subsection === "design" ? "appearance" : "content"}
       onPanelChange={(panel) => selectSubsection("menu", panel === "setup" ? "settings" : panel === "appearance" ? "design" : "content")}
       menu={menu}
-      onPreview={setPreviewMenu}
-      designPreview={<PreviewDeviceFrame device="mobile" publicPageHref={`${publicPageHref.replace(/\/$/, "")}/menu`}>
-        <div className="admin-menu-live-preview">
-          <MenuView menu={previewMenu} pageHref={publicPageHref} />
-        </div>
-      </PreviewDeviceFrame>}
-      presentation="visual"
       enabled={!editorAccess || entitlements?.nativeMenu === true}
       maxItems={entitlements?.maxMenuItems ?? null}
       advancedTheme={!editorAccess || entitlements?.themes === "advanced"}

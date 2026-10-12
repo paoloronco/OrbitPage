@@ -8,13 +8,16 @@ interface MenuViewProps {
   menu: MenuCatalog;
   pageHref?: string;
   selectedSectionId?: string;
+  onEditIdentity?: () => void;
+  onEditSection?: (id: string) => void;
+  onEditItem?: (id: string) => void;
 }
 
-export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId = '' }: MenuViewProps) {
+export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId = '', onEditIdentity, onEditSection, onEditItem }: MenuViewProps) {
   const [query, setQuery] = useState('');
   const [sectionState, setSectionState] = useState<Record<string, boolean>>({});
   const sections = [...menu.sections]
-    .filter((section) => section.visible)
+    .filter((section) => onEditSection || section.visible)
     .sort((a, b) => a.position - b.position);
   const rootSections = sections.filter((section) => !section.parentId);
   const selectedRootSection = rootSections.find((section) => section.id === selectedSectionId);
@@ -28,7 +31,7 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
   const navigableSections = visibleRootSections.flatMap((section) => {
     const subsections = subsectionsFor(section.id).filter((subsection) => sectionsWithItems.has(subsection.id));
     const hasVisibleContent = sectionsWithItems.has(section.id) || subsections.length > 0;
-    return hasVisibleContent ? [section, ...subsections] : [];
+    return hasVisibleContent || onEditSection ? [section, ...subsections] : [];
   });
   const isItalian = menu.locale.toLowerCase().startsWith('it');
   const copy = isItalian ? {
@@ -48,7 +51,7 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
     : scopedItems;
   const isLongMenu = scopedItems.length >= 12 || navigableSections.length >= 7;
   const showDirectory = navigableSections.length > 1 || scopedItems.length >= 8;
-  const isOpen = (sectionId: string, defaultOpen: boolean) => normalizedQuery
+  const isOpen = (sectionId: string, defaultOpen: boolean) => normalizedQuery || onEditSection
     ? true
     : sectionState[sectionId] ?? defaultOpen;
   const setOpen = (sectionId: string, open: boolean) => {
@@ -72,6 +75,7 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
     '--menu-accent': menu.theme.accent,
     '--menu-border': menu.theme.border,
     '--menu-radius': `${menu.theme.radius}px`,
+    ...(menu.theme.fontFamily && menu.theme.fontFamily !== 'editorial' ? { '--menu-font': menu.theme.fontFamily === 'sans' ? 'Inter, system-ui, sans-serif' : menu.theme.fontFamily === 'serif' ? 'Georgia, serif' : 'ui-monospace, monospace' } : {}),
   } as CSSProperties;
 
   const renderItems = (items: MenuCatalog['items']) => (
@@ -80,6 +84,11 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
         <article
           key={item.id}
           className={`orbitpage-menu-item${item.featured ? ' orbitpage-menu-item--featured' : ''}${!item.available ? ' orbitpage-menu-item--unavailable' : ''}`}
+          role={onEditItem ? 'button' : undefined}
+          tabIndex={onEditItem ? 0 : undefined}
+          aria-label={onEditItem ? `Edit ${item.name}` : undefined}
+          onClick={onEditItem ? () => onEditItem(item.id) : undefined}
+          onKeyDown={onEditItem ? event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onEditItem(item.id); } } : undefined}
         >
           {resolveSafePublicMediaUrl(item.imageUrl) && (
             <img
@@ -119,16 +128,16 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
   );
 
   return (
-    <main className="orbitpage-menu" style={style}>
+    <main className="orbitpage-menu" style={style} data-menu-font={menu.theme.fontFamily}>
       <div className="orbitpage-menu__shell">
         <header className="orbitpage-menu__header">
-          <a className="orbitpage-menu__back" href={pageHref} aria-label="Back to the main page">
+          <a className="orbitpage-menu__back" href={pageHref} aria-label="Back to the main page" aria-disabled={onEditIdentity ? true : undefined} tabIndex={onEditIdentity ? -1 : undefined} onClick={onEditIdentity ? event => event.preventDefault() : undefined}>
             <ArrowLeft aria-hidden="true" />
             <span>Back to main page</span>
           </a>
           <div className="orbitpage-menu__identity">
-            <h1>{menu.name}</h1>
-            {menu.description && <div>{menu.description}</div>}
+            <h1>{onEditIdentity ? <button className="menu-preview-edit" aria-label="Edit menu title" onClick={onEditIdentity} type="button">{menu.name}</button> : menu.name}</h1>
+            {(menu.description || onEditIdentity) && <div>{onEditIdentity ? <button className="menu-preview-edit" aria-label="Edit menu description" onClick={onEditIdentity} type="button">{menu.description || (isItalian ? 'Aggiungi una descrizione' : 'Add a description')}</button> : menu.description}</div>}
           </div>
         </header>
 
@@ -183,8 +192,8 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
               items: filteredItems
                 .filter((item) => item.sectionId === subsection.id)
                 .sort((a, b) => a.position - b.position),
-            })).filter((subsection) => subsection.items.length > 0);
-            if (directItems.length === 0 && subsections.length === 0) return null;
+            })).filter((subsection) => subsection.items.length > 0 || onEditSection);
+            if (directItems.length === 0 && subsections.length === 0 && !onEditSection) return null;
             const sectionOpen = isOpen(section.id, !isLongMenu || sectionIndex === 0);
             return (
               <section key={section.id} id={`menu-${section.id}`} className="orbitpage-menu__section">
@@ -194,10 +203,10 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
                     <h2>
                       <button
                         type="button"
-                        aria-expanded={sectionOpen}
+                        aria-expanded={onEditSection ? undefined : sectionOpen}
                         aria-controls={`menu-content-${section.id}`}
-                        title={sectionOpen ? copy.collapse : copy.expand}
-                        onClick={() => setOpen(section.id, !sectionOpen)}
+                        title={onEditSection ? 'Edit section' : sectionOpen ? copy.collapse : copy.expand}
+                        onClick={() => onEditSection ? onEditSection(section.id) : setOpen(section.id, !sectionOpen)}
                       >
                         <span>{section.name}</span>
                         <ChevronDown aria-hidden="true" />
@@ -220,10 +229,10 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
                           <h3>
                             <button
                               type="button"
-                              aria-expanded={subsectionOpen}
+                              aria-expanded={onEditSection ? undefined : subsectionOpen}
                               aria-controls={`menu-content-${subsection.id}`}
-                              title={subsectionOpen ? copy.collapse : copy.expand}
-                              onClick={() => setOpen(subsection.id, !subsectionOpen)}
+                              title={onEditSection ? 'Edit section' : subsectionOpen ? copy.collapse : copy.expand}
+                              onClick={() => onEditSection ? onEditSection(subsection.id) : setOpen(subsection.id, !subsectionOpen)}
                             >
                               <span>{subsection.name}</span>
                               <ChevronDown aria-hidden="true" />

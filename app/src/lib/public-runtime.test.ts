@@ -1,13 +1,47 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { hasStaticPublicSnapshot, trackPublicLinkClick, trackPublicPageView } from './public-runtime';
+import { hasStaticPublicSnapshot, startPublicPageEngagement, trackPublicLinkClick, trackPublicPageView } from './public-runtime';
 import { consentManager } from './consent-manager';
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
 describe('managed public runtime', () => {
+  it('measures visible time only after consent, stops on withdrawal and removes its listeners', () => {
+    vi.useFakeTimers();
+    let granted = false;
+    let now = 0;
+    let changed: Parameters<typeof consentManager.onConsentChange>[0] = () => {};
+    const off = vi.fn();
+    vi.spyOn(consentManager, 'isGranted').mockImplementation(() => granted);
+    vi.spyOn(consentManager, 'onConsentChange').mockImplementation(callback => { changed = callback; return off; });
+    vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const local = new Map<string, string>(), session = new Map<string, string>();
+    const storage = (map: Map<string, string>) => ({ getItem: (key: string) => map.get(key) || null, setItem: (key: string, value: string) => map.set(key, value) });
+    const pageWindow = Object.assign(new EventTarget(), { __ORBITPAGE_STATIC_SNAPSHOT__: { page: {} }, location: { hostname: 'example.invalid', href: 'https://example.invalid/', pathname: '/', search: '' }, localStorage: storage(local), sessionStorage: storage(session) });
+    const pageDocument = Object.assign(new EventTarget(), { referrer: '', visibilityState: 'visible' });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('window', pageWindow); vi.stubGlobal('document', pageDocument); vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('crypto', { randomUUID: () => 'fictional-session-1' });
+    const stop = startPublicPageEngagement()!;
+    vi.advanceTimersByTime(30_000);
+    expect(fetchMock).not.toHaveBeenCalled(); expect(local.size + session.size).toBe(0);
+    granted = true; changed(null);
+    now = 30_000; vi.advanceTimersByTime(30_000);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toMatchObject({ event: 'engagement', durationSeconds: 30, activeSeconds: 30, engagementStart: true });
+    now = 35_000; pageDocument.visibilityState = 'hidden'; pageDocument.dispatchEvent(new Event('visibilitychange'));
+    vi.advanceTimersByTime(90_000);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    now = 125_000; pageDocument.visibilityState = 'visible'; pageDocument.dispatchEvent(new Event('visibilitychange'));
+    now = 155_000; vi.advanceTimersByTime(30_000);
+    expect(JSON.parse(fetchMock.mock.calls[3][1].body)).toMatchObject({ durationSeconds: 65, activeSeconds: 30, engagementStart: false });
+    granted = false; changed(null); now = 200_000; vi.advanceTimersByTime(30_000); stop();
+    expect(fetchMock).toHaveBeenCalledTimes(4); expect(off).toHaveBeenCalledOnce();
+    granted = true; pageWindow.dispatchEvent(new Event('pageshow')); now = 230_000; vi.advanceTimersByTime(30_000);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
   it('sends managed page views and clicks to the same-origin edge collector', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true });
     const localStorage = new Map<string, string>();

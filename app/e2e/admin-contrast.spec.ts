@@ -104,6 +104,8 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
   await contentTab.click();
   await page.getByRole('button', { name: /Menu/ }).first().click();
   await expect(page.locator('.menu-editor-stack')).toBeVisible();
+  await page.getByRole('button', { name: 'Menu settings', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Menu settings', exact: true })).toBeVisible();
 
   const samples = await page.locator([
     '.admin-dashboard-logo-copy small',
@@ -111,7 +113,7 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
     '.admin-metric-label',
     '.admin-metric-detail',
     '.content-workspace-option small',
-    '.menu-editor-intro span',
+    '.menu-editor-dialog > div:first-child > p',
     '.menu-editor-section-title p',
     '.menu-category-group__toggle small',
     '.menu-category-editor-empty span',
@@ -161,6 +163,7 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
   }
 
   await expectReadableDashboardCopy(page, 'Content / Menu');
+  await page.getByRole('dialog', { name: 'Menu settings', exact: true }).getByRole('button', { name: 'Cancel', exact: true }).click();
 
   for (const workspace of ['Page', 'Theme', 'Publish', 'Backup', 'Analytics', 'Privacy']) {
     const navigationItem = page.getByRole('button', { name: workspace, exact: true }).first();

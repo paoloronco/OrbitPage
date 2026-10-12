@@ -164,7 +164,7 @@ export function VisualSiteEditor({
     if (section !== "profile") onSelect("profile");
     onLayoutEditingChange(true);
   };
-  const previewDeviceToggle = (previewEnabled || section === "menu")
+  const previewDeviceToggle = previewEnabled
     ? <PreviewDeviceToggle value={device} onChange={setDevice} />
     : null;
 
@@ -187,6 +187,7 @@ export function VisualSiteEditor({
         ))}
         <div className="visual-site-editor__toolbar-actions visual-site-editor__section-actions">
           {section === "shop" && <div data-orbitpage-shop-preview-device-slot />}
+          {section === "menu" && <div data-orbitpage-menu-preview-device-slot />}
           {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
             <button
               className="visual-site-editor__layout-toggle"

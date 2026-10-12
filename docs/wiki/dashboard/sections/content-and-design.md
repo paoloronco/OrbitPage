@@ -120,20 +120,17 @@ For any category other than **Necessary**, the provider is not contacted until t
 
 ## Menu
 
-The menu has its own public route and theme:
+The menu opens with the mobile public preview. Use the device buttons in the site-section bar to check desktop too.
 
-1. Under **Settings**, choose restaurant, bar, or cafe, then set the public name, description, ISO currency, and locale. The locale controls number and price formatting.
-2. Under **Content**, create visible categories. A category can have one level of subsections.
-3. Add items with name, description, price, optional image and details, dietary tags, allergens, availability, featured state, and up to eight priced options.
-4. Under **Design**, choose a menu preset or adjust its colors, radius, and image layout independently from the main-page theme.
+1. Click the title or introduction to edit them in a popup.
+2. Select **Add section** or **Add item** in the toolbar. Click an existing section or dish in the preview to edit, reorder or delete it.
+3. Select **Personalize** to open the side panel with preset themes, colors, typography, corner radius and image layout.
+4. Open **Menu settings** for venue type, currency, locale, footer and visibility. The locale controls price formatting.
+5. Select **Apply** to update the draft preview, then **Save** to persist it. **Cancel** restores the popup's starting values; **Reset** discards the unsaved menu draft.
 
-Use the category filter and item search to keep large menus manageable. Products can be moved between a category and one of its subsections. Deleting a category also removes its subsections and all items inside them, so export a backup first if the content may be needed.
+Sections can have one level of subsections. Deleting a section also removes its subsections and items. Item popups include prices, images, dietary tags, allergens, availability and featured state. Invalid names and failed saves keep your draft available for correction or retry.
 
-Enable the menu and select **Save** to publish it at `/menu` under the configured public page URL. The menu editor has no second publish step. Use **Add menu link to main page** to create or refresh the native menu card in Link, then save the Link blocks as well.
-
-Menu, category, item and option names must not be empty. If validation fails,
-the editor shows the field to correct and keeps your unsaved changes; correct
-it and select **Save** again. The footer accepts your own note or an empty value.
+Publish the menu and save to expose it at `/menu` under the configured public URL. To link it from the main page, add an **Internal page navigation** or **Menu** block in Content. The menu theme remains independent from the main-page theme.
 
 ## Additional pages
 

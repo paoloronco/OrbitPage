@@ -1,4 +1,5 @@
 import { createShopRouter, createShopWebhookRouter, createShopPublicRouter } from "./routes/shop.js";
+import { aiAnalyticsConditions } from '../packages/analytics.js';
 import { cleanupShopFiles, dispatchShopEmails, shopFilesPath, persistShopAiDrafts } from "./services/shop.js";
 import { dispatchShopBookingReminders } from "./services/shop-lifecycle.js";
 import './services/instance-details.js';
@@ -2058,7 +2059,10 @@ app.use('/api/newsletter', createNewsletterRouter({
 }));
 
 const analyticsEventSchema = z.object({
-  event: z.enum(['view', 'click']),
+  event: z.enum(['view', 'click', 'engagement']),
+  sessionId: z.string().regex(/^[a-zA-Z0-9_-]{8,100}$/).optional(),
+  durationSeconds: z.number().int().min(1).max(14_400).optional(),
+  activeSeconds: z.number().int().min(1).max(60).optional(),
   visitorId: z.string().trim().max(100).optional().default(''),
   linkId: z.string().trim().max(100).optional().default(''),
   referrer: z.string().trim().max(2048).optional().default(''),
@@ -2066,7 +2070,10 @@ const analyticsEventSchema = z.object({
   utmSource: z.string().trim().max(240).optional().default(''),
   utmMedium: z.string().trim().max(240).optional().default(''),
   utmCampaign: z.string().trim().max(240).optional().default(''),
-}).strip();
+}).strip().superRefine((event, context) => {
+  if (event.event !== 'click' && event.visitorId.length < 8) context.addIssue({ code: 'custom', message: 'Analytics consent is required.' });
+  if (event.event === 'engagement' && (!event.sessionId || !event.durationSeconds || !event.activeSeconds || event.activeSeconds > event.durationSeconds)) context.addIssue({ code: 'custom', message: 'Invalid engagement event.' });
+});
 
 const analyticsSource = (referrer) => {
   if (!referrer) return 'Direct';
@@ -2084,9 +2091,9 @@ const analyticsDevice = (userAgent = '') => {
 };
 
 const recordAnalyticsEvent = (req, event) => dbRun(
-  `INSERT INTO analytics_events
-    (event, visitor_id, link_id, source, device, path, utm_source, utm_medium, utm_campaign)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  `INSERT OR IGNORE INTO analytics_events
+    (event, visitor_id, link_id, source, device, path, utm_source, utm_medium, utm_campaign, session_id, country)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   [
     event.event,
     event.visitorId || null,
@@ -2097,6 +2104,8 @@ const recordAnalyticsEvent = (req, event) => dbRun(
     event.visitorId ? event.utmSource || null : null,
     event.visitorId ? event.utmMedium || null : null,
     event.visitorId ? event.utmCampaign || null : null,
+    event.event === 'view' ? event.sessionId || null : null,
+    event.visitorId && req.app.get('trust proxy fn')?.(req.socket.remoteAddress, 0) && /^[A-Z]{2}$/.test(req.get('cf-ipcountry') || '') ? req.get('cf-ipcountry') : null,
   ],
 );
 
@@ -2113,8 +2122,13 @@ const analyticsSummary = (row = {}) => {
 
 app.post('/api/analytics/events', async (req, res) => {
   const parsed = analyticsEventSchema.safeParse(req.body);
-  if (!parsed.success || parsed.data.event !== 'view') return res.status(400).json({ error: 'Invalid analytics event' });
+  if (!parsed.success || !['view', 'engagement'].includes(parsed.data.event)) return res.status(400).json({ error: 'Invalid analytics event' });
   try {
+    if (parsed.data.event === 'engagement') {
+      await dbRun(`UPDATE analytics_events SET duration_seconds = MAX(duration_seconds, ?)
+        WHERE event = 'view' AND session_id = ? AND visitor_id = ?`, [parsed.data.durationSeconds, parsed.data.sessionId, parsed.data.visitorId]);
+      return res.status(204).end();
+    }
     await recordAnalyticsEvent(req, parsed.data);
     return res.status(204).end();
   } catch (error) {
@@ -2127,11 +2141,16 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
   const periodDays = Number(req.query.days) === 7 ? 7 : 30;
   const currentStart = `-${periodDays} days`;
   const previousStart = `-${periodDays * 2} days`;
+  const ai = aiAnalyticsConditions('source', 'utm_source', 'utm_medium');
   const summarySql = `SELECT
     SUM(CASE WHEN event = 'view' THEN 1 ELSE 0 END) AS visits,
     COUNT(DISTINCT CASE WHEN event = 'view' AND visitor_id != '' THEN visitor_id END) AS visitors,
     SUM(CASE WHEN event = 'click' THEN 1 ELSE 0 END) AS clicks,
-    SUM(CASE WHEN event = 'view' AND utm_medium = 'qr' THEN 1 ELSE 0 END) AS qr_visits
+    SUM(CASE WHEN event = 'view' AND utm_medium = 'qr' THEN 1 ELSE 0 END) AS qr_visits,
+    AVG(CASE WHEN event = 'view' AND duration_seconds > 0 THEN duration_seconds END) AS duration_seconds,
+    SUM(CASE WHEN event = 'view' AND duration_seconds > 0 THEN 1 ELSE 0 END) AS engaged_visits,
+    SUM(CASE WHEN event = 'view' AND ${ai.traffic} THEN 1 ELSE 0 END) AS ai_visits,
+    SUM(CASE WHEN event = 'view' AND ${ai.search} THEN 1 ELSE 0 END) AS ai_search_visits
     FROM analytics_events WHERE created_at >= datetime('now', ?)`;
   const dimension = (field, event = 'view') => dbAll(
     `SELECT ${field} AS label, COUNT(*) AS value FROM analytics_events
@@ -2141,13 +2160,16 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
   );
 
   try {
-    const [currentRows, previousRows, trendRows, sources, devices, utmSources, utmMediums, campaigns, links, paths, qrPaths] = await Promise.all([
+    const [currentRows, previousRows, trendRows, sources, devices, utmSources, utmMediums, campaigns, links, paths, qrPaths, countries, aiSources] = await Promise.all([
       dbAll(summarySql, [currentStart]),
       dbAll(`${summarySql} AND created_at < datetime('now', ?)`, [previousStart, currentStart]),
       dbAll(`SELECT date(created_at) AS date,
         SUM(CASE WHEN event = 'view' THEN 1 ELSE 0 END) AS visits,
         COUNT(DISTINCT CASE WHEN event = 'view' AND visitor_id != '' THEN visitor_id END) AS visitors,
-        SUM(CASE WHEN event = 'click' THEN 1 ELSE 0 END) AS clicks
+        SUM(CASE WHEN event = 'click' THEN 1 ELSE 0 END) AS clicks,
+        AVG(CASE WHEN event = 'view' AND duration_seconds > 0 THEN duration_seconds END) AS duration_seconds,
+        SUM(CASE WHEN event = 'view' AND ${ai.traffic} THEN 1 ELSE 0 END) AS ai_visits,
+        SUM(CASE WHEN event = 'view' AND ${ai.search} THEN 1 ELSE 0 END) AS ai_search_visits
         FROM analytics_events WHERE created_at >= datetime('now', ?)
         GROUP BY date(created_at) ORDER BY date ASC`, [currentStart]),
       dimension('source'),
@@ -2163,6 +2185,10 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
       dbAll(`SELECT path AS label, COUNT(*) AS value FROM analytics_events
         WHERE event = 'view' AND utm_medium = 'qr' AND created_at >= datetime('now', ?)
         GROUP BY path ORDER BY value DESC LIMIT 10`, [currentStart]),
+      dimension('country'),
+      dbAll(`SELECT CASE WHEN ${ai.tagged} THEN utm_source WHEN ${ai.referral} THEN source ELSE 'Tagged AI search' END AS label, COUNT(*) AS value FROM analytics_events
+        WHERE event = 'view' AND created_at >= datetime('now', ?) AND ${ai.traffic}
+        GROUP BY label ORDER BY value DESC LIMIT 10`, [currentStart]),
     ]);
     const current = analyticsSummary(currentRows[0]);
     const previous = analyticsSummary(previousRows[0]);
@@ -2175,6 +2201,10 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
       summary: {
         ...current,
         qrVisits: analyticsNumber(currentRows[0]?.qr_visits),
+        durationSeconds: currentRows[0]?.duration_seconds == null ? null : Math.round(analyticsNumber(currentRows[0].duration_seconds)),
+        engagedVisits: analyticsNumber(currentRows[0]?.engaged_visits),
+        aiVisits: analyticsNumber(currentRows[0]?.ai_visits),
+        aiSearchVisits: analyticsNumber(currentRows[0]?.ai_search_visits),
         visitsPerVisitor: current.visitors > 0 ? Math.round((current.visits / current.visitors) * 100) / 100 : 0,
         clicksPerVisitor: current.visitors > 0 ? Math.round((current.clicks / current.visitors) * 100) / 100 : 0,
       },
@@ -2187,10 +2217,11 @@ app.get('/api/analytics', authenticateToken, requirePermission('analytics:read')
           ctr: analyticsChange(current.ctr, previous.ctr),
         },
       },
-      trend: trendRows.map((row) => ({ date: row.date, visits: analyticsNumber(row.visits), visitors: analyticsNumber(row.visitors), clicks: analyticsNumber(row.clicks) })),
+      trend: trendRows.map((row) => ({ date: row.date, visits: analyticsNumber(row.visits), visitors: analyticsNumber(row.visitors), clicks: analyticsNumber(row.clicks), durationSeconds: row.duration_seconds == null ? null : Math.round(analyticsNumber(row.duration_seconds)), aiVisits: analyticsNumber(row.ai_visits), aiSearchVisits: analyticsNumber(row.ai_search_visits) })),
       sources: mapDimension(sources),
       devices: mapDimension(devices),
-      countries: [],
+      countries: mapDimension(countries),
+      aiSources: mapDimension(aiSources),
       utmSources: mapDimension(utmSources),
       utmMediums: mapDimension(utmMediums),
       campaigns: mapDimension(campaigns),

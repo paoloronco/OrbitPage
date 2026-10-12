@@ -274,6 +274,14 @@ export const initializeDatabase = () => {
       db.run(`CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at)`, (err) => {
         if (err) console.error('Error indexing analytics events:', err);
       });
+      for (const definition of ['session_id TEXT', 'duration_seconds INTEGER NOT NULL DEFAULT 0', 'country TEXT']) {
+        db.run(`ALTER TABLE analytics_events ADD COLUMN ${definition}`, err => {
+          if (err && !err.message.includes('duplicate column')) logDatabaseError('Analytics migration failed', err);
+        });
+      }
+      db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_analytics_session ON analytics_events(session_id) WHERE session_id IS NOT NULL`, err => {
+        if (err) logDatabaseError('Analytics session index failed', err);
+      });
       db.run(`
         CREATE TRIGGER IF NOT EXISTS cleanup_analytics_events
         AFTER INSERT ON analytics_events

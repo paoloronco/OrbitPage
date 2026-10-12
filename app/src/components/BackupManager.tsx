@@ -335,7 +335,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
   return (
     <div className="admin-backup-manager-stack">
       <Card className={`admin-backup-manager glass-card space-y-6 p-6 ${DEMO_MODE ? "opacity-70" : ""}`}>
-      <div className="flex items-start gap-3">
+      <div className="admin-backup-panel-heading">
         <span className="rounded-xl bg-primary/10 p-2 text-primary">
           <Database className="h-5 w-5" />
         </span>

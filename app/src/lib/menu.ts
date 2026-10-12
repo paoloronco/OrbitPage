@@ -200,6 +200,7 @@ export function normalizeMenuCatalog(
       border: color(rawTheme.border, presetTheme.border),
       radius: Math.max(0, Math.min(28, Number.isFinite(Number(rawTheme.radius)) ? Math.round(Number(rawTheme.radius)) : presetTheme.radius)),
       imageLayout: rawTheme.imageLayout === 'cover' ? 'cover' : 'compact',
+      ...(['editorial', 'sans', 'serif', 'mono'].includes(String(rawTheme.fontFamily)) ? { fontFamily: rawTheme.fontFamily as MenuTheme['fontFamily'] } : {}),
     },
     routing: {
       homepage,

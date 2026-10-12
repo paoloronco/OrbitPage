@@ -17,8 +17,8 @@ test('tracks new QR links and shows QR, Acquisition and Audience reports without
   await expect(analytics.getByText('QR codes', { exact: true })).toBeVisible();
   await expect(analytics.locator('.managed-analytics-qr-metrics')).toContainText('QR visits');
   await expect(analytics.locator('.managed-analytics-qr-breakdown')).toContainText('/qr-e2e-destination');
-  await expect(analytics.getByText('Acquisition', { exact: true })).toBeVisible();
-  await expect(analytics.getByText('Audience', { exact: true })).toBeVisible();
+  await expect(analytics.getByRole('heading', { name: 'Traffic sources', exact: true })).toBeVisible();
+  await expect(analytics.getByRole('heading', { name: 'Devices', exact: true })).toBeVisible();
   await expect(analytics.locator('details.managed-analytics-disclosure')).toHaveCount(0);
 });
 

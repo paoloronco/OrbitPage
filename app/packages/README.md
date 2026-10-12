@@ -2,6 +2,11 @@
 
 This directory contains packages shared across OrbitPage application boundaries.
 
+[`analytics.js`](./analytics.js) keeps AI referrer/UTM attribution consistent
+between SQLite and managed Analytics Engine reports. It generates conditions
+only from trusted internal column names; it does not collect prompts or infer
+untagged AI visits.
+
 ## `shop`
 
 [Shared Shop](./shop/README.md) owns portable commerce behavior. Its payment

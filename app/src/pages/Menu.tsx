@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
 import { MenuView } from '@/components/MenuView';
 import { normalizeMenuCatalog, type MenuCatalog } from '@/lib/menu';
-import { publicPageApi } from '@/lib/api-client';
+import { publicPageApi, consentConfigPublicApi, type ConsentConfigData } from '@/lib/api-client';
 import { withPageRootPath } from '@/lib/base-path';
-import { trackPublicPageView } from '@/lib/public-runtime';
+import { trackPublicPageView, startPublicPageEngagement } from '@/lib/public-runtime';
+import { consentManager } from '@/lib/consent-manager';
+import { CookieBanner } from '@/components/CookieBanner';
 
 export default function MenuPage() {
   const [menu, setMenu] = useState<MenuCatalog | null>(null);
+  const [consentConfig, setConsentConfig] = useState<ConsentConfigData | null>(null);
+  useEffect(() => consentConfig ? startPublicPageEngagement() : undefined, [consentConfig]);
 
   useEffect(() => {
     let active = true;
@@ -16,10 +20,16 @@ export default function MenuPage() {
         const normalized = normalizeMenuCatalog(value);
         if (active && normalized.enabled) {
           setMenu(normalized);
-          trackPublicPageView();
+          const config = window.__ORBITPAGE_STATIC_SNAPSHOT__?.consentConfig ?? (await consentConfigPublicApi.get()).data;
+          if (!active) return;
+          if (config.mode === 'hardcoded') config.hardcoded.categories.analytics.enabled = true;
+          consentManager.init(config);
+          if (config.mode === 'builder') consentManager.injectBuilderScript();
+          setConsentConfig(config);
+          if (consentManager.isGranted('analytics')) trackPublicPageView();
         }
       } catch {
-        if (active) setMenu(null);
+        // The menu can remain readable when consent settings are unavailable; tracking stays off.
       }
     };
     void load();
@@ -39,5 +49,5 @@ export default function MenuPage() {
   }
 
   const selectedSectionId = typeof window === 'undefined' ? '' : new URLSearchParams(window.location.search).get('section') || '';
-  return <MenuView menu={menu} pageHref={withPageRootPath('/')} selectedSectionId={selectedSectionId} />;
+  return <><MenuView menu={menu} pageHref={withPageRootPath('/')} selectedSectionId={selectedSectionId} />{consentConfig?.mode === 'hardcoded' && consentConfig.enabled && <CookieBanner config={consentConfig} />}</>;
 }

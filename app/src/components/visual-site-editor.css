@@ -192,10 +192,6 @@ html:has(.admin-visual-editor-enabled) {
   background: #fff;
 }
 
-.visual-site-editor--menu:not(.visual-site-editor--preview-visible) .admin-preview-device-toggle {
-  visibility: hidden;
-}
-
 .visual-site-editor--menu .visual-site-editor__inspector {
   grid-column: 1;
   grid-row: 1;
@@ -214,11 +210,7 @@ html:has(.admin-visual-editor-enabled) {
 }
 
 @container visual-site-editor (max-width: 51.99rem) {
-  .visual-site-editor--menu .admin-preview-device-toggle {
-    display: none;
-  }
-
-  .visual-site-editor--menu.visual-site-editor--preview-visible .visual-site-editor__canvas {
+.visual-site-editor--menu.visual-site-editor--preview-visible .visual-site-editor__canvas {
     min-height: 460px;
     padding: 16px;
   }
