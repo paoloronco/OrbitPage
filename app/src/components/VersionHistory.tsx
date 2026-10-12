@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { versionHistoryApi, type ManagedVersionHistory } from '@/lib/api-client';
 import { useAppI18n } from '@/lib/i18n';
 
-export function VersionHistory() {
+export function VersionHistory({ canRestore = true }: { canRestore?: boolean }) {
   const { locale, tr } = useAppI18n();
   const [history, setHistory] = useState<ManagedVersionHistory | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +79,7 @@ export function VersionHistory() {
           </span>
           <span className="block truncate text-xs text-muted-foreground">{new Date(version.lastModified).toLocaleString(locale)}</span>
         </span>
-        <Button type="button" variant="outline" size="sm" className="admin-action" disabled={version.current || restoring !== null} onClick={() => void restore(version.revision)}>
+        <Button type="button" variant="outline" size="sm" className="admin-action" disabled={!canRestore || version.current || restoring !== null} onClick={() => void restore(version.revision)}>
           {restoring === version.revision ? <OrbitLoader size={16} state="weaving" /> : <RotateCcw className="h-4 w-4" />}
           <span className="hidden sm:inline">{restoring === version.revision ? tr('Restoring', 'Ripristino') : tr('Restore', 'Ripristina')}</span>
         </Button>

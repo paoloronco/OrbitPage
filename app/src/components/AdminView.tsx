@@ -389,6 +389,9 @@ export const AdminView = ({
 
   const userPerms = (currentUser?.permissions || []) as Permission[];
   const canManageUsers = hasPermission(userPerms, 'users:manage');
+  const canReadBackup = canManageUsers || hasPermission(userPerms, 'backup:read');
+  const canRestoreBackup = canManageUsers || hasPermission(userPerms, 'backup:write');
+  const canPublish = hasPermission(userPerms, 'publish:write');
   useEffect(() => {
     if (embeddedEditor || !canManageUsers) return;
     let active = true;
@@ -460,13 +463,13 @@ export const AdminView = ({
       case 'content':   return canEditLinks || canEditMenu;
       case 'ai':        return extensionPanelTabs.includes('ai') || (!hasEditorIntegration && (canEditProfile || canEditLinks || canEditTheme));
       case 'theme':     return canEditTheme;
-      case 'publish':   return canEditProfile || canEditCompliance;
+      case 'publish':   return canPublish || canEditProfile || canEditCompliance;
       case 'team':      return extensionPanelTabs.includes('team') || (!hasEditorIntegration && canManageUsers);
       case 'newsletter': return extensionPanelTabs.includes('newsletter') || (!hasEditorIntegration && canManageUsers);
       case 'account':   return extensionPanelTabs.includes('account') || !hasEditorIntegration;
       case 'plan':      return extensionPanelTabs.includes('plan') || !hasEditorIntegration;
       case 'access':    return false;
-      case 'backup':    return canManageUsers;
+      case 'backup':    return canReadBackup;
       case 'analytics': return canViewAnalytics;
       case 'privacy':   return canEditCompliance;
       default:          return false;
@@ -553,7 +556,7 @@ export const AdminView = ({
     setActiveTab((current) => current === canonicalRequestedTab ? current : canonicalRequestedTab);
   // Permission booleans are included so a deep link is applied as soon as its tab becomes available.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestedTab, requestedContentSection, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canViewAnalytics, canEditCompliance]);
+  }, [requestedTab, requestedContentSection, didPickInitialTab, canEditProfile, canEditLinks, canEditTheme, canEditMenu, canManageUsers, canReadBackup, canPublish, canViewAnalytics, canEditCompliance]);
 
   useEffect(() => {
     if (hasEditorIntegration || !mobileNavOpen) return;
@@ -1154,11 +1157,11 @@ export const AdminView = ({
             </TabsContent>
           )}
 
-          {canManageUsers && (
+          {canReadBackup && (
             <TabsContent value="backup" className="admin-tab-content">
               <div className="admin-backup-workspace admin-backup-workspace--managed" data-onboarding="backup-section">
-                <VersionHistory />
-                <BackupManager hosted={hasEditorIntegration} />
+                <VersionHistory canRestore={canRestoreBackup} />
+                <BackupManager hosted={hasEditorIntegration} canRestore={canRestoreBackup} />
               </div>
             </TabsContent>
           )}

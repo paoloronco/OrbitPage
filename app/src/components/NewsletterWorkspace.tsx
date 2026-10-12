@@ -14,7 +14,6 @@ import {
   RefreshCw,
   Send,
   Server,
-  ShieldCheck,
   Trash2,
   UserRoundPlus,
   UsersRound,
@@ -252,16 +251,20 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
     void load(true);
   }, [load]);
 
+  const [smtpTestFailed, setSmtpTestFailed] = useState(false);
+
   async function run<T>(name: string, task: () => Promise<T>, success: string) {
     setAction(name);
     setError("");
     setMessage("");
     try {
       const result = await task();
+      if (name === "smtp-test" || name === "smtp-save") setSmtpTestFailed(false);
       setMessage(success);
       await load();
       return result;
     } catch (requestError) {
+      if (name === "smtp-test") setSmtpTestFailed(true);
       setError(
         requestError instanceof Error
           ? requestError.message
@@ -528,45 +531,67 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
               <small>{data.settings.host || "No server configured"}</small>
             </article>
           </section>
-          <section className="newsletter-recent">
+          <section className="newsletter-recent newsletter-campaign-list">
             <header>
               <div>
-                <p className="dashboard-kicker">Recent</p>
                 <h3>Campaign performance</h3>
               </div>
-              <button
-                className="button ghost compact"
-                onClick={() => setView("campaigns")}
-                type="button"
-              >
-                Open campaigns
-              </button>
+              <button className="button ghost compact" onClick={() => setView("campaigns")} type="button">Open campaigns</button>
             </header>
             {data.campaigns.length === 0 ? (
               <div className="newsletter-zero">
-                <Send size={22} />
+                <Mail size={22} />
                 <div>
-                  <strong>No campaigns yet</strong>
-                  <span>
-                    Start with a focused update rather than a generic mass
-                    email.
-                  </span>
+                  <strong>No saved campaigns</strong>
+                  <span>Choose a template or start from a blank draft.</span>
                 </div>
-                <button
-                  className="button secondary compact"
-                  onClick={() => setView("campaigns")}
-                  type="button"
-                >
-                  <Plus size={15} />
-                  Create campaign
-                </button>
               </div>
             ) : (
-              data.campaigns
-                .slice(0, 5)
-                .map((item) => (
-                  <CampaignReport campaign={item} key={item.campaignId} />
-                ))
+              data.campaigns.map((item) => (
+                <div className="newsletter-campaign-row" key={item.campaignId}>
+                  <CampaignReport campaign={item} />
+                  <div className="newsletter-campaign-actions">
+                    {item.status === "draft" && (
+                      <button
+                        className="button ghost compact"
+                        onClick={() => {
+                          setView("campaigns");
+                          setCampaign(campaignFromSaved(item));
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {item.status === "scheduled" && (
+                      <button
+                        className="button ghost compact"
+                        onClick={() => void cancelCampaign(item.campaignId)}
+                        type="button"
+                      >
+                        Cancel send
+                      </button>
+                    )}
+                    {canDeleteNewsletterCampaign(item.status) && (
+                      <button
+                        aria-label={`Delete ${item.name} permanently`}
+                        className="newsletter-icon-button"
+                        disabled={action !== null}
+                        onClick={() => setCampaignToDelete(item)}
+                        title="Delete campaign and delivery report"
+                        type="button"
+                      >
+                        {action === `campaign-delete:${item.campaignId}` ? (
+                          <LoadingIndicator size={14} />
+                        ) : (
+                          <Trash2 size={15} />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </section>
         </div>
@@ -577,15 +602,9 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
           <form className="newsletter-smtp-form" onSubmit={saveSmtp}>
             <header>
               <div>
-                <p className="dashboard-kicker">Newsletter settings</p>
                 <h3>Sender and delivery</h3>
               </div>
-              {data.settings.verifiedAt && (
-                <span className="newsletter-verified">
-                  <ShieldCheck size={15} />
-                  Verified
-                </span>
-              )}
+              <span className={`newsletter-verified ${smtpTestFailed ? "failed" : data.settings.verifiedAt ? "connected" : "pending"}`} role="status" aria-label={smtpTestFailed ? "Connection failed" : data.settings.verifiedAt ? "Connection working" : "Connection not tested"} title={smtpTestFailed ? "Connection failed. Check your settings and test again." : data.settings.verifiedAt ? "Connection working at the last successful test." : "Test the connection to check your account."}><span aria-hidden="true">{smtpTestFailed ? "×" : data.settings.verifiedAt ? "✓" : "•"}</span></span>
             </header>
             <div className="newsletter-form-grid">
               <section className="newsletter-settings-group wide">
@@ -840,7 +859,6 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
             <form onSubmit={addSubscriber}>
               <header>
                 <div>
-                  <p className="dashboard-kicker">Manual entry</p>
                   <h3>Add a subscriber</h3>
                 </div>
                 <UserRoundPlus size={21} />
@@ -1021,7 +1039,6 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
           <form className="newsletter-composer" onSubmit={saveCampaign}>
             <header>
               <div>
-                <p className="dashboard-kicker">Composer</p>
                 <h3>
                   {campaign.campaignId ? "Edit campaign" : "New campaign"}
                 </h3>
@@ -1481,68 +1498,7 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
               </div>
             </div>
           </aside>
-          <section className="newsletter-campaign-list">
-            <header>
-              <div>
-                <p className="dashboard-kicker">History</p>
-                <h3>Campaigns and delivery reports</h3>
-              </div>
-            </header>
-            {data.campaigns.length === 0 ? (
-              <div className="newsletter-zero">
-                <Mail size={22} />
-                <div>
-                  <strong>No saved campaigns</strong>
-                  <span>Choose a template or start from a blank draft.</span>
-                </div>
-              </div>
-            ) : (
-              data.campaigns.map((item) => (
-                <div className="newsletter-campaign-row" key={item.campaignId}>
-                  <CampaignReport campaign={item} />
-                  <div className="newsletter-campaign-actions">
-                    {item.status === "draft" && (
-                      <button
-                        className="button ghost compact"
-                        onClick={() => {
-                          setCampaign(campaignFromSaved(item));
-                          window.scrollTo({ top: 0, behavior: "smooth" });
-                        }}
-                        type="button"
-                      >
-                        Edit
-                      </button>
-                    )}
-                    {item.status === "scheduled" && (
-                      <button
-                        className="button ghost compact"
-                        onClick={() => void cancelCampaign(item.campaignId)}
-                        type="button"
-                      >
-                        Cancel send
-                      </button>
-                    )}
-                    {canDeleteNewsletterCampaign(item.status) && (
-                      <button
-                        aria-label={`Delete ${item.name} permanently`}
-                        className="newsletter-icon-button"
-                        disabled={action !== null}
-                        onClick={() => setCampaignToDelete(item)}
-                        title="Delete campaign and delivery report"
-                        type="button"
-                      >
-                        {action === `campaign-delete:${item.campaignId}` ? (
-                          <LoadingIndicator size={14} />
-                        ) : (
-                          <Trash2 size={15} />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </section>
+
         </div>
       )}
       {campaignToDelete && (

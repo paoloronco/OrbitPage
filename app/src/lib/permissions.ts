@@ -7,7 +7,10 @@ export type Permission =
   | 'menu:write'
   | 'analytics:read'
   | 'compliance:write'
-  | 'users:manage';
+  | 'users:manage'
+  | 'backup:read'
+  | 'backup:write'
+  | 'publish:write';
 
 export type UserRole =
   | 'admin'

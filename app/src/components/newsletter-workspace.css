@@ -1189,3 +1189,6 @@
     font-size: 30px;
   }
 }
+
+.newsletter-verified.pending { background: #fff3cf; color: #745300; }
+.newsletter-verified.failed { background: #fee7e7; color: #a12727; }
