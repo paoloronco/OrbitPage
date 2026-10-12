@@ -26,6 +26,7 @@ type BackupState = "idle" | "exporting" | "restoring" | "success" | "error";
 
 interface BackupManagerProps {
   hosted?: boolean;
+  canRestore?: boolean;
 }
 
 type PendingRestore = {
@@ -120,7 +121,7 @@ function SectionSelector({
   );
 }
 
-export function BackupManager({ hosted = false }: BackupManagerProps) {
+export function BackupManager({ hosted = false, canRestore = true }: BackupManagerProps) {
   const { tr } = useAppI18n();
   const exportableSections = hosted
     ? [...MANAGED_BACKUP_SECTION_IDS]
@@ -432,7 +433,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
               </p>
             )}
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button type="button" className="admin-action admin-action-primary" onClick={() => void restoreBackup()} disabled={busy || pendingRestore.selectedSections.length === 0}>
+              <Button type="button" className="admin-action admin-action-primary" onClick={() => void restoreBackup()} disabled={busy || !canRestore || pendingRestore.selectedSections.length === 0}>
                 {state === "restoring" ? <OrbitLoader size={16} state="weaving" /> : <Upload className="h-4 w-4" />}
                 {state === "restoring" ? tr("Restoring", "Ripristino") : tr("Restore selected", "Ripristina selezione")}
               </Button>
@@ -445,7 +446,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
             variant="outline"
             className="admin-action"
             onClick={() => fileInputRef.current?.click()}
-            disabled={busy || DEMO_MODE}
+            disabled={busy || DEMO_MODE || !canRestore}
           >
             <Upload className="h-4 w-4" />
             {tr("Open backup file", "Apri file di backup")}
@@ -488,7 +489,7 @@ export function BackupManager({ hosted = false }: BackupManagerProps) {
                 {cleanupBusy === "preview" ? <OrbitLoader size={16} state="searching" /> : <Sparkles className="h-4 w-4" />}
                 {tr("Check unused media", "Controlla media inutilizzati")}
               </Button>
-              <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !cleanupReport?.unused}>
+              <Button type="button" variant="outline" className="admin-action" onClick={() => void cleanUnusedMedia()} disabled={Boolean(cleanupBusy) || DEMO_MODE || !canRestore || !cleanupReport?.unused}>
                 {cleanupBusy === "clean" ? <OrbitLoader size={16} state="working" /> : <Trash2 className="h-4 w-4" />}
                 {tr("Clean now", "Pulisci ora")}
               </Button>

@@ -40,6 +40,8 @@ In **Subscribers**, an administrator can add an email/name after recording conse
 
 Send and Schedule save the draft before queuing it. The server checks schedules every 10 seconds and sends to active subscribers in batches of 50, so the instance must stay running.
 
+Saved campaigns and their edit, cancel and delete actions are in **Overview → Campaign performance**. **Campaigns** contains the composer and live preview. Settings uses an icon badge for the last connection test; a failed test marks the connection as unavailable.
+
 Reports show deliveries, unique opens/clicks, and unsubscribes. Opens depend on email clients loading images; an SMTP acceptance does not guarantee inbox delivery. Your provider can impose sending limits.
 
 Only eligible non-active campaigns can be deleted. Deletion removes the campaign/report and cannot retract sent email.

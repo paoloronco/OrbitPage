@@ -123,7 +123,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     <div className="account-info-stack account-general-info">
       <Card className="glass-card p-6 account-panel oss-account-details-card">
         <div className="account-section-heading">
-          <div><p className="oss-account-kicker">{tr('Identity', 'Identità')}</p><h2>{tr('Account details', 'Dettagli account')}</h2></div>
+          <div><h2>{tr('Account details', 'Dettagli account')}</h2></div>
           <ShieldCheck className="h-6 w-6" aria-hidden="true" />
         </div>
         <dl className="account-details">
@@ -188,9 +188,9 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
       <div className="account-support-copy">
         <LifeBuoy className="h-6 w-6" aria-hidden="true" />
         <div>
-          <p className="oss-account-kicker">{tr('Support', 'Supporto')}</p>
-          <h2>{tr('Need help with your account?', 'Hai bisogno di aiuto con il tuo account?')}</h2>
-          <p className="muted">{tr('Contact OrbitPage support for account, access, or publishing issues.', 'Contatta il supporto OrbitPage per problemi relativi ad account, accesso o pubblicazione.')}</p>
+
+          <h2>{tr('Support', 'Supporto')}</h2>
+          <p className="muted">{tr('Contact us for billing, accounts, bugs, access, publishing or any other question.', 'Contattaci per fatturazione, account, bug, accesso, pubblicazione o qualsiasi altra domanda.')}</p>
         </div>
       </div>
       <a className="account-secondary-action" href={`mailto:${SUPPORT_EMAIL}?subject=OrbitPage%20OSS%20support`}><Mail className="h-4 w-4" aria-hidden="true" />{tr('Email support', 'Scrivi al supporto')}</a>
@@ -220,7 +220,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
     <Card className="glass-card p-6 account-danger-zone oss-account-danger-card">
       <div className="account-danger-copy">
         <Trash2 className="h-6 w-6" aria-hidden="true" />
-        <div><p className="oss-account-kicker">{tr('Danger zone', 'Zona pericolosa')}</p><h2>{tr('Delete account', 'Elimina account')}</h2><p className="muted">{tr('Permanently removes administrator accounts, page data, uploads, settings, and authentication configuration.', 'Rimuove definitivamente account amministratori, dati della pagina, caricamenti, impostazioni e configurazione di autenticazione.')}</p></div>
+        <div><h2>{tr('Delete account', 'Elimina account')}</h2><p className="muted">{tr('Permanently removes administrator accounts, page data, uploads, settings, and authentication configuration.', 'Rimuove definitivamente account amministratori, dati della pagina, caricamenti, impostazioni e configurazione di autenticazione.')}</p></div>
       </div>
       <Button className="account-danger-action" type="button" variant="destructive" disabled={DEMO_MODE || !canDeleteInstallation} onClick={() => { setAccountError(''); setAccountDialogOpen(true); }}><Trash2 className="h-4 w-4" />{tr('Delete account', 'Elimina account')}</Button>
     </Card>
