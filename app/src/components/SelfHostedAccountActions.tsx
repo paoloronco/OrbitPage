@@ -137,7 +137,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
 
       <Card className="glass-card p-6 account-panel account-instance-card">
         <div className="account-section-heading">
-          <div><p className="oss-account-kicker">{tr('Installation', 'Installazione')}</p><h2>{tr('Instance details', 'Dettagli istanza')}</h2></div>
+          <div><h2>{tr('Instance details', 'Dettagli istanza')}</h2></div>
           <Database className="h-6 w-6" aria-hidden="true" />
         </div>
         <dl className="account-details">
