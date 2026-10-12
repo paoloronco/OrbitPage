@@ -104,3 +104,21 @@ export async function saveEditorChanges(page: Page) {
   await expect(page.locator('.admin-profile-saved-notice').getByRole('status')).toContainText(/Saved|Salvato/);
   if (previous) await expect.poll(() => progress.evaluate((element, old) => element !== old, previous)).toBe(true);
 }
+
+export async function preservePageData(page: Page) {
+  const login = await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } });
+  expect(login.ok()).toBeTruthy();
+  const { token } = await login.json();
+  const headers = { Authorization: `Bearer ${token}` };
+  const paths = ['/api/profile', '/api/links'];
+  const data = await Promise.all(paths.map(async path => {
+    const response = await page.request.get(path, { headers });
+    expect(response.ok()).toBeTruthy();
+    return response.json();
+  }));
+  return async () => {
+    for (const [index, path] of paths.entries()) {
+      expect((await page.request.put(path, { headers, data: data[index] })).ok()).toBeTruthy();
+    }
+  };
+}

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { contentSaveButton, openAuthenticatedAdmin, openPreviewContentCard, saveEditorChanges } from "./helpers";
+import { contentSaveButton, openAuthenticatedAdmin, openPreviewContentCard, preservePageData, saveEditorChanges } from "./helpers";
 
 test("Page and Content keep the same editor and preview geometry", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
@@ -192,62 +192,67 @@ test("Arrange keeps long card text in its original alignment and full width", as
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
-  await page.getByRole("button", { name: "Content", exact: true }).click();
-  await page.getByRole("button", { name: "Add content" }).click();
-  await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
-  await saveEditorChanges(page);
-  const preview = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
-  const { editor, id } = await openPreviewContentCard(page, preview);
-  await editor.getByPlaceholder("Link title").fill("A long card title that uses all the available width and wraps onto more than one line");
-  await editor.getByPlaceholder("Block description").fill("A complete description with useful details for visitors. ".repeat(5));
-  await editor.getByLabel("Alignment", { exact: true }).click();
-  await page.getByRole("option", { name: "Right", exact: true }).click();
-  await saveEditorChanges(page);
-  const textBounds = () => preview.locator('[data-card-content-layout-item="title"] h3').evaluate(element => {
-    const rect = element.getBoundingClientRect();
-    return { x: rect.x, width: rect.width, height: rect.height, align: getComputedStyle(element).textAlign, clamp: getComputedStyle(element).webkitLineClamp };
-  });
-  const before = await textBounds();
-  await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  const card = page.locator(`[data-card-layout-item="${id}"]`);
-  const after = await card.locator('h3').evaluate(element => {
-    const rect = element.getBoundingClientRect();
-    return { x: rect.x, width: rect.width, height: rect.height, align: getComputedStyle(element).textAlign, clamp: getComputedStyle(element).webkitLineClamp };
-  });
-  expect(Math.abs(after.x - before.x)).toBeLessThan(2);
-  expect(Math.abs(after.width - before.width)).toBeLessThan(2);
-  expect(Math.abs(after.height - before.height)).toBeLessThan(2);
-  expect(after.align).toBe(before.align);
-  expect(after.clamp).toBe("none");
-  const resize = card.getByRole("button", { name: /^Resize card/ });
-  await resize.press("ArrowLeft");
-  await resize.press("ArrowLeft");
-  await expect.poll(() => card.evaluate(element => {
-    const title = element.querySelector('h3')!.getBoundingClientRect();
-    const description = element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect();
-    return title.bottom <= description.top && description.bottom <= element.getBoundingClientRect().bottom;
-  })).toBe(true);
-  await resize.press("ArrowUp");
-  await expect.poll(() => card.evaluate(element => element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect().bottom <= element.getBoundingClientRect().bottom)).toBe(true);
-  await card.getByRole("button", { name: /^Move card/ }).press("ArrowRight");
-  await saveEditorChanges(page);
-  await page.reload();
-  await expect(page.locator(`[data-public-editor-link-id="${id}"] h3`)).toHaveText("A long card title that uses all the available width and wraps onto more than one line");
-  await page.goto("/");
-  for (const width of [1440, 768, 390, 320]) {
-    await page.setViewportSize({ width, height: 900 });
-    const heading = page.getByRole("heading", { name: "A long card title that uses all the available width and wraps onto more than one line", exact: true }).last();
-    await expect(heading).toHaveCSS("text-align", "right");
-    await expect.poll(() => heading.evaluate(element => {
-      const card = element.closest(".glass-card")!;
-      const description = card.querySelector('[data-card-content-layout-item="description"]')!;
-      const bounds = card.getBoundingClientRect();
-      return element.scrollWidth <= element.clientWidth + 1
-        && description.getBoundingClientRect().bottom <= bounds.bottom + 1
-        && document.documentElement.scrollWidth <= innerWidth;
+  const restore = await preservePageData(page);
+  try {
+    await page.getByRole("button", { name: "Content", exact: true }).click();
+    await page.getByRole("button", { name: "Add content" }).click();
+    await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
+    await saveEditorChanges(page);
+    const preview = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
+    const { editor, id } = await openPreviewContentCard(page, preview);
+    await editor.getByPlaceholder("Link title").fill("A long card title that uses all the available width and wraps onto more than one line");
+    await editor.getByPlaceholder("Block description").fill("A complete description with useful details for visitors. ".repeat(5));
+    await editor.getByLabel("Alignment", { exact: true }).click();
+    await page.getByRole("option", { name: "Right", exact: true }).click();
+    await saveEditorChanges(page);
+    const textBounds = () => preview.locator('[data-card-content-layout-item="title"] h3').evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.x, width: rect.width, height: rect.height, align: getComputedStyle(element).textAlign, clamp: getComputedStyle(element).webkitLineClamp };
+    });
+    const before = await textBounds();
+    await page.getByRole("button", { name: "Arrange", exact: true }).click();
+    const card = page.locator(`[data-card-layout-item="${id}"]`);
+    const after = await card.locator('h3').evaluate(element => {
+      const rect = element.getBoundingClientRect();
+      return { x: rect.x, width: rect.width, height: rect.height, align: getComputedStyle(element).textAlign, clamp: getComputedStyle(element).webkitLineClamp };
+    });
+    expect(Math.abs(after.x - before.x)).toBeLessThan(2);
+    expect(Math.abs(after.width - before.width)).toBeLessThan(2);
+    expect(Math.abs(after.height - before.height)).toBeLessThan(2);
+    expect(after.align).toBe(before.align);
+    expect(after.clamp).toBe("none");
+    const resize = card.getByRole("button", { name: /^Resize card/ });
+    await resize.press("ArrowLeft");
+    await resize.press("ArrowLeft");
+    await expect.poll(() => card.evaluate(element => {
+      const title = element.querySelector('h3')!.getBoundingClientRect();
+      const description = element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect();
+      return title.bottom <= description.top && description.bottom <= element.getBoundingClientRect().bottom;
     })).toBe(true);
-  }
+    await resize.press("ArrowUp");
+    await expect.poll(() => card.evaluate(element => element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect().bottom <= element.getBoundingClientRect().bottom)).toBe(true);
+    await card.getByRole("button", { name: /^Move card/ }).press("ArrowRight");
+    await saveEditorChanges(page);
+    await page.reload();
+    await expect(page.locator(`[data-public-editor-link-id="${id}"] h3`)).toHaveText("A long card title that uses all the available width and wraps onto more than one line");
+    await page.goto("/");
+    for (const width of [1440, 768, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      const heading = page.getByRole("heading", { name: "A long card title that uses all the available width and wraps onto more than one line", exact: true }).last();
+      await expect(heading).toHaveCSS("text-align", "right");
+      await expect.poll(() => heading.evaluate(element => {
+        const card = element.closest(".glass-card")!;
+        const description = card.querySelector('[data-card-content-layout-item="description"]')!;
+        const bounds = card.getBoundingClientRect();
+        return element.scrollWidth <= element.clientWidth + 1
+          && description.getBoundingClientRect().bottom <= bounds.bottom + 1
+          && document.documentElement.scrollWidth <= innerWidth;
+      })).toBe(true);
+    }
 
+  } finally {
+    await restore();
+  }
 });
 
 test("Visual editor keeps mobile navigation and destinations explicit", async ({ page }) => {

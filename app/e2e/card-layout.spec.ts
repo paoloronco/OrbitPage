@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin, saveEditorChanges } from './helpers';
+import { openAuthenticatedAdmin, preservePageData, saveEditorChanges } from './helpers';
 
 test.use({ hasTouch: true });
 
@@ -47,53 +47,58 @@ for (const width of [1440, 390]) {
   test(`Arrange tracks the pointer, cancels and preserves other cards at ${width}px`, async ({ page, browserName }) => {
     await page.setViewportSize({ width, height: 980 });
     await openAuthenticatedAdmin(page);
-    await page.getByRole('button', { name: 'Content', exact: true }).click();
-    for (let index = 0; index < 2; index++) {
+    const restore = await preservePageData(page);
+    try {
       await page.getByRole('button', { name: 'Content', exact: true }).click();
-      await page.getByRole('button', { name: 'Add content' }).click();
-      await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
+      for (let index = 0; index < 2; index++) {
+        await page.getByRole('button', { name: 'Content', exact: true }).click();
+        await page.getByRole('button', { name: 'Add content' }).click();
+        await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
+        await saveEditorChanges(page);
+      }
+      const id = await page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last().getAttribute('data-public-editor-link-id');
+      await page.getByRole('button', { name: 'Arrange', exact: true }).click();
+      const card = page.locator(`[data-card-layout-item="${id}"]`);
+      const handle = card.getByRole('button', { name: /^Move card/ });
+      await handle.evaluate(element => element.scrollIntoView({ block: 'center' }));
+      const position = async () => (await card.getAttribute('data-card-layout-position'))!.split(',').map(Number);
+      const before = await position();
+      const others = () => page.locator(`[data-card-layout-item]:not([data-card-layout-item="${id}"])`).evaluateAll(cards => cards.map(card => card.getAttribute('data-card-layout-position')));
+      const otherPositions = await others();
+      const start = (await handle.boundingBox())!;
+      expect(start.width).toBeGreaterThanOrEqual(43.5);
+      expect(start.height).toBeGreaterThanOrEqual(43.5);
+      const canvas = page.locator('.public-card-stack--layout');
+      const scale = await canvas.evaluate(element => element.getBoundingClientRect().width / (element as HTMLElement).offsetWidth);
+      await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2 - 28, { steps: 5 });
+      await expect.poll(async () => (await position())[1]).toBe(Math.round(before[1] - 28 / scale));
+      expect(await others()).toEqual(otherPositions);
+      await page.keyboard.press('Escape');
+      await page.mouse.up();
+      expect(await position()).toEqual(before);
+      if (width === 390 && browserName === 'chromium') {
+        const cdp = await page.context().newCDPSession(page);
+        const touch = (await handle.boundingBox())!;
+        const point = { x: touch.x + touch.width / 2, y: touch.y + touch.height / 2 };
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...point, y: point.y - 20 }] });
+        await expect.poll(async () => (await position())[1]).not.toBe(before[1]);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+        await expect.poll(position).toEqual(before);
+        await cdp.detach();
+      }
+      await handle.press('Shift+ArrowUp');
+      await expect.poll(async () => (await position())[1]).toBe(before[1] - 10);
+      expect(await others()).toEqual(otherPositions);
+      await expect(card.locator('[data-card-layout-mode]')).toHaveCount(0);
+      await expect(card.locator('.page-card-layout__surface')).toHaveAttribute('inert', '');
       await saveEditorChanges(page);
+      await page.reload();
+      await expect.poll(async () => (await position())[1]).toBe(before[1] - 10);
+    } finally {
+      await restore();
     }
-    const id = await page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last().getAttribute('data-public-editor-link-id');
-    await page.getByRole('button', { name: 'Arrange', exact: true }).click();
-    const card = page.locator(`[data-card-layout-item="${id}"]`);
-    const handle = card.getByRole('button', { name: /^Move card/ });
-    await handle.scrollIntoViewIfNeeded();
-    const position = async () => (await card.getAttribute('data-card-layout-position'))!.split(',').map(Number);
-    const before = await position();
-    const others = () => page.locator(`[data-card-layout-item]:not([data-card-layout-item="${id}"])`).evaluateAll(cards => cards.map(card => card.getAttribute('data-card-layout-position')));
-    const otherPositions = await others();
-    const start = (await handle.boundingBox())!;
-    expect(start.width).toBeGreaterThanOrEqual(43.5);
-    expect(start.height).toBeGreaterThanOrEqual(43.5);
-    const canvas = page.locator('.public-card-stack--layout');
-    const scale = await canvas.evaluate(element => element.getBoundingClientRect().width / (element as HTMLElement).offsetWidth);
-    await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2 - 28, { steps: 5 });
-    await expect.poll(async () => (await position())[1]).toBe(Math.round(before[1] - 28 / scale));
-    expect(await others()).toEqual(otherPositions);
-    await page.keyboard.press('Escape');
-    await page.mouse.up();
-    expect(await position()).toEqual(before);
-    if (width === 390 && browserName === 'chromium') {
-      const cdp = await page.context().newCDPSession(page);
-      const touch = (await handle.boundingBox())!;
-      const point = { x: touch.x + touch.width / 2, y: touch.y + touch.height / 2 };
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...point, y: point.y - 20 }] });
-      await expect.poll(async () => (await position())[1]).not.toBe(before[1]);
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
-      await expect.poll(position).toEqual(before);
-      await cdp.detach();
-    }
-    await handle.press('Shift+ArrowUp');
-    await expect.poll(async () => (await position())[1]).toBe(before[1] - 10);
-    expect(await others()).toEqual(otherPositions);
-    await expect(card.locator('[data-card-layout-mode]')).toHaveCount(0);
-    await expect(card.locator('.page-card-layout__surface')).toHaveAttribute('inert', '');
-    await saveEditorChanges(page);
-    await page.reload();
-    await expect.poll(async () => (await position())[1]).toBe(before[1] - 10);
   });
 }
