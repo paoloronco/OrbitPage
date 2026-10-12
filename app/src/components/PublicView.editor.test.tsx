@@ -103,6 +103,8 @@ describe("PublicView visual editor targets", () => {
     expect(html).toContain('data-card-layout-position="48,20,52,120"');
     expect(html).not.toContain("data-card-content-layout-position");
     expect(html).toContain('data-card-content-layout-item="title"');
+    expect(html).toContain('content-card-variant-0');
+    expect(html).not.toContain('content-card-variant--1');
   });
 
   it("renders the profile and a content card in the same saved desktop canvas", () => {
@@ -152,5 +154,6 @@ describe("PublicView visual editor targets", () => {
     expect(html).toContain(`data-card-layout-item="${PROFILE_CARD_LAYOUT_ID}" data-card-layout-position="31.94,0,36.11,208"`);
     expect(html).not.toContain("Profile image");
     expect(html).toContain("lucide-move-diagonal2");
+    expect(html).toContain('content-card-variant-0');
   });
 });

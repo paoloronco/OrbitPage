@@ -370,7 +370,7 @@ export function PublicCardLayout({
             </div>
           );
         }
-        const link = card as LinkData;
+        const link = links.find(link => link.id === card.id)!;
         const selected = editorSelection?.kind === "link" && editorSelection.id === link.id;
         const active = activeCard === link.id;
         return (
