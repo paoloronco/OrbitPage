@@ -166,7 +166,7 @@ The design precedence is:
 2. Profile-card overrides in Page.
 3. Individual block overrides in Content.
 
-If cards become visually inconsistent, reset individual overrides first and then tune the shared theme. Select **Save changes** in Theme before leaving the workspace.
+If cards become visually inconsistent, reset individual overrides first and then tune the shared theme. The floating **Save** and **Revert** actions appear when the theme differs from the saved version. Returning to the saved preset clears the draft and comparison slider. Colors, Type, Layout and Background stay on one horizontally scrollable row. Save changes before leaving the workspace.
 
 ## Media lifecycle
 
