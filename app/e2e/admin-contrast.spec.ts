@@ -114,6 +114,7 @@ test('keeps secondary dashboard copy readable across the main workspaces', async
     '.admin-metric-detail',
     '.content-workspace-option small',
     '.menu-editor-dialog > div:first-child > p',
+    '.menu-editor-dialog label',
     '.menu-editor-section-title p',
     '.menu-category-group__toggle small',
     '.menu-category-editor-empty span',
