@@ -102,7 +102,7 @@ export function VisualSiteEditor({
   ));
   const [previewVisible, setPreviewVisible] = useState(true);
   const previewEnabled = section === "menu" || section === "pages" ? Boolean(renderPreview) : section !== "shop";
-  const previewCanCollapse = isPhone && previewEnabled && section !== "menu" && section !== "links";
+  const previewCanCollapse = !layoutEditing && isPhone && previewEnabled && section !== "menu" && section !== "links";
   const Inspector = previewEnabled || section === "menu" || section === "pages" ? "aside" : "section";
   const sections: VisualSectionItem[] = [
     { id: "profile", label: tr("Page", "Pagina"), icon: UserRound, status: "active" },
@@ -145,7 +145,6 @@ export function VisualSiteEditor({
     const phoneQuery = window.matchMedia(PHONE_MEDIA_QUERY);
     const syncPhoneViewport = () => {
       setIsPhone(phoneQuery.matches);
-      if (phoneQuery.matches) onLayoutEditingChange(false);
     };
     phoneQuery.addEventListener("change", syncPhoneViewport);
     syncPhoneViewport();
@@ -155,6 +154,7 @@ export function VisualSiteEditor({
 
   const startLayoutEditing = () => {
     if (section !== "profile") onSelect("profile");
+    setPreviewVisible(true);
     onLayoutEditingChange(true);
   };
   const previewDeviceToggle = previewEnabled
@@ -181,15 +181,15 @@ export function VisualSiteEditor({
         {!isPhone && <div className="visual-site-editor__toolbar-actions visual-site-editor__section-actions">
           {section === "shop" && <div data-orbitpage-shop-preview-device-slot />}
           {section === "menu" && <div data-orbitpage-menu-preview-device-slot />}
-          {!isPhone && !layoutEditing && (section === "profile" || section === "links") && onProfileLayoutChange && onCardLayoutChange && (
+          {(section === "profile" || section === "links") && onCardLayoutChange && (
             <button
               className="visual-site-editor__layout-toggle"
-              onClick={startLayoutEditing}
-              title={tr("Arrange page layout", "Disponi il layout della pagina")}
+              onClick={() => layoutEditing ? onLayoutEditingChange(false) : startLayoutEditing()}
+              title={layoutEditing ? tr("Finish arranging", "Termina disposizione") : tr("Arrange page layout", "Disponi il layout della pagina")}
               type="button"
             >
               <Edit aria-hidden="true" size={17} />
-              <span>{tr("Arrange", "Disponi")}</span>
+              <span>{layoutEditing ? tr("Done", "Fine") : tr("Arrange", "Disponi")}</span>
             </button>
           )}
           {previewDeviceToggle}
@@ -197,6 +197,17 @@ export function VisualSiteEditor({
       </nav>
 
       {isPhone && <div className="visual-site-editor__preview-controls">
+          {(section === "profile" || section === "links") && onCardLayoutChange && (
+            <button
+              className="visual-site-editor__layout-toggle"
+              onClick={() => layoutEditing ? onLayoutEditingChange(false) : startLayoutEditing()}
+              title={layoutEditing ? tr("Finish arranging", "Termina disposizione") : tr("Arrange page layout", "Disponi il layout della pagina")}
+              type="button"
+            >
+              <Edit aria-hidden="true" size={17} />
+              <span>{layoutEditing ? tr("Done", "Fine") : tr("Arrange", "Disponi")}</span>
+            </button>
+          )}
         {previewCanCollapse && (
         <button
           aria-controls="visual-site-editor-preview"
@@ -219,7 +230,7 @@ export function VisualSiteEditor({
           <span role="status">
             <GripVertical aria-hidden="true" size={17} />
             <strong>{device === "mobile" ? tr("Mobile layout", "Layout mobile") : tr("Desktop layout", "Layout desktop")}</strong>
-            <span>{tr("Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.", "Trascina le card dalle maniglie. Ridimensiona a una larghezza predefinita; usa le frecce per regolazioni precise.")}</span>
+            <span>{tr("Move and resize cards freely with the handles. Arrow keys: 1 px; Shift: 10 px. Hold Shift while dragging to align.", "Sposta e ridimensiona liberamente le card dalle maniglie. Frecce: 1 px; Maiusc: 10 px. Tieni Maiusc durante il trascinamento per allineare.")}</span>
           </span>
         </div>
       )}
@@ -244,7 +255,7 @@ export function VisualSiteEditor({
               onProfileLayoutChange={onProfileLayoutChange ? (layout) => onProfileLayoutChange(layout, device) : undefined}
               onCardLayoutChange={onCardLayoutChange ? (layout) => onCardLayoutChange(layout, device) : undefined}
               profile={profile}
-              profileLayoutEditing={layoutEditing}
+              profileLayoutEditing={false}
               cardLayoutEditing={layoutEditing}
               publicPageHref={publicPageHref}
               showOrbitPageBadge={showOrbitPageBadge}

@@ -55,7 +55,7 @@ export const PublicMenuCard = ({ link }: PublicMenuCardProps) => {
             {unavailable ? tr('Currently unavailable', 'Al momento non disponibile') : 'Menu'}
           </span>
           <span
-            className="block truncate text-base font-semibold leading-tight"
+            className="block [overflow-wrap:anywhere] text-base font-semibold leading-tight"
             style={{
               ...(link.textColor ? { color: link.textColor } : {}),
               ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}),
@@ -66,7 +66,7 @@ export const PublicMenuCard = ({ link }: PublicMenuCardProps) => {
           </span>
           {link.description && (
             <span
-              className="mt-1 block line-clamp-2 text-sm opacity-70"
+              className="mt-1 block [overflow-wrap:anywhere] text-sm opacity-70"
               style={{
                 ...(link.textColor ? { color: link.textColor } : {}),
                 ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}),

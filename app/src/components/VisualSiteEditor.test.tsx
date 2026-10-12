@@ -246,7 +246,7 @@ describe("VisualSiteEditor", () => {
     expect(withPage).not.toContain("Selected element");
   });
 
-  it("removes the top Done and Reset actions while arranging", () => {
+  it("always offers Done while arranging, even before a change", () => {
     const html = renderToStaticMarkup(
       <VisualSiteEditor
         profile={{ name: "OrbitPage", bio: "", avatar: "" }}
@@ -266,13 +266,13 @@ describe("VisualSiteEditor", () => {
       />,
     );
 
-    expect(html).not.toContain(">Done</span>");
+    expect(html).toContain(">Done</span>");
     expect(html).not.toContain(">Reset</span>");
-    expect(mockState.livePreviewProps?.profileLayoutEditing).toBe(true);
+    expect(mockState.livePreviewProps?.profileLayoutEditing).toBe(false);
     expect(mockState.livePreviewProps?.cardLayoutEditing).toBe(true);
   });
 
-  it("hides Arrange and offers a preview disclosure on smartphones", () => {
+  it("shows Arrange and offers a preview disclosure on smartphones", () => {
     vi.stubGlobal("window", {
       matchMedia: (query: string) => ({ matches: query === "(max-width: 600px)" }),
     });
@@ -297,7 +297,7 @@ describe("VisualSiteEditor", () => {
         />,
       );
 
-      expect(html).not.toContain(">Arrange</span>");
+      expect(html).toContain(">Arrange</span>");
       expect(html).toContain(">Hide Preview</span>");
       expect(html).toContain('aria-controls="visual-site-editor-preview"');
       expect(html).toContain('aria-expanded="true"');

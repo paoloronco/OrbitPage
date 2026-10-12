@@ -16,28 +16,19 @@ import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { PublicEditorTarget } from "./PublicView";
 import {
   alignCardLayoutRect,
-  defaultCardHeight,
-  normalizeCardContentLayout,
+  fitCardLayoutHeights,
   normalizeCardLayout,
   PROFILE_CARD_LAYOUT_ID,
-  reflowCardLayoutPositions,
-  snapCardLayoutSize,
-  stepCardLayoutWidth,
-  updateCardContentLayoutItem,
   updateCardLayoutItem,
-  type CardContentLayoutItem,
   type CardLayout,
   type CardLayoutGuides,
   type CardLayoutRect,
   type CardLayoutSource,
   type CardLayoutViewport,
-  type NormalizedCardContentLayout,
   type NormalizedCardLayout,
 } from "@/lib/card-layout";
 import { getContentCardVariantCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
-import { isNativeShopLink } from "@/lib/native-shop-link";
-import { getServiceLinkData } from "@/lib/link-blocks";
 
 interface PublicCardLayoutProps {
   links: LinkData[];
@@ -53,25 +44,19 @@ interface PublicCardLayoutProps {
 }
 
 type Gesture = {
-  scope: "card" | "content";
   cardId: string;
-  item?: CardContentLayoutItem;
   mode: "move" | "resize";
   pointerId: number;
   startX: number;
   startY: number;
   startRect: CardLayoutRect;
   layout: NormalizedCardLayout;
-  contentLayout?: NormalizedCardContentLayout;
   bounds: DOMRect;
   scale: number;
-  minimumHeight: number;
+  scrollContainer: HTMLElement | null;
+  scrollTop: number;
+  windowScrollY: number;
 };
-
-type ActiveTarget = { scope: Gesture["scope"]; cardId: string; item?: CardContentLayoutItem } | null;
-type ActiveGuides = CardLayoutGuides & { scope?: Gesture["scope"]; cardId?: string };
-
-const supportsContentLayout = (link: LinkData) => !link.type || link.type === "link" || isNativeShopLink(link);
 
 export function PublicCardLayout({
   links,
@@ -107,184 +92,151 @@ export function PublicCardLayout({
         prepend: true,
         defaultRect: { ...defaultRect, y: 0, height: profileCardHeight },
       }] : []),
-      ...links.map((link) => ({ ...link, defaultRect, hasIcon: Boolean(link.icon || isNativeShopLink(link) || getServiceLinkData(link.content).service) })),
+      ...links.map((link) => ({ ...link, defaultRect })),
     ];
   }, [desktopDefaultWidthCapRem, hasProfileCard, links, profileCardHeight, theme.maxWidth, viewport]);
   const savedLayout = useMemo(() => normalizeCardLayout(rawLayout, layoutCards, viewport), [layoutCards, rawLayout, viewport]);
+
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
-  const [activeTarget, setActiveTarget] = useState<ActiveTarget>(null);
-  const [guides, setGuides] = useState<ActiveGuides>({});
+  const [activeCard, setActiveCard] = useState<string | null>(null);
+  const [guides, setGuides] = useState<CardLayoutGuides>({});
+  const [heights, setHeights] = useState<Record<string, number>>({});
   const gestureRef = useRef<Gesture | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | null>(null);
-  const pointerRef = useRef<{ clientX: number; clientY: number; pointerId: number } | null>(null);
-  const pendingLayoutRef = useRef<NormalizedCardLayout | null>(null);
-  const latestLayoutRef = useRef<NormalizedCardLayout>(workingLayout);
-  const viewportRef = useRef(viewport);
+  const pointerRef = useRef<{ clientX: number; clientY: number; pointerId: number; shiftKey: boolean } | null>(null);
+  const latestLayoutRef = useRef<NormalizedCardLayout>(savedLayout);
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
-  const activeLayout = layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout;
+  const activeLayout = useMemo(() => fitCardLayoutHeights(
+    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, !activeCard,
+  ), [activeCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
 
-  useEffect(() => {
-    if (layoutEditing) return;
+  useLayoutEffect(() => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     frameRef.current = null;
     gestureRef.current = null;
+    setActiveCard(null);
+    setGuides({});
     latestLayoutRef.current = savedLayout;
     setWorkingLayout(savedLayout);
-  }, [layoutEditing, savedLayout]);
+  }, [savedLayout, layoutEditing]);
+
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !useFreeLayout) return;
+    const measure = () => {
+      const next: Record<string, number> = {};
+      canvas.querySelectorAll<HTMLElement>("[data-card-layout-item]").forEach(item => {
+        const surface = item.querySelector<HTMLElement>(".page-card-layout__surface");
+        if (!surface) return;
+        const card = surface.querySelector<HTMLElement>(".glass-card, .public-cta-card") || surface.firstElementChild as HTMLElement;
+        if (!card) return;
+        const bounds = card.getBoundingClientRect();
+        const scale = bounds.width / card.offsetWidth;
+        if (!scale) return;
+        const style = getComputedStyle(card);
+        const bottom = Math.max(Number.parseFloat(style.paddingTop), ...Array.from(card.children).map(child => {
+          const position = getComputedStyle(child).position;
+          return position === "absolute" || position === "fixed" ? 0 : (child.getBoundingClientRect().bottom - bounds.top) / scale;
+        }));
+        next[item.dataset.cardLayoutItem!] = Math.ceil(bottom + Number.parseFloat(style.paddingBottom) + Number.parseFloat(style.borderBottomWidth));
+      });
+      setHeights(previous => Object.keys(next).length === Object.keys(previous).length
+        && Object.entries(next).every(([id, height]) => previous[id] === height) ? previous : next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    canvas.querySelectorAll(".page-card-layout__surface, .page-card-layout__surface > *, .page-card-layout__surface .glass-card > *").forEach(surface => observer.observe(surface));
+    return () => observer.disconnect();
+  }, [layoutCards, useFreeLayout]);
+
+  useEffect(() => () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); }, []);
 
   const applyWorkingLayout = (next: NormalizedCardLayout) => {
     latestLayoutRef.current = next;
     setWorkingLayout(next);
   };
 
-  useLayoutEffect(() => {
-    if (!layoutEditing || !canvasRef.current) return;
-    let next = viewportRef.current === viewport ? latestLayoutRef.current : savedLayout;
-    viewportRef.current = viewport;
-    let resizedContent = false;
-    for (const canvas of canvasRef.current.querySelectorAll<HTMLElement>("[data-card-content-layout]")) {
-      const cardId = canvas.dataset.cardContentLayout!;
-      const card = layoutCards.find(item => item.id === cardId);
-      if (!card || !supportsContentLayout(card as LinkData)) continue;
-      const bounds = canvas.getBoundingClientRect();
-      if (!bounds.width || !canvas.offsetWidth) continue;
-      const scale = bounds.width / canvas.offsetWidth;
-      const stored = next.contents?.[cardId];
-      let positions = { ...normalizeCardContentLayout(stored, card.hasIcon).positions };
-      const visible = [...canvas.querySelectorAll<HTMLElement>("[data-card-content-layout-item]")];
-      for (const node of visible) {
-        const item = node.dataset.cardContentLayoutItem as CardContentLayoutItem;
-        if (stored) {
-          const height = Math.min(600, node.querySelector<HTMLElement>(".public-link-card__layout-content")?.scrollHeight || 0);
-          if (height > positions[item].height + 1) {
-            const visiblePositions = Object.fromEntries(visible.map(element => {
-              const id = element.dataset.cardContentLayoutItem as CardContentLayoutItem;
-              return [id, positions[id]];
-            }));
-            positions = { ...positions, ...reflowCardLayoutPositions(visiblePositions, item, { ...positions[item], height }, 4) };
-            resizedContent = true;
-          }
-          continue;
-        }
-        const rect = node.getBoundingClientRect();
-        positions[item] = {
-          x: (rect.left - bounds.left) / bounds.width * 100, y: (rect.top - bounds.top) / scale,
-          width: rect.width / bounds.width * 100, height: rect.height / scale,
-        };
-      }
-      const content = normalizeCardContentLayout({ positions, height: Math.max(canvas.offsetHeight, ...visible.map(node => {
-        const rect = positions[node.dataset.cardContentLayoutItem as CardContentLayoutItem];
-        return rect.y + rect.height;
-      })) }, card.hasIcon);
-      const surface = canvas.closest<HTMLElement>(".glass-card")!;
-      const style = getComputedStyle(surface);
-      const height = Math.min(1_200, content.height + Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom));
-      if (stored && JSON.stringify(stored) === JSON.stringify(content) && height <= next.positions[cardId].height) continue;
-      next = { ...next, contents: { ...next.contents, [cardId]: content } };
-      resizedContent ||= Boolean(stored);
-      next = updateCardLayoutItem(next, layoutCards, viewport, cardId, {
-        ...next.positions[cardId], height: Math.max(next.positions[cardId].height, Math.ceil(height / 48) * 48),
-      });
-    }
-    if (next !== latestLayoutRef.current) {
-      applyWorkingLayout(next);
-      if (resizedContent && !gestureRef.current) onLayoutChange?.(next);
-    }
-  }, [layoutEditing, layoutCards, savedLayout, viewport, workingLayout, onLayoutChange]);
-
-  useEffect(() => () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); }, []);
-
-  const minimumCardHeight = (cardId: string, element: HTMLElement) => {
-    const surface = element.querySelector<HTMLElement>(".glass-card");
-    const style = surface ? getComputedStyle(surface) : undefined;
-    const padding = style ? Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom) : 0;
-    return Math.min(1_200, Math.max(defaultCardHeight(layoutCards.find(card => card.id === cardId)!), (activeLayout.contents?.[cardId]?.height || 0) + padding));
-  };
-
   const startGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!layoutEditing || event.button !== 0) return;
+    if (!layoutEditing || event.button !== 0 || gestureRef.current) return;
     const target = event.target as HTMLElement;
-    const cardElement = target.closest<HTMLElement>("[data-card-layout-item]");
-    if (!cardElement) return;
-    const cardId = cardElement.dataset.cardLayoutItem;
-    if (!cardId) return;
-
-    const contentElement = target.closest<HTMLElement>("[data-card-content-layout-item]");
-    const contentCanvas = contentElement?.closest<HTMLElement>("[data-card-content-layout]");
-    const cardControl = target.closest<HTMLElement>("[data-page-card-layout-mode]");
-    if (!contentElement && !cardControl) return;
-
-    const scope: Gesture["scope"] = contentElement ? "content" : "card";
-    const mode = (target.closest<HTMLElement>("[data-card-layout-mode], [data-page-card-layout-mode]")?.dataset.cardLayoutMode
-      || target.closest<HTMLElement>("[data-page-card-layout-mode]")?.dataset.pageCardLayoutMode
-      || "move") as Gesture["mode"];
-    const item = contentElement?.dataset.cardContentLayoutItem as CardContentLayoutItem | undefined;
-    const contentLayout = item ? normalizeCardContentLayout(activeLayout.contents?.[cardId]) : undefined;
-    const canvas = scope === "content" ? contentCanvas : event.currentTarget;
-    const startRect = scope === "content" && item
-      ? contentLayout!.positions[item]
-      : activeLayout.positions[cardId];
-    if (!canvas || !startRect) return;
-
+    const control = target.closest<HTMLElement>("[data-page-card-layout-mode]");
+    const cardId = control?.closest<HTMLElement>("[data-card-layout-item]")?.dataset.cardLayoutItem;
+    if (!control || !cardId) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (!bounds.width) return;
     event.preventDefault();
     event.stopPropagation();
-    const bounds = canvas.getBoundingClientRect();
+    control.focus({ preventScroll: true });
+    const scrollContainer = event.currentTarget.closest<HTMLElement>(".admin-live-preview__scroll");
     gestureRef.current = {
-      scope,
       cardId,
-      item,
-      mode,
+      mode: control.dataset.pageCardLayoutMode as Gesture["mode"],
       pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      startRect: { ...startRect },
-      layout: activeLayout,
-      contentLayout,
-      bounds,
-      scale: Math.max(.01, bounds.width / canvas.offsetWidth),
-      minimumHeight: minimumCardHeight(cardId, cardElement),
+      startX: event.clientX, startY: event.clientY,
+      startRect: { ...activeLayout.positions[cardId] },
+      layout: activeLayout, bounds,
+      scale: bounds.width / event.currentTarget.offsetWidth,
+      scrollContainer, scrollTop: scrollContainer?.scrollTop || 0, windowScrollY: window.scrollY,
     };
-    latestLayoutRef.current = activeLayout;
-    pendingLayoutRef.current = null;
+    applyWorkingLayout(activeLayout);
     event.currentTarget.setPointerCapture(event.pointerId);
-    setActiveTarget({ scope, cardId, item });
+    setActiveCard(cardId);
   };
 
-  const updateGesturePosition = (event: { clientX: number; clientY: number; pointerId: number }) => {
+  const updateGesturePosition = (event: { clientX: number; clientY: number; pointerId: number; shiftKey: boolean }) => {
     const gesture = gestureRef.current;
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     const deltaX = (event.clientX - gesture.startX) / gesture.bounds.width * 100;
-    const deltaY = (event.clientY - gesture.startY) / gesture.scale;
-    const defaultWidth = gesture.scope === "card" ? layoutCards.find((card) => card.id === gesture.cardId)?.defaultRect?.width : undefined;
+    const deltaY = (event.clientY - gesture.startY + window.scrollY - gesture.windowScrollY) / gesture.scale
+      + (gesture.scrollContainer?.scrollTop || 0) - gesture.scrollTop;
     const rect = gesture.mode === "move"
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
-      : gesture.scope === "card"
-        ? snapCardLayoutSize({ ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY }, defaultWidth, gesture.minimumHeight)
-        : { ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY };
-    const positions = gesture.scope === "content" ? gesture.contentLayout!.positions : gesture.layout.positions;
-    const height = gesture.scope === "content" ? gesture.contentLayout!.height : gesture.layout.height;
-    const itemId = gesture.scope === "content" ? gesture.item! : gesture.cardId;
-    const snapped = alignCardLayoutRect(positions, height, itemId, rect, gesture.mode, 6 / gesture.bounds.width * 100, 6 / gesture.scale);
-    const update = (nextRect: CardLayoutRect, allowOverlap = false) => gesture.scope === "content"
-      ? updateCardContentLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, gesture.item!, nextRect, allowOverlap)
-      : updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, nextRect, allowOverlap);
-    const alignedRect = snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect;
-    const keepCardSize = gesture.scope === "card" && gesture.mode === "resize";
-    pendingLayoutRef.current = update(keepCardSize ? { ...alignedRect, width: rect.width, height: rect.height } : alignedRect);
-    setGuides({ ...snapped.guides, ...(keepCardSize ? { x: undefined, y: undefined } : {}), scope: gesture.scope, cardId: gesture.cardId });
-    applyWorkingLayout(pendingLayoutRef.current);
+      : { ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY };
+    const aligned = alignCardLayoutRect(gesture.layout.positions, gesture.layout.height, gesture.cardId, rect, gesture.mode, 4 / gesture.bounds.width * 100, 4 / gesture.scale);
+    // Guides are advisory; only Shift opts into snapping.
+    const candidate = event.shiftKey ? aligned.rect : rect;
+    if (gesture.mode === "resize") candidate.width = Math.min(candidate.width, 100 - candidate.x);
+    const next = updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, candidate);
+    setGuides(aligned.guides);
+    applyWorkingLayout(next);
+  };
+
+  const renderGestureFrame = () => {
+    frameRef.current = null;
+    const gesture = gestureRef.current;
+    const pointer = pointerRef.current;
+    if (!gesture || !pointer) return;
+    const scroll = gesture.scrollContainer;
+    let scrolled = false;
+    if (scroll) {
+      const bounds = scroll.getBoundingClientRect();
+      const edge = 36;
+      const direction = pointer.clientY < bounds.top + edge ? -1 : pointer.clientY > bounds.bottom - edge ? 1 : 0;
+      const previous = scroll.scrollTop;
+      scroll.scrollTop += direction * 12 / gesture.scale;
+      scrolled = scroll.scrollTop !== previous;
+    }
+    updateGesturePosition(pointer);
+    if (scrolled) frameRef.current = requestAnimationFrame(renderGestureFrame);
   };
 
   const updateGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!gestureRef.current || gestureRef.current.pointerId !== event.pointerId) return;
-    event.preventDefault(); event.stopPropagation();
-    pointerRef.current = { clientX: event.clientX, clientY: event.clientY, pointerId: event.pointerId };
+    event.preventDefault();
+    event.stopPropagation();
+    pointerRef.current = { clientX: event.clientX, clientY: event.clientY, pointerId: event.pointerId, shiftKey: event.shiftKey };
     if (frameRef.current !== null) return;
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null;
-      if (pointerRef.current) updateGesturePosition(pointerRef.current);
-    });
+    frameRef.current = requestAnimationFrame(renderGestureFrame);
+  };
+
+  const resetGesture = () => {
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    frameRef.current = null;
+    gestureRef.current = null;
+    pointerRef.current = null;
+    setActiveCard(null);
+    setGuides({});
   };
 
   const finishGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -292,64 +244,44 @@ export function PublicCardLayout({
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
-    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-    frameRef.current = null;
     updateGesturePosition(event);
-    const committedLayout = pendingLayoutRef.current || latestLayoutRef.current;
-    gestureRef.current = null;
-    pendingLayoutRef.current = null;
-    setActiveTarget(null);
-    setGuides({});
-    applyWorkingLayout(committedLayout);
-    onLayoutChange?.(committedLayout);
+    const next = normalizeCardLayout(fitCardLayoutHeights(latestLayoutRef.current, heights, false), layoutCards, viewport);
+    resetGesture();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    applyWorkingLayout(next);
+    if (JSON.stringify(next.positions) !== JSON.stringify(gesture.layout.positions)) onLayoutChange?.(next);
   };
 
-  const cancelGesture = (event: ReactPointerEvent<HTMLDivElement>) => {
+  const cancelGesture = (event?: ReactPointerEvent<HTMLDivElement>) => {
     const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId) return;
-    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-    frameRef.current = null;
-    gestureRef.current = null;
-    pendingLayoutRef.current = null;
-    setActiveTarget(null);
-    setGuides({});
+    if (!gesture || (event && gesture.pointerId !== event.pointerId)) return;
+    resetGesture();
+    if (canvasRef.current?.hasPointerCapture(gesture.pointerId)) canvasRef.current.releasePointerCapture(gesture.pointerId);
     applyWorkingLayout(gesture.layout);
   };
 
   const handleKeyboard = (event: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (!layoutEditing || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
-    const target = event.target as HTMLElement;
-    const cardElement = target.closest<HTMLElement>("[data-card-layout-item]");
-    const cardId = cardElement?.dataset.cardLayoutItem;
-    if (!cardId) return;
-    const contentElement = target.closest<HTMLElement>("[data-card-content-layout-item]");
-    const item = contentElement?.dataset.cardContentLayoutItem as CardContentLayoutItem | undefined;
-    const scope: Gesture["scope"] = item ? "content" : "card";
-    const mode = (target.dataset.cardLayoutMode || target.dataset.pageCardLayoutMode || "move") as Gesture["mode"];
-    const contentLayout = item ? normalizeCardContentLayout(activeLayout.contents?.[cardId]) : undefined;
-    const currentRect = item ? contentLayout!.positions[item] : activeLayout.positions[cardId];
-    if (!currentRect) return;
+    if (!layoutEditing) return;
+    if (event.key === "Escape" && gestureRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      cancelGesture();
+      return;
+    }
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    const control = (event.target as HTMLElement).closest<HTMLElement>("[data-page-card-layout-mode]");
+    const cardId = control?.closest<HTMLElement>("[data-card-layout-item]")?.dataset.cardLayoutItem;
+    if (!control || !cardId || !canvasRef.current) return;
     event.preventDefault();
     event.stopPropagation();
-    const step = event.shiftKey ? 4 : 1;
-    const defaultWidth = scope === "card" ? layoutCards.find((card) => card.id === cardId)?.defaultRect?.width : undefined;
-    const rect = mode === "move" ? {
-      ...currentRect,
-      x: currentRect.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
-      y: currentRect.y + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
-    } : {
-      ...currentRect,
-      width: scope === "card" && (event.key === "ArrowLeft" || event.key === "ArrowRight")
-        ? stepCardLayoutWidth(currentRect.width, event.key === "ArrowLeft" ? -1 : 1, defaultWidth)
-        : currentRect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
-      height: currentRect.height + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0) * (scope === "card" ? 48 : 4),
-    };
-    const sizedRect = mode === "resize" && scope === "card"
-      ? snapCardLayoutSize(rect, defaultWidth, minimumCardHeight(cardId, cardElement!))
-      : rect;
-    const next = scope === "content"
-      ? updateCardContentLayoutItem(activeLayout, layoutCards, viewport, cardId, item!, sizedRect)
-      : updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, sizedRect);
+    const rect = activeLayout.positions[cardId];
+    const step = event.shiftKey ? 10 : 1;
+    const dx = (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0) / canvasRef.current.offsetWidth * 100;
+    const dy = event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
+    const candidate = control.dataset.pageCardLayoutMode === "resize"
+      ? { ...rect, width: Math.min(100 - rect.x, rect.width + dx), height: rect.height + dy }
+      : { ...rect, x: rect.x + dx, y: rect.y + dy };
+    const next = updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, candidate);
     applyWorkingLayout(next);
     onLayoutChange?.(next);
   };
@@ -357,21 +289,6 @@ export function PublicCardLayout({
   const cardClassName = (link: LinkData, selected: boolean, editing: boolean) => (
     `content-card-variant-${links.indexOf(link) % 6} public-editor-target public-editor-target--link${selected ? " is-selected" : ""}${editing ? " is-layout-editing" : ""}`
   );
-
-  const cardContent = (link: LinkData) => {
-    const storedContent = activeLayout.contents?.[link.id];
-    const contentLayout = supportsContentLayout(link) && storedContent
-      ? normalizeCardContentLayout(storedContent)
-      : undefined;
-    return (
-      <PublicBlockRenderer
-        cardContentLayout={contentLayout}
-        cardContentLayoutEditing={layoutEditing && Boolean(contentLayout)}
-        cardContentLayoutGuides={guides.scope === "content" && guides.cardId === link.id ? guides : undefined}
-        link={link}
-      />
-    );
-  };
 
   if (!useFreeLayout) {
     return (
@@ -398,7 +315,7 @@ export function PublicCardLayout({
             style={getContentCardVariantCssVariables(theme, links.indexOf(link)) as CSSProperties}
             tabIndex={onEditorSelect ? 0 : undefined}
           >
-            {cardContent(link)}
+            {<PublicBlockRenderer link={link} />}
           </div>
         ))}
       </div>
@@ -416,9 +333,10 @@ export function PublicCardLayout({
       className={`public-card-stack public-card-stack--layout${layoutEditing ? " public-card-stack--layout-editing" : ""}`}
       ref={canvasRef}
       data-card-layout-viewport={viewport}
-      onClick={layoutEditing ? (event) => { event.preventDefault(); event.stopPropagation(); } : undefined}
+      onClickCapture={layoutEditing ? (event) => { event.preventDefault(); event.stopPropagation(); } : undefined}
       onKeyDown={handleKeyboard}
       onPointerCancel={cancelGesture}
+      onLostPointerCapture={cancelGesture}
       onPointerDown={startGesture}
       onPointerMove={updateGesture}
       onPointerUp={finishGesture}
@@ -427,7 +345,7 @@ export function PublicCardLayout({
       {orderedCards.map((card) => {
         const rect = activeLayout.positions[card.id];
         if (card.id === PROFILE_CARD_LAYOUT_ID) {
-          const active = activeTarget?.scope === "card" && activeTarget.cardId === card.id;
+          const active = activeCard === card.id;
           return (
             <div
               className={`page-card-layout__item page-card-layout__item--profile${active ? " is-dragging" : ""}`}
@@ -435,6 +353,7 @@ export function PublicCardLayout({
               data-card-layout-position={`${rect.x},${rect.y},${rect.width},${rect.height}`}
               key={card.id}
               style={{
+                zIndex: active ? layoutCards.length + 1 : layoutCards.indexOf(card) + 1,
                 "--page-card-layout-x": `${rect.x}%`,
                 "--page-card-layout-y": `${rect.y}px`,
                 "--page-card-layout-width": `${rect.width}%`,
@@ -442,9 +361,9 @@ export function PublicCardLayout({
               } as CSSProperties}
             >
               {layoutEditing && (
-              <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Other cards move out of the way.", "Trascina la card profilo. Le altre card si spostano automaticamente.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Other cards keep their positions.", "Trascina la card profilo. Le altre card mantengono la loro posizione.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
               )}
-              <div className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
+              <div {...{ inert: layoutEditing ? "" : undefined }} className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
               {layoutEditing && (
                 <button aria-label={tr("Resize profile card", "Ridimensiona card profilo")} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the whole profile.", "Trascina per ridimensionare l’intero profilo.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
               )}
@@ -453,7 +372,7 @@ export function PublicCardLayout({
         }
         const link = card as LinkData;
         const selected = editorSelection?.kind === "link" && editorSelection.id === link.id;
-        const active = activeTarget?.scope === "card" && activeTarget.cardId === link.id;
+        const active = activeCard === link.id;
         return (
           <div
             aria-label={onEditorSelect && !layoutEditing ? `Edit ${link.title || "content block"}` : undefined}
@@ -476,7 +395,8 @@ export function PublicCardLayout({
             role={onEditorSelect && !layoutEditing ? "button" : undefined}
             style={{
               ...getContentCardVariantCssVariables(theme, links.indexOf(link)),
-              "--page-card-layout-x": `${rect.x}%`,
+              zIndex: active ? layoutCards.length + 1 : layoutCards.indexOf(card) + 1,
+                "--page-card-layout-x": `${rect.x}%`,
               "--page-card-layout-y": `${rect.y}px`,
               "--page-card-layout-width": `${rect.width}%`,
               "--page-card-layout-item-height": `${rect.height}px`,
@@ -484,17 +404,17 @@ export function PublicCardLayout({
             tabIndex={onEditorSelect && !layoutEditing ? 0 : undefined}
           >
             {layoutEditing && (
-              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card. Other cards move out of the way.", "Trascina la card. Le altre card si spostano automaticamente.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card. Other cards keep their positions.", "Trascina la card. Le altre card mantengono la loro posizione.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
             )}
-            <div className="page-card-layout__surface" data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}>{cardContent(link)}</div>
+            <div {...{ inert: layoutEditing ? "" : undefined }} className="page-card-layout__surface" data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}>{<PublicBlockRenderer link={link} />}</div>
             {layoutEditing && (
-              <button aria-label={`${tr("Resize card", "Ridimensiona card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to choose a preset card size.", "Trascina per scegliere una dimensione predefinita della card.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
+              <button aria-label={`${tr("Resize card", "Ridimensiona card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize freely.", "Trascina per ridimensionare liberamente.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
             )}
           </div>
         );
       })}
-      {layoutEditing && guides.scope === "card" && guides.x !== undefined && <i className="page-card-layout__guide page-card-layout__guide--x" style={{ left: `${guides.x}%` }} />}
-      {layoutEditing && guides.scope === "card" && guides.y !== undefined && <i className="page-card-layout__guide page-card-layout__guide--y" style={{ top: `${guides.y}px` }} />}
+      {layoutEditing && guides.x !== undefined && <i className="page-card-layout__guide page-card-layout__guide--x" style={{ left: `${guides.x}%` }} />}
+      {layoutEditing && guides.y !== undefined && <i className="page-card-layout__guide page-card-layout__guide--y" style={{ top: `${guides.y}px` }} />}
     </div>
   );
 }

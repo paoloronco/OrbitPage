@@ -12,11 +12,17 @@ Edit your page in **Page**, **Content**, **Menu**, **Pages**, and **Theme**:
 
 The dashboard preview uses the public renderer, but the public URL is the final check for browser metadata, external embeds, consent behavior, and real navigation.
 
-**Arrange** starts from the card's rendered text positions. Moving a text region
-keeps its chosen text alignment. Card widths snap to quarter, half, three-quarter
-or full width, plus the page's standard width; heights resize in 48-pixel steps.
-Text regions resize freely. Arrow keys adjust position or move between card-size
-presets. Mobile and desktop layouts are independent drafts until saved.
+**Arrange** moves and resizes whole cards freely, on desktop and phones.
+Other cards stay in place during a drag, including when you cross them.
+Alignment guides are visual aids; hold Shift while dragging to snap to them.
+Arrow keys adjust by one pixel, or ten with Shift. Escape cancels the current
+drag. Mobile and desktop layouts are independent drafts until saved.
+
+Card text wraps and the card grows to keep it readable. Existing vertical gaps
+are preserved when text needs more height; deliberate overlaps remain possible.
+Icons, titles, descriptions and URLs use the automatic card layout. Old saved
+text coordinates are ignored; choose Left, Center or Right in the card's
+**Alignment** setting. Profile content is also not draggable in Arrange.
 
 Content's quick-add shortcuts include Instagram, WhatsApp, Facebook and TikTok;
 Forms & tools includes Calendly, Google Forms, Typeform, Google Calendar, GitHub
@@ -43,19 +49,19 @@ Changes in Page remain a draft in the browser until you select **Save** in the P
 
 ### Arrange the layout
 
-Select **Arrange** (the pencil button) to move and resize elements in the preview.
+Select **Arrange** (the pencil button) to move and resize cards in the preview.
 
 | Control | Behavior |
 | --- | --- |
 | Device toggle | Mobile and desktop have independent layouts; edit each separately |
-| Profile and link elements | Move profile elements, cards, and a standard link card's icon/title/description/URL |
-| Desktop card placement | Drag beside another card to align their row; full-width cards become two columns, custom widths are kept |
-| Mobile cards | Regular cards stay full-width; **Small** cards can sit side by side |
+| Profile and content cards | Use the top handle to move the whole card; internal text cannot be moved separately |
+| Card placement | No grid, automatic column conversion or displacement of neighboring cards; overlapping cards is possible |
+| Mobile cards | Cards start full-width and can be resized side by side, down to 44% width |
 | **Move up / Move down** | With mobile preview selected in Content, save that card's mobile order immediately |
-| Resize controls | Drag the lower corner or use arrow keys; the original width is an available stop |
+| Resize controls | Drag the lower corner continuously or use arrow keys; text sets the minimum visible height |
 | **Reset** while arranging | Restore the standard layout as an unsaved change |
 
-Desktop horizontal coordinates scale with the available page width. Alignment guides help with placement; reduced-motion preferences disable arranging animation.
+Horizontal coordinates scale with the available page width. On touchscreens, drag the handles; swipe elsewhere to scroll. The preview scrolls when a dragged handle reaches its upper or lower edge.
 
 Select **Done**, then **Save page** to keep both layouts.
 

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { LinkData } from "./LinkCard";
 import { PublicCalloutCard } from "./PublicCalloutCard";
 import { PublicContactCard } from "./PublicContactCard";
@@ -17,16 +18,12 @@ import { PublicVideoCard } from "./PublicVideoCard";
 import { isNativeMenuLink } from "@/lib/native-menu-link";
 import { asNativeShopLink } from "@/lib/native-shop-link";
 import { isSocialRowContent } from "@/lib/link-blocks";
-import type { NormalizedCardContentLayout } from "@/lib/card-layout";
 
 interface PublicBlockRendererProps {
   link: LinkData;
-  cardContentLayout?: NormalizedCardContentLayout;
-  cardContentLayoutEditing?: boolean;
-  cardContentLayoutGuides?: { x?: number; y?: number };
 }
 
-export const PublicBlockRenderer = ({ link, cardContentLayout, cardContentLayoutEditing, cardContentLayoutGuides }: PublicBlockRendererProps) => {
+export const PublicBlockRenderer = memo(({ link }: PublicBlockRendererProps) => {
   link = asNativeShopLink(link);
   if (isNativeMenuLink(link)) return <PublicMenuCard link={link} />;
   if (link.type === "separator") return <PublicSeparatorCard link={link} />;
@@ -42,5 +39,5 @@ export const PublicBlockRenderer = ({ link, cardContentLayout, cardContentLayout
   if (link.type === "event") return <PublicEventCard link={link} />;
   if (link.type === "embed") return <PublicEmbedCard link={link} />;
   if (link.type === "newsletter") return <PublicNewsletterCard link={link} />;
-  return <PublicLinkCard link={link} contentLayout={cardContentLayout} contentLayoutEditing={cardContentLayoutEditing} contentLayoutGuides={cardContentLayoutGuides} />;
-};
+  return <PublicLinkCard link={link} />;
+});

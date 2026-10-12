@@ -116,10 +116,10 @@ test("Visual editor persists profile and content selected on the real preview", 
   await expect(page.getByRole("link", { name: `Open ${cardName}`, exact: true })).toHaveAttribute("href", "https://example.com/visual-editor");
 });
 
-test("Arrange uses preset sizes, compact handles and persistent text alignment", async ({ page }) => {
+test("Arrange exposes only whole-card controls and continuous resizing", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
-  await page.getByRole("textbox", { name: "Role or focus" }).fill("Work");
+  await page.getByRole("textbox", { name: "Role or focus" }).fill(`Work ${Date.now()}`);
   await page.getByRole("textbox", { name: "Location" }).fill("Turin");
   await contentSaveButton(page).click();
   await page.getByRole("button", { name: "Content", exact: true }).click();
@@ -128,30 +128,23 @@ test("Arrange uses preset sizes, compact handles and persistent text alignment",
   await contentSaveButton(page).click();
 
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  const workItem = page.locator('[data-profile-layout-item="work"]');
-  const locationItem = page.locator('[data-profile-layout-item="location"]');
-  await page.getByRole("button", { name: "Align center Work", exact: true }).click();
-  await page.getByRole("button", { name: "Align center Location", exact: true }).click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-align", "center");
-  await expect(locationItem).toHaveAttribute("data-profile-layout-align", "center");
-  await page.getByRole("button", { name: "Align left Work", exact: true }).click();
-  await expect(workItem).toHaveAttribute("data-profile-layout-align", "left");
-
+  await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
   const contentCard = page.locator('[data-card-layout-item]:not([data-card-layout-item="orbitpage-profile"])').last();
   const moveHandle = contentCard.getByRole("button", { name: /^Move card/ });
   const handleBounds = await moveHandle.boundingBox();
   expect(handleBounds).not.toBeNull();
   expect(await moveHandle.evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBe(64);
 
+  const originalWidth = Number((await contentCard.getAttribute("data-card-layout-position"))!.split(",")[2]);
   await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
   await expect.poll(async () => {
     const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
-    return [25, 39, 50, 75, 100].includes(resized[2]);
+    return resized[2] > originalWidth && resized[2] < originalWidth + 1;
   }).toBe(true);
 
   await contentSaveButton(page).click();
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  await expect(page.locator('[data-profile-layout-item="work"]')).toHaveAttribute("data-profile-layout-align", "left");
+  await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
 });
 
 test("card resize returns to its default width and Revert restores Arrange", async ({ page }) => {
@@ -184,9 +177,10 @@ test("card resize returns to its default width and Revert restores Arrange", asy
     await page.mouse.up();
   };
   await dragToWidth(50);
-  await expect.poll(width).toBe(50);
+  const screenWidth = await page.locator('.public-card-stack--layout').evaluate(element => element.getBoundingClientRect().width);
+  await expect.poll(async () => Math.abs(await width() - 50) / 100 * screenWidth).toBeLessThanOrEqual(1);
   await dragToWidth(defaultWidth);
-  await expect.poll(width).toBe(defaultWidth);
+  await expect.poll(async () => Math.abs(await width() - defaultWidth) / 100 * screenWidth).toBeLessThanOrEqual(1);
 
   await resize.press("ArrowRight");
   await page.locator(".admin-profile-save-float").getByRole("button", { name: "Revert" }).click();
@@ -195,6 +189,7 @@ test("card resize returns to its default width and Revert restores Arrange", asy
 });
 
 test("Arrange keeps long card text in its original alignment and full width", async ({ page }) => {
+  test.setTimeout(60_000);
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
   await page.getByRole("button", { name: "Content", exact: true }).click();
@@ -205,6 +200,8 @@ test("Arrange keeps long card text in its original alignment and full width", as
   const { editor, id } = await openPreviewContentCard(page, preview);
   await editor.getByPlaceholder("Link title").fill("A long card title that uses all the available width and wraps onto more than one line");
   await editor.getByPlaceholder("Block description").fill("A complete description with useful details for visitors. ".repeat(5));
+  await editor.getByLabel("Alignment", { exact: true }).click();
+  await page.getByRole("option", { name: "Right", exact: true }).click();
   await saveEditorChanges(page);
   const textBounds = () => preview.locator('[data-card-content-layout-item="title"] h3').evaluate(element => {
     const rect = element.getBoundingClientRect();
@@ -220,22 +217,37 @@ test("Arrange keeps long card text in its original alignment and full width", as
   expect(Math.abs(after.x - before.x)).toBeLessThan(2);
   expect(Math.abs(after.width - before.width)).toBeLessThan(2);
   expect(Math.abs(after.height - before.height)).toBeLessThan(2);
-  expect(after.align).toBe(before.align === "start" ? "left" : before.align);
+  expect(after.align).toBe(before.align);
   expect(after.clamp).toBe("none");
   const resize = card.getByRole("button", { name: /^Resize card/ });
   await resize.press("ArrowLeft");
   await resize.press("ArrowLeft");
   await expect.poll(() => card.evaluate(element => {
     const title = element.querySelector('h3')!.getBoundingClientRect();
-    const description = element.querySelector('[data-card-content-layout-item="description"] p')!.getBoundingClientRect();
+    const description = element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect();
     return title.bottom <= description.top && description.bottom <= element.getBoundingClientRect().bottom;
   })).toBe(true);
   await resize.press("ArrowUp");
-  await expect.poll(() => card.evaluate(element => element.querySelector('[data-card-content-layout-item="description"] p')!.getBoundingClientRect().bottom <= element.getBoundingClientRect().bottom)).toBe(true);
+  await expect.poll(() => card.evaluate(element => element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect().bottom <= element.getBoundingClientRect().bottom)).toBe(true);
   await card.getByRole("button", { name: /^Move card/ }).press("ArrowRight");
   await saveEditorChanges(page);
   await page.reload();
   await expect(page.locator(`[data-public-editor-link-id="${id}"] h3`)).toHaveText("A long card title that uses all the available width and wraps onto more than one line");
+  await page.goto("/");
+  for (const width of [1440, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const heading = page.getByRole("heading", { name: "A long card title that uses all the available width and wraps onto more than one line", exact: true }).last();
+    await expect(heading).toHaveCSS("text-align", "right");
+    await expect.poll(() => heading.evaluate(element => {
+      const card = element.closest(".glass-card")!;
+      const description = card.querySelector('[data-card-content-layout-item="description"]')!;
+      const bounds = card.getBoundingClientRect();
+      return element.scrollWidth <= element.clientWidth + 1
+        && description.getBoundingClientRect().bottom <= bounds.bottom + 1
+        && document.documentElement.scrollWidth <= innerWidth;
+    })).toBe(true);
+  }
+
 });
 
 test("Visual editor keeps mobile navigation and destinations explicit", async ({ page }) => {
