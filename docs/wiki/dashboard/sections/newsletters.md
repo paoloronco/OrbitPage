@@ -35,7 +35,7 @@ In **Subscribers**, an administrator can add an email/name after recording conse
 
 1. In **Campaigns**, create a draft with its internal name, subject, and inbox preview.
 2. Add the message, optional images/logo, and call-to-action. Check the preview, links, and alternative text.
-3. Save the draft, or select **Send now** or **Schedule** with a future date/time.
+3. Save the draft, or use the adjacent **Send now** and **Schedule** buttons. To schedule, first enter a future date/time in the field below them.
 4. Check the campaign status and report. Cancel a schedule before delivery starts if needed.
 
 Send and Schedule save the draft before queuing it. The server checks schedules every 10 seconds and sends to active subscribers in batches of 50, so the instance must stay running.

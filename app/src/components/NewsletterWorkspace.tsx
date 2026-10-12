@@ -1401,29 +1401,29 @@ export default function NewsletterWorkspace({ user, selectedView, onViewChange }
                 <Send size={16} />
                 Send now
               </button>
-              <div className="newsletter-schedule-action">
+              <button
+                className="button secondary"
+                disabled={
+                  action !== null ||
+                  !scheduledFor ||
+                  !data.settings.verifiedAt ||
+                  !data.settings.complianceReady
+                }
+                onClick={() => void queueCampaign("schedule")}
+                type="button"
+              >
+                <CalendarClock size={16} />
+                Schedule
+              </button>
+              <label className="newsletter-schedule-action">
+                <span className="label">Schedule date and time</span>
                 <input
-                  aria-label="Schedule date and time"
                   min={minimumLocalScheduleValue()}
                   onChange={(event) => setScheduledFor(event.target.value)}
                   type="datetime-local"
                   value={scheduledFor}
                 />
-                <button
-                  className="button secondary"
-                  disabled={
-                    action !== null ||
-                    !scheduledFor ||
-                    !data.settings.verifiedAt ||
-                    !data.settings.complianceReady
-                  }
-                  onClick={() => void queueCampaign("schedule")}
-                  type="button"
-                >
-                  <CalendarClock size={16} />
-                  Schedule
-                </button>
-              </div>
+              </label>
             </footer>
             {(!data.settings.verifiedAt || !data.settings.complianceReady) && (
               <p className="newsletter-inline-warning">
@@ -1568,10 +1568,10 @@ function CampaignReport({ campaign }: { campaign: NewsletterCampaign }) {
   return (
     <article className="newsletter-report">
       <div className="newsletter-report-main">
+        <strong>{campaign.name}</strong>
         <span className={`newsletter-status ${campaign.status}`}>
           {campaign.status}
         </span>
-        <strong>{campaign.name}</strong>
         <small>
           {campaign.scheduledFor
             ? new Date(campaign.scheduledFor).toLocaleString()
@@ -1580,24 +1580,20 @@ function CampaignReport({ campaign }: { campaign: NewsletterCampaign }) {
       </div>
       <div className="newsletter-report-metrics">
         <span title="Accepted by SMTP">
-          <Send size={14} />
-          {campaign.stats.accepted}
-          <small>accepted</small>
+          <small><Send aria-hidden="true" size={14} />accepted</small>
+          <strong>{campaign.stats.accepted}</strong>
         </span>
         <span title="Unique opens">
-          <Eye size={14} />
-          {percent(campaign.stats.openedUnique, campaign.stats.accepted)}
-          <small>opened</small>
+          <small><Eye aria-hidden="true" size={14} />opened</small>
+          <strong>{percent(campaign.stats.openedUnique, campaign.stats.accepted)}</strong>
         </span>
         <span title="Unique clicks">
-          <MousePointerClick size={14} />
-          {percent(campaign.stats.clickedUnique, campaign.stats.accepted)}
-          <small>clicked</small>
+          <small><MousePointerClick aria-hidden="true" size={14} />clicked</small>
+          <strong>{percent(campaign.stats.clickedUnique, campaign.stats.accepted)}</strong>
         </span>
         <span title="Rejected by SMTP">
-          <Mail size={14} />
-          {delivered ? percent(campaign.stats.rejected, delivered) : "0%"}
-          <small>rejected</small>
+          <small><Mail aria-hidden="true" size={14} />rejected</small>
+          <strong>{delivered ? percent(campaign.stats.rejected, delivered) : "0%"}</strong>
         </span>
       </div>
       {campaign.lastError && (
