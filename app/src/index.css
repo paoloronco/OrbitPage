@@ -13807,6 +13807,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .menu-preview-edit:hover, .menu-preview-edit:focus-visible { outline: 2px dashed var(--menu-accent); outline-offset: 6px; border-radius: 4px; }
 .menu-preview-canvas .orbitpage-menu-item[role=button] { cursor: pointer; }
 .menu-preview-canvas .orbitpage-menu-item[role=button]:is(:hover, :focus-visible) { outline: 2px dashed var(--menu-accent); outline-offset: -2px; border-radius: var(--menu-radius); }
+.menu-preview-canvas .orbitpage-menu-item[role=button]:focus-visible { outline-offset: -3px !important; }
 .orbitpage-menu[data-menu-font]:not([data-menu-font=editorial]), .orbitpage-menu[data-menu-font]:not([data-menu-font=editorial]) :is(h1,h2,h3) { font-family: var(--menu-font); }
 @media (max-width: 900px) {
   .menu-preview-workspace.has-personalize { grid-template-columns: minmax(0, 1fr); }
