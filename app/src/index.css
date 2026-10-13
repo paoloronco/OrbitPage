@@ -6215,9 +6215,6 @@
   min-width: 0;
   width: 100%;
 }
-.menu-editor-main.space-y-5 > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 0;
-}
 .menu-editor-intro {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: .8rem 1.25rem;
@@ -13809,7 +13806,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .menu-preview-edit { display: block; width: 100%; border: 0; padding: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
 .menu-preview-edit:hover, .menu-preview-edit:focus-visible { outline: 2px dashed var(--menu-accent); outline-offset: 6px; border-radius: 4px; }
 .menu-preview-canvas .orbitpage-menu-item[role=button] { cursor: pointer; }
-.menu-preview-canvas .orbitpage-menu-item[role=button]:is(:hover, :focus-visible) { outline: 2px dashed var(--menu-accent); outline-offset: 3px; }
+.menu-preview-canvas .orbitpage-menu-item[role=button]:is(:hover, :focus-visible) { outline: 2px dashed var(--menu-accent); outline-offset: -2px; border-radius: var(--menu-radius); }
 .orbitpage-menu[data-menu-font]:not([data-menu-font=editorial]), .orbitpage-menu[data-menu-font]:not([data-menu-font=editorial]) :is(h1,h2,h3) { font-family: var(--menu-font); }
 @media (max-width: 900px) {
   .menu-preview-workspace.has-personalize { grid-template-columns: minmax(0, 1fr); }

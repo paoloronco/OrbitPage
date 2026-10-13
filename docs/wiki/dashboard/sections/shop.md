@@ -8,35 +8,23 @@ Sell digital downloads and services from your self-hosted OrbitPage installation
 
 ## Start here
 
-1. [Prepare the installation](#before-you-start) and [create your catalog](#create-a-catalog).
-2. [Add seller details and policies](#seller-details-and-policies).
-3. [Connect Stripe step by step](#connect), starting in test mode.
-4. [Configure email](#email) and [complete a test purchase](#test-checklist).
-5. [Switch to production](#go-live-on-the-same-installation), then [publish](#publish-or-unpublish).
-6. [Manage orders and customers](#orders-refunds-and-customer-erasure), or [troubleshoot a problem](#troubleshooting).
+Open **Site editor → Shop** as an administrator. Create the catalog, complete **Shop settings → Compliance**, connect [Stripe](#connect), configure [email](#email) and [test a purchase](#test-checklist) before publishing.
 
-| Your edition | How payments are connected |
-| --- | --- |
-| **Self-hosted OSS — this guide** | Enter your Stripe API key and webhook signing secret in your own installation. No OrbitPage SaaS account is required. |
-| **Hosted OrbitPage SaaS** | Use the Stripe Connect onboarding in your workspace. Follow the [hosted Shop guide](https://orbitpage.com/en-US/docs/shop#connect); do not paste the OSS webhook URL into the platform's configuration. |
-
-Buying an OrbitPage SaaS subscription and selling products through a Shop are separate payment flows.
+This guide covers self-hosted OSS: payments use your Stripe API key and webhook. Hosted workspaces use [Stripe Connect](https://orbitpage.com/en-US/docs/shop#connect). Buying an OrbitPage subscription is a separate payment flow.
 
 ## Before you start
 
-- Use a supported installation with persistent `DATA_DIR` storage and a current [backup](./backups-and-demo-mode.md).
+- Use persistent `DATA_DIR` storage and keep a [backup](./backups-and-demo-mode.md).
 - Set `PUBLIC_SITE_URL` to your public HTTPS address, including any mount path. See [Configuration](../../administration/Configuration.md).
-- Allow incoming Stripe webhook requests through your reverse proxy. A visitor login, access challenge or redirect must not block the webhook endpoint.
-- Sign in as an administrator with `users:manage`, then open **Site editor → Shop**.
-- Select the **Shop settings** gear for **Compliance**, **Coupons**, **Checkout**, **Stripe**, **Email**, **Calendar** and **INFO**.
-- Prepare products and appearance at any time. Publication and checkout require completed Compliance, verified Stripe settings, a configured webhook, a successful SMTP test and an available product.
+- Allow Stripe webhooks through your reverse proxy without login, access challenges or redirects.
+- Catalog editing works before setup. Publication and checkout require Compliance, verified Stripe settings, a webhook, a successful SMTP test and an available product.
 
-**Back to shop** returns from settings or orders to the storefront preview. Demo mode allows previews but blocks changes, uploads and checkout.
+The **Shop settings** gear opens Compliance, Coupons, Checkout, Stripe, Email, Calendar and INFO. **Back to shop** returns to the preview. Demo mode blocks changes, uploads and checkout.
 
 ## Create a catalog
 
 1. Select **Add product** and choose **Digital product** or **Service**.
-2. Enter a title, short description, full description and EUR price. Add an optional cover.
+2. Enter a title, short description, full description and price in the selected Shop currency. Add an optional cover.
 3. Save the draft product.
 4. For a digital product, use **Manage files** to upload the files buyers will receive.
 5. For a service, add post-payment instructions, an HTTPS booking link, or both. Set the number of sessions and optional questionnaire.
@@ -46,7 +34,7 @@ Buying an OrbitPage SaaS subscription and selling products through a Shop are se
 | Limit | Supported value |
 | --- | --- |
 | Catalog | 20 digital or service products |
-| Price before discounts | EUR 1–10,000 |
+| Price before discounts | 1–10,000 in the selected currency; Stripe account/payment minimums also apply |
 | Purchase | One product per Checkout; no cart |
 | Digital files | Up to 10 files per product, 50 MB each, in supported formats |
 | Service package | 1–50 sessions and up to 12 questionnaire questions |
@@ -56,9 +44,17 @@ Buying an OrbitPage SaaS subscription and selling products through a Shop are se
 - Product edits affect new purchases. Existing orders keep their purchased product, files, instructions and policy snapshot.
 - Physical shipping, recurring product subscriptions, marketplaces and multi-product carts are not supported.
 
+### Currency
+
+Choose **Shop settings → Checkout → Shop currency**, then save. Supported currencies: EUR, USD, GBP, CHF, CAD, AUD, NZD, SEK, NOK, DKK, PLN, CZK, SGD, HKD, INR, BRL, MXN and AED. Existing shops default to EUR; zero-decimal currencies such as JPY are not supported.
+
+Saving updates all catalog prices without exchange-rate conversion: **10 EUR becomes 10 USD**. Review your prices before accepting new sales. Preview, public prices, new Stripe checkouts and new fixed-amount coupons use the selection.
+
+Existing orders, open checkouts, receipts, refunds and coupons retain their original currency. Fixed-amount coupons must match the checkout currency; create a new code when needed. Stripe controls the account's payout currency, supported payment methods and conversion fees separately. See [Stripe currencies](https://docs.stripe.com/currencies).
+
 ### Required setup and AI drafts
 
-Ask **AI Assistant** to draft a product with a title, description, type and EUR price. Review and confirm the proposal. AI products are saved as drafts: add real files or service delivery details yourself before enabling purchase.
+Ask **AI Assistant** to draft a product with a title, description, type and price in the configured Shop currency. Review and confirm the proposal. AI products are saved as drafts: add real files or service delivery details yourself before enabling purchase.
 
 ## Appearance and language
 
@@ -94,65 +90,45 @@ See Stripe's official [receipt customization and support requirements](https://d
 
 ## Connect Stripe
 
-Keep these three values separate:
+| Value | Where it goes |
+| --- | --- |
+| Secret/restricted API key (`sk_test_…` / `rk_test_…`, then live equivalents) | OrbitPage → **Stripe secret API key** |
+| Endpoint URL (`https://shop.example.com/api/shop/webhook`) | Stripe → **Endpoint URL** |
+| Signing secret (`whsec_…`) | OrbitPage → **Webhook signing secret** |
 
-| Value | Example prefix / format | Where it goes |
-| --- | --- | --- |
-| Secret or restricted API key | `sk_test_…` / `rk_test_…`, later `sk_live_…` / `rk_live_…` | OrbitPage → **Stripe secret API key** |
-| Webhook endpoint URL | `https://shop.example.com/api/shop/webhook` | Stripe → **Endpoint URL** |
-| Webhook signing secret | `whsec_…` | OrbitPage → **Webhook signing secret** |
-
-A publishable `pk_…` key does **not** work in the secret-key field. A `whsec_…` secret does not identify its mode by its prefix: obtain it from the correct endpoint and environment.
+Publishable `pk_…` keys do not work here. Signing secrets have the same prefix in test and live mode; copy them from the intended destination.
 
 ### 1. Select the Stripe account and test environment
 
-1. Sign in to the [Stripe Dashboard](https://dashboard.stripe.com/).
-2. Select the account that will receive this Shop's payments. If names are similar, check the account ID rather than relying on the name.
-3. Open a sandbox or the test environment available in your Dashboard. Use test credentials for your first setup.
-4. Keep that account/environment selected while creating both the API key and webhook.
-
-Stripe separates test and live objects and credentials. Changing the Dashboard's test/live view does not change OrbitPage's saved keys. See [Stripe sandboxes](https://docs.stripe.com/sandboxes).
+In [Stripe Dashboard](https://dashboard.stripe.com/), select the account that will receive payments, then its sandbox/test environment. Keep that selection while creating both credentials. Switching Stripe's dashboard view does not change the keys saved in OrbitPage.
 
 ### 2. Create the API key
 
-1. In the selected environment, open [API keys](https://dashboard.stripe.com/apikeys).
-2. Create a **restricted key** for this installation, following [Stripe's restricted-key guide](https://docs.stripe.com/keys/restricted-api-keys). Give it a recognizable name, such as `OrbitPage OSS — test`.
-3. Grant the permissions needed by the features below. An existing supported secret key (`sk_test_…`) also works, but has broader access.
-4. Copy the key into **Shop settings → Stripe → Stripe secret API key**. Keep the form open while you create the webhook.
+Open [API keys](https://dashboard.stripe.com/apikeys) and create a [restricted key](https://docs.stripe.com/keys/restricted-api-keys) for this installation. A supported secret key also works, with broader access. Grant:
 
-| Operation | Restricted-key access needed |
+| Feature | Required access |
 | --- | --- |
-| Verify account; show balances and recent activity | Account, balance and balance-transaction reads |
-| Create and verify purchases | Checkout Session write/read, Customer creation, and permissions required for inline Product/Price creation |
-| Verify payment, refund and dispute state | PaymentIntent, Charge and Dispute reads |
-| Manage Shop discount codes | Coupon and Promotion Code write/read |
+| Account verification and activity | Account, balance and balance-transaction reads |
+| Purchases | Checkout Session write/read, Customer creation and inline Product/Price creation |
+| Payment, refund and dispute verification | PaymentIntent, Charge and Dispute reads |
+| Discount codes | Coupon and Promotion Code write/read |
 
-Stripe can group permission labels differently. If a request is denied, use its request log to identify the missing resource; do not enable unrelated permissions. See [API keys](https://docs.stripe.com/keys). Keep keys private; saved dashboard credentials are encrypted and are not returned to the browser.
+Paste the key into **Shop settings → Stripe → Stripe secret API key**. If Stripe denies a request, check its request log for the missing permission. Saved credentials are encrypted and are not returned to the browser.
 
-![OrbitPage Stripe settings before credentials are entered, with the webhook URL on an example domain](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-stripe-4.21.99.jpg)
-
-*Real OSS form, with empty secret fields. Copy your installation's displayed URL.*
+![OrbitPage Stripe settings](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.99/shop-guide-stripe-4.21.99.jpg)
 
 ### 3. Copy the endpoint URL from OrbitPage
 
-1. Find **Stripe webhook endpoint** below the two secret fields.
-2. Copy the complete URL exactly as displayed.
-3. Check that it uses your public HTTPS domain, not localhost, a dashboard route or the public `/shop` page.
+Copy **Stripe webhook endpoint** below the secret fields. It must use your public HTTPS address and end in `/api/shop/webhook`. With a configured `/orbitpage` mount path, for example, it is `https://example.com/orbitpage/api/shop/webhook`.
 
-| Installation address | Webhook endpoint |
-| --- | --- |
-| `https://shop.example.com` | `https://shop.example.com/api/shop/webhook` |
-| `https://example.com/orbitpage` | `https://example.com/orbitpage/api/shop/webhook` |
-
-The second example assumes that mount path is configured correctly. If the displayed URL is wrong, fix `PUBLIC_SITE_URL` / `BASE_PATH` before continuing. Test and live destinations may use the **same URL**, but have different signing secrets.
+Correct `PUBLIC_SITE_URL` / `BASE_PATH` if necessary. Test and live destinations can use the same URL, but require separate signing secrets.
 
 ### 4. Create the webhook destination in Stripe
 
-1. Open **Workbench → Webhooks** in the same Stripe account and test environment. Use [Stripe's event-destination instructions](https://docs.stripe.com/workbench/event-destinations) if the menu has moved.
-2. Select **Create destination** / **Add destination**.
-3. For the OSS integration, select **Your account** / **Events on your account**, including when that account is also connected to a platform.
-4. Use **snapshot events**, not a thin-event destination. For the current OrbitPage integration, select API version **`2026-06-24.dahlia`**.
-5. Select these seven events, then continue:
+Open **Workbench → Webhooks → Create destination** in the selected account/environment:
+
+1. Choose **Your account / Events on your account**, even if it also connects to a platform.
+2. Choose **snapshot events**, API version **`2026-06-24.dahlia`**, and these seven events:
 
 ```text
 checkout.session.completed
@@ -164,53 +140,25 @@ charge.dispute.created
 charge.dispute.closed
 ```
 
-6. Choose **Webhook endpoint** as the destination type.
-7. Enter the URL copied from OrbitPage. Give the destination a recognizable name, such as `OrbitPage OSS — test`, and create it.
+3. Choose **Webhook endpoint**, paste the copied URL and create the destination.
 
-![Stripe's official example of selecting account events when creating a webhook endpoint](https://b.stripecdn.com/docs-statics-srv/assets/create-webhook-endpoint.92271ebcb6d3c1f936baaeeda36feafc.png)
-
-*Source: [Stripe Workbench documentation](https://docs.stripe.com/workbench/event-destinations). This official screenshot shows an older UI/API version; use the version and event list above, not the example values in the image.*
+See [Stripe event destinations](https://docs.stripe.com/workbench/event-destinations) for the provider's setup guide.
 
 ### 5. Copy the signing secret and save
 
-1. Open the destination you just created.
-2. Find **Signing secret**, reveal it and copy the value beginning with `whsec_`.
-3. Paste it into OrbitPage's **Webhook signing secret** field.
-4. Select **Save and verify Stripe**.
-5. Confirm the displayed account and **Stripe payments are in test mode** status.
-
-Use the secret of this registered destination, not a Stripe CLI listener's secret or a different endpoint's secret. See [Stripe signature verification](https://docs.stripe.com/webhooks/signature).
-
-**A ready/configured status verifies account access and that a webhook secret is configured. It does not prove Stripe can reach your server or that the pasted signing secret matches the destination. Complete a test purchase and inspect its delivery next.**
+Reveal the destination's **Signing secret**, paste it into OrbitPage and select **Save and verify Stripe**. Confirm the account and **Stripe payments are in test mode** heading. Use this destination's secret, not a Stripe CLI listener secret.
 
 ### 6. Check an actual webhook delivery
 
-After completing [the test checklist](#test-checklist):
-
-1. In Stripe, open your destination → **Event deliveries**.
-2. Find the `checkout.session.completed` event from that OrbitPage purchase.
-3. Open **Delivery attempts** and confirm **Delivered** with an HTTP `2xx` response.
-4. Check the matching paid order, receipt and download or service instructions in OrbitPage.
-5. If delivery failed, fix the reported problem before using **Resend** for that event.
-
-A generic Stripe sample event may reference no OrbitPage order. A checkout started from your own Shop verifies the complete integration.
-
-![Stripe's official Event deliveries screen showing a successful HTTP 200 delivery](https://b.stripecdn.com/docs-statics-srv/assets/view-event-deliveries.375483a863ab143a0e92f01fa01c14b0.png)
-
-*Source: [Stripe event-delivery guide](https://docs.stripe.com/workbench/event-destinations#view-event-deliveries). The screenshot uses a sample invoice event; inspect your Shop's Checkout event instead.*
+The ready/configured status verifies account access and a saved secret; it does not prove Stripe can reach the endpoint or that signatures match. Complete a [test purchase](#test-checklist), then check **Event deliveries → Delivery attempts** for its actual Checkout event. Fix failures before resending. Opening the endpoint in a browser sends GET, not a signed webhook POST.
 
 ### If this Stripe account is used by another app
 
-- Separate API keys and endpoint secrets identify integrations; they do not isolate all account events, balances or customers.
-- Connect platforms can receive events from their connected accounts. See [Connect webhook scopes](https://docs.stripe.com/connect/webhooks).
-- **Current limitation:** Shop webhook handlers can reject another installation's order as unknown. A shared account, including OSS plus hosted Shop, needs event isolation in the applications before it can be treated as conflict-free. Verify each integration; adding another webhook URL alone does not fix this.
-- Do not delete orders or disable another application's webhook to hide these errors.
+Create a separate destination; keep the other app's keys and webhook intact. Account-level events may reach both installations. OrbitPage can reject an unknown order from another installation, so verify event isolation before sharing an account, including between OSS and hosted Shop. Do not delete orders or disable another app's webhook to conceal errors.
 
 ### Server-managed credentials
 
-- Alternatively set `SHOP_STRIPE_SECRET_KEY` and `SHOP_STRIPE_WEBHOOK_SECRET` on the server, then restart.
-- These overrides make dashboard configuration read-only. Select **Check status** after changing them.
-- Keep secrets out of `VITE_*`, Git, screenshots and public pages. See [Configuration](../../administration/Configuration.md).
+Alternatively set `SHOP_STRIPE_SECRET_KEY` and `SHOP_STRIPE_WEBHOOK_SECRET` on the server, restart and select **Check status**. These overrides make dashboard credentials read-only. Keep them out of `VITE_*`, Git, screenshots and public pages; see [Configuration](../../administration/Configuration.md).
 
 <a id="email"></a>
 
@@ -277,7 +225,7 @@ After live account verification succeeds, cleanup and credential activation comm
 - Phone: off/required. Billing address: automatic/required. Business name and supported tax IDs: off/optional/required. Payment methods may require additional details.
 - Add up to three text/numeric fields: labels up to 50 characters and answers up to 255 characters/digits. Do not request passwords, card details or sensitive data.
 - Save changes for new checkouts. Existing orders retain their original fields, answers and consent record. Inspect verified details under **Orders → View**.
-- In **Coupons**, create percentage or fixed-EUR codes. A 100% discount is supported; Checkout completion must still be verified even when there is no PaymentIntent.
+- In **Coupons**, create percentage or fixed-amount codes in the saved Shop currency. A 100% discount is supported; Checkout completion must still be verified even when there is no PaymentIntent.
 
 ## Publish or unpublish
 

@@ -40,7 +40,7 @@ import { createPortal } from "react-dom";
 import { renderShopDescription, shopProductSummary, SHOP_SUMMARY_LIMIT, SHOP_DESCRIPTION_LIMIT } from "../../packages/shop/description.js";
 import { shopOrderLabel } from "../../packages/shop/orders.js";
 import { SHOP_POLICIES, shopPolicies } from "../../packages/shop/policies.js";
-import { shopComplianceReady } from "../../packages/shop/schema.js";
+import { SHOP_CURRENCIES, shopComplianceReady } from "../../packages/shop/schema.js";
 import type { ShopAppearance, ShopBuyerDetails, ShopEmailSettings } from "../../packages/shop/schema.js";
 import { ShopDescriptionField, ShopDialog, ShopHelp, ShopLogoDialog } from "./shop-editor-controls";
 type Locale = string;
@@ -66,7 +66,7 @@ type ShopProduct = {
   sessionsIncluded: number;
   intakeQuestions: Array<{ id: string; prompt: string; required: boolean }>;
   priceCents: number;
-  currency: "eur";
+  currency: string;
   active: boolean;
   cardStyle: ProductCardStyle;
   file: { id: string; filename: string; contentType: string; sizeBytes: number } | null;
@@ -103,7 +103,7 @@ type ShopOrder = {
   applicationFeeAmount: number;
   amountRefunded?: number;
   applicationFeeRefunded?: number;
-  currency: "eur";
+  currency: string;
   status: string;
   buyerEmail: string | null;
   buyerName?: string | null;
@@ -246,9 +246,9 @@ const EMPTY_PRODUCT: ProductDraft = {
   },
 };
 
-function money(cents: number, locale: Locale = "en-US") {
+function money(cents: number, locale: Locale = "en-US", currency = "eur") {
   const language = locale;
-  return new Intl.NumberFormat(language, { style: "currency", currency: "EUR" }).format(cents / 100);
+  return new Intl.NumberFormat(language, { style: "currency", currency }).format(cents / 100);
 }
 
 function fileSize(bytes: number) {
@@ -500,7 +500,7 @@ function ShopStorefrontPreview({
               {appearance.showProductType && <small>{product.type === "digital" ? copy.digitalDownload : copy.service}</small>}
               <strong>{product.title}</strong>
               <div className="shop-preview-summary" dangerouslySetInnerHTML={{ __html: renderShopDescription(shopProductSummary(product)) }} />
-              <div><b>{money(product.priceCents, "en")}</b><span>{copy.buy}</span></div>
+              <div><b>{money(product.priceCents, "en", appearance.currency)}</b><span>{copy.buy}</span></div>
             </article>
           );
         })}
@@ -530,7 +530,7 @@ function ShopStorefrontPreview({
               ? "I understand that the page owner is the seller and has declared they are not a trader. EU consumer protection rights do not apply to this contract."
               : "I understand that the page owner is the seller. Any seller policies shown on this page apply; my statutory rights are not waived."}</span></label>
             {detailsProduct.type === "digital" && <label><input disabled type="checkbox" /><span>I expressly consent to immediate supply of the digital content and acknowledge that I lose my withdrawal right once the download begins.</span></label>}
-            <div className="shop-product-detail-price"><strong>{money(detailsProduct.priceCents, "en")}</strong><button disabled type="button">{copy.buy}</button></div>
+            <div className="shop-product-detail-price"><strong>{money(detailsProduct.priceCents, "en", appearance.currency)}</strong><button disabled type="button">{copy.buy}</button></div>
           </div>
           <footer className="shop-product-detail-edit"><button disabled={disabled} onClick={() => { onSelectProduct(detailsProduct.productId); setDetailsProductId(null); }} type="button">Edit product<ArrowUpRight size={16} /></button></footer>
         </div>
@@ -957,6 +957,7 @@ export default function ShopClient({
             required: line.endsWith("*"),
           })) : [],
           priceCents: Math.round(price * 100),
+          currency: appearance?.currency || "eur",
           active: draft.type === "digital" && !existingHasFile ? false : draft.active,
           cardStyle: draft.cardStyle,
         }),
@@ -989,6 +990,7 @@ export default function ShopClient({
             sessionsIncluded: 1,
             intakeQuestions: [],
             priceCents: Math.round(price * 100),
+            currency: appearance?.currency || "eur",
             active: true,
             cardStyle: draft.cardStyle,
           }),
@@ -1316,7 +1318,7 @@ export default function ShopClient({
       <ShopDescriptionField label="Short description" maxLength={SHOP_SUMMARY_LIMIT} onChange={(summary) => setDraft((current) => ({ ...current, summary }))} required={false} value={draft.summary} />
       <ShopDescriptionField label="Full description" maxLength={SHOP_DESCRIPTION_LIMIT} onChange={(description) => setDraft((current) => ({ ...current, description }))} value={draft.description} />
       <label><span>Cover image <small>JPEG, PNG, AVIF, WebP or GIF · max 5 MB · automatically fitted without stretching or cropping</small></span><input accept="image/jpeg,image/png,image/avif,image/webp,image/gif" onChange={(event) => setCover(event.target.files?.[0] || null)} type="file" />{draftCoverUrl && <img alt="Cover preview" className="shop-cover-upload-preview" src={new URL(draftCoverUrl, data.shop?.publicUrl || "https://orbitpage.com").toString()} />}{draft.productId && data.products.find((product) => product.productId === draft.productId)?.coverUrl && !cover && <small>Current cover image saved</small>}</label>
-      <label><span>Price</span><span className="shop-price-input"><Euro size={17} /><input inputMode="decimal" min="1" onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="15.00" required step="0.01" type="number" value={draft.price} /></span></label>
+      <label><span>Price</span><span className="shop-price-input"><span>{(appearance?.currency || "eur").toUpperCase()}</span><input aria-label="Price" inputMode="decimal" min="1" onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))} placeholder="15.00" required step="0.01" type="number" value={draft.price} /></span></label>
       {draft.type === "digital" ? <div className="shop-product-files-field"><strong>Product files</strong><button className="button secondary compact" onClick={() => setFilesDialogOpen(true)} type="button"><FileArchive size={16} /> Manage files</button><small>Up to 10 files · max {maxFileLabel} each</small><ul>{savedProductFiles.map((item) => <li key={item.id}><FileArchive size={14} /><span>{item.filename}</span><small>{fileSize(item.sizeBytes)} · Saved</small><button aria-label={`Remove uploaded ${item.filename}`} className="shop-delete-button" disabled={action !== null} onClick={() => removeSavedFile(item.id)} type="button"><Trash2 size={16} /></button></li>)}{files.map((file, index) => <li key={index}><FileArchive size={14} /><span>{file.name}</span><small>{fileSize(file.size)} · Selected</small></li>)}</ul></div> : <>
         <label><span><span className="shop-label-with-icon"><CalendarDays size={16} /> Booking calendar</span></span><input maxLength={2048} onChange={(event) => setDraft((current) => ({ ...current, bookingUrl: event.target.value }))} placeholder="https://calendly.com/your-name/consulting" type="url" value={draft.bookingUrl} /><small>Calendly, Cal.com, Google Calendar or another secure HTTPS booking page. This link is revealed only after payment.</small></label>
         <label><span>Sessions included</span><input max="50" min="1" onChange={(event) => setDraft((current) => ({ ...current, sessionsIncluded: event.target.value }))} required type="number" value={draft.sessionsIncluded} /><small>Use more than one session to sell a consulting package.</small></label>
@@ -1506,7 +1508,7 @@ export default function ShopClient({
         <button aria-current={settingsTab === "calendar" ? "page" : undefined} onClick={() => setSettingsTab("calendar")} type="button"><CalendarDays size={15} /> Calendar</button>
         <button aria-current={settingsTab === "info" ? "page" : undefined} onClick={() => setSettingsTab("info")} type="button"><Info size={15} /> INFO</button>
       </nav>}
-      {view === "settings" && settingsTab === "coupons" && (data.shop?.stripeToolsAvailable === false ? <p className="shop-provider-muted">Stripe account management is available to Shop editors.</p> : <ShopCoupons request={request} connected={Boolean(data.shop?.stripeConnected)} onConnect={() => setSettingsTab("stripe")} dashboardUrl={stripeDashboardUrl} />)}
+      {view === "settings" && settingsTab === "coupons" && (data.shop?.stripeToolsAvailable === false ? <p className="shop-provider-muted">Stripe account management is available to Shop editors.</p> : <ShopCoupons currency={data.shop?.appearance.currency || "eur"} request={request} connected={Boolean(data.shop?.stripeConnected)} onConnect={() => setSettingsTab("stripe")} dashboardUrl={stripeDashboardUrl} />)}
       {view === "settings" && settingsTab === "info" && <AccountInfo request={requestInfo} tr={infoTranslator} documentationUrl={documentationUrl("info")} faqUrl={selfHosted ? "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/faq.md" : "/en-US/#faq"} />}
       {(view === "orders" || view === "customers") && <nav aria-label="Sales" className="shop-sales-tabs"><button aria-current={view === "orders" ? "page" : undefined} onClick={() => setView("orders")} type="button"><ReceiptText size={16} /> Orders</button><button aria-current={view === "customers" ? "page" : undefined} onClick={() => setView("customers")} type="button">Customers</button></nav>}
 
@@ -1562,6 +1564,7 @@ export default function ShopClient({
         </header>
         <fieldset disabled={action !== null}>
           <div className="shop-option-grid">
+            <label><span>Shop currency</span><select aria-describedby="shop-currency-help" onChange={event => setAppearance(current => current ? { ...current, currency: event.target.value as ShopAppearance["currency"] } : current)} value={appearance.currency || "eur"}>{SHOP_CURRENCIES.map(currency => <option key={currency} value={currency}>{currency.toUpperCase()} — {new Intl.DisplayNames([locale], { type: "currency" }).of(currency.toUpperCase())}</option>)}</select><small id="shop-currency-help">Applies to all catalog prices, new payments and new fixed-amount coupons. Saving keeps the numeric prices without currency conversion. Existing orders, open checkouts and coupons keep their original currency. Stripe payout currency is managed in Stripe.</small></label>
             <label>Name<select disabled value="required"><option value="required">Always required</option></select></label>
             <label>Email<select disabled value="required"><option value="required">Always required</option></select></label>
             <label>Phone number<select onChange={event => updateCheckout({ phone: event.target.value === "required" })} value={appearance.checkout.phone ? "required" : "off"}><option value="off">Not collected</option><option value="required">Required</option></select><small>Stripe requires a phone number when enabled.</small></label>
@@ -1679,9 +1682,9 @@ export default function ShopClient({
                 <td><strong className="shop-sales-cell-main" title={order.productTitle}>{order.productTitle}</strong><small>{order.productType === "service" ? "Service" : "Digital download"}</small></td>
                 <td><span className="shop-sales-cell-main" title={order.buyerEmail || undefined}>{order.buyerEmail || "—"}</span>{order.buyerName && <small>{order.buyerName}</small>}</td>
                 <td><span className={`shop-order-status ${order.status}`}>{order.status.replaceAll("_", " ")}</span></td>
-                <td className="shop-catalog-price">{money(order.amountTotal, locale)}</td>
-                <td className="shop-catalog-price">{money(order.amountRefunded || 0, locale)}</td>
-                {hasLegacyFees && <td className="shop-catalog-price">{money(order.applicationFeeAmount, locale)}{!!order.applicationFeeRefunded && <small>{money(order.applicationFeeRefunded, locale)} refunded</small>}</td>}
+                <td className="shop-catalog-price">{money(order.amountTotal, locale, order.currency)}</td>
+                <td className="shop-catalog-price">{money(order.amountRefunded || 0, locale, order.currency)}</td>
+                {hasLegacyFees && <td className="shop-catalog-price">{money(order.applicationFeeAmount, locale, order.currency)}{!!order.applicationFeeRefunded && <small>{money(order.applicationFeeRefunded, locale, order.currency)} refunded</small>}</td>}
                 <td>{order.productType === "service" ? <><span className="shop-sales-booking-status">{(order.bookingStatus || "awaiting_booking").replaceAll("_", " ")}</span><small>{order.sessionsRemaining} / {order.sessionsIncluded} sessions remaining</small>{order.scheduledStartAt && <small>{shopDate(order.scheduledStartAt, locale)}</small>}</> : `${order.downloadCount} ${order.downloadCount === 1 ? "download" : "downloads"}`}</td>
                 <td><button aria-label={`View order ${shopOrderLabel(order)}`} className="shop-catalog-edit" onClick={() => setSelectedOrder(order)} type="button">View<ArrowUpRight size={14} /></button>{order.intakeSubmittedAt && <small>Questionnaire received</small>}</td>
               </tr>)}</tbody>
@@ -1737,8 +1740,8 @@ export default function ShopClient({
           {selectedOrder.buyerDetails?.taxIds.map((taxId, index) => <div key={`tax-${index}`}><dt>Tax ID / VAT number</dt><dd>{taxId.value} ({taxId.type})</dd></div>)}
           {selectedOrder.buyerDetails?.customFields.map(field => <div key={field.key}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}
           <div><dt>Created</dt><dd>{shopDate(selectedOrder.createdAt, locale)}</dd></div><div><dt>Paid</dt><dd>{shopDate(selectedOrder.paidAt, locale)}</dd></div>
-          <div><dt>Original total</dt><dd>{money(selectedOrder.amountTotal, locale)}</dd></div><div><dt>Refunded</dt><dd>{money(selectedOrder.amountRefunded || 0, locale)}</dd></div>
-          {!selfHosted && selectedOrder.applicationFeeAmount > 0 && <><div><dt>Previous platform fee</dt><dd>{money(selectedOrder.applicationFeeAmount, locale)}</dd></div><div><dt>Fee refunded</dt><dd>{money(selectedOrder.applicationFeeRefunded || 0, locale)}</dd></div></>}
+          <div><dt>Original total</dt><dd>{money(selectedOrder.amountTotal, locale, selectedOrder.currency)}</dd></div><div><dt>Refunded</dt><dd>{money(selectedOrder.amountRefunded || 0, locale, selectedOrder.currency)}</dd></div>
+          {!selfHosted && selectedOrder.applicationFeeAmount > 0 && <><div><dt>Previous platform fee</dt><dd>{money(selectedOrder.applicationFeeAmount, locale, selectedOrder.currency)}</dd></div><div><dt>Fee refunded</dt><dd>{money(selectedOrder.applicationFeeRefunded || 0, locale, selectedOrder.currency)}</dd></div></>}
           {selectedOrder.productType === "service" ? <><div><dt>Booking status</dt><dd className="shop-sales-booking-status">{(selectedOrder.bookingStatus || "awaiting_booking").replaceAll("_", " ")}</dd></div><div><dt>Scheduled start</dt><dd>{shopDate(selectedOrder.scheduledStartAt, locale)}</dd></div><div><dt>Sessions remaining</dt><dd>{selectedOrder.sessionsRemaining} / {selectedOrder.sessionsIncluded}</dd></div></> : <div><dt>Downloads</dt><dd>{selectedOrder.downloadCount}</dd></div>}
         </dl>
         {selectedOrder.intakeAnswers.length > 0 && <section className="shop-order-intake"><h3>Questionnaire</h3>{selectedOrder.intakeAnswers.map(answer => <p key={answer.questionId}><strong>{selectedOrder.intakeQuestions.find(question => question.id === answer.questionId)?.prompt || answer.questionId}</strong><span>{answer.answer}</span></p>)}</section>}
@@ -1751,8 +1754,8 @@ export default function ShopClient({
           <label>Search<input onChange={(event) => setCatalogQuery(event.target.value)} placeholder="Search products" type="search" value={catalogQuery} /></label>
           <label>Type<select onChange={(event) => setCatalogType(event.target.value)} value={catalogType}><option value="all">All types</option><option value="digital">Digital download</option><option value="service">Service</option></select></label>
           <label>Visibility<select onChange={(event) => setCatalogFilter(event.target.value)} value={catalogFilter}><option value="all">All products</option><option value="visible">Visible</option><option value="hidden">Hidden</option></select></label>
-          <label>Minimum price (€)<input inputMode="decimal" min="0" onChange={(event) => setCatalogMinPrice(event.target.value)} placeholder="0.00" step="0.01" type="number" value={catalogMinPrice} /></label>
-          <label>Maximum price (€)<input inputMode="decimal" min="0" onChange={(event) => setCatalogMaxPrice(event.target.value)} placeholder="No limit" step="0.01" type="number" value={catalogMaxPrice} /></label>
+          <label>Minimum price ({(data.shop?.appearance.currency || "eur").toUpperCase()})<input inputMode="decimal" min="0" onChange={(event) => setCatalogMinPrice(event.target.value)} placeholder="0.00" step="0.01" type="number" value={catalogMinPrice} /></label>
+          <label>Maximum price ({(data.shop?.appearance.currency || "eur").toUpperCase()})<input inputMode="decimal" min="0" onChange={(event) => setCatalogMaxPrice(event.target.value)} placeholder="No limit" step="0.01" type="number" value={catalogMaxPrice} /></label>
         </div>
         <div className="shop-catalog-summary"><span role="status">{catalogProducts.length} of {data.products.length} products</span><button disabled={!catalogQuery && catalogFilter === "all" && catalogType === "all" && !catalogMinPrice && !catalogMaxPrice && catalogSort === "title"} onClick={() => { setCatalogQuery(""); setCatalogFilter("all"); setCatalogType("all"); setCatalogMinPrice(""); setCatalogMaxPrice(""); setCatalogSort("title"); }} type="button"><RotateCcw size={14} /> Reset filters</button></div>
         <div aria-label="Product catalog table" className="shop-catalog-grid" role="region" tabIndex={0}>
@@ -1769,7 +1772,7 @@ export default function ShopClient({
               <th scope="row"><div className="shop-catalog-product"><div className="shop-catalog-thumbnail">{product.coverUrl ? <img alt="" src={new URL(product.coverUrl, data.shop?.publicUrl || "https://orbitpage.com").toString()} /> : product.type === "digital" ? <FileArchive size={20} /> : <CalendarDays size={20} />}</div><div><strong>{product.title}</strong><small>{shopProductSummary(product)}</small></div></div></th>
               <td>{product.type === "digital" ? "Digital download" : "Service"}</td>
               <td><span className={`shop-catalog-status ${product.active ? "visible" : "hidden"}`}><span aria-hidden="true" />{product.active ? "Visible" : "Hidden"}</span></td>
-              <td className="shop-catalog-price">{money(product.priceCents)}</td>
+              <td className="shop-catalog-price">{money(product.priceCents, locale, product.currency)}</td>
               <td>{product.type === "digital" ? product.files?.length || (product.file ? 1 : 0) : "—"}</td>
               <td><button aria-label={`Edit ${product.title}`} className="shop-catalog-edit" disabled={action !== null} onClick={() => selectProduct(product.productId)} type="button">Edit<ArrowUpRight size={14} /></button></td>
             </tr>)}</tbody>

@@ -1,4 +1,6 @@
 import { SHOP_SUMMARY_LIMIT, SHOP_DESCRIPTION_LIMIT } from "./description.js";
+// shortcut: Shop amounts use two decimals; add minor-unit handling before adding JPY or other currencies.
+export const SHOP_CURRENCIES = ["eur", "usd", "gbp", "chf", "cad", "aud", "nzd", "sek", "nok", "dkk", "pln", "czk", "sgd", "hkd", "inr", "brl", "mxn", "aed"];
 export function isSafeShopBookingUrl(value) {
     if (!value)
         return true;
@@ -18,7 +20,7 @@ export function createShopSchemas(z, isOwnedLogo) {
     const couponCode = z.string().trim().min(2).max(40).regex(/^[a-z0-9-]+$/i, "Use letters, numbers and dashes for the coupon code.").transform(value => value.toUpperCase());
     const shopCouponInputSchema = z.discriminatedUnion("discountType", [
         z.object({ code: couponCode, discountType: z.literal("percent"), discount: z.number().min(0.01).max(100) }).strict(),
-        z.object({ code: couponCode, discountType: z.literal("amount"), discount: z.number().int().min(1).max(1_000_000) }).strict(),
+        z.object({ code: couponCode, discountType: z.literal("amount"), discount: z.number().int().min(1).max(1_000_000), currency: z.enum(SHOP_CURRENCIES).default("eur") }).strict(),
     ]);
     const shopAiDraftSchema = z.object({
         productId: z.string().uuid(), type: z.enum(["digital", "service"]),
@@ -47,6 +49,7 @@ export function createShopSchemas(z, isOwnedLogo) {
             required: z.boolean().default(false)
         }).strict()).max(12).default([]),
         priceCents: z.number().int().min(100).max(1_000_000),
+        currency: z.enum(SHOP_CURRENCIES).default("eur"),
         active: z.boolean().default(false),
         removedFileIds: z.array(z.string().regex(/^[a-f0-9]{64}$/)).max(10).default([]),
         cardStyle: shopProductCardStyleInputSchema.default({
@@ -101,6 +104,7 @@ export function createShopSchemas(z, isOwnedLogo) {
         "发现产品和服务。"
     ]);
     const shopAppearanceStorageSchema = z.object({
+        currency: z.enum(SHOP_CURRENCIES).default("eur"),
         locale: z.enum(["en", "it", "es", "fr", "de", "pt", "nl", "pl", "tr", "ru", "ar", "zh", "ja", "ko"]).default("en"),
         title: z.string().trim().max(80).default("Shop"),
         description: z.string().trim().max(320).default(DEFAULT_SHOP_DESCRIPTION),

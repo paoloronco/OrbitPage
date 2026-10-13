@@ -30,7 +30,7 @@ export function ShopStripeAccount({ request, dashboardUrl }: { request: ShopRequ
   </section>;
 }
 
-export function ShopCoupons({ request, connected, onConnect, dashboardUrl }: { request: ShopRequest; connected: boolean; onConnect: () => void; dashboardUrl: string }) {
+export function ShopCoupons({ request, connected, onConnect, dashboardUrl, currency = "eur" }: { currency?: string; request: ShopRequest; connected: boolean; onConnect: () => void; dashboardUrl: string }) {
   const [data, setData] = useState<{ coupons: ShopCoupon[]; hasMore: boolean } | null>(null);
   const [code, setCode] = useState("");
   const [discountType, setDiscountType] = useState<"percent" | "amount">("percent");
@@ -49,7 +49,7 @@ export function ShopCoupons({ request, connected, onConnect, dashboardUrl }: { r
   async function create(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError(""); setSuccess("");
     try {
-      const coupon = await request<ShopCoupon>("/api/shop/coupons", { method: "POST", body: JSON.stringify({ code, discountType, discount: discountType === "amount" ? Math.round(Number(discount) * 100) : Number(discount) }) });
+      const coupon = await request<ShopCoupon>("/api/shop/coupons", { method: "POST", body: JSON.stringify({ code, discountType, ...(discountType === "amount" ? { currency } : {}), discount: discountType === "amount" ? Math.round(Number(discount) * 100) : Number(discount) }) });
       setData(current => {
         const coupons = [coupon, ...(current?.coupons || []).filter(item => item.id !== coupon.id)];
         return { coupons: coupons.slice(0, 50), hasMore: Boolean(current?.hasMore || coupons.length > 50) };
@@ -63,8 +63,8 @@ export function ShopCoupons({ request, connected, onConnect, dashboardUrl }: { r
     {!connected ? <><p className="shop-provider-muted">Connect Stripe before creating coupons.</p><button className="button primary" onClick={onConnect} type="button">Open Stripe settings</button></> : <>
       <form className="shop-provider-form shop-coupon-form" onSubmit={event => void create(event)}><fieldset disabled={busy || loading}><div className="shop-option-grid">
         <label>Coupon code<input autoCapitalize="characters" autoComplete="off" maxLength={40} minLength={2} onChange={event => setCode(event.target.value)} pattern="[A-Za-z0-9-]+" placeholder="WELCOME10" required value={code} /></label>
-        <label>Discount type<select onChange={event => setDiscountType(event.target.value as "percent" | "amount")} value={discountType}><option value="percent">Percentage</option><option value="amount">Fixed amount (EUR)</option></select></label>
-        <label>{discountType === "percent" ? "Discount (%)" : "Discount (EUR)"}<input max={discountType === "percent" ? 100 : 10000} min="0.01" onChange={event => setDiscount(event.target.value)} required step="0.01" type="number" value={discount} /></label>
+        <label>Discount type<select onChange={event => setDiscountType(event.target.value as "percent" | "amount")} value={discountType}><option value="percent">Percentage</option><option value="amount">Fixed amount ({currency.toUpperCase()})</option></select></label>
+        <label>{discountType === "percent" ? "Discount (%)" : `Discount (${currency.toUpperCase()})`}<input max={discountType === "percent" ? 100 : 10000} min="0.01" onChange={event => setDiscount(event.target.value)} required step="0.01" type="number" value={discount} /></label>
       </div><button className="button primary" type="submit">{busy ? <OrbitLoader size={16} /> : <Plus size={16} />} Create coupon</button></fieldset></form>
       {loading && <p className="shop-provider-muted" role="status">Loading coupons…</p>}
       {data?.coupons.length ? <div aria-label="Coupon codes" className="shop-catalog-table-scroll" role="region" tabIndex={0}><table className="shop-catalog-table"><thead><tr><th>Code</th><th>Discount</th><th>Uses</th><th>Status</th></tr></thead><tbody>{data.coupons.map(coupon => <tr key={coupon.id}><td><strong>{coupon.code}</strong></td><td>{coupon.discountType === "percent" ? `${coupon.discount}%` : money(coupon.discount, coupon.currency || "eur")}</td><td>{coupon.timesRedeemed}</td><td>{coupon.active ? "Active" : "Inactive"}</td></tr>)}</tbody></table></div> : data && <p className="shop-provider-muted">No coupons yet. Create your first code above.</p>}

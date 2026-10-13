@@ -1,3 +1,5 @@
+export const SHOP_CURRENCIES: readonly ["eur", "usd", "gbp", "chf", "cad", "aud", "nzd", "sek", "nok", "dkk", "pln", "czk", "sgd", "hkd", "inr", "brl", "mxn", "aed"];
+export type ShopCurrency = typeof SHOP_CURRENCIES[number];
 export type ShopAiDraft = { productId: string; type: "digital" | "service"; title: string; description: string; priceCents: number };
 export type ShopLocale = 'en' | 'it' | 'es' | 'fr' | 'de' | 'pt' | 'nl' | 'pl' | 'tr' | 'ru' | 'ar' | 'zh' | 'ja' | 'ko';
 export type ShopProductCardStyle = {
@@ -9,10 +11,11 @@ export type ShopIntakeQuestion = { id: string; prompt: string; required: boolean
 export type ShopProductInput = {
   productId?: string; type: 'digital' | 'service'; title: string; summary: string;
   description: string; fulfillmentText: string; bookingUrl: string; sessionsIncluded: number;
-  intakeQuestions: ShopIntakeQuestion[]; priceCents: number; active: boolean;
+  intakeQuestions: ShopIntakeQuestion[]; priceCents: number; currency: ShopCurrency; active: boolean;
   removedFileIds: string[]; cardStyle: ShopProductCardStyle;
 };
 export type ShopAppearance = {
+  currency: ShopCurrency;
   locale: ShopLocale; title: string; description: string;
   showTitle: boolean; showDescription: boolean;
   titleFontFamily: string | null; titleFontSize: number | null;
@@ -62,7 +65,7 @@ export function createShopSchemas(zod: unknown, isOwnedLogo: (value: string) => 
   normalizeShopAppearance(value: unknown): ShopAppearance;
   normalizeShopProductCardStyle(value: unknown): ShopProductCardStyle;
 };
-export type ShopCouponInput = { code: string; discountType: "percent" | "amount"; discount: number };
+export type ShopCouponInput = { code: string; discountType: "percent" | "amount"; discount: number; currency?: ShopCurrency };
 export function isSafeShopBookingUrl(value: string): boolean;
 
 export function shopComplianceReady(appearance?: ShopAppearance | null): boolean;
