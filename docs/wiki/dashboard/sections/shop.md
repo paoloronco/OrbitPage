@@ -76,6 +76,8 @@ Ask **AI Assistant** to draft a product with a title, description, type and pric
 
 Stripe account verification does not fill these fields. You remain responsible for your products, delivery, support, taxes, invoices and applicable disclosures. Collecting a tax ID does not calculate tax or generate an invoice.
 
+The trash button clears seller details and policies even when the profile is incomplete. Changes remain a draft until **Save**; **Reset** restores them. Saving the removal asks for confirmation and unpublishes the Shop.
+
 ### Public phone and Stripe receipts
 
 - Leave **Public phone** empty to hide it from the OrbitPage Shop and new order emails. OrbitPage does not import your Stripe identity or support phone. Existing orders retain the seller details saved at purchase.

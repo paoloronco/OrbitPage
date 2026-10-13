@@ -22,6 +22,9 @@ In iubenda, open **Manage and Embed** for your site. Copy the complete **Privacy
 
 OrbitPage maps purposes **2 or 3 → Preferences**, **4 → Analytics**, **5 → Marketing**. Existing installations using site and cookie-policy IDs remain supported; the dashboard uses the complete snippet for new configurations.
 
+On public pages, iubenda's inline US privacy controls sit inside the centered
+page footer. Floating controls keep the position configured in iubenda.
+
 [Find the iubenda installation snippet](https://www.iubenda.com/en/help/1209-how-to-use-the-cookie-solution-in-a-multilingual-wordpress-site/).
 
 ### CookieYes

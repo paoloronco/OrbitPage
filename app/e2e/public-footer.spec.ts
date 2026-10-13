@@ -59,3 +59,61 @@ test('short-page footer reaches the bottom of both preview devices', async ({ pa
     }
   } finally { await restore(); }
 });
+
+for (const beforeMount of [true, false]) {
+  test(`integrates inline privacy controls ${beforeMount ? 'before' : 'after'} the public page mounts and preserves them on navigation`, async ({ page }) => {
+    await page.addInitScript(beforeMount => {
+      (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+        page: { profile: { name: 'Privacy footer fixture', bio: '', avatar: '', showAvatar: false }, links: [], theme: {} },
+        consentConfig: { mode: 'disabled', enabled: false },
+      };
+      if (beforeMount) document.addEventListener('DOMContentLoaded', () => {
+        const widget = document.createElement('div');
+        widget.className = 'iub__us-widget';
+        const button = document.createElement('button');
+        button.textContent = 'Privacy choices';
+        button.addEventListener('click', () => button.dataset.clicks = String(Number(button.dataset.clicks || 0) + 1));
+        widget.append(button); document.body.append(widget);
+      });
+    }, beforeMount);
+    await page.goto('/');
+    const root = page.locator('.public-page-root');
+    await expect(root).toBeVisible();
+    if (!beforeMount) await page.evaluate(() => {
+      const widget = document.createElement('div'); widget.className = 'iub__us-widget';
+      const button = document.createElement('button'); button.textContent = 'Privacy choices';
+      button.addEventListener('click', () => button.dataset.clicks = String(Number(button.dataset.clicks || 0) + 1));
+      widget.append(button); document.body.append(widget);
+    });
+    const control = page.getByRole('button', { name: 'Privacy choices', exact: true });
+    await expect(root.locator('footer .iub__us-widget')).toBeVisible();
+    await control.click(); await expect(control).toHaveAttribute('data-clicks', '1');
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect.poll(() => root.evaluate(root => {
+        const footer = root.querySelector('footer')!.getBoundingClientRect(), widget = root.querySelector('.iub__us-widget')!.getBoundingClientRect();
+        return Math.abs(widget.x + widget.width / 2 - footer.x - footer.width / 2) < 1
+          && Math.abs(footer.bottom + parseFloat(getComputedStyle(root).paddingBottom) - innerHeight) < 1
+          && document.documentElement.scrollWidth <= innerWidth;
+      })).toBe(true);
+    }
+    await page.evaluate(() => { history.pushState({}, '', '/cookies'); window.dispatchEvent(new PopStateEvent('popstate')); });
+    await expect(root).toHaveCount(0);
+    await expect(page.locator('body > .iub__us-widget')).toBeVisible();
+    await control.click(); await expect(control).toHaveAttribute('data-clicks', '2');
+  });
+}
+
+test('keeps a floating provider widget in its configured position', async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+      page: { profile: { name: 'Floating privacy fixture', bio: '', avatar: '', showAvatar: false }, links: [], theme: {} },
+      consentConfig: { mode: 'disabled', enabled: false },
+    };
+  });
+  await page.goto('/');
+  await expect(page.locator('.public-page-root')).toBeVisible();
+  await page.evaluate(() => { const widget = document.createElement('div'); widget.className = 'iub__us-widget'; widget.style.position = 'fixed'; widget.textContent = 'Floating privacy controls'; document.body.append(widget); });
+  await expect(page.locator('body > .iub__us-widget')).toHaveCSS('position', 'fixed');
+  await expect(page.locator('.public-page-footer__privacy')).toBeHidden();
+});

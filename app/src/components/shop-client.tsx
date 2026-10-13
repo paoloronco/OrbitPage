@@ -1517,7 +1517,7 @@ export default function ShopClient({
       {view === "settings" && settingsTab === "compliance" && appearance && <form aria-labelledby="shop-legal-profile-title" className="shop-provider-panel shop-provider-form shop-legal-settings" id="shop-legal-profile" onSubmit={(event) => { event.preventDefault(); void saveChanges(); }}>
             <header className="shop-provider-heading">
               <h3 id="shop-legal-profile-title">Seller and legal information</h3>
-              {data.shop?.appearance.sellerName && <button aria-label="Delete seller profile" className="shop-delete-button" disabled={action !== null || deleteProfilePending} onClick={() => { setAppearance(clearLegalProfile(appearance)); setPolicyDrafts({}); setDeleteProfilePending(true); }} type="button"><Trash2 size={16} /></button>}
+              <button aria-label="Delete seller profile" className="shop-delete-button" disabled={action !== null || deleteProfilePending} onClick={() => { setAppearance(clearLegalProfile(appearance)); setPolicyDrafts({}); setDeleteProfilePending(true); }} type="button"><Trash2 size={16} /></button>
               <div className="shop-legal-intro">
                 <p>Add your seller details and Shop policies. You can save an incomplete profile and finish it later.</p>
                 {!sellerAcknowledged && <p>To publish, confirm your responsibility as the seller using the checkbox below.</p>}
@@ -1533,9 +1533,9 @@ export default function ShopClient({
                 <label><span>Public email</span><input autoComplete="email" maxLength={254} onChange={(event) => setAppearance((current) => current ? { ...current, sellerEmail: event.target.value } : current)} type="email" value={appearance.sellerEmail} /></label>
                 <label><span>Public phone <small>Optional</small></span><input autoComplete="tel" maxLength={30} onChange={(event) => setAppearance((current) => current ? { ...current, sellerPhone: event.target.value } : current)} type="tel" value={appearance.sellerPhone} /></label>
               </div>
+              <label className="shop-seller-address"><span>Geographic address <small>Provide where required by law</small></span><textarea maxLength={300} onChange={(event) => setAppearance((current) => current ? { ...current, sellerAddress: event.target.value } : current)} rows={3} value={appearance.sellerAddress} /></label>
               <p className="shop-provider-muted">Leave Public phone empty to hide it from your OrbitPage Shop and new order emails. Stripe does not fill these fields. Existing orders keep the seller details saved at purchase.</p>
               <p className="shop-provider-muted">Stripe Checkout, receipts and invoices use Stripe's own public details. Keep them consistent with this profile; clearing a field here does not remove it from Stripe. <a href={stripePublicDetailsUrl} rel="noreferrer" target="_blank">Review public details in Stripe</a>.</p>
-              <label className="shop-seller-address"><span>Geographic address <small>Provide where required by law</small></span><textarea maxLength={300} onChange={(event) => setAppearance((current) => current ? { ...current, sellerAddress: event.target.value } : current)} rows={3} value={appearance.sellerAddress} /></label>
               </div>
               {appearance.sellerType === "trader" && <label><span>VAT, tax or business registration ID <small>When applicable</small></span><input maxLength={120} onChange={(event) => setAppearance((current) => current ? { ...current, sellerBusinessId: event.target.value } : current)} value={appearance.sellerBusinessId} /></label>}
               <p className="shop-platform-note">Hosted policies appear as sections on /shop/legal. Footer links are always visible; unconfigured policies return 404.</p>

@@ -9,6 +9,10 @@
 @import './components/account-info.css';
 @config '../tailwind.config.ts';
 
+html:has(.orbitpage-admin) {
+  color-scheme: light;
+}
+
 :focus-visible {
   outline: 3px solid hsl(var(--ring)) !important;
   outline-offset: 3px !important;
@@ -9839,6 +9843,12 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .public-page-footer {
   overflow-wrap: anywhere;
+}
+
+.public-page-footer__privacy {
+  max-width: 28rem;
+  margin-inline: auto;
+  margin-bottom: 1rem;
 }
 
 .public-page-root button {
