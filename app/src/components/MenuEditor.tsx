@@ -612,7 +612,7 @@ useEffect(() => () => {
 
   return (
     <div className={"menu-editor-stack menu-editor-stack--visual"}>
-      <div className="menu-editor-main space-y-5 shop-workspace">
+      <div className="menu-editor-main shop-workspace">
         <>
           {deviceSlot && createPortal(<PreviewDeviceToggle value={device} onChange={setDevice} />, deviceSlot)}
           <fieldset disabled={saving || Boolean(uploadingItem)} className="menu-preview-toolbar shop-view-toolbar">

@@ -139,6 +139,11 @@ test('keeps the preview, Personalize and dialogs usable from phones to laptops',
 });
 
 test('matches Shop device geometry and keeps the surrounding canvas transparent', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  await openAdminSection(page, 'Menu');
+  await page.getByRole('button', { name: 'Add item', exact: true }).click();
+  await itemDialog(page).getByRole('textbox', { name: 'Name', exact: true }).fill('Preview outline');
+  await apply(page);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 980 });
     for (const device of ['Mobile', 'Desktop']) {
@@ -149,10 +154,16 @@ test('matches Shop device geometry and keeps the surrounding canvas transparent'
         await expect(page.locator('.shop-device-viewport')).toHaveAttribute('data-preview-viewport-ready', 'true');
         frames.push(await page.locator('.shop-device-hardware').evaluate(element => {
           const rect = element.getBoundingClientRect(), css = getComputedStyle(element);
-          return { width: rect.width, height: rect.height, radius: css.borderRadius, padding: css.padding, background: css.backgroundColor };
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, radius: css.borderRadius, padding: css.padding, background: css.backgroundColor };
         }));
         if (section === 'Menu') {
           await expect(page.locator('.menu-preview-canvas')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+          const item = page.locator('.orbitpage-menu-item[role=button]').first();
+          await item.hover();
+          await expect(item).toHaveCSS('outline-style', 'dashed');
+          await expect(item).toHaveCSS('outline-offset', '-2px');
+          await item.focus();
+          await expect(item).toHaveCSS('outline-offset', '-2px');
           await page.screenshot({ path: testInfo.outputPath(`menu-${device}-${width}.png`), fullPage: true });
         }
       }

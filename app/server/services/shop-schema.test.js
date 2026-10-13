@@ -1,14 +1,34 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { createShopSchemas } from '../../packages/shop/schema.js';
+import { createShopSchemas, SHOP_CURRENCIES } from '../../packages/shop/schema.js';
 import { renderShopDescription } from '../../packages/shop/description.js';
-import { shopPurchasePresentation, renderShopHtml } from '../../packages/shop/render.js';
+import { shopPurchasePresentation, renderShopHtml, renderShopMarkdown } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail } from '../../packages/shop/email.js';
 
 const { shopAppearanceInputSchema: appearance, shopProductInputSchema: product, normalizeShopAppearance } =
   createShopSchemas(z, value => /^\/uploads\/[a-zA-Z0-9._-]+$/.test(value));
 
 describe('self-hosted shared Shop contracts', () => {
+  it('validates supported currencies and renders prices, metadata and receipts consistently', () => {
+    const fixture = { productId: 'guide', type: 'digital', title: 'Guide', description: 'Download details', priceCents: 1250 };
+    expect(appearance.parse({}).currency).toBe('eur');
+    expect(product.parse(fixture).currency).toBe('eur');
+    for (const currency of SHOP_CURRENCIES) {
+      expect(new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits).toBe(2);
+      const settings = appearance.parse({ currency });
+      const input = { username: 'studio', apiBaseUrl: '/api/shop', newsletterEndpoint: '/newsletter', coverUrlPrefix: '/covers/', title: 'Studio', canonicalUrl: 'https://example.test/shop', appearance: settings, products: [product.parse({ ...fixture, currency })] };
+      const html = renderShopHtml(input);
+      expect(html).toContain(`"priceCurrency":"${currency.toUpperCase()}"`);
+      const price = new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(12.5);
+      expect(html).toContain(price);
+      expect(renderShopMarkdown(input)).toContain(price);
+      expect(buildShopBuyerEmail({ order: { orderId: 'order', productType: 'digital', productTitle: 'Guide', amountTotal: 1250, currency }, deliveryUrl: 'https://example.test/download' }).text).toContain(price);
+    }
+    for (const currency of ['jpy', 'usd<script>', 'xyz', 'USD']) {
+      expect(appearance.safeParse({ currency }).success).toBe(false);
+      expect(product.safeParse({ ...fixture, currency }).success).toBe(false);
+    }
+  });
   it('keeps required policy links in a live Shop and omits them from fictional previews', () => {
     const input = { username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: normalizeShopAppearance({}), products: [], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' };
     expect(renderShopHtml(input)).toContain('href="https://studio.example.test/shop/legal/terms"');

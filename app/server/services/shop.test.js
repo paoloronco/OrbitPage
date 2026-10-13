@@ -20,7 +20,7 @@ vi.mock('stripe', async () => {
         create: async (input, options) => { provider.creates.push({ input, options }); await provider.beforeCreate?.(); const id = `cs_${key.includes('_live_') ? 'live' : 'test'}_${randomUUID().replaceAll('-', '')}`;
           const session = { id, livemode: key.includes('_live_'), url: `https://checkout.stripe.com/test/${id}`, mode: 'payment', status: 'open', payment_status: 'unpaid', metadata: input.metadata,
             amount_subtotal: input.line_items[0].price_data.unit_amount, amount_total: input.line_items[0].price_data.unit_amount,
-            total_details: { amount_discount: 0, amount_tax: 0, amount_shipping: null }, currency: 'eur', payment_intent: null,
+            total_details: { amount_discount: 0, amount_tax: 0, amount_shipping: null }, currency: input.line_items[0].price_data.currency, payment_intent: null,
             customer_details: { email: 'synthetic@example.com', name: 'Synthetic Buyer' } };
           provider.sessions.set(id, session); return session; },
         retrieve: async id => { await provider.beforeRetrieve?.(); return provider.sessions.get(id); },
@@ -83,8 +83,8 @@ async function newCheckout(productId, discount = 0, paid = true) {
   if (session.amount_total) {
     const intentId = `pi_${randomUUID()}`, chargeId = `ch_${randomUUID()}`;
     session.payment_intent = intentId;
-    provider.intents.set(intentId, { id: intentId, status: 'succeeded', amount: session.amount_total, amount_received: session.amount_total, currency: 'eur', latest_charge: chargeId, application_fee_amount: null });
-    provider.charges.set(chargeId, { id: chargeId, payment_intent: intentId, amount: session.amount_total, amount_refunded: 0, currency: 'eur', captured: true, paid: true, application_fee: null });
+    provider.intents.set(intentId, { id: intentId, status: 'succeeded', amount: session.amount_total, amount_received: session.amount_total, currency: session.currency, latest_charge: chargeId, application_fee_amount: null });
+    provider.charges.set(chargeId, { id: chargeId, payment_intent: intentId, amount: session.amount_total, amount_refunded: 0, currency: session.currency, captured: true, paid: true, application_fee: null });
   }
   return session;
 }
@@ -145,6 +145,28 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     const product = (await shop.shopProducts()).find(p => p.productId === id); expect(existsSync(shop.shopFilePath(product.files[0].id))).toBe(true);
     await expect(shop.reserveShopUpload({ productId: id, filename: '../../secret.pdf', contentType: 'application/pdf', sizeBytes: 20, kind: 'file' }, base)).rejects.toThrow('valid filename');
     await expect(shop.shopDelivery(`${randomUUID()}.invalid`)).rejects.toMatchObject({ code: 'SHOP_DOWNLOAD_INVALID' });
+  });
+  it('changes catalog currency atomically while preserving open and paid orders', async () => {
+    const appearance = (await shop.shopSettings()).appearance;
+    const id = await newProduct(), euro = await newCheckout(id);
+    await shop.saveShopAppearance({ ...appearance, currency: 'usd' }, base);
+    try {
+      expect((await shop.shopProducts()).find(product => product.productId === id)).toMatchObject({ currency: 'usd', priceCents: 1000 });
+      expect(await shop.publicShop(base)).toContain('"priceCurrency":"USD"');
+      await expect(shop.saveShopProduct({ ...digitalInput(), productId: id }, base)).rejects.toMatchObject({ code: 'SHOP_CURRENCY_CHANGED' });
+      await shop.saveShopProduct({ ...digitalInput(), productId: id, currency: 'usd', priceCents: 1250 }, base);
+      const usd = await newCheckout(id, 250);
+      expect(provider.creates.at(-1).input.line_items[0].price_data).toMatchObject({ currency: 'usd', unit_amount: 1250 });
+      await shop.saveShopAppearance({ ...appearance, currency: 'gbp' }, base);
+      expect((await webhook('checkout.session.completed', usd)).status).toBe(200);
+      expect((await webhook('checkout.session.completed', euro)).status).toBe(200);
+      expect(await shop.shopOrder(usd.metadata.orbitpageOrderId)).toMatchObject({ currency: 'usd', status: 'paid', amountTotal: 1000, amountSubtotal: 1250 });
+      expect(await shop.shopOrder(euro.metadata.orbitpageOrderId)).toMatchObject({ currency: 'eur', status: 'paid', amountTotal: 1000 });
+      const delivery = await shop.shopDelivery(shop.deliveryTokenForOrder(usd.metadata.orbitpageOrderId));
+      expect(delivery).toMatchObject({ currency: 'usd', amountTotal: 1000 });
+      await db.withImmediateTransaction(transaction => shop.persistShopAiDrafts(transaction, [{ productId: randomUUID(), type: 'service', title: 'Currency draft', description: 'Saved in shop currency', priceCents: 1500 }]));
+      expect((await shop.shopProducts()).find(product => product.title === 'Currency draft')).toMatchObject({ currency: 'gbp', active: false, priceCents: 1500 });
+    } finally { await shop.saveShopAppearance(appearance, base); }
   });
   it('fulfills discounted orders exactly once, survives duplicated and delayed events, and counts downloads atomically', async () => {
     const id = await newProduct(), session = await newCheckout(id, 500), eventId = `evt_${randomUUID()}`;

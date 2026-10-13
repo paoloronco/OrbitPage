@@ -25,13 +25,13 @@ export function renderShopMarkdown(input) {
     const products = input.products.map((product) => [
         `## ${markdownText(product.title)}`,
         markdownText(product.description),
-        `Price: ${formatEur(product.priceCents, PUBLIC_SHOP_LOCALE)}`,
+        `Price: ${formatMoney(product.priceCents, product.currency)}`,
         `Type: ${product.type}`,
     ].join("\n\n"));
     return [appearance.showTitle && appearance.title ? `# ${markdownText(appearance.title)}` : "", appearance.showDescription ? markdownText(appearance.description) : "", `Canonical: ${input.canonicalUrl}`, ...products].filter(Boolean).join("\n\n") + "\n";
 }
-function formatEur(cents, locale) {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(cents / 100);
+function formatMoney(cents, currency = "eur") {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
 }
 function themeObject(value) {
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
@@ -132,7 +132,7 @@ export function renderShopHtml(input) {
                 url: input.canonicalUrl,
                 offers: {
                     "@type": "Offer",
-                    priceCurrency: "EUR",
+                    priceCurrency: (product.currency || "eur").toUpperCase(),
                     price: (product.priceCents / 100).toFixed(2),
                     availability: "https://schema.org/InStock",
                     url: input.canonicalUrl,
@@ -155,7 +155,7 @@ export function renderShopHtml(input) {
       <h2>${escapeHtml(product.title)}</h2>
       <div class="product-excerpt">${renderShopDescription(shopProductSummary(product))}</div>
       ${product.type === "service" && sessionsIncluded > 1 ? `<div class="package-size">${escapeHtml(sessionsLabel)}</div>` : ""}
-      <div class="product-footer"><strong>${escapeHtml(formatEur(product.priceCents, locale))}</strong><button class="open-product" aria-controls="product-${escapeHtml(product.productId)}" aria-haspopup="dialog" data-product-dialog="product-${escapeHtml(product.productId)}" type="button">${escapeHtml(tr("View details", "Vedi dettagli"))}</button></div>
+      <div class="product-footer"><strong>${escapeHtml(formatMoney(product.priceCents, product.currency))}</strong><button class="open-product" aria-controls="product-${escapeHtml(product.productId)}" aria-haspopup="dialog" data-product-dialog="product-${escapeHtml(product.productId)}" type="button">${escapeHtml(tr("View details", "Vedi dettagli"))}</button></div>
     </article>
     <dialog class="product-dialog" id="product-${escapeHtml(product.productId)}" aria-labelledby="title-${escapeHtml(product.productId)}">
       <button class="close-product" aria-label="${escapeHtml(tr("Close", "Chiudi"))}" type="button">×</button>
@@ -168,7 +168,7 @@ export function renderShopHtml(input) {
         <label class="purchase-consent"><input name="sellerNoticeAcknowledged" required type="checkbox" value="accepted"><span>${escapeHtml(sellerNotice)}</span></label>
         ${product.type === "digital" ? `<label class="purchase-consent digital-consent"><input name="digitalContentConsent" required type="checkbox" value="accepted"><span>${escapeHtml(tr("I expressly consent to immediate supply of the digital content and acknowledge that I lose my withdrawal right once the download begins.", "Acconsento espressamente alla fornitura immediata del contenuto digitale e riconosco di perdere il diritto di recesso quando inizia il download."))}</span></label>` : ""}
         <div class="product-footer">
-          <strong>${escapeHtml(formatEur(product.priceCents, locale))}</strong>
+          <strong>${escapeHtml(formatMoney(product.priceCents, product.currency))}</strong>
           <button type="submit">${escapeHtml(tr("Buy", "Acquista"))}</button>
         </div>
       </form>`}

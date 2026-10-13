@@ -15,7 +15,7 @@ type Delivery = {
   productTitle: string;
   productType: "digital" | "service";
   amountTotal: number;
-  currency: "eur";
+  currency: string;
   fulfillmentText: string;
   bookingUrl: string;
   downloadable: boolean;
@@ -30,8 +30,8 @@ type Delivery = {
   intakeQuestions: Array<{ id: string; prompt: string; required: boolean }>;
 };
 
-function money(cents: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR" }).format(cents / 100);
+function money(cents: number, currency: string) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(cents / 100);
 }
 export default function ShopSuccessClient({
   deliveryToken: initialDeliveryToken,
@@ -123,7 +123,7 @@ export default function ShopSuccessClient({
         )}
         </section>
         <aside className="shop-purchase-sidebar">
-          <section className="shop-purchase-card"><h2>Order details</h2><dl className="shop-purchase-details shop-success-product"><div><dt>Order</dt><dd>{shopOrderLabel(delivery)}</dd></div>{delivery.paidAt && <div><dt>Date</dt><dd>{new Date(delivery.paidAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</dd></div>}<div className="shop-purchase-total"><dt>Total paid</dt><dd>{money(delivery.amountTotal)}</dd></div></dl><p className="shop-purchase-note">Payment processed by Stripe.</p></section>
+          <section className="shop-purchase-card"><h2>Order details</h2><dl className="shop-purchase-details shop-success-product"><div><dt>Order</dt><dd>{shopOrderLabel(delivery)}</dd></div>{delivery.paidAt && <div><dt>Date</dt><dd>{new Date(delivery.paidAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</dd></div>}<div className="shop-purchase-total"><dt>Total paid</dt><dd>{money(delivery.amountTotal, delivery.currency)}</dd></div></dl><p className="shop-purchase-note">Payment processed by Stripe.</p></section>
           {delivery.customerPortalUrl && <section className="shop-purchase-card shop-purchase-access"><h2>Your purchases</h2><p>Find your files, appointments and service details here.</p><a className="shop-purchase-button secondary" href={delivery.customerPortalUrl}>View your purchases <ArrowRight size={17} aria-hidden="true" /></a>{delivery.intakeQuestions.length > 0 && <p className="shop-purchase-note">Your service includes a questionnaire. Complete it before your appointment.</p>}</section>}
         </aside>
       </div>

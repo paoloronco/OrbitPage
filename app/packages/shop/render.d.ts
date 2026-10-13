@@ -1,7 +1,7 @@
 import type { ShopAppearance, ShopProductCardStyle } from './schema.js';
 type ShopRenderProduct = {
   productId: string; type: 'digital' | 'service'; title: string; description: string;
-  summary?: string; priceCents: number; sessionsIncluded?: number;
+  summary?: string; priceCents: number; currency?: string; sessionsIncluded?: number;
   cardStyle: ShopProductCardStyle; coverKey?: string | null;
   file: { filename: string } | null; files?: Array<{ filename: string }>;
 };

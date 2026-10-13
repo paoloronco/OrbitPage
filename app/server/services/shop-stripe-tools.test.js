@@ -15,6 +15,18 @@ function client() {
   };
 }
 describe('Shop Stripe tools', () => {
+  it('binds fixed discounts and idempotent retries to their original currency', async () => {
+    const stripe = client();
+    const input = { code: 'SAVE5', discountType: 'amount', discount: 500, currency: 'usd' };
+    await createStripeShopCoupon(stripe, options, input, 'owner');
+    expect(stripe.coupons.create).toHaveBeenCalledWith(expect.objectContaining({ amount_off: 500, currency: 'usd' }), expect.objectContaining(options));
+    const usdKey = stripe.coupons.create.mock.calls[0][1].idempotencyKey;
+    await createStripeShopCoupon(stripe, options, { ...input, currency: 'gbp' }, 'owner');
+    expect(stripe.coupons.create.mock.calls[1][1].idempotencyKey).not.toBe(usdKey);
+    stripe.promotionCodes.list.mockResolvedValue({ data: [{ ...promotion, promotion: { coupon: { ...coupon, percent_off: null, amount_off: 500, currency: 'usd' } } }] });
+    await expect(createStripeShopCoupon(stripe, options, input, 'owner')).resolves.toMatchObject({ currency: 'usd' });
+    await expect(createStripeShopCoupon(stripe, options, { ...input, currency: 'gbp' }, 'owner')).rejects.toBeInstanceOf(ShopCouponError);
+  });
   it('bounds discounts and normalizes customer-facing codes', () => {
     const { shopCouponInputSchema } = createShopSchemas(z, () => false);
     expect(shopCouponInputSchema.parse({ code: ' welcome10 ', discountType: 'percent', discount: 10 }).code).toBe('WELCOME10');

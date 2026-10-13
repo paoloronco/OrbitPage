@@ -101,6 +101,7 @@ export async function shopCoupons() {
 }
 export async function saveShopCoupon(raw) {
   const input = shopCouponInputSchema.parse(raw);
+  if (input.discountType === 'amount' && input.currency !== normalizeShopAppearance((await shopSettings()).appearance).currency) fail(409, 'SHOP_CURRENCY_CHANGED', 'Shop currency changed. Reload before saving.');
   const { client, config } = await shopStripe();
   try { return await createStripeShopCoupon(client, {}, input, config.accountId); }
   catch (error) {
@@ -281,6 +282,9 @@ export async function saveShopAppearance(raw, base) {
     const setting = await shopSettings();
     if (setting.enabled && !appearance.sellerSelfCertified) fail(409, 'SHOP_SELLER_ACKNOWLEDGMENT_REQUIRED', 'Acknowledge your seller responsibilities.');
     const previousAppearance = setting.appearance;
+    if (appearance.currency !== normalizeShopAppearance(previousAppearance).currency) {
+      for (const product of await shopProducts()) await saveProduct({ ...product, currency: appearance.currency, updatedAt: now() });
+    }
     setting.appearance = appearance; setting.publicBase = base; await saveShopSettings(setting); await syncShopHome(base, previousAppearance);
   });
   return shopDashboard(base);
@@ -307,24 +311,27 @@ export async function assertShopSetup(setting = null) {
   if (!setting.email?.verifiedAt) fail(409, 'SHOP_EMAIL_REQUIRED', 'Configure SMTP and send a successful test email before publishing or accepting payments.');
 }
 export async function persistShopAiDrafts(transaction, drafts) {
+  const currency = normalizeShopAppearance(decode(await transaction.get('SELECT data FROM shop_settings WHERE id = 1'))?.appearance).currency;
   const count = (await transaction.get('SELECT COUNT(*) AS count FROM shop_products')).count;
   if (count + drafts.length > SHOP_MAX_PRODUCTS) fail(409, 'SHOP_PRODUCT_LIMIT', 'The catalog supports up to 20 products.');
   for (const raw of drafts) {
     const draft = shopAiDraftSchema.parse(raw), timestamp = now();
     const fields = shopProductInputSchema.parse({ ...draft, active: false });
-    await transaction.run('INSERT INTO shop_products (id, data) VALUES (?, ?)', [draft.productId, JSON.stringify({ ...fields, currency: 'eur', files: [], file: null, cover: null, createdAt: timestamp, updatedAt: timestamp })]);
+    await transaction.run('INSERT INTO shop_products (id, data) VALUES (?, ?)', [draft.productId, JSON.stringify({ ...fields, currency, files: [], file: null, cover: null, createdAt: timestamp, updatedAt: timestamp })]);
   }
 }
 export async function saveShopProduct(raw, base) {
   const input = shopProductInputSchema.parse(raw), productId = input.productId || randomUUID();
   await withTransaction(async () => {
     const previous = await productFor(productId), products = await shopProducts();
+    const currency = normalizeShopAppearance((await shopSettings()).appearance).currency;
+    if (input.currency !== currency) fail(409, 'SHOP_CURRENCY_CHANGED', 'Shop currency changed. Reload before saving.');
     if (input.productId && !previous) fail(404, 'PRODUCT_NOT_FOUND', 'Product not found.');
     if (!previous && products.length >= SHOP_MAX_PRODUCTS) fail(409, 'SHOP_PRODUCT_LIMIT', 'The catalog supports up to 20 products.');
     const removed = new Set(input.removedFileIds || []), files = (previous?.files || []).filter(file => !removed.has(file.id));
     if (input.type !== previous?.type && previous?.files?.length) fail(409, 'SHOP_PRODUCT_TYPE', 'Remove digital files before changing product type.');
     const { removedFileIds, ...fields } = input;
-    await saveProduct({ ...previous, ...fields, productId, currency: 'eur', files, file: files[0] || null, cover: previous?.cover || null,
+    await saveProduct({ ...previous, ...fields, productId, currency, files, file: files[0] || null, cover: previous?.cover || null,
       createdAt: previous?.createdAt || now(), updatedAt: now() });
   });
   const result = await shopDashboard(base); return { ...result, savedProductId: productId };
@@ -441,7 +448,7 @@ export async function createShopCheckout(raw, base) {
   const orderId = randomUUID(), timestamp = now(), policy = shopPolicyLinks(appearance, `${base}/shop`);
   const order = { orderId, productId: product.productId, productType: product.type, productTitle: product.title,
     amountTotal: product.priceCents, amountSubtotal: product.priceCents, amountDiscount: 0, amountRefunded: 0,
-    applicationFeeAmount: 0, applicationFeeRefunded: 0, currency: 'eur', status: 'creating',
+    applicationFeeAmount: 0, applicationFeeRefunded: 0, currency: product.currency || 'eur', status: 'creating',
     stripeAccountId: setting.stripe.accountId, stripeLivemode: config.livemode,
     stripeCheckoutSessionId: null, stripePaymentIntentId: null, stripeChargeId: null,
     buyerEmail: null, buyerName: null, buyerDetails: null, customerId: null,
@@ -475,7 +482,7 @@ export async function createShopCheckout(raw, base) {
       phone_number_collection: { enabled: appearance.checkout.phone }, billing_address_collection: appearance.checkout.billingAddress,
       tax_id_collection: stripeTaxIdCollection(appearance.checkout.taxId),
       custom_fields: appearance.checkout.customFields.map(field => ({ key: field.key, label: { type: 'custom', custom: field.label }, type: field.type, optional: !field.required })),
-      allow_promotion_codes: true, line_items: [{ quantity: 1, price_data: { currency: 'eur', unit_amount: product.priceCents, product_data: { name: product.title, description: product.description.slice(0, 500) } } }],
+      allow_promotion_codes: true, line_items: [{ quantity: 1, price_data: { currency: order.currency, unit_amount: order.amountTotal, product_data: { name: product.title, description: product.description.slice(0, 500) } } }],
       metadata, payment_intent_data: { metadata },
       success_url: `${base}/shop/success?order=${orderId}&session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${base}/shop`,
       custom_text: { submit: { message: 'The seller is responsible for this product or service. OrbitPage provides the shop software.' } },

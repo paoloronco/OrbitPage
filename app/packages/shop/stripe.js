@@ -22,13 +22,13 @@ export async function createStripeShopCoupon(client, options, input, namespace) 
   const existing = await client.promotionCodes.list({ code: input.code, active: true, limit: 1, expand: ["data.promotion.coupon"] }, options);
   if (existing.data.length) {
     const promotion = existing.data[0], coupon = couponDto(promotion);
-    if (promotion.metadata.orbitpageShop !== namespace || coupon.discountType !== input.discountType || coupon.discount !== input.discount) throw new ShopCouponError();
+    if (promotion.metadata.orbitpageShop !== namespace || coupon.discountType !== input.discountType || coupon.discount !== input.discount || (input.discountType === "amount" && coupon.currency !== (input.currency || "eur"))) throw new ShopCouponError();
     return coupon;
   }
   // Stable keys recover both provider writes when a response is lost.
-  const key = `orbitpage-shop-coupon-${namespace}-${input.code}-${input.discountType}-${input.discount}`;
+  const key = `orbitpage-shop-coupon-${namespace}-${input.code}-${input.discountType}-${input.discount}${input.discountType === "amount" && input.currency && input.currency !== "eur" ? `-${input.currency}` : ""}`;
   const coupon = await client.coupons.create({ duration: "once", name: input.code,
-    ...(input.discountType === "percent" ? { percent_off: input.discount } : { amount_off: input.discount, currency: "eur" }),
+    ...(input.discountType === "percent" ? { percent_off: input.discount } : { amount_off: input.discount, currency: input.currency || "eur" }),
     metadata: { orbitpageShop: namespace },
   }, { ...options, idempotencyKey: `${key}-discount` });
   const promotion = await client.promotionCodes.create({ code: input.code, promotion: { type: "coupon", coupon: coupon.id }, metadata: { orbitpageShop: namespace } },
