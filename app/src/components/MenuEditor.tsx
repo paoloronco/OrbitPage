@@ -407,9 +407,6 @@ useEffect(() => () => {
     return (
       <section className="menu-category-editor" aria-label={tr("Selected category", "Categoria selezionata")}>
             <div className="menu-category-editor__heading">
-              <div>
-                <strong>{section.name || tr("Untitled category", "Categoria senza nome")}</strong>
-              </div>
               <label>
                 <Switch
                   checked={section.visible}
@@ -525,8 +522,8 @@ useEffect(() => () => {
                 <div className="menu-item-visibility">
                   <div className="menu-item-form-section__title"><strong>{tr('Visibility', 'Visibilità')}</strong><span>{tr('Control how this item appears on the public menu.', 'Scegli come appare nel menu pubblico.')}</span></div>
                   <div className="menu-product-flags">
-                  <label><Switch checked={selectedItem.available} onCheckedChange={(available) => updateItem(selectedItem.id, { available })} /><span><strong>{tr("Available", "Disponibile")}</strong><small>{tr('Show this item to visitors', 'Mostra questo elemento ai visitatori')}</small></span></label>
-                  <label><Switch checked={selectedItem.featured} onCheckedChange={(featured) => updateItem(selectedItem.id, { featured })} /><span><strong>{tr("Featured", "In evidenza")}</strong><small>{tr('Highlight it in the menu', 'Mettilo in evidenza nel menu')}</small></span></label>
+                  <label><Switch aria-label={tr("Available", "Disponibile")} checked={selectedItem.available} onCheckedChange={(available) => updateItem(selectedItem.id, { available })} /><span><strong>{tr("Available", "Disponibile")}</strong><small>{tr('Show this item to visitors', 'Mostra questo elemento ai visitatori')}</small></span></label>
+                  <label><Switch aria-label={tr("Featured", "In evidenza")} checked={selectedItem.featured} onCheckedChange={(featured) => updateItem(selectedItem.id, { featured })} /><span><strong>{tr("Featured", "In evidenza")}</strong><small>{tr('Highlight it in the menu', 'Mettilo in evidenza nel menu')}</small></span></label>
                   </div>
                 </div>
                   </article>

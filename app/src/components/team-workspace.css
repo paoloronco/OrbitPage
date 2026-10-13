@@ -144,7 +144,6 @@
   .orbitpage-admin .team-workspace .team-member-actions, .orbitpage-admin .team-workspace .team-remove-button, .orbitpage-admin .team-workspace .team-action-placeholder { grid-column: 3; grid-row: 1; justify-content: flex-start; }
   .orbitpage-admin .team-workspace .team-member-editor { margin-left: 0; }
   .orbitpage-admin .team-workspace .api-token-create-actions { grid-column: auto; }
-  .orbitpage-admin .team-workspace .api-token-row-meta { border-top: 1px solid var(--team-line); padding-top: 10px; }
   .orbitpage-admin .team-workspace .api-token-example-actions .team-button { width: 100%; }
 }
 

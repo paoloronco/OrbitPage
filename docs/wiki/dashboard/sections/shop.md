@@ -24,7 +24,7 @@ The **Shop settings** gear opens Compliance, Coupons, Checkout, Stripe, Email, C
 ## Create a catalog
 
 1. Select **Add product** and choose **Digital product** or **Service**.
-2. Enter a title, short description, full description and price in the selected Shop currency. Add an optional cover.
+2. Enter a title, short description, full description and price in the selected Shop currency. Add an optional cover; click the help icons beside **Cover image** and **Product files** for formats and upload limits.
 3. Save the draft product.
 4. For a digital product, use **Manage files** to upload the files buyers will receive.
 5. For a service, add post-payment instructions, an HTTPS booking link, or both. Set the number of sessions and optional questionnaire.

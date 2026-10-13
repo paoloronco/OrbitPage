@@ -133,6 +133,11 @@ test('keeps the preview, Personalize and dialogs usable from phones to laptops',
     await expect.poll(async () => { const box = (await dialog.boundingBox())!; return Math.abs(box.x + box.width / 2 - (await page.locator('[data-state="open"].fixed.inset-0').boundingBox())!.width / 2); }).toBeLessThan(2);
     const box = (await dialog.boundingBox())!; expect(Math.abs(box.x + box.width/2 - (await page.locator('[data-state="open"].fixed.inset-0').boundingBox())!.width/2)).toBeLessThan(2); expect(box.y).toBeGreaterThanOrEqual(0); expect(box.y + box.height).toBeLessThanOrEqual(902);
     await expect(dialog.getByRole('button', { name: /Move|Delete/ })).toHaveCount(0);
+    for (const name of ['Available', 'Featured']) {
+      const toggle = dialog.getByRole('switch', { name, exact: true });
+      const geometry = await toggle.evaluate(el => { const button = el.getBoundingClientRect(), label = el.parentElement.getBoundingClientRect(), thumb = el.querySelector('span').getBoundingClientRect(); return { centered: Math.abs(button.y + button.height / 2 - label.y - label.height / 2), contained: thumb.left >= button.left && thumb.right <= button.right && thumb.top >= button.top && thumb.bottom <= button.bottom, padding: getComputedStyle(el).padding }; });
+      expect(geometry.centered).toBeLessThan(2); expect(geometry.contained).toBe(true); expect(geometry.padding).toBe('0px');
+    }
     const body = (await dialog.locator('.menu-editor-dialog-body').boundingBox())!, footer = (await dialog.locator('.menu-editor-dialog-footer').boundingBox())!; expect(body.y + body.height).toBeLessThanOrEqual(footer.y + 1); expect(body.x + body.width).toBeLessThanOrEqual(box.x + box.width);
     await expect(dialog.getByRole('button', { name: 'Apply', exact: true })).toBeVisible(); await page.screenshot({ path: testInfo.outputPath('menu-popup-' + width + '.png'), fullPage: true }); await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   }
