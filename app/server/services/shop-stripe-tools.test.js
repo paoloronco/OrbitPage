@@ -66,6 +66,14 @@ describe('Shop Stripe tools', () => {
     expect(stripe.promotionCodes.update).not.toHaveBeenCalled();
     expect(stripe.coupons.del).not.toHaveBeenCalled();
   });
+  it('keeps deleted codes hidden even when Stripe retains the expanded discount', async () => {
+    const stripe = client();
+    stripe.coupons.del.mockRejectedValueOnce({ code: 'resource_missing' });
+    await expect(revokeStripeShopCoupon(stripe, options, promotion.id, 'owner', true)).resolves.toMatchObject({ deleted: true });
+    expect(stripe.promotionCodes.update).toHaveBeenLastCalledWith(promotion.id, { metadata: { orbitpageDeleted: 'true' } }, options);
+    stripe.promotionCodes.list.mockResolvedValue({ data: [{ ...promotion, active: false, metadata: { ...promotion.metadata, orbitpageDeleted: 'true' } }], has_more: false });
+    expect((await listStripeShopCoupons(stripe, options, 'owner')).coupons).toEqual([]);
+  });
   it('creates a fresh discount after revocation and preserves retry stability', async () => {
     const stripe = client(), input = { code: 'WELCOME10', discountType: 'percent', discount: 10 };
     await createStripeShopCoupon(stripe, options, input, 'owner');

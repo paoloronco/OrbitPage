@@ -17,7 +17,7 @@ function couponDto(promotion, coupon = promotion.promotion.coupon, namespace) {
 
 export async function listStripeShopCoupons(client, options, namespace) {
   const result = await client.promotionCodes.list({ limit: 50, expand: ["data.promotion.coupon"] }, options);
-  return { coupons: result.data.filter(promotion => !promotion.promotion.coupon.deleted).map(promotion => couponDto(promotion, undefined, namespace)), hasMore: result.has_more };
+  return { coupons: result.data.filter(promotion => promotion.metadata?.orbitpageDeleted !== "true" && !promotion.promotion.coupon.deleted).map(promotion => couponDto(promotion, undefined, namespace)), hasMore: result.has_more };
 }
 
 export async function createStripeShopCoupon(client, options, input, namespace) {
@@ -47,14 +47,17 @@ export async function revokeStripeShopCoupon(client, options, id, namespace, rem
   if (promotion.metadata?.orbitpageShop !== namespace || (!coupon.deleted && coupon.metadata?.orbitpageShop !== namespace)) {
     throw new ShopCouponError("Manage this code in Stripe. It was not created by this Shop.", 403, "SHOP_COUPON_NOT_OWNED");
   }
-  if (coupon.deleted) return { id, deleted: true };
+  if (coupon.deleted || promotion.metadata?.orbitpageDeleted === "true") return { id, deleted: true };
   if (remove) {
     const linked = await client.promotionCodes.list({ coupon: coupon.id, limit: 2 }, options);
     if (linked.data.some(code => code.id !== id) || linked.has_more) throw new ShopCouponError("Other codes use this discount. Revoke this code or manage the discount in Stripe.", 409, "SHOP_COUPON_SHARED");
   }
   const updated = promotion.active ? await client.promotionCodes.update(id, { active: false }, options) : promotion;
   if (remove) {
-    await client.coupons.del(coupon.id, options);
+    try { await client.coupons.del(coupon.id, options); }
+    catch (error) { if (error.code !== "resource_missing") throw error; }
+    // Promotion codes remain in Stripe's history after deleting their discount.
+    await client.promotionCodes.update(id, { metadata: { orbitpageDeleted: "true" } }, options);
     return { id, deleted: true };
   }
   return couponDto(updated, coupon, namespace);
