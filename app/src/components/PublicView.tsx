@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { PublicProfileSection } from "./PublicProfileSection";
 import { PublicCardLayout } from "./PublicCardLayout";
 import { OrbitPageBrand } from "./OrbitPageBrand";
@@ -64,32 +64,6 @@ export const PublicView = ({
   cardLayoutEditing = false,
   onCardLayoutChange,
 }: PublicViewProps) => {
-  const privacyFooterRef = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const slot = privacyFooterRef.current;
-    if (embedded || !slot) return;
-    let widget: HTMLElement | null = null;
-    let originalParent: Node | null = null;
-    let originalNextSibling: Node | null = null;
-    const placeWidget = () => {
-      const candidate = document.querySelector<HTMLElement>('.iub__us-widget');
-      if (candidate && !slot.contains(candidate) && ['static', 'relative'].includes(getComputedStyle(candidate).position)) {
-        widget = candidate;
-        originalParent = candidate.parentNode;
-        originalNextSibling = candidate.nextSibling;
-        slot.appendChild(candidate);
-      }
-      slot.hidden = !slot.hasChildNodes();
-    };
-    placeWidget();
-    const observer = new MutationObserver(placeWidget);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => {
-      observer.disconnect();
-      // Keep the provider's controls alive when navigating away from the public page.
-      if (widget?.parentNode === slot && originalParent?.isConnected) originalParent.insertBefore(widget, originalNextSibling?.parentNode === originalParent ? originalNextSibling : null);
-    };
-  }, [embedded]);
   const responsiveViewport = useIsMobile() ? "mobile" : "desktop";
   const cardLayoutViewport = embedded ? embeddedViewport : responsiveViewport;
   const privacyHref = privacyPolicyUrl?.trim() ? withTenantBasePath(privacyPolicyUrl.trim()) : undefined;
@@ -216,7 +190,6 @@ export const PublicView = ({
       </div>
 
       <footer className="public-page-footer mt-auto w-full text-center pt-8 pb-2 space-y-1" style={{ fontFamily: "var(--font-footer, inherit)" }}>
-        {!embedded && <div className="public-page-footer__privacy" hidden ref={privacyFooterRef} />}
         {footerText && (
           <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
             {footerText}

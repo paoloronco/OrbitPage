@@ -9845,10 +9845,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   overflow-wrap: anywhere;
 }
 
-.public-page-footer__privacy {
-  max-width: 28rem;
-  margin-inline: auto;
-  margin-bottom: 1rem;
+.iub__us-widget {
+  display: none !important;
 }
 
 .public-page-root button {
