@@ -321,13 +321,14 @@ useEffect(() => () => {
     update((current) => ({ ...current, items: current.items.map((item) => item.id === id ? { ...item, ...patch } : item) }));
   };
 
-  const uploadItemImage = async (id: string, file?: File) => {
+  const uploadItemImage = async (file?: File, id?: string) => {
     if (!file) return;
-    setUploadingItem(id);
+    setUploadingItem(id ?? 'logo');
     try {
       const optimized = await optimizeImageForUpload(file, 'cover');
-      const result = await uploadApi.uploadImage(optimized, `menu-${id}`);
-      updateItem(id, { imageUrl: result.fullUrl || result.filePath, imageAlt: draft.items.find((item) => item.id === id)?.name || '' });
+      const result = await uploadApi.uploadImage(optimized, `menu-${id ?? 'logo'}`);
+      if (id === undefined) update(current => ({ ...current, logoUrl: result.fullUrl || result.filePath }));
+      else updateItem(id, { imageUrl: result.fullUrl || result.filePath, imageAlt: draft.items.find((item) => item.id === id)?.name || '' });
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : tr('Image upload failed', 'Caricamento immagine non riuscito'));
     } finally {
@@ -498,7 +499,7 @@ useEffect(() => () => {
                     <label className="menu-product-image">
                       <span className="sr-only">{tr('Upload item image', 'Carica immagine elemento')}</span>
                       {selectedItem.imageUrl ? <img src={selectedItem.imageUrl} alt="" /> : uploadingItem === selectedItem.id ? <OrbitLoader size={20} state="composing" /> : <ImagePlus />}
-                      <input type="file" accept={RASTER_IMAGE_ACCEPT} onChange={(event) => void uploadItemImage(selectedItem.id, event.target.files?.[0])} />
+                      <input type="file" accept={RASTER_IMAGE_ACCEPT} onChange={(event) => void uploadItemImage(event.target.files?.[0], selectedItem.id)} />
                     </label>
                     <span>{selectedItem.imageUrl ? tr('Change image', 'Cambia immagine') : tr('Add image', 'Aggiungi immagine')}</span>
                     {selectedItem.imageUrl && <button type="button" className="menu-remove-image-action" onClick={() => updateItem(selectedItem.id, { imageUrl: undefined, imageAlt: undefined })}>{tr("Remove image", "Rimuovi immagine")}</button>}
@@ -540,6 +541,13 @@ useEffect(() => () => {
   const appearanceFields = <>
         <section className="admin-panel space-y-5">
           <div className="menu-editor-section-title"><Palette /><div><h3>{tr("Menu appearance", "Aspetto del menu")}</h3><p>{tr("Independent from the main OrbitPage theme.", "Indipendente dal tema principale OrbitPage.")}</p></div></div>
+          <div className="space-y-2">
+            <Label htmlFor="menu-logo">{tr('Menu logo', 'Logo del menu')}</Label>
+            {draft.logoUrl && <img className="menu-logo-preview" src={draft.logoUrl} alt={tr('Menu logo', 'Logo del menu')} />}
+            <Input id="menu-logo" type="file" accept={RASTER_IMAGE_ACCEPT} disabled={Boolean(uploadingItem)} onChange={event => { void uploadItemImage(event.target.files?.[0]); event.target.value = ''; }} />
+            {uploadingItem === 'logo' && <span role="status">{tr('Uploading logo…', 'Caricamento logo…')}</span>}
+            {draft.logoUrl && <Button variant="outline" disabled={Boolean(uploadingItem)} onClick={() => update(current => ({ ...current, logoUrl: '' }))}>{tr('Remove logo', 'Rimuovi logo')}</Button>}
+          </div>
           <div className="menu-theme-presets">
             {(Object.keys(MENU_THEME_PRESETS) as MenuThemePreset[]).map((preset) => {
               const value = MENU_THEME_PRESETS[preset];

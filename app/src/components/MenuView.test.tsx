@@ -4,6 +4,13 @@ import { createDefaultMenu } from '@/lib/menu';
 import { MenuView } from './MenuView';
 
 describe('MenuView subsections', () => {
+  it('renders the optional menu logo safely in the header', () => {
+    const menu = { ...createDefaultMenu(), logoUrl: '/uploads/menu-logo.png' };
+    const html = renderToStaticMarkup(<MenuView menu={menu} />);
+    expect(html).toContain('class="orbitpage-menu__logo" src="/uploads/menu-logo.png"');
+    expect(html.indexOf('orbitpage-menu__logo')).toBeLessThan(html.indexOf('orbitpage-menu__identity'));
+    expect(renderToStaticMarkup(<MenuView menu={{ ...menu, logoUrl: 'javascript:alert(1)' }} />)).not.toContain('orbitpage-menu__logo');
+  });
   it('uses the page branding choice and exposes editable footer text in the preview', () => {
     const menu = createDefaultMenu();
     const html = renderToStaticMarkup(<MenuView menu={menu} showOrbitPageBadge={false} onEditFooter={() => {}} />);

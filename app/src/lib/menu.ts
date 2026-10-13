@@ -186,6 +186,7 @@ export function normalizeMenuCatalog(
     venueType,
     name: editableText(input.name, 120, fallback.name),
     description: editableText(input.description, 500, fallback.description),
+    ...(passiveMediaUrl(input.logoUrl) ? { logoUrl: passiveMediaUrl(input.logoUrl) } : {}),
     footerText: editableText(input.footerText, 500, fallback.footerText),
     currency: /^[A-Z]{3}$/.test(text(input.currency, 3)) ? text(input.currency, 3) : 'EUR',
     locale: /^[a-z]{2}(?:-[A-Z]{2})?$/.test(text(input.locale, 8)) ? text(input.locale, 8) : 'en-GB',

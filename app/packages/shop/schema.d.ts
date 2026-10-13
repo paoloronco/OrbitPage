@@ -65,7 +65,7 @@ export function createShopSchemas(zod: unknown, isOwnedLogo: (value: string) => 
   normalizeShopAppearance(value: unknown): ShopAppearance;
   normalizeShopProductCardStyle(value: unknown): ShopProductCardStyle;
 };
-export type ShopCouponInput = { code: string; discountType: "percent" | "amount"; discount: number; currency?: ShopCurrency };
+export type ShopCouponInput = { code: string; discountType: "percent" | "amount"; discount: number; currency?: ShopCurrency; maxRedemptions?: number; expiresAt?: number };
 export function isSafeShopBookingUrl(value: string): boolean;
 
 export function shopComplianceReady(appearance?: ShopAppearance | null): boolean;

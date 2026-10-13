@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { parseOrbitPageMenu } from '@orbitpage/page-schema';
+
+it('preserves an optional logo through both menu contracts and normalization', () => {
+  const menu = { ...createDefaultMenu(), logoUrl: '/uploads/menu-logo.png' };
+  expect(normalizeMenuCatalog(parseOrbitPageMenu(menu)).logoUrl).toBe(menu.logoUrl);
+  expect(normalizeMenuCatalog(parseMenuCatalog(menu)).logoUrl).toBe(menu.logoUrl);
+  expect(normalizeMenuCatalog({ ...menu, logoUrl: 'javascript:alert(1)' }).logoUrl).toBeUndefined();
+  expect(parseOrbitPageMenu(createDefaultMenu()).logoUrl).toBeUndefined();
+});
 // The standalone Node backend consumes JavaScript schemas; verify the same wire contract.
 import { parseMenuCatalog } from '../../server/schemas/menu.schema.js';
 import {

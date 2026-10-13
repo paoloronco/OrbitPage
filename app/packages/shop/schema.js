@@ -18,9 +18,13 @@ export function isSafeShopBookingUrl(value) {
 // Keep both backends on one contract while preserving their Zod errors and upload policy.
 export function createShopSchemas(z, isOwnedLogo) {
     const couponCode = z.string().trim().min(2).max(40).regex(/^[a-z0-9-]+$/i, "Use letters, numbers and dashes for the coupon code.").transform(value => value.toUpperCase());
+    const couponLimits = {
+        maxRedemptions: z.number().int().min(1).max(1_000_000).optional(),
+        expiresAt: z.number().int().refine(value => value > Math.floor(Date.now() / 1000) && value <= 253402300799, "Choose a future expiry date.").optional(),
+    };
     const shopCouponInputSchema = z.discriminatedUnion("discountType", [
-        z.object({ code: couponCode, discountType: z.literal("percent"), discount: z.number().min(0.01).max(100) }).strict(),
-        z.object({ code: couponCode, discountType: z.literal("amount"), discount: z.number().int().min(1).max(1_000_000), currency: z.enum(SHOP_CURRENCIES).default("eur") }).strict(),
+        z.object({ code: couponCode, discountType: z.literal("percent"), discount: z.number().min(0.01).max(100), ...couponLimits }).strict(),
+        z.object({ code: couponCode, discountType: z.literal("amount"), discount: z.number().int().min(1).max(1_000_000), currency: z.enum(SHOP_CURRENCIES).default("eur"), ...couponLimits }).strict(),
     ]);
     const shopAiDraftSchema = z.object({
         productId: z.string().uuid(), type: z.enum(["digital", "service"]),

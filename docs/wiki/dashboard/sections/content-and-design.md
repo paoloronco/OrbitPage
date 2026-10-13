@@ -132,7 +132,7 @@ The menu opens with the mobile public preview, using the same phone and desktop 
 
 1. Click the title or introduction to edit them, venue type, currency and locale in a popup. The locale controls price formatting.
 2. Select **Add section** or **Add item** in the toolbar. Click an existing section or dish in the preview to edit it. Hover or focus it for move up/down and delete controls; on touch screens these controls stay visible. Items move only within their own section, and sections move only among siblings.
-3. Select **Personalize** to open the side panel with preset themes, colors, typography, corner radius and image layout.
+3. Select **Personalize** to upload or remove an optional menu logo, or change preset themes, colors, typography, corner radius and image layout. The logo keeps its proportions at the right of the menu header in both preview and the public menu.
 4. Click the footer in the preview to edit its text. The Made with OrbitPage switch uses the page branding setting for every workspace page; SaaS plans and page permissions determine whether it can be changed. OSS keeps the badge visible.
 5. Select **Apply** to save popup edits automatically. Reordering and confirmed deletions also save immediately. Use **Save** for changes in Personalize or to retry a failed action. **Cancel** restores the popup's starting values; **Reset** discards the unsaved menu draft.
 

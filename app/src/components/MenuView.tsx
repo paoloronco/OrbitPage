@@ -147,10 +147,13 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
     <main className="orbitpage-menu" style={style} data-menu-font={menu.theme.fontFamily}>
       <div className="orbitpage-menu__shell">
         <header className="orbitpage-menu__header">
+          <div className="orbitpage-menu__topbar">
           <a className="orbitpage-menu__back" href={pageHref} aria-label="Back to the main page" aria-disabled={onEditIdentity ? true : undefined} tabIndex={onEditIdentity ? -1 : undefined} onClick={onEditIdentity ? event => event.preventDefault() : undefined}>
             <ArrowLeft aria-hidden="true" />
             <span>Back to main page</span>
           </a>
+          {resolveSafePublicMediaUrl(menu.logoUrl) && <img className="orbitpage-menu__logo" src={resolveSafePublicMediaUrl(menu.logoUrl) || undefined} alt={menu.name} />}
+          </div>
           <div className="orbitpage-menu__identity">
             <h1>{onEditIdentity ? <button className="menu-preview-edit" aria-label="Edit menu title" onClick={onEditIdentity} type="button">{menu.name}</button> : menu.name}</h1>
             {(menu.description || onEditIdentity) && <div>{onEditIdentity ? <button className="menu-preview-edit" aria-label="Edit menu description" onClick={onEditIdentity} type="button">{menu.description || (isItalian ? 'Aggiungi una descrizione' : 'Add a description')}</button> : menu.description}</div>}

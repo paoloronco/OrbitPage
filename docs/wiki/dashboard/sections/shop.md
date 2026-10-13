@@ -228,6 +228,8 @@ After live account verification succeeds, cleanup and credential activation comm
 - Add up to three text/numeric fields: labels up to 50 characters and answers up to 255 characters/digits. Do not request passwords, card details or sensitive data.
 - Save changes for new checkouts. Existing orders retain their original fields, answers and consent record. Inspect verified details under **Orders → View**.
 - In **Coupons**, create percentage or fixed-amount codes in the saved Shop currency. A 100% discount is supported; Checkout completion must still be verified even when there is no PaymentIntent.
+- **Create coupon** is beside the Coupons heading. Optionally set a maximum number of uses and an expiry in your local time; empty limits mean unlimited uses and no expiry. These limits are fixed at creation, so revoke and recreate the code to change them.
+- The table shows discount, uses/limit, expiry and status for up to 50 recent codes. Confirm **Revoke** to stop new redemptions, or **Delete** to permanently delete the underlying discount and remove it from the list. Existing orders keep their discounts. Codes created outside this Shop, or discounts shared by multiple codes, are managed in Stripe.
 
 ## Publish or unpublish
 
