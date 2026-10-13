@@ -10,7 +10,7 @@ import { getDirectorySizeBytes, getUploadStorageQuotaBytes } from './upload-poli
 import { encryptSmtpPassword, decryptSmtpPassword, newsletterComplianceReady } from './newsletter.js';
 import { createShopSchemas, shopComplianceReady } from '../../packages/shop/schema.js';
 import { checkoutAmounts, assertCheckoutCharge, stripeObjectId, stripeTaxIdCollection, stripeNameCollection } from '../../packages/shop/payments.js';
-import { readStripeShopOverview, listStripeShopCoupons, createStripeShopCoupon, ShopCouponError } from '../../packages/shop/stripe.js';
+import { readStripeShopOverview, listStripeShopCoupons, createStripeShopCoupon, revokeStripeShopCoupon, ShopCouponError } from '../../packages/shop/stripe.js';
 import { validateShopFile, matchesShopFileSignature } from '../../packages/shop/files.js';
 import { renderShopHtml, renderShopMarkdown, shopPolicyLinks, resolvedShopDesign, buildShopHomeLinks, shopPurchasePresentation } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail, buildShopSellerEmail } from '../../packages/shop/email.js';
@@ -96,8 +96,16 @@ export async function shopStripeOverview() {
   return overview;
 }
 export async function shopCoupons() {
-  const { client } = await shopStripe();
-  return listStripeShopCoupons(client, {});
+  const { client, config } = await shopStripe();
+  return listStripeShopCoupons(client, {}, config.accountId);
+}
+export async function revokeShopCoupon(id, remove = false) {
+  const { client, config } = await shopStripe();
+  try { return await revokeStripeShopCoupon(client, {}, id, config.accountId, remove); }
+  catch (error) {
+    if (error instanceof ShopCouponError) fail(error.status, error.code, error.message);
+    throw error;
+  }
 }
 export async function saveShopCoupon(raw) {
   const input = shopCouponInputSchema.parse(raw);

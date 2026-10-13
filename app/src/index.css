@@ -4944,10 +4944,10 @@ html:has(.orbitpage-admin) {
 .orbitpage-menu__result-count { flex: 0 0 auto; color: var(--menu-muted); font-size: .72rem; font-weight: 750; white-space: nowrap; }
 .orbitpage-menu__catalog { padding-top: clamp(2rem, 6vw, 5rem); }
 .orbitpage-menu__section { scroll-margin-top: 8rem; display: grid; grid-template-columns: minmax(11rem, .42fr) minmax(0, 1fr); gap: clamp(1.75rem, 5vw, 5rem); padding: 0 0 clamp(3.5rem, 8vw, 7rem); }
-.orbitpage-menu__section-heading { display: flex; align-items: flex-start; gap: 1rem; }
+.orbitpage-menu__section-heading { display: flex; align-items: baseline; gap: 1rem; }
 .orbitpage-menu__section-heading > div:not(.menu-preview-actions) { flex: 1; min-width: 0; }
 .orbitpage-menu__section-heading > span { color: var(--menu-accent); font-size: .7rem; font-weight: 850; }
-.orbitpage-menu__section-heading h2 { margin: -.25rem 0 .5rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 500; line-height: 1; letter-spacing: 0; }
+.orbitpage-menu__section-heading h2 { margin: 0 0 .5rem; font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 500; line-height: 1; letter-spacing: 0; }
 .orbitpage-menu__section-heading h2 button, .orbitpage-menu__subsection > header h3 button { display: flex; align-items: center; gap: .65rem; width: 100%; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; line-height: inherit; text-align: left; cursor: pointer; }
 .orbitpage-menu__section-heading h2 button svg, .orbitpage-menu__subsection > header h3 button svg { flex: 0 0 auto; width: 1rem; height: 1rem; margin-left: auto; color: var(--menu-muted); transition: transform 180ms ease; }
 .orbitpage-menu__section-heading h2 button[aria-expanded="true"] svg, .orbitpage-menu__subsection > header h3 button[aria-expanded="true"] svg { transform: rotate(180deg); }
@@ -11983,7 +11983,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 /* One semantic type scale for every dashboard surface; public previews keep the page theme. */
-.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) :is(h1, h2, h3, h4):not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) :is(h1, h2, h3, h4):not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *, .admin-menu-live-preview *)) {
   margin-block-start: 0;
   color: var(--orbitpage-dashboard-ink);
   font-family: var(--orbitpage-dashboard-font);
@@ -11991,25 +11991,25 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   letter-spacing: -.015em;
 }
 
-.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h1:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h1:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *, .admin-menu-live-preview *)) {
   font-size: var(--orbitpage-type-page);
   font-weight: var(--orbitpage-weight-page);
   line-height: 1.12;
 }
 
-.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h2:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h2:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *, .admin-menu-live-preview *)) {
   font-size: var(--orbitpage-type-section);
   font-weight: var(--orbitpage-weight-title);
   line-height: 1.25;
 }
 
-.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h3:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h3:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *, .admin-menu-live-preview *)) {
   font-size: var(--orbitpage-type-panel);
   font-weight: var(--orbitpage-weight-title);
   line-height: 1.3;
 }
 
-.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h4:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *)) {
+.orbitpage-admin :is(.admin-dashboard-main, .admin-app-shell) h4:not(:where(.admin-live-preview *, .public-block-preview *, .admin-preview-device__hardware *, .admin-menu-live-preview *)) {
   font-size: var(--orbitpage-type-body);
   font-weight: var(--orbitpage-weight-label);
   line-height: 1.4;
@@ -13934,10 +13934,11 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 @media (max-width: 767px) { .admin-dashboard-nav-stack { transform: none; } }
 
-/* Inline menu actions keep their space so hovering never moves the content. */
+/* Overlay editor actions without reserving empty space above the public content. */
 .menu-preview-item { background: var(--menu-surface); }
-.menu-preview-item, .menu-preview-section, .orbitpage-menu__subsection > header.menu-preview-section { position: relative; padding-top: 52px; }
-.menu-preview-actions { position: absolute; top: 0; right: 0; display: flex; gap: 4px; opacity: 0; pointer-events: none; }
+.menu-preview-item, .menu-preview-section, .orbitpage-menu__subsection > header.menu-preview-section { position: relative; }
+.menu-preview-actions { position: absolute; top: 0; right: 0; z-index: 2; display: flex; gap: 4px; opacity: 0; pointer-events: none; }
+.menu-preview-section > .menu-preview-actions { top: auto; bottom: 100%; }
 .menu-preview-actions button { display: grid; place-items: center; width: 44px; height: 44px; padding: 8px; border: 1px solid var(--menu-border); border-radius: 8px; background: var(--menu-surface); color: var(--menu-text); cursor: pointer; }
 .menu-preview-actions button svg { width: 20px; height: 20px; }
 .menu-preview-actions button:disabled { opacity: .35; cursor: default; }
@@ -13948,10 +13949,15 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .orbitpage-menu__section-title > button.orbitpage-menu__section-toggle { flex: 0 0 44px; justify-content: center; width: 44px; min-height: 44px; }
 .orbitpage-menu__section-title > button.orbitpage-menu__section-toggle svg { margin: 0; }
 .menu-section-collapse-setting { display: flex; align-items: center; gap: 10px; }
+.orbitpage-menu__topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.orbitpage-menu__logo { display: block; max-width: 40%; max-height: 80px; object-fit: contain; }
+.menu-logo-preview { display: block; max-width: 100%; max-height: 80px; object-fit: contain; }
 @media (hover: none), (pointer: coarse) {
   .menu-preview-actions { opacity: 1; pointer-events: auto; }
   .menu-preview-actions button { width: 64px; height: 64px; }
-  .menu-preview-item, .menu-preview-section, .orbitpage-menu__subsection > header.menu-preview-section { padding-top: 72px; }
+  .menu-preview-actions { position: static; justify-content: flex-end; padding: 4px; }
+  .orbitpage-menu__section-heading.menu-preview-section { flex-wrap: wrap; }
+  .orbitpage-menu__section-heading > .menu-preview-actions { flex-basis: 100%; }
   .orbitpage-menu__section-title > button.orbitpage-menu__section-toggle { flex-basis: 64px; min-height: 64px; }
 }
 

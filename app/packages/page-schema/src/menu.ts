@@ -80,6 +80,7 @@ export const OrbitPageMenuSchema = z.object({
   venueType: z.enum(["restaurant", "bar", "cafe"]),
   name: boundedString(120).trim().min(1),
   description: boundedString(500).trim(),
+  logoUrl: boundedString(2_048).trim().optional(),
   footerText: boundedString(500).trim().default(DEFAULT_ORBITPAGE_MENU_FOOTER),
   currency: z.string().regex(/^[A-Z]{3}$/),
   locale: z.string().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/),

@@ -1,5 +1,5 @@
 import express from 'express';
-import { shopStripeOverview, shopCoupons, saveShopCoupon } from '../services/shop.js';
+import { shopStripeOverview, shopCoupons, saveShopCoupon, revokeShopCoupon } from '../services/shop.js';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import fs from 'node:fs';
@@ -73,6 +73,8 @@ export function createShopRouter({ publicBase, demoMode }) {
   router.get('/stripe/overview', ...admin, writeLimiter, endpoint(() => shopStripeOverview()));
   router.get('/coupons', ...admin, writeLimiter, endpoint(() => shopCoupons()));
   router.post('/coupons', ...write, endpoint(req => saveShopCoupon(req.body)));
+  router.post('/coupons/:id/revoke', ...write, endpoint(req => revokeShopCoupon(req.params.id)));
+  router.delete('/coupons/:id', ...write, endpoint(req => revokeShopCoupon(req.params.id, true)));
   router.post('/stripe/test', ...write, endpoint(req => refreshShopStripe(base(req))));
   router.post('/email', ...write, endpoint(req => configureShopEmail(req.body)));
   router.post('/email/test', ...write, endpoint(req => testShopEmail(req.body?.recipient)));

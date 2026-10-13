@@ -54,6 +54,7 @@ export const MenuCatalogSchema = z.object({
   venueType: z.enum(['restaurant', 'bar', 'cafe']),
   name: Text(120).min(1),
   description: Text(500),
+  logoUrl: Text(2048).optional(),
   footerText: Text(500).default('Prices and availability may change. Ask the venue about allergens and dietary requirements.'),
   currency: z.string().regex(/^[A-Z]{3}$/),
   locale: z.string().regex(/^[a-z]{2}(?:-[A-Z]{2})?$/),
