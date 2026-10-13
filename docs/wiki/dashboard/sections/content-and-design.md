@@ -41,7 +41,7 @@ Use **Page** for profile and browser settings:
 - set the browser title, favicon, search description, and footer;
 - optionally override the profile-card surface, border, colors, shadow, and typography.
 
-The selected profile type changes the labels for the two detail fields; it does not create a separate kind of public page. The favicon may be different from the profile image.
+The selected profile type changes the labels for the two detail fields; it does not create a separate kind of public page. The favicon may be different from the profile image. The centered footer sits at the bottom of short pages and follows the content on longer pages, including in both device previews.
 
 In **Social links**, enter the username for each network; OrbitPage builds the public profile link automatically. YouTube uses a channel handle, Discord an invite code, WhatsApp a phone number, and Mastodon a full `@username@instance` handle. Leave a field empty to hide that social icon. Existing saved links remain editable.
 
