@@ -52,7 +52,7 @@ test('OSS edits products and storefront before setup while requiring Compliance,
   await openAdminSection(page, 'Shop');
   const shop = page.locator('.orbitpage-selfhosted-shop');
   await shop.getByRole('button', { name: 'Shop settings', exact: true }).click();
-  const publish = shop.getByRole('button', { name: 'Publish shop', exact: true });
+  const publish = page.getByRole('button', { name: 'Publish shop', exact: true });
   await expect(publish).toBeVisible();
   await expect(publish).toBeDisabled();
   await expect(publish).toHaveCSS('opacity', '0.55');

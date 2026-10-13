@@ -145,6 +145,7 @@ export function VisualSiteEditor({
     const phoneQuery = window.matchMedia(PHONE_MEDIA_QUERY);
     const syncPhoneViewport = () => {
       setIsPhone(phoneQuery.matches);
+      if (phoneQuery.matches) onLayoutEditingChange(false);
     };
     phoneQuery.addEventListener("change", syncPhoneViewport);
     syncPhoneViewport();
@@ -197,17 +198,6 @@ export function VisualSiteEditor({
       </nav>
 
       {isPhone && <div className="visual-site-editor__preview-controls">
-          {(section === "profile" || section === "links") && onCardLayoutChange && (
-            <button
-              className="visual-site-editor__layout-toggle"
-              onClick={() => layoutEditing ? onLayoutEditingChange(false) : startLayoutEditing()}
-              title={layoutEditing ? tr("Finish arranging", "Termina disposizione") : tr("Arrange page layout", "Disponi il layout della pagina")}
-              type="button"
-            >
-              <Edit aria-hidden="true" size={17} />
-              <span>{layoutEditing ? tr("Done", "Fine") : tr("Arrange", "Disponi")}</span>
-            </button>
-          )}
         {previewCanCollapse && (
         <button
           aria-controls="visual-site-editor-preview"

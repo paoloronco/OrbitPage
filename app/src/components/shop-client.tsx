@@ -1461,10 +1461,13 @@ export default function ShopClient({
     </section>
 
   </fieldset></form>;
+  const publicationControl = publicationBlockReason ? <Tooltip describeChild title={publicationBlockReason}><span className="shop-publication-tooltip" tabIndex={0}>{publicationButton}</span></Tooltip> : publicationButton;
+  const previewControls = <div className="shop-preview-toolbar"><div className={`shop-preview-device-control${editingStorefront ? "" : " is-placeholder"}`} aria-hidden={!editingStorefront}><PreviewDeviceToggle value={device} onChange={setDevice} /></div><div className="shop-preview-publication">{publicationControl}</div></div>;
+
   return (
     <section className={embedded ? "shop-workspace embedded" : "shop-workspace"} lang="en-US" dir="ltr">
-      {editingStorefront && previewDeviceSlot && createPortal(<PreviewDeviceToggle value={device} onChange={setDevice} />, previewDeviceSlot)}
-      {editingStorefront && !previewDeviceSlot && <div className="shop-preview-device-toolbar"><PreviewDeviceToggle value={device} onChange={setDevice} /></div>}
+      {previewDeviceSlot && createPortal(previewControls, previewDeviceSlot)}
+      {!previewDeviceSlot && <div className="shop-preview-device-toolbar"><div className={`shop-preview-device-control${editingStorefront ? "" : " is-placeholder"}`} aria-hidden={!editingStorefront}><PreviewDeviceToggle value={device} onChange={setDevice} /></div></div>}
       {!embedded && <header className="shop-command-bar">
         <div className="shop-command-copy">
           {!embedded && <button className="shop-back-button" onClick={onBackToContent} type="button"><ChevronLeft size={16} /> Content</button>}
@@ -1478,17 +1481,16 @@ export default function ShopClient({
       {feedback?.code === "CONNECT_PLATFORM_ACTIVATION_REQUIRED" && (
         <p className="shop-platform-note">You can continue preparing products. Connecting payouts will become available as soon as OrbitPage completes Stripe platform activation.</p>
       )}
-      <div className="shop-view-toolbar">
+      <div className={`shop-view-toolbar${previewDeviceSlot ? " has-preview-slot" : ""}`}>
         <div className="shop-toolbar-left">
           <button aria-label="Shop settings" aria-pressed={view === "settings"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("settings")} title="Settings" type="button"><Settings size={18} /></button>
           <button aria-label="Orders and customers" aria-pressed={view === "orders" || view === "customers"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("orders")} title="Orders and customers" type="button"><ReceiptText size={18} /></button>
           {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={action !== null} onClick={() => setView(view === "design" ? "products" : "design")} title="Personalize" type="button"><Palette size={18} /><span>Personalize</span></button>}
         </div>
         <div className="shop-toolbar-publication">
-          {!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"><ChevronLeft size={16} /> Back to shop</button>}
-          {publicationBlockReason ? <Tooltip describeChild title={publicationBlockReason}><span className="shop-publication-tooltip" tabIndex={0}>{publicationButton}</span></Tooltip> : publicationButton}
+          {publicationControl}
         </div>
-        <div className="shop-toolbar-right">{editingStorefront && data.products.length > 0 && <button aria-label="View catalog" className="button secondary compact shop-catalog-button" onClick={() => setCatalogOpen(true)} title="View catalog" type="button"><Search size={14} /><span>View catalog</span></button>}{editingStorefront && addProductButton}</div>
+        <div className="shop-toolbar-right">{!editingStorefront && <button className="button secondary" disabled={action !== null} onClick={() => setView("products")} type="button"><ChevronLeft size={16} /> Back to shop</button>}{editingStorefront && data.products.length > 0 && <button aria-label="View catalog" className="button secondary compact shop-catalog-button" onClick={() => setCatalogOpen(true)} title="View catalog" type="button"><Search size={14} /><span>View catalog</span></button>}{editingStorefront && addProductButton}</div>
       </div>
 
       {editingStorefront && appearance && previewDesign && <div className={"shop-storefront-workspace" + (view === "design" || productEditorOpen ? " has-inspector" : "")}>

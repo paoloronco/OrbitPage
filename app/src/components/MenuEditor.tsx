@@ -503,7 +503,7 @@ useEffect(() => () => {
                     <span>{selectedItem.imageUrl ? tr('Change image', 'Cambia immagine') : tr('Add image', 'Aggiungi immagine')}</span>
                     {selectedItem.imageUrl && <button type="button" className="menu-remove-image-action" onClick={() => updateItem(selectedItem.id, { imageUrl: undefined, imageAlt: undefined })}>{tr("Remove image", "Rimuovi immagine")}</button>}
                   </div>
-                  <div className="min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
+                  <div className="menu-item-name-price min-w-0 grid flex-1 gap-3 md:grid-cols-[1fr_9rem]">
                     <div className="space-y-2"><Label htmlFor={`menu-item-name-${selectedItem.id}`}>{tr("Name", "Nome")}</Label><Input id={`menu-item-name-${selectedItem.id}`} value={selectedItem.name} onChange={(e) => updateItem(selectedItem.id, { name: e.target.value })} /></div>
                     <div className="space-y-2"><p>{tr("Price", "Prezzo")} ({draft.currency})</p><PriceInput value={selectedItem.priceMinor} locale={draft.locale} label={tr('Item price', 'Prezzo elemento')} onChange={(priceMinor) => updateItem(selectedItem.id, { priceMinor })} /></div>
                   </div>
@@ -513,7 +513,7 @@ useEffect(() => () => {
                   <div className="space-y-2 md:col-span-2"><Label htmlFor={`menu-item-section-${selectedItem.id}`}>{tr("Category", "Categoria")}</Label><select id={`menu-item-section-${selectedItem.id}`} value={selectedItem.sectionId} onChange={(e) => { updateItem(selectedItem.id, { sectionId: e.target.value });  }}>{rootSections.map((section) => <optgroup key={section.id} label={section.name}><option value={section.id}>{section.name}</option>{sectionSiblings(sortedSections, section.id).map((subsection) => <option key={subsection.id} value={subsection.id}>↳ {subsection.name}</option>)}</optgroup>)}</select></div>
                 </div>
                     </section>
-                    <details className="menu-item-form-section menu-item-more-details" open={Boolean(selectedItem.details || selectedItem.dietaryTags.length || selectedItem.allergens.length)}>
+                    <details className="menu-item-form-section menu-item-more-details">
                       <summary>{tr('More details and dietary information', 'Altri dettagli e informazioni alimentari')}<span>{tr('Optional', 'Facoltativo')}</span></summary>
                       <div className="menu-item-more-details__fields">
                   <div className="space-y-2"><Label htmlFor={`menu-item-details-${selectedItem.id}`}>{tr("Details", "Dettagli")}</Label><Input id={`menu-item-details-${selectedItem.id}`} placeholder="250 ml, 12% vol, seasonal" value={selectedItem.details || ''} onChange={(e) => updateItem(selectedItem.id, { details: e.target.value })} /></div>
@@ -610,14 +610,17 @@ useEffect(() => () => {
     );
   }
 
+  const publicationButton = <button className="button primary" disabled={isDirty || saving || Boolean(uploadingItem)} title={isDirty ? tr('Save or revert your changes first.', 'Salva o annulla prima le modifiche.') : undefined} type="button" onClick={() => void save({ ...draft, enabled: !draft.enabled })}>{saving ? <OrbitLoader size={16} /> : draft.enabled ? <Download size={16} /> : <UploadCloud size={16} />}{draft.enabled ? tr('Unpublish', 'Rimuovi pubblicazione') : tr('Publish menu', 'Pubblica menu')}</button>;
+  const previewControls = <div className="shop-preview-toolbar"><PreviewDeviceToggle value={device} onChange={setDevice} /><div className="shop-preview-publication">{publicationButton}</div></div>;
+
   return (
     <div className={"menu-editor-stack menu-editor-stack--visual"}>
       <div className="menu-editor-main shop-workspace">
         <>
-          {deviceSlot && createPortal(<PreviewDeviceToggle value={device} onChange={setDevice} />, deviceSlot)}
-          <fieldset disabled={saving || Boolean(uploadingItem)} className="menu-preview-toolbar shop-view-toolbar">
+          {deviceSlot && createPortal(previewControls, deviceSlot)}
+          <fieldset disabled={saving || Boolean(uploadingItem)} className={`menu-preview-toolbar shop-view-toolbar${deviceSlot ? " has-preview-slot" : ""}`}>
             <div className="shop-toolbar-left"><button className="shop-tool-button shop-personalize-button" aria-label={tr('Personalize', 'Personalizza')} title={tr('Personalize', 'Personalizza')} type="button" onClick={() => setActivePanel(activePanel === 'appearance' ? 'content' : 'appearance')} aria-expanded={activePanel === 'appearance'}><Palette size={18} /><span>{tr('Personalize', 'Personalizza')}</span></button></div>
-            <div className="shop-toolbar-publication"><button className="button primary" disabled={isDirty || saving} title={isDirty ? tr('Save or revert your changes first.', 'Salva o annulla prima le modifiche.') : undefined} type="button" onClick={() => void save({ ...draft, enabled: !draft.enabled })}>{saving ? <OrbitLoader size={16} /> : draft.enabled ? <Download size={16} /> : <UploadCloud size={16} />}{draft.enabled ? tr('Unpublish', 'Rimuovi pubblicazione') : tr('Publish menu', 'Pubblica menu')}</button></div>
+            <div className="shop-toolbar-publication">{publicationButton}</div>
             <div className="shop-toolbar-right"><button className="button secondary compact shop-catalog-button" aria-label={tr('Add section', 'Aggiungi sezione')} disabled={draft.sections.length >= 30} type="button" onClick={addSection}><ListTree size={14} /><span>{tr('Add section', 'Aggiungi sezione')}</span></button><button className="button primary compact shop-add-product-button" aria-label={tr('Add item', 'Aggiungi elemento')} disabled={maxItems !== null && draft.items.length >= maxItems} type="button" onClick={() => addItem()}><Plus size={16} /><span>{tr('Add item', 'Aggiungi elemento')}</span></button>{!deviceSlot && <PreviewDeviceToggle value={device} onChange={setDevice} />}</div>
           </fieldset>
           <div className={`menu-preview-workspace${activePanel === 'appearance' ? ' has-personalize' : ''}`}>

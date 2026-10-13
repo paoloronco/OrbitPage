@@ -272,7 +272,7 @@ describe("VisualSiteEditor", () => {
     expect(mockState.livePreviewProps?.cardLayoutEditing).toBe(true);
   });
 
-  it("shows Arrange and offers a preview disclosure on smartphones", () => {
+  it("omits Arrange and offers a preview disclosure on smartphones", () => {
     vi.stubGlobal("window", {
       matchMedia: (query: string) => ({ matches: query === "(max-width: 600px)" }),
     });
@@ -297,7 +297,7 @@ describe("VisualSiteEditor", () => {
         />,
       );
 
-      expect(html).toContain(">Arrange</span>");
+      expect(html).not.toContain(">Arrange</span>");
       expect(html).toContain(">Hide Preview</span>");
       expect(html).toContain('aria-controls="visual-site-editor-preview"');
       expect(html).toContain('aria-expanded="true"');
