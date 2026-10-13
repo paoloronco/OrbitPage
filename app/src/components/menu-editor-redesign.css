@@ -873,7 +873,7 @@
 
 @media (hover: none) {
   .menu-editor-stack--classic button,
-  .menu-editor-stack--visual button {
+  .menu-editor-stack--visual button:not(:where(.shop-view-toolbar *)) {
     min-height: 48px;
   }
 }

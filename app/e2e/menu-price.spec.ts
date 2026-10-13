@@ -162,7 +162,8 @@ test('matches Shop device geometry and keeps the surrounding canvas transparent'
           await item.hover();
           await expect(item).toHaveCSS('outline-style', 'dashed');
           await expect(item).toHaveCSS('outline-offset', '-2px');
-          await item.press('ArrowRight');
+          await item.press('Shift+Tab');
+          await page.keyboard.press('Tab');
           await expect(item).toBeFocused();
           await expect(item).toHaveCSS('outline-offset', '-3px');
           await page.screenshot({ path: testInfo.outputPath(`menu-${device}-${width}.png`), fullPage: true });
