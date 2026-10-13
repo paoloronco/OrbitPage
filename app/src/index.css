@@ -9824,7 +9824,21 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   --public-profile-title-line-height: 1.5;
   --public-profile-bio-cap: 10rem;
   --public-profile-bio-line-height: 1.625;
+  display: flex;
+  flex-direction: column;
   padding-block: var(--public-page-block-padding);
+}
+
+.public-page-root--standalone {
+  min-height: 100dvh;
+}
+
+.admin-live-preview .public-page-root {
+  min-height: var(--preview-viewport-height, 100%);
+}
+
+.public-page-footer {
+  overflow-wrap: anywhere;
 }
 
 .public-page-root button {

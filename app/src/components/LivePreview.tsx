@@ -108,6 +108,7 @@ export function PreviewDeviceFrame({
             data-preview-viewport-ready={measuredViewport ? "true" : "false"}
             style={{
               "--preview-scale": measuredViewport?.scale ?? 1,
+              "--preview-viewport-height": measuredViewport ? `${measuredViewport.height}px` : undefined,
               height: measuredViewport ? `${measuredViewport.height}px` : undefined,
               transform: measuredViewport ? `scale(${measuredViewport.scale})` : undefined,
               width: `${sourceWidth}px`,

@@ -168,7 +168,7 @@ export const PublicView = ({
       className={`public-page-root ${viewportClass}${hasResponsiveProfileLayout ? " public-page-root--responsive-profile-layout" : ""}${hasResponsiveCardLayout ? " public-page-root--responsive-card-layout" : ""} ${onEditorSelect ? "public-page-root--editor" : ""} ${embedded ? "min-h-full" : "min-h-screen"} py-8 px-4`}
     >
       <div
-        className="public-page-content mx-auto space-y-6"
+        className="public-page-content mx-auto w-full space-y-6"
         style={{ "--public-page-max-width": theme.maxWidth || "28rem" } as CSSProperties}
       >
         {!useUnifiedPageLayout && profileTarget}
@@ -187,54 +187,54 @@ export const PublicView = ({
             viewport={cardLayoutViewport}
           />
         )}
+      </div>
 
-        <footer className="text-center pt-8 pb-2 space-y-1" style={{ fontFamily: "var(--font-footer, inherit)" }}>
-          {footerText && (
-            <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
-              {footerText}
-            </p>
-          )}
-          {(privacyHref || cookieHref) && (
-            <p className="text-xs text-muted-foreground opacity-60 break-words">
-              {privacyHref && (
-                <a
-                  href={privacyHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-primary"
-                >
-                  Privacy Policy
-                </a>
-              )}
-              {privacyHref && cookieHref && <span> | </span>}
-              {cookieHref && (
-                <a
-                  href={cookieHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-primary"
-                >
-                  Cookie Policy
-                </a>
-              )}
-            </p>
-          )}
-          {showOrbitPageBadge && (
-            <p className="flex items-center justify-center gap-2 pt-2 text-xs text-muted-foreground opacity-70">
-              <span>Powered by</span>
+      <footer className="public-page-footer mt-auto w-full text-center pt-8 pb-2 space-y-1" style={{ fontFamily: "var(--font-footer, inherit)" }}>
+        {footerText && (
+          <p className="text-xs text-muted-foreground opacity-70 whitespace-pre-line">
+            {footerText}
+          </p>
+        )}
+        {(privacyHref || cookieHref) && (
+          <p className="text-xs text-muted-foreground opacity-60 break-words">
+            {privacyHref && (
               <a
-                aria-label="OrbitPage"
-                href="https://orbitpage.com"
+                href={privacyHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex rounded-md text-current no-underline transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="underline hover:text-primary"
               >
-                <OrbitPageBrand className="gap-1.5" size="xs" />
+                Privacy Policy
               </a>
-            </p>
-          )}
-        </footer>
-      </div>
+            )}
+            {privacyHref && cookieHref && <span> | </span>}
+            {cookieHref && (
+              <a
+                href={cookieHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-primary"
+              >
+                Cookie Policy
+              </a>
+            )}
+          </p>
+        )}
+        {showOrbitPageBadge && (
+          <p className="flex items-center justify-center gap-2 pt-2 text-xs text-muted-foreground opacity-70">
+            <span>Powered by</span>
+            <a
+              aria-label="OrbitPage"
+              href="https://orbitpage.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex rounded-md text-current no-underline transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <OrbitPageBrand className="gap-1.5" size="xs" />
+            </a>
+          </p>
+        )}
+      </footer>
     </main>
   );
 };
