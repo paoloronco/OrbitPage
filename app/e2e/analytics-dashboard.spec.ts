@@ -33,7 +33,7 @@ test('renders separate interactive analytics charts, responsive layouts and hone
     const days = Number(new URL(route.request().url()).searchParams.get('days'));
     const visits = days === 7 ? 200 : 1200;
     const trend = Array.from({ length: 7 }, (_, index) => ({ date: new Date(Date.now() - (6-index)*86400000).toISOString().slice(0,10), visits: 80+index*20, visitors: 60+index*10, clicks: 10+index*3, durationSeconds: 60+index*10, aiVisits: index*2, aiSearchVisits: index }));
-    return route.fulfill({ json: { configured: true, detailed: true, periodDays: days, maxPeriodDays: 30, summary: { visits, visitors: 850, clicks: 180, qrVisits: 80, ctr: 15, visitsPerVisitor: 1.4, clicksPerVisitor: .2, durationSeconds: 90, engagedVisits: 400, aiVisits: 60, aiSearchVisits: 20 }, comparison: { previous: { visits: 1000, visitors: 800, clicks: 100, ctr: 10 }, changes: { visits: 20, visitors: 6.3, clicks: 80, ctr: 50 } }, trend, countries: [{ label: 'IT', value: 800 }, { label: 'US', value: 400 }], devices: [{ label: 'Mobile', value: 900 }, { label: 'Desktop', value: 300 }], aiSources: [{ label: 'chatgpt.com', value: 40 }, { label: 'perplexity.ai', value: 20 }], sources: [{ label: 'Direct', value: 900 }], links: [{ label: 'Fictional booking', value: 180 }], paths: [], campaigns: [], utmSources: [], utmMediums: [], qrPaths: [] } });
+    return route.fulfill({ json: { configured: true, detailed: true, periodDays: days, maxPeriodDays: 90, summary: { visits, visitors: 850, clicks: 180, qrVisits: 80, ctr: 15, visitsPerVisitor: 1.4, clicksPerVisitor: .2, durationSeconds: 90, engagedVisits: 400, aiVisits: 60, aiSearchVisits: 20 }, comparison: { previous: { visits: 1000, visitors: 800, clicks: 100, ctr: 10 }, changes: { visits: 20, visitors: 6.3, clicks: 80, ctr: 50 } }, trend, countries: [{ label: 'IT', value: 800 }, { label: 'US', value: 400 }], devices: [{ label: 'Mobile', value: 900 }, { label: 'Desktop', value: 300 }], aiSources: [{ label: 'chatgpt.com', value: 40 }, { label: 'perplexity.ai', value: 20 }], sources: [{ label: 'Direct', value: 900 }], links: [{ label: 'Fictional booking', value: 180 }], paths: [], campaigns: [], utmSources: [], utmMediums: [], qrPaths: [] } });
   });
   await openAdminSection(page, 'Analytics');
   const dashboard = page.getByTestId('managed-analytics');
@@ -43,9 +43,17 @@ test('renders separate interactive analytics charts, responsive layouts and hone
   await expect(dashboard.getByRole('group', { name: 'Traffic metric' }).getByRole('button', { name: 'Visits', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await dashboard.getByRole('button', { name: '7 days', exact: true }).click();
   await expect(dashboard.locator('.analytics-chart-value').first()).toContainText('200');
-  for (const width of [1440,390,320]) {
+  for (const width of [1440,390,360,320]) {
     await page.setViewportSize({ width, height: 980 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    const periods = await dashboard.getByRole('group', { name: 'Analytics range' }).getByRole('button').evaluateAll(buttons => buttons.map(button => { const r = button.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; }));
+    expect(periods).toHaveLength(3);
+    for (let i = 1; i < periods.length; i++) {
+      expect(periods[i].x).toBeGreaterThanOrEqual(periods[i - 1].x + periods[i - 1].width);
+      expect(Math.abs(periods[i].y - periods[0].y)).toBeLessThan(1);
+    }
+    const google = (await dashboard.getByRole('button', { name: 'Google Analytics', exact: true }).boundingBox())!;
+    expect(Math.abs(google.y + google.height / 2 - periods[0].y - periods[0].height / 2)).toBeLessThan(2);
     await page.screenshot({ path: testInfo.outputPath('analytics-' + width + '.png'), fullPage: true, animations: 'disabled' });
   }
   await dashboard.getByText('View chart data', { exact: true }).click();

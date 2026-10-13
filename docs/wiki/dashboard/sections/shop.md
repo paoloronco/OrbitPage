@@ -300,6 +300,10 @@ Stripe settings refresh when opened, when returning to the tab and every 30 seco
 
 See [Backups](./backups-and-demo-mode.md) and [Maintenance](../../administration/maintenance.md).
 
+On phones, Publish/Unpublish sits beside the preview device selector. Settings
+and Orders hide the selector while preserving its space. Desktop previews use
+a 16:9 screen that scales to the available width.
+
 ## Troubleshooting
 
 | Symptom | What to check |

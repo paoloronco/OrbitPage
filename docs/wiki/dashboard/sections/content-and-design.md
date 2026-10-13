@@ -12,7 +12,9 @@ Edit your page in **Page**, **Content**, **Menu**, **Pages**, and **Theme**:
 
 The dashboard preview uses the public renderer, but the public URL is the final check for browser metadata, external embeds, consent behavior, and real navigation.
 
-**Arrange** moves and resizes whole cards freely, on desktop and phones.
+**Arrange** is available in desktop browsers and moves or resizes whole cards freely.
+Choose Mobile or Desktop to edit either layout. Phone browsers keep the preview
+and item editing controls; they do not show Arrange.
 Other cards stay in place during a drag, including when you cross them.
 Alignment guides are visual aids; hold Shift while dragging to snap to them.
 Arrow keys adjust by one pixel, or ten with Shift. Escape cancels the current

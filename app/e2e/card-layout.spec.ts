@@ -44,8 +44,8 @@ test('public cards wrap long text and ignore legacy text coordinates at every wi
 });
 
 for (const width of [1440, 390]) {
-  test(`Arrange tracks the pointer, cancels and preserves other cards at ${width}px`, async ({ page, browserName }) => {
-    await page.setViewportSize({ width, height: 980 });
+  test(`Arrange tracks the pointer, cancels and preserves other cards in the ${width === 390 ? "mobile" : "desktop"} preview`, async ({ page, browserName }) => {
+    await page.setViewportSize({ width: 1440, height: 980 });
     await openAuthenticatedAdmin(page);
     const restore = await preservePageData(page);
     try {
@@ -57,9 +57,12 @@ for (const width of [1440, 390]) {
         await saveEditorChanges(page);
       }
       const id = await page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last().getAttribute('data-public-editor-link-id');
+      if (width === 390) await page.getByRole('button', { name: 'Mobile preview', exact: true }).click();
       await page.getByRole('button', { name: 'Arrange', exact: true }).click();
       const card = page.locator(`[data-card-layout-item="${id}"]`);
       const handle = card.getByRole('button', { name: /^Move card/ });
+      await handle.evaluate(async element => { await Promise.all(element.closest('.admin-preview-device__hardware')!.getAnimations().map(animation => animation.finished)); });
+      await handle.focus();
       await handle.evaluate(element => element.scrollIntoView({ block: 'center' }));
       const position = async () => (await card.getAttribute('data-card-layout-position'))!.split(',').map(Number);
       const before = await position();
@@ -96,6 +99,7 @@ for (const width of [1440, 390]) {
       await expect(card.locator('.page-card-layout__surface')).toHaveAttribute('inert', '');
       await saveEditorChanges(page);
       await page.reload();
+      if (width === 390) await page.getByRole('button', { name: 'Mobile preview', exact: true }).click();
       await expect.poll(async () => (await position())[1]).toBe(before[1] - 10);
     } finally {
       await restore();

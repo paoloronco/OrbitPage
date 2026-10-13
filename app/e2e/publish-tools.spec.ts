@@ -54,6 +54,13 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
   expect(mobileQrBounds).not.toBeNull();
   expect(mobileQrBounds!.width).toBeLessThanOrEqual(190);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  for (const tab of await page.locator('.publish-tools-tab').all()) {
+    const icon = (await tab.locator('svg').boundingBox())!, label = (await tab.locator('strong').boundingBox())!;
+    expect(Math.abs(icon.y + icon.height / 2 - label.y - label.height / 2)).toBeLessThan(2);
+  }
+  await page.getByRole('tab', { name: /Sitemap/ }).click();
+  const icon = (await page.locator('#publish-tool-sitemap .admin-panel-icon').boundingBox())!;
+  expect(Math.abs(icon.width - icon.height)).toBeLessThan(1);
   await page.screenshot({ path: 'test-results/publish-tools-mobile.png', fullPage: true });
 });
 

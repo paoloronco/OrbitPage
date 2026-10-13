@@ -400,7 +400,8 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   const desktopHardwareBounds = await desktopPreview.locator('.admin-preview-device__hardware').boundingBox();
   expect(desktopHardwareBounds).not.toBeNull();
   expect(desktopHardwareBounds!.width).toBeLessThanOrEqual(900);
-  expect(desktopHardwareBounds!.height).toBeGreaterThanOrEqual(480);
+  const desktopScreen = (await desktopPreview.locator('.admin-preview-device__screen').boundingBox())!;
+  expect(Math.abs(desktopScreen.width / desktopScreen.height - 16 / 9)).toBeLessThan(.02);
 
   const horizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
@@ -448,6 +449,9 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   await page.screenshot({ path: test.info().outputPath('mobile-navigation.png') });
   const footer = await navigation.locator('.admin-dashboard-sidebar-footer > *').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().y));
   expect(Math.max(...footer) - Math.min(...footer)).toBeLessThanOrEqual(1);
+  const workspaceItems = await navigation.locator('.admin-dashboard-nav-workspace button').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().y));
+  expect(workspaceItems[0]).toBeGreaterThan(500);
+  expect(Math.max(...workspaceItems.slice(1).map((y, i) => y - workspaceItems[i]))).toBeLessThanOrEqual(44);
 
   await page.getByRole('button', { name: 'Close navigation' }).first().click();
   await launcher.click();
