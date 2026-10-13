@@ -50,12 +50,12 @@ for (const width of [1440, 390]) {
     const restore = await preservePageData(page);
     try {
       await page.getByRole('button', { name: 'Content', exact: true }).click();
-      for (let index = 0; index < 2; index++) {
+      for (let index = 0; index < 6; index++) {
         await page.getByRole('button', { name: 'Content', exact: true }).click();
         await page.getByRole('button', { name: 'Add content' }).click();
         await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
-        await saveEditorChanges(page);
       }
+      await saveEditorChanges(page);
       const id = await page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last().getAttribute('data-public-editor-link-id');
       if (width === 390) await page.getByRole('button', { name: 'Mobile preview', exact: true }).click();
       await page.getByRole('button', { name: 'Arrange', exact: true }).click();
@@ -92,15 +92,23 @@ for (const width of [1440, 390]) {
         await expect.poll(position).toEqual(before);
         await cdp.detach();
       }
+      const commitStart = (await handle.boundingBox())!;
+      await page.mouse.move(commitStart.x + commitStart.width / 2, commitStart.y + commitStart.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(commitStart.x + commitStart.width / 2, commitStart.y + commitStart.height / 2 - 20, { steps: 5 });
+      const committedY = Math.round(before[1] - 20 / scale);
+      await expect.poll(async () => (await position())[1]).toBe(committedY);
+      await page.mouse.up();
+      await expect.poll(async () => (await position())[1]).toBe(committedY);
       await handle.press('Shift+ArrowUp');
-      await expect.poll(async () => (await position())[1]).toBe(before[1] - 10);
+      await expect.poll(async () => (await position())[1]).toBe(committedY - 10);
       expect(await others()).toEqual(otherPositions);
       await expect(card.locator('[data-card-layout-mode]')).toHaveCount(0);
       await expect(card.locator('.page-card-layout__surface')).toHaveAttribute('inert', '');
       await saveEditorChanges(page);
       await page.reload();
       if (width === 390) await page.getByRole('button', { name: 'Mobile preview', exact: true }).click();
-      await expect.poll(async () => (await position())[1]).toBe(before[1] - 10);
+      await expect.poll(async () => (await position())[1]).toBe(committedY - 10);
     } finally {
       await restore();
     }
