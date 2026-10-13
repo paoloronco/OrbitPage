@@ -198,6 +198,8 @@ export function PublicCardLayout({
     const candidate = event.shiftKey ? aligned.rect : rect;
     if (gesture.mode === "resize") candidate.width = Math.min(candidate.width, 100 - candidate.x);
     const next = updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, candidate);
+    // Shrinking the canvas during a drag clamps scrollTop and moves the card again.
+    next.height = Math.max(next.height, gesture.layout.height);
     setGuides(aligned.guides);
     applyWorkingLayout(next);
   };
@@ -245,7 +247,8 @@ export function PublicCardLayout({
     event.preventDefault();
     event.stopPropagation();
     updateGesturePosition(event);
-    const next = normalizeCardLayout(fitCardLayoutHeights(latestLayoutRef.current, heights, false), layoutCards, viewport);
+    const completed = updateCardLayoutItem(latestLayoutRef.current, layoutCards, viewport, gesture.cardId, latestLayoutRef.current.positions[gesture.cardId]);
+    const next = normalizeCardLayout(fitCardLayoutHeights(completed, heights, false), layoutCards, viewport);
     resetGesture();
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     applyWorkingLayout(next);
