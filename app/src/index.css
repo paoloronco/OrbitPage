@@ -6003,7 +6003,7 @@ html:has(.orbitpage-admin) {
 .menu-category-picker__item > small { display: inline-flex; align-items: center; gap: .25rem; color: var(--admin-secondary-copy); font-size: .66rem; font-weight: 750; }
 .menu-category-picker__item > small svg, .menu-category-picker__item > svg { width: .85rem; height: .85rem; }
 .menu-category-editor { display: grid; gap: .8rem; padding: .85rem; border: 1px solid #d7e0ec; border-radius: 7px; background: #fff; }
-.menu-category-editor__heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem; padding-bottom: .7rem; border-bottom: 1px solid #e3e9f1; }
+.menu-category-editor__heading { display: flex; align-items: center; gap: .75rem; padding-bottom: .7rem; border-bottom: 1px solid #e3e9f1; }
 .menu-category-editor__heading > div { display: grid; min-width: 0; gap: .1rem; }
 .menu-category-editor__heading > div span { color: #2f66df; font-size: .62rem; font-weight: 850; letter-spacing: .07em; text-transform: uppercase; }
 .menu-category-editor__heading > div strong { overflow: hidden; color: #172033; font-size: .86rem; text-overflow: ellipsis; white-space: nowrap; }
@@ -6064,7 +6064,7 @@ html:has(.orbitpage-admin) {
 .menu-product-filter select { width: 100%; height: 2.5rem; padding: 0 .75rem; border: 1px solid hsl(var(--input)); border-radius: .375rem; background: #fff; color: #172033; font-size: .8rem; }
 .menu-product-flags { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr); align-items: center; gap: 1rem; padding-top: .75rem; border-top: 1px solid #e2e8f0; }
 .menu-product-flags label { display: flex; align-items: center; gap: .45rem; color: #334155; font-size: .72rem; font-weight: 650; }
-.menu-product-flags button { justify-self: end; margin-left: 0; border: 0; background: transparent; color: #b42318; font-size: .7rem; font-weight: 700; }
+.menu-product-flags > button { justify-self: end; margin-left: 0; border: 0; background: transparent; color: #b42318; font-size: .7rem; font-weight: 700; }
 .menu-variants-editor { display: grid; gap: .65rem; padding: .8rem; border: 1px solid #dbe3ee; border-radius: 6px; background: #fff; }
 .menu-variants-editor__heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .menu-variants-editor__heading > div { display: grid; gap: .15rem; }
@@ -6195,7 +6195,7 @@ html:has(.orbitpage-admin) {
   .menu-variants-editor__heading { align-items: flex-start; }
   .menu-product-flags { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
   .menu-product-flags label { min-height: 2.5rem; }
-  .menu-product-flags button { grid-column: 1 / -1; justify-self: stretch; width: 100%; }
+  .menu-product-flags > button { grid-column: 1 / -1; justify-self: stretch; width: 100%; }
   .menu-variant-row { grid-template-columns: minmax(0, 1fr) 7.75rem 2.5rem; }
   .menu-editor-main,
   .menu-content-editor,
@@ -7106,7 +7106,7 @@ button.subpage-page-card:focus-visible { outline: 3px solid #6d94f3; outline-off
   .menu-product-image { width: 3.75rem; }
   .menu-product-editor__top > div { flex-basis: auto; }
   .menu-product-flags { align-items: stretch; gap: .65rem; }
-  .menu-product-flags button { min-height: 40px; margin-left: 0; padding-inline: .35rem; }
+  .menu-product-flags > button { min-height: 40px; margin-left: 0; padding-inline: .35rem; }
   .menu-variants-editor { padding: .65rem; }
   .menu-variant-row { grid-template-columns: minmax(0,1fr) minmax(5.5rem,.65fr) 2.5rem; gap: .4rem; }
   .menu-theme-presets { gap: .45rem; }
@@ -13824,6 +13824,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .menu-editor-dialog .menu-item-form-section__title { display: grid; gap: 4px; margin-bottom: 10px; }
 .menu-editor-dialog .menu-item-form-section__title > span { color: var(--admin-muted-copy); font-size: 12px; }
 .menu-editor-dialog .menu-product-flags { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.menu-editor-dialog .menu-product-flags > label { display: flex; align-items: center; justify-content: center; }
 .menu-editor-dialog .menu-product-flags strong, .menu-editor-dialog .menu-product-flags small { display: block; }
 .menu-editor-dialog .menu-product-flags small { margin-top: 3px; color: var(--admin-muted-copy); font-size: 10px; }
 .menu-editor-dialog .menu-item-order-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
