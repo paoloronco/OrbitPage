@@ -2,7 +2,7 @@
 
 ![Page, content blocks, menu, additional pages and theme in the site editor](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-content-and-design-4.21.75.gif)
 
-Edit your page in **Page**, **Content**, **Menu**, **Pages**, and **Theme**:
+Edit your public identity, content blocks, menu, additional pages and appearance in **Page**, **Content**, **Menu**, **Pages**, and **Theme**:
 
 1. Set the public identity in **Page**.
 2. Add and arrange the main-page blocks in **Content > Link**.
@@ -178,6 +178,11 @@ If cards become visually inconsistent, reset individual overrides first and then
 
 ## Media lifecycle
 
-Images, video, GIFs, icons, and covers uploaded through the editor are stored under `DATA_DIR/uploads`. Raster uploads accept PNG, JPEG, GIF, WebP, and AVIF; non-animated images are optimized to AVIF when the browser supports encoding it and otherwise to WebP. The server validates media type, per-file limits, and the installation-wide upload quota. See [Configuration](../../administration/Configuration.md) for the current controls.
+Raster uploads accept PNG, JPEG, GIF, WebP, and AVIF; non-animated images are optimized to AVIF when the browser supports encoding it and otherwise to WebP. Uploads are checked for their actual media type and applicable limits.
+
+| Edition | Storage and limits |
+| --- | --- |
+| **Open Source** | Uploaded images, video, GIFs, icons and covers are stored under `DATA_DIR/uploads`. The installation administrator controls per-file and total upload limits through [Configuration](../../administration/Configuration.md#variables). |
+| **SaaS** | Uploads count toward managed workspace storage. **Plan** shows usage and the plan's allowances; per-file limits also apply. The plan controls additional-page availability and other hosted features. |
 
 Removing media from a block or theme removes the reference, not necessarily the stored file. Use **Backup > Check unused media** before cleanup, and keep a backup before selecting **Clean now**. The [backups and demo-mode guide](./backups-and-demo-mode.md) explains the complete workflow.

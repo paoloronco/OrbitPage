@@ -2,9 +2,9 @@
 
 ![Newsletter campaign editor with a fictional message and its preview](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-feature-newsletters-4.21.75.png)
 
-Send newsletters through your own SMTP server. An administrator manages settings, subscribers, and campaigns under **Newsletter**.
+Send newsletters through your own SMTP server. Open **Newsletter** with permission to manage settings, subscribers and campaigns for the selected page.
 
-Read [SMTP email setup](../../integrations/smtp.md) for provider examples, authentication, DNS and troubleshooting. OSS has no managed email service.
+Read [SMTP email setup](../../integrations/smtp.md) for provider examples, authentication, DNS and troubleshooting. Newsletter requires your own SMTP in both editions. In SaaS it is available on Free with a smaller audience allowance; **Plan** shows audience and sending limits.
 
 ## Configure SMTP
 
@@ -12,18 +12,19 @@ Read [SMTP email setup](../../integrations/smtp.md) for provider examples, authe
 2. Enter the SMTP host, port, username, and password.
 3. Set sender name/type, authorized sender email, optional reply-to, and footer.
 4. Complete the sender address/legal details and public Privacy Policy and Terms URLs.
-5. Select **Save settings**, then **Verify and send test**. The test goes to the sender email; a successful test is required before sending a campaign.
+5. Select **Save settings**, then **Verify and send test**. OSS sends the test to the sender email; the SaaS dashboard sends it to your signed-in account. Check inbox and spam. A successful test is required before sending a campaign.
 
 | Port | Connection |
 | --- | --- |
 | `465` | TLS from connection start |
 | `587`, `2525` | STARTTLS required |
 
-The password is encrypted in SQLite and is not returned to the browser. Leaving its field blank reuses the saved password only if host, port, and username are unchanged. Private-network SMTP destinations are blocked.
+The password is encrypted and is not returned to the browser. Leaving its field blank reuses the saved password only if host, port, and username are unchanged. Private-network SMTP destinations are blocked. Configure SPF, DKIM and DMARC as instructed by your provider.
 
-Set `PUBLIC_SITE_URL` to your public HTTPS URL, including any mount path. Signup, confirmation, unsubscribe, and tracking links use it. If the URL changes, update and retest settings.
-
-Keep `JWT_SECRET` stable, or use a separate stable `NEWSLETTER_SECRET_KEY` of at least 32 characters. Losing the key makes saved SMTP credentials unreadable and invalidates email links.
+| Edition | Public links and credentials |
+| --- | --- |
+| **Open Source** | Set `PUBLIC_SITE_URL` to your public HTTPS URL, including any mount path. Keep `JWT_SECRET` stable, or use a stable `NEWSLETTER_SECRET_KEY` of at least 32 characters. Losing the key makes saved SMTP credentials unreadable and invalidates email links. |
+| **SaaS** | OrbitPage manages the public address and encryption for the workspace. Check the generated signup and email links after changing the page address or domain. |
 
 ## Subscribers
 
@@ -38,17 +39,19 @@ In **Subscribers**, an administrator can add an email/name after recording conse
 3. Save the draft, or use the adjacent **Send now** and **Schedule** buttons. To schedule, first enter a future date/time in the field below them.
 4. Check the campaign status and report. Cancel a schedule before delivery starts if needed.
 
-Send and Schedule save the draft before queuing it. The server checks schedules every 10 seconds and sends to active subscribers in batches of 50, so the instance must stay running.
+Send and Schedule save the draft before queuing it. Check the timezone shown before scheduling. In OSS, the server checks schedules every 10 seconds and sends to active subscribers in batches of 50, so the instance must stay running. SaaS delivery runs on the managed service within the workspace's sending allowance.
 
 Saved campaigns and their edit, cancel and delete actions are in **Overview → Campaign performance**. **Campaigns** contains the composer and live preview. Settings uses an icon badge for the last connection test; a failed test marks the connection as unavailable.
 
-Reports show deliveries, unique opens/clicks, and unsubscribes. Opens depend on email clients loading images; an SMTP acceptance does not guarantee inbox delivery. Your provider can impose sending limits.
+## Delivery reports
 
-Only eligible non-active campaigns can be deleted. Deletion removes the campaign/report and cannot retract sent email.
+Reports show deliveries, unique opens/clicks, and unsubscribes. Opens depend on email clients loading images; an SMTP acceptance does not guarantee inbox delivery. Your provider can impose sending limits. Investigate failed delivery in the provider's logs before retrying, so you do not send duplicate messages.
+
+Only eligible non-active campaigns can be deleted. Deletion removes the campaign/report and cannot retract sent email or reset its usage. Unsubscribed recipients stop receiving campaigns.
 
 ## Backups and problems
 
-Newsletter data and SMTP settings live in `DATA_DIR/orbitpage.db`. Dashboard JSON exports exclude them; use an [infrastructure backup](../../administration/maintenance.md). Newsletter changes are disabled in demo mode.
+Dashboard page exports do not include newsletter audiences, campaigns or SMTP credentials. In OSS these records live in `DATA_DIR/orbitpage.db`; use an [infrastructure backup](../../administration/maintenance.md). Newsletter changes are disabled in OSS demo mode. In SaaS, restoring page content does not restore newsletter records.
 
 | Problem | Check |
 | --- | --- |
@@ -57,4 +60,4 @@ Newsletter data and SMTP settings live in `DATA_DIR/orbitpage.db`. Dashboard JSO
 | Schedule not delivered | Running instance, logs, and provider limits; avoid re-queuing an existing send |
 | Missing opens or poor delivery | Image blocking and the provider's SPF/DKIM/DMARC setup |
 
-See [Configuration](../../administration/Configuration.md) for public URLs and encryption keys.
+Self-hosted administrators can use [Configuration](../../administration/Configuration.md#variables) for public URLs and encryption keys.

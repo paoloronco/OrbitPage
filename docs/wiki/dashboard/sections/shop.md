@@ -40,7 +40,7 @@ The **Shop settings** gear opens Compliance, Coupons, Checkout, Stripe, Email, C
 | Service package | 1–50 sessions and up to 12 questionnaire questions |
 
 - Digital products need at least one file before sale. Documents, archives, ebooks, images, audio and video are supported in the formats accepted by the uploader.
-- Delivery files are private in `DATA_DIR/shop-files`; covers and logos are public. Uploads count toward instance storage.
+- Delivery files are private; covers and logos are public. OSS stores delivery files in `DATA_DIR/shop-files` and counts uploads toward instance storage. SaaS uses managed private storage and counts uploads toward workspace storage.
 - Product edits affect new purchases. Existing orders keep their purchased product, files, instructions and policy snapshot.
 - Physical shipping, recurring product subscriptions, marketplaces and multi-product carts are not supported.
 
@@ -277,7 +277,7 @@ Links use server-side HMAC-SHA256 signatures; signatures prevent changes but do 
 
 - Buyers submit/update answers in **Your purchases**; the seller sees them on the order.
 - A matching signed booking consumes one session; rescheduling uses no extra session and cancellation restores it. Duplicate events update the same booking.
-- The customer area shows dates, status and meeting links. Keep the server and SMTP running for 24-hour and 1-hour reminders.
+- The customer area shows dates, status and meeting links. Booking changes and 24-hour and 1-hour reminders use the selected Shop email service. In OSS, keep the server and SMTP running for delivery.
 - Other providers work as booking links without synchronization. External URL access/availability is controlled by that provider; cancellation does not issue a Stripe refund.
 
 ## Orders, refunds and customer erasure

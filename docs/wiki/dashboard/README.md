@@ -2,9 +2,21 @@
 
 The dashboard is where you edit your public page, manage sharing and newsletters, and change account or installation settings.
 
-Open `/dashboard/profile` to sign in or, on a new installation, choose the admin password.
-
 Section names appear in navigation; the workspace header keeps an accessible title for screen readers without repeating a visible title or introductory subtitle.
+
+## Sign in and first page
+
+| Edition | First access |
+| --- | --- |
+| **Open Source** | Open `/dashboard/profile` on your installation. On first access, choose the administrator password. |
+| **SaaS** | Sign up at orbitpage.com with email/password or Google. Verify your email when requested and choose an available username during onboarding. Your public address is `https://orbitpage.net/your-name`. |
+
+1. Open **Page** and set your name, description and profile image.
+2. Open **Content** to add links, text, media or other blocks.
+3. Choose your colors, font and background in **Theme**.
+4. Save each section you changed, then open **Public page** to check the result.
+
+In SaaS, check the selected workspace before editing. Each workspace has its own page, membership, plan and connected services. Available actions depend on your permissions; hosted plans also determine feature availability and quotas.
 
 ## Dashboard main sections
 
@@ -17,11 +29,12 @@ Section names appear in navigation; the workspace header keeps an accessible tit
 | **Page** | Profile, image, social links, browser title, metadata, and footer | `/dashboard/editor/page` |
 | **Content** | Main-page blocks, order, visibility, and schedules | `/dashboard/editor/content` |
 | **Menu** | Menu settings, sections, items, prices, and appearance | `/dashboard/editor/menu/content` |
+| **Shop** | Digital products, services, payments, and orders | `/dashboard/editor/shop/products` |
 | **Pages** | Additional pages, their URLs, publication state, and blocks | `/dashboard/editor/pages` |
 | **Theme** | Colors, fonts, cards, background, and responsive preview | `/dashboard/theme/page` |
 | **AI Assistant** | Suggested page changes to review and confirm | `/dashboard/ai` |
 
-The **Shop** section sells digital products and services through the owner's Stripe account. See [Shop](./sections/shop.md); its shared route is `/dashboard/editor/shop/products`.
+The **Shop** section sells digital products and services through the owner's Stripe account. See [Shop](./sections/shop.md) for the payment, email and publication setup for your edition.
 
 See [Content and design](./sections/content-and-design.md) for editing controls, [External modules](../integrations/external-modules.md) for connected services and [AI Assistant](../ai-assistant.md) for provider setup.
 
@@ -41,17 +54,25 @@ Detailed guides: [Publishing](./sections/publishing.md), [Backups](./sections/ba
 
 ### Account and installation
 
-![Team, account settings and the self-hosted edition](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-account-installation-4.21.75.gif)
+![Team and account controls, shown in the self-hosted edition](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-account-installation-4.21.75.gif)
+
+Team and Account share the navigation below. The illustration shows the self-hosted edition; account management and installation controls differ as described in the following table.
 
 | Workspace | Tools | URL |
 | --- | --- | --- |
-| **Team** | Local users, roles, passwords, and personal API tokens | `/dashboard/team` |
-| **Account → General** | Instance version, health/storage details, updates, environment overrides, and public URL | `/dashboard/account/general` |
+| **Team** | Users, roles, permissions, and personal API tokens | `/dashboard/team` |
+| **Account → General** | Account and page or installation information | `/dashboard/account/general` |
 | **Account → Security** | Your password, authenticator, and recovery codes | `/dashboard/account/security` |
-| **Account → Audit log** | Successful changes, with user, action, date, and text filters; administrators only | `/dashboard/account/audit` |
-| **Edition** | Self-hosted features and server responsibilities | `/dashboard/plan` |
+| **Account → Audit log** | Successful changes, with user, action, date, and text filters; permission required | `/dashboard/account/audit` |
 
-See [Account and team](./sections/account-and-team.md), [Configuration](../administration/Configuration.md#dashboard-environment-overrides), and [Updates](../administration/Deployment.md#update-safely).
+| Area | Open Source | SaaS |
+| --- | --- | --- |
+| Team | Local users and credentials belong to the installation. | Invite collaborators with their own accounts and grant access to the selected workspace. |
+| Account → General | Instance version, health/storage details, updates, environment overrides and public URL. | Account details and page controls. OrbitPage manages the infrastructure. |
+| Account → Audit log | Administrators can review successful changes. | Owners, administrators and custom members with member-visibility permission can review workspace events. |
+| Edition / Plan | **Edition**, `/dashboard/plan`, explains self-hosted features and server responsibilities. | **Plan**, `/dashboard/billing`, manages the subscription, usage, billing and custom domains; owner controls require ownership. |
+
+See [Account and team](./sections/account-and-team.md) for access controls. Self-hosted administrators also use [Configuration](../administration/Configuration.md#dashboard-environment-overrides) and [Updates](../administration/Deployment.md#update-safely). SaaS owners use [Plan and billing](https://orbitpage.com/en-US/docs/billing) and [Security](https://orbitpage.com/en-US/docs/account-and-security).
 
 ## Save and preview
 
@@ -63,7 +84,9 @@ See [Account and team](./sections/account-and-team.md), [Configuration](../admin
 
 ### Preview and publication
 
-The preview can show unsaved changes. In the self-hosted edition, saved public content appears on the public page without a separate site-wide publish step. Additional pages must also be marked **Published**.
+The preview can show unsaved changes. Saving a dashboard section updates its public content without a separate site-wide publish step. Additional pages must also be marked **Published**; Menu and Shop have their own publication controls. Open **Public page** after saving to verify the result.
+
+SaaS publication can report a failure while the previous valid public version remains online. Resolve the displayed error and check the public result again. API and ChatGPT workflows can explicitly create private drafts; those require their own publication step.
 
 ### Drafts
 
@@ -73,7 +96,7 @@ Subpage settings and blocks have separate save controls. Theme, Menu, Privacy, a
 
 ### Language and base path
 
-The tables omit the language prefix: `/dashboard/account/security` becomes `/en-US/dashboard/account/security` in an English dashboard. A configured `BASE_PATH` comes before that prefix. Public routes use neither the dashboard language nor its section paths.
+The tables omit the language prefix: `/dashboard/account/security` becomes `/en-US/dashboard/account/security` in an English dashboard. On a self-hosted installation, a configured `BASE_PATH` comes before that prefix. Public routes use neither the dashboard language nor its section paths.
 
 ### Tab paths
 
@@ -82,7 +105,7 @@ Tabs append these slugs to their workspace path:
 | Path | Tab slugs |
 | --- | --- |
 | `/dashboard/editor/menu` | `settings`, `content`, `design` |
-| `/dashboard/editor/shop` | `legal`, `payments`, `design`, `products`, `orders`, `customers` |
+| `/dashboard/editor/shop` | Shared tabs: `products`, `orders`, `customers`, `design`. OSS also has `legal` and `payments` tabs; SaaS opens these settings with the gear button. |
 | `/dashboard/theme` | `page`, `card` |
 | `/dashboard/publish` | `QR`, `Sitemap`, `TXT` |
 | `/dashboard/newsletter` | `overview`, `campaigns`, `subscribers`, `settings` |
