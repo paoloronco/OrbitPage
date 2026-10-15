@@ -62,7 +62,7 @@ Bookings and responses stay with the provider. Configure availability, questions
 
 Provider guides: [Calendly](https://developer.calendly.com/api-docs/overview/embedding/getting-started), [Typeform sharing](https://help.typeform.com/hc/en-us/articles/360029252892-Share-your-form), [Google Forms sharing and embeds](https://support.google.com/docs/answer/183965).
 
-For Cal.com or an external payment page, add a normal **Link** block with its public HTTPS URL. Native Cal.com booking synchronization and Stripe checkout belong to the [managed service](https://orbitpage.com/en-US/docs/cal-com).
+For Cal.com or an external payment page, add a normal **Link** block with its public HTTPS URL. Configure paid-service booking synchronization and Stripe checkout separately in [Shop](../dashboard/sections/shop.md); connected-service blocks do not create paid orders.
 
 ## Other presets
 
