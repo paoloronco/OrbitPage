@@ -30,7 +30,7 @@ The password is encrypted and is not returned to the browser. Leaving its field 
 
 Copy the signup link from the workspace. Visitors consent and confirm their email through a link valid for 48 hours.
 
-In **Subscribers**, an administrator can add an email/name after recording consent and confirmation. Every campaign includes an unsubscribe link. Removing a subscriber requires confirmation.
+In **Subscribers**, a user with Newsletter management permission can add an email/name after recording consent and confirmation. Every campaign includes an unsubscribe link. Removing a subscriber requires confirmation.
 
 ## Campaigns
 

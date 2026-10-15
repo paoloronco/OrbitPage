@@ -61,7 +61,7 @@ prepared before setup. Changing connection/sender settings clears
 the test status; test again. The sender handles buyer confirmations, seller
 notifications, questionnaire updates, booking changes and reminders. Purchase
 access remains available through the verified receipt if an email is delayed.
-See [Shop](../dashboard/sections/shop.md#transactional-email).
+See [Shop](../dashboard/sections/shop.md#email).
 
 Saved custom settings are used immediately. OrbitPage does not silently fall back to managed email when your SMTP fails. In SaaS, select **Use OrbitPage email** and save to return to managed sending. Email failure does not undo a confirmed purchase.
 
