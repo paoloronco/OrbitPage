@@ -5,6 +5,15 @@ email provider. It is a sending connection, not a hosted mailbox or inbox.
 Self-hosted OrbitPage includes no email hosting or managed sender: configure
 your own SMTP separately for Shop and Newsletter.
 
+## Email in SaaS and OSS
+
+| Feature | Open Source | SaaS |
+| --- | --- | --- |
+| Shop | Your SMTP provider | **Use OrbitPage email** or **Use custom SMTP** |
+| Newsletter | Your SMTP provider | Your SMTP provider |
+
+Shop and Newsletter settings are separate; credentials are not copied between them. SMTP delivers messages, not a mailbox for reading replies.
+
 ## Choose a provider
 
 Use a provider that permits your intended traffic and sender address. Shop
@@ -40,14 +49,13 @@ enabled. The OrbitPage server/container needs outbound access to the chosen port
 
 ## Shop
 
-1. Open **Shop settings → Compliance** and save the seller profile and policies.
-2. Verify **Stripe**, including the matching webhook signing secret.
-3. Open **Email**, enter your SMTP and sender fields, then **Save**.
-4. Select **Send test email**. OSS uses the configured sender as test recipient;
-   inspect its inbox and spam folder.
-5. After the test succeeds, publish the prepared Shop when its other requirements are complete.
+1. Open **Shop settings → Email**. In SaaS choose **Use OrbitPage email** for managed delivery or **Use custom SMTP** for your own provider. OSS uses your SMTP only.
+2. For custom SMTP, enter the connection and sender fields, then **Save**.
+3. Select **Send test email**. OSS uses the configured sender as test recipient; SaaS uses your signed-in account. Inspect inbox and spam.
+4. Repeat the test after changing the connection or sender settings.
+5. Complete the payment, compliance and publication requirements for your edition before selling.
 
-Compliance, verified Stripe/webhook and a successful SMTP test are required
+In OSS, Compliance, verified Stripe/webhook and a successful SMTP test are required
 before publication or accepting payments. Products and storefront design can be
 prepared before setup. Changing connection/sender settings clears
 the test status; test again. The sender handles buyer confirmations, seller
@@ -55,11 +63,13 @@ notifications, questionnaire updates, booking changes and reminders. Purchase
 access remains available through the verified receipt if an email is delayed.
 See [Shop](../dashboard/sections/shop.md#transactional-email).
 
+Saved custom settings are used immediately. OrbitPage does not silently fall back to managed email when your SMTP fails. In SaaS, select **Use OrbitPage email** and save to return to managed sending. Email failure does not undo a confirmed purchase.
+
 ## Newsletter
 
 1. Open **Newsletter → Settings** and enter a separate SMTP configuration.
 2. Complete sender identity, postal/legal details, Privacy and Terms URLs.
-3. Save, then **Verify and send test**; the test goes to the sender email.
+3. Save, then **Verify and send test**; OSS sends to the sender email and the SaaS dashboard sends to your signed-in account.
 4. Confirm receipt before sending or scheduling a campaign.
 
 Newsletter always requires your SMTP and a successful test. Shop credentials
@@ -68,14 +78,15 @@ required. See [Newsletters](../dashboard/sections/newsletters.md).
 
 ## Keep settings recoverable
 
-Passwords are encrypted in SQLite and never returned to the browser. A blank
+Passwords are encrypted and never returned to the browser. A blank
 password retains the saved value only for the same host, port and username.
-Back up the database and keep `JWT_SECRET` or the configured stable encryption
+In OSS, back up the database and keep `JWT_SECRET` or the configured stable encryption
 secret. Losing it makes encrypted settings unreadable. Set the correct public
 HTTPS URL for customer, confirmation and unsubscribe links.
 
-Shop admins can deliberately configure a private SMTP relay; Newsletter blocks
-private/reserved destinations. Do not disable TLS verification for a relay.
+OSS Shop admins can deliberately configure a private SMTP relay. SaaS Shop and Newsletter in both editions block private/reserved destinations. Do not disable TLS verification for a relay.
+
+## Troubleshooting
 
 | Failure | Check |
 | --- | --- |
@@ -86,3 +97,4 @@ private/reserved destinations. Do not disable TLS verification for a relay.
 | Settings unreadable after restart | Restore the original encryption secret or enter credentials again |
 
 A successful test proves provider acceptance, not guaranteed inbox delivery.
+Never share SMTP credentials, signed customer links or private buyer details in a public support request.
