@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin, preservePageData, saveEditorChanges } from './helpers';
+import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData, saveEditorChanges } from './helpers';
 
 test.use({ hasTouch: true });
 
@@ -49,13 +49,13 @@ for (const width of [1440, 390]) {
     await openAuthenticatedAdmin(page);
     const restore = await preservePageData(page);
     try {
+      // Seed the scrolling fixture through the API; this test measures Arrange, not six add dialogs.
+      const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+      const headers = { Authorization: `Bearer ${token}` };
+      const extra = Array.from({ length: 6 }, (_, index) => ({ id: `arrange-${width}-${index}`, type: 'link', title: `Arrange fixture ${index}`, url: 'https://example.invalid', isActive: true }));
+      expect((await page.request.put('/api/links', { headers, data: extra })).ok()).toBeTruthy();
+      await page.reload();
       await page.getByRole('button', { name: 'Content', exact: true }).click();
-      for (let index = 0; index < 6; index++) {
-        await page.getByRole('button', { name: 'Content', exact: true }).click();
-        await page.getByRole('button', { name: 'Add content' }).click();
-        await page.getByRole('dialog', { name: 'Add content' }).getByRole('button', { name: /^Link\b/ }).click();
-      }
-      await saveEditorChanges(page);
       const id = await page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last().getAttribute('data-public-editor-link-id');
       if (width === 390) await page.getByRole('button', { name: 'Mobile preview', exact: true }).click();
       await page.getByRole('button', { name: 'Arrange', exact: true }).click();
