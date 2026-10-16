@@ -51,11 +51,11 @@ enabled. The OrbitPage server/container needs outbound access to the chosen port
 
 1. Open **Shop settings → Email**. In SaaS choose **Use OrbitPage email** for managed delivery or **Use custom SMTP** for your own provider. OSS uses your SMTP only.
 2. For custom SMTP, enter the connection and sender fields, then **Save**.
-3. Select **Send test email**. OSS uses the configured sender as test recipient; SaaS uses your signed-in account. Inspect inbox and spam.
+3. For custom SMTP, select **Send test email**. OSS uses the configured sender as test recipient; SaaS uses your signed-in account. Inspect inbox and spam.
 4. Repeat the test after changing the connection or sender settings.
 5. Complete the payment, compliance and publication requirements for your edition before selling.
 
-In OSS, Compliance, verified Stripe/webhook and a successful SMTP test are required
+In OSS, Compliance, a verified Stripe account, a saved webhook secret and a successful SMTP test are required
 before publication or accepting payments. Products and storefront design can be
 prepared before setup. Changing connection/sender settings clears
 the test status; test again. The sender handles buyer confirmations, seller
@@ -78,8 +78,9 @@ required. See [Newsletters](../dashboard/sections/newsletters.md).
 
 ## Keep settings recoverable
 
-Passwords are encrypted and never returned to the browser. A blank
-password retains the saved value only for the same host, port and username.
+Passwords are encrypted and never returned to the browser. A blank password
+does not clear an existing password. Enter the password again when changing
+the SMTP provider or login, then repeat the test.
 In OSS, back up the database and keep `JWT_SECRET` or the configured stable encryption
 secret. Losing it makes encrypted settings unreadable. Set the correct public
 HTTPS URL for customer, confirmation and unsubscribe links.
