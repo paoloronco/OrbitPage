@@ -21,12 +21,17 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | --- | --- |
 | Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard/README.md) |
 | Edit profiles, blocks, menus, pages, and themes | [Content and design](./dashboard/sections/content-and-design.md) |
+| Add, arrange and schedule blocks | [Content blocks](./dashboard/sections/content-blocks.md) |
+| Build and publish a venue menu | [Menu](./dashboard/sections/menu.md) |
+| Style the page and manage uploads | [Theme and media](./dashboard/sections/theme-and-media.md) |
 | Share a page or print a QR code | [Publishing and QR](./dashboard/sections/publishing.md) |
 | Configure search metadata and discovery files | [SEO and indexing](./SEO-and-indexing.md) |
 | View analytics and configure consent | [Analytics and privacy](./dashboard/sections/analytics-and-privacy.md) |
 | Understand SMTP, choose a provider and configure email | [SMTP email setup](./integrations/smtp.md) |
 | Configure SMTP and send campaigns | [Newsletters](./dashboard/sections/newsletters.md) |
 | Configure Shop, Stripe, delivery, signed customer access and SMTP | [Shop](./dashboard/sections/shop.md) |
+| Create products, files and service packages | [Shop catalog](./dashboard/sections/shop-catalog.md) |
+| Manage purchases, delivery, refunds and customer access | [Shop orders and customers](./dashboard/sections/shop-customers.md) |
 | Configure AI and review suggested edits | [AI assistant](./ai-assistant.md) |
 | Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/sections/backups-and-demo-mode.md) |
 | Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/sections/account-and-team.md) |
@@ -38,6 +43,7 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | --- | --- |
 | Add service links, video/audio players, scheduling and forms | [External modules](./integrations/external-modules.md) |
 | Configure iubenda, CookieYes, Cookiebot, OneTrust or a custom CMP | [Consent management](./integrations/consent-management.md) |
+| Connect seller payments and verify test/live mode | [Stripe](./integrations/stripe.md) |
 
 See the [Integrations index](./integrations/README.md) for SMTP, AI and automation guides.
 
