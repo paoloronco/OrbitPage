@@ -34,9 +34,11 @@ Links use server-side HMAC-SHA256 signatures; signatures prevent changes but do 
 
 - In **Shop settings → Checkout**, configure the information Stripe collects. Name and email are required.
 - Phone: off/required. Billing address: automatic/required. Business name and supported tax IDs: off/optional/required. Payment methods may require additional details.
+- Collecting billing details or a tax ID does not enable automatic tax calculation or invoice creation. Shop Checkout does not enable Stripe Tax or automatic invoices; the seller manages tax obligations and invoicing separately. An OrbitPage order confirmation is not a tax invoice.
 - Add up to three text/numeric fields: labels up to 50 characters and answers up to 255 characters/digits. Do not request passwords, card details or sensitive data.
 - Save changes for new checkouts. Existing orders retain their original fields, answers and consent record. Inspect verified details under **Orders → View**.
 - In **Coupons**, create percentage or fixed-amount codes in the saved Shop currency. A 100% discount is supported; Checkout completion must still be verified even when there is no PaymentIntent.
+- An order discounted to zero has no payment charge to refund. Review its delivery and customer access before distributing the code.
 - **Create coupon** is beside the Coupons heading. Optionally set a maximum number of uses and an expiry in your local time; empty limits mean unlimited uses and no expiry. These limits are fixed at creation, so revoke and recreate the code to change them.
 - The table shows discount, uses/limit, expiry and status for up to 50 recent codes. Confirm **Revoke** to stop new redemptions, or **Delete** to permanently delete the underlying discount and remove it from the list. Existing orders keep their discounts. Codes created outside this Shop, or discounts shared by multiple codes, are managed in Stripe.
 
@@ -46,5 +48,5 @@ Links use server-side HMAC-SHA256 signatures; signatures prevent changes but do 
 - Order references such as `#000001` follow Checkout creation, including abandoned attempts. Refunds do not reuse numbers; older orders may retain short-ID references.
 - Issue refunds and manage disputes in Stripe, then check the verified update in OrbitPage. Partial refunds keep eligible delivery; full refunds revoke it and clear service entitlement/local booking reminders.
 - Downloaded files cannot be recalled. Cancel external appointments separately in your booking provider. Disputed purchases are unavailable while ineligible for delivery.
-- In SaaS, customer erasure also removes the connected Stripe customer profile.
-- Customer erasure removes saved personal details, answers, local bookings and related email; it anonymizes financial orders and revokes access. It is not a refund or deletion of Stripe's independent payment records.
+- In OSS, customer erasure removes local customer data and queued order emails. It does not delete the Stripe customer profile; manage that separately in your Stripe account.
+- Customer erasure removes saved personal details, answers and local bookings; it anonymizes financial orders and revokes access. It is not a refund and does not recall delivered files or emails, cancel appointments in your booking provider, or delete Stripe's independent payment records.

@@ -87,10 +87,10 @@ Use this installation with **test credentials**; no second installation is neede
 3. Open the public `/shop`, start Checkout and use Stripe's test card `4242 4242 4242 4242`, any future expiry and a valid test CVC. See [Stripe testing](https://docs.stripe.com/testing).
 4. Confirm the paid receipt, download the actual file, open **Your purchases**, refresh and check mobile layout.
 5. Verify the real Checkout event was delivered to your endpoint. Check a discount code and, if used, a 100% discount.
-6. In the test Stripe environment, test partial/full refunds and the resulting access changes. For services, also test questionnaire and calendar behavior.
+6. In the test Stripe environment, test partial/full refunds and the resulting access changes. For services, also test questionnaire and calendar behavior. Use mailboxes you control and a dedicated calendar event: Stripe test mode does not disable real email delivery or calendar bookings.
 7. Hide fictional products or unpublish before switching to live mode.
 
-Never use real card details in a test environment. Test cards do not make a live Checkout safe for testing; they work only with test credentials.
+Never use real card details in a test environment or simulate purchases with real cards in live mode. Test cards work only with test credentials. Changing the view in Stripe Dashboard alone does not change the credentials saved in OrbitPage.
 
 ## Go live on the same installation
 
