@@ -2,8 +2,6 @@
 
 The dashboard is where you edit your public page, manage sharing and newsletters, and change account or installation settings.
 
-Section names appear in navigation; the workspace header keeps an accessible title for screen readers without repeating a visible title or introductory subtitle.
-
 ## Sign in and first page
 
 | Edition | First access |
