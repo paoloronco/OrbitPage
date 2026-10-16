@@ -571,6 +571,8 @@ test('keeps the dense editors compact and organized by task', async ({ page }) =
 
   await page.getByRole('button', { name: 'Theme', exact: true }).click();
   const compactThemePreview = page.locator('.admin-theme-mockup--compact').first();
+  // Theme is a lazy chunk; wait for mounting separately from the geometry assertion.
+  await compactThemePreview.waitFor({ state: 'visible', timeout: 15_000 });
   await expect(compactThemePreview).toHaveCSS('height', '112px');
   await expect(page.locator('.admin-theme-preview-disclosure')).toHaveAttribute('open', '');
   await expect(page.locator('.admin-theme-live-preview')).toBeVisible();

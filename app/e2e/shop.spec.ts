@@ -155,13 +155,18 @@ test('OSS edits products and storefront before setup while requiring Compliance,
 });
 
 test('Personalize opens and closes in the configured OSS dashboard and survives refresh', async ({ page }) => {
+  let fixture: object | undefined;
   await page.route(/\/api\/shop(?:\?|$)/, async route => {
-    const response = await route.fetch();
-    const data = await response.json();
-    Object.assign(data.shop, { stripeConnected: true, stripeReady: true, stripeLivemode: false });
-    Object.assign(data.shop.appearance, { sellerSelfCertified: true, sellerType: 'private', sellerName: 'Fictional Studio', sellerEmail: 'studio@example.invalid', termsText: 'Terms', privacyText: 'Privacy', refundPolicyText: 'Refunds', withdrawalText: 'Withdrawal' });
-    data.shop.emailSettings.verifiedAt = '2026-10-09T00:00:00.000Z';
-    await route.fulfill({ response, json: data });
+    // Reuse the read-only fixture so reload does not race a second upstream fetch.
+    if (!fixture) {
+      const response = await route.fetch();
+      const data = await response.json();
+      Object.assign(data.shop, { stripeConnected: true, stripeReady: true, stripeLivemode: false });
+      Object.assign(data.shop.appearance, { sellerSelfCertified: true, sellerType: 'private', sellerName: 'Fictional Studio', sellerEmail: 'studio@example.invalid', termsText: 'Terms', privacyText: 'Privacy', refundPolicyText: 'Refunds', withdrawalText: 'Withdrawal' });
+      data.shop.emailSettings.verifiedAt = '2026-10-09T00:00:00.000Z';
+      fixture = data;
+    }
+    await route.fulfill({ json: fixture });
   });
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Shop');
