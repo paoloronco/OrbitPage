@@ -49,17 +49,6 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   viewer:       'View-only access to analytics',
 };
 
-export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  admin:        ['links:write', 'links:style', 'links:images', 'theme:write', 'profile:write', 'menu:write', 'analytics:read', 'compliance:write', 'users:manage'],
-  editor:       ['links:write', 'profile:write', 'menu:write', 'analytics:read'],
-  links_editor: ['links:write', 'analytics:read'],
-  links_style:  ['links:style'],
-  links_images: ['links:images'],
-  theme_editor: ['theme:write'],
-  compliance:   ['compliance:write'],
-  viewer:       ['analytics:read'],
-};
-
 export const hasPermission = (permissions: Permission[], permission: Permission): boolean =>
   permissions.includes(permission);
 

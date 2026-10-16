@@ -701,11 +701,5 @@ export const getVideoData = (content: string | null | undefined): VideoBlockData
   };
 };
 
-export const isBlockType = (type: string | undefined): type is LinkBlockType => (
-  type === 'link' || type === 'menu' || type === 'text' || type === 'separator' || type === 'cta' ||
-  type === 'heading' || type === 'image' || type === 'video' || type === 'contact' || type === 'social_row' ||
-  type === 'internal_links' || type === 'callout' || type === 'map' || type === 'event' || type === 'embed' || type === 'newsletter'
-);
-
 export const isPublicActionableBlock = (type?: LinkBlockType | string) =>
   type !== 'separator' && type !== 'heading' && type !== 'embed' && type !== 'video' && type !== 'internal_links' && type !== 'newsletter';

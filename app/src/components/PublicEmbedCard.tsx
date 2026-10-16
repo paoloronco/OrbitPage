@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { CalendarDays, Code2, Mail, MapPinned, Music2, PlaySquare, ShieldCheck } from "lucide-react";
+import { Code2, Mail, MapPinned, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { consentManager } from "@/lib/consent-manager";
 import { apiPath } from "@/lib/base-path";

@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { LinkCard, LinkData } from "./LinkCard";
 import { TextCard } from "./TextCard";
 import { useToast } from "@/components/ui/use-toast";
-import { linksApi, newsletterRequest } from "@/lib/api-client";
+import { newsletterRequest } from "@/lib/api-client";
 import type { NewsletterDashboardData } from "@/lib/newsletter-types";
 import { LinkEditMode } from "@/lib/permissions";
 import { commitWorkingLinks, prepareLinkForSave } from "./link-save-state";

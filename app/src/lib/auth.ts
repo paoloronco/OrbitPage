@@ -68,17 +68,9 @@ export const authenticateUser = async (password: string, username = 'admin'): Pr
   }
 };
 
-// Check if user is currently authenticated
-export const isAuthenticated = (): boolean => {
-  return authApi.isAuthenticated();
-};
-
 export const hasStoredAuthToken = (): boolean => {
   return authApi.hasStoredToken();
 };
-
-// Kept for backward compatibility — token management is handled by the API client
-export const setAuthenticated = (_username: string): void => { /* no-op */ };
 
 // Logout user
 export const logout = (): Promise<void> => authApi.logout();
@@ -128,19 +120,6 @@ export const generateSecurePassword = async (): Promise<string> => {
     // Shuffle the password
     const shuffled = secureShuffle(password.split(''));
     return shuffled.join('');
-  }
-};
-
-// Get current user credentials (safe data only)
-// Always returns admin username if authenticated, null otherwise
-export const getCurrentCredentials = async (): Promise<{ username: string } | null> => {
-  try {
-    if (!isAuthenticated()) return null;
-    
-    const result = await authApi.verify();
-    return result.valid ? { username: 'admin' } : null;
-  } catch {
-    return null;
   }
 };
 

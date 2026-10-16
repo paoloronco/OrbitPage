@@ -72,8 +72,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
   }, [editing, link, savedRevision, setIsEditing]);
 
   const isFullEdit = editMode === 'full';
-  const canEditStyle = editMode === 'full' || editMode === 'style';
-  const canEditImages = editMode === 'full' || editMode === 'images';
   const canEdit = editMode !== 'view';
   const isListCard = Array.isArray(editLink.textItems);
 
@@ -158,28 +156,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
       ...prev,
       textItems: prev.textItems?.filter((_, i) => i !== index) || []
     }));
-  };
-
-  const formatContent = (content?: string) => {
-    if (!content) return null;
-    
-    // Convert simple markdown-like syntax to HTML
-    let formatted = content
-      // Convert bullet points
-      .replace(/^\* (.+)$/gm, '<li>$1</li>')
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      // Convert numbered lists
-      .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-      // Convert line breaks
-      .replace(/\n/g, '<br/>');
-    
-    // Wrap consecutive list items in ul tags
-    formatted = formatted.replace(/(<li>.*?<\/li>(\s*<br\/>)*)+/g, (match) => {
-      const listItems = match.replace(/<br\/>/g, '');
-      return `<ul class="list-disc list-inside space-y-1 ml-2">${listItems}</ul>`;
-    });
-    
-    return formatted;
   };
 
   const isVisible = link.isActive !== false;

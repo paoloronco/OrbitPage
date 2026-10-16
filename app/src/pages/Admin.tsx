@@ -174,11 +174,7 @@ const Admin = () => {
     if (location.pathname !== path) navigate(path);
   };
 
-  // Check authentication status and setup status on mount.
-  // Use async token verify so a page refresh doesn't clear the session:
-  // the synchronous isAuthenticated() only checks the in-memory cache
-  // (which is wiped on refresh), while authApi.verify() decrypts the token
-  // from localStorage and confirms it with the server.
+  // Restore the persisted token and verify it with the server after a refresh.
   useEffect(() => {
     const checkAuth = async () => {
       const integration = getEditorIntegration();
@@ -494,12 +490,6 @@ const Admin = () => {
     setIsLoggedIn(false);
     setCurrentUser(null);
     setWorkspaceLoaded(false);
-  };
-
-  const handleThemeChange = (newTheme: ThemeConfig) => {
-    setTheme(newTheme);
-    // Apply live changes to admin UI
-    applyTheme(newTheme);
   };
 
   if (isLoading || (isLoggedIn && !workspaceLoaded)) {

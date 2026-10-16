@@ -1,7 +1,7 @@
 import { useDialogAccessibility } from "@/lib/use-dialog-accessibility";
 import type { ShopView } from "./shop-client";
 import { shopRequest } from "@/lib/api-client";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { ProfileSection } from "./ProfileSection";
 import { LinkManager } from "./LinkManager";
 import { LinkData } from "./LinkCard";
@@ -190,7 +190,6 @@ function visualSectionForContent(section: ContentDestination): VisualSiteEditorS
 }
 
 const SELF_HOSTED_SIDEBAR_STORAGE_KEY = "orbitpage.admin.sidebar-collapsed";
-const EMBEDDED_PREVIEW_MEDIA_QUERY = "(min-width: 1121px)";
 const DOCKER_MIGRATION_GUIDE = "https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Docker-Hub-migration.md";
 
 export const AdminView = ({
@@ -234,13 +233,6 @@ export const AdminView = ({
   const [gaSetupOpen, setGaSetupOpen] = useState(false);
   const [updateDialogVersion, setUpdateDialogVersion] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTab>("profile");
-  const [contentSection, setContentSection] = useState<ContentDestination>(() => (
-    getEditorIntegration()?.contentSection
-      || (getEditorIntegration()?.extensions?.shop?.selected ? "shop" : null)
-      || requestedContentSection
-      || contentSectionForTab(requestedTab)
-      || "link"
-  ));
   const [editorIntegration, setEditorIntegration] = useState<EditorIntegration | null>(() => getEditorIntegration());
   const [didPickInitialTab, setDidPickInitialTab] = useState(false);
   const [previewProfile, setPreviewProfile] = useState(profile);
@@ -265,10 +257,6 @@ export const AdminView = ({
   const [visualProfileLayoutCommand, setVisualProfileLayoutCommand] = useState<{ id: number; layout: ProfileLayout; viewport: ProfileLayoutViewport } | null>(null);
   const [visualCardLayoutCommand, setVisualCardLayoutCommand] = useState<{ id: number; layout: CardLayout | null; viewport: ProfileLayoutViewport } | null>(null);
   const [visualLayoutEditing, setVisualLayoutEditing] = useState(false);
-  const [showEmbeddedPreview, setShowEmbeddedPreview] = useState(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
-    return window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY).matches;
-  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem(SELF_HOSTED_SIDEBAR_STORAGE_KEY) === "true";
@@ -312,24 +300,10 @@ export const AdminView = ({
     orbitPageBadgeEditable ? (preference ?? !editorAccess) : true
   );
   useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-    const mediaQuery = window.matchMedia(EMBEDDED_PREVIEW_MEDIA_QUERY);
-    const syncPreviewVisibility = () => setShowEmbeddedPreview(mediaQuery.matches);
-    syncPreviewVisibility();
-    mediaQuery.addEventListener("change", syncPreviewVisibility);
-    return () => mediaQuery.removeEventListener("change", syncPreviewVisibility);
-  }, []);
-
-  useEffect(() => {
     if (!embeddedEditor) return;
     const syncHostedConfig = () => {
       const nextConfig = getEditorIntegration();
       setEditorIntegration(nextConfig);
-      setContentSection((current) => {
-        if (nextConfig?.contentSection) return nextConfig.contentSection;
-        if (nextConfig?.extensions?.shop?.selected) return "shop";
-        return current;
-      });
       if (nextConfig?.extensions?.shop?.selected) {
         setVisualSection("shop");
       } else if (nextConfig && canonicalViewTab(nextConfig.section) === "content" && nextConfig.contentSection) {
@@ -344,7 +318,6 @@ export const AdminView = ({
   }, [embeddedEditor]);
 
   const selectContentSection = (section: ContentDestination) => {
-    setContentSection(section);
     onContentSectionChange?.(section);
     if (!embeddedEditor) return;
     const config = getEditorIntegration();
@@ -496,8 +469,6 @@ export const AdminView = ({
   );
 
   const selectTab = (tab: AdminTab) => {
-    const requestedContentSection = contentSectionForTab(tab);
-    if (requestedContentSection) setContentSection(requestedContentSection);
     const requestedCanonicalTab = canonicalViewTab(tab);
     const canonicalTab = requestedCanonicalTab === "content" ? "profile" : requestedCanonicalTab;
     setActiveTab(canonicalTab);
@@ -539,8 +510,6 @@ export const AdminView = ({
     if (visibleTabs.length === 0) return;
 
     if (currentUser && !didPickInitialTab) {
-      const legacyContentSection = contentSectionForTab(requestedTab);
-      if (canonicalViewTab(requestedTab) === "content") setContentSection(requestedContentSection || legacyContentSection || "link");
       const rawCanonicalRequestedTab = canonicalViewTab(requestedTab);
       const canonicalRequestedTab = rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
       const preferred = visibleTabs.find(tab => tab.value === canonicalRequestedTab)
@@ -559,8 +528,6 @@ export const AdminView = ({
   }, [currentUser, didPickInitialTab, requestedTab, requestedContentSection]);
 
   useEffect(() => {
-    const legacyContentSection = contentSectionForTab(requestedTab);
-    if (canonicalViewTab(requestedTab) === "content") setContentSection(requestedContentSection || legacyContentSection || "link");
     const rawCanonicalRequestedTab = canonicalViewTab(requestedTab);
     const canonicalRequestedTab = rawCanonicalRequestedTab === "content" ? "profile" : rawCanonicalRequestedTab;
     if (!didPickInitialTab || !visibleTabs.some((tab) => tab.value === canonicalRequestedTab)) return;
@@ -599,7 +566,6 @@ export const AdminView = ({
   useEffect(() => {
     if (!requestedEditorSection || embeddedEditor) return;
     setVisualSection(requestedEditorSection === "profile" ? "profile" : visualSectionForContent(requestedEditorSection));
-    if (requestedEditorSection !== "profile") setContentSection(requestedEditorSection);
   }, [requestedEditorSection, embeddedEditor]);
 
   const updateVisualProfileLayout = (layout: ProfileLayout, viewport: ProfileLayoutViewport) => {

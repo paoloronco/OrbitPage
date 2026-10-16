@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, KeyRound, ShieldCheck } from "lucide-react";
-import { authenticateUser, setAuthenticated } from "@/lib/auth";
+import { authenticateUser } from "@/lib/auth";
 import { authApi } from "@/lib/api-client";
 import { OrbitPageBrand } from "./OrbitPageBrand";
 
@@ -39,7 +39,6 @@ export const LoginForm = ({ onLogin }: LoginFormProps) => {
       }
 
       if (('authenticated' in result && result.authenticated) || ('token' in result && result.token)) {
-        setAuthenticated(username);
         onLogin();
       } else {
         setError("Invalid credentials");
