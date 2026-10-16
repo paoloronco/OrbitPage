@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { Type, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";

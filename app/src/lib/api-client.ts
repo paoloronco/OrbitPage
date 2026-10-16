@@ -227,15 +227,6 @@ export interface ApiResponse<T = unknown> {
   revision?: number;
 }
 
-// Auth specific types
-interface AuthSetupResponse extends ApiResponse {
-  isFirstTimeSetup?: boolean;
-  token: string;
-  user?: {
-    username: string;
-  };
-}
-
 export interface LoginResponse extends ApiResponse {
   token?: string;
   requiresTwoFactor?: boolean;
@@ -549,10 +540,6 @@ export const authApi = {
     });
     if (response.token) await setAuthToken(response.token);
     return response;
-  },
-
-  isAuthenticated: (): boolean => {
-    return !!getAuthToken();
   },
 
   reset: async (currentPassword: string): Promise<ApiResponse> => {

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, FileText, Film, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { LinkEditMode } from "@/lib/permissions";
 import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";

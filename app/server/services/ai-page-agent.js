@@ -1280,5 +1280,3 @@ export function aiPageAgentHttpError(error) {
     },
   };
 }
-
-export const AI_PAGE_AGENT_MODELS = [...SUPPORTED_MODELS];
