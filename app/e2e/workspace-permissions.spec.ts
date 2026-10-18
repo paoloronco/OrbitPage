@@ -53,4 +53,18 @@ test('opens saved newsletters from Overview and keeps the composer focused on ed
   await expect(page.getByRole('status', { name: 'Connection working' })).toBeVisible();
   await expect(page.getByText('Verified', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Newsletter settings', { exact: true })).toHaveCount(0);
+  const password = page.locator('input[type=password]');
+  await expect(password).not.toHaveAttribute('required', '');
+  await page.getByLabel('SMTP host', { exact: true }).fill('smtp.changed.example.invalid');
+  await expect(password).toHaveAttribute('required', '');
+  await page.getByLabel('SMTP host', { exact: true }).fill('smtp.example.invalid');
+  await expect(password).not.toHaveAttribute('required', '');
+  let recipient = '';
+  await page.route('**/api/newsletter/settings/test*', async route => {
+    recipient = route.request().postDataJSON().recipient;
+    await route.fulfill({ json: { verifiedAt: '2026-01-01T00:00:00Z' } });
+  });
+  await page.getByRole('button', { name: /test/i }).click();
+  await expect(page.getByText('Connection verified. A test message was sent to sender@example.invalid.')).toBeVisible();
+  expect(recipient).toBe('sender@example.invalid');
 });
