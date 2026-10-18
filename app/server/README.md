@@ -8,6 +8,8 @@ This directory contains the Express backend used by the bundled self-hosted dash
 - `database.js`: SQLite connection, additive migrations, and database helpers.
 - `auth.js`: password hashing, JWT creation, and permission checks.
 - `schemas/`: request validation schemas.
+- `routes/consent-config.js` and `services/consent-config.js`: consent endpoints,
+  legal-policy projection and executable-CMP permission checks.
 - `services/`: AI planning, backup, media, upload, and two-factor services.
 - `*.test.js` and `services/*.test.js`: Vitest backend coverage.
 
