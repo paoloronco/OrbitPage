@@ -7932,6 +7932,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   min-width: 0;
 }
 
+.publish-tools-header.admin-section-actions,
 .admin-theme-preview-context.admin-section-actions {
   display: flex;
   min-height: 58px;
