@@ -60,7 +60,7 @@ date. It records successful authenticated changes as metadata, not a copy of
 page contents. Records stay in SQLite and are included in infrastructure backups;
 recording starts when the feature is installed.
 
-**Account → General** exposes version, instance checks and update actions.
+**Account → General** contains account details, support, public page controls, and account deletion. The second column stays empty in OSS; marketing email preferences belong to SaaS. **Edition → Instance details** exposes version, instance checks, environment variables, and update actions.
 See [Deployment](../../administration/Deployment.md#update-safely) for updates and [Maintenance](../../administration/maintenance.md) for backup, rollback, and removal,
 and [Configuration](../../administration/Configuration.md#dashboard-environment-overrides) before
 changing runtime environment overrides. Restart after saving environment overrides.

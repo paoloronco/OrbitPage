@@ -9,7 +9,7 @@ There are two main types of configuration:
 
 ## Configure from the dashboard (recommended)
 
-Administrators can change optional settings under **Account → General → Instance details → Environment variables**.
+Administrators can change optional settings under **Edition → Instance details → Environment variables**.
 
 Existing values are hidden. Enter a replacement, or select **Use host** to remove a dashboard override. Save with your current password, then restart the instance to apply the changes.
 

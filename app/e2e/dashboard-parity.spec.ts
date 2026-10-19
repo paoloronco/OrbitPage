@@ -18,6 +18,9 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   const plan = page.getByTestId('open-source-plan');
   await expect(plan.getByRole('heading', { name: 'OrbitPage Open Source', exact: true })).toBeVisible();
   await expect(plan.locator('.oss-plan-feature')).toHaveCount(4);
+  await expect(plan.getByRole('heading', { name: 'Instance details', exact: true })).toBeVisible();
+  await expect(plan.getByRole('button', { name: 'Environment variables…' })).toBeEnabled();
+  await page.screenshot({ path: 'output/playwright/oss-edition-desktop.png', fullPage: true });
   await expect(plan.getByText('No subscription or paid feature tiers.', { exact: false })).toBeVisible();
   await expect(plan.getByRole('link', { name: 'Open account settings' })).toHaveAttribute('href', '/en-US/dashboard/account/general');
   await page.getByLabel('Language', { exact: true }).selectOption('it');
@@ -28,9 +31,11 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   await expect(plan.getByRole('heading', { name: 'Cosa gestisci tu', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Pagina pubblica', exact: true })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#admin-dashboard-primary-navigation')).toBeHidden();
   await expect(plan).toHaveCSS('gap', '12px');
   await expect(plan.locator('.oss-plan-feature-list')).toHaveCSS('grid-template-columns', /^\d+(\.\d+)?px$/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  await page.screenshot({ path: 'output/playwright/oss-edition-mobile.png', fullPage: true });
   const publicUrl = await page.request.get('/api/public-url?locale=it');
   expect((await publicUrl.json()).publicUrl).toMatch(/^http:\/\/localhost:\d+\/$/);
   const alias = await page.request.get('/it-IT?source=bookmark', { maxRedirects: 0 });
@@ -73,7 +78,8 @@ test('opens dashboard subsections directly and keeps tabs, history and menu draf
     ['newsletter/campaigns', '.newsletter-workspace'],
     ['newsletter/subscribers', '.newsletter-workspace'],
     ['newsletter/settings', '.newsletter-workspace'],
-    ['account/general', '.account-instance-card'],
+    ['account/general', '.oss-account-details-card'],
+    ['plan', '.account-instance-card'],
     ['account/security', '.oss-account-mfa-card'],
     ...['legal', 'payments', 'design', 'products', 'orders', 'customers'].map(view => [`editor/shop/${view}`, '.visual-site-editor__inspector']),
   ]) {
@@ -108,6 +114,26 @@ test('opens dashboard subsections directly and keeps tabs, history and menu draf
   await expect(page.locator('.admin-dashboard-shell')).toHaveCount(0);
 });
 
+test('keeps account cards in SaaS order with an empty second column and no instance controls', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openAuthenticatedAdmin(page);
+  await openAdminSection(page, 'Account');
+  const account = page.locator('.account-workspace');
+  await expect(account.locator('.account-panel')).toHaveCount(1);
+  await expect(account.locator('.account-instance-card, .account-marketing-card')).toHaveCount(0);
+  await expect(account.getByRole('heading', { level: 2 })).toHaveText(['Account details', 'Support', 'Your public OrbitPage', 'Delete account']);
+  const grid = (await account.locator('.account-general-info').boundingBox())!;
+  const details = (await account.locator('.oss-account-details-card').boundingBox())!;
+  expect(Math.abs(details.width * 2 + 18 - grid.width)).toBeLessThanOrEqual(1);
+  expect(details.x).toBe(grid.x);
+  await page.screenshot({ path: 'output/playwright/oss-account-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('#admin-dashboard-primary-navigation')).toBeHidden();
+  await expect(account.locator('.account-general-info')).toHaveCSS('grid-template-columns', /^\d+(\.\d+)?px$/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'output/playwright/oss-account-mobile.png', fullPage: true });
+});
+
 test('checks OSS updates and explains when the host update service is not enabled', async ({ page }) => {
   let tag = 'v99.0.0';
   let status = 200;
@@ -116,9 +142,8 @@ test('checks OSS updates and explains when the host update service is not enable
     body: JSON.stringify({ tag_name: tag, draft: false, prerelease: false }),
   }));
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('button', { name: 'Edition', exact: true }).click();
   const instance = page.locator('.account-instance-card');
-  const details = page.locator('.oss-account-details-card');
   const currentVersion = await instance.locator('.account-detail-row').filter({ hasText: 'Current version' }).locator('dd').innerText();
   expect(currentVersion).toMatch(/^v\d+\.\d+\.\d+$/);
   const shell = await page.request.get('/en-US/dashboard/account');
@@ -130,23 +155,14 @@ test('checks OSS updates and explains when the host update service is not enable
   }
   await expect(page.getByRole('heading', { name: "We couldn't open this page." })).toBeHidden();
   await page.evaluate(() => document.fonts.ready);
-  const initialCards = await Promise.all([details.boundingBox(), instance.boundingBox()]);
-  expect(initialCards.every(Boolean)).toBe(true);
-  for (let index = 0; index < 4; index += 1) {
-    const rows = await Promise.all([details, instance].map(card => card.locator('.account-detail-row').nth(index).boundingBox()));
-    expect(Math.abs(rows[0]!.y - rows[1]!.y)).toBeLessThanOrEqual(1);
-    expect(Math.abs(rows[0]!.height - rows[1]!.height)).toBeLessThanOrEqual(1);
-  }
-  const supportPosition = () => page.locator('.oss-account-support-card').evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
-  const initialSupport = await supportPosition();
+  const initialHeight = (await instance.boundingBox())!.height;
   const check = instance.getByRole('button', { name: 'Check for updates', exact: true });
   const install = instance.getByRole('button', { name: 'Install update…', exact: true });
   await expect(install).toBeDisabled();
   await check.click();
   await expect(instance.getByRole('status')).toContainText('Update available: v99.0.0');
   await expect(instance.getByRole('link', { name: 'Release notes' })).toHaveAttribute('href', 'https://github.com/paoloronco/OrbitPage/releases/tag/v99.0.0');
-  const updatedSupport = await supportPosition();
-  expect(Math.abs(updatedSupport - initialSupport)).toBeLessThanOrEqual(1);
+  expect(Math.abs((await instance.boundingBox())!.height - initialHeight)).toBeLessThanOrEqual(1);
   await install.click();
   const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
   await expect(dialog).toBeVisible();
@@ -188,7 +204,7 @@ test('reconnects after an update restart and transient 401, then reloads once wi
     contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ tag_name: latestTag, draft: false, prerelease: false }),
   }));
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('button', { name: 'Edition', exact: true }).click();
   await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
   await page.getByRole('button', { name: 'Install update…', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });
@@ -207,11 +223,16 @@ test('reconnects after an update restart and transient 401, then reloads once wi
   await dialog.getByLabel('Admin dashboard password', { exact: true }).fill('Current123!');
   await dialog.getByRole('button', { name: 'Install update', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Checking the release');
+  await expect(dialog.getByRole('status')).toHaveClass('sr-only');
+  await expect(dialog.locator('.account-update-status, progress')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeHidden();
-  job = { ...job, state: 'running', logs: '[update] Downloading image\n[update] Backing up persistent data\nBackup created\n[update] Checking application health' };
+  job = { ...job, state: 'running', logs: '[update] Downloading image\n[update] Backing up persistent data\nBackup created\n' + 'Downloading image layer\n'.repeat(30) + '[update] Checking application health' };
   await expect(dialog.getByLabel('Update logs', { exact: true })).toContainText('Backup created', { timeout: 10000 });
+  await expect(dialog.locator('.account-update-status, progress')).toHaveCount(0);
+  await expect.poll(() => dialog.getByLabel('Update logs', { exact: true }).evaluate(element =>
+    element.scrollHeight > element.clientHeight && element.scrollHeight - element.clientHeight - element.scrollTop <= 1)).toBe(true);
   await page.screenshot({ path: 'output/playwright/oss-update-running.png' });
   disconnected = true;
   await expect(dialog.getByRole('alert')).toContainText('Waiting for the server', { timeout: 10000 });
@@ -237,7 +258,7 @@ test('reconnects after an update restart and transient 401, then reloads once wi
   expect(dashboardLoads).toBe(loadsBeforeCompletion + 1);
   await page.getByRole('button', { name: 'Theme', exact: true }).click();
   latestTag = 'v100.0.0'; rejectInstall = true;
-  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('button', { name: 'Edition', exact: true }).click();
   await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
   await page.getByRole('button', { name: 'Install update…', exact: true }).click();
   await dialog.getByLabel('Admin dashboard password', { exact: true }).fill('Current123!');
@@ -284,7 +305,7 @@ test('does not claim installation when the start is rejected or cannot be confir
     body: JSON.stringify({ tag_name: 'v99.0.0', draft: false, prerelease: false }),
   }));
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('button', { name: 'Edition', exact: true }).click();
   await page.getByRole('button', { name: 'Check for updates', exact: true }).click();
   await page.getByRole('button', { name: 'Install update…', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Install OrbitPage update' });

@@ -35,7 +35,7 @@ test('INFO shows saved service status, honest health results and support links o
 
 test('shows installation diagnostics and edits masked runtime variables', async ({ page }) => {
   await openAuthenticatedAdmin(page);
-  await page.goto('/en-US/dashboard/account/general');
+  await page.goto('/en-US/dashboard/plan');
   const card = page.locator('.account-instance-card');
   await expect(card.getByText('Database path')).toBeVisible();
   await expect(card.getByText('DATA_DIR', { exact: true })).toBeVisible();

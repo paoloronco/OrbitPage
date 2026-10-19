@@ -61,16 +61,16 @@ Team and Account share the navigation below. The illustration shows the self-hos
 | Workspace | Tools | URL |
 | --- | --- | --- |
 | **Team** | Users, roles, permissions, and personal API tokens | `/dashboard/team` |
-| **Account → General** | Account and page or installation information | `/dashboard/account/general` |
+| **Account → General** | Account details, support, and public page controls | `/dashboard/account/general` |
 | **Account → Security** | Your password, authenticator, and recovery codes | `/dashboard/account/security` |
 | **Account → Audit log** | Successful changes, with user, action, date, and text filters; permission required | `/dashboard/account/audit` |
 
 | Area | Open Source | SaaS |
 | --- | --- | --- |
 | Team | Local users and credentials belong to the installation. | Invite collaborators with their own accounts and grant access to the selected workspace. |
-| Account → General | Instance version, health/storage details, updates, environment overrides and public URL. | Account details and page controls. OrbitPage manages the infrastructure. |
+| Account → General | Account details, support and page controls. The second column stays empty. | Account details and page controls. OrbitPage manages the infrastructure. |
 | Account → Audit log | Administrators can review successful changes. | Owners, administrators and custom members with member-visibility permission can review workspace events. |
-| Edition / Plan | **Edition**, `/dashboard/plan`, explains self-hosted features and server responsibilities. | **Plan**, `/dashboard/billing`, manages the subscription, usage, billing and custom domains; owner controls require ownership. |
+| Edition / Plan | **Edition**, `/dashboard/plan`, contains instance diagnostics, updates, environment overrides, self-hosted features and server responsibilities. | **Plan**, `/dashboard/billing`, manages the subscription, usage, billing and custom domains; owner controls require ownership. |
 
 See [Account and team](./sections/account-and-team.md) for access controls. Self-hosted administrators also use [Configuration](../administration/Configuration.md#dashboard-environment-overrides) and [Updates](../administration/Deployment.md#update-safely). SaaS owners use [Plan and billing](https://orbitpage.com/en-US/docs/billing) and [Security](https://orbitpage.com/en-US/docs/account-and-security).
 

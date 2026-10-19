@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { applicationUpdatesApi, type ApplicationUpdateStatus } from '@/lib/api-client';
 import { useAppI18n } from '@/lib/i18n';
 
-const UPDATE_GUIDE = 'https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/Deployment.md#web-updates';
+const UPDATE_GUIDE = 'https://github.com/paoloronco/OrbitPage/blob/main/docs/wiki/administration/Deployment.md#web-updates';
 
 export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }: {
   requestedVersion: string | null; canInstall: boolean; onClose: () => void;
@@ -107,7 +107,7 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
     <DialogContent dirty={active || Boolean(password)} className={`orbitpage-admin oss-account-delete-dialog account-update-dialog${active ? ' account-update-dialog--locked' : ''}`} overlayClassName="oss-account-delete-overlay" aria-describedby={undefined}
       onEscapeKeyDown={event => { if (active) event.preventDefault(); }} onPointerDownOutside={event => { if (active) event.preventDefault(); }}>
       <DialogHeader className="account-delete-header"><DialogTitle>{tr('Install OrbitPage update', 'Installa l’aggiornamento di OrbitPage')}</DialogTitle></DialogHeader>
-      <div className={`account-update-status${job?.state === 'failed' ? ' account-update-status--failed' : ''}`} role="status" aria-live="polite">
+      <div className={active ? 'sr-only' : `account-update-status${job?.state === 'failed' ? ' account-update-status--failed' : ''}`} role="status" aria-live="polite">
         <strong>{reloading ? tr('Update complete — reopening your dashboard…', 'Aggiornamento completato — riapertura della dashboard…')
           : connectionError && wasActive.current && !uncertain ? tr('Restarting OrbitPage — reconnecting automatically…', 'Riavvio di OrbitPage — riconnessione automatica…')
           : uncertain ? tr('Connection lost — update status unknown', 'Connessione persa — stato aggiornamento sconosciuto')
@@ -121,8 +121,6 @@ export function SelfHostedUpdateDialog({ requestedVersion, canInstall, onClose }
           : status?.enabled ? tr(`Ready to install v${requestedVersion}`, `Pronto per installare v${requestedVersion}`)
           : status ? tr('Web updates are not enabled', 'Gli aggiornamenti web non sono abilitati')
           : tr('Connecting to the host updater…', 'Connessione all’updater sul server…')}</strong>
-        {job?.state === 'running' && job.logs.includes('[update] ') && <span>{job.logs.split('\n').filter(line => line.startsWith('[update] ')).at(-1)?.slice(9)}</span>}
-        {(starting || ['queued', 'running'].includes(job?.state || '')) && !uncertain && <progress aria-label={tr('Update in progress', 'Aggiornamento in corso')} />}
       </div>
       {connectionError && <p role="alert">{uncertain
         ? tr('The result could not be confirmed. Check the updater service on the server; the dashboard remains locked while the last known update is active.', 'Non è possibile confermare l’esito. Controlla il servizio updater sul server; la dashboard resta bloccata mentre l’ultimo stato noto indica un aggiornamento attivo.')

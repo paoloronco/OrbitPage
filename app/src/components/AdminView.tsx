@@ -1114,8 +1114,6 @@ export const AdminView = ({
                 </nav>
                 {accountView === "general" ? (
                   <SelfHostedAccountActions
-                    onInstallUpdate={setUpdateDialogVersion}
-                    version={appVersion}
                     canDeleteInstallation={canManageUsers}
                     publicPageHref={publicPageHref}
                     role={currentUser?.role || "-"}
@@ -1142,7 +1140,7 @@ export const AdminView = ({
 
           {!hasEditorIntegration && (
             <TabsContent value="plan" className="admin-tab-content">
-              <OpenSourcePlan />
+              <OpenSourcePlan version={appVersion} canManageInstance={canManageUsers} onInstallUpdate={setUpdateDialogVersion} />
             </TabsContent>
           )}
 

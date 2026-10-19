@@ -185,7 +185,7 @@ Edit <code>app/.env</code> if needed; set `HOST=0.0.0.0` for LAN access.
   <img src="./docs/screenshots/orbitpage-update-controls.png" alt="Dashboard buttons: Check for updates and Install update" width="486" />
 </p>
 
-Open **Dashboard → Account → General → Instance details** and click **Check for updates**. When a release is available, click **Install update…** as an administrator. The dialog installs it through the host update service or shows terminal instructions if the service is unavailable.
+Open **Dashboard → Edition → Instance details** and click **Check for updates**. When a release is available, click **Install update…** as an administrator. The dialog installs it through the host update service or shows terminal instructions if the service is unavailable.
 
 ### Updating OrbitPage
 
@@ -282,8 +282,8 @@ The dashboard exports selected application data as JSON, with an optional **Incl
 | **Privacy** | Consent banner, legal policies, and external CMP settings | <code>/dashboard/privacy</code> |
 | **Newsletter** | SMTP settings, subscribers, campaigns, scheduling, and reports | <code>/dashboard/newsletter/overview</code> |
 | **Team** | Users, roles, permissions, and personal API tokens | <code>/dashboard/team</code> |
-| **Account** | Instance details, updates, environment settings, password, TOTP, and admin audit log | <code>/dashboard/account/general</code> |
-| **Edition** | Self-hosted features and server responsibilities | <code>/dashboard/plan</code> |
+| **Account** | Account details, public page controls, password, TOTP, and admin audit log | <code>/dashboard/account/general</code> |
+| **Edition** | Instance details, updates, environment settings, self-hosted features, and server responsibilities | <code>/dashboard/plan</code> |
 
 Dashboard URLs include the interface language, for example <code>/it-IT/dashboard/account/general</code>. The paths above omit that prefix for readability. Navigation shows only the tools your role can access.
 
@@ -315,7 +315,7 @@ Common runtime settings:
 | <code>ORBITPAGE_TRUST_PROXY</code> | Disabled | Trusted proxy IPs or CIDRs; see the configuration reference before enabling |
 | <code>BASE_PATH</code> | Empty | Mount path when serving under a subdirectory |
 
-Administrators can change instance settings under **Account → General → Instance details → Environment variables**.
+Administrators can change instance settings under **Edition → Instance details → Environment variables**.
 
 Newsletters require SMTP configuration. See the [newsletter guide](./docs/wiki/dashboard/sections/newsletters.md) for setup and the [Configuration reference](./docs/wiki/administration/Configuration.md) for all variables, defaults, and examples.
 

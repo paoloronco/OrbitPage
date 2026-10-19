@@ -350,7 +350,9 @@ Use your original settings if they differ. Removing the container keeps its name
 
 ### Web updates
 
-In **Account → General → Instance details**, click **Check for updates**, then **Install update…**. The Linux/Proxmox installer enables the host update service for official `latest` images on systemd hosts. Without that service, the dialog shows terminal instructions.
+In **Edition → Instance details**, click **Check for updates**, then **Install update…**. The Linux/Proxmox installer enables the host update service for official `latest` images on systemd hosts. Without that service, the dialog shows terminal instructions.
+
+While the update runs, the dialog shows the automatically scrolling update log. Connection warnings and errors remain visible; the result appears when the update finishes.
 
 For an existing Docker Run or Compose container, install the service with:
 

@@ -3,10 +3,13 @@ import { useAppI18n } from "@/lib/i18n";
 import { adminSubsectionPath } from "@/lib/admin-navigation";
 import { publicLocaleSlug } from "@/lib/public-routing";
 import { withBasePath } from "@/lib/base-path";
+import { SelfHostedInstanceDetails } from "./SelfHostedInstanceDetails";
 
 const repositoryUrl = "https://github.com/paoloronco/OrbitPage";
 
-export function OpenSourcePlan() {
+export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: {
+  version: string; canManageInstance: boolean; onInstallUpdate: (version: string) => void;
+}) {
   const { locale, tr } = useAppI18n();
   const included = [
     { title: tr("Pages and design", "Pagine e design"), detail: tr("Profiles, content blocks, menus, extra pages and themes.", "Profili, blocchi, menu, pagine aggiuntive e temi.") },
@@ -23,40 +26,43 @@ export function OpenSourcePlan() {
   return (
     <div className="oss-plan-layout" data-testid="open-source-plan">
       <section className="oss-plan-intro" aria-labelledby="oss-plan-title">
-        <div className="oss-plan-intro-copy">
+        <div>
           <p className="oss-plan-kicker">{tr("Current edition", "Edizione attuale")}</p>
-          <h2 id="oss-plan-title">OrbitPage Open Source</h2>
+          <div className="oss-plan-title-row"><h2 id="oss-plan-title">OrbitPage Open Source</h2><span className="oss-plan-badge">{tr("Free · MIT license", "Gratuito · licenza MIT")}</span></div>
           <p>{tr("No subscription or paid feature tiers. You manage the app, its data and any services you connect.", "Nessun abbonamento né funzioni a pagamento. Gestisci tu l'app, i dati e i servizi che colleghi.")}</p>
         </div>
-        <dl className="oss-plan-summary">
-          <div><dt>{tr("Software", "Software")}</dt><dd>{tr("Free · MIT license", "Gratuito · licenza MIT")}</dd></div>
-          <div><dt>{tr("Hosting", "Hosting")}</dt><dd>{tr("Managed by you", "Gestito da te")}</dd></div>
-        </dl>
+        <div className="oss-plan-resources">
+          <a className="oss-plan-text-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer">{tr("Source code", "Codice sorgente")}<ArrowUpRight aria-hidden="true" size={15} /></a>
+          <a className="oss-plan-text-link" href={`${repositoryUrl}/blob/main/docs/wiki/administration/Deployment.md`} target="_blank" rel="noopener noreferrer">{tr("Deployment guide", "Guida all'installazione")}<ArrowUpRight aria-hidden="true" size={15} /></a>
+        </div>
       </section>
 
       <div className="oss-plan-columns">
-        <section className="oss-plan-panel oss-plan-included" aria-labelledby="oss-plan-included-title">
-          <div className="oss-plan-section-heading">
-            <h3 id="oss-plan-included-title">{tr("Included here", "Già incluso")}</h3>
-          </div>
-          <ul className="oss-plan-feature-list">
-            {included.map(({ title, detail }) => <li className="oss-plan-feature" key={title}><strong>{title}</strong><span>{detail}</span></li>)}
-          </ul>
-          <a className="oss-plan-text-link oss-plan-source-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer">{tr("Source code", "Codice sorgente")}<ArrowUpRight aria-hidden="true" size={15} /></a>
-        </section>
+        <div className="oss-account-layout account-workspace oss-plan-instance">
+          <SelfHostedInstanceDetails version={version} canManageInstance={canManageInstance} onInstallUpdate={onInstallUpdate} />
+        </div>
+        <div className="oss-plan-sidebar">
+          <section className="oss-plan-panel oss-plan-included" aria-labelledby="oss-plan-included-title">
+            <div className="oss-plan-section-heading">
+              <h3 id="oss-plan-included-title">{tr("Included here", "Già incluso")}</h3>
+            </div>
+            <ul className="oss-plan-feature-list">
+              {included.map(({ title, detail }) => <li className="oss-plan-feature" key={title}><strong>{title}</strong><span>{detail}</span></li>)}
+            </ul>
+          </section>
 
-        <section className="oss-plan-panel oss-plan-management" aria-labelledby="oss-plan-management-title">
-          <div className="oss-plan-section-heading">
-            <h3 id="oss-plan-management-title">{tr("What you manage", "Cosa gestisci tu")}</h3>
-          </div>
-          <dl className="oss-plan-responsibilities">
-            {responsibilities.map(({ title, detail }) => <div key={title}><dt>{title}</dt><dd>{detail}</dd></div>)}
-          </dl>
-          <div className="oss-plan-links">
-            <a className="oss-plan-primary-link" href={withBasePath(adminSubsectionPath("account", "general", locale))}>{tr("Open account settings", "Apri le impostazioni account")}<ArrowRight aria-hidden="true" size={16} /></a>
-            <a className="oss-plan-text-link" href={`${repositoryUrl}/blob/main/docs/wiki/Deployment.md`} target="_blank" rel="noopener noreferrer">{tr("Deployment guide", "Guida all'installazione")}<ArrowUpRight aria-hidden="true" size={15} /></a>
-          </div>
-        </section>
+          <section className="oss-plan-panel oss-plan-management" aria-labelledby="oss-plan-management-title">
+            <div className="oss-plan-section-heading">
+              <h3 id="oss-plan-management-title">{tr("What you manage", "Cosa gestisci tu")}</h3>
+            </div>
+            <dl className="oss-plan-responsibilities">
+              {responsibilities.map(({ title, detail }) => <div key={title}><dt>{title}</dt><dd>{detail}</dd></div>)}
+            </dl>
+            <div className="oss-plan-links">
+              <a className="oss-plan-primary-link" href={withBasePath(adminSubsectionPath("account", "general", locale))}>{tr("Open account settings", "Apri le impostazioni account")}<ArrowRight aria-hidden="true" size={16} /></a>
+            </div>
+          </section>
+        </div>
       </div>
 
       <footer className="oss-plan-footer">
