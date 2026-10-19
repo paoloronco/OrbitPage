@@ -80,6 +80,17 @@ describe('consentManager Google Consent Mode v2', () => {
     });
   });
 
+  it('notifies already mounted map previews when the public consent configuration becomes available', async () => {
+    const { consentManager } = await import('./consent-manager');
+    const states: boolean[] = [];
+    const off = consentManager.onConsentChange(() => states.push(consentManager.isGranted('preferences')));
+    consentManager.init(hardcodedConfig);
+    consentManager.savePreferences({ preferences: true });
+    consentManager.init(hardcodedConfig);
+    expect(states).toEqual([false, true, true]);
+    off();
+  });
+
   it('updates Consent Mode v2 to granted when all consent is accepted', async () => {
     const { consentManager } = await import('./consent-manager');
 

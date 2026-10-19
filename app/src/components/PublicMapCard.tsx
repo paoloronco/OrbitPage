@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import type { LinkData } from "./LinkCard";
 import { getMapData } from "@/lib/link-blocks";
-import { trackPublicLinkClick } from "@/lib/public-runtime";
+import { hasStaticPublicSnapshot, trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, MapPinned, Navigation, ShieldCheck } from "lucide-react";
 import { consentManager } from "@/lib/consent-manager";
 import { getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent } from "@/lib/public-block-style";
@@ -49,9 +49,11 @@ const RealMapPreview = ({ src, label }: { src: string; label: string }) => (
 );
 
 export const PublicMapCard = ({ link }: PublicMapCardProps) => {
-  const [mapConsent, setMapConsent] = useState(() => consentManager.isGranted("preferences"));
+  const [mapConsent, setMapConsent] = useState(() => consentManager.isInitialized() && consentManager.isGranted("preferences"));
   useEffect(() => {
-    const syncConsent = () => setMapConsent(consentManager.isGranted("preferences"));
+    const syncConsent = () => setMapConsent(
+      (!hasStaticPublicSnapshot() || consentManager.isInitialized()) && consentManager.isGranted("preferences"),
+    );
     syncConsent();
     return consentManager.onConsentChange(syncConsent);
   }, []);

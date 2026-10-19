@@ -231,6 +231,7 @@ class ConsentManager {
     this.initialized = true;
     // Immediately fire any scripts registered before init() was called
     this._dispatchPendingScripts();
+    this._notifyListeners();
   }
 
   /** Whether init() has been called at least once */
