@@ -259,14 +259,14 @@ test("Visual editor keeps mobile navigation and destinations explicit", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await openAuthenticatedAdmin(page);
 
-  const topbarPublicPage = page.locator(".admin-dashboard-mobile-public-page");
-  await expect(topbarPublicPage).toBeVisible();
-  await expect(topbarPublicPage).toHaveAccessibleName("Public page");
-  const topbarPublicPageBounds = await topbarPublicPage.boundingBox();
-  expect(topbarPublicPageBounds).not.toBeNull();
-  expect(topbarPublicPageBounds!.height).toBeGreaterThanOrEqual(44);
+  const publicPage = page.locator(".visual-site-editor__preview-controls .admin-section-public-page");
+  await expect(publicPage).toBeVisible();
+  await expect(publicPage).toHaveAccessibleName("Public page");
+  const publicPageBounds = await publicPage.boundingBox();
+  expect(publicPageBounds).not.toBeNull();
+  expect(publicPageBounds!.height).toBeGreaterThanOrEqual(44);
 
-  await expect(page.locator(".admin-dashboard-header-public-page")).toBeHidden();
+  await expect(page.locator(".admin-dashboard-header, .admin-dashboard-mobile-public-page")).toHaveCount(0);
   await expect(page.locator('[data-preview-device="mobile"]')).toBeVisible();
   await page.getByRole("button", { name: "Open navigation" }).click();
 
@@ -288,7 +288,7 @@ test("Visual editor keeps mobile navigation and destinations explicit", async ({
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
 
   await page.setViewportSize({ width: 320, height: 740 });
-  await expect(topbarPublicPage).toBeVisible();
+  await expect(publicPage).toBeVisible();
   await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
   const compactOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(compactOverflow).toBeLessThanOrEqual(1);

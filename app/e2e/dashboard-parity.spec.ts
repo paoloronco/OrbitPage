@@ -26,7 +26,7 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   await expect(plan.getByRole('link', { name: 'Scopri OrbitPage SaaS' })).toHaveAttribute('href', 'https://orbitpage.com/it-IT/pricing');
   await page.reload();
   await expect(plan.getByRole('heading', { name: 'Cosa gestisci tu', exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Pagina pubblica', exact: true })).toHaveAttribute('href', /^http:\/\/localhost:\d+\/$/);
+  await expect(page.getByRole('link', { name: 'Pagina pubblica', exact: true })).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(plan).toHaveCSS('gap', '12px');
   await expect(plan.locator('.oss-plan-feature-list')).toHaveCSS('grid-template-columns', /^\d+(\.\d+)?px$/);
@@ -344,7 +344,7 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('width', '30px');
   await expect(page.locator('.orbitpage-dashboard-brand img')).toHaveCSS('height', '30px');
   await expect(page.locator('.admin-dashboard-logo-copy')).toHaveCSS('width', '125px');
-  await expect(page.locator('.admin-dashboard-header')).toHaveCSS('min-height', '92px');
+  await expect(page.locator('.admin-dashboard-header')).toHaveCount(0);
 
   const language = page.locator('.admin-dashboard-language');
   await expect(language).toHaveCSS('height', '36px');
@@ -642,12 +642,12 @@ test('keeps product labels shared with SaaS without repeating localized section 
   await expect(page.getByRole('button', { name: 'Editor sito', exact: true })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Sezioni del sito' }).getByRole('button', { name: 'Contenuti', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Theme', exact: true })).toBeVisible();
-  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Editor sito');
-  await expect(page.locator('.admin-dashboard-header h1')).toHaveClass('sr-only');
+  await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Editor sito');
+  await expect(page.locator('.admin-dashboard-main > h1')).toHaveClass('sr-only');
   await expect(page.getByText('Modifica identità e contenuti direttamente sulla pagina reale.', { exact: true })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Team', exact: true }).click();
-  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Team');
+  await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Team');
   await expect(page.getByText("Assegna a ogni collaboratore solo l'accesso necessario.", { exact: true })).toHaveCount(0);
   const members = page.locator('.team-overview-panel');
   const tokens = page.locator('.account-api-token-panel');
@@ -666,6 +666,6 @@ test('keeps product labels shared with SaaS without repeating localized section 
   await page.setViewportSize({ width: 1280, height: 720 });
 
   await page.getByRole('button', { name: 'Account', exact: true }).click();
-  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Account');
+  await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Account');
   await expect(page.getByText('Gestisci identità, sicurezza e workspace attivo.', { exact: true })).toHaveCount(0);
 });

@@ -14,7 +14,7 @@ for (const width of [390, 768, 1440]) {
     for (const section of ['Page', 'Content', 'Menu', 'Shop', 'Pages', 'AI Assistant', 'Theme', 'Publish', 'Backup', 'Analytics', 'Privacy', 'Newsletter', 'Team', 'Account', 'Edition']) {
       await openAdminSection(page, section);
       if (width < 768) await expect(page.locator('.admin-dashboard-nav-stack')).toBeHidden();
-      await expect(page.locator('.admin-dashboard-header h1')).toHaveClass('sr-only');
+      await expect(page.locator('.admin-dashboard-main > h1')).toHaveClass('sr-only');
       await expect(page.locator('.admin-dashboard-section-description')).toHaveCount(0);
       const panel = { Menu: '.menu-editor-stack', Theme: '.admin-theme-customizer', Newsletter: '.newsletter-workspace' }[section];
       if (panel) await expect(page.locator(panel)).toBeVisible();

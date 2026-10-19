@@ -6466,8 +6466,9 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 @media (max-width: 600px) {
   .orbitpage-admin .admin-section-public-page {
-    width: 40px;
-    min-width: 40px;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 0;
     font-size: 0;
   }
