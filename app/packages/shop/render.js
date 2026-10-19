@@ -116,6 +116,7 @@ export function renderShopHtml(input) {
     const sellerNotice = appearance.sellerType === "private"
         ? "I understand that the page owner is the seller and has declared they are not a trader. EU consumer protection rights do not apply to this contract."
         : "I understand that the page owner is the seller. Any seller policies shown on this page apply; my statutory rights are not waived.";
+    const productCoverUrl = (product) => (input.previewOnly ? input.previewCoverUrls?.[product.productId] : undefined) || (product.coverKey ? `${input.coverUrlPrefix}${product.coverKey}` : null);
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "ItemList",
@@ -130,6 +131,7 @@ export function renderShopHtml(input) {
                 name: product.title,
                 description: product.description,
                 url: input.canonicalUrl,
+                image: productCoverUrl(product) ? new URL(productCoverUrl(product), input.canonicalUrl).href : undefined,
                 offers: {
                     "@type": "Offer",
                     priceCurrency: (product.currency || "eur").toUpperCase(),
@@ -146,7 +148,7 @@ export function renderShopHtml(input) {
         const sessionsLabel = sessionsIncluded === 1
             ? tr("1 session included", "1 sessione inclusa")
             : tr("{count} sessions included", "{count} sessioni incluse").replaceAll("{count}", String(sessionsIncluded));
-        const coverUrl = (input.previewOnly ? input.previewCoverUrls?.[product.productId] : undefined) || (product.coverKey ? `${input.coverUrlPrefix}${product.coverKey}` : null);
+        const coverUrl = productCoverUrl(product);
         const cover = coverUrl ? `<img class="product-cover" alt="" loading="lazy" src="${escapeHtml(coverUrl)}">` : "";
         return `
     <article class="product ${coverUrl ? "has-cover" : "no-cover"} effect-${cardStyle.surfaceEffect} align-${cardStyle.alignment}" data-product-dialog="product-${escapeHtml(product.productId)}" data-search="${escapeHtml([product.title, product.summary, product.description].filter(Boolean).join(" "))}" style="--product-bg:${cardStyle.backgroundColor || design.cardBackground};--product-ink:${cardStyle.textColor || design.cardTextColor}">

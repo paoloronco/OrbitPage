@@ -35,6 +35,21 @@ describe('self-hosted shared Shop contracts', () => {
     expect(renderShopHtml({ ...input, previewOnly: true })).not.toMatch(/href="[^"]*\/shop\/legal/);
   });
 
+  it('uses the displayed product covers as absolute structured-data images', () => {
+    const fixture = { productId: 'guide', title: 'Guide', description: 'Download details', type: 'digital', priceCents: 1250, coverKey: 'guide.webp', cardStyle: {} };
+    const input = { title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: normalizeShopAppearance({}), products: [fixture], coverUrlPrefix: '/covers/', apiBaseUrl: '', newsletterEndpoint: '' };
+    for (const [overrides, image] of [
+      [{}, 'https://studio.example.test/covers/guide.webp'],
+      [{ previewOnly: true, previewCoverUrls: { guide: '/showcase/guide.webp' } }, 'https://studio.example.test/showcase/guide.webp'],
+      [{ products: [{ ...fixture, coverKey: null }] }, undefined],
+    ]) {
+      const html = renderShopHtml({ ...input, ...overrides });
+      const data = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+      expect(data.itemListElement[0].item.image).toBe(image);
+      if (image) expect(html).toContain(`src="${new URL(image).pathname}"`);
+    }
+  });
+
   it.each(['', '+39 011 1234567'])('shows only the explicitly configured seller phone in Shop and order emails (%s)', phone => {
     const settings = normalizeShopAppearance({ sellerName: 'Fictional Studio', sellerPhone: phone });
     const html = renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: settings, products: [], apiBaseUrl: '/api/shop', newsletterEndpoint: '/api/newsletter', coverUrlPrefix: '/shop/covers/' });
