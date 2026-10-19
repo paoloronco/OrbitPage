@@ -68,6 +68,7 @@ interface VisualSiteEditorProps {
   onLayoutEditingChange: (editing: boolean) => void;
   previewHint?: string;
   renderPreview?: (device: PreviewDevice) => ReactNode;
+  headerAction?: ReactNode;
 }
 
 export function VisualSiteEditor({
@@ -92,6 +93,7 @@ export function VisualSiteEditor({
   onLayoutEditingChange,
   previewHint,
   renderPreview,
+  headerAction,
 }: VisualSiteEditorProps) {
   const { tr } = useAppI18n();
   const [device, setDevice] = useState<PreviewDevice>(() => (
@@ -194,6 +196,7 @@ export function VisualSiteEditor({
             </button>
           )}
           {previewDeviceToggle}
+          {headerAction}
         </div>}
       </nav>
 
@@ -213,6 +216,7 @@ export function VisualSiteEditor({
         {section === "shop" && <div data-orbitpage-shop-preview-device-slot />}
         {section === "menu" && <div data-orbitpage-menu-preview-device-slot />}
         {previewDeviceToggle}
+        {headerAction}
       </div>}
 
       {layoutEditing && (

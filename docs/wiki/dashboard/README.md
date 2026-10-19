@@ -36,6 +36,8 @@ The **Shop** section sells digital products and services through the owner's Str
 
 See [Content and design](./sections/content-and-design.md) for editing controls, [External modules](../integrations/external-modules.md) for connected services and [AI Assistant](../ai-assistant.md) for provider setup.
 
+**Public page** opens your live page in a new tab. Find it beside the preview device controls in Site editor and Theme, at the top right of the AI conversation, or above the Publish tools. In the Shop editor, the action opens the public Shop.
+
 ### Share and manage content options
 
 ![Sharing, backups, analytics, privacy and newsletter](https://github.com/paoloronco/OrbitPage/releases/download/v4.21.74/orbitpage-dashboard-content-management-4.21.75.gif)

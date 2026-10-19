@@ -108,9 +108,9 @@ html:has(.admin-visual-editor-enabled) {
 }
 
 .visual-site-editor__section-actions {
-  width: 260px;
-  min-width: 260px;
-  flex: 0 0 260px;
+  width: 340px;
+  min-width: 340px;
+  flex: 0 0 340px;
   justify-content: flex-end;
   margin-left: auto;
   padding-left: 8px;
@@ -1094,6 +1094,27 @@ html:has(.admin-visual-editor-enabled) {
 .visual-site-editor__preview-controls > :last-child { margin-left: auto; }
 
 .visual-site-editor__preview-controls > .visual-site-editor__preview-toggle { width: auto; flex: 0 1 auto; }
+
+@media (min-width: 601px) {
+  @container visual-site-editor (max-width: 900px) {
+    .visual-site-editor__sections {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .visual-site-editor__sections > button {
+      width: 100%;
+      min-width: 0;
+      padding-inline: 6px;
+    }
+
+    .visual-site-editor__section-actions {
+      grid-column: 1 / -1;
+      width: 100%;
+      min-width: 0;
+    }
+  }
+}
 
 @media (pointer: coarse) {
   .page-card-layout__grip,

@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { FileText, Map, QrCode } from "@/components/ui/material-icons";
 import { useAppI18n } from "@/lib/i18n";
 import { ProfileQrCode } from "./ProfileQrCode";
@@ -17,6 +17,7 @@ interface PublishToolsProps {
   canUseDiscovery?: boolean;
   selectedTool?: PublishTool;
   onToolChange?: (tool: PublishTool) => void;
+  headerAction?: ReactNode;
 }
 
 const TOOL_STORAGE_KEY = "orbitpage.admin.publish-tool";
@@ -29,6 +30,7 @@ export function PublishTools({
   canUseDiscovery = true,
   selectedTool,
   onToolChange,
+  headerAction,
 }: PublishToolsProps) {
   const { tr } = useAppI18n();
   const tools = useMemo(() => [
@@ -72,6 +74,7 @@ export function PublishTools({
 
   return (
     <section className="publish-tools" data-onboarding="publish-section">
+      {headerAction && <div className="publish-tools-header admin-section-actions">{headerAction}</div>}
       <div className="publish-tools-tabs" role="tablist" aria-label={tr("Publishing tools", "Strumenti di pubblicazione")}>
         {tools.map(({ id, icon: Icon, title, description }, index) => (
           <button

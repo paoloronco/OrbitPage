@@ -795,6 +795,14 @@ export const AdminView = ({
         />
   );
 
+  const publicPageAction = (
+    <a className="admin-dashboard-public-page admin-section-public-page" href={activeTab === "profile" && visualSection === "shop" ? `${publicPageHref.replace(/\/$/, "")}/shop` : publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page" title={activeTab === "profile" && visualSection === "shop" ? tr("Public Shop", "Shop pubblico") : tr("Public page", "Pagina pubblica")}>
+      <ExternalLink aria-hidden="true" size={17} />
+      {activeTab === "profile" && visualSection === "shop" ? tr("Public Shop", "Shop pubblico") : tr("Public page", "Pagina pubblica")}
+    </a>
+  );
+  const sectionPublicPageAction = isProspectReadOnly ? null : publicPageAction;
+
   return (
     <div
       className={`orbitpage-admin min-h-screen${usesDashboardShell ? ` admin-dashboard-shell${sidebarCollapsed ? " admin-dashboard-collapsed" : ""}` : ""} admin-visual-editor-enabled`}
@@ -820,17 +828,6 @@ export const AdminView = ({
             >
               {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" aria-hidden="true" /> : <PanelLeftClose className="h-4 w-4" aria-hidden="true" />}
             </button>
-            <a
-              aria-label={tr("Public page", "Pagina pubblica")}
-              className="admin-dashboard-mobile-public-page"
-              href={publicPageHref}
-              rel="noopener noreferrer"
-              target="_blank"
-              title={tr("Public page", "Pagina pubblica")}
-            >
-              <ExternalLink aria-hidden="true" size={16} />
-              <span>{tr("Open", "Apri")}</span>
-            </a>
             <button
               aria-controls="admin-dashboard-primary-navigation"
               aria-expanded={mobileNavOpen}
@@ -958,17 +955,7 @@ export const AdminView = ({
               </Button>
             )}
           </div>
-        </header> : usesDashboardShell ? <header className="admin-dashboard-header">
-          <div className="admin-dashboard-header-copy">
-            <h1 className="sr-only">{displayedTabLabel(activeTab)}</h1>
-          </div>
-          <div className="admin-dashboard-header-actions">
-            <a className="admin-dashboard-public-page admin-dashboard-header-public-page" href={activeTab === "profile" && visualSection === "shop" ? `${publicPageHref.replace(/\/$/, "")}/shop` : publicPageHref} target="_blank" rel="noopener noreferrer" data-onboarding="public-page">
-              <ExternalLink aria-hidden="true" size={17} />
-              {activeTab === "profile" && visualSection === "shop" ? tr("Public Shop", "Shop pubblico") : tr("Public page", "Pagina pubblica")}
-            </a>
-          </div>
-        </header> : null}
+        </header> : usesDashboardShell ? <h1 className="sr-only">{displayedTabLabel(activeTab)}</h1> : null}
 
         {!hasEditorIntegration && distributionImage === "paueron/orbitpage" && (
           <section className="admin-docker-migration-banner" role="status">
@@ -993,6 +980,7 @@ export const AdminView = ({
               <strong>{tr("Prospect demo account", "Account demo prospect")}</strong>
               <span>{tr("Read-only access. Explore the workspace and its public page; changes, uploads, restores and publishing are disabled.", "Accesso in sola lettura. Puoi esplorare il workspace e la pagina pubblica; modifiche, upload, ripristini e pubblicazione sono disabilitati.")}</span>
             </div>
+            {publicPageAction}
           </section>
         )}
 
@@ -1014,6 +1002,7 @@ export const AdminView = ({
           >
           <TabsContent value="profile" className="admin-tab-content">
             <VisualSiteEditor
+                headerAction={sectionPublicPageAction}
                 profile={previewProfile}
                 links={previewLinks}
                 theme={previewTheme}
@@ -1052,6 +1041,7 @@ export const AdminView = ({
           {!hasEditorIntegration && (
             <TabsContent value="ai" className="admin-tab-content">
               <SelfHostedAiPanel
+                headerAction={sectionPublicPageAction}
                 canManageSettings={canManageUsers}
                 historyKey={currentUser?.username}
                 onApplied={onAiApplied}
@@ -1061,6 +1051,7 @@ export const AdminView = ({
 
           <TabsContent value="theme" className="admin-tab-content">
             <Suspense fallback={<OrbitLoader size={24} state="composing" />}><ThemeCustomizer
+              headerAction={sectionPublicPageAction}
               selectedScope={subsection === "card" ? "cards" : "page"}
               onScopeChange={(scope) => selectSubsection("theme", scope === "cards" ? "card" : "page")}
               theme={theme}
@@ -1087,6 +1078,7 @@ export const AdminView = ({
 
           <TabsContent value="publish" className="admin-tab-content">
             <PublishTools
+              headerAction={sectionPublicPageAction}
               selectedTool={subsection === "Sitemap" ? "sitemap" : subsection === "TXT" ? "txt" : subsection === "QR" ? "qr" : undefined}
               onToolChange={(tool) => selectSubsection("publish", tool === "qr" ? "QR" : tool === "sitemap" ? "Sitemap" : "TXT")}
               menu={menu}

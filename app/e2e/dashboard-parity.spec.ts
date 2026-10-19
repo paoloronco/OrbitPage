@@ -367,8 +367,9 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
 
   await expect(page.locator('.admin-dashboard-header .admin-dashboard-kicker')).toHaveCount(0);
   await expect(page.locator('.admin-dashboard-context-row')).toHaveCount(0);
-  await expect(page.locator('.admin-dashboard-header h1')).toHaveClass('sr-only');
-  await expect(page.locator('.admin-dashboard-header h1')).toHaveText('Site editor');
+  await expect(page.locator('.admin-dashboard-header')).toHaveCount(0);
+  await expect(page.locator('.admin-dashboard-main > h1')).toHaveClass('sr-only');
+  await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Site editor');
   await expect(page.locator('.admin-dashboard-section-description')).toHaveCount(0);
 
   const publicPage = page.getByRole('link', { name: 'Public page' });

@@ -6443,6 +6443,36 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   transform: translateY(-1px);
 }
 
+.admin-section-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.orbitpage-admin .admin-section-public-page {
+  width: auto;
+  min-height: 40px;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.oss-ai-header-actions {
+  align-self: start;
+}
+
+@media (max-width: 600px) {
+  .orbitpage-admin .admin-section-public-page {
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+    font-size: 0;
+  }
+}
+
 .admin-dashboard-public-page:focus-visible {
   box-shadow: 0 0 0 3px rgb(49 103 239 / 20%);
 }
@@ -7896,8 +7926,16 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 /* Theme preview: persistent on desktop, compact and progressively disclosed on narrower workspaces. */
 .admin-theme-preview-rail {
   position: sticky;
+  display: grid;
+  gap: 12px;
   top: 20px;
   min-width: 0;
+}
+
+.admin-theme-preview-context.admin-section-actions {
+  display: flex;
+  min-height: 58px;
+  padding: 5px;
 }
 
 .admin-theme-preview-disclosure,
@@ -8023,7 +8061,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
   .admin-theme-preview-body {
     display: none;
-    grid-template-columns: minmax(180px, .5fr) minmax(300px, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     align-items: center;
     border-top: 1px solid #e0e6ef;
@@ -9078,7 +9116,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .admin-dashboard-main {
   display: block;
-  padding: 0 clamp(16px, 2vw, 28px) 32px;
+  padding: 16px clamp(16px, 2vw, 28px) 32px;
 }
 
 .admin-dashboard-header {

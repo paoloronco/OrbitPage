@@ -57,6 +57,7 @@ interface ThemeCustomizerProps {
   managePlanHref?: string;
   selectedScope?: PresetScope;
   onScopeChange?: (scope: PresetScope) => void;
+  headerAction?: ReactNode;
 }
 
 
@@ -283,6 +284,7 @@ export const ThemeCustomizer = ({
   managePlanHref = "/dashboard/billing",
   selectedScope,
   onScopeChange,
+  headerAction,
 }: ThemeCustomizerProps) => {
   const { tr } = useAppI18n();
   const [localScope, setLocalScope] = useState<PresetScope>("page");
@@ -406,6 +408,10 @@ export const ThemeCustomizer = ({
 
   const livePreviewPanel = (
     <aside className="admin-theme-preview-rail">
+      <div className="admin-theme-preview-context admin-section-actions">
+        <PreviewDeviceToggle value={previewDevice} onChange={setPreviewDevice} />
+        {headerAction}
+      </div>
       <details className="admin-theme-preview-disclosure" open={previewOpen} onToggle={(event) => setPreviewOpen(event.currentTarget.open)}>
         <summary className="admin-theme-preview-summary">
           <span className="admin-theme-preview-summary-identity">
@@ -419,12 +425,6 @@ export const ThemeCustomizer = ({
           </span>
         </summary>
         <div className="admin-theme-preview-body">
-          <div className="admin-theme-preview-context">
-            <div className="flex items-center justify-between gap-3 px-1">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-600">{tr("Page preview", "Anteprima pagina")}</p>
-              <PreviewDeviceToggle value={previewDevice} onChange={setPreviewDevice} />
-            </div>
-          </div>
           <div className="admin-theme-live-preview">
             {isDirty ? (
               <div className="space-y-2" data-theme-comparison="">

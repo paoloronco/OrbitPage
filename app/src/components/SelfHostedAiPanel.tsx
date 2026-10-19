@@ -1,5 +1,5 @@
 import { keepMobileInputVisible } from "@/lib/mobile-keyboard-focus";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
   Check,
@@ -31,6 +31,7 @@ type SelfHostedAiPanelProps = {
   canManageSettings: boolean;
   historyKey?: string;
   onApplied?: () => void;
+  headerAction?: ReactNode;
 };
 
 type ConversationEntry = AiConversationMessage & {
@@ -55,7 +56,7 @@ function entry(role: "user" | "assistant", content: string, error = false, persi
   };
 }
 
-export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onApplied }: SelfHostedAiPanelProps) {
+export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onApplied, headerAction }: SelfHostedAiPanelProps) {
   const { tr } = useAppI18n();
   const historyStorageKey = useMemo(() => `${AI_HISTORY_STORAGE_KEY}:${encodeURIComponent(historyKey)}`, [historyKey]);
   const welcome = tr(
@@ -279,14 +280,17 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
               "Descrivi il risultato. L’assistente lavora sul profilo, sui contenuti e sul tema attuali di questa pagina.",
             )}</p>
           </div>
-          <button
-            aria-label={tr("Clear conversation", "Svuota chat")}
-            className="oss-ai-clear"
-            disabled={planning || applying || launching || !messages.some((message) => message.persistent !== false)}
-            onClick={clearConversation}
-            title={tr("Clear conversation", "Svuota chat")}
-            type="button"
-          ><Trash2 aria-hidden="true" /></button>
+          <div className="admin-section-actions oss-ai-header-actions">
+            <button
+              aria-label={tr("Clear conversation", "Svuota chat")}
+              className="oss-ai-clear"
+              disabled={planning || applying || launching || !messages.some((message) => message.persistent !== false)}
+              onClick={clearConversation}
+              title={tr("Clear conversation", "Svuota chat")}
+              type="button"
+            ><Trash2 aria-hidden="true" /></button>
+            {headerAction}
+          </div>
         </header>
 
         <div className="oss-ai-conversation" ref={conversationRef} aria-live="polite">
