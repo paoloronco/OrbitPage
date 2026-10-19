@@ -235,6 +235,7 @@ export const OrbitPageMapContentSchema = z.object({
   mapUrl: OrbitPagePublicHrefSchema.optional().default(""),
   latitude: boundedString(40).optional().default(""),
   longitude: boundedString(40).optional().default(""),
+  resolvedUrl: OrbitPagePublicHrefSchema.optional().default(""),
   resolvedSource: boundedString(2_752).optional().default("")
 }).strict();
 

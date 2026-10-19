@@ -1,5 +1,6 @@
 import { createShopRouter, createShopWebhookRouter, createShopPublicRouter } from "./routes/shop.js";
 import { aiAnalyticsConditions } from '../packages/analytics.js';
+import { resolveMapPreview } from '../packages/map-preview.js';
 import { cleanupShopFiles, dispatchShopEmails, shopFilesPath, persistShopAiDrafts } from "./services/shop.js";
 import { dispatchShopBookingReminders } from "./services/shop-lifecycle.js";
 import './services/instance-details.js';
@@ -4377,201 +4378,19 @@ app.post(
   },
 );
 
-const MAP_PREVIEW_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const MAP_PREVIEW_CACHE_MAX_ENTRIES = 500;
-const mapPreviewCache = new Map();
-
-const cacheMapPreview = (key, value) => {
-  const now = Date.now();
-  for (const [cachedKey, entry] of mapPreviewCache) {
-    if (now - entry.timestamp >= MAP_PREVIEW_CACHE_TTL_MS) mapPreviewCache.delete(cachedKey);
-  }
-  if (mapPreviewCache.has(key)) mapPreviewCache.delete(key);
-  while (mapPreviewCache.size >= MAP_PREVIEW_CACHE_MAX_ENTRIES) {
-    mapPreviewCache.delete(mapPreviewCache.keys().next().value);
-  }
-  mapPreviewCache.set(key, { timestamp: now, value });
-};
-
-const mapCoordinatesFromText = (value = '') => {
-  let decoded = String(value);
-  try {
-    decoded = decodeURIComponent(decoded);
-  } catch {
-    // Keep the original value when decoding fails.
-  }
-  const patterns = [
-    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
-    /[?&](?:q|query|ll)=(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
-    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
-  ];
-  for (const pattern of patterns) {
-    const match = decoded.match(pattern);
-    if (!match) continue;
-    const lat = Number.parseFloat(match[1]);
-    const lon = Number.parseFloat(match[2]);
-    if (Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
-      return { lat: String(lat), lon: String(lon) };
-    }
-  }
-  return null;
-};
-
-const mapQueryFromUrl = (value = '') => {
-  try {
-    const url = new URL(value);
-    for (const key of ['q', 'query', 'destination', 'daddr', 'address']) {
-      const candidate = url.searchParams.get(key)?.trim();
-      if (candidate && !mapCoordinatesFromText(candidate)) return candidate;
-    }
-    const pathMatch = url.pathname.match(/\/(?:place|search)\/([^/@]+)/i);
-    return pathMatch?.[1] ? decodeURIComponent(pathMatch[1]).replace(/\+/g, ' ').trim() : '';
-  } catch {
-    return '';
-  }
-};
-
-const SUPPORTED_GOOGLE_MAP_DOMAINS = new Set([
-  'google.com', 'google.it', 'google.co.uk', 'google.fr', 'google.de', 'google.es',
-  'google.pt', 'google.nl', 'google.pl', 'google.ca', 'google.com.au', 'google.co.jp',
-  'google.co.kr', 'google.com.br', 'google.com.mx', 'google.ch', 'google.at',
-  'google.be', 'google.ie',
-]);
-
-const normalizeSupportedMapUrl = (value = '') => {
-  try {
-    const url = new URL(value);
-    if (url.protocol !== 'https:' || url.username || url.password || (url.port && url.port !== '443')) return null;
-    const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
-    const isShortener = hostname === 'maps.app.goo.gl' || (hostname === 'goo.gl' && url.pathname.startsWith('/maps'));
-    const isOpenStreetMap = hostname === 'openstreetmap.org' || hostname.endsWith('.openstreetmap.org');
-    const googleDomain = [...SUPPORTED_GOOGLE_MAP_DOMAINS].find((domain) => (
-      hostname === domain || hostname === `www.${domain}` || hostname === `maps.${domain}`
-    ));
-    const isGoogleMaps = Boolean(googleDomain && (hostname.startsWith('maps.') || url.pathname.startsWith('/maps')));
-    return isShortener || isOpenStreetMap || isGoogleMaps ? url : null;
-  } catch {
-    return null;
-  }
-};
-
-const getMapShortenerFetchUrl = (value = '') => {
-  const parsed = normalizeSupportedMapUrl(value);
-  if (!parsed) return '';
-  if (parsed.hostname === 'maps.app.goo.gl') {
-    const shortCode = parsed.pathname.match(/^\/([a-zA-Z0-9_-]{1,256})$/)?.[1];
-    return shortCode ? `https://maps.app.goo.gl/${encodeURIComponent(shortCode)}` : '';
-  }
-  if (parsed.hostname === 'goo.gl') {
-    const shortCode = parsed.pathname.match(/^\/maps\/([a-zA-Z0-9_-]{1,256})$/)?.[1];
-    return shortCode ? `https://goo.gl/maps/${encodeURIComponent(shortCode)}` : '';
-  }
-  return '';
-};
-
-const resolveMapRedirect = async (mapUrl) => {
-  const initialUrl = normalizeSupportedMapUrl(mapUrl);
-  if (!initialUrl) return { finalUrl: '', coordinates: null };
-  let currentUrl = initialUrl.toString();
-  for (let hop = 0; hop < 5; hop += 1) {
-    const fetchUrl = getMapShortenerFetchUrl(currentUrl);
-    if (!fetchUrl) return { finalUrl: currentUrl, coordinates: mapCoordinatesFromText(currentUrl) };
-    const response = await fetch(fetchUrl, {
-      redirect: 'manual',
-      signal: AbortSignal.timeout(6000),
-      headers: {
-        Accept: 'text/html,application/xhtml+xml',
-        'User-Agent': `OrbitPage/${APP_VERSION} (+https://orbitpage.com; contact: contact@orbitpage.com)`,
-      },
-    });
-    const location = response.headers.get('location');
-    await response.body?.cancel().catch(() => undefined);
-    if (!location) {
-      const finalUrl = normalizeSupportedMapUrl(response.url || currentUrl)?.toString() || currentUrl;
-      return { finalUrl, coordinates: mapCoordinatesFromText(finalUrl) };
-    }
-    const nextUrl = normalizeSupportedMapUrl(new URL(location, fetchUrl).toString());
-    if (!nextUrl) throw new Error('Map redirect left the supported providers');
-    currentUrl = nextUrl.toString();
-    const coordinates = mapCoordinatesFromText(currentUrl);
-    if (coordinates) return { finalUrl: currentUrl, coordinates };
-  }
-  throw new Error('Map redirect limit exceeded');
-};
-
 app.get('/api/map-preview', apiLimiter, authenticateToken, requirePermission('links:write'), async (req, res) => {
   const query = typeof req.query.query === 'string' ? req.query.query.trim() : '';
   const mapUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
-  if ((!query && !mapUrl) || query.length > 300 || mapUrl.length > 2000) {
+  if ((!query && !mapUrl) || query.length > 700 || mapUrl.length > 2048) {
     return res.status(400).json({ error: 'A valid map query is required' });
   }
-
-  const cacheKey = `${query}|${mapUrl}`.toLocaleLowerCase('it');
-  const cached = mapPreviewCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < MAP_PREVIEW_CACHE_TTL_MS) {
-    res.set('Cache-Control', 'public, max-age=86400');
-    return res.json(cached.value);
-  }
-
   try {
-    const directCoordinates = mapCoordinatesFromText(mapUrl) || mapCoordinatesFromText(query);
-    if (directCoordinates) {
-      const value = { ...directCoordinates, displayName: query || mapUrl, source: 'coordinates' };
-      cacheMapPreview(cacheKey, value);
-      res.set('Cache-Control', 'public, max-age=86400');
-      return res.json(value);
-    }
-
-    let finalUrl = mapUrl;
-    if (mapUrl && normalizeSupportedMapUrl(mapUrl)) {
-      const redirect = await resolveMapRedirect(mapUrl);
-      finalUrl = redirect.finalUrl || mapUrl;
-      if (redirect.coordinates) {
-        const value = { ...redirect.coordinates, displayName: query || mapUrl, source: 'redirect' };
-        cacheMapPreview(cacheKey, value);
-        res.set('Cache-Control', 'public, max-age=86400');
-        return res.json(value);
-      }
-    }
-
-    const lookupQuery = mapQueryFromUrl(finalUrl) || mapQueryFromUrl(mapUrl) || query;
-    if (!lookupQuery) return res.status(404).json({ error: 'Map location not found' });
-
-    const lookupUrl = new URL('https://nominatim.openstreetmap.org/search');
-    lookupUrl.searchParams.set('format', 'jsonv2');
-    lookupUrl.searchParams.set('limit', '1');
-    lookupUrl.searchParams.set('accept-language', 'it');
-    lookupUrl.searchParams.set('q', lookupQuery);
-
-    const response = await fetch(lookupUrl, {
-      signal: AbortSignal.timeout(8000),
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': `OrbitPage/${APP_VERSION} (+https://orbitpage.com; contact: contact@orbitpage.com)`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`Map provider returned ${response.status}`);
-    }
-
-    const results = await response.json();
-    const result = Array.isArray(results) ? results[0] : null;
-    if (!result?.lat || !result?.lon) {
-      return res.status(404).json({ error: 'Map location not found' });
-    }
-
-    const value = {
-      lat: String(result.lat),
-      lon: String(result.lon),
-      displayName: typeof result.display_name === 'string' ? result.display_name : lookupQuery,
-      source: 'geocoding',
-    };
-    cacheMapPreview(cacheKey, value);
-    res.set('Cache-Control', 'public, max-age=86400');
-    return res.json(value);
+    const value = await resolveMapPreview({ query, mapUrl });
+    return res.set('Cache-Control', 'private, no-store').json(value);
   } catch (error) {
     console.error('Map preview lookup failed:', error?.message || error);
-    return res.status(502).json({ error: 'Map preview is temporarily unavailable' });
+    if (error?.message === 'The map location could not be found.') return res.status(404).json({ error: 'Map location not found' });
+    return res.status(502).json({ error: 'Map preview is temporarily unavailable. Check the Maps URL or enter an address.' });
   }
 });
 

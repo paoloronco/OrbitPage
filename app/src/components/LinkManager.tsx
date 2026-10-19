@@ -778,9 +778,10 @@ export const LinkManager = ({
     setBusy(true);
     setSaveError("");
     try {
-      const preparedDrafts = new Map<string, LinkData>();
-      for (const [id, draft] of previewDrafts) preparedDrafts.set(id, await prepareLinkForSave(draft));
-      const nextLinks = mergeLinkPreviews(workingLinks, preparedDrafts);
+      const nextLinks: LinkData[] = [];
+      for (const link of mergeLinkPreviews(workingLinks, previewDrafts)) {
+        nextLinks.push(link.type === 'map' || previewDrafts.has(String(link.id)) ? await prepareLinkForSave(link) : link);
+      }
       const result = await commitWorkingLinks({ isDirty: hasUnsavedChanges, links: nextLinks, onSave: onLinksUpdate });
       setIsDirty(result.isDirty);
       setSaveError(result.error);

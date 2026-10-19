@@ -9,9 +9,10 @@ import { getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPu
 import {
   extractMapCoordinates,
   getMapQuery,
+  getMapPreviewUrl,
+  getMapResolutionSource,
   getSafeMapOpenUrl,
   toMapCoordinates,
-  type MapCoordinates,
 } from "@/lib/map-location";
 
 interface PublicMapCardProps {
@@ -34,26 +35,10 @@ const MapLocationFallback = ({ label }: { label: string }) => (
   </div>
 );
 
-const getOpenStreetMapEmbedUrl = ({ lat, lon }: MapCoordinates) => {
-  const latitudeSpan = 0.012;
-  const longitudeSpan = latitudeSpan / Math.max(Math.cos(lat * Math.PI / 180), 0.35);
-  const params = new URLSearchParams({
-    bbox: [
-      lon - longitudeSpan,
-      lat - latitudeSpan,
-      lon + longitudeSpan,
-      lat + latitudeSpan,
-    ].join(","),
-    layer: "mapnik",
-    marker: `${lat},${lon}`,
-  });
-  return `https://www.openstreetmap.org/export/embed.html?${params.toString()}`;
-};
-
-const RealMapPreview = ({ coordinates, label }: { coordinates: MapCoordinates; label: string }) => (
+const RealMapPreview = ({ src, label }: { src: string; label: string }) => (
   <div className="absolute inset-0 overflow-hidden bg-slate-200">
     <iframe
-      src={getOpenStreetMapEmbedUrl(coordinates)}
+      src={src}
       title={`Map preview for ${label}`}
       loading="lazy"
       referrerPolicy="strict-origin-when-cross-origin"
@@ -70,12 +55,16 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
     syncConsent();
     return consentManager.onConsentChange(syncConsent);
   }, []);
-  const { placeName, address, mapUrl, latitude, longitude } = getMapData(link.content);
-  const mapQuery = getMapQuery(placeName, address, link.title, mapUrl);
-  const coordinates = toMapCoordinates(latitude, longitude)
-    || extractMapCoordinates(mapUrl)
+  const { placeName, address, mapUrl: contentMapUrl, latitude, longitude, resolvedUrl, resolvedSource } = getMapData(link.content);
+  const mapUrl = contentMapUrl || link.url;
+  const mapQuery = getMapQuery(placeName, address, link.title !== 'Map' ? link.title : '', mapUrl);
+  const currentResolution = resolvedSource === getMapResolutionSource(placeName, address, mapUrl);
+  const coordinates = extractMapCoordinates(mapUrl)
     || extractMapCoordinates(address)
-    || extractMapCoordinates(placeName);
+    || extractMapCoordinates(placeName)
+    || (currentResolution || !resolvedSource ? toMapCoordinates(latitude, longitude) : null);
+  const previewUrl = getMapPreviewUrl(currentResolution && resolvedUrl ? resolvedUrl : mapUrl, mapQuery, coordinates);
+  const provider = previewUrl.includes('openstreetmap.org/') ? 'OpenStreetMap' : 'Google Maps';
   const resolvedMapUrl = getSafeMapOpenUrl(mapUrl, mapQuery);
 
   const handleOpen = () => {
@@ -93,13 +82,13 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
-      <div className={`relative overflow-hidden bg-muted/30 ${link.size === "small" ? "h-32" : link.size === "large" ? "h-52" : "h-40"}`}>
-        {coordinates && mapConsent ? (
-          <RealMapPreview coordinates={coordinates} label={mapQuery || placeName || address || link.title || "Map"} />
+      <div className={`relative overflow-hidden bg-muted/30 ${previewUrl && provider === 'Google Maps' ? 'min-h-[200px]' : ''} ${link.size === "small" ? "h-32" : link.size === "large" ? "h-52" : "h-40"}`}>
+        {previewUrl && mapConsent ? (
+          <RealMapPreview src={previewUrl} label={mapQuery || placeName || address || link.title || "Map"} />
         ) : (
           <MapLocationFallback label={mapQuery || placeName || address || link.title || "Map"} />
         )}
-        {coordinates && !mapConsent ? (
+        {previewUrl && !mapConsent ? (
           <button
             type="button"
             onClick={() => {
@@ -110,7 +99,7 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
           >
             <ShieldCheck className="h-6 w-6" />
             <strong className="mt-2 text-sm">Map blocked until consent</strong>
-            <span className="mt-1 text-xs text-white/75">Open cookie preferences to load OpenStreetMap.</span>
+            <span className="mt-1 text-xs text-white/75">Open cookie preferences to load {provider}.</span>
           </button>
         ) : null}
         <div className="pointer-events-none absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background/70" style={getPublicButtonStyle(link)}>

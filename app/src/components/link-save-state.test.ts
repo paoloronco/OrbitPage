@@ -1,8 +1,39 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { mapPreviewApi } from '@/lib/api-client';
 
 import { commitWorkingLinks, prepareLinkForSave } from './link-save-state';
 
 describe('commitWorkingLinks', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('saves address previews without a provider request and discards stale coordinates', async () => {
+    const resolve = vi.spyOn(mapPreviewApi, 'resolve');
+    const saved = await prepareLinkForSave({ id: 'map', type: 'map', title: 'Map', description: '', url: '',
+      content: JSON.stringify({ address: 'Torino', latitude: '40', longitude: '10', resolvedSource: '|Old address|' }),
+    });
+    expect(JSON.parse(saved.content || '{}')).toMatchObject({ address: 'Torino', resolvedSource: '|Torino|' });
+    expect(JSON.parse(saved.content || '{}').latitude).toBeUndefined();
+    expect(resolve).not.toHaveBeenCalled();
+  });
+
+  it('expands a short URL once, keeps the original input and reuses the saved result', async () => {
+    const resolve = vi.spyOn(mapPreviewApi, 'resolve').mockResolvedValue({
+      resolvedUrl: 'https://www.google.com/maps/place/Torino', displayName: 'Torino', source: 'redirect',
+    });
+    const saved = await prepareLinkForSave({ id: 'map', type: 'map', title: 'Map', description: '', url: '',
+      content: JSON.stringify({ mapUrl: 'https://maps.app.goo.gl/torino', placeName: 'Office' }),
+    });
+    expect(JSON.parse(saved.content || '{}')).toMatchObject({ mapUrl: 'https://maps.app.goo.gl/torino', resolvedUrl: 'https://www.google.com/maps/place/Torino' });
+    await prepareLinkForSave(saved);
+    expect(resolve).toHaveBeenCalledOnce();
+  });
+
+  it('preserves an unsaved map when short URL resolution fails', async () => {
+    vi.spyOn(mapPreviewApi, 'resolve').mockRejectedValue(new Error('Map unavailable'));
+    const map = { id: 'map', type: 'map' as const, title: 'Map', description: '', url: '', content: '{"mapUrl":"https://maps.app.goo.gl/failure"}' };
+    await expect(prepareLinkForSave(map)).rejects.toThrow('Map unavailable');
+    expect(map.content).toContain('failure');
+  });
   it('trims map text only when preparing the saved payload', async () => {
     const result = await prepareLinkForSave({
       id: 'map',

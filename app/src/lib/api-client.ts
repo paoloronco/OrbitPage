@@ -824,12 +824,8 @@ export const auditLogApi = {
   },
 };
 
-export type MapPreviewResolution = {
-  lat: string;
-  lon: string;
-  displayName: string;
-  source: 'coordinates' | 'redirect' | 'geocoding';
-};
+export type { MapPreviewResolution } from '../../packages/map-preview.js';
+import type { MapPreviewResolution } from '../../packages/map-preview.js';
 
 export const mapPreviewApi = {
   resolve: async (query: string, mapUrl?: string): Promise<MapPreviewResolution> => {

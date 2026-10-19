@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extractMapCoordinates,
   getMapQuery,
+  getMapPreviewUrl,
   getMapResolutionSource,
   getMapUrlQuery,
   getSafeMapOpenUrl,
@@ -18,6 +19,28 @@ describe('map location helpers', () => {
   it('rejects invalid coordinate ranges', () => {
     expect(toMapCoordinates('91', '7')).toBeNull();
     expect(toMapCoordinates('45', '181')).toBeNull();
+    expect(toMapCoordinates('45oops', '7')).toBeNull();
+    expect(toMapCoordinates('', '')).toBeNull();
+    expect(toMapCoordinates(0, 0)).toEqual({ lat: 0, lon: 0 });
+  });
+
+  it('uses the place marker instead of the viewport and supports OpenStreetMap and plain coordinates', () => {
+    expect(extractMapCoordinates('https://www.google.com/maps/place/Test/@45,7,15z/data=!3d45.1!4d7.2')).toEqual({ lat: 45.1, lon: 7.2 });
+    expect(extractMapCoordinates('https://www.google.com/maps/embed?pb=!2d7.2!3d45.1')).toEqual({ lat: 45.1, lon: 7.2 });
+    expect(extractMapCoordinates('https://www.openstreetmap.org/?mlat=45.1&mlon=7.2#map=15/45/7')).toEqual({ lat: 45.1, lon: 7.2 });
+    expect(extractMapCoordinates('https://www.openstreetmap.org/#map=15/45.1/7.2')).toEqual({ lat: 45.1, lon: 7.2 });
+    expect(extractMapCoordinates('45.1, 7.2')).toEqual({ lat: 45.1, lon: 7.2 });
+  });
+
+  it('previews an address or full Maps URL without geocoding and validates embed hosts', () => {
+    expect(getMapPreviewUrl('', 'Via Roma 1, Torino')).toContain('q=Via+Roma+1%2C+Torino&output=embed');
+    expect(getMapPreviewUrl('https://www.google.it/maps/place/Torino', 'Different label')).toContain('q=Torino&output=embed');
+    expect(getMapPreviewUrl('https://www.google.com/maps/embed?pb=!1m2!test')).toBe('https://www.google.com/maps/embed?pb=%211m2%21test');
+    expect(getMapPreviewUrl('https://www.google.com/maps?cid=123')).toContain('cid=123&output=embed');
+    expect(getMapPreviewUrl('https://maps.app.goo.gl/abc', 'Label')).toBe('');
+    expect(getMapPreviewUrl('https://google.com.attacker.net/maps/embed?pb=test')).toBe('');
+    expect(getMapPreviewUrl('https://www.google.com:8443/maps/embed?pb=test')).toBe('');
+    expect(getMapPreviewUrl('')).toBe('');
   });
 
   it('derives a useful lookup query from map URLs without coordinates', () => {

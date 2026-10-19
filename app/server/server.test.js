@@ -413,19 +413,16 @@ describe('API Endpoints', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('GET /api/map-preview geocodes the location encoded in a full Maps URL', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => [{ lat: '45.0703', lon: '7.6869', display_name: 'Torino' }],
-    });
+  it('GET /api/map-preview prepares a full Maps URL without geocoding', async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const response = await request(app)
       .get('/api/map-preview')
-      .query({ url: 'https://example.com/?q=Porta+Nuova+Torino' });
+      .query({ url: 'https://www.google.com/maps?q=Porta+Nuova+Torino' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toMatchObject({ lat: '45.0703', lon: '7.6869', source: 'geocoding' });
-    expect(String(fetchMock.mock.calls[0][0])).toContain('q=Porta+Nuova+Torino');
+    expect(response.body).toMatchObject({ source: 'embed', resolvedUrl: 'https://www.google.com/maps?q=Porta+Nuova+Torino' });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('GET /api/map-preview follows an allowlisted Google Maps short URL only', async () => {

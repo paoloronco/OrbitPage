@@ -350,7 +350,10 @@ export const LinkCard = ({
   };
 
   const updateMapData = (field: keyof MapBlockData, value: string) => {
-    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...mapData, [field]: value }) }));
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({
+      ...getMapData(prev.content), [field]: value,
+      latitude: undefined, longitude: undefined, resolvedUrl: undefined, resolvedSource: undefined,
+    }) }));
   };
 
   const updateEventData = <K extends keyof EventBlockData>(field: K, value: EventBlockData[K]) => {

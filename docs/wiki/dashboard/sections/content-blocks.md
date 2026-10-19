@@ -59,6 +59,23 @@ After changing a schedule, test once before the start, once during the active wi
 
 ## Embeds and consent
 
+### Maps
+
+Add a Map block and enter a place, address, Google Maps link or OpenStreetMap
+link. Addresses and full Google Maps URLs preview immediately. Short Google
+Maps links are expanded when you save; their result is stored with the block
+and reused after reload and publication. Saving also resolves maps imported
+without coordinates. An invalid short link leaves your changes unsaved so you
+can correct it or replace it with an address.
+
+Coordinates display an OpenStreetMap preview; text locations and Google shared
+embeds display Google Maps. Map previews load only after Preferences consent
+when consent management is enabled. No API key, geocoding service or paid Maps
+API is required. Google's website embeds depend on that provider's availability;
+they do not carry the Maps Platform API service guarantee.
+
+### Other embeds
+
 Use a provider preset when one is available. OrbitPage converts supported public share URLs to the provider's official embedded form and rejects unrelated hosts. Custom snippets run in a sandbox.
 
 See [External modules](../../integrations/external-modules.md) for accepted URLs and provider settings, and [Consent management](../../integrations/consent-management.md) for CMP installation.

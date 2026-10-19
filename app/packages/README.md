@@ -12,6 +12,14 @@ untagged AI visits.
 [Shared Shop](./shop/README.md) owns portable commerce behavior. Its payment
 validation is used by both the self-hosted server and the hosted adapter.
 
+## Maps
+
+`map-location.js` and `map-preview.js` share map URL parsing, preview URLs and
+bounded short-link expansion between the renderer and both server editions.
+Address previews use Google Maps website embeds; coordinates use OpenStreetMap.
+No geocoding or paid Maps API is called. Only short-link expansion makes a server
+request, with provider allowlisting, a timeout and a bounded 30-day cache.
+
 ## `page-schema`
 
 `@orbitpage/page-schema` defines the canonical public content structures for blocks, menus, subpages, discovery settings, profiles, and themes. It intentionally excludes hosted tenant, owner, billing, provider and persistence metadata. The application consumes it through the local dependency declared in `app/package.json`.

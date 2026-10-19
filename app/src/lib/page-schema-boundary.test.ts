@@ -24,6 +24,15 @@ import { themePresets } from './theme-presets';
 import { cardThemePresets } from './card-theme-presets';
 
 describe('canonical page schema boundary', () => {
+  it('preserves resolved map URLs through write validation and public normalization', () => {
+    const block = { id: 'map', type: 'map', content: JSON.stringify({
+      mapUrl: 'https://maps.app.goo.gl/test', resolvedUrl: 'https://www.google.com/maps/place/Torino',
+      resolvedSource: '||https://maps.app.goo.gl/test',
+    }) };
+    const saved = parseOrbitPageBlocks([block]);
+    expect(JSON.parse(normalizeStoredOrbitPageBlocks(saved)[0].content || '{}').resolvedUrl).toBe('https://www.google.com/maps/place/Torino');
+    expect(() => parseOrbitPageBlocks([{ ...block, content: JSON.stringify({ resolvedUrl: 'http://127.0.0.1/admin' }) }])).toThrow();
+  });
   it.each([
     () => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, { ownerUid: 'unexpected' }),
     () => parseOrbitPageTheme({ ...DEFAULT_ORBITPAGE_THEME, background: 'invalid' }),

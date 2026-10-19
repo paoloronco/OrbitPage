@@ -87,6 +87,7 @@ export interface MapBlockData {
   mapUrl?: string;
   latitude?: string;
   longitude?: string;
+  resolvedUrl?: string;
   resolvedSource?: string;
 }
 
@@ -300,6 +301,7 @@ export const getMapData = (content: string | null | undefined): MapBlockData => 
     mapUrl: toString((parsed as Record<string, unknown>).mapUrl),
     latitude: toString((parsed as Record<string, unknown>).latitude),
     longitude: toString((parsed as Record<string, unknown>).longitude),
+    resolvedUrl: toString((parsed as Record<string, unknown>).resolvedUrl),
     resolvedSource: toString((parsed as Record<string, unknown>).resolvedSource),
   };
 };
