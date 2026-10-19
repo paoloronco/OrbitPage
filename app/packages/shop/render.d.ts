@@ -11,6 +11,7 @@ export type ShopRenderInput = {
   machineReadableEnabled?: boolean; previewOnly?: boolean; previewCoverUrls?: Record<string, string>;
   apiBaseUrl: string; newsletterEndpoint: string; newsletterUsername?: string; newsletterContentType?: string;
   coverUrlPrefix: string;
+  scriptNonce?: string;
 };
 export function renderShopHtml(input: ShopRenderInput): string;
 export function renderShopMarkdown(input: Pick<ShopRenderInput, 'title' | 'canonicalUrl' | 'products' | 'appearance'>): string;

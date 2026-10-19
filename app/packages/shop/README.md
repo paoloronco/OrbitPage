@@ -18,6 +18,8 @@ the self-hosted upload rule from widening the hosted media boundary.
 `description.js` and `policies.js` own public formatting and legal navigation.
 `render.js` includes configured product covers as absolute image URLs in the
 catalog's structured data, using the same cover as the visible product card.
+Adapters with a nonce-based CSP can pass their request's `scriptNonce` for the
+Shop interaction script; those responses must not be shared between requests.
 
 `stripe.js` supplies bounded account activity and coupon operations. The calling
 server verifies the owner, account and mode before passing its Stripe client and

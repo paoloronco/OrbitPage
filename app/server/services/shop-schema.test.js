@@ -33,6 +33,8 @@ describe('self-hosted shared Shop contracts', () => {
     const input = { username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: normalizeShopAppearance({}), products: [], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' };
     expect(renderShopHtml(input)).toContain('href="https://studio.example.test/shop/legal/terms"');
     expect(renderShopHtml({ ...input, previewOnly: true })).not.toMatch(/href="[^"]*\/shop\/legal/);
+    expect(renderShopHtml({ ...input, scriptNonce: 'fixture-nonce' })).toContain('<script type="module" nonce="fixture-nonce">');
+    expect(renderShopHtml({ ...input, scriptNonce: '\"<test>' })).toContain('nonce="&quot;&lt;test&gt;"');
   });
 
   it('uses the displayed product covers as absolute structured-data images', () => {
