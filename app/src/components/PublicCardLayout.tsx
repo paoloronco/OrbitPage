@@ -39,7 +39,7 @@ interface PublicCardLayoutProps {
   editorSelection?: PublicEditorTarget | null;
   onEditorSelect?: (target: PublicEditorTarget) => void;
   onLayoutChange?: (layout: CardLayout) => void;
-  profileCard?: { content: ReactNode; height: number };
+  profileCard?: { content: ReactNode; height: number; fitHeight?: boolean };
   desktopDefaultWidthCapRem?: number;
 }
 
@@ -107,9 +107,10 @@ export function PublicCardLayout({
   const pointerRef = useRef<{ clientX: number; clientY: number; pointerId: number; shiftKey: boolean } | null>(null);
   const latestLayoutRef = useRef<NormalizedCardLayout>(savedLayout);
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
+  const fitProfileHeight = profileCard?.fitHeight && activeCard !== PROFILE_CARD_LAYOUT_ID;
   const activeLayout = useMemo(() => fitCardLayoutHeights(
-    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, !activeCard,
-  ), [activeCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
+    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, !activeCard, fitProfileHeight,
+  ), [activeCard, fitProfileHeight, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
 
   useLayoutEffect(() => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);

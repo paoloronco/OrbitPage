@@ -3,6 +3,70 @@ import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData, saveEdito
 
 test.use({ hasTouch: true });
 
+test('profile cards fit their visible content in the editor and public page', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openAuthenticatedAdmin(page);
+  const restore = await preservePageData(page);
+  try {
+    const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+    const headers = { Authorization: `Bearer ${token}` };
+    const profile = await (await page.request.get('/api/profile', { headers })).json();
+    const layout = (height: number) => ({
+      positions: {
+        'orbitpage-profile': { x: 0, y: 0, width: 100, height },
+        'profile-following': { x: 0, y: height + 24, width: 100, height: 100 },
+      },
+      height: height + 124,
+    });
+    const draft = { ...profile, name: 'Sample profile', bio: 'A short description', avatar: '', showAvatar: false,
+      appearance: { cardLayouts: { desktop: layout(208), mobile: layout(224) } } };
+    expect((await page.request.put('/api/profile', { headers, data: draft })).ok()).toBeTruthy();
+    expect((await page.request.put('/api/links', { headers, data: [{ id: 'profile-following', type: 'link', title: 'Following card', url: 'https://example.com', isActive: true }] })).ok()).toBeTruthy();
+
+    const compactProfile = async (selector: string) => {
+      await expect.poll(() => page.locator(`${selector} .profile-card`).evaluate(card => {
+        const bounds = card.getBoundingClientRect();
+        const style = getComputedStyle(card);
+        const scale = bounds.width / (card as HTMLElement).offsetWidth;
+        const contentBottom = card.querySelector('.profile-card__bio')!.getBoundingClientRect().bottom;
+        const padding = Number.parseFloat(style.paddingBottom) + Number.parseFloat(style.borderBottomWidth);
+        return Math.abs((bounds.bottom - contentBottom) / scale - padding);
+      })).toBeLessThanOrEqual(1);
+      await expect.poll(() => page.locator(selector).evaluate(root => {
+        const card = root.querySelector('.profile-card')!.getBoundingClientRect();
+        const next = root.querySelector('[data-card-layout-item="profile-following"]')!.getBoundingClientRect();
+        const item = root.querySelector('[data-card-layout-item="orbitpage-profile"]') as HTMLElement;
+        const scale = item.getBoundingClientRect().width / item.offsetWidth;
+        return Math.abs((next.top - card.bottom) / scale - 24);
+      })).toBeLessThanOrEqual(1);
+    };
+
+    await page.setViewportSize({ width: 1440, height: 980 });
+    await page.reload();
+    const preview = '.visual-site-editor__canvas';
+    for (const device of ['Desktop', 'Mobile']) {
+      await page.getByRole('button', { name: `${device} preview`, exact: true }).click();
+      await compactProfile(preview);
+    }
+    for (const width of [1440, 768, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      await compactProfile('.public-page-root');
+    }
+    const unchanged = await (await page.request.get('/api/profile', { headers })).json();
+    expect(unchanged.appearance.cardLayouts).toEqual(draft.appearance.cardLayouts);
+
+    draft.appearance.cardLayouts = { desktop: layout(356), mobile: layout(356) };
+    expect((await page.request.put('/api/profile', { headers, data: draft })).ok()).toBeTruthy();
+    await page.reload();
+    await expect(page.locator('.profile-card')).toHaveCSS('min-height', '356px');
+    const saved = await (await page.request.get('/api/profile', { headers })).json();
+    expect(saved.appearance.cardLayouts).toEqual(draft.appearance.cardLayouts);
+  } finally {
+    await restore();
+  }
+});
+
 test('public cards wrap long text and ignore legacy text coordinates at every width', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));

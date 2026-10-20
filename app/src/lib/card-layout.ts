@@ -205,21 +205,31 @@ export function moveMobileCard(
   return { ...normalized, positions, height: Math.max(normalized.height, y - CARD_GAP) };
 }
 
-// Preserve saved gaps when wrapping text grows; intentional overlaps stay intentional.
-export function fitCardLayoutHeights(layout: NormalizedCardLayout, heights: Record<string, number>, moveFollowing = true): NormalizedCardLayout {
+// Preserve saved gaps as content grows or an automatic profile shrinks; intentional overlaps stay intentional.
+export function fitCardLayoutHeights(layout: NormalizedCardLayout, heights: Record<string, number>, moveFollowing = true, fitProfileHeight = false): NormalizedCardLayout {
   const positions: Record<string, CardLayoutRect> = {};
   const ordered = Object.entries(layout.positions).sort(([, a], [, b]) => a.y - b.y);
   for (const [id, rect] of ordered) {
-    let growth = 0;
+    let growth: number | undefined;
     if (moveFollowing) {
-      for (const [previousId, previous] of Object.entries(positions)) {
+      const preceding = Object.entries(positions).filter(([previousId]) => {
         const original = layout.positions[previousId];
-        if (rect.y >= original.y + original.height && rect.x < original.x + original.width && rect.x + rect.width > original.x) {
-          growth = Math.max(growth, previous.y + previous.height - original.y - original.height);
-        }
+        return rect.y >= original.y + original.height && rect.x < original.x + original.width && rect.x + rect.width > original.x;
+      });
+      const precedingBottom = Math.max(0, ...preceding.map(([id]) => layout.positions[id].y + layout.positions[id].height));
+      for (const [previousId, previous] of preceding) {
+        const original = layout.positions[previousId];
+        const baseline = fitProfileHeight ? precedingBottom : original.y + original.height;
+        growth = Math.max(growth ?? (fitProfileHeight ? -Infinity : 0), previous.y + previous.height - baseline);
       }
     }
-    positions[id] = { ...rect, y: rect.y + growth, height: Math.max(rect.height, heights[id] || 0) };
+    const height = fitProfileHeight && id === PROFILE_CARD_LAYOUT_ID && heights[id]
+      ? Math.max(48, heights[id])
+      : Math.max(rect.height, heights[id] || 0);
+    positions[id] = { ...rect, y: rect.y + (growth ?? 0), height };
   }
-  return { ...layout, positions, height: Math.max(layout.height, ...Object.values(positions).map(rect => rect.y + rect.height)) };
+  const profileDelta = fitProfileHeight && positions[PROFILE_CARD_LAYOUT_ID]
+    ? Math.min(0, positions[PROFILE_CARD_LAYOUT_ID].height - layout.positions[PROFILE_CARD_LAYOUT_ID].height)
+    : 0;
+  return { ...layout, positions, height: Math.max(layout.height + profileDelta, ...Object.values(positions).map(rect => rect.y + rect.height)) };
 }

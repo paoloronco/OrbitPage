@@ -125,10 +125,14 @@ export const PublicView = ({
   );
   const activeCardLayout = profile.appearance?.cardLayouts?.[cardLayoutViewport];
   const hasResponsiveCardLayout = cardLayoutEditing || Boolean(activeCardLayout);
-  const profileCardHeight = normalizeVisibleProfileLayout(
+  const legacyProfileCardHeight = normalizeVisibleProfileLayout(
     profile.appearance?.layouts?.[cardLayoutViewport] || profile.appearance?.layout,
     visibleProfileItems,
   ).height + (cardLayoutViewport === "mobile" ? 64 : 48);
+  const hasCustomProfileLayout = profileLayoutEditing || hasResponsiveProfileLayout || Boolean(profile.appearance?.layout);
+  const profileCardHeight = hasCustomProfileLayout ? legacyProfileCardHeight : 48;
+  // shortcut: legacy heights have no sizing mode; add one if an exact old minimum must stay manual.
+  const fitProfileHeight = !hasCustomProfileLayout && activeCardLayout?.positions?.[PROFILE_CARD_LAYOUT_ID]?.height === legacyProfileCardHeight;
   const useUnifiedPageLayout = hasProfileContent && (
     cardLayoutEditing || Boolean(activeCardLayout?.positions?.[PROFILE_CARD_LAYOUT_ID])
   );
@@ -182,7 +186,7 @@ export const PublicView = ({
             links={visibleLinks}
             onEditorSelect={onEditorSelect}
             onLayoutChange={onCardLayoutChange}
-            profileCard={useUnifiedPageLayout ? { content: profileTarget, height: profileCardHeight } : undefined}
+            profileCard={useUnifiedPageLayout ? { content: profileTarget, height: profileCardHeight, fitHeight: fitProfileHeight } : undefined}
             theme={theme}
             viewport={cardLayoutViewport}
           />

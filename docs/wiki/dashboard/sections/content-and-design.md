@@ -39,6 +39,8 @@ Alignment guides are visual aids; hold Shift while dragging to snap to them. Arr
 
 Card text wraps and the card grows to keep it readable. Existing vertical gaps are preserved when text needs more height. Icons, titles, descriptions and URLs use the automatic card layout; choose Left, Center or Right in the card's **Alignment** setting. Old saved text coordinates are ignored.
 
+The profile card's default height follows its visible content instead of reserving empty editor rows. Existing default canvas heights are also fitted when rendering the page; larger custom card sizes and custom profile-element positions remain unchanged.
+
 | Control | Behavior |
 | --- | --- |
 | Device toggle | Mobile and desktop have independent layouts; edit each separately |

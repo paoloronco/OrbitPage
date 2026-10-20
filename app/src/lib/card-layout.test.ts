@@ -137,4 +137,37 @@ describe("responsive card layout", () => {
     expect(updateCardLayoutItem({ contents }, cards, "desktop", "large", { x: 3, y: 8, width: 70, height: 160 }).contents).toEqual(contents);
   });
 
+  it("fits an automatic profile and preserves gaps, columns and intentional overlaps", () => {
+    const layout = { height: 432, positions: {
+      [PROFILE_CARD_LAYOUT_ID]: { x: 0, y: 0, width: 50, height: 208 },
+      below: { x: 0, y: 232, width: 50, height: 100 },
+      last: { x: 0, y: 356, width: 50, height: 76 },
+      side: { x: 60, y: 232, width: 40, height: 100 },
+      overlap: { x: 0, y: 40, width: 50, height: 50 },
+    } };
+    const heights = { [PROFILE_CARD_LAYOUT_ID]: 120 };
+    const fitted = fitCardLayoutHeights(layout, heights, true, true);
+    expect(fitted.positions[PROFILE_CARD_LAYOUT_ID].height).toBe(120);
+    expect(fitted.positions.below.y).toBe(144);
+    expect(fitted.positions.last.y).toBe(268);
+    expect(fitted.positions.side).toEqual(layout.positions.side);
+    expect(fitted.positions.overlap).toEqual(layout.positions.overlap);
+    expect(fitted.height).toBe(344);
+    expect(fitCardLayoutHeights(layout, heights).positions).toEqual(layout.positions);
+    expect(fitCardLayoutHeights(layout, {}, true, true)).toEqual(layout);
+    expect(fitCardLayoutHeights(layout, heights, false, true).positions.below.y).toBe(232);
+    expect(layout.positions[PROFILE_CARD_LAYOUT_ID].height).toBe(208);
+  });
+
+  it("keeps a full-width card below an unchanged neighboring column", () => {
+    const layout = { height: 332, positions: {
+      [PROFILE_CARD_LAYOUT_ID]: { x: 0, y: 0, width: 50, height: 208 },
+      side: { x: 60, y: 0, width: 40, height: 208 },
+      below: { x: 0, y: 232, width: 100, height: 100 },
+    } };
+    const fitted = fitCardLayoutHeights(layout, { [PROFILE_CARD_LAYOUT_ID]: 120 }, true, true);
+    expect(fitted.positions.below).toEqual(layout.positions.below);
+    expect(fitted.height).toBe(332);
+  });
+
 });
