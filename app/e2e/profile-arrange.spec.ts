@@ -40,6 +40,7 @@ test('Arrange places profile elements on a grid, locks the bio and saves indepen
     const nameHandle = card.getByRole('button', { name: 'Move Name', exact: true });
     const dragName = async (dy: number, alt = false, cancel = false) => {
       await nameHandle.scrollIntoViewIfNeeded();
+      await card.locator('[data-profile-layout-item="name"]').hover();
       const bounds = (await nameHandle.boundingBox())!;
       const scale = await card.locator('.profile-card__layout').evaluate(element => element.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(element).width));
       if (alt) await page.keyboard.down('Alt');
@@ -76,9 +77,12 @@ test('Arrange places profile elements on a grid, locks the bio and saves indepen
     await moveWork.press('Shift+ArrowDown');
     expect((await position('work'))[1]).toBe(161);
     await expect(page.locator('.page-layout-overlap-warning')).toContainText('Change not applied');
+    await card.getByRole('button', { name: 'Resize Work', exact: true }).press('ArrowUp');
+    expect((await position('work'))[3]).toBe(39);
     await card.getByRole('button', { name: 'Move Social links', exact: true }).press('Shift+ArrowDown');
     await expect.poll(async () => (await position('socials'))[1]).toBe(216);
     await expect.poll(() => page.locator('.visual-site-editor__canvas').getByRole('heading', { name: 'Following card', exact: true }).evaluate(next => next.closest('.glass-card')!.getBoundingClientRect().top >= document.querySelector('.visual-site-editor__canvas .profile-card')!.getBoundingClientRect().bottom)).toBe(true);
+    await card.locator('[data-profile-layout-item="location"]').hover();
     await card.getByRole('button', { name: 'Align left Location', exact: true }).click();
     await expect(card.locator('[data-profile-layout-item="location"]')).toHaveAttribute('data-profile-layout-align', 'left');
     await saveEditorChanges(page);

@@ -653,7 +653,7 @@ html:has(.admin-visual-editor-enabled) {
 
 .profile-card__layout-grip {
   top: -8px;
-  left: -8px;
+  left: -32px;
 }
 
 .profile-card__layout-grip svg {
@@ -677,7 +677,7 @@ html:has(.admin-visual-editor-enabled) {
 .profile-card__layout-align {
   position: absolute;
   z-index: 3;
-  top: -15px;
+  top: -30px;
   left: 50%;
   display: flex;
   padding: 2px;
@@ -704,6 +704,18 @@ html:has(.admin-visual-editor-enabled) {
 .profile-card__layout-align button.is-active {
   background: #eaf1ff;
   color: #174bcc;
+}
+
+.profile-card__layout-grip,
+.profile-card__layout-resize,
+.profile-card__layout-align {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.profile-card__layout-item:is(:hover, :focus-within, .is-dragging) > :is(.profile-card__layout-grip, .profile-card__layout-resize, .profile-card__layout-align) {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .profile-card__layout-grip:focus-visible,

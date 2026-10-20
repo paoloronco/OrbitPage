@@ -278,7 +278,7 @@ export const PublicProfileSection = ({
     const avatarSize = Math.min(192, Math.max(56, profile.appearance?.avatarSize ?? 112));
     return {
       width: item === "avatar" && canvas ? Math.min(100, avatarSize / Number.parseFloat(getComputedStyle(canvas).width) * 100) : 12,
-      height: item === "avatar" ? avatarSize : Math.max(36, contentElement?.scrollHeight || 0),
+      height: item === "avatar" ? avatarSize : Math.max(36, measureProfileItemHeight(contentElement)),
     };
   };
 
