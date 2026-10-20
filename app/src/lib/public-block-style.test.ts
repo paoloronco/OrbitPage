@@ -10,6 +10,11 @@ describe("public block style", () => {
       .toMatchObject({ textAlign, "--public-block-align": itemsAlign });
     for (const size of ["small", "medium", "large"] as const) expect(getPublicBlockPadding(size)).toContain("public-block-content");
   });
+  it.each(["social_row", "link"] as const)("preserves the centered default for %s social docks", type => {
+    const link = { id: "dock", title: "", description: "", url: "", type, content: JSON.stringify({ items: [{ platform: "github", label: "GitHub", url: "fictional" }], layout: "icons" }) };
+    expect(getPublicBlockStyle(link)).toMatchObject({ textAlign: "center", "--public-block-align": "center" });
+    expect(getPublicBlockStyle({ ...link, alignment: "left" })).toMatchObject({ textAlign: "left", "--public-block-align": "start" });
+  });
   it("preserves theme transparency for a custom block color", () => {
     const style = getPublicBlockStyle({
       id: "link-1",

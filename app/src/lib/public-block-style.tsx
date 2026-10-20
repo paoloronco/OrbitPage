@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { LinkData } from "@/components/LinkCard";
 import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
+import { isSocialRowContent } from "@/lib/link-blocks";
 
 const parseHexColor = (color?: string) => {
   if (!color) return null;
@@ -28,17 +29,24 @@ export const getPublicTextColor = (link: LinkData) =>
 
 type PublicBlockCssProperties = CSSProperties & Record<`--${string}`, string>;
 
-export const getPublicBlockStyle = (link: LinkData): PublicBlockCssProperties => ({
-  ...(link.backgroundColor ? {
-    background: `color-mix(in srgb, ${link.backgroundColor} var(--content-card-opacity-percent, 100%), transparent)`,
-    '--content-card-surface-tint': link.backgroundColor,
-  } : {}),
-  ...(getPublicTextColor(link) ? { color: getPublicTextColor(link) } : {}),
-  fontFamily: link.titleFontFamily || "var(--font-card-title, inherit)",
-  '--font-card-description-effective': link.descriptionFontFamily || "var(--font-card-description, inherit)",
-  textAlign: link.alignment || "left",
-  '--public-block-align': { left: "start", center: "center", right: "end" }[link.alignment || "left"],
-});
+export const getPublicBlockAlignment = (link: LinkData) => link.alignment || (
+  link.type === "social_row" || isSocialRowContent(link.content) ? "center" : "left"
+);
+
+export const getPublicBlockStyle = (link: LinkData): PublicBlockCssProperties => {
+  const alignment = getPublicBlockAlignment(link);
+  return {
+    ...(link.backgroundColor ? {
+      background: `color-mix(in srgb, ${link.backgroundColor} var(--content-card-opacity-percent, 100%), transparent)`,
+      '--content-card-surface-tint': link.backgroundColor,
+    } : {}),
+    ...(getPublicTextColor(link) ? { color: getPublicTextColor(link) } : {}),
+    fontFamily: link.titleFontFamily || "var(--font-card-title, inherit)",
+    '--font-card-description-effective': link.descriptionFontFamily || "var(--font-card-description, inherit)",
+    textAlign: alignment,
+    '--public-block-align': { left: "start", center: "center", right: "end" }[alignment],
+  };
+};
 
 export const getPublicBlockPadding = (size?: LinkData["size"]) => {
   if (size === "small") return "public-block-content p-3";

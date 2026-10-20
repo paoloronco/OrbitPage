@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
+import { getPublicBlockAlignment } from "@/lib/public-block-style";
 import { LinkEditMode } from "@/lib/permissions";
 import { DEFAULT_SELF_HOSTED_VIDEO_MAX_BYTES, isAllowedRasterImageFile, RASTER_IMAGE_ACCEPT, validateVideoFile, VIDEO_ACCEPT } from "@/lib/media-validation";
 import { optimizeImageForUpload, type ImageUploadVariant } from "@/lib/image-upload";
@@ -974,7 +975,7 @@ export const LinkCard = ({
               <div className="space-y-1">
                 <Label htmlFor={`link-card-alignment-${link.id}`} className="text-xs">Alignment</Label>
                 <Select
-                  value={editLink.alignment || 'left'}
+                  value={getPublicBlockAlignment(editLink)}
                   onValueChange={(value: 'left' | 'center' | 'right') => setEditLink(prev => ({ ...prev, alignment: value }))}
                 >
                   <SelectTrigger id={`link-card-alignment-${link.id}`} className="h-8 bg-white text-black">

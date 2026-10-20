@@ -19,7 +19,7 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
       : "public-compact-link--brand";
 
   return (
-    <div className="public-compact-links public-unboxed-block public-block-content border border-transparent" style={getPublicBlockStyle(link)}>
+    <div className="public-compact-links public-unboxed-block public-block-content" style={getPublicBlockStyle(link)}>
       <div className="public-compact-links__content">
         {items.length > 0 ? (
           <div className="public-compact-links__items public-compact-links__items--icons">

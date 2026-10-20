@@ -6999,7 +6999,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .public-compact-links.public-block-content {
-  border: 1px solid transparent;
+  /* Match bordered cards' text inset while keeping the dock borderless. */
+  padding-inline: calc(1rem + 1px);
 }
 
 .public-separator[data-alignment="left"] > :first-child,
