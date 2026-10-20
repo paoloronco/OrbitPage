@@ -75,7 +75,7 @@ test('subpages keep normal card spacing without inheriting the home card layout'
     const profile = await (await page.request.get('/api/profile', { headers })).json();
     const layout = {
       positions: {
-        'orbitpage-profile': { x: 0, y: 0, width: 100, height: 200 },
+        'orbitpage-profile': { x: 0, y: 0, width: 100, height: 400 },
         'home-link': { x: 0, y: 650, width: 100, height: 120 },
       },
       height: 770,
