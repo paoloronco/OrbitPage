@@ -9,6 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
   normalizeVisibleProfileLayout,
   updateProfileLayoutAlignment,
   updateProfileLayoutItem,
+  snapProfileLayoutRect,
   type NormalizedProfileLayout,
   type ProfileLayout,
   type ProfileLayoutItem,
@@ -83,6 +85,7 @@ type LayoutGesture = {
   scale: number;
   minimumWidth: number;
   minimumHeight: number;
+  control: HTMLElement;
 };
 
 const SOCIALS = [
@@ -98,6 +101,9 @@ const SOCIALS = [
   { id: "whatsapp", label: "WhatsApp profile", icon: WhatsAppIcon },
   { id: "mastodon", label: "Mastodon profile", icon: MastodonIcon },
 ] as const;
+
+const measureProfileItemHeight = (content?: Element | null) =>
+  Math.max(0, ...Array.from(content?.children || []).map(child => child.scrollHeight));
 
 const safeProfileLayoutUpdate = (
   layout: NormalizedProfileLayout,
@@ -145,8 +151,7 @@ export const PublicProfileSection = ({
     ...(profileDetails?.primary ? ["work" as const] : []),
     ...(profileDetails?.secondary ? ["location" as const] : []),
     ...(hasSocialLinks ? ["socials" as const] : []),
-    ...(hasBio ? ["bio" as const] : []),
-  ], [avatarVisible, displayName, hasBio, hasSocialLinks, profileDetails?.primary, profileDetails?.secondary]);
+  ], [avatarVisible, displayName, hasSocialLinks, profileDetails?.primary, profileDetails?.secondary]);
   const savedLayout = useMemo(() => normalizeVisibleProfileLayout(rawLayout, visibleLayoutItems), [rawLayout, visibleLayoutItems]);
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
   const [activeItem, setActiveItem] = useState<ProfileLayoutItem | null>(null);
@@ -174,6 +179,18 @@ export const PublicProfileSection = ({
       setWorkingLayout(savedLayout);
     }
   }, [savedLayout]);
+
+  useEffect(() => () => {
+    const gesture = gestureRef.current;
+    gestureRef.current = null;
+    pendingLayoutRef.current = null;
+    if (gesture) {
+      latestLayoutRef.current = gesture.layout;
+      setWorkingLayout(gesture.layout);
+      setActiveItem(null); setGuides({});
+    }
+    if (gesture?.control.hasPointerCapture(gesture.pointerId)) gesture.control.releasePointerCapture(gesture.pointerId);
+  }, [layoutEditing, activeLayoutViewport]);
 
   const avatar = avatarVisible ? (
     <Avatar className="profile-card__avatar" style={getProfileAvatarStyle(profile.appearance)}>
@@ -225,7 +242,7 @@ export const PublicProfileSection = ({
     socials,
     bio,
   };
-  const canvasHeight = Math.max(160, ...visibleLayoutItems
+  const canvasHeight = Math.max(0, ...visibleLayoutItems
     .map((item) => layout.positions[item].y + layout.positions[item].height));
 
   useLayoutEffect(() => {
@@ -234,7 +251,7 @@ export const PublicProfileSection = ({
     const measure = () => {
       const items = Array.from(canvas.querySelectorAll<HTMLElement>("[data-profile-layout-item]"));
       const heights = Object.fromEntries(items.map(item => [item.dataset.profileLayoutItem!,
-        Math.max(0, ...Array.from(item.querySelector(".profile-card__layout-content")?.children || []).map(child => child.scrollHeight)),
+        measureProfileItemHeight(item.querySelector(".profile-card__layout-content")),
       ]));
       setContentHeights(previous => Object.keys(previous).length === Object.keys(heights).length
         && Object.entries(heights).every(([id, height]) => previous[id] === height) ? previous : heights);
@@ -260,7 +277,7 @@ export const PublicProfileSection = ({
     const contentElement = itemElement?.querySelector<HTMLElement>(".profile-card__layout-content");
     const avatarSize = Math.min(192, Math.max(56, profile.appearance?.avatarSize ?? 112));
     return {
-      width: item === "avatar" && canvas ? avatarSize / canvas.offsetWidth * 100 : 12,
+      width: item === "avatar" && canvas ? Math.min(100, avatarSize / Number.parseFloat(getComputedStyle(canvas).width) * 100) : 12,
       height: item === "avatar" ? avatarSize : Math.max(36, contentElement?.scrollHeight || 0),
     };
   };
@@ -270,11 +287,12 @@ export const PublicProfileSection = ({
     item: ProfileLayoutItem,
     mode: LayoutGesture["mode"],
   ) => {
-    if (!layoutEditing || event.button !== 0) return;
+    if (!layoutEditing || item === "bio" || event.button !== 0) return;
     const canvas = layoutRef.current;
     if (!canvas) return;
     event.preventDefault();
     event.stopPropagation();
+    (event.currentTarget.tagName === "BUTTON" ? event.currentTarget : canvas).focus({ preventScroll: true });
     const bounds = canvas.getBoundingClientRect();
     const startRect = { ...layout.positions[item] };
     const minimumSize = minimumItemSize(item);
@@ -287,9 +305,10 @@ export const PublicProfileSection = ({
       startRect,
       layout,
       bounds,
-      scale: Math.max(.01, bounds.width / canvas.offsetWidth),
+      scale: Math.max(.01, bounds.width / Number.parseFloat(getComputedStyle(canvas).width)),
       minimumWidth: minimumSize.width,
       minimumHeight: minimumSize.height,
+      control: event.currentTarget,
     };
     latestLayoutRef.current = layout;
     pendingLayoutRef.current = null;
@@ -311,11 +330,16 @@ export const PublicProfileSection = ({
           width: Math.max(gesture.minimumWidth, gesture.startRect.width + deltaX),
           height: Math.max(gesture.minimumHeight, gesture.startRect.height + deltaY),
         };
+    const gridRect = event.altKey ? rect : snapProfileLayoutRect(rect, gesture.mode, gesture.bounds.width / gesture.scale);
+    if (gesture.mode === "resize") {
+      gridRect.width = Math.min(100 - gridRect.x, Math.max(gesture.minimumWidth, gridRect.width));
+      gridRect.height = Math.max(gesture.minimumHeight, gridRect.height);
+    }
     const snapped = alignCardLayoutRect(
-      gesture.layout.positions,
+      Object.fromEntries(visibleLayoutItems.map(id => [id, gesture.layout.positions[id]])),
       gesture.layout.height,
       gesture.item,
-      rect,
+      gridRect,
       gesture.mode,
       6 / gesture.bounds.width * 100,
       6 / gesture.scale,
@@ -323,13 +347,24 @@ export const PublicProfileSection = ({
     pendingLayoutRef.current = safeProfileLayoutUpdate(
       gesture.layout,
       gesture.item,
-      snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect,
+      event.altKey ? rect : snapped.rect,
       visibleLayoutItems,
     );
     gesture.rejected = !pendingLayoutRef.current;
     if (gesture.rejected && !gesture.warned) { warnOverlap(); gesture.warned = true; }
-    setGuides(snapped.guides);
-    applyWorkingLayout(pendingLayoutRef.current || gesture.layout);
+    setGuides(event.altKey ? {} : snapped.guides);
+    if (pendingLayoutRef.current) {
+      flushSync(() => applyWorkingLayout(pendingLayoutRef.current!));
+      const element = layoutRef.current?.querySelector<HTMLElement>(`[data-profile-layout-item="${gesture.item}"] .profile-card__layout-content`);
+      const height = measureProfileItemHeight(element);
+      const candidate = pendingLayoutRef.current.positions[gesture.item];
+      if (!safeProfileLayoutUpdate(pendingLayoutRef.current, gesture.item, { ...candidate, height: Math.max(candidate.height, height) }, visibleLayoutItems)) {
+        gesture.rejected = true;
+        pendingLayoutRef.current = null;
+        if (!gesture.warned) { warnOverlap(); gesture.warned = true; }
+      }
+    }
+    if (!pendingLayoutRef.current) applyWorkingLayout(gesture.layout);
   };
 
   const finishGesture = (event: ReactPointerEvent<HTMLElement>) => {
@@ -343,6 +378,7 @@ export const PublicProfileSection = ({
     setActiveItem(null);
     setGuides({});
     applyWorkingLayout(committedLayout);
+    if (gesture.control.hasPointerCapture(gesture.pointerId)) gesture.control.releasePointerCapture(gesture.pointerId);
     if (gesture.rejected) return;
     onLayoutChange?.(committedLayout);
   };
@@ -358,8 +394,13 @@ export const PublicProfileSection = ({
   };
 
   const commitKeyboardChange = (item: ProfileLayoutItem, rect: ProfileLayoutRect) => {
-    const next = safeProfileLayoutUpdate(layout, item, rect, visibleLayoutItems);
+    let next = safeProfileLayoutUpdate(layout, item, rect, visibleLayoutItems);
     if (!next) { warnOverlap(); return; }
+    flushSync(() => applyWorkingLayout(next!));
+    const element = layoutRef.current?.querySelector<HTMLElement>(`[data-profile-layout-item="${item}"] .profile-card__layout-content`);
+    const height = measureProfileItemHeight(element);
+    next = safeProfileLayoutUpdate(next, item, { ...next.positions[item], height: Math.max(next.positions[item].height, height) }, visibleLayoutItems);
+    if (!next) { applyWorkingLayout(layout); warnOverlap(); return; }
     applyWorkingLayout(next);
     onLayoutChange?.(next);
   };
@@ -375,11 +416,12 @@ export const PublicProfileSection = ({
     event.preventDefault();
     event.stopPropagation();
     const rect = layout.positions[item];
-    const step = event.shiftKey ? 4 : 1;
+    const step = event.shiftKey ? 8 : 1;
+    const dx = step / Number.parseFloat(getComputedStyle(layoutRef.current!).width) * 100;
     commitKeyboardChange(item, {
       ...rect,
-      x: rect.x + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0),
-      y: rect.y + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0),
+      x: rect.x + (event.key === "ArrowLeft" ? -dx : event.key === "ArrowRight" ? dx : 0),
+      y: rect.y + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0),
     });
   };
 
@@ -388,12 +430,13 @@ export const PublicProfileSection = ({
     event.preventDefault();
     event.stopPropagation();
     const rect = layout.positions[item];
-    const step = event.shiftKey ? 4 : 1;
+    const step = event.shiftKey ? 8 : 1;
+    const dx = step / Number.parseFloat(getComputedStyle(layoutRef.current!).width) * 100;
     const minimumSize = minimumItemSize(item);
     commitKeyboardChange(item, {
       ...rect,
-      width: Math.max(minimumSize.width, rect.width + (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0)),
-      height: Math.max(minimumSize.height, rect.height + (event.key === "ArrowUp" ? -step * 4 : event.key === "ArrowDown" ? step * 4 : 0)),
+      width: Math.min(100 - rect.x, Math.max(minimumSize.width, rect.width + (event.key === "ArrowLeft" ? -dx : event.key === "ArrowRight" ? dx : 0))),
+      height: Math.max(minimumSize.height, rect.height + (event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0)),
     });
   };
 
@@ -411,14 +454,25 @@ export const PublicProfileSection = ({
         <div
           className="profile-card__layout profile-card__layout--free"
           ref={layoutRef}
+          tabIndex={-1}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || !gestureRef.current) return;
+            event.preventDefault(); event.stopPropagation();
+            const gesture = gestureRef.current;
+            gestureRef.current = null;
+            pendingLayoutRef.current = null;
+            applyWorkingLayout(gesture.layout);
+            setActiveItem(null); setGuides({});
+            if (gesture.control.hasPointerCapture(gesture.pointerId)) gesture.control.releasePointerCapture(gesture.pointerId);
+          }}
           style={{ "--profile-layout-height": `${canvasHeight}px` } as CSSProperties}
         >
-          {(Object.keys(layout.positions) as ProfileLayoutItem[]).map((item) => {
+          {visibleLayoutItems.map((item) => {
             const content = contents[item];
             if (!content) return null;
             const rect = layout.positions[item];
             const alignment = layout.alignments[item];
-            const canAlignText = item === "name" || item === "work" || item === "location" || item === "bio";
+            const canAlignText = item === "name" || item === "work" || item === "location";
             return (
               <div
                 className={`profile-card__layout-item profile-card__layout-item--${item}${activeItem === item ? " is-dragging" : ""}`}
@@ -427,6 +481,7 @@ export const PublicProfileSection = ({
                 data-profile-layout-position={`${rect.x},${rect.y},${rect.width},${rect.height}`}
                 key={item}
                 onPointerCancel={cancelGesture}
+                onLostPointerCapture={cancelGesture}
                 onPointerDown={(event) => {
                   if ((event.target as HTMLElement).closest(".profile-card__layout-grip, .profile-card__layout-resize")) return;
                   startGesture(event, item, "move");
@@ -450,14 +505,14 @@ export const PublicProfileSection = ({
                     onPointerDown={(event) => startGesture(event, item, "move")}
                     onPointerMove={updateGesture}
                     onPointerUp={finishGesture}
-                    title={tr("Drag freely. Use arrow keys for precise movement.", "Trascina liberamente. Usa le frecce per movimenti precisi.")}
+                    title={tr("Drag on the grid; hold Alt to move freely. Arrow keys: 1 px; Shift: 8 px.", "Trascina sulla griglia; tieni Alt per muoverti liberamente. Frecce: 1 px; Maiusc: 8 px.")}
                     type="button"
                   >
                     <GripVertical aria-hidden="true" size={17} />
                   </button>
                 )}
 
-                <div className="profile-card__layout-content">
+                <div {...{ inert: layoutEditing ? "" : undefined }} className="profile-card__layout-content">
                   {content || <span className="profile-card__layout-placeholder">{labels[item]}</span>}
                 </div>
 
@@ -511,6 +566,13 @@ export const PublicProfileSection = ({
           </div>
         </>
       )}
+      {(hasCustomLayout || layoutEditing) && bio && <div className="profile-card__fixed-bio" data-profile-layout-fixed="bio">{bio}</div>}
+      {layoutEditing && <button className="profile-card__layout-reset" type="button" onClick={(event) => {
+        event.stopPropagation();
+        const next = normalizeVisibleProfileLayout(undefined, visibleLayoutItems);
+        applyWorkingLayout(next);
+        onLayoutChange?.(next);
+      }}>{tr("Reset profile arrangement", "Ripristina disposizione profilo")}</button>}
     </Card>
   );
 };

@@ -384,7 +384,10 @@ export function PublicCardLayout({
       className={`public-card-stack public-card-stack--layout${layoutEditing ? " public-card-stack--layout-editing" : ""}`}
       ref={canvasRef}
       data-card-layout-viewport={viewport}
-      onClickCapture={layoutEditing ? (event) => { event.preventDefault(); event.stopPropagation(); } : undefined}
+      onClickCapture={layoutEditing ? (event) => {
+        if ((event.target as HTMLElement).closest('[data-profile-layout-editor="true"]')) return;
+        event.preventDefault(); event.stopPropagation();
+      } : undefined}
       onKeyDown={handleKeyboard}
       onPointerCancel={cancelGesture}
       onLostPointerCapture={cancelGesture}
@@ -414,7 +417,7 @@ export function PublicCardLayout({
               {layoutEditing && (
               <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Other cards keep their positions.", "Trascina la card profilo. Le altre card mantengono la loro posizione.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
               )}
-              <div {...{ inert: layoutEditing ? "" : undefined }} className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
+              <div className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
               {layoutEditing && (
                 <button aria-label={tr("Resize profile card", "Ridimensiona card profilo")} className="page-card-layout__resize" data-page-card-layout-mode="resize" onClick={(event) => event.stopPropagation()} title={tr("Drag to resize the whole profile.", "Trascina per ridimensionare l’intero profilo.")} type="button"><MoveDiagonal2 aria-hidden="true" size={17} /></button>
               )}

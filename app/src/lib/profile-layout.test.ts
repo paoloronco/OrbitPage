@@ -5,9 +5,21 @@ import {
   normalizeVisibleProfileLayout,
   updateProfileLayoutAlignment,
   updateProfileLayoutItem,
+  snapProfileLayoutRect,
 } from "./profile-layout";
 
 describe("profile layout", () => {
+  it("snaps movement and resizing to the same 8px grid at fractional canvas widths", () => {
+    const rect = { x: 7, y: 13, width: 47, height: 53 };
+    const moved = snapProfileLayoutRect(rect, 'move', 300.5);
+    const resized = snapProfileLayoutRect(rect, 'resize', 300.5);
+    expect(moved.y).toBe(16);
+    expect(Math.abs(moved.x / 100 * 300.5 - 24)).toBeLessThan(.02);
+    expect(moved.width).toBe(rect.width);
+    expect(resized.height).toBe(56);
+    expect(Math.abs(resized.width / 100 * 300.5 - 144)).toBeLessThan(.02);
+    expect(resized.x).toBe(rect.x);
+  });
   it("supports continuous placement and two-dimensional resizing", () => {
     const moved = updateProfileLayoutItem(DEFAULT_PROFILE_LAYOUT, "name", {
       x: 34.25,

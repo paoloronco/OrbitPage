@@ -225,6 +225,7 @@ export function VisualSiteEditor({
             <GripVertical aria-hidden="true" size={17} />
             <strong>{device === "mobile" ? tr("Mobile layout", "Layout mobile") : tr("Desktop layout", "Layout desktop")}</strong>
             <span>{tr("Move and resize cards freely with the handles. Arrow keys: 1 px; Shift: 10 px. Hold Shift while dragging to align.", "Sposta e ridimensiona liberamente le card dalle maniglie. Frecce: 1 px; Maiusc: 10 px. Tieni Maiusc durante il trascinamento per allineare.")}</span>
+            <span>{tr("Profile elements snap to an 8 px grid; hold Alt to move freely. The bio stays below them.", "Gli elementi del profilo seguono una griglia di 8 px; tieni Alt per spostarli liberamente. La bio resta sotto.")}</span>
           </span>
         </div>
       )}
@@ -249,7 +250,7 @@ export function VisualSiteEditor({
               onProfileLayoutChange={onProfileLayoutChange ? (layout) => onProfileLayoutChange(layout, device) : undefined}
               onCardLayoutChange={onCardLayoutChange ? (layout) => onCardLayoutChange(layout, device) : undefined}
               profile={profile}
-              profileLayoutEditing={false}
+              profileLayoutEditing={layoutEditing && Boolean(onProfileLayoutChange)}
               cardLayoutEditing={layoutEditing}
               publicPageHref={publicPageHref}
               showOrbitPageBadge={showOrbitPageBadge}

@@ -129,12 +129,11 @@ export const PublicView = ({
     profile.appearance?.layouts?.[cardLayoutViewport] || profile.appearance?.layout,
     visibleProfileItems,
   ).height + (cardLayoutViewport === "mobile" ? 64 : 48);
-  const hasCustomProfileLayout = profileLayoutEditing || hasResponsiveProfileLayout || Boolean(profile.appearance?.layout);
-  const profileCardHeight = hasCustomProfileLayout ? legacyProfileCardHeight : 48;
+  const profileCardHeight = 48;
   const savedProfileHeight = activeCardLayout?.positions?.[PROFILE_CARD_LAYOUT_ID]?.height;
   // Legacy layouts did not distinguish a manual minimum from the old automatic editor height.
   const profileMinHeight = activeCardLayout?.profileMinHeight ?? (
-    !hasCustomProfileLayout && (savedProfileHeight === legacyProfileCardHeight || savedProfileHeight === (cardLayoutViewport === "mobile" ? 224 : 208))
+    (savedProfileHeight === legacyProfileCardHeight || savedProfileHeight === (cardLayoutViewport === "mobile" ? 224 : 208))
       ? 48 : savedProfileHeight ?? profileCardHeight
   );
   const useUnifiedPageLayout = hasProfileContent && (
@@ -151,7 +150,7 @@ export const PublicView = ({
         event.stopPropagation();
         onEditorSelect({ kind: "profile" });
       } : undefined}
-      onKeyDown={onEditorSelect ? (event) => {
+      onKeyDown={onEditorSelect && !profileLayoutEditing ? (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
         onEditorSelect({ kind: "profile" });

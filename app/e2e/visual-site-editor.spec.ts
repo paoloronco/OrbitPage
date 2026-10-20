@@ -116,7 +116,7 @@ test("Visual editor persists profile and content selected on the real preview", 
   await expect(page.getByRole("link", { name: `Open ${cardName}`, exact: true })).toHaveAttribute("href", "https://example.com/visual-editor");
 });
 
-test("Arrange exposes only whole-card controls and continuous resizing", async ({ page }) => {
+test("Arrange exposes profile elements alongside whole-card controls and continuous resizing", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
   await page.getByRole("textbox", { name: "Role or focus" }).fill(`Work ${Date.now()}`);
@@ -128,6 +128,8 @@ test("Arrange exposes only whole-card controls and continuous resizing", async (
   await contentSaveButton(page).click();
 
   await page.getByRole("button", { name: "Arrange", exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Move Work', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Move Location', exact: true })).toBeVisible();
   await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
   const contentCard = page.locator('[data-card-layout-item]:not([data-card-layout-item="orbitpage-profile"])').last();
   const moveHandle = contentCard.getByRole("button", { name: /^Move card/ });

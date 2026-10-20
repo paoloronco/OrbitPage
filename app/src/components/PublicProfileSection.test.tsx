@@ -19,7 +19,7 @@ describe("PublicProfileSection custom layout", () => {
 
     expect(html).not.toContain("Profile image");
     expect(html).toContain('data-profile-layout-position="10,0,80,64"');
-    expect(html).toContain("--profile-layout-height:160px");
+    expect(html).toContain("--profile-layout-height:64px");
   });
 
   it("links entered usernames and omits empty socials", () => {
@@ -67,9 +67,10 @@ describe("PublicProfileSection custom layout", () => {
 
     const publicHtml = renderToStaticMarkup(<PublicProfileSection profile={profile} />);
     expect(publicHtml).toContain('data-profile-layout-position="34,0,40,96"');
-    expect(publicHtml).toContain('--profile-layout-height:312px');
-    expect(publicHtml).toContain('data-profile-layout-position="4,168,92,72"');
-    expect(publicHtml).toContain('data-profile-layout-position="10,264,80,48"');
+    expect(publicHtml).toContain('--profile-layout-height:192px');
+    expect(publicHtml).not.toContain('data-profile-layout-item="bio"');
+    expect(publicHtml).toContain('data-profile-layout-fixed="bio"');
+    expect(publicHtml).toContain('data-profile-layout-position="10,144,80,48"');
     expect(profile.appearance.layout.positions.bio.y).toBe(120);
     expect(publicHtml).toContain("profile-card__title--stacked");
     expect(publicHtml).toContain(">Mario</span><span>Rossi</span>");
@@ -82,6 +83,9 @@ describe("PublicProfileSection custom layout", () => {
     expect(editorHtml).toContain("profile-card__layout-resize");
     expect(editorHtml).toContain('aria-label="Align Work"');
     expect(editorHtml).toContain('aria-label="Align center Work"');
+    expect(editorHtml).not.toContain('aria-label="Move Description"');
+    expect(editorHtml).not.toContain('aria-label="Resize Description"');
+    expect(editorHtml).not.toContain('aria-label="Align Description"');
     expect(editorHtml).toContain("lucide-move-diagonal2");
   });
 
@@ -111,11 +115,11 @@ describe("PublicProfileSection custom layout", () => {
     const mobileHtml = renderToStaticMarkup(<PublicProfileSection layoutViewport="mobile" profile={profile} />);
     expect(mobileHtml).toContain('data-profile-layout-viewport="mobile"');
     expect(mobileHtml).toContain('data-profile-layout-position="10,128,80,64"');
-    expect(mobileHtml).toContain('--profile-layout-height:408px');
+    expect(mobileHtml).toContain('--profile-layout-height:192px');
 
     const desktopHtml = renderToStaticMarkup(<PublicProfileSection layoutViewport="desktop" profile={profile} />);
     expect(desktopHtml).toContain('data-profile-layout-viewport="desktop"');
     expect(desktopHtml).toContain('data-profile-layout-position="55,24,35,72"');
-    expect(desktopHtml).toContain('--profile-layout-height:240px');
+    expect(desktopHtml).toContain('--profile-layout-height:96px');
   });
 });

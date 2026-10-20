@@ -233,7 +233,7 @@ test('legacy overlaps and growing profile elements stay separated at every publi
         footerText: 'Footer follows the complete page',
         appearance: { profileDetails: { primary: 'Unbroken'.repeat(30), secondary: 'City'.repeat(15) }, layout: { positions: {
           name: { x: 0, y: 0, width: 100, height: 64 },
-          work: { x: 0, y: 24, width: 48, height: 40 },
+          work: { x: 0, y: 24, width: 48, height: 300 },
           location: { x: 52, y: 24, width: 48, height: 40 },
           bio: { x: 0, y: 24, width: 100, height: 80 },
         }, height: 104 }, cardLayouts: { desktop: layout, mobile: layout } },
@@ -244,7 +244,7 @@ test('legacy overlaps and growing profile elements stay separated at every publi
   await page.goto('/');
   for (const width of [1440, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const selector of ['[data-card-layout-item]', '[data-profile-layout-item]']) {
+    for (const selector of ['[data-card-layout-item]', '[data-profile-layout-item], [data-profile-layout-fixed]']) {
       await expect.poll(() => page.locator(selector).evaluateAll(items => {
         const rects = items.map(item => item.getBoundingClientRect());
         return rects.length >= 2 && items.every(item => item.scrollWidth <= item.clientWidth + 1 && item.scrollHeight <= item.clientHeight + 1)
@@ -253,5 +253,6 @@ test('legacy overlaps and growing profile elements stay separated at every publi
       })).toBe(true);
     }
     expect(await page.locator('.public-page-footer').evaluate(footer => footer.getBoundingClientRect().top >= document.querySelector('.public-page-content')!.getBoundingClientRect().bottom)).toBe(true);
+    expect(await page.locator('.profile-card').evaluate(card => Math.abs(card.querySelector('.profile-card__layout-item--work .profile-card__detail')!.getBoundingClientRect().top - card.querySelector('.profile-card__layout-item--location .profile-card__detail')!.getBoundingClientRect().top))).toBeLessThan(.1);
   }
 });

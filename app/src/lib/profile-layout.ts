@@ -45,8 +45,15 @@ export const DEFAULT_PROFILE_LAYOUT: NormalizedProfileLayout = {
 };
 
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value));
-const round = (value: number) => Math.round(value * 4) / 4;
+const round = (value: number) => Math.round(value * 100) / 100;
 const finite = (value: number | undefined, fallback: number) => Number.isFinite(value) ? Number(value) : fallback;
+
+export function snapProfileLayoutRect(rect: ProfileLayoutRect, mode: "move" | "resize", canvasWidth: number): ProfileLayoutRect {
+  const snapX = (value: number) => round(Math.round(value * canvasWidth / 100 / 8) * 8 / canvasWidth * 100);
+  return mode === "move"
+    ? { ...rect, x: snapX(rect.x), y: Math.round(rect.y / 8) * 8 }
+    : { ...rect, width: snapX(rect.width), height: Math.round(rect.height / 8) * 8 };
+}
 
 function normalizeRect(candidate: Partial<ProfileLayoutRect> | undefined, fallback: ProfileLayoutRect): ProfileLayoutRect {
   const width = round(clamp(finite(candidate?.width, fallback.width), 12, 100));

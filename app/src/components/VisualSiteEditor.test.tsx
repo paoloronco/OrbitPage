@@ -268,7 +268,7 @@ describe("VisualSiteEditor", () => {
 
     expect(html).toContain(">Done</span>");
     expect(html).not.toContain(">Reset</span>");
-    expect(mockState.livePreviewProps?.profileLayoutEditing).toBe(false);
+    expect(mockState.livePreviewProps?.profileLayoutEditing).toBe(true);
     expect(mockState.livePreviewProps?.cardLayoutEditing).toBe(true);
   });
 

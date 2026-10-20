@@ -583,6 +583,27 @@ html:has(.admin-visual-editor-enabled) {
   position: absolute;
 }
 
+.profile-card--layout-editing .profile-card__layout {
+  background-image: linear-gradient(rgb(129 151 190 / 16%) 1px, transparent 1px), linear-gradient(90deg, rgb(129 151 190 / 16%) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+.profile-card__layout-reset {
+  position: absolute;
+  left: 12px;
+  bottom: 4px;
+  z-index: 6;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff;
+  color: #2454d6;
+  font-size: 11px;
+  max-width: calc(100% - 72px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .profile-card--layout-editing .profile-card__layout-item {
   min-height: 36px;
   padding: 0;
@@ -798,6 +819,10 @@ html:has(.admin-visual-editor-enabled) {
 
 .public-card-stack--layout-editing .page-card-layout__surface {
   pointer-events: none;
+}
+
+.public-card-stack--layout-editing .page-card-layout__surface--profile {
+  pointer-events: auto;
 }
 
 .public-card-stack--layout-editing .page-card-layout__surface * {
