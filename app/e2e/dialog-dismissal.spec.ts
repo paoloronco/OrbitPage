@@ -58,11 +58,14 @@ test('closes the AI popup outside only when its composer has no draft', async ({
   await expect(dialog).toBeHidden();
   await open.click();
   const composer = dialog.getByRole('textbox');
+  const send = dialog.getByRole('button', { name: 'Send', exact: true });
   await composer.fill('Unsaved instruction');
+  await expect(send).toBeEnabled();
   await page.mouse.click(2, 2);
   await expect(dialog).toBeVisible();
   await expect(composer).toHaveValue('Unsaved instruction');
   await composer.fill('');
+  await expect(send).toBeDisabled();
   await page.mouse.click(2, 2);
   await expect(dialog).toBeHidden();
 });

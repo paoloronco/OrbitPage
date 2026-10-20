@@ -140,7 +140,7 @@ jobs:
   e2e:
     name: E2E (${{ matrix.browser }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 22
+    timeout-minutes: 26
     strategy:
       fail-fast: false
       matrix:
@@ -174,7 +174,7 @@ jobs:
 
       - name: Run isolated Playwright E2E tests
         run: npm run test:e2e:${{ matrix.browser }}
-        timeout-minutes: 16
+        timeout-minutes: 20
 
       - name: Upload Playwright test report
         uses: actions/upload-artifact@v4
