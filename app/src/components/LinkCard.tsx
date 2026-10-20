@@ -378,8 +378,8 @@ export const LinkCard = ({
     }));
   };
 
-  const updateSeparatorData = (field: keyof ReturnType<typeof getSeparatorData>, value: boolean) => {
-    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...separatorData, [field]: value }) }));
+  const updateSeparatorData = <K extends keyof ReturnType<typeof getSeparatorData>,>(field: K, value: ReturnType<typeof getSeparatorData>[K]) => {
+    setEditLink(prev => ({ ...prev, content: buildBlockContent({ ...getSeparatorData(prev.content), [field]: value }) }));
   };
 
   const updateVideoData = <K extends keyof VideoBlockData>(field: K, value: VideoBlockData[K]) => {
@@ -1136,6 +1136,23 @@ export const LinkCard = ({
                 )}
                 {isSeparator && (
                   <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                    <div className="space-y-1">
+                      <Label htmlFor={`link-card-separator-line-${link.id}`} className="text-xs">{tr('Line position', 'Posizione della linea')}</Label>
+                      <Select
+                        value={separatorData.linePosition || 'inline'}
+                        onValueChange={(value: 'inline' | 'above' | 'below') => updateSeparatorData('linePosition', value)}
+                      >
+                        <SelectTrigger id={`link-card-separator-line-${link.id}`} className="h-8 bg-white text-black">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="inline">{tr('Beside text', 'Accanto al testo')}</SelectItem>
+                          <SelectItem value="above">{tr('Above text', 'Sopra il testo')}</SelectItem>
+                          <SelectItem value="below">{tr('Below text', 'Sotto il testo')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">{tr('Use Alignment to place the text left, center or right.', 'Usa Allineamento per posizionare il testo a sinistra, al centro o a destra.')}</p>
+                    </div>
                     <div className="space-y-1">
                       <Label htmlFor={`link-card-separator-background-${link.id}`} className="text-xs">Separator background</Label>
                       <Select

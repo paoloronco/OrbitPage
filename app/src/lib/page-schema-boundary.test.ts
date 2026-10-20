@@ -24,6 +24,16 @@ import { themePresets } from './theme-presets';
 import { cardThemePresets } from './card-theme-presets';
 
 describe('canonical page schema boundary', () => {
+  it('preserves separator arrangements at write and public boundaries and rejects invalid positions', () => {
+    for (const linePosition of ['inline', 'above', 'below']) {
+      const saved = parseOrbitPageBlocks([{ id: 'separator', type: 'separator', title: 'Section', content: JSON.stringify({ boxed: true, linePosition }) }]);
+      expect(JSON.parse(normalizeStoredOrbitPageBlocks(saved)[0].content || '{}')).toEqual({ boxed: true, linePosition });
+    }
+    const legacy = parseOrbitPageBlocks([{ id: 'separator', type: 'separator', title: 'Section', content: '{"boxed":true}' }]);
+    expect(JSON.parse(legacy[0].content || '{}')).toEqual({ boxed: true, linePosition: 'inline' });
+    expect(() => parseOrbitPageBlocks([{ id: 'separator', type: 'separator', content: '{"linePosition":"invalid"}' }])).toThrow();
+  });
+
   it('preserves resolved map URLs through write validation and public normalization', () => {
     const block = { id: 'map', type: 'map', content: JSON.stringify({
       mapUrl: 'https://maps.app.goo.gl/test', resolvedUrl: 'https://www.google.com/maps/place/Torino',

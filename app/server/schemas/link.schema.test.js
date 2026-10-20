@@ -3,6 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { LinkSchema, LinksPayloadSchema } from './link.schema.js';
 
 describe('link schemas', () => {
+  it('preserves separator arrangements on the standalone save and import boundary', () => {
+    for (const linePosition of ['inline', 'above', 'below']) {
+      const content = JSON.stringify({ boxed: true, linePosition });
+      expect(LinksPayloadSchema.parse([{ id: 'separator', type: 'separator', title: 'Section', alignment: 'center', content }])[0].content).toBe(content);
+    }
+  });
+
   it('normalizes supported link payloads and strips unknown fields', () => {
     const result = LinkSchema.parse({
       id: 12,

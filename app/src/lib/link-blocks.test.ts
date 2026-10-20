@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { detectEmbedProvider, getInternalLinksData, getKnownEmbedUrl, getMapData, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference, isSocialRowContent } from './link-blocks';
+import { detectEmbedProvider, getInternalLinksData, getKnownEmbedUrl, getMapData, getSeparatorData, getServiceLinkData, getSocialRowData, getSocialRowDraftData, getTypeformFormReference, isSocialRowContent } from './link-blocks';
 
 describe('compact link block data', () => {
+  it('reads separator line positions and keeps legacy or unsupported values inline', () => {
+    for (const linePosition of ['inline', 'above', 'below'] as const) {
+      expect(getSeparatorData(JSON.stringify({ boxed: true, linePosition }))).toEqual({ boxed: true, linePosition });
+    }
+    for (const data of [{}, { linePosition: 'unsupported' }, { linePosition: 1 }]) {
+      expect(getSeparatorData(JSON.stringify(data))).toEqual({ boxed: false, linePosition: 'inline' });
+    }
+    expect(getSeparatorData('{broken')).toEqual({});
+  });
+
   it('preserves spaces while editing map names and addresses', () => {
     expect(getMapData(JSON.stringify({ placeName: 'Orbit Page ', address: 'Via Roma ' }))).toMatchObject({
       placeName: 'Orbit Page ',

@@ -7098,9 +7098,32 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   padding-inline: calc(1rem + 1px);
 }
 
-.public-separator[data-alignment="left"] > :first-child,
-.public-separator[data-alignment="right"] > :last-child {
-  display: none;
+.public-separator__line {
+  height: 1px;
+  min-width: 1rem;
+  flex: 1;
+  background: currentColor;
+  opacity: .25;
+}
+
+.public-separator__title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.public-separator[data-line-position="above"],
+.public-separator[data-line-position="below"] {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.public-separator[data-line-position="below"] {
+  flex-direction: column-reverse;
+}
+
+.public-separator:not([data-line-position="inline"]) > .public-separator__line {
+  flex: none;
+  min-width: 0;
 }
 
 .public-card-stack {

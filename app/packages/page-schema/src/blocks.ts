@@ -267,7 +267,8 @@ export const OrbitPageEmbedContentSchema = z.object({
 }).strict();
 
 export const OrbitPageSeparatorContentSchema = z.object({
-  boxed: z.boolean().optional().default(false)
+  boxed: z.boolean().optional().default(false),
+  linePosition: z.enum(["inline", "above", "below"]).optional().default("inline")
 }).strict();
 
 export const OrbitPageInternalLinkItemSchema = z.object({

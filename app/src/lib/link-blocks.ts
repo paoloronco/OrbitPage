@@ -120,6 +120,7 @@ export interface ServiceLinkBlockData {
 
 export interface SeparatorBlockData {
   boxed?: boolean;
+  linePosition?: 'inline' | 'above' | 'below';
 }
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
@@ -683,6 +684,7 @@ export const getSeparatorData = (content: string | null | undefined): SeparatorB
 
   return {
     boxed: (parsed as Record<string, unknown>).boxed === true,
+    linePosition: parsed.linePosition === 'above' || parsed.linePosition === 'below' ? parsed.linePosition : 'inline',
   };
 };
 
