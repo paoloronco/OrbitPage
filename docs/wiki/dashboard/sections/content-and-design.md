@@ -45,6 +45,8 @@ The profile card grows and shrinks with its visible image, name, description, de
 
 Manual moves and resizes must fit in free space, including when a narrower card makes its text wrap onto more lines. A colliding change is rejected in full and the previous layout is kept; other cards stay where they are. A temporary **Change not applied: space occupied** notice appears at the top and explains how to choose a free position or smaller size. The same rule applies to pointer, touch and keyboard controls in both layouts. Older overlapping layouts and growing profile elements are separated automatically in preview and on the public page without rewriting saved data.
 
+After a rejected drag, release the handle and start again. To move past an occupied area, use separate moves through free space, for example right, down, then left. The notice disappearing does not interrupt the next drag, and a rejected drag stops automatic preview scrolling.
+
 | Control | Behavior |
 | --- | --- |
 | Device toggle | Mobile and desktop have independent layouts; edit each separately |

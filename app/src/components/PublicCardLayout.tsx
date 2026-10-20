@@ -137,20 +137,28 @@ export function PublicCardLayout({
   const frameRef = useRef<number | null>(null);
   const pointerRef = useRef<{ clientX: number; clientY: number; pointerId: number; shiftKey: boolean } | null>(null);
   const latestLayoutRef = useRef<NormalizedCardLayout>(savedLayout);
+  const previousSavedStateRef = useRef({ layout: savedLayout, editing: layoutEditing, viewport });
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
   const activeLayout = useMemo(() => fitCardLayoutHeights(
     layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, true, hasProfileCard,
   ), [hasProfileCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
 
   useLayoutEffect(() => {
+    const previous = previousSavedStateRef.current;
+    previousSavedStateRef.current = { layout: savedLayout, editing: layoutEditing, viewport };
+    // Toast updates can recreate identical layout props while a card is being dragged.
+    if (previous.editing === layoutEditing && previous.viewport === viewport && JSON.stringify(previous.layout) === JSON.stringify(savedLayout)) return;
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
     frameRef.current = null;
+    const pointerId = gestureRef.current?.pointerId;
     gestureRef.current = null;
+    pointerRef.current = null;
+    if (pointerId !== undefined && canvasRef.current?.hasPointerCapture(pointerId)) canvasRef.current.releasePointerCapture(pointerId);
     setActiveCard(null);
     setGuides({});
     latestLayoutRef.current = savedLayout;
     setWorkingLayout(savedLayout);
-  }, [savedLayout, layoutEditing]);
+  }, [savedLayout, layoutEditing, viewport]);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
@@ -233,7 +241,7 @@ export function PublicCardLayout({
     frameRef.current = null;
     const gesture = gestureRef.current;
     const pointer = pointerRef.current;
-    if (!gesture || !pointer) return;
+    if (!gesture || gesture.rejected || !pointer) return;
     const scroll = gesture.scrollContainer;
     let scrolled = false;
     if (scroll) {

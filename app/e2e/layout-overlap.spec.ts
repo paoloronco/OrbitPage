@@ -1,6 +1,117 @@
 import { expect, test, type Locator } from '@playwright/test';
 import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData, saveEditorChanges } from './helpers';
 
+test('Arrange moves around occupied space in stages and stops scrolling after a rejected move', async ({ page, browserName }) => {
+  test.setTimeout(90_000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await openAuthenticatedAdmin(page);
+  const restore = await preservePageData(page);
+  try {
+    const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+    const headers = { Authorization: 'Bearer ' + token };
+    const profile = await (await page.request.get('/api/profile', { headers })).json();
+    const layout = { positions: {
+      moving: { x: 0, y: 0, width: 44, height: 100 },
+      obstacle: { x: 0, y: 160, width: 44, height: 100 },
+      bottom: { x: 0, y: 1600, width: 100, height: 100 },
+    }, height: 1700 };
+    expect((await page.request.put('/api/profile', { headers, data: { ...profile, name: '', bio: '', avatar: '', showAvatar: false,
+      appearance: { cardLayouts: { desktop: layout, mobile: layout } } } })).ok()).toBeTruthy();
+    expect((await page.request.put('/api/links', { headers, data: ['moving', 'obstacle', 'bottom'].map(id => ({ id, type: 'link', title: id, url: 'https://example.com', isActive: true })) })).ok()).toBeTruthy();
+    await page.reload();
+    const canvas = page.locator('.visual-site-editor__canvas .public-card-stack--layout');
+    const card = canvas.locator('[data-card-layout-item="moving"]');
+    const handle = card.getByRole('button', { name: 'Move card moving', exact: true });
+    const position = async () => (await card.getAttribute('data-card-layout-position'))!.split(',').map(Number);
+    const others = () => canvas.locator('[data-card-layout-item]:not([data-card-layout-item="moving"])').evaluateAll(items => items.map(item => item.getAttribute('data-card-layout-position')));
+    const scroll = page.locator('.visual-site-editor__canvas .admin-live-preview__scroll');
+    const frames = (count: number) => page.evaluate(async count => {
+      for (let frame = 0; frame < count; frame++) await new Promise(requestAnimationFrame);
+    }, count);
+    for (const device of ['Desktop', 'Mobile']) {
+      await page.getByRole('button', { name: device + ' preview', exact: true }).click();
+      await page.getByRole('button', { name: 'Arrange', exact: true }).click();
+      await handle.evaluate(element => element.scrollIntoView({ block: 'center' }));
+      await frames(3);
+      const initial = await position();
+      const neighbors = await others();
+      const scale = await canvas.evaluate(element => element.getBoundingClientRect().width / (element as HTMLElement).offsetWidth);
+      const screenWidth = (await canvas.boundingBox())!.width;
+      const drag = async (dx: number, dy: number) => {
+        await handle.evaluate(element => element.scrollIntoView({ block: 'center' }));
+        const box = (await handle.boundingBox())!;
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(box.x + box.width / 2 + dx, box.y + box.height / 2 + dy, { steps: 8 });
+        await page.mouse.up();
+      };
+      const start = (await handle.boundingBox())!;
+      await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2 + 100 * scale, { steps: 5 });
+      await expect(page.locator('.page-layout-overlap-warning')).toBeVisible();
+      expect(await scroll.evaluate(element => element.scrollHeight - element.clientHeight)).toBeGreaterThan(100);
+      const edge = (await scroll.boundingBox())!;
+      await page.mouse.move(start.x + start.width / 2, edge.y + edge.height - 8);
+      await frames(3);
+      const rejectedScroll = await scroll.evaluate(element => element.scrollTop);
+      await frames(12);
+      expect(await scroll.evaluate(element => element.scrollTop)).toBeCloseTo(rejectedScroll, 1);
+      await page.mouse.up();
+      await expect.poll(position).toEqual(initial);
+      expect(await others()).toEqual(neighbors);
+
+      // Route around the obstacle: right, down, left, then fine-tune all four directions.
+      await handle.evaluate(element => element.scrollIntoView({ block: 'center' }));
+      const retry = (await handle.boundingBox())!;
+      await page.mouse.move(retry.x + retry.width / 2, retry.y + retry.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(retry.x + retry.width / 2 + screenWidth * .57, retry.y + retry.height / 2, { steps: 8 });
+      await expect.poll(position).toEqual([56, 0, 44, initial[3]]);
+      await expect(page.locator('.page-layout-overlap-warning')).toBeHidden({ timeout: 6500 });
+      await expect.poll(position).toEqual([56, 0, 44, initial[3]]);
+      await page.mouse.up();
+      await expect.poll(position).toEqual([56, 0, 44, initial[3]]);
+      await drag(0, 320 * scale);
+      await expect.poll(async () => Math.abs((await position())[1] - 320)).toBeLessThanOrEqual(1);
+      const routedY = (await position())[1];
+      await drag(-screenWidth * .57, 0);
+      await expect.poll(position).toEqual([0, routedY, 44, initial[3]]);
+      for (const key of ['ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'Shift+ArrowRight', 'Shift+ArrowUp', 'Shift+ArrowLeft', 'Shift+ArrowDown']) await handle.press(key);
+      await expect.poll(position).toEqual([0, routedY, 44, initial[3]]);
+      expect(await others()).toEqual(neighbors);
+      if (device === 'Mobile' && browserName === 'chromium') {
+        const cdp = await page.context().newCDPSession(page);
+        const box = (await handle.boundingBox())!;
+        const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...point, y: point.y - 100 * scale }] });
+        await frames(3);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await expect.poll(position).toEqual([0, routedY, 44, initial[3]]);
+        await cdp.detach();
+        await drag(0, -20 * scale);
+        await expect.poll(async () => Math.abs((await position())[1] - (routedY - 20))).toBeLessThanOrEqual(1);
+      }
+      const expected = await position();
+      await saveEditorChanges(page);
+      await page.reload();
+      await page.getByRole('button', { name: device + ' preview', exact: true }).click();
+      await expect.poll(position).toEqual(expected);
+      expect(await others()).toEqual(neighbors);
+    }
+    await page.goto('/');
+    for (const width of [1440, 768, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect.poll(() => page.locator('[data-card-layout-item]').evaluateAll(items => {
+        const rects = items.map(item => item.getBoundingClientRect());
+        return rects.every((a, i) => rects.every((b, j) => i === j || a.right <= b.left + .1 || a.left >= b.right - .1 || a.bottom <= b.top + .1 || a.top >= b.bottom - .1));
+      })).toBe(true);
+    }
+  } finally { await page.mouse.up(); await restore(); }
+});
+
 test('Arrange rejects overlapping moves and resizes atomically and preserves automatic profile growth', async ({ page }) => {
   test.setTimeout(120_000);
   await page.emulateMedia({ reducedMotion: 'reduce' });
