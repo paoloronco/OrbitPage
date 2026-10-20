@@ -232,6 +232,7 @@ Exclude API, dashboard, localized dashboard, and health responses from proxy cac
 | --- | --- |
 | Old or missing content | Save the edited section, then check block visibility, schedules, and additional-page publication. Preview can include unsaved changes. |
 | Content is saved but the public page stays stale | Inspect `curl -I https://page.example.com/` for `Age`, `CF-Cache-Status`, or `X-Cache`. Purge the affected proxy/CDN cache. |
+| Cards keep growing while the page is idle | Check the running version at `/health`. Versions before 4.21.120 can repeatedly round fractional card measurements upward, especially navigation cards on desktop. Update using the [existing deployment method](./Deployment.md#update-safely), then reload the page with fresh assets. Keep the data volume and secrets. Updating does not clear saved card sizes; use **Arrange > Reset** if the stored layout also needs correction. |
 | Wrong domain in QR codes, previews, or newsletter links | Set `PUBLIC_SITE_URL`, including any mount path, then restart/recreate as required. Check saved dashboard overrides if the host value is ignored. |
 | An exported QR image still uses the old address | Generate it again; changing the configuration cannot alter an existing image. |
 | Social preview remains old | Refresh the social platform's cached preview after correcting the page metadata. |

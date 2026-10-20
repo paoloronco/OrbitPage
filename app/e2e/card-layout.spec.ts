@@ -3,6 +3,60 @@ import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData, saveEdito
 
 test.use({ hasTouch: true });
 
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  test(`public navigation cards keep stable dimensions over time with ${reducedMotion} motion`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.emulateMedia({ reducedMotion });
+    const errors: string[] = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => {
+      const items = ['links', 'menu', 'shop', 'services'].map(path => ({ id: path, kind: 'page', path: '/' + path, label: path }));
+      const links = ['stacked', 'grid', 'buttons', 'tabs'].map(layout => ({
+        id: layout, type: 'internal_links', title: '', description: '', size: 'small', isActive: true,
+        content: JSON.stringify({ items, layout, columns: 2, showIcons: false }),
+      }));
+      const layout = (mobile: boolean) => ({ positions: Object.fromEntries(links.map((link, index) => [link.id, {
+        x: mobile ? 0 : index % 2 * 43, y: mobile ? index * 324 : Math.floor(index / 2) * 1224,
+        width: mobile ? 100 : 36.11, height: mobile ? 300 : 1200,
+      }])), height: mobile ? 1272 : 2424 });
+      (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+        page: { profile: { name: '', bio: '', avatar: '', showAvatar: false, appearance: { cardLayouts: { desktop: layout(false), mobile: layout(true) } } }, links, theme: {}, branding: { showOrbitPageBadge: false } },
+        consentConfig: { mode: 'disabled', enabled: false },
+      };
+    });
+    for (const width of [1440, 1366, 1024, 768, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      await expect(page.locator('.public-internal-links')).toHaveCount(4);
+      await page.locator('.public-page-root').evaluate(async root => {
+        await document.fonts.ready;
+        await Promise.all(root.getAnimations({ subtree: true }).map(animation => animation.finished));
+      });
+      // Observe movement directly instead of letting hover wait for stable geometry.
+      await page.locator('.public-internal-link').first().hover({ force: true });
+      const samples = await page.locator('[data-card-layout-item]').evaluateAll(async cards => {
+        const samples: number[][] = [];
+        const start = performance.now();
+        do {
+          await new Promise(requestAnimationFrame);
+          samples.push(cards.flatMap(card => {
+            const bounds = card.getBoundingClientRect();
+            return [bounds.width, bounds.height, bounds.top + scrollY];
+          }));
+        } while (performance.now() - start < 1100);
+        return samples;
+      });
+      expect(samples.length).toBeGreaterThan(5);
+      for (let coordinate = 0; coordinate < samples[0].length; coordinate++) {
+        const values = samples.map(sample => sample[coordinate]);
+        expect(Math.max(...values) - Math.min(...values), `Stable card geometry at ${width}px`).toBeLessThanOrEqual(.1);
+      }
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+    expect(errors).toEqual([]);
+  });
+}
+
 test('profile cards fit their visible content in the editor and public page', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openAuthenticatedAdmin(page);
