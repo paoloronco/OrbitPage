@@ -36,7 +36,7 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CardSurfaceEffect } from "@/lib/theme";
-import { alignCardLayoutRect, fitCardLayoutHeights, hasCardLayoutOverlap, type CardLayoutGuides } from "@/lib/card-layout";
+import { alignCardLayoutRect, fitCardLayoutHeights, hasCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, type CardLayoutGuides } from "@/lib/card-layout";
 import { useLayoutOverlapWarning } from "@/hooks/use-layout-overlap-warning";
 
 interface ProfileData {
@@ -135,7 +135,8 @@ export const PublicProfileSection = ({
   const hasCustomLayout = Boolean(
     profile.appearance?.layout ||
     profile.appearance?.layouts?.mobile ||
-    profile.appearance?.layouts?.desktop
+    profile.appearance?.layouts?.desktop ||
+    profile.appearance?.cardLayouts?.[activeLayoutViewport]?.positions?.[PROFILE_CARD_LAYOUT_ID]
   );
   const hasBio = Boolean(profile.bio && profile.bio.trim() !== "");
   const displayName = profile.name?.trim() || fallbackName || "";

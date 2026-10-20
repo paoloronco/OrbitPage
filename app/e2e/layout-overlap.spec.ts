@@ -16,7 +16,7 @@ test('Arrange moves around occupied space in stages and stops scrolling after a 
       obstacle: { x: 0, y: 160, width: 44, height: 100 },
       bottom: { x: 0, y: 1600, width: 100, height: 100 },
     }, height: 1700 };
-    expect((await page.request.put('/api/profile', { headers, data: { ...profile, name: '', bio: '', avatar: '', showAvatar: false,
+    expect((await page.request.put('/api/profile', { headers, data: { ...profile, name: '', bio: '', avatar: '', showAvatar: false, socialLinks: {}, social_links: {},
       appearance: { cardLayouts: { desktop: layout, mobile: layout } } } })).ok()).toBeTruthy();
     expect((await page.request.put('/api/links', { headers, data: ['moving', 'obstacle', 'bottom'].map(id => ({ id, type: 'link', title: id, url: 'https://example.com', isActive: true })) })).ok()).toBeTruthy();
     await page.reload();
@@ -170,28 +170,29 @@ test('Arrange rejects overlapping moves and resizes atomically and preserves aut
       expect(before.appearance.cardLayouts[device.toLowerCase()]).toEqual(layout);
       await card('first').getByRole('button', { name: 'Move card first', exact: true }).press('Shift+ArrowDown');
       const neighbor = await position(card('second'));
+      const resizedHeight = (await position(card('orbitpage-profile')))[3] + 10;
       await card('orbitpage-profile').getByRole('button', { name: 'Resize profile card', exact: true }).press('Shift+ArrowDown');
-      await expect.poll(async () => (await position(card('orbitpage-profile')))[3]).toBe(210);
+      await expect.poll(async () => (await position(card('orbitpage-profile')))[3]).toBe(resizedHeight);
       expect(await position(card('second'))).toEqual(neighbor);
       await saveEditorChanges(page);
       await page.reload();
       await page.getByRole('button', { name: device + ' preview', exact: true }).click();
-      await expect.poll(async () => (await position(card('orbitpage-profile')))[3]).toBe(210);
+      await expect.poll(async () => (await position(card('orbitpage-profile')))[3]).toBe(resizedHeight);
       const savedPositions = await positions();
       await page.locator('#profile-bio').fill('A detailed description that wraps naturally. '.repeat(20));
-      await expect.poll(async () => (await position(card('orbitpage-profile')))[3]).toBeGreaterThan(210);
+      await expect.poll(async () => (await position(card('orbitpage-profile')))[3]).toBeGreaterThan(resizedHeight);
       const grown = await position(card('orbitpage-profile'));
-      expect((await position(card('second')))[1] - neighbor[1]).toBe(grown[3] - 210);
+      expect((await position(card('second')))[1] - neighbor[1]).toBe(grown[3] - resizedHeight);
       await page.locator('#profile-bio').fill('Short bio');
       await expect.poll(positions).toEqual(savedPositions);
       const saved = await (await page.request.get('/api/profile', { headers })).json();
-      expect(saved.appearance.cardLayouts[device.toLowerCase()].profileMinHeight).toBe(210);
+      expect(saved.appearance.cardLayouts[device.toLowerCase()].profileMinHeight).toBe(resizedHeight);
     }
     const wrappedLayout = { positions: {
       first: { x: 0, y: 0, width: 100, height: 100 },
       following: { x: 0, y: 124, width: 100, height: 100 },
     }, height: 224 };
-    expect((await page.request.put('/api/profile', { headers, data: { ...profile, name: '', bio: '', avatar: '', showAvatar: false,
+    expect((await page.request.put('/api/profile', { headers, data: { ...profile, name: '', bio: '', avatar: '', showAvatar: false, socialLinks: {}, social_links: {},
       appearance: { cardLayouts: { desktop: wrappedLayout, mobile: wrappedLayout } } } })).ok()).toBeTruthy();
     expect((await page.request.put('/api/links', { headers, data: [
       { id: 'first', type: 'link', title: 'Wrapping card', description: 'Wrapping text needs more vertical space. '.repeat(25), url: 'https://example.com', isActive: true },

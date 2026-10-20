@@ -31,6 +31,17 @@ describe("PublicProfileSection custom layout", () => {
     expect(html).not.toContain('aria-label="GitHub profile"');
   });
 
+  it("retains the default internal arrangement after saving the whole page layout", () => {
+    const profile = { name: "Alice", bio: "Designer", avatar: "", showAvatar: false, appearance: {
+      cardLayouts: { desktop: { positions: { 'orbitpage-profile': { x: 0, y: 0, width: 100, height: 200 } }, height: 200 } },
+    } };
+    for (const layoutEditing of [true, false]) {
+      const html = renderToStaticMarkup(<PublicProfileSection layoutViewport="desktop" layoutEditing={layoutEditing} profile={profile} />);
+      expect(html).toContain('data-profile-layout-position="10,0,80,64"');
+      expect(html).toContain('data-profile-layout-fixed="bio"');
+    }
+  });
+
   it("renders a safe profile-card background without replacing the card surface", () => {
     const html = renderToStaticMarkup(<PublicProfileSection profile={{
       name: "Alice", bio: "Designer", avatar: "", showAvatar: false,

@@ -77,7 +77,7 @@ export const PublicView = ({
     ...(profile.socialLinks && Object.values(profile.socialLinks).some(Boolean) ? ["socials" as const] : []),
     ...(profile.bio?.trim() ? ["bio" as const] : []),
   ];
-  const hasProfileContent = Boolean(profileLayoutEditing ||
+  const hasProfileContent = Boolean(
     profile.name?.trim() ||
     profile.bio?.trim() ||
     (profile.socialLinks && Object.values(profile.socialLinks).some(Boolean)) ||

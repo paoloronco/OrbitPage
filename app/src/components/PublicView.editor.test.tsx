@@ -57,6 +57,14 @@ describe("PublicView visual editor targets", () => {
     expect(html).not.toContain("data-public-editor-link-id");
   });
 
+  it("does not insert an empty profile while arranging content cards", () => {
+    const html = renderToStaticMarkup(<PublicView cardLayoutEditing profileLayoutEditing links={links}
+      profile={{ name: "", bio: "", avatar: "", showAvatar: false }} theme={defaultTheme} />);
+
+    expect(html).not.toContain(`data-card-layout-item="${PROFILE_CARD_LAYOUT_ID}"`);
+    expect(html).not.toContain("profile-card__layout");
+  });
+
   it("keeps public cards without a destination visible and non-actionable", () => {
     const html = renderToStaticMarkup(
       <PublicView
