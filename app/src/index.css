@@ -7037,7 +7037,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .public-link-card__header > button {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   top: 50%;
   transform: translateY(-50%);
 }
@@ -7055,7 +7055,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .public-link-card__header > button {
     position: static;
     display: block;
-    margin-left: auto;
+    margin-inline-start: auto;
     transform: none;
   }
 

@@ -94,6 +94,13 @@ test('mobile link icons and navigation stay on compact horizontal rows', async (
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.evaluate(() => { document.documentElement.dir = 'rtl'; });
+  expect(await page.locator('[data-card-content-layout="compact"]').evaluate(element => {
+    const icon = element.querySelector('[data-card-content-layout-item="icon"]')!.getBoundingClientRect();
+    const action = element.querySelector('button')!.getBoundingClientRect();
+    return icon.right <= action.left || action.right <= icon.left;
+  })).toBe(true);
   await page.setViewportSize({ width: 160, height: 900 });
   for (const card of await page.locator('.glass-card').all()) {
     expect(await card.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
