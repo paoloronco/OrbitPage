@@ -1012,6 +1012,7 @@ html:has(.orbitpage-admin) {
 
   .profile-card {
     position: relative;
+    overflow-wrap: anywhere;
     isolation: isolate;
     background: var(--profile-card-background);
     border-color: var(--profile-card-border);
@@ -1203,6 +1204,8 @@ html:has(.orbitpage-admin) {
   }
 
   .profile-card__detail {
+    min-width: 0;
+    max-width: 100%;
     color: var(--profile-card-muted);
     font-size: .875rem;
   }
@@ -6967,6 +6970,18 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   border-radius: var(--card-radius);
   overflow-wrap: anywhere;
 }
+
+.page-layout-overlap-warning {
+  position: fixed;
+  pointer-events: none;
+  inset: 16px 16px auto auto;
+  width: min(460px, calc(100vw - 32px));
+  border-color: #d6a543;
+  background: #fff8e6;
+  color: #66460d;
+}
+
+.page-layout-overlap-warning [toast-close] { display: none; }
 
 .public-card-stack--layout-editing .page-card-layout__surface > * {
   transition: none;

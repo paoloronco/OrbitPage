@@ -1233,5 +1233,7 @@
   "Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.": "Kartları kulplardan sürükleyin. Önceden belirlenmiş bir genişliğe yeniden boyutlandırın; hassas ayarlamalar için ok tuşlarını kullanın.",
   "Save or revert your changes first.": "Önce değişikliklerinizi kaydedin veya geri alın.",
   "Footer": "Altbilgi",
-  "Applies to every page in this workspace.": "Bu çalışma alanındaki her sayfaya uygulanır."
+  "Applies to every page in this workspace.": "Bu çalışma alanındaki her sayfaya uygulanır.",
+  "Change not applied: space occupied": "Değişiklik uygulanmadı: alan dolu",
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Bu konum veya boyut başka bir öğeyle çakışır. Önceki düzen korundu. Öğeyi boş bir alana taşıyın veya küçültün."
 }

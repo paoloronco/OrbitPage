@@ -1233,5 +1233,7 @@
   "Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.": "Перетаскивайте карточки за ручки. Изменяйте размер до заданной ширины; используйте клавиши со стрелками для точной настройки.",
   "Save or revert your changes first.": "Сначала сохраните или отмените ваши изменения.",
   "Footer": "Подвал",
-  "Applies to every page in this workspace.": "Применяется ко всем страницам в этом рабочем пространстве."
+  "Applies to every page in this workspace.": "Применяется ко всем страницам в этом рабочем пространстве.",
+  "Change not applied: space occupied": "Изменение не применено: место занято",
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "При таком расположении или размере элемент перекроет другой элемент. Предыдущая компоновка сохранена. Переместите элемент в свободное место или уменьшите его."
 }

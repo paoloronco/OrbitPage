@@ -67,7 +67,10 @@ describe("PublicProfileSection custom layout", () => {
 
     const publicHtml = renderToStaticMarkup(<PublicProfileSection profile={profile} />);
     expect(publicHtml).toContain('data-profile-layout-position="34,0,40,96"');
-    expect(publicHtml).toContain('--profile-layout-height:192px');
+    expect(publicHtml).toContain('--profile-layout-height:312px');
+    expect(publicHtml).toContain('data-profile-layout-position="4,168,92,72"');
+    expect(publicHtml).toContain('data-profile-layout-position="10,264,80,48"');
+    expect(profile.appearance.layout.positions.bio.y).toBe(120);
     expect(publicHtml).toContain("profile-card__title--stacked");
     expect(publicHtml).toContain(">Mario</span><span>Rossi</span>");
     expect(publicHtml).toContain('profile-card__layout-item--socials" data-profile-layout-align="center"');

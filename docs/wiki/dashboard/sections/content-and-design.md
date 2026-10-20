@@ -41,13 +41,15 @@ Card text wraps and the card grows to keep it readable. Existing vertical gaps a
 
 Content blocks share the same text frame: Left and Right use matching horizontal insets, and Center uses the card's exact center. Font size, font family, colors, block size and card surface do not change that frame. Icons and copy controls occupy separate rows so they cannot shift the text. The same rules apply in the editor preview and on the public page.
 
-The profile card grows and shrinks with its visible image, name, description, details and social links. Text wraps within the chosen width. Resizing the profile vertically sets its minimum height; longer content can still expand it. Both content changes and vertical resizing move the following cards while preserving their gaps. Saving a layout keeps the manual minimum separate from the measured content height. Existing custom profile-element positions remain supported.
+The profile card grows and shrinks with its visible image, name, description, details and social links. Text wraps within the chosen width. Resizing the profile vertically sets its minimum height; longer content can still expand it. Automatic content growth moves the following cards while preserving their gaps. Saving a layout keeps the manual minimum separate from the measured content height. Existing custom profile-element positions remain supported.
+
+Manual moves and resizes must fit in free space, including when a narrower card makes its text wrap onto more lines. A colliding change is rejected in full and the previous layout is kept; other cards stay where they are. A temporary **Change not applied: space occupied** notice appears at the top and explains how to choose a free position or smaller size. The same rule applies to pointer, touch and keyboard controls in both layouts. Older overlapping layouts and growing profile elements are separated automatically in preview and on the public page without rewriting saved data.
 
 | Control | Behavior |
 | --- | --- |
 | Device toggle | Mobile and desktop have independent layouts; edit each separately |
 | Profile and content cards | Use the top handle to move the whole card; internal text cannot be moved separately |
-| Card placement | Move cards freely without a grid or column conversion; profile height changes reserve space for following cards |
+| Card placement | Move cards freely in unoccupied space without a grid or column conversion; overlapping moves or resizes are rejected |
 | Mobile cards | Cards start full-width and can be resized side by side, down to 44% width |
 | **Move up / Move down** | With mobile preview selected in Content, save that card's mobile order immediately |
 | Resize controls | Drag the lower corner continuously or use arrow keys; text sets the minimum visible height |

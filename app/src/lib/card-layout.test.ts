@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignCardLayoutRect, fitCardLayoutHeights, moveMobileCard, normalizeCardLayout, preventCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, fitCardLayoutHeights, hasCardLayoutOverlap, moveMobileCard, normalizeCardLayout, PROFILE_CARD_LAYOUT_ID, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -80,17 +80,20 @@ describe("responsive card layout", () => {
     expect(aligned.guides).toEqual({ x: 100, y: 20 });
   });
 
-  it("rejects overlap while still allowing movement on a free axis", () => {
+  it("detects collisions on either axis while allowing adjacent edges and free columns", () => {
     const positions = {
       left: { x: 0, y: 0, width: 50, height: 120 },
       right: { x: 50, y: 140, width: 50, height: 120 },
     };
 
-    expect(preventCardLayoutOverlap(positions, "right", { x: 25, y: 60, width: 50, height: 120 }, positions.right)).toEqual({ x: 25, y: 140, width: 50, height: 120 });
-    expect(preventCardLayoutOverlap(positions, "right", { x: 25, y: 280, width: 50, height: 120 }, positions.right)).toEqual({ x: 25, y: 280, width: 50, height: 120 });
+    expect(hasCardLayoutOverlap(positions, "right", { x: 25, y: 60, width: 50, height: 120 })).toBe(true);
+    expect(hasCardLayoutOverlap(positions, "right", { x: 25, y: 280, width: 50, height: 120 })).toBe(false);
+    expect(hasCardLayoutOverlap(positions, "right", { x: 50, y: 0, width: 50, height: 120 })).toBe(false);
+    expect(hasCardLayoutOverlap(positions, "right", { x: 0, y: 120, width: 100, height: 120 })).toBe(false);
+    expect(hasCardLayoutOverlap(positions, "right", { x: 49.99, y: 0, width: 50, height: 120 })).toBe(true);
   });
 
-  it("keeps all other cards stationary even when dragging across them", () => {
+  it("keeps other cards stationary so a colliding manual candidate can be rejected", () => {
     const layout = {
       positions: {
         large: { x: 0, y: 0, width: 50, height: 120 },
@@ -102,6 +105,7 @@ describe("responsive card layout", () => {
     const updated = updateCardLayoutItem(layout, cards, "desktop", "compact", { x: 25, y: 0, width: 50, height: 92 });
     expect(updated.positions.compact).toEqual({ x: 25, y: 0, width: 50, height: 92 });
     expect(updated.positions.large).toEqual({ x: 0, y: 0, width: 50, height: 120 });
+    expect(hasCardLayoutOverlap(updated.positions, "compact")).toBe(true);
   });
 
   it("does not resize visual cards below their useful default height", () => {
@@ -121,12 +125,10 @@ describe("responsive card layout", () => {
       first: { x: 0, y: 0, width: 50, height: 100 },
       below: { x: 0, y: 124, width: 50, height: 100 },
       side: { x: 60, y: 124, width: 40, height: 100 },
-      overlap: { x: 0, y: 40, width: 50, height: 50 },
     } };
     const fitted = fitCardLayoutHeights(layout, { first: 250, below: 140 });
     expect(fitted.positions.below).toMatchObject({ y: 274, height: 140 });
     expect(fitted.positions.side).toEqual(layout.positions.side);
-    expect(fitted.positions.overlap).toEqual(layout.positions.overlap);
     expect(fitted.height).toBe(414);
     expect(fitCardLayoutHeights(layout, { first: 250 }, false).positions.below).toEqual(layout.positions.below);
     expect(fitCardLayoutHeights(layout, {}).positions).toEqual(layout.positions);
@@ -137,13 +139,12 @@ describe("responsive card layout", () => {
     expect(updateCardLayoutItem({ contents }, cards, "desktop", "large", { x: 3, y: 8, width: 70, height: 160 }).contents).toEqual(contents);
   });
 
-  it("fits an automatic profile and preserves gaps, columns and intentional overlaps", () => {
+  it("fits an automatic profile and preserves gaps and independent columns", () => {
     const layout = { height: 432, positions: {
       [PROFILE_CARD_LAYOUT_ID]: { x: 0, y: 0, width: 50, height: 208 },
       below: { x: 0, y: 232, width: 50, height: 100 },
       last: { x: 0, y: 356, width: 50, height: 76 },
       side: { x: 60, y: 232, width: 40, height: 100 },
-      overlap: { x: 0, y: 40, width: 50, height: 50 },
     } };
     const heights = { [PROFILE_CARD_LAYOUT_ID]: 120 };
     const fitted = fitCardLayoutHeights(layout, heights, true, true);
@@ -151,7 +152,6 @@ describe("responsive card layout", () => {
     expect(fitted.positions.below.y).toBe(144);
     expect(fitted.positions.last.y).toBe(268);
     expect(fitted.positions.side).toEqual(layout.positions.side);
-    expect(fitted.positions.overlap).toEqual(layout.positions.overlap);
     expect(fitted.height).toBe(344);
     expect(fitCardLayoutHeights(layout, heights).positions).toEqual(layout.positions);
     expect(fitCardLayoutHeights(layout, {}, true, true)).toEqual(layout);
@@ -170,31 +170,49 @@ describe("responsive card layout", () => {
     expect(fitted.height).toBe(332);
   });
 
-  it("reflows the profile resize in both directions without freezing automatic content growth", () => {
+  it("validates manual profile resizing without moving neighbors and still reflows automatic growth", () => {
     const sources = [{ id: PROFILE_CARD_LAYOUT_ID, type: "profile", defaultRect: { height: 48 } }, ...cards];
     const layout = { profileMinHeight: 48, height: 448, positions: {
       [PROFILE_CARD_LAYOUT_ID]: { x: 0, y: 0, width: 100, height: 200 },
       large: { x: 0, y: 224, width: 100, height: 120 },
       compact: { x: 0, y: 368, width: 100, height: 80 },
     } };
-    const enlarged = updateCardLayoutItem(layout, sources, "desktop", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], height: 400 }, "resize");
-    expect(enlarged.profileMinHeight).toBe(400);
-    expect(enlarged.positions.large.y).toBe(424);
-    expect(enlarged.positions.compact.y).toBe(568);
+    const blocked = updateCardLayoutItem(layout, sources, "desktop", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], height: 400 }, "resize");
+    expect(hasCardLayoutOverlap(blocked.positions, PROFILE_CARD_LAYOUT_ID)).toBe(true);
+    expect(blocked.positions.large).toEqual(layout.positions.large);
+    const enlarged = updateCardLayoutItem(layout, sources, "desktop", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], height: 210 }, "resize");
+    expect(enlarged.profileMinHeight).toBe(210);
+    expect(hasCardLayoutOverlap(enlarged.positions, PROFILE_CARD_LAYOUT_ID)).toBe(false);
+    expect(enlarged.positions.large.y).toBe(224);
+    expect(enlarged.positions.compact.y).toBe(368);
     const grown = fitCardLayoutHeights(enlarged, { [PROFILE_CARD_LAYOUT_ID]: 600 }, true, true);
-    expect(grown.positions.large.y).toBe(624);
+    expect(grown.positions.large.y).toBe(614);
     expect(fitCardLayoutHeights(grown, { [PROFILE_CARD_LAYOUT_ID]: 150 }, true, true).positions).toEqual(enlarged.positions);
     const smaller = updateCardLayoutItem(enlarged, sources, "mobile", PROFILE_CARD_LAYOUT_ID, { ...enlarged.positions[PROFILE_CARD_LAYOUT_ID], height: 150 }, "resize");
-    expect(smaller.positions.large.y).toBe(174);
-    expect(smaller.positions.compact.y).toBe(318);
+    expect(smaller.positions.large.y).toBe(224);
+    expect(smaller.positions.compact.y).toBe(368);
     expect(smaller.profileMinHeight).toBe(150);
     const wider = updateCardLayoutItem(layout, sources, "desktop", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], width: 80 }, "resize");
     expect(wider.profileMinHeight).toBe(48);
     expect(wider.positions.large.y).toBe(224);
     const minimum = updateCardLayoutItem(layout, sources, "mobile", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], width: 0, height: 0 }, "resize");
     expect(minimum.positions[PROFILE_CARD_LAYOUT_ID]).toMatchObject({ width: 44, height: 48 });
-    expect(fitCardLayoutHeights(minimum, { [PROFILE_CARD_LAYOUT_ID]: 150 }, true, true).positions.large.y).toBe(174);
-    expect(moveMobileCard(enlarged, sources, ["large", "compact"], "compact", -1)?.profileMinHeight).toBe(400);
+    expect(fitCardLayoutHeights(minimum, { [PROFILE_CARD_LAYOUT_ID]: 150 }, true, true).positions.large.y).toBe(326);
+    expect(moveMobileCard(enlarged, sources, ["large", "compact"], "compact", -1)?.profileMinHeight).toBe(210);
+  });
+
+  it("repairs old overlapping layouts without modifying saved coordinates or independent columns", () => {
+    const layout = { height: 224, positions: {
+      first: { x: 0, y: 0, width: 50, height: 100 },
+      overlap: { x: 0, y: 40, width: 50, height: 50 },
+      below: { x: 0, y: 124, width: 50, height: 100 },
+      side: { x: 60, y: 0, width: 40, height: 100 },
+    } };
+    const fitted = fitCardLayoutHeights(layout, { first: 250 });
+    for (const id of Object.keys(fitted.positions)) expect(hasCardLayoutOverlap(fitted.positions, id)).toBe(false);
+    expect(fitted.positions.side).toEqual(layout.positions.side);
+    expect(layout.positions.overlap.y).toBe(40);
+    expect(fitCardLayoutHeights(fitted, {})).toEqual(fitted);
   });
 
   it("keeps gaps when saving a measured profile taller than the stored rectangle limit", () => {
@@ -208,6 +226,10 @@ describe("responsive card layout", () => {
     expect(stored.positions[PROFILE_CARD_LAYOUT_ID].height).toBe(1200);
     expect(stored.positions.large.y).toBe(1224);
     expect(fitCardLayoutHeights(stored, { [PROFILE_CARD_LAYOUT_ID]: 1800 }, true, true)).toEqual(measured);
+    const moved = updateCardLayoutItem(measured, sources, "mobile", "compact", { ...measured.positions.compact, y: 2400 });
+    expect(moved.positions.large).toEqual(measured.positions.large);
+    expect(moved.positions[PROFILE_CARD_LAYOUT_ID]).toEqual(measured.positions[PROFILE_CARD_LAYOUT_ID]);
+    expect(hasCardLayoutOverlap(moved.positions, "compact")).toBe(false);
   });
 
 });

@@ -9,6 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { GripVertical, MoveDiagonal2 } from "lucide-react";
 
 import type { LinkData } from "./LinkCard";
@@ -17,6 +18,7 @@ import type { PublicEditorTarget } from "./PublicView";
 import {
   alignCardLayoutRect,
   fitCardLayoutHeights,
+  hasCardLayoutOverlap,
   normalizeCardLayout,
   PROFILE_CARD_LAYOUT_ID,
   updateCardLayoutItem,
@@ -29,6 +31,7 @@ import {
 } from "@/lib/card-layout";
 import { getContentCardVariantCssVariables, type ThemeConfig } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
+import { useLayoutOverlapWarning } from "@/hooks/use-layout-overlap-warning";
 
 interface PublicCardLayoutProps {
   links: LinkData[];
@@ -44,6 +47,8 @@ interface PublicCardLayoutProps {
 }
 
 type Gesture = {
+  rejected?: boolean;
+  warned?: boolean;
   cardId: string;
   mode: "move" | "resize";
   pointerId: number;
@@ -58,6 +63,27 @@ type Gesture = {
   windowScrollY: number;
 };
 
+function measureCardHeights(canvas: HTMLElement) {
+  const heights: Record<string, number> = {};
+  canvas.querySelectorAll<HTMLElement>("[data-card-layout-item]").forEach(item => {
+    const surface = item.querySelector<HTMLElement>(".page-card-layout__surface");
+    if (!surface) return;
+    const card = surface.querySelector<HTMLElement>(".glass-card, .public-cta-card") || surface.firstElementChild as HTMLElement;
+    if (!card) return;
+    const bounds = card.getBoundingClientRect();
+    const style = getComputedStyle(card);
+    const scale = bounds.width / Number.parseFloat(style.width);
+    if (!scale) return;
+    const bottom = Math.max(Number.parseFloat(style.paddingTop), ...Array.from(card.children).map(child => {
+      const position = getComputedStyle(child).position;
+      return position === "absolute" || position === "fixed" ? 0 : (child.getBoundingClientRect().bottom - bounds.top) / scale;
+    }));
+    // Scaled preview coordinates have subpixel noise, especially in Firefox.
+    heights[item.dataset.cardLayoutItem!] = Math.ceil(bottom + Number.parseFloat(style.paddingBottom) + Number.parseFloat(style.borderBottomWidth) - 0.05);
+  });
+  return heights;
+}
+
 export function PublicCardLayout({
   links,
   theme,
@@ -71,6 +97,7 @@ export function PublicCardLayout({
   desktopDefaultWidthCapRem = 72,
 }: PublicCardLayoutProps) {
   const { tr } = useAppI18n();
+  const warnOverlap = useLayoutOverlapWarning();
   const hasProfileCard = profileCard !== undefined;
   const profileCardHeight = profileCard?.height;
   const profileMinHeight = profileCard?.minHeight;
@@ -112,8 +139,8 @@ export function PublicCardLayout({
   const latestLayoutRef = useRef<NormalizedCardLayout>(savedLayout);
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
   const activeLayout = useMemo(() => fitCardLayoutHeights(
-    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, !activeCard || activeCard === PROFILE_CARD_LAYOUT_ID, hasProfileCard,
-  ), [activeCard, hasProfileCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
+    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, true, hasProfileCard,
+  ), [hasProfileCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
 
   useLayoutEffect(() => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
@@ -129,23 +156,7 @@ export function PublicCardLayout({
     const canvas = canvasRef.current;
     if (!canvas || !useFreeLayout) return;
     const measure = () => {
-      const next: Record<string, number> = {};
-      canvas.querySelectorAll<HTMLElement>("[data-card-layout-item]").forEach(item => {
-        const surface = item.querySelector<HTMLElement>(".page-card-layout__surface");
-        if (!surface) return;
-        const card = surface.querySelector<HTMLElement>(".glass-card, .public-cta-card") || surface.firstElementChild as HTMLElement;
-        if (!card) return;
-        const bounds = card.getBoundingClientRect();
-        const style = getComputedStyle(card);
-        const scale = bounds.width / Number.parseFloat(style.width);
-        if (!scale) return;
-        const bottom = Math.max(Number.parseFloat(style.paddingTop), ...Array.from(card.children).map(child => {
-          const position = getComputedStyle(child).position;
-          return position === "absolute" || position === "fixed" ? 0 : (child.getBoundingClientRect().bottom - bounds.top) / scale;
-        }));
-        // Scaled preview coordinates have subpixel noise, especially in Firefox.
-        next[item.dataset.cardLayoutItem!] = Math.ceil(bottom + Number.parseFloat(style.paddingBottom) + Number.parseFloat(style.borderBottomWidth) - 0.05);
-      });
+      const next = measureCardHeights(canvas);
       setHeights(previous => Object.keys(next).length === Object.keys(previous).length
         && Object.entries(next).every(([id, height]) => previous[id] === height) ? previous : next);
     };
@@ -191,7 +202,7 @@ export function PublicCardLayout({
 
   const updateGesturePosition = (event: { clientX: number; clientY: number; pointerId: number; shiftKey: boolean }) => {
     const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    if (!gesture || gesture.pointerId !== event.pointerId || gesture.rejected) return;
     const deltaX = (event.clientX - gesture.startX) / gesture.bounds.width * 100;
     const deltaY = (event.clientY - gesture.startY + window.scrollY - gesture.windowScrollY) / gesture.scale
       + (gesture.scrollContainer?.scrollTop || 0) - gesture.scrollTop;
@@ -202,7 +213,16 @@ export function PublicCardLayout({
     // Guides are advisory; only Shift opts into snapping.
     const candidate = event.shiftKey ? aligned.rect : rect;
     if (gesture.mode === "resize") candidate.width = Math.min(candidate.width, 100 - candidate.x);
-    const next = updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, candidate, gesture.mode);
+    const next = fitCardLayoutHeights(
+      updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, candidate, gesture.mode), heights, false, hasProfileCard,
+    );
+    gesture.rejected = hasCardLayoutOverlap(next.positions, gesture.cardId);
+    if (gesture.rejected) {
+      applyWorkingLayout(gesture.layout);
+      setGuides({});
+      if (!gesture.warned) { warnOverlap(); gesture.warned = true; }
+      return;
+    }
     // Shrinking the canvas during a drag clamps scrollTop and moves the card again.
     next.height = Math.max(next.height, gesture.layout.height);
     setGuides(aligned.guides);
@@ -251,12 +271,15 @@ export function PublicCardLayout({
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
-    updateGesturePosition(event);
-    const completed = updateCardLayoutItem(latestLayoutRef.current, layoutCards, viewport, gesture.cardId, latestLayoutRef.current.positions[gesture.cardId]);
-    const next = normalizeCardLayout(fitCardLayoutHeights(completed, heights, gesture.cardId === PROFILE_CARD_LAYOUT_ID, hasProfileCard), layoutCards, viewport);
+    // Measure the final width before committing: wrapping can make a resized card taller.
+    flushSync(() => updateGesturePosition(event));
+    const completed = fitCardLayoutHeights(latestLayoutRef.current, measureCardHeights(event.currentTarget), false, hasProfileCard);
+    const rejected = gesture.rejected || hasCardLayoutOverlap(completed.positions, gesture.cardId);
+    const next = rejected ? gesture.layout : normalizeCardLayout(completed, layoutCards, viewport);
     resetGesture();
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     applyWorkingLayout(next);
+    if (rejected) { if (!gesture.warned) warnOverlap(); return; }
     if (next.profileMinHeight !== gesture.layout.profileMinHeight || JSON.stringify(next.positions) !== JSON.stringify(gesture.layout.positions)) onLayoutChange?.(next);
   };
 
@@ -290,9 +313,18 @@ export function PublicCardLayout({
     const candidate = mode === "resize"
       ? { ...rect, width: Math.min(100 - rect.x, rect.width + dx), height: rect.height + dy }
       : { ...rect, x: rect.x + dx, y: rect.y + dy };
-    const next = normalizeCardLayout(fitCardLayoutHeights(
-      updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, candidate, mode), heights, cardId === PROFILE_CARD_LAYOUT_ID, hasProfileCard,
-    ), layoutCards, viewport);
+    const proposed = fitCardLayoutHeights(
+      updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, candidate, mode), heights, false, hasProfileCard,
+    );
+    if (hasCardLayoutOverlap(proposed.positions, cardId)) { warnOverlap(); return; }
+    flushSync(() => applyWorkingLayout(proposed));
+    const measured = fitCardLayoutHeights(proposed, measureCardHeights(canvasRef.current), false, hasProfileCard);
+    if (hasCardLayoutOverlap(measured.positions, cardId)) {
+      applyWorkingLayout(activeLayout);
+      warnOverlap();
+      return;
+    }
+    const next = normalizeCardLayout(measured, layoutCards, viewport);
     applyWorkingLayout(next);
     onLayoutChange?.(next);
   };

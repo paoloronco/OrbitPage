@@ -1233,5 +1233,7 @@
   "Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.": "ハンドルを使ってカードをドラッグします。プリセット幅にリサイズし、精密な調整には矢印キーを使用してください。",
   "Save or revert your changes first.": "まず変更を保存するか、元に戻してください。",
   "Footer": "フッター",
-  "Applies to every page in this workspace.": "このワークスペースのすべてのページに適用されます。"
+  "Applies to every page in this workspace.": "このワークスペースのすべてのページに適用されます。",
+  "Change not applied: space occupied": "変更は適用されませんでした：スペースが使用中です",
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "この位置またはサイズでは、他の要素と重なります。元のレイアウトを保持しました。要素を空いている場所に移動するか、小さくしてください。"
 }

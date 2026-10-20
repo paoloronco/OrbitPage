@@ -1233,5 +1233,7 @@
   "Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.": "Sleep kaarten met de handvatten. Formaat wijzigen naar een vooraf ingestelde breedte; gebruik de pijltjestoetsen voor nauwkeurige aanpassingen.",
   "Save or revert your changes first.": "Sla eerst uw wijzigingen op of maak ze ongedaan.",
   "Footer": "Voettekst",
-  "Applies to every page in this workspace.": "Geldt voor elke pagina in deze werkruimte."
+  "Applies to every page in this workspace.": "Geldt voor elke pagina in deze werkruimte.",
+  "Change not applied: space occupied": "Wijziging niet toegepast: ruimte bezet",
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Met deze positie of grootte zou een ander element worden overlapt. De vorige indeling is behouden. Verplaats het element naar een vrije plek of maak het kleiner."
 }

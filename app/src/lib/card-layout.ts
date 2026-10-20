@@ -57,20 +57,11 @@ const overlaps = (left: CardLayoutRect, right: CardLayoutRect) => (
   left.y + left.height > right.y
 );
 
-export function preventCardLayoutOverlap(
+export const hasCardLayoutOverlap = (
   positions: Record<string, CardLayoutRect>,
   item: string,
-  candidate: CardLayoutRect,
-  previous: CardLayoutRect,
-) {
-  const collides = (rect: CardLayoutRect) => Object.entries(positions)
-    .some(([id, position]) => id !== item && overlaps(rect, position));
-  if (!collides(candidate)) return candidate;
-  const horizontalOnly = { ...previous, x: candidate.x, width: candidate.width };
-  if (!collides(horizontalOnly)) return horizontalOnly;
-  const verticalOnly = { ...previous, y: candidate.y, height: candidate.height };
-  return collides(verticalOnly) ? previous : verticalOnly;
-}
+  candidate = positions[item],
+) => Object.entries(positions).some(([id, position]) => id !== item && overlaps(candidate, position));
 
 export function alignCardLayoutRect(
   positions: Record<string, CardLayoutRect>,
@@ -179,16 +170,19 @@ export function updateCardLayoutItem(
   rect: CardLayoutRect,
   mode: "move" | "resize" = "move",
 ): NormalizedCardLayout {
-  const normalized = normalizeCardLayout(layout, cards, viewport);
+  const bounded = normalizeCardLayout(layout, cards, viewport);
+  const measuredProfileHeight = layout?.positions?.[PROFILE_CARD_LAYOUT_ID]?.height ?? 0;
+  const normalized = measuredProfileHeight > 1_200
+    ? fitCardLayoutHeights(bounded, { [PROFILE_CARD_LAYOUT_ID]: measuredProfileHeight }, true, true)
+    : bounded;
   const card = cards.find((candidate) => candidate.id === cardId);
   if (!card) return normalized;
   const candidate = normalizeCardRect(rect, normalized.positions[cardId], card, viewport);
-  const resized = cardId === PROFILE_CARD_LAYOUT_ID && mode === "resize" && candidate.height !== normalized.positions[cardId].height
-    ? fitCardLayoutHeights({ ...normalized, profileMinHeight: candidate.height }, { [cardId]: candidate.height }, true, true)
-    : normalized;
-  const positions = { ...resized.positions, [cardId]: candidate };
+  const positions = { ...normalized.positions, [cardId]: candidate };
   return {
-    ...resized,
+    ...normalized,
+    ...(cardId === PROFILE_CARD_LAYOUT_ID && mode === "resize" && candidate.height !== normalized.positions[cardId].height
+      ? { profileMinHeight: candidate.height } : {}),
     positions,
     height: Math.round(Math.max(48, ...Object.values(positions).map((position) => position.y + position.height))),
   };
@@ -218,7 +212,7 @@ export function moveMobileCard(
   return { ...normalized, positions, height: Math.max(normalized.height, y - CARD_GAP) };
 }
 
-// Preserve saved gaps as content grows or an automatic profile shrinks; intentional overlaps stay intentional.
+// Preserve saved gaps and columns; repair older overlapping layouts without changing saved data.
 export function fitCardLayoutHeights(layout: NormalizedCardLayout, heights: Record<string, number>, moveFollowing = true, fitProfileHeight = false): NormalizedCardLayout {
   const positions: Record<string, CardLayoutRect> = {};
   const ordered = Object.entries(layout.positions).sort(([, a], [, b]) => a.y - b.y);
@@ -239,7 +233,13 @@ export function fitCardLayoutHeights(layout: NormalizedCardLayout, heights: Reco
     const height = fitProfileHeight && id === PROFILE_CARD_LAYOUT_ID && heights[id]
       ? Math.max(layout.profileMinHeight ?? 48, heights[id])
       : Math.max(rect.height, heights[id] || 0);
-    positions[id] = { ...rect, y: rect.y + (growth ?? 0), height };
+    const fitted = { ...rect, y: rect.y + (growth ?? 0), height };
+    if (moveFollowing) {
+      for (const previous of Object.values(positions).sort((a, b) => a.y - b.y)) {
+        if (overlaps(fitted, previous)) fitted.y = previous.y + previous.height + CARD_GAP;
+      }
+    }
+    positions[id] = fitted;
   }
   const profileDelta = fitProfileHeight && positions[PROFILE_CARD_LAYOUT_ID]
     ? Math.min(0, positions[PROFILE_CARD_LAYOUT_ID].height - layout.positions[PROFILE_CARD_LAYOUT_ID].height)

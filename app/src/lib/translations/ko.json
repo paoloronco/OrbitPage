@@ -1233,5 +1233,7 @@
   "Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.": "손잡이로 카드를 드래그하세요. 미리 설정된 너비로 크기를 조절하고, 정확한 조정을 위해 화살표 키를 사용하세요.",
   "Save or revert your changes first.": "먼저 변경 사항을 저장하거나 되돌리세요.",
   "Footer": "바닥글",
-  "Applies to every page in this workspace.": "이 작업 공간의 모든 페이지에 적용됩니다."
+  "Applies to every page in this workspace.": "이 작업 공간의 모든 페이지에 적용됩니다.",
+  "Change not applied: space occupied": "변경 사항이 적용되지 않음: 공간 사용 중",
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "이 위치나 크기에서는 다른 요소와 겹칩니다. 이전 레이아웃이 유지되었습니다. 요소를 빈 공간으로 옮기거나 크기를 줄이세요."
 }

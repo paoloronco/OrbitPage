@@ -1233,5 +1233,7 @@
   "Drag cards with the handles. Resize to a preset width; use arrow keys for precise adjustments.": "Przeciągnij karty za pomocą uchwytów. Zmień rozmiar na ustawioną szerokość; użyj klawiszy strzałek, aby dokonać precyzyjnych ustawień.",
   "Save or revert your changes first.": "Najpierw zapisz lub cofnij swoje zmiany.",
   "Footer": "Stopka",
-  "Applies to every page in this workspace.": "Dotyczy każdej strony w tym obszarze roboczym."
+  "Applies to every page in this workspace.": "Dotyczy każdej strony w tym obszarze roboczym.",
+  "Change not applied: space occupied": "Zmiana nie została zastosowana: miejsce zajęte",
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Ta pozycja lub rozmiar spowodowałyby nakładanie się na inny element. Zachowano poprzedni układ. Przenieś element w wolne miejsce lub go zmniejsz."
 }

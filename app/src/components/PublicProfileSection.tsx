@@ -34,7 +34,8 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CardSurfaceEffect } from "@/lib/theme";
-import { alignCardLayoutRect, preventCardLayoutOverlap, type CardLayoutGuides } from "@/lib/card-layout";
+import { alignCardLayoutRect, fitCardLayoutHeights, hasCardLayoutOverlap, type CardLayoutGuides } from "@/lib/card-layout";
+import { useLayoutOverlapWarning } from "@/hooks/use-layout-overlap-warning";
 
 interface ProfileData {
   name: string;
@@ -69,6 +70,8 @@ interface PublicProfileSectionProps {
 }
 
 type LayoutGesture = {
+  rejected?: boolean;
+  warned?: boolean;
   item: ProfileLayoutItem;
   mode: "move" | "resize";
   pointerId: number;
@@ -100,10 +103,11 @@ const safeProfileLayoutUpdate = (
   layout: NormalizedProfileLayout,
   item: ProfileLayoutItem,
   rect: ProfileLayoutRect,
+  visibleItems: ProfileLayoutItem[],
 ) => {
   const candidate = updateProfileLayoutItem(layout, item, rect);
-  const safeRect = preventCardLayoutOverlap(layout.positions, item, candidate.positions[item], layout.positions[item]);
-  return updateProfileLayoutItem(layout, item, safeRect);
+  const positions = Object.fromEntries(visibleItems.map(id => [id, candidate.positions[id]]));
+  return hasCardLayoutOverlap(positions, item) ? null : candidate;
 };
 
 export const PublicProfileSection = ({
@@ -115,6 +119,7 @@ export const PublicProfileSection = ({
   onLayoutChange,
 }: PublicProfileSectionProps) => {
   const { tr } = useAppI18n();
+  const warnOverlap = useLayoutOverlapWarning();
   const responsiveViewport: ProfileLayoutViewport = useIsMobile() ? "mobile" : "desktop";
   const activeLayoutViewport = layoutViewport || responsiveViewport;
   const resolvedSurfaceEffect = profile.appearance?.surfaceEffect && profile.appearance.surfaceEffect !== "inherit"
@@ -146,13 +151,20 @@ export const PublicProfileSection = ({
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
   const [activeItem, setActiveItem] = useState<ProfileLayoutItem | null>(null);
   const [guides, setGuides] = useState<CardLayoutGuides>({});
-  const [measuredContentHeight, setMeasuredContentHeight] = useState(0);
+  const [contentHeights, setContentHeights] = useState<Record<string, number>>({});
   const layoutRef = useRef<HTMLDivElement>(null);
   const gestureRef = useRef<LayoutGesture | null>(null);
   const pendingLayoutRef = useRef<NormalizedProfileLayout | null>(null);
   const latestLayoutRef = useRef(workingLayout);
   const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || avatarVisible || layoutEditing);
-  const layout = layoutEditing ? workingLayout : savedLayout;
+  const baseLayout = layoutEditing ? workingLayout : savedLayout;
+  const layout = useMemo(() => {
+    const fitted = fitCardLayoutHeights({
+      positions: Object.fromEntries(visibleLayoutItems.map(id => [id, baseLayout.positions[id]])),
+      height: baseLayout.height,
+    }, contentHeights);
+    return { ...baseLayout, positions: { ...baseLayout.positions, ...fitted.positions }, height: fitted.height };
+  }, [baseLayout, contentHeights, visibleLayoutItems]);
   const compactNameMatch = layout.positions.name.width <= 50 && displayName.match(/^(.*)\s+(\S+)$/);
   const nameLines = compactNameMatch ? [compactNameMatch[1], compactNameMatch[2]] : [displayName];
 
@@ -213,23 +225,25 @@ export const PublicProfileSection = ({
     socials,
     bio,
   };
-  const baseCanvasHeight = Math.max(160, ...visibleLayoutItems
+  const canvasHeight = Math.max(160, ...visibleLayoutItems
     .map((item) => layout.positions[item].y + layout.positions[item].height));
-  const canvasHeight = Math.max(baseCanvasHeight, measuredContentHeight);
 
   useLayoutEffect(() => {
     const canvas = layoutRef.current;
     if (!canvas) return;
     const measure = () => {
       const items = Array.from(canvas.querySelectorAll<HTMLElement>("[data-profile-layout-item]"));
-      const contentHeight = Math.max(0, ...items.map((item) => item.offsetTop + Math.max(item.offsetHeight, item.scrollHeight)));
-      setMeasuredContentHeight(Math.ceil(contentHeight));
+      const heights = Object.fromEntries(items.map(item => [item.dataset.profileLayoutItem!,
+        Math.max(0, ...Array.from(item.querySelector(".profile-card__layout-content")?.children || []).map(child => child.scrollHeight)),
+      ]));
+      setContentHeights(previous => Object.keys(previous).length === Object.keys(heights).length
+        && Object.entries(heights).every(([id, height]) => previous[id] === height) ? previous : heights);
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(measure);
     observer.observe(canvas);
-    canvas.querySelectorAll("[data-profile-layout-item]").forEach((item) => observer.observe(item));
+    canvas.querySelectorAll("[data-profile-layout-item], .profile-card__layout-content > *").forEach((item) => observer.observe(item));
     return () => observer.disconnect();
   }, [displayName, hasSocialLinks, layout, layoutEditing, profile.avatar, profile.bio, profile.showAvatar, profileDetails?.primary, profileDetails?.secondary]);
 
@@ -285,7 +299,7 @@ export const PublicProfileSection = ({
 
   const updateGesture = (event: ReactPointerEvent<HTMLElement>) => {
     const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    if (!gesture || gesture.pointerId !== event.pointerId || gesture.rejected) return;
     event.preventDefault();
     event.stopPropagation();
     const deltaX = (event.clientX - gesture.startX) / gesture.bounds.width * 100;
@@ -306,14 +320,16 @@ export const PublicProfileSection = ({
       6 / gesture.bounds.width * 100,
       6 / gesture.scale,
     );
-    const liveLayout = updateProfileLayoutItem(gesture.layout, gesture.item, rect);
     pendingLayoutRef.current = safeProfileLayoutUpdate(
       gesture.layout,
       gesture.item,
       snapped.guides.x !== undefined || snapped.guides.y !== undefined ? snapped.rect : rect,
+      visibleLayoutItems,
     );
+    gesture.rejected = !pendingLayoutRef.current;
+    if (gesture.rejected && !gesture.warned) { warnOverlap(); gesture.warned = true; }
     setGuides(snapped.guides);
-    applyWorkingLayout(liveLayout);
+    applyWorkingLayout(pendingLayoutRef.current || gesture.layout);
   };
 
   const finishGesture = (event: ReactPointerEvent<HTMLElement>) => {
@@ -327,6 +343,7 @@ export const PublicProfileSection = ({
     setActiveItem(null);
     setGuides({});
     applyWorkingLayout(committedLayout);
+    if (gesture.rejected) return;
     onLayoutChange?.(committedLayout);
   };
 
@@ -341,7 +358,8 @@ export const PublicProfileSection = ({
   };
 
   const commitKeyboardChange = (item: ProfileLayoutItem, rect: ProfileLayoutRect) => {
-    const next = safeProfileLayoutUpdate(layout, item, rect);
+    const next = safeProfileLayoutUpdate(layout, item, rect, visibleLayoutItems);
+    if (!next) { warnOverlap(); return; }
     applyWorkingLayout(next);
     onLayoutChange?.(next);
   };
