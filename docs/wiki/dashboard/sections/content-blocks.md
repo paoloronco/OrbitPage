@@ -20,6 +20,8 @@ Quick-add shortcuts include Instagram, WhatsApp, Facebook and TikTok. Forms & to
 
 A list is a preconfigured text block. Connected-service entries create either a link or a consent-aware embed with provider-specific defaults. The page supports one compact-links row; edit the existing row to add, remove, or reorder its destinations.
 
+List bodies use the full card width below the icon/title row. Bullets have a shared inset inside the card, with or without an icon; item labels and wrapped URLs share the same text edge.
+
 Main pages and additional pages have no block count quota. Large pages are still subject to request and storage limits.
 
 ## Internal page navigation

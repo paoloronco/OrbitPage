@@ -7021,6 +7021,22 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   min-width: 0;
 }
 
+.public-text-card__body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.public-text-card__list {
+  list-style: disc outside;
+  padding-inline: clamp(1rem, 10%, 1.5rem);
+}
+
+/* Keep bullets inside the card on the same axis across item fonts. */
+.public-text-card__list > li::marker {
+  font-family: Arial, sans-serif;
+  font-size: 1rem;
+}
+
 .public-link-card__header {
   position: relative;
   container-type: inline-size;

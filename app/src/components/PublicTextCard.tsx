@@ -54,7 +54,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
     // Wrap consecutive list items in ul tags
     formatted = formatted.replace(/(<li>.*?<\/li>(\s*<br\/>*)*)+/g, (match) => {
       const listItems = match.replace(/<br\/>/g, '');
-      return `<ul class="list-disc list-outside space-y-1">${listItems}</ul>`;
+      return `<ul class="public-text-card__list space-y-1">${listItems}</ul>`;
     });
 
     return formatted;
@@ -147,6 +147,10 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                 {link.title || "Text Card"}
               </h3>
             )}
+          </div>
+        </div>
+      </div>
+      <div className="public-text-card__body">
           {link.content && (
             <div
               className={`text-sm leading-relaxed${link.textItems?.length ? ' mb-3' : ''}`}
@@ -155,11 +159,11 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             />
           )}
           {link.textItems && link.textItems.length > 0 && (
-            <ul className="text-sm leading-relaxed space-y-2 mb-3" style={readableTextColor ? { color: readableTextColor } : undefined}>
+            <ul className="public-text-card__list text-sm leading-relaxed space-y-2 mb-3" style={readableTextColor ? { color: readableTextColor } : undefined}>
               {link.textItems.map((item, index) => {
                 const itemHref = resolveSafePublicHref(item.url);
                 return (
-                <li key={index} className="list-disc list-outside" style={{ color: item.textColor || readableTextColor }}>
+                <li key={index} style={{ color: item.textColor || readableTextColor }}>
                   <div className="min-w-0">
                     {/* Label on its own line */}
                     <div style={{ color: item.textColor || readableTextColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || "var(--font-card-description, inherit)" }}>{item.text}</div>
@@ -183,8 +187,6 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
               })}
             </ul>
           )}
-          </div>
-        </div>
       </div>
       </div>
     </Card>

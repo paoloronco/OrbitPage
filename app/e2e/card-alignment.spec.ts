@@ -132,7 +132,7 @@ async function checkTextFrame(root: Locator, links: LinkData[], alignment: LinkD
       const range = document.createRange();
       range.selectNodeContents(element);
       const text = range.getBoundingClientRect();
-      const inset = 17 + (element.closest('.public-link-card__row') ? 44 : 0);
+      const inset = 17 + (element.closest('.public-text-card__list') ? 24 : element.closest('.public-link-card__row') ? 44 : 0);
       return Math.abs(alignment === 'center' ? (text.left + text.right - frame.left - frame.right) / 2 / scale
         : alignment === 'right' ? (frame.right - text.right) / scale - inset : (text.left - frame.left) / scale - inset);
     }, alignment)).toBeLessThanOrEqual(.1);
@@ -162,6 +162,49 @@ test('content blocks keep consistent left, center and right text frames across f
       await page.setViewportSize({ width, height: 1000 });
       await checkTextFrame(page.locator('.public-card-stack'), blocks(alignment), alignment);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+  }
+});
+
+test('list bodies share an inset below their headers with or without icons and wrap long items', async ({ page }) => {
+  test.setTimeout(60_000);
+  const textItems = Array.from({ length: 6 }, (_, index) => ({
+    text: index ? `Resource ${index}: ${'A long resource name '.repeat(3)}` : 'UnbrokenResourceName'.repeat(8),
+    url: `https://example.invalid/${'long-repository-address-'.repeat(4)}${index}`,
+    fontSize: `${[12, 20, 28][index % 3]}px`, fontFamily: ['Arial', 'Georgia', 'monospace'][index % 3],
+  }));
+  const links = ['left', 'center', 'right'].flatMap(alignment => [
+    { id: `plain-${alignment}`, title: 'Repository collection', textItems },
+    { id: `emoji-${alignment}`, title: 'Resources', icon: '🛍️', iconType: 'emoji', textItems: textItems.slice(0, 2) },
+    { id: `image-${alignment}`, title: 'Image list', icon: '/brand/orbitpage-mark-192.png', iconType: 'image', coverImage: '/brand/orbitpage-mark-192.png', textItems: textItems.slice(0, 2) },
+    { id: `markdown-${alignment}`, title: 'Written list', icon: '📁', iconType: 'emoji', content: `- ${'UnbrokenResourceName'.repeat(8)}\n- Another resource (https://example.invalid/resource)` },
+  ].map(link => ({ ...link, type: 'text', alignment, url: '', isActive: true })));
+  await page.addInitScript(links => {
+    (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+      page: { profile: { name: '', bio: '', avatar: '', showAvatar: false }, links, theme: {}, branding: { showOrbitPageBadge: false } },
+      consentConfig: { mode: 'disabled', enabled: false },
+    };
+  }, links);
+  await page.goto('/');
+  await expect(page.locator('.public-text-card__list')).toHaveCount(12);
+  for (const width of [1440, 768, 390, 320, 160]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const dir of ['ltr', 'rtl']) {
+      await page.evaluate(dir => { document.documentElement.dir = dir; }, dir);
+      await expect.poll(() => page.locator('.public-text-card__list').evaluateAll(lists => lists.every(list => {
+        const frame = list.getBoundingClientRect(), body = list.closest('.public-text-card__body')!.getBoundingClientRect();
+        const style = getComputedStyle(list), inset = Math.max(16, Math.min(24, frame.width * .1));
+        const card = list.closest<HTMLElement>('.glass-card')!;
+        return Math.abs(frame.left - body.left) <= .1 && Math.abs(frame.right - body.right) <= .1
+          && Math.abs(Number.parseFloat(style.paddingInlineStart) - inset) <= .1
+          && style.listStyleType === 'disc' && style.listStylePosition === 'outside'
+          && [...list.querySelectorAll('li')].every(item => {
+            const itemFrame = item.getBoundingClientRect(), marker = getComputedStyle(item, '::marker');
+            return Math.abs(itemFrame.left - frame.left - inset) <= .1 && Math.abs(frame.right - itemFrame.right - inset) <= .1
+              && marker.fontSize === '16px' && marker.fontFamily.startsWith('Arial')
+              && item.scrollWidth <= item.clientWidth + 1;
+          }) && card.scrollWidth <= card.clientWidth + 1;
+      })), `List gutters and wrapping at ${width}px, ${dir}`).toBe(true);
     }
   }
 });
