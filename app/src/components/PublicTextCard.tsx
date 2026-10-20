@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { ExternalLink } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
-import { getPublicBlockStyle, getPublicTextColor } from "@/lib/public-block-style";
+import { getPublicBlockPadding, getPublicBlockStyle, getPublicTextColor } from "@/lib/public-block-style";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
@@ -36,14 +35,6 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
       window.open(safeHref, '_blank', 'noopener,noreferrer');
     }
   };
-  const getSizeClasses = (size?: string) => {
-    switch (size) {
-      case 'small': return 'p-3';
-      case 'large': return 'p-6';
-      default: return 'p-4';
-    }
-  };
-
   const escapeHtml = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -63,7 +54,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
     // Wrap consecutive list items in ul tags
     formatted = formatted.replace(/(<li>.*?<\/li>(\s*<br\/>*)*)+/g, (match) => {
       const listItems = match.replace(/<br\/>/g, '');
-      return `<ul class="list-disc list-inside space-y-1 ml-2">${listItems}</ul>`;
+      return `<ul class="list-disc list-outside space-y-1">${listItems}</ul>`;
     });
 
     return formatted;
@@ -95,7 +86,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
 
   return (
     <Card
-      className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getSizeClasses(link.size)} transition-smooth ${
+      className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getPublicBlockPadding(link.size)} transition-smooth ${
         safeHref ? 'hover:glow-effect group cursor-pointer' : ''
       }`}
       onClick={hasCoverImage ? undefined : handleClick}
@@ -119,12 +110,12 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
         </div>
       )}
       <div
-        className={hasCoverImage ? getSizeClasses(link.size) : ''}
+        className={hasCoverImage ? getPublicBlockPadding(link.size) : ''}
         onClick={hasCoverImage && safeHref ? handleClick : undefined}
       >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="public-block-header mb-2">
             {link.icon && (
               <div className="flex-shrink-0">
                 {link.iconType === 'image' || link.iconType === 'svg' ? (
@@ -143,20 +134,19 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                   event.stopPropagation();
                   trackClick();
                 }}
-                className="font-semibold [overflow-wrap:anywhere] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="w-full font-semibold [overflow-wrap:anywhere] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
               </a>
             ) : (
               <h3
-                className="font-semibold [overflow-wrap:anywhere]"
+                className="w-full font-semibold [overflow-wrap:anywhere]"
                 style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
               </h3>
             )}
-            {safeHref && <ExternalLink className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth" />}
           </div>
           {link.content && (
             <div
@@ -170,9 +160,8 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
               {link.textItems.map((item, index) => {
                 const itemHref = resolveSafePublicHref(item.url);
                 return (
-                <li key={index} className="flex">
-                  <span className="mr-2" style={{ color: item.textColor || readableTextColor }}>•</span>
-                  <div className="flex-1 min-w-0">
+                <li key={index} className="list-disc list-outside" style={{ color: item.textColor || readableTextColor }}>
+                  <div className="min-w-0">
                     {/* Label on its own line */}
                     <div style={{ color: item.textColor || readableTextColor, fontSize: item.fontSize || undefined, fontFamily: item.fontFamily || link.descriptionFontFamily || "var(--font-card-description, inherit)" }}>{item.text}</div>
                     {/* URL on a second line, aligned with the item text */}
@@ -182,7 +171,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="block [overflow-wrap:anywhere] hover:underline hover:text-primary transition-colors text-left"
+                        className="block [overflow-wrap:anywhere] hover:underline hover:text-primary transition-colors"
                         title={item.url}
                         style={{ color: item.textColor || readableTextColor }}
                       >

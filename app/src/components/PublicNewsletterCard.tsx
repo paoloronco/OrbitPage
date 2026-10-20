@@ -37,11 +37,11 @@ export function PublicNewsletterCard({ link }: { link: LinkData }) {
   return (
     <Card className="glass-card overflow-hidden p-0" style={getPublicBlockStyle(link)}>
       <div className={`space-y-4 ${getPublicBlockPadding(link.size)}`}>
-        <div className="flex items-start gap-3">
+        <div className="public-block-header">
           <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15`} style={getPublicAccentStyle(link)}>
             {getPublicIconContent(link, <Mail className="h-5 w-5" />)}
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="public-block-copy">
             <p className="text-base font-semibold leading-tight" style={{ ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}), ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}) }}>{link.title || tr("Join the newsletter", "Iscriviti alla newsletter")}</p>
             {link.description ? <p className="mt-1 text-sm leading-relaxed text-muted-foreground" style={{ ...(link.textColor ? { color: link.textColor, opacity: .82 } : {}), ...(link.descriptionFontSize ? { fontSize: link.descriptionFontSize } : {}), ...(link.descriptionFontFamily ? { fontFamily: link.descriptionFontFamily } : {}) }}>{link.description}</p> : null}
           </div>

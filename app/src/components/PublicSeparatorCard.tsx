@@ -1,25 +1,21 @@
 import type { LinkData } from "./LinkCard";
 import { getSeparatorData } from "@/lib/link-blocks";
-import { getPublicBlockPadding } from "@/lib/public-block-style";
+import { getPublicBlockPadding, getPublicBlockStyle } from "@/lib/public-block-style";
 
 export const PublicSeparatorCard = ({ link }: { link: LinkData }) => {
   const { boxed } = getSeparatorData(link.content);
-  const style = {
-    ...(boxed && link.backgroundColor ? { backgroundColor: link.backgroundColor } : {}),
-    ...(link.textColor ? { color: link.textColor } : {}),
-    ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),
-    ...(link.alignment ? { textAlign: link.alignment } : {}),
-  };
+  const style = getPublicBlockStyle({ ...link, backgroundColor: boxed ? link.backgroundColor : undefined });
 
   return (
     <div
-      className={`${boxed ? `rounded-md border border-current/15 ${getPublicBlockPadding(link.size)}` : "public-unboxed-block py-1"} flex items-center gap-3`}
+      className={`public-separator ${boxed ? `rounded-md border border-current/15 ${getPublicBlockPadding(link.size)}` : "public-unboxed-block public-block-content border border-transparent py-1"} flex items-center gap-3`}
+      data-alignment={link.alignment || "left"}
       style={style}
     >
       <div className="h-px flex-1 bg-current opacity-25" />
       {link.title && (
         <span
-          className="px-2 text-xs font-semibold uppercase tracking-widest text-current opacity-75"
+          className="text-xs font-semibold uppercase tracking-widest text-current opacity-75"
           style={{
             ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}),
             ...(link.titleFontFamily ? { fontFamily: link.titleFontFamily } : {}),

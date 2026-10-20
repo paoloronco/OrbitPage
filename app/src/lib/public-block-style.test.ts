@@ -1,8 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { getPublicBlockStyle } from "./public-block-style";
+import { getPublicBlockPadding, getPublicBlockStyle } from "./public-block-style";
 
 describe("public block style", () => {
+  it.each([
+    [undefined, "left", "start"], ["left", "left", "start"], ["center", "center", "center"], ["right", "right", "end"],
+  ] as const)("shares the %s alignment across text and icon rows", (alignment, textAlign, itemsAlign) => {
+    expect(getPublicBlockStyle({ id: "aligned", title: "Title", url: "", description: "", alignment }))
+      .toMatchObject({ textAlign, "--public-block-align": itemsAlign });
+    for (const size of ["small", "medium", "large"] as const) expect(getPublicBlockPadding(size)).toContain("public-block-content");
+  });
   it("preserves theme transparency for a custom block color", () => {
     const style = getPublicBlockStyle({
       id: "link-1",

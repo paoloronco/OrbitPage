@@ -11,10 +11,10 @@ export const PublicHeadingCard = ({ link }: PublicHeadingCardProps) => {
 
   return (
     <Card
-      className="public-unboxed-block border-none bg-transparent px-0 py-2 shadow-none"
+      className="public-unboxed-block border-transparent bg-transparent px-0 py-2 shadow-none"
       style={headingStyles}
     >
-      <div className="px-1">
+      <div className="public-block-content">
         <div className="mb-3 h-px w-full bg-gradient-to-r from-primary/45 via-primary/15 to-transparent" />
         <h2
           className="text-xl font-bold leading-tight"

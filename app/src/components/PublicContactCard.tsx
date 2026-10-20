@@ -54,11 +54,11 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
       <div className={`space-y-4 ${getPublicBlockPadding(link.size)}`}>
-        <div className="flex items-start gap-3">
+        <div className="public-block-header">
           <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary ring-1 ring-primary/15`} style={getPublicAccentStyle(link)}>
             {getPublicIconContent(link, <UserRound className="h-5 w-5" />)}
           </div>
-          <div className="min-w-0 flex-1">
+          <div className="public-block-copy">
             <div
               className="text-base font-semibold leading-tight"
               style={{
@@ -91,9 +91,9 @@ export const PublicContactCard = ({ link }: PublicContactCardProps) => {
 
         <div className="grid gap-2">
           {items.map((item) => item.value ? (
-            <div key={item.key} className="flex items-start gap-3 rounded-md border border-border/55 bg-background/35 px-3 py-2 text-sm" style={panelStyle}>
+            <div key={item.key} className="public-block-header rounded-md border border-border/55 bg-background/35 px-3 py-2 text-sm" style={panelStyle}>
               <item.Icon className="mt-0.5 h-4 w-4 shrink-0 text-primary" style={getPublicAccentStyle(link)} />
-              <div className="min-w-0 flex-1">
+              <div className="public-block-copy">
                 <span className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground" style={secondaryTextStyle}>{item.key}</span>
                 {item.href ? buildLink(item.href, item.value, textStyle) : <span className="break-words" style={textStyle}>{item.value}</span>}
               </div>

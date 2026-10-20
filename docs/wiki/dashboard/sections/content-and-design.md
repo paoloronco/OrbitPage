@@ -39,6 +39,8 @@ Alignment guides are visual aids; hold Shift while dragging to snap to them. Arr
 
 Card text wraps and the card grows to keep it readable. Existing vertical gaps are preserved when text needs more height. Icons, titles, descriptions and URLs use the automatic card layout; choose Left, Center or Right in the card's **Alignment** setting. Old saved text coordinates are ignored.
 
+Content blocks share the same text frame: Left and Right use matching horizontal insets, and Center uses the card's exact center. Font size, font family, colors, block size and card surface do not change that frame. Icons and copy controls occupy separate rows so they cannot shift the text. The same rules apply in the editor preview and on the public page.
+
 The profile card grows and shrinks with its visible image, name, description, details and social links. Text wraps within the chosen width. Resizing the profile vertically sets its minimum height; longer content can still expand it. Both content changes and vertical resizing move the following cards while preserving their gaps. Saving a layout keeps the manual minimum separate from the measured content height. Existing custom profile-element positions remain supported.
 
 | Control | Behavior |

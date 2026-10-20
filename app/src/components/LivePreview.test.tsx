@@ -103,8 +103,8 @@ describe("LivePreview", () => {
       />,
     );
 
-    expect(html).toContain('public-unboxed-block border-none bg-transparent');
-    expect(html).toContain('glass-card p-4');
+    expect(html).toContain('public-unboxed-block border-transparent bg-transparent');
+    expect(html).toContain('glass-card public-block-content p-4');
     expect(html.match(/data-surface-effect="liquid-glass"/g)).toHaveLength(2);
   });
 });

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
-import { ArrowRight, CalendarCheck, Check, Copy, Download, ExternalLink, Link2, Mail, MailPlus, MapPin, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { CalendarCheck, Check, Copy, Download, ExternalLink, Link2, Mail, MailPlus, MapPin, Phone, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import type { LinkData } from "./LinkCard";
 import { internalAssetPath, withPageRootPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
@@ -12,7 +12,7 @@ import { resolveSafePublicHref, resolveSafePublicMediaUrl } from '@/lib/browser-
 import { isPublicImageReference, resolvePublicImageUrl } from '@/lib/public-asset-readiness';
 import { CompactLinkIcon } from './CompactLinkIcon';
 import type { SocialLinkPlatform } from '@/lib/link-blocks';
-import { getPublicBlockStyle, getPublicTextColor } from '@/lib/public-block-style';
+import { getPublicBlockPadding, getPublicBlockStyle, getPublicTextColor } from '@/lib/public-block-style';
 import { isNativeShopLink } from '@/lib/native-shop-link';
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
@@ -133,14 +133,6 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     }
   };
 
-  const getSizeClasses = (size?: string) => {
-    switch (size) {
-      case 'small': return 'p-3';
-      case 'large': return 'p-6';
-      default: return 'p-4';
-    }
-  };
-
   // Add error state for images
   const [imageError, setImageError] = useState(false);
   const [coverImageError, setCoverImageError] = useState(false);
@@ -235,13 +227,13 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
           onClick={handleLinkClick}
           aria-disabled={unavailable}
           tabIndex={unavailable ? -1 : undefined}
-          className={`public-cta-link flex min-h-[88px] items-center gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed' : ''}`}
+          className={`public-cta-link public-block-content public-block-header min-h-[88px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed' : ''}`}
           aria-label={`${ctaConfig.label}: ${link.title || 'Open action'}`}
         >
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-white/16 text-white ring-1 ring-white/25">
             <Icon className="h-5 w-5" />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="public-block-copy">
             <span className="mb-1 inline-flex rounded-md bg-white/14 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/85" style={{ fontFamily: 'var(--font-button, inherit)' }}>
               {unavailable ? tr('Unavailable', 'Non disponibile') : ctaConfig.label}
             </span>
@@ -260,7 +252,6 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
               </span>
             )}
           </span>
-          {safeHref && <ArrowRight className="h-5 w-5 shrink-0 text-white/75 transition-transform group-hover:translate-x-0.5" />}
         </a>
       </Card>
     );
@@ -269,7 +260,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
 
   return (
     <Card
-      className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getSizeClasses(link.size)} transition-smooth hover:glow-effect group`}
+      className={`glass-card ${hasCoverImage ? 'overflow-hidden' : getPublicBlockPadding(link.size)} transition-smooth hover:glow-effect group`}
       style={getPublicBlockStyle(link)}
     >
       {hasCoverImage && (
@@ -295,8 +286,8 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
           </div>
         </a>
       )}
-      <div className={hasCoverImage ? getSizeClasses(link.size) : ''} data-card-content-layout={hasCoverImage ? undefined : link.id}>
-        <div className="flex items-center justify-between gap-3">
+      <div className={hasCoverImage ? getPublicBlockPadding(link.size) : ''} data-card-content-layout={hasCoverImage ? undefined : link.id}>
+        <div className="public-block-header">
           <a
             href={unavailable ? undefined : safeHref || undefined}
             target={linkTarget}
@@ -304,19 +295,18 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
             onClick={handleLinkClick}
             aria-disabled={unavailable}
             tabIndex={unavailable ? -1 : undefined}
-            className={`flex items-center gap-3 flex-1 min-w-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed opacity-65' : ''}`}
+            className={`public-block-header w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed opacity-65' : ''}`}
             aria-label={link.title ? `Open ${link.title}` : 'Open link'}
           >
             {renderedIcon ? <div className="flex-shrink-0" data-card-content-layout-item="icon">{renderedIcon}</div> : null}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2" data-card-content-layout-item="title">
+            <div className="public-block-copy">
+              <div data-card-content-layout-item="title">
                 <h3
                   className="min-w-0 [overflow-wrap:anywhere] font-semibold flex-1"
                   style={{ ...effectiveTextStyle, fontFamily: titleFontFamily, ...(link.titleFontSize ? { fontSize: link.titleFontSize } : {}) }}
                 >
                   {link.title || "Untitled Link"}
                 </h3>
-                {safeHref && <ExternalLink aria-hidden="true" className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-smooth flex-shrink-0" />}
                 {unavailable ? (
                   <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{tr('Unavailable', 'Non disponibile')}</span>
                 ) : null}
@@ -344,7 +334,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
           {!unavailable && safeHref && <button
             aria-label={copied ? "Link copied" : "Copy link"}
             onClick={handleCopy}
-            className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-smooth flex-shrink-0 p-1 rounded hover:bg-primary/10"
+            className="self-end rounded p-1 transition-smooth hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title={copied ? "Link copied" : "Copy link"}
             type="button"
           >

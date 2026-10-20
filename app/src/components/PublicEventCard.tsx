@@ -50,8 +50,8 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={cardStyle}>
-      <div className="flex">
-        <div className="flex w-20 shrink-0 flex-col items-center justify-center bg-primary/12 px-3 py-5 text-center text-primary ring-1 ring-inset ring-primary/15" style={getPublicAccentStyle(link)}>
+      <div className="flex flex-col">
+        <div className="public-block-header public-block-content bg-primary/12 py-3 text-primary ring-1 ring-inset ring-primary/15" style={getPublicAccentStyle(link)}>
           <span className="mb-2 flex h-6 w-6 items-center justify-center">
             {getPublicIconContent(link, <CalendarDays className="h-5 w-5" />)}
           </span>
@@ -98,17 +98,17 @@ export const PublicEventCard = ({ link }: PublicEventCardProps) => {
               </div>
             ) : null}
             {(eventData.date || eventData.time || eventData.endDate || eventData.endTime) ? (
-              <div className="flex items-start gap-2 rounded-md bg-muted/35 px-3 py-2">
+              <div className="public-block-header rounded-md bg-muted/35 px-3 py-2">
                 <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-primary" style={getPublicAccentStyle(link)} />
-                <span>
+                <span className="public-block-copy">
                   {dateLabel}{eventData.endDate ? ` - ${eventData.endDate}` : ""}{timeLabel ? `, ${timeLabel}` : ""}
                 </span>
               </div>
             ) : null}
             {eventData.location ? (
-              <div className="flex items-start gap-2 rounded-md bg-muted/35 px-3 py-2">
+              <div className="public-block-header rounded-md bg-muted/35 px-3 py-2">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" style={getPublicAccentStyle(link)} />
-                <span className="break-words">{eventData.location}</span>
+                <span className="public-block-copy break-words">{eventData.location}</span>
               </div>
             ) : null}
             {eventData.notes ? (

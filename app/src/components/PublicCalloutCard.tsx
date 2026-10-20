@@ -3,7 +3,7 @@ import type { LinkData } from "./LinkCard";
 import { getCalloutData } from "@/lib/link-blocks";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { ArrowUpRight, Sparkles } from "lucide-react";
-import { getPublicAccentStyle, getPublicBlockGap, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
+import { getPublicAccentStyle, getPublicBlockPadding, getPublicBlockStyle, getPublicButtonStyle, getPublicIconContent, getPublicIconSize } from "@/lib/public-block-style";
 import { resolveSafePublicHref } from "@/lib/browser-network-policy";
 
 interface PublicCalloutCardProps {
@@ -32,11 +32,11 @@ export const PublicCalloutCard = ({ link }: PublicCalloutCardProps) => {
       style={cardStyle}
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
-      <div className={`flex ${getPublicBlockGap(link.size)} ${getPublicBlockPadding(link.size)}`}>
+      <div className={`public-block-header ${getPublicBlockPadding(link.size)}`}>
         <div className={`flex ${getPublicIconSize(link.size)} shrink-0 items-center justify-center rounded-lg bg-primary/14 text-primary ring-1 ring-primary/20`} style={getPublicAccentStyle(link)}>
           {getPublicIconContent(link, <Sparkles className="h-5 w-5" />)}
         </div>
-        <div className="min-w-0 flex-1 space-y-2">
+        <div className="public-block-copy space-y-2">
           {badge ? (
             <span className="inline-flex rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary" style={getPublicAccentStyle(link)}>
               {badge}

@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import type { LinkData } from "./LinkCard";
 import { getSocialRowData } from "@/lib/link-blocks";
 import { CompactLinkIcon } from "./CompactLinkIcon";
@@ -18,10 +17,9 @@ export const PublicSocialRowCard = ({ link }: PublicSocialRowCardProps) => {
     : iconStyle === "theme"
       ? "public-compact-link--theme"
       : "public-compact-link--brand";
-  const cardStyle = { color: getPublicBlockStyle(link).color } as CSSProperties;
 
   return (
-    <div className="public-compact-links public-unboxed-block" style={cardStyle}>
+    <div className="public-compact-links public-unboxed-block public-block-content border border-transparent" style={getPublicBlockStyle(link)}>
       <div className="public-compact-links__content">
         {items.length > 0 ? (
           <div className="public-compact-links__items public-compact-links__items--icons">

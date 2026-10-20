@@ -80,13 +80,13 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={getPublicBlockStyle(link)}>
-      <div className={`flex items-start gap-3 ${getPublicBlockPadding(link.size)}`}>
+      <div className={`public-block-header ${getPublicBlockPadding(link.size)}`}>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/15" style={{ ...getPublicAccentStyle(link), ...(!link.icon && brandColor ? { color: brandColor } : {}) }}>
           {getPublicIconContent(link, getProviderIcon(provider))}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold leading-tight">{link.title || providerLabel}</p>
+        <div className="public-block-copy">
+          <div className="public-block-header">
+            <p className="w-full font-semibold leading-tight">{link.title || providerLabel}</p>
             <span className="rounded-full border border-current/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] opacity-65">{providerLabel}</span>
           </div>
           {link.description ? <p className="mt-1 text-sm leading-relaxed" style={secondaryStyle}>{link.description}</p> : null}

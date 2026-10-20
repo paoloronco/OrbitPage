@@ -36,19 +36,14 @@ export const getPublicBlockStyle = (link: LinkData): PublicBlockCssProperties =>
   ...(getPublicTextColor(link) ? { color: getPublicTextColor(link) } : {}),
   fontFamily: link.titleFontFamily || "var(--font-card-title, inherit)",
   '--font-card-description-effective': link.descriptionFontFamily || "var(--font-card-description, inherit)",
-  ...(link.alignment ? { textAlign: link.alignment } : {}),
+  textAlign: link.alignment || "left",
+  '--public-block-align': { left: "start", center: "center", right: "end" }[link.alignment || "left"],
 });
 
 export const getPublicBlockPadding = (size?: LinkData["size"]) => {
-  if (size === "small") return "p-3";
-  if (size === "large") return "p-5 sm:p-6";
-  return "p-4 sm:p-5";
-};
-
-export const getPublicBlockGap = (size?: LinkData["size"]) => {
-  if (size === "small") return "gap-3";
-  if (size === "large") return "gap-5";
-  return "gap-4";
+  if (size === "small") return "public-block-content p-3";
+  if (size === "large") return "public-block-content p-5 sm:p-6";
+  return "public-block-content p-4 sm:p-5";
 };
 
 export const getPublicIconSize = (size?: LinkData["size"]) => {
