@@ -85,6 +85,11 @@ test('Arrange places profile elements on a grid, locks the bio and saves indepen
     await card.locator('[data-profile-layout-item="location"]').hover();
     await card.getByRole('button', { name: 'Align left Location', exact: true }).click();
     await expect(card.locator('[data-profile-layout-item="location"]')).toHaveAttribute('data-profile-layout-align', 'left');
+    const compactHeight = await card.evaluate(card => card.getBoundingClientRect().height);
+    await page.locator('#profile-bio').fill('A longer description needs more room. '.repeat(25));
+    await expect.poll(() => card.evaluate(card => card.getBoundingClientRect().height)).toBeGreaterThan(compactHeight);
+    await page.locator('#profile-bio').fill('This description always follows the arranged profile elements.');
+    await expect.poll(() => card.evaluate(card => card.getBoundingClientRect().height)).toBeCloseTo(compactHeight, 1);
     await saveEditorChanges(page);
     await page.getByRole('button', { name: 'Mobile preview', exact: true }).click();
     await page.getByRole('button', { name: 'Arrange', exact: true }).click();

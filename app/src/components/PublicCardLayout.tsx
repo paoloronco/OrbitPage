@@ -74,10 +74,16 @@ function measureCardHeights(canvas: HTMLElement) {
     const style = getComputedStyle(card);
     const scale = bounds.width / Number.parseFloat(style.width);
     if (!scale) return;
-    const bottom = Math.max(Number.parseFloat(style.paddingTop), ...Array.from(card.children).map(child => {
+    const children = Array.from(card.children).filter(child => !["absolute", "fixed"].includes(getComputedStyle(child).position));
+    // An anchored bio's automatic margin fills the manual minimum, not intrinsic content height.
+    const bottom = card.querySelector(':scope > .profile-card__fixed-bio')
+      ? Number.parseFloat(style.paddingTop) + Number.parseFloat(style.borderTopWidth)
+        + children.reduce((sum, child) => sum + child.getBoundingClientRect().height / scale, 0)
+        + Number.parseFloat(style.rowGap) * Math.max(0, children.length - 1)
+      : Math.max(Number.parseFloat(style.paddingTop), ...children.map(child => {
       const position = getComputedStyle(child).position;
       return position === "absolute" || position === "fixed" ? 0 : (child.getBoundingClientRect().bottom - bounds.top) / scale;
-    }));
+      }));
     // Scaled preview coordinates have subpixel noise, especially in Firefox.
     heights[item.dataset.cardLayoutItem!] = Math.ceil(bottom + Number.parseFloat(style.paddingBottom) + Number.parseFloat(style.borderBottomWidth) - 0.05);
   });
