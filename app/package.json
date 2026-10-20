@@ -81,7 +81,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^7.3.2",
+    "vite": "^7.3.7",
     "vitest": "^4.1.11"
   },
   "overrides": {
