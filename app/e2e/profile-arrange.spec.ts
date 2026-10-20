@@ -99,6 +99,7 @@ test('Arrange places profile elements on a grid, locks the bio and saves indepen
         return rects.every((a, i) => rects.every((b, j) => i === j || a.right <= b.left + .1 || a.left >= b.right - .1 || a.bottom <= b.top + .1 || a.top >= b.bottom - .1));
       })).toBe(true);
       expect(await publicCard.evaluate(card => card.scrollWidth <= card.clientWidth + 1 && card.querySelector('.profile-card__fixed-bio')!.getBoundingClientRect().bottom <= card.getBoundingClientRect().bottom)).toBe(true);
+      expect(await publicCard.locator('[data-profile-layout-item]').evaluateAll(items => items.every(item => item.scrollWidth <= item.clientWidth + 1))).toBe(true);
       expect(await page.getByRole('heading', { name: 'Following card', exact: true }).evaluate(next => next.closest('.glass-card')!.getBoundingClientRect().top >= document.querySelector('.profile-card')!.getBoundingClientRect().bottom)).toBe(true);
     }
   } finally { await restore(); }

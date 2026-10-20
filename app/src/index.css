@@ -1191,15 +1191,16 @@ html:has(.orbitpage-admin) {
     justify-content: center;
   }
 
-  .profile-card__layout-item--avatar .profile-card__avatar {
+  .profile-card .profile-card__layout-item--avatar .profile-card__avatar {
     aspect-ratio: 1;
-    max-width: 100%;
+    max-width: min(100%, var(--public-profile-avatar-max, 192px));
     max-height: 100%;
     height: auto !important;
   }
 
   .profile-card__layout-item--avatar .profile-card__avatar-slot {
     width: 100%;
+    min-width: 0;
     height: 100%;
     align-items: center;
   }
