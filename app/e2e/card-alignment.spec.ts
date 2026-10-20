@@ -62,10 +62,14 @@ test('mobile link icons and navigation stay on compact horizontal rows', async (
     const row = await card.evaluate(element => {
       const icon = element.querySelector('[data-card-content-layout-item="icon"]')!.getBoundingClientRect();
       const title = element.querySelector('h3')!.getBoundingClientRect();
-      return { overlap: Math.min(icon.bottom, title.bottom) - Math.max(icon.top, title.top), height: element.closest('.glass-card')!.getBoundingClientRect().height };
+      const copy = element.querySelector('.public-block-copy')!.getBoundingClientRect();
+      const card = element.closest('.glass-card')!;
+      const style = getComputedStyle(card);
+      const padding = [style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth].reduce((sum, value) => sum + Number.parseFloat(value), 0);
+      return { overlap: Math.min(icon.bottom, title.bottom) - Math.max(icon.top, title.top), emptyHeight: card.getBoundingClientRect().height - Math.max(icon.height, copy.height) - padding };
     });
     expect(row.overlap, `Icon and title share a row at ${width}px`).toBeGreaterThan(0);
-    expect(row.height).toBeLessThanOrEqual(90);
+    expect(Math.abs(row.emptyHeight)).toBeLessThanOrEqual(.1);
     const long = await page.locator('[data-card-content-layout="long"]').evaluate(element => {
       const icon = element.querySelector('[data-card-content-layout-item="icon"]')!.getBoundingClientRect();
       const title = element.querySelector('h3')!.getBoundingClientRect();
@@ -79,10 +83,14 @@ test('mobile link icons and navigation stay on compact horizontal rows', async (
       const row = await item.evaluate(element => {
         const icon = element.querySelector('.public-internal-link__icon')!.getBoundingClientRect();
         const title = element.querySelector('strong')!.getBoundingClientRect();
-        return { overlap: Math.min(icon.bottom, title.bottom) - Math.max(icon.top, title.top), height: element.getBoundingClientRect().height };
+        const copy = element.querySelector('.public-internal-link__copy')!.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        const padding = [style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth].reduce((sum, value) => sum + Number.parseFloat(value), 0);
+        const expected = Math.max(Number.parseFloat(style.minHeight), Math.max(icon.height, copy.height) + padding);
+        return { overlap: Math.min(icon.bottom, title.bottom) - Math.max(icon.top, title.top), emptyHeight: element.getBoundingClientRect().height - expected };
       });
       expect(row.overlap).toBeGreaterThan(0);
-      expect(row.height).toBeLessThanOrEqual(90);
+      expect(Math.abs(row.emptyHeight)).toBeLessThanOrEqual(.1);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
