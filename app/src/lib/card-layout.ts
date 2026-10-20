@@ -22,6 +22,7 @@ export type CardLayoutSource = {
   prepend?: boolean;
 };
 export type NormalizedCardLayout = {
+  profileMinHeight?: number;
   positions: Record<string, CardLayoutRect>;
   contents?: Record<string, CardContentLayout>;
   height: number;
@@ -128,10 +129,17 @@ export function normalizeCardLayout(
   viewport: CardLayoutViewport,
 ): NormalizedCardLayout {
   const positions: Record<string, CardLayoutRect> = {};
-  const initialPositions = layout?.positions ? { ...layout.positions } : undefined;
+  let initialPositions = layout?.positions ? { ...layout.positions } : undefined;
+  let storedHeight = layout?.height ?? 0;
   if (initialPositions?.[LEGACY_PROFILE_CARD_LAYOUT_ID]) {
     initialPositions[PROFILE_CARD_LAYOUT_ID] ??= initialPositions[LEGACY_PROFILE_CARD_LAYOUT_ID];
     delete initialPositions[LEGACY_PROFILE_CARD_LAYOUT_ID];
+  }
+  // Measured profiles can exceed stored rectangle bounds; compact their followers by the same amount before saving.
+  if (initialPositions?.[PROFILE_CARD_LAYOUT_ID]?.height > 1_200) {
+    const bounded = fitCardLayoutHeights({ positions: initialPositions, height: storedHeight }, { [PROFILE_CARD_LAYOUT_ID]: 1_200 }, true, true);
+    initialPositions = bounded.positions;
+    storedHeight = bounded.height;
   }
   const missingPrepend = cards.find((card) => card.prepend && !initialPositions?.[card.id]);
   const prependOffset = missingPrepend ? defaultCardHeight(missingPrepend) + CARD_GAP : 0;
@@ -157,8 +165,9 @@ export function normalizeCardLayout(
   const contentHeight = Math.max(48, ...Object.values(positions).map((rect) => rect.y + rect.height));
   return {
     positions,
+    ...(layout?.profileMinHeight !== undefined ? { profileMinHeight: clamp(layout.profileMinHeight, 48, 1_200) } : {}),
     ...(layout?.contents ? { contents: layout.contents } : {}),
-    height: Math.round(clamp(Math.max((layout?.height ?? 0) + prependOffset, contentHeight), 48, 6_000)),
+    height: Math.round(clamp(Math.max(storedHeight + prependOffset, contentHeight), 48, 6_000)),
   };
 }
 
@@ -168,15 +177,19 @@ export function updateCardLayoutItem(
   viewport: CardLayoutViewport,
   cardId: string,
   rect: CardLayoutRect,
+  mode: "move" | "resize" = "move",
 ): NormalizedCardLayout {
   const normalized = normalizeCardLayout(layout, cards, viewport);
   const card = cards.find((candidate) => candidate.id === cardId);
   if (!card) return normalized;
   const candidate = normalizeCardRect(rect, normalized.positions[cardId], card, viewport);
-  const positions = { ...normalized.positions, [cardId]: candidate };
+  const resized = cardId === PROFILE_CARD_LAYOUT_ID && mode === "resize" && candidate.height !== normalized.positions[cardId].height
+    ? fitCardLayoutHeights({ ...normalized, profileMinHeight: candidate.height }, { [cardId]: candidate.height }, true, true)
+    : normalized;
+  const positions = { ...resized.positions, [cardId]: candidate };
   return {
+    ...resized,
     positions,
-    ...(normalized.contents ? { contents: normalized.contents } : {}),
     height: Math.round(Math.max(48, ...Object.values(positions).map((position) => position.y + position.height))),
   };
 }
@@ -224,7 +237,7 @@ export function fitCardLayoutHeights(layout: NormalizedCardLayout, heights: Reco
       }
     }
     const height = fitProfileHeight && id === PROFILE_CARD_LAYOUT_ID && heights[id]
-      ? Math.max(48, heights[id])
+      ? Math.max(layout.profileMinHeight ?? 48, heights[id])
       : Math.max(rect.height, heights[id] || 0);
     positions[id] = { ...rect, y: rect.y + (growth ?? 0), height };
   }

@@ -1183,6 +1183,7 @@ describe('API Endpoints', () => {
     const cardLayouts = {
       mobile: null,
       desktop: {
+        profileMinHeight: 300,
         positions: {
           'orbitpage-profile': { x: 25, y: 0, width: 50, height: 456 },
           github: { x: 0, y: 480, width: 42, height: 100 },

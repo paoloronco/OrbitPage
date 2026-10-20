@@ -170,4 +170,44 @@ describe("responsive card layout", () => {
     expect(fitted.height).toBe(332);
   });
 
+  it("reflows the profile resize in both directions without freezing automatic content growth", () => {
+    const sources = [{ id: PROFILE_CARD_LAYOUT_ID, type: "profile", defaultRect: { height: 48 } }, ...cards];
+    const layout = { profileMinHeight: 48, height: 448, positions: {
+      [PROFILE_CARD_LAYOUT_ID]: { x: 0, y: 0, width: 100, height: 200 },
+      large: { x: 0, y: 224, width: 100, height: 120 },
+      compact: { x: 0, y: 368, width: 100, height: 80 },
+    } };
+    const enlarged = updateCardLayoutItem(layout, sources, "desktop", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], height: 400 }, "resize");
+    expect(enlarged.profileMinHeight).toBe(400);
+    expect(enlarged.positions.large.y).toBe(424);
+    expect(enlarged.positions.compact.y).toBe(568);
+    const grown = fitCardLayoutHeights(enlarged, { [PROFILE_CARD_LAYOUT_ID]: 600 }, true, true);
+    expect(grown.positions.large.y).toBe(624);
+    expect(fitCardLayoutHeights(grown, { [PROFILE_CARD_LAYOUT_ID]: 150 }, true, true).positions).toEqual(enlarged.positions);
+    const smaller = updateCardLayoutItem(enlarged, sources, "mobile", PROFILE_CARD_LAYOUT_ID, { ...enlarged.positions[PROFILE_CARD_LAYOUT_ID], height: 150 }, "resize");
+    expect(smaller.positions.large.y).toBe(174);
+    expect(smaller.positions.compact.y).toBe(318);
+    expect(smaller.profileMinHeight).toBe(150);
+    const wider = updateCardLayoutItem(layout, sources, "desktop", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], width: 80 }, "resize");
+    expect(wider.profileMinHeight).toBe(48);
+    expect(wider.positions.large.y).toBe(224);
+    const minimum = updateCardLayoutItem(layout, sources, "mobile", PROFILE_CARD_LAYOUT_ID, { ...layout.positions[PROFILE_CARD_LAYOUT_ID], width: 0, height: 0 }, "resize");
+    expect(minimum.positions[PROFILE_CARD_LAYOUT_ID]).toMatchObject({ width: 44, height: 48 });
+    expect(fitCardLayoutHeights(minimum, { [PROFILE_CARD_LAYOUT_ID]: 150 }, true, true).positions.large.y).toBe(174);
+    expect(moveMobileCard(enlarged, sources, ["large", "compact"], "compact", -1)?.profileMinHeight).toBe(400);
+  });
+
+  it("keeps gaps when saving a measured profile taller than the stored rectangle limit", () => {
+    const sources = [{ id: PROFILE_CARD_LAYOUT_ID, type: "profile", defaultRect: { height: 48 } }, ...cards];
+    const measured = { profileMinHeight: 48, height: 2168, positions: {
+      [PROFILE_CARD_LAYOUT_ID]: { x: 0, y: 0, width: 100, height: 1800 },
+      large: { x: 0, y: 1824, width: 100, height: 120 },
+      compact: { x: 0, y: 1968, width: 100, height: 200 },
+    } };
+    const stored = normalizeCardLayout(measured, sources, "mobile");
+    expect(stored.positions[PROFILE_CARD_LAYOUT_ID].height).toBe(1200);
+    expect(stored.positions.large.y).toBe(1224);
+    expect(fitCardLayoutHeights(stored, { [PROFILE_CARD_LAYOUT_ID]: 1800 }, true, true)).toEqual(measured);
+  });
+
 });

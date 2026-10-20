@@ -346,15 +346,20 @@ describe('canonical page schema boundary', () => {
     expect(applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       appearance: {
         cardLayouts: {
-          mobile: { positions: { compact: { x: 52, y: 0, width: 48, height: 72 } }, height: 72 },
+          mobile: { profileMinHeight: 48, positions: { compact: { x: 52, y: 0, width: 48, height: 72 } }, height: 72 },
           desktop: {
             positions: { feature: { x: 0, y: 20, width: 48, height: 180 } },
             contents: { feature: { positions: { title: { x: 4, y: 8, width: 70, height: 32 } }, height: 80 } },
-            height: 200,
+            height: 200, profileMinHeight: 180,
           },
         },
       },
-    })).toMatchObject({ appearance: { cardLayouts: { desktop: { height: 200 }, mobile: { height: 72 } } } });
+    })).toMatchObject({ appearance: { cardLayouts: { desktop: { height: 200, profileMinHeight: 180 }, mobile: { height: 72, profileMinHeight: 48 } } } });
+    for (const profileMinHeight of [0, 1201, Infinity]) {
+      expect(() => applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
+        appearance: { cardLayouts: { desktop: { profileMinHeight } } },
+      })).toThrow();
+    }
 
     const migrated = applyOrbitPageProfilePatch(DEFAULT_ORBITPAGE_PROFILE, {
       appearance: {

@@ -119,6 +119,7 @@ const OrbitPageCardContentsSchema = z.record(
 ).refine((contents) => Object.keys(contents).length <= 200, "A page layout cannot contain more than 200 card content layouts.");
 
 export const OrbitPageCardLayoutSchema = z.object({
+  profileMinHeight: z.number().finite().min(48).max(1200).optional(),
   positions: OrbitPageCardPositionsSchema.optional(),
   contents: OrbitPageCardContentsSchema.optional(),
   height: z.number().finite().min(48).max(6_000).optional()

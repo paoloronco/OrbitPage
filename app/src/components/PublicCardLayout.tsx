@@ -39,7 +39,7 @@ interface PublicCardLayoutProps {
   editorSelection?: PublicEditorTarget | null;
   onEditorSelect?: (target: PublicEditorTarget) => void;
   onLayoutChange?: (layout: CardLayout) => void;
-  profileCard?: { content: ReactNode; height: number; fitHeight?: boolean };
+  profileCard?: { content: ReactNode; height: number; minHeight: number };
   desktopDefaultWidthCapRem?: number;
 }
 
@@ -73,6 +73,7 @@ export function PublicCardLayout({
   const { tr } = useAppI18n();
   const hasProfileCard = profileCard !== undefined;
   const profileCardHeight = profileCard?.height;
+  const profileMinHeight = profileCard?.minHeight;
   const layoutCards = useMemo<CardLayoutSource[]>(() => {
     const configuredWidth = Number.parseFloat(theme.maxWidth);
     const configuredWidthPx = theme.maxWidth.endsWith("rem")
@@ -95,7 +96,10 @@ export function PublicCardLayout({
       ...links.map((link) => ({ ...link, defaultRect })),
     ];
   }, [desktopDefaultWidthCapRem, hasProfileCard, links, profileCardHeight, theme.maxWidth, viewport]);
-  const savedLayout = useMemo(() => normalizeCardLayout(rawLayout, layoutCards, viewport), [layoutCards, rawLayout, viewport]);
+  const savedLayout = useMemo(() => ({
+    ...normalizeCardLayout(rawLayout, layoutCards, viewport),
+    ...(hasProfileCard ? { profileMinHeight } : {}),
+  }), [hasProfileCard, layoutCards, profileMinHeight, rawLayout, viewport]);
 
   const [workingLayout, setWorkingLayout] = useState(savedLayout);
   const [activeCard, setActiveCard] = useState<string | null>(null);
@@ -107,10 +111,9 @@ export function PublicCardLayout({
   const pointerRef = useRef<{ clientX: number; clientY: number; pointerId: number; shiftKey: boolean } | null>(null);
   const latestLayoutRef = useRef<NormalizedCardLayout>(savedLayout);
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
-  const fitProfileHeight = profileCard?.fitHeight && activeCard !== PROFILE_CARD_LAYOUT_ID;
   const activeLayout = useMemo(() => fitCardLayoutHeights(
-    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, !activeCard, fitProfileHeight,
-  ), [activeCard, fitProfileHeight, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
+    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, !activeCard || activeCard === PROFILE_CARD_LAYOUT_ID, hasProfileCard,
+  ), [activeCard, hasProfileCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
 
   useLayoutEffect(() => {
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
@@ -133,14 +136,15 @@ export function PublicCardLayout({
         const card = surface.querySelector<HTMLElement>(".glass-card, .public-cta-card") || surface.firstElementChild as HTMLElement;
         if (!card) return;
         const bounds = card.getBoundingClientRect();
-        const scale = bounds.width / card.offsetWidth;
-        if (!scale) return;
         const style = getComputedStyle(card);
+        const scale = bounds.width / Number.parseFloat(style.width);
+        if (!scale) return;
         const bottom = Math.max(Number.parseFloat(style.paddingTop), ...Array.from(card.children).map(child => {
           const position = getComputedStyle(child).position;
           return position === "absolute" || position === "fixed" ? 0 : (child.getBoundingClientRect().bottom - bounds.top) / scale;
         }));
-        next[item.dataset.cardLayoutItem!] = Math.ceil(bottom + Number.parseFloat(style.paddingBottom) + Number.parseFloat(style.borderBottomWidth));
+        // Scaled preview coordinates have subpixel noise, especially in Firefox.
+        next[item.dataset.cardLayoutItem!] = Math.ceil(bottom + Number.parseFloat(style.paddingBottom) + Number.parseFloat(style.borderBottomWidth) - 0.05);
       });
       setHeights(previous => Object.keys(next).length === Object.keys(previous).length
         && Object.entries(next).every(([id, height]) => previous[id] === height) ? previous : next);
@@ -149,7 +153,7 @@ export function PublicCardLayout({
     const observer = new ResizeObserver(measure);
     canvas.querySelectorAll(".page-card-layout__surface, .page-card-layout__surface > *, .page-card-layout__surface .glass-card > *").forEach(surface => observer.observe(surface));
     return () => observer.disconnect();
-  }, [layoutCards, useFreeLayout]);
+  }, [layoutCards, profileCard?.content, useFreeLayout]);
 
   useEffect(() => () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); }, []);
 
@@ -198,7 +202,7 @@ export function PublicCardLayout({
     // Guides are advisory; only Shift opts into snapping.
     const candidate = event.shiftKey ? aligned.rect : rect;
     if (gesture.mode === "resize") candidate.width = Math.min(candidate.width, 100 - candidate.x);
-    const next = updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, candidate);
+    const next = updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, candidate, gesture.mode);
     // Shrinking the canvas during a drag clamps scrollTop and moves the card again.
     next.height = Math.max(next.height, gesture.layout.height);
     setGuides(aligned.guides);
@@ -249,11 +253,11 @@ export function PublicCardLayout({
     event.stopPropagation();
     updateGesturePosition(event);
     const completed = updateCardLayoutItem(latestLayoutRef.current, layoutCards, viewport, gesture.cardId, latestLayoutRef.current.positions[gesture.cardId]);
-    const next = normalizeCardLayout(fitCardLayoutHeights(completed, heights, false), layoutCards, viewport);
+    const next = normalizeCardLayout(fitCardLayoutHeights(completed, heights, gesture.cardId === PROFILE_CARD_LAYOUT_ID, hasProfileCard), layoutCards, viewport);
     resetGesture();
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     applyWorkingLayout(next);
-    if (JSON.stringify(next.positions) !== JSON.stringify(gesture.layout.positions)) onLayoutChange?.(next);
+    if (next.profileMinHeight !== gesture.layout.profileMinHeight || JSON.stringify(next.positions) !== JSON.stringify(gesture.layout.positions)) onLayoutChange?.(next);
   };
 
   const cancelGesture = (event?: ReactPointerEvent<HTMLDivElement>) => {
@@ -282,10 +286,13 @@ export function PublicCardLayout({
     const step = event.shiftKey ? 10 : 1;
     const dx = (event.key === "ArrowLeft" ? -step : event.key === "ArrowRight" ? step : 0) / canvasRef.current.offsetWidth * 100;
     const dy = event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
-    const candidate = control.dataset.pageCardLayoutMode === "resize"
+    const mode = control.dataset.pageCardLayoutMode as Gesture["mode"];
+    const candidate = mode === "resize"
       ? { ...rect, width: Math.min(100 - rect.x, rect.width + dx), height: rect.height + dy }
       : { ...rect, x: rect.x + dx, y: rect.y + dy };
-    const next = updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, candidate);
+    const next = normalizeCardLayout(fitCardLayoutHeights(
+      updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, candidate, mode), heights, cardId === PROFILE_CARD_LAYOUT_ID, hasProfileCard,
+    ), layoutCards, viewport);
     applyWorkingLayout(next);
     onLayoutChange?.(next);
   };

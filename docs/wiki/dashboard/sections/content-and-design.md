@@ -39,13 +39,13 @@ Alignment guides are visual aids; hold Shift while dragging to snap to them. Arr
 
 Card text wraps and the card grows to keep it readable. Existing vertical gaps are preserved when text needs more height. Icons, titles, descriptions and URLs use the automatic card layout; choose Left, Center or Right in the card's **Alignment** setting. Old saved text coordinates are ignored.
 
-The profile card's default height follows its visible content instead of reserving empty editor rows. Existing default canvas heights are also fitted when rendering the page; larger custom card sizes and custom profile-element positions remain unchanged.
+The profile card grows and shrinks with its visible image, name, description, details and social links. Text wraps within the chosen width. Resizing the profile vertically sets its minimum height; longer content can still expand it. Both content changes and vertical resizing move the following cards while preserving their gaps. Saving a layout keeps the manual minimum separate from the measured content height. Existing custom profile-element positions remain supported.
 
 | Control | Behavior |
 | --- | --- |
 | Device toggle | Mobile and desktop have independent layouts; edit each separately |
 | Profile and content cards | Use the top handle to move the whole card; internal text cannot be moved separately |
-| Card placement | No grid, automatic column conversion or displacement of neighboring cards; overlapping cards is possible |
+| Card placement | Move cards freely without a grid or column conversion; profile height changes reserve space for following cards |
 | Mobile cards | Cards start full-width and can be resized side by side, down to 44% width |
 | **Move up / Move down** | With mobile preview selected in Content, save that card's mobile order immediately |
 | Resize controls | Drag the lower corner continuously or use arrow keys; text sets the minimum visible height |

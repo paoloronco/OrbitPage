@@ -3303,6 +3303,7 @@ const CardContentLayoutSchema = z.object({
   height: z.number().min(48).max(1200).optional(),
 }).strip();
 const CardLayoutSchema = z.object({
+  profileMinHeight: z.number().min(48).max(1200).optional(),
   positions: z.record(z.string().min(1).max(160), CardLayoutRectSchema)
     .refine((positions) => Object.keys(positions).filter((id) => id !== 'orbitpage-profile' && id !== '__orbitpage_profile__').length <= 200).optional(),
   contents: z.record(z.string().min(1).max(160), CardContentLayoutSchema)
