@@ -1028,7 +1028,7 @@ export const AdminView = ({
                 renderPreview={visualSection === "pages" && previewSubpage ? ((device) => (
                   <LivePreview
                     device={device}
-                    profile={{ ...previewProfile, name: previewSubpage.page.title, bio: previewSubpage.page.description }}
+                    profile={{ ...previewProfile, appearance: { ...previewProfile.appearance, cardLayouts: undefined }, name: previewSubpage.page.title, bio: previewSubpage.page.description }}
                     links={previewSubpage.links}
                     theme={previewTheme}
                     publicPageHref={`${publicPageHref.replace(/\/$/, "")}/${previewSubpage.page.slug}`}

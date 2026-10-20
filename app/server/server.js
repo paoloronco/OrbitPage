@@ -2897,7 +2897,7 @@ app.get('/api/public-page', async (req, res) => {
     const branding = { showOrbitPageBadge: true };
     const publicSubpage = subpage ? getPublicSubpagesPayload([subpage])[0] : null;
     res.json(publicSubpage ? {
-      profile: { ...profile, name: publicSubpage.title, bio: publicSubpage.description, tab_title: publicSubpage.title, meta_description: publicSubpage.description },
+      profile: { ...profile, appearance: { ...profile.appearance, cardLayouts: undefined }, name: publicSubpage.title, bio: publicSubpage.description, tab_title: publicSubpage.title, meta_description: publicSubpage.description },
       links: publicSubpage.links,
       theme,
       menu,

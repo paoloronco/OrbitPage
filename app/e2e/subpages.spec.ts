@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { contentSaveButton, openAdminSection, openAuthenticatedAdmin } from './helpers';
+import { contentSaveButton, E2E_ADMIN_PASSWORD, openAdminSection, openAuthenticatedAdmin, preservePageData } from './helpers';
 
 test('edits and previews the selected additional page, then publishes its content', async ({ page }) => {
   await openAuthenticatedAdmin(page);
@@ -63,4 +63,62 @@ test('edits and previews the selected additional page, then publishes its conten
   await expect(page.getByRole('heading', { name: 'Summer events' })).toBeVisible();
   await expect(page.getByText('Dates, guests and booking details.')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Book a table' }).first()).toHaveAttribute('href', 'https://example.com/book');
+});
+
+test('subpages keep normal card spacing without inheriting the home card layout', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openAuthenticatedAdmin(page);
+  const restore = await preservePageData(page, ['/api/profile', '/api/links', '/api/subpages']);
+  try {
+    const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+    const headers = { Authorization: `Bearer ${token}` };
+    const profile = await (await page.request.get('/api/profile', { headers })).json();
+    const layout = {
+      positions: {
+        'orbitpage-profile': { x: 0, y: 0, width: 100, height: 200 },
+        'home-link': { x: 0, y: 650, width: 100, height: 120 },
+      },
+      height: 770,
+    };
+    const link = { id: 'home-link', type: 'link', title: 'Home link', url: 'https://example.com/home', isActive: true };
+    expect((await page.request.put('/api/profile', { headers, data: {
+      ...profile, name: 'Home profile', bio: 'Main page description', avatar: '', showAvatar: false,
+      appearance: { cardBackgroundColor: '#123456', cardLayouts: { mobile: layout, desktop: layout } },
+    } })).ok()).toBeTruthy();
+    expect((await page.request.put('/api/links', { headers, data: [link] })).ok()).toBeTruthy();
+    expect((await page.request.put('/api/subpages', { headers, data: [{
+      id: 'spacing-page', slug: 'jawatengah', title: 'Jawa Tengah', description: 'Regional links', enabled: true,
+      links: [{ ...link, id: 'subpage-link', title: 'Regional website', url: 'https://example.com/region' }],
+    }] })).ok()).toBeTruthy();
+    const subpage = await (await page.request.get('/api/public-page?subpage=jawatengah')).json();
+    expect(subpage.profile.appearance).toEqual({ cardBackgroundColor: '#123456' });
+
+    await page.reload();
+    await openAdminSection(page, 'Pages');
+    await page.locator('.subpage-page-card').filter({ hasText: 'Jawa Tengah' }).click();
+    const preview = page.locator('.visual-site-editor__canvas');
+    await expect(preview.getByRole('link', { name: 'Regional website' })).toBeVisible();
+    await expect(preview.locator('[data-card-layout-item]')).toHaveCount(0);
+
+    for (const width of [390, 320, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/jawatengah');
+      const card = page.getByRole('link', { name: 'Regional website' });
+      await expect(card).toBeVisible();
+      await expect(page.locator('[data-card-layout-item]')).toHaveCount(0);
+      const gap = await card.evaluate(element => element.closest('.glass-card, .public-cta-card')!.getBoundingClientRect().top
+        - document.querySelector('.profile-card')!.getBoundingClientRect().bottom);
+      expect(gap).toBeGreaterThanOrEqual(0);
+      expect(gap).toBeLessThanOrEqual(32);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+      await expect(card).toHaveAttribute('href', 'https://example.com/region');
+
+      await page.goto('/');
+      await expect(page.locator('[data-card-layout-item="home-link"]')).toHaveAttribute('data-card-layout-position', '0,650,100,120');
+    }
+    const savedProfile = await (await page.request.get('/api/profile', { headers })).json();
+    expect(savedProfile.appearance.cardLayouts).toEqual({ mobile: layout, desktop: layout });
+  } finally {
+    await restore();
+  }
 });
