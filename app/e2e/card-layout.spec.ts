@@ -28,6 +28,7 @@ for (const reducedMotion of ['no-preference', 'reduce'] as const) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/');
       await expect(page.locator('.public-internal-links')).toHaveCount(4);
+      expect(await page.locator('.public-internal-links__items--stacked .public-internal-link').first().evaluate(element => element.getBoundingClientRect().height)).toBeLessThanOrEqual(90);
       await page.locator('.public-page-root').evaluate(async root => {
         await document.fonts.ready;
         await Promise.all(root.getAnimations({ subtree: true }).map(animation => animation.finished));

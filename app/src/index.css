@@ -6994,7 +6994,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   margin-inline: 0;
 }
 
-/* All content blocks use the same text frame; icons and actions occupy separate rows. */
+/* All content blocks use matching outer text insets. */
 .public-block-content {
   min-width: 0;
   padding-inline: 1rem;
@@ -7011,6 +7011,62 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .public-block-copy {
   width: 100%;
   min-width: 0;
+}
+
+.public-link-card__header {
+  position: relative;
+  container-type: inline-size;
+}
+
+.public-link-card__row {
+  display: grid;
+  /* Equal side slots keep centered copy on the card's axis. */
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: .75rem;
+}
+
+.public-link-card__row > [data-card-content-layout-item="icon"] {
+  grid-area: 1 / 1;
+  align-self: start;
+}
+
+.public-link-card__row > .public-block-copy {
+  grid-area: 1 / 2;
+}
+
+.public-link-card__header > button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@container (max-width: 180px) {
+  .public-link-card__row {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: var(--public-block-align, start);
+  }
+
+  .public-link-card__row > .public-block-copy {
+    grid-area: auto / 1;
+  }
+
+  .public-link-card__header > button {
+    position: static;
+    display: block;
+    margin-left: auto;
+    transform: none;
+  }
+
+  .public-internal-links__items--stacked .public-internal-link {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .public-internal-links__items--stacked .public-internal-link > * {
+    grid-column: 1;
+  }
 }
 
 .public-compact-links.public-block-content {
@@ -10691,6 +10747,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 /* Internal OrbitPage navigation: one semantic block, three intentionally different densities. */
 .public-internal-links {
   display: grid;
+  align-content: start;
+  container-type: inline-size;
   gap: clamp(.8rem, 3cqi, 1.1rem);
   overflow: hidden;
 }
@@ -10745,7 +10803,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .public-internal-link {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
   justify-items: var(--public-block-align, start);
   align-items: center;
   gap: .7rem;
@@ -10787,6 +10845,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .public-internal-link__icon {
+  grid-column: 1;
+  align-self: start;
   display: grid;
   place-items: center;
   width: 2rem;
@@ -10807,6 +10867,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .public-internal-link__copy {
+  grid-column: 2;
   display: grid;
   width: 100%;
   min-width: 0;
@@ -10834,6 +10895,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .public-internal-link__arrow {
+  grid-column: 3;
+  justify-self: end;
   width: .9rem;
   height: .9rem;
   opacity: .48;
@@ -10852,6 +10915,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   min-height: 88px;
 }
 
+.public-internal-links__items--grid .public-internal-link > * {
+  grid-column: 1;
+}
+
 .public-internal-links__items--grid .public-internal-link__arrow {
   justify-self: end;
 }
@@ -10862,16 +10929,22 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .public-internal-links__items--buttons .public-internal-link {
   display: inline-flex;
-  flex-direction: column;
-  align-items: var(--public-block-align, start);
+  align-items: center;
   flex: 0 1 auto;
   width: auto;
+  max-width: 100%;
+  min-width: 0;
   min-height: 44px;
   padding: .45rem .72rem;
   border-radius: 999px;
 }
 
+.public-internal-links__items--buttons .public-internal-link__copy {
+  width: auto;
+}
+
 .public-internal-links__items--buttons .public-internal-link__icon {
+  flex-shrink: 0;
   width: 1.55rem;
   height: 1.55rem;
   border: 0;

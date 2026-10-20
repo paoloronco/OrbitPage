@@ -39,6 +39,59 @@ const blocks = (alignment: LinkData['alignment']) => examples.map((example, inde
   ...example,
 } as LinkData));
 
+test('mobile link icons and navigation stay on compact horizontal rows', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.addInitScript(() => {
+    const items = ['Services', 'Resources', 'Contact'].map(label => ({ id: label, kind: 'page', path: '/' + label.toLowerCase(), label, description: 'Useful information', icon: '📁' }));
+    (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+      page: {
+        profile: { name: '', bio: '', avatar: '', showAvatar: false },
+        links: [
+          { id: 'compact', type: 'link', title: 'Sampling schedule', description: 'View the schedule', url: 'https://example.invalid', hideUrl: true, icon: '📅', iconType: 'emoji', alignment: 'center' },
+          { id: 'long', type: 'link', title: 'Detailed instructions', description: 'Keep all the useful details readable. '.repeat(20), url: 'https://example.invalid', hideUrl: true, icon: '📁', iconType: 'emoji' },
+          ...['stacked', 'buttons'].map(layout => ({ id: layout, type: 'internal_links', title: '', content: JSON.stringify({ items, layout, showIcons: true, showDescriptions: true }) })),
+        ], theme: {}, branding: { showOrbitPageBadge: false },
+      }, consentConfig: { mode: 'disabled', enabled: false },
+    };
+  });
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const card = page.locator('[data-card-content-layout="compact"]');
+    await expect(card).toBeVisible();
+    const row = await card.evaluate(element => {
+      const icon = element.querySelector('[data-card-content-layout-item="icon"]')!.getBoundingClientRect();
+      const title = element.querySelector('h3')!.getBoundingClientRect();
+      return { overlap: Math.min(icon.bottom, title.bottom) - Math.max(icon.top, title.top), height: element.closest('.glass-card')!.getBoundingClientRect().height };
+    });
+    expect(row.overlap, `Icon and title share a row at ${width}px`).toBeGreaterThan(0);
+    expect(row.height).toBeLessThanOrEqual(90);
+    const long = await page.locator('[data-card-content-layout="long"]').evaluate(element => {
+      const icon = element.querySelector('[data-card-content-layout-item="icon"]')!.getBoundingClientRect();
+      const title = element.querySelector('h3')!.getBoundingClientRect();
+      const description = element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect();
+      const card = element.closest('.glass-card')!.getBoundingClientRect();
+      return { overlap: Math.min(icon.bottom, title.bottom) - Math.max(icon.top, title.top), fits: description.bottom <= card.bottom };
+    });
+    expect(long.overlap).toBeGreaterThan(0);
+    expect(long.fits).toBe(true);
+    for (const item of await page.locator('.public-internal-link').all()) {
+      const row = await item.evaluate(element => {
+        const icon = element.querySelector('.public-internal-link__icon')!.getBoundingClientRect();
+        const title = element.querySelector('strong')!.getBoundingClientRect();
+        return { overlap: Math.min(icon.bottom, title.bottom) - Math.max(icon.top, title.top), height: element.getBoundingClientRect().height };
+      });
+      expect(row.overlap).toBeGreaterThan(0);
+      expect(row.height).toBeLessThanOrEqual(90);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+  await page.setViewportSize({ width: 160, height: 900 });
+  for (const card of await page.locator('.glass-card').all()) {
+    expect(await card.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  }
+});
+
 async function checkTextFrame(root: Locator, links: LinkData[], alignment: LinkData['alignment']) {
   const targets = [
     ...links.map(link => root.getByText(link.title, { exact: true })),
@@ -57,13 +110,14 @@ async function checkTextFrame(root: Locator, links: LinkData[], alignment: LinkD
       const range = document.createRange();
       range.selectNodeContents(element);
       const text = range.getBoundingClientRect();
+      const inset = 17 + (element.closest('.public-link-card__row') ? 44 : 0);
       return Math.abs(alignment === 'center' ? (text.left + text.right - frame.left - frame.right) / 2 / scale
-        : alignment === 'right' ? (frame.right - text.right) / scale - 17 : (text.left - frame.left) / scale - 17);
+        : alignment === 'right' ? (frame.right - text.right) / scale - inset : (text.left - frame.left) / scale - inset);
     }, alignment)).toBeLessThanOrEqual(.1);
   }
 }
 
-test('every content block shares exact left, center and right text frames across fonts and themes', async ({ page }) => {
+test('content blocks keep consistent left, center and right text frames across fonts and themes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.route('**/*', route => new URL(route.request().url()).hostname === 'localhost' ? route.continue() : route.abort());
   await page.addInitScript(({ left, center, right }) => {

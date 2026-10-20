@@ -287,7 +287,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
         </a>
       )}
       <div className={hasCoverImage ? getPublicBlockPadding(link.size) : ''} data-card-content-layout={hasCoverImage ? undefined : link.id}>
-        <div className="public-block-header">
+        <div className="public-link-card__header">
           <a
             href={unavailable ? undefined : safeHref || undefined}
             target={linkTarget}
@@ -295,7 +295,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
             onClick={handleLinkClick}
             aria-disabled={unavailable}
             tabIndex={unavailable ? -1 : undefined}
-            className={`public-block-header w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed opacity-65' : ''}`}
+            className={`public-link-card__row w-full rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${unavailable ? 'cursor-not-allowed opacity-65' : ''}`}
             aria-label={link.title ? `Open ${link.title}` : 'Open link'}
           >
             {renderedIcon ? <div className="flex-shrink-0" data-card-content-layout-item="icon">{renderedIcon}</div> : null}
