@@ -1126,6 +1126,7 @@ html:has(.orbitpage-admin) {
 
   .profile-card__layout {
     position: relative;
+    flex-shrink: 0;
     height: var(--profile-layout-height, 408px);
     min-height: 0;
   }
@@ -1213,7 +1214,8 @@ html:has(.orbitpage-admin) {
   }
 
   .profile-card__detail svg { flex-shrink: 0; }
-  .profile-card__fixed-bio { margin-top: 16px; text-align: center; }
+  .profile-card:has(> .profile-card__fixed-bio) { display: flex; flex-direction: column; gap: 16px; }
+  .profile-card__fixed-bio { margin-top: auto; text-align: center; }
 
   .public-card-stack,
   .public-block-preview {
