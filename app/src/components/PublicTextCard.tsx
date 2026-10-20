@@ -113,11 +113,10 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
         className={hasCoverImage ? getPublicBlockPadding(link.size) : ''}
         onClick={hasCoverImage && safeHref ? handleClick : undefined}
       >
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="public-block-header mb-2">
+      <div className="public-link-card__header">
+        <div className={link.icon ? 'public-link-card__row' : ''}>
             {link.icon && (
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0" data-card-content-layout-item="icon">
                 {link.iconType === 'image' || link.iconType === 'svg' ? (
                   iconUrl ? <img src={iconUrl} alt="" className="w-5 h-5 object-cover rounded" /> : null
                 ) : (
@@ -125,6 +124,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                 )}
               </div>
             )}
+          <div className="public-block-copy">
             {safeHref ? (
               <a
                 href={safeHref}
@@ -134,20 +134,19 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
                   event.stopPropagation();
                   trackClick();
                 }}
-                className="w-full font-semibold [overflow-wrap:anywhere] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="block w-full mb-2 font-semibold [overflow-wrap:anywhere] rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
               </a>
             ) : (
               <h3
-                className="w-full font-semibold [overflow-wrap:anywhere]"
+                className="w-full mb-2 font-semibold [overflow-wrap:anywhere]"
                 style={readableTextColor ? { color: readableTextColor } : undefined}
               >
                 {link.title || "Text Card"}
               </h3>
             )}
-          </div>
           {link.content && (
             <div
               className={`text-sm leading-relaxed${link.textItems?.length ? ' mb-3' : ''}`}
@@ -184,6 +183,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
               })}
             </ul>
           )}
+          </div>
         </div>
       </div>
       </div>

@@ -7,7 +7,8 @@ const examples: Partial<LinkData>[] = [
   { id: 'icon', type: 'link', url: 'https://example.invalid', icon: 'link' },
   { id: 'cover', type: 'link', url: 'https://example.invalid', coverImage: '/brand/orbitpage-mark-192.png' },
   { id: 'text', type: 'text', content: 'Body copy' },
-  { id: 'list', type: 'text', content: 'Body copy', textItems: [{ text: 'List entry', url: 'https://example.invalid' }] },
+  { id: 'list', type: 'text', icon: '📁', iconType: 'emoji', content: 'Body copy', textItems: [{ text: 'List entry', url: 'https://example.invalid' }] },
+  { id: 'list-image', type: 'text', icon: '/brand/orbitpage-mark-192.png', iconType: 'image', coverImage: '/brand/orbitpage-mark-192.png', textItems: [{ text: 'List entry', url: 'https://example.invalid/a-long-list-item-address-that-wraps' }] },
   { id: 'heading', type: 'heading' },
   { id: 'cta', type: 'cta', url: 'https://example.invalid', ctaAction: 'book' },
   { id: 'image', type: 'image', url: '/brand/orbitpage-mark-192.png' },
@@ -49,6 +50,7 @@ test('mobile link icons and navigation stay on compact horizontal rows', async (
         links: [
           { id: 'compact', type: 'link', title: 'Sampling schedule', description: 'View the schedule', url: 'https://example.invalid', hideUrl: true, icon: '📅', iconType: 'emoji', alignment: 'center' },
           { id: 'long', type: 'link', title: 'Detailed instructions', description: 'Keep all the useful details readable. '.repeat(20), url: 'https://example.invalid', hideUrl: true, icon: '📁', iconType: 'emoji' },
+          { id: 'list', type: 'text', title: 'Useful links', icon: '📁', iconType: 'emoji', textItems: [{ text: 'A useful resource', url: 'https://example.invalid/a-long-list-item-address-that-wraps' }] },
           ...['stacked', 'buttons'].map(layout => ({ id: layout, type: 'internal_links', title: '', content: JSON.stringify({ items, layout, showIcons: true, showDescriptions: true }) })),
         ], theme: {}, branding: { showOrbitPageBadge: false },
       }, consentConfig: { mode: 'disabled', enabled: false },
@@ -79,6 +81,11 @@ test('mobile link icons and navigation stay on compact horizontal rows', async (
     });
     expect(long.overlap).toBeGreaterThan(0);
     expect(long.fits).toBe(true);
+    expect(await page.getByRole('heading', { name: 'Useful links', exact: true }).evaluate(title => {
+      const icon = title.closest('.glass-card')!.querySelector('[data-card-content-layout-item="icon"]')!.getBoundingClientRect();
+      const heading = title.getBoundingClientRect();
+      return Math.min(icon.bottom, heading.bottom) - Math.max(icon.top, heading.top);
+    })).toBeGreaterThan(0);
     for (const item of await page.locator('.public-internal-link').all()) {
       const row = await item.evaluate(element => {
         const icon = element.querySelector('.public-internal-link__icon')!.getBoundingClientRect();
@@ -130,6 +137,13 @@ async function checkTextFrame(root: Locator, links: LinkData[], alignment: LinkD
         : alignment === 'right' ? (frame.right - text.right) / scale - inset : (text.left - frame.left) / scale - inset);
     }, alignment)).toBeLessThanOrEqual(.1);
   }
+  for (const link of links.filter(link => link.type === 'text' && link.icon)) {
+    await expect.poll(() => root.getByText(link.title, { exact: true }).evaluate(title => {
+      const icon = title.closest('.glass-card')!.querySelector('.flex-shrink-0')!.getBoundingClientRect();
+      const heading = title.getBoundingClientRect();
+      return Math.min(icon.bottom, heading.bottom) - Math.max(icon.top, heading.top);
+    }), `Text-card icon and title share a row: ${link.id}`).toBeGreaterThan(0);
+  }
 }
 
 test('content blocks keep consistent left, center and right text frames across fonts and themes', async ({ page }) => {
@@ -164,7 +178,7 @@ test('preview and saved public card alignment use the same geometry, including h
     const profile = await (await page.request.get('/api/profile', { headers })).json();
     expect((await page.request.put('/api/profile', { headers, data: { ...profile, appearance: {} } })).ok()).toBeTruthy();
     for (const alignment of ['left', 'center', 'right'] as const) {
-      const links = blocks(alignment).filter(link => ['plain', 'icon', 'text', 'heading', 'cta', 'menu'].includes(link.id));
+      const links = blocks(alignment).filter(link => ['plain', 'icon', 'text', 'list', 'list-image', 'heading', 'cta', 'menu'].includes(link.id));
       expect((await page.request.put('/api/links', { headers, data: links })).ok()).toBeTruthy();
       await page.goto('/admin');
       for (const device of ['Desktop', 'Mobile']) {
