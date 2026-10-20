@@ -254,5 +254,6 @@ test('legacy overlaps and growing profile elements stay separated at every publi
     }
     expect(await page.locator('.public-page-footer').evaluate(footer => footer.getBoundingClientRect().top >= document.querySelector('.public-page-content')!.getBoundingClientRect().bottom)).toBe(true);
     expect(await page.locator('.profile-card').evaluate(card => Math.abs(card.querySelector('.profile-card__layout-item--work .profile-card__detail')!.getBoundingClientRect().top - card.querySelector('.profile-card__layout-item--location .profile-card__detail')!.getBoundingClientRect().top))).toBeLessThan(.1);
+    expect(await page.locator('.profile-card').evaluate(card => Math.abs(card.querySelector('.profile-card__layout-item--work .profile-card__detail svg')!.getBoundingClientRect().top - card.querySelector('.profile-card__layout-item--location .profile-card__detail svg')!.getBoundingClientRect().top))).toBeLessThan(.1);
   }
 });

@@ -557,8 +557,8 @@ export const PublicProfileSection = ({
             {name && <div className="mb-2">{name}</div>}
             {hasProfileDetails && (
               <div className="profile-card__details flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
-                {profileDetails?.primary && <span className="inline-flex items-center gap-1.5"><BriefcaseBusiness className="h-3.5 w-3.5" />{profileDetails.primary}</span>}
-                {profileDetails?.secondary && <span className="inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{profileDetails.secondary}</span>}
+                {profileDetails?.primary && <span className="profile-card__detail inline-flex items-center gap-1.5"><BriefcaseBusiness className="h-3.5 w-3.5" />{profileDetails.primary}</span>}
+                {profileDetails?.secondary && <span className="profile-card__detail inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{profileDetails.secondary}</span>}
               </div>
             )}
             {socials && <div className="mb-4">{socials}</div>}

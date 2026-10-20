@@ -1213,7 +1213,8 @@ html:has(.orbitpage-admin) {
     font-size: .875rem;
   }
 
-  .profile-card__detail svg { flex-shrink: 0; }
+  .profile-card .profile-card__detail { align-items: flex-start; }
+  .profile-card__detail svg { flex-shrink: 0; margin-top: .25em; }
   .profile-card:has(> .profile-card__fixed-bio) { display: flex; flex-direction: column; gap: 16px; }
   .profile-card__fixed-bio { margin-top: auto; text-align: center; }
 
