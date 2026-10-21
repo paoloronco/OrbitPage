@@ -154,7 +154,7 @@ test('Arrange rejects overlapping moves and resizes atomically and preserves aut
       await drag(card('orbitpage-profile').getByRole('button', { name: 'Move profile card', exact: true }), 0, 80 * scale);
       await expect.poll(positions).toEqual(initial);
       await expect(warning).toContainText('Change not applied: space occupied');
-      expect((await warning.boundingBox())!.y).toBeLessThan(80);
+      await expect.poll(async () => (await warning.boundingBox())!.y).toBeLessThan(80);
       await expect(warning).toBeHidden({ timeout: 6500 });
       await drag(card('orbitpage-profile').getByRole('button', { name: 'Resize profile card', exact: true }), 0, 80 * scale);
       await expect.poll(positions).toEqual(initial);

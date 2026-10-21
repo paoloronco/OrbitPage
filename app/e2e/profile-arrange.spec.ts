@@ -1,6 +1,42 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData, saveEditorChanges } from './helpers';
 
+test('existing profile detail rows repair themselves without saving and adapt together to content and width', async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+      page: { profile: {
+        name: 'A fictional long name that needs several lines in the right column', bio: 'The description follows all profile details.', avatar: '', showAvatar: false,
+        social_links: { github: 'fictional-profile' },
+        appearance: { profileDetails: { primary: 'Designer', secondary: 'A fictional long location that wraps across several lines' }, layout: { positions: {
+          name: { x: 55, y: 0, width: 45, height: 64 },
+          work: { x: 0, y: 80, width: 45, height: 40 },
+          location: { x: 55, y: 80, width: 45, height: 72 },
+          socials: { x: 0, y: 168, width: 45, height: 48 },
+        }, height: 216 } },
+      }, links: [{ id: 'following', type: 'link', title: 'Following card', url: 'https://example.invalid', isActive: true }], theme: {}, branding: { showOrbitPageBadge: false } },
+      consentConfig: { mode: 'disabled', enabled: false },
+    };
+  });
+  const mutations: string[] = [];
+  page.on('request', request => { if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method()) && request.url().includes('/api/profile')) mutations.push(request.method()); });
+  await page.goto('/');
+  for (const width of [1440, 768, 390, 320, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect.poll(() => page.locator('.profile-card').evaluate(card => {
+      const work = card.querySelector('.profile-card__layout-item--work .profile-card__detail')!.getBoundingClientRect();
+      const location = card.querySelector('.profile-card__layout-item--location .profile-card__detail')!.getBoundingClientRect();
+      const icons = ['work', 'location'].map(id => card.querySelector(`.profile-card__layout-item--${id} svg`)!.getBoundingClientRect());
+      const elements = [...card.querySelectorAll('[data-profile-layout-item], [data-profile-layout-fixed]')];
+      const rects = elements.map(element => element.getBoundingClientRect());
+      return Math.abs(work.top - location.top) < .1 && Math.abs(icons[0].top - icons[1].top) < .1
+        && elements.every(element => element.scrollWidth <= element.clientWidth + 1 && element.scrollHeight <= element.clientHeight + 1)
+        && rects.every((a, i) => rects.every((b, j) => i === j || a.right <= b.left + .1 || a.left >= b.right - .1 || a.bottom <= b.top + .1 || a.top >= b.bottom - .1));
+    })).toBe(true);
+    expect(await page.getByRole('heading', { name: 'Following card', exact: true }).evaluate(next => next.closest('.glass-card')!.getBoundingClientRect().top >= document.querySelector('.profile-card')!.getBoundingClientRect().bottom)).toBe(true);
+  }
+  expect(mutations).toEqual([]);
+});
+
 test('Arrange places profile elements on a grid, locks the bio and saves independent layouts without overlaps', async ({ page }) => {
   test.setTimeout(120_000);
   page.setDefaultTimeout(10_000);

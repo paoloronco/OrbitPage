@@ -3,6 +3,7 @@ import {
   type OrbitPageProfileLayout,
   type OrbitPageProfileLayoutItem,
 } from "@orbitpage/page-schema";
+import { fitCardLayoutHeights } from "./card-layout";
 
 export type ProfileLayout = OrbitPageProfileLayout;
 export type ProfileLayoutItem = OrbitPageProfileLayoutItem;
@@ -138,6 +139,35 @@ export function normalizeVisibleProfileLayout(
     return rect.y + rect.height;
   }));
   return { ...normalized, height: Math.round(clamp(contentHeight, 160, 2_000)) };
+}
+
+export function fitVisibleProfileLayout(
+  layout: NormalizedProfileLayout,
+  visibleItems: ProfileLayoutItem[],
+  heights: Record<string, number>,
+): NormalizedProfileLayout {
+  const positions = Object.fromEntries(visibleItems.map(id => [id, layout.positions[id]]));
+  const { work, location } = positions;
+  const sharedDetailRow = work && location && work.y === location.y
+    && (work.x + work.width <= location.x || location.x + location.width <= work.x);
+
+  // Fit a saved detail row together so growth in either column cannot split its baseline.
+  if (sharedDetailRow) {
+    positions.work = {
+      x: Math.min(work.x, location.x), y: work.y,
+      width: Math.max(work.x + work.width, location.x + location.width) - Math.min(work.x, location.x),
+      height: Math.max(work.height, location.height),
+    };
+    delete positions.location;
+  }
+  const fitted = fitCardLayoutHeights({ positions, height: layout.height }, sharedDetailRow
+    ? { ...heights, work: Math.max(heights.work || 0, heights.location || 0) } : heights);
+  if (sharedDetailRow) {
+    const y = fitted.positions.work.y;
+    fitted.positions.work = { ...work, y, height: Math.max(work.height, heights.work || 0) };
+    fitted.positions.location = { ...location, y, height: Math.max(location.height, heights.location || 0) };
+  }
+  return { ...layout, positions: { ...layout.positions, ...fitted.positions }, height: fitted.height };
 }
 
 export function updateProfileLayoutItem(

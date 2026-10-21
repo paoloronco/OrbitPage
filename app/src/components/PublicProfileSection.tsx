@@ -24,6 +24,7 @@ import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
 import { getProfileAppearanceStyle, getProfileAvatarStyle, type ProfileAppearance } from "@/lib/profile-appearance";
 import {
   normalizeVisibleProfileLayout,
+  fitVisibleProfileLayout,
   updateProfileLayoutAlignment,
   updateProfileLayoutItem,
   snapProfileLayoutRect,
@@ -36,7 +37,7 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CardSurfaceEffect } from "@/lib/theme";
-import { alignCardLayoutRect, fitCardLayoutHeights, hasCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, type CardLayoutGuides } from "@/lib/card-layout";
+import { alignCardLayoutRect, hasCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, type CardLayoutGuides } from "@/lib/card-layout";
 import { useLayoutOverlapWarning } from "@/hooks/use-layout-overlap-warning";
 
 interface ProfileData {
@@ -164,13 +165,7 @@ export const PublicProfileSection = ({
   const latestLayoutRef = useRef(workingLayout);
   const hasVisibleProfile = Boolean(displayName || hasBio || hasSocialLinks || hasProfileDetails || avatarVisible || layoutEditing);
   const baseLayout = layoutEditing ? workingLayout : savedLayout;
-  const layout = useMemo(() => {
-    const fitted = fitCardLayoutHeights({
-      positions: Object.fromEntries(visibleLayoutItems.map(id => [id, baseLayout.positions[id]])),
-      height: baseLayout.height,
-    }, contentHeights);
-    return { ...baseLayout, positions: { ...baseLayout.positions, ...fitted.positions }, height: fitted.height };
-  }, [baseLayout, contentHeights, visibleLayoutItems]);
+  const layout = useMemo(() => fitVisibleProfileLayout(baseLayout, visibleLayoutItems, contentHeights), [baseLayout, contentHeights, visibleLayoutItems]);
   const compactNameMatch = layout.positions.name.width <= 50 && displayName.match(/^(.*)\s+(\S+)$/);
   const nameLines = compactNameMatch ? [compactNameMatch[1], compactNameMatch[2]] : [displayName];
 

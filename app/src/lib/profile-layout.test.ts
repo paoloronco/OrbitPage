@@ -3,6 +3,7 @@ import {
   DEFAULT_PROFILE_LAYOUT,
   normalizeProfileLayout,
   normalizeVisibleProfileLayout,
+  fitVisibleProfileLayout,
   updateProfileLayoutAlignment,
   updateProfileLayoutItem,
   snapProfileLayoutRect,
@@ -60,5 +61,37 @@ describe("profile layout", () => {
     expect(compact.positions.location.y).toBe(80);
     expect(compact.positions.bio.y).toBe(136);
     expect(compact.height).toBe(216);
+  });
+
+  it("repairs a saved detail row as a unit when one column grows or overlaps an earlier element", () => {
+    const saved = normalizeVisibleProfileLayout({ positions: {
+      name: { x: 55, y: 0, width: 45, height: 64 },
+      work: { x: 0, y: 80, width: 45, height: 40 },
+      location: { x: 55, y: 80, width: 45, height: 72 },
+      socials: { x: 0, y: 168, width: 45, height: 48 },
+    } }, ["name", "work", "location", "socials"]);
+    const before = structuredClone(saved);
+    for (const nameHeight of [64, 96]) {
+      const fitted = fitVisibleProfileLayout(saved, ["name", "work", "location", "socials"], { name: nameHeight, location: 120 });
+      expect(fitted.positions.work.y).toBe(fitted.positions.location.y);
+      expect(fitted.positions.location.y).toBeGreaterThanOrEqual(nameHeight);
+      expect(fitted.positions.socials.y).toBeGreaterThanOrEqual(fitted.positions.location.y + 120 + 16);
+      expect(fitted.positions.work).toMatchObject({ x: 0, width: 45, height: 40 });
+      expect(fitted.positions.location).toMatchObject({ x: 55, width: 45, height: 120 });
+    }
+    expect(fitVisibleProfileLayout(saved, ["name", "work", "location", "socials"], {}).positions).toEqual(saved.positions);
+    expect(saved).toEqual(before);
+  });
+
+  it("preserves valid manual offsets and fits a single visible detail independently", () => {
+    const saved = normalizeVisibleProfileLayout({ positions: {
+      work: { x: 0, y: 80, width: 45, height: 40 },
+      location: { x: 55, y: 81, width: 45, height: 40 },
+    }, alignments: { work: "right", location: "left" } }, ["work", "location"]);
+    expect(fitVisibleProfileLayout(saved, ["work", "location"], {}).positions).toEqual(saved.positions);
+    expect(fitVisibleProfileLayout(saved, ["work", "location"], {}).alignments).toEqual(saved.alignments);
+    const fitted = fitVisibleProfileLayout(saved, ["work"], { location: 400 });
+    expect(fitted.positions.work).toEqual(saved.positions.work);
+    expect(fitted.positions.location).toEqual(saved.positions.location);
   });
 });
