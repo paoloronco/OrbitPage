@@ -1,4 +1,5 @@
 .admin-profile-save-layer {
+  background: transparent;
   bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   display: grid;
   gap: 10px;
@@ -27,9 +28,6 @@
 
 .admin-profile-save-float > button {
   min-height: 44px;
-}
-
-.admin-profile-save-float > button:disabled {
   box-shadow: none;
 }
 

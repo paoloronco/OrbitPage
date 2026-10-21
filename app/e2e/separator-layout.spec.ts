@@ -79,13 +79,40 @@ test('separator controls update preview, save through the API and survive reload
       const canvas = page.locator('.visual-site-editor__canvas');
       const preview = canvas.locator('[data-public-editor-link-id="separator"]');
       const { editor } = await openPreviewContentCard(page, preview);
-      await editor.getByLabel('Line position', { exact: true }).click();
-      await page.getByRole('option', { name: label, exact: true }).click();
-      await editor.getByLabel('Alignment', { exact: true }).click();
-      await page.getByRole('option', { name: alignment, exact: true }).click();
+      const background = editor.getByLabel('Separator background', { exact: true });
+      await background.scrollIntoViewIfNeeded();
+      const geometry = () => page.locator('.visual-site-editor__sections, .visual-site-editor__canvas, .visual-site-editor__inspector').evaluateAll(elements => elements.map(element => {
+        const { x, y, width } = element.getBoundingClientRect();
+        return { x, y, width };
+      }));
+      const before = await geometry();
+      await background.click();
+      await expect(page.getByRole('option', { name: 'Transparent line', exact: true })).toBeVisible();
+      expect(await geometry()).toEqual(before);
+      await page.keyboard.press('Escape');
+      await expect(page.locator('body')).not.toHaveAttribute('data-scroll-locked');
+      expect(await geometry()).toEqual(before);
+      const linePosition = editor.getByRole('group', { name: 'Line position', exact: true });
+      await linePosition.getByRole('button', { name: label, exact: true }).click();
+      await expect(linePosition.getByRole('button', { name: label, exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await editor.getByRole('group', { name: 'Text alignment', exact: true }).getByRole('button', { name: alignment, exact: true }).click();
       await editor.getByLabel('Separator background', { exact: true }).click();
       await page.getByRole('option', { name: boxed, exact: true }).click();
       await expect(preview.locator('.public-separator')).toHaveAttribute('data-line-position', position);
+      await expect(preview.locator('.public-separator')).toHaveAttribute('data-alignment', alignment.toLowerCase());
+      if (position === 'above') {
+        for (const width of [390, 320]) {
+          await page.setViewportSize({ width, height: 980 });
+          const right = editor.getByRole('group', { name: 'Text alignment', exact: true }).getByRole('button', { name: 'Right', exact: true });
+          await right.focus();
+          await page.keyboard.press('Space');
+          await expect(right).toHaveAttribute('aria-pressed', 'true');
+          await expect(preview.locator('.public-separator')).toHaveAttribute('data-alignment', 'right');
+          expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        }
+        await page.setViewportSize({ width: 1440, height: 980 });
+        await editor.getByRole('group', { name: 'Text alignment', exact: true }).getByRole('button', { name: alignment, exact: true }).click();
+      }
       await saveEditorChanges(page);
       const saved = await (await page.request.get('/api/links', { headers })).json();
       expect(JSON.parse(saved[0].content)).toEqual({ boxed: boxed === 'Full background', linePosition: position });

@@ -2,6 +2,13 @@ html:has(.admin-visual-editor-enabled) {
   scrollbar-gutter: stable;
 }
 
+@supports (scrollbar-gutter: stable) {
+  body[data-scroll-locked]:has(.admin-visual-editor-enabled) {
+    /* The root already reserves the scrollbar; Radix must not reserve it twice. */
+    margin-right: 0 !important;
+  }
+}
+
 .admin-visual-editor-enabled .admin-tab-stage,
 .admin-visual-editor-enabled .admin-tab-content[data-state="active"] {
   min-width: 0;

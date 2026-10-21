@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
+import { AlignCenter, AlignLeft, AlignRight, ArrowLeft, ArrowRight, CalendarClock, ChevronDown, Code2, Image, Loader2, LockKeyhole, MapPin, Plus, RotateCcw, Share2, ShieldCheck, ShoppingBag, Tag, UserCircle2, X, Edit, Eye, EyeOff, ExternalLink, Upload, Trash2, GripVertical, MousePointerClick, UtensilsCrossed } from "lucide-react";
 import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import { getPublicBlockAlignment } from "@/lib/public-block-style";
 import { LinkEditMode } from "@/lib/permissions";
@@ -931,7 +931,7 @@ export const LinkCard = ({
               </div>
               )}
               {canEditStyle && (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <div className={`grid grid-cols-1 gap-2 ${isSeparator ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
               <div className="space-y-1">
                 <Label htmlFor={`link-card-title-font-${link.id}`} className="text-xs">Title Font</Label>
                 <Select
@@ -972,7 +972,7 @@ export const LinkCard = ({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
+              {!isSeparator && <div className="space-y-1">
                 <Label htmlFor={`link-card-alignment-${link.id}`} className="text-xs">Alignment</Label>
                 <Select
                   value={getPublicBlockAlignment(editLink)}
@@ -987,11 +987,66 @@ export const LinkCard = ({
                     <SelectItem value="right">Right</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div>}
               </div>
               )}
               </div>
             </section>
+            )}
+            {isSeparator && canEditStyle && (
+              <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium">{tr('Line position', 'Posizione della linea')}</p>
+                  <div className="admin-separator-options" role="group" aria-label={tr('Line position', 'Posizione della linea')}>
+                    {([
+                      ['above', tr('Above text', 'Sopra il testo')],
+                      ['inline', tr('Beside text', 'Accanto al testo')],
+                      ['below', tr('Below text', 'Sotto il testo')],
+                    ] as const).map(([value, label]) => (
+                      <button key={value} type="button" className="admin-separator-option" aria-pressed={(separatorData.linePosition || 'inline') === value} onClick={() => updateSeparatorData('linePosition', value)}>
+                        <svg width="48" height="24" viewBox="0 0 48 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                          <path d={value === 'inline' ? 'M2 12h12 M34 12h12' : value === 'above' ? 'M2 5h44' : 'M2 19h44'} />
+                          <rect x="20" y={value === 'above' ? 13 : value === 'below' ? 5 : 9} width="8" height="6" rx="1" fill="currentColor" stroke="none" />
+                        </svg>
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium">{tr('Text alignment', 'Allineamento del testo')}</p>
+                  <div className="admin-separator-options" role="group" aria-label={tr('Text alignment', 'Allineamento del testo')}>
+                    {([
+                      ['left', tr('Left', 'Sinistra'), AlignLeft],
+                      ['center', tr('Center', 'Centro'), AlignCenter],
+                      ['right', tr('Right', 'Destra'), AlignRight],
+                    ] as const).map(([value, label, Icon]) => (
+                      <button key={value} type="button" className="admin-separator-option" aria-pressed={getPublicBlockAlignment(editLink) === value} onClick={() => setEditLink(prev => ({ ...prev, alignment: value }))}>
+                        <Icon className="h-5 w-5" aria-hidden="true" />
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`link-card-separator-background-${link.id}`} className="text-xs">Separator background</Label>
+                  <Select
+                    value={separatorData.boxed === true ? 'full' : 'transparent'}
+                    onValueChange={(value: 'transparent' | 'full') => updateSeparatorData('boxed', value === 'full')}
+                  >
+                    <SelectTrigger id={`link-card-separator-background-${link.id}`} className="h-8 bg-white text-black">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="transparent">Transparent line</SelectItem>
+                      <SelectItem value="full">Full background</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Transparent keeps a classic separator. Full background turns it into a boxed section label.
+                  </p>
+                </div>
+              </div>
             )}
             {isFullEdit && (
               <>
@@ -1132,45 +1187,6 @@ export const LinkCard = ({
                       onChange={(e) => updateContactData('note', e.target.value)}
                       placeholder="Note"
                     />
-                  </div>
-                )}
-                {isSeparator && (
-                  <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
-                    <div className="space-y-1">
-                      <Label htmlFor={`link-card-separator-line-${link.id}`} className="text-xs">{tr('Line position', 'Posizione della linea')}</Label>
-                      <Select
-                        value={separatorData.linePosition || 'inline'}
-                        onValueChange={(value: 'inline' | 'above' | 'below') => updateSeparatorData('linePosition', value)}
-                      >
-                        <SelectTrigger id={`link-card-separator-line-${link.id}`} className="h-8 bg-white text-black">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="inline">{tr('Beside text', 'Accanto al testo')}</SelectItem>
-                          <SelectItem value="above">{tr('Above text', 'Sopra il testo')}</SelectItem>
-                          <SelectItem value="below">{tr('Below text', 'Sotto il testo')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">{tr('Use Alignment to place the text left, center or right.', 'Usa Allineamento per posizionare il testo a sinistra, al centro o a destra.')}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor={`link-card-separator-background-${link.id}`} className="text-xs">Separator background</Label>
-                      <Select
-                        value={separatorData.boxed === true ? 'full' : 'transparent'}
-                        onValueChange={(value: 'transparent' | 'full') => updateSeparatorData('boxed', value === 'full')}
-                      >
-                        <SelectTrigger id={`link-card-separator-background-${link.id}`} className="h-8 bg-white text-black">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="transparent">Transparent line</SelectItem>
-                          <SelectItem value="full">Full background</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Transparent keeps a classic separator. Full background turns it into a boxed section label.
-                      </p>
-                    </div>
                   </div>
                 )}
                 {isInternalLinks && (

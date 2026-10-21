@@ -22,7 +22,7 @@ A list is a preconfigured text block. Connected-service entries create either a 
 
 List bodies use the full card width below the icon/title row. Bullets have a shared inset inside the card, with or without an icon; item labels and wrapped URLs share the same text edge.
 
-Separators have a **Line position** control: **Beside text**, **Above text**, or **Below text**. Combine it with **Alignment** (Left, Center, Right): beside centered text, the line appears on both sides; beside left- or right-aligned text, it fills the remaining side. Above and below use a full-width line. These choices work with both transparent and full backgrounds, in preview and on the public page. Existing separators keep their beside-text layout.
+Separators have three graphical **Line position** buttons: **Above text**, **Beside text**, or **Below text**. Use the adjacent **Text alignment** buttons (Left, Center, Right): beside centered text, the line appears on both sides; beside left- or right-aligned text, it fills the remaining side. Above and below use a full-width line. These choices work with both transparent and full backgrounds, in preview and on the public page. Existing separators keep their beside-text layout.
 
 Main pages and additional pages have no block count quota. Large pages are still subject to request and storage limits.
 

@@ -1327,7 +1327,8 @@ html:has(.orbitpage-admin) {
     --border: var(--content-card-border-hsl);
   }
 
-  .orbitpage-admin {
+  .orbitpage-admin,
+  .admin-profile-save-layer {
     --background: 225 17% 97%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -10175,7 +10176,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   gap: 16px;
 }
 
-.admin-profile-avatar-shape-options {
+.admin-profile-avatar-shape-options,
+.admin-separator-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
@@ -10186,7 +10188,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   padding: 4px;
 }
 
-.admin-profile-avatar-shape-option {
+.admin-profile-avatar-shape-option,
+.admin-separator-option {
   display: grid;
   min-width: 0;
   min-height: 54px;
@@ -10204,12 +10207,14 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
 }
 
-.admin-profile-avatar-shape-option:hover {
+.admin-profile-avatar-shape-option:hover,
+.admin-separator-option:hover {
   background: #fff;
   color: #263851;
 }
 
-.admin-profile-avatar-shape-option.active {
+.admin-profile-avatar-shape-option.active,
+.admin-separator-option[aria-pressed="true"] {
   border-color: #a9c0ec;
   background: #fff;
   color: #1f56bd;
