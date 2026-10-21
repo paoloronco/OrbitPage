@@ -1358,8 +1358,11 @@ html:has(.orbitpage-admin) {
     --admin-secondary-copy: #435675;
     --admin-tertiary-copy: #52698f;
     color: rgb(15 23 42);
-    background: #f6f7fa;
     font-family: "Aptos", "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  }
+
+  .orbitpage-admin {
+    background: #f6f7fa;
   }
 
   .orbitpage-admin :is(
