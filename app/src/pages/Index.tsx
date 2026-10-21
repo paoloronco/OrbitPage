@@ -7,7 +7,7 @@ import { applyTheme, normalizeTheme, BackgroundMediaConfig, type ThemeConfig } f
 import { publicPageApi, consentConfigPublicApi, type ConsentConfigData, type PublicPageResponse } from "@/lib/api-client";
 import { consentManager } from "@/lib/consent-manager";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
-import { getEffectivePrivacyPolicyUrl } from "@/config/legal";
+import { getEffectivePolicyUrl, getEffectivePrivacyPolicyUrl } from "@/config/legal";
 import { getActiveBasePath, internalAssetPath, withRuntimeAssetPath, withTenantBasePath } from "@/lib/base-path";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { hasCustomProfileAvatar, isBundledProfileAvatar } from "@/lib/profile-avatar";
@@ -433,18 +433,8 @@ const Index = () => {
     const profileUrl = kind === 'privacy'
       ? profile.privacyPolicyUrl
       : profile.cookiePolicyUrl;
-    const fallback = kind === 'privacy' ? '/privacy' : '/cookies';
-
-    if (profileUrl && profileUrl.trim()) {
-      return profileUrl.trim();
-    }
-
     const policy = consentConfig?.legalPolicies?.[kind === 'privacy' ? 'privacyPolicy' : 'cookiePolicy'];
-    if (!policy) return fallback;
-    if (policy.mode === 'external') {
-      return policy.externalUrl?.trim() || fallback;
-    }
-    return fallback;
+    return getEffectivePolicyUrl(kind, policy?.mode, policy?.externalUrl, profileUrl);
   };
 
   const privacyPolicyUrl = resolvePolicyUrl('privacy');

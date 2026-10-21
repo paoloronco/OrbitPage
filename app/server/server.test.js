@@ -111,7 +111,8 @@ describe('API Endpoints', () => {
     authMockState.permissions = ['compliance:write'];
     const response = await request(app).put('/api/consent-config').send({ ...config, mode: 'builder', enabled: false });
     expect(response.status).toBe(200);
-    expect(JSON.parse(vi.mocked(dbRun).mock.calls[0][1][2]).restoreReviewRequired).toBe(true);
+    const firstSavedConfig = vi.mocked(dbRun).mock.calls.find(([sql]) => String(sql).startsWith('UPDATE cookie_consent_config'))[1][2];
+    expect(JSON.parse(firstSavedConfig).restoreReviewRequired).toBe(true);
     authMockState.permissions = ['users:manage'];
     const approved = await request(app).put('/api/consent-config').send({ ...config, mode: 'builder', enabled: false });
     expect(approved.status).toBe(200);
@@ -1576,6 +1577,34 @@ describe('API Endpoints', () => {
 
     expect(response.status).toBe(403);
     expect(dbRun).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/consent-config synchronizes legacy profile policy URLs with legal policy settings', async () => {
+    vi.mocked(dbGet)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        privacy_policy_url: 'https://old.example/privacy',
+        cookie_policy_url: 'https://old.example/cookies',
+      });
+
+    const response = await request(app)
+      .put('/api/consent-config')
+      .set('Authorization', '******')
+      .send({
+        mode: 'disabled',
+        enabled: false,
+        legalPolicies: {
+          showFooterLinks: true,
+          privacyPolicy: { mode: 'hosted', hostedText: 'Current privacy policy' },
+          cookiePolicy: { mode: 'external', externalUrl: 'https://new.example/cookies' },
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE profile_data SET privacy_policy_url'),
+      ['/privacy', 'https://new.example/cookies']
+    );
   });
 
   it('GET /api/consent-config/public infers hosted legal policy mode from legacy local URLs', async () => {

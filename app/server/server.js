@@ -110,7 +110,7 @@ import { startNewsletterDispatcher } from './services/newsletter.js';
 import { normalizePublicLocale, parseLocalizedPublicPath } from './public-locale.js';
 import { dataDir as instanceDataDir, databasePath, uploadsPath as instanceUploadsPath, environmentSummary, saveEnvironmentChanges, storageUsage, writableDirectory } from './services/instance-details.js';
 import { createConsentConfigRouter } from './routes/consent-config.js';
-import { DEFAULT_CONSENT_CONFIG, DEMO_CONSENT_CONFIG, DEMO_LEGAL_URLS, getPublicConsentConfig } from './services/consent-config.js';
+import { DEFAULT_CONSENT_CONFIG, DEMO_CONSENT_CONFIG, DEMO_LEGAL_URLS, getPublicConsentConfig, normalizePolicyUrl } from './services/consent-config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -411,7 +411,7 @@ app.use((req, res, next) => {
 });
 app.use((req, res, next) => {
   const shopPurchase = SHOP_PURCHASE_ROUTES.has(parseLocalizedPublicPath(req.path)?.routePath || req.path);
-  if (shopPurchase || req.path.startsWith('/api/shop')) {
+  if (shopPurchase || req.path.startsWith('/api/shop') || (parseLocalizedPublicPath(req.path)?.routePath || req.path).startsWith('/newsletter') || req.path.startsWith('/api/newsletter/public')) {
     res.set({ 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'private, no-store' });
   }
   if (shopPurchase || req.path.startsWith('/api') || isAdminSpaRoute(req.path) || req.path === '/health') {
@@ -442,35 +442,6 @@ if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
   console.log('Created uploads directory at:', uploadsPath);
 }
-
-const normalizePolicyUrl = (value, fieldName) => {
-  if (value == null) return null;
-  const trimmed = String(value).trim();
-  if (!trimmed) return null;
-  if (/[\x00-\x1f\x7f\\]/.test(trimmed)) {
-    throw new Error(`${fieldName} contains unsafe characters.`);
-  }
-
-  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-    return trimmed;
-  }
-
-  let parsed;
-  try {
-    parsed = new URL(trimmed);
-  } catch {
-    throw new Error(`${fieldName} must be a valid URL.`);
-  }
-
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new Error(`${fieldName} must start with http:// or https://.`);
-  }
-  if (parsed.username || parsed.password) {
-    throw new Error(`${fieldName} must not contain credentials.`);
-  }
-
-  return parsed.toString();
-};
 
 const getProfileLegalUrls = async () => {
   if (DEMO_MODE) return DEMO_LEGAL_URLS;
@@ -5298,7 +5269,7 @@ app.get('/api/health', healthHandler);
 // ============================================================
 
 app.use('/api/consent-config', createConsentConfigRouter({
-  demoMode: DEMO_MODE, apiLimiter, getProfileLegalUrls, safeJsonParse,
+  demoMode: DEMO_MODE, apiLimiter, getProfileLegalUrls, safeJsonParse, withTransaction,
 }));
 
 // Catch-all route for SPA
@@ -5409,4 +5380,3 @@ app.listen(PORT, HOST, async () => {
   }
 });
 }
-

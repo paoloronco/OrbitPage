@@ -1,5 +1,48 @@
 import { suppressUnreviewedPrivacy } from './privacy-restore.js';
 
+export const normalizePolicyUrl = (value, fieldName) => {
+  if (value == null) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+  if (/[\x00-\x1f\x7f\\]/.test(trimmed)) {
+    throw new Error(`${fieldName} contains unsafe characters.`);
+  }
+
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed;
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new Error(`${fieldName} must be a valid URL.`);
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(`${fieldName} must start with http:// or https://.`);
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error(`${fieldName} must not contain credentials.`);
+  }
+
+  return parsed.toString();
+};
+
+export const getProfileLegalUrlsFromConsentConfig = (config, fallback) => {
+  const policies = config.legalPolicies;
+  if (!policies) return fallback;
+
+  return {
+    privacyPolicyUrl: policies.privacyPolicy.mode === 'external'
+      ? normalizePolicyUrl(policies.privacyPolicy.externalUrl, 'Privacy Policy URL') || ''
+      : '/privacy',
+    cookiePolicyUrl: policies.cookiePolicy.mode === 'external'
+      ? normalizePolicyUrl(policies.cookiePolicy.externalUrl, 'Cookie Policy URL') || ''
+      : '/cookies',
+  };
+};
+
 const IUBENDA_LOADER_SNIPPET = `<script type="text/javascript">
   (function (w, d) {
     var loader = function () {

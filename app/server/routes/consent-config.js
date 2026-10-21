@@ -6,9 +6,10 @@ import {
   DEFAULT_CONSENT_CONFIG, DEMO_CONSENT_CONFIG, DEMO_LEGAL_URLS,
   applyProfileLegalUrlsToConsentConfig, stripDuplicateLegalUrlsFromConsentConfig,
   validateConsentConfigDomain, canUpdateExecutableConsent, getPublicConsentConfig,
+  getProfileLegalUrlsFromConsentConfig,
 } from '../services/consent-config.js';
 
-export function createConsentConfigRouter({ demoMode, apiLimiter, getProfileLegalUrls, safeJsonParse }) {
+export function createConsentConfigRouter({ demoMode, apiLimiter, getProfileLegalUrls, safeJsonParse, withTransaction }) {
   const router = express.Router();
   // GET /api/consent-config/public — unauthenticated, used by the public page at runtime
   router.get('/public', apiLimiter, async (req, res) => {
@@ -127,24 +128,40 @@ export function createConsentConfigRouter({ demoMode, apiLimiter, getProfileLega
         });
       }
 
-      const legalUrls = await getProfileLegalUrls();
+      const profileLegalUrls = await getProfileLegalUrls();
+      let legalUrls = profileLegalUrls;
+      if (req.body?.legalPolicies) {
+        try {
+          legalUrls = getProfileLegalUrlsFromConsentConfig(parsed.data, profileLegalUrls);
+        } catch (validationError) {
+          return res.status(400).json({ success: false, error: validationError.message });
+        }
+      }
       const domainErrors = validateConsentConfigDomain(parsed.data, legalUrls);
       if (domainErrors.length > 0) {
         return res.status(400).json({ success: false, error: domainErrors.join(' ') });
       }
 
       const fullConfig = JSON.stringify({ ...stripDuplicateLegalUrlsFromConsentConfig({ legalPolicies, hardcoded, builder }), ...(!canManageUsers && existingConfig.restoreReviewRequired ? { restoreReviewRequired: true } : {}) });
-      if (existing) {
-        await dbRun(
-          'UPDATE cookie_consent_config SET mode = ?, enabled = ?, full_config = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-          [mode, enabled ? 1 : 0, fullConfig, existing.id]
-        );
-      } else {
-        await dbRun(
-          'INSERT INTO cookie_consent_config (mode, enabled, full_config) VALUES (?, ?, ?)',
-          [mode, enabled ? 1 : 0, fullConfig]
-        );
-      }
+      await withTransaction(async () => {
+        if (req.body?.legalPolicies) {
+          await dbRun(
+            'UPDATE profile_data SET privacy_policy_url = ?, cookie_policy_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = (SELECT id FROM profile_data ORDER BY id DESC LIMIT 1)',
+            [legalUrls.privacyPolicyUrl || null, legalUrls.cookiePolicyUrl || null]
+          );
+        }
+        if (existing) {
+          await dbRun(
+            'UPDATE cookie_consent_config SET mode = ?, enabled = ?, full_config = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [mode, enabled ? 1 : 0, fullConfig, existing.id]
+          );
+        } else {
+          await dbRun(
+            'INSERT INTO cookie_consent_config (mode, enabled, full_config) VALUES (?, ?, ?)',
+            [mode, enabled ? 1 : 0, fullConfig]
+          );
+        }
+      });
       return res.json({ success: true, message: 'Consent configuration saved successfully.' });
     } catch (err) {
       console.error('Error saving consent config:', err);

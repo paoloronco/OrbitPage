@@ -13,6 +13,7 @@
 5. Test the saved public page in a private browser window.
 
 A policy link or policy embed is separate from the banner installation. Languages, regional rules and provider subscriptions are managed with the CMP.
+Saving the policies also updates the public profile links, so the footer, consent banner and `/privacy` or `/cookies` routes use the same current destinations.
 
 ## Supported CMPs
 
