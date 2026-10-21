@@ -995,7 +995,7 @@ export const LinkCard = ({
             )}
             {isSeparator && canEditStyle && (
               <div className="space-y-2 rounded border border-white/5 bg-white/5 p-3">
-                <div className="space-y-1">
+                {isFullEdit && <div className="space-y-1">
                   <p className="text-xs font-medium">{tr('Line position', 'Posizione della linea')}</p>
                   <div className="admin-separator-options" role="group" aria-label={tr('Line position', 'Posizione della linea')}>
                     {([
@@ -1012,7 +1012,7 @@ export const LinkCard = ({
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>}
                 <div className="space-y-1">
                   <p className="text-xs font-medium">{tr('Text alignment', 'Allineamento del testo')}</p>
                   <div className="admin-separator-options" role="group" aria-label={tr('Text alignment', 'Allineamento del testo')}>
@@ -1028,7 +1028,7 @@ export const LinkCard = ({
                     ))}
                   </div>
                 </div>
-                <div className="space-y-1">
+                {isFullEdit && <div className="space-y-1">
                   <Label htmlFor={`link-card-separator-background-${link.id}`} className="text-xs">Separator background</Label>
                   <Select
                     value={separatorData.boxed === true ? 'full' : 'transparent'}
@@ -1045,7 +1045,7 @@ export const LinkCard = ({
                   <p className="text-xs text-muted-foreground">
                     Transparent keeps a classic separator. Full background turns it into a boxed section label.
                   </p>
-                </div>
+                </div>}
               </div>
             )}
             {isFullEdit && (
