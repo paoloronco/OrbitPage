@@ -18,7 +18,7 @@ export async function resolveMapPreview({ query = '', mapUrl = '' }) {
     if (!url || !['maps.app.goo.gl', 'goo.gl'].includes(url.hostname)) break;
     const path = url.pathname.match(url.hostname === 'goo.gl' ? /^\/maps\/([a-zA-Z0-9_-]{1,256})$/ : /^\/([a-zA-Z0-9_-]{1,256})$/);
     if (!path) throw new Error('Invalid map short URL.');
-    const target = url.hostname === 'goo.gl' ? `https://goo.gl/maps/${path[1]}` : `https://maps.app.goo.gl/${path[1]}`;
+    const target = url.hostname === 'goo.gl' ? `https://goo.gl/maps/${encodeURIComponent(path[1])}` : `https://maps.app.goo.gl/${encodeURIComponent(path[1])}`;
     const response = await fetch(target, {
       redirect: 'manual', signal: AbortSignal.timeout(6_000),
       headers: { accept: 'text/html,application/xhtml+xml', 'user-agent': 'OrbitPage (+https://orbitpage.com; contact: contact@orbitpage.com)' },

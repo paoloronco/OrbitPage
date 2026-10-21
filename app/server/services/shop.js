@@ -377,7 +377,7 @@ export async function uploadFor(token) {
 }
 export async function receiveShopUpload(token, body, contentType) {
   const upload = await uploadFor(token);
-  if (!Buffer.isBuffer(body) || body.length !== upload.sizeBytes || contentType !== upload.contentType || !matchesShopFileSignature(contentType, body.subarray(0, 32))) fail(400, 'INVALID_SHOP_FILE', 'Uploaded file content, size or type does not match the reservation.');
+  if (typeof body !== 'object' || !Buffer.isBuffer(body) || body.length !== upload.sizeBytes || contentType !== upload.contentType || !matchesShopFileSignature(contentType, body.subarray(0, 32))) fail(400, 'INVALID_SHOP_FILE', 'Uploaded file content, size or type does not match the reservation.');
   fs.mkdirSync(shopFilesPath, { recursive: true, mode: 0o700 });
   const temporary = `${shopFilePath(upload.id)}.upload`;
   try { fs.writeFileSync(temporary, body, { flag: 'wx', mode: 0o600 }); }
