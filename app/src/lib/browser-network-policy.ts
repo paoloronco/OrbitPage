@@ -132,5 +132,5 @@ export const resolveSafePublicMediaUrl = (value?: string | null, currentHref = g
   if (/^\/(?!\/)/.test(candidate)) return encodeURI(`/${candidate.replace(/^\/+/, '')}`);
   if (!candidate.includes(':') && !candidate.startsWith('//')) return encodeURI(candidate.replace(/^\/+/, ''));
   const safeUrl = resolveSafeBrowserHttpUrl(candidate, currentHref);
-  return safeUrl ? encodeURI(candidate) : null;
+  return safeUrl ? safeUrl.toString() : null;
 };

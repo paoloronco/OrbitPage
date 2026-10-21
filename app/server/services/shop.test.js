@@ -136,7 +136,16 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     const page = await request(app).get('/shop'); expect(page.status).toBe(200); expect(page.text).toContain('Synthetic PDF');
     expect((await request(app).get('/shop/legal/privacy')).status).toBe(200);
     expect((await request(app).get('/shop/legal/unknown')).status).toBe(404);
-    expect(page.headers['content-security-policy']).toContain('sha256-'); expect(page.headers['content-security-policy']).toContain('https://checkout.stripe.com');
+    const nonce = page.headers['content-security-policy'].match(/'nonce-([^']+)'/)[1];
+    expect(page.text).toContain(`type="module" nonce="${nonce}"`);
+    expect(page.headers['content-security-policy']).not.toContain('sha256-');
+    expect(page.headers['content-security-policy']).toContain('https://checkout.stripe.com');
+    expect(page.headers['cache-control']).toBe('private, no-store');
+    const nextPage = await request(app).get('/shop');
+    expect(nextPage.headers['content-security-policy']).not.toContain(`nonce-${nonce}`);
+    const markdown = await request(app).get('/shop').set('Accept', 'text/markdown');
+    expect(markdown.headers['content-type']).toContain('text/markdown');
+    expect(markdown.headers['cache-control']).toBe('public, max-age=0, must-revalidate');
     expect((await db.dbGet('SELECT url FROM links WHERE id = ?', ['orbitpage-shop'])).url).toBe(`${base}/shop`);
     const checkout = await request(app).post('/api/shop/checkout').type('form').send({ productId: id, priceCents: 1, sellerNoticeAcknowledged: 'accepted', digitalContentConsent: 'accepted' });
     expect(checkout.status).toBe(303); expect(provider.creates.at(-1).input.line_items[0].price_data.unit_amount).toBe(1000);
@@ -145,6 +154,19 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     const product = (await shop.shopProducts()).find(p => p.productId === id); expect(existsSync(shop.shopFilePath(product.files[0].id))).toBe(true);
     await expect(shop.reserveShopUpload({ productId: id, filename: '../../secret.pdf', contentType: 'application/pdf', sizeBytes: 20, kind: 'file' }, base)).rejects.toThrow('valid filename');
     await expect(shop.shopDelivery(`${randomUUID()}.invalid`)).rejects.toMatchObject({ code: 'SHOP_DOWNLOAD_INVALID' });
+  });
+  it('rejects non-binary upload bodies without consuming the reservation or writing files', async () => {
+    const dashboard = await shop.saveShopProduct(digitalInput(), base);
+    const body = Buffer.from('%PDF-1.7\nsynthetic upload');
+    const { uploadToken } = await shop.reserveShopUpload({ productId: dashboard.savedProductId, filename: 'test.pdf', contentType: 'application/pdf', sizeBytes: body.length, kind: 'file' }, base);
+    const upload = await shop.uploadFor(uploadToken);
+    for (const invalid of [undefined, null, body.toString(), [...body], { length: body.length, subarray: () => body }]) {
+      await expect(shop.receiveShopUpload(uploadToken, invalid, 'application/pdf')).rejects.toMatchObject({ status: 400, code: 'INVALID_SHOP_FILE' });
+      expect((await shop.uploadFor(uploadToken)).received).toBe(false);
+      expect(existsSync(`${shop.shopFilePath(upload.id)}.upload`)).toBe(false);
+    }
+    await expect(shop.receiveShopUpload(uploadToken, body, 'application/pdf')).resolves.toEqual({ received: true });
+    await shop.finalizeShopUpload(uploadToken, base);
   });
   it('changes catalog currency atomically while preserving open and paid orders', async () => {
     const appearance = (await shop.shopSettings()).appearance;

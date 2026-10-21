@@ -20,6 +20,7 @@ test('shows backup history and export without exposing restore to a read-only ba
 
 test('opens saved newsletters from Overview and keeps the composer focused on editing', async ({ page }) => {
   await openAuthenticatedAdmin(page);
+  await page.route('https://images.example.invalid/**', route => route.abort());
   const content = { eyebrow: '', headline: 'Fictional update', body: 'A local test message.', ctaLabel: '', ctaUrl: '', imageUrl: '', imageAlt: '', logoUrl: '', accentColor: '#2563eb', backgroundColor: '#eef2ff', contentBackgroundColor: '#ffffff', contentColor: '#111827', buttonTextColor: '#ffffff', fontFamily: 'system', textAlign: 'left', containerWidth: 640, cornerRadius: 20, buttonRadius: 12, footerNote: '' };
   await page.route('**/api/newsletter?*', route => route.fulfill({ json: { available: true, canManage: true, planId: 'oss', limits: { maxSubscribers: null, maxSendsPerMonth: null, sendsThisMonth: 0, reservedThisMonth: 0 }, settings: { configured: true, passwordConfigured: true, host: 'smtp.example.invalid', port: 587, username: 'fictional', fromName: 'Fictional studio', fromEmail: 'sender@example.invalid', senderType: 'business', senderAddress: '', privacyPolicyUrl: '', termsUrl: '', footerText: '', complianceReady: true, verifiedAt: '2026-01-01T00:00:00Z' }, subscriberCounts: { total: 0, active: 0, pending: 0, unsubscribed: 0 }, subscribers: [], campaigns: [{ campaignId: 'draft', name: 'Fictional draft', subject: 'Fictional subject', preheader: '', content, status: 'draft', targetCount: 0, stats: { attempted: 0, accepted: 0, rejected: 0, openedUnique: 0, clickedUnique: 0, unsubscribed: 0 }, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }, { campaignId: 'sent', name: 'Fictional campaign with a long name for the responsive performance report', subject: 'Fictional subject', preheader: '', content, status: 'sent', targetCount: 10000, stats: { attempted: 10000, accepted: 9876, rejected: 124, openedUnique: 2469, clickedUnique: 987, unsubscribed: 0 }, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z' }] } }));
   for (const width of [1440, 390]) {
@@ -33,6 +34,20 @@ test('opens saved newsletters from Overview and keeps the composer focused on ed
     expect(await report.locator('.newsletter-report-metrics > span').evaluateAll(elements => elements.every(element => element.scrollWidth <= element.clientWidth))).toBe(true);
     await page.getByRole('button', { name: 'Edit', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Edit campaign' })).toBeVisible();
+    const imageUrl = 'https://images.example.invalid/photo.png?q=<img src=x onerror="alert(1)">';
+    await page.getByLabel(/^Image URL/).fill(imageUrl);
+    await page.getByLabel(/^Brand logo URL/).fill(imageUrl);
+    await expect(page.locator('.newsletter-preview-hero')).toHaveAttribute('src', encodeURI(imageUrl));
+    await expect(page.locator('.newsletter-preview-logo')).toHaveAttribute('src', encodeURI(imageUrl));
+    await expect(page.locator('.newsletter-email-preview [onerror]')).toHaveCount(0);
+    const ordinaryUrl = 'https://images.example.invalid/photo.png?size=large&v=1';
+    await page.getByLabel(/^Image URL/).fill(ordinaryUrl);
+    await expect(page.locator('.newsletter-preview-hero')).toHaveAttribute('src', ordinaryUrl);
+    const encodedUrl = 'https://images.example.invalid/photo%20one.png?key=a%2Fb%3D&signature=abc%2B123';
+    await page.getByLabel(/^Image URL/).fill(encodedUrl);
+    await page.getByLabel(/^Brand logo URL/).fill(encodedUrl);
+    await expect(page.locator('.newsletter-preview-hero')).toHaveAttribute('src', encodedUrl);
+    await expect(page.locator('.newsletter-preview-logo')).toHaveAttribute('src', encodedUrl);
     await expect(page.locator('.newsletter-campaign-list')).toHaveCount(0);
     await expect(page.getByText('Composer', { exact: true })).toHaveCount(0);
     const send = await page.getByRole('button', { name: 'Send now', exact: true }).boundingBox();

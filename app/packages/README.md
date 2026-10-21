@@ -19,6 +19,8 @@ bounded short-link expansion between the renderer and both server editions.
 Address previews use Google Maps website embeds; coordinates use OpenStreetMap.
 No geocoding or paid Maps API is called. Only short-link expansion makes a server
 request, with provider allowlisting, a timeout and a bounded 30-day cache.
+Requests reconstruct one of two fixed HTTPS origins from a validated short-link
+identifier. Every redirect is checked again before another request.
 
 ## `page-schema`
 

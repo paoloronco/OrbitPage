@@ -53,4 +53,19 @@ describe('browser network policy', () => {
     expect(resolveSafePublicMediaUrl('data:image/svg+xml,<svg onload=alert(1)>', publicPage)).toBeNull();
     expect(resolveSafePublicMediaUrl('javascript:alert(1)', publicPage)).toBeNull();
   });
+
+  it('encodes markup in newsletter image URLs and rejects private or credentialed HTTPS destinations', () => {
+    const dashboard = 'https://orbitpage.com/dashboard/newsletter';
+    expect(resolveSafePublicMediaUrl('https://images.example.com/photo.png?q=<img src=x onerror="alert(1)">', dashboard))
+      .toBe('https://images.example.com/photo.png?q=%3Cimg%20src=x%20onerror=%22alert(1)%22%3E');
+    expect(resolveSafePublicMediaUrl('https://images.example.com/photo.png?size=large&v=1', dashboard))
+      .toBe('https://images.example.com/photo.png?size=large&v=1');
+    expect(resolveSafePublicMediaUrl('https://user:pass@images.example.com/photo.png', dashboard)).toBeNull();
+    expect(resolveSafePublicMediaUrl('https://127.0.0.1/private', dashboard)).toBeNull();
+  });
+
+  it('preserves encoded paths and signed query parameters in public media URLs', () => {
+    const url = 'https://images.example.com/photo%20one.png?key=a%2Fb%3D&signature=abc%2B123';
+    expect(resolveSafePublicMediaUrl(url, 'https://orbitpage.com/dashboard/newsletter')).toBe(url);
+  });
 });

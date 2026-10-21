@@ -50,5 +50,8 @@ From this directory, `npm test -- --run` runs only backend tests. Follow [Develo
 - Keep `JWT_SECRET` stable in production. It signs sessions and protects encrypted server-side secrets.
 - The frontend sends the session token in the `Authorization` header. The internal API is not a stable external SDK contract.
 - Uploaded media is public when referenced by the public page; do not store private documents under `uploads/`.
+- Shop HTML uses a fresh CSP script nonce and `private, no-store` responses.
+  Markdown retains its public revalidation policy. Private Shop uploads accept
+  only binary bodies matching a signed size, MIME type and file signature.
 
 The complete runtime-variable reference is in [Configuration](../../docs/wiki/administration/Configuration.md), and the supported security model is in [SECURITY.md](../../SECURITY.md).

@@ -26,6 +26,7 @@ import {
 } from "../lib/newsletter-types";
 import ColorPicker from "./ui/color-picker";
 import { useDialogAccessibility } from "../lib/use-dialog-accessibility";
+import { resolveSafePublicMediaUrl } from "../lib/browser-network-policy";
 
 const DefaultLoadingIndicator = ({ size }: { size: number }) => <LoaderCircle aria-hidden="true" className="animate-spin" size={size} />;
 function RangeSlider({ value, valueLabel, ...props }: InputHTMLAttributes<HTMLInputElement> & { value: number; valueLabel: string }) {
@@ -1460,7 +1461,7 @@ export default function NewsletterWorkspaceView({
                   <img
                     alt={campaign.content.imageAlt}
                     className="newsletter-preview-hero"
-                    src={campaign.content.imageUrl}
+                    src={resolveSafePublicMediaUrl(campaign.content.imageUrl) || undefined}
                   />
                 )}
                 <div className="newsletter-preview-content">
@@ -1468,7 +1469,7 @@ export default function NewsletterWorkspaceView({
                     <img
                       alt=""
                       className="newsletter-preview-logo"
-                      src={campaign.content.logoUrl}
+                      src={resolveSafePublicMediaUrl(campaign.content.logoUrl) || undefined}
                     />
                   )}
                 <small style={{ color: campaign.content.accentColor }}>

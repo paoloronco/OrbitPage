@@ -66,7 +66,7 @@ export const PublicMapCard = ({ link }: PublicMapCardProps) => {
     || extractMapCoordinates(placeName)
     || (currentResolution || !resolvedSource ? toMapCoordinates(latitude, longitude) : null);
   const previewUrl = getMapPreviewUrl(currentResolution && resolvedUrl ? resolvedUrl : mapUrl, mapQuery, coordinates);
-  const provider = previewUrl.includes('openstreetmap.org/') ? 'OpenStreetMap' : 'Google Maps';
+  const provider = previewUrl && new URL(previewUrl).hostname === 'www.openstreetmap.org' ? 'OpenStreetMap' : 'Google Maps';
   const resolvedMapUrl = getSafeMapOpenUrl(mapUrl, mapQuery);
 
   const handleOpen = () => {

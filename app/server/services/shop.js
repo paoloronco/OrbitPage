@@ -377,7 +377,7 @@ export async function uploadFor(token) {
 }
 export async function receiveShopUpload(token, body, contentType) {
   const upload = await uploadFor(token);
-  if (body.length !== upload.sizeBytes || contentType !== upload.contentType || !matchesShopFileSignature(contentType, body.subarray(0, 32))) fail(400, 'INVALID_SHOP_FILE', 'Uploaded file content, size or type does not match the reservation.');
+  if (!Buffer.isBuffer(body) || body.length !== upload.sizeBytes || contentType !== upload.contentType || !matchesShopFileSignature(contentType, body.subarray(0, 32))) fail(400, 'INVALID_SHOP_FILE', 'Uploaded file content, size or type does not match the reservation.');
   fs.mkdirSync(shopFilesPath, { recursive: true, mode: 0o700 });
   const temporary = `${shopFilePath(upload.id)}.upload`;
   try { fs.writeFileSync(temporary, body, { flag: 'wx', mode: 0o600 }); }
@@ -420,13 +420,13 @@ export async function publicShopCover(id) {
   if (!product) fail(404, 'SHOP_COVER_NOT_FOUND', 'Image not found.');
   return { ...product.cover, path: shopFilePath(id) };
 }
-export async function publicShop(base, markdown = false) {
+export async function publicShop(base, markdown = false, scriptNonce) {
   const [setting, products, profile, theme] = await Promise.all([shopSettings(), shopProducts(), dbGet('SELECT name, machine_readable_enabled FROM profile_data WHERE id = 1'), dbGet('SELECT full_config FROM theme_config WHERE id = 1')]);
   if (!setting.enabled) fail(404, 'SHOP_NOT_FOUND', 'Shop not found.');
   const visible = products.filter(p => p.active && (p.type === 'service' || p.files.length)).map(p => ({ ...p, coverKey: p.cover ? p.cover.id : null }));
   const input = { username: 'owner', title: profile?.name || 'OrbitPage', canonicalUrl: `${base}/shop`, products: visible,
     appearance: normalizeShopAppearance(setting.appearance), theme: theme?.full_config ? JSON.parse(theme.full_config) : {},
-    machineReadableEnabled: Boolean(profile?.machine_readable_enabled), apiBaseUrl: base, newsletterEndpoint: `${base}/api/newsletter/public/subscribe`, newsletterContentType: 'application/json', coverUrlPrefix: `${base}/api/shop/covers/` };
+    machineReadableEnabled: Boolean(profile?.machine_readable_enabled), apiBaseUrl: base, newsletterEndpoint: `${base}/api/newsletter/public/subscribe`, newsletterContentType: 'application/json', coverUrlPrefix: `${base}/api/shop/covers/`, scriptNonce };
   return markdown ? renderShopMarkdown(input) : renderShopHtml(input);
 }
 export async function cleanupShopFiles() {

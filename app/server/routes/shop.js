@@ -3,7 +3,7 @@ import { shopStripeOverview, shopCoupons, saveShopCoupon, revokeShopCoupon } fro
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import fs from 'node:fs';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { z } from 'zod';
 import { authenticateToken, requirePermission } from '../auth.js';
@@ -123,6 +123,7 @@ export function createShopPublicRouter({ publicBase }) {
   const router = express.Router(), base = req => publicBase(req).replace(/\/$/, '');
   router.get(['/', '/legal', '/legal/:policy'], endpoint(async (req, res) => {
     const markdown = req.path === '/' && req.get('accept')?.includes('text/markdown');
+    const nonce = markdown ? undefined : randomBytes(16).toString('base64');
     let html;
     if (req.path.startsWith('/legal')) {
       const setting = await shopSettings();
@@ -132,12 +133,11 @@ export function createShopPublicRouter({ publicBase }) {
       }
       html = renderShopPolicyHtml({ appearance: setting.appearance, shopUrl: `${base(req)}/shop` });
       if (!html) throw new ShopError(404, 'SHOP_POLICY_NOT_FOUND', 'Shop policy not found.');
-    } else html = await publicShop(base(req), markdown);
+    } else html = await publicShop(base(req), markdown, nonce);
     if (!markdown) {
-      const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => `'sha256-${createHash('sha256').update(match[1]).digest('base64')}'`);
-      res.set('Content-Security-Policy', `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://checkout.stripe.com; script-src 'self' ${scripts.join(' ')}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'`);
+      res.set('Content-Security-Policy', `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self' https://checkout.stripe.com; script-src 'self' 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'`);
     }
-    res.set({ 'Cache-Control': 'public, max-age=0, must-revalidate', 'Content-Type': markdown ? 'text/markdown; charset=utf-8' : 'text/html; charset=utf-8' }).send(html);
+    res.set({ 'Cache-Control': markdown ? 'public, max-age=0, must-revalidate' : 'private, no-store', 'Content-Type': markdown ? 'text/markdown; charset=utf-8' : 'text/html; charset=utf-8' }).send(html);
   }));
   return router;
 }
