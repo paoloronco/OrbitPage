@@ -94,4 +94,13 @@ describe("profile layout", () => {
     expect(fitted.positions.work).toEqual(saved.positions.work);
     expect(fitted.positions.location).toEqual(saved.positions.location);
   });
+
+  it("preserves an element deliberately placed beneath the shorter detail column", () => {
+    const saved = normalizeVisibleProfileLayout({ positions: {
+      work: { x: 0, y: 80, width: 45, height: 40 },
+      location: { x: 55, y: 80, width: 45, height: 160 },
+      socials: { x: 0, y: 136, width: 45, height: 48 },
+    } }, ["work", "location", "socials"]);
+    expect(fitVisibleProfileLayout(saved, ["work", "location", "socials"], {}).positions).toEqual(saved.positions);
+  });
 });

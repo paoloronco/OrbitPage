@@ -3,7 +3,7 @@ import {
   type OrbitPageProfileLayout,
   type OrbitPageProfileLayoutItem,
 } from "@orbitpage/page-schema";
-import { fitCardLayoutHeights } from "./card-layout";
+import { fitCardLayoutHeights, hasCardLayoutOverlap } from "./card-layout";
 
 export type ProfileLayout = OrbitPageProfileLayout;
 export type ProfileLayoutItem = OrbitPageProfileLayoutItem;
@@ -149,7 +149,11 @@ export function fitVisibleProfileLayout(
   const positions = Object.fromEntries(visibleItems.map(id => [id, layout.positions[id]]));
   const { work, location } = positions;
   const sharedDetailRow = work && location && work.y === location.y
-    && (work.x + work.width <= location.x || location.x + location.width <= work.x);
+    && (work.x + work.width <= location.x || location.x + location.width <= work.x)
+    // Preserve valid manual arrangements beneath the shorter detail column.
+    && !visibleItems.some(id => id !== "work" && id !== "location" && positions[id].y >= work.y
+      && positions[id].y < Math.max(work.y + work.height, location.y + location.height)
+      && !hasCardLayoutOverlap({ work, location, [id]: positions[id] }, id));
 
   // Fit a saved detail row together so growth in either column cannot split its baseline.
   if (sharedDetailRow) {
