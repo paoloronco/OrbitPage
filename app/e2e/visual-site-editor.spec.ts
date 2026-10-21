@@ -163,6 +163,7 @@ test("card resize returns to its default width and Revert restores Arrange", asy
   const width = async () => Number((await card.getAttribute("data-card-layout-position"))!.split(",")[2]);
   const defaultWidth = await width();
   const resize = card.getByRole("button", { name: /^Resize card/ });
+  await resize.scrollIntoViewIfNeeded();
   await resize.press("ArrowRight");
   await expect.poll(width).not.toBe(defaultWidth);
   await resize.press("ArrowLeft");
@@ -224,6 +225,7 @@ test("Arrange keeps long card text in its original alignment and full width", as
     expect(after.align).toBe(before.align);
     expect(after.clamp).toBe("none");
     const resize = card.getByRole("button", { name: /^Resize card/ });
+    await resize.scrollIntoViewIfNeeded();
     await resize.press("ArrowLeft");
     await resize.press("ArrowLeft");
     await expect.poll(() => card.evaluate(element => {
@@ -233,7 +235,9 @@ test("Arrange keeps long card text in its original alignment and full width", as
     })).toBe(true);
     await resize.press("ArrowUp");
     await expect.poll(() => card.evaluate(element => element.querySelector('[data-card-content-layout-item="description"]')!.getBoundingClientRect().bottom <= element.getBoundingClientRect().bottom)).toBe(true);
-    await card.getByRole("button", { name: /^Move card/ }).press("ArrowRight");
+    const move = card.getByRole("button", { name: /^Move card/ });
+    await move.scrollIntoViewIfNeeded();
+    await move.press("ArrowRight");
     await saveEditorChanges(page);
     await page.reload();
     await expect(page.locator(`[data-public-editor-link-id="${id}"] h3`)).toHaveText("A long card title that uses all the available width and wraps onto more than one line");
