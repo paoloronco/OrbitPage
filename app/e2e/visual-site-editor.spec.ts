@@ -161,6 +161,41 @@ test("Arrange exposes profile elements alongside whole-card controls and continu
   await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
 });
 
+test("Arrange still lets image cards open their editor, update the image, and delete", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 980 });
+  await openAuthenticatedAdmin(page);
+  const restore = await startIsolatedLayoutPage(page);
+  try {
+    await page.getByRole("button", { name: "Content", exact: true }).click();
+    await page.getByRole("button", { name: "Add content" }).click();
+    const library = page.getByRole("dialog", { name: "Add content" });
+    await library.getByRole("button", { name: /Media & embeds/ }).click();
+    await library.getByRole("button", { name: /^Image\b/ }).click();
+
+    const inspector = page.locator(".visual-site-editor__inspector");
+    await inspector.getByPlaceholder("Image title (optional)").fill("Arrange image test");
+    const imageUrl = "https://example.invalid/image.png";
+    await inspector.getByPlaceholder("https://example.com/image.jpg").fill(imageUrl);
+    await contentSaveButton(page).click();
+
+    const card = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
+    await expect(card).toBeVisible();
+    await page.getByRole("button", { name: "Arrange", exact: true }).click();
+    await card.click();
+
+    await expect(page.getByRole("button", { name: "Content", exact: true })).toHaveAttribute("aria-current", "page");
+    const imageInput = inspector.getByRole("textbox", { name: "Cover Image", exact: true });
+    await expect(imageInput).toHaveValue(imageUrl);
+    await imageInput.fill("https://example.invalid/updated-image.png");
+    await contentSaveButton(page).click();
+    await expect(imageInput).toHaveValue("https://example.invalid/updated-image.png");
+    await page.getByRole("button", { name: "Delete card", exact: true }).click();
+    await expect(card).toHaveCount(0);
+  } finally {
+    await restore();
+  }
+});
+
 test("card resize returns to its default width and Revert restores Arrange", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);

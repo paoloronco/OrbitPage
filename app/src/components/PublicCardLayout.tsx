@@ -391,8 +391,20 @@ export function PublicCardLayout({
       ref={canvasRef}
       data-card-layout-viewport={viewport}
       onClickCapture={layoutEditing ? (event) => {
-        if ((event.target as HTMLElement).closest('[data-profile-layout-editor="true"]')) return;
-        event.preventDefault(); event.stopPropagation();
+        const target = event.target as HTMLElement;
+        if (
+          target.closest('[data-profile-layout-editor="true"]') ||
+          target.closest("[data-page-card-layout-mode]")
+        ) return;
+        const cardId = target.closest<HTMLElement>("[data-card-layout-item]")?.dataset.cardLayoutItem;
+        if (onEditorSelect && cardId && cardId !== PROFILE_CARD_LAYOUT_ID) {
+          event.preventDefault();
+          event.stopPropagation();
+          onEditorSelect({ kind: "link", id: cardId });
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
       } : undefined}
       onKeyDown={handleKeyboard}
       onPointerCancel={cancelGesture}
