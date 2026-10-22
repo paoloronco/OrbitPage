@@ -16,10 +16,19 @@ test('the shared storefront grid fills three, two or one columns according to av
   const seller = page.getByRole('region', { name: 'Seller information' });
   await expect(seller).toBeVisible();
   await expect(seller).toContainText('Studio Seller');
-  await expect(seller.getByRole('link')).toHaveCount(1);
+  await expect(seller.getByRole('link')).toHaveCount(0);
+  const sellerEmail = page.locator('.shop-footer-contact');
+  await expect(sellerEmail.getByRole('link')).toHaveAttribute('href', 'mailto:seller@example.invalid');
+  const sellerAndEmailShareFooterRow = await seller.evaluate(element => {
+    const contact = element.nextElementSibling;
+    return element.parentElement?.classList.contains('shop-footer-details') === true
+      && contact?.classList.contains('shop-footer-contact') === true
+      && Math.abs(element.getBoundingClientRect().top - contact.getBoundingClientRect().top) < 1;
+  });
+  expect(sellerAndEmailShareFooterRow).toBe(true);
   await expect(seller.locator('details, summary')).toHaveCount(0);
   await expect(seller).toHaveCSS('border-top-width', '0px');
-  expect(await seller.evaluate(element => element.nextElementSibling?.tagName)).toBe('FOOTER');
+  expect(await seller.evaluate(element => element.parentElement?.nextElementSibling?.tagName)).toBe('FOOTER');
   const grid = page.locator('.grid');
   for (const [width, columns] of [[1440, 3], [1024, 3], [768, 2], [650, 2], [640, 1], [390, 1], [320, 1]]) {
     await page.setViewportSize({ width, height: 980 });
