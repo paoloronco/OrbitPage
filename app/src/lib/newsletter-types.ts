@@ -28,11 +28,24 @@ export type NewsletterSubscriber = {
   status: NewsletterSubscriberStatus;
   source: "manual" | "public" | "import";
   consentAt: string | null;
+  trackingConsentAt?: string | null;
+  trackingConsentId?: string | null;
+  trackingConsentVersion?: string | null;
+  trackingConsentSource?: "signup" | "preferences" | null;
+  trackingRevokedAt?: string | null;
   confirmedAt: string | null;
   unsubscribedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
+
+export const NEWSLETTER_TRACKING_CONSENT_VERSION = "2026-10-21";
+export const NEWSLETTER_TRACKING_CONSENT_TEXT = "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.";
+
+export function newsletterTrackingAllowed(subscriber: Pick<NewsletterSubscriber, "status" | "confirmedAt" | "trackingConsentId" | "trackingConsentAt" | "trackingConsentVersion">) {
+  return subscriber.status === "active" && Boolean(subscriber.confirmedAt && subscriber.trackingConsentAt && subscriber.trackingConsentId)
+    && subscriber.trackingConsentVersion === NEWSLETTER_TRACKING_CONSENT_VERSION;
+}
 
 export type NewsletterCampaignContent = {
   eyebrow: string;

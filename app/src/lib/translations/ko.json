@@ -1235,5 +1235,15 @@
   "Footer": "바닥글",
   "Applies to every page in this workspace.": "이 작업 공간의 모든 페이지에 적용됩니다.",
   "Change not applied: space occupied": "변경 사항이 적용되지 않음: 공간 사용 중",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "이 위치나 크기에서는 다른 요소와 겹칩니다. 이전 레이아웃이 유지되었습니다. 요소를 빈 공간으로 옮기거나 크기를 줄이세요."
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "이 위치나 크기에서는 다른 요소와 겹칩니다. 이전 레이아웃이 유지되었습니다. 요소를 빈 공간으로 옮기거나 크기를 줄이세요.",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "선택 사항: 발신자가 이 뉴스레터를 개선하는 데 도움을 주기 위해 이메일 열람 수와 링크 클릭 수를 측정하는 데 동의합니다. 구독 취소 없이도 각 이메일에서 이 동의를 철회할 수 있습니다.",
+  "Email tracking preferences": "이메일 추적 선호도",
+  "Disable tracking and keep my subscription": "추적 기능을 비활성화하고 구독은 유지하세요",
+  "I consent to email tracking": "이메일 추적에 동의합니다",
+  "Tracking preference saved. Your subscription is unchanged.": "추적 선호도 저장됨. 구독 내역은 변함없습니다.",
+  "Current setting: enabled": "현재 설정: 활성화됨",
+  "Current setting: disabled": "현재 설정: 비활성화됨",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "이메일 클라이언트 프록시와 자동 스캐너의 영향이 열림과 클릭 처리에 영향을 줄 수 있습니다.",
+  "Consented": "동의",
+  "Disabled": "장애"
 }

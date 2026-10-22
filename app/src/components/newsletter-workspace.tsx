@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import {
   canDeleteNewsletterCampaign,
+  newsletterTrackingAllowed,
   type NewsletterCampaign,
   type NewsletterCampaignContent,
   type NewsletterDashboardData,
@@ -990,6 +991,7 @@ export default function NewsletterWorkspaceView({
                       <th>Subscriber</th>
                       <th>Status</th>
                       <th>Source</th>
+                      <th>Email tracking</th>
                       <th>Added</th>
                       <th>
                         <span className="sr-only">Actions</span>
@@ -1009,6 +1011,7 @@ export default function NewsletterWorkspaceView({
                           </span>
                         </td>
                         <td>{item.source}</td>
+                        <td>{newsletterTrackingAllowed(item) ? "Consented" : "Disabled"}</td>
                         <td>{new Date(item.createdAt).toLocaleDateString()}</td>
                         <td>
                           <button

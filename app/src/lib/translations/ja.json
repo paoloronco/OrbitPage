@@ -1235,5 +1235,15 @@
   "Footer": "フッター",
   "Applies to every page in this workspace.": "このワークスペースのすべてのページに適用されます。",
   "Change not applied: space occupied": "変更は適用されませんでした：スペースが使用中です",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "この位置またはサイズでは、他の要素と重なります。元のレイアウトを保持しました。要素を空いている場所に移動するか、小さくしてください。"
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "この位置またはサイズでは、他の要素と重なります。元のレイアウトを保持しました。要素を空いている場所に移動するか、小さくしてください。",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "任意:送信者のこのニュースレター改善を支援するために、メールの開封数とリンククリック数の測定に同意します。購読解除せずに各メールで同意を撤回できます。",
+  "Email tracking preferences": "メール追跡の設定",
+  "Disable tracking and keep my subscription": "追跡を無効にしてサブスクリプションを維持",
+  "I consent to email tracking": "メール追跡には同意します",
+  "Tracking preference saved. Your subscription is unchanged.": "追跡の優先順位が保存されました。あなたのサブスクリプションは変わりません。",
+  "Current setting: enabled": "現在設定:有効",
+  "Current setting: disabled": "現在設定:無効化",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "開封やクリックはメールクライアントプロキシや自動スキャナーの影響を受けることがあります。",
+  "Consented": "同意済み",
+  "Disabled": "障害者"
 }

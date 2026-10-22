@@ -6,7 +6,7 @@ import { authenticateToken, requirePermission } from '../auth.js';
 import {
   NewsletterError, addSubscriber, cancelCampaign, confirmSubscription, deleteCampaign,
   newsletterDashboard, publicLanding, queueCampaign, recordEvent, removeSubscriber,
-  saveCampaign, saveSmtpSettings, subscribe, testSmtp, unsubscribe,
+  saveCampaign, saveSmtpSettings, subscribe, testSmtp, unsubscribe, trackingPreference,
 } from '../services/newsletter.js';
 
 const transparentGif = Buffer.from('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=', 'base64');
@@ -74,6 +74,15 @@ export function createNewsletterRouter({ publicBase, demoMode }) {
   });
   router.get('/public/unsubscribe', unsubscribeRequest);
   router.post('/public/unsubscribe', unsubscribeRequest);
+  router.get('/public/tracking', endpoint(async (req, res) => {
+    res.set('Referrer-Policy', 'no-referrer');
+    return trackingPreference(req.query.token);
+  }));
+  router.post('/public/tracking', endpoint(async (req, res) => {
+    res.set('Referrer-Policy', 'no-referrer');
+    const input = z.object({ token: z.string().min(1).max(4096), enabled: z.boolean() }).strict().parse(req.body);
+    return trackingPreference(input.token, input.enabled);
+  }));
   router.get('/public/open', endpoint(async (req, res) => {
     await recordEvent(req.query.token, 'open').catch(() => undefined);
     res.set({ 'Content-Type': 'image/gif', 'Cache-Control': 'private, no-store, max-age=0', 'Content-Length': String(transparentGif.length) }).send(transparentGif);

@@ -2,6 +2,8 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { ArrowLeft, Check, LoaderCircle, Mail, MailX } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { apiPath, withPageRootPath } from '@/lib/base-path';
+import { NEWSLETTER_TRACKING_CONSENT_TEXT } from '@/lib/newsletter-types';
+import { useAppI18n } from '@/lib/i18n';
 
 type SenderType = 'individual' | 'bar' | 'restaurant' | 'creator' | 'business' | 'association' | 'other';
 type Landing = { fromName: string; senderType: SenderType; privacyPolicyUrl: string; termsUrl: string; publicPageUrl: string };
@@ -21,6 +23,7 @@ const messages = {
 } as const;
 
 export default function Newsletter() {
+  const { tr } = useAppI18n();
   const location = useLocation();
   const isStatus = location.pathname.endsWith('/newsletter/status');
   const state = new URLSearchParams(location.search).get('state') as keyof typeof messages;
@@ -30,9 +33,32 @@ export default function Newsletter() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
+  const [trackingConsent, setTrackingConsent] = useState(false);
+  const [tracking, setTracking] = useState<{ enabled: boolean; privacyPolicyUrl: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!isStatus || state !== ('tracking' as string)) return;
+    const token = new URLSearchParams(location.search).get('token') || '';
+    fetch(`${apiPath('/newsletter/public/tracking')}?token=${encodeURIComponent(token)}`, { cache: 'no-store', referrerPolicy: 'no-referrer' })
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error('Invalid preference link.')))
+      .then(setTracking).catch(() => setError('Invalid preference link.'));
+  }, [isStatus, state, location.search]);
+
+  async function saveTracking(enabled: boolean) {
+    setSending(true);
+    setError('');
+    try {
+      const response = await fetch(apiPath('/newsletter/public/tracking'), { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: new URLSearchParams(location.search).get('token') || '', enabled }) });
+      if (!response.ok) throw new Error('Preference could not be saved.');
+      setTracking(await response.json());
+      setSent(true);
+    } catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Preference could not be saved.'); }
+    finally { setSending(false); }
+  }
 
   useEffect(() => {
     if (isStatus) return;
@@ -52,7 +78,7 @@ export default function Newsletter() {
     try {
       const response = await fetch(apiPath('/newsletter/public/subscribe'), {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ name, email, consent }),
+        body: JSON.stringify({ name, email, consent, trackingConsent }),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok) throw new Error(result?.error || 'Subscription failed.');
@@ -63,6 +89,7 @@ export default function Newsletter() {
   }
 
   if (isStatus) {
+    if (state === ('tracking' as string)) return <main className="newsletter-public-shell"><section className="newsletter-status-panel"><h1>Email tracking preferences</h1><p>{tr(NEWSLETTER_TRACKING_CONSENT_TEXT, 'Facoltativo: acconsento alla misurazione delle aperture delle mie email e dei clic sui link per aiutare il mittente a migliorare questa newsletter. Posso revocare il consenso da ogni email senza annullare l’iscrizione.')}</p>{tracking ? <><p>Current setting: {tracking.enabled ? 'enabled' : 'disabled'}</p><a href={tracking.privacyPolicyUrl} rel="noreferrer" target="_blank">Privacy Policy</a><button className="button" disabled={sending} onClick={() => void saveTracking(false)}>Disable tracking and keep my subscription</button><button className="button secondary" disabled={sending} onClick={() => void saveTracking(true)}>I consent to email tracking</button>{sent && <p role="status">Tracking preference saved. Your subscription is unchanged.</p>}</> : !error && <p role="status">Loading…</p>}{error && <p role="alert">{error}</p>}</section></main>;
     const Icon = message.success ? Check : MailX;
     return <main className="newsletter-public-shell"><section className="newsletter-status-panel"><strong>OrbitPage</strong><span className={message.success ? 'newsletter-status-icon success' : 'newsletter-status-icon'}><Icon aria-hidden="true" size={26} /></span><h1>{message.title}</h1><p>{message.copy}</p><a className="button" href={withPageRootPath('/')}>Go to OrbitPage</a></section></main>;
   }
@@ -78,6 +105,7 @@ export default function Newsletter() {
         <label><span>Email</span><input autoComplete="email" maxLength={254} onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
         <label className="newsletter-consent"><input checked={consent} onChange={(event) => setConsent(event.target.checked)} required type="checkbox" /><span>I want to receive email updates from {landing.fromName}. I can unsubscribe at any time.{landing.privacyPolicyUrl && <> <a href={landing.privacyPolicyUrl} rel="noreferrer" target="_blank">Privacy Policy</a>.</>}{landing.termsUrl && <> <a href={landing.termsUrl} rel="noreferrer" target="_blank">Terms</a>.</>}</span></label>
         {error && <p className="error" role="alert">{error}</p>}
+        <label className="newsletter-consent"><input checked={trackingConsent} onChange={(event) => setTrackingConsent(event.target.checked)} type="checkbox" /><span>{tr(NEWSLETTER_TRACKING_CONSENT_TEXT, 'Facoltativo: acconsento alla misurazione delle aperture delle mie email e dei clic sui link per aiutare il mittente a migliorare questa newsletter. Posso revocare il consenso da ogni email senza annullare l’iscrizione.')}</span></label>
         <button aria-busy={sending} className="button" disabled={sending} type="submit">{sending ? <LoaderCircle aria-hidden="true" className="animate-spin" size={16} /> : <Mail aria-hidden="true" size={17} />}{sending ? 'Sending confirmation' : 'Subscribe'}</button>
       </form>}
       <a className="newsletter-back-link" href={withPageRootPath('/')}><ArrowLeft aria-hidden="true" size={15} />Back to the public page</a>

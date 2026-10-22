@@ -28,7 +28,7 @@ The password is encrypted and is not returned to the browser. Leaving its field 
 
 ## Subscribers
 
-Copy the signup link from the workspace. Visitors consent and confirm their email through a link valid for 48 hours.
+Copy the signup link from the workspace. Visitors consent to receive email and confirm their address through a link valid for 48 hours. Optional open/click measurement has a separate, unchecked consent; it is not required to receive the newsletter. Imported subscribers do not have tracking consent by default. Each recipient can change tracking preferences from an email without unsubscribing.
 
 In **Subscribers**, a user with Newsletter management permission can add an email/name after recording consent and confirmation. Every campaign includes an unsubscribe link. Removing a subscriber requires confirmation.
 
@@ -45,7 +45,7 @@ Saved campaigns and their edit, cancel and delete actions are in **Overview → 
 
 ## Delivery reports
 
-Reports show deliveries, unique opens/clicks, and unsubscribes. Opens depend on email clients loading images; an SMTP acceptance does not guarantee inbox delivery. Your provider can impose sending limits. Investigate failed delivery in the provider's logs before retrying, so you do not send duplicate messages.
+Reports show deliveries, consented unique opens/clicks, and unsubscribes. Opens and clicks are measured only for recipients with current tracking consent and may be affected by email-client image blocking, proxies or automated scanners. Tracking consent is optional and separate from newsletter subscription. An SMTP acceptance does not guarantee inbox delivery. Your provider can impose sending limits. Investigate failed delivery in the provider's logs before retrying, so you do not send duplicate messages.
 
 Only eligible non-active campaigns can be deleted. Deletion removes the campaign/report and cannot retract sent email or reset its usage. Unsubscribed recipients stop receiving campaigns.
 

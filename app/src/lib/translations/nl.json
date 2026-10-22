@@ -1235,5 +1235,15 @@
   "Footer": "Voettekst",
   "Applies to every page in this workspace.": "Geldt voor elke pagina in deze werkruimte.",
   "Change not applied: space occupied": "Wijziging niet toegepast: ruimte bezet",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Met deze positie of grootte zou een ander element worden overlapt. De vorige indeling is behouden. Verplaats het element naar een vrije plek of maak het kleiner."
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Met deze positie of grootte zou een ander element worden overlapt. De vorige indeling is behouden. Verplaats het element naar een vrije plek of maak het kleiner.",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "Optioneel: Ik stem in met het meten van mijn e-mailopeningen en linkklikken om de afzender te helpen deze nieuwsbrief te verbeteren. Ik kan deze toestemming in elke e-mail intrekken zonder me af te melden.",
+  "Email tracking preferences": "Voorkeuren voor e-mailtracking",
+  "Disable tracking and keep my subscription": "Zet tracking uit en behoud mijn abonnement",
+  "I consent to email tracking": "Ik geef toestemming voor e-mailtracking",
+  "Tracking preference saved. Your subscription is unchanged.": "Trackingvoorkeur opgeslagen. Je abonnement blijft ongewijzigd.",
+  "Current setting: enabled": "Huidige instelling: ingeschakeld",
+  "Current setting: disabled": "Huidige instelling: uitgeschakeld",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "Openingen en klikken kunnen worden beïnvloed door e-mailclient-proxies en geautomatiseerde scanners.",
+  "Consented": "Toestemming",
+  "Disabled": "Gehandicapt"
 }

@@ -460,6 +460,9 @@ export const initializeDatabase = () => {
         source TEXT NOT NULL, consent_at TEXT, confirmed_at TEXT, unsubscribed_at TEXT,
         created_at TEXT NOT NULL, updated_at TEXT NOT NULL
       )`);
+      for (const definition of ['tracking_requested INTEGER NOT NULL DEFAULT 0', 'tracking_consent_id TEXT', 'tracking_consent_at TEXT', 'tracking_consent_version TEXT', 'tracking_consent_source TEXT', 'tracking_consent_policy_url TEXT', 'tracking_revoked_at TEXT']) {
+        db.run(`ALTER TABLE newsletter_subscribers ADD COLUMN ${definition}`, () => {});
+      }
       db.run(`CREATE INDEX IF NOT EXISTS idx_newsletter_subscribers_status ON newsletter_subscribers(status, id)`);
       db.run(`CREATE TABLE IF NOT EXISTS newsletter_campaigns (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, subject TEXT NOT NULL, preheader TEXT NOT NULL,
@@ -476,6 +479,8 @@ export const initializeDatabase = () => {
         UNIQUE(campaign_id, subscriber_id),
         FOREIGN KEY(campaign_id) REFERENCES newsletter_campaigns(id) ON DELETE CASCADE
       )`);
+      db.run('ALTER TABLE newsletter_deliveries ADD COLUMN tracking_consent_at TEXT', () => {});
+      db.run('ALTER TABLE newsletter_deliveries ADD COLUMN tracking_consent_id TEXT', () => {});
       db.run(`CREATE TABLE IF NOT EXISTS personal_api_tokens (
         id TEXT PRIMARY KEY,
         username TEXT NOT NULL,

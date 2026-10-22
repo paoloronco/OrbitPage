@@ -1235,5 +1235,15 @@
   "Footer": "Altbilgi",
   "Applies to every page in this workspace.": "Bu çalışma alanındaki her sayfaya uygulanır.",
   "Change not applied: space occupied": "Değişiklik uygulanmadı: alan dolu",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Bu konum veya boyut başka bir öğeyle çakışır. Önceki düzen korundu. Öğeyi boş bir alana taşıyın veya küçültün."
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Bu konum veya boyut başka bir öğeyle çakışır. Önceki düzen korundu. Öğeyi boş bir alana taşıyın veya küçültün.",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "İsteğe bağlı: Gönderenin bu bültenini geliştirmesine yardımcı olmak için e-posta açılışlarımı ve bağlantı tıklamalarımı ölçmeye onay veriyorum. Bu onayımı her e-postada abonelikten çıkmadan geri çekebilirim.",
+  "Email tracking preferences": "E-posta takibi tercihleri",
+  "Disable tracking and keep my subscription": "Takibi devre dışı bırak ve aboneliğimi elinde tut",
+  "I consent to email tracking": "E-posta takibine onay veriyorum",
+  "Tracking preference saved. Your subscription is unchanged.": "İzleme tercihi kaydedildi. Aboneliğiniz değişmedi.",
+  "Current setting: enabled": "Mevcut ayar: etkin",
+  "Current setting: disabled": "Mevcut ayar: devre dışı bırakılmış",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "Açılış ve tıklamalar e-posta istemcisi proxy'leri ve otomatik tarayıcılar tarafından etkilenebilir.",
+  "Consented": "Onay",
+  "Disabled": "Engelli"
 }

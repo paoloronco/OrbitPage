@@ -1235,5 +1235,15 @@
   "Footer": "Stopka",
   "Applies to every page in this workspace.": "Dotyczy każdej strony w tym obszarze roboczym.",
   "Change not applied: space occupied": "Zmiana nie została zastosowana: miejsce zajęte",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Ta pozycja lub rozmiar spowodowałyby nakładanie się na inny element. Zachowano poprzedni układ. Przenieś element w wolne miejsce lub go zmniejsz."
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Ta pozycja lub rozmiar spowodowałyby nakładanie się na inny element. Zachowano poprzedni układ. Przenieś element w wolne miejsce lub go zmniejsz.",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "Opcjonalnie: wyrażam zgodę na mierzenie liczby otwartych e-maili i kliknięć w linki, aby pomóc nadawcy ulepszyć ten newsletter. Mogę wycofać tę zgodę w każdym mailu bez rezygnacji z subskrypcji.",
+  "Email tracking preferences": "Preferencje śledzenia poczty elektronicznej",
+  "Disable tracking and keep my subscription": "Wyłącz śledzenie i zachowaj subskrypcję",
+  "I consent to email tracking": "Wyrażam zgodę na śledzenie e-maili",
+  "Tracking preference saved. Your subscription is unchanged.": "Preferencja śledzenia zapisana. Twoja subskrypcja pozostaje bez zmian.",
+  "Current setting: enabled": "Aktualne ustawienia: włączone",
+  "Current setting: disabled": "Obecne ustawienie: wyłączone",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "Otwarcia i kliknięcia mogą być wpływane przez proxy klientów poczty oraz automatyczne skanery.",
+  "Consented": "Zgoda",
+  "Disabled": "Niepełnosprawność"
 }

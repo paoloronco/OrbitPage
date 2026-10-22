@@ -3,6 +3,8 @@ import nodemailer from 'nodemailer';
 import { z } from 'zod';
 import { dbAll, dbGet, dbRun, withImmediateTransaction } from '../database.js';
 
+const TRACKING_CONSENT_VERSION = '2026-10-21';
+const trackingAllowed = (row) => row?.status === 'active' && Boolean(row.confirmed_at && row.tracking_consent_at && row.tracking_consent_id) && row.tracking_consent_version === TRACKING_CONSENT_VERSION;
 const now = () => new Date().toISOString();
 const ports = [465, 587, 2525];
 const header = (max) => z.string().trim().min(1).max(max).refine((value) => !/[\r\n]/.test(value));
@@ -34,7 +36,7 @@ export const subscriberSchema = z.object({
   source: z.enum(['manual', 'import']).default('manual'),
 }).strict();
 export const publicSubscriberSchema = z.object({
-  email, name: optionalHeader(100).default(''), consent: z.literal(true),
+  email, name: optionalHeader(100).default(''), consent: z.literal(true), trackingConsent: z.boolean().default(false),
 }).strict();
 export const campaignSchema = z.object({
   campaignId: z.string().uuid().optional(), name: header(100), subject: header(160),
@@ -121,6 +123,9 @@ const publicSettings = (row) => ({
 const emptyStats = () => ({ attempted: 0, accepted: 0, rejected: 0, openedUnique: 0, clickedUnique: 0, unsubscribed: 0 });
 const subscriberDto = (row) => ({
   subscriberId: row.id, email: row.email, name: row.name, status: row.status, source: row.source,
+  trackingConsentAt: row.tracking_consent_at || null, trackingConsentVersion: row.tracking_consent_version || null,
+  trackingConsentId: row.tracking_consent_id || null,
+  trackingConsentSource: row.tracking_consent_source || null, trackingRevokedAt: row.tracking_revoked_at || null,
   consentAt: row.consent_at, confirmedAt: row.confirmed_at, unsubscribedAt: row.unsubscribed_at,
   createdAt: row.created_at, updatedAt: row.updated_at,
 });
@@ -218,7 +223,8 @@ export async function addSubscriber(raw) {
     (id, email, name, status, source, consent_at, confirmed_at, unsubscribed_at, created_at, updated_at)
     VALUES (?, ?, ?, 'active', ?, ?, ?, NULL, ?, ?)
     ON CONFLICT(email) DO UPDATE SET name=excluded.name, status='active', source=excluded.source,
-    consent_at=excluded.consent_at, confirmed_at=excluded.confirmed_at, unsubscribed_at=NULL, updated_at=excluded.updated_at`,
+    consent_at=excluded.consent_at, confirmed_at=excluded.confirmed_at, unsubscribed_at=NULL, updated_at=excluded.updated_at,
+    tracking_requested=0, tracking_consent_id=NULL, tracking_consent_at=NULL, tracking_consent_version=NULL, tracking_consent_source=NULL, tracking_revoked_at=excluded.updated_at`,
   [id, input.email, input.name || null, input.source, date, date, existing?.created_at || date, date]);
   return subscriberDto(await dbGet('SELECT * FROM newsletter_subscribers WHERE email = ?', [input.email]));
 }
@@ -295,29 +301,34 @@ export function emailDocument(campaign, subscriber, deliveryId, publicBase, sett
   const unsubscribeUrl = `${publicBase}/api/newsletter/public/unsubscribe?token=${encodeURIComponent(signNewsletterToken({
     action: 'unsubscribe', subscriberId: subscriber.id, campaignId: campaign.id,
   }, 365 * 86400))}`;
+  const tracking = trackingAllowed(subscriber);
+  const trackingUrl = `${publicBase}/newsletter/status?state=tracking&token=${encodeURIComponent(signNewsletterToken({
+    action: 'tracking', subscriberId: subscriber.id, consentAt: subscriber.consent_at,
+  }, 365 * 86400))}`;
   const openUrl = `${publicBase}/api/newsletter/public/open?token=${encodeURIComponent(signNewsletterToken({
     action: 'open', subscriberId: subscriber.id, campaignId: campaign.id, deliveryId,
   }, 365 * 86400))}`;
-  const ctaUrl = content.ctaUrl ? `${publicBase}/api/newsletter/public/click?token=${encodeURIComponent(signNewsletterToken({
+  const ctaUrl = tracking && content.ctaUrl ? `${publicBase}/api/newsletter/public/click?token=${encodeURIComponent(signNewsletterToken({
     action: 'click', subscriberId: subscriber.id, campaignId: campaign.id, deliveryId, url: content.ctaUrl,
-  }, 365 * 86400))}` : '';
+  }, 365 * 86400))}` : content.ctaUrl;
   const fonts = { system: 'Arial,Helvetica,sans-serif', editorial: 'Georgia,Times New Roman,serif', modern: 'Trebuchet MS,Arial,sans-serif' };
   const paragraphs = personalize(content.body, subscriber).split(/\n{2,}/).map((part) =>
     `<p style="margin:0 0 18px;line-height:1.65">${escapeHtml(part).replaceAll('\n', '<br>')}</p>`).join('');
-  const image = content.imageUrl
+  // Sender-controlled remote images can themselves track a recipient.
+  const image = tracking && content.imageUrl
     ? `<img src="${escapeHtml(content.imageUrl)}" alt="${escapeHtml(content.imageAlt)}" width="${content.containerWidth}" style="display:block;width:100%;height:auto;max-height:420px;object-fit:cover">` : '';
-  const logo = content.logoUrl
+  const logo = tracking && content.logoUrl
     ? `<p style="margin:0 0 24px;text-align:${content.textAlign}"><img src="${escapeHtml(content.logoUrl)}" alt="" width="144" style="display:inline-block;width:auto;max-width:144px;max-height:56px;height:auto"></p>` : '';
   const cta = content.ctaLabel && ctaUrl
     ? `<p style="margin:28px 0 8px;text-align:${content.textAlign}"><a href="${escapeHtml(ctaUrl)}" style="display:inline-block;padding:13px 20px;border-radius:${content.buttonRadius}px;background:${content.accentColor};color:${content.buttonTextColor};text-decoration:none;font-weight:700">${escapeHtml(content.ctaLabel)}</a></p>` : '';
   const persistentFooter = newsletterFooter(setting);
-  const footerText = [content.footerNote, persistentFooter.text].filter(Boolean).join('\n');
-  const footerHtml = [content.footerNote ? escapeHtml(content.footerNote) : '', persistentFooter.html].filter(Boolean).join('<br>');
+  const footerText = [content.footerNote, persistentFooter.text, `Email tracking preferences: ${trackingUrl}`].filter(Boolean).join('\n');
+  const footerHtml = [content.footerNote ? escapeHtml(content.footerNote) : '', persistentFooter.html, `<a href="${escapeHtml(trackingUrl)}">Email tracking preferences</a>`].filter(Boolean).join('<br>');
   return {
     unsubscribeUrl,
     subject: personalize(campaign.subject, subscriber),
     text: `${personalize(content.headline, subscriber)}\n\n${personalize(content.body, subscriber)}${content.ctaUrl ? `\n\n${content.ctaLabel}: ${content.ctaUrl}` : ''}\n\n${footerText}\nUnsubscribe: ${unsubscribeUrl}`,
-    html: `<!doctype html><html><body style="margin:0;background:${content.backgroundColor};color:${content.contentColor};font-family:${fonts[content.fontFamily]}"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(campaign.preheader)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:28px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:${content.containerWidth}px;background:${content.contentBackgroundColor};border-radius:${content.cornerRadius}px;overflow:hidden"><tr><td>${image}</td></tr><tr><td style="padding:34px;text-align:${content.textAlign}">${logo}<p style="margin:0 0 10px;color:${content.accentColor};font-size:12px;font-weight:700;text-transform:uppercase">${escapeHtml(content.eyebrow)}</p><h1 style="margin:0 0 20px;font-size:30px;line-height:1.15;color:${content.contentColor}">${escapeHtml(personalize(content.headline, subscriber))}</h1>${paragraphs}${cta}<p style="margin:34px 0 0;padding-top:20px;border-top:1px solid #e5e7eb;color:${content.contentColor};opacity:.72;font-size:12px;line-height:1.55">${footerHtml}<br><a href="${escapeHtml(unsubscribeUrl)}" style="color:${content.contentColor}">Unsubscribe</a></p></td></tr></table></td></tr></table><img src="${escapeHtml(openUrl)}" width="1" height="1" alt="" style="display:block;width:1px;height:1px"></body></html>`,
+    html: `<!doctype html><html><body style="margin:0;background:${content.backgroundColor};color:${content.contentColor};font-family:${fonts[content.fontFamily]}"><div style="display:none;max-height:0;overflow:hidden">${escapeHtml(campaign.preheader)}</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:28px 14px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:${content.containerWidth}px;background:${content.contentBackgroundColor};border-radius:${content.cornerRadius}px;overflow:hidden"><tr><td>${image}</td></tr><tr><td style="padding:34px;text-align:${content.textAlign}">${logo}<p style="margin:0 0 10px;color:${content.accentColor};font-size:12px;font-weight:700;text-transform:uppercase">${escapeHtml(content.eyebrow)}</p><h1 style="margin:0 0 20px;font-size:30px;line-height:1.15;color:${content.contentColor}">${escapeHtml(personalize(content.headline, subscriber))}</h1>${paragraphs}${cta}<p style="margin:34px 0 0;padding-top:20px;border-top:1px solid #e5e7eb;color:${content.contentColor};opacity:.72;font-size:12px;line-height:1.55">${footerHtml}<br><a href="${escapeHtml(unsubscribeUrl)}" style="color:${content.contentColor}">Unsubscribe</a></p></td></tr></table></td></tr></table>${tracking ? `<img src="${escapeHtml(openUrl)}" width="1" height="1" alt="" style="display:block;width:1px;height:1px">` : ""}</body></html>`,
   };
 }
 
@@ -345,12 +356,13 @@ export async function subscribe(raw) {
       const id = existing?.id || randomUUID();
       const date = now();
       await dbRun(`INSERT INTO newsletter_subscribers
-    (id, email, name, status, source, consent_at, confirmed_at, unsubscribed_at, created_at, updated_at)
-    VALUES (?, ?, ?, 'pending', 'public', ?, NULL, NULL, ?, ?)
+    (id, email, name, status, source, consent_at, confirmed_at, unsubscribed_at, created_at, updated_at, tracking_requested, tracking_consent_policy_url, tracking_consent_version)
+    VALUES (?, ?, ?, 'pending', 'public', ?, NULL, NULL, ?, ?, ?, ?, ?)
     ON CONFLICT(email) DO UPDATE SET name=excluded.name, status='pending', source='public',
-    consent_at=excluded.consent_at, confirmed_at=NULL, unsubscribed_at=NULL, updated_at=excluded.updated_at`,
-      [id, input.email, input.name || null, date, existing?.created_at || date, date]);
-      const token = signNewsletterToken({ action: 'confirm', subscriberId: id }, 48 * 3600);
+    consent_at=excluded.consent_at, confirmed_at=NULL, unsubscribed_at=NULL, updated_at=excluded.updated_at,
+    tracking_requested=excluded.tracking_requested, tracking_consent_id=NULL, tracking_consent_at=NULL, tracking_consent_version=excluded.tracking_consent_version, tracking_consent_source=NULL, tracking_consent_policy_url=excluded.tracking_consent_policy_url`,
+      [id, input.email, input.name || null, date, existing?.created_at || date, date, input.trackingConsent ? 1 : 0, setting.privacy_policy_url, input.trackingConsent ? TRACKING_CONSENT_VERSION : null]);
+      const token = signNewsletterToken({ action: 'confirm', subscriberId: id, consentAt: date }, 48 * 3600);
       const confirmUrl = `${setting.public_origin}/api/newsletter/public/confirm?token=${encodeURIComponent(token)}`;
       const footer = newsletterFooter(setting);
       const client = await transport(setting);
@@ -371,17 +383,44 @@ export async function subscribe(raw) {
 }
 
 export async function confirmSubscription(token) {
-  const { subscriberId } = verifyNewsletterToken(token, 'confirm');
-  const result = await dbRun("UPDATE newsletter_subscribers SET status='active', confirmed_at=?, unsubscribed_at=NULL, updated_at=? WHERE id=? AND status='pending'", [now(), now(), subscriberId]);
+  const { subscriberId, consentAt } = verifyNewsletterToken(token, 'confirm');
+  const date = now();
+  const tracking = `tracking_requested=1 AND tracking_consent_version='${TRACKING_CONSENT_VERSION}'`;
+  const result = await dbRun(`UPDATE newsletter_subscribers SET status='active', confirmed_at=?, unsubscribed_at=NULL, updated_at=?,
+    tracking_consent_at=CASE WHEN ${tracking} THEN ? ELSE NULL END,
+    tracking_consent_version=CASE WHEN ${tracking} THEN ? ELSE NULL END,
+    tracking_consent_source=CASE WHEN ${tracking} THEN 'signup' ELSE NULL END,
+    tracking_consent_id=CASE WHEN ${tracking} THEN ? ELSE NULL END, tracking_requested=0
+    WHERE id=? AND status='pending' AND consent_at=?`, [date, date, date, TRACKING_CONSENT_VERSION, randomUUID(), subscriberId, consentAt || '']);
   if (!result.changes) throw new NewsletterError(400, 'NEWSLETTER_LINK_INVALID', 'This confirmation link is no longer valid.');
   return { confirmed: true };
 }
 
 export async function unsubscribe(token) {
   const { subscriberId, campaignId } = verifyNewsletterToken(token, 'unsubscribe');
-  const result = await dbRun("UPDATE newsletter_subscribers SET status='unsubscribed', unsubscribed_at=?, updated_at=? WHERE id=? AND status!='unsubscribed'", [now(), now(), subscriberId]);
+  const result = await dbRun("UPDATE newsletter_subscribers SET status='unsubscribed', unsubscribed_at=?, updated_at=?, tracking_consent_at=NULL, tracking_consent_version=NULL, tracking_requested=0, tracking_revoked_at=updated_at WHERE id=? AND status!='unsubscribed'", [now(), now(), subscriberId]);
   if (result.changes && campaignId) await incrementStat(dbRun, campaignId, 'unsubscribed');
   return { unsubscribed: true };
+}
+
+export async function trackingPreference(token, enabled) {
+  const { subscriberId, consentAt } = verifyNewsletterToken(token, 'tracking');
+  const setting = await settings();
+  return withImmediateTransaction(async (db) => {
+    const subscriber = await db.get('SELECT * FROM newsletter_subscribers WHERE id=?', [subscriberId]);
+    if (!subscriber || subscriber.status !== 'active' || !consentAt || consentAt !== subscriber.consent_at || !setting) {
+      throw new NewsletterError(410, 'NEWSLETTER_LINK_INVALID', 'This preference link is no longer valid.');
+    }
+    if (enabled !== undefined) {
+      const date = now();
+      await db.run(`UPDATE newsletter_subscribers SET tracking_consent_at=?, tracking_consent_version=?, tracking_consent_id=?,
+        tracking_consent_source=?, tracking_consent_policy_url=?, tracking_revoked_at=? WHERE id=?`,
+      [enabled ? (trackingAllowed(subscriber) ? subscriber.tracking_consent_at : date) : null,
+        enabled ? TRACKING_CONSENT_VERSION : null, enabled ? (trackingAllowed(subscriber) ? subscriber.tracking_consent_id : randomUUID()) : null, enabled ? 'preferences' : null,
+        setting.privacy_policy_url, enabled ? null : date, subscriberId]);
+    }
+    return { enabled: enabled ?? trackingAllowed(subscriber), privacyPolicyUrl: setting.privacy_policy_url };
+  });
 }
 
 function incrementStat(run, campaignId, field) {
@@ -395,17 +434,22 @@ export async function recordEvent(token, action) {
   if (!payload.campaignId || !payload.deliveryId) throw new NewsletterError(400, 'NEWSLETTER_TRACKING_INVALID', 'Invalid tracking link.');
   const field = action === 'open' ? 'opened_at' : 'clicked_at';
   const statsField = action === 'open' ? 'openedUnique' : 'clickedUnique';
+  const target = action === 'click' ? new URL(payload.url) : null;
+  if (target && (target.protocol !== 'https:' || target.username || target.password)) throw new NewsletterError(400, 'NEWSLETTER_TRACKING_INVALID', 'Invalid tracking link.');
   await withImmediateTransaction(async (db) => {
     const delivery = await db.get('SELECT * FROM newsletter_deliveries WHERE id=?', [payload.deliveryId]);
+    if (target) {
+      const campaign = await db.get('SELECT * FROM newsletter_campaigns WHERE id=?', [payload.campaignId]);
+      if (!campaign || !delivery || delivery.campaign_id !== payload.campaignId || delivery.subscriber_id !== payload.subscriberId
+        || JSON.parse(campaign.content).ctaUrl !== payload.url) throw new NewsletterError(410, 'NEWSLETTER_TRACKING_INVALID', 'This newsletter link is no longer available.');
+    }
+    const subscriber = await db.get('SELECT * FROM newsletter_subscribers WHERE id=?', [payload.subscriberId]);
+    if (!trackingAllowed(subscriber) || !delivery?.tracking_consent_id || delivery.tracking_consent_id !== subscriber.tracking_consent_id) return;
     if (!delivery || delivery.campaign_id !== payload.campaignId || delivery.subscriber_id !== payload.subscriberId || delivery[field]) return;
     await db.run(`UPDATE newsletter_deliveries SET ${field}=?, updated_at=? WHERE id=?`, [now(), now(), payload.deliveryId]);
     await incrementStat(db.run, payload.campaignId, statsField);
   });
-  if (action === 'click') {
-    const target = new URL(payload.url);
-    if (target.protocol !== 'https:') throw new NewsletterError(400, 'NEWSLETTER_TRACKING_INVALID', 'Invalid tracking link.');
-    return target.toString();
-  }
+  if (target) return target.toString();
 }
 
 let dispatching = false;
@@ -446,12 +490,14 @@ async function sendBatch(id) {
   }
   const client = await transport(setting, true);
   try {
-    for (const subscriber of recipients) {
+    for (const recipient of recipients) {
+      const subscriber = await dbGet("SELECT * FROM newsletter_subscribers WHERE id=? AND status='active'", [recipient.id]);
+      if (!subscriber) continue;
       const deliveryId = createHash('sha256').update(`${id}\0${subscriber.id}`).digest('hex');
       const date = now();
       const created = await dbRun(`INSERT OR IGNORE INTO newsletter_deliveries
-        (id, campaign_id, subscriber_id, email, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, 'sending', ?, ?)`, [deliveryId, id, subscriber.id, subscriber.email, date, date]);
+        (id, campaign_id, subscriber_id, email, status, created_at, updated_at, tracking_consent_at, tracking_consent_id)
+        VALUES (?, ?, ?, ?, 'sending', ?, ?, ?, ?)`, [deliveryId, id, subscriber.id, subscriber.email, date, date, trackingAllowed(subscriber) ? subscriber.tracking_consent_at : null, trackingAllowed(subscriber) ? subscriber.tracking_consent_id : null]);
       if (!created.changes) continue;
       const message = emailDocument(campaign, subscriber, deliveryId, setting.public_origin, setting);
       await incrementStat(dbRun, id, 'attempted');

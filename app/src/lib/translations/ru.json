@@ -1235,5 +1235,15 @@
   "Footer": "Подвал",
   "Applies to every page in this workspace.": "Применяется ко всем страницам в этом рабочем пространстве.",
   "Change not applied: space occupied": "Изменение не применено: место занято",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "При таком расположении или размере элемент перекроет другой элемент. Предыдущая компоновка сохранена. Переместите элемент в свободное место или уменьшите его."
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "При таком расположении или размере элемент перекроет другой элемент. Предыдущая компоновка сохранена. Переместите элемент в свободное место или уменьшите его.",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "По желанию: я соглашаюсь на измерение открытий и кликов по ссылкам на мои письма, чтобы помочь отправителю улучшить эту рассылку. Я могу отозвать это согласие в каждом письме без отписки.",
+  "Email tracking preferences": "Настройки отслеживания электронной почты",
+  "Disable tracking and keep my subscription": "Отключите отслеживание и оставьте мою подписку",
+  "I consent to email tracking": "Я согласен на отслеживание электронной почты",
+  "Tracking preference saved. Your subscription is unchanged.": "Отслеживание предпочтений сохранено. Ваша подписка не изменилась.",
+  "Current setting: enabled": "Текущая настройка: включена",
+  "Current setting: disabled": "Текущая настройка: отключена",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "Открытие и клики могут зависеть от прокси почтового клиента и автоматических сканеров.",
+  "Consented": "Согласие",
+  "Disabled": "Отключение"
 }

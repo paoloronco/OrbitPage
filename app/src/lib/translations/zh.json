@@ -1235,5 +1235,15 @@
   "Footer": "页脚",
   "Applies to every page in this workspace.": "适用于此工作区的每一页。",
   "Change not applied: space occupied": "更改未应用：空间已被占用",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "此位置或尺寸会与其他元素重叠。已保留原来的布局。请将元素移到空白区域或缩小元素。"
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "此位置或尺寸会与其他元素重叠。已保留原来的布局。请将元素移到空白区域或缩小元素。",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "可选：我同意测量我的邮件打开次数和链接点击量，以帮助发送者改进本通讯。我可以在每封邮件中撤回同意，无需取消订阅。",
+  "Email tracking preferences": "电子邮件追踪偏好",
+  "Disable tracking and keep my subscription": "关闭追踪功能，保留订阅",
+  "I consent to email tracking": "我同意电子邮件追踪",
+  "Tracking preference saved. Your subscription is unchanged.": "追踪偏好保存下来。你的订阅没有变化。",
+  "Current setting: enabled": "当前设置：启用",
+  "Current setting: disabled": "当前设置：禁用",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "打开和点击可能会受到电子邮件客户端代理和自动扫描器的影响。",
+  "Consented": "同意",
+  "Disabled": "已失效"
 }

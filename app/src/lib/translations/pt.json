@@ -1235,5 +1235,15 @@
   "Footer": "Rodapé",
   "Applies to every page in this workspace.": "Aplica-se a todas as páginas neste espaço de trabalho.",
   "Change not applied: space occupied": "Alteração não aplicada: espaço ocupado",
-  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Esta posição ou tamanho sobreporia outro elemento. O layout anterior foi mantido. Move o elemento para uma área livre ou reduz o seu tamanho."
+  "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Esta posição ou tamanho sobreporia outro elemento. O layout anterior foi mantido. Move o elemento para uma área livre ou reduz o seu tamanho.",
+  "Optional: I consent to measuring my email opens and link clicks to help the sender improve this newsletter. I can withdraw this consent in each email without unsubscribing.": "Opcional: Eu consento em medir as aberturas do meu e-mail e cliques nos links para ajudar o remetente a melhorar este boletim. Posso retirar esse consentimento em cada e-mail sem cancelar a inscrição.",
+  "Email tracking preferences": "Preferências de rastreamento de e-mails",
+  "Disable tracking and keep my subscription": "Desative o rastreamento e mantenha minha assinatura",
+  "I consent to email tracking": "Eu consento o rastreamento de e-mails",
+  "Tracking preference saved. Your subscription is unchanged.": "Acompanhamento de preferência salvo. Sua assinatura permanece inalterada.",
+  "Current setting: enabled": "Configuração atual: ativada",
+  "Current setting: disabled": "Configuração atual: desativado",
+  "Opens and clicks may be affected by email client proxies and automated scanners.": "Aberturas e cliques podem ser afetados por proxies de clientes de e-mail e scanners automatizados.",
+  "Consented": "Consentido",
+  "Disabled": "Deficiente"
 }
