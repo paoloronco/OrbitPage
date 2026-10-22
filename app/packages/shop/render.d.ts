@@ -30,7 +30,7 @@ export function shopPurchasePresentation(input: {
   appearance: ShopAppearance; theme?: Record<string, unknown>; shopUrl: string; title?: string;
 }): ShopPurchasePresentation;
 export function shopPolicyLinks(appearance: ShopAppearance, canonicalUrl: string): {
-  terms: string; digitalLicense: string; privacy: string; refunds: string; withdrawal: string;
+  terms: string; digitalLicense: string; privacy: string; cookies: string; refunds: string; withdrawal: string;
 };
 export function buildShopHomeLinks(input: {
   links: Array<Record<string, unknown>>; enabled: boolean; appearance: ShopAppearance;

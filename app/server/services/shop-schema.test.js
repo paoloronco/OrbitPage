@@ -29,9 +29,13 @@ describe('self-hosted shared Shop contracts', () => {
       expect(product.safeParse({ ...fixture, currency }).success).toBe(false);
     }
   });
-  it('keeps required policy links in a live Shop and omits them from fictional previews', () => {
+  it('shows only configured policies in a live Shop and omits them from fictional previews', () => {
     const input = { username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: normalizeShopAppearance({}), products: [], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' };
-    expect(renderShopHtml(input)).toContain('href="https://studio.example.test/shop/legal/terms"');
+    expect(renderShopHtml(input)).not.toContain('/shop/legal/');
+    const configured = { ...input, appearance: normalizeShopAppearance({ termsText: 'Seller terms', privacyUrl: 'https://studio.example.test/privacy' }) };
+    expect(renderShopHtml(configured)).toContain('href="https://studio.example.test/shop/legal#terms"');
+    expect(renderShopHtml(configured)).toContain('href="https://studio.example.test/privacy"');
+    expect(renderShopHtml(configured)).not.toContain('/shop/legal/privacy');
     expect(renderShopHtml({ ...input, previewOnly: true })).not.toMatch(/href="[^"]*\/shop\/legal/);
     expect(renderShopHtml({ ...input, scriptNonce: 'fixture-nonce' })).toContain('<script type="module" nonce="fixture-nonce">');
     expect(renderShopHtml({ ...input, scriptNonce: '\"<test>' })).toContain('nonce="&quot;&lt;test&gt;"');
@@ -77,6 +81,9 @@ describe('self-hosted shared Shop contracts', () => {
   it('preserves complete defaults and legacy appearance normalization', () => {
     const defaults = normalizeShopAppearance(null);
     expect(defaults.checkout).toEqual({ phone: false, billingAddress: 'auto', businessName: 'off', taxId: 'off', customFields: [] });
+    expect(defaults.productCardSize).toBe('medium');
+    expect(defaults.sellerNoticeAddon).toBe('');
+    expect(defaults.digitalContentConsentAddon).toBe('');
     expect(defaults.logoUrl).toBe(''); expect(defaults.sellerSelfCertified).toBe(false);
     expect(normalizeShopAppearance({ description: 'Prodotti digitali e servizi, acquistabili in modo sicuro.' })).toMatchObject({ locale: 'it', description: '' });
     expect(appearance.parse({ backLinkDescription: 'Old text' }).backLinkDescription).toBe('');
@@ -85,7 +92,8 @@ describe('self-hosted shared Shop contracts', () => {
     expect(appearance.parse({ logoUrl: '/uploads/logo.png' }).logoUrl).toBe('/uploads/logo.png');
     for (const input of [{ logoUrl: 'https://example.test/logo.png' }, { logoUrl: '/uploads/../secret' },
       { logoUrl: '/media/tenants/t/pages/p/upload/logo.png' }, { titleFontFamily: '</style><script>' },
-      { stripeSecretKey: 'never-public' }, { termsUrl: 'javascript:alert(1)' }]) {
+      { stripeSecretKey: 'never-public' }, { termsUrl: 'javascript:alert(1)' },
+      { productCardSize: 'huge' }, { sellerNoticeAddon: 'x'.repeat(501) }]) {
       expect(appearance.safeParse(input).success).toBe(false);
     }
     expect(renderShopDescription('<img src=x onerror=alert(1)>\n**Bold**')).toBe('<p>&lt;img src=x onerror=alert(1)&gt;</p><p><strong>Bold</strong></p>');

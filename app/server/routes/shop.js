@@ -81,7 +81,7 @@ export function createShopRouter({ publicBase, demoMode }) {
   router.post('/products', ...write, endpoint(req => saveShopProduct(req.body, base(req))));
   router.delete('/products/:id', ...write, endpoint(req => deleteShopProduct(req.params.id, base(req))));
   router.delete('/customers/:id', ...write, endpoint(req => deleteShopCustomer(req.params.id, base(req))));
-  router.post('/appearance', ...write, endpoint(req => saveShopAppearance(req.body, base(req))));
+  router.post('/appearance', ...write, endpoint(req => saveShopAppearance(req.body, base(req), req.query.compact === '1')));
   router.post('/publish', ...write, endpoint(req => setShopPublished(true, base(req))));
   router.post('/unpublish', ...write, endpoint(req => setShopPublished(false, base(req))));
   router.post('/uploads/reserve', ...write, endpoint(req => reserveShopUpload(req.body, base(req))));

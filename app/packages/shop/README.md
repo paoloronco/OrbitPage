@@ -16,6 +16,8 @@ its own uploaded-media paths. This preserves backend error handling and prevents
 the self-hosted upload rule from widening the hosted media boundary.
 
 `description.js` and `policies.js` own public formatting and legal navigation.
+Only configured policies are linked; checkout notices keep their fixed core
+copy and append any seller-provided note.
 `render.js` includes configured product covers as absolute image URLs in the
 catalog's structured data, using the same cover as the visible product card.
 Adapters with a nonce-based CSP can pass their request's `scriptNonce` for the

@@ -76,7 +76,7 @@ async function newProduct(input = digitalInput()) {
   return id;
 }
 async function newCheckout(productId, discount = 0, paid = true) {
-  await shop.createShopCheckout({ productId, sellerNoticeAcknowledged: true, sellerTermsAccepted: false, digitalContentConsent: true }, base);
+  await shop.createShopCheckout({ productId, sellerNoticeAcknowledged: true, sellerTermsAccepted: true, digitalContentConsent: true }, base);
   const session = [...provider.sessions.values()].at(-1);
   session.status = 'complete'; session.amount_total = session.amount_subtotal - discount; session.total_details.amount_discount = discount;
   session.payment_status = paid ? session.amount_total ? 'paid' : 'no_payment_required' : 'unpaid';
@@ -133,6 +133,7 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     const id = await newProduct();
     const appearance = { ...(await shop.shopSettings()).appearance, sellerSelfCertified: true, sellerEmail: 'seller@example.com', homeLinkEnabled: true };
     await shop.saveShopAppearance(appearance, base); await shop.setShopPublished(true, base);
+    await shop.saveShopAppearance({ ...(await shop.shopSettings()).appearance, termsText: 'Seller terms' }, base);
     const page = await request(app).get('/shop'); expect(page.status).toBe(200); expect(page.text).toContain('Synthetic PDF');
     expect((await request(app).get('/shop/legal/privacy')).status).toBe(200);
     expect((await request(app).get('/shop/legal/unknown')).status).toBe(404);
@@ -147,8 +148,15 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     expect(markdown.headers['content-type']).toContain('text/markdown');
     expect(markdown.headers['cache-control']).toBe('public, max-age=0, must-revalidate');
     expect((await db.dbGet('SELECT url FROM links WHERE id = ?', ['orbitpage-shop'])).url).toBe(`${base}/shop`);
-    const checkout = await request(app).post('/api/shop/checkout').type('form').send({ productId: id, priceCents: 1, sellerNoticeAcknowledged: 'accepted', digitalContentConsent: 'accepted' });
+    const rejectedCheckout = await request(app).post('/api/shop/checkout').type('form').send({ productId: id, priceCents: 1, sellerNoticeAcknowledged: 'accepted', digitalContentConsent: 'accepted' });
+    expect(rejectedCheckout.status).toBe(400);
+    expect(rejectedCheckout.body.code).toBe('SELLER_TERMS_ACCEPTANCE_REQUIRED');
+    const checkout = await request(app).post('/api/shop/checkout').type('form').send({ productId: id, priceCents: 1, sellerTermsAccepted: 'accepted', sellerNoticeAcknowledged: 'accepted', digitalContentConsent: 'accepted' });
     expect(checkout.status).toBe(303); expect(provider.creates.at(-1).input.line_items[0].price_data.unit_amount).toBe(1000);
+    const savedOrder = JSON.parse((await db.dbGet('SELECT data FROM shop_orders ORDER BY rowid DESC LIMIT 1')).data);
+    expect(savedOrder.sellerTermsAcceptedAt).toBeTruthy();
+    expect(savedOrder.sellerNoticeText).toContain('My legal rights depend on applicable law; this acknowledgement does not waive rights that cannot legally be waived.');
+    expect(savedOrder.digitalContentConsentText).toContain('lose my withdrawal right once the download begins');
     expect(provider.creates.at(-1).input.locale).toBe('en');
     expect(provider.creates.at(-1).input.payment_intent_data).not.toHaveProperty('application_fee_amount');
     const product = (await shop.shopProducts()).find(p => p.productId === id); expect(existsSync(shop.shopFilePath(product.files[0].id))).toBe(true);
@@ -312,7 +320,7 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
   it('allocates consecutive order numbers for simultaneous checkouts and keeps AI drafts private', async () => {
     const id = await newProduct({ type: 'service', title: 'Number fixture', description: 'Test order sequence', fulfillmentText: 'Contact the seller', priceCents: 1000, active: true });
     const before = (await shop.shopSettings()).lastOrderNumber;
-    await Promise.all(Array.from({ length: 3 }, () => shop.createShopCheckout({ productId: id, sellerNoticeAcknowledged: true, digitalContentConsent: false }, base)));
+    await Promise.all(Array.from({ length: 3 }, () => shop.createShopCheckout({ productId: id, sellerNoticeAcknowledged: true, sellerTermsAccepted: true, digitalContentConsent: false }, base)));
     const orders = (await shop.shopDashboard(base)).orders.filter(order => order.productTitle === 'Number fixture');
     expect(orders.map(order => order.orderNumber).sort((a, b) => a - b)).toEqual([before + 1, before + 2, before + 3]);
     const draft = { productId: randomUUID(), type: 'service', title: 'AI draft', description: 'Not available for purchase', priceCents: 1000 };
@@ -482,7 +490,7 @@ describe('automatic Stripe test-to-live transition', () => {
     const hook = operation === 'checkout' ? 'beforeCreate' : 'beforeRetrieve';
     provider[hook] = async () => { started(); await pending; };
     const work = operation === 'checkout'
-      ? shop.createShopCheckout({ productId, sellerNoticeAcknowledged: true, digitalContentConsent: true }, base)
+      ? shop.createShopCheckout({ productId, sellerNoticeAcknowledged: true, sellerTermsAccepted: true, digitalContentConsent: true }, base)
       : shop.reconcileShopPayment(order.orderId, session.id);
     const result = work.catch(error => error);
     await entered;

@@ -199,6 +199,8 @@ for (const width of [1440, 390]) {
       expect(await others()).toEqual(otherPositions);
       await page.keyboard.press('Escape');
       await page.mouse.up();
+      await expect(canvas).toBeVisible();
+      await expect(card).toBeVisible();
       expect(await position()).toEqual(before);
       if (width === 390 && browserName === 'chromium') {
         const cdp = await page.context().newCDPSession(page);

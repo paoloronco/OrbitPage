@@ -1,3 +1,4 @@
+import type { ShopAppearance } from "./schema.js";
 export const SHOP_POLICIES: readonly [
   { slug: 'terms'; title: 'Terms'; textField: 'termsText'; urlField: 'termsUrl' },
   { slug: 'digital-license'; title: 'Digital Product & License Terms'; textField: 'digitalLicenseText'; urlField: 'digitalLicenseUrl' },
@@ -8,3 +9,5 @@ export const SHOP_POLICIES: readonly [
 ];
 type ShopPolicy = typeof SHOP_POLICIES[number];
 export function shopPolicies(appearance: Record<ShopPolicy['textField' | 'urlField'], string>, shopUrl: string): Array<ShopPolicy & { text: string; url: string }>;
+export function shopSellerNotice(appearance: Pick<ShopAppearance, 'sellerType' | 'sellerNoticeAddon'>): string;
+export function shopDigitalContentConsent(appearance: Pick<ShopAppearance, 'digitalContentConsentAddon'>): string;

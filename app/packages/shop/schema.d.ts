@@ -1,5 +1,11 @@
 export const SHOP_CURRENCIES: readonly ["eur", "usd", "gbp", "chf", "cad", "aud", "nzd", "sek", "nok", "dkk", "pln", "czk", "sgd", "hkd", "inr", "brl", "mxn", "aed"];
+export const SHOP_PRODUCT_CARD_DIMENSIONS: {
+  readonly small: { readonly minWidth: 240; readonly rowHeight: 190; readonly listMaxWidth: 420 };
+  readonly medium: { readonly minWidth: 300; readonly rowHeight: 230; readonly listMaxWidth: 480 };
+  readonly large: { readonly minWidth: 360; readonly rowHeight: 270; readonly listMaxWidth: 560 };
+};
 export type ShopCurrency = typeof SHOP_CURRENCIES[number];
+export type ShopProductCardSize = keyof typeof SHOP_PRODUCT_CARD_DIMENSIONS;
 export type ShopAiDraft = { productId: string; type: "digital" | "service"; title: string; description: string; priceCents: number };
 export type ShopLocale = 'en' | 'it' | 'es' | 'fr' | 'de' | 'pt' | 'nl' | 'pl' | 'tr' | 'ru' | 'ar' | 'zh' | 'ja' | 'ko';
 export type ShopProductCardStyle = {
@@ -27,8 +33,10 @@ export type ShopAppearance = {
   buttonTextColor: string; cardBackground: string; cardTextColor: string; borderColor: string;
   cardEffect: 'solid' | 'transparent' | 'liquid-glass'; cardOpacity: number;
   cardRadius: number; shadowIntensity: number; layout: 'grid' | 'list'; alignment: 'left' | 'center';
+  productCardSize: ShopProductCardSize;
   showProductType: boolean; newsletterEnabled: boolean; homeLinkEnabled: boolean;
   homeLinkTitle: string; homeLinkDescription: string;
+  sellerNoticeAddon: string; digitalContentConsentAddon: string;
   sellerType: 'unset' | 'trader' | 'private'; sellerName: string; sellerEmail: string;
   sellerPhone: string; sellerAddress: string; sellerBusinessId: string;
   termsText: string; digitalLicenseText: string; privacyText: string; cookiePolicyText: string;

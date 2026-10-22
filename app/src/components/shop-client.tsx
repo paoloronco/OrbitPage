@@ -39,8 +39,8 @@ import { CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useS
 import { createPortal } from "react-dom";
 import { renderShopDescription, shopProductSummary, SHOP_SUMMARY_LIMIT, SHOP_DESCRIPTION_LIMIT } from "../../packages/shop/description.js";
 import { shopOrderLabel } from "../../packages/shop/orders.js";
-import { SHOP_POLICIES, shopPolicies } from "../../packages/shop/policies.js";
-import { SHOP_CURRENCIES, shopComplianceReady } from "../../packages/shop/schema.js";
+import { SHOP_POLICIES, shopDigitalContentConsent, shopPolicies, shopSellerNotice } from "../../packages/shop/policies.js";
+import { SHOP_CURRENCIES, SHOP_PRODUCT_CARD_DIMENSIONS, shopComplianceReady } from "../../packages/shop/schema.js";
 import type { ShopAppearance, ShopBuyerDetails, ShopEmailSettings } from "../../packages/shop/schema.js";
 import { ShopDescriptionField, ShopDialog, ShopHelp, ShopLogoDialog } from "./shop-editor-controls";
 type Locale = string;
@@ -93,6 +93,11 @@ type ShopThemePreview = {
   borderColor: string;
   cardRadius: number;
   fontFamily: string;
+};
+
+type ShopAppearanceSaveResult = {
+  appearance: ShopAppearance;
+  themePreview: ShopThemePreview;
 };
 
 type ShopOrder = {
@@ -432,7 +437,13 @@ function ShopStorefrontPreview({
 }) {
   const [detailsProductId, setDetailsProductId] = useState<string | null>(null);
   const detailsProduct = products.find((product) => product.productId === detailsProductId);
-  const digitalLicense = shopPolicies(appearance, publicUrl).find((policy) => policy.slug === "digital-license");
+  const shopLegalLinks = shopPolicies(appearance, publicUrl);
+  const purchasePolicies = shopLegalLinks.filter(({ slug }) =>
+    slug === "terms" || slug === "privacy" || slug === "refunds" || slug === "withdrawal" || slug === "digital-license"
+  );
+  const sellerNotice = shopSellerNotice(appearance);
+  const digitalContentConsent = shopDigitalContentConsent(appearance);
+  const cardDimensions = SHOP_PRODUCT_CARD_DIMENSIONS[appearance.productCardSize] || SHOP_PRODUCT_CARD_DIMENSIONS.medium;
   const title = appearance.showTitle !== false ? appearance.title : "";
   const description = appearance.showDescription !== false ? appearance.description : "";
   const compactHeader = !title && !description;
@@ -466,6 +477,8 @@ function ShopStorefrontPreview({
         "--shop-description-size": `${appearance.descriptionFontSize ?? 16}px`,
         "--shop-description-weight": appearance.descriptionFontWeight ?? 400,
         "--shop-description-color": appearance.descriptionColor || design.mutedColor,
+        "--shop-product-card-min-width": `${cardDimensions.minWidth}px`,
+        "--shop-product-card-row-height": `${cardDimensions.rowHeight}px`,
       } as CSSProperties}
     >
       <div className={`shop-preview-topbar${compactHeader ? " centered-logo" : ""}`}><button aria-label="Edit back link" className="shop-preview-back" disabled={disabled} onClick={onEditBackLink} type="button"><span>← {appearance.backLinkLabel || copy.back}</span></button><button aria-label="Edit shop logo" className="shop-preview-logo" disabled={disabled} onClick={onEditLogo} type="button">{appearance.logoUrl ? <img alt="Shop logo" src={new URL(appearance.logoUrl, publicUrl).toString()} /> : <><ShoppingCart aria-hidden="true" size={17} />{copy.shop}</>}</button>{compactHeader && search}</div>
@@ -511,7 +524,13 @@ function ShopStorefrontPreview({
         <div><strong>{copy.newsletterTitle}</strong><p>{copy.newsletterDescription}</p></div>
         <span>Email</span><b>{copy.subscribe}</b>
       </section>}
-      <footer className="shop-preview-footer"><nav aria-label="Shop policies">{shopPolicies(appearance, publicUrl).map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>{copy.securePayments} · OrbitPage</footer>
+      <footer className="shop-preview-footer">
+        <div className="shop-preview-seller">
+          <section><strong>Seller information{appearance.sellerName ? `: ${appearance.sellerName}` : ""}</strong>{appearance.sellerAddress && <span>{appearance.sellerAddress}</span>}{appearance.sellerPhone && <span>{appearance.sellerPhone}</span>}</section>
+          {appearance.sellerEmail && <section><strong>Email</strong><a href={`mailto:${appearance.sellerEmail}`}>{appearance.sellerEmail}</a></section>}
+        </div>
+        {shopLegalLinks.length > 0 && <nav aria-label="Shop policies">{shopLegalLinks.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}{copy.securePayments} · OrbitPage
+      </footer>
     </div>
     </ShopDeviceFrame>
       {detailsProduct && <ShopDialog className="shop-product-preview-dialog" onClose={() => setDetailsProductId(null)} title={detailsProduct.title} style={{
@@ -525,11 +544,10 @@ function ShopStorefrontPreview({
           <div className="shop-product-detail-description" dangerouslySetInnerHTML={{ __html: renderShopDescription(detailsProduct.description) }} />
           {detailsProduct.type === "digital" && <p className="shop-product-detail-files">{(detailsProduct.files?.length ? detailsProduct.files : detailsProduct.file ? [detailsProduct.file] : []).map((file) => file.filename).join(" · ")}</p>}
           <div className="shop-product-detail-checkout">
-            {detailsProduct.type === "digital" && digitalLicense && (appearance.digitalLicenseText || appearance.digitalLicenseUrl) && <p><a href={digitalLicense.url} rel="noreferrer" target="_blank">{digitalLicense.title}</a></p>}
-            <label><input disabled type="checkbox" /><span>{appearance.sellerType === "private"
-              ? "I understand that the page owner is the seller and has declared they are not a trader. EU consumer protection rights do not apply to this contract."
-              : "I understand that the page owner is the seller. Any seller policies shown on this page apply; my statutory rights are not waived."}</span></label>
-            {detailsProduct.type === "digital" && <label><input disabled type="checkbox" /><span>I expressly consent to immediate supply of the digital content and acknowledge that I lose my withdrawal right once the download begins.</span></label>}
+            {purchasePolicies.filter(({ slug }) => slug !== "digital-license" || detailsProduct.type === "digital").map((policy) => <p key={policy.slug}><a href={policy.url} rel="noreferrer" target="_blank">{policy.title}</a></p>)}
+            {appearance.termsText || appearance.termsUrl ? <label><input disabled type="checkbox" /><span>I have read and agree to the seller's Terms.</span></label> : null}
+            <label><input disabled type="checkbox" /><span>{sellerNotice}</span></label>
+            {detailsProduct.type === "digital" && <label><input disabled type="checkbox" /><span>{digitalContentConsent}</span></label>}
             <div className="shop-product-detail-price"><strong>{money(detailsProduct.priceCents, "en", appearance.currency)}</strong><button disabled type="button">{copy.buy}</button></div>
           </div>
           <footer className="shop-product-detail-edit"><button disabled={disabled} onClick={() => { onSelectProduct(detailsProduct.productId); setDetailsProductId(null); }} type="button">Edit product<ArrowUpRight size={16} /></button></footer>
@@ -674,6 +692,7 @@ export default function ShopClient({
   const [settingsTab, setSettingsTab] = useState<"compliance" | "coupons" | "stripe" | "calendar" | "checkout" | "email" | "info">("compliance");
   const [smtpDraft, setSmtpDraft] = useState<ShopEmailDraft | null>(null);
   const [themeMode, setThemeMode] = useState<"presets" | "custom">("presets");
+  const [personalizeSection, setPersonalizeSection] = useState<"shop" | "theme">("theme");
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
@@ -1069,12 +1088,11 @@ export default function ShopClient({
     setFeedback(null);
     try {
       if (!wasEnabled && appearance) {
-        const saved = await request<ShopDashboard>("/api/shop/appearance", {
+        const saved = await request<ShopAppearanceSaveResult>("/api/shop/appearance?compact=1", {
           method: "POST",
           body: JSON.stringify(appearance),
         });
-        setData(saved);
-        setAppearance(saved.shop?.appearance || appearance);
+        applySavedAppearance(saved);
         setPolicyDrafts({});
       }
       setData(await request<ShopDashboard>(`/api/shop/${wasEnabled ? "unpublish" : "publish"}`, { method: "POST", body: "{}" }));
@@ -1090,6 +1108,21 @@ export default function ShopClient({
     }
   }
 
+  function applySavedAppearance(result: ShopAppearanceSaveResult, preserveDraft = false) {
+    setData((current) => {
+      if (!current) return current;
+      const currencyChanged = current.shop?.appearance.currency !== result.appearance.currency;
+      return {
+        ...current,
+        products: currencyChanged ? current.products.map((product) => ({ ...product, currency: result.appearance.currency })) : current.products,
+        shop: current.shop ? { ...current.shop, appearance: result.appearance, themePreview: result.themePreview } : current.shop,
+      };
+    });
+    setAppearance((current) => preserveDraft && current
+      ? { ...current, ...shopIdentity(result.appearance) }
+      : result.appearance);
+  }
+
   async function saveAppearance(event?: FormEvent, legalProfile = false) {
     event?.preventDefault();
     if (!appearance) return;
@@ -1097,7 +1130,11 @@ export default function ShopClient({
     setAction("save-appearance");
     setFeedback(null);
     try {
-      if (deleteProfilePending && data?.shop?.enabled) setData(await request<ShopDashboard>("/api/shop/unpublish", { method: "POST", body: "{}" }));
+      let shopEnabled = Boolean(data?.shop?.enabled);
+      if (deleteProfilePending && shopEnabled) {
+        setData(await request<ShopDashboard>("/api/shop/unpublish", { method: "POST", body: "{}" }));
+        shopEnabled = false;
+      }
       let nextAppearance = appearance;
       if (logoFile) {
         const form = new FormData(); form.set("file", logoFile);
@@ -1105,19 +1142,18 @@ export default function ShopClient({
         nextAppearance = { ...appearance, logoUrl: result.logoUrl };
         setAppearance(nextAppearance); setLogoFile(null);
       }
-      const next = await request<ShopDashboard>("/api/shop/appearance", {
+      const saved = await request<ShopAppearanceSaveResult>("/api/shop/appearance?compact=1", {
         method: "POST",
         body: JSON.stringify(nextAppearance),
       });
-      setData(next);
-      setAppearance(next.shop?.appearance || nextAppearance);
+      applySavedAppearance(saved);
       setPolicyDrafts({});
       setDeleteProfilePending(false);
       setFeedback({
         type: "success",
         text: legalProfile
-          ? next.shop?.enabled ? "Legal profile saved and published." : "Legal profile saved."
-          : next.shop?.enabled ? "Shop settings saved and published." : "Shop settings saved. It will be used when you publish.",
+          ? shopEnabled ? "Legal profile saved and published." : "Legal profile saved."
+          : shopEnabled ? "Shop settings saved and published." : "Shop settings saved. It will be used when you publish.",
       });
       return true;
     } catch (error) {
@@ -1134,14 +1170,12 @@ export default function ShopClient({
     setFeedback(null);
     try {
       const nextAppearance = { ...data.shop.appearance, ...shopIdentity(draft) };
-      const next = await request<ShopDashboard>("/api/shop/appearance", {
+      const next = await request<ShopAppearanceSaveResult>("/api/shop/appearance?compact=1", {
         method: "POST", body: JSON.stringify(nextAppearance),
       });
-      const savedAppearance = next.shop?.appearance || nextAppearance;
-      setData(next);
-      setAppearance((current) => current ? { ...current, ...shopIdentity(savedAppearance) } : savedAppearance);
+      applySavedAppearance(next, true);
       setIdentityDialogOpen(false);
-      setFeedback({ type: "success", text: next.shop?.enabled ? "Shop title and description saved and published." : "Shop title and description saved." });
+      setFeedback({ type: "success", text: data?.shop?.enabled ? "Shop title and description saved and published." : "Shop title and description saved." });
     } finally {
       setAction(null);
     }
@@ -1417,11 +1451,16 @@ export default function ShopClient({
     <section className="shop-design-panel">
       <div className="shop-section-heading"><div><h3>Personalize</h3></div><button aria-label="Close personalization" className="shop-delete-button" disabled={action !== null} onClick={() => setView("products")} type="button"><X size={18} /></button></div>
 
+      <nav aria-label="Personalization sections" className="shop-settings-tabs">
+        <button aria-current={personalizeSection === "shop" ? "page" : undefined} onClick={() => setPersonalizeSection("shop")} type="button">Shop</button>
+        <button aria-current={personalizeSection === "theme" ? "page" : undefined} onClick={() => setPersonalizeSection("theme")} type="button">Theme</button>
+      </nav>
+      {personalizeSection === "theme" ? <>
       <label className="shop-setting-toggle">
         <ToggleSwitch aria-label="Use the page theme" checked={appearance.inheritPageTheme} onCheckedChange={(inheritPageTheme) => setAppearance((current) => current ? { ...current, inheritPageTheme } : current)} />
         <span><strong>Use the page theme</strong><small>Keep colors and typography consistent with your main OrbitPage.</small></span>
       </label>
-      <fieldset aria-label="Shop customization options" className="shop-customization-options" disabled={appearance.inheritPageTheme}>
+      <fieldset aria-label="Theme customization options" className="shop-customization-options" disabled={appearance.inheritPageTheme}>
       <nav aria-label="Theme options" className="shop-settings-tabs"><button aria-current={themeMode === "presets" ? "page" : undefined} onClick={() => setThemeMode("presets")} type="button">Themes</button><button aria-current={themeMode === "custom" ? "page" : undefined} onClick={() => setThemeMode("custom")} type="button">Custom theme</button></nav>
       {themeMode === "presets" ? <div className="shop-theme-presets">{SHOP_THEMES.map(({ name, ...colors }) => <button aria-label={`${name} theme`} key={name} onClick={() => setAppearance((current) => current ? { ...current, ...colors, inheritPageTheme: false } : current)} type="button"><span style={{ background: colors.pageBackground, color: colors.textColor }}><i style={{ background: colors.cardBackground, borderColor: colors.borderColor }} /><i style={{ background: colors.accentColor }} /></span><strong>{name}</strong></button>)}</div> : <>
       <div className="shop-color-grid">
@@ -1448,6 +1487,11 @@ export default function ShopClient({
         <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show product type" checked={appearance.showProductType} onCheckedChange={(showProductType) => setAppearance((current) => current ? { ...current, showProductType } : current)} size="small" /><span><strong>Show product type</strong><small>Display “digital download” or “service” above each item.</small></span></label>
       </div></>}
 
+      </fieldset></> : <>
+      <div className="shop-design-section shop-shop-options">
+        <div><strong>Product cards</strong><small>Choose the default size for every product. Individual card styles stay unchanged.</small></div>
+        <label><span>Card size</span><select onChange={(event) => setAppearance((current) => current ? { ...current, productCardSize: event.target.value as ShopAppearance["productCardSize"] } : current)} value={appearance.productCardSize || "medium"}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+      </div>
       <div className="shop-design-section shop-home-link-section">
         <div className="shop-home-link-heading"><div><strong>Add Shop to Home</strong><small>Create a normal OrbitPage card that opens this shop.</small></div><Link2 size={20} /></div>
         <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show a Shop card on Home" checked={appearance.homeLinkEnabled} onCheckedChange={(homeLinkEnabled) => setAppearance((current) => current ? { ...current, homeLinkEnabled } : current)} size="small" /><span><strong>Show a Shop card on Home</strong><small>The card is added when the shop is online and removed when it is unpublished.</small></span></label>
@@ -1457,7 +1501,7 @@ export default function ShopClient({
         <div className="shop-home-link-heading"><div><strong>Newsletter signup</strong><small>Collect subscribers from the public Shop.</small></div><MailPlus size={20} /></div>
         <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show newsletter signup form" checked={appearance.newsletterEnabled} disabled={!data.newsletterComplianceReady} onCheckedChange={(newsletterEnabled) => setAppearance((current) => current ? { ...current, newsletterEnabled } : current)} size="small" /><span><strong>Show signup form</strong><small>{data.newsletterComplianceReady ? "Subscribers join the same audience used by Newsletter." : "Complete Newsletter compliance settings first."}</small></span></label>
       </div>
-      </fieldset>
+      </>}
     </section>
 
   </fieldset></form>;
@@ -1564,8 +1608,8 @@ export default function ShopClient({
           <a className="shop-provider-docs" href={documentationUrl("customer-details")} rel="noreferrer" target="_blank"><HelpCircle aria-hidden="true" size={14} /> Checkout documentation</a>
         </header>
         <fieldset disabled={action !== null}>
-          <div className="shop-option-grid">
-            <label><span>Shop currency</span><select aria-describedby="shop-currency-help" onChange={event => setAppearance(current => current ? { ...current, currency: event.target.value as ShopAppearance["currency"] } : current)} value={appearance.currency || "eur"}>{SHOP_CURRENCIES.map(currency => <option key={currency} value={currency}>{currency.toUpperCase()} — {new Intl.DisplayNames([locale], { type: "currency" }).of(currency.toUpperCase())}</option>)}</select><small id="shop-currency-help">Applies to all catalog prices, new payments and new fixed-amount coupons. Saving keeps the numeric prices without currency conversion. Existing orders, open checkouts and coupons keep their original currency. Stripe payout currency is managed in Stripe.</small></label>
+          <div className="shop-option-grid shop-checkout-options">
+            <label className="shop-checkout-currency"><span>Shop currency</span><select aria-describedby="shop-currency-help" onChange={event => setAppearance(current => current ? { ...current, currency: event.target.value as ShopAppearance["currency"] } : current)} value={appearance.currency || "eur"}>{SHOP_CURRENCIES.map(currency => <option key={currency} value={currency}>{currency.toUpperCase()} — {new Intl.DisplayNames([locale], { type: "currency" }).of(currency.toUpperCase())}</option>)}</select><small id="shop-currency-help">Applies to all catalog prices, new payments and new fixed-amount coupons. Saving keeps the numeric prices without currency conversion. Existing orders, open checkouts and coupons keep their original currency. Stripe payout currency is managed in Stripe.</small></label>
             <label>Name<select disabled value="required"><option value="required">Always required</option></select></label>
             <label>Email<select disabled value="required"><option value="required">Always required</option></select></label>
             <label>Phone number<select onChange={event => updateCheckout({ phone: event.target.value === "required" })} value={appearance.checkout.phone ? "required" : "off"}><option value="off">Not collected</option><option value="required">Required</option></select><small>Stripe requires a phone number when enabled.</small></label>
@@ -1573,6 +1617,11 @@ export default function ShopClient({
             <label>Business name<select onChange={event => updateCheckout({ businessName: event.target.value as ShopAppearance["checkout"]["businessName"] })} value={appearance.checkout.businessName}><option value="off">Not collected</option><option value="optional">Optional</option><option value="required">Required</option></select><small>Stripe may also request a business name with tax IDs.</small></label>
             <label>Tax ID / VAT number<select onChange={event => updateCheckout({ taxId: event.target.value as ShopAppearance["checkout"]["taxId"] })} value={appearance.checkout.taxId}><option value="off">Not collected</option><option value="optional">Optional</option><option value="if_supported">Required where supported by Stripe</option></select><small>Collection follows Stripe's supported billing countries.</small></label>
           </div>
+          <section className="shop-checkout-notices">
+            <div><h4>Checkout notices</h4><p className="shop-provider-muted">Required buyer acknowledgements stay fixed. Optional text is appended and shown to the customer before payment; it cannot replace the fixed notice.</p></div>
+            <label><span>Seller notice — optional addition</span><textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, sellerNoticeAddon: event.target.value } : current)} rows={3} value={appearance.sellerNoticeAddon || ""} /><small>Additional information shown with the seller-status acknowledgement. Do not suggest that mandatory customer rights are waived.</small></label>
+            <label><span>Digital delivery consent — optional addition</span><textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, digitalContentConsentAddon: event.target.value } : current)} rows={3} value={appearance.digitalContentConsentAddon || ""} /><small>Appended to the explicit consent shown for digital products only.</small></label>
+          </section>
           <div className="shop-checkout-fields-heading"><div><h4>Additional fields</h4><p className="shop-provider-muted">Up to three text or number fields for order references. Keep sensitive information out.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkout.customFields.length >= 3} onClick={() => updateCheckout({ customFields: [...appearance.checkout.customFields, { key: crypto.randomUUID().replaceAll("-", ""), label: "", type: "text", required: false }] })} type="button"><PackagePlus size={16} /> Add field</button></div>
           {appearance.checkout.customFields.length === 0 && <p className="shop-checkout-fields-empty">No additional fields. Customers see only the checkout details selected above.</p>}
           {appearance.checkout.customFields.map((field, index) => <div className="shop-option-grid shop-checkout-custom-field" key={field.key}>

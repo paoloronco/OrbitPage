@@ -1,6 +1,11 @@
 import { SHOP_SUMMARY_LIMIT, SHOP_DESCRIPTION_LIMIT } from "./description.js";
 // shortcut: Shop amounts use two decimals; add minor-unit handling before adding JPY or other currencies.
 export const SHOP_CURRENCIES = ["eur", "usd", "gbp", "chf", "cad", "aud", "nzd", "sek", "nok", "dkk", "pln", "czk", "sgd", "hkd", "inr", "brl", "mxn", "aed"];
+export const SHOP_PRODUCT_CARD_DIMENSIONS = {
+    small: { minWidth: 240, rowHeight: 190, listMaxWidth: 420 },
+    medium: { minWidth: 300, rowHeight: 230, listMaxWidth: 480 },
+    large: { minWidth: 360, rowHeight: 270, listMaxWidth: 560 },
+};
 export function isSafeShopBookingUrl(value) {
     if (!value)
         return true;
@@ -139,12 +144,15 @@ export function createShopSchemas(z, isOwnedLogo) {
         cardRadius: z.number().int().min(0).max(32).default(8),
         shadowIntensity: z.number().int().min(0).max(100).default(18),
         layout: z.enum(["grid", "list"]).default("grid"),
+        productCardSize: z.enum(["small", "medium", "large"]).default("medium"),
         alignment: z.enum(["left", "center"]).default("left"),
         showProductType: z.boolean().default(true),
         newsletterEnabled: z.boolean().default(false),
         homeLinkEnabled: z.boolean().default(false),
         homeLinkTitle: z.string().trim().min(1).max(70).default("Shop"),
         homeLinkDescription: z.string().trim().max(180).default(DEFAULT_SHOP_HOME_DESCRIPTION),
+        sellerNoticeAddon: z.string().trim().max(500).default(""),
+        digitalContentConsentAddon: z.string().trim().max(500).default(""),
         sellerType: z.enum(["unset", "trader", "private"]).default("unset"),
         sellerName: z.string().trim().max(120).default(""),
         sellerEmail: z.union([z.literal(""), z.string().trim().toLowerCase().max(254).email()]).default(""),

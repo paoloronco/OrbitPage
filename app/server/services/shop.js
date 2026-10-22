@@ -14,6 +14,7 @@ import { readStripeShopOverview, listStripeShopCoupons, createStripeShopCoupon, 
 import { validateShopFile, matchesShopFileSignature } from '../../packages/shop/files.js';
 import { renderShopHtml, renderShopMarkdown, shopPolicyLinks, resolvedShopDesign, buildShopHomeLinks, shopPurchasePresentation } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail, buildShopSellerEmail } from '../../packages/shop/email.js';
+import { shopDigitalContentConsent, shopSellerNotice } from '../../packages/shop/policies.js';
 
 export const SHOP_FILE_BYTES = 50 * 1024 * 1024;
 export const SHOP_MAX_PRODUCTS = 20;
@@ -282,7 +283,7 @@ export async function syncShopHome(base, previousAppearance) {
       [link.id, link.title, link.description || '', link.url, 'link', link.isActive ? 1 : 0, existingIds.has(link.id) ? index : -1, 1, link.size, link.icon, link.iconType, link.surfaceEffect]);
   }
 }
-export async function saveShopAppearance(raw, base) {
+export async function saveShopAppearance(raw, base, compact = false) {
   const appearance = shopAppearanceInputSchema.parse(raw);
   if (appearance.logoUrl && !fs.existsSync(join(shopDataDir, appearance.logoUrl.slice(1)))) fail(400, 'INVALID_SHOP_LOGO', 'Choose an uploaded Shop logo.');
   if (appearance.newsletterEnabled && !newsletterComplianceReady(await dbGet('SELECT * FROM newsletter_settings WHERE id=1'))) fail(409, 'NEWSLETTER_COMPLIANCE_REQUIRED', 'Complete Newsletter compliance settings before adding signup.');
@@ -295,6 +296,10 @@ export async function saveShopAppearance(raw, base) {
     }
     setting.appearance = appearance; setting.publicBase = base; await saveShopSettings(setting); await syncShopHome(base, previousAppearance);
   });
+  if (compact) {
+    const theme = await dbGet('SELECT full_config FROM theme_config WHERE id = 1');
+    return { appearance, themePreview: resolvedShopDesign(appearance, theme?.full_config ? JSON.parse(theme.full_config) : {}) };
+  }
   return shopDashboard(base);
 }
 export async function setShopPublished(enabled, base) {
@@ -449,11 +454,13 @@ export async function createShopCheckout(raw, base) {
   if (!setting.enabled || !product?.active || (product.type === 'digital' && !product.files.length)) fail(404, 'PRODUCT_NOT_FOUND', 'Product not found.');
   const appearance = normalizeShopAppearance(setting.appearance);
   if (!appearance.sellerSelfCertified || !input.sellerNoticeAcknowledged) fail(400, 'SELLER_NOTICE_REQUIRED', 'Confirm the seller notice before checkout.');
+  const policy = shopPolicyLinks(appearance, `${base}/shop`);
+  if (policy.terms && !input.sellerTermsAccepted) fail(400, 'SELLER_TERMS_ACCEPTANCE_REQUIRED', 'Accept the seller terms before checkout.');
   if (product.type === 'digital' && !input.digitalContentConsent) fail(400, 'DIGITAL_CONTENT_CONSENT_REQUIRED', 'Consent to immediate digital delivery before checkout.');
   const { client, config } = await shopStripe();
   if (!config.webhookSecret || !setting.stripe?.ready || config.livemode !== setting.stripe.livemode) fail(409, 'SHOP_NOT_READY', 'This shop cannot accept payments yet.');
   await assertShopSetup(setting);
-  const orderId = randomUUID(), timestamp = now(), policy = shopPolicyLinks(appearance, `${base}/shop`);
+  const orderId = randomUUID(), timestamp = now();
   const order = { orderId, productId: product.productId, productType: product.type, productTitle: product.title,
     amountTotal: product.priceCents, amountSubtotal: product.priceCents, amountDiscount: 0, amountRefunded: 0,
     applicationFeeAmount: 0, applicationFeeRefunded: 0, currency: product.currency || 'eur', status: 'creating',
@@ -465,7 +472,9 @@ export async function createShopCheckout(raw, base) {
     sellerRefundPolicyText: appearance.refundPolicyText, sellerWithdrawalText: appearance.withdrawalText,
     sellerTermsUrl: policy.terms, sellerDigitalLicenseUrl: policy.digitalLicense, sellerPrivacyUrl: policy.privacy,
     sellerRefundPolicyUrl: policy.refunds, sellerWithdrawalUrl: policy.withdrawal,
-    sellerNoticeAcknowledgedAt: timestamp, sellerTermsAcceptedAt: input.sellerTermsAccepted ? timestamp : null,
+    sellerNoticeText: shopSellerNotice(appearance),
+    digitalContentConsentText: product.type === 'digital' ? shopDigitalContentConsent(appearance) : '',
+    sellerNoticeAcknowledgedAt: timestamp, sellerTermsAcceptedAt: policy.terms && input.sellerTermsAccepted ? timestamp : null,
     digitalContentConsentAt: product.type === 'digital' ? timestamp : null,
     deliveryTokenHash: hash(deliveryTokenForOrder(orderId)), deliveryExpiresAt: new Date(Date.now() + 30 * 86400_000).toISOString(), downloadCount: 0,
     deliveryFiles: product.type === 'digital' ? product.files : [],

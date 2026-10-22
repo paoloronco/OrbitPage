@@ -29,7 +29,8 @@ Create digital products or services, attach delivery files and choose the Shop c
 
 ## Appearance and language
 
-- Select **Personalize** to change layout, colors, fonts and cards, or enable **Use the page theme**.
+- Select **Personalize → Shop** to choose small, medium or large product cards and manage **Add Shop to Home** and **Newsletter signup**. These options are independent of the page theme.
+- Select **Personalize → Theme** to change layout, colors, fonts and card styling, or enable **Use the page theme**.
 - Click the preview title, introduction, logo or back link to edit it. **Apply** in a dialog adds the change to the shared **Save / Reset** flow.
 - **Save** persists pending Shop settings; **Reset** restores saved values. Save before refreshing or leaving.
 - Check desktop and mobile previews. Grid cards adapt to three, two or one column; list layout uses one column.
@@ -43,7 +44,7 @@ Create digital products or services, attach delivery files and choose the Shop c
 3. Add Terms, Privacy, Refunds and Withdrawal/contact policies. Complete Digital Product & License Terms and Cookie policy where applicable.
 4. For each policy, choose **Host in OrbitPage** and enter text, or **External** and provide an HTTPS link.
 5. Confirm the seller-responsibility acknowledgment and save.
-6. Check the public footer links. Hosted policies appear under `/shop/legal`; an unconfigured policy link returns 404.
+6. Check the public footer links. Seller details and the seller email appear side by side above the legal links on wider screens. Only policies with saved text or an external HTTPS URL are linked; unconfigured policies are omitted.
 
 Stripe account verification does not fill these fields. You remain responsible for your products, delivery, support, taxes, invoices and applicable disclosures. Collecting a tax ID does not calculate tax or generate an invoice.
 
@@ -103,6 +104,8 @@ Read the complete instructions in [Shop orders and customers](./shop-customers.m
 **Unpublish** stops new storefront sales while retaining products, orders, customers and eligible paid links. It does not refund payments. If Shop is the homepage, select another homepage first. Hiding a product also preserves past purchases. Newsletter signup uses its separate audience and consent settings.
 
 ## Checkout and immediate delivery
+
+Checkout shows the seller's configured Terms, Privacy, Refund, Withdrawal and (for digital products) Digital Product & License policies. Customers must accept the seller's Terms when configured, acknowledge the seller notice, and explicitly consent to immediate supply for digital products. In **Shop settings → Checkout**, optional seller wording can be appended to the fixed seller notice and digital-delivery consent; the fixed acknowledgements remain visible and cannot be replaced.
 
 Read the complete instructions in [Shop orders and customers](./shop-customers.md#checkout-and-immediate-delivery).
 

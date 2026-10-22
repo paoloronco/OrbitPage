@@ -301,7 +301,6 @@ export function PublicCardLayout({
     const gesture = gestureRef.current;
     if (!gesture || (event && gesture.pointerId !== event.pointerId)) return;
     resetGesture();
-    if (canvasRef.current?.hasPointerCapture(gesture.pointerId)) canvasRef.current.releasePointerCapture(gesture.pointerId);
     applyWorkingLayout(gesture.layout);
   };
 
