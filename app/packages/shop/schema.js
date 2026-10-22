@@ -146,6 +146,8 @@ export function createShopSchemas(z, isOwnedLogo) {
         layout: z.enum(["grid", "list"]).default("grid"),
         productCardSize: z.enum(["small", "medium", "large"]).default("medium"),
         alignment: z.enum(["left", "center"]).default("left"),
+        showCoverImages: z.boolean().default(true),
+        showDigitalProductBadge: z.boolean().default(true),
         showProductType: z.boolean().default(true),
         newsletterEnabled: z.boolean().default(false),
         homeLinkEnabled: z.boolean().default(false),

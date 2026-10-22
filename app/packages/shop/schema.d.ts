@@ -34,7 +34,7 @@ export type ShopAppearance = {
   cardEffect: 'solid' | 'transparent' | 'liquid-glass'; cardOpacity: number;
   cardRadius: number; shadowIntensity: number; layout: 'grid' | 'list'; alignment: 'left' | 'center';
   productCardSize: ShopProductCardSize;
-  showProductType: boolean; newsletterEnabled: boolean; homeLinkEnabled: boolean;
+  showCoverImages: boolean; showDigitalProductBadge: boolean; showProductType: boolean; newsletterEnabled: boolean; homeLinkEnabled: boolean;
   homeLinkTitle: string; homeLinkDescription: string;
   sellerNoticeAddon: string; digitalContentConsentAddon: string;
   sellerType: 'unset' | 'trader' | 'private'; sellerName: string; sellerEmail: string;

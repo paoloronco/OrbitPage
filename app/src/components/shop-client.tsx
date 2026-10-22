@@ -509,8 +509,8 @@ function ShopStorefrontPreview({
                 "--shop-product-preview-ink": cardStyle.textColor || design.cardTextColor,
               } as CSSProperties}
             >
-              {product.coverUrl && <img alt="" className="shop-preview-cover" src={new URL(product.coverUrl, publicUrl).toString()} />}
-              {appearance.showProductType && <small>{product.type === "digital" ? copy.digitalDownload : copy.service}</small>}
+              {appearance.showCoverImages && product.coverUrl && <img alt="" className="shop-preview-cover" src={new URL(product.coverUrl, publicUrl).toString()} />}
+              {appearance.showDigitalProductBadge && <small>{product.type === "digital" ? copy.digitalDownload : copy.service}</small>}
               <strong>{product.title}</strong>
               <div className="shop-preview-summary" dangerouslySetInnerHTML={{ __html: renderShopDescription(shopProductSummary(product)) }} />
               <div><b>{money(product.priceCents, "en", appearance.currency)}</b><span>{copy.buy}</span></div>
@@ -525,9 +525,17 @@ function ShopStorefrontPreview({
         <span>Email</span><b>{copy.subscribe}</b>
       </section>}
       <footer className="shop-preview-footer">
-        <div className="shop-preview-seller">
-          <section><strong>Seller information{appearance.sellerName ? `: ${appearance.sellerName}` : ""}</strong>{appearance.sellerAddress && <span>{appearance.sellerAddress}</span>}{appearance.sellerPhone && <span>{appearance.sellerPhone}</span>}</section>
-          {appearance.sellerEmail && <section><strong>Email</strong><a href={`mailto:${appearance.sellerEmail}`}>{appearance.sellerEmail}</a></section>}
+        <div className="shop-preview-seller-info">
+          <section className="shop-seller-info">
+            <strong>Seller information</strong>
+            {appearance.sellerName && <div className="shop-seller-name">{appearance.sellerName}</div>}
+            {appearance.sellerAddress && <div className="shop-seller-address">{appearance.sellerAddress}</div>}
+            {appearance.sellerPhone && <div className="shop-seller-phone">{appearance.sellerPhone}</div>}
+          </section>
+          {appearance.sellerEmail && <section className="shop-seller-email">
+            <strong>Email</strong>
+            <a href={`mailto:${appearance.sellerEmail}`}>{appearance.sellerEmail}</a>
+          </section>}
         </div>
         {shopLegalLinks.length > 0 && <nav aria-label="Shop policies">{shopLegalLinks.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}{copy.securePayments} · OrbitPage
       </footer>
@@ -1490,7 +1498,13 @@ export default function ShopClient({
       </fieldset></> : <>
       <div className="shop-design-section shop-shop-options">
         <div><strong>Product cards</strong><small>Choose the default size for every product. Individual card styles stay unchanged.</small></div>
-        <label><span>Card size</span><select onChange={(event) => setAppearance((current) => current ? { ...current, productCardSize: event.target.value as ShopAppearance["productCardSize"] } : current)} value={appearance.productCardSize || "medium"}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+        <div className="shop-card-size-selector">
+          <label className={appearance.productCardSize === "small" ? "selected" : ""}><input type="radio" name="productCardSize" checked={appearance.productCardSize === "small"} onChange={() => setAppearance((current) => current ? { ...current, productCardSize: "small" } : current)} />Small</label>
+          <label className={appearance.productCardSize === "medium" ? "selected" : ""}><input type="radio" name="productCardSize" checked={appearance.productCardSize === "medium"} onChange={() => setAppearance((current) => current ? { ...current, productCardSize: "medium" } : current)} />Medium</label>
+          <label className={appearance.productCardSize === "large" ? "selected" : ""}><input type="radio" name="productCardSize" checked={appearance.productCardSize === "large"} onChange={() => setAppearance((current) => current ? { ...current, productCardSize: "large" } : current)} />Large</label>
+        </div>
+        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show cover images" checked={appearance.showCoverImages} onCheckedChange={(showCoverImages) => setAppearance((current) => current ? { ...current, showCoverImages } : current)} size="small" /><span><strong>Show cover images</strong><small>Display cover image on product cards.</small></span></label>
+        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show digital product badge" checked={appearance.showDigitalProductBadge} onCheckedChange={(showDigitalProductBadge) => setAppearance((current) => current ? { ...current, showDigitalProductBadge } : current)} size="small" /><span><strong>Show digital product badge</strong><small>Display "digital download" or "service" above each item.</small></span></label>
       </div>
       <div className="shop-design-section shop-home-link-section">
         <div className="shop-home-link-heading"><div><strong>Add Shop to Home</strong><small>Create a normal OrbitPage card that opens this shop.</small></div><Link2 size={20} /></div>
