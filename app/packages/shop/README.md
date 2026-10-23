@@ -20,9 +20,12 @@ Only configured policies are linked; checkout notices keep their fixed core
 copy and append any seller-provided note.
 `render.js` includes configured product covers as absolute image URLs in the
 catalog's structured data, using the same cover as the visible product card.
-Cover visibility applies to cards and product dialogs. Product badges respect
-both `showDigitalProductBadge` and the legacy `showProductType` preference;
-the editor updates both together so existing hidden badges stay hidden.
+Cover visibility applies to cards, product dialogs and structured data. Digital
+badges respect `showDigitalProductBadge` and the legacy `showProductType` preference;
+enabling digital badges restores that legacy visibility setting. Hiding digital
+badges preserves service labels. Customer fields and configurable acknowledgements
+are validated server-side before creating Checkout; answers prefill Stripe and
+acknowledgement wording and choices are stored with the order.
 Adapters with a nonce-based CSP can pass their request's `scriptNonce` for the
 Shop interaction script; those responses must not be shared between requests.
 
