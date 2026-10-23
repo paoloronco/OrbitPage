@@ -6,7 +6,13 @@ Part of [Content and design](./content-and-design.md).
 
 ## Preview and navigation
 
-The menu opens with the mobile public preview, using the same phone and desktop frames as Shop. Use the device buttons to check desktop too. On a phone, device controls are below the site-section bar.
+The menu opens with the mobile public preview, using the same phone and desktop mockups as Page and Content. Use the device buttons to check desktop too. On a phone, device controls are below the site-section bar.
+
+## First-use setup
+
+An unused menu opens a full-page setup flow. Enter the venue name, optionally upload a logo, and choose the venue type and menu language. Restaurant, bar and café starters use categories in the selected language; **Other** starts with one editable category. Existing configured menus open directly in the editor.
+
+Rename, reorder, remove or add categories in the full-width category step. Add dishes or drinks inside each category using the regular item editor, then choose **Finish setup** to save everything. A failed save keeps the draft and allows a retry. Setup does not publish the menu; publication remains a separate action.
 
 ## Edit menu content
 
@@ -18,7 +24,7 @@ The menu opens with the mobile public preview, using the same phone and desktop 
 
 ## Sections and items
 
-Sections can have one level of subsections. Deletion asks for confirmation; deleting a section also removes its subsections and items. **Revert** in the saved notice restores the previous menu. Disable **Allow collapsing this section** in Edit section to keep that section open and hide its arrow. Item popups include prices, images, dietary tags, allergens, availability and featured state. Invalid names and failed saves keep your draft available for correction or retry.
+Sections can have one level of subsections. Deletion asks for confirmation; deleting a section also removes its subsections and items. **Revert** in the saved notice restores the previous menu. Edit section groups two independent switches in bordered panels: disable **Allow collapsing this section** to keep it open and hide its arrow, or disable **Show section number** to hide its 01, 02, 03 label. Existing sections keep both options enabled by default. Item popups include prices, images, dietary tags, allergens, availability and featured state. Invalid names and failed saves keep your draft available for correction or retry.
 
 ## Publish and link the menu
 

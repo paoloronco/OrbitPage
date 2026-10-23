@@ -12,6 +12,7 @@ it('preserves an optional logo through both menu contracts and normalization', (
 import { parseMenuCatalog } from '../../server/schemas/menu.schema.js';
 import {
   MENU_THEME_PRESETS, createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
+  menuStarterSections, needsMenuOnboarding,
 } from './menu';
 
 const luminance = (hex: string) => {
@@ -26,6 +27,34 @@ const contrast = (foreground: string, background: string) => {
 };
 
 describe('menu catalog normalization', () => {
+  it('seeds localized venue categories and preserves saved menus', () => {
+    expect(menuStarterSections('restaurant', 'it-IT').map(section => section.name)).toEqual(['Antipasti', 'Primi', 'Secondi', 'Contorni', 'Dolci']);
+    expect(menuStarterSections('bar', 'it-IT').map(section => section.name)).toEqual(['Birre', 'Cocktail', 'Vini', 'Analcolici']);
+    expect(menuStarterSections('bar', 'fr-CA')[0].name).toBe('Bières');
+    for (const locale of ['en', 'it', 'es', 'fr', 'de', 'pt', 'nl', 'pl', 'tr', 'ru', 'ar', 'zh', 'ja', 'ko']) {
+      for (const venue of ['restaurant', 'bar', 'cafe', 'other'] as const) {
+        const menu = { ...createDefaultMenu(venue), setupCompleted: true, sections: menuStarterSections(venue, locale) };
+        expect(parseOrbitPageMenu(menu)).toEqual(parseMenuCatalog(menu));
+      }
+    }
+    expect(needsMenuOnboarding(createDefaultMenu())).toBe(true);
+    for (const patch of [{ name: 'Custom venue' }, { updatedAt: '2026-10-23T00:00:00.000Z' }, { enabled: true }, { setupCompleted: true }, { sections: menuStarterSections('bar', 'it') }]) {
+      expect(needsMenuOnboarding({ ...createDefaultMenu(), ...patch })).toBe(false);
+    }
+  });
+  it('round-trips setup and section numbering while rejecting invalid booleans', () => {
+    const menu = createDefaultMenu('other');
+    menu.setupCompleted = true;
+    menu.sections[0].showNumber = false;
+    const payload = normalizeMenuCatalog(menu);
+    expect(parseOrbitPageMenu(payload)).toEqual(parseMenuCatalog(payload));
+    expect(payload.sections[0].showNumber).toBe(false);
+    expect(payload.setupCompleted).toBe(true);
+    for (const parse of [parseOrbitPageMenu, parseMenuCatalog]) {
+      expect(() => parse({ ...payload, setupCompleted: 'true' })).toThrow();
+      expect(() => parse({ ...payload, sections: [{ ...payload.sections[0], showNumber: 'false' }] })).toThrow();
+    }
+  });
   it('round-trips the optional collapse setting through both backend contracts', () => {
     const menu = createDefaultMenu();
     menu.sections[0].collapsible = false;

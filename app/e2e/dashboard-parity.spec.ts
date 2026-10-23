@@ -490,7 +490,7 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
 test('keeps Menu actions and mobile preview usable on phones', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 }); await openAuthenticatedAdmin(page); await openAdminSection(page, 'Menu');
   for(const label of ['Personalize','Add section','Add item']) await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
-  await expect(page.locator('.menu-preview-canvas .shop-device-frame.mobile')).toBeVisible();
+  await expect(page.locator('.menu-preview-canvas .admin-preview-device--mobile')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 });
 

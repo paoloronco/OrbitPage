@@ -1,5 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openAdminSection, openAuthenticatedAdmin, preservePageData } from './helpers';
+import { E2E_ADMIN_PASSWORD, openAdminSection, openAuthenticatedAdmin, preservePageData } from './helpers';
+import { createDefaultMenu, type MenuCatalog } from '../src/lib/menu';
+
+test.use({ reducedMotion: 'reduce' });
+
+async function seedMenu(page: Page, menu: MenuCatalog) {
+  const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+  const headers = { Authorization: `Bearer ${token}` };
+  expect((await page.request.put('/api/menu', { headers, data: menu })).ok()).toBeTruthy();
+}
 
 const itemDialog = (page: Page) => page.getByRole('dialog', { name: 'Edit item', exact: true });
 const sectionDialog = (page: Page) => page.getByRole('dialog', { name: 'Edit section', exact: true });
@@ -18,6 +27,48 @@ test.beforeEach(async ({ page }) => {
   restoreMenu = await preservePageData(page, ['/api/menu']);
 });
 test.afterEach(async () => { await restoreMenu?.(); });
+
+test('onboards a new venue full-page, edits localized categories and saves items with retry', async ({ page }, testInfo) => {
+  await seedMenu(page, { ...createDefaultMenu(), setupCompleted: false });
+  await page.reload(); await openAdminSection(page, 'Menu');
+  const setup = page.getByRole('region', { name: 'Set up your menu' });
+  await expect(setup).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Menu preview' })).toHaveCount(0);
+  await setup.getByRole('textbox', { name: 'Venue name', exact: true }).fill('Fictional Bar');
+  await setup.getByRole('combobox', { name: 'Venue type' }).selectOption('bar');
+  await setup.getByRole('combobox', { name: 'Menu language' }).selectOption('it-IT');
+  await expect(setup.getByLabel('Logo (optional)')).toHaveAttribute('accept', /image/);
+  await setup.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(setup.getByRole('textbox', { name: 'Category 1', exact: true })).toHaveValue('Birre');
+  await expect(setup.getByRole('textbox', { name: 'Category 3', exact: true })).toHaveValue('Vini');
+  await setup.getByRole('textbox', { name: 'Category 1', exact: true }).fill('Birre artigianali');
+  await setup.getByRole('button', { name: 'Move up 3', exact: true }).click();
+  await expect(setup.getByRole('textbox', { name: 'Category 2', exact: true })).toHaveValue('Vini');
+  await setup.getByRole('button', { name: 'Remove category 4', exact: true }).click();
+  await setup.getByRole('button', { name: 'Add category', exact: true }).click();
+  await setup.getByRole('textbox', { name: 'Category 4', exact: true }).fill('Snack');
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    if (width < 768) await expect(page.locator('.admin-dashboard-nav-stack')).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    await page.screenshot({ path: testInfo.outputPath(`menu-onboarding-categories-${width}.png`), fullPage: true });
+  }
+  await setup.getByRole('button', { name: 'Continue', exact: true }).click();
+  await setup.getByRole('button', { name: 'Add item to Birre artigianali', exact: true }).click();
+  await itemDialog(page).getByRole('textbox', { name: 'Name', exact: true }).fill('Birra della casa');
+  await itemDialog(page).getByRole('textbox', { name: 'Item price', exact: true }).fill('6,50');
+  await itemDialog(page).getByRole('button', { name: 'Apply', exact: true }).click();
+  await expect(setup.getByRole('button', { name: 'Birra della casa', exact: true })).toBeVisible();
+  await page.route('**/api/menu', async route => route.request().method() === 'PUT' ? route.fulfill({ status: 400, json: { error: 'Fictional setup save failure' } }) : route.fallback(), { times: 1 });
+  await setup.getByRole('button', { name: 'Finish setup', exact: true }).click();
+  await expect(setup.getByRole('alert')).toContainText('Fictional setup save failure');
+  await setup.getByRole('button', { name: 'Finish setup', exact: true }).click();
+  await expect(setup).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Edit Birra della casa' })).toBeVisible();
+  await page.reload(); await openAdminSection(page, 'Menu');
+  await expect(setup).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Edit Birra della casa' })).toBeVisible();
+});
 
 test('protects popup drafts, rejects empty names and preserves a failed menu save for retry', async ({ page }) => {
   await openAdminSection(page, 'Menu');
@@ -82,6 +133,9 @@ test('reorders only within sections, confirms deletions, and saves each action a
   await expect(short.locator('.orbitpage-menu-item h3')).toHaveText([salad, soup]);
   await short.locator('h2').getByRole('button', { name: shortName, exact: true }).click();
   await category.getByRole('switch', { name: 'Allow collapsing this section' }).click(); await apply(page);
+  await short.locator('h2').getByRole('button', { name: shortName, exact: true }).click();
+  await category.getByRole('switch', { name: 'Show section number' }).click(); await apply(page);
+  await expect(short.locator('.orbitpage-menu__section-heading > span')).toHaveCount(0);
   await expect(short.getByRole('button', { name: 'Collapse ' + shortName, exact: true })).toHaveCount(0);
   await page.reload(); await openAdminSection(page, 'Menu'); await expect(short.locator('.orbitpage-menu-item h3')).toHaveText([salad, soup]);
   await expect(short.getByRole('button', { name: 'Collapse ' + shortName, exact: true })).toHaveCount(0);
@@ -92,6 +146,7 @@ test('reorders only within sections, confirms deletions, and saves each action a
   const publicShort = page.locator('.orbitpage-menu__section').filter({ has: page.getByRole('heading', { name: shortName, exact: true }) });
   await expect(publicShort.locator('.orbitpage-menu-item h3')).toHaveText([salad, soup]);
   await expect(publicShort.locator('h2 button')).toHaveCount(0);
+  await expect(publicShort.locator('.orbitpage-menu__section-heading > span')).toHaveCount(0);
   await expect(page.locator('.menu-preview-actions')).toHaveCount(0);
   await page.goto('/admin'); await openAdminSection(page, 'Menu');
   await page.locator('.menu-preview-canvas').getByRole('button', { name: shortName, exact: true }).click();
@@ -143,7 +198,7 @@ test('keeps the preview, Personalize and dialogs usable from phones to laptops',
   }
 });
 
-test('matches Shop device geometry and keeps the surrounding canvas transparent', async ({ page }, testInfo) => {
+test('matches Page and Content device geometry and keeps the surrounding canvas transparent', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   await openAdminSection(page, 'Menu');
   await page.getByRole('button', { name: 'Add item', exact: true }).click();
@@ -153,13 +208,15 @@ test('matches Shop device geometry and keeps the surrounding canvas transparent'
     await page.setViewportSize({ width, height: 980 });
     for (const device of ['Mobile', 'Desktop']) {
       const frames = [];
-      for (const section of ['Shop', 'Menu']) {
+      for (const section of ['Page', 'Content', 'Menu']) {
         await openAdminSection(page, section);
         await page.getByRole('button', { name: `${device} preview`, exact: true }).click();
-        await expect(page.locator('.shop-device-viewport')).toHaveAttribute('data-preview-viewport-ready', 'true');
-        frames.push(await page.locator('.shop-device-hardware').evaluate(element => {
+        await expect(page.locator('.admin-preview-device__viewport:visible')).toHaveAttribute('data-preview-viewport-ready', 'true');
+        frames.push(await page.locator('.admin-preview-device__hardware:visible').evaluate(async element => {
+          await Promise.all(element.getAnimations().map(animation => animation.finished));
           const rect = element.getBoundingClientRect(), css = getComputedStyle(element);
-          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, radius: css.borderRadius, padding: css.padding, background: css.backgroundColor };
+          const screen = element.querySelector('.admin-preview-device__screen') as HTMLElement;
+          return { radius: css.borderRadius, padding: css.padding, background: css.backgroundColor, screenRatio: getComputedStyle(screen).aspectRatio, width: rect.width, height: rect.height };
         }));
         if (section === 'Menu') {
           await expect(page.locator('.menu-preview-canvas')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
@@ -175,6 +232,12 @@ test('matches Shop device geometry and keeps the surrounding canvas transparent'
         }
       }
       expect(frames[1]).toEqual(frames[0]);
+      // Each mockup fits its canvas; compare its chrome and proportions across editors.
+      const { width: _pageWidth, height: _pageHeight, ...pageChrome } = frames[0];
+      const { width: hardwareWidth, height, ...menuChrome } = frames[2];
+      expect(menuChrome).toEqual(pageChrome);
+      expect(hardwareWidth).toBeLessThanOrEqual(device === 'Mobile' ? 280 : 900);
+      if (device === 'Mobile') expect(height / hardwareWidth).toBeCloseTo(13 / 6, 2);
     }
   }
 });

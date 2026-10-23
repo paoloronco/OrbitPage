@@ -218,7 +218,7 @@ export function MenuView({ menu, pageHref = withBasePath('/'), selectedSectionId
               <section key={section.id} id={`menu-${section.id}`} className="orbitpage-menu__section">
                 <div className={`orbitpage-menu__section-heading${renderSectionActions ? ' menu-preview-section' : ''}`}>
                   {renderSectionActions?.(section.id)}
-                  <span>{String(sectionIndex + 1).padStart(2, '0')}</span>
+                  {section.showNumber !== false && <span>{String(sectionIndex + 1).padStart(2, '0')}</span>}
                   <div>
                     <h2>{renderSectionTitle(section, sectionOpen)}</h2>
                     {section.description && <p>{section.description}</p>}

@@ -17,6 +17,7 @@ const MenuSectionSchema = z.object({
   description: Text(240).optional(),
   visible: z.boolean(),
   collapsible: z.boolean().optional(),
+  showNumber: z.boolean().optional(),
   position: z.number().int().min(0).max(29),
 }).strict();
 
@@ -51,7 +52,8 @@ const DEFAULT_CONTENT_ROUTING = {
 export const MenuCatalogSchema = z.object({
   version: z.literal(1),
   enabled: z.boolean(),
-  venueType: z.enum(['restaurant', 'bar', 'cafe']),
+  venueType: z.enum(['restaurant', 'bar', 'cafe', 'other']),
+  setupCompleted: z.boolean().optional(),
   name: Text(120).min(1),
   description: Text(500),
   logoUrl: Text(2048).optional(),

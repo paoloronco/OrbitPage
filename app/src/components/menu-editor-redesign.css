@@ -294,3 +294,33 @@
 @container menu-workspace (max-width: 47.99rem) {
   .menu-unified-panel:not(.is-editing) .menu-unified-side { display: none; }
 }
+
+.menu-onboarding { width: 100%; min-width: 0; padding: clamp(18px, 3vw, 36px); border: 1px solid var(--admin-line); border-radius: 16px; background: var(--admin-surface); color: var(--admin-ink); }
+.menu-onboarding header > p { color: var(--admin-accent); font-weight: 700; }
+.menu-onboarding h2 { font-size: clamp(24px, 3vw, 34px); font-weight: 750; }
+.menu-onboarding ol { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: 24px 0; padding: 0; list-style: none; }
+.menu-onboarding ol li { display: flex; gap: 8px; align-items: center; color: var(--admin-secondary-copy); }
+.menu-onboarding ol li[aria-current] { color: var(--admin-accent); font-weight: 700; }
+.menu-onboarding ol li > span { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid currentColor; border-radius: 50%; }
+.menu-onboarding fieldset { display: grid; gap: 20px; min-width: 0; }
+.menu-onboarding h3 { font-size: 22px; font-weight: 700; }
+.menu-onboarding label { display: grid; gap: 8px; font-weight: 600; }
+.menu-onboarding-identity, .menu-section-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.menu-onboarding select { min-width: 0; width: 100%; padding: 10px; border: 1px solid var(--admin-line); border-radius: 6px; background: var(--admin-surface); }
+.menu-onboarding-categories { display: grid; gap: 12px; }
+.menu-onboarding-categories > div { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, 40px); gap: 8px; }
+.menu-onboarding-logo { display: flex; align-items: center; gap: 16px; }
+.menu-onboarding-logo img { width: 100px; height: 80px; object-fit: contain; }
+.menu-onboarding-items { padding: 18px; border: 1px solid var(--admin-line); border-radius: 10px; }
+.menu-onboarding-items h4 { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+.menu-onboarding-items li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 10px; }
+.menu-onboarding footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--admin-line); }
+.menu-section-collapse-setting { padding: 14px; border: 1px solid var(--admin-line); border-radius: 10px; background: var(--admin-canvas); }
+.menu-section-collapse-setting small { display: block; color: var(--admin-secondary-copy); }
+@media (max-width: 600px) {
+  .menu-onboarding-identity, .menu-section-settings { grid-template-columns: minmax(0, 1fr); }
+  .menu-onboarding-categories > div { grid-template-columns: minmax(0, 1fr) repeat(3, 32px); gap: 8px; padding: 10px; border: 1px solid var(--admin-line); border-radius: 8px; }
+  .menu-onboarding-categories input { grid-column: 1 / -1; }
+  .menu-onboarding-categories button:first-of-type { grid-column: 2; }
+  .menu-onboarding-categories button { width: 32px; }
+}

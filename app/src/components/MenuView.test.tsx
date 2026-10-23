@@ -4,6 +4,17 @@ import { createDefaultMenu } from '@/lib/menu';
 import { MenuView } from './MenuView';
 
 describe('MenuView subsections', () => {
+  it('hides numbers independently of section titles and collapsing', () => {
+    const menu = createDefaultMenu();
+    const render = () => renderToStaticMarkup(<MenuView menu={menu} onEditSection={() => {}} />);
+    expect(render()).toContain('<span>01</span>');
+    menu.sections[0].showNumber = false;
+    const html = render();
+    expect(html).not.toContain('<span>01</span>');
+    expect(html).toContain('<span>02</span>');
+    expect(html).toContain(menu.sections[0].name);
+    expect(html).toContain('Collapse Starters');
+  });
   it('renders the optional menu logo safely in the header', () => {
     const menu = { ...createDefaultMenu(), logoUrl: '/uploads/menu-logo.png' };
     const html = renderToStaticMarkup(<MenuView menu={menu} />);

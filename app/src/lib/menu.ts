@@ -40,7 +40,38 @@ const DEFAULT_SECTIONS: Record<MenuVenueType, Array<Pick<MenuSection, 'name' | '
     { name: 'Breakfast', description: 'Fresh every morning' },
     { name: 'Cold drinks', description: 'Refreshments and juices' },
   ],
+  other: [{ name: 'Menu', description: '' }],
 };
+
+const STARTER_CATEGORIES: Record<string, [string[], string[], string[], string[]]> = {
+  en: [['Starters', 'First courses', 'Main courses', 'Sides', 'Desserts'], ['Beers', 'Cocktails', 'Wines', 'Soft drinks'], ['Coffee', 'Breakfast', 'Cold drinks'], ['Menu']],
+  it: [['Antipasti', 'Primi', 'Secondi', 'Contorni', 'Dolci'], ['Birre', 'Cocktail', 'Vini', 'Analcolici'], ['Caffetteria', 'Colazione', 'Bevande fredde'], ['Menu']],
+  es: [['Entrantes', 'Primeros', 'Platos principales', 'Guarniciones', 'Postres'], ['Cervezas', 'Cócteles', 'Vinos', 'Sin alcohol'], ['Café', 'Desayuno', 'Bebidas frías'], ['Menú']],
+  fr: [['Entrées', 'Premiers plats', 'Plats principaux', 'Accompagnements', 'Desserts'], ['Bières', 'Cocktails', 'Vins', 'Sans alcool'], ['Café', 'Petit-déjeuner', 'Boissons fraîches'], ['Menu']],
+  de: [['Vorspeisen', 'Erste Gänge', 'Hauptgerichte', 'Beilagen', 'Desserts'], ['Biere', 'Cocktails', 'Weine', 'Alkoholfreie Getränke'], ['Kaffee', 'Frühstück', 'Kaltgetränke'], ['Speisekarte']],
+  pt: [['Entradas', 'Primeiros pratos', 'Pratos principais', 'Acompanhamentos', 'Sobremesas'], ['Cervejas', 'Cocktails', 'Vinhos', 'Sem álcool'], ['Café', 'Pequeno-almoço', 'Bebidas frias'], ['Menu']],
+  nl: [['Voorgerechten', 'Eerste gangen', 'Hoofdgerechten', 'Bijgerechten', 'Desserts'], ['Bieren', 'Cocktails', 'Wijnen', 'Alcoholvrij'], ['Koffie', 'Ontbijt', 'Koude dranken'], ['Menu']],
+  pl: [['Przystawki', 'Pierwsze dania', 'Dania główne', 'Dodatki', 'Desery'], ['Piwa', 'Koktajle', 'Wina', 'Bezalkoholowe'], ['Kawa', 'Śniadanie', 'Zimne napoje'], ['Menu']],
+  tr: [['Başlangıçlar', 'İlk yemekler', 'Ana yemekler', 'Garnitürler', 'Tatlılar'], ['Biralar', 'Kokteyller', 'Şaraplar', 'Alkolsüz içecekler'], ['Kahve', 'Kahvaltı', 'Soğuk içecekler'], ['Menü']],
+  ru: [['Закуски', 'Первые блюда', 'Основные блюда', 'Гарниры', 'Десерты'], ['Пиво', 'Коктейли', 'Вино', 'Безалкогольные напитки'], ['Кофе', 'Завтрак', 'Холодные напитки'], ['Меню']],
+  ar: [['مقبلات', 'أطباق أولى', 'أطباق رئيسية', 'أطباق جانبية', 'حلويات'], ['بيرة', 'كوكتيلات', 'نبيذ', 'مشروبات غير كحولية'], ['قهوة', 'فطور', 'مشروبات باردة'], ['القائمة']],
+  zh: [['开胃菜', '前菜', '主菜', '配菜', '甜点'], ['啤酒', '鸡尾酒', '葡萄酒', '无酒精饮品'], ['咖啡', '早餐', '冷饮'], ['菜单']],
+  ja: [['前菜', 'プリモ', 'メイン料理', 'サイド料理', 'デザート'], ['ビール', 'カクテル', 'ワイン', 'ノンアルコール'], ['コーヒー', '朝食', '冷たい飲み物'], ['メニュー']],
+  ko: [['애피타이저', '첫 번째 요리', '메인 요리', '사이드', '디저트'], ['맥주', '칵테일', '와인', '무알코올 음료'], ['커피', '아침 식사', '차가운 음료'], ['메뉴']],
+};
+
+export function menuStarterSections(venueType: MenuVenueType, locale: string): MenuSection[] {
+  const names = (STARTER_CATEGORIES[locale.split('-')[0]] || STARTER_CATEGORIES.en)[['restaurant', 'bar', 'cafe', 'other'].indexOf(venueType)];
+  return names.map((name, position) => ({ id: `section-${position + 1}`, name, visible: true, position }));
+}
+
+export function needsMenuOnboarding(menu: MenuCatalog) {
+  if (menu.setupCompleted !== undefined) return !menu.setupCompleted;
+  const defaults = createDefaultMenu();
+  return !menu.updatedAt && !menu.enabled && !menu.items.length && !menu.logoUrl
+    && menu.name === defaults.name && menu.description === defaults.description
+    && JSON.stringify(menu.sections) === JSON.stringify(defaults.sections);
+}
 
 function safeId(value: unknown, fallback: string) {
   const normalized = typeof value === 'string' ? value.trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) : '';
@@ -84,7 +115,7 @@ export function createDefaultMenu(venueType: MenuVenueType = 'restaurant'): Menu
     version: 1,
     enabled: false,
     venueType,
-    name: venueType === 'restaurant' ? 'Our menu' : venueType === 'bar' ? 'Drinks menu' : 'Café menu',
+    name: venueType === 'bar' ? 'Drinks menu' : venueType === 'cafe' ? 'Café menu' : 'Our menu',
     description: 'A concise selection, updated by the venue.',
     footerText: DEFAULT_ORBITPAGE_MENU_FOOTER,
     currency: 'EUR',
@@ -102,7 +133,7 @@ export function normalizeMenuCatalog(
   options: NormalizeMenuCatalogOptions = {},
 ): MenuCatalog {
   const input = value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
-  const venueType: MenuVenueType = input.venueType === 'bar' || input.venueType === 'cafe' ? input.venueType : 'restaurant';
+  const venueType: MenuVenueType = input.venueType === 'bar' || input.venueType === 'cafe' || input.venueType === 'other' ? input.venueType : 'restaurant';
   const fallback = createDefaultMenu(venueType);
   const editableText = (textValue: unknown, max: number, textFallback = '') => {
     if (!options.preserveTextEdges) return text(textValue, max, textFallback);
@@ -119,6 +150,7 @@ export function normalizeMenuCatalog(
       description: editableText(section.description, 240) || undefined,
       visible: section.visible !== false,
       ...(section.collapsible === false ? { collapsible: false } : {}),
+      ...(section.showNumber === false ? { showNumber: false } : {}),
       position: index,
     };
   });
@@ -184,6 +216,7 @@ export function normalizeMenuCatalog(
     version: 1,
     enabled: input.enabled === true,
     venueType,
+    ...(typeof input.setupCompleted === 'boolean' ? { setupCompleted: input.setupCompleted } : {}),
     name: editableText(input.name, 120, fallback.name),
     description: editableText(input.description, 500, fallback.description),
     ...(passiveMediaUrl(input.logoUrl) ? { logoUrl: passiveMediaUrl(input.logoUrl) } : {}),

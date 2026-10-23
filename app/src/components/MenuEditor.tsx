@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { MenuView } from './MenuView';
-import { ShopDeviceFrame } from './ShopDeviceFrame';
+import { PreviewDeviceFrame } from './LivePreview';
 import { Download, UploadCloud } from 'lucide-react';
 import { PreviewDeviceToggle, type PreviewDevice } from './PreviewDeviceToggle';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -23,7 +23,7 @@ import { optimizeImageForUpload } from '@/lib/image-upload';
 import { RASTER_IMAGE_ACCEPT } from '@/lib/media-validation';
 import { uploadApi } from '@/lib/api-client';
 import {
-  MENU_THEME_PRESETS, createDefaultMenu, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput,
+  MENU_THEME_PRESETS, formatMenuPriceInput, normalizeMenuCatalog, parseMenuPriceInput, menuStarterSections, needsMenuOnboarding,
   type MenuCatalog, type MenuItem, type MenuSection, type MenuThemePreset, type MenuVenueType,
 } from '@/lib/menu';
 import { useAppI18n } from '@/lib/i18n';
@@ -172,8 +172,15 @@ export function MenuEditor({
   menu, enabled, maxItems, advancedTheme,
   onSave, selectedPanel, onPanelChange, showOrbitPageBadge = true, brandingEditable = false,
 }: MenuEditorProps) {
-  const { tr } = useAppI18n();
-  const [draft, setDraft] = useState(() => normalizeMenuCatalog(menu, maxItems ?? 250));
+  const { tr, locale } = useAppI18n();
+  const [onboardingStep, setOnboardingStep] = useState<number | null>(() => needsMenuOnboarding(normalizeMenuCatalog(menu)) ? 0 : null);
+  const [seededFor, setSeededFor] = useState('');
+  const [draft, setDraft] = useState(() => {
+    const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
+    return needsMenuOnboarding(normalized) ? { ...normalized, name: '', locale: MENU_LOCALE_OPTIONS.find(option => option.value.startsWith(`${locale}-`))?.value || 'en-GB' } : normalized;
+  });
+  const setupHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { if (onboardingStep !== null) setupHeading.current?.focus(); }, [onboardingStep]);
   const [device, setDevice] = useState<PreviewDevice>('mobile');
   const deviceSlot = usePreviewDeviceSlot('[data-orbitpage-menu-preview-device-slot]');
   const [dialog, setDialog] = useState<'identity' | 'footer' | 'category' | 'item' | null>(null);
@@ -209,6 +216,7 @@ export function MenuEditor({
     setDialog(null);
   };
   const applyDialog = async () => {
+    if (onboardingStep !== null) { dialogSnapshot.current = null; setDialog(null); return; }
     if (await save()) { dialogSnapshot.current = null; setDialog(null); }
   };
   const selectedSection = useMemo(
@@ -221,8 +229,14 @@ export function MenuEditor({
   );
   useEffect(() => {
     const normalized = normalizeMenuCatalog(menu, maxItems ?? 250);
-    setDraft(normalized);
-  }, [menu, maxItems]);
+    if (!needsMenuOnboarding(normalized)) {
+      setOnboardingStep(null);
+      setDraft(normalized);
+    } else if (onboardingStep === null) {
+      setOnboardingStep(0);
+      setDraft(normalized);
+    }
+  }, [menu, maxItems, onboardingStep]);
 
 useEffect(() => () => {
     if (savedNoticeTimerRef.current !== null) window.clearTimeout(savedNoticeTimerRef.current);
@@ -306,15 +320,7 @@ useEffect(() => () => {
   };
 
   const changeVenueType = (venueType: MenuVenueType) => {
-    const seeded = createDefaultMenu(venueType);
-    update((current) => ({
-      ...current,
-      venueType,
-      name: current.items.length ? current.name : seeded.name,
-      description: current.items.length ? current.description : seeded.description,
-      sections: current.items.length ? current.sections : seeded.sections,
-      theme: current.items.length ? current.theme : seeded.theme,
-    }));
+    update((current) => ({ ...current, venueType }));
   };
 
   const updateItem = (id: string, patch: Partial<MenuItem>) => {
@@ -441,10 +447,13 @@ useEffect(() => () => {
                 }))}
               />
             </div>
-            <label className="menu-section-collapse-setting">
+            <div className="menu-section-settings"><label className="menu-section-collapse-setting">
               <Switch checked={section.collapsible !== false} aria-label={tr('Allow collapsing this section', 'Consenti di chiudere questa sezione')} onCheckedChange={(collapsible) => update((current) => ({ ...current, sections: current.sections.map((candidate) => candidate.id === section.id ? { ...candidate, collapsible } : candidate) }))} />
               <span>{tr('Allow collapsing this section', 'Consenti di chiudere questa sezione')}</span>
-            </label>
+            </label>{!nested && <label className="menu-section-collapse-setting">
+              <Switch checked={section.showNumber !== false} aria-label={tr('Show section number', 'Mostra numero sezione')} onCheckedChange={(showNumber) => update(current => ({ ...current, sections: current.sections.map(candidate => candidate.id === section.id ? { ...candidate, showNumber } : candidate) }))} />
+              <span>{tr('Show section number', 'Mostra numero sezione')} <small>01, 02, 03…</small></span>
+            </label>}</div>
             <div className="menu-category-editor__actions">
               <Button
                 type="button"
@@ -574,9 +583,9 @@ useEffect(() => () => {
   const identityFields = <>
         <section className="admin-panel space-y-5">
           <div className="menu-venue-switch" role="group" aria-label={tr("Venue type", "Tipo di locale")}>
-            {(['restaurant', 'bar', 'cafe'] as const).map((type) => (
+            {(['restaurant', 'bar', 'cafe', 'other'] as const).map((type) => (
               <button key={type} type="button" className={draft.venueType === type ? 'active' : ''} onClick={() => changeVenueType(type)}>
-                {type === 'cafe' ? 'Café' : type[0].toUpperCase() + type.slice(1)}
+                {type === 'restaurant' ? tr('Restaurant', 'Ristorante') : type === 'bar' ? 'Bar' : type === 'cafe' ? 'Café' : tr('Other', 'Altro')}
               </button>
             ))}
           </div>
@@ -617,11 +626,54 @@ useEffect(() => () => {
 
   const publicationButton = <button className="button primary" disabled={isDirty || saving || Boolean(uploadingItem)} title={isDirty ? tr('Save or revert your changes first.', 'Salva o annulla prima le modifiche.') : undefined} type="button" onClick={() => void save({ ...draft, enabled: !draft.enabled })}>{saving ? <OrbitLoader size={16} /> : draft.enabled ? <Download size={16} /> : <UploadCloud size={16} />}{draft.enabled ? tr('Unpublish', 'Rimuovi pubblicazione') : tr('Publish menu', 'Pubblica menu')}</button>;
   const previewControls = <div className="shop-preview-toolbar"><PreviewDeviceToggle value={device} onChange={setDevice} /><div className="shop-preview-publication">{publicationButton}</div></div>;
+  const setupLabels = [tr('Your venue', 'Il tuo locale'), tr('Categories', 'Categorie'), tr('Menu items', 'Piatti ed elementi')];
+  const setupReady = draft.name.trim() && draft.sections.every(section => section.name.trim());
+  const nextSetupStep = () => {
+    if (onboardingStep === 0) {
+      const seed = `${draft.venueType}:${draft.locale}`;
+      if (seed !== seededFor && !draft.items.length) {
+        update(current => ({ ...current, description: '', sections: menuStarterSections(current.venueType, current.locale) }));
+        setSeededFor(seed);
+      }
+    }
+    setOnboardingStep(step => (step ?? 0) + 1);
+  };
 
   return (
     <div className={"menu-editor-stack menu-editor-stack--visual"}>
       <div className="menu-editor-main shop-workspace">
         <>
+          {onboardingStep !== null ? <section className="menu-onboarding" aria-label={tr('Set up your menu', 'Configura il tuo menu')}>
+            <header><p>OrbitPage Menu</p><h2>{tr('Create your venue menu', 'Crea il menu del tuo locale')}</h2><ol aria-label={tr('Setup progress', 'Avanzamento configurazione')}>{setupLabels.map((label, index) => <li key={label} aria-current={onboardingStep === index ? 'step' : undefined}><span>{index + 1}</span>{label}</li>)}</ol></header>
+            {saveError && <p role="alert">{saveError}</p>}
+            <fieldset disabled={saving || Boolean(uploadingItem)}>
+            <h3 ref={setupHeading} tabIndex={-1}>{setupLabels[onboardingStep]}</h3>
+            {onboardingStep === 0 && <>
+              <label>{tr('Venue name', 'Nome del locale')}<Input maxLength={120} value={draft.name} onChange={event => update(current => ({ ...current, name: event.target.value }))} /></label>
+              <div className="menu-onboarding-identity">
+                <label>{tr('Venue type', 'Tipo di locale')}<select value={draft.venueType} onChange={event => changeVenueType(event.target.value as MenuVenueType)}><option value="restaurant">{tr('Restaurant', 'Ristorante')}</option><option value="bar">Bar</option><option value="cafe">Café</option><option value="other">{tr('Other', 'Altro')}</option></select></label>
+                <label>{tr('Menu language', 'Lingua del menu')}<select value={draft.locale} onChange={event => update(current => ({ ...current, locale: event.target.value }))}>{MENU_LOCALE_OPTIONS.map(option => <option key={option.value} value={option.value}>{tr(option.label, option.labelIt)}</option>)}</select></label>
+              </div>
+              <label>{tr('Logo (optional)', 'Logo (facoltativo)')}<Input type="file" accept={RASTER_IMAGE_ACCEPT} onChange={event => void uploadItemImage(event.target.files?.[0])} /></label>
+              {draft.logoUrl && <div className="menu-onboarding-logo"><img src={draft.logoUrl} alt={tr('Venue logo', 'Logo del locale')} /><Button variant="outline" onClick={() => update(current => ({ ...current, logoUrl: undefined }))}>{tr('Remove logo', 'Rimuovi logo')}</Button></div>}
+            </>}
+            {onboardingStep === 1 && <>
+              <p>{tr('We prepared categories for your venue and language. Rename, reorder or remove them, and add your own.', 'Abbiamo preparato le categorie per il tuo locale e la lingua scelta. Rinominale, riordinale, rimuovile o aggiungine altre.')}</p>
+              <div className="menu-onboarding-categories">{draft.sections.map((section, index) => <div key={section.id}>
+                <Input aria-label={`${tr('Category', 'Categoria')} ${index + 1}`} maxLength={80} value={section.name} onChange={event => update(current => ({ ...current, sections: current.sections.map(candidate => candidate.id === section.id ? { ...candidate, name: event.target.value } : candidate) }))} />
+                <Button variant="outline" size="icon" aria-label={`${tr('Move up', 'Sposta su')} ${index + 1}`} disabled={index === 0} onClick={() => update(current => ({ ...current, sections: moveMenuSection(current.sections, section.id, -1) }))}><ArrowUp /></Button>
+                <Button variant="outline" size="icon" aria-label={`${tr('Move down', 'Sposta giù')} ${index + 1}`} disabled={index === draft.sections.length - 1} onClick={() => update(current => ({ ...current, sections: moveMenuSection(current.sections, section.id, 1) }))}><ArrowDown /></Button>
+                <Button variant="outline" size="icon" aria-label={`${tr('Remove category', 'Rimuovi categoria')} ${index + 1}`} disabled={draft.sections.length <= 1 || draft.items.some(item => item.sectionId === section.id)} onClick={() => update(current => ({ ...current, sections: current.sections.filter(candidate => candidate.id !== section.id) }))}><Trash2 /></Button>
+              </div>)}</div>
+              <Button variant="outline" disabled={draft.sections.length >= 30} onClick={() => update(current => ({ ...current, sections: [...current.sections, { id: makeId('section'), name: '', visible: true, position: current.sections.length }] }))}><Plus />{tr('Add category', 'Aggiungi categoria')}</Button>
+            </>}
+            {onboardingStep === 2 && <>
+              <p>{tr('Add dishes or drinks inside each category. You can keep editing after setup.', 'Aggiungi piatti o bevande nelle categorie. Potrai continuare a modificarli dopo la configurazione.')}</p>
+              {draft.sections.map(section => <section key={section.id} className="menu-onboarding-items"><h4>{section.name}</h4><ul>{draft.items.filter(item => item.sectionId === section.id).map(item => <li key={item.id}><Button variant="outline" onClick={() => { setSelectedItemId(item.id); openDialog('item'); }}>{item.name}</Button><span>{formatMenuPriceInput(item.priceMinor, draft.locale)} {draft.currency}</span></li>)}</ul><Button variant="outline" disabled={maxItems !== null && draft.items.length >= maxItems} onClick={() => addItem(section.id)}><Plus />{tr('Add item to', 'Aggiungi elemento a')} {section.name}</Button></section>)}
+            </>}
+            </fieldset>
+            <footer>{onboardingStep > 0 && <Button variant="outline" disabled={saving || Boolean(uploadingItem)} onClick={() => setOnboardingStep(step => (step ?? 1) - 1)}>{tr('Back', 'Indietro')}</Button>}{onboardingStep < 2 ? <Button disabled={!setupReady || saving || Boolean(uploadingItem)} onClick={nextSetupStep}>{tr('Continue', 'Continua')}</Button> : <Button disabled={!setupReady || saving || Boolean(uploadingItem)} onClick={async () => { if (await save({ ...draft, setupCompleted: true, updatedAt: new Date().toISOString() })) setOnboardingStep(null); }}>{saving ? tr('Saving', 'Salvataggio') : tr('Finish setup', 'Completa configurazione')}</Button>}</footer>
+          </section> : <>
           {deviceSlot && createPortal(previewControls, deviceSlot)}
           <fieldset disabled={saving || Boolean(uploadingItem)} className={`menu-preview-toolbar shop-view-toolbar${deviceSlot ? " has-preview-slot" : ""}`}>
             <div className="shop-toolbar-left"><button className="shop-tool-button shop-personalize-button" aria-label={tr('Personalize', 'Personalizza')} title={tr('Personalize', 'Personalizza')} type="button" onClick={() => setActivePanel(activePanel === 'appearance' ? 'content' : 'appearance')} aria-expanded={activePanel === 'appearance'}><Palette size={18} /><span>{tr('Personalize', 'Personalizza')}</span></button></div>
@@ -629,14 +681,15 @@ useEffect(() => () => {
             <div className="shop-toolbar-right"><button className="button secondary compact shop-catalog-button" aria-label={tr('Add section', 'Aggiungi sezione')} disabled={draft.sections.length >= 30} type="button" onClick={addSection}><ListTree size={14} /><span>{tr('Add section', 'Aggiungi sezione')}</span></button><button className="button primary compact shop-add-product-button" aria-label={tr('Add item', 'Aggiungi elemento')} disabled={maxItems !== null && draft.items.length >= maxItems} type="button" onClick={() => addItem()}><Plus size={16} /><span>{tr('Add item', 'Aggiungi elemento')}</span></button>{!deviceSlot && <PreviewDeviceToggle value={device} onChange={setDevice} />}</div>
           </fieldset>
           <div className={`menu-preview-workspace${activePanel === 'appearance' ? ' has-personalize' : ''}`}>
-            <section className="menu-preview-canvas shop-storefront-canvas" aria-label={tr('Menu preview', 'Anteprima menu')}>
-              <ShopDeviceFrame device={device} publicUrl="/menu"><div className="admin-menu-live-preview"><MenuView renderItemActions={id => renderActions('item', id)} renderSectionActions={id => renderActions('section', id)} menu={draft} showOrbitPageBadge={draftBadge} onEditFooter={() => openDialog('footer')} onEditIdentity={() => openDialog('identity')} onEditSection={openCategoryEditor} onEditItem={id => { if (saving || uploadingItem) return; setSelectedItemId(id); openDialog('item'); }} /></div></ShopDeviceFrame>
+            <section className="menu-preview-canvas shop-storefront-canvas visual-site-editor__canvas" aria-label={tr('Menu preview', 'Anteprima menu')}>
+              <PreviewDeviceFrame device={device} publicPageHref="/menu"><div className="admin-menu-live-preview"><MenuView renderItemActions={id => renderActions('item', id)} renderSectionActions={id => renderActions('section', id)} menu={draft} showOrbitPageBadge={draftBadge} onEditFooter={() => openDialog('footer')} onEditIdentity={() => openDialog('identity')} onEditSection={openCategoryEditor} onEditItem={id => { if (saving || uploadingItem) return; setSelectedItemId(id); openDialog('item'); }} /></div></PreviewDeviceFrame>
             </section>
             {activePanel === 'appearance' && <aside className="menu-personalize" aria-label={tr('Personalize menu', 'Personalizza menu')}><header><h3>{tr('Personalize', 'Personalizza')}</h3><Button variant="ghost" size="icon" aria-label={tr('Close Personalize', 'Chiudi Personalizza')} onClick={() => setActivePanel('content')}><X className="h-4 w-4" /></Button></header><fieldset disabled={saving}>{appearanceFields}</fieldset></aside>}
           </div>
+          </>}
           <Dialog open={Boolean(dialog)} onOpenChange={open => { if (!open) cancelDialog(); }}>
             <DialogContent className="menu-editor-dialog orbitpage-admin" overlayClassName="menu-editor-dialog-overlay" dirty={popupDirty || Boolean(uploadingItem)} onEscapeKeyDown={event => { if (saving || uploadingItem) event.preventDefault(); }}>
-              <DialogHeader><DialogTitle>{dialog === 'identity' ? tr('Menu title and description', 'Titolo e descrizione menu') : dialog === 'footer' ? tr('Footer', 'Footer') : dialog === 'category' ? tr('Edit section', 'Modifica sezione') : tr('Edit item', 'Modifica elemento')}</DialogTitle><DialogDescription>{tr('Applying changes saves the menu automatically.', 'Applicando le modifiche, il menu viene salvato automaticamente.')}</DialogDescription></DialogHeader>
+              <DialogHeader><DialogTitle>{dialog === 'identity' ? tr('Menu title and description', 'Titolo e descrizione menu') : dialog === 'footer' ? tr('Footer', 'Footer') : dialog === 'category' ? tr('Edit section', 'Modifica sezione') : tr('Edit item', 'Modifica elemento')}</DialogTitle><DialogDescription>{onboardingStep !== null ? tr('Changes are saved when you finish setup.', 'Le modifiche vengono salvate al termine della configurazione.') : tr('Applying changes saves the menu automatically.', 'Applicando le modifiche, il menu viene salvato automaticamente.')}</DialogDescription></DialogHeader>
               {saveError && dialog && <p className="menu-dialog-error" role="alert">{saveError}</p>}
               <div className="menu-editor-dialog-body"><fieldset disabled={saving || Boolean(uploadingItem)} className="menu-editor-dialog-fields">
                 {dialog === 'identity' && identityFields}
@@ -650,7 +703,7 @@ useEffect(() => () => {
         </>
 
       </div>
-      {typeof document !== 'undefined' && (isDirty || saving || savedNotice) ? createPortal(
+      {onboardingStep === null && typeof document !== 'undefined' && (isDirty || saving || savedNotice) ? createPortal(
         <div className="admin-profile-save-layer">
           {saveError && !dialog && <p className="pointer-events-auto rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{saveError}</p>}
           {(isDirty || saving) && !dialog && (

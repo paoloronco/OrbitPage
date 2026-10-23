@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22.23.4-alpine AS builder
 
-LABEL org.opencontainers.image.version="4.21.139"
+LABEL org.opencontainers.image.version="4.21.140"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Self-hosted public page manager"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"

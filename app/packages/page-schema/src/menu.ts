@@ -19,6 +19,7 @@ const MenuSectionSchema = z.object({
   description: boundedString(240).trim().optional(),
   visible: z.boolean(),
   collapsible: z.boolean().optional(),
+  showNumber: z.boolean().optional(),
   position: z.number().int().min(0).max(29)
 }).strict();
 
@@ -77,7 +78,8 @@ export const DEFAULT_ORBITPAGE_CONTENT_ROUTING: OrbitPageContentRouting = {
 export const OrbitPageMenuSchema = z.object({
   version: z.literal(1),
   enabled: z.boolean(),
-  venueType: z.enum(["restaurant", "bar", "cafe"]),
+  venueType: z.enum(["restaurant", "bar", "cafe", "other"]),
+  setupCompleted: z.boolean().optional(),
   name: boundedString(120).trim().min(1),
   description: boundedString(500).trim(),
   logoUrl: boundedString(2_048).trim().optional(),

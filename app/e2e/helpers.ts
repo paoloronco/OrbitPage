@@ -41,6 +41,14 @@ export async function openAuthenticatedAdmin(page: Page) {
 
   await expect(page.locator('.admin-dashboard-shell')).toBeVisible();
   await expect(page.locator('.admin-dashboard-logo-copy strong')).toHaveText('OrbitPage');
+  // Dashboard fixtures start configured; the onboarding regression explicitly seeds setupCompleted: false.
+  const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+  const headers = { Authorization: `Bearer ${token}` };
+  const menu = await (await page.request.get('/api/menu', { headers })).json();
+  if (menu.setupCompleted === undefined) {
+    expect((await page.request.put('/api/menu', { headers, data: { ...menu, setupCompleted: true } })).ok()).toBeTruthy();
+    await page.reload();
+  }
 }
 
 export async function openAdminSection(page: Page, name: string) {
