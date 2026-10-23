@@ -1260,5 +1260,6 @@
   "Change not applied: space occupied": "変更は適用されませんでした：スペースが使用中です",
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "この位置またはサイズでは、他の要素と重なります。元のレイアウトを保持しました。要素を空いている場所に移動するか、小さくしてください。",
   "Loading profile, content and theme.": "プロフィール、コンテンツ、テーマを読み込み中。",
-  "Preparing your workspace": "ワークスペースの準備"
+  "Preparing your workspace": "ワークスペースの準備",
+  "Show copy button": "コピーボタンを表示"
 }

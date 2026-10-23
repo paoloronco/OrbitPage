@@ -67,6 +67,7 @@ const CommonBlockShape = {
   description: boundedString(2_000).nullable().optional(),
   url: OrbitPageHrefCandidateSchema.nullable().optional(),
   hideUrl: z.boolean().nullable().optional(),
+  showCopyButton: z.boolean().nullable().optional(),
   type: z.union([OrbitPageBlockTypeSchema, boundedString(40)]).optional(),
   icon: NullableString(2_048),
   iconType: z.enum(["emoji", "image", "svg"]).nullable().optional(),
@@ -386,6 +387,7 @@ export const OrbitPageBlockSchema = z.object({
   description: boundedString(2_000),
   url: OrbitPagePublicHrefSchema,
   hideUrl: z.boolean().optional(),
+  showCopyButton: z.boolean().optional(),
   type: OrbitPageBlockTypeSchema,
   icon: boundedString(2_048).nullable().optional(),
   iconType: z.enum(["emoji", "image", "svg"]).nullable().optional(),
@@ -448,6 +450,7 @@ function canonicalBlock(value: unknown, position: number, strict: boolean): Orbi
     description: input.description ?? "",
     url: canonicalBlockHref(type, content, input.url),
     ...(input.hideUrl !== undefined && input.hideUrl !== null ? { hideUrl: input.hideUrl } : {}),
+    ...(input.showCopyButton != null ? { showCopyButton: input.showCopyButton } : {}),
     type,
     ...(input.icon !== undefined ? { icon: input.icon } : {}),
     ...(input.iconType !== undefined || input.icon_type !== undefined

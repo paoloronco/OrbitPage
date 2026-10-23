@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { LinkSchema, LinksPayloadSchema } from './link.schema.js';
 
 describe('link schemas', () => {
+  it.each([undefined, false, true])('preserves the copy preference and rejects non-booleans (%s)', (showCopyButton) => {
+    expect(LinkSchema.parse({ id: 'copy', title: 'Website', showCopyButton }).showCopyButton).toBe(showCopyButton);
+    expect(() => LinkSchema.parse({ id: 'copy', title: 'Website', showCopyButton: 'true' })).toThrow();
+  });
+
   it('preserves separator arrangements on the standalone save and import boundary', () => {
     for (const linePosition of ['inline', 'above', 'below']) {
       const content = JSON.stringify({ boxed: true, linePosition });

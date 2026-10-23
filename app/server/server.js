@@ -608,6 +608,7 @@ const formatLinkPayload = (link) => {
     description: link.description || '',
     url: link.url || '',
     hideUrl: link.hide_url === 1,
+    showCopyButton: link.show_copy_button === 1,
     icon,
     iconType: link.icon_type || (icon ? 'image' : undefined),
     content: link.content || null,
@@ -3550,6 +3551,7 @@ app.get('/api/links/export', authenticateToken, requirePermission('links:write')
       title: link.title,
       description: link.description || '',
       url: link.url || '',
+      showCopyButton: link.show_copy_button === 1,
       type: link.type || 'link',
       icon: link.icon || null,
       iconType: link.icon_type || null,
@@ -3627,8 +3629,8 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             text_alignment, title_font_size, description_font_size,
             text_items, sort_order, is_active,
             click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone,
-            cover_image, cover_image_alt, availability
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            cover_image, cover_image_alt, availability, show_copy_button
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             link.id || String(index + 1),
             link.title,
@@ -3663,7 +3665,8 @@ app.post('/api/links/import', authenticateToken, requirePermission('links:write'
             link.timezone || null,
             link.coverImage || null,
             link.coverImageAlt || null,
-            link.availability === 'unavailable' ? 'unavailable' : 'available'
+            link.availability === 'unavailable' ? 'unavailable' : 'available',
+            link.showCopyButton === true ? 1 : 0,
           ]
         );
       }
@@ -3732,7 +3735,7 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
           : (link.ctaClicks || 0);
 
         await dbRun(
-          'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, surface_effect, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, surface_effect, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability, show_copy_button) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             linkId,
             link.title,
@@ -3767,7 +3770,8 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
             link.timezone || null,
             link.coverImage || null,
             link.coverImageAlt || null,
-            link.availability === 'unavailable' ? 'unavailable' : 'available'
+            link.availability === 'unavailable' ? 'unavailable' : 'available',
+            link.showCopyButton === true ? 1 : 0,
           ]
         );
       }
@@ -4051,7 +4055,7 @@ const persistAiLinks = async (transaction, input, permissions) => {
     const clickCount = savedClicks.has(linkId) ? savedClicks.get(linkId) : (link.clickCount || 0);
     const ctaClicks = savedCtaClicks.has(linkId) ? savedCtaClicks.get(linkId) : (link.ctaClicks || 0);
     await transaction.run(
-      'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, surface_effect, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO links (id, title, description, url, hide_url, icon, type, text_items, sort_order, is_active, background_color, text_color, surface_effect, size, icon_type, content, title_font_family, description_font_family, text_alignment, title_font_size, description_font_size, click_count, cta_action, cta_click_count, status, campaign_name, start_date, start_time, end_date, end_time, timezone, cover_image, cover_image_alt, availability, show_copy_button) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         linkId,
         link.title,
@@ -4087,6 +4091,7 @@ const persistAiLinks = async (transaction, input, permissions) => {
         link.coverImage || null,
         link.coverImageAlt || null,
         link.availability === 'unavailable' ? 'unavailable' : 'available',
+        link.showCopyButton === true ? 1 : 0,
       ],
     );
   }

@@ -4,6 +4,13 @@ import { expect, it } from "vitest";
 import { defaultTheme } from "@/lib/theme";
 import { ProfileSection } from "./ProfileSection";
 
+it.each([undefined, true, false])("shows the border color only when the image border is enabled (%s)", (avatarBorderEnabled) => {
+  const profile = { name: 'Example', bio: '', avatar: '', appearance: { avatarBorderEnabled, avatarBorderColor: '#123456' } };
+  const html = renderToStaticMarkup(<ProfileSection profile={profile} theme={defaultTheme} onProfileUpdate={() => {}} />);
+  expect(html.includes('Profile image border')).toBe(avatarBorderEnabled !== false);
+  expect(html.includes('Use theme')).toBe(avatarBorderEnabled !== false);
+});
+
 it("hides the page type choice in hosted pages while keeping studio details", () => {
   const profile = { name: "Orbit Studio", bio: "", avatar: "", appearance: { profilePreset: "studio" as const } };
   const html = renderToStaticMarkup(<ProfileSection profile={profile} theme={defaultTheme} onProfileUpdate={() => {}} pageTypeEditable={false} />);

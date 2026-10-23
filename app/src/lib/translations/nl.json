@@ -1260,5 +1260,6 @@
   "Change not applied: space occupied": "Wijziging niet toegepast: ruimte bezet",
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Met deze positie of grootte zou een ander element worden overlapt. De vorige indeling is behouden. Verplaats het element naar een vrije plek of maak het kleiner.",
   "Loading profile, content and theme.": "Profiel, inhoud en thema laden.",
-  "Preparing your workspace": "Uw werkruimte voorbereiden"
+  "Preparing your workspace": "Uw werkruimte voorbereiden",
+  "Show copy button": "Kopieerknop tonen"
 }

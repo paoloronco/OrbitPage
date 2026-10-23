@@ -1260,5 +1260,6 @@
   "Change not applied: space occupied": "更改未应用：空间已被占用",
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "此位置或尺寸会与其他元素重叠。已保留原来的布局。请将元素移到空白区域或缩小元素。",
   "Loading profile, content and theme.": "正在加载个人资料、内容和主题。",
-  "Preparing your workspace": "准备工作区"
+  "Preparing your workspace": "准备工作区",
+  "Show copy button": "显示复制按钮"
 }

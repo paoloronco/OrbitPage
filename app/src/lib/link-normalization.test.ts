@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { normalizeLinkDto, normalizeLinkDtos } from './link-normalization';
 
 describe('link normalization', () => {
+  it.each([undefined, false, true])('defaults copy to off and preserves an explicit preference (%s)', showCopyButton => {
+    expect(normalizeLinkDto({ id: 'copy', title: 'Website', showCopyButton }).showCopyButton).toBe(showCopyButton === true);
+  });
+
   it('normalizes mixed API link DTO shapes into LinkData', () => {
     expect(normalizeLinkDto({
       id: 42,
@@ -24,6 +28,7 @@ describe('link normalization', () => {
       hideUrl: true,
       type: 'link',
       icon: undefined,
+      showCopyButton: false,
       iconType: 'emoji',
       backgroundColor: undefined,
       textColor: undefined,

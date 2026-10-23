@@ -1260,5 +1260,6 @@
   "Change not applied: space occupied": "Изменение не применено: место занято",
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "При таком расположении или размере элемент перекроет другой элемент. Предыдущая компоновка сохранена. Переместите элемент в свободное место или уменьшите его.",
   "Loading profile, content and theme.": "Загрузка профиля, контента и темы.",
-  "Preparing your workspace": "Подготовка рабочего места"
+  "Preparing your workspace": "Подготовка рабочего места",
+  "Show copy button": "Показать кнопку копирования"
 }

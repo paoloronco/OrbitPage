@@ -13,6 +13,7 @@ function toLinkData(link: OrbitPageBlock): LinkData {
     description: link.description,
     url: link.url,
     hideUrl: link.hideUrl === true,
+    showCopyButton: link.showCopyButton === true,
     type: link.type,
     icon: emptyToUndefined(link.icon),
     iconType: link.iconType || undefined,

@@ -65,6 +65,7 @@ export interface LinkData {
   description: string;
   url: string;
   hideUrl?: boolean;
+  showCopyButton?: boolean;
   icon?: string;
   iconType?: 'emoji' | 'image' | 'svg';
   backgroundColor?: string;
@@ -1099,16 +1100,28 @@ export const LinkCard = ({
                             aria-label={serviceData.service ? `${serviceData.service} URL` : 'Destination URL'}
                             className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white"
                           />
-                          <div className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
-                            <div>
-                              <Label htmlFor={`show-url-${link.id}`} className="text-sm font-medium text-slate-900">Show URL on card</Label>
-                              <p className="mt-0.5 text-xs text-slate-500">The entire card stays clickable when hidden.</p>
+                          <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                            <div className="flex flex-1 items-center justify-between gap-4">
+                              <div>
+                                <Label htmlFor={`show-url-${link.id}`} className="text-sm font-medium text-slate-900">Show URL on card</Label>
+                                <p className="mt-0.5 text-xs text-slate-500">The entire card stays clickable when hidden.</p>
+                              </div>
+                              <Switch
+                                id={`show-url-${link.id}`}
+                                checked={editLink.hideUrl !== true}
+                                onCheckedChange={(checked) => setEditLink(prev => ({ ...prev, hideUrl: !checked }))}
+                              />
                             </div>
-                            <Switch
-                              id={`show-url-${link.id}`}
-                              checked={editLink.hideUrl !== true}
-                              onCheckedChange={(checked) => setEditLink(prev => ({ ...prev, hideUrl: !checked }))}
-                            />
+                            {(!editLink.type || editLink.type === 'link') && (
+                              <div className="flex items-center gap-3">
+                                <Label htmlFor={`show-copy-${link.id}`} className="text-sm font-medium text-slate-900">{tr('Show copy button', 'Mostra pulsante copia')}</Label>
+                                <Switch
+                                  id={`show-copy-${link.id}`}
+                                  checked={editLink.showCopyButton === true}
+                                  onCheckedChange={(showCopyButton) => setEditLink(prev => ({ ...prev, showCopyButton }))}
+                                />
+                              </div>
+                            )}
                           </div>
                         </>
                       )}

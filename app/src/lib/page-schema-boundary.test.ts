@@ -24,6 +24,12 @@ import { themePresets } from './theme-presets';
 import { cardThemePresets } from './card-theme-presets';
 
 describe('canonical page schema boundary', () => {
+  it.each([undefined, false, true])('preserves the opt-in copy button across page and editor boundaries (%s)', (showCopyButton) => {
+    const blocks = parseOrbitPageBlocks([{ id: 'copy', title: 'Website', showCopyButton }]);
+    expect(normalizeStoredOrbitPageBlocks(blocks)[0].showCopyButton).toBe(showCopyButton);
+    expect(() => parseOrbitPageBlocks([{ id: 'copy', showCopyButton: 'true' }])).toThrow();
+  });
+
   it('preserves separator arrangements at write and public boundaries and rejects invalid positions', () => {
     for (const linePosition of ['inline', 'above', 'below']) {
       const saved = parseOrbitPageBlocks([{ id: 'separator', type: 'separator', title: 'Section', content: JSON.stringify({ boxed: true, linePosition }) }]);

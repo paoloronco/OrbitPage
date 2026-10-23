@@ -2451,6 +2451,7 @@ describe('API Endpoints', () => {
           url: 'https://example.com',
           type: 'link',
           hideUrl: true,
+          showCopyButton: true,
           availability: 'unavailable',
         },
       ]);
@@ -2464,7 +2465,9 @@ describe('API Endpoints', () => {
     expect(insertCall[0]).toContain('hide_url');
     expect(insertCall[0]).toContain('availability');
     expect(insertCall[1][4]).toBe(1);
-    expect(insertCall[1].at(-1)).toBe('unavailable');
+    expect(insertCall[0]).toContain('show_copy_button');
+    expect(insertCall[1].at(-2)).toBe('unavailable');
+    expect(insertCall[1].at(-1)).toBe(1);
   });
 
   it('PUT /api/links persists per-card surface effects', async () => {

@@ -25,6 +25,8 @@ Use **Page** for profile and browser settings:
 
 The selected profile type changes the labels for the two detail fields; it does not create a separate kind of public page. In the self-hosted edition, choose it in Page; the managed edition uses the type selected during onboarding. The favicon may be different from the profile image. The centered footer sits at the bottom of short pages and follows the content on longer pages, including in both device previews.
 
+The profile image's border color controls appear only while **Image border** is enabled. Turning the border off preserves the selected color for when it is enabled again.
+
 In **Social links**, enter the username for each network; OrbitPage builds the public profile link automatically. YouTube uses a channel handle, Discord an invite code, WhatsApp a phone number, and Mastodon a full `@username@instance` handle. Leave a field empty to hide that social icon. Existing saved links remain editable.
 
 Most profile-card settings inherit from **Theme**. An explicit value in **Page** takes precedence. Use **Use theme** or reset the card appearance when you want it to inherit the shared design again.

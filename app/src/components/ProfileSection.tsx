@@ -587,10 +587,10 @@ export const ProfileSection = ({
                     </div>
                     <div className="space-y-3 border-t border-slate-200 pt-4">
                       <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">{tr("Image border", "Bordo immagine")}</p><Switch aria-label={tr("Image border", "Bordo immagine")} checked={draft.appearance?.avatarBorderEnabled !== false} onCheckedChange={(avatarBorderEnabled) => updateAppearance({ avatarBorderEnabled })} /></div>
-                      <div className="space-y-1.5">
+                      {draft.appearance?.avatarBorderEnabled !== false && <div className="space-y-1.5">
                         {draft.appearance?.avatarBorderColor && <div className="flex justify-end"><button type="button" onClick={() => updateAppearance({ avatarBorderColor: undefined })} className="text-[11px] font-semibold text-blue-700 hover:underline">{tr("Use theme", "Usa tema")}</button></div>}
                         <ColorPicker label={tr("Profile image border", "Bordo immagine profilo")} value={draft.appearance?.avatarBorderColor || theme.profileCard.accent} onChange={(avatarBorderColor) => updateAppearance({ avatarBorderColor })} />
-                      </div>
+                      </div>}
                     </div>
                   </div>
                 </div>

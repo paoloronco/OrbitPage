@@ -33,6 +33,7 @@ describe('hosted backup import', () => {
           sort_order: 0,
           is_active: 1,
           hide_url: 1,
+          show_copy_button: 1,
         }],
         theme_config: [{ full_config: '{"primary":"#167d91"}' }],
         cookie_consent_config: [{ full_config: '{"enabled":true}' }],
@@ -68,12 +69,15 @@ describe('hosted backup import', () => {
           id: 'link-1',
           description: 'icon.png',
           hideUrl: true,
+          showCopyButton: true,
           icon: 'https://media.example/backup-import-content-links-0-icon',
         }],
         theme: { primary: '#167d91' },
         consentConfig: { enabled: true },
       },
     });
+    const restored = prepareSelfHostedRestoreBackup(result.backup);
+    expect(restored).toMatchObject({ tables: { links: [{ show_copy_button: 1 }] } });
   });
 
   it('keeps supported managed backups portable', async () => {

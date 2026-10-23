@@ -47,6 +47,8 @@ Each block has its own edit panel. The available fields depend on the block type
 
 The floating **Save** button in Content saves edits from open cards together with additions and reordering. **Revert** discards the current unsaved content changes. The **Unsaved changes** badge identifies pending work.
 
+Link cards hide the copy button by default, including existing cards after an update. Enable **Show copy button** next to **Show URL on card** to let visitors copy that card's destination. These controls are independent: hiding the displayed URL keeps the card clickable and does not disable an enabled copy button.
+
 The toolbar can also export only the Link blocks to `links-export.json`. Importing that format validates the file and replaces the current Link block list. Create a full backup before importing if the existing list may be needed later.
 
 ## Visibility and scheduling

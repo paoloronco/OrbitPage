@@ -331,7 +331,7 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
               )}
             </div>
           </a>
-          {!unavailable && safeHref && <button
+          {link.showCopyButton === true && !unavailable && safeHref && <button
             aria-label={copied ? "Link copied" : "Copy link"}
             onClick={handleCopy}
             className="self-end rounded p-1 transition-smooth hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

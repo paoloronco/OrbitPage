@@ -3,7 +3,7 @@ import type { LinkData } from '../src/components/LinkCard';
 import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData } from './helpers';
 
 const examples: Partial<LinkData>[] = [
-  { id: 'plain', type: 'link', url: 'https://example.invalid' },
+  { id: 'plain', type: 'link', url: 'https://example.invalid', showCopyButton: true },
   { id: 'icon', type: 'link', url: 'https://example.invalid', icon: 'link' },
   { id: 'cover', type: 'link', url: 'https://example.invalid', coverImage: '/brand/orbitpage-mark-192.png' },
   { id: 'text', type: 'text', content: 'Body copy' },
@@ -48,7 +48,7 @@ test('mobile link icons and navigation stay on compact horizontal rows', async (
       page: {
         profile: { name: '', bio: '', avatar: '', showAvatar: false },
         links: [
-          { id: 'compact', type: 'link', title: 'Sampling schedule', description: 'View the schedule', url: 'https://example.invalid', hideUrl: true, icon: '📅', iconType: 'emoji', alignment: 'center' },
+          { id: 'compact', type: 'link', title: 'Sampling schedule', description: 'View the schedule', url: 'https://example.invalid', hideUrl: true, showCopyButton: true, icon: '📅', iconType: 'emoji', alignment: 'center' },
           { id: 'long', type: 'link', title: 'Detailed instructions', description: 'Keep all the useful details readable. '.repeat(20), url: 'https://example.invalid', hideUrl: true, icon: '📁', iconType: 'emoji' },
           { id: 'list', type: 'text', title: 'Useful links', icon: '📁', iconType: 'emoji', textItems: [{ text: 'A useful resource', url: 'https://example.invalid/a-long-list-item-address-that-wraps' }] },
           ...['stacked', 'buttons'].map(layout => ({ id: layout, type: 'internal_links', title: '', content: JSON.stringify({ items, layout, showIcons: true, showDescriptions: true }) })),

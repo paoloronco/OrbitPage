@@ -23,6 +23,7 @@ export const LinkSchema = z.object({
   description: z.string().max(2000).optional().default(''),
   url: z.string().max(5000).optional().default(''),
   hideUrl: z.boolean().optional(),
+  showCopyButton: z.boolean().optional(),
   // Accept any string: data:image/ base64, http(s)/blob URLs, or short emoji/text strings.
   icon: z.string().max(2000000).nullable().optional().default(null),
   type: z.string().min(1).max(50).optional().default('link'),

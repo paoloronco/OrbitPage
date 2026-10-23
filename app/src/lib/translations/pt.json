@@ -1260,5 +1260,6 @@
   "Change not applied: space occupied": "Alteração não aplicada: espaço ocupado",
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Esta posição ou tamanho sobreporia outro elemento. O layout anterior foi mantido. Move o elemento para uma área livre ou reduz o seu tamanho.",
   "Loading profile, content and theme.": "Carregando perfil, conteúdo e tema.",
-  "Preparing your workspace": "Preparando seu espaço de trabalho"
+  "Preparing your workspace": "Preparando seu espaço de trabalho",
+  "Show copy button": "Mostrar botão de copiar"
 }

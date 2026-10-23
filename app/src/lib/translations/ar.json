@@ -1260,5 +1260,6 @@
   "Change not applied: space occupied": "لم يُطبّق التغيير: المساحة مشغولة",
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "سيؤدي هذا الموضع أو الحجم إلى تداخل مع عنصر آخر. تم الاحتفاظ بالتخطيط السابق. انقل العنصر إلى مساحة فارغة أو قلّل حجمه.",
   "Loading profile, content and theme.": "تحميل الملف الشخصي والمحتوى والموضوع.",
-  "Preparing your workspace": "تجهيز مساحة العمل الخاصة بك"
+  "Preparing your workspace": "تجهيز مساحة العمل الخاصة بك",
+  "Show copy button": "إظهار زر النسخ"
 }

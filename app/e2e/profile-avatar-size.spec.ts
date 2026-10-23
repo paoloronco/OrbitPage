@@ -17,6 +17,16 @@ test("persists the profile image size and renders it exactly on the public page"
   if (!(await showAvatar.isChecked())) await showAvatar.click();
   await expect(showAvatar).toBeChecked();
 
+  const border = page.getByRole('switch', { name: 'Image border', exact: true });
+  const borderColor = page.getByRole('button', { name: /^Profile image border:/ });
+  if (!(await border.isChecked())) await border.click();
+  await expect(borderColor).toBeVisible();
+  await border.click();
+  await expect(borderColor).toHaveCount(0);
+  await border.click();
+  await expect(borderColor).toBeVisible();
+  await border.click();
+
   const avatarSize = page.getByRole("slider", { name: "Profile image size" });
   await expect(avatarSize).toBeVisible();
   for (let step = 0; step < 20; step += 1) await avatarSize.press("ArrowRight");
@@ -36,4 +46,6 @@ test("persists the profile image size and renders it exactly on the public page"
   await page.goto("/admin", { waitUntil: "load" });
   await expect(page.locator(".admin-dashboard-shell")).toBeVisible();
   await expect(page.getByRole("slider", { name: "Profile image size" })).toHaveAttribute("aria-valuenow", "192");
+  await expect(border).not.toBeChecked();
+  await expect(borderColor).toHaveCount(0);
 });
