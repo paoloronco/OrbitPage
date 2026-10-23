@@ -51,6 +51,10 @@ test('onboards a new venue full-page, edits localized categories and saves items
     await page.setViewportSize({ width, height: 900 });
     if (width < 768) await expect(page.locator('.admin-dashboard-nav-stack')).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+    const next = setup.getByRole('button', { name: 'Continue', exact: true });
+    const nextBounds = (await next.boundingBox())!, footerBounds = (await page.locator('.admin-footer').boundingBox())!;
+    expect(nextBounds.y + nextBounds.height).toBeLessThanOrEqual(footerBounds.y);
+    await expect(page.locator('.ai-page-agent')).toBeHidden();
     await page.screenshot({ path: testInfo.outputPath(`menu-onboarding-categories-${width}.png`), fullPage: true });
   }
   await setup.getByRole('button', { name: 'Continue', exact: true }).click();

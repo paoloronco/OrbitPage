@@ -296,6 +296,11 @@
 }
 
 .menu-onboarding { width: 100%; min-width: 0; padding: clamp(18px, 3vw, 36px); border: 1px solid var(--admin-line); border-radius: 16px; background: var(--admin-surface); color: var(--admin-ink); }
+/* Full-page setup must grow with its content after WebKit viewport changes. */
+.visual-site-editor:has(.menu-onboarding) { container-type: normal; display: block; }
+.visual-site-editor:has(.menu-onboarding) > * + * { margin-top: 12px; }
+.visual-site-editor__workspace:has(.menu-onboarding) { display: block; }
+body:has(.menu-onboarding) .ai-page-agent { visibility: hidden; pointer-events: none; }
 .menu-onboarding header > p { color: var(--admin-accent); font-weight: 700; }
 .menu-onboarding h2 { font-size: clamp(24px, 3vw, 34px); font-weight: 750; }
 .menu-onboarding ol { display: flex; flex-wrap: wrap; gap: 12px 24px; margin: 24px 0; padding: 0; list-style: none; }
