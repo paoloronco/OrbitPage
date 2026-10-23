@@ -1,5 +1,9 @@
 export function stripeTaxIdCollection(taxId: 'off' | 'optional' | 'if_supported'): { enabled: boolean; required?: 'if_supported' | 'never' };
 export function stripeNameCollection(businessName: 'off' | 'optional' | 'required'): { individual: { enabled: boolean; optional: boolean }; business: { enabled: boolean; optional?: boolean } };
+export function shopCheckoutCustomFields(checkout: import('./schema.js').ShopAppearance['checkout'], submitted?: unknown): Array<{
+  key: string; label: { type: 'custom'; custom: string }; type: 'text' | 'numeric'; optional: boolean;
+  text?: { default_value: string }; numeric?: { default_value: string };
+}>;
 type PaymentOrder = {
   orderId: string; currency: string; amountTotal: number; amountSubtotal?: number;
   paidAt?: string | null; stripeCheckoutSessionId: string | null;

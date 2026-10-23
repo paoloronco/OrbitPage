@@ -53,11 +53,13 @@ describe('instance health', () => {
   });
   it('warns about unsupported and expired Node.js versions', async () => {
     const { supportedNode } = await import('./instance-health.js');
-    const now = Date.parse('2026-10-09');
+    const now = Date.parse('2026-10-23');
     expect(supportedNode('v20.19.0', now)).toBe(false);
     expect(supportedNode('v22.11.0', now)).toBe(false);
-    expect(supportedNode('v22.12.0', now)).toBe(true);
-    expect(supportedNode('v22.12.0', Date.parse('2027-05-01'))).toBe(false);
-    expect(supportedNode('v24.21.0', now)).toBe(true);
+    expect(supportedNode('v22.12.0', now)).toBe(false);
+    for (const version of ['v22.23.3', 'v24.22.0', 'v26.12.0', 'v23.11.0', 'v24.22.1-rc.1', 'invalid']) expect(supportedNode(version, now)).toBe(false);
+    for (const version of ['v22.23.4', 'v24.22.1', 'v26.12.1', 'v24.23.0']) expect(supportedNode(version, now)).toBe(true);
+    expect(supportedNode('v22.23.4', Date.parse('2027-05-01'))).toBe(false);
+    expect(supportedNode('v24.21.0', now)).toBe(false);
   });
 });

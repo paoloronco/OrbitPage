@@ -4,7 +4,7 @@ Use this workflow to change the source code. [Application](./application.md) map
 
 ## Install
 
-Requirements: Node.js `^20.19.0` or `>=22.12.0`, npm, and Git.
+Requirements: Node.js `^22.23.4`, `^24.22.1` or `^26.12.1`, npm, and Git.
 
 ```bash
 cd OrbitPage/app

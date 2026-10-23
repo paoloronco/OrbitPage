@@ -14,9 +14,12 @@ let auditCache, auditPending;
 
 // Official Node.js release schedule: https://github.com/nodejs/Release.
 export function supportedNode(version, timestamp = Date.now()) {
-  const [major, minor] = version.replace(/^v/, '').split('.').map(Number);
+  const match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  if (!match) return false;
+  const [major, minor, patch] = match.slice(1).map(Number);
+  const minimum = { 22: [23, 4], 24: [22, 1], 26: [12, 1] }[major];
   const end = { 22: '2027-04-30', 24: '2028-04-30', 26: '2029-04-30' }[major];
-  return Boolean(end && (major !== 22 || minor >= 12) && timestamp < Date.parse(end));
+  return Boolean(end && minimum && (minor > minimum[0] || (minor === minimum[0] && patch >= minimum[1])) && timestamp < Date.parse(end));
 }
 
 export async function auditDependencies() {

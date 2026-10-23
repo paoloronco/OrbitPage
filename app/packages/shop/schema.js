@@ -174,6 +174,12 @@ export function createShopSchemas(z, isOwnedLogo) {
         refundPolicyUrl: z.string().trim().max(2_048).refine(isSafeShopBookingUrl, "Enter a secure HTTPS refund policy URL.").default(""),
         withdrawalUrl: z.string().trim().max(2_048).refine(isSafeShopBookingUrl, "Enter a secure HTTPS withdrawal URL.").default(""),
         sellerSelfCertified: z.boolean().default(false),
+        checkoutAcknowledgements: z.array(z.object({
+            id: z.string().regex(/^[a-zA-Z0-9-]{1,64}$/),
+            label: z.string().trim().min(1).max(500),
+            required: z.boolean().default(true),
+            appliesTo: z.enum(["all", "digital", "service"]).default("all")
+        }).strict()).max(5).refine(items => new Set(items.map(item => item.id)).size === items.length, "Each acknowledgement must have a unique ID.").default([]),
         checkout: z.object({
             phone: z.boolean().default(false),
             billingAddress: z.enum(["auto", "required"]).default("auto"),

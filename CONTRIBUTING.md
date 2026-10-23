@@ -20,7 +20,7 @@ Repository-level files contain Docker, CI, release, and documentation configurat
 
 ## Requirements
 
-- Node.js `^20.19.0` or `>=22.12.0`
+- Node.js `^22.23.4`, `^24.22.1` or `^26.12.1`
 - npm
 - Git
 - Docker, only when testing container builds

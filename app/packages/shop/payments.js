@@ -6,6 +6,23 @@ export function stripeNameCollection(businessName) {
     business: businessName === 'off' ? { enabled: false } : { enabled: true, optional: businessName !== 'required' } };
 }
 
+export function shopCheckoutCustomFields(checkout, submitted = []) {
+  const fields = checkout.customFields;
+  if (!Array.isArray(submitted) || submitted.length > 3
+    || submitted.some(item => !Array.isArray(item) || item.length !== 2 || typeof item[0] !== 'string'
+      || typeof item[1] !== 'string' || item[1].length > 255 || !fields.some(field => field.key === item[0]))
+    || new Set(submitted.map(([key]) => key)).size !== submitted.length) {
+    throw new Error('Invalid customer details. Reload the product and try again.');
+  }
+  return fields.map(field => {
+    const value = (submitted.find(([key]) => key === field.key)?.[1] || '').trim();
+    if (field.required && !value) throw new Error(`Complete the required field: ${field.label}.`);
+    if (value && field.type === 'numeric' && !/^[0-9]+$/.test(value)) throw new Error(`Use numbers only for: ${field.label}.`);
+    return { key: field.key, label: { type: 'custom', custom: field.label }, type: field.type, optional: !field.required,
+      ...(value ? { [field.type]: { default_value: value } } : {}) };
+  });
+}
+
 // The stored Session ID, not merchant-editable metadata, binds a payment to an order.
 export function checkoutAmounts(order, session) {
   const subtotal = order.amountSubtotal ?? order.amountTotal;

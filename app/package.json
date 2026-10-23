@@ -1,7 +1,7 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.21.138",
+  "version": "4.21.139",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -91,5 +91,8 @@
     "flatted": "^3.4.2",
     "picomatch": "^4.0.4",
     "brace-expansion": "^5.0.12"
+  },
+  "engines": {
+    "node": "^22.23.4 || ^24.22.1 || ^26.12.1"
   }
 }

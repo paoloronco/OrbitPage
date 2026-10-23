@@ -90,7 +90,9 @@ import { consumeSetupToken, rotateSetupToken } from './services/setup-token.js';
 import { updateAgentRequest } from './services/application-updates.js';
 import { saveEnvironmentChanges } from './services/instance-details.js';
 import { instanceHealth } from './services/instance-health.js';
-vi.mock('./services/instance-health.js', () => ({ instanceHealth: vi.fn() }));
+vi.mock('./services/instance-health.js', async importOriginal => ({
+  ...(await importOriginal()), instanceHealth: vi.fn(),
+}));
 vi.mock('./services/application-updates.js', async importOriginal => ({
   ...await importOriginal(), updateAgentRequest: vi.fn(),
 }));

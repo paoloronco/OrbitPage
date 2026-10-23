@@ -25,3 +25,19 @@ export function shopDigitalContentConsent(appearance) {
     const core = "I expressly consent to immediate supply of the digital content and acknowledge that I lose my withdrawal right once the download begins.";
     return [core, appearance.digitalContentConsentAddon].filter(Boolean).join(" ");
 }
+
+export function shopCheckoutAcknowledgements(appearance, productType) {
+    return (appearance.checkoutAcknowledgements || []).filter(item => item.appliesTo === "all" || item.appliesTo === productType);
+}
+
+export function shopBuyerAcknowledgements(appearance, productType, accepted = []) {
+    const items = shopCheckoutAcknowledgements(appearance, productType);
+    if (!Array.isArray(accepted) || accepted.length > 5 || new Set(accepted).size !== accepted.length
+        || accepted.some(id => typeof id !== "string" || !items.some(item => item.id === id))) {
+        throw new Error("Invalid checkout acknowledgements. Reload the product and try again.");
+    }
+    if (items.some(item => item.required && !accepted.includes(item.id))) {
+        throw new Error("Accept the required purchase acknowledgements before checkout.");
+    }
+    return items.map(item => ({ ...item, accepted: accepted.includes(item.id) }));
+}

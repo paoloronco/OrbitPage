@@ -103,7 +103,10 @@ export function createShopRouter({ publicBase, demoMode }) {
   router.post('/checkout', publicLimiter, writable(demoMode), endpoint(async (req, res) => {
     if (!req.is('application/x-www-form-urlencoded')) throw new ShopError(415, 'INVALID_SHOP_CHECKOUT', 'Invalid checkout request.');
     const accepted = value => value === 'accepted';
-    const url = await createShopCheckout({ productId: req.body?.productId, sellerTermsAccepted: accepted(req.body?.sellerTermsAccepted),
+    const values = req.body?.acceptedAcknowledgements;
+    const acceptedAcknowledgements = values === undefined ? [] : Array.isArray(values) ? values : [values];
+    const checkoutFieldValues = Object.entries(req.body || {}).filter(([key]) => key.startsWith('checkoutField:')).map(([key, value]) => [key.slice('checkoutField:'.length), value]);
+    const url = await createShopCheckout({ acceptedAcknowledgements, checkoutFieldValues, productId: req.body?.productId, sellerTermsAccepted: accepted(req.body?.sellerTermsAccepted),
       sellerNoticeAcknowledged: accepted(req.body?.sellerNoticeAcknowledged) || accepted(req.body?.sellerTermsAccepted), digitalContentConsent: accepted(req.body?.digitalContentConsent) }, base(req));
     res.redirect(303, url);
   }));

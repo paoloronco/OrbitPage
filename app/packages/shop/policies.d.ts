@@ -1,4 +1,7 @@
 import type { ShopAppearance } from "./schema.js";
+import type { ShopCheckoutAcknowledgement, ShopBuyerAcknowledgement } from "./schema.js";
+export function shopCheckoutAcknowledgements(appearance: Pick<ShopAppearance, 'checkoutAcknowledgements'>, productType: 'digital' | 'service'): ShopCheckoutAcknowledgement[];
+export function shopBuyerAcknowledgements(appearance: Pick<ShopAppearance, 'checkoutAcknowledgements'>, productType: 'digital' | 'service', accepted?: string[]): ShopBuyerAcknowledgement[];
 export const SHOP_POLICIES: readonly [
   { slug: 'terms'; title: 'Terms'; textField: 'termsText'; urlField: 'termsUrl' },
   { slug: 'digital-license'; title: 'Digital Product & License Terms'; textField: 'digitalLicenseText'; urlField: 'digitalLicenseUrl' },

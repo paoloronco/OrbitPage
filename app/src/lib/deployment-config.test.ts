@@ -26,8 +26,8 @@ describe('deployment configuration', () => {
     const appDockerfile = read('app/Dockerfile');
 
     for (const dockerfile of [rootDockerfile, appDockerfile]) {
-      expect(dockerfile).toContain('FROM node:22-alpine AS builder');
-      expect(dockerfile).toContain('FROM node:22-alpine');
+      expect(dockerfile).toContain('FROM node:22.23.4-alpine AS builder');
+      expect(dockerfile).toContain('FROM node:22.23.4-alpine');
       expect(dockerfile).toContain('COPY docker-entrypoint.sh /app/server/docker-entrypoint.sh');
       expect(dockerfile).toContain('ENTRYPOINT ["./docker-entrypoint.sh"]');
       expect(dockerfile).toContain('ENV PORT=8080');

@@ -46,6 +46,38 @@ test('the shared storefront grid fills three, two or one columns according to av
   await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
 });
 
+test('product requirements are accessible, start unchecked and block checkout until complete', async ({ page }) => {
+  const { normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z, () => false);
+  const appearance = normalizeShopAppearance({ showCoverImages: false, showDigitalProductBadge: false,
+    checkout: { customFields: [{ key: 'reference', label: 'Project reference', type: 'numeric', required: true }] },
+    checkoutAcknowledgements: [{ id: 'scope', label: 'I agree to the product scope.', required: true, appliesTo: 'digital' }, { id: 'contact', label: 'Contact me about this purchase.', required: false, appliesTo: 'all' }] });
+  const product = { productId: 'guide', type: 'digital' as const, title: 'Guide', description: 'Download details', priceCents: 1000, coverKey: 'cover.webp', cardStyle: normalizeShopProductCardStyle({}) };
+  await page.route('**/*', route => route.abort());
+  await page.setContent(renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.invalid/shop', products: [product, { ...product, productId: 'service', type: 'service', title: 'Consultation' }], appearance, apiBaseUrl: 'https://example.invalid', newsletterEndpoint: '', coverUrlPrefix: '/covers/' }));
+  await expect(page.locator('.product-cover')).toHaveCount(0);
+  await expect(page.locator('.product-kind')).toHaveText(['Service']);
+  await page.getByRole('button', { name: 'View details', exact: true }).first().click();
+  const dialog = page.getByRole('dialog', { name: 'Guide', exact: true });
+  await expect(dialog).toBeVisible();
+  const required = dialog.getByRole('checkbox', { name: 'I agree to the product scope.', exact: true });
+  await expect(required).not.toBeChecked();
+  await expect(required).toHaveAttribute('required', '');
+  await expect(dialog.getByRole('checkbox', { name: 'Contact me about this purchase. (optional)', exact: true })).not.toHaveAttribute('required');
+  const valid = () => dialog.locator('form').evaluate(form => (form as HTMLFormElement).checkValidity());
+  expect(await valid()).toBe(false);
+  await dialog.getByLabel('Project reference *', { exact: true }).fill('abc');
+  for (const checkbox of await dialog.locator('input[type=checkbox][required]').all()) await checkbox.check();
+  expect(await valid()).toBe(false);
+  await dialog.getByLabel('Project reference *', { exact: true }).fill('00123');
+  expect(await valid()).toBe(true);
+  const values = await dialog.locator('form').evaluate(form => [...new FormData(form as HTMLFormElement)].filter(([key]) => key === 'acceptedAcknowledgements' || key.startsWith('checkoutField:')));
+  expect(values).toEqual([['checkoutField:reference', '00123'], ['acceptedAcknowledgements', 'scope']]);
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await dialog.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  }
+});
+
 test('OSS edits products and storefront before setup while requiring Compliance, Stripe and SMTP to publish', async ({ page }, testInfo) => {
   const draftTitle = `Editable OSS draft ${testInfo.project.name}`;
   const updatedTitle = `Updated OSS draft ${testInfo.project.name}`;
@@ -116,6 +148,8 @@ test('OSS edits products and storefront before setup while requiring Compliance,
       await personalize.click();
       const panel = shop.getByRole('complementary', { name: 'Personalization', exact: true });
       await expect(panel).toBeVisible();
+      await expect(panel.getByRole('combobox', { name: 'Card size', exact: true })).toBeVisible();
+      await panel.getByRole('button', { name: 'Theme', exact: true }).click();
       await expect(panel.getByRole('switch', { name: 'Use the page theme', exact: true })).toBeEnabled();
       if (width === 390 && section === 'Customers') {
         await page.reload({ waitUntil: 'domcontentloaded' });

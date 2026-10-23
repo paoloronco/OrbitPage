@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { checkoutAmounts, assertCheckoutCharge, stripeTaxIdCollection, stripeNameCollection } from '../../packages/shop/payments.js';
+import { checkoutAmounts, assertCheckoutCharge, stripeTaxIdCollection, stripeNameCollection, shopCheckoutCustomFields } from '../../packages/shop/payments.js';
+import { shopBuyerAcknowledgements } from '../../packages/shop/policies.js';
 
 const order = { orderId: 'order', currency: 'eur', amountTotal: 2000, stripeCheckoutSessionId: 'cs_1' };
 const session = {
@@ -10,6 +11,29 @@ const session = {
 };
 
 describe('shared Checkout verification', () => {
+  it('validates pre-checkout answers and prefills Stripe without trusting submitted labels or requirements', () => {
+    const checkout = { customFields: [{ key: 'reference', label: 'Reference', type: 'numeric', required: true }, { key: 'note', label: 'Note', type: 'text', required: false }] };
+    expect(shopCheckoutCustomFields(checkout, [['reference', '00123'], ['note', ' Studio ']])).toEqual([
+      { key: 'reference', label: { type: 'custom', custom: 'Reference' }, type: 'numeric', optional: false, numeric: { default_value: '00123' } },
+      { key: 'note', label: { type: 'custom', custom: 'Note' }, type: 'text', optional: true, text: { default_value: 'Studio' } }
+    ]);
+    for (const answers of [[], [['reference', ' ']], [['reference', '1e3']], [['reference', '-1']], [['unknown', '1']], [['reference', ['1']]], [['reference', '1'], ['reference', '2']], [['reference', '1'.repeat(256)]], {}, null]) {
+      expect(() => shopCheckoutCustomFields(checkout, answers)).toThrow();
+    }
+    expect(shopCheckoutCustomFields({ customFields: [] })).toEqual([]);
+    expect(shopCheckoutCustomFields(checkout, [['reference', '0']])[1]).not.toHaveProperty('text');
+  });
+  it('requires applicable acknowledgements and records the seller-owned text and unchecked optional choices', () => {
+    const required = { id: 'required', label: 'I accept the scope.', required: true, appliesTo: 'all' };
+    const optional = { id: 'optional', label: 'Contact me.', required: false, appliesTo: 'digital' };
+    const appearance = { checkoutAcknowledgements: [required, optional, { id: 'service', label: 'Service terms', required: true, appliesTo: 'service' }] };
+    expect(shopBuyerAcknowledgements(appearance, 'digital', ['required'])).toEqual([{ ...required, accepted: true }, { ...optional, accepted: false }]);
+    for (const accepted of [[], ['optional'], ['required', 'unknown'], ['required', 'service'], ['required', 'required'], null, 'required']) {
+      expect(() => shopBuyerAcknowledgements(appearance, 'digital', accepted)).toThrow();
+    }
+    expect(() => shopBuyerAcknowledgements(appearance, 'service', ['required'])).toThrow();
+    expect(shopBuyerAcknowledgements({}, 'digital')).toEqual([]);
+  });
   it('omits Stripe required tax-ID settings when collection is disabled', () => {
     expect(stripeTaxIdCollection('off')).toEqual({ enabled: false });
     expect(stripeTaxIdCollection('optional')).toEqual({ enabled: true, required: 'never' });

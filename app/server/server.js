@@ -13,7 +13,7 @@ import path, { dirname, join } from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import { updateAgentRequest, isUpdateActive } from './services/application-updates.js';
-import { instanceHealth } from './services/instance-health.js';
+import { instanceHealth, supportedNode } from './services/instance-health.js';
 import { shopInfo } from './services/shop.js';
 import { initializeDatabase, dbGet, dbAll, dbRun, withTransaction, withImmediateTransaction } from './database.js';
 import {
@@ -2353,11 +2353,6 @@ const EMPTY_PERSONAL_PAGE_BACKUP = {
   shopFiles: [],
 };
 
-const supportedNodeRuntime = () => {
-  const [major = 0, minor = 0] = process.versions.node.split('.').map((part) => Number.parseInt(part, 10));
-  return (major === 20 && minor >= 19) || (major === 22 && minor >= 12) || major > 22;
-};
-
 const getSetupDependencies = async () => {
   const checks = [];
   const addCheck = (id, label, ok, detail) => checks.push({ id, label, ok, detail });
@@ -2365,8 +2360,8 @@ const getSetupDependencies = async () => {
   addCheck(
     'runtime',
     'Node.js runtime',
-    supportedNodeRuntime(),
-    `${process.version}; OrbitPage requires Node.js 20.19+ or 22.12+`,
+    supportedNode(process.version),
+    `${process.version}; OrbitPage requires a patched Node.js 22.23.4+, 24.22.1+ or 26.12.1+ on a supported release line`,
   );
 
   try {

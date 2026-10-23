@@ -39,9 +39,9 @@ import { CSSProperties, FormEvent, useCallback, useEffect, useMemo, useRef, useS
 import { createPortal } from "react-dom";
 import { renderShopDescription, shopProductSummary, SHOP_SUMMARY_LIMIT, SHOP_DESCRIPTION_LIMIT } from "../../packages/shop/description.js";
 import { shopOrderLabel } from "../../packages/shop/orders.js";
-import { SHOP_POLICIES, shopDigitalContentConsent, shopPolicies, shopSellerNotice } from "../../packages/shop/policies.js";
+import { SHOP_POLICIES, shopCheckoutAcknowledgements, shopDigitalContentConsent, shopPolicies, shopSellerNotice } from "../../packages/shop/policies.js";
 import { SHOP_CURRENCIES, SHOP_PRODUCT_CARD_DIMENSIONS, shopComplianceReady } from "../../packages/shop/schema.js";
-import type { ShopAppearance, ShopBuyerDetails, ShopEmailSettings } from "../../packages/shop/schema.js";
+import type { ShopAppearance, ShopBuyerAcknowledgement, ShopBuyerDetails, ShopEmailSettings } from "../../packages/shop/schema.js";
 import { ShopDescriptionField, ShopDialog, ShopHelp, ShopLogoDialog } from "./shop-editor-controls";
 type Locale = string;
 import { OrbitLoader as LoadingIndicator } from "./ui/orbit-loader";
@@ -113,6 +113,7 @@ type ShopOrder = {
   buyerEmail: string | null;
   buyerName?: string | null;
   buyerDetails?: ShopBuyerDetails | null;
+  buyerAcknowledgements?: ShopBuyerAcknowledgement[];
   downloadCount: number;
   createdAt: string;
   paidAt: string | null;
@@ -510,7 +511,7 @@ function ShopStorefrontPreview({
               } as CSSProperties}
             >
               {appearance.showCoverImages && product.coverUrl && <img alt="" className="shop-preview-cover" src={new URL(product.coverUrl, publicUrl).toString()} />}
-              {appearance.showProductType && appearance.showDigitalProductBadge && <small>{product.type === "digital" ? copy.digitalDownload : copy.service}</small>}
+              {appearance.showProductType && (product.type !== "digital" || appearance.showDigitalProductBadge) && <small>{product.type === "digital" ? copy.digitalDownload : copy.service}</small>}
               <strong>{product.title}</strong>
               <div className="shop-preview-summary" dangerouslySetInnerHTML={{ __html: renderShopDescription(shopProductSummary(product)) }} />
               <div><b>{money(product.priceCents, "en", appearance.currency)}</b><span>{copy.buy}</span></div>
@@ -525,15 +526,17 @@ function ShopStorefrontPreview({
         <span>Email</span><b>{copy.subscribe}</b>
       </section>}
       <footer className="shop-preview-footer">
-        <div className="shop-preview-seller-info">
+        <div className="shop-preview-seller">
           <section className="shop-seller-info">
-            <strong>Seller information</strong>
+            <div className="shop-footer-heading"><ShoppingBag aria-hidden="true" size={18} /><strong>Seller information</strong></div>
             {appearance.sellerName && <div className="shop-seller-name">{appearance.sellerName}</div>}
             {appearance.sellerAddress && <div className="shop-seller-address">{appearance.sellerAddress}</div>}
             {appearance.sellerPhone && <div className="shop-seller-phone">{appearance.sellerPhone}</div>}
+            {appearance.sellerBusinessId && <div>{appearance.sellerBusinessId}</div>}
           </section>
           {appearance.sellerEmail && <section className="shop-seller-email">
-            <strong>Email</strong>
+            <div className="shop-footer-heading"><Mail aria-hidden="true" size={18} /><strong>Email</strong></div>
+            <p>Questions about your purchase?</p>
             <a href={`mailto:${appearance.sellerEmail}`}>{appearance.sellerEmail}</a>
           </section>}
         </div>
@@ -546,16 +549,18 @@ function ShopStorefrontPreview({
         "--brand": design.accentColor, "--button-ink": design.buttonTextColor,
         "--surface": design.cardBackground, "--radius": `${design.cardRadius}px`, fontFamily: design.fontFamily,
       } as CSSProperties}>
-        {detailsProduct.coverUrl && <img alt={detailsProduct.title} className="shop-product-detail-cover" src={new URL(detailsProduct.coverUrl, publicUrl).toString()} />}
+        {appearance.showCoverImages && detailsProduct.coverUrl && <img alt={detailsProduct.title} className="shop-product-detail-cover" src={new URL(detailsProduct.coverUrl, publicUrl).toString()} />}
         <div className="shop-product-detail-body">
           <h2>{detailsProduct.title}</h2>
           <div className="shop-product-detail-description" dangerouslySetInnerHTML={{ __html: renderShopDescription(detailsProduct.description) }} />
           {detailsProduct.type === "digital" && <p className="shop-product-detail-files">{(detailsProduct.files?.length ? detailsProduct.files : detailsProduct.file ? [detailsProduct.file] : []).map((file) => file.filename).join(" · ")}</p>}
           <div className="shop-product-detail-checkout">
+            {appearance.checkout.customFields.map(field => <label className="shop-purchase-field" key={field.key}><span>{field.label}{field.required ? " *" : " (optional)"}</span><input disabled type="text" /></label>)}
             {purchasePolicies.filter(({ slug }) => slug !== "digital-license" || detailsProduct.type === "digital").map((policy) => <p key={policy.slug}><a href={policy.url} rel="noreferrer" target="_blank">{policy.title}</a></p>)}
             {appearance.termsText || appearance.termsUrl ? <label><input disabled type="checkbox" /><span>I have read and agree to the seller's Terms.</span></label> : null}
             <label><input disabled type="checkbox" /><span>{sellerNotice}</span></label>
             {detailsProduct.type === "digital" && <label><input disabled type="checkbox" /><span>{digitalContentConsent}</span></label>}
+            {shopCheckoutAcknowledgements(appearance, detailsProduct.type).map(item => <label key={item.id}><input disabled type="checkbox" /><span>{item.label}{item.required ? "" : " (optional)"}</span></label>)}
             <div className="shop-product-detail-price"><strong>{money(detailsProduct.priceCents, "en", appearance.currency)}</strong><button disabled type="button">{copy.buy}</button></div>
           </div>
           <footer className="shop-product-detail-edit"><button disabled={disabled} onClick={() => { onSelectProduct(detailsProduct.productId); setDetailsProductId(null); }} type="button">Edit product<ArrowUpRight size={16} /></button></footer>
@@ -700,7 +705,7 @@ export default function ShopClient({
   const [settingsTab, setSettingsTab] = useState<"compliance" | "coupons" | "stripe" | "calendar" | "checkout" | "email" | "info">("compliance");
   const [smtpDraft, setSmtpDraft] = useState<ShopEmailDraft | null>(null);
   const [themeMode, setThemeMode] = useState<"presets" | "custom">("presets");
-  const [personalizeSection, setPersonalizeSection] = useState<"shop" | "theme">("theme");
+  const [personalizeSection, setPersonalizeSection] = useState<"shop" | "theme">("shop");
   const [logoDialogOpen, setLogoDialogOpen] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
@@ -1497,13 +1502,9 @@ export default function ShopClient({
       </fieldset></> : <>
       <div className="shop-design-section shop-shop-options">
         <div><strong>Product cards</strong><small>Choose the default size for every product. Individual card styles stay unchanged.</small></div>
-        <div className="shop-card-size-selector">
-          <label className={appearance.productCardSize === "small" ? "selected" : ""}><input type="radio" name="productCardSize" checked={appearance.productCardSize === "small"} onChange={() => setAppearance((current) => current ? { ...current, productCardSize: "small" } : current)} />Small</label>
-          <label className={appearance.productCardSize === "medium" ? "selected" : ""}><input type="radio" name="productCardSize" checked={appearance.productCardSize === "medium"} onChange={() => setAppearance((current) => current ? { ...current, productCardSize: "medium" } : current)} />Medium</label>
-          <label className={appearance.productCardSize === "large" ? "selected" : ""}><input type="radio" name="productCardSize" checked={appearance.productCardSize === "large"} onChange={() => setAppearance((current) => current ? { ...current, productCardSize: "large" } : current)} />Large</label>
-        </div>
-        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show cover images" checked={appearance.showCoverImages} onCheckedChange={(showCoverImages) => setAppearance((current) => current ? { ...current, showCoverImages } : current)} size="small" /><span><strong>Show cover images</strong><small>Display cover image on product cards.</small></span></label>
-        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show digital product badge" checked={appearance.showProductType && appearance.showDigitalProductBadge} onCheckedChange={(showDigitalProductBadge) => setAppearance((current) => current ? { ...current, showDigitalProductBadge, showProductType: showDigitalProductBadge } : current)} size="small" /><span><strong>Show digital product badge</strong><small>Display "digital download" or "service" above each item.</small></span></label>
+        <label className="shop-card-size-selector"><span>Card size</span><select value={appearance.productCardSize} onChange={event => setAppearance(current => current ? { ...current, productCardSize: event.target.value as ShopAppearance["productCardSize"] } : current)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show cover images" checked={appearance.showCoverImages} onCheckedChange={(showCoverImages) => setAppearance((current) => current ? { ...current, showCoverImages } : current)} size="small" /><span><strong>Show cover images</strong><small>Show images on product cards and in product details.</small></span></label>
+        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show digital product badge" checked={appearance.showProductType && appearance.showDigitalProductBadge} onCheckedChange={(showDigitalProductBadge) => setAppearance((current) => current ? { ...current, showDigitalProductBadge, showProductType: showDigitalProductBadge || current.showProductType } : current)} size="small" /><span><strong>Show digital product badge</strong><small>Show the label above digital products.</small></span></label>
       </div>
       <div className="shop-design-section shop-home-link-section">
         <div className="shop-home-link-heading"><div><strong>Add Shop to Home</strong><small>Create a normal OrbitPage card that opens this shop.</small></div><Link2 size={20} /></div>
@@ -1542,7 +1543,7 @@ export default function ShopClient({
         <div className="shop-toolbar-left">
           <button aria-label="Shop settings" aria-pressed={view === "settings"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("settings")} title="Settings" type="button"><Settings size={18} /></button>
           <button aria-label="Orders and customers" aria-pressed={view === "orders" || view === "customers"} className="shop-tool-button" disabled={action !== null} onClick={() => setView("orders")} title="Orders and customers" type="button"><ReceiptText size={18} /></button>
-          {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={action !== null} onClick={() => setView(view === "design" ? "products" : "design")} title="Personalize" type="button"><Palette size={18} /><span>Personalize</span></button>}
+          {editingStorefront && <button aria-label="Personalize" aria-expanded={view === "design"} aria-pressed={view === "design"} aria-controls="shop-personalization" className="shop-tool-button shop-personalize-button" disabled={action !== null} onClick={() => { setPersonalizeSection("shop"); setView(view === "design" ? "products" : "design"); }} title="Personalize" type="button"><Palette size={18} /><span>Personalize</span></button>}
         </div>
         <div className="shop-toolbar-publication">
           {publicationControl}
@@ -1635,7 +1636,7 @@ export default function ShopClient({
             <label><span>Seller notice — optional addition</span><textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, sellerNoticeAddon: event.target.value } : current)} rows={3} value={appearance.sellerNoticeAddon || ""} /><small>Additional information shown with the seller-status acknowledgement. Do not suggest that mandatory customer rights are waived.</small></label>
             <label><span>Digital delivery consent — optional addition</span><textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, digitalContentConsentAddon: event.target.value } : current)} rows={3} value={appearance.digitalContentConsentAddon || ""} /><small>Appended to the explicit consent shown for digital products only.</small></label>
           </section>
-          <div className="shop-checkout-fields-heading"><div><h4>Additional fields</h4><p className="shop-provider-muted">Up to three text or number fields for order references. Keep sensitive information out.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkout.customFields.length >= 3} onClick={() => updateCheckout({ customFields: [...appearance.checkout.customFields, { key: crypto.randomUUID().replaceAll("-", ""), label: "", type: "text", required: false }] })} type="button"><PackagePlus size={16} /> Add field</button></div>
+          <div className="shop-checkout-fields-heading"><div><h4>Additional fields</h4><p className="shop-provider-muted">Up to three text or number fields on the product before checkout, carried into Stripe for confirmation. Keep sensitive information out.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkout.customFields.length >= 3} onClick={() => updateCheckout({ customFields: [...appearance.checkout.customFields, { key: crypto.randomUUID().replaceAll("-", ""), label: "", type: "text", required: false }] })} type="button"><PackagePlus size={16} /> Add field</button></div>
           {appearance.checkout.customFields.length === 0 && <p className="shop-checkout-fields-empty">No additional fields. Customers see only the checkout details selected above.</p>}
           {appearance.checkout.customFields.map((field, index) => <div className="shop-option-grid shop-checkout-custom-field" key={field.key}>
             <label>Field {index + 1} label<input maxLength={50} onChange={event => updateCheckout({ customFields: appearance.checkout.customFields.map(item => item.key === field.key ? { ...item, label: event.target.value } : item) })} placeholder="e.g. Project reference" required value={field.label} /></label>
@@ -1643,6 +1644,15 @@ export default function ShopClient({
             <label>Field {index + 1} requirement<select onChange={event => updateCheckout({ customFields: appearance.checkout.customFields.map(item => item.key === field.key ? { ...item, required: event.target.value === "required" } : item) })} value={field.required ? "required" : "optional"}><option value="optional">Optional</option><option value="required">Required</option></select></label>
             <button aria-label={`Remove field ${index + 1}`} className="shop-delete-button" onClick={() => updateCheckout({ customFields: appearance.checkout.customFields.filter(item => item.key !== field.key) })} type="button"><Trash2 size={17} /></button>
           </div>)}
+          <section className="shop-checkout-notices">
+            <div className="shop-checkout-fields-heading"><div><h4>Before checkout</h4><p className="shop-provider-muted">Add up to five unchecked acceptance boxes to the product. Required boxes must be accepted before continuing to Stripe.</p></div><button className="button secondary shop-checkout-add" disabled={appearance.checkoutAcknowledgements.length >= 5} onClick={() => setAppearance(current => current ? { ...current, checkoutAcknowledgements: [...current.checkoutAcknowledgements, { id: crypto.randomUUID(), label: "", required: true, appliesTo: "all" }] } : current)} type="button"><PackagePlus size={16} /> Add acceptance</button></div>
+            {appearance.checkoutAcknowledgements.map((item, index) => <div className="shop-option-grid shop-checkout-custom-field" key={item.id}>
+              <label>Acceptance {index + 1} text<textarea maxLength={500} onChange={event => setAppearance(current => current ? { ...current, checkoutAcknowledgements: current.checkoutAcknowledgements.map(value => value.id === item.id ? { ...value, label: event.target.value } : value) } : current)} required rows={3} value={item.label} /></label>
+              <label>Acceptance {index + 1} products<select onChange={event => setAppearance(current => current ? { ...current, checkoutAcknowledgements: current.checkoutAcknowledgements.map(value => value.id === item.id ? { ...value, appliesTo: event.target.value as "all" | "digital" | "service" } : value) } : current)} value={item.appliesTo}><option value="all">All products</option><option value="digital">Digital products</option><option value="service">Services</option></select></label>
+              <label>Acceptance {index + 1} requirement<select onChange={event => setAppearance(current => current ? { ...current, checkoutAcknowledgements: current.checkoutAcknowledgements.map(value => value.id === item.id ? { ...value, required: event.target.value === "required" } : value) } : current)} value={item.required ? "required" : "optional"}><option value="required">Required</option><option value="optional">Optional</option></select></label>
+              <button aria-label={`Remove acceptance ${index + 1}`} className="shop-delete-button" onClick={() => setAppearance(current => current ? { ...current, checkoutAcknowledgements: current.checkoutAcknowledgements.filter(value => value.id !== item.id) } : current)} type="button"><Trash2 size={17} /></button>
+            </div>)}
+          </section>
           <p className="shop-provider-muted">Save to apply these settings to new checkouts. Existing orders keep the information collected at purchase.</p>
         </fieldset>
       </form>}
@@ -1802,6 +1812,7 @@ export default function ShopClient({
           {selectedOrder.buyerDetails?.billingAddress && <div><dt>Billing address</dt><dd>{[selectedOrder.buyerDetails.billingAddress.line1, selectedOrder.buyerDetails.billingAddress.line2, selectedOrder.buyerDetails.billingAddress.postal_code, selectedOrder.buyerDetails.billingAddress.city, selectedOrder.buyerDetails.billingAddress.state, selectedOrder.buyerDetails.billingAddress.country].filter(Boolean).join(", ")}</dd></div>}
           {selectedOrder.buyerDetails?.taxIds.map((taxId, index) => <div key={`tax-${index}`}><dt>Tax ID / VAT number</dt><dd>{taxId.value} ({taxId.type})</dd></div>)}
           {selectedOrder.buyerDetails?.customFields.map(field => <div key={field.key}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}
+          {selectedOrder.buyerAcknowledgements?.map(item => <div key={item.id}><dt>{item.label}</dt><dd>{item.accepted ? "Accepted" : "Not accepted (optional)"}</dd></div>)}
           <div><dt>Created</dt><dd>{shopDate(selectedOrder.createdAt, locale)}</dd></div><div><dt>Paid</dt><dd>{shopDate(selectedOrder.paidAt, locale)}</dd></div>
           <div><dt>Original total</dt><dd>{money(selectedOrder.amountTotal, locale, selectedOrder.currency)}</dd></div><div><dt>Refunded</dt><dd>{money(selectedOrder.amountRefunded || 0, locale, selectedOrder.currency)}</dd></div>
           {!selfHosted && selectedOrder.applicationFeeAmount > 0 && <><div><dt>Previous platform fee</dt><dd>{money(selectedOrder.applicationFeeAmount, locale, selectedOrder.currency)}</dd></div><div><dt>Fee refunded</dt><dd>{money(selectedOrder.applicationFeeRefunded || 0, locale, selectedOrder.currency)}</dd></div></>}

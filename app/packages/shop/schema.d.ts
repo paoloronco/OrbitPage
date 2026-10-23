@@ -14,6 +14,8 @@ export type ShopProductCardStyle = {
   alignment: 'inherit' | 'left' | 'center';
 };
 export type ShopIntakeQuestion = { id: string; prompt: string; required: boolean };
+export type ShopCheckoutAcknowledgement = { id: string; label: string; required: boolean; appliesTo: 'all' | 'digital' | 'service' };
+export type ShopBuyerAcknowledgement = ShopCheckoutAcknowledgement & { accepted: boolean };
 export type ShopProductInput = {
   productId?: string; type: 'digital' | 'service'; title: string; summary: string;
   description: string; fulfillmentText: string; bookingUrl: string; sessionsIncluded: number;
@@ -43,6 +45,7 @@ export type ShopAppearance = {
   refundPolicyText: string; withdrawalText: string; termsUrl: string; digitalLicenseUrl: string;
   privacyUrl: string; cookiePolicyUrl: string; refundPolicyUrl: string; withdrawalUrl: string;
   sellerSelfCertified: boolean;
+  checkoutAcknowledgements: ShopCheckoutAcknowledgement[];
   checkout: {
     phone: boolean; billingAddress: 'auto' | 'required'; businessName: 'off' | 'optional' | 'required';
     taxId: 'off' | 'optional' | 'if_supported';

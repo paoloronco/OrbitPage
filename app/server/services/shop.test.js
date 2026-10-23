@@ -163,6 +163,28 @@ describe('Shop SQLite integration with signed webhooks and simulated provider re
     await expect(shop.reserveShopUpload({ productId: id, filename: '../../secret.pdf', contentType: 'application/pdf', sizeBytes: 20, kind: 'file' }, base)).rejects.toThrow('valid filename');
     await expect(shop.shopDelivery(`${randomUUID()}.invalid`)).rejects.toMatchObject({ code: 'SHOP_DOWNLOAD_INVALID' });
   });
+  it('enforces product acknowledgements and customer fields before Stripe and snapshots the choices', async () => {
+    const original = (await shop.shopSettings()).appearance;
+    const id = await newProduct();
+    const acknowledgement = { id: 'scope', label: 'I accept the product scope.', required: true, appliesTo: 'digital' };
+    await shop.saveShopAppearance({ ...original, checkoutAcknowledgements: [acknowledgement], checkout: { ...original.checkout, customFields: [{ key: 'reference', label: 'Reference', type: 'numeric', required: true }] } }, base);
+    const input = { productId: id, sellerTermsAccepted: 'accepted', sellerNoticeAcknowledged: 'accepted', digitalContentConsent: 'accepted' };
+    const before = provider.creates.length;
+    try {
+      const missingConsent = await request(app).post('/api/shop/checkout').type('form').send(input);
+      expect(missingConsent.status).toBe(400); expect(missingConsent.body.code).toBe('CHECKOUT_ACKNOWLEDGEMENT_REQUIRED');
+      const missingField = await request(app).post('/api/shop/checkout').type('form').send({ ...input, acceptedAcknowledgements: 'scope' });
+      expect(missingField.status).toBe(400); expect(missingField.body.code).toBe('CHECKOUT_CUSTOMER_DETAILS_REQUIRED');
+      expect(provider.creates).toHaveLength(before);
+      const accepted = await request(app).post('/api/shop/checkout').type('form').send({ ...input, acceptedAcknowledgements: 'scope', 'checkoutField:reference': '00123' });
+      expect(accepted.status).toBe(303);
+      expect(provider.creates.at(-1).input.custom_fields).toEqual([{ key: 'reference', label: { type: 'custom', custom: 'Reference' }, type: 'numeric', optional: false, numeric: { default_value: '00123' } }]);
+      const saved = JSON.parse((await db.dbGet('SELECT data FROM shop_orders ORDER BY rowid DESC LIMIT 1')).data);
+      expect(saved.buyerAcknowledgements).toEqual([{ ...acknowledgement, accepted: true }]);
+      await shop.saveShopAppearance({ ...original, checkoutAcknowledgements: [{ ...acknowledgement, label: 'Changed later' }] }, base);
+      expect(JSON.parse((await db.dbGet('SELECT data FROM shop_orders WHERE id = ?', [saved.orderId])).data).buyerAcknowledgements[0].label).toBe(acknowledgement.label);
+    } finally { await shop.saveShopAppearance(original, base); }
+  });
   it('rejects non-binary upload bodies without consuming the reservation or writing files', async () => {
     const dashboard = await shop.saveShopProduct(digitalInput(), base);
     const body = Buffer.from('%PDF-1.7\nsynthetic upload');

@@ -767,7 +767,14 @@
 .shop-preview-footer a { color: inherit; }
 .shop-preview-footer { color: var(--shop-preview-muted); font-size: 13px; padding: 44px 0 16px; text-align: center; }
 .shop-preview-seller { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); margin-bottom: 18px; text-align: left; }
-.shop-preview-seller section { display: grid; gap: 4px; min-width: 0; }
+.shop-preview-seller section { align-content: start; background: color-mix(in srgb, var(--shop-preview-accent) 4%, var(--shop-preview-card)); border: 1px solid var(--shop-preview-line); border-radius: max(12px, var(--shop-preview-radius)); display: grid; gap: 8px; min-width: 0; overflow-wrap: anywhere; padding: 22px; }
+.shop-preview-seller .shop-footer-heading { align-items: center; display: flex; gap: 10px; margin-bottom: 6px; }
+.shop-preview-seller .shop-footer-heading svg { color: var(--shop-preview-accent); flex-shrink: 0; }
+.shop-preview-seller .shop-seller-name { color: var(--shop-preview-ink); font-size: 17px; font-weight: 700; }
+.shop-preview-seller p { margin: 0; }
+.shop-preview-seller .shop-seller-email a { color: var(--shop-preview-ink); font-size: 15px; text-underline-offset: 4px; }
+.shop-card-size-selector { display: grid; gap: 8px; max-width: 100%; }
+.shop-card-size-selector select { min-width: 0; width: 100%; }
 .shop-preview-seller strong { color: var(--shop-preview-ink); }
 .shop-preview-seller span,
 .shop-preview-seller a { overflow-wrap: anywhere; }
@@ -879,6 +886,8 @@
 .shop-product-detail-checkout label { align-items: flex-start; color: var(--ink); display: flex; font-size: 12px; font-weight: 400; gap: 8px; line-height: 1.45; margin: 0; }
 .shop-product-detail-checkout input[type="checkbox"] { accent-color: var(--brand); flex: none; height: 14px; margin: 2px 0 0; min-height: 0; padding: 0; width: 14px; }
 .shop-product-detail-checkout a { color: inherit; }
+.shop-product-detail-checkout .shop-purchase-field { display: grid; gap: 6px; font-size: 14px; }
+.shop-purchase-field input { background: transparent; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; min-width: 0; padding: 10px 12px; width: 100%; }
 .shop-product-detail-price { align-items: center; display: flex; gap: 16px; justify-content: space-between; }
 .shop-product-detail-price strong { font-size: 18px; }
 .shop-product-detail-price button { background: var(--brand); border: 0; border-radius: max(6px, calc(var(--radius) * .55)); color: var(--button-ink); cursor: not-allowed; font: inherit; font-size: 15px; font-weight: 800; line-height: 1.45; min-height: 46px; min-width: 128px; padding: 10px 20px; }

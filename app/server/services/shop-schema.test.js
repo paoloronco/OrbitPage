@@ -26,6 +26,29 @@ describe('self-hosted shared Shop contracts', () => {
     expect(html.includes('<div class="product-kind">')).toBe(badges);
   });
 
+  it('validates configurable acceptance boxes without changing legacy shops', () => {
+    const item = { id: 'scope', label: 'Accept scope', required: true, appliesTo: 'all' };
+    expect(normalizeShopAppearance({}).checkoutAcknowledgements).toEqual([]);
+    expect(appearance.parse({ checkoutAcknowledgements: [item] }).checkoutAcknowledgements).toEqual([item]);
+    for (const items of [[item, item], [{ ...item, id: '<input>' }], [{ ...item, label: ' ' }], [{ ...item, appliesTo: 'other' }], Array.from({ length: 6 }, (_, i) => ({ ...item, id: String(i) }))]) {
+      expect(appearance.safeParse({ checkoutAcknowledgements: items }).success).toBe(false);
+    }
+  });
+  it('honors image and digital badge visibility and safely renders configured pre-checkout controls', () => {
+    const settings = normalizeShopAppearance({ showCoverImages: false, showDigitalProductBadge: false,
+      checkout: { customFields: [{ key: 'reference', label: '<Reference>', type: 'numeric', required: true }] },
+      checkoutAcknowledgements: [{ id: 'scope', label: '<I agree>', required: true, appliesTo: 'digital' }, { id: 'service', label: 'Service only', required: true, appliesTo: 'service' }] });
+    const html = renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.test/shop', appearance: settings,
+      products: [{ ...product.parse({ productId: 'guide', type: 'digital', title: 'Guide', description: 'Details', priceCents: 1250 }), coverKey: 'guide.webp' }], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '/covers/' });
+    expect(html).not.toContain('src="/covers/guide.webp"');
+    expect(html).not.toContain('"image":');
+    expect(html).not.toContain('<div class="product-kind">Digital download</div>');
+    expect(html).toContain('name="checkoutField:reference" type="text" maxlength="255" required inputmode="numeric" pattern="[0-9]+"');
+    expect(html).toContain('&lt;Reference&gt;'); expect(html).toContain('&lt;I agree&gt;');
+    expect(html).toContain('name="acceptedAcknowledgements" required type="checkbox" value="scope"');
+    expect(html).not.toContain('value="service"');
+    expect(html).toContain('name="digitalContentConsent" required');
+  });
   it('validates supported currencies and renders prices, metadata and receipts consistently', () => {
     const fixture = { productId: 'guide', type: 'digital', title: 'Guide', description: 'Download details', priceCents: 1250 };
     expect(appearance.parse({}).currency).toBe('eur');

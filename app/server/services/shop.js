@@ -9,12 +9,12 @@ import { dbAll, dbGet, dbRun, withTransaction } from '../database.js';
 import { getDirectorySizeBytes, getUploadStorageQuotaBytes } from './upload-policy.js';
 import { encryptSmtpPassword, decryptSmtpPassword, newsletterComplianceReady } from './newsletter.js';
 import { createShopSchemas, shopComplianceReady } from '../../packages/shop/schema.js';
-import { checkoutAmounts, assertCheckoutCharge, stripeObjectId, stripeTaxIdCollection, stripeNameCollection } from '../../packages/shop/payments.js';
+import { checkoutAmounts, assertCheckoutCharge, stripeObjectId, stripeTaxIdCollection, stripeNameCollection, shopCheckoutCustomFields } from '../../packages/shop/payments.js';
 import { readStripeShopOverview, listStripeShopCoupons, createStripeShopCoupon, revokeStripeShopCoupon, ShopCouponError } from '../../packages/shop/stripe.js';
 import { validateShopFile, matchesShopFileSignature } from '../../packages/shop/files.js';
 import { renderShopHtml, renderShopMarkdown, shopPolicyLinks, resolvedShopDesign, buildShopHomeLinks, shopPurchasePresentation } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail, buildShopSellerEmail } from '../../packages/shop/email.js';
-import { shopDigitalContentConsent, shopSellerNotice } from '../../packages/shop/policies.js';
+import { shopBuyerAcknowledgements, shopDigitalContentConsent, shopSellerNotice } from '../../packages/shop/policies.js';
 
 export const SHOP_FILE_BYTES = 50 * 1024 * 1024;
 export const SHOP_MAX_PRODUCTS = 20;
@@ -449,7 +449,7 @@ export async function cleanupShopFiles() {
 }
 
 export async function createShopCheckout(raw, base) {
-  const input = z.object({ productId: uuid, sellerNoticeAcknowledged: z.boolean(), sellerTermsAccepted: z.boolean().default(false), digitalContentConsent: z.boolean() }).strict().parse(raw);
+  const input = z.object({ productId: uuid, sellerNoticeAcknowledged: z.boolean(), sellerTermsAccepted: z.boolean().default(false), digitalContentConsent: z.boolean(), acceptedAcknowledgements: z.array(z.string().max(64)).max(5).default([]), checkoutFieldValues: z.unknown().optional() }).strict().parse(raw);
   const [setting, product] = await Promise.all([shopSettings(), productFor(input.productId)]);
   if (!setting.enabled || !product?.active || (product.type === 'digital' && !product.files.length)) fail(404, 'PRODUCT_NOT_FOUND', 'Product not found.');
   const appearance = normalizeShopAppearance(setting.appearance);
@@ -457,6 +457,12 @@ export async function createShopCheckout(raw, base) {
   const policy = shopPolicyLinks(appearance, `${base}/shop`);
   if (policy.terms && !input.sellerTermsAccepted) fail(400, 'SELLER_TERMS_ACCEPTANCE_REQUIRED', 'Accept the seller terms before checkout.');
   if (product.type === 'digital' && !input.digitalContentConsent) fail(400, 'DIGITAL_CONTENT_CONSENT_REQUIRED', 'Consent to immediate digital delivery before checkout.');
+  let buyerAcknowledgements;
+  try { buyerAcknowledgements = shopBuyerAcknowledgements(appearance, product.type, input.acceptedAcknowledgements); }
+  catch (error) { fail(400, "CHECKOUT_ACKNOWLEDGEMENT_REQUIRED", error.message); }
+  let customFields;
+  try { customFields = shopCheckoutCustomFields(appearance.checkout, input.checkoutFieldValues); }
+  catch (error) { fail(400, 'CHECKOUT_CUSTOMER_DETAILS_REQUIRED', error.message); }
   const { client, config } = await shopStripe();
   if (!config.webhookSecret || !setting.stripe?.ready || config.livemode !== setting.stripe.livemode) fail(409, 'SHOP_NOT_READY', 'This shop cannot accept payments yet.');
   await assertShopSetup(setting);
@@ -467,6 +473,7 @@ export async function createShopCheckout(raw, base) {
     stripeAccountId: setting.stripe.accountId, stripeLivemode: config.livemode,
     stripeCheckoutSessionId: null, stripePaymentIntentId: null, stripeChargeId: null,
     buyerEmail: null, buyerName: null, buyerDetails: null, customerId: null,
+    buyerAcknowledgements,
     checkoutFields: appearance.checkout, ...Object.fromEntries(['sellerType', 'sellerName', 'sellerEmail', 'sellerPhone', 'sellerAddress', 'sellerBusinessId'].map(key => [key, appearance[key]])),
     sellerTermsText: appearance.termsText, sellerDigitalLicenseText: appearance.digitalLicenseText, sellerPrivacyText: appearance.privacyText,
     sellerRefundPolicyText: appearance.refundPolicyText, sellerWithdrawalText: appearance.withdrawalText,
@@ -498,7 +505,7 @@ export async function createShopCheckout(raw, base) {
       name_collection: stripeNameCollection(appearance.checkout.businessName),
       phone_number_collection: { enabled: appearance.checkout.phone }, billing_address_collection: appearance.checkout.billingAddress,
       tax_id_collection: stripeTaxIdCollection(appearance.checkout.taxId),
-      custom_fields: appearance.checkout.customFields.map(field => ({ key: field.key, label: { type: 'custom', custom: field.label }, type: field.type, optional: !field.required })),
+      custom_fields: customFields,
       allow_promotion_codes: true, line_items: [{ quantity: 1, price_data: { currency: order.currency, unit_amount: order.amountTotal, product_data: { name: product.title, description: product.description.slice(0, 500) } } }],
       metadata, payment_intent_data: { metadata },
       success_url: `${base}/shop/success?order=${orderId}&session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${base}/shop`,

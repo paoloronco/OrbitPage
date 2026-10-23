@@ -2,6 +2,18 @@
 
 This guide explains the implemented protections and installation settings. Report vulnerabilities using [SECURITY.md](../../../SECURITY.md).
 
+## Node.js security updates
+
+Use a maintained Node.js release with the October 2026 security fixes:
+22.23.4+, 24.22.1+ or 26.12.1+ within those release lines. Earlier versions can
+be vulnerable to [CVE-2026-111497](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases)
+when decoding untrusted Brotli data, including fetched HTTP responses.
+Update and recreate Docker containers from the patched OrbitPage image; a Git
+pull alone does not replace a running container's Node.js runtime. Source
+installations must update Node.js separately and restart the application.
+Review access/provider logs and rotate potentially exposed provider keys after
+patching. Keep existing data volumes and backups throughout the update.
+
 ## Accounts and sessions
 
 - Passwords use bcrypt with 12 salt rounds. Sessions use signed JWTs with a 12-hour expiry.
