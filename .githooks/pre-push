@@ -1,6 +1,6 @@
 #!/bin/sh
 # Pre-push hook: lint, unit tests, and build before allowing git push.
-# Install with: sh scripts/install-git-hooks.sh
+# Install from the repository root: npm --prefix app run install:hooks
 
 echo "========================================================="
 echo "  OrbitPage Pre-Push Hook: Running quality checks...    "

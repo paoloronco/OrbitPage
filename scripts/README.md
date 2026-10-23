@@ -1,15 +1,37 @@
 # Repository scripts
 
-These public helpers are part of the supported self-hosted installation and
-maintenance path. Keep them in GitHub so Linux/PVE installs, host updates and CI
-use the same reviewed version. Do not move their published paths casually.
+These public helpers support self-hosted updates and repository verification.
+Keep them in GitHub so installations, contributors and CI use the same reviewed
+version. Tests and contributor tools belong in the source repository even when
+they are not needed by a running installation. The root Dockerfile bundles only
+`orbitpage-update.sh` and `orbitpage-update.py` from this directory.
 
-## Host operations and contributor tools
+## Host operations
 
-- `install-git-hooks.sh` and `install-git-hooks.ps1`: point Git at the tracked `.githooks/` directory.
-- `orbitpage-update.sh` and `orbitpage-update.py`: host update command for existing Docker, Compose, and source installations.
+- `orbitpage-update.sh`: host command bundled in the Docker image for existing
+  installations; delegates installer-managed updates to `orbitpage update` and
+  otherwise invokes the Python helper. Its compatibility flags still support
+  older installations; this is not an unused migration script.
+- `orbitpage-update.py`: updates Docker, Compose and source installations and
+  serves dashboard update requests. Both root installers also distribute this
+  helper. Keep both updater filenames stable.
 - The root `install.sh` also owns dashboard update service activation through
   `web-updates CONTAINER`; see [Web updates](../docs/wiki/administration/Deployment.md#web-updates).
+
+## Contributor tools
+
+- [`app/scripts/install-hooks.js`](../app/scripts/install-hooks.js): optional,
+  cross-platform setup for the tracked `.githooks/` directory. Use the existing
+  npm command instead of separate shell or PowerShell installers:
+
+  ```bash
+  npm --prefix app run install:hooks
+  ```
+
+  The pre-push hook checks tracked runtime data, lint, unit tests and the build.
+- [`app/scripts/clean-e2e.js`](../app/scripts/clean-e2e.js): resets the isolated
+  browser-test database before the `test:e2e:*` npm commands. It prevents tests
+  from importing a developer's existing database.
 
 ## Isolated verification helpers
 
