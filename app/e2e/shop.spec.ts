@@ -28,7 +28,7 @@ test('the shared storefront grid fills three, two or one columns according to av
   expect(sellerAndEmailShareFooterRow).toBe(true);
   await expect(seller.locator('details, summary')).toHaveCount(0);
   await expect(seller).toHaveCSS('border-top-width', '0px');
-  expect(await seller.evaluate(element => element.parentElement?.nextElementSibling?.tagName)).toBe('FOOTER');
+  expect(await seller.evaluate(element => element.closest('footer') !== null)).toBe(true);
   const grid = page.locator('.grid');
   for (const [width, columns] of [[1440, 3], [1024, 3], [768, 2], [650, 2], [640, 1], [390, 1], [320, 1]]) {
     await page.setViewportSize({ width, height: 980 });
@@ -172,6 +172,8 @@ test('Personalize opens and closes in the configured OSS dashboard and survives 
       const data = await response.json();
       Object.assign(data.shop, { stripeConnected: true, stripeReady: true, stripeLivemode: false });
       Object.assign(data.shop.appearance, { sellerSelfCertified: true, sellerType: 'private', sellerName: 'Fictional Studio', sellerEmail: 'studio@example.invalid', termsText: 'Terms', privacyText: 'Privacy', refundPolicyText: 'Refunds', withdrawalText: 'Withdrawal' });
+      data.shop.appearance.showProductType = false;
+      data.products = [{ productId: 'visibility-fixture', type: 'digital', title: 'Visibility fixture', description: 'Fixture download', priceCents: 1000, currency: 'eur', active: true, cardStyle: {}, coverUrl: '/brand/orbitpage-mark.svg', file: { filename: 'guide.pdf' } }];
       data.shop.emailSettings.verifiedAt = '2026-10-09T00:00:00.000Z';
       fixture = data;
     }
@@ -196,6 +198,21 @@ test('Personalize opens and closes in the configured OSS dashboard and survives 
   await personalize.click();
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(panel).toBeVisible();
+  await panel.getByRole('button', { name: 'Shop', exact: true }).click();
+  const preview = shop.getByRole('region', { name: 'Shop preview', exact: true });
+  const badge = preview.locator('article > small');
+  await expect(badge).toHaveCount(0);
+  const showBadge = panel.getByRole('switch', { name: 'Show digital product badge' });
+  await expect(showBadge).not.toBeChecked();
+  await showBadge.click();
+  await expect(badge).toHaveCount(1);
+  await showBadge.click();
+  await expect(badge).toHaveCount(0);
+  await expect(preview.locator('.shop-preview-cover')).toHaveCount(1);
+  await panel.getByRole('switch', { name: 'Show cover images' }).click();
+  await expect(preview.locator('.shop-preview-cover')).toHaveCount(0);
+  await panel.getByRole('switch', { name: 'Show cover images' }).click();
+  await expect(preview.locator('.shop-preview-cover')).toHaveCount(1);
   await shop.getByRole('button', { name: 'Close personalization', exact: true }).click();
   await page.unrouteAll({ behavior: 'wait' });
 });

@@ -9,6 +9,23 @@ const { shopAppearanceInputSchema: appearance, shopProductInputSchema: product, 
   createShopSchemas(z, value => /^\/uploads\/[a-zA-Z0-9._-]+$/.test(value));
 
 describe('self-hosted shared Shop contracts', () => {
+  it.each([
+    [{}, true, true],
+    [{ showCoverImages: false }, false, true],
+    [{ showDigitalProductBadge: false }, true, false],
+    [{ showProductType: false }, true, false],
+    [{ showCoverImages: false, showDigitalProductBadge: false }, false, false],
+  ])('honors product visibility preferences, including legacy badges (%j)', (settings, covers, badges) => {
+    const html = renderShopHtml({
+      title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: normalizeShopAppearance(settings),
+      products: [{ productId: 'guide', title: 'Guide', description: 'Download details', type: 'digital', priceCents: 1250, coverKey: 'guide.webp', cardStyle: {} }],
+      coverUrlPrefix: '/covers/', apiBaseUrl: '', newsletterEndpoint: ''
+    });
+    expect(html.includes('<img class="product-cover"')).toBe(covers);
+    expect(html.includes('product has-cover')).toBe(covers);
+    expect(html.includes('<div class="product-kind">')).toBe(badges);
+  });
+
   it('validates supported currencies and renders prices, metadata and receipts consistently', () => {
     const fixture = { productId: 'guide', type: 'digital', title: 'Guide', description: 'Download details', priceCents: 1250 };
     expect(appearance.parse({}).currency).toBe('eur');

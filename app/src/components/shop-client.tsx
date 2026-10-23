@@ -498,7 +498,7 @@ function ShopStorefrontPreview({
               aria-haspopup="dialog"
               data-selected={selectedProductId === product.productId}
               aria-disabled={disabled}
-              className={`${product.coverUrl ? "has-cover" : "no-cover"} ${cardStyle.surfaceEffect === "inherit" ? appearance.cardEffect : cardStyle.surfaceEffect} ${cardStyle.alignment === "inherit" ? appearance.alignment : cardStyle.alignment}`}
+              className={`${appearance.showCoverImages && product.coverUrl ? "has-cover" : "no-cover"} ${cardStyle.surfaceEffect === "inherit" ? appearance.cardEffect : cardStyle.surfaceEffect} ${cardStyle.alignment === "inherit" ? appearance.alignment : cardStyle.alignment}`}
               key={product.productId}
               onClick={() => { if (!disabled) setDetailsProductId(product.productId); }}
               onKeyDown={(event) => { if (!disabled && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setDetailsProductId(product.productId); } }}
@@ -510,7 +510,7 @@ function ShopStorefrontPreview({
               } as CSSProperties}
             >
               {appearance.showCoverImages && product.coverUrl && <img alt="" className="shop-preview-cover" src={new URL(product.coverUrl, publicUrl).toString()} />}
-              {appearance.showDigitalProductBadge && <small>{product.type === "digital" ? copy.digitalDownload : copy.service}</small>}
+              {appearance.showProductType && appearance.showDigitalProductBadge && <small>{product.type === "digital" ? copy.digitalDownload : copy.service}</small>}
               <strong>{product.title}</strong>
               <div className="shop-preview-summary" dangerouslySetInnerHTML={{ __html: renderShopDescription(shopProductSummary(product)) }} />
               <div><b>{money(product.priceCents, "en", appearance.currency)}</b><span>{copy.buy}</span></div>
@@ -1492,7 +1492,6 @@ export default function ShopClient({
         <label className="shop-range-field"><span>Card opacity <b>{Math.round(appearance.cardOpacity * 100)}%</b></span><RangeSlider aria-label="Card opacity" max={1} min={0} onChange={(event) => setAppearance((current) => current ? { ...current, cardOpacity: Number(event.target.value) } : current)} step=".05" value={appearance.cardOpacity} valueLabel={`${Math.round(appearance.cardOpacity * 100)}%`} /></label>
         <label className="shop-range-field"><span>Corner radius <b>{appearance.cardRadius}px</b></span><RangeSlider aria-label="Corner radius" disabled={appearance.inheritPageTheme} max={32} min={0} onChange={(event) => setAppearance((current) => current ? { ...current, cardRadius: Number(event.target.value) } : current)} value={appearance.cardRadius} valueLabel={`${appearance.cardRadius}px`} /></label>
         <label className="shop-range-field"><span>Shadow <b>{appearance.shadowIntensity}%</b></span><RangeSlider aria-label="Shadow" max={100} min={0} onChange={(event) => setAppearance((current) => current ? { ...current, shadowIntensity: Number(event.target.value) } : current)} value={appearance.shadowIntensity} valueLabel={`${appearance.shadowIntensity}%`} /></label>
-        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show product type" checked={appearance.showProductType} onCheckedChange={(showProductType) => setAppearance((current) => current ? { ...current, showProductType } : current)} size="small" /><span><strong>Show product type</strong><small>Display “digital download” or “service” above each item.</small></span></label>
       </div></>}
 
       </fieldset></> : <>
@@ -1504,7 +1503,7 @@ export default function ShopClient({
           <label className={appearance.productCardSize === "large" ? "selected" : ""}><input type="radio" name="productCardSize" checked={appearance.productCardSize === "large"} onChange={() => setAppearance((current) => current ? { ...current, productCardSize: "large" } : current)} />Large</label>
         </div>
         <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show cover images" checked={appearance.showCoverImages} onCheckedChange={(showCoverImages) => setAppearance((current) => current ? { ...current, showCoverImages } : current)} size="small" /><span><strong>Show cover images</strong><small>Display cover image on product cards.</small></span></label>
-        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show digital product badge" checked={appearance.showDigitalProductBadge} onCheckedChange={(showDigitalProductBadge) => setAppearance((current) => current ? { ...current, showDigitalProductBadge } : current)} size="small" /><span><strong>Show digital product badge</strong><small>Display "digital download" or "service" above each item.</small></span></label>
+        <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show digital product badge" checked={appearance.showProductType && appearance.showDigitalProductBadge} onCheckedChange={(showDigitalProductBadge) => setAppearance((current) => current ? { ...current, showDigitalProductBadge, showProductType: showDigitalProductBadge } : current)} size="small" /><span><strong>Show digital product badge</strong><small>Display "digital download" or "service" above each item.</small></span></label>
       </div>
       <div className="shop-design-section shop-home-link-section">
         <div className="shop-home-link-heading"><div><strong>Add Shop to Home</strong><small>Create a normal OrbitPage card that opens this shop.</small></div><Link2 size={20} /></div>

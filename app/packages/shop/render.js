@@ -150,12 +150,12 @@ export function renderShopHtml(input) {
         const sessionsLabel = sessionsIncluded === 1
             ? tr("1 session included", "1 sessione inclusa")
             : tr("{count} sessions included", "{count} sessioni incluse").replaceAll("{count}", String(sessionsIncluded));
-        const coverUrl = productCoverUrl(product);
+        const coverUrl = appearance.showCoverImages ? productCoverUrl(product) : null;
         const cover = coverUrl ? `<img class="product-cover" alt="" loading="lazy" src="${escapeHtml(coverUrl)}">` : "";
         return `
     <article class="product ${coverUrl ? "has-cover" : "no-cover"} effect-${cardStyle.surfaceEffect} align-${cardStyle.alignment}" data-product-dialog="product-${escapeHtml(product.productId)}" data-search="${escapeHtml([product.title, product.summary, product.description].filter(Boolean).join(" "))}" style="--product-bg:${cardStyle.backgroundColor || design.cardBackground};--product-ink:${cardStyle.textColor || design.cardTextColor}">
       ${cover}
-      ${appearance.showProductType ? `<div class="product-kind">${escapeHtml(product.type === "digital" ? tr("Digital download", "Download digitale") : tr("Service", "Servizio"))}</div>` : ""}
+      ${appearance.showProductType && appearance.showDigitalProductBadge ? `<div class="product-kind">${escapeHtml(product.type === "digital" ? tr("Digital download", "Download digitale") : tr("Service", "Servizio"))}</div>` : ""}
       <h2>${escapeHtml(product.title)}</h2>
       <div class="product-excerpt">${renderShopDescription(shopProductSummary(product))}</div>
       ${product.type === "service" && sessionsIncluded > 1 ? `<div class="package-size">${escapeHtml(sessionsLabel)}</div>` : ""}
@@ -213,8 +213,6 @@ export function renderShopHtml(input) {
   .shop-footer-details .seller{margin:0}
   .shop-footer-contact h2{color:var(--ink);font-size:14px;font-weight:500;margin:0 0 12px}
   .shop-footer-contact a{overflow-wrap:anywhere}
-  @container shop-shell (max-width:660px){.grid{grid-template-columns:${appearance.layout === "list" ? `minmax(0,min(100%,${cardDimensions.listMaxWidth}px))` : "minmax(0,1fr)"}}}
-  @media(max-width:700px){.grid{grid-template-columns:1fr}}
   </style></head><body><main class="shell">
     <div class="shop-topbar${compactHeader ? " centered-logo" : ""}"><a class="back" href="${escapeHtml(input.canonicalUrl.replace(/\/shop\/?$/, ""))}">← ${escapeHtml(appearance.backLinkLabel)}</a><span class="eyebrow">${appearance.logoUrl ? `<img alt="Shop logo" src="${escapeHtml(appearance.logoUrl)}">` : `<svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M2 3h2l2.5 12h12l2.5-9H5"/></svg>${escapeHtml(tr("Shop", "Shop"))}`}</span>${compactHeader ? search : ""}</div>
     ${!compactHeader ? `<section class="hero"><div class="hero-heading${title && input.products.length ? " with-search" : ""}">${title ? `<h1>${escapeHtml(title)}</h1>` : ""}${search}</div>${description ? `<p class="hero-description">${escapeHtml(description)}</p>` : ""}</section>` : ""}
