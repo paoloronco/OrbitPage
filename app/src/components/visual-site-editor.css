@@ -275,6 +275,9 @@ html:has(.admin-visual-editor-enabled) {
 }
 
 .visual-site-editor__canvas .admin-preview-device--mobile .admin-preview-device__hardware {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
   width: min(280px, calc(100% - 24px));
   height: auto;
   aspect-ratio: 6 / 13;

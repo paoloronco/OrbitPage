@@ -216,7 +216,7 @@ test('matches Page and Content device geometry and keeps the surrounding canvas 
           await Promise.all(element.getAnimations().map(animation => animation.finished));
           const rect = element.getBoundingClientRect(), css = getComputedStyle(element);
           const screen = element.querySelector('.admin-preview-device__screen') as HTMLElement;
-          return { radius: css.borderRadius, padding: css.padding, background: css.backgroundColor, screenRatio: getComputedStyle(screen).aspectRatio, width: rect.width, height: rect.height };
+          return { radius: css.borderRadius, padding: css.padding, background: css.backgroundColor, frameRatio: css.aspectRatio, screenRatio: getComputedStyle(screen).aspectRatio, width: rect.width, height: rect.height };
         }));
         if (section === 'Menu') {
           await expect(page.locator('.menu-preview-canvas')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
@@ -237,7 +237,7 @@ test('matches Page and Content device geometry and keeps the surrounding canvas 
       const { width: hardwareWidth, height, ...menuChrome } = frames[2];
       expect(menuChrome).toEqual(pageChrome);
       expect(hardwareWidth).toBeLessThanOrEqual(device === 'Mobile' ? 280 : 900);
-      if (device === 'Mobile') expect(height / hardwareWidth).toBeCloseTo(13 / 6, 2);
+      if (device === 'Mobile') expect(height / hardwareWidth).toBeCloseTo(frames[0].height / frames[0].width, 2);
     }
   }
 });
