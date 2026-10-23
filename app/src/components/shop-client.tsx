@@ -17,6 +17,7 @@ import {
   Euro,
   FileArchive,
   Link2,
+  LockKeyhole,
   MailPlus,
   Mail,
   PackagePlus,
@@ -527,20 +528,23 @@ function ShopStorefrontPreview({
       </section>}
       <footer className="shop-preview-footer">
         <div className="shop-preview-seller">
-          <section className="shop-seller-info">
-            <div className="shop-footer-heading"><ShoppingBag aria-hidden="true" size={18} /><strong>Seller information</strong></div>
-            {appearance.sellerName && <div className="shop-seller-name">{appearance.sellerName}</div>}
+          <section aria-label="Seller information" className="shop-seller-info">
+            <strong className="shop-seller-name">{appearance.sellerName || "Seller information"}</strong>
+            {appearance.sellerType === "trader" && <p>Professional seller</p>}
             {appearance.sellerAddress && <div className="shop-seller-address">{appearance.sellerAddress}</div>}
             {appearance.sellerPhone && <div className="shop-seller-phone">{appearance.sellerPhone}</div>}
             {appearance.sellerBusinessId && <div>{appearance.sellerBusinessId}</div>}
           </section>
           {appearance.sellerEmail && <section className="shop-seller-email">
-            <div className="shop-footer-heading"><Mail aria-hidden="true" size={18} /><strong>Email</strong></div>
-            <p>Questions about your purchase?</p>
-            <a href={`mailto:${appearance.sellerEmail}`}>{appearance.sellerEmail}</a>
+            <Mail aria-hidden="true" size={23} />
+            <div><a href={`mailto:${appearance.sellerEmail}`}>{appearance.sellerEmail}</a><p>Questions about your purchase?</p></div>
           </section>}
         </div>
-        {shopLegalLinks.length > 0 && <nav aria-label="Shop policies">{shopLegalLinks.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}{copy.securePayments} · OrbitPage
+        <div className="shop-preview-footer-bottom">
+          {shopLegalLinks.length > 0 && <nav aria-label="Shop policies">{shopLegalLinks.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}
+          <div className="shop-preview-assurance"><span><LockKeyhole aria-hidden="true" size={18} />{copy.securePayments}</span><span className="shop-preview-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage <ArrowUpRight aria-hidden="true" size={14} /></a></span></div>
+        </div>
+        <p className="shop-preview-disclaimer">The page owner is the seller; OrbitPage provides the shop software.</p>
       </footer>
     </div>
     </ShopDeviceFrame>

@@ -30,7 +30,7 @@ Create digital products or services, attach delivery files and choose the Shop c
 ## Appearance and language
 
 - **Personalize** opens **Shop**. Choose small, medium or large cards from **Card size**, show or hide cover images and the digital product badge, and manage **Add Shop to Home** and **Newsletter signup**. Image visibility also applies to product details; hiding the badge does not remove the digital-delivery consent. These options are independent of the page theme.
-- Seller information and the contact email appear in two themed footer panels above the policy links. They stack on narrow screens.
+- The footer places the seller name and details beside the contact email, separated by a divider. Policy links, payment information and the OrbitPage credit appear underneath; the contact columns stack on narrow screens.
 - Select **Personalize → Theme** to change layout, colors, fonts and card styling, or enable **Use the page theme**.
 - Click the preview title, introduction, logo or back link to edit it. **Apply** in a dialog adds the change to the shared **Save / Reset** flow.
 - **Save** persists pending Shop settings; **Reset** restores saved values. Save before refreshing or leaving.

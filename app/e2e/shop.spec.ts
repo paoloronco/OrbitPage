@@ -8,16 +8,17 @@ test.use({ locale: 'it-IT' });
 
 test('the shared storefront grid fills three, two or one columns according to available space', async ({ page }, testInfo) => {
   const { normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z, () => false);
-  const products = Array.from({ length: 4 }, (_, index) => ({ productId: `print-${index}`, type: 'digital' as const, title: `Illustration ${index + 1}`, description: 'Printable artwork for your studio.', priceCents: 1000, cardStyle: normalizeShopProductCardStyle({}), file: { filename: 'artwork.pdf' } }));
-  const cover = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="230"%3E%3Crect width="400" height="230" fill="%23215d94"/%3E%3C/svg%3E';
-  await page.route('**/*', route => route.abort());
-  const html = (layout: 'grid' | 'list') => renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.invalid/shop', products, appearance: normalizeShopAppearance({ title: 'Studio prints', layout, sellerName: 'Studio Seller', sellerEmail: 'seller@example.invalid' }), previewOnly: true, previewCoverUrls: Object.fromEntries(products.map(product => [product.productId, cover])), apiBaseUrl: '/api/shop', newsletterEndpoint: '/newsletter', coverUrlPrefix: '/covers/' });
+  const products = Array.from({ length: 4 }, (_, index) => ({ productId: `print-${index}`, type: 'digital' as const, title: `Illustration ${index + 1}`, description: 'Printable artwork for your studio.', priceCents: 1000, coverKey: 'fixture.svg', cardStyle: normalizeShopProductCardStyle({}), file: { filename: 'artwork.pdf' } }));
+  const cover = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="230"><rect width="400" height="230" fill="#215d94"/></svg>';
+  await page.route('**/*', route => new URL(route.request().url()).pathname === '/covers/fixture.svg' ? route.fulfill({ contentType: 'image/svg+xml', body: cover }) : route.abort());
+  const html = (layout: 'grid' | 'list') => renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.invalid/shop', products, appearance: normalizeShopAppearance({ title: 'Studio prints', layout, sellerName: 'Studio Seller', sellerEmail: 'seller@example.invalid', termsText: 'Fictional terms', digitalLicenseText: 'Fictional license', privacyText: 'Fictional privacy', refundPolicyText: 'Fictional refunds', withdrawalText: 'Fictional withdrawal' }), apiBaseUrl: '/api/shop', newsletterEndpoint: '/newsletter', coverUrlPrefix: '/covers/' });
   await page.setContent(html('grid'));
   const seller = page.getByRole('region', { name: 'Seller information' });
   await expect(seller).toBeVisible();
   await expect(seller).toContainText('Studio Seller');
   await expect(seller.getByRole('link')).toHaveCount(0);
   const sellerEmail = page.locator('.shop-footer-contact');
+  await expect(page.getByRole('navigation', { name: 'Shop policies' }).getByRole('link')).toHaveCount(5);
   await expect(sellerEmail.getByRole('link')).toHaveAttribute('href', 'mailto:seller@example.invalid');
   const sellerAndEmailShareFooterRow = await seller.evaluate(element => {
     const contact = element.nextElementSibling;
@@ -30,18 +31,27 @@ test('the shared storefront grid fills three, two or one columns according to av
   await expect(seller).toHaveCSS('border-top-width', '0px');
   expect(await seller.evaluate(element => element.closest('footer') !== null)).toBe(true);
   const grid = page.locator('.grid');
-  for (const [width, columns] of [[1440, 3], [1024, 3], [768, 2], [650, 2], [640, 1], [390, 1], [320, 1]]) {
+  for (const [width, columns] of [[1440, 3], [1024, 3], [768, 2], [650, 2], [640, 1], [580, 1], [390, 1], [320, 1]]) {
     await page.setViewportSize({ width, height: 980 });
     await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(columns);
     const geometry = await grid.evaluate(element => ({ width: element.clientWidth, card: element.querySelector('article')!.getBoundingClientRect().width, overflow: element.scrollWidth > element.clientWidth }));
     expect(geometry.card).toBeCloseTo((geometry.width - (columns - 1) * 12) / columns, 0);
     expect(geometry.overflow).toBe(false);
+    await expect(seller).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+    await expect(seller).toHaveCSS('border-left-width', '0px');
+    await expect(sellerEmail).toHaveCSS('border-left-width', width < 600 ? '0px' : '1px');
+    await expect(sellerEmail).toHaveCSS('border-top-width', width < 600 ? '1px' : '0px');
+    const footer = page.locator('footer');
+    await expect(footer.getByRole('link', { name: 'OrbitPage', exact: true })).toHaveAttribute('href', 'https://orbitpage.com');
+    expect(await footer.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     if (width === 1440 || width === 390) await page.screenshot({ path: testInfo.outputPath(`storefront-grid-${width}.png`), fullPage: true });
   }
   await page.setViewportSize({ width: 1440, height: 980 });
   await page.locator('.shell').evaluate(element => element.style.maxWidth = '560px');
   await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
+  await expect(sellerEmail).toHaveCSS('border-left-width', '0px');
+  await expect(sellerEmail).toHaveCSS('border-top-width', '1px');
   await page.setContent(html('list'));
   await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
 });
