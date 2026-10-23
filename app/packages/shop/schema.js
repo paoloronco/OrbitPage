@@ -174,6 +174,13 @@ export function createShopSchemas(z, isOwnedLogo) {
         cookiePolicyUrl: z.string().trim().max(2_048).refine(isSafeShopBookingUrl, "Enter a secure HTTPS cookie policy URL.").default(""),
         refundPolicyUrl: z.string().trim().max(2_048).refine(isSafeShopBookingUrl, "Enter a secure HTTPS refund policy URL.").default(""),
         withdrawalUrl: z.string().trim().max(2_048).refine(isSafeShopBookingUrl, "Enter a secure HTTPS withdrawal URL.").default(""),
+        showTermsInFooter: z.boolean().default(true),
+        showDigitalLicenseInFooter: z.boolean().default(true),
+        showPrivacyInFooter: z.boolean().default(true),
+        showCookiesInFooter: z.boolean().default(true),
+        showRefundsInFooter: z.boolean().default(true),
+        showWithdrawalInFooter: z.boolean().default(true),
+        showStripePaymentNoticeInFooter: z.boolean().default(true),
         sellerSelfCertified: z.boolean().default(false),
         checkoutAcknowledgements: z.array(z.object({
             id: z.string().regex(/^[a-zA-Z0-9-]{1,64}$/),

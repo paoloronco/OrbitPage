@@ -44,6 +44,9 @@ export type ShopAppearance = {
   termsText: string; digitalLicenseText: string; privacyText: string; cookiePolicyText: string;
   refundPolicyText: string; withdrawalText: string; termsUrl: string; digitalLicenseUrl: string;
   privacyUrl: string; cookiePolicyUrl: string; refundPolicyUrl: string; withdrawalUrl: string;
+  showTermsInFooter: boolean; showDigitalLicenseInFooter: boolean; showPrivacyInFooter: boolean;
+  showCookiesInFooter: boolean; showRefundsInFooter: boolean; showWithdrawalInFooter: boolean;
+  showStripePaymentNoticeInFooter: boolean;
   sellerSelfCertified: boolean;
   checkoutAcknowledgements: ShopCheckoutAcknowledgement[];
   checkout: {

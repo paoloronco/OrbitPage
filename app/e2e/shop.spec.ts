@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { z } from 'zod';
 import { createShopSchemas } from '../packages/shop/schema.js';
 import { renderShopHtml } from '../packages/shop/render.js';
+import { SHOP_POLICIES } from '../packages/shop/policies.js';
 import { contentSaveButton, openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 test.use({ locale: 'it-IT' });
@@ -57,6 +58,32 @@ test('the shared storefront grid fills three, two or one columns according to av
   await expect(sellerEmail).toHaveCSS('border-top-width', '1px');
   await page.setContent(html('list'));
   await expect.poll(() => grid.evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').length)).toBe(1);
+});
+
+test('footer visibility hides policies and the Stripe notice without hiding checkout links', async ({ page }) => {
+  const { normalizeShopAppearance, normalizeShopProductCardStyle } = createShopSchemas(z, () => false);
+  await page.route('**/*', route => route.abort());
+  const policies = Object.fromEntries(SHOP_POLICIES.map(policy => [policy.textField, `Fictional ${policy.title}`]));
+  for (const visible of [false, true]) {
+    const appearance = normalizeShopAppearance({ ...policies, ...Object.fromEntries(SHOP_POLICIES.map(policy => [policy.footerField, visible])), showStripePaymentNoticeInFooter: visible });
+    await page.setContent(renderShopHtml({ username: 'studio', title: 'Studio', canonicalUrl: 'https://example.invalid/shop', appearance,
+      products: [{ productId: 'guide', title: 'Guide', type: 'digital', description: 'Download details', priceCents: 1000, cardStyle: normalizeShopProductCardStyle({}), file: null }], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' }));
+    const footer = page.locator('footer');
+    await expect(footer.getByRole('navigation', { name: 'Shop policies' })).toHaveCount(visible ? 1 : 0);
+    await expect(footer.getByText('Secure payments with Stripe', { exact: true })).toHaveCount(visible ? 1 : 0);
+    await expect(footer.locator('.shop-footer-powered')).toHaveCSS('border-left-width', visible ? '1px' : '0px');
+    await expect(footer.getByRole('link', { name: 'OrbitPage', exact: true })).toBeVisible();
+    for (const width of [1440, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await footer.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    }
+    await page.getByRole('button', { name: 'View details', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Guide', exact: true });
+    for (const policy of SHOP_POLICIES.filter(policy => policy.slug !== 'cookies')) {
+      await expect(dialog.getByRole('link', { name: policy.title, exact: true }).first()).toBeVisible();
+    }
+    await expect(dialog.locator('input[name="sellerTermsAccepted"]')).toHaveAttribute('required', '');
+  }
 });
 
 test('product requirements are accessible, start unchecked and block checkout until complete', async ({ page }) => {

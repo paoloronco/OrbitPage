@@ -703,10 +703,13 @@
 
 .shop-legal-policies { display: grid; gap: 12px; }
 .shop-legal-policies article { background: #f7f9fd; border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 10px; padding: 14px; }
-.shop-legal-policies article > strong { color: var(--ink); font-size: 12px; }
+.shop-policy-heading { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; }
+.shop-policy-heading > strong { color: var(--ink); font-size: 12px; }
+.shop-policy-visibility { align-items: center; display: flex; gap: 6px; }
 .shop-legal-policies label { color: var(--ink); display: grid; font-size: 11px; font-weight: 700; gap: 6px; }
 .shop-legal-policies textarea,
-.shop-legal-policies input { background: #fff; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font: inherit; font-size: 12px; font-weight: 400; padding: 9px 11px; resize: vertical; width: 100%; }
+.shop-legal-policies input:not([type="checkbox"]) { background: #fff; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font: inherit; font-size: 12px; font-weight: 400; padding: 9px 11px; resize: vertical; width: 100%; }
+.shop-legal-policies .shop-policy-visibility label { align-items: center; display: flex; gap: 8px; }
 .shop-legal-policies small { color: var(--muted); font-weight: 500; }
 
 .shop-range-field { display: grid; gap: 7px; }
@@ -782,7 +785,7 @@
 .shop-preview-assurance { align-items: center; display: flex; flex-wrap: wrap; font-size: 11px; gap: 14px 24px; }
 .shop-preview-assurance span, .shop-preview-assurance a { align-items: center; display: inline-flex; gap: 8px; }
 .shop-preview-assurance svg { color: var(--shop-preview-accent); flex-shrink: 0; }
-.shop-preview-powered { border-inline-start: 1px solid var(--shop-preview-line); padding-inline-start: 22px; }
+.shop-preview-powered:not(:first-child) { border-inline-start: 1px solid var(--shop-preview-line); padding-inline-start: 22px; }
 .shop-preview-powered a { color: var(--shop-preview-accent); }
 .shop-preview-seller .shop-seller-footer-text { white-space: pre-line; }
 @container shop-preview-panel (max-width: 560px) {

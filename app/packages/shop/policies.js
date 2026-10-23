@@ -1,10 +1,10 @@
 export const SHOP_POLICIES = [
-    { slug: "terms", title: "Terms", textField: "termsText", urlField: "termsUrl" },
-    { slug: "digital-license", title: "Digital Product & License Terms", textField: "digitalLicenseText", urlField: "digitalLicenseUrl" },
-    { slug: "privacy", title: "Privacy policy", textField: "privacyText", urlField: "privacyUrl" },
-    { slug: "cookies", title: "Cookie policy", textField: "cookiePolicyText", urlField: "cookiePolicyUrl" },
-    { slug: "refunds", title: "Refund policy", textField: "refundPolicyText", urlField: "refundPolicyUrl" },
-    { slug: "withdrawal", title: "Withdrawal and contact", textField: "withdrawalText", urlField: "withdrawalUrl" },
+    { slug: "terms", title: "Terms", textField: "termsText", urlField: "termsUrl", footerField: "showTermsInFooter" },
+    { slug: "digital-license", title: "Digital Product & License Terms", textField: "digitalLicenseText", urlField: "digitalLicenseUrl", footerField: "showDigitalLicenseInFooter" },
+    { slug: "privacy", title: "Privacy policy", textField: "privacyText", urlField: "privacyUrl", footerField: "showPrivacyInFooter" },
+    { slug: "cookies", title: "Cookie policy", textField: "cookiePolicyText", urlField: "cookiePolicyUrl", footerField: "showCookiesInFooter" },
+    { slug: "refunds", title: "Refund policy", textField: "refundPolicyText", urlField: "refundPolicyUrl", footerField: "showRefundsInFooter" },
+    { slug: "withdrawal", title: "Withdrawal and contact", textField: "withdrawalText", urlField: "withdrawalUrl", footerField: "showWithdrawalInFooter" },
 ];
 export function shopPolicies(appearance, shopUrl) {
     return SHOP_POLICIES.filter((policy) => policy.slug === "terms" || appearance[policy.textField] || appearance[policy.urlField]).map((policy) => ({

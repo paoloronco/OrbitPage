@@ -441,6 +441,7 @@ function ShopStorefrontPreview({
   const [detailsProductId, setDetailsProductId] = useState<string | null>(null);
   const detailsProduct = products.find((product) => product.productId === detailsProductId);
   const shopLegalLinks = shopPolicies(appearance, publicUrl);
+  const footerPolicies = shopLegalLinks.filter((policy) => appearance[policy.footerField] !== false);
   const purchasePolicies = shopLegalLinks.filter(({ slug }) =>
     slug === "terms" || slug === "privacy" || slug === "refunds" || slug === "withdrawal" || slug === "digital-license"
   );
@@ -543,8 +544,8 @@ function ShopStorefrontPreview({
           </section>}
         </div>
         <div className="shop-preview-footer-bottom">
-          {shopLegalLinks.length > 0 && <nav aria-label="Shop policies">{shopLegalLinks.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}
-          <div className="shop-preview-assurance"><span><LockKeyhole aria-hidden="true" size={18} />{copy.securePayments}</span><span className="shop-preview-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage <ArrowUpRight aria-hidden="true" size={14} /></a></span></div>
+          {footerPolicies.length > 0 && <nav aria-label="Shop policies">{footerPolicies.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}
+          <div className="shop-preview-assurance">{appearance.showStripePaymentNoticeInFooter !== false && <span><LockKeyhole aria-hidden="true" size={18} />{copy.securePayments}</span>}<span className="shop-preview-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage <ArrowUpRight aria-hidden="true" size={14} /></a></span></div>
         </div>
       </footer>
     </div>
@@ -1606,7 +1607,13 @@ export default function ShopClient({
                 {SHOP_POLICIES.map((policy) => {
                   const source = policyDrafts[policy.slug]?.source || (appearance[policy.textField] || !appearance[policy.urlField] ? "hosted" : "external");
                   return <article aria-label={policy.title} key={policy.slug}>
-                    <strong>{policy.title}</strong>
+                    <div className="shop-policy-heading">
+                      <strong>{policy.title}</strong>
+                      <div className="shop-policy-visibility">
+                        <label><ToggleSwitch aria-label={`Show ${policy.title} in footer`} checked={appearance[policy.footerField] !== false} onCheckedChange={(checked) => setAppearance((current) => current ? { ...current, [policy.footerField]: checked } : current)} size="small" /><span>Show in footer</span></label>
+                        <ShopHelp label={`About ${policy.title} footer visibility`} text="We recommend always showing this policy in the footer so customers can easily find it. Hiding the link keeps the policy available on the legal page and, where applicable, during checkout." />
+                      </div>
+                    </div>
                     <div aria-label={`${policy.title} source`} className="shop-kind-selector" role="group">
                       <button aria-pressed={source === "hosted"} className={source === "hosted" ? "active" : undefined} onClick={() => updatePolicy(policy, "hosted")} type="button"><ShieldCheck size={18} /><span><strong>Host in OrbitPage</strong><small>Write or paste the policy text.</small></span></button>
                       <button aria-pressed={source === "external"} className={source === "external" ? "active" : undefined} onClick={() => updatePolicy(policy, "external")} type="button"><Link2 size={18} /><span><strong>External</strong><small>Link to a policy on your website.</small></span></button>
@@ -1704,6 +1711,7 @@ export default function ShopClient({
               <p>In Stripe's public details, turn off “Show phone number on receipts and invoices” if you do not want it displayed. Stripe controls this setting separately. An account shared with other shops or apps uses the same Stripe public details.</p>
               <a className="shop-provider-docs" href={stripePublicDetailsUrl} rel="noreferrer" target="_blank"><ArrowUpRight aria-hidden="true" size={14} /> Review public details in Stripe</a>
             </div>
+            {appearance && <label className="shop-setting-toggle compact"><ToggleSwitch aria-label="Show Secure payments with Stripe in footer" checked={appearance.showStripePaymentNoticeInFooter !== false} disabled={action !== null} onCheckedChange={(checked) => setAppearance((current) => current ? { ...current, showStripePaymentNoticeInFooter: checked } : current)} /><span><strong>Secure payments with Stripe</strong><small>Show this notice in the Shop footer.</small></span></label>}
             {(!selfHosted || (data.shop?.stripeConnected && !shopReady)) && <div className="shop-connect-actions">
               {!selfHosted && data.shop?.stripeConnected && <a className="button secondary" href={stripeDashboardUrl} rel="noreferrer" target="_blank"><ArrowUpRight size={16} /> Stripe Dashboard</a>}
               {data.shop?.stripeConnected && !shopReady && <button className="button secondary" disabled={action !== null} onClick={() => void refreshStripeConnection()} type="button">{action === "refresh-status" ? <LoadingIndicator size={16} /> : <RefreshCw size={16} />} Check status</button>}

@@ -4,6 +4,7 @@ import { createShopSchemas, SHOP_CURRENCIES } from '../../packages/shop/schema.j
 import { renderShopDescription } from '../../packages/shop/description.js';
 import { shopPurchasePresentation, renderShopHtml, renderShopMarkdown, renderShopPolicyHtml, shopPolicyLinks } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail } from '../../packages/shop/email.js';
+import { SHOP_POLICIES } from '../../packages/shop/policies.js';
 
 const { shopAppearanceInputSchema: appearance, shopProductInputSchema: product, normalizeShopAppearance } =
   createShopSchemas(z, value => /^\/uploads\/[a-zA-Z0-9._-]+$/.test(value));
@@ -80,6 +81,30 @@ describe('self-hosted shared Shop contracts', () => {
     expect(renderShopHtml({ ...input, previewOnly: true })).not.toMatch(/href="[^"]*\/shop\/legal/);
     expect(renderShopHtml({ ...input, scriptNonce: 'fixture-nonce' })).toContain('<script type="module" nonce="fixture-nonce">');
     expect(renderShopHtml({ ...input, scriptNonce: '\"<test>' })).toContain('nonce="&quot;&lt;test&gt;"');
+  });
+
+  it('validates footer visibility preferences and keeps legacy shops visible by default', () => {
+    for (const field of [...SHOP_POLICIES.map(policy => policy.footerField), 'showStripePaymentNoticeInFooter']) {
+      expect(normalizeShopAppearance({})[field]).toBe(true);
+      expect(normalizeShopAppearance(appearance.parse({ [field]: false }))[field]).toBe(false);
+      expect(appearance.safeParse({ [field]: 'false' }).success).toBe(false);
+    }
+  });
+
+  it.each(SHOP_POLICIES)('hides only the selected footer policy without changing legal pages or checkout: $slug', policy => {
+    for (const source of ['textField', 'urlField']) {
+      const settings = Object.fromEntries(SHOP_POLICIES.map(item => [item[source], source === 'textField' ? `Fictional ${item.title}` : `https://example.test/${item.slug}`]));
+      const visible = normalizeShopAppearance(settings);
+      const hidden = normalizeShopAppearance({ ...settings, [policy.footerField]: false });
+      const input = { title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', products: [product.parse({ productId: 'guide', type: 'digital', title: 'Guide', description: 'Details', priceCents: 1000 })], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' };
+      const before = renderShopHtml({ ...input, appearance: visible });
+      const after = renderShopHtml({ ...input, appearance: hidden });
+      const footer = after.match(/<footer>.*?<\/footer>/s)[0];
+      for (const item of SHOP_POLICIES) expect(footer.includes(`>${item.title.replaceAll('&', '&amp;')}</a>`)).toBe(item !== policy);
+      expect(after.replace(/<footer>.*?<\/footer>/s, '')).toBe(before.replace(/<footer>.*?<\/footer>/s, ''));
+      expect(shopPolicyLinks(hidden, input.canonicalUrl)).toEqual(shopPolicyLinks(visible, input.canonicalUrl));
+      expect(renderShopPolicyHtml({ appearance: hidden, shopUrl: input.canonicalUrl })).toBe(renderShopPolicyHtml({ appearance: visible, shopUrl: input.canonicalUrl }));
+    }
   });
 
   it('bounds optional seller footer text and renders it as plain text below the seller name', () => {

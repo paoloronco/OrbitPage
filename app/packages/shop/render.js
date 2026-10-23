@@ -114,6 +114,7 @@ export function renderShopHtml(input) {
     const design = resolvedShopDesign(appearance, input.theme || {});
     const policyLinks = shopPolicyLinks(appearance, input.canonicalUrl);
     const policyNav = (input.previewOnly ? [] : shopPolicies(appearance, input.canonicalUrl))
+        .filter((policy) => appearance[policy.footerField] !== false)
         .map(({ url, title }) => `<a href="${escapeHtml(url)}" rel="noreferrer" target="_blank">${escapeHtml(title)}</a>`).join("");
     const sellerNotice = shopSellerNotice(appearance);
     const digitalContentConsent = shopDigitalContentConsent(appearance);
@@ -230,7 +231,7 @@ export function renderShopHtml(input) {
   .shop-footer-assurance{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;font-size:11px}
   .shop-footer-assurance span,.shop-footer-assurance a{display:inline-flex;align-items:center;gap:8px}
   .shop-footer-assurance svg{width:18px;height:18px;color:var(--brand);flex-shrink:0}
-  .shop-footer-powered{border-inline-start:1px solid var(--line);padding-inline-start:22px}
+  .shop-footer-powered:not(:first-child){border-inline-start:1px solid var(--line);padding-inline-start:22px}
   .shop-footer-powered a{color:var(--brand)}.shop-footer-powered svg{width:14px;height:14px}
   .seller-footer-text{white-space:pre-line;margin:0}
   @container shop-shell (max-width:560px){.shell>footer{padding-top:44px}.shop-footer-details{grid-template-columns:minmax(0,1fr);gap:24px;padding:26px 0}.shop-footer-details>section+section{border-inline-start:0;border-top:1px solid var(--line);padding-inline-start:0;padding-top:24px}.shop-footer-contact{gap:16px}}
@@ -241,7 +242,7 @@ export function renderShopHtml(input) {
     <section class="grid">${cards || `<div class="empty">${escapeHtml(tr("No products available.", "Nessun prodotto disponibile."))}</div>`}</section>
     ${input.products.length ? `<p aria-live="polite" class="search-empty" hidden>${escapeHtml(tr("No products match your search.", "Nessun prodotto corrisponde alla ricerca."))}</p>` : ""}
     ${appearance.newsletterEnabled ? `<section class="newsletter-signup"><h2>${escapeHtml(tr("Join the newsletter", "Iscriviti alla newsletter"))}</h2><p>${escapeHtml(tr("Get useful updates by email.", "Ricevi aggiornamenti utili via email."))}</p><form class="newsletter-form" data-newsletter-signup><div class="newsletter-fields"><input aria-label="Email" autocomplete="email" maxlength="254" name="email" placeholder="Email" required type="email"><button type="submit">${escapeHtml(tr("Subscribe", "Iscriviti"))}</button></div><label class="newsletter-consent"><input name="consent" required type="checkbox"><span>${escapeHtml(tr("I want to receive email updates. I can unsubscribe at any time.", "Voglio ricevere aggiornamenti email. Posso annullare l'iscrizione in qualsiasi momento."))}</span></label></form><p aria-live="polite" class="newsletter-message" data-newsletter-message></p></section>` : ""}
-    <footer>${footerDetails}<div class="shop-footer-bottom">${policyNav ? `<nav class="shop-policy-nav" aria-label="Shop policies">${policyNav}</nav>` : ""}<div class="shop-footer-assurance"><span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg>${escapeHtml(tr("Secure payments with Stripe", "Pagamenti sicuri con Stripe"))}</span><span class="shop-footer-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 17 17 7M7 7h10v10"/></svg></a></span></div></div></footer>
+    <footer>${footerDetails}<div class="shop-footer-bottom">${policyNav ? `<nav class="shop-policy-nav" aria-label="Shop policies">${policyNav}</nav>` : ""}<div class="shop-footer-assurance">${appearance.showStripePaymentNoticeInFooter !== false ? `<span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></svg>${escapeHtml(tr("Secure payments with Stripe", "Pagamenti sicuri con Stripe"))}</span>` : ""}<span class="shop-footer-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 17 17 7M7 7h10v10"/></svg></a></span></div></div></footer>
   </main><script type="module"${input.scriptNonce ? ` nonce="${escapeHtml(input.scriptNonce)}"` : ""}>
     const legacyPolicy=${safeJson(legacyPolicyLinks)}[location.hash];if(legacyPolicy)location.replace(legacyPolicy);
     let outsideProductDialog=null;const isProductBackdrop=(event)=>{if(!event.target.matches("dialog.product-dialog"))return false;const b=event.target.getBoundingClientRect();return event.clientX<b.left||event.clientX>b.right||event.clientY<b.top||event.clientY>b.bottom};
