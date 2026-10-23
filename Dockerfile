@@ -45,7 +45,7 @@ COPY app/server/routes ./routes
 # ---------- STAGE 2: runtime ----------
 FROM node:22.23.4-alpine
 
-LABEL org.opencontainers.image.version="4.21.139"
+LABEL org.opencontainers.image.version="4.21.140"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"

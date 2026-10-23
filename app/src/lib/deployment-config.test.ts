@@ -17,8 +17,10 @@ describe('deployment configuration', () => {
     const appDockerfile = read('app/Dockerfile');
 
     expect(backendPackage.version).toBe(frontendPackage.version);
-    expect(rootDockerfile).toContain(`org.opencontainers.image.version="${frontendPackage.version}"`);
-    expect(appDockerfile).toContain(`org.opencontainers.image.version="${frontendPackage.version}"`);
+    for (const dockerfile of [rootDockerfile, appDockerfile]) {
+      const versions = [...dockerfile.matchAll(/org\.opencontainers\.image\.version="([^"]+)"/g)].map(match => match[1]);
+      expect(versions).toEqual([frontendPackage.version, frontendPackage.version]);
+    }
   });
 
   it('keeps both Dockerfiles aligned on production startup requirements', () => {
