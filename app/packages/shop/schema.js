@@ -157,6 +157,7 @@ export function createShopSchemas(z, isOwnedLogo) {
         digitalContentConsentAddon: z.string().trim().max(500).default(""),
         sellerType: z.enum(["unset", "trader", "private"]).default("unset"),
         sellerName: z.string().trim().max(120).default(""),
+        sellerFooterText: z.string().trim().max(200).default(""),
         sellerEmail: z.union([z.literal(""), z.string().trim().toLowerCase().max(254).email()]).default(""),
         sellerPhone: z.string().trim().max(30).refine((value) => !value || /^[+0-9().\s-]{6,30}$/.test(value), "Enter a valid public contact phone number.").default(""),
         sellerAddress: z.string().trim().max(300).default(""),

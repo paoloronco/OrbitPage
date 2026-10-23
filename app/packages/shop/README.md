@@ -16,8 +16,11 @@ its own uploaded-media paths. This preserves backend error handling and prevents
 the self-hosted upload rule from widening the hosted media boundary.
 
 `description.js` and `policies.js` own public formatting and legal navigation.
-Only configured policies are linked; checkout notices keep their fixed core
-copy and append any seller-provided note.
+Terms always include the fixed platform seller notice and the seller's hosted
+text or external terms link. Other policies are linked only when configured;
+checkout notices keep their fixed core copy and append any seller-provided note.
+The optional `sellerFooterText` is plain text, limited to 200 characters, and
+appears below the seller name in the editor preview and public footer.
 `render.js` includes configured product covers as absolute image URLs in the
 catalog's structured data, using the same cover as the visible product card.
 Cover visibility applies to cards, product dialogs and structured data. Digital

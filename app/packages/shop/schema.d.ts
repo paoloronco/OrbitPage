@@ -39,7 +39,7 @@ export type ShopAppearance = {
   showCoverImages: boolean; showDigitalProductBadge: boolean; showProductType: boolean; newsletterEnabled: boolean; homeLinkEnabled: boolean;
   homeLinkTitle: string; homeLinkDescription: string;
   sellerNoticeAddon: string; digitalContentConsentAddon: string;
-  sellerType: 'unset' | 'trader' | 'private'; sellerName: string; sellerEmail: string;
+  sellerType: 'unset' | 'trader' | 'private'; sellerName: string; sellerFooterText: string; sellerEmail: string;
   sellerPhone: string; sellerAddress: string; sellerBusinessId: string;
   termsText: string; digitalLicenseText: string; privacyText: string; cookiePolicyText: string;
   refundPolicyText: string; withdrawalText: string; termsUrl: string; digitalLicenseUrl: string;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createShopSchemas, SHOP_CURRENCIES } from '../../packages/shop/schema.js';
 import { renderShopDescription } from '../../packages/shop/description.js';
-import { shopPurchasePresentation, renderShopHtml, renderShopMarkdown } from '../../packages/shop/render.js';
+import { shopPurchasePresentation, renderShopHtml, renderShopMarkdown, renderShopPolicyHtml, shopPolicyLinks } from '../../packages/shop/render.js';
 import { buildShopBuyerEmail } from '../../packages/shop/email.js';
 
 const { shopAppearanceInputSchema: appearance, shopProductInputSchema: product, normalizeShopAppearance } =
@@ -69,9 +69,10 @@ describe('self-hosted shared Shop contracts', () => {
       expect(product.safeParse({ ...fixture, currency }).success).toBe(false);
     }
   });
-  it('shows only configured policies in a live Shop and omits them from fictional previews', () => {
+  it('shows Terms and configured policies in a live Shop and omits them from fictional previews', () => {
     const input = { username: 'studio', title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', appearance: normalizeShopAppearance({}), products: [], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' };
     expect(renderShopHtml(input)).not.toContain('/shop/legal/');
+    expect(renderShopHtml(input)).toContain('href="https://studio.example.test/shop/legal#terms"');
     const configured = { ...input, appearance: normalizeShopAppearance({ termsText: 'Seller terms', privacyUrl: 'https://studio.example.test/privacy' }) };
     expect(renderShopHtml(configured)).toContain('href="https://studio.example.test/shop/legal#terms"');
     expect(renderShopHtml(configured)).toContain('href="https://studio.example.test/privacy"');
@@ -79,6 +80,34 @@ describe('self-hosted shared Shop contracts', () => {
     expect(renderShopHtml({ ...input, previewOnly: true })).not.toMatch(/href="[^"]*\/shop\/legal/);
     expect(renderShopHtml({ ...input, scriptNonce: 'fixture-nonce' })).toContain('<script type="module" nonce="fixture-nonce">');
     expect(renderShopHtml({ ...input, scriptNonce: '\"<test>' })).toContain('nonce="&quot;&lt;test&gt;"');
+  });
+
+  it('bounds optional seller footer text and renders it as plain text below the seller name', () => {
+    expect(normalizeShopAppearance({ sellerName: 'Legacy seller' }).sellerFooterText).toBe('');
+    expect(appearance.parse({ sellerFooterText: '  Private seller  ' }).sellerFooterText).toBe('Private seller');
+    expect(appearance.parse({ sellerFooterText: 'x'.repeat(200) }).sellerFooterText).toHaveLength(200);
+    expect(appearance.safeParse({ sellerFooterText: 'x'.repeat(201) }).success).toBe(false);
+    const input = { title: 'Studio', canonicalUrl: 'https://studio.example.test/shop', products: [], apiBaseUrl: '', newsletterEndpoint: '', coverUrlPrefix: '' };
+    const html = renderShopHtml({ ...input, appearance: normalizeShopAppearance({ sellerName: 'Studio', sellerFooterText: 'Private seller\n<script>alert(1)</script>' }) });
+    expect(html).toContain('<strong class="seller-name">Studio</strong><p class="seller-footer-text">Private seller\n&lt;script&gt;alert(1)&lt;/script&gt;</p>');
+    expect(html).not.toContain('The page owner is the seller; OrbitPage provides the shop software.');
+    expect(renderShopHtml({ ...input, appearance: normalizeShopAppearance({ sellerFooterText: '  ' }) })).not.toContain('<p class="seller-footer-text">');
+  });
+
+  it.each([
+    {},
+    { termsText: 'Seller terms <test>' },
+    { termsUrl: 'https://studio.example.test/terms?a=1&b=2' },
+    { termsText: 'Seller terms <test>', termsUrl: 'https://studio.example.test/unused' },
+  ])('keeps the platform notice in Terms with hosted, external or missing seller terms (%j)', settings => {
+    const configured = normalizeShopAppearance(settings);
+    const shopUrl = 'https://studio.example.test/shop';
+    const html = renderShopPolicyHtml({ appearance: configured, shopUrl });
+    expect(html).toContain('<section id="terms"><h2>Terms</h2><div class="policy-text">The page owner is the seller; OrbitPage provides the shop software.');
+    expect(html.includes("Read the seller's Terms")).toBe(Boolean(settings.termsUrl && !settings.termsText));
+    if (settings.termsText) expect(html).toContain('Seller terms &lt;test&gt;');
+    if (settings.termsUrl && !settings.termsText) expect(html).toContain('href="https://studio.example.test/terms?a=1&amp;b=2"');
+    expect(shopPolicyLinks(configured, shopUrl).terms).toBe(settings.termsText || settings.termsUrl ? `${shopUrl}/legal#terms` : '');
   });
 
   it('uses the displayed product covers as absolute structured-data images', () => {

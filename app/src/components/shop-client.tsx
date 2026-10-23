@@ -384,6 +384,7 @@ function clearLegalProfile(appearance: ShopAppearance): ShopAppearance {
     ...appearance,
     sellerType: "unset",
     sellerName: "",
+    sellerFooterText: "",
     sellerEmail: "",
     sellerPhone: "",
     sellerAddress: "",
@@ -530,6 +531,7 @@ function ShopStorefrontPreview({
         <div className="shop-preview-seller">
           <section aria-label="Seller information" className="shop-seller-info">
             <strong className="shop-seller-name">{appearance.sellerName || "Seller information"}</strong>
+            {appearance.sellerFooterText && <p className="shop-seller-footer-text">{appearance.sellerFooterText}</p>}
             {appearance.sellerType === "trader" && <p>Professional seller</p>}
             {appearance.sellerAddress && <div className="shop-seller-address">{appearance.sellerAddress}</div>}
             {appearance.sellerPhone && <div className="shop-seller-phone">{appearance.sellerPhone}</div>}
@@ -544,7 +546,6 @@ function ShopStorefrontPreview({
           {shopLegalLinks.length > 0 && <nav aria-label="Shop policies">{shopLegalLinks.map((policy) => <a href={policy.url} key={policy.slug} rel="noreferrer" target="_blank">{policy.title}</a>)}</nav>}
           <div className="shop-preview-assurance"><span><LockKeyhole aria-hidden="true" size={18} />{copy.securePayments}</span><span className="shop-preview-powered">Powered by <a href="https://orbitpage.com" rel="noreferrer" target="_blank">OrbitPage <ArrowUpRight aria-hidden="true" size={14} /></a></span></div>
         </div>
-        <p className="shop-preview-disclaimer">The page owner is the seller; OrbitPage provides the shop software.</p>
       </footer>
     </div>
     </ShopDeviceFrame>
@@ -1599,7 +1600,8 @@ export default function ShopClient({
               <label className="shop-seller-address"><span>Geographic address <small>Provide where required by law</small></span><textarea maxLength={300} onChange={(event) => setAppearance((current) => current ? { ...current, sellerAddress: event.target.value } : current)} rows={3} value={appearance.sellerAddress} /></label>
               </div>
               {appearance.sellerType === "trader" && <label><span>VAT, tax or business registration ID <small>When applicable</small></span><input maxLength={120} onChange={(event) => setAppearance((current) => current ? { ...current, sellerBusinessId: event.target.value } : current)} value={appearance.sellerBusinessId} /></label>}
-              <p className="shop-platform-note">Hosted policies appear as sections on /shop/legal. Footer links are always visible; unconfigured policies return 404.</p>
+              <label><span>Seller footer text <small>Optional</small></span><textarea aria-describedby="shop-seller-footer-help" maxLength={200} onChange={(event) => setAppearance((current) => current ? { ...current, sellerFooterText: event.target.value } : current)} placeholder="e.g. Private seller" rows={2} value={appearance.sellerFooterText || ""} /><small id="shop-seller-footer-help">Shown below your seller name. {(appearance.sellerFooterText || "").length}/200 characters.</small></label>
+              <p className="shop-platform-note">Terms always include the OrbitPage seller notice, with your text or a link to your external terms. Other policies appear only when configured.</p>
               <div className="shop-legal-policies">
                 {SHOP_POLICIES.map((policy) => {
                   const source = policyDrafts[policy.slug]?.source || (appearance[policy.textField] || !appearance[policy.urlField] ? "hosted" : "external");

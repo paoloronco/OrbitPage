@@ -7,10 +7,12 @@ export const SHOP_POLICIES = [
     { slug: "withdrawal", title: "Withdrawal and contact", textField: "withdrawalText", urlField: "withdrawalUrl" },
 ];
 export function shopPolicies(appearance, shopUrl) {
-    return SHOP_POLICIES.filter((policy) => appearance[policy.textField] || appearance[policy.urlField]).map((policy) => ({
+    return SHOP_POLICIES.filter((policy) => policy.slug === "terms" || appearance[policy.textField] || appearance[policy.urlField]).map((policy) => ({
         ...policy,
-        text: appearance[policy.textField],
-        url: appearance[policy.textField]
+        text: policy.slug === "terms"
+            ? ["The page owner is the seller; OrbitPage provides the shop software.", appearance[policy.textField]].filter(Boolean).join("\n\n")
+            : appearance[policy.textField],
+        url: policy.slug === "terms" || appearance[policy.textField]
             ? `${shopUrl}/legal#${policy.slug}`
             : appearance[policy.urlField],
     }));

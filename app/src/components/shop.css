@@ -784,7 +784,7 @@
 .shop-preview-assurance svg { color: var(--shop-preview-accent); flex-shrink: 0; }
 .shop-preview-powered { border-inline-start: 1px solid var(--shop-preview-line); padding-inline-start: 22px; }
 .shop-preview-powered a { color: var(--shop-preview-accent); }
-.shop-preview-footer .shop-preview-disclaimer { font-size: 11px; margin: 18px 0 0; }
+.shop-preview-seller .shop-seller-footer-text { white-space: pre-line; }
 @container shop-preview-panel (max-width: 560px) {
   .shop-preview-footer { padding-top: 44px; }
   .shop-preview-seller { gap: 24px; grid-template-columns: minmax(0, 1fr); padding: 26px 0; }

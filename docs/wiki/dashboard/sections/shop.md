@@ -42,10 +42,11 @@ Create digital products or services, attach delivery files and choose the Shop c
 
 1. Open **Shop settings → Compliance**.
 2. Enter seller status, public name and email; include the geographic address for a professional/trader and other applicable contact details.
+   Optionally add **Seller footer text** (up to 200 characters), such as “Private seller”. It appears as plain text directly below the seller name; leave it empty to hide it.
 3. Add Terms, Privacy, Refunds and Withdrawal/contact policies. Complete Digital Product & License Terms and Cookie policy where applicable.
 4. For each policy, choose **Host in OrbitPage** and enter text, or **External** and provide an HTTPS link.
 5. Confirm the seller-responsibility acknowledgment and save.
-6. Check the public footer links. Seller details and the seller email appear side by side above the legal links on wider screens. Only policies with saved text or an external HTTPS URL are linked; unconfigured policies are omitted.
+6. Check the public footer links. Seller details and the seller email appear side by side above the legal links on wider screens. **Terms** always opens the Shop legal page with the fixed notice “The page owner is the seller; OrbitPage provides the shop software.” and your saved terms or external HTTPS link. This notice is absent from the footer. Other policies are linked only when configured.
 
 Stripe account verification does not fill these fields. You remain responsible for your products, delivery, support, taxes, invoices and applicable disclosures. Collecting a tax ID does not calculate tax or generate an invoice.
 
