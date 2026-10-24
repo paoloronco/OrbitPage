@@ -15,7 +15,8 @@ test('opts existing cards into copying and preserves the choice through save, ex
     const copy = editor.getByRole('switch', { name: 'Show copy button', exact: true });
     await expect(copy).not.toBeChecked();
     await expect(preview.getByRole('button', { name: 'Copy link', exact: true })).toHaveCount(0);
-    await copy.click();
+    // The floating assistant can cover this control near the viewport edge.
+    await copy.press('Space');
     await expect(preview.getByRole('button', { name: 'Copy link', exact: true })).toBeVisible();
     await editor.getByRole('switch', { name: 'Show URL on card', exact: true }).click();
     await expect(preview.locator('[data-card-content-layout-item="url"]')).toHaveCount(0);
