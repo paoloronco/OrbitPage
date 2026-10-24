@@ -12,11 +12,11 @@ export const UserRoleSchema = z.enum([
 ]);
 
 export const UsernameSchema = z
-  .string({ required_error: 'Username is required' })
+  .string({ error: (issue) => issue.input === undefined ? 'Username is required' : undefined })
   .trim()
   .regex(/^[a-zA-Z0-9_-]{3,32}$/, 'Username must be 3-32 alphanumeric characters (underscores and hyphens allowed)');
 
-const RequiredPasswordSchema = z.string({ required_error: 'Password is required' }).min(1, 'Password is required');
+const RequiredPasswordSchema = z.string({ error: (issue) => issue.input === undefined ? 'Password is required' : undefined }).min(1, 'Password is required');
 
 const RESERVED_PAGE_SLUGS = new Set([
   'about', 'admin', 'ai', 'api', 'assets', 'cookies', 'dashboard', 'health', 'humans',
@@ -25,7 +25,7 @@ const RESERVED_PAGE_SLUGS = new Set([
 ]);
 
 export const PageSlugSchema = z
-  .string({ required_error: 'Page slug is required' })
+  .string({ error: (issue) => issue.input === undefined ? 'Page slug is required' : undefined })
   .trim()
   .toLowerCase()
   .min(3, 'Page slug must contain at least 3 characters')
@@ -63,7 +63,7 @@ export const CreateUserBodySchema = z.object({
 });
 
 export const UpdateUserPasswordBodySchema = z.object({
-  password: z.string({ required_error: 'New password is required' }).min(1, 'New password is required'),
+  password: z.string({ error: (issue) => issue.input === undefined ? 'New password is required' : undefined }).min(1, 'New password is required'),
 });
 
 export const UpdateRoleBodySchema = z.object({
@@ -71,13 +71,13 @@ export const UpdateRoleBodySchema = z.object({
 });
 
 export const ChangePasswordBodySchema = z.object({
-  currentPassword: z.string({ required_error: 'Current password is required' }).min(1),
-  newPassword: z.string({ required_error: 'New password is required' }).min(1),
+  currentPassword: z.string({ error: (issue) => issue.input === undefined ? 'Current password is required' : undefined }).min(1),
+  newPassword: z.string({ error: (issue) => issue.input === undefined ? 'New password is required' : undefined }).min(1),
 });
 
 export const ResetViaTokenBodySchema = z.object({
-  token: z.string({ required_error: 'Reset token is required' }).min(32, 'Reset token must contain at least 32 characters'),
-  newPassword: z.string({ required_error: 'New password is required' }).min(1),
+  token: z.string({ error: (issue) => issue.input === undefined ? 'Reset token is required' : undefined }).min(32, 'Reset token must contain at least 32 characters'),
+  newPassword: z.string({ error: (issue) => issue.input === undefined ? 'New password is required' : undefined }).min(1),
 });
 
 export const ResetApplicationBodySchema = z.object({

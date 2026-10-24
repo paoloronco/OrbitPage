@@ -20,6 +20,9 @@ describe('auth schemas', () => {
   });
 
   it('requires passwords for setup and password changes', () => {
+    expect(SetupBodySchema.safeParse({}).error.issues[0].message).toBe('Password is required');
+    expect(UpdateUserPasswordBodySchema.safeParse({}).error.issues[0].message).toBe('New password is required');
+    expect(SetupBodySchema.safeParse({ password: 123 }).success).toBe(false);
     expect(() => SetupBodySchema.parse({})).toThrow();
     expect(() => ChangePasswordBodySchema.parse({ currentPassword: 'old' })).toThrow();
     expect(() => UpdateUserPasswordBodySchema.parse({})).toThrow();

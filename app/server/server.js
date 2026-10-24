@@ -3212,7 +3212,7 @@ app.get('/api/profile', optionalAuthenticateToken, async (req, res) => {
   }
 });
 
-const SocialLinksSchema = z.record(z.string().max(2048)).optional().default({});
+const SocialLinksSchema = z.record(z.string(), z.string().max(2048)).optional().default({});
 const ProfileColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 const ProfileLayoutItemSchema = z.enum(['avatar', 'name', 'work', 'location', 'socials', 'bio']);
 const ProfileLayoutRectSchema = z.object({
@@ -3787,7 +3787,7 @@ app.put('/api/links', authenticateToken, requirePermission('links:write'), async
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         error: 'Invalid links payload',
-        details: error.errors
+        details: error.issues
       });
     }
 

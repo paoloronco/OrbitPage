@@ -20,9 +20,13 @@ describe('consent schemas', () => {
       hardcoded: {
         policyVersion: '1.0',
         layout: 'bottom-bar',
+        texts: { acceptAll: 'Accept all' },
+        urls: { privacyPolicy: '', cookiePolicy: '' },
+        categories: { analytics: { enabled: false, title: '', description: '' } },
       },
       builder: {
         provider: 'custom',
+        providerConfig: { siteId: '', scriptId: '' },
       },
     });
   });

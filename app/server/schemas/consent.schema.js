@@ -20,16 +20,16 @@ export const HardcodedTextsSchema = z.object({
 
 export const HardcodedConfigSchema = z.object({
   policyVersion: z.string().max(50).default('1.0'),
-  texts: HardcodedTextsSchema.default({}),
+  texts: HardcodedTextsSchema.prefault({}),
   urls: z.object({
     privacyPolicy: z.string().max(500).default(''),
     cookiePolicy: z.string().max(500).default(''),
-  }).default({}),
+  }).prefault({}),
   categories: z.object({
-    preferences: CategoryConfigSchema.default({}),
-    analytics: CategoryConfigSchema.default({}),
-    marketing: CategoryConfigSchema.default({}),
-  }).default({}),
+    preferences: CategoryConfigSchema.prefault({}),
+    analytics: CategoryConfigSchema.prefault({}),
+    marketing: CategoryConfigSchema.prefault({}),
+  }).prefault({}),
   layout: z.enum(['bottom-bar', 'centered-modal', 'corner-popup']).default('bottom-bar'),
   theme: z.enum(['light', 'dark', 'auto']).default('auto'),
   buttonPriority: z.enum(['equal', 'reject-first']).default('equal'),
@@ -49,9 +49,9 @@ export const LegalPolicySchema = z.object({
 
 export const LegalPoliciesSchema = z.object({
   showFooterLinks: z.boolean().default(false),
-  privacyPolicy: LegalPolicySchema.default({}),
-  cookiePolicy: LegalPolicySchema.default({}),
-}).default({});
+  privacyPolicy: LegalPolicySchema.prefault({}),
+  cookiePolicy: LegalPolicySchema.prefault({}),
+}).prefault({});
 
 export const BuilderProviderConfigSchema = z.object({
   siteId: z.string().max(200).default(''),
@@ -65,7 +65,7 @@ export const BuilderProviderConfigSchema = z.object({
 
 export const BuilderConfigSchema = z.object({
   provider: z.enum(['iubenda', 'cookiebot', 'cookieyes', 'onetrust', 'custom']).default('custom'),
-  providerConfig: BuilderProviderConfigSchema.default({}),
+  providerConfig: BuilderProviderConfigSchema.prefault({}),
   reopenSelector: z.string().max(200).default(''),
 });
 
@@ -80,7 +80,7 @@ export const ConsentConfigBodySchema = z.object({
   mode: z.enum(['disabled', 'hardcoded', 'builder']),
   enabled: z.boolean(),
   controller: ConsentControllerSchema.optional(),
-  legalPolicies: LegalPoliciesSchema.optional().default({}),
-  hardcoded: HardcodedConfigSchema.optional().default({}),
-  builder: BuilderConfigSchema.optional().default({}),
+  legalPolicies: LegalPoliciesSchema.optional().prefault({}),
+  hardcoded: HardcodedConfigSchema.optional().prefault({}),
+  builder: BuilderConfigSchema.optional().prefault({}),
 });
