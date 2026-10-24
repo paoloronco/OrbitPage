@@ -39,6 +39,7 @@ test('fine tuning edits one card, shared styles and profile with recoverable sav
     await page.locator('.theme-fine-page-preview [data-public-editor-link-id="alpha"]').click();
     const dialog = page.locator('.theme-fine-dialog');
     await setColor(page, 'Card background', '#123456');
+    await expect(dialog.getByRole('button', { name: 'Card text: #F8FAFC', exact: true })).toBeVisible();
     await dialog.getByRole('button', { name: 'Shared style', exact: true }).click();
     await setColor(page, 'Card background', '#cbd5e1');
     await dialog.getByRole('button', { name: 'Done', exact: true }).click();

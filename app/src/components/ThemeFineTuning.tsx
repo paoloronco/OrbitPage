@@ -13,6 +13,7 @@ import { PublicBlockRenderer } from "./PublicBlockRenderer";
 import type { LinkData } from "./LinkCard";
 import type { PublicEditorTarget } from "./PublicView";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
+import { getPublicBlockAlignment, getPublicTextColor } from "@/lib/public-block-style";
 import { getThemeCssVariables, getContentCardVariant, getContentCardVariantCssVariables, type ThemeConfig, type CardSurfaceEffect } from "@/lib/theme";
 import { useAppI18n } from "@/lib/i18n";
 import type { EditableTheme } from "./theme-save-state";
@@ -89,14 +90,14 @@ export function ThemeFineTuning({ theme, profile, links, device, onThemeChange, 
             {selectedLink && <><div className="theme-fine-scope" role="group" aria-label={tr("Apply changes to", "Applica modifiche a")}><button type="button" aria-pressed={!shared} onClick={() => setShared(false)}>{tr("This card", "Questa card")}</button><button type="button" aria-pressed={shared} onClick={() => setShared(true)}>{tr("Shared style", "Stile condiviso")}</button></div><p className="theme-fine-hint">{single ? tr("Only this card changes.", "Cambia solo questa card.") : tr("Applies to all cards using the shared style. Individual overrides are kept.", "Vale per tutte le card che usano lo stile condiviso. Le personalizzazioni singole restano attive.")}</p></>}
             {single && selectedLink && <>
               {color(tr("Card background", "Sfondo card"), selectedLink.backgroundColor || variant.background, backgroundColor => onLinkChange(selectedLink.id, { backgroundColor }))}
-              {color(tr("Card text", "Testo card"), selectedLink.textColor || variant.foreground, textColor => onLinkChange(selectedLink.id, { textColor }))}
+              {color(tr("Card text", "Testo card"), getPublicTextColor(selectedLink) || variant.foreground, textColor => onLinkChange(selectedLink.id, { textColor }))}
               {choice(tr("Surface", "Superficie"), selectedLink.surfaceEffect || "inherit", [["inherit", tr("Use shared style", "Usa stile condiviso")], ...effects], surfaceEffect => onLinkChange(selectedLink.id, { surfaceEffect: surfaceEffect as LinkData["surfaceEffect"] }))}
               <details><summary>{tr("Typography & size", "Caratteri e dimensioni")}</summary><div>
                 {font(tr("Title font", "Font titolo"), selectedLink.titleFontFamily, titleFontFamily => onLinkChange(selectedLink.id, { titleFontFamily: titleFontFamily === "inherit" ? undefined : titleFontFamily }))}
                 {font(tr("Description font", "Font descrizione"), selectedLink.descriptionFontFamily, descriptionFontFamily => onLinkChange(selectedLink.id, { descriptionFontFamily: descriptionFontFamily === "inherit" ? undefined : descriptionFontFamily }))}
                 {range(tr("Title size", "Dimensione titolo"), parseInt(selectedLink.titleFontSize || "16"), 10, 48, value => onLinkChange(selectedLink.id, { titleFontSize: `${value}px` }))}
                 {range(tr("Description size", "Dimensione descrizione"), parseInt(selectedLink.descriptionFontSize || "14"), 10, 36, value => onLinkChange(selectedLink.id, { descriptionFontSize: `${value}px` }))}
-                {choice(tr("Alignment", "Allineamento"), selectedLink.alignment || "left", [["left", tr("Left", "Sinistra")], ["center", tr("Center", "Centro")], ["right", tr("Right", "Destra")]], alignment => onLinkChange(selectedLink.id, { alignment: alignment as LinkData["alignment"] }))}
+                {choice(tr("Alignment", "Allineamento"), getPublicBlockAlignment(selectedLink), [["left", tr("Left", "Sinistra")], ["center", tr("Center", "Centro")], ["right", tr("Right", "Destra")]], alignment => onLinkChange(selectedLink.id, { alignment: alignment as LinkData["alignment"] }))}
                 {choice(tr("Card size", "Dimensione card"), selectedLink.size || "medium", [["small", tr("Small", "Piccola")], ["medium", tr("Medium", "Media")], ["large", tr("Large", "Grande")]], size => onLinkChange(selectedLink.id, { size: size as LinkData["size"] }))}
               </div></details>
               <Button variant="outline" onClick={() => onLinkChange(selectedLink.id, inheritedLinkStyle)}>{tr("Reset to shared style", "Ripristina stile condiviso")}</Button>
@@ -147,7 +148,7 @@ export function ThemeFineTuning({ theme, profile, links, device, onThemeChange, 
               <details><summary>{tr("Profile gradient", "Gradiente profilo")}</summary><div><p>{tr("The gradient replaces a custom solid background.", "Il gradiente sostituisce lo sfondo a tinta unita personalizzato.")}</p>
                 {color(tr("Gradient start", "Inizio gradiente"), theme.profileCard.background, background => { onProfileChange({ cardBackgroundColor: undefined, cardBackgroundImage: undefined }); onThemeChange({ profileCard: { ...theme.profileCard, background } }); })}
                 {color(tr("Gradient end", "Fine gradiente"), theme.profileCard.backgroundSecondary, backgroundSecondary => { onProfileChange({ cardBackgroundColor: undefined, cardBackgroundImage: undefined }); onThemeChange({ profileCard: { ...theme.profileCard, backgroundSecondary } }); })}
-                {choice(tr("Gradient direction", "Direzione gradiente"), theme.profileCard.direction, directions, direction => onThemeChange({ profileCard: { ...theme.profileCard, direction } }))}
+                {choice(tr("Gradient direction", "Direzione gradiente"), theme.profileCard.direction, directions, direction => { onProfileChange({ cardBackgroundColor: undefined, cardBackgroundImage: undefined }); onThemeChange({ profileCard: { ...theme.profileCard, direction } }); })}
               </div></details>
             </>}
             {target === "page" && <>
