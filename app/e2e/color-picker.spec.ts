@@ -8,7 +8,9 @@ test("keeps the shared theme color picker usable on mobile", async ({ page }) =>
 
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("button", { name: "Theme", exact: true }).click();
-  await page.getByRole("button", { name: "Open controls" }).click();
+  await page.getByRole("tab", { name: "Fine tuning", exact: true }).click();
+  await page.locator('.theme-fine-targets').getByRole('button', { name: /Page background/ }).click();
+  await page.getByText('Page colors & accents', { exact: true }).click();
 
   const trigger = page.getByRole("button", { name: /^Buttons & highlights: #[0-9A-F]{6}$/ });
   await expect(trigger).toBeVisible();

@@ -31,7 +31,7 @@ describe("ColorPicker", () => {
 
   it("replaces native dashboard color inputs with the shared picker", () => {
     const componentPaths = [
-      "../ThemeCustomizer.tsx",
+      "../ThemeFineTuning.tsx",
       "../BackgroundMediaCustomizer.tsx",
       "../ProfileSection.tsx",
       "../MenuEditor.tsx",

@@ -32,7 +32,7 @@ export type AdminEditorSection = "profile" | AdminContentSection;
 export const ADMIN_SUBSECTIONS = {
   menu: ["settings", "content", "design"],
   shop: ["legal", "payments", "design", "products", "orders", "customers"],
-  theme: ["page", "card"],
+  theme: ["page", "card", "fine-tuning"],
   publish: ["QR", "Sitemap", "TXT"],
   newsletter: ["overview", "campaigns", "subscribers", "settings"],
   account: ["general", "security", "audit"],

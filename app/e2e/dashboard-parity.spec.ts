@@ -548,7 +548,7 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   expect(secondThemeBounds!.x).toBeGreaterThan(firstThemeBounds!.x);
   await summary.click();
   await expect(previewBody).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Open controls' })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('tab', { name: 'Fine tuning', exact: true })).toHaveAttribute('data-state', 'inactive');
   await expect(page.locator('#admin-theme-manual-controls')).toHaveCount(0);
   const compactThemeHeight = await page.evaluate(() => document.documentElement.scrollHeight);
   expect(compactThemeHeight).toBeLessThan(1600);

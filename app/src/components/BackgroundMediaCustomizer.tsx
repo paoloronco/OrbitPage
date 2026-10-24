@@ -36,7 +36,7 @@ type BgType = "color" | "gradient" | "video" | "gif";
 
 const TYPE_OPTIONS: { type: BgType; label: string; icon: React.ElementType; description: string }[] = [
   { type: "color", label: "Color", icon: Paintbrush, description: "Solid background color" },
-  { type: "gradient", label: "Gradient", icon: Layers, description: "Gradient (from Colors tab)" },
+  { type: "gradient", label: "Gradient", icon: Layers, description: "Two-color background" },
   { type: "video", label: "Video", icon: Film, description: "Looping video background" },
   { type: "gif", label: "Image", icon: ImageIcon, description: "Static image or animated GIF background" },
 ];
@@ -152,8 +152,8 @@ export const BackgroundMediaCustomizer = ({
         {(config.type === "color" || config.type === "gradient") && (
           <p className="text-xs text-muted-foreground">
             {config.type === "color"
-              ? "Uses the Background color from the Colors tab."
-              : "Uses the Background Gradient settings from the Colors tab."}
+              ? "Choose the page color below."
+              : "Choose the gradient colors and direction below."}
           </p>
         )}
         {!videoUploadsEnabled && (
@@ -334,7 +334,7 @@ export const BackgroundMediaCustomizer = ({
               <SelectTrigger id="background-media-object-fit">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="admin-content-select theme-fine-select">
                 <SelectItem value="cover">Cover (fills screen, may crop)</SelectItem>
                 <SelectItem value="contain">Contain (letterboxed)</SelectItem>
                 <SelectItem value="fill">Fill (stretches to fit)</SelectItem>

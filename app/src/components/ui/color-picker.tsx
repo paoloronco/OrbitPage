@@ -174,7 +174,7 @@ export function ColorPicker({
       </div>
       <p className="orbit-color-picker__hint">Opacity is kept at 100% for theme compatibility.</p>
     </div>,
-    triggerRef.current?.closest("dialog") || document.body,
+    triggerRef.current?.closest('dialog, [role="dialog"]') || document.body,
   ) : null;
 
   return (

@@ -7,6 +7,7 @@
 @import './components/visual-site-editor.css';
 @import './components/shop.css';
 @import './components/account-info.css';
+@import './components/theme-fine-tuning.css';
 @config '../tailwind.config.ts';
 
 html:has(.orbitpage-admin) {

@@ -62,8 +62,8 @@ test('clears restored themes and keeps theme and publishing tabs on one scrollin
   await themes.nth(0).getByRole('button').click();
   await expect(save).toBeHidden();
   await expect(page.locator('[data-theme-comparison]')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Open controls', exact: true }).click();
-  const themeTabs = page.locator('.admin-theme-control-tabs');
+  await page.getByRole('tab', { name: 'Fine tuning', exact: true }).click();
+  const themeTabs = page.getByRole('tablist', { name: 'Theme sections' });
   await expect(themeTabs).toBeVisible();
   const ys = await themeTabs.getByRole('tab').evaluateAll(tabs => tabs.map(tab => tab.getBoundingClientRect().y));
   expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(1);

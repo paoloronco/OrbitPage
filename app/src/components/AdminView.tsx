@@ -1052,15 +1052,21 @@ export const AdminView = ({
           <TabsContent value="theme" className="admin-tab-content">
             <Suspense fallback={<OrbitLoader size={24} state="composing" />}><ThemeCustomizer
               headerAction={sectionPublicPageAction}
-              selectedScope={subsection === "card" ? "cards" : "page"}
-              onScopeChange={(scope) => selectSubsection("theme", scope === "cards" ? "card" : "page")}
+              selectedScope={subsection === "fine-tuning" ? "fine-tuning" : subsection === "card" ? "cards" : "page"}
+              onScopeChange={(scope) => selectSubsection("theme", scope === "cards" ? "card" : scope)}
               theme={theme}
+              profile={profile}
+              links={links}
+              publicPageHref={publicPageHref}
+              showOrbitPageBadge={resolveOrbitPageBadgeVisibility(profile.showOrbitPageBadge)}
+              onLinksChange={onLinksUpdate}
+              onProfileAppearanceChange={appearance => onProfileUpdate({ ...profile, appearance })}
               onThemeChange={onThemeChange}
               onThemePreview={(nextTheme) => applyTheme(nextTheme)}
-              renderPreview={(previewTheme, device) => (
+              renderPreview={(previewTheme, device, previewProfile, previewLinks) => (
                 <LivePreview
-                  profile={profile}
-                  links={links}
+                  profile={previewProfile}
+                  links={previewLinks}
                   theme={previewTheme}
                   publicPageHref={publicPageHref}
                   device={device}
