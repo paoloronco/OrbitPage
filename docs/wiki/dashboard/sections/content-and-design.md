@@ -53,7 +53,7 @@ Resizing the whole profile card vertically sets its minimum height; longer conte
 
 Dragging a card into an occupied area moves intersecting neighbors down with a 24px gap. Cards in the same vertical column exchange order as the dragged card crosses their centers, closing the vacated slot. Independent columns and larger existing gaps remain unchanged. Narrowing a description grows its card and makes room below it. Pointer, touch and keyboard changes all prevent overlap.
 
-Escape or a cancelled touch restores the entire arrangement. A gesture can continue through occupied space without releasing the handle. Only the page's storage limits can reject a move, with a **Change not applied: layout limit reached** notice; an invalid final drop keeps the previous arrangement. Existing overlapping layouts are repaired at render time without rewriting saved data. Self-hosted installations receive these fixes when updated; no per-page reset is required.
+Escape or a cancelled touch restores the entire arrangement. A gesture can continue through occupied space without releasing the handle. Only the page's storage limits can reject a move, with a **Change not applied: layout limit reached** notice; an invalid final drop keeps the previous arrangement. Existing overlapping layouts are repaired at render time without rewriting saved data. No per-page reset is required.
 
 | Control | Behavior |
 | --- | --- |
