@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAdminSection, openAuthenticatedAdmin } from './helpers';
+import { E2E_ADMIN_PASSWORD, openAdminSection, openAuthenticatedAdmin } from './helpers';
 
 const E2E_BIO = 'OrbitPage AI E2E verified this page update.';
 
@@ -72,6 +72,12 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await publicPage.reload();
     await expect(publicPage.getByText(E2E_BIO, { exact: true })).toHaveCount(0);
 
+    await page.reload();
+    await expect(proposal.getByRole('button', { name: 'Apply changes' })).toBeVisible();
+    await expect(proposal.getByRole('button', { name: 'Mobile preview' })).toHaveAttribute('aria-pressed', 'true');
+    expect(await proposal.locator('.ai-page-comparison__viewport').evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(242);
+    await page.locator('#oss-ai-prompt').focus();
+    expect(await page.locator('#oss-ai-prompt').evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none');
     await proposal.getByRole('button', { name: 'Apply changes' }).click();
     await expect(page.getByText('Editor data refreshed.')).toBeVisible();
     await expect(page.getByText('Done. The approved changes are now live in your editor.')).toBeVisible();
@@ -94,4 +100,39 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await expect(page.getByText('The new block URL is not safe.', { exact: true })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Page preview', exact: true })).toHaveCount(0);
   });
+});
+
+test('creates a draft product and a private menu dish only after approval, and sends generated suggestions', async ({ page }) => {
+  await openAuthenticatedAdmin(page);
+  const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+  const headers = { Authorization: `Bearer ${token}` };
+  const menu = await (await page.request.get('/api/menu', { headers })).json();
+  await page.request.put('/api/menu', { headers, data: { ...menu, enabled: false } });
+  await openAdminSection(page, 'AI Assistant');
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [prompt, name] of [['E2E_DRAFT_PRODUCT', 'Fictional AI consultation'], ['E2E_PRIVATE_MENU', 'Fictional AI pasta']]) {
+    await page.locator('#oss-ai-prompt').fill(prompt);
+    await page.getByRole('button', { name: 'Send request' }).click();
+    const proposal = page.locator('.oss-ai-proposal');
+    await expect(proposal.getByText(name, { exact: true })).toBeVisible();
+    await expect(proposal.locator('.ai-page-comparison__viewport')).toHaveCount(0);
+    await page.reload();
+    await expect(proposal.getByText(name, { exact: true })).toBeVisible();
+    await proposal.getByRole('button', { name: 'Apply changes' }).click();
+    await expect(proposal).toHaveCount(0);
+  }
+  const savedMenu = await (await page.request.get('/api/menu', { headers })).json();
+  expect(savedMenu.enabled).toBe(false);
+  expect(savedMenu.items.some((item: { name: string }) => item.name === 'Fictional AI pasta')).toBe(true);
+  // This is the real local Shop endpoint; no provider or payment setup is needed.
+  const shop = await (await page.request.get('/api/shop', { headers })).json();
+  expect(shop.products.find((product: { title: string }) => product.title === 'Fictional AI consultation')).toMatchObject({ active: false, files: [], bookingUrl: '' });
+  await page.locator('#oss-ai-prompt').fill('Suggest the next edit');
+  await page.getByRole('button', { name: 'Send request' }).click();
+  const suggestion = page.getByRole('button', { name: 'Make the biography more concise', exact: true });
+  await expect(suggestion).toBeVisible();
+  const sent = page.waitForRequest(request => request.url().endsWith('/api/ai/page/plan') && request.postDataJSON().message === 'Make the biography more concise');
+  await suggestion.click();
+  await sent;
+  await expect(page.locator('.oss-ai-message.user').last()).toHaveText('Make the biography more concise');
 });

@@ -84,6 +84,15 @@ createServer((request, response) => {
           operations: [operation()],
         };
 
+    plan.suggestedPrompts = ['Make the biography more concise'];
+    if (latestMessage.includes('E2E_DRAFT_PRODUCT')) {
+      plan.answer = 'Review the draft product before creating it.';
+      plan.operations = [operation({ kind: 'shop.product.draft', field: null, value: null, title: 'Fictional AI consultation', description: 'A fictional planning session', productType: 'service', priceCents: 2500 })];
+    }
+    if (latestMessage.includes('E2E_PRIVATE_MENU')) {
+      plan.answer = 'Review the dish; the menu remains private.';
+      plan.operations = [operation({ kind: 'menu.item.add', field: null, value: null, title: 'Fictional AI pasta', description: 'Tomato sauce', priceCents: 1200 })];
+    }
     return json(response, 200, completed(plan));
   });
 }).listen(PORT, '127.0.0.1');

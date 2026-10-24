@@ -302,3 +302,13 @@ describe("AI Shop draft operations", () => {
     expect(() => applyAiPageOperations({ ...input, operations: [{ ...draft, priceCents: 0 }] })).toThrow();
   });
 });
+
+it("prepares dishes in a private menu without changing publication or routing", () => {
+  const dish = operation({ kind: "menu.item.add", field: null, value: null, title: "Pasta", description: "Tomato sauce", priceCents: 1200 });
+  const input = { page, operations: [dish], permissions: ["menu:write"] };
+  const result = applyAiPageOperations(input);
+  expect(result.changes.menu).toMatchObject({ enabled: false, routing: { homepage: "link" }, items: [{ name: "Pasta", priceMinor: 1200, allergens: [] }] });
+  expect(() => applyAiPageOperations({ ...input, permissions: [] })).toThrow();
+  expect(() => applyAiPageOperations({ ...input, operations: [{ ...dish, targetId: "missing-section" }] })).toThrow();
+  expect(() => applyAiPageOperations({ ...input, operations: [{ ...dish, priceCents: null }] })).toThrow();
+});

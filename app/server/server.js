@@ -1,7 +1,7 @@
 import { createShopRouter, createShopWebhookRouter, createShopPublicRouter } from "./routes/shop.js";
 import { aiAnalyticsConditions } from '../packages/analytics.js';
 import { resolveMapPreview } from '../packages/map-preview.js';
-import { cleanupShopFiles, dispatchShopEmails, shopFilesPath, persistShopAiDrafts } from "./services/shop.js";
+import { cleanupShopFiles, dispatchShopEmails, shopFilesPath, persistShopAiDrafts, shopSettings, normalizeShopAppearance } from "./services/shop.js";
 import { dispatchShopBookingReminders } from "./services/shop-lifecycle.js";
 import './services/instance-details.js';
 import express from 'express';
@@ -3960,11 +3960,13 @@ const AI_PREVIEW_TTL_MS = 10 * 60 * 1000;
 const AI_PREVIEW_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 const getAiPageSnapshot = async (permissions = []) => {
-  const [profile, linkRows, theme, state] = await Promise.all([
+  const [profile, linkRows, theme, state, menu, shop] = await Promise.all([
     getPublicProfilePayload(),
     dbAll('SELECT * FROM links ORDER BY sort_order'),
     getPublicThemePayload(),
     dbGet('SELECT revision FROM page_state WHERE id = 1'),
+    permissions.includes('menu:write') ? getMenuPayload() : undefined,
+    permissions.includes('users:manage') ? shopSettings() : undefined,
   ]);
   return {
     page: {
@@ -3973,6 +3975,8 @@ const getAiPageSnapshot = async (permissions = []) => {
         ? linkRows.map(formatLinkPayload)
         : linkRows.filter(isLinkPubliclyVisible).map(formatPublicLinkPayload),
       theme,
+      ...(menu ? { menu } : {}),
+      ...(shop ? { shopCurrency: normalizeShopAppearance(shop.appearance).currency } : {}),
     },
     revision: Number.isSafeInteger(state?.revision) && state.revision >= 0 ? state.revision : 0,
   };
@@ -4135,7 +4139,7 @@ const launchKitUpload = multer({
 });
 
 const aiProposalResponse = async (username, snapshot, result) => {
-  if (!result.proposal) return { reply: result.reply, proposal: null };
+  if (!result.proposal) return { reply: result.reply, suggestedPrompts: result.suggestedPrompts, proposal: null };
 
   const previewToken = createPreviewToken();
   const createdAt = new Date().toISOString();
@@ -4162,6 +4166,7 @@ const aiProposalResponse = async (username, snapshot, result) => {
   ).catch(() => undefined);
   return {
     reply: result.reply,
+    suggestedPrompts: result.suggestedPrompts,
     proposal: {
       previewToken,
       summary: result.proposal.summary,
@@ -4179,7 +4184,7 @@ const aiProposalResponse = async (username, snapshot, result) => {
 app.get(
   '/api/ai/settings',
   authenticateToken,
-  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'menu:write', 'users:manage'),
   async (req, res) => {
     try {
       setNoStoreHeaders(res);
@@ -4209,7 +4214,7 @@ app.post(
   '/api/ai/page/plan',
   authenticateToken,
   aiAgentLimiter,
-  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'menu:write', 'users:manage'),
   async (req, res) => {
     if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
     try {
@@ -4233,7 +4238,7 @@ app.post(
   '/api/ai/launch-kit',
   authenticateToken,
   aiAgentLimiter,
-  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'menu:write', 'users:manage'),
   launchKitUpload.single('screenshot'),
   async (req, res) => {
     if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
@@ -4266,7 +4271,7 @@ app.post(
 app.post(
   '/api/ai/page/commit',
   authenticateToken,
-  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'users:manage'),
+  requireAnyPermission('profile:write', 'links:write', 'theme:write', 'menu:write', 'users:manage'),
   async (req, res) => {
     if (DEMO_MODE) return res.status(403).json({ error: 'OrbitPage AI is disabled in demo mode.' });
     const previewToken = String(req.body?.previewToken || '');
@@ -4323,6 +4328,11 @@ app.post(
             throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot apply theme changes.');
           }
           await persistAiTheme(transaction, changes.theme);
+        }
+        if (changes.menu !== undefined) {
+          if (!(req.user.permissions || []).includes('menu:write')) throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot edit the menu.');
+          const menu = parseMenuCatalog(changes.menu);
+          await transaction.run('INSERT INTO menu_config (id, full_config, updated_at) VALUES (1, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET full_config = excluded.full_config, updated_at = CURRENT_TIMESTAMP', [JSON.stringify(menu)]);
         }
         if (changes.shopProducts?.length) {
           if (!(req.user.permissions || []).includes('users:manage')) throw new AiPageAgentError(403, 'AI_OPERATION_NOT_ALLOWED', 'Your role cannot add Shop products.');

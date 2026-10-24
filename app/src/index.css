@@ -4479,7 +4479,7 @@ html:has(.orbitpage-admin) {
 .oss-ai-workspace {
   min-height: min(720px, calc(100vh - 210px));
   display: grid;
-  grid-template-rows: auto minmax(260px, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
   border: 1px solid #dbe4f0;
   border-radius: 12px;
@@ -11869,3 +11869,28 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .managed-analytics-actions { gap: 4px; }
   .managed-analytics-actions > [role=group] button { font-size: 10px; padding-inline: 4px; }
 }
+
+/* AI proposals keep their own height inside the conversation scroll area. */
+.oss-ai-conversation > *, .oss-ai-conversation :is(.oss-ai-proposal, .oss-ai-message, .oss-ai-thinking), .ai-page-agent-messages > * { flex-shrink: 0; }
+.oss-ai-conversation, .ai-page-agent-messages { overscroll-behavior: contain; overflow-anchor: none; }
+.ai-page-agent-panel { grid-template-rows: auto minmax(0, 1fr) auto auto; max-height: min(720px, calc(100dvh - 40px)); }
+.ai-page-agent-messages { min-height: 0; }
+.oss-ai-composer textarea { display: block; max-height: 140px; border-radius: 13px; }
+.oss-ai-composer textarea:is(:focus, :focus-visible) { outline: none !important; box-shadow: none !important; }
+.ai-suggested-prompts { display: flex; flex-wrap: wrap; gap: 6px; grid-column: 1 / -1; padding: 8px; max-height: 112px; overflow-y: auto; }
+.ai-suggested-prompts button { padding: 6px 10px; border: 1px solid #d5e1ef; border-radius: 10px; background: #f3f7fc; color: #24568b; text-align: left; font: inherit; font-size: 12px; line-height: 1.4; cursor: pointer; }
+.ai-suggested-prompts button:hover { background: #e6effa; }
+.ai-suggested-prompts button:focus-visible { outline: 2px solid #5484c7; outline-offset: 1px; }
+.ai-suggested-prompts button:disabled { opacity: .5; cursor: default; }
+.ai-page-comparison { padding: 12px; }
+.ai-page-comparison__viewport, .ai-page-agent-proposal .ai-page-comparison__viewport { height: 240px; }
+.ai-page-comparison__layer .admin-preview-device--mobile { height: 100%; padding: 0 0 34px; }
+.ai-page-comparison__layer .admin-preview-device--mobile .admin-preview-device__hardware { height: 100%; width: 180px; margin: auto; min-height: 0; }
+.ai-page-comparison__layer .admin-preview-device__hardware { overflow: hidden; }
+.ai-catalog-preview { display: grid; gap: 8px; }
+.ai-catalog-preview h3 { margin: 0; font-size: 14px; color: #17395f; }
+.ai-catalog-preview article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; padding: 12px; border: 1px solid #d9e2ee; border-radius: 10px; background: #fff; color: #27364c; font-size: 13px; overflow-wrap: anywhere; }
+.ai-catalog-preview article p, .ai-catalog-preview article small { grid-column: 1 / -1; margin: 0; padding: 0; background: none; }
+.ai-catalog-preview article small { color: #52647e; }
+.ai-page-agent-proposal-actions { display: flex; gap: 8px; }
+.ai-page-agent-proposal-actions > button { flex: 1; }

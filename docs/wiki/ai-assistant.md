@@ -1,6 +1,6 @@
 # AI assistant
 
-Use **AI Assistant** or **Edit with AI** to propose profile, content, theme changes, and draft Shop products. Manual editing works without a provider.
+Use **AI Assistant** or **Edit with AI** to propose profile, content, theme changes, draft Shop products, and new menu dishes. Manual editing works without a provider.
 
 ## Configure
 
@@ -24,6 +24,10 @@ Say which content or design you want to change and include the exact text and de
 3. Confirm to apply them.
 
 Generation does not save page changes. Confirmation checks input, permissions, and the page revision again. Proposals expire after ten minutes or become invalid if the page changed; request a new proposal in that case.
+
+The conversation, suggested next steps, and pending preview with its Apply/Discard controls are saved in this browser for the current page. Reloading does not renew the ten-minute approval window. The preview starts in a compact mobile view; switch to desktop when needed. The conversation scrolls to new replies and loaded previews, while manual scrolling lets you read earlier messages.
+
+AI-generated next-step prompts appear above the composer. Selecting one sends it directly as your next message; it does not approve a proposal.
 
 The conversation is saved in this browser for the current page. Use the trash button to clear the visible conversation and saved history.
 
@@ -55,3 +59,7 @@ or delivery instructions are added, and products cannot be bought. Complete
 [Shop setup](./dashboard/sections/shop.md#required-setup-and-ai-drafts) first,
 then finish delivery details manually and make the product available when ready.
 Proposals still check permission, catalog limits and revision on confirmation.
+
+## Menu dishes
+
+Ask for dishes with their names and prices in the menu currency. The assistant can add them to an existing section even while the Menu is private. Review the names, descriptions, section and amounts, then apply: visibility and homepage routing stay as configured. Ingredient, allergen and dietary claims are not invented. Required role permissions and plan limits still apply.

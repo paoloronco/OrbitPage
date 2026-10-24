@@ -5,6 +5,9 @@ import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { normalizeTheme, type ThemeConfig } from "@/lib/theme";
 import type { ProfileAppearance } from "@/lib/profile-appearance";
 import { useAppI18n } from "@/lib/i18n";
+import { PreviewDeviceToggle, type PreviewDevice } from "./PreviewDeviceToggle";
+import type { OrbitPageMenu } from "@orbitpage/page-schema";
+import type { ShopAiDraft } from "../../packages/shop/schema.js";
 
 type PreviewProfile = {
   name?: string;
@@ -33,6 +36,9 @@ export type AiPagePreviewSnapshot = {
   profile: PreviewProfile;
   links: LinkData[];
   theme: ThemeConfig;
+  menu?: OrbitPageMenu;
+  shopProducts?: ShopAiDraft[];
+  shopCurrency?: string;
 };
 
 function previewProps(snapshot: AiPagePreviewSnapshot) {
@@ -68,25 +74,45 @@ export function AiPageComparisonPreview({
 }) {
   const { tr } = useAppI18n();
   const [split, setSplit] = useState(50);
+  const [device, setDevice] = useState<PreviewDevice>("mobile");
   const beforeProps = previewProps(before);
   const afterProps = previewProps(after);
+  const menuItems = after.menu?.items.filter(item => !before.menu?.items.some(existing => existing.id === item.id)) || [];
+  const pageChanged = JSON.stringify([before.profile, before.links, before.theme]) !== JSON.stringify([after.profile, after.links, after.theme]);
+  const amount = (price: number, currency?: string) => `${(price / 100).toFixed(2)}${currency ? ` ${currency.toUpperCase()}` : ""}`;
 
   return (
     <section className="ai-page-comparison" aria-label={tr("Page preview before and after", "Anteprima pagina prima e dopo")}>
+      {!!after.shopProducts?.length && <div className="ai-catalog-preview">
+        <h3>{tr("Draft Shop products", "Prodotti Shop in bozza")}</h3>
+        {after.shopProducts.map(product => <article key={product.productId}>
+          <strong>{product.title}</strong><span>{amount(product.priceCents, after.shopCurrency)}</span>
+          <p>{product.description}</p><small>{tr("Draft · not available for purchase", "Bozza · non acquistabile")}</small>
+        </article>)}
+      </div>}
+      {!!menuItems.length && <div className="ai-catalog-preview">
+        <h3>{tr("New menu items", "Nuovi piatti nel menu")}</h3>
+        {menuItems.map(item => <article key={item.id}>
+          <strong>{item.name}</strong><span>{amount(item.priceMinor, after.menu?.currency)}</span>
+          <p>{item.description}</p><small>{after.menu?.sections.find(section => section.id === item.sectionId)?.name}{!after.menu?.enabled && tr(" · Menu remains private", " · Il menu resta privato")}</small>
+        </article>)}
+      </div>}
+      {(pageChanged || (!after.shopProducts?.length && !menuItems.length)) && <>
+      <PreviewDeviceToggle value={device} onChange={setDevice} />
       <div className="ai-page-comparison__labels" aria-hidden="true">
         <span>{tr("Before", "Prima")}</span>
         <span>{tr("After", "Dopo")}</span>
       </div>
       <div className="ai-page-comparison__viewport">
         <div className="ai-page-comparison__layer">
-          <LivePreview {...beforeProps} device="desktop" />
+          <LivePreview {...beforeProps} device={device} />
         </div>
         <div
           aria-hidden="true"
           className="ai-page-comparison__layer ai-page-comparison__layer--after"
           style={{ clipPath: `inset(0 0 0 ${split}%)` }}
         >
-          <LivePreview {...afterProps} device="desktop" />
+          <LivePreview {...afterProps} device={device} />
         </div>
         <span className="ai-page-comparison__divider" style={{ left: `${split}%` }} aria-hidden="true" />
         <input
@@ -98,6 +124,7 @@ export function AiPageComparisonPreview({
           value={split}
         />
       </div>
+      </>}
     </section>
   );
 }

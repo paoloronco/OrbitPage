@@ -1,6 +1,7 @@
+import { useAiConversationScroll } from "@/lib/use-ai-conversation-scroll";
 
 import { keepMobileInputVisible } from '@/lib/mobile-keyboard-focus';
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Send, ShieldCheck, Sparkles, Trash2, X } from "@/components/ui/material-icons";
 import {
@@ -22,6 +23,7 @@ type AgentMessage = AiConversationMessage & {
   applying?: boolean;
   applied?: boolean;
   persistent?: boolean;
+  suggestedPrompts?: string[];
 };
 
 function message(role: AgentMessage["role"], content: string, error = false, persistent = true): AgentMessage {
@@ -77,15 +79,15 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
   }), [tr]);
 
   useEffect(() => {
-    setMessages(readAiConversationHistory(historyStorageKey).map(({ role, content }) => message(role, content)));
+    setMessages(readAiConversationHistory(historyStorageKey).map((item) => ({ ...message(item.role, item.content), ...item, proposal: item.proposal as unknown as AiPageProposal | undefined })));
     setLoadedHistoryKey(historyStorageKey);
-  }, [historyStorageKey]);
+  }, [historyStorageKey, open]);
 
   useEffect(() => {
     if (loadedHistoryKey !== historyStorageKey) return;
     writeAiConversationHistory(historyStorageKey, messages
-      .filter((item) => !item.error && item.persistent !== false)
-      .map(({ role, content }) => ({ role, content })));
+      .filter((item) => (!item.error || item.proposal) && item.persistent !== false)
+      .map(({ role, content, proposal, suggestedPrompts }) => ({ role, content, proposal, suggestedPrompts })));
   }, [historyStorageKey, loadedHistoryKey, messages]);
 
   useEffect(() => {
@@ -108,14 +110,11 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
     setMessages([message("assistant", settings?.configured === false ? labels.configure : labels.welcome, false, false)]);
   }, [historyStorageKey, labels.configure, labels.welcome, loadedHistoryKey, messages.length, open, settings?.configured]);
 
-  useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, sending]);
+  useAiConversationScroll(listRef, messages, open);
 
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    const prompt = draft.trim();
-    if (!prompt || sending || settings?.configured !== true) return;
+  const submit = async (suggestion?: string) => {
+    const prompt = (suggestion ?? draft).trim();
+    if (!prompt || sending || messages.some(item => item.applying) || settings?.configured !== true) return;
     const userMessage = message("user", prompt);
     const history = messages
       .filter((item) => !item.error && item.persistent !== false)
@@ -129,6 +128,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
       setMessages((current) => [...current, {
         ...message("assistant", result.reply),
         proposal: result.proposal,
+        suggestedPrompts: result.suggestedPrompts,
       }]);
     } catch (error) {
       setMessages((current) => [...current, message(
@@ -184,6 +184,7 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
                           ? <><Check aria-hidden="true" size={16} />{labels.applied}</>
                           : <><Sparkles aria-hidden="true" size={16} />{labels.apply}</>}
                     </button>
+                    <button disabled={item.applying} onClick={() => setMessages(current => current.map(message => message.id === item.id ? { ...message, proposal: null } : message))} type="button">{tr("Discard", "Scarta")}</button>
                   </section>
                 )}
               </div>
@@ -191,7 +192,10 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
             {sending && <div className="ai-page-agent-thinking" role="status"><OrbitLoader size={16} state="solving" />{labels.thinking}</div>}
           </div>
 
-          <form className="ai-page-agent-composer" onSubmit={submit}>
+          <form className="ai-page-agent-composer" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+            {!!messages.at(-1)?.suggestedPrompts?.length && <div className="ai-suggested-prompts" aria-label={tr("Suggested next steps", "Prossimi passi suggeriti")}>
+              {messages.at(-1)!.suggestedPrompts!.map(prompt => <button key={prompt} type="button" disabled={sending || messages.some(item => item.applying)} onClick={() => void submit(prompt)}>{prompt}</button>)}
+            </div>}
             <textarea
               ref={composerRef}
               aria-label={labels.placeholder}

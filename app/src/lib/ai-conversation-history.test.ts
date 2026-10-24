@@ -24,3 +24,15 @@ describe("AI conversation history", () => {
     expect(removeItem).toHaveBeenCalledWith("ai-chat");
   });
 });
+
+it("restores pending approval and suggestions, stripping transient state and invalid proposals", () => {
+  const proposal = { previewToken: "a".repeat(43), summary: "Review", changes: Array.from({ length: 25 }, (_, index) => `Change ${index}`), expectedRevision: 2,
+    expiresAt: new Date(Date.now() + 600_000).toISOString(), applying: true,
+    preview: { before: { profile: {}, links: [], theme: {} }, after: { profile: { bio: "New" }, links: [], theme: {} } } };
+  const restored = parseAiConversationHistory(JSON.stringify([{ role: "assistant", content: "Ready", proposal, suggestedPrompts: ["Make the bio shorter"] }]));
+  expect(restored[0]?.proposal).toMatchObject({ previewToken: proposal.previewToken, expectedRevision: 2 });
+  expect(restored[0]?.proposal).not.toHaveProperty("applying");
+  expect(restored[0]?.suggestedPrompts).toEqual(["Make the bio shorter"]);
+  expect(parseAiConversationHistory(JSON.stringify([{ role: "user", content: "Untrusted", proposal }]))[0]).not.toHaveProperty("proposal");
+  expect(parseAiConversationHistory(JSON.stringify([{ role: "assistant", content: "Invalid", proposal: { ...proposal, previewToken: "bad" } }]))[0]).not.toHaveProperty("proposal");
+});

@@ -1,3 +1,4 @@
+import { useAiConversationScroll } from "@/lib/use-ai-conversation-scroll";
 import { keepMobileInputVisible } from "@/lib/mobile-keyboard-focus";
 import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -38,6 +39,7 @@ type ConversationEntry = AiConversationMessage & {
   id: string;
   error?: boolean;
   persistent?: boolean;
+  suggestedPrompts?: string[];
 };
 
 const MODEL_LABELS: Record<string, { name: string; detail: string }> = {
@@ -89,8 +91,9 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
   useEffect(() => {
     const history = readAiConversationHistory(historyStorageKey);
     setMessages(history.length
-      ? history.map(({ role, content }) => entry(role, content))
+      ? history.map(item => ({ ...entry(item.role, item.content), suggestedPrompts: item.suggestedPrompts }))
       : [entry("assistant", welcome, false, false)]);
+    setProposal(([...history].reverse().find(item => item.proposal)?.proposal as unknown as AiPageProposal) ?? null);
     setLoadedHistoryKey(historyStorageKey);
   }, [historyStorageKey, welcome]);
 
@@ -98,8 +101,10 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
     if (loadedHistoryKey !== historyStorageKey) return;
     writeAiConversationHistory(historyStorageKey, messages
       .filter((message) => !message.error && message.persistent !== false)
-      .map(({ role, content }) => ({ role, content })));
-  }, [historyStorageKey, loadedHistoryKey, messages]);
+      .map(({ role, content, suggestedPrompts }, index, items) => ({ role, content, suggestedPrompts,
+        ...(index === items.length - 1 && role === "assistant" ? { proposal } : {}),
+      })));
+  }, [historyStorageKey, loadedHistoryKey, messages, proposal]);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,11 +122,8 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
     };
   }, []);
 
-  useEffect(() => {
-    const container = conversationRef.current;
-    if (!container) return;
-    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
-  }, [messages, proposal, planning]);
+  const scrollUpdates = useMemo(() => [messages, proposal, planning, launching], [messages, proposal, planning, launching]);
+  useAiConversationScroll(conversationRef, scrollUpdates);
 
   const conversationHistory = useMemo<AiConversationMessage[]>(() => (
     messages
@@ -175,10 +177,9 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
     }
   };
 
-  const submitPrompt = async (event: FormEvent) => {
-    event.preventDefault();
-    const message = prompt.trim();
-    if (!message || planning || !settings?.configured) return;
+  const submitPrompt = async (suggestion?: string) => {
+    const message = (suggestion ?? prompt).trim();
+    if (!message || planning || applying || launching || !settings?.configured) return;
     const userEntry = entry("user", message);
     setMessages((current) => [...current, userEntry]);
     setPrompt("");
@@ -187,7 +188,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
     setPlanning(true);
     try {
       const result = await aiPageAgentApi.plan(message, conversationHistory);
-      setMessages((current) => [...current, entry("assistant", result.reply)]);
+      setMessages((current) => [...current, { ...entry("assistant", result.reply), suggestedPrompts: result.suggestedPrompts }]);
       setProposal(result.proposal);
     } catch (error) {
       setMessages((current) => [
@@ -244,7 +245,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
     setMessages((current) => [...current, entry("user", `Launch Kit · ${launchScreenshot.name}`)]);
     try {
       const result = await aiPageAgentApi.launchKit(launchScreenshot);
-      setMessages((current) => [...current, entry("assistant", result.reply)]);
+      setMessages((current) => [...current, { ...entry("assistant", result.reply), suggestedPrompts: result.suggestedPrompts }]);
       setProposal(result.proposal);
       setLaunchScreenshot(null);
       setLaunchAttested(false);
@@ -349,7 +350,10 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
           )}
         </div>
 
-        <form className="oss-ai-composer" onSubmit={submitPrompt}>
+        <form className="oss-ai-composer" onSubmit={(event) => { event.preventDefault(); void submitPrompt(); }}>
+          {!!messages.at(-1)?.suggestedPrompts?.length && <div className="ai-suggested-prompts" aria-label={tr("Suggested next steps", "Prossimi passi suggeriti")}>
+            {messages.at(-1)!.suggestedPrompts!.map(prompt => <button key={prompt} type="button" disabled={planning || launching || applying} onClick={() => void submitPrompt(prompt)}>{prompt}</button>)}
+          </div>}
           <Label className="sr-only" htmlFor="oss-ai-prompt">
             {tr("Ask OrbitPage AI", "Chiedi a OrbitPage AI")}
           </Label>

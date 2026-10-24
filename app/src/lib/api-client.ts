@@ -648,6 +648,7 @@ export const applicationUpdatesApi = {
 
 export type AiPagePlanResponse = {
   reply: string;
+  suggestedPrompts?: string[];
   proposal: AiPageProposal | null;
 };
 
