@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { LinkData } from "@/components/LinkCard";
-import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
+import { resolvePublicImageUrl } from "@/lib/public-asset-readiness";
 import { isSocialRowContent } from "@/lib/link-blocks";
 
 const parseHexColor = (color?: string) => {
@@ -63,9 +63,9 @@ export const getPublicIconSize = (size?: LinkData["size"]) => {
 export const getPublicIconContent = (link: LinkData, fallback: ReactNode) => {
   if (!link.icon) return fallback;
   if (link.iconType === "image" || link.iconType === "svg") {
-    const safeIcon = resolveSafePublicMediaUrl(link.icon);
+    const safeIcon = resolvePublicImageUrl(link.icon);
     return safeIcon
-      ? <img src={safeIcon} alt="" className="h-full w-full rounded-lg object-cover" loading="lazy" decoding="async" />
+      ? <img src={safeIcon} alt="" className="h-full w-full object-contain" loading="lazy" decoding="async" />
       : fallback;
   }
   return <span className="text-xl leading-none">{link.icon}</span>;

@@ -186,13 +186,13 @@ export const PublicLinkCard = ({ link }: PublicLinkCardProps) => {
     }
     // If we have an icon URL, render it with proper error handling. Use full-size image filling the container to avoid layout clipping.
     return (
-      <div className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-full overflow-hidden">
+      <div className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg">
         <img
           src={iconUrl}
           alt=""
           loading="eager"
           decoding="async"
-          className="public-link-icon-image w-full h-full object-cover rounded-full"
+          className="public-link-icon-image w-full h-full object-contain"
           onError={() => {
             console.error('Error loading image:', iconUrl);
             setImageError(true);

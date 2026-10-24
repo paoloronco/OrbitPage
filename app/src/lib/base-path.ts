@@ -57,7 +57,7 @@ export const withBasePath = (path = '/'): string => {
 export const withRuntimeAssetPath = (path = '/'): string => {
   if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  if (typeof window !== 'undefined' && '__ORBITPAGE_STATIC_SNAPSHOT__' in window) {
+  if (getEditorIntegration() || (typeof window !== 'undefined' && '__ORBITPAGE_STATIC_SNAPSHOT__' in window)) {
     return `/orbitpage-runtime${normalizedPath}`;
   }
   return withBasePath(normalizedPath);

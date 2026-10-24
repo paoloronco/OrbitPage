@@ -1,3 +1,5 @@
+import { BlockIconPicker } from "./BlockIconPicker";
+import { resolvePublicImageUrl } from "@/lib/public-asset-readiness";
 import { type ChangeEvent, type CSSProperties, type DragEvent, useCallback, useEffect, useLayoutEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
@@ -240,7 +242,6 @@ export const LinkCard = ({
     return () => onPreparingChange?.(link.id, false);
   }, [link.id, onPreparingChange, uploadingImage, uploadingVideo]);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -258,19 +259,6 @@ export const LinkCard = ({
     } finally {
       setUploadingImage(null);
     }
-  };
-
-  const handleIconUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!isAllowedRasterImageFile(file)) {
-        setImageUploadError("Unsupported image type. Use PNG, JPG, GIF, or WebP.");
-        e.target.value = '';
-        return;
-      }
-      await uploadBlockImage(file, "icon");
-    }
-    e.target.value = '';
   };
 
   const handleCoverImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -854,7 +842,7 @@ export const LinkCard = ({
           {link.icon && (
             <div className="flex-shrink-0">
               {link.iconType === 'image' || link.iconType === 'svg' ? (
-                <img src={link.icon} alt="" className="w-5 h-5 object-cover rounded" />
+                <img src={resolvePublicImageUrl(link.icon) || undefined} alt="" className="w-5 h-5 object-contain" />
               ) : (
                 <span className="text-lg">{link.icon}</span>
               )}
@@ -895,7 +883,7 @@ export const LinkCard = ({
             {!isSocialRow && !isInternalLinks && (isFullEdit || canEditStyle) && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Title &amp; typography</p>
+                <p className="admin-content-section-title text-sm font-semibold">Title &amp; typography</p>
               </div>
               <div className="space-y-3">
               {isFullEdit && (
@@ -942,7 +930,7 @@ export const LinkCard = ({
                   <SelectTrigger id={`link-card-title-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value={"Inter, system-ui, sans-serif"}>Inter</SelectItem>
                     <SelectItem value={"Arial, Helvetica, sans-serif"}>Arial</SelectItem>
                     <SelectItem value={"Helvetica, Arial, sans-serif"}>Helvetica</SelectItem>
@@ -962,7 +950,7 @@ export const LinkCard = ({
                   <SelectTrigger id={`link-card-description-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value={"Inter, system-ui, sans-serif"}>Inter</SelectItem>
                     <SelectItem value={"Arial, Helvetica, sans-serif"}>Arial</SelectItem>
                     <SelectItem value={"Helvetica, Arial, sans-serif"}>Helvetica</SelectItem>
@@ -982,7 +970,7 @@ export const LinkCard = ({
                   <SelectTrigger id={`link-card-alignment-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value="left">Left</SelectItem>
                     <SelectItem value="center">Center</SelectItem>
                     <SelectItem value="right">Right</SelectItem>
@@ -1038,7 +1026,7 @@ export const LinkCard = ({
                     <SelectTrigger id={`link-card-separator-background-${link.id}`} className="h-8 bg-white text-black">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="admin-content-select">
                       <SelectItem value="transparent">Transparent line</SelectItem>
                       <SelectItem value="full">Full background</SelectItem>
                     </SelectContent>
@@ -1054,7 +1042,7 @@ export const LinkCard = ({
                 {!isSocialRow && !isInternalLinks && !isMap && (!isSeparator || showUrlField) && (
                   <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                     <div className="mb-3">
-                      <p className="text-sm font-semibold text-slate-900">{isInternalLinks ? tr("Section description", "Descrizione della sezione") : tr("Description & link", "Descrizione e link")}</p>
+                      <p className="admin-content-section-title text-sm font-semibold">{isInternalLinks ? tr("Section description", "Descrizione della sezione") : tr("Description & link", "Descrizione e link")}</p>
                     </div>
                     <div className="space-y-3">
                       {!isSeparator && (
@@ -1230,7 +1218,7 @@ export const LinkCard = ({
                         <span>{tr("Item appearance", "Aspetto elementi")}</span>
                         <Select value={internalLinksData.itemStyle} onValueChange={(value: InternalLinksItemStyle) => updateInternalLinksData('itemStyle', value)}>
                           <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="admin-content-select">
                             <SelectItem value="filled">{tr("Filled", "Pieno")}</SelectItem>
                             <SelectItem value="outline">{tr("Outline", "Contorno")}</SelectItem>
                             <SelectItem value="minimal">{tr("Minimal", "Minimale")}</SelectItem>
@@ -1242,7 +1230,7 @@ export const LinkCard = ({
                           <span>{tr("Cards per row", "Card per riga")}</span>
                           <Select value={String(internalLinksData.columns)} onValueChange={(value) => updateInternalLinksData('columns', value === '3' ? 3 : 2)}>
                             <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="admin-content-select">
                               <SelectItem value="2">2</SelectItem>
                               <SelectItem value="3">3</SelectItem>
                             </SelectContent>
@@ -1268,7 +1256,7 @@ export const LinkCard = ({
                           <Plus className="h-4 w-4" />
                           <SelectValue placeholder={canAddInternalDestination ? tr("Add destination", "Aggiungi destinazione") : tr("No destinations available", "Nessuna destinazione disponibile")} />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="admin-content-select">
                           {availableInternalDestinations.map((destination) => <SelectItem key={destination.id} value={destination.id}>{destination.title}</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -1298,7 +1286,7 @@ export const LinkCard = ({
                                   if (destination) updateInternalItem(index, { kind: destination.kind, path: destination.path, label: destination.title, description: destination.description, icon: destination.icon || '' });
                                 }}>
                                   <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent className="admin-content-select">
                                     {!currentDestination && <SelectItem value={item.path}>{tr("Unavailable", "Non disponibile")} · {item.path}</SelectItem>}
                                     {selectableDestinations.map((destination) => <SelectItem key={destination.id} value={destination.path}>{destination.title}</SelectItem>)}
                                   </SelectContent>
@@ -1446,7 +1434,7 @@ export const LinkCard = ({
                                 <Label htmlFor={`compact-link-platform-${link.id}-${index}`}>{tr("Icon", "Icona")}</Label>
                                 <Select value={item.platform || 'auto'} onValueChange={(value: SocialLinkPlatform) => updateSocialItem(index, 'platform', value)}>
                                   <SelectTrigger id={`compact-link-platform-${link.id}-${index}`} className="bg-white text-black"><SelectValue /></SelectTrigger>
-                                  <SelectContent>{compactLinkPlatformOptions.map((option) => <SelectItem key={option.value} value={option.value}>{compactPlatformLabel(option.value, option.label)}</SelectItem>)}</SelectContent>
+                                  <SelectContent className="admin-content-select">{compactLinkPlatformOptions.map((option) => <SelectItem key={option.value} value={option.value}>{compactPlatformLabel(option.value, option.label)}</SelectItem>)}</SelectContent>
                                 </Select>
                               </div>
                               <div>
@@ -1479,7 +1467,7 @@ export const LinkCard = ({
                         <span>{tr("Icon appearance", "Aspetto icone")}</span>
                         <Select value={socialData.iconStyle || 'brand'} onValueChange={(value: SocialRowIconStyle) => updateSocialData('iconStyle', value)}>
                           <SelectTrigger className="bg-white text-black"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="admin-content-select">
                             <SelectItem value="brand">{tr("Official brand colors", "Colori ufficiali")}</SelectItem>
                             <SelectItem value="theme">{tr("Page theme", "Tema pagina")}</SelectItem>
                             <SelectItem value="outline">{tr("Outline", "Contorno")}</SelectItem>
@@ -1512,7 +1500,7 @@ export const LinkCard = ({
                 {isMap && (
                   <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                     <div>
-                      <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                      <p className="flex items-center gap-2 admin-content-section-title text-sm font-semibold">
                         <MapPin className="h-4 w-4" />
                         {tr("Map destination", "Destinazione mappa")}
                       </p>
@@ -1642,7 +1630,7 @@ export const LinkCard = ({
                         <Label htmlFor={`link-card-embed-provider-${link.id}`} className="text-xs">Provider</Label>
                         <Select value={embedData.provider || 'auto'} onValueChange={(value: EmbedProvider) => updateEmbedProvider(value)}>
                           <SelectTrigger id={`link-card-embed-provider-${link.id}`} className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="admin-content-select">
                             <SelectItem value="auto">Auto detect</SelectItem>
                             <SelectItem value="instagram">Instagram</SelectItem>
                             <SelectItem value="facebook">Facebook</SelectItem>
@@ -1670,7 +1658,7 @@ export const LinkCard = ({
                         <Label htmlFor={`link-card-consent-category-${link.id}`} className="text-xs">Consent category</Label>
                         <Select value={embedData.consentCategory || 'marketing'} onValueChange={(value: EmbedConsentCategory) => updateEmbedData('consentCategory', value)}>
                           <SelectTrigger id={`link-card-consent-category-${link.id}`} className="h-9 bg-white text-black"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="admin-content-select">
                             <SelectItem value="necessary">Necessary · load immediately</SelectItem>
                             <SelectItem value="preferences">Preferences</SelectItem>
                             <SelectItem value="analytics">Analytics</SelectItem>
@@ -1763,7 +1751,7 @@ export const LinkCard = ({
                        <SelectTrigger id={`link-card-cta-action-${link.id}`} className="h-8 bg-white text-black">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="admin-content-select">
                         <SelectItem value="book">Book</SelectItem>
                         <SelectItem value="contact">Contact me</SelectItem>
                         <SelectItem value="download">Download</SelectItem>
@@ -1778,7 +1766,7 @@ export const LinkCard = ({
             {!isInternalLinks && (
             <details className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 sm:p-4">
-                <span className="text-sm font-semibold text-slate-900">{isMenu ? tr('Menu availability schedule', 'Programmazione disponibilità menu') : tr('Status, campaign & schedule', 'Stato, campagna e programmazione')}</span>
+                <span className="admin-content-section-title text-sm font-semibold">{isMenu ? tr('Menu availability schedule', 'Programmazione disponibilità menu') : tr('Status, campaign & schedule', 'Stato, campagna e programmazione')}</span>
                 <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
               </summary>
               <div className="border-t border-slate-200 p-3 sm:p-4">
@@ -1812,7 +1800,7 @@ export const LinkCard = ({
                   <SelectTrigger id={`link-card-status-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="live">Live</SelectItem>
                     <SelectItem value="expired">Expired</SelectItem>
@@ -1900,7 +1888,7 @@ export const LinkCard = ({
             {isVideo && canEditImages && (
               <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
                 <div className="mb-3">
-                  <p className="text-sm font-semibold text-slate-900">Uploaded media</p>
+                  <p className="admin-content-section-title text-sm font-semibold">Uploaded media</p>
                 </div>
                 <div className="space-y-3">
                   {videoData.mediaUrl ? (
@@ -1950,7 +1938,7 @@ export const LinkCard = ({
                       <Label htmlFor={`link-card-video-fit-${link.id}`} className="text-sm font-medium text-slate-900">Fit</Label>
                       <Select value={videoData.objectFit || 'cover'} onValueChange={(value: 'cover' | 'contain') => updateVideoData('objectFit', value)}>
                         <SelectTrigger id={`link-card-video-fit-${link.id}`} className="h-8 w-28"><SelectValue /></SelectTrigger>
-                        <SelectContent><SelectItem value="cover">Cover</SelectItem><SelectItem value="contain">Contain</SelectItem></SelectContent>
+                        <SelectContent className="admin-content-select"><SelectItem value="cover">Cover</SelectItem><SelectItem value="contain">Contain</SelectItem></SelectContent>
                       </Select>
                     </div>
                   </div>
@@ -1963,40 +1951,13 @@ export const LinkCard = ({
             {canEditImages && !isSeparator && !isSocialRow && !isInternalLinks && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">{isImage ? "Image" : isVideo ? "Poster image" : "Icon & cover image"}</p>
+                <p className="admin-content-section-title text-sm font-semibold">{isImage ? "Image" : isVideo ? "Poster image" : "Icon & cover image"}</p>
               </div>
               <div className="space-y-4">
             {!isImage && !isVideo && (
-            <div className="space-y-2">
-              <Label htmlFor={`link-card-icon-${link.id}`} className="text-sm font-medium">Icon</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`link-card-icon-${link.id}`}
-                  value={editLink.icon || ''}
-                  onChange={(e) => setEditLink(prev => ({ ...prev, icon: e.target.value, iconType: 'emoji' }))}
-                  placeholder="🔗 or emoji"
-                  className="glass-card border-primary/20 flex-1"
-                />
-                <Button
-                  aria-label="Upload and optimize icon"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={Boolean(uploadingImage)}
-                  title="Upload and optimize icon"
-                >
-                  {uploadingImage === "icon" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={RASTER_IMAGE_ACCEPT}
-                  onChange={handleIconUpload}
-                  className="hidden"
-                />
-              </div>
-            </div>
+            <BlockIconPicker value={editLink} disabled={Boolean(uploadingImage)}
+              onChange={icon => setEditLink(previous => ({ ...previous, ...icon }))}
+              onUpload={file => uploadBlockImage(file, "icon")} />
             )}
             <div className="space-y-2">
               <Label htmlFor={`link-card-cover-url-${link.id}`} className="text-sm font-medium flex items-center gap-1">
@@ -2065,7 +2026,7 @@ export const LinkCard = ({
             {canEditStyle && (
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Size &amp; colors</p>
+                <p className="admin-content-section-title text-sm font-semibold">Size &amp; colors</p>
               </div>
               <div className="space-y-4">
             <div className="space-y-2">
@@ -2077,7 +2038,7 @@ export const LinkCard = ({
                 <SelectTrigger id={`link-card-surface-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="admin-content-select">
                   <SelectItem value="inherit">Use theme default</SelectItem>
                   <SelectItem value="solid">Solid</SelectItem>
                   <SelectItem value="transparent">Transparent</SelectItem>
@@ -2097,7 +2058,7 @@ export const LinkCard = ({
                 <SelectTrigger id={`link-card-size-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="admin-content-select">
                   <SelectItem value="small">Small</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="large">Large</SelectItem>

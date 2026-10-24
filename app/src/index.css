@@ -3107,16 +3107,38 @@ html:has(.orbitpage-admin) {
 
   .admin-link-list.is-editing .admin-block-editor-shell {
     gap: 0;
-    padding: 14px;
-    border: 3px solid #2f66df;
+    padding: 10px 8px;
+    border: 1px solid var(--admin-line, #dbe2ec);
     border-radius: 12px;
     background: #fff;
-    box-shadow: 0 0 0 4px rgb(47 102 223 / 12%), 0 14px 34px rgb(15 23 42 / 10%);
+    box-shadow: 0 4px 16px rgb(15 23 42 / 5%);
   }
 
   .admin-link-list.is-editing .admin-card-edit-body {
     margin-left: 0 !important;
   }
+
+  .admin-content-section-title { color: #376ac4; }
+
+  /* Select portals live outside the dashboard's light theme. */
+  .admin-content-select {
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --accent: 214 32% 95%;
+    --accent-foreground: 219 57% 40%;
+    --border: 220 24% 89%;
+    color-scheme: light;
+    font-family: var(--orbitpage-dashboard-font);
+  }
+
+  .admin-block-icon-picker { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; }
+  .admin-icon-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; height: auto; }
+  .admin-icon-tabs > button { padding-inline: 6px; white-space: normal; }
+  .admin-icon-presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)); gap: 6px; }
+  .admin-icon-presets > button { display: grid; place-items: center; min-height: 44px; border: 1px solid #dbe2ec; border-radius: 8px; background: #fff; }
+  .admin-icon-presets > button:hover { background: #f0f5ff; }
+  .admin-icon-presets > button[aria-pressed="true"] { border-color: #3167ef; background: #eaf1ff; }
+  .admin-icon-presets > button:focus-visible { outline: 2px solid #3167ef; outline-offset: 2px; }
 
   .admin-link-list.is-editing .admin-card-drag-handle {
     display: none;

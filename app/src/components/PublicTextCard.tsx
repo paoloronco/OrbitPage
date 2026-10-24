@@ -4,6 +4,7 @@ import type { LinkData } from "./LinkCard";
 import { internalAssetPath } from "@/lib/base-path";
 import { trackPublicLinkClick } from "@/lib/public-runtime";
 import { getPublicBlockPadding, getPublicBlockStyle, getPublicTextColor } from "@/lib/public-block-style";
+import { resolvePublicImageUrl } from "@/lib/public-asset-readiness";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 
 const resolveCoverImageUrl = (src?: string | null): string | null => {
@@ -79,7 +80,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
 
   const coverUrl = resolveCoverImageUrl(link.coverImage);
   const iconUrl = link.iconType === 'image' || link.iconType === 'svg'
-    ? resolveCoverImageUrl(link.icon)
+    ? resolvePublicImageUrl(link.icon)
     : null;
   const hasCoverImage = !!(coverUrl && !coverImageError);
   const readableTextColor = getPublicTextColor(link);
@@ -118,7 +119,7 @@ export const PublicTextCard = ({ link }: PublicTextCardProps) => {
             {link.icon && (
               <div className="flex-shrink-0" data-card-content-layout-item="icon">
                 {link.iconType === 'image' || link.iconType === 'svg' ? (
-                  iconUrl ? <img src={iconUrl} alt="" className="w-5 h-5 object-cover rounded" /> : null
+                  iconUrl ? <img src={iconUrl} alt="" className="w-5 h-5 object-contain" /> : null
                 ) : (
                   <span className="text-lg">{link.icon}</span>
                 )}

@@ -1,6 +1,6 @@
 import type { LinkData } from "@/components/LinkCard";
 import { hasCustomProfileAvatar } from "@/lib/profile-avatar";
-import { internalAssetPath } from "@/lib/base-path";
+import { internalAssetPath, withRuntimeAssetPath } from "@/lib/base-path";
 import { resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 import type { BackgroundMediaConfig } from "@/lib/theme";
 
@@ -10,6 +10,7 @@ const DEFAULT_WAIT_MS = 1_800;
 export function resolvePublicImageUrl(value?: string | null) {
   const safeUrl = resolveSafePublicMediaUrl(value);
   if (!safeUrl) return null;
+  if (/^\/block-icons\/[a-z-]+\.svg$/.test(safeUrl)) return withRuntimeAssetPath(safeUrl);
   if (safeUrl.startsWith("/") || (!safeUrl.includes(":") && !safeUrl.startsWith("//"))) {
     return internalAssetPath(safeUrl);
   }

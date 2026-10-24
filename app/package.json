@@ -1,7 +1,7 @@
 {
   "name": "orbitpage",
   "private": true,
-  "version": "4.21.145",
+  "version": "4.21.146",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -49,6 +49,7 @@
     "@typeform/embed-react": "^5.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "emoji-picker-react": "5.1.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.462.0",
     "qrcode": "^1.5.4",

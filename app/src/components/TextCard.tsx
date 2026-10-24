@@ -1,3 +1,5 @@
+import { BlockIconPicker } from "./BlockIconPicker";
+import { resolvePublicImageUrl } from "@/lib/public-asset-readiness";
 import { type CSSProperties, useCallback, useEffect, useLayoutEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ColorPicker } from "@/components/ui/color-picker";
@@ -90,7 +92,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
     return () => onPreparingChange?.(link.id, false);
   }, [link.id, onPreparingChange, uploadingImage]);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
 
   const uploadBlockImage = async (file: File, variant: "icon" | "cover") => {
@@ -107,19 +108,6 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
     } finally {
       setUploadingImage(null);
     }
-  };
-
-  const handleIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!isAllowedRasterImageFile(file)) {
-        setImageUploadError("Unsupported image type. Use PNG, JPG, GIF, or WebP.");
-        e.target.value = '';
-        return;
-      }
-      await uploadBlockImage(file, "icon");
-    }
-    e.target.value = '';
   };
 
   const handleCoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,7 +243,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
           <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Title, text &amp; typography</p>
+                <p className="admin-content-section-title text-sm font-semibold">Title, text &amp; typography</p>
               </div>
               <div className="space-y-3">
             <Input
@@ -287,7 +275,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                   <SelectTrigger id={`text-card-title-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value={"Inter, system-ui, sans-serif"}>Inter</SelectItem>
                     <SelectItem value={"Arial, Helvetica, sans-serif"}>Arial</SelectItem>
                     <SelectItem value={"Georgia, serif"}>Georgia</SelectItem>
@@ -306,7 +294,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                   <SelectTrigger id={`text-card-description-font-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value={"Inter, system-ui, sans-serif"}>Inter</SelectItem>
                     <SelectItem value={"Arial, Helvetica, sans-serif"}>Arial</SelectItem>
                     <SelectItem value={"Georgia, serif"}>Georgia</SelectItem>
@@ -325,7 +313,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                   <SelectTrigger id={`text-card-alignment-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value="left">Left</SelectItem>
                     <SelectItem value="center">Center</SelectItem>
                     <SelectItem value="right">Right</SelectItem>
@@ -339,7 +327,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Clickable List Items */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">List items &amp; link</p>
+                <p className="admin-content-section-title text-sm font-semibold">List items &amp; link</p>
               </div>
               <div className="space-y-3">
             <div className="space-y-2">
@@ -426,7 +414,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                         <SelectTrigger aria-label={`List item ${index + 1} font family`} className="h-8 w-full bg-white text-black rounded-md">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="admin-content-select">
                           <SelectItem value={"Inter, system-ui, sans-serif"}>Inter</SelectItem>
                           <SelectItem value={"Arial, Helvetica, sans-serif"}>Arial</SelectItem>
                           <SelectItem value={"Georgia, serif"}>Georgia</SelectItem>
@@ -457,7 +445,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Link Scheduler */}
             <details className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3 sm:p-4">
-                <span className="text-sm font-semibold text-slate-900">Status, campaign &amp; schedule</span>
+                <span className="admin-content-section-title text-sm font-semibold">Status, campaign &amp; schedule</span>
                 <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-500 transition-transform group-open:rotate-180" />
               </summary>
               <div className="border-t border-slate-200 p-3 sm:p-4">
@@ -478,7 +466,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                   <SelectTrigger id={`text-card-status-${link.id}`} className="h-8 bg-white text-black">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="admin-content-select">
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="live">Live</SelectItem>
                     <SelectItem value="expired">Expired</SelectItem>
@@ -563,38 +551,12 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Icon Upload */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Icon &amp; cover image</p>
+                <p className="admin-content-section-title text-sm font-semibold">Icon &amp; cover image</p>
               </div>
               <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor={`text-card-icon-${link.id}`} className="text-sm font-medium">Icon</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`text-card-icon-${link.id}`}
-                  value={editLink.icon || ''}
-                  onChange={(e) => setEditLink(prev => ({ ...prev, icon: e.target.value, iconType: 'emoji' }))}
-                  placeholder="📝 or emoji"
-                  className="glass-card border-primary/20 flex-1"
-                />
-                <Button
-                  aria-label="Upload icon"
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={Boolean(uploadingImage)}
-                >
-                  {uploadingImage === "icon" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept={RASTER_IMAGE_ACCEPT}
-                  onChange={handleIconUpload}
-                  className="hidden"
-                />
-              </div>
-            </div>
+            <BlockIconPicker value={editLink} disabled={Boolean(uploadingImage)}
+              onChange={icon => setEditLink(previous => ({ ...previous, ...icon }))}
+              onUpload={file => uploadBlockImage(file, "icon")} />
 
             {/* Cover Image */}
             <div className="space-y-2">
@@ -663,7 +625,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
             {/* Size Selection */}
             <section className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:p-4">
               <div className="mb-3">
-                <p className="text-sm font-semibold text-slate-900">Surface, size &amp; colors</p>
+                <p className="admin-content-section-title text-sm font-semibold">Surface, size &amp; colors</p>
               </div>
               <div className="space-y-4">
             <div className="space-y-2">
@@ -675,7 +637,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 <SelectTrigger id={`text-card-surface-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="admin-content-select">
                   <SelectItem value="inherit">Use theme default</SelectItem>
                   <SelectItem value="solid">Solid</SelectItem>
                   <SelectItem value="transparent">Transparent</SelectItem>
@@ -696,7 +658,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 <SelectTrigger id={`text-card-size-${link.id}`} className="glass-card border-primary/20 bg-white text-black dark:bg-gray-800 dark:text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="admin-content-select">
                   <SelectItem value="small">Small</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="large">Large</SelectItem>
@@ -764,7 +726,7 @@ export const TextCard = ({ link, onUpdate, onPreview, onPreparingChange, onDelet
                 {link.icon && (
                   <div className="flex-shrink-0">
                     {link.iconType === 'image' || link.iconType === 'svg' ? (
-                      <img src={link.icon} alt="" className="w-5 h-5 object-cover rounded" />
+                      <img src={resolvePublicImageUrl(link.icon) || undefined} alt="" className="w-5 h-5 object-contain" />
                     ) : (
                       <span className="text-lg">{link.icon}</span>
                     )}

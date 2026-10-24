@@ -68,6 +68,15 @@ describe("public asset readiness", () => {
     })).toEqual([]);
   });
 
+  it("loads preset icons from runtime assets on hosted snapshots and subfolder installations", () => {
+    try {
+      vi.stubGlobal("window", { __ORBITPAGE_STATIC_SNAPSHOT__: {}, __ORBITPAGE_BASE_PATH__: "/creator", location: { pathname: "/creator", href: "https://example.invalid/creator" } });
+      expect(resolvePublicImageUrl("/block-icons/star.svg")).toBe("/orbitpage-runtime/block-icons/star.svg");
+      vi.stubGlobal("window", { __ORBITPAGE_BASE_PATH__: "/profile", location: { pathname: "/profile/admin", href: "https://example.invalid/profile/admin" } });
+      expect(resolvePublicImageUrl("/block-icons/star.svg")).toBe("/profile/block-icons/star.svg");
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it("never holds the page beyond the readiness timeout", async () => {
     vi.useFakeTimers();
     class PendingImage {

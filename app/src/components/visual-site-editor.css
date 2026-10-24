@@ -335,6 +335,10 @@ html:has(.admin-visual-editor-enabled) {
   padding: 14px;
 }
 
+.visual-site-editor__inspector-body:has(.admin-block-editor-shell) {
+  padding-inline: 8px;
+}
+
 .admin-content-start {
   display: none;
 }
