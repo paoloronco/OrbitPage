@@ -18,7 +18,8 @@ import type { PublicEditorTarget } from "./PublicView";
 import {
   alignCardLayoutRect,
   fitCardLayoutHeights,
-  hasCardLayoutOverlap,
+  reflowLayoutItem,
+  snapCardLayoutGaps,
   normalizeCardLayout,
   PROFILE_CARD_LAYOUT_ID,
   updateCardLayoutItem,
@@ -48,7 +49,6 @@ interface PublicCardLayoutProps {
 
 type Gesture = {
   rejected?: boolean;
-  warned?: boolean;
   cardId: string;
   mode: "move" | "resize";
   pointerId: number;
@@ -141,7 +141,7 @@ export function PublicCardLayout({
   const gestureRef = useRef<Gesture | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<number | null>(null);
-  const pointerRef = useRef<{ clientX: number; clientY: number; pointerId: number; shiftKey: boolean } | null>(null);
+  const pointerRef = useRef<{ clientX: number; clientY: number; pointerId: number; altKey: boolean } | null>(null);
   const latestLayoutRef = useRef<NormalizedCardLayout>(savedLayout);
   const previousSavedStateRef = useRef({ layout: savedLayout, editing: layoutEditing, viewport });
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
@@ -214,27 +214,30 @@ export function PublicCardLayout({
     setActiveCard(cardId);
   };
 
-  const updateGesturePosition = (event: { clientX: number; clientY: number; pointerId: number; shiftKey: boolean }) => {
+  const updateGesturePosition = (event: { clientX: number; clientY: number; pointerId: number; altKey: boolean }) => {
     const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId || gesture.rejected) return;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
     const deltaX = (event.clientX - gesture.startX) / gesture.bounds.width * 100;
     const deltaY = (event.clientY - gesture.startY + window.scrollY - gesture.windowScrollY) / gesture.scale
       + (gesture.scrollContainer?.scrollTop || 0) - gesture.scrollTop;
     const rect = gesture.mode === "move"
       ? { ...gesture.startRect, x: gesture.startRect.x + deltaX, y: gesture.startRect.y + deltaY }
       : { ...gesture.startRect, width: gesture.startRect.width + deltaX, height: gesture.startRect.height + deltaY };
-    const aligned = alignCardLayoutRect(gesture.layout.positions, gesture.layout.height, gesture.cardId, rect, gesture.mode, 4 / gesture.bounds.width * 100, 4 / gesture.scale);
-    // Guides are advisory; only Shift opts into snapping.
-    const candidate = event.shiftKey ? aligned.rect : rect;
+    const canvasWidth = gesture.bounds.width / gesture.scale;
+    const spaced = event.altKey ? rect : snapCardLayoutGaps(gesture.layout.positions, gesture.cardId, rect, gesture.mode, canvasWidth, viewport === "mobile" ? 44 : 20);
+    const aligned = alignCardLayoutRect(gesture.layout.positions, gesture.layout.height, gesture.cardId, spaced, gesture.mode, 8 / canvasWidth * 100, 8, 24 / canvasWidth * 100, 24);
+    const candidate = event.altKey ? rect : aligned.rect;
+    if (!event.altKey) {
+      if (spaced.x !== rect.x) candidate.x = spaced.x;
+      if (spaced.width !== rect.width) candidate.width = spaced.width;
+    }
     if (gesture.mode === "resize") candidate.width = Math.min(candidate.width, 100 - candidate.x);
-    const next = fitCardLayoutHeights(
+    const next = reflowLayoutItem(fitCardLayoutHeights(
       updateCardLayoutItem(gesture.layout, layoutCards, viewport, gesture.cardId, candidate, gesture.mode), heights, false, hasProfileCard,
-    );
-    gesture.rejected = hasCardLayoutOverlap(next.positions, gesture.cardId);
-    if (gesture.rejected) {
-      applyWorkingLayout(gesture.layout);
+    ), gesture.cardId, 24, 4_000, gesture.mode === "move" ? gesture.startRect : undefined);
+    gesture.rejected = !next;
+    if (!next) {
       setGuides({});
-      if (!gesture.warned) { warnOverlap(); gesture.warned = true; }
       return;
     }
     // Shrinking the canvas during a drag clamps scrollTop and moves the card again.
@@ -247,7 +250,7 @@ export function PublicCardLayout({
     frameRef.current = null;
     const gesture = gestureRef.current;
     const pointer = pointerRef.current;
-    if (!gesture || gesture.rejected || !pointer) return;
+    if (!gesture || !pointer) return;
     const scroll = gesture.scrollContainer;
     let scrolled = false;
     if (scroll) {
@@ -266,7 +269,7 @@ export function PublicCardLayout({
     if (!gestureRef.current || gestureRef.current.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
-    pointerRef.current = { clientX: event.clientX, clientY: event.clientY, pointerId: event.pointerId, shiftKey: event.shiftKey };
+    pointerRef.current = { clientX: event.clientX, clientY: event.clientY, pointerId: event.pointerId, altKey: event.altKey };
     if (frameRef.current !== null) return;
     frameRef.current = requestAnimationFrame(renderGestureFrame);
   };
@@ -287,13 +290,13 @@ export function PublicCardLayout({
     event.stopPropagation();
     // Measure the final width before committing: wrapping can make a resized card taller.
     flushSync(() => updateGesturePosition(event));
-    const completed = fitCardLayoutHeights(latestLayoutRef.current, measureCardHeights(event.currentTarget), false, hasProfileCard);
-    const rejected = gesture.rejected || hasCardLayoutOverlap(completed.positions, gesture.cardId);
+    const completed = reflowLayoutItem(fitCardLayoutHeights(latestLayoutRef.current, measureCardHeights(event.currentTarget), false, hasProfileCard), gesture.cardId);
+    const rejected = gesture.rejected || !completed;
     const next = rejected ? gesture.layout : normalizeCardLayout(completed, layoutCards, viewport);
     resetGesture();
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     applyWorkingLayout(next);
-    if (rejected) { if (!gesture.warned) warnOverlap(); return; }
+    if (rejected) { warnOverlap(); return; }
     if (next.profileMinHeight !== gesture.layout.profileMinHeight || JSON.stringify(next.positions) !== JSON.stringify(gesture.layout.positions)) onLayoutChange?.(next);
   };
 
@@ -326,13 +329,13 @@ export function PublicCardLayout({
     const candidate = mode === "resize"
       ? { ...rect, width: Math.min(100 - rect.x, rect.width + dx), height: rect.height + dy }
       : { ...rect, x: rect.x + dx, y: rect.y + dy };
-    const proposed = fitCardLayoutHeights(
+    const proposed = reflowLayoutItem(fitCardLayoutHeights(
       updateCardLayoutItem(activeLayout, layoutCards, viewport, cardId, candidate, mode), heights, false, hasProfileCard,
-    );
-    if (hasCardLayoutOverlap(proposed.positions, cardId)) { warnOverlap(); return; }
+    ), cardId);
+    if (!proposed) { warnOverlap(); return; }
     flushSync(() => applyWorkingLayout(proposed));
-    const measured = fitCardLayoutHeights(proposed, measureCardHeights(canvasRef.current), false, hasProfileCard);
-    if (hasCardLayoutOverlap(measured.positions, cardId)) {
+    const measured = reflowLayoutItem(fitCardLayoutHeights(proposed, measureCardHeights(canvasRef.current), false, hasProfileCard), cardId);
+    if (!measured) {
       applyWorkingLayout(activeLayout);
       warnOverlap();
       return;
@@ -432,7 +435,7 @@ export function PublicCardLayout({
               } as CSSProperties}
             >
               {layoutEditing && (
-              <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Other cards keep their positions.", "Trascina la card profilo. Le altre card mantengono la loro posizione.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={tr("Move profile card", "Sposta card profilo")} className="page-card-layout__grip page-card-layout__grip--profile" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the profile card. Nearby cards make room automatically.", "Trascina la card profilo. Le card vicine fanno spazio automaticamente.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
               )}
               <div className="page-card-layout__surface page-card-layout__surface--profile">{profileCard?.content}</div>
               {layoutEditing && (
@@ -475,7 +478,7 @@ export function PublicCardLayout({
             tabIndex={onEditorSelect && !layoutEditing ? 0 : undefined}
           >
             {layoutEditing && (
-              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card. Other cards keep their positions.", "Trascina la card. Le altre card mantengono la loro posizione.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
+              <button aria-label={`${tr("Move card", "Sposta card")} ${link.title || tr("content block", "blocco contenuto")}`} className="page-card-layout__grip" data-page-card-layout-mode="move" onClick={(event) => event.stopPropagation()} title={tr("Drag the card. Nearby cards make room automatically.", "Trascina la card. Le card vicine fanno spazio automaticamente.")} type="button"><GripVertical aria-hidden="true" size={17} /></button>
             )}
             <div {...{ inert: layoutEditing ? "" : undefined }} className="page-card-layout__surface" data-surface-effect={link.surfaceEffect && link.surfaceEffect !== "inherit" ? link.surfaceEffect : theme.contentCardEffect}>{<PublicBlockRenderer link={link} />}</div>
             {layoutEditing && (

@@ -1,6 +1,36 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData, saveEditorChanges } from './helpers';
 
+for (const legacyGrid of [false, true]) test(`profile details align on narrow screens with ${legacyGrid ? 'legacy grid' : 'default'} layouts`, async ({ page }) => {
+  await page.addInitScript(legacyGrid => {
+    (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+      page: { profile: {
+        name: 'Fictional professional with a long name', bio: 'Description beneath all elements', avatar: '', show_avatar: true,
+        appearance: { profileDetails: { primary: 'A long professional description including Unbroken'.repeat(3), secondary: 'Roma' },
+          ...(legacyGrid ? { layout: { order: ['avatar', 'name', 'location', 'work', 'socials'], spans: { avatar: 1, name: 1, location: 1, work: 1 }, gap: 20 } } : {}),
+        },
+      }, links: [], theme: {}, branding: { showOrbitPageBadge: false } },
+      consentConfig: { mode: 'disabled', enabled: false },
+    };
+  }, legacyGrid);
+  await page.goto('/');
+  for (const width of [1440, 390, 320, 768]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect.poll(() => page.locator('.profile-card').evaluate(card => {
+      const details = [...card.querySelectorAll('.profile-card__detail')];
+      const boxes = details.map(detail => detail.getBoundingClientRect());
+      const icons = details.map(detail => detail.querySelector('svg')!.getBoundingClientRect());
+      return boxes.length === 2 && Math.abs(boxes[0].top - boxes[1].top) < .1 && Math.abs(icons[0].top - icons[1].top) < .1
+        && details.every(detail => detail.scrollWidth <= detail.clientWidth + 1) && card.scrollWidth <= card.clientWidth + 1;
+    })).toBe(true);
+    if (legacyGrid) expect(await page.locator('.profile-card').evaluate(card => {
+      const avatar = card.querySelector('[data-profile-layout-item="avatar"]')!.getBoundingClientRect();
+      const name = card.querySelector('[data-profile-layout-item="name"]')!.getBoundingClientRect();
+      return Math.abs(avatar.top - name.top) < .1;
+    })).toBe(true);
+  }
+});
+
 test('existing profile detail rows repair themselves without saving and adapt together to content and width', async ({ page }) => {
   await page.addInitScript(() => {
     (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
@@ -111,12 +141,12 @@ test('Arrange places profile elements on a grid, locks the bio and saves indepen
     await moveWork.press('Shift+ArrowDown');
     await expect.poll(async () => (await position('work'))[1]).toBe(161);
     await moveWork.press('Shift+ArrowDown');
-    expect((await position('work'))[1]).toBe(161);
-    await expect(page.locator('.page-layout-overlap-warning')).toContainText('Change not applied');
+    expect((await position('work'))[1]).toBe(169);
+    await expect(page.locator('.page-layout-overlap-warning')).toBeHidden();
     await card.getByRole('button', { name: 'Resize Work', exact: true }).press('ArrowUp');
     expect((await position('work'))[3]).toBe(39);
     await card.getByRole('button', { name: 'Move Social links', exact: true }).press('Shift+ArrowDown');
-    await expect.poll(async () => (await position('socials'))[1]).toBe(216);
+    await expect.poll(async () => (await position('socials'))[1]).toBe(233);
     await expect.poll(() => page.locator('.visual-site-editor__canvas').getByRole('heading', { name: 'Following card', exact: true }).evaluate(next => next.closest('.glass-card')!.getBoundingClientRect().top >= document.querySelector('.visual-site-editor__canvas .profile-card')!.getBoundingClientRect().bottom)).toBe(true);
     await card.locator('[data-profile-layout-item="location"]').hover();
     await card.getByRole('button', { name: 'Align left Location', exact: true }).click();
@@ -138,7 +168,7 @@ test('Arrange places profile elements on a grid, locks the bio and saves indepen
     for (const width of [1440, 390, 320]) {
       await page.setViewportSize({ width, height: 900 });
       const publicCard = page.locator('.profile-card');
-      await expect.poll(async () => (await publicCard.locator('[data-profile-layout-item="work"]').getAttribute('data-profile-layout-position'))!.split(',').map(Number)[1]).toBe(width === 1440 ? 161 : 144);
+      await expect.poll(async () => (await publicCard.locator('[data-profile-layout-item="work"]').getAttribute('data-profile-layout-position'))!.split(',').map(Number)[1]).toBe(width === 1440 ? 169 : 144);
       await expect.poll(() => publicCard.evaluate(card => {
         const rects = [...card.querySelectorAll('[data-profile-layout-item], [data-profile-layout-fixed]')].map(item => item.getBoundingClientRect());
         return rects.every((a, i) => rects.every((b, j) => i === j || a.right <= b.left + .1 || a.left >= b.right - .1 || a.bottom <= b.top + .1 || a.top >= b.bottom - .1));

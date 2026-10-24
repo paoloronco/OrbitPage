@@ -71,10 +71,12 @@ export function alignCardLayoutRect(
   mode: "move" | "resize",
   thresholdX: number,
   thresholdY: number,
+  gapX = 0,
+  gapY = 0,
 ) {
   const others = Object.entries(positions).filter(([id]) => id !== item).map(([, position]) => position);
-  const xTargets = [0, 50, 100, ...others.flatMap((position) => [position.x, position.x + position.width / 2, position.x + position.width])];
-  const yTargets = [0, canvasHeight, ...others.flatMap((position) => [position.y, position.y + position.height / 2, position.y + position.height])];
+  const xTargets = [0, 50, 100, ...others.flatMap((position) => [position.x - gapX, position.x, position.x + position.width / 2, position.x + position.width, position.x + position.width + gapX])];
+  const yTargets = [0, canvasHeight, ...others.flatMap((position) => [position.y - gapY, position.y, position.y + position.height / 2, position.y + position.height, position.y + position.height + gapY])];
   const xSnap = closestSnap(mode === "move" ? [rect.x, rect.x + rect.width / 2, rect.x + rect.width] : [rect.x + rect.width], xTargets, thresholdX);
   const ySnap = closestSnap(mode === "move" ? [rect.y, rect.y + rect.height / 2, rect.y + rect.height] : [rect.y + rect.height], yTargets, thresholdY);
   return {
@@ -85,6 +87,72 @@ export function alignCardLayoutRect(
     },
     guides: { x: xSnap?.guide, y: ySnap?.guide } as CardLayoutGuides,
   };
+}
+
+// The dragged item owns its destination; only intersecting neighbors make room.
+export function reflowLayoutItem<T extends { positions: Record<string, CardLayoutRect>; height: number }>(
+  layout: T,
+  item: string,
+  gap = CARD_GAP,
+  maximumY = 4_000,
+  previousRect?: CardLayoutRect,
+): T | null {
+  let active = layout.positions[item];
+  if (!active) return layout;
+  const others = Object.entries(layout.positions).filter(([id]) => id !== item).sort(([, a], [, b]) => a.y - b.y || a.x - b.x);
+  const reordered: Record<string, CardLayoutRect> = {};
+  if (previousRect && active.x === previousRect.x && active.width === previousRect.width) {
+    const down = active.y > previousRect.y;
+    const crossed = others.filter(([, rect]) => rect.x === active.x && rect.width === active.width
+      && (down ? rect.y >= previousRect.y + previousRect.height && rect.y + rect.height / 2 <= active.y + active.height / 2
+        : rect.y + rect.height <= previousRect.y && rect.y + rect.height / 2 >= active.y + active.height / 2));
+    if (crossed.length) {
+      let y = down ? previousRect.y : crossed[0][1].y;
+      const ordered: [string, CardLayoutRect][] = down ? [...crossed, [item, active]] : [[item, active], ...crossed];
+      for (const [id, rect] of ordered) {
+        reordered[id] = { ...rect, y };
+        y += rect.height + gap;
+      }
+      active = reordered[item];
+    }
+  }
+  if (active.y > maximumY) return null;
+  const positions: Record<string, CardLayoutRect> = { [item]: active };
+  for (const [id, rect] of others) {
+    const next = { ...(reordered[id] || rect) };
+    for (const placed of Object.values(positions).sort((a, b) => a.y - b.y)) {
+      if (overlaps(next, placed)) next.y = placed.y + placed.height + gap;
+    }
+    if (next.y > maximumY) return null;
+    positions[id] = next;
+  }
+  return { ...layout, positions, height: Math.max(48, ...Object.values(positions).map(rect => rect.y + rect.height)) };
+}
+
+export function snapCardLayoutGaps(
+  positions: Record<string, CardLayoutRect>, item: string, rect: CardLayoutRect,
+  mode: "move" | "resize", canvasWidth: number, minimumWidth: number,
+) {
+  const gap = CARD_GAP / canvasWidth * 100;
+  const tolerance = 8 / canvasWidth * 100;
+  let candidate = { ...rect };
+  for (const [id, other] of Object.entries(positions)) {
+    if (id === item || rect.y + rect.height <= other.y || rect.y >= other.y + other.height) continue;
+    if (mode === "resize") {
+      const width = other.x - gap - rect.x;
+      if (width >= minimumWidth && Math.abs(rect.width - width) <= tolerance) candidate.width = width;
+    } else {
+      const right = other.x + other.width + gap;
+      const left = other.x - gap - rect.width;
+      if (Math.abs(rect.x - right) <= tolerance && right + minimumWidth <= 100) {
+        const width = Math.min(rect.width, 100 - right);
+        if (rect.width - width <= tolerance) candidate = { ...candidate, x: right, width };
+      } else if (Math.abs(rect.x - left) <= tolerance && left >= -tolerance && other.x - gap >= minimumWidth) {
+        candidate = { ...candidate, x: Math.max(0, left), width: Math.min(rect.width, other.x - gap) };
+      }
+    }
+  }
+  return candidate;
 }
 
 export const defaultCardHeight = (card: CardLayoutSource) => {

@@ -37,7 +37,7 @@ import {
 import { useAppI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { CardSurfaceEffect } from "@/lib/theme";
-import { alignCardLayoutRect, hasCardLayoutOverlap, PROFILE_CARD_LAYOUT_ID, type CardLayoutGuides } from "@/lib/card-layout";
+import { alignCardLayoutRect, reflowLayoutItem, PROFILE_CARD_LAYOUT_ID, type CardLayoutGuides } from "@/lib/card-layout";
 import { useLayoutOverlapWarning } from "@/hooks/use-layout-overlap-warning";
 
 interface ProfileData {
@@ -74,7 +74,6 @@ interface PublicProfileSectionProps {
 
 type LayoutGesture = {
   rejected?: boolean;
-  warned?: boolean;
   item: ProfileLayoutItem;
   mode: "move" | "resize";
   pointerId: number;
@@ -114,7 +113,8 @@ const safeProfileLayoutUpdate = (
 ) => {
   const candidate = updateProfileLayoutItem(layout, item, rect);
   const positions = Object.fromEntries(visibleItems.map(id => [id, candidate.positions[id]]));
-  return hasCardLayoutOverlap(positions, item) ? null : candidate;
+  const reflowed = reflowLayoutItem({ positions, height: candidate.height }, item, 16, 1_600);
+  return reflowed ? { ...candidate, positions: { ...candidate.positions, ...reflowed.positions }, height: Math.max(160, Math.min(2_000, reflowed.height)) } : null;
 };
 
 export const PublicProfileSection = ({
@@ -233,8 +233,8 @@ export const PublicProfileSection = ({
   const contents: Record<ProfileLayoutItem, ReactNode> = {
     avatar: avatar ? <div className="profile-card__avatar-slot flex justify-center">{avatar}</div> : null,
     name,
-    work: profileDetails?.primary ? <span className="profile-card__detail inline-flex items-center justify-center gap-1.5"><BriefcaseBusiness className="h-3.5 w-3.5" />{profileDetails.primary}</span> : null,
-    location: profileDetails?.secondary ? <span className="profile-card__detail inline-flex items-center justify-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{profileDetails.secondary}</span> : null,
+    work: profileDetails?.primary ? <span className="profile-card__detail inline-flex items-center justify-center gap-1.5"><BriefcaseBusiness className="h-3.5 w-3.5" /><span>{profileDetails.primary}</span></span> : null,
+    location: profileDetails?.secondary ? <span className="profile-card__detail inline-flex items-center justify-center gap-1.5"><MapPin className="h-3.5 w-3.5" /><span>{profileDetails.secondary}</span></span> : null,
     socials,
     bio,
   };
@@ -314,7 +314,7 @@ export const PublicProfileSection = ({
 
   const updateGesture = (event: ReactPointerEvent<HTMLElement>) => {
     const gesture = gestureRef.current;
-    if (!gesture || gesture.pointerId !== event.pointerId || gesture.rejected) return;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
     event.preventDefault();
     event.stopPropagation();
     const deltaX = (event.clientX - gesture.startX) / gesture.bounds.width * 100;
@@ -339,6 +339,8 @@ export const PublicProfileSection = ({
       gesture.mode,
       6 / gesture.bounds.width * 100,
       6 / gesture.scale,
+      16 / (gesture.bounds.width / gesture.scale) * 100,
+      16,
     );
     pendingLayoutRef.current = safeProfileLayoutUpdate(
       gesture.layout,
@@ -347,18 +349,15 @@ export const PublicProfileSection = ({
       visibleLayoutItems,
     );
     gesture.rejected = !pendingLayoutRef.current;
-    if (gesture.rejected && !gesture.warned) { warnOverlap(); gesture.warned = true; }
     setGuides(event.altKey ? {} : snapped.guides);
     if (pendingLayoutRef.current) {
       flushSync(() => applyWorkingLayout(pendingLayoutRef.current!));
       const element = layoutRef.current?.querySelector<HTMLElement>(`[data-profile-layout-item="${gesture.item}"] .profile-card__layout-content`);
       const height = measureProfileItemHeight(element);
       const candidate = pendingLayoutRef.current.positions[gesture.item];
-      if (!safeProfileLayoutUpdate(pendingLayoutRef.current, gesture.item, { ...candidate, height: Math.max(candidate.height, height) }, visibleLayoutItems)) {
-        gesture.rejected = true;
-        pendingLayoutRef.current = null;
-        if (!gesture.warned) { warnOverlap(); gesture.warned = true; }
-      }
+      pendingLayoutRef.current = safeProfileLayoutUpdate(pendingLayoutRef.current, gesture.item, { ...candidate, height: Math.max(candidate.height, height) }, visibleLayoutItems);
+      gesture.rejected = !pendingLayoutRef.current;
+      if (pendingLayoutRef.current) applyWorkingLayout(pendingLayoutRef.current);
     }
     if (!pendingLayoutRef.current) applyWorkingLayout(gesture.layout);
   };
@@ -375,7 +374,7 @@ export const PublicProfileSection = ({
     setGuides({});
     applyWorkingLayout(committedLayout);
     if (gesture.control.hasPointerCapture(gesture.pointerId)) gesture.control.releasePointerCapture(gesture.pointerId);
-    if (gesture.rejected) return;
+    if (gesture.rejected) { warnOverlap(); return; }
     onLayoutChange?.(committedLayout);
   };
 
@@ -552,9 +551,9 @@ export const PublicProfileSection = ({
           <div className="space-y-4">
             {name && <div className="mb-2">{name}</div>}
             {hasProfileDetails && (
-              <div className="profile-card__details flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
-                {profileDetails?.primary && <span className="profile-card__detail inline-flex items-center gap-1.5"><BriefcaseBusiness className="h-3.5 w-3.5" />{profileDetails.primary}</span>}
-                {profileDetails?.secondary && <span className="profile-card__detail inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{profileDetails.secondary}</span>}
+              <div className="profile-card__details text-sm">
+                {contents.work}
+                {contents.location}
               </div>
             )}
             {socials && <div className="mb-4">{socials}</div>}

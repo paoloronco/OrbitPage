@@ -45,6 +45,17 @@ describe("profile layout", () => {
     expect(migrated.positions.bio.y).toBeGreaterThan(migrated.positions.name.y);
   });
 
+  it("preserves the rows and order of legacy grids when removing hidden items", () => {
+    const migrated = normalizeVisibleProfileLayout({
+      order: ["name", "avatar", "location", "work", "socials"],
+      spans: { avatar: 1, name: 1, work: 1, location: 1 }, gap: 20,
+    }, ["name", "avatar", "work", "location"]);
+    expect(migrated.positions.name.y).toBe(0);
+    expect(migrated.positions.avatar.y).toBe(0);
+    expect(migrated.positions.location).toMatchObject({ x: 0, y: 132 });
+    expect(migrated.positions.work).toMatchObject({ x: 52, y: 132 });
+  });
+
   it("stores explicit text alignment instead of inferring it from position", () => {
     const aligned = updateProfileLayoutAlignment(DEFAULT_PROFILE_LAYOUT, "location", "left");
 

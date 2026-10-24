@@ -123,13 +123,13 @@ export function normalizeVisibleProfileLayout(
 
   if (!layout?.positions) {
     const rows = [...new Set(ORBITPAGE_PROFILE_LAYOUT_ITEMS.filter((item) => visible.has(item))
-      .map((item) => DEFAULT_PROFILE_LAYOUT.positions[item].y))];
+      .map((item) => normalized.positions[item].y))].sort((a, b) => a - b);
     const positions = { ...normalized.positions };
     let nextY = 0;
     for (const rowY of rows) {
-      const rowItems = ORBITPAGE_PROFILE_LAYOUT_ITEMS.filter((item) => visible.has(item) && DEFAULT_PROFILE_LAYOUT.positions[item].y === rowY);
+      const rowItems = ORBITPAGE_PROFILE_LAYOUT_ITEMS.filter((item) => visible.has(item) && normalized.positions[item].y === rowY);
       for (const item of rowItems) positions[item] = { ...positions[item], y: nextY };
-      nextY += Math.max(...rowItems.map((item) => positions[item].height)) + 16;
+      nextY += Math.max(...rowItems.map((item) => positions[item].height)) + (layout?.gap ?? 16);
     }
     normalized.positions = positions;
   }

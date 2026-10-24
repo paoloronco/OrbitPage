@@ -192,6 +192,7 @@ for (const width of [1440, 390]) {
       expect(start.height).toBeGreaterThanOrEqual(43.5);
       const canvas = page.locator('.public-card-stack--layout');
       const scale = await canvas.evaluate(element => element.getBoundingClientRect().width / (element as HTMLElement).offsetWidth);
+      await page.keyboard.down('Alt');
       await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
       await page.mouse.down();
       await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2 + 28, { steps: 5 });
@@ -199,6 +200,7 @@ for (const width of [1440, 390]) {
       expect(await others()).toEqual(otherPositions);
       await page.keyboard.press('Escape');
       await page.mouse.up();
+      await page.keyboard.up('Alt');
       await expect(canvas).toBeVisible();
       await expect(card).toBeVisible();
       expect(await position()).toEqual(before);
@@ -214,12 +216,14 @@ for (const width of [1440, 390]) {
         await cdp.detach();
       }
       const commitStart = (await handle.boundingBox())!;
+      await page.keyboard.down('Alt');
       await page.mouse.move(commitStart.x + commitStart.width / 2, commitStart.y + commitStart.height / 2);
       await page.mouse.down();
       await page.mouse.move(commitStart.x + commitStart.width / 2, commitStart.y + commitStart.height / 2 + 20, { steps: 5 });
       const committedY = Math.round(before[1] + 20 / scale);
       await expect.poll(async () => (await position())[1]).toBe(committedY);
       await page.mouse.up();
+      await page.keyboard.up('Alt');
       await expect.poll(async () => (await position())[1]).toBe(committedY);
       await handle.press('Shift+ArrowDown');
       await expect.poll(async () => (await position())[1]).toBe(committedY + 10);

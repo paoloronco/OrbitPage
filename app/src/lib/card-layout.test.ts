@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alignCardLayoutRect, fitCardLayoutHeights, hasCardLayoutOverlap, moveMobileCard, normalizeCardLayout, PROFILE_CARD_LAYOUT_ID, updateCardLayoutItem } from "./card-layout";
+import { alignCardLayoutRect, fitCardLayoutHeights, hasCardLayoutOverlap, moveMobileCard, normalizeCardLayout, PROFILE_CARD_LAYOUT_ID, reflowLayoutItem, snapCardLayoutGaps, updateCardLayoutItem } from "./card-layout";
 
 const cards = [
   { id: "large", type: "link", size: "large" },
@@ -8,6 +8,51 @@ const cards = [
 ];
 
 describe("responsive card layout", () => {
+  it("inserts and enlarges cards by moving only intersecting neighbors with a fixed gap", () => {
+    const layout = { height: 400, positions: {
+      active: { x: 0, y: 0, width: 48, height: 240 },
+      next: { x: 0, y: 124, width: 48, height: 100 },
+      last: { x: 0, y: 248, width: 48, height: 100 },
+      side: { x: 52, y: 124, width: 48, height: 100 },
+    } };
+    const fitted = reflowLayoutItem(layout, "active")!;
+    expect(fitted.positions.next.y).toBe(264);
+    expect(fitted.positions.last.y).toBe(388);
+    expect(fitted.positions.side).toEqual(layout.positions.side);
+    expect(Object.keys(fitted.positions).some(id => hasCardLayoutOverlap(fitted.positions, id))).toBe(false);
+    expect(reflowLayoutItem(layout, "active", 24, 300)).toBeNull();
+    expect(layout.positions.next.y).toBe(124);
+  });
+
+  it("reorders a stack in either direction and closes the vacated slot", () => {
+    const positions = {
+      first: { x: 0, y: 0, width: 100, height: 100 },
+      second: { x: 0, y: 124, width: 100, height: 140 },
+      third: { x: 0, y: 288, width: 100, height: 100 },
+    };
+    const down = reflowLayoutItem({ height: 388, positions: { ...positions, first: { ...positions.first, y: 150 } } }, "first", 24, 4000, positions.first)!;
+    expect(down.positions.second.y).toBe(0);
+    expect(down.positions.first.y).toBe(164);
+    expect(down.positions.third.y).toBe(288);
+    const up = reflowLayoutItem({ height: 388, positions: { ...positions, third: { ...positions.third, y: 0 } } }, "third", 24, 4000, positions.third)!;
+    expect(up.positions.third.y).toBe(0);
+    expect(up.positions.first.y).toBe(124);
+    expect(up.positions.second.y).toBe(248);
+    for (const layout of [up, down]) expect(Object.keys(layout.positions).some(id => hasCardLayoutOverlap(layout.positions, id))).toBe(false);
+    expect(reflowLayoutItem({ height: 4050, positions: {
+      first: { x: 0, y: 4000, width: 100, height: 50 },
+      second: { x: 0, y: 3950, width: 100, height: 100 },
+    } }, "first", 24, 4000, { x: 0, y: 3900, width: 100, height: 50 })).toBeNull();
+  });
+
+  it("fits nearly adjacent columns without requiring pixel-perfect dragging", () => {
+    const positions = { left: { x: 0, y: 0, width: 48, height: 100 } };
+    expect(snapCardLayoutGaps(positions, "right", { x: 49.8, y: 0, width: 50, height: 100 }, "move", 1000, 20)).toMatchObject({ x: 50.4, width: 49.6 });
+    expect(snapCardLayoutGaps(positions, "right", { x: 50, y: 0, width: 50, height: 100 }, "move", 1000, 20)).toMatchObject({ x: 50.4, width: 49.6 });
+    const right = { right: { x: 52, y: 0, width: 48, height: 100 } };
+    expect(snapCardLayoutGaps(right, "left", { x: 0, y: 0, width: 50, height: 100 }, "resize", 1000, 20).width).toBe(49.6);
+    expect(snapCardLayoutGaps(right, "left", { x: 0, y: 0, width: 50, height: 100 }, "move", 1000, 20)).toMatchObject({ x: 0, width: 49.6 });
+  });
   it("allows free widths on both viewports within readable bounds", () => {
     const mobileLarge = updateCardLayoutItem(undefined, cards, "mobile", "large", { x: 35, y: 40, width: 50, height: 140 });
     const mobileCompact = updateCardLayoutItem(mobileLarge, cards, "mobile", "compact", { x: 52, y: 40, width: 48, height: 76 });
