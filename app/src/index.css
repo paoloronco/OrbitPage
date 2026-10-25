@@ -4751,19 +4751,21 @@ html:has(.orbitpage-admin) {
 }
 
 .oss-ai-composer {
-  position: relative;
   margin: 0 clamp(14px, 2.5vw, 26px) clamp(14px, 2.5vw, 26px);
+}
+
+.oss-ai-composer .ai-composer-input {
+  position: relative;
   padding: 3px;
   border: 1px solid #cbd7e7;
   border-radius: 17px;
   background: #fff;
-  box-shadow: 0 16px 40px -34px rgba(10, 38, 82, .55);
   transition: border-color .16s ease, box-shadow .16s ease;
 }
 
-.oss-ai-composer:focus-within {
+.oss-ai-composer .ai-composer-input:has(textarea:focus-visible) {
   border-color: #5484c7;
-  box-shadow: 0 0 0 3px rgba(39, 96, 175, .1), 0 16px 40px -34px rgba(10, 38, 82, .55);
+  box-shadow: inset 0 0 0 1px #5484c7;
 }
 
 .oss-ai-composer textarea {
@@ -4783,7 +4785,7 @@ html:has(.orbitpage-admin) {
 .oss-ai-composer textarea::placeholder { color: #8b97aa; }
 .oss-ai-composer textarea:disabled { cursor: not-allowed; background: #f7f9fc; }
 
-.oss-ai-composer > button {
+.oss-ai-composer .ai-composer-input > button {
   position: absolute;
   right: 10px;
   bottom: 28px;
@@ -4798,19 +4800,19 @@ html:has(.orbitpage-admin) {
   transition: transform .16s ease, background .16s ease, opacity .16s ease;
 }
 
-.oss-ai-composer > button:hover:not(:disabled) {
+.oss-ai-composer .ai-composer-input > button:hover:not(:disabled) {
   transform: translateY(-1px);
   background: #113f8b;
 }
 
-.oss-ai-composer > button:disabled {
+.oss-ai-composer .ai-composer-input > button:disabled {
   cursor: not-allowed;
   opacity: .38;
 }
 
-.oss-ai-composer > button svg { width: 18px; height: 18px; }
+.oss-ai-composer .ai-composer-input > button svg { width: 18px; height: 18px; }
 
-.oss-ai-composer > p {
+.oss-ai-composer .ai-composer-input > p {
   position: absolute;
   bottom: 7px;
   left: 15px;
@@ -4822,7 +4824,7 @@ html:has(.orbitpage-admin) {
   font-size: .66rem;
 }
 
-.oss-ai-composer > p svg { width: 12px; height: 12px; }
+.oss-ai-composer .ai-composer-input > p svg { width: 12px; height: 12px; }
 
 .oss-ai-settings {
   position: static;
@@ -4841,11 +4843,15 @@ html:has(.orbitpage-admin) {
   align-content: start;
 }
 
-.ai-page-comparison {
+.ai-page-comparison, .ai-page-comparison-mount { display: contents; }
+
+.ai-page-comparison__content {
+  grid-area: preview;
   display: grid;
+  min-width: 0;
   gap: 8px;
-  padding: 14px 20px 18px;
-  border-top: 1px solid #e8edf4;
+  padding: 12px;
+  border-bottom: 1px solid #e8edf4;
   background: #f8fafc;
 }
 
@@ -4861,74 +4867,88 @@ html:has(.orbitpage-admin) {
 
 .ai-page-comparison__viewport {
   position: relative;
-  height: 430px;
+  justify-self: center;
+  width: min(100%, calc(clamp(220px, 65cqh, 480px) * 16 / 9));
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border: 1px solid #c9d8eb;
-  border-radius: 14px;
+  border-radius: 10px;
   background: #e9eef5;
 }
 
-.ai-page-comparison__layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.ai-page-comparison__viewport[data-device="mobile"] {
+  width: min(100%, calc(clamp(220px, 65cqh, 480px) * 390 / 844));
+  aspect-ratio: 390 / 844;
+  border-radius: 18px;
 }
 
-.ai-page-comparison__layer .admin-preview-device {
+.ai-page-comparison__layer { position: absolute; inset: 0; pointer-events: none; }
+
+/* The comparison is the screen itself: device chrome would distort its aspect ratio. */
+.ai-page-comparison__viewport .ai-page-comparison__layer .admin-preview-device,
+.ai-page-comparison__viewport .ai-page-comparison__layer .admin-preview-device .admin-preview-device__hardware,
+.ai-page-comparison__viewport .ai-page-comparison__layer .admin-preview-device .admin-preview-device__screen {
+  width: 100%;
   height: 100%;
   min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
   border: 0;
   border-radius: 0;
+  aspect-ratio: auto;
+  box-shadow: none;
+  animation: none;
 }
 
-.ai-page-comparison__layer .admin-preview-device--desktop {
-  height: 100%;
-  min-height: 0;
-  padding: 12px 10px 40px;
-}
-
-.ai-page-comparison__layer .admin-preview-device--desktop .admin-preview-device__hardware {
-  width: 100%;
-  max-width: 620px;
-}
+.ai-page-comparison__layer :is(.admin-preview-device__side-button, .admin-preview-device__island, .admin-preview-device__browser-bar, .admin-preview-device__stand),
+.ai-page-comparison__layer .admin-preview-device__hardware::before,
+.ai-page-comparison__layer .admin-preview-device__hardware::after { display: none; }
 
 .ai-page-comparison__divider {
   position: absolute;
   z-index: 3;
-  top: 0;
-  bottom: 0;
+  inset-block: 0;
   width: 2px;
   background: #fff;
-  box-shadow: 0 0 0 1px rgb(23 78 166 / 18%), 0 0 14px rgb(23 78 166 / 24%);
+  box-shadow: 0 0 0 1px rgb(23 78 166 / 18%);
   transform: translateX(-1px);
   pointer-events: none;
 }
 
-.ai-page-comparison__viewport > input[type="range"] {
+.ai-page-comparison__handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 32px;
+  border: 1px solid #b8cbe4;
+  border-radius: 10px;
+  background: #fff;
+  color: #174ea6;
+  box-shadow: 0 2px 8px #163d6926;
+  transform: translate(-50%, -50%);
+}
+.ai-page-comparison__handle svg { width: 16px; height: 16px; }
+
+.ai-page-comparison__content .ai-page-comparison__viewport > input[type="range"] {
   position: absolute;
   z-index: 4;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
-  width: calc(100% - 24px);
-  accent-color: #174ea6;
+  inset: 0 -22px;
+  width: calc(100% + 44px);
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  appearance: none;
   cursor: ew-resize;
+  touch-action: pan-y;
 }
-
-.ai-page-agent-proposal .ai-page-comparison {
-  margin: 0 -2px;
-  padding: 10px 0 4px;
-  border-top: 1px solid #e8edf4;
-  background: transparent;
-}
-
-.ai-page-agent-proposal .ai-page-comparison__viewport {
-  height: 330px;
-}
-
-.ai-page-agent-proposal .ai-page-comparison__layer .admin-preview-device--desktop {
-  padding-bottom: 34px;
-}
+.ai-page-comparison__content .ai-page-comparison__viewport > input[type="range"]::-webkit-slider-thumb { appearance: none; width: 44px; height: 44px; }
+.ai-page-comparison__content .ai-page-comparison__viewport > input[type="range"]::-moz-range-thumb { width: 44px; height: 44px; border: 0; }
+.ai-page-comparison__viewport:has(input:focus-visible) { outline: 2px solid #5484c7; outline-offset: 2px; }
 
 .oss-ai-settings::before {
   display: none;
@@ -6855,10 +6875,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .ai-page-agent-messages { display: grid; min-height: 210px; max-height: 430px; align-content: start; gap: 11px; overflow-y: auto; padding: 15px; background: #fbfcff; }
 .ai-page-agent-message { display: grid; max-width: 91%; gap: 9px; }
 .ai-page-agent-message.user { justify-self: end; }
-.ai-page-agent-message p { margin: 0; padding: 10px 12px; border-radius: 13px; background: #eef1f7; color: #27364c; font-size: 13px; line-height: 1.48; white-space: pre-wrap; }
-.ai-page-agent-message.user p { border-bottom-right-radius: 4px; background: #312e81; color: #fff; }
-.ai-page-agent-message.assistant p { border-bottom-left-radius: 4px; }
-.ai-page-agent-message.error p { border: 1px solid #fecaca; background: #fff1f2; color: #9f1239; }
+.ai-page-agent-message > p, .ai-page-agent-message > div > p { margin: 0; padding: 10px 12px; border-radius: 13px; background: #eef1f7; color: #27364c; font-size: 13px; line-height: 1.48; white-space: pre-wrap; }
+.ai-page-agent-message.user > p, .ai-page-agent-message.user > div > p { border-bottom-right-radius: 4px; background: #312e81; color: #fff; }
+.ai-page-agent-message.assistant > p, .ai-page-agent-message.assistant > div > p { border-bottom-left-radius: 4px; }
+.ai-page-agent-message.error > p, .ai-page-agent-message.error > div > p { border: 1px solid #fecaca; background: #fff1f2; color: #9f1239; }
 .ai-page-agent-proposal { display: grid; gap: 10px; padding: 12px; border: 1px solid #c7d2fe; border-radius: 13px; background: #fff; }
 .ai-page-agent-proposal-actions { display: contents; }
 .ai-page-agent-proposal-heading { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 8px; color: #3730a3; }
@@ -6879,8 +6899,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .ai-page-agent-composer textarea { width: 100%; min-height: 66px; max-height: 140px; resize: vertical; border: 1px solid #d7dce5; border-radius: 11px; background: #fff; color: #172033; font: inherit; font-size: 12px; line-height: 1.45; outline: none; padding: 10px 11px; }
 .ai-page-agent-composer textarea:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgb(99 102 241 / 12%); }
 .ai-page-agent-composer textarea:disabled { cursor: not-allowed; background: #f5f6fa; }
-.ai-page-agent-composer > button { display: grid; width: 38px; height: 38px; place-items: center; border: 0; border-radius: 10px; background: #312e81; color: #fff; cursor: pointer; }
-.ai-page-agent-composer > button:disabled { background: #c5cad4; cursor: default; }
+.ai-page-agent-composer .ai-composer-input > button { display: grid; width: 38px; height: 38px; place-items: center; border: 0; border-radius: 10px; background: #312e81; color: #fff; cursor: pointer; }
+.ai-page-agent-composer .ai-composer-input > button:disabled { background: #c5cad4; cursor: default; }
 .ai-page-agent-safety { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0 14px 11px; background: #fff; color: #7c8596; font-size: 10px; }
 @keyframes ai-page-agent-spin { to { transform: rotate(360deg); } }
 
@@ -9915,7 +9935,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 .oss-ai-workspace {
   min-height: 0;
-  height: clamp(560px, calc(100dvh - 300px), 760px);
+  height: max(520px, calc(100dvh - var(--ai-workspace-top, 220px) - 24px));
 }
 
 .oss-ai-workspace-header {
@@ -11872,25 +11892,59 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 
 /* AI proposals keep their own height inside the conversation scroll area. */
 .oss-ai-conversation > *, .oss-ai-conversation :is(.oss-ai-proposal, .oss-ai-message, .oss-ai-thinking), .ai-page-agent-messages > * { flex-shrink: 0; }
-.oss-ai-conversation, .ai-page-agent-messages { overscroll-behavior: contain; overflow-anchor: none; }
-.ai-page-agent-panel { grid-template-rows: auto minmax(0, 1fr) auto auto; max-height: min(720px, calc(100dvh - 40px)); }
-.ai-page-agent-messages { min-height: 0; }
+.oss-ai-conversation, .ai-page-agent-messages { container-type: size; overscroll-behavior: contain; overflow-anchor: none; }
+.ai-page-agent-panel { grid-template-rows: auto minmax(0, 1fr) auto auto; height: min(780px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); }
+.ai-page-agent-messages { min-height: 0; max-height: none; }
 .oss-ai-composer textarea { display: block; max-height: 140px; border-radius: 13px; }
-.oss-ai-composer textarea:is(:focus, :focus-visible) { outline: none !important; box-shadow: none !important; }
+:is(.oss-ai-composer, .ai-page-agent-composer) textarea:is(:focus, :focus-visible) { outline: none !important; box-shadow: none !important; border-color: transparent; }
 .ai-suggested-prompts { display: flex; flex-wrap: wrap; gap: 6px; grid-column: 1 / -1; padding: 8px; max-height: 112px; overflow-y: auto; }
 .ai-suggested-prompts button { padding: 6px 10px; border: 1px solid #d5e1ef; border-radius: 10px; background: #f3f7fc; color: #24568b; text-align: left; font: inherit; font-size: 12px; line-height: 1.4; cursor: pointer; }
 .ai-suggested-prompts button:hover { background: #e6effa; }
 .ai-suggested-prompts button:focus-visible { outline: 2px solid #5484c7; outline-offset: 1px; }
 .ai-suggested-prompts button:disabled { opacity: .5; cursor: default; }
-.ai-page-comparison { padding: 12px; }
-.ai-page-comparison__viewport, .ai-page-agent-proposal .ai-page-comparison__viewport { height: 240px; }
-.ai-page-comparison__layer .admin-preview-device--mobile { height: 100%; padding: 0 0 34px; }
-.ai-page-comparison__layer .admin-preview-device--mobile .admin-preview-device__hardware { height: 100%; width: 180px; margin: auto; min-height: 0; }
-.ai-page-comparison__layer .admin-preview-device__hardware { overflow: hidden; }
 .ai-catalog-preview { display: grid; gap: 8px; }
 .ai-catalog-preview h3 { margin: 0; font-size: 14px; color: #17395f; }
 .ai-catalog-preview article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 12px; padding: 12px; border: 1px solid #d9e2ee; border-radius: 10px; background: #fff; color: #27364c; font-size: 13px; overflow-wrap: anywhere; }
 .ai-catalog-preview article p, .ai-catalog-preview article small { grid-column: 1 / -1; margin: 0; padding: 0; background: none; }
 .ai-catalog-preview article small { color: #52647e; }
-.ai-page-agent-proposal-actions { display: flex; gap: 8px; }
-.ai-page-agent-proposal-actions > button { flex: 1; }
+
+.oss-ai-proposal, .ai-page-agent-proposal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "preview preview" "actions device";
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  min-width: 0;
+}
+.ai-page-agent-message:has(.ai-page-agent-proposal) { width: 100%; max-width: none; min-width: 0; }
+.oss-ai-proposal-actions, .ai-page-agent-proposal-actions {
+  grid-area: actions;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  border: 0;
+}
+:is(.oss-ai-proposal, .ai-page-agent-proposal) :is(.oss-ai-proposal-actions, .ai-page-agent-proposal-actions) > button {
+  min-height: 36px;
+  height: auto;
+  min-width: 0;
+  padding: 7px 9px;
+  gap: 5px;
+  font-size: 12px;
+}
+.ai-page-agent-proposal-actions > button:last-child { color: #52647e; background: #eef2f8; }
+.ai-page-comparison__device { grid-area: device; margin: 8px 10px 8px 0; align-self: center; }
+.ai-page-comparison__device button { width: 32px; height: 36px; }
+.ai-page-agent-composer { grid-template-columns: minmax(0, 1fr); }
+.ai-page-agent-composer .ai-composer-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 8px; border: 1px solid #cbd7e7; border-radius: 12px; padding: 3px; }
+.ai-page-agent-composer .ai-composer-input:has(textarea:focus-visible) { border-color: #5484c7; box-shadow: inset 0 0 0 1px #5484c7; }
+.ai-page-agent-composer textarea { border: 0; background: transparent; }
+.ai-page-agent-composer .ai-composer-input > button { margin: 0 4px 4px 0; }
+@media (max-width: 900px) { .oss-ai-workspace { height: clamp(480px, 80dvh, 720px); min-height: 0; } }
+@media (forced-colors: active) {
+  .ai-composer-input:has(textarea:focus-visible) { outline: 2px solid Highlight; outline-offset: -2px; }
+}

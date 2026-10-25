@@ -52,6 +52,11 @@ test.describe('OrbitPage AI API end-to-end', () => {
 
   test('plans, reviews and commits a real page change only after confirmation', async ({ page, context }) => {
     await openAuthenticatedAdmin(page);
+    const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+    const headers = { Authorization: `Bearer ${token}` };
+    const profile = await (await page.request.get('/api/profile', { headers })).json();
+    expect((await page.request.put('/api/profile', { headers, data: { ...profile, bio: 'Before the AI proposal' } })).ok()).toBeTruthy();
+    await page.reload();
     await openAdminSection(page, 'AI Assistant');
 
     await expect(page.getByRole('heading', { name: 'Edit by asking' })).toBeVisible();
@@ -66,7 +71,7 @@ test.describe('OrbitPage AI API end-to-end', () => {
 
     const proposal = page.getByRole('region', { name: 'Page preview', exact: true });
     await expect(proposal).toBeVisible();
-    await expect(proposal.getByRole('region', { name: 'Page preview before and after' })).toBeVisible({ timeout: 15_000 });
+    await expect(proposal.locator('.ai-page-comparison__viewport')).toBeVisible({ timeout: 15_000 });
     await expect(proposal.getByRole('slider', { name: 'Move to compare before and after' })).toBeVisible();
 
     await publicPage.reload();
@@ -75,7 +80,22 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await page.reload();
     await expect(proposal.getByRole('button', { name: 'Apply changes' })).toBeVisible();
     await expect(proposal.getByRole('button', { name: 'Mobile preview' })).toHaveAttribute('aria-pressed', 'true');
-    expect(await proposal.locator('.ai-page-comparison__viewport').evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(242);
+    for (const [device, ratio] of [['Mobile', 390 / 844], ['Desktop', 16 / 9]] as const) {
+      await proposal.getByRole('button', { name: `${device} preview` }).click();
+      const viewport = proposal.locator('.ai-page-comparison__viewport');
+      const dimensions = await viewport.boundingBox();
+      expect(dimensions!.width / dimensions!.height).toBeCloseTo(ratio, 1);
+      const screen = await viewport.locator('.admin-preview-device__screen').first().boundingBox();
+      expect(screen!.width / screen!.height).toBeCloseTo(ratio, 1);
+      expect(Math.abs(dimensions!.height - screen!.height - 2)).toBeLessThan(1);
+      expect(Math.abs(screen!.y - dimensions!.y - 1)).toBeLessThan(1);
+      const slider = proposal.getByRole('slider');
+      await slider.focus();
+      await slider.press('Home');
+      await slider.press('ArrowRight');
+      await expect(slider).toHaveValue('1');
+      await expect(viewport.locator('.ai-page-comparison__handle svg')).toHaveCount(2);
+    }
     await page.locator('#oss-ai-prompt').focus();
     expect(await page.locator('#oss-ai-prompt').evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none');
     await proposal.getByRole('button', { name: 'Apply changes' }).click();

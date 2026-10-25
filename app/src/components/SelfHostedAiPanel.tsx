@@ -354,32 +354,34 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
           {!!messages.at(-1)?.suggestedPrompts?.length && <div className="ai-suggested-prompts" aria-label={tr("Suggested next steps", "Prossimi passi suggeriti")}>
             {messages.at(-1)!.suggestedPrompts!.map(prompt => <button key={prompt} type="button" disabled={planning || launching || applying} onClick={() => void submitPrompt(prompt)}>{prompt}</button>)}
           </div>}
-          <Label className="sr-only" htmlFor="oss-ai-prompt">
-            {tr("Ask OrbitPage AI", "Chiedi a OrbitPage AI")}
-          </Label>
-          <textarea
+          <div className="ai-composer-input">
+            <Label className="sr-only" htmlFor="oss-ai-prompt">
+              {tr("Ask OrbitPage AI", "Chiedi a OrbitPage AI")}
+            </Label>
+            <textarea
               ref={composerRef}
-            id="oss-ai-prompt"
-            maxLength={4000}
-            onChange={(event) => setPrompt(event.target.value)}
-            placeholder={configured
-              ? tr("E.g. Make the page more editorial and move the booking link first…", "Es. Rendi la pagina più editoriale e sposta il link prenotazioni al primo posto…")
-              : tr("Configure your OpenAI API key to start.", "Configura la tua chiave API OpenAI per iniziare.")}
-            rows={3}
-            value={prompt}
-            disabled={!configured || planning}
-          />
-          <button
-            aria-label={tr("Send request", "Invia richiesta")}
-            disabled={!configured || planning || !prompt.trim()}
-            type="submit"
-          >
-            {planning ? <OrbitLoader size={18} state="solving" /> : <Send />}
-          </button>
-          <p>
-            <ShieldCheck aria-hidden="true" />
-            {tr("Nothing changes without your confirmation.", "Nessuna modifica senza la tua conferma.")}
-          </p>
+              id="oss-ai-prompt"
+              maxLength={4000}
+              onChange={(event) => setPrompt(event.target.value)}
+              placeholder={configured
+                ? tr("E.g. Make the page more editorial and move the booking link first…", "Es. Rendi la pagina più editoriale e sposta il link prenotazioni al primo posto…")
+                : tr("Configure your OpenAI API key to start.", "Configura la tua chiave API OpenAI per iniziare.")}
+              rows={3}
+              value={prompt}
+              disabled={!configured || planning}
+            />
+            <button
+              aria-label={tr("Send request", "Invia richiesta")}
+              disabled={!configured || planning || !prompt.trim()}
+              type="submit"
+            >
+              {planning ? <OrbitLoader size={18} state="solving" /> : <Send />}
+            </button>
+            <p>
+              <ShieldCheck aria-hidden="true" />
+              {tr("Nothing changes without your confirmation.", "Nessuna modifica senza la tua conferma.")}
+            </p>
+          </div>
         </form>
       </section>
 

@@ -2,6 +2,21 @@ import { useEffect, type RefObject } from "react";
 
 export function useAiConversationScroll(ref: RefObject<HTMLDivElement | null>, updates: unknown, open = true) {
   useEffect(() => {
+    const workspace = ref.current?.closest<HTMLElement>(".oss-ai-workspace");
+    if (!workspace || !open) return;
+    const fit = () => {
+      if (window.innerWidth <= 900) return;
+      const top = Math.max(0, workspace.getBoundingClientRect().top + window.scrollY);
+      workspace.style.setProperty("--ai-workspace-top", `${top}px`);
+    };
+    const frame = requestAnimationFrame(fit);
+    const observer = new ResizeObserver(fit);
+    if (workspace.parentElement) observer.observe(workspace.parentElement);
+    window.addEventListener("resize", fit);
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); window.removeEventListener("resize", fit); };
+  }, [ref, open]);
+
+  useEffect(() => {
     const container = ref.current;
     if (!container || !open) return;
     let follow = true;

@@ -177,14 +177,16 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
                 {item.proposal && (
                   <section className="ai-page-agent-proposal">
                     <AiPageComparisonPreview {...item.proposal.preview} />
-                    <button disabled={item.applying || item.applied} onClick={() => void applyProposal(item.id, item.proposal!)} type="button">
-                      {item.applying
-                        ? <><OrbitLoader size={16} state="weaving" />{labels.applying}</>
-                        : item.applied
-                          ? <><Check aria-hidden="true" size={16} />{labels.applied}</>
-                          : <><Sparkles aria-hidden="true" size={16} />{labels.apply}</>}
-                    </button>
-                    <button disabled={item.applying} onClick={() => setMessages(current => current.map(message => message.id === item.id ? { ...message, proposal: null } : message))} type="button">{tr("Discard", "Scarta")}</button>
+                    <div className="ai-page-agent-proposal-actions">
+                      <button disabled={item.applying || item.applied} onClick={() => void applyProposal(item.id, item.proposal!)} type="button">
+                        {item.applying
+                          ? <><OrbitLoader size={16} state="weaving" />{labels.applying}</>
+                          : item.applied
+                            ? <><Check aria-hidden="true" size={16} />{labels.applied}</>
+                            : <><Sparkles aria-hidden="true" size={16} />{labels.apply}</>}
+                      </button>
+                      <button disabled={item.applying} onClick={() => setMessages(current => current.map(message => message.id === item.id ? { ...message, proposal: null } : message))} type="button">{tr("Discard", "Scarta")}</button>
+                    </div>
                   </section>
                 )}
               </div>
@@ -196,17 +198,19 @@ export function SelfHostedAiAgent({ historyKey = "admin", onApplied }: { history
             {!!messages.at(-1)?.suggestedPrompts?.length && <div className="ai-suggested-prompts" aria-label={tr("Suggested next steps", "Prossimi passi suggeriti")}>
               {messages.at(-1)!.suggestedPrompts!.map(prompt => <button key={prompt} type="button" disabled={sending || messages.some(item => item.applying)} onClick={() => void submit(prompt)}>{prompt}</button>)}
             </div>}
-            <textarea
-              ref={composerRef}
-              aria-label={labels.placeholder}
-              disabled={sending || settings?.configured !== true}
-              maxLength={4000}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder={settings?.configured === false ? labels.configure : labels.placeholder}
-              rows={3}
-              value={draft}
-            />
-            <button aria-label={tr("Send", "Invia")} disabled={sending || settings?.configured !== true || !draft.trim()} type="submit"><Send size={17} /></button>
+            <div className="ai-composer-input">
+              <textarea
+                ref={composerRef}
+                aria-label={labels.placeholder}
+                disabled={sending || settings?.configured !== true}
+                maxLength={4000}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder={settings?.configured === false ? labels.configure : labels.placeholder}
+                rows={3}
+                value={draft}
+              />
+              <button aria-label={tr("Send", "Invia")} disabled={sending || settings?.configured !== true || !draft.trim()} type="submit"><Send size={17} /></button>
+            </div>
           </form>
           <p className="ai-page-agent-safety"><ShieldCheck aria-hidden="true" size={13} /><span>{labels.safety}</span></p>
         </section>,
