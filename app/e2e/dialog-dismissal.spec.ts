@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openAuthenticatedAdmin, openAdminSection } from './helpers';
+import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, openAdminSection } from './helpers';
 
 test('closes clean Analytics popups outside and protects unsaved changes', async ({ page }) => {
   await openAuthenticatedAdmin(page);
@@ -71,32 +71,42 @@ test('closes the AI popup outside only when its composer has no draft', async ({
 });
 
 test('protects changed cookie preferences without granting consent on dismissal', async ({ page }) => {
-  await page.route('**/api/consent-config/public*', route => route.fulfill({ json: { success: true, data: {
-    mode: 'hardcoded', enabled: true, hardcoded: {
+  const { token } = await (await page.request.post('/api/auth/login', { data: { password: E2E_ADMIN_PASSWORD } })).json();
+  const headers = { Authorization: `Bearer ${token}` };
+  const original = (await (await page.request.get('/api/consent-config', { headers })).json()).data;
+  const config = {
+    mode: 'hardcoded', enabled: true,
+    legalPolicies: { showFooterLinks: true, privacyPolicy: { mode: 'external', externalUrl: 'https://example.com/privacy' }, cookiePolicy: { mode: 'external', externalUrl: '' } },
+    hardcoded: {
       policyVersion: 'test', layout: 'centered-modal', theme: 'light', buttonPriority: 'equal', geoMode: 'always', consentExpiryDays: 180, reshowOnVersionChange: true, legalFooterText: '',
       texts: { title: 'Cookie consent', description: 'Choose your preferences.', acceptAll: 'Accept all', rejectAll: 'Reject all', managePreferences: 'Manage preferences', savePreferences: 'Save preferences', reopenLabel: 'Cookie preferences', privacyPolicyLinkText: 'Privacy', cookiePolicyLinkText: 'Cookies' },
       urls: { privacyPolicy: '', cookiePolicy: '' },
       categories: { preferences: { enabled: false, title: 'Preferences', description: '' }, analytics: { enabled: true, title: 'Analytics', description: 'Usage statistics' }, marketing: { enabled: false, title: 'Marketing', description: '' } },
     },
-  } } }));
-  await page.goto('/');
-  const banner = page.getByRole('dialog', { name: 'Cookie consent', exact: true });
-  await expect(banner).toBeVisible();
-  await page.mouse.click(2, 2);
-  await expect(banner).toBeHidden();
-  const open = page.getByRole('button', { name: 'Cookie preferences', exact: true });
-  await open.click();
-  const preferences = page.getByRole('dialog', { name: 'Cookie preferences', exact: true });
-  await expect(preferences).toBeVisible();
-  await page.mouse.click(2, 2);
-  await expect(preferences).toBeHidden();
-  await open.click();
-  const analytics = preferences.getByRole('switch', { name: 'Analytics', exact: true });
-  await analytics.click();
-  await page.mouse.click(2, 2);
-  await expect(preferences).toBeVisible();
-  await analytics.click();
-  await page.mouse.click(2, 2);
-  await expect(preferences).toBeHidden();
-  expect(await page.evaluate(() => Object.keys(localStorage).some(key => key.startsWith('orbitpage_consent_v2:')))).toBe(false);
+  };
+  try {
+    expect((await page.request.put('/api/consent-config', { headers, data: config })).ok()).toBeTruthy();
+    await page.goto('/');
+    const banner = page.getByRole('dialog', { name: 'Cookie consent', exact: true });
+    await expect(banner).toBeVisible();
+    await page.mouse.click(2, 2);
+    await expect(banner).toBeHidden();
+    const open = page.getByRole('button', { name: 'Cookie preferences', exact: true });
+    await open.click();
+    const preferences = page.getByRole('dialog', { name: 'Cookie preferences', exact: true });
+    await expect(preferences).toBeVisible();
+    await page.mouse.click(2, 2);
+    await expect(preferences).toBeHidden();
+    await open.click();
+    const analytics = preferences.getByRole('switch', { name: 'Analytics', exact: true });
+    await analytics.click();
+    await page.mouse.click(2, 2);
+    await expect(preferences).toBeVisible();
+    await analytics.click();
+    await page.mouse.click(2, 2);
+    await expect(preferences).toBeHidden();
+    expect(await page.evaluate(() => Object.keys(localStorage).some(key => key.startsWith('orbitpage_consent_v2:')))).toBe(false);
+  } finally {
+    expect((await page.request.put('/api/consent-config', { headers, data: original })).ok()).toBeTruthy();
+  }
 });

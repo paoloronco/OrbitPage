@@ -1269,6 +1269,7 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
     pathName = `/${subpage.slug}`;
     profile = {
       ...profile,
+      appearance: { ...profile.appearance, cardLayouts: undefined },
       name: subpage.title,
       bio: subpage.description,
       tab_title: subpage.title,

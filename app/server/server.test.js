@@ -1688,6 +1688,20 @@ describe('API Endpoints', () => {
     expect(response.text).not.toContain('href="./brand/');
   });
 
+  it('GET /:subpage keeps home card positioning out of the initial snapshot', async () => {
+    vi.mocked(dbGet).mockImplementation(async (sql) => {
+      if (String(sql).includes('FROM profile_data')) return { name: 'Home', appearance: JSON.stringify({ cardLayouts: { desktop: { height: 900 } } }) };
+      if (String(sql).includes('FROM subpages_config')) return { full_config: JSON.stringify([{ id: 'services', slug: 'services', title: 'Services', description: '', links: [], enabled: true }]) };
+      return null;
+    });
+
+    const response = await request(app).get('/services');
+    const snapshot = JSON.parse(response.text.split('window.__ORBITPAGE_STATIC_SNAPSHOT__??=')[1].split(';</script>')[0]);
+
+    expect(response.status).toBe(200);
+    expect(snapshot.page.profile.appearance.cardLayouts).toBeUndefined();
+  });
+
   it.each(['', '/orbitpage'])('serves crawlable policy content and navigation at %s', async (basePath) => {
     vi.mocked(dbGet).mockImplementation(async (sql) => {
       if (String(sql).includes('FROM profile_data')) return { name: 'Example', privacy_policy_url: '/privacy', cookie_policy_url: '/cookies' };
