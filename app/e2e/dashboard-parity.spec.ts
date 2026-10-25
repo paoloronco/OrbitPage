@@ -41,7 +41,10 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   expect((await summaryGroups.nth(0).boundingBox())!.y).toBe((await summaryGroups.nth(1).boundingBox())!.y);
   expect((await plan.locator('.oss-plan-instance').boundingBox())!.width).toBeGreaterThan(560);
   await expect(plan.getByRole('heading', { name: 'OrbitPage SaaS', exact: true })).toBeVisible();
-  expect((await plan.locator('.oss-plan-managed-promo').boundingBox())!.width).toBeGreaterThan((await plan.locator('.oss-plan-instance').boundingBox())!.width);
+  const summaryBox = (await plan.locator('.oss-plan-summary').boundingBox())!;
+  const promoBox = (await plan.locator('.oss-plan-managed-promo').boundingBox())!;
+  expect(Math.abs(promoBox.width - summaryBox.width)).toBeLessThan(2);
+  expect(promoBox.y).toBeGreaterThan(summaryBox.y + summaryBox.height);
   await page.screenshot({ path: 'output/playwright/oss-edition-desktop.png', fullPage: true });
   await expect(plan.getByRole('link', { name: 'Open account settings' })).toHaveAttribute('href', '/en-US/dashboard/account/general');
   await page.getByLabel('Language', { exact: true }).selectOption('it');
