@@ -30,6 +30,16 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await expect(page.locator('.oss-ai-conversation').getByText('Saved message 80')).toHaveCount(0);
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByRole('button', { name: 'Clear conversation' })).toBeVisible();
+    const mobileTabs = page.locator('.ai-assistant-mobile-tabs');
+    await expect(mobileTabs).toBeVisible();
+    await expect(page.locator('.oss-ai-aside-stack')).toBeHidden();
+    await page.locator('#oss-ai-prompt').fill('Keep my draft');
+    await mobileTabs.getByRole('button', { name: 'Tools', exact: true }).click();
+    await expect(page.locator('.oss-ai-workspace')).toBeHidden();
+    await expect(page.locator('.oss-ai-settings')).toBeVisible();
+    await expect(page.locator('.oss-ai-launch-kit')).toBeVisible();
+    await mobileTabs.getByRole('button', { name: 'Chat', exact: true }).click();
+    await expect(page.locator('#oss-ai-prompt')).toHaveValue('Keep my draft');
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   });
 
@@ -96,6 +106,11 @@ test.describe('OrbitPage AI API end-to-end', () => {
       await expect(slider).toHaveValue('1');
       await expect(viewport.locator('.ai-page-comparison__handle svg')).toHaveCount(2);
     }
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('.ai-assistant-mobile-tabs').getByRole('button', { name: 'Tools', exact: true }).click();
+    await expect(proposal).toBeHidden();
+    await page.locator('.ai-assistant-mobile-tabs').getByRole('button', { name: 'Chat', exact: true }).click();
+    await expect(proposal.getByRole('button', { name: 'Apply changes' })).toBeVisible();
     await page.locator('#oss-ai-prompt').focus();
     expect(await page.locator('#oss-ai-prompt').evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none');
     await proposal.getByRole('button', { name: 'Apply changes' }).click();

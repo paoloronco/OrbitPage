@@ -11786,13 +11786,11 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 @media (max-width: 900px) {
   .ai-assistant-layout { display: flex; flex-direction: column; align-items: stretch; }
-  .ai-assistant-aside { order: -1; }
 }
 
 @media (max-width: 767px) { .admin-dashboard-mobile-nav-button.open { visibility: hidden; } }
 
 @media (max-width: 767px) { .menu-editor-dialog :is(input, textarea, select), .ai-page-agent-composer textarea, .oss-ai-composer textarea { font-size: 16px; } }
-@media (max-width: 900px) { .ai-assistant-layout > .oss-ai-aside-stack { display: contents; } }
 
 @media (max-width: 767px) { .admin-dashboard-nav-stack { transform: none; } }
 
@@ -11908,7 +11906,21 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .ai-page-agent-composer .ai-composer-input:has(textarea:focus-visible) { border-color: #5484c7; box-shadow: inset 0 0 0 1px #5484c7; }
 .ai-page-agent-composer textarea { border: 0; background: transparent; }
 .ai-page-agent-composer .ai-composer-input > button { margin: 0 4px 4px 0; }
-@media (max-width: 900px) { .oss-ai-workspace { height: clamp(480px, 80dvh, 720px); min-height: 0; } }
+
+.ai-assistant-mobile-tabs { display: none; }
+@media (max-width: 900px) {
+  .ai-assistant-mobile-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 1px solid #dbe4f0; border-radius: 12px; background: #eef3fa; }
+  .ai-assistant-mobile-tabs > button { min-width: 0; min-height: 44px; padding: 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #52647e; font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; }
+  .ai-assistant-mobile-tabs > button[aria-pressed="true"] { border-color: #c6d8f1; color: #174ea6; background: #fff; box-shadow: 0 1px 3px #163d6910; }
+  .ai-assistant-mobile-tabs > button:focus-visible { outline: 2px solid #5484c7; outline-offset: -2px; }
+  .ai-assistant-layout[data-mobile-view="chat"] > .oss-ai-aside-stack,
+  .ai-assistant-layout[data-mobile-view="tools"] > .oss-ai-workspace { display: none; }
+  .ai-assistant-layout > .oss-ai-aside-stack { width: 100%; }
+  .ai-assistant-layout > .oss-ai-workspace { height: max(400px, calc(100dvh - var(--ai-workspace-top, 180px) - 16px)); min-height: 0; width: 100%; }
+  .ai-assistant-layout .oss-ai-workspace-header { padding: 12px; gap: 10px; }
+  .ai-assistant-layout .oss-ai-workspace-header > div:nth-child(2) > p:last-child { display: none; }
+}
+
 @media (forced-colors: active) {
   .ai-composer-input:has(textarea:focus-visible) { outline: 2px solid Highlight; outline-offset: -2px; }
 }

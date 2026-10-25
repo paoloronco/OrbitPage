@@ -1,3 +1,4 @@
+import { AiAssistantMobileTabs, type AiAssistantMobileView } from "./AiAssistantMobileTabs";
 import { useAiConversationScroll } from "@/lib/use-ai-conversation-scroll";
 import { keepMobileInputVisible } from "@/lib/mobile-keyboard-focus";
 import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
@@ -60,6 +61,7 @@ function entry(role: "user" | "assistant", content: string, error = false, persi
 
 export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onApplied, headerAction }: SelfHostedAiPanelProps) {
   const { tr } = useAppI18n();
+  const [mobileView, setMobileView] = useState<AiAssistantMobileView>("chat");
   const historyStorageKey = useMemo(() => `${AI_HISTORY_STORAGE_KEY}:${encodeURIComponent(historyKey)}`, [historyKey]);
   const welcome = tr(
     "Tell me what you want to change on the open page. I will show you the edits to review before you apply them.",
@@ -238,6 +240,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
   const submitLaunchKit = async (event: FormEvent) => {
     event.preventDefault();
     if (!configured || !launchScreenshot || !launchAttested || launching) return;
+    setMobileView("chat");
     setLaunching(true);
     setLaunchError("");
     setProposal(null);
@@ -266,7 +269,8 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
 
   return (
     <div className="ai-assistant-page" data-ai-assistant-edition="oss">
-      <div className="oss-ai-layout ai-assistant-layout">
+      <div className="oss-ai-layout ai-assistant-layout" data-mobile-view={mobileView}>
+      <AiAssistantMobileTabs value={mobileView} onChange={setMobileView} toolsLabel={tr("Tools", "Strumenti")} />
       <section className="oss-ai-workspace ai-assistant-chat" aria-labelledby="oss-ai-heading">
         <header className="oss-ai-workspace-header">
           <div className="oss-ai-mark" aria-hidden="true">

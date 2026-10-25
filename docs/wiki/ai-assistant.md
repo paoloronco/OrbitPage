@@ -13,6 +13,8 @@ In OSS, the dashboard key is encrypted in SQLite, never returned to the browser,
 
 For self-hosted model selection, `OPENAI_PAGE_AGENT_MODEL` supplies the default when no selection is saved; see [Configuration](./administration/Configuration.md#variables).
 
+On phones, use **Chat** for the full-width conversation and **Tools** for usage or provider settings and Launch Kit. Switching views keeps your draft and pending approval. Starting Launch Kit opens Chat to show progress and the result. Desktop keeps both areas side by side.
+
 ## Describe the change
 
 Say which content or design you want to change and include the exact text and destination links that matter. OrbitPage reads the current page and checks supported fields, your permissions and applicable limits. Use the normal editor for direct changes that do not need an AI request.

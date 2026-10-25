@@ -5,7 +5,7 @@ export function useAiConversationScroll(ref: RefObject<HTMLDivElement | null>, u
     const workspace = ref.current?.closest<HTMLElement>(".oss-ai-workspace");
     if (!workspace || !open) return;
     const fit = () => {
-      if (window.innerWidth <= 900) return;
+      if (!workspace.getClientRects().length) return;
       const top = Math.max(0, workspace.getBoundingClientRect().top + window.scrollY);
       workspace.style.setProperty("--ai-workspace-top", `${top}px`);
     };
