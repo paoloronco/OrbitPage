@@ -111,6 +111,13 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await expect(proposal).toBeHidden();
     await page.locator('.ai-assistant-mobile-tabs').getByRole('button', { name: 'Chat', exact: true }).click();
     await expect(proposal.getByRole('button', { name: 'Apply changes' })).toBeVisible();
+    await proposal.getByRole('button', { name: 'Mobile preview' }).click();
+    const phone = (await proposal.locator('.admin-preview-device__hardware').boundingBox())!;
+    const camera = (await proposal.locator('.admin-preview-device__island').boundingBox())!;
+    const sideButton = (await proposal.locator('.admin-preview-device__side-button').first().boundingBox())!;
+    expect(camera.width / phone.width).toBeLessThanOrEqual(.24);
+    expect(camera.height / phone.width).toBeLessThanOrEqual(.07);
+    expect(sideButton.height / phone.width).toBeLessThanOrEqual(.15);
     await page.locator('#oss-ai-prompt').focus();
     expect(await page.locator('#oss-ai-prompt').evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none');
     await proposal.getByRole('button', { name: 'Apply changes' }).click();

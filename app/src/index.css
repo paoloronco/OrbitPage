@@ -4872,6 +4872,19 @@ html:has(.orbitpage-admin) {
 .ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__screen { aspect-ratio: 390 / 844; }
 .ai-page-comparison .admin-preview-device__stand { bottom: 18px; height: 42px; }
 
+@media (max-width: 900px) {
+  /* Scale the phone hardware with its screen instead of keeping desktop-sized details. */
+  .ai-page-comparison__viewport[data-device="mobile"] { width: min(100%, calc(var(--ai-preview-height) * 390 / 844 / .94 + 8px)); }
+  .ai-page-comparison__viewport .admin-preview-device--mobile { container-type: inline-size; }
+  .ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__hardware { border-width: .5cqw; border-radius: 12cqw; padding: 2.5cqw; box-shadow: 0 8cqw 16cqw rgb(15 23 42 / 20%); }
+  .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__screen { border-radius: 9.5cqw; }
+  .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__island { top: 4cqw; width: 22cqw; height: 6cqw; padding-right: 2.5cqw; }
+  .ai-page-comparison__viewport .admin-preview-device__island i { width: 3cqw; height: 3cqw; border-width: .45cqw; }
+  .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__side-button { left: -1.3cqw; width: 1.3cqw; height: 14cqw; border-radius: .9cqw 0 0 .9cqw; }
+  .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__hardware::before { right: -1.3cqw; width: 1.3cqw; height: 19cqw; border-radius: 0 .9cqw .9cqw 0; }
+  .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__hardware::after { bottom: 3.8cqw; height: 1.3cqw; }
+}
+
 .ai-page-comparison__divider {
   position: absolute;
   z-index: 3;
