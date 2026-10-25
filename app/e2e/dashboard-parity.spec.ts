@@ -32,6 +32,8 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   await expect(sourceCode).toHaveCSS('border-style', 'solid');
   expect((await sourceCode.boundingBox())!.y).toBe((await deploymentGuide.boundingBox())!.y);
   await expect(plan.locator('.oss-plan-summary')).toHaveCount(1);
+  await expect(plan.locator('.oss-plan-feature .oss-plan-item-icon')).toHaveCount(4);
+  await expect(plan.locator('.oss-plan-responsibilities .oss-plan-item-icon')).toHaveCount(3);
   await expect(plan.getByRole('heading', { name: 'OrbitPage SaaS', exact: true })).toBeVisible();
   await page.screenshot({ path: 'output/playwright/oss-edition-desktop.png', fullPage: true });
   await expect(plan.getByRole('link', { name: 'Open account settings' })).toHaveAttribute('href', '/en-US/dashboard/account/general');

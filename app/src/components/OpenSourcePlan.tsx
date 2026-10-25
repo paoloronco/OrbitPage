@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, BookOpen, Github } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BarChart3, BookOpen, FileText, Github, Mail, PackageCheck, Puzzle, RefreshCw, Server, Users, Wrench } from "lucide-react";
 import { useAppI18n } from "@/lib/i18n";
 import { adminSubsectionPath } from "@/lib/admin-navigation";
 import { publicLocaleSlug } from "@/lib/public-routing";
@@ -12,15 +12,15 @@ export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: 
 }) {
   const { locale, tr } = useAppI18n();
   const included = [
-    { title: tr("Pages and design", "Pagine e design"), detail: tr("Profiles, content blocks, menus, extra pages and themes.", "Profili, blocchi, menu, pagine aggiuntive e temi.") },
-    { title: tr("Publishing and analytics", "Pubblicazione e analytics"), detail: tr("Your domain, QR codes, sitemap, visits and clicks.", "Il tuo dominio, codici QR, sitemap, visite e clic.") },
-    { title: tr("Newsletter and AI", "Newsletter e AI"), detail: tr("Use your SMTP server for email and your own API key for the AI assistant.", "Usa il tuo server SMTP per le email e una tua chiave API per l'assistente AI.") },
-    { title: tr("Team and recovery", "Team e ripristino"), detail: tr("Local users, roles, two-factor authentication, backup and restore.", "Utenti locali, ruoli, autenticazione a due fattori, backup e ripristino.") },
+    { icon: FileText, title: tr("Pages and design", "Pagine e design"), detail: tr("Profiles, content blocks, menus, extra pages and themes.", "Profili, blocchi, menu, pagine aggiuntive e temi.") },
+    { icon: BarChart3, title: tr("Publishing and analytics", "Pubblicazione e analytics"), detail: tr("Your domain, QR codes, sitemap, visits and clicks.", "Il tuo dominio, codici QR, sitemap, visite e clic.") },
+    { icon: Mail, title: tr("Newsletter and AI", "Newsletter e AI"), detail: tr("Use your SMTP server for email and your own API key for the AI assistant.", "Usa il tuo server SMTP per le email e una tua chiave API per l'assistente AI.") },
+    { icon: Users, title: tr("Team and recovery", "Team e ripristino"), detail: tr("Local users, roles, two-factor authentication, backup and restore.", "Utenti locali, ruoli, autenticazione a due fattori, backup e ripristino.") },
   ];
   const responsibilities = [
-    { title: tr("Server and domain", "Server e dominio"), detail: tr("Run the app on your server and configure HTTPS.", "Esegui l'app sul tuo server e configura HTTPS.") },
-    { title: tr("Updates and backups", "Aggiornamenti e backup"), detail: tr("Install new versions and keep copies of your persistent data.", "Installa le nuove versioni e conserva copie dei dati persistenti.") },
-    { title: tr("Optional services", "Servizi facoltativi"), detail: tr("Add SMTP and an AI provider only if you use those tools.", "Configura SMTP e un provider AI solo se usi quelle funzioni.") },
+    { icon: Server, title: tr("Server and domain", "Server e dominio"), detail: tr("Run the app on your server and configure HTTPS.", "Esegui l'app sul tuo server e configura HTTPS.") },
+    { icon: RefreshCw, title: tr("Updates and backups", "Aggiornamenti e backup"), detail: tr("Install new versions and keep copies of your persistent data.", "Installa le nuove versioni e conserva copie dei dati persistenti.") },
+    { icon: Puzzle, title: tr("Optional services", "Servizi facoltativi"), detail: tr("Add SMTP and an AI provider only if you use those tools.", "Configura SMTP e un provider AI solo se usi quelle funzioni.") },
   ];
 
   return (
@@ -41,19 +41,21 @@ export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: 
           <section className="oss-plan-panel oss-plan-summary" aria-labelledby="oss-plan-included-title">
             <div className="oss-plan-summary-group">
               <div className="oss-plan-section-heading">
+                <span aria-hidden="true"><PackageCheck size={18} /></span>
                 <h3 id="oss-plan-included-title">{tr("Included here", "Già incluso")}</h3>
               </div>
               <ul className="oss-plan-feature-list">
-                {included.map(({ title, detail }) => <li className="oss-plan-feature" key={title}><strong>{title}</strong><span>{detail}</span></li>)}
+                {included.map(({ icon: Icon, title, detail }) => <li className="oss-plan-feature" key={title}><span className="oss-plan-item-icon" aria-hidden="true"><Icon size={18} /></span><span><strong>{title}</strong><small>{detail}</small></span></li>)}
               </ul>
             </div>
             <div className="oss-plan-summary-group" aria-labelledby="oss-plan-management-title">
               <div className="oss-plan-section-heading">
+                <span aria-hidden="true"><Wrench size={18} /></span>
                 <h3 id="oss-plan-management-title">{tr("What you manage", "Cosa gestisci tu")}</h3>
               </div>
-              <dl className="oss-plan-responsibilities">
-                {responsibilities.map(({ title, detail }) => <div key={title}><dt>{title}</dt><dd>{detail}</dd></div>)}
-              </dl>
+              <ul className="oss-plan-responsibilities">
+                {responsibilities.map(({ icon: Icon, title, detail }) => <li key={title}><span className="oss-plan-item-icon" aria-hidden="true"><Icon size={18} /></span><span><strong>{title}</strong><small>{detail}</small></span></li>)}
+              </ul>
               <div className="oss-plan-links">
                 <a className="oss-plan-primary-link" href={withBasePath(adminSubsectionPath("account", "general", locale))}>{tr("Open account settings", "Apri le impostazioni account")}<ArrowRight aria-hidden="true" size={16} /></a>
               </div>
