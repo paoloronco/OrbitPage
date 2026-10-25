@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Database, Download, ExternalLink, RefreshCw, ShieldCheck, Sliders } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,7 +57,7 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
   };
 
   return <>
-      <Card className="glass-card p-6 account-panel account-instance-card">
+      <div className="account-panel account-instance-card">
         <div className="instance-overview-grid">
           <section className="instance-overview-panel">
             <div className="account-section-heading">
@@ -129,7 +128,7 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
             </div>
           </section>
         </div>
-      </Card>
+      </div>
 
     <Dialog open={environmentOpen} onOpenChange={(open) => { if (!environmentBusy) { setEnvironmentOpen(open); if (!open) { setEnvironmentChanges({}); setEnvironmentPassword(''); } } }}>
       <DialogContent dirty={environmentBusy || Object.keys(environmentChanges).length > 0 || Boolean(environmentPassword)} className="orbitpage-admin oss-account-delete-dialog instance-environment-dialog" overlayClassName="oss-account-delete-overlay">

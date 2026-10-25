@@ -7190,10 +7190,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-plan-resource-link svg:last-child { margin-left: 2px; }
 .oss-plan-columns { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); align-items: start; gap: 18px; }
 .orbitpage-admin .oss-plan-instance { min-width: 0; max-width: none; }
-.oss-plan-instance .account-instance-card { width: 100%; padding: 12px; }
+.oss-plan-instance .account-instance-card { width: 100%; padding: 0; }
 .instance-overview-grid { display: grid; gap: 12px; }
 .instance-overview-panel { display: grid; align-content: start; gap: 16px; min-width: 0; padding: 18px; border: 1px solid var(--admin-line); border-radius: 7px; background: var(--admin-surface); }
-.orbitpage-admin .oss-account-layout .instance-overview-panel .account-section-heading h3 { margin: 0; color: var(--admin-ink); font-size: 15px; font-weight: 750; line-height: 1.3; }
+.orbitpage-admin .oss-account-layout .instance-overview-panel .account-section-heading h3 { margin: 0; color: var(--admin-accent-strong); font-size: 15px; font-weight: 750; line-height: 1.3; }
 .instance-environment-actions { align-items: flex-start; }
 .instance-environment-actions p { width: 100%; margin: 0; color: var(--admin-secondary-copy); font-size: 12px; line-height: 1.55; }
 .account-instance-release-link.is-placeholder { visibility: hidden; }

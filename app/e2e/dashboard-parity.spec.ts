@@ -19,6 +19,8 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   await expect(plan.getByRole('heading', { name: 'OrbitPage Open Source', exact: true })).toBeVisible();
   await expect(plan.locator('.oss-plan-feature')).toHaveCount(4);
   await expect(plan.locator('.instance-overview-panel')).toHaveCount(4);
+  await expect(plan.locator('.account-instance-card')).toHaveCSS('border-width', '0px');
+  await expect(plan.locator('.instance-overview-panel .account-section-heading h3').first()).toHaveCSS('color', 'rgb(36, 86, 211)');
   await expect(plan.getByRole('heading', { name: 'Instance details', exact: true })).toBeVisible();
   await expect(plan.getByRole('heading', { name: 'System check', exact: true })).toBeVisible();
   await expect(plan.getByRole('heading', { name: 'Environment', exact: true })).toBeVisible();
