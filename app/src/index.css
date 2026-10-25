@@ -4697,37 +4697,6 @@ html:has(.orbitpage-admin) {
   line-height: 1.45;
 }
 
-.oss-ai-proposal ol {
-  margin: 0;
-  padding: 2px 20px;
-  list-style: none;
-}
-
-.oss-ai-proposal li {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr);
-  gap: 10px;
-  align-items: baseline;
-  padding: 12px 0;
-  border-bottom: 1px solid #edf1f6;
-}
-
-.oss-ai-proposal li:last-child { border-bottom: 0; }
-
-.oss-ai-proposal li > span {
-  color: #6e83a0;
-  font-size: .67rem;
-  font-weight: 800;
-  letter-spacing: .04em;
-}
-
-.oss-ai-proposal li p {
-  margin: 0;
-  color: #3a4b63;
-  font-size: .82rem;
-  line-height: 1.45;
-}
-
 .oss-ai-proposal-actions {
   display: flex;
   gap: 8px;
@@ -4866,44 +4835,42 @@ html:has(.orbitpage-admin) {
 }
 
 .ai-page-comparison__viewport {
-  position: relative;
+  --ai-preview-height: clamp(200px, 60cqh, 480px);
   justify-self: center;
-  width: min(100%, calc(clamp(220px, 65cqh, 480px) * 16 / 9));
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border: 1px solid #c9d8eb;
-  border-radius: 10px;
-  background: #e9eef5;
+  width: min(100%, calc(var(--ai-preview-height) * 16 / 9));
 }
 
 .ai-page-comparison__viewport[data-device="mobile"] {
-  width: min(100%, calc(clamp(220px, 65cqh, 480px) * 390 / 844));
-  aspect-ratio: 390 / 844;
-  border-radius: 18px;
+  width: min(100%, calc(var(--ai-preview-height) * 390 / 844 + 22px));
 }
+
+@media (max-width: 600px) { .ai-page-comparison__viewport { --ai-preview-height: clamp(200px, 60cqh, 280px); } }
 
 .ai-page-comparison__layer { position: absolute; inset: 0; pointer-events: none; }
 
-/* The comparison is the screen itself: device chrome would distort its aspect ratio. */
-.ai-page-comparison__viewport .ai-page-comparison__layer .admin-preview-device,
-.ai-page-comparison__viewport .ai-page-comparison__layer .admin-preview-device .admin-preview-device__hardware,
-.ai-page-comparison__viewport .ai-page-comparison__layer .admin-preview-device .admin-preview-device__screen {
-  width: 100%;
-  height: 100%;
+/* Share the editor hardware while sizing the screen, not the scaled page content. */
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device {
   min-height: 0;
-  max-width: none;
-  margin: 0;
-  padding: 0;
+  padding: 4px;
   border: 0;
-  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--desktop { padding: 0 0 60px; }
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device .admin-preview-device__hardware {
+  width: 100%;
+  max-width: none;
+  height: auto;
   aspect-ratio: auto;
-  box-shadow: none;
   animation: none;
 }
-
-.ai-page-comparison__layer :is(.admin-preview-device__side-button, .admin-preview-device__island, .admin-preview-device__browser-bar, .admin-preview-device__stand),
-.ai-page-comparison__layer .admin-preview-device__hardware::before,
-.ai-page-comparison__layer .admin-preview-device__hardware::after { display: none; }
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--desktop .admin-preview-device__hardware { padding: 32px 8px 10px; }
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device .admin-preview-device__screen {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__screen { aspect-ratio: 390 / 844; }
+.ai-page-comparison .admin-preview-device__stand { bottom: 18px; height: 42px; }
 
 .ai-page-comparison__divider {
   position: absolute;
@@ -4934,7 +4901,7 @@ html:has(.orbitpage-admin) {
 }
 .ai-page-comparison__handle svg { width: 16px; height: 16px; }
 
-.ai-page-comparison__content .ai-page-comparison__viewport > input[type="range"] {
+.ai-page-comparison__content .ai-page-comparison__viewport .admin-preview-device__screen > input[type="range"] {
   position: absolute;
   z-index: 4;
   inset: 0 -22px;
@@ -4946,9 +4913,9 @@ html:has(.orbitpage-admin) {
   cursor: ew-resize;
   touch-action: pan-y;
 }
-.ai-page-comparison__content .ai-page-comparison__viewport > input[type="range"]::-webkit-slider-thumb { appearance: none; width: 44px; height: 44px; }
-.ai-page-comparison__content .ai-page-comparison__viewport > input[type="range"]::-moz-range-thumb { width: 44px; height: 44px; border: 0; }
-.ai-page-comparison__viewport:has(input:focus-visible) { outline: 2px solid #5484c7; outline-offset: 2px; }
+.ai-page-comparison__content .ai-page-comparison__viewport .admin-preview-device__screen > input[type="range"]::-webkit-slider-thumb { appearance: none; width: 44px; height: 44px; }
+.ai-page-comparison__content .ai-page-comparison__viewport .admin-preview-device__screen > input[type="range"]::-moz-range-thumb { width: 44px; height: 44px; border: 0; }
+.ai-page-comparison .admin-preview-device__screen:has(input:focus-visible) { outline: 2px solid #5484c7; outline-offset: 2px; }
 
 .oss-ai-settings::before {
   display: none;
@@ -6885,9 +6852,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .ai-page-agent-proposal-heading > div { display: grid; gap: 2px; }
 .ai-page-agent-proposal-heading strong { font-size: 12px; }
 .ai-page-agent-proposal-heading span { color: #475569; font-size: 12px; line-height: 1.4; }
-.ai-page-agent-proposal ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.ai-page-agent-proposal li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 6px; color: #334155; font-size: 11px; line-height: 1.4; }
-.ai-page-agent-proposal li svg { margin-top: 1px; color: #16a34a; }
 .ai-page-agent-proposal > small { color: #7c8596; font-size: 10px; }
 :is(.ai-page-agent-proposal, .ai-page-agent-proposal-actions) > button { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 10px; background: #4338ca; color: #fff; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
 :is(.ai-page-agent-proposal, .ai-page-agent-proposal-actions) > button:hover:not(:disabled),

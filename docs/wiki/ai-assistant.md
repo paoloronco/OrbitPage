@@ -25,7 +25,7 @@ Say which content or design you want to change and include the exact text and de
 
 Generation does not save page changes. Confirmation checks input, permissions, and the page revision again. Proposals expire after ten minutes or become invalid if the page changed; request a new proposal in that case.
 
-The conversation, suggested next steps, and pending preview with its Apply/Discard controls are saved in this browser for the current page. Reloading does not renew the ten-minute approval window. The preview starts in a compact mobile view; switch to the 16:9 desktop view beside Apply changes when needed. Drag the two-arrow divider, or focus it and use the arrow keys, to compare before and after. The conversation scrolls to new replies and loaded previews, while manual scrolling lets you read earlier messages.
+The conversation, suggested next steps, and pending preview with its Apply/Discard controls are saved in this browser for the current page. Reloading does not renew the ten-minute approval window. The preview uses the same phone and desktop/browser mockups as Site Editor and starts in a compact mobile view; switch to the 16:9 desktop view beside Apply changes when needed. Drag the two-arrow divider, or focus it and use the arrow keys, to compare before and after. The conversation scrolls to new replies and loaded previews, while manual scrolling lets you read earlier messages.
 
 AI-generated next-step prompts appear above the composer. Selecting one sends it directly as your next message; it does not approve a proposal.
 

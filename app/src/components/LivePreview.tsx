@@ -54,10 +54,12 @@ export function PreviewDeviceFrame({
   device,
   publicPageHref = "/",
   children,
+  screenOverlay,
 }: {
   device: PreviewDevice;
   publicPageHref?: string;
   children: ReactNode;
+  screenOverlay?: ReactNode;
 }) {
   const screenRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState<{
@@ -116,6 +118,7 @@ export function PreviewDeviceFrame({
           >
             {children}
           </div>
+          {screenOverlay}
         </div>
       </div>
       {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
@@ -123,11 +126,10 @@ export function PreviewDeviceFrame({
   );
 }
 
-export const LivePreview = ({
+export const LivePreviewContent = ({
   profile,
   links,
   theme,
-  publicPageHref = "/",
   device = "mobile",
   showOrbitPageBadge = true,
   editorSelection,
@@ -144,43 +146,47 @@ export const LivePreview = ({
   const previewThemeVars = getThemeCssVariables(theme) as CSSProperties;
 
   return (
-    <PreviewDeviceFrame device={device} publicPageHref={publicPageHref}>
-      <div className="admin-live-preview relative overflow-hidden" style={{ background: previewBackground }}>
-        <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
-          <div
-            className="admin-live-preview__page relative isolate min-h-full overflow-hidden"
-            style={{
-              ...previewThemeVars,
-              background: previewBackground,
-              color: theme.foreground,
-              fontFamily: theme.fontFamily,
-            }}
-          >
-            {(bgType === "video" || bgType === "gif") && theme.backgroundMedia?.mediaUrl && (
-              <BackgroundLayer config={theme.backgroundMedia} mode="container" />
-            )}
-            <div className="relative z-[1] min-h-full">
-              <PublicView
-                profile={profile}
-                links={links}
-                theme={theme}
-                footerText={profile.footerText}
-                privacyPolicyUrl={profile.privacyPolicyUrl || "/privacy"}
-                cookiePolicyUrl={profile.cookiePolicyUrl || "/cookies"}
-                showOrbitPageBadge={showOrbitPageBadge}
-                embedded
-                embeddedViewport={device}
-                editorSelection={editorSelection}
-                onEditorSelect={onEditorSelect}
-                profileLayoutEditing={profileLayoutEditing}
-                onProfileLayoutChange={onProfileLayoutChange}
-                cardLayoutEditing={cardLayoutEditing}
-                onCardLayoutChange={onCardLayoutChange}
-              />
-            </div>
+    <div className="admin-live-preview relative overflow-hidden" style={{ background: previewBackground }}>
+      <div className="admin-live-preview__scroll absolute inset-0 overflow-y-auto overflow-x-hidden">
+        <div
+          className="admin-live-preview__page relative isolate min-h-full overflow-hidden"
+          style={{
+            ...previewThemeVars,
+            background: previewBackground,
+            color: theme.foreground,
+            fontFamily: theme.fontFamily,
+          }}
+        >
+          {(bgType === "video" || bgType === "gif") && theme.backgroundMedia?.mediaUrl && (
+            <BackgroundLayer config={theme.backgroundMedia} mode="container" />
+          )}
+          <div className="relative z-[1] min-h-full">
+            <PublicView
+              profile={profile}
+              links={links}
+              theme={theme}
+              footerText={profile.footerText}
+              privacyPolicyUrl={profile.privacyPolicyUrl || "/privacy"}
+              cookiePolicyUrl={profile.cookiePolicyUrl || "/cookies"}
+              showOrbitPageBadge={showOrbitPageBadge}
+              embedded
+              embeddedViewport={device}
+              editorSelection={editorSelection}
+              onEditorSelect={onEditorSelect}
+              profileLayoutEditing={profileLayoutEditing}
+              onProfileLayoutChange={onProfileLayoutChange}
+              cardLayoutEditing={cardLayoutEditing}
+              onCardLayoutChange={onCardLayoutChange}
+            />
           </div>
         </div>
       </div>
-    </PreviewDeviceFrame>
+    </div>
   );
 };
+
+export const LivePreview = ({ publicPageHref = "/", device = "mobile", ...props }: LivePreviewProps) => (
+  <PreviewDeviceFrame device={device} publicPageHref={publicPageHref}>
+    <LivePreviewContent {...props} device={device} />
+  </PreviewDeviceFrame>
+);

@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "./ui/material-icons";
 import { useState } from "react";
-import { LivePreview } from "./LivePreview";
+import { LivePreviewContent, PreviewDeviceFrame } from "./LivePreview";
 import type { LinkData } from "./LinkCard";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { normalizeTheme, type ThemeConfig } from "@/lib/theme";
@@ -106,27 +106,30 @@ export function AiPageComparisonPreview({
           <span>{tr("After", "Dopo")}</span>
         </div>
         <div className="ai-page-comparison__viewport" data-device={device}>
-          <div className="ai-page-comparison__layer">
-            <LivePreview {...beforeProps} device={device} />
-          </div>
-          <div
-            aria-hidden="true"
-            className="ai-page-comparison__layer ai-page-comparison__layer--after"
-            style={{ clipPath: `inset(0 0 0 ${split}%)` }}
-          >
-            <LivePreview {...afterProps} device={device} />
-          </div>
-          <span className="ai-page-comparison__divider" style={{ left: `${split}%` }} aria-hidden="true">
-            <span className="ai-page-comparison__handle"><ChevronLeft /><ChevronRight /></span>
-          </span>
-          <input
-            aria-label={tr("Move to compare before and after", "Sposta per confrontare prima e dopo")}
-            max="100"
-            min="0"
-            onChange={(event) => setSplit(Number(event.target.value))}
-            type="range"
-            value={split}
-          />
+          <PreviewDeviceFrame device={device} screenOverlay={<>
+            <span className="ai-page-comparison__divider" style={{ left: `${split}%` }} aria-hidden="true">
+              <span className="ai-page-comparison__handle"><ChevronLeft /><ChevronRight /></span>
+            </span>
+            <input
+              aria-label={tr("Move to compare before and after", "Sposta per confrontare prima e dopo")}
+              max="100"
+              min="0"
+              onChange={(event) => setSplit(Number(event.target.value))}
+              type="range"
+              value={split}
+            />
+          </>}>
+            <div className="ai-page-comparison__layer">
+              <LivePreviewContent {...beforeProps} device={device} />
+            </div>
+            <div
+              aria-hidden="true"
+              className="ai-page-comparison__layer ai-page-comparison__layer--after"
+              style={{ clipPath: `inset(0 0 0 ${split}%)` }}
+            >
+              <LivePreviewContent {...afterProps} device={device} />
+            </div>
+          </PreviewDeviceFrame>
         </div>
         </>}
       </div>

@@ -83,12 +83,12 @@ test.describe('OrbitPage AI API end-to-end', () => {
     for (const [device, ratio] of [['Mobile', 390 / 844], ['Desktop', 16 / 9]] as const) {
       await proposal.getByRole('button', { name: `${device} preview` }).click();
       const viewport = proposal.locator('.ai-page-comparison__viewport');
-      const dimensions = await viewport.boundingBox();
-      expect(dimensions!.width / dimensions!.height).toBeCloseTo(ratio, 1);
       const screen = await viewport.locator('.admin-preview-device__screen').first().boundingBox();
       expect(screen!.width / screen!.height).toBeCloseTo(ratio, 1);
-      expect(Math.abs(dimensions!.height - screen!.height - 2)).toBeLessThan(1);
-      expect(Math.abs(screen!.y - dimensions!.y - 1)).toBeLessThan(1);
+      const hardware = (await viewport.locator('.admin-preview-device__hardware').boundingBox())!;
+      expect(screen!.x).toBeGreaterThan(hardware.x);
+      expect(screen!.y).toBeGreaterThan(hardware.y);
+      await expect(viewport.locator(device === 'Mobile' ? '.admin-preview-device__island' : '.admin-preview-device__browser-bar')).toBeVisible();
       const slider = proposal.getByRole('slider');
       await slider.focus();
       await slider.press('Home');
