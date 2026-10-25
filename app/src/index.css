@@ -7188,7 +7188,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-plan-resource-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 9px 12px; border: 1px solid var(--admin-line); border-radius: 7px; background: var(--admin-surface); color: var(--admin-accent-strong); font-size: 12px; font-weight: 750; line-height: 1.4; text-decoration: none; white-space: nowrap; }
 .oss-plan-resource-link:hover { border-color: #b8c8e8; background: var(--admin-accent-soft); }
 .oss-plan-resource-link svg:last-child { margin-left: 2px; }
-.oss-plan-columns { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, .9fr); align-items: start; gap: 18px; }
+.oss-plan-columns { display: grid; grid-template-columns: minmax(360px, .8fr) minmax(560px, 1.2fr); align-items: start; gap: 18px; }
 .orbitpage-admin .oss-plan-instance { min-width: 0; max-width: none; }
 .oss-plan-instance .account-instance-card { width: 100%; padding: 0; }
 .instance-overview-grid { display: grid; gap: 12px; }
@@ -7199,8 +7199,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .account-instance-release-link.is-placeholder { visibility: hidden; }
 .oss-plan-sidebar { display: grid; gap: 18px; min-width: 0; }
 .oss-plan-panel { min-width: 0; padding: 24px; border: 1px solid var(--admin-line); border-radius: 8px; background: var(--admin-surface); }
-.oss-plan-summary { display: grid; gap: 24px; }
-.oss-plan-summary-group + .oss-plan-summary-group { padding-top: 24px; border-top: 1px solid var(--admin-line); }
+.oss-plan-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.oss-plan-summary-group + .oss-plan-summary-group { padding-left: 24px; border-left: 1px solid var(--admin-line); }
 .oss-plan-section-heading { display: flex; align-items: center; gap: 10px; }
 .oss-plan-section-heading > span { display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; border-radius: 9px; background: #eaf0ff; color: var(--admin-accent-strong); }
 .oss-plan-section-heading h3 { margin: 0; color: var(--admin-ink); font-size: 16px; font-weight: 750; letter-spacing: -.02em; line-height: 1.3; }
@@ -7226,7 +7226,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .oss-plan-managed-link:hover { background: #4d31c8; }
 @media (max-width: 960px) {
   .oss-plan-columns { grid-template-columns: minmax(0, 1fr); }
-  .oss-plan-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .oss-plan-layout, .oss-plan-columns, .oss-plan-sidebar { gap: 12px; }
@@ -7236,6 +7235,10 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .oss-plan-resource-link { flex: 1 1 0; min-width: 0; padding-inline: 8px; }
   .oss-plan-sidebar { grid-template-columns: minmax(0, 1fr); }
   .oss-plan-panel { padding: 20px; }
+  .oss-plan-summary { grid-auto-columns: calc(100% - 32px); grid-auto-flow: column; grid-template-columns: none; gap: 20px; overflow-x: auto; overscroll-behavior-inline: contain; scroll-padding-inline: 20px; scroll-snap-type: inline mandatory; scrollbar-width: none; touch-action: pan-x; }
+  .oss-plan-summary::-webkit-scrollbar { display: none; }
+  .oss-plan-summary-group { scroll-snap-align: start; scroll-snap-stop: always; }
+  .oss-plan-summary-group + .oss-plan-summary-group { padding-left: 0; border-left: 0; }
   .oss-plan-managed-promo { padding: 20px; }
 }
 

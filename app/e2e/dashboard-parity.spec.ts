@@ -36,6 +36,8 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   await expect(plan.locator('.oss-plan-summary')).toHaveCount(1);
   await expect(plan.locator('.oss-plan-feature .oss-plan-item-icon')).toHaveCount(4);
   await expect(plan.locator('.oss-plan-responsibilities .oss-plan-item-icon')).toHaveCount(3);
+  const summaryGroups = plan.locator('.oss-plan-summary-group');
+  expect((await summaryGroups.nth(0).boundingBox())!.y).toBe((await summaryGroups.nth(1).boundingBox())!.y);
   await expect(plan.getByRole('heading', { name: 'OrbitPage SaaS', exact: true })).toBeVisible();
   await page.screenshot({ path: 'output/playwright/oss-edition-desktop.png', fullPage: true });
   await expect(plan.getByRole('link', { name: 'Open account settings' })).toHaveAttribute('href', '/en-US/dashboard/account/general');
@@ -50,6 +52,7 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   await expect(page.locator('#admin-dashboard-primary-navigation')).toBeHidden();
   await expect(plan).toHaveCSS('gap', '12px');
   await expect(plan.locator('.oss-plan-feature-list')).toHaveCSS('grid-template-columns', /^\d+(\.\d+)?px$/);
+  expect(await plan.locator('.oss-plan-summary').evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
   await page.screenshot({ path: 'output/playwright/oss-edition-mobile.png', fullPage: true });
   const publicUrl = await page.request.get('/api/public-url?locale=it');
