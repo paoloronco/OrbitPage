@@ -6,7 +6,7 @@ import { getActiveBasePath } from './lib/base-path.ts'
 const activeBasePath = getActiveBasePath();
 const activeHomePath = activeBasePath || '/';
 
-if (window.location.pathname !== activeHomePath) {
+if (window.location.pathname !== activeHomePath || !window.__ORBITPAGE_STATIC_SNAPSHOT__) {
   if (window.__ORBITPAGE_BOOT_READY__) {
     window.__ORBITPAGE_BOOT_READY__();
   } else {

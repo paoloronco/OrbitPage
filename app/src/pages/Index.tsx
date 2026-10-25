@@ -1,6 +1,5 @@
-import { useState, useEffect, useLayoutEffect } from "react";
+import { lazy, Suspense, useState, useEffect, useLayoutEffect } from "react";
 import { PublicView } from "@/components/PublicView";
-import { CookieBanner } from "@/components/CookieBanner";
 import { BackgroundLayer } from "@/components/BackgroundLayer";
 import { LinkData } from "@/components/LinkCard";
 import { applyTheme, normalizeTheme, BackgroundMediaConfig, type ThemeConfig } from "@/lib/theme";
@@ -16,6 +15,8 @@ import { UnderConstruction } from "@/components/UnderConstruction";
 import { getEmbedData } from "@/lib/link-blocks";
 import { resolveSafePublicHref, resolveSafePublicMediaUrl } from "@/lib/browser-network-policy";
 import { parseLocalizedPublicPath } from "@/lib/public-routing";
+
+const CookieBanner = lazy(() => import("@/components/CookieBanner").then((module) => ({ default: module.CookieBanner })));
 
 interface ProfileData {
   name: string;
@@ -366,7 +367,11 @@ const Index = () => {
     };
   }, []);
 
-  if (loading) return null;
+  if (loading) return (
+    <main aria-busy="true" style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', background: '#f8fafc', color: '#475569', fontFamily: 'system-ui, sans-serif' }}>
+      <p>Loading page…</p>
+    </main>
+  );
   if (pageRemoved) {
     return <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: '24px', background: '#f8fafc', color: '#0f172a', fontFamily: 'system-ui, sans-serif' }}>
       <div style={{ maxWidth: '420px', textAlign: 'center' }}><h1 style={{ margin: 0, fontSize: '1.25rem' }}>Page unavailable</h1><p style={{ margin: '10px 0 0', color: '#64748b' }}>This public OrbitPage has been removed by its owner.</p></div>
@@ -460,7 +465,7 @@ const Index = () => {
           Builder mode: external CMP injects its own UI via injectBuilderScript().
           Disabled mode: no banner rendered. */}
       {consentConfig?.mode === 'hardcoded' && consentConfig.enabled && bannerConfig && (
-        <CookieBanner config={bannerConfig} />
+        <Suspense fallback={null}><CookieBanner config={bannerConfig} /></Suspense>
       )}
     </>
   );

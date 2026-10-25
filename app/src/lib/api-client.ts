@@ -16,6 +16,7 @@ const TOKEN_STORAGE_KEY = 'orbitpage-auth-token';
 const TOKEN_IV_PREFIX = 'orbitpage-auth-iv-';
 const DEVICE_SECRET_KEY = 'orbitpage-device-secret';
 let capturedPageRevision: number | null = null;
+export const AUTH_EXPIRED_EVENT = 'orbitpage:auth-expired';
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -438,7 +439,10 @@ export const apiRequest = async <T>(endpoint: string, options: RequestInit = {},
       // Only auth failures should clear the token. Other 403 responses are real
       // permission/product errors, for example demo-mode write protection.
       if (isAuthExpired) {
-        if (!preserveSession && !getEditorIntegration()) removeAuthToken();
+        if (!preserveSession) {
+          if (!getEditorIntegration()) removeAuthToken();
+          window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+        }
         throw Object.assign(new Error('AUTH_EXPIRED'), { status: response.status });
       }
       if (response.status === 429) {

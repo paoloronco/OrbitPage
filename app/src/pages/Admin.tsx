@@ -9,7 +9,7 @@ import { OrbitLoadingState } from "@/components/ui/orbit-loader";
 import { LinkData } from "@/components/LinkCard";
 import { ThemeConfig, defaultTheme, applyTheme, normalizeTheme } from "@/lib/theme";
 import { hasStoredAuthToken, isFirstTimeSetup } from "@/lib/auth";
-import { profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, type SubpageItem, type WorkspaceBootstrapResponse } from "@/lib/api-client";
+import { AUTH_EXPIRED_EVENT, profileApi, linksApi, subpagesApi, themeApi, menuApi, authApi, type SubpageItem, type WorkspaceBootstrapResponse } from "@/lib/api-client";
 import { normalizeLinkDtos } from "@/lib/link-normalization";
 import { parseOrbitPageBlocks } from "@orbitpage/page-schema";
 import { useToast } from "@/hooks/use-toast";
@@ -151,6 +151,17 @@ const Admin = () => {
     window.addEventListener(EDITOR_SECTION_NAVIGATE_EVENT, receiveNavigation);
     return () => window.removeEventListener(EDITOR_SECTION_NAVIGATE_EVENT, receiveNavigation);
   }, [embeddedSurface]);
+
+  useEffect(() => {
+    const expireSession = () => {
+      setIsLoggedIn(false);
+      setCurrentUser(null);
+      setWorkspaceLoaded(false);
+      if (embeddedEditor) setSessionDenied(true);
+    };
+    window.addEventListener(AUTH_EXPIRED_EVENT, expireSession);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, expireSession);
+  }, [embeddedEditor]);
 
   const handleTabChange = (tab: AdminTab) => {
     if (embeddedSurface) {

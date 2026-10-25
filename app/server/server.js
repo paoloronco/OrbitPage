@@ -456,6 +456,18 @@ const getProfileLegalUrls = async () => {
   };
 };
 
+const getPublicConsentConfigPayload = async (profile) => {
+  if (DEMO_MODE) return getPublicConsentConfig(DEMO_CONSENT_CONFIG, 'builder', true, DEMO_LEGAL_URLS);
+  const row = await dbGet(
+    'SELECT mode, enabled, full_config FROM cookie_consent_config ORDER BY id DESC LIMIT 1'
+  );
+  const config = row ? safeJsonParse(row.full_config, {}) : DEFAULT_CONSENT_CONFIG;
+  return getPublicConsentConfig(config, row?.mode || 'disabled', Boolean(row?.enabled), {
+    privacyPolicyUrl: profile?.privacy_policy_url || '',
+    cookiePolicyUrl: profile?.cookie_policy_url || '',
+  });
+};
+
 const setNoStoreHeaders = (res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
   res.set('Pragma', 'no-cache');
@@ -1310,6 +1322,8 @@ const buildSeoContext = async (req, { statusCode = 200 } = {}) => {
     locale: locale.slug,
     routePath: requestPath,
     setupRequired,
+    pageKind,
+    pageSlug,
   };
 };
 
@@ -1353,6 +1367,26 @@ const serveSpaIndex = async (req, res, { statusCode = 200 } = {}) => {
       });
       await recordMachineReadableRequest('markdown', req.path);
       return res.status(statusCode).type('text/markdown; charset=utf-8').send(markdown);
+    }
+    if (statusCode < 400 && seo.pageKind === 'home') {
+      const [theme, storedMenu, consentConfig] = await Promise.all([
+        getPublicThemePayload(),
+        getMenuPayload(),
+        getPublicConsentConfigPayload(seo.profile),
+      ]);
+      const snapshot = {
+        page: {
+          profile: seo.profile,
+          links: seo.links,
+          theme,
+          menu: getPublicMenuPayload(storedMenu),
+          branding: { showOrbitPageBadge: true },
+          setupRequired: Boolean(seo.setupRequired),
+          pageSlug: seo.pageSlug,
+        },
+        consentConfig,
+      };
+      html = html.replace('</head>', `    <script>window.__ORBITPAGE_STATIC_SNAPSHOT__??=${safeJsonForHtml(snapshot)};</script>\n  </head>`);
     }
     html = injectSeoIntoHtml(html, seo);
     html = html.replace(/<html lang="[^"]*"/, `<html lang="${seo.locale}"`);

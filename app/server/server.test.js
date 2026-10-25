@@ -1676,6 +1676,8 @@ describe('API Endpoints', () => {
     expect(response.text).toContain('<link rel="canonical" href="https://links.example.test/"');
     expect(response.text).toContain('<meta property="og:url" content="https://links.example.test/"');
     expect(response.text).toContain('id="orbitpage-structured-data"');
+    expect(response.text).toContain('window.__ORBITPAGE_STATIC_SNAPSHOT__??=');
+    expect(response.text).toContain('"name":"Paolo"');
     expect(response.text).toContain('<noscript>');
     expect(response.text).toContain('href="https://github.com/example"');
     expect(response.text).toContain('<li>Opening hours<p>Monday to Friday</p></li>');

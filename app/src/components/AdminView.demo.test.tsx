@@ -151,13 +151,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('What you manage');
     expect(html).toContain('See OrbitPage SaaS');
     expect(html).toContain('/en-US/pricing');
-    expect(html).toContain('data-testid="managed-analytics"');
-    expect(html).toContain('managed-analytics-primary-kpis');
-    expect(html).toContain('Audience over time');
-    expect(html).toContain('>7 days</button>');
-    expect(html).toContain('>30 days</button>');
-    expect(html).not.toContain('>90 days</button>');
-    expect(html).not.toContain('Smart CTA clicks will appear here separately');
+    expect(html).toContain('data-testid="managed-analytics-loader"');
     expect(html).toContain('admin-dashboard-mobile-nav-button');
     expect(html).toContain('data-status="inactive"');
     expect(html).toContain('Edit with AI');
@@ -201,11 +195,10 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('admin-metrics-saas');
     expect(html).not.toContain('admin-dashboard-sidebar');
     expect(html).toContain('data-onboarding="public-page"');
-    expect(html).toContain('data-testid="managed-analytics"');
+    expect(html).toContain('data-testid="managed-analytics-loader"');
     expect(html).not.toContain('data-testid="oss-analytics"');
     expect(html).not.toContain('Page visits and clicks');
     expect(html).not.toContain('Performance overview');
-    expect(html).toContain('data-testid="google-analytics-settings-trigger"');
     expect(html).not.toContain('id="ga-id"');
     expect(html).not.toContain('https://github.com/paoloronco/OrbitPage');
     expect(mockState.profileProps.at(-1)).toMatchObject({ pageTypeEditable: false });

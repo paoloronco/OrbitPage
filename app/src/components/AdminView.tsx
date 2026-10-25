@@ -69,7 +69,7 @@ import { canonicalAdminTab, type AdminContentSection, type AdminEditorSection, t
 import { DEFAULT_CONTENT_ROUTING, createDefaultMenu, type ContentDestination, type ContentRouting, type MenuCatalog } from "@/lib/menu";
 import type { InternalDestinationOption } from "@/lib/link-blocks";
 import { APP_LOCALES, APP_LOCALE_LABELS, useAppI18n, type AppLocale } from "@/lib/i18n";
-import { ManagedAnalyticsDashboard } from "./ManagedAnalyticsDashboard";
+const ManagedAnalyticsDashboard = lazy(() => import("./ManagedAnalyticsDashboard").then(module => ({ default: module.ManagedAnalyticsDashboard })));
 const ThemeCustomizer = lazy(() => import("./ThemeCustomizer").then(module => ({ default: module.ThemeCustomizer })));
 const MenuEditor = lazy(() => import("./MenuEditor").then(module => ({ default: module.MenuEditor })));
 const SelfHostedShop = lazy(() => import("./SelfHostedShop"));
@@ -1158,7 +1158,7 @@ export const AdminView = ({
 
           <TabsContent value="analytics" className="admin-tab-content">
             <div className="admin-analytics-grid">
-              <ManagedAnalyticsDashboard headerAction={(
+              <Suspense fallback={<span data-testid="managed-analytics-loader"><OrbitLoader size={24} state="composing" /></span>}><ManagedAnalyticsDashboard headerAction={(
                 <Button
                   className="admin-action"
                   data-testid="google-analytics-settings-trigger"
@@ -1169,7 +1169,7 @@ export const AdminView = ({
                   <GoogleAnalyticsIcon size={16} />
                   Google Analytics
                 </Button>
-              )} />
+              )} /></Suspense>
               {googleAnalyticsDialog}
             </div>
           </TabsContent>

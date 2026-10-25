@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { authApi } from './api-client';
+import { AUTH_EXPIRED_EVENT, authApi } from './api-client';
 
 const storage = () => {
   let values: Record<string, string> = {};
@@ -83,5 +83,27 @@ describe('auth token presence', () => {
     window.__orbitpageTokenCache = { iv: '', ct: '', val: 'token' };
 
     expect(authApi.hasStoredToken()).toBe(true);
+  });
+
+  it('notifies the dashboard when an authenticated session expires', async () => {
+    const browser = Object.assign(new EventTarget(), {
+      location: { hash: '', search: '', href: 'http://example.test/', origin: 'http://example.test' },
+      history: { replaceState: vi.fn(), state: null },
+      __orbitpageTokenCache: { iv: '', ct: '', val: 'expired-token' },
+    });
+    vi.stubGlobal('window', browser);
+    vi.stubGlobal('localStorage', storage());
+    vi.stubGlobal('sessionStorage', storage());
+    vi.stubGlobal('crypto', {});
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'Expired' }), {
+      status: 401,
+      headers: { 'content-type': 'application/json' },
+    })));
+    const expired = vi.fn();
+    window.addEventListener(AUTH_EXPIRED_EVENT, expired);
+
+    await expect(authApi.verify()).rejects.toThrow('AUTH_EXPIRED');
+    expect(expired).toHaveBeenCalledOnce();
+    expect(authApi.hasStoredToken()).toBe(false);
   });
 });
