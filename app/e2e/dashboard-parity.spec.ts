@@ -13,6 +13,7 @@ const primaryNavigation = [
 ];
 
 test('keeps public URLs at the root and dashboard language in the URL with a responsive edition overview', async ({ page }) => {
+  await page.setViewportSize({ width: 1536, height: 960 });
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Edition');
   const plan = page.getByTestId('open-source-plan');
@@ -38,7 +39,9 @@ test('keeps public URLs at the root and dashboard language in the URL with a res
   await expect(plan.locator('.oss-plan-responsibilities .oss-plan-item-icon')).toHaveCount(3);
   const summaryGroups = plan.locator('.oss-plan-summary-group');
   expect((await summaryGroups.nth(0).boundingBox())!.y).toBe((await summaryGroups.nth(1).boundingBox())!.y);
+  expect((await plan.locator('.oss-plan-instance').boundingBox())!.width).toBeGreaterThan(560);
   await expect(plan.getByRole('heading', { name: 'OrbitPage SaaS', exact: true })).toBeVisible();
+  expect((await plan.locator('.oss-plan-managed-promo').boundingBox())!.width).toBeGreaterThan((await plan.locator('.oss-plan-instance').boundingBox())!.width);
   await page.screenshot({ path: 'output/playwright/oss-edition-desktop.png', fullPage: true });
   await expect(plan.getByRole('link', { name: 'Open account settings' })).toHaveAttribute('href', '/en-US/dashboard/account/general');
   await page.getByLabel('Language', { exact: true }).selectOption('it');
