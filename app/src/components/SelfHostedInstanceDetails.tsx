@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Database, Download, ExternalLink, RefreshCw, Sliders } from '@/components/ui/material-icons';
+import { Database, Download, ExternalLink, RefreshCw, ShieldCheck, Sliders } from '@/components/ui/material-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -59,50 +59,75 @@ export function SelfHostedInstanceDetails({ canManageInstance, version, onInstal
 
   return <>
       <Card className="glass-card p-6 account-panel account-instance-card">
-        <div className="account-section-heading">
-          <div><h2>{tr('Instance details', 'Dettagli istanza')}</h2></div>
-          <Database className="h-6 w-6" aria-hidden="true" />
-        </div>
-        <dl className="account-details">
-          <div className="account-detail-row"><dt>{tr('Runtime', 'Runtime')}</dt><dd>OrbitPage Open Source</dd></div>
-          <div className="account-detail-row"><dt>{tr('Current version', 'Versione installata')}</dt><dd>v{version.replace(/^v/, '')}</dd></div>
-          <div className="account-detail-row"><dt>{tr('Deployment', 'Distribuzione')}</dt><dd>{tr('Self-hosted', 'Self-hosted')}</dd></div>
-          <div className="account-detail-row"><dt>{tr('Administration', 'Amministrazione')}</dt><dd>{tr('Managed by this installation', 'Gestita da questa installazione')}</dd></div>
-          {canManageInstance && <>
-            <div className="account-detail-row"><dt>{tr('Database path', 'Percorso DB')}</dt><dd><code>{instance?.databasePath || '—'}</code></dd></div>
-            <div className="account-detail-row"><dt>DATA_DIR</dt><dd><code>{instance?.dataDir || '—'}</code></dd></div>
-            <div className="account-detail-row"><dt>{tr('Space used', 'Spazio usato')}</dt><dd>{formatBytes(instance?.usedBytes ?? null)}</dd></div>
-            <div className="account-detail-row"><dt>{tr('Uploads used', 'Spazio upload')}</dt><dd>{formatBytes(instance?.uploadBytes ?? null)}</dd></div>
-          </>}
-        </dl>
-        {canManageInstance && <>
-          {instanceError && <p className="oss-account-error" role="alert">{instanceError}</p>}
-          <div className="instance-services">
-            <strong>{tr('Services', 'Servizi')}</strong>
-            <div>{([
-              ['api', 'API'], ['database', 'SQLite'], ['dataDirectory', 'DATA_DIR'], ['uploads', tr('Uploads', 'Upload')],
-            ] as const).map(([key, label]) => <span className={`instance-service ${instance?.services[key] ? 'is-ok' : 'is-down'}`} key={key}>
-              <span aria-hidden="true" className="instance-service-dot" />{label}: {!instance ? tr('Checking…', 'Verifica…') : instance.services[key] ? tr('Ready', 'Attivo') : tr('Unavailable', 'Non disponibile')}
-            </span>)}</div>
-          </div>
-          <div className="instance-environment-actions">
-            <Button type="button" variant="outline" className="account-secondary-action" disabled={!instance} onClick={() => { setEnvironmentError(''); setEnvironmentOpen(true); }}><Sliders className="h-4 w-4" />{tr('Environment variables…', 'Variabili ambiente…')}</Button>
-            {restartRequired && <span role="status">{tr('Restart the instance to apply the saved changes.', 'Riavvia l’istanza per applicare le modifiche salvate.')}</span>}
-          </div>
-        </>}
-        <div className="account-instance-updates">
-          <p className={updateError ? 'oss-account-error' : 'muted'} role="status" aria-live="polite">
-            {checkingUpdates ? tr('Checking for updates…', 'Verifica aggiornamenti…')
-              : updateError ? tr('Could not check for updates. Try again.', 'Impossibile verificare gli aggiornamenti. Riprova.')
-              : update?.updateAvailable ? <>{tr('Update available:', 'Aggiornamento disponibile:')} <strong>v{update.version}</strong></>
-              : update ? tr('You’re up to date.', 'La versione è aggiornata.')
-              : tr('Check for a newer stable release.', 'Verifica se è disponibile una nuova versione stabile.')}
-          </p>
-          <div className="account-instance-update-actions">
-            <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
-            <Button type="button" className="account-primary-action" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canManageInstance} onClick={() => update && onInstallUpdate(update.version)}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
-          </div>
-          {update && <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" />{tr('Release notes', 'Note di rilascio')}</a>}
+        <div className="instance-overview-grid">
+          <section className="instance-overview-panel">
+            <div className="account-section-heading">
+              <h3>{tr('Instance details', 'Dettagli istanza')}</h3>
+              <Database className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <dl className="account-details">
+              <div className="account-detail-row"><dt>{tr('Runtime', 'Runtime')}</dt><dd>OrbitPage Open Source</dd></div>
+              <div className="account-detail-row"><dt>{tr('Current version', 'Versione installata')}</dt><dd>v{version.replace(/^v/, '')}</dd></div>
+              <div className="account-detail-row"><dt>{tr('Deployment', 'Distribuzione')}</dt><dd>{tr('Self-hosted', 'Self-hosted')}</dd></div>
+              <div className="account-detail-row"><dt>{tr('Administration', 'Amministrazione')}</dt><dd>{tr('Managed by this installation', 'Gestita da questa installazione')}</dd></div>
+              {canManageInstance && <>
+                <div className="account-detail-row"><dt>{tr('Database path', 'Percorso DB')}</dt><dd><code>{instance?.databasePath || '—'}</code></dd></div>
+                <div className="account-detail-row"><dt>DATA_DIR</dt><dd><code>{instance?.dataDir || '—'}</code></dd></div>
+                <div className="account-detail-row"><dt>{tr('Space used', 'Spazio usato')}</dt><dd>{formatBytes(instance?.usedBytes ?? null)}</dd></div>
+                <div className="account-detail-row"><dt>{tr('Uploads used', 'Spazio upload')}</dt><dd>{formatBytes(instance?.uploadBytes ?? null)}</dd></div>
+              </>}
+            </dl>
+          </section>
+
+          {canManageInstance && <section className="instance-overview-panel">
+            <div className="account-section-heading">
+              <h3>{tr('System check', 'Controllo sistema')}</h3>
+              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            </div>
+            {instanceError && <p className="oss-account-error" role="alert">{instanceError}</p>}
+            <div className="instance-services">
+              <div>{([
+                ['api', 'API'], ['database', 'SQLite'], ['dataDirectory', 'DATA_DIR'], ['uploads', tr('Uploads', 'Upload')],
+              ] as const).map(([key, label]) => <span className={`instance-service ${instance?.services[key] ? 'is-ok' : 'is-down'}`} key={key}>
+                <span aria-hidden="true" className="instance-service-dot" />{label}: {!instance ? tr('Checking…', 'Verifica…') : instance.services[key] ? tr('Ready', 'Attivo') : tr('Unavailable', 'Non disponibile')}
+              </span>)}</div>
+            </div>
+          </section>}
+
+          {canManageInstance && <section className="instance-overview-panel">
+            <div className="account-section-heading">
+              <h3>{tr('Environment', 'Ambiente')}</h3>
+              <Sliders className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div className="instance-environment-actions">
+              <p>{tr('View and manage the environment variables used by this installation.', 'Visualizza e gestisci le variabili ambiente usate da questa installazione.')}</p>
+              <Button type="button" variant="outline" className="account-secondary-action" disabled={!instance} onClick={() => { setEnvironmentError(''); setEnvironmentOpen(true); }}><Sliders className="h-4 w-4" />{tr('Environment variables…', 'Variabili ambiente…')}</Button>
+              {restartRequired && <span role="status">{tr('Restart the instance to apply the saved changes.', 'Riavvia l’istanza per applicare le modifiche salvate.')}</span>}
+            </div>
+          </section>}
+
+          <section className="instance-overview-panel account-instance-updates">
+            <div className="account-section-heading">
+              <h3>{tr('Updates', 'Aggiornamenti')}</h3>
+              <RefreshCw className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <p className={updateError ? 'oss-account-error' : 'muted'} role="status" aria-live="polite">
+              {checkingUpdates ? tr('Checking for updates…', 'Verifica aggiornamenti…')
+                : updateError ? tr('Could not check for updates. Try again.', 'Impossibile verificare gli aggiornamenti. Riprova.')
+                : update?.updateAvailable ? <>{tr('Update available:', 'Aggiornamento disponibile:')} <strong>v{update.version}</strong></>
+                : update ? tr('You’re up to date.', 'La versione è aggiornata.')
+                : tr('Check for a newer stable release.', 'Verifica se è disponibile una nuova versione stabile.')}
+            </p>
+            <div className="account-instance-update-actions">
+              <Button type="button" className="account-secondary-action" variant="outline" disabled={checkingUpdates} aria-busy={checkingUpdates} onClick={() => void checkUpdates()}><RefreshCw className={`h-4 w-4${checkingUpdates ? ' animate-spin' : ''}`} />{tr('Check for updates', 'Verifica aggiornamenti')}</Button>
+              <Button type="button" className="account-primary-action" variant="gradient" disabled={!update?.updateAvailable || checkingUpdates || DEMO_MODE || !canManageInstance} onClick={() => update && onInstallUpdate(update.version)}><Download className="h-4 w-4" />{tr('Install update…', 'Installa aggiornamento…')}</Button>
+            </div>
+            <div className="account-instance-release-slot">
+              {update
+                ? <a className="account-instance-release-link" href={update.releaseUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" />{tr('Release notes', 'Note di rilascio')}</a>
+                : <span className="account-instance-release-link is-placeholder" aria-hidden="true"><ExternalLink className="h-3 w-3" />{tr('Release notes', 'Note di rilascio')}</span>}
+            </div>
+          </section>
         </div>
       </Card>
 

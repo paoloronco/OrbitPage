@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight, BookOpen, Github } from "lucide-react";
 import { useAppI18n } from "@/lib/i18n";
 import { adminSubsectionPath } from "@/lib/admin-navigation";
 import { publicLocaleSlug } from "@/lib/public-routing";
@@ -26,14 +26,10 @@ export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: 
   return (
     <div className="oss-plan-layout" data-testid="open-source-plan">
       <section className="oss-plan-intro" aria-labelledby="oss-plan-title">
-        <div>
-          <p className="oss-plan-kicker">{tr("Current edition", "Edizione attuale")}</p>
-          <div className="oss-plan-title-row"><h2 id="oss-plan-title">OrbitPage Open Source</h2><span className="oss-plan-badge">{tr("Free · MIT license", "Gratuito · licenza MIT")}</span></div>
-          <p>{tr("No subscription or paid feature tiers. You manage the app, its data and any services you connect.", "Nessun abbonamento né funzioni a pagamento. Gestisci tu l'app, i dati e i servizi che colleghi.")}</p>
-        </div>
+        <h2 id="oss-plan-title">OrbitPage Open Source</h2>
         <div className="oss-plan-resources">
-          <a className="oss-plan-text-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer">{tr("Source code", "Codice sorgente")}<ArrowUpRight aria-hidden="true" size={15} /></a>
-          <a className="oss-plan-text-link" href={`${repositoryUrl}/blob/main/docs/wiki/administration/Deployment.md`} target="_blank" rel="noopener noreferrer">{tr("Deployment guide", "Guida all'installazione")}<ArrowUpRight aria-hidden="true" size={15} /></a>
+          <a className="oss-plan-resource-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer"><Github aria-hidden="true" size={17} />{tr("Source code", "Codice sorgente")}<ArrowUpRight aria-hidden="true" size={14} /></a>
+          <a className="oss-plan-resource-link" href={`${repositoryUrl}/blob/main/docs/wiki/administration/Deployment.md`} target="_blank" rel="noopener noreferrer"><BookOpen aria-hidden="true" size={17} />{tr("Deployment guide", "Guida all'installazione")}<ArrowUpRight aria-hidden="true" size={14} /></a>
         </div>
       </section>
 
@@ -42,33 +38,35 @@ export function OpenSourcePlan({ version, canManageInstance, onInstallUpdate }: 
           <SelfHostedInstanceDetails version={version} canManageInstance={canManageInstance} onInstallUpdate={onInstallUpdate} />
         </div>
         <div className="oss-plan-sidebar">
-          <section className="oss-plan-panel oss-plan-included" aria-labelledby="oss-plan-included-title">
-            <div className="oss-plan-section-heading">
-              <h3 id="oss-plan-included-title">{tr("Included here", "Già incluso")}</h3>
+          <section className="oss-plan-panel oss-plan-summary" aria-labelledby="oss-plan-included-title">
+            <div className="oss-plan-summary-group">
+              <div className="oss-plan-section-heading">
+                <h3 id="oss-plan-included-title">{tr("Included here", "Già incluso")}</h3>
+              </div>
+              <ul className="oss-plan-feature-list">
+                {included.map(({ title, detail }) => <li className="oss-plan-feature" key={title}><strong>{title}</strong><span>{detail}</span></li>)}
+              </ul>
             </div>
-            <ul className="oss-plan-feature-list">
-              {included.map(({ title, detail }) => <li className="oss-plan-feature" key={title}><strong>{title}</strong><span>{detail}</span></li>)}
-            </ul>
+            <div className="oss-plan-summary-group" aria-labelledby="oss-plan-management-title">
+              <div className="oss-plan-section-heading">
+                <h3 id="oss-plan-management-title">{tr("What you manage", "Cosa gestisci tu")}</h3>
+              </div>
+              <dl className="oss-plan-responsibilities">
+                {responsibilities.map(({ title, detail }) => <div key={title}><dt>{title}</dt><dd>{detail}</dd></div>)}
+              </dl>
+              <div className="oss-plan-links">
+                <a className="oss-plan-primary-link" href={withBasePath(adminSubsectionPath("account", "general", locale))}>{tr("Open account settings", "Apri le impostazioni account")}<ArrowRight aria-hidden="true" size={16} /></a>
+              </div>
+            </div>
           </section>
 
-          <section className="oss-plan-panel oss-plan-management" aria-labelledby="oss-plan-management-title">
-            <div className="oss-plan-section-heading">
-              <h3 id="oss-plan-management-title">{tr("What you manage", "Cosa gestisci tu")}</h3>
-            </div>
-            <dl className="oss-plan-responsibilities">
-              {responsibilities.map(({ title, detail }) => <div key={title}><dt>{title}</dt><dd>{detail}</dd></div>)}
-            </dl>
-            <div className="oss-plan-links">
-              <a className="oss-plan-primary-link" href={withBasePath(adminSubsectionPath("account", "general", locale))}>{tr("Open account settings", "Apri le impostazioni account")}<ArrowRight aria-hidden="true" size={16} /></a>
-            </div>
-          </section>
+          <aside className="oss-plan-managed-promo" aria-labelledby="oss-plan-managed-title">
+            <div><span>{tr("Managed", "Gestito")}</span><h3 id="oss-plan-managed-title">OrbitPage SaaS</h3></div>
+            <p>{tr("Want hosting and updates handled for you?", "Preferisci che hosting e aggiornamenti siano gestiti per te?")}</p>
+            <a className="oss-plan-managed-link" href={`https://orbitpage.com/${publicLocaleSlug(locale)}/pricing`} target="_blank" rel="noopener noreferrer">{tr("See OrbitPage SaaS", "Scopri OrbitPage SaaS")}<ArrowUpRight aria-hidden="true" size={15} /></a>
+          </aside>
         </div>
       </div>
-
-      <footer className="oss-plan-footer">
-        <p>{tr("Want hosting and updates handled for you?", "Preferisci che hosting e aggiornamenti siano gestiti per te?")}</p>
-        <a className="oss-plan-text-link" href={`https://orbitpage.com/${publicLocaleSlug(locale)}/pricing`} target="_blank" rel="noopener noreferrer">{tr("See OrbitPage SaaS", "Scopri OrbitPage SaaS")}<ArrowUpRight aria-hidden="true" size={15} /></a>
-      </footer>
     </div>
   );
 }
