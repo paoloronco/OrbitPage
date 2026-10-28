@@ -20,7 +20,7 @@ An installation serves a main page, optional additional pages, a menu and an opt
 | Newsletter | The owner can configure SMTP, verify it, manage confirmed subscribers, and send or schedule campaigns | [Newsletters](../dashboard/sections/newsletters.md) |
 | Shop | Shared catalog/editor, private digital delivery, services, orders and customers use owner Stripe, SQLite and local SMTP without an OrbitPage fee | [Shop](../dashboard/sections/shop.md) |
 | AI editing | With an optional provider key, the assistant proposes changes and applies them only after confirmation | [AI assistant](../ai-assistant.md) |
-| Accounts | Roles restrict reads and changes on the server; each user can manage their password and TOTP | [Account and team](../dashboard/sections/account-and-team.md) |
+| Accounts | Roles restrict reads and changes on the server; each user can manage their password and TOTP, and optionally request OrbitPage marketing emails with email confirmation | [Account and team](../dashboard/sections/account-and-team.md) |
 | Automation | Personal API tokens have limited access and expiry and can be revoked | [API](./api.md) |
 | Recovery | Data and secrets survive updates; exports, version history, infrastructure backups, and admin recovery have documented procedures | [Backups](../dashboard/sections/backups-and-demo-mode.md), [Maintenance](../administration/maintenance.md), [Recovery](../administration/recovery.md) |
 

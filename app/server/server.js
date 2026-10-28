@@ -303,7 +303,7 @@ app.use(helmet({
       // Security directives from Helmet defaults — kept explicit so they stay active
       // now that useDefaults:false disables auto-merging.
       baseUri: ["'self'"],
-      formAction: ["'self'"],
+      formAction: ["'self'", "https://orbitpage.com/api/marketing/subscribe"],
       frameAncestors: ["'self'"],
       scriptSrcAttr: ["'none'"],
       scriptSrc: [

@@ -139,14 +139,14 @@ test('opens dashboard subsections directly and keeps tabs, history and menu draf
   await expect(page.locator('.admin-dashboard-shell')).toHaveCount(0);
 });
 
-test('keeps account cards in SaaS order with an empty second column and no instance controls', async ({ page }) => {
+test('keeps account cards in SaaS order with optional marketing signup and no instance controls', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openAuthenticatedAdmin(page);
   await openAdminSection(page, 'Account');
   const account = page.locator('.account-workspace');
-  await expect(account.locator('.account-panel')).toHaveCount(1);
-  await expect(account.locator('.account-instance-card, .account-marketing-card')).toHaveCount(0);
-  await expect(account.getByRole('heading', { level: 2 })).toHaveText(['Account details', 'Support', 'Your public OrbitPage', 'Delete account']);
+  await expect(account.locator('.account-panel')).toHaveCount(2);
+  await expect(account.locator('.account-instance-card')).toHaveCount(0);
+  await expect(account.getByRole('heading', { level: 2 })).toHaveText(['Account details', 'Marketing emails', 'Support', 'Your public OrbitPage', 'Delete account']);
   const grid = (await account.locator('.account-general-info').boundingBox())!;
   const details = (await account.locator('.oss-account-details-card').boundingBox())!;
   expect(Math.abs(details.width * 2 + 18 - grid.width)).toBeLessThanOrEqual(1);
@@ -157,6 +157,28 @@ test('keeps account cards in SaaS order with an empty second column and no insta
   await expect(account.locator('.account-general-info')).toHaveCSS('grid-template-columns', /^\d+(\.\d+)?px$/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'output/playwright/oss-account-mobile.png', fullPage: true });
+});
+
+test('requests newsletter confirmation without exporting local credentials or making background requests', async ({ page }) => {
+  const submissions: Array<{ method: string; body: string; authorization?: string }> = [];
+  await openAuthenticatedAdmin(page);
+  await page.context().route('https://orbitpage.com/api/marketing/subscribe', async route => {
+    const request = route.request();
+    submissions.push({ method: request.method(), body: request.postData() || '', authorization: request.headers().authorization });
+    await route.fulfill({ status: 202, contentType: 'text/html', body: '<html><head><title>OrbitPage newsletter confirmation</title></head><body>Check your inbox. No subscription is active until confirmation.</body></html>' });
+  });
+  await openAdminSection(page, 'Account');
+  const form = page.locator('.account-marketing-form'), submit = form.getByRole('button', { name: 'Confirm by email' });
+  await expect(form.getByRole('checkbox')).not.toBeChecked();await expect(submit).toBeDisabled();
+  expect(submissions).toHaveLength(0);
+  await form.getByRole('textbox', { name: 'Email', exact: true }).fill('subscriber@example.invalid');
+  await form.getByRole('checkbox').check();expect(submissions).toHaveLength(0);
+  const [popup] = await Promise.all([page.waitForEvent('popup'), submit.click()]);
+  await expect(popup).toHaveTitle('OrbitPage newsletter confirmation');
+  expect(submissions).toHaveLength(1);expect(submissions[0].method).toBe('POST');expect(submissions[0].authorization).toBeUndefined();
+  expect(Object.fromEntries(new URLSearchParams(submissions[0].body))).toEqual({ email: 'subscriber@example.invalid', consent: 'true', source: 'oss', locale: 'en' });
+  await expect(form.getByRole('status')).toContainText('A request alone does not activate');
+  await popup.close();await page.reload();await expect(form.getByRole('checkbox')).not.toBeChecked();
 });
 
 test('checks OSS updates and explains when the host update service is not enabled', async ({ page }) => {

@@ -60,7 +60,24 @@ date. It records successful authenticated changes as metadata, not a copy of
 page contents. Records stay in SQLite and are included in infrastructure backups;
 recording starts when the feature is installed.
 
-**Account → General** contains account details, support, public page controls, and account deletion. The second column stays empty in OSS; marketing email preferences belong to SaaS. **Edition → Instance details** exposes version, instance checks, environment variables, and update actions.
+**Account → General** contains account details, optional OrbitPage marketing email signup, support, public page controls, and account deletion. **Edition → Instance details** exposes version, instance checks, environment variables, and update actions.
 See [Deployment](../../administration/Deployment.md#update-safely) for updates and [Maintenance](../../administration/maintenance.md) for backup, rollback, and removal,
 and [Configuration](../../administration/Configuration.md#dashboard-environment-overrides) before
 changing runtime environment overrides. Restart after saving environment overrides.
+
+## Optional OrbitPage marketing emails
+
+Under **Account → General → Marketing emails**, enter your email, select the
+optional consent checkbox and choose **Confirm by email**. An OrbitPage tab
+shows the result. Open the confirmation email and confirm the subscription;
+the form alone does not activate it. No hosted account is required.
+
+Only the email, language and consent are submitted to the public OrbitPage
+service when you choose to continue. Local account credentials, page content
+and instance configuration are not submitted. There are no newsletter API keys
+or private automation endpoints to configure in your installation. Normal
+self-hosted editing works without this optional external service.
+
+The checkbox starts a subscription request; it is not a cached subscription
+status. To stop an existing subscription, use the unsubscribe link in any
+newsletter. Your own site's **Newsletter** workspace and SMTP remain separate.

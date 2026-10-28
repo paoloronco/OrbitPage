@@ -9,6 +9,7 @@ import { DEMO_MODE } from '@/lib/config';
 import { authApi, personalPageApi, type PersonalPageStatus } from '@/lib/api-client';
 import { withBasePath } from '@/lib/base-path';
 import { useAppI18n } from '@/lib/i18n';
+import { MarketingNewsletterSignup } from './MarketingNewsletterSignup';
 
 const SUPPORT_EMAIL = 'contact@orbitpage.com';
 
@@ -92,6 +93,7 @@ export function SelfHostedAccountActions({ canDeleteInstallation, publicPageHref
           <div className="account-detail-row"><dt>{tr('Login method', 'Metodo di accesso')}</dt><dd><span className="login-method">Password</span></dd></div>
         </dl>
       </Card>
+      <MarketingNewsletterSignup />
     </div>
 
     <Card className="glass-card p-6 account-support oss-account-support-card">
