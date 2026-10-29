@@ -53,11 +53,12 @@ export const withBasePath = (path = '/'): string => {
 /**
  * Hosted public snapshots use the tenant slug as their navigation base, while
  * the shared application and brand files live under `/orbitpage-runtime`.
+ * Self-hosted snapshots have no API base override and retain the local mount.
  */
 export const withRuntimeAssetPath = (path = '/'): string => {
   if (/^(?:[a-z][a-z\d+\-.]*:|\/\/)/i.test(path)) return path;
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  if (getEditorIntegration() || (typeof window !== 'undefined' && '__ORBITPAGE_STATIC_SNAPSHOT__' in window)) {
+  if (getEditorIntegration() || (typeof window !== 'undefined' && window.__ORBITPAGE_STATIC_SNAPSHOT__ && window.__ORBITPAGE_API_BASE__)) {
     return `/orbitpage-runtime${normalizedPath}`;
   }
   return withBasePath(normalizedPath);

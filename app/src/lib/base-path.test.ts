@@ -53,14 +53,26 @@ describe('tenant public paths', () => {
     expect(withTenantBasePath('/privacy')).toBe('/orbitpage/privacy');
   });
 
-  it('loads shared brand files from the hosted runtime instead of the tenant slug', () => {
+  it.each(['', '/studio', '/studio/services'])('loads shared brand files from the hosted runtime at %s', (basePath) => {
     vi.stubGlobal('window', {
-      __ORBITPAGE_BASE_PATH__: '/studio',
+      __ORBITPAGE_BASE_PATH__: basePath,
       __ORBITPAGE_STATIC_SNAPSHOT__: {},
-      location: { pathname: '/studio' },
+      __ORBITPAGE_API_BASE__: 'https://orbitpage.com/api/orbitpage',
+      location: { pathname: basePath || '/' },
     });
     expect(withRuntimeAssetPath('/brand/orbitpage-mark-192.png'))
       .toBe('/orbitpage-runtime/brand/orbitpage-mark-192.png');
+  });
+
+  it.each(['', '/orbitpage'])('keeps self-hosted snapshot assets inside the mount path %s', (basePath) => {
+    vi.stubGlobal('window', {
+      __ORBITPAGE_BASE_PATH__: basePath,
+      __ORBITPAGE_STATIC_SNAPSHOT__: { page: {} },
+      location: { pathname: `${basePath}/services` },
+    });
+    for (const asset of ['/brand/orbitpage-mark-192.png', '/brand/orbitpage-favicon-48.png', '/block-icons/star.svg']) {
+      expect(withRuntimeAssetPath(asset)).toBe(`${basePath}${asset}`);
+    }
   });
 
   it('retains the configured mount path for self-hosted brand files', () => {
