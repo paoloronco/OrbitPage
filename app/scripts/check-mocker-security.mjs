@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
@@ -16,7 +16,8 @@ for (const target of ['frontend', 'backend']) {
   const require = createRequire(join(appRoot, target === 'frontend' ? 'package.json' : 'server/package.json'));
   const { createServer } = await import(pathToFileURL(require.resolve('vite')).href);
   const { interceptorPlugin } = await import(pathToFileURL(require.resolve('@vitest/mocker/node')).href);
-  const fixture = await mkdtemp(join(tmpdir(), 'orbitpage-mocker-'));
+  // Windows runners can expose TEMP through an 8.3 alias; Vite needs canonical paths.
+  const fixture = await realpath(await mkdtemp(join(tmpdir(), 'orbitpage-mocker-')));
   const root = join(fixture, 'root');
   await mkdir(root);
   for (const name of ['module', 'manual-0', 'manual-1', 'manual-2', 'allowed', 'slash', 'backslash', 'mixed']) {
