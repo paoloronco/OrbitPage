@@ -49,7 +49,7 @@ Work and location saved side by side on the same row move together when an earli
 
 The bio always follows the arranged elements, centered at full width. It has no move, resize or alignment handles; older saved bio coordinates are ignored. Growing elements move the bio and following cards down automatically. **Reset profile arrangement** restores the default internal arrangement for the selected device as an unsaved change; mobile and desktop remain independent. Existing custom positions for the other profile elements remain supported.
 
-Resizing the whole profile card vertically sets its minimum height; longer content can still expand it. Automatic content growth moves the following cards while preserving their gaps. Saving a layout keeps the manual minimum separate from the measured content height.
+Resizing the whole profile card vertically sets its minimum height; longer content can still expand it. Automatic content growth moves the following cards while preserving their gaps. Saving a layout keeps the manual minimum separate from the measured content height. The footer follows the last visible card even when an older layout retains unused canvas height. Card positions, minimum sizes and the gaps between cards remain unchanged.
 
 Dragging a card into an occupied area moves intersecting neighbors down with a 24px gap. Cards in the same vertical column exchange order as the dragged card crosses their centers, closing the vacated slot. Independent columns and larger existing gaps remain unchanged. Narrowing a description grows its card and makes room below it. Pointer, touch and keyboard changes all prevent overlap.
 

@@ -145,9 +145,14 @@ export function PublicCardLayout({
   const latestLayoutRef = useRef<NormalizedCardLayout>(savedLayout);
   const previousSavedStateRef = useRef({ layout: savedLayout, editing: layoutEditing, viewport });
   const useFreeLayout = layoutEditing || Boolean(rawLayout);
-  const activeLayout = useMemo(() => fitCardLayoutHeights(
-    layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, true, hasProfileCard,
-  ), [hasProfileCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
+  const activeLayout = useMemo(() => {
+    const fitted = fitCardLayoutHeights(
+      layoutEditing ? normalizeCardLayout(workingLayout, layoutCards, viewport) : savedLayout, heights, true, hasProfileCard,
+    );
+    // Discard unused saved canvas space; keep the canvas stable during a drag.
+    if (!activeCard) fitted.height = Math.max(48, ...Object.values(fitted.positions).map(rect => rect.y + rect.height));
+    return fitted;
+  }, [activeCard, hasProfileCard, heights, layoutCards, layoutEditing, savedLayout, viewport, workingLayout]);
 
   useLayoutEffect(() => {
     const previous = previousSavedStateRef.current;

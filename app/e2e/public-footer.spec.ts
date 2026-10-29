@@ -1,6 +1,44 @@
 import { expect, test } from '@playwright/test';
 import { E2E_ADMIN_PASSWORD, openAuthenticatedAdmin, preservePageData } from './helpers';
 
+for (const hasProfile of [false, true]) {
+  test(`footer follows visible cards instead of obsolete canvas height with profile=${hasProfile}`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.addInitScript(hasProfile => {
+      const layout = (mobile: boolean) => ({
+        height: 6000, profileMinHeight: 160,
+        positions: {
+          ...(hasProfile ? { 'orbitpage-profile': { x: 0, y: 0, width: mobile ? 100 : 44, height: 160 } } : {}),
+          first: { x: mobile ? 0 : 54, y: 300, width: mobile ? 100 : 44, height: 180 },
+          last: { x: 0, y: mobile ? 1500 : 1200, width: mobile ? 100 : 44, height: 180 },
+          hidden: { x: 0, y: 4000, width: 100, height: 180 },
+        },
+      });
+      (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
+        page: {
+          profile: { name: hasProfile ? 'Canvas fixture' : '', bio: '', avatar: '', showAvatar: false, footerText: 'Fictional footer', appearance: { cardLayouts: { desktop: layout(false), mobile: layout(true) } } },
+          links: ['first', 'last', 'hidden'].map(id => ({ id, type: 'link', title: id, description: '', url: 'https://example.com', isActive: id !== 'hidden' })),
+          theme: { maxWidth: '72rem' }, branding: { showOrbitPageBadge: true },
+        },
+        consentConfig: { mode: 'disabled', enabled: false },
+      };
+    }, hasProfile);
+    await page.goto('/');
+    for (const width of [1440, 768, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(page.locator('[data-card-layout-item="hidden"]')).toHaveCount(0);
+      await expect(page.locator('[data-card-layout-item="first"]')).toHaveAttribute('data-card-layout-position', `${width < 768 ? '0' : '54'},300,${width < 768 ? '100' : '44'},180`);
+      await expect(page.locator('[data-card-layout-item="last"]')).toHaveAttribute('data-card-layout-position', `0,${width < 768 ? 1500 : 1200},${width < 768 ? 100 : 44},180`);
+      await expect.poll(() => page.locator('.public-page-root').evaluate(root => {
+        const lastBottom = Math.max(...Array.from(root.querySelectorAll('[data-card-layout-item]')).map(card => card.getBoundingClientRect().bottom));
+        return Math.abs(root.querySelector('footer')!.getBoundingClientRect().top - lastBottom);
+      })).toBeLessThanOrEqual(1);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+      expect(await page.evaluate(() => window.__ORBITPAGE_STATIC_SNAPSHOT__!.page.profile.appearance!.cardLayouts!.desktop!.height)).toBe(6000);
+    }
+  });
+}
+
 for (const count of [0, 12]) {
   test(`public footer stays centered ${count ? 'after long content' : 'at the bottom of a short page'}`, async ({ page }) => {
     await page.addInitScript((count) => {
