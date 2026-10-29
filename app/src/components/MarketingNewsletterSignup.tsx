@@ -16,6 +16,7 @@ export function MarketingNewsletterSignup() {
       <div><h2>{tr('Marketing emails', 'Email di marketing')}</h2><p className="muted">{tr('Occasional OrbitPage news, tips and product offers. Optional; no hosted account required.', 'Novità, consigli e offerte occasionali di OrbitPage. Facoltativo; non serve un account SaaS.')}</p></div>
       <Mail aria-hidden="true" className="h-6 w-6" />
     </div>
+    <p className="muted"><a href="https://orbitpage.com/newsletter" target="_blank" rel="noopener noreferrer">{tr('Open newsletter signup page', 'Apri la pagina di iscrizione alla newsletter')} ↗</a></p>
     <form className="account-marketing-form" action="https://orbitpage.com/api/marketing/subscribe" method="post" target="_blank" rel="noopener noreferrer" onSubmit={(event) => { if (DEMO_MODE) event.preventDefault(); else setSubmitted(true); }}>
       <div className="space-y-2"><Label htmlFor="orbitpage-marketing-email">Email</Label><Input id="orbitpage-marketing-email" name="email" type="email" autoComplete="email" maxLength={254} required disabled={DEMO_MODE} /></div>
       <input type="hidden" name="source" value="oss" />

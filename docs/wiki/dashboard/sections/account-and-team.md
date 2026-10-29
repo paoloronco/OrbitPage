@@ -71,6 +71,8 @@ Under **Account → General → Marketing emails**, enter your email, select the
 optional consent checkbox and choose **Confirm by email**. An OrbitPage tab
 shows the result. Open the confirmation email and confirm the subscription;
 the form alone does not activate it. No hosted account is required.
+The same card links to the [public OrbitPage newsletter page](https://orbitpage.com/newsletter),
+where visitors can subscribe without an OrbitPage installation or account.
 
 Only the email, language and consent are submitted to the public OrbitPage
 service when you choose to continue. Local account credentials, page content

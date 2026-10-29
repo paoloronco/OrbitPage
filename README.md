@@ -19,6 +19,7 @@
   <a href="./LICENSE.txt"><img src="https://img.shields.io/badge/license-MIT-111827" alt="MIT License" /></a>
   <a href="https://hub.docker.com/r/paoloronco/orbitpage"><img src="https://img.shields.io/docker/pulls/paoloronco/orbitpage?logo=docker&amp;label=Docker%20pulls" alt="OrbitPage Docker Hub pulls" /></a>
   <a href="https://github.com/paoloronco/OrbitPage/pkgs/container/orbitpage"><img src="https://img.shields.io/badge/GHCR-orbitpage-181717?logo=github&logoColor=white" alt="GitHub Container Registry" /></a>
+  <a href="https://orbitpage.com/newsletter"><img src="https://img.shields.io/badge/Newsletter-Subscribe-3167EF?logo=maildotru&amp;logoColor=white" alt="Subscribe to the OrbitPage newsletter — no account required" /></a>
 </p>
 
 <p align="center">

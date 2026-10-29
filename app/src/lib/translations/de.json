@@ -1261,5 +1261,6 @@
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "Diese Position oder Größe würde ein anderes Element überlappen. Das bisherige Layout wurde beibehalten. Verschiebe das Element in einen freien Bereich oder verkleinere es.",
   "Loading profile, content and theme.": "Profil, Inhalt und Thema werden geladen.",
   "Preparing your workspace": "Vorbereiten Ihres Arbeitsbereichs",
-  "Show copy button": "Kopierbutton anzeigen"
+  "Show copy button": "Kopierbutton anzeigen",
+  "Open newsletter signup page": "Seite zur Newsletter-Anmeldung öffnen"
 }

@@ -1261,5 +1261,6 @@
   "This position or size would overlap another element. The previous layout was kept. Move the element to a free area or make it smaller.": "이 위치나 크기에서는 다른 요소와 겹칩니다. 이전 레이아웃이 유지되었습니다. 요소를 빈 공간으로 옮기거나 크기를 줄이세요.",
   "Loading profile, content and theme.": "프로필, 콘텐츠, 테마를 로드하는 중입니다.",
   "Preparing your workspace": "작업공간 준비",
-  "Show copy button": "복사 버튼 표시"
+  "Show copy button": "복사 버튼 표시",
+  "Open newsletter signup page": "뉴스레터 구독 페이지 열기"
 }
