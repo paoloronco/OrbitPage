@@ -11,6 +11,7 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest",
     "test:unit": "vitest run && cd server && npm test -- --run",
+    "test:security:mocker": "node scripts/check-mocker-security.mjs",
     "clean:e2e": "node scripts/clean-e2e.js",
     "test:e2e": "npm run test:e2e:chromium",
     "test:e2e:chromium": "npm run clean:e2e && playwright test --project=chromium",
@@ -83,7 +84,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^7.3.7",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.12"
   },
   "overrides": {
     "lodash": "^4.17.23",

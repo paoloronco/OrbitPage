@@ -55,6 +55,7 @@ describe('deployment configuration', () => {
     expect(workflow).toContain('EXPECTED_TAG="v${VERSION}"');
     expect(workflow).toContain('git merge-base --is-ancestor "${RELEASE_SHA}" origin/main');
     expect(workflow).toContain('"E2E (webkit)"');
+    expect(workflow).toContain('"Mocker security (Windows)"');
     expect(workflow).toContain('"Build and smoke Docker (amd64)"');
     expect(workflow).toContain('"Build and smoke Docker (arm64)"');
     expect(workflow).toContain('gh release create "$TAG"');

@@ -35,6 +35,12 @@ they are not needed by a running installation. The root Dockerfile bundles only
 
 ## Isolated verification helpers
 
+- [`app/scripts/check-mocker-security.mjs`](../app/scripts/check-mocker-security.mjs),
+  run with `npm --prefix app run test:security:mocker`: exercises both installed
+  Vitest mockers over loopback HTTP/WebSocket with synthetic modules and an
+  outside-root canary. Checks literal escaping and file access on Linux and
+  Windows without evaluating injected JavaScript.
+
 - `check-markdown-links.mjs`: validates repository-local documentation links;
   CI runs it before application checks.
 - `check-tracked-runtime-data.mjs`: rejects tracked databases, sidecars and local

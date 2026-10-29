@@ -195,6 +195,7 @@ Run these from `app/`. The authoritative definitions are in [package.json](./pac
 | `npm run lint` / `npm run typecheck` | Run ESLint / frontend TypeScript checking. |
 | `npm test` | Run the frontend Vitest watcher. |
 | `npm run test:unit` | Run frontend and backend Vitest suites once. |
+| `npm run test:security:mocker` | Check both installed mocker dependency graphs through isolated local HTTP/WebSocket fixtures, including native Windows traversal. |
 | `npm run clean:e2e` | Reset the isolated browser-test data directory. |
 | `npm run test:e2e` / `npm run test:e2e:chromium` | Reset test data and run Chromium browser tests. |
 | `npm run test:e2e:firefox` / `npm run test:e2e:webkit` | Reset test data and run the selected browser suite. |

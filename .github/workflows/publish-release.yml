@@ -93,6 +93,7 @@ jobs:
           RELEASE_SHA="$(git rev-parse HEAD)"
           for CHECK_NAME in \
             "Quality Gate" \
+            "Mocker security (Windows)" \
             "E2E (chromium)" \
             "E2E (firefox)" \
             "E2E (webkit)" \
