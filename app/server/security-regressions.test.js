@@ -6,7 +6,34 @@
  */
 import { describe, it, expect } from 'vitest';
 import qs from 'qs';
+import { createRequire } from 'node:module';
 import { expand } from '../node_modules/brace-expansion/dist/esm/index.js';
+
+describe('security: CVE-2026-110816 — comma serialization of untrusted objects', () => {
+  const inputs = [
+    ['JSON object', () => JSON.parse('{"a":[{"toString":"x"}]}')],
+    ['extended query', () => qs.parse('a[0][toString]=x', { allowPrototypes: true })],
+    ['null-prototype object', () => qs.parse('a[][b]=c', { plainObjects: true })],
+    ['nested array', () => JSON.parse('{"a":[[{"toString":"x"}]]}')],
+  ];
+  for (const encodeValuesOnly of [false, true]) {
+    const options = { arrayFormat: 'comma', encodeValuesOnly };
+    it.each(inputs)(`handles %s without throwing with encodeValuesOnly=${encodeValuesOnly}`, (_name, input) => {
+      expect(() => qs.stringify(input(), options)).not.toThrow();
+    });
+    it(`preserves ordinary arrays with encodeValuesOnly=${encodeValuesOnly}`, () => {
+      expect(qs.stringify({ a: ['first', 'second'] }, options))
+        .toBe(encodeValuesOnly ? 'a=first,second' : 'a=first%2Csecond');
+    });
+  }
+
+  it('uses the tested qs instance in both Express query and form parsers', () => {
+    const require = createRequire(import.meta.url);
+    for (const consumer of ['express', 'body-parser']) {
+      expect(createRequire(require.resolve(consumer))('qs')).toBe(qs);
+    }
+  });
+});
 
 // ---------------------------------------------------------------------------
 // #71 — qs ≤ 6.15.1: TypeError in qs.stringify con arrayFormat:'comma' +

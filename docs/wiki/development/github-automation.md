@@ -12,6 +12,9 @@ The release workflow queries `Quality Gate`, `E2E (browser)`, and `Build and smo
 
 Frontend and backend npm audits reject high/critical advisories. A release tag must match both application package versions. See [Contributing → Release notes](../../../CONTRIBUTING.md#release-notes).
 
+Browser suites have a 25-minute execution budget inside a 30-minute job so
+WebKit can complete the full suite and upload failure reports on slower runners.
+
 Publication reuses main CI's `rolling-amd64` and `rolling-arm64` build caches, verifies both architectures, and creates the release if it does not exist. Tag pushes and manual publication for the same tag share a concurrency group.
 
 ## Gitea mirror credential
