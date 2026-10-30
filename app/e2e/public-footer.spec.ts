@@ -16,7 +16,7 @@ for (const hasProfile of [false, true]) {
       });
       (window as unknown as { __ORBITPAGE_STATIC_SNAPSHOT__: unknown }).__ORBITPAGE_STATIC_SNAPSHOT__ = {
         page: {
-          profile: { name: hasProfile ? 'Canvas fixture' : '', bio: '', avatar: '', showAvatar: false, footerText: 'Fictional footer', appearance: { cardLayouts: { desktop: layout(false), mobile: layout(true) } } },
+          profile: { name: hasProfile ? 'Canvas' : '', bio: '', avatar: '', showAvatar: false, footerText: 'Fictional footer', appearance: { cardLayouts: { desktop: layout(false), mobile: layout(true) } } },
           links: ['first', 'last', 'hidden'].map(id => ({ id, type: 'link', title: id, description: '', url: 'https://example.com', isActive: id !== 'hidden' })),
           theme: { maxWidth: '72rem' }, branding: { showOrbitPageBadge: true },
         },
