@@ -61,6 +61,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   const staticCustomEmbedUnavailable = !requiresAllowlistedUrl && !knownProviderUrl && hasStaticPublicSnapshot();
   const brandColor = isBrandServiceProvider(provider) ? brandServiceColors[provider] : undefined;
   const usesResponsiveVideoFrame = provider === 'youtube' || provider === 'vimeo' || provider === 'loom';
+  const showHeader = provider !== 'youtube' || Boolean(link.title.trim() || link.description.trim());
   const embedViewportStyle = usesResponsiveVideoFrame
     ? { aspectRatio: '16 / 9', minHeight: '200px' }
     : { height: `${embed.height || 360}px` };
@@ -80,7 +81,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
 
   return (
     <Card className="glass-card overflow-hidden p-0" style={getPublicBlockStyle(link)}>
-      <div className={`public-block-header ${getPublicBlockPadding(link.size)}`}>
+      {showHeader && <div className={`public-block-header ${getPublicBlockPadding(link.size)}`}>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary ring-1 ring-primary/15" style={{ ...getPublicAccentStyle(link), ...(!link.icon && brandColor ? { color: brandColor } : {}) }}>
           {getPublicIconContent(link, getProviderIcon(provider))}
         </span>
@@ -91,7 +92,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
           </div>
           {link.description ? <p className="mt-1 text-sm leading-relaxed" style={secondaryStyle}>{link.description}</p> : null}
         </div>
-      </div>
+      </div>}
 
       {invalidProviderUrl ? (
         <div className={`border-t border-current/10 ${getPublicBlockPadding(link.size)}`}>

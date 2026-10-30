@@ -34,6 +34,10 @@ Choose **GitHub** and paste the HTTPS URL of a profile, repository or release. T
 
 The original video must permit embedding. Vimeo access hashes for unlisted videos are not preserved by the preset; use a normal Link block for those videos. Provider age, region and domain restrictions still apply.
 
+For a player-only YouTube card, leave both the title and description empty. The
+card then displays the responsive player without an additional heading. Add a
+title or description to restore the header. No YouTube API key is needed.
+
 Provider guides: [YouTube embeds](https://support.google.com/youtube/answer/171780), [Vimeo embeds](https://help.vimeo.com/hc/en-us/articles/12426259908881-How-to-embed-my-video).
 
 ## Audio players
