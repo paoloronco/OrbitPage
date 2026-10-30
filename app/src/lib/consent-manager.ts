@@ -413,18 +413,19 @@ class ConsentManager {
 
   /** Programmatically open the preferences modal */
   openPreferences(): void {
-    if (this._openPrefsCb) {
-      this._openPrefsCb();
+    if (this.config?.mode === 'builder') {
+      const builder = this.config.builder;
+      const selector = builder?.reopenSelector?.trim()
+        || (builder?.provider === 'iubenda' ? '.iubenda-cs-preferences-link' : '');
+      if (!selector) return;
+      try {
+        document.querySelector<HTMLElement>(selector)?.click();
+      } catch {
+        // Invalid selectors supplied by an external CMP are ignored safely.
+      }
       return;
     }
-    const selector = this.config?.mode === 'builder' ? this.config.builder?.reopenSelector?.trim() : '';
-    if (!selector) return;
-    try {
-      const trigger = document.querySelector<HTMLElement>(selector);
-      trigger?.click();
-    } catch {
-      // Invalid selectors supplied by an external CMP are ignored safely.
-    }
+    this._openPrefsCb?.();
   }
 
   /**

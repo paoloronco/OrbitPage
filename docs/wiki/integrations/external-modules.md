@@ -35,8 +35,12 @@ Choose **GitHub** and paste the HTTPS URL of a profile, repository or release. T
 The original video must permit embedding. Vimeo access hashes for unlisted videos are not preserved by the preset; use a normal Link block for those videos. Provider age, region and domain restrictions still apply.
 
 For a player-only YouTube card, leave both the title and description empty. The
-card then displays the responsive player without an additional heading. Add a
-title or description to restore the header. No YouTube API key is needed.
+card then displays a responsive cover and Play button without an additional
+heading. Clicking Play loads the privacy-enhanced player; neither the thumbnail
+nor the player loads before the chosen consent category is granted. Add a title
+or description to restore the header. No YouTube API key is needed. With an
+external consent platform, declare the YouTube privacy-enhanced widget and its
+experience purpose there as well.
 
 Provider guides: [YouTube embeds](https://support.google.com/youtube/answer/171780), [Vimeo embeds](https://help.vimeo.com/hc/en-us/articles/12426259908881-How-to-embed-my-video).
 

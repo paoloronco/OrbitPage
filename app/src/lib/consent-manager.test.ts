@@ -80,6 +80,44 @@ describe('consentManager Google Consent Mode v2', () => {
     });
   });
 
+  it('opens iubenda preferences instead of the inactive native modal callback', async () => {
+    const click = vi.fn();
+    const querySelector = vi.fn().mockReturnValue({ click });
+    Object.assign(document, { querySelector });
+    const { consentManager } = await import('./consent-manager');
+    consentManager.init(builderConfig('iubenda'));
+    const nativeModal = vi.fn();
+    consentManager._registerUICallbacks(vi.fn(), nativeModal);
+    consentManager.openPreferences();
+    expect(querySelector).toHaveBeenCalledWith('.iubenda-cs-preferences-link');
+    expect(click).toHaveBeenCalledOnce();
+    expect(nativeModal).not.toHaveBeenCalled();
+    expect(consentManager.isGranted('preferences')).toBe(false);
+  });
+
+  it('keeps a configured external reopen selector and safely ignores an invalid one', async () => {
+    const click = vi.fn();
+    const querySelector = vi.fn().mockReturnValue({ click });
+    Object.assign(document, { querySelector });
+    const { consentManager } = await import('./consent-manager');
+    const config = builderConfig('custom');
+    consentManager.init({ ...config, builder: { ...config.builder, reopenSelector: '#custom-preferences' } });
+    consentManager.openPreferences();
+    expect(querySelector).toHaveBeenCalledWith('#custom-preferences');
+    expect(click).toHaveBeenCalledOnce();
+    querySelector.mockImplementation(() => { throw new Error('Invalid selector'); });
+    expect(() => consentManager.openPreferences()).not.toThrow();
+  });
+
+  it('continues to use the native preferences modal in native mode', async () => {
+    const { consentManager } = await import('./consent-manager');
+    consentManager.init(hardcodedConfig);
+    const nativeModal = vi.fn();
+    consentManager._registerUICallbacks(vi.fn(), nativeModal);
+    consentManager.openPreferences();
+    expect(nativeModal).toHaveBeenCalledOnce();
+  });
+
   it('notifies already mounted map previews when the public consent configuration becomes available', async () => {
     const { consentManager } = await import('./consent-manager');
     const states: boolean[] = [];

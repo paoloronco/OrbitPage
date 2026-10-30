@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Code2, Mail, MapPinned, ShieldCheck } from "lucide-react";
+import { Code2, Mail, MapPinned, Play, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { consentManager } from "@/lib/consent-manager";
 import { apiPath } from "@/lib/base-path";
@@ -43,6 +43,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
   const provider = resolveEmbedProvider(embed.provider, embed.snippet);
   const category = embed.consentCategory || 'marketing';
   const [isGranted, setIsGranted] = useState(() => consentManager.isGranted(category));
+  const [playingUrl, setPlayingUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const syncConsent = () => setIsGranted(consentManager.isGranted(category));
@@ -50,11 +51,20 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
     return consentManager.onConsentChange(syncConsent);
   }, [category]);
 
+  useEffect(() => {
+    if (!isGranted) setPlayingUrl(null);
+  }, [isGranted]);
+
   const textColor = getPublicTextColor(link);
   const secondaryStyle = textColor ? { color: textColor, opacity: 0.72 } : undefined;
   const providerLabel = getEmbedProviderLabel(provider);
   const embedderUrl = typeof window === 'undefined' ? undefined : window.location.href;
   const knownProviderUrl = getKnownEmbedUrl(provider, embed.snippet, embedderUrl);
+  const youtubeVideoId = provider === 'youtube' ? knownProviderUrl?.match(/\/embed\/([\w-]{11})(?:\?|$)/)?.[1] : null;
+  const showYouTubePreview = Boolean(youtubeVideoId && playingUrl !== knownProviderUrl);
+  const playerUrl = provider === 'youtube' && knownProviderUrl && playingUrl === knownProviderUrl
+    ? `${knownProviderUrl}${knownProviderUrl.includes('?') ? '&' : '?'}autoplay=1`
+    : knownProviderUrl;
   const typeformReference = provider === 'typeform' ? getTypeformFormReference(embed.snippet) : null;
   const requiresAllowlistedUrl = provider !== 'custom' && provider !== 'newsletter';
   const invalidProviderUrl = Boolean(embed.snippet) && requiresAllowlistedUrl && !knownProviderUrl;
@@ -116,7 +126,26 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
         </div>
       ) : isGranted ? (
         <div className="relative w-full overflow-hidden border-t border-current/10 bg-slate-950/10" style={embedViewportStyle}>
-          {typeformReference ? (
+          {showYouTubePreview ? (
+            <button
+              type="button"
+              aria-label={`Play YouTube video${link.title ? `: ${link.title}` : ''}`}
+              onClick={() => setPlayingUrl(knownProviderUrl)}
+              className="group relative block h-full w-full overflow-hidden bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
+            >
+              <img
+                src={`https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`}
+                alt=""
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <span className="absolute inset-0 flex items-center justify-center bg-black/15 transition-colors group-hover:bg-black/25">
+                <span className="flex h-12 w-[68px] items-center justify-center rounded-xl bg-[#ff0000] shadow-lg">
+                  <Play aria-hidden="true" className="h-7 w-7 fill-white text-white" />
+                </span>
+              </span>
+            </button>
+          ) : typeformReference ? (
             <Suspense fallback={<div className="flex h-full items-center justify-center text-sm font-medium opacity-65">Loading Typeform...</div>}>
               <TypeformWidget
                 id={typeformReference.id}
@@ -136,7 +165,7 @@ export const PublicEmbedCard = ({ link }: PublicEmbedCardProps) => {
             </Suspense>
           ) : (
             <iframe
-              src={knownProviderUrl || apiPath(`/embed/${encodeURIComponent(link.id)}`)}
+              src={playerUrl || apiPath(`/embed/${encodeURIComponent(link.id)}`)}
               title={`${providerLabel}: ${link.title || 'embedded content'}`}
               className={`h-full w-full border-0 ${provider === 'instagram' || provider === 'facebook' ? 'mx-auto block max-w-[540px]' : ''}`}
               loading="lazy"

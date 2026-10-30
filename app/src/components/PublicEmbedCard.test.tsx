@@ -9,19 +9,23 @@ vi.mock('@/lib/consent-manager', () => ({ consentManager: {
   showBanner: vi.fn(), openPreferences: vi.fn(),
 } }));
 
-const render = (title = '', description = '') => renderToStaticMarkup(<PublicEmbedCard link={{
+const render = (title = '', description = '', snippet = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') => renderToStaticMarkup(<PublicEmbedCard link={{
   id: 'youtube-test', type: 'embed', title, description, url: '',
-  content: JSON.stringify({ provider: 'youtube', snippet: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', consentCategory: 'marketing', height: 360 }),
+  content: JSON.stringify({ provider: 'youtube', snippet, consentCategory: 'marketing', height: 360 }),
 }} />);
 
 beforeEach(() => { consent.granted = true; });
 
 describe('YouTube player-only cards', () => {
-  it('keeps the accessible responsive player while omitting an empty header', () => {
+  it('keeps a newly added empty YouTube block configurable', () => {
+    expect(render('', '', '')).toContain('Paste a YouTube URL');
+  });
+  it('shows an accessible responsive cover before loading the player, without an empty header', () => {
     const html = render();
-    expect(html).toContain('youtube-nocookie.com/embed/dQw4w9WgXcQ');
+    expect(html).toContain('https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+    expect(html).not.toContain('<iframe');
     expect(html).toContain('aspect-ratio:16 / 9');
-    expect(html).toContain('title="YouTube: embedded content"');
+    expect(html).toContain('aria-label="Play YouTube video"');
     expect(html).not.toContain('public-block-header');
   });
 
@@ -36,6 +40,7 @@ describe('YouTube player-only cards', () => {
     const html = render();
     expect(html).not.toContain('<iframe');
     expect(html).not.toContain('youtube-nocookie.com');
+    expect(html).not.toContain('i.ytimg.com');
     expect(html).toContain('Third-party content blocked');
     expect(html).toContain('Manage cookie preferences');
   });

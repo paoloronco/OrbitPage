@@ -65,10 +65,15 @@ test('renders YouTube with the origin-preserving policy required by the player',
   await page.getByRole('option', { name: /Necessary/ }).click();
   await contentSaveButton(page).click();
 
-  const player = youtubePreview.locator('iframe');
+  await expect(youtubePreview.locator('iframe')).toHaveCount(0);
+  await expect(youtubePreview.locator('img[src*="i.ytimg.com"]')).toHaveAttribute('src', 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+  await expect(youtubePreview.locator('[data-service-brand="youtube"]')).toBeVisible();
+  await page.goto('/');
+  await page.getByRole('button', { name: /Play YouTube video/ }).click();
+  const player = page.locator('iframe[src*="youtube-nocookie.com/embed/dQw4w9WgXcQ"]');
   await expect(player).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ(?:\?|$)/);
   await expect(player).toHaveAttribute('referrerpolicy', 'origin');
-  await expect(youtubePreview.locator('[data-service-brand="youtube"]')).toBeVisible();
+  await expect(player).toHaveAttribute('src', /[?&]autoplay=1(?:&|$)/);
 
   if (process.env.ORBITPAGE_EXTERNAL_EMBED_TESTS === '1') {
     await expect.poll(
