@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { contentSaveButton, openAdminSection, openAuthenticatedAdmin, openPreviewContentCard } from './helpers';
+import { contentSaveButton, openAdminSection, openAuthenticatedAdmin, openPreviewContentCard, preservePageData, saveEditorChanges } from './helpers';
 
 test('adds official service blocks and renders an allowlisted Spotify player', async ({ page }) => {
   await openAuthenticatedAdmin(page);
@@ -50,38 +50,43 @@ test('adds official service blocks and renders an allowlisted Spotify player', a
 
 test('renders YouTube with the origin-preserving policy required by the player', async ({ page }) => {
   await openAuthenticatedAdmin(page);
-  await page.getByRole('button', { name: 'Content', exact: true }).click();
+  const restore = await preservePageData(page);
+  try {
+    await page.getByRole('button', { name: 'Content', exact: true }).click();
 
-  await page.getByRole('button', { name: 'Add content' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Add content' });
-  await dialog.getByRole('button', { name: /Connected services/ }).click();
-  await dialog.getByRole('button', { name: /YouTube/ }).click();
-  await contentSaveButton(page).click();
+    await page.getByRole('button', { name: 'Add content' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add content' });
+    await dialog.getByRole('button', { name: /Connected services/ }).click();
+    await dialog.getByRole('button', { name: /YouTube/ }).click();
+    await contentSaveButton(page).click();
 
-  const youtubePreview = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
-  const { editor: youtubeCard } = await openPreviewContentCard(page, youtubePreview);
-  await youtubeCard.getByRole('textbox', { name: 'YouTube URL' }).fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-  await youtubeCard.getByText('Consent category').locator('..').getByRole('combobox').click();
-  await page.getByRole('option', { name: /Necessary/ }).click();
-  await contentSaveButton(page).click();
+    const youtubePreview = page.locator('.visual-site-editor__canvas [data-public-editor-link-id]').last();
+    const { editor: youtubeCard } = await openPreviewContentCard(page, youtubePreview);
+    await youtubeCard.getByRole('textbox', { name: 'YouTube URL' }).fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    await youtubeCard.getByText('Consent category').locator('..').getByRole('combobox').click();
+    await page.getByRole('option', { name: /Necessary/ }).click();
+    await saveEditorChanges(page);
 
-  await expect(youtubePreview.locator('iframe')).toHaveCount(0);
-  await expect(youtubePreview.locator('img[src*="i.ytimg.com"]')).toHaveAttribute('src', 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
-  await expect(youtubePreview.locator('[data-service-brand="youtube"]')).toBeVisible();
-  await page.goto('/');
-  await page.getByRole('button', { name: /Play YouTube video/ }).click();
-  const player = page.locator('iframe[src*="youtube-nocookie.com/embed/dQw4w9WgXcQ"]');
-  await expect(player).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ(?:\?|$)/);
-  await expect(player).toHaveAttribute('referrerpolicy', 'origin');
-  await expect(player).toHaveAttribute('src', /[?&]autoplay=1(?:&|$)/);
+    await expect(youtubePreview.locator('iframe')).toHaveCount(0);
+    await expect(youtubePreview.locator('img[src*="i.ytimg.com"]')).toHaveAttribute('src', 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+    await expect(youtubePreview.locator('[data-service-brand="youtube"]')).toBeVisible();
+    await page.goto('/');
+    await page.getByRole('button', { name: /Play YouTube video/ }).last().click();
+    const player = page.locator('iframe[src*="youtube-nocookie.com/embed/dQw4w9WgXcQ"]');
+    await expect(player).toHaveAttribute('src', /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ(?:\?|$)/);
+    await expect(player).toHaveAttribute('referrerpolicy', 'origin');
+    await expect(player).toHaveAttribute('src', /[?&]autoplay=1(?:&|$)/);
 
-  if (process.env.ORBITPAGE_EXTERNAL_EMBED_TESTS === '1') {
-    await expect.poll(
-      () => page.frames().some((frame) => frame.url().includes('youtube-nocookie.com/embed/dQw4w9WgXcQ')),
-      { timeout: 15_000 },
-    ).toBe(true);
-    const youtubeFrame = page.frames().find((frame) => frame.url().includes('youtube-nocookie.com/embed/dQw4w9WgXcQ'));
-    await expect(youtubeFrame!.locator('body')).not.toContainText(/error\s*153|player configuration error/i);
+    if (process.env.ORBITPAGE_EXTERNAL_EMBED_TESTS === '1') {
+      await expect.poll(
+        () => page.frames().some((frame) => frame.url().includes('youtube-nocookie.com/embed/dQw4w9WgXcQ')),
+        { timeout: 15_000 },
+      ).toBe(true);
+      const youtubeFrame = page.frames().find((frame) => frame.url().includes('youtube-nocookie.com/embed/dQw4w9WgXcQ'));
+      await expect(youtubeFrame!.locator('body')).not.toContainText(/error\s*153|player configuration error/i);
+    }
+  } finally {
+    await restore();
   }
 });
 

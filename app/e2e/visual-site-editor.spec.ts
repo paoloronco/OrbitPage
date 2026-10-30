@@ -131,34 +131,39 @@ test("Visual editor persists profile and content selected on the real preview", 
 test("Arrange exposes profile elements alongside whole-card controls and continuous resizing", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 980 });
   await openAuthenticatedAdmin(page);
-  await page.getByRole("textbox", { name: "Role or focus" }).fill(`Work ${Date.now()}`);
-  await page.getByRole("textbox", { name: "Location" }).fill("Turin");
-  await contentSaveButton(page).click();
-  await page.getByRole("button", { name: "Content", exact: true }).click();
-  await page.getByRole("button", { name: "Add content" }).click();
-  await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
-  await contentSaveButton(page).click();
+  const restore = await startIsolatedLayoutPage(page);
+  try {
+    await page.getByRole("textbox", { name: "Role or focus" }).fill(`Work ${Date.now()}`);
+    await page.getByRole("textbox", { name: "Location" }).fill("Turin");
+    await contentSaveButton(page).click();
+    await page.getByRole("button", { name: "Content", exact: true }).click();
+    await page.getByRole("button", { name: "Add content" }).click();
+    await page.getByRole("dialog", { name: "Add content" }).getByRole("button", { name: /^Link\b/ }).click();
+    await contentSaveButton(page).click();
 
-  await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Move Work', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Move Location', exact: true })).toBeVisible();
-  await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
-  const contentCard = page.locator('[data-card-layout-item]:not([data-card-layout-item="orbitpage-profile"])').last();
-  const moveHandle = contentCard.getByRole("button", { name: /^Move card/ });
-  const handleBounds = await moveHandle.boundingBox();
-  expect(handleBounds).not.toBeNull();
-  expect(await moveHandle.evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBe(64);
+    await page.getByRole("button", { name: "Arrange", exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Move Work', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Move Location', exact: true })).toBeVisible();
+    await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
+    const contentCard = page.locator('[data-card-layout-item]:not([data-card-layout-item="orbitpage-profile"])').last();
+    const moveHandle = contentCard.getByRole("button", { name: /^Move card/ });
+    const handleBounds = await moveHandle.boundingBox();
+    expect(handleBounds).not.toBeNull();
+    expect(await moveHandle.evaluate((element) => Number.parseFloat(getComputedStyle(element).width))).toBe(64);
 
-  const originalWidth = Number((await contentCard.getAttribute("data-card-layout-position"))!.split(",")[2]);
-  await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
-  await expect.poll(async () => {
-    const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
-    return resized[2] > originalWidth && resized[2] < originalWidth + 1;
-  }).toBe(true);
+    const originalWidth = Number((await contentCard.getAttribute("data-card-layout-position"))!.split(",")[2]);
+    await contentCard.getByRole("button", { name: /^Resize card/ }).press("ArrowRight");
+    await expect.poll(async () => {
+      const resized = (await contentCard.getAttribute("data-card-layout-position"))!.split(",").map(Number);
+      return resized[2] > originalWidth && resized[2] < originalWidth + 1;
+    }).toBe(true);
 
-  await contentSaveButton(page).click();
-  await page.getByRole("button", { name: "Arrange", exact: true }).click();
-  await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
+    await contentSaveButton(page).click();
+    await page.getByRole("button", { name: "Arrange", exact: true }).click();
+    await expect(page.locator("[data-profile-layout-mode], [data-card-layout-mode]")).toHaveCount(0);
+  } finally {
+    await restore();
+  }
 });
 
 test("Arrange still lets image cards open their editor, update the image, and delete", async ({ page }) => {
