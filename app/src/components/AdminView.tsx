@@ -867,7 +867,7 @@ export const AdminView = ({
                   title={displayedTabLabel(value)}
                   type="button"
                 >
-                  <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
+                  <Icon className="admin-dashboard-nav-icon h-5 w-5" data-dashboard-icon={iconName} aria-hidden="true" size={20} />
                   <span>{displayedTabLabel(value)}</span>
                 </button>
               ))}
@@ -885,7 +885,7 @@ export const AdminView = ({
                     title={displayedTabLabel(value)}
                     type="button"
                   >
-                    <Icon className="admin-dashboard-nav-icon h-[18px] w-[18px]" data-dashboard-icon={iconName} aria-hidden="true" size={18} />
+                    <Icon className="admin-dashboard-nav-icon h-5 w-5" data-dashboard-icon={iconName} aria-hidden="true" size={20} />
                     <span>{displayedTabLabel(value)}</span>
                   </button>
                 ))}

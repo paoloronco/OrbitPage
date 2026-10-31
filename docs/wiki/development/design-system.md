@@ -34,7 +34,7 @@ Check the stylesheet before changing a value.
 
 | Pattern | Rule |
 | --- | --- |
-| Navigation and tabs | Mark the active item and keep the selected subsection in the dashboard URL. Keep the site-section strip at a consistent height when section controls appear or disappear. |
+| Navigation and tabs | Mark the active item and keep the selected subsection in the dashboard URL. Both sidebar groups use 40px rows, a fixed 20px icon column, a 12px icon/text gap and centered 20px text lines. Keep the site-section strip at a consistent height when section controls appear or disappear. |
 | Form fields | Use existing primitives and visible labels; attach validation to the relevant control. |
 | Save | Show unsaved state and save results. Self-hosted public content becomes visible when saved; additional pages also have a publication state. |
 | Cards and panels | Group a task or related data; preserve a readable hierarchy on narrow screens. |
