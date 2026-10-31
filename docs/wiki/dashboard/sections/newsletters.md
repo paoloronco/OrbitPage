@@ -32,6 +32,10 @@ Copy the signup link from the workspace. Visitors consent to receive email and c
 
 In **Subscribers**, a user with Newsletter management permission can add an email/name after recording consent and confirmation. Every campaign includes an unsubscribe link. Removing a subscriber requires confirmation.
 
+Search by name or email, combine status, source and email-tracking filters, and select a column heading to sort in either direction. The list starts with the newest additions and shows 10 rows per page; choose 25 or 50 for a larger page. Changing a search, filter or sort returns to the first page. **Clear filters** restores the complete loaded list.
+
+Both editions currently load up to 100 of the most recently updated subscribers. When the audience is larger, a notice explains that search, filters, sorting and pagination cover only those loaded contacts, not the whole audience. The audience total and plan allowance remain separate from the matching-row count.
+
 ## Campaigns
 
 1. In **Campaigns**, create a draft with its internal name, subject, and inbox preview.

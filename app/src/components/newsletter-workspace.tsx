@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import {
   canDeleteNewsletterCampaign,
-  newsletterTrackingAllowed,
   type NewsletterCampaign,
   type NewsletterCampaignContent,
   type NewsletterDashboardData,
@@ -28,6 +27,7 @@ import {
 import ColorPicker from "./ui/color-picker";
 import { useDialogAccessibility } from "../lib/use-dialog-accessibility";
 import { resolveSafePublicMediaUrl } from "../lib/browser-network-policy";
+import NewsletterSubscriberTable, { type NewsletterTranslator } from "./newsletter-subscriber-table";
 
 const DefaultLoadingIndicator = ({ size }: { size: number }) => <LoaderCircle aria-hidden="true" className="animate-spin" size={size} />;
 function RangeSlider({ value, valueLabel, ...props }: InputHTMLAttributes<HTMLInputElement> & { value: number; valueLabel: string }) {
@@ -47,6 +47,7 @@ export type NewsletterWorkspaceProps = {
   unavailableContent?: ReactNode;
   loadingIndicator?: ComponentType<{ size: number }>;
   dismissOnOutsideClick?: boolean;
+  subscriberTranslator?: NewsletterTranslator;
 };
 
 type CampaignDraft = {
@@ -184,6 +185,7 @@ export default function NewsletterWorkspaceView({
   unlimitedLabels = { subscribers: "No OrbitPage limit", sends: "No OrbitPage limit" },
   unavailableContent, loadingIndicator: LoadingIndicator = DefaultLoadingIndicator,
   dismissOnOutsideClick = true,
+  subscriberTranslator,
 }: NewsletterWorkspaceProps) {
   const [data, setData] = useState<NewsletterDashboardData | null>(null);
   const [localView, setLocalView] = useState<NewsletterView>("overview");
@@ -984,58 +986,7 @@ export default function NewsletterWorkspaceView({
                 </div>
               </div>
             ) : (
-              <div className="newsletter-table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Subscriber</th>
-                      <th>Status</th>
-                      <th>Source</th>
-                      <th>Email tracking</th>
-                      <th>Added</th>
-                      <th>
-                        <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.subscribers.map((item) => (
-                      <tr key={item.subscriberId}>
-                        <td>
-                          <strong>{item.name || item.email}</strong>
-                          {item.name && <span>{item.email}</span>}
-                        </td>
-                        <td>
-                          <span className={`newsletter-status ${item.status}`}>
-                            {item.status}
-                          </span>
-                        </td>
-                        <td>{item.source}</td>
-                        <td>{newsletterTrackingAllowed(item) ? "Consented" : "Disabled"}</td>
-                        <td>{new Date(item.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <button
-                            aria-label={`Remove ${item.email}`}
-                            className="newsletter-icon-button"
-                            disabled={action !== null}
-                            onClick={() =>
-                              void removeSubscriber(item.subscriberId)
-                            }
-                            type="button"
-                          >
-                            {action ===
-                            `subscriber-remove:${item.subscriberId}` ? (
-                              <LoadingIndicator size={14} />
-                            ) : (
-                              <Trash2 size={15} />
-                            )}
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <NewsletterSubscriberTable subscribers={data.subscribers} total={data.subscriberCounts.total} action={action} onRemove={removeSubscriber} loadingIndicator={LoadingIndicator} tr={subscriberTranslator} />
             )}
           </section>
         </div>

@@ -529,8 +529,55 @@
   font-weight: 800;
 }
 
+.newsletter-subscriber-list { min-width: 0; }
+
+.newsletter-subscriber-filters {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.newsletter-subscriber-filters > .field { flex: 1 1 140px; min-width: 0; }
+.newsletter-subscriber-filters > .newsletter-subscriber-search { flex-basis: 240px; }
+.newsletter-subscriber-search > span:last-child { display: flex; align-items: center; position: relative; }
+.newsletter-subscriber-search svg { color: var(--muted); inset-inline-start: 11px; pointer-events: none; position: absolute; }
+.newsletter-subscriber-search .input { padding-inline-start: 35px; }
+.newsletter-subscriber-filters .input { font-size: 12px; }
+.newsletter-subscriber-filters > .button { min-height: 42px; }
+.newsletter-subscriber-scope { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 0; padding: 0 20px 16px; }
+
+.newsletter-sort-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0;
+  text-align: start;
+  text-transform: inherit;
+}
+
+.newsletter-sort-button svg { flex: 0 0 auto; }
+.newsletter-sort-button:hover { color: var(--teal-dark); }
+.newsletter-subscriber-pagination { align-items: center; border-top: 1px solid var(--line); color: var(--muted); display: flex; flex-wrap: wrap; font-size: 12px; gap: 14px; justify-content: space-between; padding: 14px 20px; }
+.newsletter-subscriber-pagination p { margin: 0; }
+.newsletter-subscriber-pagination label, .newsletter-subscriber-pagination nav { align-items: center; display: flex; gap: 10px; }
+.newsletter-subscriber-pagination .input { font-size: 12px; min-height: 36px; padding: 6px; width: auto; }
+.newsletter-subscriber-pagination .button { min-height: 36px; }
+.newsletter-subscriber-pagination .button:disabled { cursor: default; }
+.newsletter-subscriber-list :is(.newsletter-sort-button, .newsletter-table-wrap, input, select, button):focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+
 .newsletter-table-wrap {
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  position: relative;
 }
 
 .newsletter-table-wrap table {
@@ -1107,6 +1154,10 @@
 }
 
 @media (max-width: 760px) {
+  .newsletter-subscriber-list > header { align-items: start; flex-direction: column; gap: 8px; }
+  .newsletter-subscriber-filters { padding: 16px; }
+  .newsletter-subscriber-filters > .newsletter-subscriber-search { flex-basis: 100%; }
+  .newsletter-subscriber-pagination { padding: 14px 16px; }
   .newsletter-tabs {
     gap: 20px;
   }
