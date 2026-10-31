@@ -138,11 +138,12 @@ function InfoBox({ children }: { children: React.ReactNode }) {
 }
 
 function StatusBadge({ configured }: { configured: boolean }) {
+  const { tr } = useAppI18n();
   return (
     <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
       configured ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
     }`}>
-      {configured ? 'Configured' : 'Missing'}
+      {configured ? tr("Configured", "Configurato") : tr("Missing", "Da configurare")}
     </span>
   );
 }
@@ -206,6 +207,7 @@ function PolicyConfigurator({
   onHostedFileNameChange: (name: string) => void;
   onProviderConfigChange: (config: string) => void;
 }) {
+  const { tr } = useAppI18n();
   const hostedPath = HOSTED_POLICY_PATH[kind];
   const resolvedUrl =
     method === 'hosted' ? hostedPath :
@@ -233,34 +235,34 @@ function PolicyConfigurator({
         <StatusBadge configured={configured} />
       </div>
 
-      <FieldRow label={`How do you want to provide your ${title.toLowerCase()}?`}>
+      <FieldRow label={tr("How do you want to provide this policy?", "Come vuoi fornire questa informativa?")}>
         <div className="privacy-method-grid grid gap-2">
           <MethodButton
             active={method === 'external'}
             icon={Link2}
-            title="External link"
-            description="Use a page you already have."
+            title={tr("External link", "Link esterno")}
+            description={tr("Use a page you already have.", "Usa una pagina già esistente.")}
             onClick={() => onMethodChange('external')}
           />
           <MethodButton
             active={method === 'hosted'}
             icon={FileText}
-            title="Host it in OrbitPage"
-            description={`Use the built-in ${hostedPath} page.`}
+            title={tr("Host it in OrbitPage", "Ospita su OrbitPage")}
+            description={`${tr("Use the built-in page at", "Usa la pagina integrata all’indirizzo")} ${hostedPath}.`}
             onClick={() => onMethodChange('hosted')}
           />
           <MethodButton
             active={method === 'embedded'}
             icon={Sliders}
-            title="Embedded"
-            description="Paste HTML or a script from a policy service."
+            title={tr("Embedded", "Incorporata")}
+            description={tr("Paste HTML or a script from a policy service.", "Incolla il codice HTML o lo script del servizio di informative.")}
             onClick={() => onMethodChange('embedded')}
           />
         </div>
       </FieldRow>
 
       {method === 'external' && (
-        <FieldRow label="Page URL" description="Users will be redirected to this page.">
+        <FieldRow label={tr("Page URL", "URL della pagina")} description={tr("Users will be redirected to this page.", "I visitatori verranno indirizzati a questa pagina.")}>
           <Input
             className="admin-input"
             value={externalUrl}
@@ -274,16 +276,16 @@ function PolicyConfigurator({
 
       {method === 'hosted' && (
         <div className="space-y-3">
-          <InfoBox>OrbitPage will generate a public page at {hostedPath}</InfoBox>
-          <FieldRow label="Policy text">
+          <InfoBox>{tr("OrbitPage will generate a public page at", "OrbitPage genererà una pagina pubblica all’indirizzo")} {hostedPath}</InfoBox>
+          <FieldRow label={tr("Policy text", "Testo dell’informativa")}>
             <Textarea
               className="admin-input min-h-[120px] resize-y text-sm"
               value={hostedText}
               onChange={(e) => onHostedTextChange(e.target.value)}
-              placeholder={`Paste your ${title.toLowerCase()} text here.`}
+              placeholder={tr("Paste the policy text here.", "Incolla qui il testo dell’informativa.")}
             />
           </FieldRow>
-          <FieldRow label="Upload text file" description=".txt files are copied into the text box. .docx files can be selected as a reminder for manual review.">
+          <FieldRow label={tr("Upload text file", "Carica un file di testo")} description={tr(".txt files are copied into the text box. .docx files can be selected as a reminder for manual review.", "Il contenuto dei file .txt viene copiato nel campo di testo. I file .docx possono essere selezionati come promemoria per la revisione manuale.")}>
             <Input
               className="admin-input"
               type="file"
@@ -291,11 +293,11 @@ function PolicyConfigurator({
               onChange={(e) => void handleFile(e.target.files?.[0])}
             />
             {hostedFileName && (
-              <p className="text-xs leading-5 text-slate-500">Selected: {hostedFileName}</p>
+              <p className="text-xs leading-5 text-slate-500">{tr("Selected:", "Selezionato:")} {hostedFileName}</p>
             )}
           </FieldRow>
           <a className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 underline" href={withBasePath(hostedPath)} target="_blank" rel="noopener noreferrer">
-            Preview {hostedPath}
+            {tr("Preview", "Anteprima")} {hostedPath}
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
@@ -304,10 +306,10 @@ function PolicyConfigurator({
       {method === 'embedded' && (
         <details className="rounded-lg border border-slate-200 bg-white p-3">
           <summary className="cursor-pointer text-sm font-semibold text-slate-800">
-            Advanced - embedded policy
+            {tr("Advanced - embedded policy", "Avanzate: informativa incorporata")}
           </summary>
           <div className="mt-3 space-y-3">
-            <FieldRow label="Policy embed code" description={`Paste the HTML or script for this document. OrbitPage will render it at ${hostedPath}.`}>
+            <FieldRow label={tr("Policy embed code", "Codice di incorporamento dell’informativa")} description={`${tr("Paste the HTML or script for this document. OrbitPage will render it at", "Incolla il codice HTML o lo script del documento. OrbitPage lo mostrerà all’indirizzo")} ${hostedPath}.`}>
               <Textarea
                 className="admin-input min-h-[120px] resize-y font-mono text-xs"
                 value={providerConfig}
@@ -316,9 +318,9 @@ function PolicyConfigurator({
               />
             </FieldRow>
             {providerConfig.trim() ? (
-              <p className="text-xs text-green-700">Embedded policy configured. Use Preview to verify the public page.</p>
+              <p className="text-xs text-green-700">{tr("Embedded policy configured. Use Preview to verify the public page.", "Informativa incorporata configurata. Usa Anteprima per verificare la pagina pubblica.")}</p>
             ) : (
-              <p className="text-xs text-amber-700">Missing: paste the embed code from your policy service.</p>
+              <p className="text-xs text-amber-700">{tr("Missing: paste the embed code from your policy service.", "Incolla il codice di incorporamento fornito dal servizio di informative.")}</p>
             )}
           </div>
         </details>
@@ -334,12 +336,13 @@ function LegalPoliciesForm({
   privacy: Omit<React.ComponentProps<typeof PolicyConfigurator>, 'kind' | 'title'>;
   cookie: Omit<React.ComponentProps<typeof PolicyConfigurator>, 'kind' | 'title'>;
 }) {
+  const { tr } = useAppI18n();
   return (
     <div className="privacy-legal-form space-y-4">
       <div className="space-y-4">
         <div className="privacy-policy-grid">
-          <PolicyConfigurator kind="privacy" title="Privacy Policy" {...privacy} />
-          <PolicyConfigurator kind="cookie" title="Cookie Policy" {...cookie} />
+          <PolicyConfigurator kind="privacy" title={tr("Privacy Policy", "Informativa sulla privacy")} {...privacy} />
+          <PolicyConfigurator kind="cookie" title={tr("Cookie Policy", "Informativa sui cookie")} {...cookie} />
         </div>
       </div>
     </div>
@@ -357,13 +360,14 @@ function CategorySection({
   catCfg: { enabled: boolean; title: string; description: string };
   onChange: (updates: Partial<typeof catCfg>) => void;
 }) {
+  const { tr } = useAppI18n();
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-slate-900">{label}</p>
           <p className="text-xs text-slate-500">
-            {catCfg.enabled ? 'Visible in preferences modal' : 'Hidden from users'}
+            {catCfg.enabled ? tr("Visible in preferences modal", "Visibile nella finestra delle preferenze") : tr("Hidden from users", "Nascosta ai visitatori")}
           </p>
         </div>
         <Switch
@@ -374,7 +378,7 @@ function CategorySection({
       </div>
       {catCfg.enabled && (
         <div className="space-y-2 pt-1">
-          <FieldRow label="Category title">
+          <FieldRow label={tr("Category title", "Titolo della categoria")}>
             <Input
               className="admin-input"
               value={catCfg.title}
@@ -382,7 +386,7 @@ function CategorySection({
               maxLength={100}
             />
           </FieldRow>
-          <FieldRow label="Description (shown to users)" description="Required when the category is enabled.">
+          <FieldRow label={tr("Description (shown to users)", "Descrizione mostrata ai visitatori")} description={tr("Required when the category is enabled.", "Obbligatoria quando la categoria è abilitata.")}>
             <Textarea
               className="admin-input min-h-[72px] resize-y text-sm"
               value={catCfg.description}
@@ -405,6 +409,7 @@ function HardcodedForm({
   cfg: NonNullable<ConsentConfigData['hardcoded']>;
   onChange: (updates: Partial<NonNullable<ConsentConfigData['hardcoded']>>) => void;
 }) {
+  const { tr } = useAppI18n();
   const updateTexts = (updates: Partial<typeof cfg.texts>) =>
     onChange({ texts: { ...cfg.texts, ...updates } });
   const updateCat = (
@@ -416,10 +421,10 @@ function HardcodedForm({
     <Tabs defaultValue="content" className="mt-1">
       <TabsList className="privacy-banner-tabs mb-4 h-auto flex-wrap gap-1 bg-slate-100 p-1">
         {[
-          { value: 'content', label: 'Banner text', icon: Type },
-          { value: 'categories', label: 'Categories', icon: ListChecks },
-          { value: 'appearance', label: 'Appearance', icon: LayoutTemplate },
-          { value: 'advanced', label: 'Advanced', icon: Sliders },
+          { value: 'content', label: tr("Banner text", "Testi del banner"), icon: Type },
+          { value: 'categories', label: tr("Categories", "Categorie"), icon: ListChecks },
+          { value: 'appearance', label: tr("Appearance", "Aspetto"), icon: LayoutTemplate },
+          { value: 'advanced', label: tr("Advanced", "Avanzate"), icon: Sliders },
         ].map(({ value, label, icon: Icon }) => (
           <TabsTrigger
             key={value}
@@ -434,52 +439,52 @@ function HardcodedForm({
 
       {/* ── Banner text ── */}
       <TabsContent value="content" className="space-y-4">
-        <FieldRow label="Banner title">
+        <FieldRow label={tr("Banner title", "Titolo del banner")}>
           <Input className="admin-input" value={cfg.texts.title}
             onChange={(e) => updateTexts({ title: e.target.value })} maxLength={200} />
         </FieldRow>
-        <FieldRow label="Banner description" description="Explain what cookies are used for. Be specific.">
+        <FieldRow label={tr("Banner description", "Descrizione del banner")} description={tr("Explain what cookies are used for. Be specific.", "Spiega in modo preciso a cosa servono i cookie.")}>
           <Textarea className="admin-input min-h-[80px] resize-y text-sm" value={cfg.texts.description}
             onChange={(e) => updateTexts({ description: e.target.value })} maxLength={2000} />
         </FieldRow>
         <div className="space-y-3 border-t border-slate-200 pt-4">
-          <h3 className="text-sm font-semibold text-slate-950">Banner buttons</h3>
+          <h3 className="text-sm font-semibold text-slate-950">{tr("Banner buttons", "Pulsanti del banner")}</h3>
           <div className="grid gap-4 sm:grid-cols-3">
-            <FieldRow label="Accept button label">
+            <FieldRow label={tr("Accept button label", "Testo del pulsante Accetta")}>
               <Input className="admin-input" value={cfg.texts.acceptAll}
                 onChange={(e) => updateTexts({ acceptAll: e.target.value })} maxLength={100} />
             </FieldRow>
-            <FieldRow label="Reject button label">
+            <FieldRow label={tr("Reject button label", "Testo del pulsante Rifiuta")}>
               <Input className="admin-input" value={cfg.texts.rejectAll}
                 onChange={(e) => updateTexts({ rejectAll: e.target.value })} maxLength={100} />
             </FieldRow>
-            <FieldRow label="Manage preferences label">
+            <FieldRow label={tr("Manage preferences label", "Testo del pulsante Gestisci preferenze")}>
               <Input className="admin-input" value={cfg.texts.managePreferences}
                 onChange={(e) => updateTexts({ managePreferences: e.target.value })} maxLength={100} />
             </FieldRow>
           </div>
         </div>
         <div className="grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
-          <FieldRow label="Save preferences label">
+          <FieldRow label={tr("Save preferences label", "Testo del pulsante Salva preferenze")}>
             <Input className="admin-input" value={cfg.texts.savePreferences}
               onChange={(e) => updateTexts({ savePreferences: e.target.value })} maxLength={100} />
           </FieldRow>
-          <FieldRow label="Reopen chip label">
+          <FieldRow label={tr("Reopen chip label", "Testo del pulsante per riaprire le preferenze")}>
             <Input className="admin-input" value={cfg.texts.reopenLabel}
               onChange={(e) => updateTexts({ reopenLabel: e.target.value })} maxLength={100} />
           </FieldRow>
         </div>
         <div className="grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
-          <FieldRow label="Privacy policy link text">
+          <FieldRow label={tr("Privacy policy link text", "Testo del link all’informativa sulla privacy")}>
             <Input className="admin-input" value={cfg.texts.privacyPolicyLinkText}
               onChange={(e) => updateTexts({ privacyPolicyLinkText: e.target.value })} maxLength={100} />
           </FieldRow>
-          <FieldRow label="Cookie policy link text">
+          <FieldRow label={tr("Cookie policy link text", "Testo del link all’informativa sui cookie")}>
             <Input className="admin-input" value={cfg.texts.cookiePolicyLinkText}
               onChange={(e) => updateTexts({ cookiePolicyLinkText: e.target.value })} maxLength={100} />
           </FieldRow>
         </div>
-        <FieldRow label="Legal / help text">
+        <FieldRow label={tr("Legal / help text", "Testo legale o di aiuto")}>
           <Textarea className="admin-input min-h-[64px] resize-y text-sm" value={cfg.legalFooterText}
             onChange={(e) => onChange({ legalFooterText: e.target.value })} maxLength={500} />
         </FieldRow>
@@ -490,19 +495,19 @@ function HardcodedForm({
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-sm font-semibold text-slate-900">Necessary</p>
-              <p className="text-xs text-slate-500">Always active — essential for site functionality</p>
+              <p className="text-sm font-semibold text-slate-900">{tr("Necessary", "Necessari")}</p>
+              <p className="text-xs text-slate-500">{tr("Always active — essential for site functionality", "Sempre attivi: essenziali per il funzionamento del sito")}</p>
             </div>
             <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-              Always on
+              {tr("Always on", "Sempre attivi")}
             </span>
           </div>
         </div>
         {(
           [
-            ['preferences', 'Preferences'],
-            ['analytics', 'Analytics'],
-            ['marketing', 'Marketing'],
+            ['preferences', tr("Preferences", "Preferenze")],
+            ['analytics', tr("Analytics", "Statistiche")],
+            ['marketing', tr("Marketing", "Marketing")],
           ] as const
         ).map(([cat, label]) => (
           <CategorySection
@@ -518,34 +523,34 @@ function HardcodedForm({
       {/* ── Appearance ── */}
       <TabsContent value="appearance" className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <FieldRow label="Banner layout">
+          <FieldRow label={tr("Banner layout", "Posizione del banner")}>
             <Select value={cfg.layout} onValueChange={(v: typeof cfg.layout) => onChange({ layout: v })}>
               <SelectTrigger className="admin-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="bottom-bar">Bottom bar (recommended)</SelectItem>
-                <SelectItem value="centered-modal">Centered modal</SelectItem>
-                <SelectItem value="corner-popup">Corner popup</SelectItem>
+                <SelectItem value="bottom-bar">{tr("Bottom bar (recommended)", "Barra inferiore (consigliata)")}</SelectItem>
+                <SelectItem value="centered-modal">{tr("Centered modal", "Finestra centrale")}</SelectItem>
+                <SelectItem value="corner-popup">{tr("Corner popup", "Popup nell’angolo")}</SelectItem>
               </SelectContent>
             </Select>
           </FieldRow>
-          <FieldRow label="Color theme">
+          <FieldRow label={tr("Color theme", "Tema cromatico")}>
             <Select value={cfg.theme} onValueChange={(v: typeof cfg.theme) => onChange({ theme: v })}>
               <SelectTrigger className="admin-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="auto">Auto (follows system)</SelectItem>
-                <SelectItem value="light">Light</SelectItem>
-                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="auto">{tr("Auto (follows system)", "Automatico (segue il sistema)")}</SelectItem>
+                <SelectItem value="light">{tr("Light", "Chiaro")}</SelectItem>
+                <SelectItem value="dark">{tr("Dark", "Scuro")}</SelectItem>
               </SelectContent>
             </Select>
           </FieldRow>
         </div>
         <FieldRow
-          label="Button priority"
-          description='Choose "Reject first" to place the reject button before accept — required in some EU member states.'
+          label={tr("Button priority", "Ordine dei pulsanti")}
+          description={tr("Choose \"Reject first\" to place the reject button before accept — required in some EU member states.", "Scegli \"Rifiuta prima\" per mostrare il pulsante Rifiuta prima di Accetta, come richiesto in alcuni Stati membri dell’UE.")}
         >
           <Select
             value={cfg.buttonPriority}
@@ -555,15 +560,13 @@ function HardcodedForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="equal">Equal weight (Manage · Reject · Accept)</SelectItem>
-              <SelectItem value="reject-first">Reject first (Reject · Manage · Accept)</SelectItem>
+              <SelectItem value="equal">{tr("Equal weight (Manage · Reject · Accept)", "Stessa rilevanza (Gestisci · Rifiuta · Accetta)")}</SelectItem>
+              <SelectItem value="reject-first">{tr("Reject first (Reject · Manage · Accept)", "Rifiuta prima (Rifiuta · Gestisci · Accetta)")}</SelectItem>
             </SelectContent>
           </Select>
         </FieldRow>
         <InfoBox>
-          "Reject all" and "Accept all" always receive the same visual size and weight by design.
-          This satisfies the EDPB and Italian Garante guidance that opt-out must be as easy as
-          opt-in.
+          {tr("\"Reject all\" and \"Accept all\" always receive the same visual size and weight by design. This satisfies the EDPB and Italian Garante guidance that opt-out must be as easy as opt-in.", "I pulsanti \"Rifiuta tutto\" e \"Accetta tutto\" hanno sempre le stesse dimensioni e la stessa rilevanza visiva, in linea con le indicazioni dell’EDPB e del Garante italiano sulla facilità di rifiutare o accettare il consenso.")}
         </InfoBox>
       </TabsContent>
 
@@ -571,23 +574,23 @@ function HardcodedForm({
       <TabsContent value="advanced" className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldRow
-            label="Geo behaviour"
-            description="Who sees the banner. 'EU/EEA only' is the recommended default."
+            label={tr("Geo behaviour", "Area geografica")}
+            description={tr("Who sees the banner. 'EU/EEA only' is the recommended default.", "Scegli chi vede il banner. L’impostazione predefinita consigliata è \"Solo UE/SEE\".")}
           >
             <Select value={cfg.geoMode} onValueChange={(v: typeof cfg.geoMode) => onChange({ geoMode: v })}>
               <SelectTrigger className="admin-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="eu-only">EU / EEA / UK only (recommended)</SelectItem>
-                <SelectItem value="global">Global (all visitors)</SelectItem>
-                <SelectItem value="always">Always show</SelectItem>
+                <SelectItem value="eu-only">{tr("EU / EEA / UK only (recommended)", "Solo UE / SEE / Regno Unito (consigliato)")}</SelectItem>
+                <SelectItem value="global">{tr("Global (all visitors)", "Globale (tutti i visitatori)")}</SelectItem>
+                <SelectItem value="always">{tr("Always show", "Mostra sempre")}</SelectItem>
               </SelectContent>
             </Select>
           </FieldRow>
           <FieldRow
-            label="Consent validity (days)"
-            description="How long stored consent is considered valid before re-prompting."
+            label={tr("Consent validity (days)", "Validità del consenso (giorni)")}
+            description={tr("How long stored consent is considered valid before re-prompting.", "Per quanto tempo il consenso salvato resta valido prima di richiederlo di nuovo.")}
           >
             <Input
               className="admin-input"
@@ -602,8 +605,8 @@ function HardcodedForm({
           </FieldRow>
         </div>
         <FieldRow
-          label="Policy version"
-          description="Increment this string when you update your privacy or cookie policy. Visitors who previously consented will be re-prompted (when the option below is enabled)."
+          label={tr("Policy version", "Versione dell’informativa")}
+          description={tr("Increment this string when you update your privacy or cookie policy. Visitors who previously consented will be re-prompted (when the option below is enabled).", "Aggiorna questa versione quando modifichi le informative sulla privacy o sui cookie. Se l’opzione seguente è attiva, il consenso verrà richiesto di nuovo.")}
         >
           <Input
             className="admin-input font-mono"
@@ -615,21 +618,19 @@ function HardcodedForm({
         </FieldRow>
         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-slate-800">Re-show banner on policy update</p>
+            <p className="text-sm font-medium text-slate-800">{tr("Re-show banner on policy update", "Mostra di nuovo il banner quando cambia l’informativa")}</p>
             <p className="text-xs text-slate-500">
-              Visitors who already consented will see the banner again when the policy version changes.
+              {tr("Visitors who already consented will see the banner again when the policy version changes.", "Chi ha già espresso il consenso vedrà di nuovo il banner quando cambia la versione dell’informativa.")}
             </p>
           </div>
           <Switch
-            aria-label="Re-show banner on policy update"
+            aria-label={tr("Re-show banner on policy update", "Mostra di nuovo il banner quando cambia l’informativa")}
             checked={cfg.reshowOnVersionChange}
             onCheckedChange={(v) => onChange({ reshowOnVersionChange: v })}
           />
         </div>
         <InfoBox>
-          Under EU/EEA law, geo detection on the client side is not reliable without a server-side
-          IP geolocation API. Setting "Global" ensures all visitors see the banner and is the
-          safest choice for most deployments.
+          {tr("Under EU/EEA law, geo detection on the client side is not reliable without a server-side IP geolocation API. Setting \"Global\" ensures all visitors see the banner and is the safest choice for most deployments.", "Per applicare le regole UE/SEE, il rilevamento geografico nel browser non è affidabile senza un’API di geolocalizzazione IP lato server. L’impostazione \"Globale\" mostra il banner a tutti i visitatori ed è la scelta più prudente per la maggior parte delle installazioni.")}
         </InfoBox>
       </TabsContent>
     </Tabs>
@@ -651,7 +652,7 @@ function BuilderForm({
 
   return (
     <div className="space-y-5">
-      <FieldRow label="CMP provider" description="Choose a supported integration. Use Custom only when your provider is not listed.">
+      <FieldRow label={tr("CMP provider", "Fornitore CMP")} description={tr("Choose a supported integration. Use Custom only when your provider is not listed.", "Scegli un’integrazione supportata. Usa l’opzione personalizzata solo se il tuo fornitore non è nell’elenco.")}>
         <Select value={cfg.provider} onValueChange={(provider) => onChange({ provider: provider as typeof cfg.provider })}>
           <SelectTrigger className="admin-input"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -659,7 +660,7 @@ function BuilderForm({
             <SelectItem value="cookiebot">Cookiebot</SelectItem>
             <SelectItem value="cookieyes">CookieYes</SelectItem>
             <SelectItem value="onetrust">OneTrust</SelectItem>
-            <SelectItem value="custom">Custom snippet</SelectItem>
+            <SelectItem value="custom">{tr("Custom snippet", "Codice personalizzato")}</SelectItem>
           </SelectContent>
         </Select>
       </FieldRow>
@@ -684,19 +685,19 @@ function BuilderForm({
       )}
 
       {(cfg.provider === 'cookiebot' || cfg.provider === 'cookieyes') && (
-        <FieldRow label={cfg.provider === 'cookiebot' ? 'Cookiebot CBID' : 'CookieYes script ID'} description="Copy the identifier from the provider installation code.">
+        <FieldRow label={cfg.provider === 'cookiebot' ? 'Cookiebot CBID' : tr("CookieYes script ID", "ID dello script CookieYes")} description={tr("Copy the identifier from the provider installation code.", "Copia l’identificativo dal codice di installazione del fornitore.")}>
           <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.scriptId ?? ''} onChange={(e) => updateCfg({ scriptId: e.target.value })} />
         </FieldRow>
       )}
 
       {cfg.provider === 'onetrust' && (
-        <FieldRow label="OneTrust domain script ID" description="The data-domain-script value from the OneTrust installation code.">
+        <FieldRow label={tr("OneTrust domain script ID", "ID dello script di dominio OneTrust")} description={tr("The data-domain-script value from the OneTrust installation code.", "Il valore data-domain-script presente nel codice di installazione OneTrust.")}>
           <Input className="admin-input font-mono text-xs" value={cfg.providerConfig.siteId ?? ''} onChange={(e) => updateCfg({ siteId: e.target.value })} />
         </FieldRow>
       )}
 
       {cfg.provider === 'custom' && (
-        <FieldRow label="CMP script" description="Paste the trusted installation snippet supplied by your CMP.">
+        <FieldRow label={tr("CMP script", "Script CMP")} description={tr("Paste the trusted installation snippet supplied by your CMP.", "Incolla il codice di installazione attendibile fornito dalla tua CMP.")}>
           <Textarea
             className="admin-input min-h-[140px] resize-y font-mono text-xs"
             value={cfg.providerConfig.headSnippet ?? ''}
@@ -707,8 +708,8 @@ function BuilderForm({
         </FieldRow>
       )}
       <FieldRow
-        label="Reopen selector (optional)"
-        description='Optional CSS selector or JS expression that opens your provider preferences again. Example: ".cky-btn-revisit".'
+        label={tr("Reopen selector (optional)", "Selettore per riaprire le preferenze (facoltativo)")}
+        description={tr("Optional CSS selector or JS expression that opens your provider preferences again. Example: \".cky-btn-revisit\".", "Selettore CSS o espressione JS facoltativi per riaprire le preferenze del fornitore. Esempio: \".cky-btn-revisit\".")}
       >
         <Input className="admin-input font-mono text-xs" value={cfg.reopenSelector}
           onChange={(e) => onChange({ reopenSelector: e.target.value })} maxLength={200}

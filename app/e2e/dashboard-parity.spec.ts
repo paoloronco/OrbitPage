@@ -709,7 +709,7 @@ test('keeps product labels shared with SaaS without repeating localized section 
 
   await expect(page.getByRole('button', { name: 'Editor sito', exact: true })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Sezioni del sito' }).getByRole('button', { name: 'Contenuti', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Theme', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Tema', exact: true })).toBeVisible();
   await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Editor sito');
   await expect(page.locator('.admin-dashboard-main > h1')).toHaveClass('sr-only');
   await expect(page.getByText('Modifica identità e contenuti direttamente sulla pagina reale.', { exact: true })).toHaveCount(0);
@@ -736,4 +736,41 @@ test('keeps product labels shared with SaaS without repeating localized section 
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Account');
   await expect(page.getByText('Gestisci identità, sicurezza e workspace attivo.', { exact: true })).toHaveCount(0);
+});
+
+
+test('localizes sidebar, theme and privacy controls without changing the chosen language', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem('orbitpage.locale', 'it'));
+  await page.route('**/api/consent-config*', route => route.fulfill({ json: {
+    success: true, data: { mode: 'hardcoded', enabled: true },
+  } }));
+  await openAuthenticatedAdmin(page);
+  const navigation = page.locator('.admin-dashboard-nav-stack .admin-dashboard-nav-item');
+  const italianLabels = ['Editor sito', 'Assistente AI', 'Tema', 'Pubblica', 'Backup', 'Statistiche', 'Privacy', 'Newsletter', 'Team', 'Account', 'Edizione'];
+  await expect(navigation).toHaveText(italianLabels);
+  await page.getByRole('button', { name: 'Tema', exact: true }).click();
+  await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Tema');
+  await expect(page.getByRole('tablist', { name: 'Sezioni del tema' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Personalizzazione avanzata', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Privacy', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Informativa sulla privacy', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Informativa sui cookie', exact: true })).toBeVisible();
+  await page.locator('[aria-controls="privacy-panel-consent"]').click();
+  await expect(page.getByRole('tab', { name: 'Testi del banner', exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Aspetto', exact: true }).click();
+  await expect(page.getByText('Tema cromatico', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Avanzate', exact: true }).click();
+  await expect(page.getByText('Validità del consenso (giorni)', { exact: true })).toBeVisible();
+  await page.getByLabel('Lingua', { exact: true }).selectOption('fr');
+  await expect(page.getByRole('button', { name: 'Thème', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Statistiques', exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/fr-FR\/dashboard\/privacy/);
+  await page.locator('.admin-dashboard-language select').selectOption('it');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Apri navigazione', exact: true }).click();
+  await expect(navigation).toHaveText(italianLabels);
+  await expect(page.getByRole('button', { name: 'Tema', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Tema', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Personalizzazione avanzata', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 });

@@ -221,9 +221,9 @@ export const AdminView = ({
 }: AdminViewProps) => {
   const { locale, setLocale, tr } = useAppI18n();
   const tabLabel = (tab: AdminTab) => ({
-    profile: "Page", content: "Content", links: "Content", pages: "Content", ai: tr("AI Assistant", "Assistente AI"), theme: "Theme", menu: "Content",
+    profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), ai: tr("AI Assistant", "Assistente AI"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
-    newsletter: "Newsletter", team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Edition", "Edizione"), access: tr("Account", "Account"), backup: "Backup", analytics: "Analytics", privacy: "Privacy",
+    newsletter: tr("Newsletter", "Newsletter"), team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Edition", "Edizione"), access: tr("Account", "Account"), backup: tr("Backup", "Backup"), analytics: tr("Analytics", "Statistiche"), privacy: tr("Privacy", "Privacy"),
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [distributionImage, setDistributionImage] = useState("");
@@ -1238,6 +1238,7 @@ function PlanLockedFeature({
   description: string;
   managePlanHref: string;
 }) {
+  const { tr } = useAppI18n();
   return (
     <Card className="admin-plan-locked">
       <span className="admin-plan-locked-icon"><LockKeyhole className="h-5 w-5" /></span>
@@ -1245,7 +1246,7 @@ function PlanLockedFeature({
         <h2>{title}</h2>
         <p>{description}</p>
       </div>
-      <a href={managePlanHref} target="_top">View plans</a>
+      <a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a>
     </Card>
   );
 }

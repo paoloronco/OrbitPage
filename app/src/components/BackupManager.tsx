@@ -365,7 +365,7 @@ export function BackupManager({ hosted = false, canRestore = true }: BackupManag
       <section className="admin-backup-section admin-backup-section--export space-y-4" aria-labelledby="backup-export-heading">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h4 id="backup-export-heading" className="text-sm font-semibold">Export</h4>
+            <h4 id="backup-export-heading" className="text-sm font-semibold">{tr("Export", "Esporta")}</h4>
           </div>
           <div className="flex gap-3 text-xs">
             <button type="button" className="font-medium text-primary hover:underline" onClick={() => setExportSections(exportableSections)} disabled={busy}>{tr("Select all", "Seleziona tutto")}</button>

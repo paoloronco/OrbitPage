@@ -75,6 +75,7 @@ const findMatchingPreset = (theme: ThemeConfig) => themePresets.find((preset) =>
 ))?.id || null;
 
 const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?: boolean }) => {
+  const { tr } = useAppI18n();
   const boxShadow = getCardShadowCss(theme.cardShadow);
   const cardStyle: CSSProperties = {
     background: getCardSurfaceGradient(theme.contentCard, theme.contentCardOpacity),
@@ -121,7 +122,7 @@ const ThemeMockup = ({ theme, compact = false }: { theme: ThemeConfig; compact?:
               className="flex h-9 items-center justify-center rounded-lg text-[9px] font-bold uppercase tracking-[0.16em]"
               style={{ background: theme.contentCard.accent, color: theme.contentCard.accentForeground }}
             >
-              Call to action
+              {tr("Call to action", "Invito all’azione")}
             </div>
           ) : null}
         </div>
@@ -378,10 +379,10 @@ export const ThemeCustomizer = ({
     <div className="admin-theme-customizer space-y-6" data-onboarding="theme-customizer">
       <Tabs value={presetScope} onValueChange={value => setPresetScope(value as PresetScope)}>
         <div className="theme-workspace-header">
-        <TabsList className="theme-workspace-tabs" aria-label={tr("Theme sections", "Sezioni Theme")}>
+        <TabsList className="theme-workspace-tabs" aria-label={tr("Theme sections", "Sezioni del tema")}>
           <TabsTrigger value="page" disabled={saveState === "saving"}><Palette size={16} />{tr("Page themes", "Temi pagina")}</TabsTrigger>
           <TabsTrigger value="cards" disabled={!premiumThemesEnabled || saveState === "saving"}><Layers3 size={16} />{tr("Card styles", "Stili card")}</TabsTrigger>
-          <TabsTrigger value="fine-tuning" disabled={saveState === "saving"}><Palette size={16} />{tr("Fine tuning", "Fine-tuning")}</TabsTrigger>
+          <TabsTrigger value="fine-tuning" disabled={saveState === "saving"}><Palette size={16} />{tr("Fine tuning", "Personalizzazione avanzata")}</TabsTrigger>
         </TabsList>
         {showEmbeddedPreview && <div className="admin-theme-preview-context admin-section-actions">
           <PreviewDeviceToggle value={previewDevice} onChange={setPreviewDevice} />
@@ -403,7 +404,7 @@ export const ThemeCustomizer = ({
         publicPageHref={publicPageHref} showOrbitPageBadge={showOrbitPageBadge}
         onSave={saveTheme} saving={saveState === "saving"} dirty={hasDraft} error={saveError} onDialogChange={setFineDialogOpen}
         videoUploadsEnabled={videoUploadsEnabled} maxUploadBytes={maxUploadBytes} maxVideoUploadBytes={maxVideoUploadBytes} managePlanHref={managePlanHref}
-      /> : <div className="admin-inline-plan-lock"><LockKeyhole size={20} /><span>{tr("Fine tuning is available on Pro.", "Fine-tuning è disponibile con Pro.")}</span><a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a></div> : <div className={showEmbeddedPreview ? "admin-theme-layout" : "admin-theme-layout admin-theme-layout--without-preview"}>
+      /> : <div className="admin-inline-plan-lock"><LockKeyhole size={20} /><span>{tr("Fine tuning is available on Pro.", "La personalizzazione avanzata è disponibile con Pro.")}</span><a href={managePlanHref} target="_top">{tr("View plans", "Vedi i piani")}</a></div> : <div className={showEmbeddedPreview ? "admin-theme-layout" : "admin-theme-layout admin-theme-layout--without-preview"}>
         <section className="admin-theme-catalog rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-6">
           {presetScope === "page" ? (
             <>
