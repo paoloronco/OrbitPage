@@ -9361,6 +9361,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 }
 
 .admin-dashboard-nav-stack .admin-dashboard-nav {
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
 }
 
