@@ -1,6 +1,6 @@
 # Dashboard
 
-The dashboard is where you edit your public page, manage sharing and newsletters, and change account or installation settings.
+The dashboard is where you edit your public page, manage sharing and newsletters, and change account or installation settings. The sidebar starts directly with **Site editor**.
 
 ## Sign in and first page
 

@@ -855,7 +855,7 @@ export const AdminView = ({
           />
 
           <div ref={mobileNavRef} role={mobileNavOpen ? "dialog" : undefined} aria-modal={mobileNavOpen || undefined} aria-label={mobileNavOpen ? tr("Page tools", "Strumenti pagina") : undefined} tabIndex={-1} className={`admin-dashboard-nav-stack${mobileNavOpen ? " open" : ""}`} id="admin-dashboard-primary-navigation">
-            <div className="admin-dashboard-nav-heading">{tr("Page tools", "Strumenti pagina")}<button className="admin-dashboard-nav-close" aria-label={tr("Close navigation", "Chiudi navigazione")} onClick={() => setMobileNavOpen(false)} type="button"><X aria-hidden="true" size={18} /></button></div>
+            <button className="admin-dashboard-nav-close" aria-label={tr("Close navigation", "Chiudi navigazione")} onClick={() => setMobileNavOpen(false)} type="button"><X aria-hidden="true" size={18} /></button>
             <nav className="admin-dashboard-nav admin-dashboard-nav-page" aria-label={tr("Page tools", "Strumenti pagina")}>
               {visiblePageTabs.map(({ value, icon: Icon, iconName }) => (
                 <button
