@@ -127,6 +127,7 @@ describe('AdminView demo mode', () => {
     expect(html).not.toContain('Admin access');
     expect(html).toContain('admin-dashboard-shell');
     expect(html).toContain('admin-dashboard-sidebar');
+    expect(html).toContain('class="admin-dashboard-logo" href="/" target="_blank"');
     expect(html).not.toContain('Open Source plan');
     expect(html).not.toContain('Workspace Open Source');
     expect(html).toContain('Page tools');
@@ -195,7 +196,7 @@ describe('AdminView demo mode', () => {
     expect(mockState.backupProps.at(-1)).toMatchObject({ hosted: true });
     expect(html).not.toContain('admin-metrics-saas');
     expect(html).not.toContain('admin-dashboard-sidebar');
-    expect(html).toContain('data-onboarding="public-page"');
+    expect(html).not.toContain('admin-section-public-page');
     expect(html).toContain('data-testid="managed-analytics-loader"');
     expect(html).not.toContain('data-testid="oss-analytics"');
     expect(html).not.toContain('Page visits and clicks');
@@ -248,8 +249,7 @@ describe('AdminView demo mode', () => {
     expect(html).toContain('Read-only access');
     expect(html).toContain('admin-readonly-stage');
     expect(html).toContain('inert=""');
-    expect(html.match(/class="admin-dashboard-public-page admin-section-public-page"/g)).toHaveLength(1);
-    expect(html.indexOf('class="admin-dashboard-public-page admin-section-public-page"')).toBeLessThan(html.indexOf('admin-tab-stage'));
+    expect(html).not.toContain('admin-section-public-page');
     expect(html).toContain('ProfileSection');
     expect(html).toContain('visual-site-editor');
     expect(html).not.toContain('>Guide<');

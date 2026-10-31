@@ -145,7 +145,8 @@ test('OSS edits products and storefront before setup while requiring Compliance,
   await expect(shop.getByRole('region', { name: 'Required Shop setup' })).toHaveCount(0);
   await expect(shop.getByRole('navigation', { name: 'Shop settings sections' })).toBeVisible();
   await expect(shop.getByRole('button', { name: 'Add product', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Public Shop', exact: true })).toHaveAttribute('href', /\/shop$/);
+  await expect(page.getByRole('link', { name: 'Public Shop', exact: true })).toHaveCount(0);
+  expect(new URL((await page.locator('a.admin-dashboard-logo').getAttribute('href'))!, page.url()).pathname).toBe('/');
   await shop.getByRole('button', { name: 'Stripe', exact: true }).click();
   await expect(shop.getByLabel('Stripe secret API key')).toHaveAttribute('type', 'password');
   await expect(shop.getByLabel('Stripe webhook endpoint')).toHaveValue(/\/api\/shop\/webhook$/);

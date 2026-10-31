@@ -2,7 +2,7 @@
 
 The dashboard is where you edit your public page, manage sharing and newsletters, and change account or installation settings.
 
-The sidebar starts directly with **Site editor**.
+The sidebar starts directly with **Site editor**. Click the OrbitPage logo or your slug above the menu to open your public page in a new tab.
 
 ## Sign in and first page
 
@@ -14,7 +14,7 @@ The sidebar starts directly with **Site editor**.
 1. Open **Page** and set your name, description and profile image.
 2. Open **Content** to add links, text, media or other blocks.
 3. Choose your colors, font and background in **Theme**.
-4. Save each section you changed, then open **Public page** to check the result.
+4. Save each section you changed, then click the OrbitPage logo or slug in the sidebar to check the public result.
 
 In SaaS, check the selected workspace before editing. Each workspace has its own page, membership, plan and connected services. Available actions depend on your permissions; hosted plans also determine feature availability and quotas.
 
@@ -38,7 +38,7 @@ The **Shop** section sells digital products and services through the owner's Str
 
 See [Content and design](./sections/content-and-design.md) for editing controls, [External modules](../integrations/external-modules.md) for connected services and [AI Assistant](../ai-assistant.md) for provider setup.
 
-**Public page** opens your live page in a new tab. Find it beside the preview device controls in Site editor and Theme, at the top right of the AI conversation, or above the Publish tools. In the Shop editor, the action opens the public Shop.
+The logo and slug always open the main public address, including while editing Shop.
 
 ### Share and manage content options
 

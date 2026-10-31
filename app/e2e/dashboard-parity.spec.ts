@@ -423,15 +423,11 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(sidebarFooter).toHaveCSS('gap', '4px');
 
   const signOut = page.getByRole('button', { name: 'Sign out' });
-  const backToSite = page.getByRole('link', { name: 'Back to site' });
   await expect(signOut).toHaveCSS('height', '38px');
-  await expect(backToSite).toHaveCSS('height', '38px');
-  await expect(backToSite).toHaveCSS('font-weight', '800');
-  await expect(backToSite).toHaveCSS('white-space', 'nowrap');
-  await expect(backToSite).not.toHaveAttribute('target', '_blank');
-  const footerActionBounds = await Promise.all([signOut.boundingBox(), backToSite.boundingBox()]);
-  expect(footerActionBounds.every(Boolean)).toBe(true);
-  expect(Math.abs(footerActionBounds[0]!.y - footerActionBounds[1]!.y)).toBeLessThanOrEqual(1);
+  await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCount(0);
+  const footerBounds = (await sidebarFooter.boundingBox())!;
+  const signOutBounds = (await signOut.boundingBox())!;
+  expect(Math.abs(footerBounds.width - signOutBounds.width)).toBeLessThanOrEqual(2);
 
   await expect(page.locator('.admin-dashboard-header .admin-dashboard-kicker')).toHaveCount(0);
   await expect(page.locator('.admin-dashboard-context-row')).toHaveCount(0);
@@ -440,10 +436,18 @@ test('matches the SaaS dashboard shell and keeps hosted-only surfaces explicit',
   await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Site editor');
   await expect(page.locator('.admin-dashboard-section-description')).toHaveCount(0);
 
-  const publicPage = page.getByRole('link', { name: 'Public page' });
-  await expect(publicPage).toHaveCSS('min-height', '40px');
-  await expect(publicPage).toHaveCSS('font-size', '13px');
-  await expect(publicPage.locator('button')).toHaveCount(0);
+  const publicPage = page.locator('a.admin-dashboard-logo');
+  await expect(publicPage).toHaveAccessibleName(/^Public page: \/.+/);
+  await expect(publicPage).toHaveAttribute('target', '_blank');
+  await expect(publicPage).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(page.locator('.admin-section-public-page')).toHaveCount(0);
+  const publicUrl = new URL((await publicPage.getAttribute('href'))!, page.url()).href;
+  await publicPage.focus();
+  const popupPromise = page.waitForEvent('popup');
+  await publicPage.press('Enter');
+  const publicTab = await popupPromise;
+  await expect(publicTab).toHaveURL(publicUrl);
+  await publicTab.close();
 
   const shopNavigation = page.getByRole('navigation', { name: 'Site sections' }).getByRole('button', { name: 'Shop', exact: true });
   await expect(shopNavigation).toHaveAttribute('data-status', 'inactive');
@@ -511,10 +515,10 @@ test('keeps the parity navigation and AI launcher usable on mobile', async ({ pa
   expect(menuBounds.x).toBe(0); expect(menuBounds.y).toBe(0);
   expect(menuBounds.width).toBe(390); expect(menuBounds.height).toBeCloseTo(844, 0);
   await expect(launcher).toBeHidden();
-  await expect(page.getByRole('link', { name: 'Back to site' }).locator('span')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Back to site' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Sign out', exact: true }).locator('span')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Language' })).toHaveCSS('opacity', '1');
-  await expect(page.getByRole('link', { name: 'Back to site' }).locator('span')).toHaveCSS('clip-path', 'none');
+  await expect(page.getByRole('button', { name: 'Sign out', exact: true }).locator('span')).toHaveCSS('clip-path', 'none');
   await page.screenshot({ path: test.info().outputPath('mobile-navigation.png') });
   const footer = await navigation.locator('.admin-dashboard-sidebar-footer > *').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().y));
   expect(Math.max(...footer) - Math.min(...footer)).toBeLessThanOrEqual(1);

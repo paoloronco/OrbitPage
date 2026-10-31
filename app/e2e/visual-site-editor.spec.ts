@@ -316,9 +316,16 @@ test("Visual editor keeps mobile navigation and destinations explicit", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await openAuthenticatedAdmin(page);
 
-  const publicPage = page.locator(".visual-site-editor__preview-controls .admin-section-public-page");
+  const publicPage = page.locator("a.admin-dashboard-logo");
   await expect(publicPage).toBeVisible();
-  await expect(publicPage).toHaveAccessibleName("Public page");
+  await expect(publicPage).toHaveAccessibleName(/^Public page: \/.+/);
+  await expect(page.locator('.admin-section-public-page')).toHaveCount(0);
+  const publicUrl = new URL((await publicPage.getAttribute('href'))!, page.url()).href;
+  const popupPromise = page.waitForEvent('popup');
+  await publicPage.click();
+  const publicTab = await popupPromise;
+  await expect(publicTab).toHaveURL(publicUrl);
+  await publicTab.close();
   const publicPageBounds = await publicPage.boundingBox();
   expect(publicPageBounds).not.toBeNull();
   expect(publicPageBounds!.height).toBeGreaterThanOrEqual(44);
