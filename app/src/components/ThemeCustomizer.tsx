@@ -382,7 +382,7 @@ export const ThemeCustomizer = ({
         <TabsList className="theme-workspace-tabs" aria-label={tr("Theme sections", "Sezioni del tema")}>
           <TabsTrigger value="page" disabled={saveState === "saving"}><Palette size={16} />{tr("Page themes", "Temi pagina")}</TabsTrigger>
           <TabsTrigger value="cards" disabled={!premiumThemesEnabled || saveState === "saving"}><Layers3 size={16} />{tr("Card styles", "Stili card")}</TabsTrigger>
-          <TabsTrigger value="fine-tuning" disabled={saveState === "saving"}><Palette size={16} />{tr("Fine tuning", "Personalizzazione avanzata")}</TabsTrigger>
+          <TabsTrigger value="fine-tuning" disabled={saveState === "saving"}><Palette size={16} />{tr("Fine tuning", "Avanzate")}</TabsTrigger>
         </TabsList>
         {showEmbeddedPreview && <div className="admin-theme-preview-context admin-section-actions">
           <PreviewDeviceToggle value={previewDevice} onChange={setPreviewDevice} />

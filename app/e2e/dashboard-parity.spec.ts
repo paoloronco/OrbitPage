@@ -751,7 +751,7 @@ test('localizes sidebar, theme and privacy controls without changing the chosen 
   await page.getByRole('button', { name: 'Tema', exact: true }).click();
   await expect(page.locator('.admin-dashboard-main > h1')).toHaveText('Tema');
   await expect(page.getByRole('tablist', { name: 'Sezioni del tema' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Personalizzazione avanzata', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Avanzate', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Privacy', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Informativa sulla privacy', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Informativa sui cookie', exact: true })).toBeVisible();
@@ -766,11 +766,12 @@ test('localizes sidebar, theme and privacy controls without changing the chosen 
   await expect(page.getByRole('button', { name: 'Statistiques', exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/fr-FR\/dashboard\/privacy/);
   await page.locator('.admin-dashboard-language select').selectOption('it');
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 320, height: 740 });
   await page.getByRole('button', { name: 'Apri navigazione', exact: true }).click();
   await expect(navigation).toHaveText(italianLabels);
   await expect(page.getByRole('button', { name: 'Tema', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Tema', exact: true }).click();
-  await expect(page.getByRole('tab', { name: 'Personalizzazione avanzata', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Avanzate', exact: true })).toBeVisible();
+  expect(await page.getByRole('tab', { name: 'Avanzate', exact: true }).evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 });
