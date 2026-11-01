@@ -278,8 +278,7 @@ export function SelfHostedAiPanel({ canManageSettings, historyKey = "admin", onA
             <span />
           </div>
           <div>
-            <p className="admin-dashboard-kicker">OrbitPage AI</p>
-            <h2 id="oss-ai-heading">{tr("Edit by asking", "Modifica chiedendo")}</h2>
+            <h2 id="oss-ai-heading">OrbitPage AI</h2>
             <p>{tr(
               "Describe the outcome. The assistant works from this page’s current profile, content and theme.",
               "Descrivi il risultato. L’assistente lavora sul profilo, sui contenuti e sul tema attuali di questa pagina.",

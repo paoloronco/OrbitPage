@@ -76,6 +76,7 @@ import {
 } from './services/backup-service.js';
 import { cleanupUnusedMedia, mediaCleanupGraceMs } from './services/media-cleanup.js';
 import { consumeSetupToken, ensureSetupToken, isSetupTokenRequired, rotateSetupToken, verifySetupToken } from './services/setup-token.js';
+import { listSignIns, recordSignIn } from './services/sign-ins.js';
 import { auditActionForRequest, listAuditEvents, recordAuditEvent } from './services/audit-log.js';
 import {
   captureApplicationVersion,
@@ -1927,6 +1928,15 @@ const rejectPersonalTokenSession = (req, res, next) => (
     : next()
 );
 
+app.get('/api/account/sign-ins', authenticateToken, rejectPersonalTokenSession, async (req, res) => {
+  res.set('Cache-Control', 'private, no-store');
+  try {
+    res.json(await listSignIns(req.user.username));
+  } catch {
+    res.status(503).json({ error: 'Sign-in history is unavailable.' });
+  }
+});
+
 app.get('/api/account/audit-log', authenticateToken, requirePermission('users:manage'), async (req, res) => {
   try {
     res.set('Cache-Control', 'private, no-store');
@@ -2541,6 +2551,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
     }
 
     const token = generateToken(username, Number(state?.auth_version || 0), state?.session_id);
+    await recordSignIn(username, 'password', req.get('user-agent')).catch(() => console.error('Sign-in history could not be recorded.'));
     res.json({ success: true, token });
     return;
   } catch (error) {
@@ -2598,6 +2609,7 @@ app.post('/api/auth/2fa/verify', loginLimiter, async (req, res) => {
     if (!verification.valid || Number(verification.authVersion) !== Number(challenge.authVersion || 0)) {
       return res.status(401).json({ error: 'The authentication or recovery code is not valid.' });
     }
+    await recordSignIn(challenge.username, 'password+totp', req.get('user-agent')).catch(() => console.error('Sign-in history could not be recorded.'));
     return res.json({
       success: true,
       token: generateToken(challenge.username, verification.authVersion, verification.sessionId),

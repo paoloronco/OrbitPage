@@ -23,7 +23,8 @@ Changing roles also changes the permissions of existing personal API tokens.
 
 Open **Account → Security** for the signed-in user's password and authenticator.
 For password changes, enter the current password, then the new password and its
-confirmation. Use a unique password that passes the on-screen strength checks.
+confirmation. The information icon beside **New password** shows the strength
+requirements on hover, keyboard focus or tap.
 
 To enable TOTP:
 
@@ -38,6 +39,13 @@ recovery code; replacement invalidates the previous set. **Disable 2FA** needs
 the same checks and confirmation and revokes older sessions. If all access is
 lost, follow the host-owner recovery procedure in [Security](../../administration/Security.md).
 Never send setup keys or recovery codes in support requests.
+
+Below the authenticator, **Recent sign-ins > View sign-ins** opens a table of
+your last 20 successful sign-ins, newest first. It shows the time, authentication
+method and a coarse browser/device label when recognized. Recording starts when
+this feature is installed; failed attempts and raw user agents/IP addresses are
+not retained. Records belong to the local account identity, are bounded to 20,
+and are removed with that account. Personal API tokens cannot read this history.
 
 ## Personal API tokens
 

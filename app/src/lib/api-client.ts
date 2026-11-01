@@ -822,6 +822,9 @@ export const versionHistoryApi = {
 
 export type AuditEvent = { id: number; createdAt: string; actor: string; action: string; description: string };
 export type AuditLogPage = { events: AuditEvent[]; nextCursor: number | null };
+export const signInsApi = {
+  list: (signal: AbortSignal): Promise<{ events: Array<{ id: number; createdAt: string; method: string; device: string }> }> => apiRequest('/account/sign-ins', { signal }),
+};
 export const auditLogApi = {
   list: (filters: Record<string, string>): Promise<AuditLogPage> => {
     const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value.trim()));

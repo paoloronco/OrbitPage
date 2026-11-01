@@ -8,6 +8,7 @@ import { useAppI18n } from "@/lib/i18n";
 import { isPasswordStrong } from "@/lib/auth";
 import { DEMO_MODE } from "@/lib/config";
 import { authApi } from "@/lib/api-client";
+import PasswordRequirements from "./password-requirements";
 import { apiPath, withBasePath } from "@/lib/base-path";
 
 const useCurrentUsername = () => {
@@ -196,7 +197,7 @@ export const PasswordManager = () => {
             </div>
 
             <div className="field">
-              <Label htmlFor="new-password">{tr('New password', 'Nuova password')}</Label>
+              <div className="password-label-row"><Label htmlFor="new-password">{tr('New password', 'Nuova password')}</Label><PasswordRequirements password={newPassword} tr={tr} /></div>
               <div className="password-field-control">
                 <Input
                   id="new-password"
@@ -220,16 +221,6 @@ export const PasswordManager = () => {
                 >
                   {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </Button>
-              </div>
-              <div className="password-requirements">
-                <p>{tr('Requirements:', 'Requisiti:')}</p>
-                <ul>
-                  <li data-valid={newPassword.length >= 8}>{tr('At least 8 characters', 'Almeno 8 caratteri')}</li>
-                  <li data-valid={/[A-Z]/.test(newPassword)}>{tr('Uppercase letter', 'Lettera maiuscola')}</li>
-                  <li data-valid={/[a-z]/.test(newPassword)}>{tr('Lowercase letter', 'Lettera minuscola')}</li>
-                  <li data-valid={/\d/.test(newPassword)}>{tr('Number', 'Numero')}</li>
-                  <li data-valid={/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)}>{tr('Special character', 'Carattere speciale')}</li>
-                </ul>
               </div>
             </div>
 

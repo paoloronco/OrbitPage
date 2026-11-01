@@ -431,6 +431,14 @@ export const initializeDatabase = () => {
         )
       `);
       db.run(`CREATE INDEX IF NOT EXISTS idx_page_versions_created_at ON page_versions(created_at DESC)`);
+      db.run(`CREATE TABLE IF NOT EXISTS account_sign_ins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+        created_at TEXT NOT NULL,
+        method TEXT NOT NULL,
+        device TEXT NOT NULL
+      )`);
+      db.run(`CREATE INDEX IF NOT EXISTS idx_account_sign_ins_user ON account_sign_ins(user_id, id DESC)`);
       // Small, append-only account activity records survive revision pruning.
       // They contain action metadata only; request bodies and secrets are never stored.
       db.run(`CREATE TABLE IF NOT EXISTS audit_events (

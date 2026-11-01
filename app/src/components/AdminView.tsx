@@ -23,6 +23,7 @@ import {
   Database,
   Globe2,
   HelpCircle,
+  History,
   Languages,
   CreditCard,
   LockKeyhole,
@@ -43,6 +44,8 @@ import { logout } from "@/lib/auth";
 import { ThemeConfig, applyTheme } from "@/lib/theme";
 import { PasswordManager } from "./PasswordManager";
 import { AuditLog } from "./AuditLog";
+import RecentSignIns from "./recent-sign-ins";
+import { signInsApi } from "@/lib/api-client";
 import { UserManager } from "./UserManager";
 import { PersonalApiTokens } from "./PersonalApiTokens";
 import { OrbitPageBrand } from "./OrbitPageBrand";
@@ -222,7 +225,7 @@ export const AdminView = ({
   const tabLabel = (tab: AdminTab) => ({
     profile: tr("Page", "Pagina"), content: tr("Content", "Contenuti"), links: tr("Content", "Contenuti"), pages: tr("Content", "Contenuti"), ai: tr("AI Assistant", "Assistente AI"), theme: tr("Theme", "Tema"), menu: tr("Content", "Contenuti"),
     publish: tr("Publish", "Pubblica"), qr: tr("Publish", "Pubblica"), txt: tr("Publish", "Pubblica"), sitemap: tr("Publish", "Pubblica"),
-    newsletter: tr("Newsletter", "Newsletter"), team: tr("Team", "Team"), account: tr("Account", "Account"), plan: tr("Edition", "Edizione"), access: tr("Account", "Account"), backup: tr("Backup", "Backup"), analytics: tr("Analytics", "Statistiche"), privacy: tr("Privacy", "Privacy"),
+    newsletter: tr("Newsletter", "Newsletter"), team: tr("Team", "Team"), account: tr("Account", "Account"), plan: isEmbeddedEditor() ? tr("Plan", "Piano") : tr("Edition", "Edizione"), access: tr("Account", "Account"), backup: tr("Backup", "Backup"), analytics: tr("Analytics", "Statistiche"), privacy: tr("Privacy", "Privacy"),
   })[tab];
   const [appVersion, setAppVersion] = useState<string>(__APP_VERSION__);
   const [distributionImage, setDistributionImage] = useState("");
@@ -1102,7 +1105,7 @@ export const AdminView = ({
                 <nav aria-label={tr("Account sections", "Sezioni account")} className="account-tabs">
                   <button aria-current={accountView === "general" ? "page" : undefined} className={accountView === "general" ? "active" : ""} onClick={() => selectSubsection("account", "general")} type="button"><CircleUserRound aria-hidden="true" />{tr("General", "Generale")}</button>
                   <button aria-current={accountView === "security" ? "page" : undefined} className={accountView === "security" ? "active" : ""} onClick={() => selectSubsection("account", "security")} type="button"><ShieldCheck aria-hidden="true" />{tr("Security", "Sicurezza")}</button>
-                  {canManageUsers && <button aria-current={accountView === "audit" ? "page" : undefined} className={accountView === "audit" ? "active" : ""} onClick={() => selectSubsection("account", "audit")} type="button">{tr("Audit log", "Registro attività")}</button>}
+                  {canManageUsers && <button aria-current={accountView === "audit" ? "page" : undefined} className={accountView === "audit" ? "active" : ""} onClick={() => selectSubsection("account", "audit")} type="button"><History aria-hidden="true" />{tr("Audit log", "Registro attività")}</button>}
                 </nav>
                 {accountView === "general" ? (
                   <SelfHostedAccountActions
@@ -1114,7 +1117,10 @@ export const AdminView = ({
                 ) : accountView === "security" ? (
                   <div className="account-security-stack">
                     <PasswordManager />
-                    <TwoFactorManager username={currentUser?.username} />
+                    <div className="account-security-secondary">
+                      <TwoFactorManager username={currentUser?.username} />
+                      <RecentSignIns load={signInsApi.list} tr={tr} />
+                    </div>
                   </div>
                 ) : canManageUsers ? <AuditLog tr={tr} /> : null}
               </div>

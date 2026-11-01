@@ -61,14 +61,14 @@ export function TwoFactorManager({ username = "admin" }: { username?: string }) 
 
   return <Card className={`glass-card p-6 space-y-5 account-panel account-mfa-panel oss-account-mfa-card ${DEMO_MODE ? 'opacity-60 pointer-events-none' : ''}`}>
     <div className="account-section-heading">
-      <div><p className="oss-account-kicker">{tr("Two-step verification", "Verifica in due passaggi")}</p><h2>{tr("Authenticator app", "App di autenticazione")}</h2></div>
+      <div><h2>{tr("Authenticator app", "App di autenticazione")}</h2></div>
       {status?.enabled ? <ShieldCheck className="h-6 w-6 text-emerald-600" /> : <KeyRound className="h-6 w-6 text-primary" />}
     </div>
 
-    <div className={`mfa-status ${status?.enabled ? 'enabled' : ''}`}>
+    {status?.enabled && <div className="mfa-status enabled">
       <span className="mfa-status-dot" aria-hidden="true" />
-      <div><strong>{status?.enabled ? tr("Two-factor authentication is active", "Autenticazione a due fattori attiva") : tr("Two-factor authentication is off", "Autenticazione a due fattori disattivata")}</strong><span>{status?.enabled ? `${status.recoveryCodesRemaining} recovery codes remaining` : tr("Protect sign-in with a time-based code from your authenticator app.", "Proteggi l’accesso con un codice temporaneo della tua app di autenticazione.")}</span></div>
-    </div>
+      <div><strong>{tr("Two-factor authentication is active", "Autenticazione a due fattori attiva")}</strong><span>{status.recoveryCodesRemaining} {tr("recovery codes remaining", "codici di recupero rimanenti")}</span></div>
+    </div>}
 
     {!setup && <form className="mfa-identity-check" onSubmit={(event) => { event.preventDefault(); if (!status?.enabled) void startSetup(); }}>
       <input className="sr-only" type="text" name="username" autoComplete="username" value={username} readOnly tabIndex={-1} aria-hidden="true" />
