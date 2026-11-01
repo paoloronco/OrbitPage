@@ -120,8 +120,8 @@ export function PreviewDeviceFrame({
           </div>
           {screenOverlay}
         </div>
+        {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
       </div>
-      {device === "desktop" && <div className="admin-preview-device__stand" aria-hidden="true"><i /></div>}
     </div>
   );
 }

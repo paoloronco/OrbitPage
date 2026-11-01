@@ -546,7 +546,7 @@ test('keeps Menu actions and mobile preview usable on phones', async ({ page }) 
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 });
 
-test('keeps the real theme preview available without crowding tablet and mobile layouts', async ({ page }) => {
+test('keeps the real theme preview available without crowding tablet and mobile layouts', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1024, height: 768 });
   await openAuthenticatedAdmin(page);
   await page.getByRole('button', { name: 'Theme', exact: true }).click();
@@ -604,6 +604,26 @@ test('keeps the real theme preview available without crowding tablet and mobile 
   await expect(page.locator('#admin-theme-manual-controls')).toHaveCount(0);
   const compactThemeHeight = await page.evaluate(() => document.documentElement.scrollHeight);
   expect(compactThemeHeight).toBeLessThan(1600);
+
+  for (const width of [1440, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    if (!await previewBody.isVisible()) await summary.click();
+    await page.getByRole('button', { name: 'Desktop preview', exact: true }).click();
+    const monitor = previewBody.locator('.admin-preview-device--desktop');
+    await expect(monitor.locator('.admin-preview-device__viewport')).toHaveAttribute('data-preview-viewport-ready', 'true');
+    const hardware = (await monitor.locator('.admin-preview-device__hardware').boundingBox())!;
+    const screen = (await monitor.locator('.admin-preview-device__screen').boundingBox())!;
+    const stand = (await monitor.locator('.admin-preview-device__stand').boundingBox())!;
+    const base = (await monitor.locator('.admin-preview-device__stand i').boundingBox())!;
+    const browser = (await monitor.locator('.admin-preview-device__browser-bar').boundingBox())!;
+    const frame = (await monitor.boundingBox())!;
+    expect(stand.y).toBeGreaterThanOrEqual(hardware.y + hardware.height - 2);
+    expect(base.y + base.height).toBeLessThanOrEqual(frame.y + frame.height + 1);
+    expect(browser.y + browser.height).toBeLessThanOrEqual(screen.y + 1);
+    expect(browser.height).toBeLessThanOrEqual(26);
+    expect(parseFloat(await monitor.locator('.admin-preview-device__browser-bar b').evaluate(node => getComputedStyle(node).fontSize))).toBeLessThanOrEqual(9);
+    await monitor.screenshot({ path: testInfo.outputPath(`desktop-theme-${width}.png`) });
+  }
 });
 
 test('keeps the content preview readable on a 720p laptop viewport', async ({ page }) => {

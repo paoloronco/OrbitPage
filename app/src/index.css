@@ -2744,7 +2744,7 @@ html:has(.orbitpage-admin) {
     border: 1px solid #020617;
     border-radius: 14px;
     max-width: 540px;
-    padding: 32px 8px 10px;
+    padding: 26px 8px 10px;
     width: 100%;
   }
 
@@ -2806,8 +2806,8 @@ html:has(.orbitpage-admin) {
     align-items: center;
     color: #cbd5e1;
     display: flex;
-    gap: 12px;
-    height: 35px;
+    gap: 8px;
+    height: 24px;
     left: 10px;
     position: absolute;
     right: 10px;
@@ -2817,14 +2817,14 @@ html:has(.orbitpage-admin) {
   .admin-preview-device__browser-bar > span {
     display: flex;
     flex: 0 0 auto;
-    gap: 5px;
+    gap: 4px;
   }
 
   .admin-preview-device__browser-bar i {
     background: #64748b;
     border-radius: 50%;
-    height: 6px;
-    width: 6px;
+    height: 4px;
+    width: 4px;
   }
 
   .admin-preview-device__browser-bar b {
@@ -2832,11 +2832,11 @@ html:has(.orbitpage-admin) {
     border-radius: 5px;
     color: #cbd5e1;
     display: block;
-    font-size: 9px;
-    font-weight: 600;
-    line-height: 22px;
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 16px;
     overflow: hidden;
-    padding: 0 10px;
+    padding: 0 8px;
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2845,21 +2845,23 @@ html:has(.orbitpage-admin) {
 
   .admin-preview-device__stand {
     background: #1e293b;
-    height: 42px;
+    height: 18px;
+    left: 50%;
     position: absolute;
-    bottom: 18px;
-    width: 74px;
+    top: 100%;
+    transform: translateX(-50%);
+    width: 54px;
   }
 
   .admin-preview-device__stand i {
     background: #111827;
     border-radius: 999px;
     bottom: -5px;
-    height: 9px;
+    height: 6px;
     left: 50%;
     position: absolute;
     transform: translateX(-50%);
-    width: 146px;
+    width: 120px;
   }
 
   @keyframes admin-preview-device-enter {
@@ -4857,7 +4859,7 @@ html:has(.orbitpage-admin) {
   background: transparent;
   overflow: visible;
 }
-.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--desktop { padding: 0 0 60px; }
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--desktop { padding: 0 0 26px; }
 .ai-page-comparison .ai-page-comparison__viewport .admin-preview-device .admin-preview-device__hardware {
   width: 100%;
   max-width: none;
@@ -4865,13 +4867,12 @@ html:has(.orbitpage-admin) {
   aspect-ratio: auto;
   animation: none;
 }
-.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--desktop .admin-preview-device__hardware { padding: 32px 8px 10px; }
+.ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--desktop .admin-preview-device__hardware { padding: 26px 8px 10px; }
 .ai-page-comparison .ai-page-comparison__viewport .admin-preview-device .admin-preview-device__screen {
   height: auto;
   aspect-ratio: 16 / 9;
 }
 .ai-page-comparison .ai-page-comparison__viewport .admin-preview-device--mobile .admin-preview-device__screen { aspect-ratio: 390 / 844; }
-.ai-page-comparison .admin-preview-device__stand { bottom: 18px; height: 42px; }
 
 @media (max-width: 900px) {
   /* Scale the phone hardware with its screen instead of keeping desktop-sized details. */
@@ -7693,7 +7694,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-preview-device--mobile .admin-preview-device__island { width: 50px; }
   .admin-preview-device--desktop { min-height: 276px; padding: 10px 8px 34px; }
   .admin-preview-device--desktop .admin-preview-device__hardware { max-width: 450px; }
-  .admin-preview-device__stand { bottom: 14px; height: 34px; }
   .ai-page-agent { right: 16px; bottom: 16px; }
 }
 
@@ -7717,7 +7717,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-preview-device__side-button--two { top: 98px; }
   .admin-preview-device--desktop { min-height: 250px; padding: 8px 8px 32px; }
   .admin-preview-device--desktop .admin-preview-device__hardware { max-width: 410px; }
-  .admin-preview-device__stand { bottom: 12px; height: 30px; }
 }
 
 .admin-tab-stage {
@@ -11860,9 +11859,9 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-dashboard-nav-stack.open .admin-dashboard-footer-action span { display: inline; position: static; width: auto; height: auto; margin: 0; padding: 0; min-width: 0; overflow: hidden; clip: auto; clip-path: none; text-overflow: ellipsis; }
   .admin-dashboard-nav-stack.open .admin-dashboard-language select { display: block; position: static; inset: auto; opacity: 1; width: 100%; min-width: 0; padding: 0; color: #fff; font-size: 11px; text-overflow: ellipsis; }
   body:has(.admin-dashboard-nav-stack.open) :is(.ai-page-agent, [data-orbitpage-cookie-ui], .admin-profile-save-layer) { visibility: hidden; pointer-events: none; }
-  .orbitpage-admin .admin-preview-device--desktop { min-height: 0; padding: 12px 0 24px; }
-  .orbitpage-admin .admin-preview-device--desktop .admin-preview-device__hardware { width: 100%; max-width: none; height: auto; min-height: 0; aspect-ratio: auto; padding: 0; }
-  .orbitpage-admin .admin-preview-device--desktop .admin-preview-device__screen { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
+  .orbitpage-admin .visual-site-editor__canvas .admin-preview-device--desktop { min-height: 0; padding: 12px 0 24px; }
+  .orbitpage-admin .visual-site-editor__canvas .admin-preview-device--desktop .admin-preview-device__hardware { width: 100%; max-width: none; height: auto; min-height: 0; aspect-ratio: auto; padding: 0; }
+  .orbitpage-admin .visual-site-editor__canvas .admin-preview-device--desktop .admin-preview-device__screen { height: auto; min-height: 0; aspect-ratio: 16 / 9; }
   .publish-tools-tabs { display: flex; flex-wrap: nowrap; width: 100%; overflow-x: auto; overflow-y: hidden; gap: 8px; touch-action: pan-x; scrollbar-width: none; }
   .publish-tools-tab { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; min-width: 110px; min-height: 44px; padding: 8px 12px; white-space: nowrap; }
   .publish-tools-tab small { display: none; }
