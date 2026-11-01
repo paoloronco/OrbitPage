@@ -106,3 +106,13 @@ Safe harbor applies for good-faith research that follows this policy, avoids pri
 ## Bug Bounty
 
 There is no paid bug bounty program at this time. Researchers may be credited in release notes when appropriate.
+
+## Dependency maintenance
+
+The frontend override requires patched minimatch 11.0.1 or newer for lint tooling
+([glob-pattern amplification advisory](https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249)).
+The backend lockfile uses node-gyp 12.4.0 for optional SQLite build tooling,
+removing the legacy glob/minimatch chain affected by that issue and the
+[glob cancellation advisory](https://github.com/isaacs/node-glob/security/advisories/GHSA-3g3m-2fjr-6pw4).
+Keep both lockfiles committed and audit development dependencies as well as
+runtime dependencies when refreshing them.
