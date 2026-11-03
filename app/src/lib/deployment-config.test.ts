@@ -66,8 +66,9 @@ describe('deployment configuration', () => {
     const workflow = read('.github/workflows/publish-release.yml');
 
     expect(workflow).toContain('DOCKERHUB_IMAGE: docker.io/paoloronco/orbitpage');
-    expect(workflow).toContain('LEGACY_DOCKERHUB_IMAGE: docker.io/paueron/orbitpage');
-    expect(workflow).toContain('LEGACY_DOCKERHUB_CUTOFF: "2026-10-09T00:00:00Z"');
+    expect(workflow).not.toContain('LEGACY_DOCKERHUB');
+    expect(workflow).not.toContain('legacy_enabled');
+    expect(workflow).not.toContain('paueron/orbitpage');
     expect(workflow).toContain('GHCR_IMAGE: ghcr.io/paoloronco/orbitpage');
     expect(workflow).toContain('packages: write');
     expect(workflow).toContain('registry: ghcr.io');
@@ -78,7 +79,7 @@ describe('deployment configuration', () => {
   it('publishes only latest and complete version Docker tags', () => {
     const workflow = read('.github/workflows/publish-release.yml');
     const publishedTags = workflow
-      .match(/^\s+\$\{\{ env\.(?:DOCKERHUB_IMAGE|GHCR_IMAGE|LEGACY_DOCKERHUB_IMAGE) \}\}:[^\r\n]+/gm)
+      .match(/^\s+\$\{\{ env\.(?:DOCKERHUB_IMAGE|GHCR_IMAGE) \}\}:[^\r\n]+/gm)
       ?.map((tag) => tag.trim());
 
     expect(publishedTags).toEqual([
@@ -86,8 +87,6 @@ describe('deployment configuration', () => {
       '${{ env.DOCKERHUB_IMAGE }}:latest',
       '${{ env.GHCR_IMAGE }}:${{ needs.validate.outputs.version }}',
       '${{ env.GHCR_IMAGE }}:latest',
-      '${{ env.LEGACY_DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}',
-      '${{ env.LEGACY_DOCKERHUB_IMAGE }}:latest',
     ]);
   });
 

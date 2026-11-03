@@ -5394,7 +5394,7 @@ app.listen(PORT, HOST, async () => {
   }
   console.log(`HTTP server running on port ${PORT}`);
   if (DISTRIBUTION_IMAGE.replace(/^docker\.io\//, '') === 'paueron/orbitpage') {
-    console.warn('[OrbitPage] Docker Hub image moved to paoloronco/orbitpage. The paueron/orbitpage compatibility feed stops on 2026-10-09.');
+    console.warn('[OrbitPage] Docker Hub image moved to paoloronco/orbitpage. Updates for paueron/orbitpage ended on 2026-10-09.');
   }
   if (IS_PRODUCTION) {
     console.log(`Production mode: Frontend and API served from same origin`);

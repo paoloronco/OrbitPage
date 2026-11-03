@@ -40,7 +40,7 @@ Prefer managed hosting? Explore [orbitpage.com](https://orbitpage.com). This rep
   <img src="./docs/screenshots/orbitpage-product-loop.gif" alt="OrbitPage dashboard walkthrough: page, content, menu, additional pages, themes, newsletter, publishing and the public page" width="800" />
 </p>
 
-> **Docker Hub namespace migration:** the official image is now `paoloronco/orbitpage`. The former `paueron/orbitpage` path is a temporary compatibility feed and stops receiving updates on **October 9, 2026**. Existing volumes and data are unaffected; see [Deployment](./docs/wiki/administration/Deployment.md#older-docker-hub-images).
+> **Docker Hub namespace migration:** the official image is `paoloronco/orbitpage`. Updates for the former `paueron/orbitpage` feed ended on **October 9, 2026**. Existing volumes and data are unaffected; see [Deployment](./docs/wiki/administration/Deployment.md#older-docker-hub-images).
 
 ## Contents
 

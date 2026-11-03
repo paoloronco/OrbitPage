@@ -957,8 +957,8 @@ export const AdminView = ({
             <div>
               <strong>{tr("Docker image moved", "Immagine Docker trasferita")}</strong>
               <span>{tr(
-                "Switch to paoloronco/orbitpage before legacy updates stop on October 9, 2026.",
-                "Passa a paoloronco/orbitpage prima che gli aggiornamenti legacy terminino il 9 ottobre 2026.",
+                "Updates for paueron/orbitpage ended on October 9, 2026. Switch to paoloronco/orbitpage to receive updates.",
+                "Gli aggiornamenti di paueron/orbitpage sono terminati il 9 ottobre 2026. Passa a paoloronco/orbitpage per ricevere aggiornamenti.",
               )}</span>
             </div>
             <a href={DOCKER_MIGRATION_GUIDE} rel="noopener noreferrer" target="_blank">

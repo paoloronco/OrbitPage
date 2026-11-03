@@ -109,7 +109,7 @@ Enter the token when choosing the admin password. It can be used once.
 
 ### Older Docker Hub images
 
-The former `paueron/orbitpage` feed stops receiving updates on October 9, 2026. Use `paoloronco/orbitpage` with the same data mount. Installer-managed `latest` deployments migrate with `sudo orbitpage update`; manual deployments follow [Updating OrbitPage](#updating-orbitpage). Replace old standalone `orbitpage-update` helpers from the current official image before using them.
+Updates for the former `paueron/orbitpage` feed ended on October 9, 2026. Use `paoloronco/orbitpage` with the same data mount. Installer-managed `latest` deployments migrate with `sudo orbitpage update`; manual deployments follow [Updating OrbitPage](#updating-orbitpage). Replace old standalone `orbitpage-update` helpers from the current official image before using them.
 
 ---
 

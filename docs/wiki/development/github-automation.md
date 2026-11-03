@@ -47,6 +47,10 @@ local HTTP/WebSocket connections.
 
 Publication reuses main CI's `rolling-amd64` and `rolling-arm64` build caches, verifies both architectures, and creates the release if it does not exist. Tag pushes and manual publication for the same tag share a concurrency group.
 
+Images publish only to `paoloronco/orbitpage` and GHCR. The retired
+`paueron/orbitpage` publisher and its credentials are no longer used; existing
+installations follow the [migration guide](../administration/Deployment.md#older-docker-hub-images).
+
 ## Gitea mirror credential
 
 The mirror runs from `main` and copies other refs as Git data, without building or executing their source. Main pushes, release completion, and ref deletion trigger it; an hourly schedule covers other ref changes.

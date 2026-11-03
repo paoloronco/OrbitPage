@@ -20,8 +20,6 @@ permissions:
 env:
   GHCR_IMAGE: ghcr.io/paoloronco/orbitpage
   DOCKERHUB_IMAGE: docker.io/paoloronco/orbitpage
-  LEGACY_DOCKERHUB_IMAGE: docker.io/paueron/orbitpage
-  LEGACY_DOCKERHUB_CUTOFF: "2026-10-09T00:00:00Z"
 
 jobs:
   validate:
@@ -34,7 +32,6 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
-      legacy_enabled: ${{ steps.legacy.outputs.enabled }}
 
     steps:
       - name: Checkout repository
@@ -109,22 +106,6 @@ jobs:
             fi
           done
 
-      - id: legacy
-        name: Check legacy Docker Hub compatibility window
-        env:
-          LEGACY_USERNAME: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
-          LEGACY_TOKEN: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          if (( $(date -u +%s) >= $(date -u -d "$LEGACY_DOCKERHUB_CUTOFF" +%s) )); then
-            echo "::notice::Legacy Docker Hub updates ended at ${LEGACY_DOCKERHUB_CUTOFF}."
-          elif [[ -z "$LEGACY_USERNAME" || -z "$LEGACY_TOKEN" ]]; then
-            echo "::warning::Legacy Docker Hub credentials are unavailable; paueron/orbitpage was not updated."
-          else
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          fi
-
   publish-images:
     name: Publish images and GitHub release
     needs: validate
@@ -198,34 +179,6 @@ jobs:
           repository: paoloronco/orbitpage
           short-description: Self-hosted link-in-bio and microsite platform
           enable-url-completion: true
-
-      - name: Log out from primary Docker Hub account
-        if: ${{ needs.validate.outputs.legacy_enabled == 'true' }}
-        run: docker logout docker.io
-
-      - name: Log in to legacy Docker Hub account
-        if: ${{ needs.validate.outputs.legacy_enabled == 'true' }}
-        uses: docker/login-action@v4
-        with:
-          registry: docker.io
-          username: ${{ secrets.LEGACY_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.LEGACY_DOCKERHUB_TOKEN }}
-
-      - name: Build and publish legacy stable multi-arch image
-        if: ${{ needs.validate.outputs.legacy_enabled == 'true' }}
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          build-args: ORBITPAGE_DISTRIBUTION_IMAGE=docker.io/paueron/orbitpage
-          tags: |
-            ${{ env.LEGACY_DOCKERHUB_IMAGE }}:${{ needs.validate.outputs.version }}
-            ${{ env.LEGACY_DOCKERHUB_IMAGE }}:latest
-          cache-from: |
-            type=gha,scope=rolling-amd64
-            type=gha,scope=rolling-arm64
 
       - name: Create release for the existing tag
         env:
