@@ -416,7 +416,7 @@ const Admin = () => {
     } catch (error) {
       if ((error instanceof Error ? error.message : "") === 'AUTH_EXPIRED') {
         setIsLoggedIn(false);
-        throw new Error('Your session expired. Sign in again before retrying the save.');
+        throw new Error('Your session expired. Sign in again before retrying the save.', { cause: error });
       }
       console.error('Error saving links:', error);
       toast({

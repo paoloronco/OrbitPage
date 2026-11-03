@@ -6464,32 +6464,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .admin-dashboard-language option { background: var(--admin-sidebar-soft); color: #f4f7fc; }
 .admin-dashboard-language option:checked { background: var(--admin-accent-strong); color: #fff; }
 
-.admin-dashboard-public-page {
-  display: inline-flex;
-  min-height: 36px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 6px;
-  background: #e7edf5;
-  color: var(--admin-ink);
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1.5;
-  text-decoration: none;
-  transition: transform 180ms ease, background 180ms ease;
-}
-
-.admin-dashboard-public-page:hover,
-.admin-dashboard-public-page:focus-visible {
-  background: #dbe4ef;
-  color: var(--admin-ink);
-  outline: none;
-  transform: translateY(-1px);
-}
-
 .admin-section-actions {
   display: flex;
   min-width: 0;
@@ -6498,31 +6472,8 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   gap: 8px;
 }
 
-.orbitpage-admin .admin-section-public-page {
-  width: auto;
-  min-height: 40px;
-  flex: 0 0 auto;
-  padding: 8px 12px;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
 .oss-ai-header-actions {
   align-self: start;
-}
-
-@media (max-width: 600px) {
-  .orbitpage-admin .admin-section-public-page {
-    width: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-    font-size: 0;
-  }
-}
-
-.admin-dashboard-public-page:focus-visible {
-  box-shadow: 0 0 0 3px rgb(49 103 239 / 20%);
 }
 
 .admin-dashboard-main {
@@ -6907,8 +6858,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-dashboard-heading-row h1 { font-size: 22px; }
   .admin-dashboard-section-description { max-width: 32rem; font-size: 11px; }
   .admin-dashboard-header-actions { width: auto; align-self: flex-start; }
-  .admin-dashboard-header-actions .admin-action,
-  .admin-dashboard-public-page { width: 40px; min-width: 40px; min-height: 40px; padding: 0; font-size: 0; }
+  .admin-dashboard-header-actions .admin-action { width: 40px; min-width: 40px; min-height: 40px; padding: 0; font-size: 0; }
   .oss-hosted-feature { grid-template-columns: auto minmax(0, 1fr); padding: 20px 17px; }
   .oss-hosted-feature > a { grid-column: 1 / -1; justify-content: center; }
   .oss-account-layout { grid-template-columns: 1fr; }
@@ -7683,7 +7633,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-dashboard-heading-row h1 { font-size: clamp(21px, 1.8vw, 23px); line-height: 1.03; }
   .admin-dashboard-kicker { margin-bottom: 2px; font-size: 9px; line-height: 1.1; }
   .admin-dashboard-section-description { margin-top: 2px; font-size: 10px; line-height: 1.2; }
-  .admin-dashboard-public-page,
   .admin-dashboard-header-actions .admin-action { min-height: 34px; }
   .orbitpage-admin .admin-panel,
   .orbitpage-admin .admin-side-panel,
@@ -7707,7 +7656,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   .admin-dashboard-nav-item { padding-block: 5px; }
   .admin-dashboard-header { padding-top: 5px; padding-bottom: 5px; }
   .admin-dashboard-heading-row h1 { font-size: 20px; }
-  .admin-dashboard-public-page,
   .admin-dashboard-header-actions .admin-action { min-height: 32px; }
   .admin-preview-device--mobile { min-height: 374px; }
   .admin-preview-device--mobile .admin-preview-device__hardware { width: 214px; height: 356px; border-radius: 24px; padding: 6px; }
@@ -9419,7 +9367,6 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   font-size: var(--admin-text-meta);
 }
 
-.admin-dashboard-public-page,
 .admin-dashboard-header-actions .admin-action {
   min-height: var(--admin-control-height);
   padding: 8px 13px;

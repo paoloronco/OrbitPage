@@ -15,7 +15,7 @@ const getSecureRandomInt = (maxExclusive: number): number => {
   const maxUint32 = 0xFFFFFFFF;
   const limit = Math.floor((maxUint32 + 1) / maxExclusive) * maxExclusive;
   const buffer = new Uint32Array(1);
-  let value = 0;
+  let value: number;
   do {
     cryptoObj.getRandomValues(buffer);
     value = buffer[0];
