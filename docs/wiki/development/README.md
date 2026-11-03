@@ -18,4 +18,7 @@ Follow [Development workflow](./Development.md) to install dependencies, run the
 
 Use [Contributing](../../../CONTRIBUTING.md) for the review workflow and [GitHub automation](./github-automation.md) for CI, releases and mirrors. Update the guide that owns changed behavior instead of adding a second explanation elsewhere.
 
+[Repository maintenance](../../repository-maintenance.md) defines the weekly checks,
+the criteria for useful changes and the first four weeks of maintenance work.
+
 Return to the [documentation index](../README.md).

@@ -5,10 +5,12 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  schedule:
+    - cron: "23 7 * * 1"
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -27,6 +29,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Check Markdown links
         working-directory: .
@@ -98,11 +102,11 @@ jobs:
         run: npm run test:security:mocker
 
       - name: Build Docker image for smoke test
-        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+        if: ${{ github.event_name == 'pull_request' || github.ref != 'refs/heads/main' }}
         run: docker build -t orbitpage-ci-smoke ..
 
       - name: Smoke test Docker image
-        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+        if: ${{ github.event_name == 'pull_request' || github.ref != 'refs/heads/main' }}
         run: |
           set -Eeuo pipefail
           cleanup() {
@@ -123,7 +127,7 @@ jobs:
           exit 1
 
       - name: Verify Docker Run update preserves settings
-        if: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+        if: ${{ github.event_name == 'pull_request' || github.ref != 'refs/heads/main' }}
         working-directory: .
         run: |
           set -Eeuo pipefail
@@ -150,6 +154,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
@@ -181,6 +187,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -215,7 +223,7 @@ jobs:
 
   docker-platforms:
     name: Build and smoke Docker (${{ matrix.arch }})
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')) }}
     needs: [test, e2e]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 35
@@ -232,6 +240,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -287,3 +297,66 @@ jobs:
             -e JWT_SECRET=ci-updater-secret-ci-updater-secret-123456 \
             "orbitpage-ci:${GITHUB_SHA}-amd64"
           python3 scripts/test-updater-docker.py
+
+  node-compatibility:
+    name: Node compatibility (${{ matrix.node }})
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [24.22.1, 26.12.1]
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up supported Node.js version
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: |
+            app/package-lock.json
+            app/server/package-lock.json
+      - name: Install locked dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          npm --prefix server ci --prefer-offline --no-audit
+      - name: Check types, build and unit tests
+        run: |
+          npm run typecheck
+          npm run build
+          npm run test:unit
+
+  maintenance-report:
+    name: Maintenance report
+    if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    needs: [test, mocker-security-windows, e2e, docker-platforms, node-compatibility]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Summarize checks without repository changes
+        env:
+          QUALITY: ${{ needs.test.result }}
+          WINDOWS: ${{ needs.mocker-security-windows.result }}
+          BROWSERS: ${{ needs.e2e.result }}
+          DOCKER: ${{ needs.docker-platforms.result }}
+          NODE: ${{ needs.node-compatibility.result }}
+        run: |
+          {
+            printf '# Weekly maintenance checks\n\n'
+            printf 'Commit: `%s`\n\n' "$GITHUB_SHA"
+            printf '| Check | Result |\n| --- | --- |\n'
+            printf '| Lint, types, build, unit tests, documentation, installers and dependency audits (Node 22) | %s |\n' "$QUALITY"
+            printf '| Windows mocker security | %s |\n' "$WINDOWS"
+            printf '| Chromium, Firefox and WebKit | %s |\n' "$BROWSERS"
+            printf '| Docker amd64 and arm64 | %s |\n' "$DOCKER"
+            printf '| Node 24 and 26 compatibility | %s |\n\n' "$NODE"
+            printf 'Review failures in the corresponding job logs. Recheck the current revision before preparing a fix.\n\n'
+            printf 'No commits, pushes, issues or releases are created by these checks.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
