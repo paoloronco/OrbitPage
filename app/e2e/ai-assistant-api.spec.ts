@@ -69,7 +69,7 @@ test.describe('OrbitPage AI API end-to-end', () => {
     await page.reload();
     await openAdminSection(page, 'AI Assistant');
 
-    await expect(page.getByRole('heading', { name: 'Edit by asking' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'OrbitPage AI', exact: true })).toBeVisible();
     await expect(page.getByText('Connected', { exact: true })).toBeVisible();
 
     const publicPage = await context.newPage();
