@@ -404,8 +404,7 @@ In **Edition → Instance details**, click **Check for updates**, then **Install
 >
 > Replace `orbitpage` with the actual container name. Confirm the result with
 > `docker exec orbitpage node -p 'require("./package.json").version'`; it should
-> print `4.21.168`. This temporary note is scheduled for automatic removal on
-> November 24, 2026.
+> print `4.21.168`.
 <!-- orbitpage-web-update-recovery-note:end -->
 
 While the update runs, the dialog shows the automatically scrolling update log. Connection warnings and errors remain visible; the result appears when the update finishes.
