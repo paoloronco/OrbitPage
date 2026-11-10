@@ -1,5 +1,6 @@
 services:
   orbitpage:
+    container_name: orbitpage
     image: paoloronco/orbitpage:latest   # or ghcr.io/paoloronco/orbitpage:latest
     ports:
       - "8080:8080"
@@ -7,3 +8,38 @@ services:
       # Also persists the automatically generated JWT secret.
       - ./orbitpage-data:/app/data
     restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  orbitpage-updater:
+    container_name: orbitpage-updater
+    image: paoloronco/orbitpage:latest   # keep this registry aligned with orbitpage
+    entrypoint: ["python3", "/app/orbitpage-update.py", "--serve-web-updates", "orbitpage"]
+    environment:
+      ORBITPAGE_WEB_UPDATE_DATA_DIR: /app/data
+      ORBITPAGE_WEB_UPDATE_DIRECT: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+    volumes:
+      - ./orbitpage-data:/app/data
+      - orbitpage-update-state:/var/lib/orbitpage-updates
+      - orbitpage-backups:/var/backups/orbitpage
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      orbitpage:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+
+volumes:
+  orbitpage-update-state:
+  orbitpage-backups:

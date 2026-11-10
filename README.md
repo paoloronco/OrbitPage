@@ -88,6 +88,20 @@ docker run -d \
   -v orbitpage-data:/app/data \
   --security-opt no-new-privileges:true \
   paoloronco/orbitpage:latest
+
+docker run -d \
+  --name orbitpage-updater \
+  --restart unless-stopped \
+  --read-only --tmpfs /tmp \
+  -e ORBITPAGE_WEB_UPDATE_DATA_DIR=/app/data \
+  -e ORBITPAGE_WEB_UPDATE_DIRECT=1 \
+  -v orbitpage-data:/app/data \
+  -v orbitpage-update-state:/var/lib/orbitpage-updates \
+  -v orbitpage-backups:/var/backups/orbitpage \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --entrypoint python3 \
+  paoloronco/orbitpage:latest \
+  /app/orbitpage-update.py --serve-web-updates orbitpage
 ~~~
 
 Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
@@ -106,6 +120,20 @@ docker run -d \
   -v orbitpage-data:/app/data \
   --security-opt no-new-privileges:true \
   ghcr.io/paoloronco/orbitpage:latest
+
+docker run -d \
+  --name orbitpage-updater \
+  --restart unless-stopped \
+  --read-only --tmpfs /tmp \
+  -e ORBITPAGE_WEB_UPDATE_DATA_DIR=/app/data \
+  -e ORBITPAGE_WEB_UPDATE_DIRECT=1 \
+  -v orbitpage-data:/app/data \
+  -v orbitpage-update-state:/var/lib/orbitpage-updates \
+  -v orbitpage-backups:/var/backups/orbitpage \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --entrypoint python3 \
+  ghcr.io/paoloronco/orbitpage:latest \
+  /app/orbitpage-update.py --serve-web-updates orbitpage
 ~~~
 
 Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
@@ -126,6 +154,7 @@ Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a passw
 The public page is at [http://device_ip:8080](http://device_ip:8080).
 
 Edit `docker-compose.yml` to change the image, port, environment, or storage path.
+The included update agent makes **Edition → Instance details → Install update…** available by default. It is isolated from the application container; only the agent receives the Docker socket.
 
 ## Linux installer
 

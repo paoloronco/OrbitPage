@@ -38,6 +38,20 @@ docker run -d \
   -v orbitpage-data:/app/data \
   --security-opt no-new-privileges:true \
   paoloronco/orbitpage:latest
+
+docker run -d \
+  --name orbitpage-updater \
+  --restart unless-stopped \
+  --read-only --tmpfs /tmp \
+  -e ORBITPAGE_WEB_UPDATE_DATA_DIR=/app/data \
+  -e ORBITPAGE_WEB_UPDATE_DIRECT=1 \
+  -v orbitpage-data:/app/data \
+  -v orbitpage-update-state:/var/lib/orbitpage-updates \
+  -v orbitpage-backups:/var/backups/orbitpage \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --entrypoint python3 \
+  paoloronco/orbitpage:latest \
+  /app/orbitpage-update.py --serve-web-updates orbitpage
 ```
 
 Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
@@ -64,6 +78,20 @@ docker run -d \
   -v orbitpage-data:/app/data \
   --security-opt no-new-privileges:true \
   ghcr.io/paoloronco/orbitpage:latest
+
+docker run -d \
+  --name orbitpage-updater \
+  --restart unless-stopped \
+  --read-only --tmpfs /tmp \
+  -e ORBITPAGE_WEB_UPDATE_DATA_DIR=/app/data \
+  -e ORBITPAGE_WEB_UPDATE_DIRECT=1 \
+  -v orbitpage-data:/app/data \
+  -v orbitpage-update-state:/var/lib/orbitpage-updates \
+  -v orbitpage-backups:/var/backups/orbitpage \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --entrypoint python3 \
+  ghcr.io/paoloronco/orbitpage:latest \
+  /app/orbitpage-update.py --serve-web-updates orbitpage
 ```
 
 Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
@@ -87,6 +115,7 @@ docker compose up -d
 | Published port | `8080:8080` (all host interfaces) |
 | Persistent data | `./orbitpage-data` |
 | Restart policy | `unless-stopped` |
+| Web updates | Enabled by the isolated `orbitpage-updater` service |
 
 Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin. The public page is at [http://device_ip:8080](http://device_ip:8080).
 
@@ -350,18 +379,18 @@ Use your original settings if they differ. Removing the container keeps its name
 
 ### Web updates
 
-In **Edition → Instance details**, click **Check for updates**, then **Install update…**. The Linux/Proxmox installer enables the host update service for official `latest` images on systemd hosts. Without that service, the dialog shows terminal instructions.
+In **Edition → Instance details**, click **Check for updates**, then **Install update…**. New Docker Run, Compose, Linux and Proxmox installations using the documented defaults enable the update agent automatically for official `latest` images. The application container never receives the Docker socket; Docker deployments give it only to the isolated update agent. Pinned releases, custom images and platforms that do not expose the local Docker engine keep operator-controlled terminal updates.
 
 While the update runs, the dialog shows the automatically scrolling update log. Connection warnings and errors remain visible; the result appears when the update finishes.
 
-For an existing Docker Run or Compose container, install the service with:
+For an existing Docker Run or Compose container created before the update agent was included, install the host service with:
 
 ```bash
 git clone https://github.com/paoloronco/OrbitPage.git
 sudo ./OrbitPage/install.sh web-updates orbitpage
 ```
 
-Replace `orbitpage` with the actual container name. The service requires Python 3, systemd, an official `latest` image, and a writable persistent `/app/data` mount. Source installations, custom images, and pinned releases use terminal updates.
+Replace `orbitpage` with the actual container name. The command now verifies the live socket before reporting success. The service requires Python 3, systemd, an official `latest` image, and a writable persistent `/app/data` mount. Source installations, custom images, and pinned releases use terminal updates.
 
 Dashboard installation requires an administrator's current password. OrbitPage does not receive the Docker socket or sudo access. If an update result is unconfirmed, inspect the service and retained backup as described in [Troubleshooting](./Troubleshooting.md#image-pull-or-dashboard-installation-fails).
 

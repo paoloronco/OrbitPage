@@ -26,6 +26,16 @@ class UpdatePlanTests(unittest.TestCase):
                     with self.assertRaisesRegex(RuntimeError, 'Pinned images'):
                         updater.web_update_directory('orbitpage-test')
 
+    def test_containerized_agent_uses_its_shared_data_mount(self):
+        with tempfile.TemporaryDirectory() as directory:
+            container = {'Config': {'Image': 'paoloronco/orbitpage:latest'}, 'Mounts': [
+                {'Type': 'bind', 'Destination': '/app/data', 'Source': '/host/path/not-visible-in-agent', 'RW': True},
+            ]}
+            with patch.dict(updater.os.environ, {'ORBITPAGE_WEB_UPDATE_DATA_DIR': directory}), \
+                 patch.object(updater, 'run', return_value=SimpleNamespace(stdout='unix:///var/run/docker.sock')), \
+                 patch.object(updater, 'docker_json', return_value=[container]):
+                self.assertEqual(updater.web_update_directory('orbitpage-test'), Path(directory).resolve())
+
     def test_source_update_never_installs_checkout_owned_helpers_as_root(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -73,9 +83,11 @@ class UpdatePlanTests(unittest.TestCase):
                     connection.close(); thread.join(timeout=5)
             with patch.object(updater, 'WEB_STATE_DIR', data / 'state'), \
                  patch.object(updater, 'web_update_directory', return_value=data), \
-                 patch.object(updater, 'run', return_value=SimpleNamespace(stdout=str(updater.os.getuid()))), \
-                 patch.object(updater.os, 'chown'), patch.object(socketserver.BaseServer, 'serve_forever', exercise):
+                 patch.object(updater.os, 'chown') as chown, \
+                 patch.object(socketserver.BaseServer, 'serve_forever', exercise):
                 updater.serve_web_updates('orbitpage-test')
+                directory_owner = data.stat()
+                chown.assert_called_once_with(data / '.orbitpage-update.sock', directory_owner.st_uid, directory_owner.st_gid)
 
     def test_web_job_survives_restart_and_rejects_parallel_or_untrusted_requests(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(updater.threading.Thread, 'start'):
@@ -190,6 +202,22 @@ class UpdatePlanTests(unittest.TestCase):
 
         inspect.assert_called_once_with('inspect', 'orbitpage')
         update.assert_called_once_with(container)
+
+    def test_containerized_agent_updates_compose_container_directly(self):
+        container = {'Name': '/orbitpage', 'Config': {'Image': 'paoloronco/orbitpage:latest', 'Labels': {
+            'com.docker.compose.project': 'orbitpage', 'com.docker.compose.service': 'orbitpage',
+        }}}
+        with patch.dict(updater.os.environ, {'ORBITPAGE_WEB_UPDATE_DIRECT': '1'}), \
+             patch.object(updater.os, 'geteuid', return_value=0, create=True), \
+             patch.object(updater, 'SOURCE_FILE', Path('missing-update-source')), \
+             patch.object(updater.sys, 'argv', ['orbitpage-update.py', 'orbitpage']), \
+             patch.object(updater, 'run', return_value=SimpleNamespace(stdout='orbitpage\n')), \
+             patch.object(updater, 'docker_json', return_value=[container]), \
+             patch.object(updater, 'update_docker_run') as direct, \
+             patch.object(updater, 'update_compose') as compose:
+            updater.main()
+        direct.assert_called_once_with(container)
+        compose.assert_not_called()
 
 
 if __name__ == '__main__':

@@ -306,6 +306,9 @@ def main():
         raise RuntimeError('No OrbitPage installation found. For source installs, register it with --register-source /path/to/OrbitPage.')
     groups = {}
     for container in selected:
+        if os.environ.get('ORBITPAGE_WEB_UPDATE_DIRECT') == '1':
+            update_docker_run(container)
+            continue
         labels = container['Config'].get('Labels') or {}
         key = (labels.get('com.docker.compose.project'), labels.get('com.docker.compose.service'))
         if key[0]:
@@ -329,14 +332,15 @@ def web_update_directory(name):
     mount = next((m for m in container.get('Mounts', []) if m.get('Destination') == '/app/data' and m.get('RW')), None)
     if not mount or mount.get('Type') not in ('bind', 'volume'):
         raise RuntimeError('Web updates require a writable persistent /app/data mount.')
-    directory = Path(mount['Source']).resolve(strict=True)
+    mounted_directory = os.environ.get('ORBITPAGE_WEB_UPDATE_DATA_DIR')
+    directory = Path(mounted_directory or mount['Source']).resolve(strict=True)
     if not directory.is_dir() or directory == Path('/'):
         raise RuntimeError('Invalid persistent data directory.')
     return directory
 
 
 def enable_web_updates(name):
-    web_update_directory(name)
+    data = web_update_directory(name)
     if not shutil.which('systemctl'):
         raise RuntimeError('Web updates require a Linux host with systemd. Use the terminal updater on this host.')
     service = f'orbitpage-updates-{name}.service'
@@ -349,6 +353,22 @@ def enable_web_updates(name):
     os.chmod(unit, 0o644)
     run('systemctl', 'daemon-reload')
     run('systemctl', 'enable', '--now', service)
+    socket_path = data / '.orbitpage-update.sock'
+    for _ in range(50):
+        if socket_path.is_socket():
+            try:
+                connection = UnixConnection(str(socket_path))
+                connection.request('GET', '/updates')
+                response = connection.getresponse()
+                payload = json.loads(response.read(65536))
+                connection.close()
+                if response.status == 200 and payload.get('enabled') is True:
+                    break
+            except (OSError, http.client.HTTPException, ValueError, json.JSONDecodeError):
+                pass
+        time.sleep(0.1)
+    else:
+        raise RuntimeError(f'The dashboard update service did not become ready. Check: journalctl -u {service}')
     print(f'Web updates enabled for {name}. Logs: journalctl -u {service}')
 
 
@@ -494,9 +514,11 @@ def serve_web_updates(name):
     class Server(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
         daemon_threads = True
     with Server(str(socket_path), Handler) as server:
-        uid = int(run('docker', 'exec', name, 'id', '-u', capture=True).stdout.strip())
-        gid = int(run('docker', 'exec', name, 'id', '-g', capture=True).stdout.strip())
-        os.chown(socket_path, uid, gid)
+        # The host-side owner of the mounted directory already includes any
+        # rootless/user-namespace UID mapping. A UID read inside the container
+        # does not, and can leave an apparently enabled socket inaccessible.
+        owner = data.stat()
+        os.chown(socket_path, owner.st_uid, owner.st_gid)
         os.chmod(socket_path, 0o600)
         server.serve_forever()
 

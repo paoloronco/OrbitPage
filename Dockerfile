@@ -1,7 +1,7 @@
 # ---------- STAGE 1: build (frontend + server deps) ----------
 FROM node:22.23.4-alpine AS builder
 
-LABEL org.opencontainers.image.version="4.21.167"
+LABEL org.opencontainers.image.version="4.21.168"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -45,7 +45,7 @@ COPY app/server/routes ./routes
 # ---------- STAGE 2: runtime ----------
 FROM node:22.23.4-alpine
 
-LABEL org.opencontainers.image.version="4.21.167"
+LABEL org.opencontainers.image.version="4.21.168"
 LABEL org.opencontainers.image.title="OrbitPage"
 LABEL org.opencontainers.image.description="Open-source, self-hosted link-in-bio and public page builder"
 LABEL org.opencontainers.image.source="https://github.com/paoloronco/OrbitPage"
@@ -53,8 +53,9 @@ LABEL org.opencontainers.image.url="https://orbitpage.com/en-US/open-source"
 LABEL org.opencontainers.image.documentation="https://github.com/paoloronco/OrbitPage/blob/main/docs/README.md"
 LABEL org.opencontainers.image.licenses="MIT"
 
-# sqlite runtime
-RUN apk add --no-cache sqlite
+# SQLite serves the application. Python and the Docker CLI serve the isolated
+# update-agent mode; the application container receives no Docker socket.
+RUN apk add --no-cache sqlite python3 docker-cli
 
 # npm is not needed at runtime; remove it to eliminate its bundled
 # vulnerable packages (tar, minimatch, glob) from the final image
