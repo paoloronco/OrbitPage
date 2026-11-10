@@ -381,6 +381,33 @@ Use your original settings if they differ. Removing the container keeps its name
 
 In **Edition → Instance details**, click **Check for updates**, then **Install update…**. New Docker Run, Compose, Linux and Proxmox installations using the documented defaults enable the update agent automatically for official `latest` images. The application container never receives the Docker socket; Docker deployments give it only to the isolated update agent. Pinned releases, custom images and platforms that do not expose the local Docker engine keep operator-controlled terminal updates.
 
+<!-- orbitpage-web-update-recovery-note:start expires=2026-11-24T00:00:00+01:00 -->
+> [!IMPORTANT]
+> **Temporary recovery for installations up to v4.21.167.** If the dashboard
+> still says **Web updates are not enabled**, run the following commands on the
+> Docker host, not inside the container. They update the existing official
+> `latest` deployment while preserving its data mount, ports and environment,
+> then install the corrected host service:
+>
+> ```bash
+> git clone --branch v4.21.168 --depth 1 \
+>   https://github.com/paoloronco/OrbitPage.git \
+>   /tmp/orbitpage-4.21.168
+>
+> sudo python3 \
+>   /tmp/orbitpage-4.21.168/scripts/orbitpage-update.py \
+>   orbitpage
+>
+> sudo /tmp/orbitpage-4.21.168/install.sh \
+>   web-updates orbitpage
+> ```
+>
+> Replace `orbitpage` with the actual container name. Confirm the result with
+> `docker exec orbitpage node -p 'require("./package.json").version'`; it should
+> print `4.21.168`. This temporary note is scheduled for automatic removal on
+> November 24, 2026.
+<!-- orbitpage-web-update-recovery-note:end -->
+
 While the update runs, the dialog shows the automatically scrolling update log. Connection warnings and errors remain visible; the result appears when the update finishes.
 
 For an existing Docker Run or Compose container created before the update agent was included, install the host service with:
