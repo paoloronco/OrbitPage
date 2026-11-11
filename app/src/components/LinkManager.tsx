@@ -1078,7 +1078,6 @@ export const LinkManager = ({
             data-onboarding="link-add-grid"
           >
             <DialogHeader className="admin-block-library-dialog-header">
-              <p className="admin-block-library-kicker">{tr("Block library", "Libreria blocchi")}</p>
               <DialogTitle>{tr("Add content", "Aggiungi contenuto")}</DialogTitle>
               <DialogDescription>
                 {tr(

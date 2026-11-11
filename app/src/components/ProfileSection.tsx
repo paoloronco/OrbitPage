@@ -677,7 +677,7 @@ export const ProfileSection = ({
             </summary>
 
             <div className="space-y-5 border-t border-slate-200 p-4">
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-5" role="group" aria-label={tr("Profile card style", "Stile card profilo")}>
+              <div className="admin-profile-card-styles" role="group" aria-label={tr("Profile card style", "Stile card profilo")}>
                 {([
                   { id: "theme", label: tr("Theme", "Tema"), icon: Palette },
                   { id: "personalized", label: tr("Personalized", "Personalizzato"), icon: Square },

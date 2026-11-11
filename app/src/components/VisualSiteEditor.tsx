@@ -259,12 +259,8 @@ export function VisualSiteEditor({
           )}
         </div>}
 
-        <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle}>
-          {previewEnabled && section !== "menu" && inspectorDescription && <header className="visual-site-editor__inspector-heading">
-            <h2 className="visual-site-editor__title">{inspectorTitle}</h2>
-            <span>{inspectorDescription}</span>
-            {section === "links" && <div className="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot="" />}
-          </header>}
+        <Inspector className="visual-site-editor__inspector" aria-label={inspectorTitle} aria-description={inspectorDescription || undefined}>
+          {previewEnabled && section === "links" && <div className="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot="" />}
           <div className="visual-site-editor__inspector-body">{inspector}</div>
         </Inspector>
       </div>

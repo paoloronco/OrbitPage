@@ -288,51 +288,63 @@ html:has(.admin-visual-editor-enabled) {
 }
 
 .visual-site-editor__inspector {
+  container-name: orbitpage-inspector;
+  container-type: inline-size;
   align-self: stretch;
   min-width: 0;
   border-width: 0 0 0 1px;
 }
 
-.visual-site-editor__inspector-heading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px;
-  padding: 16px 18px 14px;
-  border-bottom: 1px solid #e2e7ef;
-  background: #fff;
-}
-
-.visual-site-editor h2.visual-site-editor__title {
-  grid-column: 1;
-  margin: 0;
-  color: #14213a;
-  font-family: var(--orbitpage-dashboard-font);
-  font-size: 17px;
-  font-style: normal;
-  font-weight: 820;
-  letter-spacing: -.015em;
-  line-height: 1.2;
-}
-
-.visual-site-editor__inspector-heading span {
-  grid-column: 1;
-  color: #66758d;
-  font-size: 11px;
-  line-height: 1.45;
-}
-
 .visual-site-editor__inspector-heading-actions {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  align-self: center;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e7ef;
 }
 
 .visual-site-editor__inspector-heading-actions .admin-link-actions {
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .visual-site-editor__inspector-body {
   padding: 14px;
+}
+
+.admin-profile-card-styles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+  gap: 8px;
+}
+
+.admin-profile-card-styles > button,
+.admin-profile-card-styles > button > strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@container orbitpage-inspector (max-width: 28rem) {
+  .visual-site-editor__inspector .admin-profile-avatar-layout {
+    grid-template-columns: minmax(0, 8rem) minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+  }
+
+  .visual-site-editor__inspector .admin-profile-avatar-controls { display: contents; }
+  .visual-site-editor__inspector .admin-profile-avatar-shape { grid-column: 2; grid-row: 1; }
+  .visual-site-editor__inspector .admin-profile-avatar-shape-options { grid-template-columns: minmax(0, 1fr); }
+  .visual-site-editor__inspector .admin-profile-avatar-shape-option { display: flex; min-height: 34px; gap: 8px; padding: 6px 8px; text-align: left; }
+  .visual-site-editor__inspector .admin-profile-avatar-controls > :nth-child(n + 2) { grid-column: 1 / -1; }
+  .visual-site-editor__inspector .admin-profile-avatar-controls > :nth-child(2) { grid-row: 2; }
+  .visual-site-editor__inspector .admin-profile-avatar-controls > :nth-child(3) { grid-row: 3; }
+}
+
+@container orbitpage-inspector (max-width: 20rem) {
+  .visual-site-editor__inspector .admin-profile-avatar-layout { grid-template-columns: minmax(0, 1fr); }
+  .visual-site-editor__inspector .admin-profile-avatar-shape,
+  .visual-site-editor__inspector .admin-profile-avatar-controls > :nth-child(n + 2) { grid-column: auto; grid-row: auto; }
+  .visual-site-editor__inspector .admin-profile-avatar-shape-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .visual-site-editor__inspector .admin-profile-avatar-shape-option { display: grid; justify-content: center; text-align: center; }
 }
 
 .visual-site-editor__inspector-body:has(.admin-block-editor-shell) {
@@ -344,6 +356,9 @@ html:has(.admin-visual-editor-enabled) {
 }
 
 @media (min-width: 601px) {
+  .visual-site-editor__inspector-heading-actions:not(:has(.admin-link-actions > :not(.admin-content-header-add))) {
+    display: none;
+  }
   .visual-site-editor__inspector-heading-actions .admin-content-header-add {
     display: none;
   }
@@ -597,9 +612,22 @@ html:has(.admin-visual-editor-enabled) {
   position: absolute;
 }
 
-.profile-card--layout-editing .profile-card__layout {
+.profile-card--layout-editing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 1px solid rgb(129 151 190 / 52%);
+  border-radius: inherit;
   background-image: linear-gradient(rgb(129 151 190 / 16%) 1px, transparent 1px), linear-gradient(90deg, rgb(129 151 190 / 16%) 1px, transparent 1px);
   background-size: 8px 8px;
+}
+
+.profile-card--layout-editing > .profile-card__layout,
+.profile-card--layout-editing > .profile-card__fixed-bio {
+  position: relative;
+  z-index: 1;
 }
 
 .profile-card__layout-reset {

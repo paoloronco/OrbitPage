@@ -141,7 +141,7 @@ describe("VisualSiteEditor", () => {
     expect(renderPreview).not.toHaveBeenCalled();
   });
 
-  it("uses the same inspector heading for profile and content", () => {
+  it("labels the inspector without duplicate visible headings and preserves content actions", () => {
     const html = renderToStaticMarkup(
       <VisualSiteEditor
         profile={{ name: "OrbitPage", bio: "", avatar: "" }}
@@ -159,11 +159,12 @@ describe("VisualSiteEditor", () => {
       />,
     );
 
-    expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2 class="visual-site-editor__title">Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
-    expect(html.match(/<h2 class="visual-site-editor__title">Content block<\/h2>/g)).toHaveLength(1);
+    expect(html).toContain('aria-label="Content block" aria-description="7 blocks"');
+    expect(html).toContain('data-orbitpage-content-header-slot=""');
+    expect(html).not.toContain('class="visual-site-editor__title"');
   });
 
-  it("keeps the shared inspector heading when a preview card is selected on mobile", () => {
+  it("keeps the accessible inspector and actions when a preview card is selected on mobile", () => {
     vi.stubGlobal("window", {
       matchMedia: (query: string) => ({ matches: query === "(max-width: 600px)" }),
     });
@@ -187,7 +188,9 @@ describe("VisualSiteEditor", () => {
         />,
       );
 
-      expect(html).toContain('<header class="visual-site-editor__inspector-heading"><h2 class="visual-site-editor__title">Content block</h2><span>7 blocks</span><div class="visual-site-editor__inspector-heading-actions" data-orbitpage-content-header-slot=""></div></header>');
+      expect(html).toContain('aria-label="Content block" aria-description="7 blocks"');
+      expect(html).toContain('data-orbitpage-content-header-slot=""');
+      expect(html).not.toContain('class="visual-site-editor__title"');
     } finally {
       vi.unstubAllGlobals();
     }

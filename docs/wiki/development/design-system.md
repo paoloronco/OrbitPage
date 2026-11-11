@@ -47,6 +47,11 @@ The [UI components](../../../app/src/components/ui) and
 the component baseline. Extend an existing primitive or workspace pattern
 before introducing a parallel one.
 
+Inspector controls reflow from the inspector's own container width. Keep section
+names in navigation and accessible region labels rather than repeating them above
+the form. Arrangement bounds and the grid include the entire profile card,
+including its fixed biography.
+
 ## Accessibility and responsive rules
 
 - Preserve `:focus-visible` and the forced-colors focus override in the shared
