@@ -59,7 +59,7 @@ schedule choices against the preview before relying on them for opening hours.
 **Publish → Sitemap** generates the current public-route list. Disabled destinations are excluded.
 **Publish → TXT** edits robots, humans, AI, LLM and security discovery files and
 custom text endpoints. Save the relevant editor, then inspect the public
-endpoint. Machine-readable page Markdown is opt-in and distinct from `llms.txt`.
+endpoint. The resizable TXT editor starts with 18 visible rows; a demo declared by the server is read-only and still allows selecting and copying its text. Machine-readable page Markdown is opt-in and distinct from `llms.txt`.
 Use the [SEO guide](../../SEO-and-indexing.md) for paths, limits and indexing rules.
 
 When you change a page slug or domain, check the sitemap, navigation blocks, QR destinations and external links together.

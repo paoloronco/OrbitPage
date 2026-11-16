@@ -15,8 +15,10 @@ interface TextFileManagerProps {
   readOnly?: boolean;
 }
 
-export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
+export function TextFileManager({ readOnly: requestedReadOnly = false }: TextFileManagerProps) {
   const { tr } = useAppI18n();
+  const [serverReadOnly, setServerReadOnly] = useState(false);
+  const readOnly = requestedReadOnly || serverReadOnly;
   const [files, setFiles] = useState<TextFileConfig[]>([]);
   const [activeKey, setActiveKey] = useState<TextFileConfig["key"]>("robots");
   const [draft, setDraft] = useState("");
@@ -40,6 +42,7 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
       try {
         const response = await textFilesApi.get();
         if (cancelled) return;
+        setServerReadOnly(response.data.demoMode === true);
         const nextFiles = response.data.files;
         setFiles(nextFiles);
         const selected = nextFiles.find((file) => file.key === activeKey) || nextFiles[0];
@@ -275,10 +278,12 @@ export function TextFileManager({ readOnly = false }: TextFileManagerProps) {
           </div>
 
           <Textarea
+            rows={18}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             spellCheck={false}
-            disabled={busy || readOnly}
+            disabled={busy}
+            readOnly={readOnly}
             className="min-h-[360px] resize-y font-mono text-xs leading-5"
           />
 

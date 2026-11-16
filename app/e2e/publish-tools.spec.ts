@@ -39,6 +39,9 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
 
   await page.getByRole('tab', { name: /TXT/ }).click();
   await expect(page.getByRole('heading', { name: 'TXT files' })).toBeVisible();
+  const editor = page.locator('.publish-tools textarea');
+  await expect(editor).toBeEditable();
+  expect(await editor.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThanOrEqual(320);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'TXT files' })).toBeVisible();
   await page.getByRole('tab', { name: /TXT/ }).focus();
@@ -62,6 +65,28 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
   const icon = (await page.locator('#publish-tool-sitemap .admin-panel-icon').boundingBox())!;
   expect(Math.abs(icon.width - icon.height)).toBeLessThan(1);
   await page.screenshot({ path: 'test-results/publish-tools-mobile.png', fullPage: true });
+  await page.getByRole('tab', { name: /TXT/ }).click();
+  await expect(editor).toBeEditable();
+  expect(await editor.evaluate(node => node.getBoundingClientRect().height)).toBeGreaterThanOrEqual(320);
+});
+
+test('honors a server-declared read-only TXT demo while allowing text selection', async ({ page }) => {
+  await page.route('**/api/text-files', async route => {
+    const response = await route.fetch();
+    const body = await response.json();
+    await route.fulfill({ response, json: { ...body, data: { ...body.data, demoMode: true } } });
+  });
+  await openAuthenticatedAdmin(page);
+  await openAdminSection(page, 'Publish');
+  await page.getByRole('tab', { name: /TXT/ }).click();
+  const tools = page.locator('.publish-tools'), editor = tools.locator('textarea');
+  await expect(tools.getByText('Demo read-only', { exact: true })).toBeVisible();
+  await expect(editor).toHaveAttribute('readonly', '');
+  await expect(editor).toBeEnabled();
+  await expect(tools.getByRole('button', { name: 'Add TXT file', exact: true })).toHaveCount(0);
+  await expect(tools.getByRole('button', { name: 'Save', exact: true })).toBeDisabled();
+  expect((await editor.inputValue()).length).toBeGreaterThan(0);
+  expect(await editor.evaluate(node => { node.focus(); node.select(); return node.selectionEnd - node.selectionStart; })).toBe((await editor.inputValue()).length);
 });
 
 test('redirects legacy publishing routes to the unified workspace', async ({ page }) => {
