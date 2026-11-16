@@ -7553,6 +7553,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
     font-size: 12px;
   }
   .orbitpage-admin textarea:not(.admin-live-preview *, .oss-account-layout *, .oss-account-delete-dialog *, .team-workspace *) { min-height: 64px; padding: 7px 9px; font-size: 12px; }
+  .orbitpage-admin .publish-tools textarea { min-height: 360px; }
   .orbitpage-admin button.h-9:not(.admin-live-preview *, .oss-account-layout *, .oss-account-delete-dialog *, .team-workspace *),
   .orbitpage-admin [role="button"].h-9:not(.admin-live-preview *, .oss-account-layout *, .oss-account-delete-dialog *, .team-workspace *) { height: 32px; min-height: 32px; }
   .orbitpage-admin button.h-10:not(.admin-live-preview *, .oss-account-layout *, .oss-account-delete-dialog *, .team-workspace *),
