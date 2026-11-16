@@ -71,7 +71,9 @@ test('groups QR, Sitemap and TXT in one responsive Publish workspace', async ({ 
 });
 
 test('honors a server-declared read-only TXT demo while allowing text selection', async ({ page }) => {
-  await page.route('**/api/text-files', async route => {
+  let reads = 0;
+  await page.route(/\/api\/text-files(?:\?|$)/, async route => {
+    reads++;
     const response = await route.fetch();
     const body = await response.json();
     await route.fulfill({ response, json: { ...body, data: { ...body.data, demoMode: true } } });
@@ -81,6 +83,7 @@ test('honors a server-declared read-only TXT demo while allowing text selection'
   await page.getByRole('tab', { name: /TXT/ }).click();
   const tools = page.locator('.publish-tools'), editor = tools.locator('textarea');
   await expect(tools.getByText('Demo read-only', { exact: true })).toBeVisible();
+  expect(reads).toBeGreaterThan(0);
   await expect(editor).toHaveAttribute('readonly', '');
   await expect(editor).toBeEnabled();
   await expect(tools.getByRole('button', { name: 'Add TXT file', exact: true })).toHaveCount(0);
