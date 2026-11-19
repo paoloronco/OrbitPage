@@ -19,6 +19,7 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 
 | Task | Guide |
 | --- | --- |
+| Choose the purpose and content order of a page | [Plan your page](./page-planning.md) |
 | Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard/README.md) |
 | Edit profiles, blocks, menus, pages, and themes | [Content and design](./dashboard/sections/content-and-design.md) |
 | Add, arrange and schedule blocks | [Content blocks](./dashboard/sections/content-blocks.md) |

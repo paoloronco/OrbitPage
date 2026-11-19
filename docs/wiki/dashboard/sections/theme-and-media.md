@@ -19,6 +19,18 @@ Use a page preset as the starting point, then refine only what the page needs. T
 
 For a selected card, choose **This card** to override its appearance or **Shared style** to update the common style. Individual overrides remain active when editing the shared style. **Reset to shared style** removes the selected card's overrides; **Use shared style on every card** clears all individual style overrides in the draft. Profile appearance controls use the same overrides as the Page editor. Hosted plan permissions still apply to advanced customization.
 
+## Readable and accessible design
+
+Design for visitors using a phone in sunlight as well as a laptop. Keep text large enough to read, keyboard focus visible and foreground contrast clear over images or video. A background can establish mood while leaving labels easy to read.
+
+- Give the primary action one dominant visual treatment.
+- Keep tap targets comfortably large and separated.
+- Use thumbnails when they help identify the content.
+- Test the longest label at the narrowest supported screen width.
+- Check the page with images delayed or unavailable.
+
+Follow the [publishing checklist](./publishing.md#launch-checklist) after changing the design.
+
 ## Moving backgrounds
 
 Video backgrounds autoplay muted and loop. They pause when the visitor has reduced motion enabled. For video or GIF backgrounds, adjust opacity, blur, overlay, brightness, saturation, contrast, scale, and fit until foreground content remains readable. **Cover** may crop, **Contain** can letterbox, and **Fill** can distort the media.

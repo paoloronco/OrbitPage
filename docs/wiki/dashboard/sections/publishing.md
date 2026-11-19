@@ -15,6 +15,27 @@ Saved content appears at the public URL. Save each section before opening **Publ
 
 Additional pages must be marked **Published**; Menu and Shop have their own publication controls. If saving reports a publication error, resolve it and check the public result again.
 
+## Launch checklist
+
+Before sharing a new page or campaign:
+
+1. Open every destination in a private browser window.
+2. Confirm the first action is still the one that matters most.
+3. Read every label without relying on the image beside it.
+4. Check mobile and desktop layouts, keyboard focus and color contrast.
+5. Verify the browser title, description, share preview and favicon.
+6. Remove expired events, duplicate links and draft content.
+
+Use [page planning](../../page-planning.md) to review the content order and [Analytics and privacy](./analytics-and-privacy.md#measure-useful-actions) to choose what to measure after sharing.
+
+## Choose a lasting address
+
+A hosted username is enough to begin and suits many personal pages. Consider a custom domain when the address is part of a lasting brand, printed on materials or shared by a team. Keeping control of the domain helps you retain the public identity when hosting tools change.
+
+Ownership also includes who operates the software. Managed hosting handles accounts, publishing, storage and maintenance. An open-source page builder lets you inspect and run the software yourself when you want operational control. Choose according to whether you want to operate software or focus on editing your page.
+
+The address should remain useful beyond the next campaign. Updating content at the same URL preserves existing links and printed QR codes; changing the address requires checking those destinations again.
+
 ## Public address
 
 | Edition | Configuration |

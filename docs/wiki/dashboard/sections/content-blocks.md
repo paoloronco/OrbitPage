@@ -4,6 +4,18 @@ Add and arrange links, text, media and connected services, control their visibil
 
 Part of [Content and design](./content-and-design.md).
 
+## Choose a content format
+
+Use a link when its label and destination give visitors enough information to act. Choose a richer block when context, media, location or timing affects their decision:
+
+- a text block introduces a project;
+- an image or video shows the work;
+- a map helps someone plan a visit;
+- an event combines a date with its booking link;
+- contact details and social profiles provide a direct next step.
+
+Use fewer, more informative blocks rather than filling the page with every available format. Start with the [page purpose and content order](../../page-planning.md), then add the blocks that support it.
+
 ## Main-page blocks
 
 Open **Content > Link**, then select **Add content**. The library groups the available blocks by purpose:

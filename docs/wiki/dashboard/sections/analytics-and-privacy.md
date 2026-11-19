@@ -30,6 +30,14 @@ Duration appears only for new consented visits and cannot be reconstructed for h
 
 AI discovery is a referrer/tag estimate, not a count of search prompts, AI answers or crawler reads. Untagged visits cannot reliably be identified. The table below the charts exposes the plotted values.
 
+## Measure useful actions
+
+Choose the question before comparing click totals. Did a featured event receive more interest than the generic calendar? Does "View the collection" help visitors find the offer more clearly than "Shop"? Use trends and campaign tags when there is enough traffic for a useful comparison.
+
+Collect only the visitor data needed for the decision. Document analytics providers, follow the applicable consent settings and keep personal information out of public URLs and campaign parameters. Check the available reports and controls for your edition before planning a measurement workflow.
+
+Review the [page purpose and primary action](../../page-planning.md) alongside the reports. A change in visits alone does not show whether visitors completed the action that matters to the page.
+
 ## Campaign and QR traffic
 
 Use tagged campaign links and QR codes from **Publish** to distinguish placements. QR reporting counts consented visits when the destination loads, not camera scans. Newly generated QR codes include a campaign marker; regenerate older codes without it to distinguish their traffic.
