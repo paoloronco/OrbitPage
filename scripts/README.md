@@ -41,8 +41,15 @@ they are not needed by a running installation. The root Dockerfile bundles only
   outside-root canary. Checks literal escaping and file access on Linux and
   Windows without evaluating injected JavaScript.
 
-- `check-markdown-links.mjs`: validates repository-local documentation links;
-  CI runs it before application checks.
+- `check-markdown-links.mjs`: checks every Git-visible Markdown file, including
+  nested package READMEs. Validates local files, exact path case, section anchors,
+  reference links and HTML image/link targets, and checks that canonical `docs/`
+  pages are reachable from the project README. Four wiki compatibility pages
+  are deliberately excluded from new-reader navigation. External HTTP links
+  are not fetched by this offline check.
+- `check-markdown-links.test.mjs`: isolated temporary fixtures covering broken
+  bookmarks, path case, references, code examples, encoded paths and disconnected
+  guides. CI runs these and the documentation check before application checks.
 - `check-tracked-runtime-data.mjs`: rejects tracked databases, sidecars and local
   credential/configuration files in CI, before push and before release. It
   checks the current Git index; it neither reads nor rewrites historical data.
@@ -59,6 +66,7 @@ Run the documentation link check from the repository root:
 
 ```bash
 node scripts/check-markdown-links.mjs
+node --test scripts/check-markdown-links.test.mjs
 ```
 
 ## Safety rules

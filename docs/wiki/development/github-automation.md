@@ -33,6 +33,11 @@ manually. See [GitHub's schedule contract](https://docs.github.com/en/actions/re
 
 ## Release checks
 
+The quality gate first runs the isolated documentation-checker tests and scans
+all repository Markdown files. Local links, Linux-sensitive filename case,
+section bookmarks and guide reachability must pass before dependency installation.
+Run the same checks locally using [Scripts](../../../scripts/README.md).
+
 The release workflow queries `Quality Gate`, `Mocker security (Windows)`, `E2E (browser)`, and `Build and smoke Docker (architecture)`; keep these job names aligned with the gate and repository protection.
 
 Frontend and backend npm audits reject high/critical advisories. A release tag must match both application package versions. See [Contributing → Release notes](../../../CONTRIBUTING.md#release-notes).

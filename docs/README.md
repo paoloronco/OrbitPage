@@ -4,6 +4,17 @@ The [wiki index](./wiki/README.md) is the complete, task-oriented guide to the o
 
 For the managed service, use [OrbitPage's online documentation](https://orbitpage.com/en-US/docs). Installation commands and owner-managed credentials in this repository apply to self-hosted OrbitPage.
 
+<a id="documentation"></a>
+<a id="install-orbitpage"></a>
+<a id="update-orbitpage"></a>
+<a id="using-orbitpage"></a>
+<a id="integrations"></a>
+<a id="administration"></a>
+<a id="development-and-architecture"></a>
+<a id="common-paths"></a>
+<a id="new-installation"></a>
+<a id="existing-installation"></a>
+
 ## Choose a starting point
 
 | What you want to do | Start here |
@@ -16,6 +27,8 @@ For the managed service, use [OrbitPage's online documentation](https://orbitpag
 | Update, back up or recover an installation | [Administration](./wiki/administration/README.md) |
 | Diagnose a problem | [Troubleshooting](./wiki/administration/Troubleshooting.md) and [Frequently asked questions](./wiki/faq.md) |
 | Change application code or write an integration | [Development](./wiki/development/README.md) and [Contributing](../CONTRIBUTING.md) |
+
+<a id="additional-resources"></a>
 
 ## Folder map and document ownership
 
@@ -34,6 +47,9 @@ For the managed service, use [OrbitPage's online documentation](https://orbitpag
 The repository [README](../README.md) owns the product overview and quick start. The [application README](../app/README.md) maps source code and commands; [Scripts](../scripts/README.md) explains installer, updater and verification helpers. Security reporting follows [SECURITY.md](../SECURITY.md).
 
 Root-level wiki compatibility pages retain earlier links. Follow their links to the canonical guide rather than adding instructions to the compatibility page.
+
+<a id="contributor"></a>
+<a id="need-help"></a>
 
 ## Read, contribute and get help
 

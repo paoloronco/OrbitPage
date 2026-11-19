@@ -70,6 +70,7 @@ app/lint-report.json
 scripts/*
 !scripts/README.md
 !scripts/check-markdown-links.mjs
+!scripts/check-markdown-links.test.mjs
 !scripts/check-tracked-runtime-data.mjs
 !scripts/orbitpage-update.sh
 !scripts/orbitpage-update.py

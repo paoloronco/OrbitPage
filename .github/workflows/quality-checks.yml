@@ -32,9 +32,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check Markdown links
+      - name: Check documentation links and discoverability
         working-directory: .
-        run: node scripts/check-markdown-links.mjs
+        run: |
+          node --test scripts/check-markdown-links.test.mjs
+          node scripts/check-markdown-links.mjs
 
       - name: Reject tracked runtime data and local configuration
         working-directory: .

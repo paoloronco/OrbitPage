@@ -85,6 +85,7 @@ Run from the repository root before pushing documentation:
 
 ```bash
 node scripts/check-markdown-links.mjs
+node --test scripts/check-markdown-links.test.mjs
 ```
 
 Application tests are needed when documented behavior changes in code. A documentation correction alone does not require a release tag.
