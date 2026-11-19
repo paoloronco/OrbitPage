@@ -26,10 +26,8 @@ A focused page can replace a small brochure website when the goal is identity, s
 
 ## Continue with the relevant guide
 
-| Task | Guide |
-| --- | --- |
-| Add identity and organize additional pages | [Content and design](./dashboard/sections/content-and-design.md) |
-| Choose links, text, images, maps and events | [Choose a content format](./dashboard/sections/content-blocks.md#choose-a-content-format) |
-| Make the page readable on phones and with a keyboard | [Readable and accessible design](./dashboard/sections/theme-and-media.md#readable-and-accessible-design) |
-| Choose an address and check the page before sharing | [Publishing and QR codes](./dashboard/sections/publishing.md) |
-| Compare useful actions and respect visitor privacy | [Measure useful actions](./dashboard/sections/analytics-and-privacy.md#measure-useful-actions) |
+- [Content and design](./dashboard/sections/content-and-design.md): add your identity and organize additional pages.
+- [Choose a content format](./dashboard/sections/content-blocks.md#choose-a-content-format): choose links, text, images, maps and events.
+- [Readable and accessible design](./dashboard/sections/theme-and-media.md#readable-and-accessible-design): make the page readable on phones and with a keyboard.
+- [Publishing and QR codes](./dashboard/sections/publishing.md): choose an address and check the page before sharing.
+- [Measure useful actions](./dashboard/sections/analytics-and-privacy.md#measure-useful-actions): compare useful actions and respect visitor privacy.
