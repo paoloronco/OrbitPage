@@ -2,6 +2,8 @@
 
 Build a small-brand page with product context, previews and a focused catalog. Check payment, protected delivery and support before sharing.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 A small brand or digital seller often needs the context of a landing page and the transaction of a shop. OrbitPage keeps those jobs close without becoming a complex retail platform.
@@ -50,6 +52,12 @@ Use a specialist commerce platform when physical inventory, shipping, tax automa
 
 Activate only current products, review orders and customer history, and use page analytics to understand how people reach the offer. Newsletter consent and support expectations should remain explicit.
 
+## Check the result
+
+- Follow the [Shop test checklist](../integrations/stripe.md#test-checklist), including the actual protected file or service instructions.
+- Check formats, usage terms, price, currency and support details against the offer.
+- Keep paid files in the private Shop file store; do not link their contents from public uploads.
+
 ## Examples and next steps
 
 - [Open a published example](https://orbitpage.com/demos/shop). The demo uses fictional content; adapt the structure to your own project.
@@ -57,6 +65,5 @@ Activate only current products, review orders and customer history, and use page
 - [Choose blocks](../dashboard/sections/content-blocks.md).
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Sell digital products](https://orbitpage.com/en-US/sell-digital-products): Plan the offer, checkout and file-delivery flow.
-
 - [Set up optional digital products or paid services](../dashboard/sections/shop.md).
 - [Review and apply optional AI edits](../ai-assistant.md).

@@ -2,6 +2,8 @@
 
 Build a real-estate page with selected properties, local context and distinct viewing or valuation actions. Keep listings in their source system.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 Independent property professionals need a credible public destination that can introduce the practice, surface selected listings and route each visitor toward the right conversation.
@@ -48,6 +50,12 @@ For most property pages, enquiry and viewing routes matter more than checkout. A
 
 Compare viewing, valuation and contact actions by campaign source. Treat clicks as directional evidence, then evaluate lead quality in the system where the team already manages property relationships.
 
+## Check the result
+
+- Open each listing and confirm its availability, price and facts in the maintained source system.
+- Test viewing, valuation and contact actions separately.
+- Check permission to publish photographs and property details; keep client records in the specialist system.
+
 ## Examples and next steps
 
 - [Open a published example](https://orbitpage.net/prospect-real-estate-01). The demo uses fictional content; adapt the structure to your own project.
@@ -55,7 +63,6 @@ Compare viewing, valuation and contact actions by campaign source. Treat clicks 
 - [Choose blocks](../dashboard/sections/content-blocks.md).
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Professional service pages](./professionals-and-studios.md): Structure service details, proof and contact routes.
-
 - [Set up optional digital products or paid services](../dashboard/sections/shop.md).
 - [Review and apply optional AI edits](../ai-assistant.md).
 - [Read analytics and configure visitor consent](../dashboard/sections/analytics-and-privacy.md).

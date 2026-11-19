@@ -2,6 +2,8 @@
 
 Build a restaurant or bar page with reservations, a structured menu, opening hours and directions. Check and publish the guest journey.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 Guests arrive with practical questions. A restaurant or bar page should answer them quickly, stay editable by the operating team and make optional experiences easy to understand.
@@ -56,6 +58,12 @@ OrbitPage Shop is not a table-management or restaurant POS system.
 
 A useful pilot does not require a new content strategy. Reuse the approved menu, reservation destination, phone, location and current visual identity, then add campaigns only after the daily information is reliable.
 
+## Check the result
+
+- Check menu prices, availability, dietary information and opening hours against the approved venue information.
+- Scan the actual table or window QR and confirm that it opens the intended public menu.
+- Follow the reservation or phone action and confirm that guests reach the existing booking service or venue number.
+
 ## Examples and next steps
 
 - [Open a published example](https://orbitpage.net/prospect-restaurant-01). The demo uses fictional content; adapt the structure to your own project.
@@ -64,7 +72,6 @@ A useful pilot does not require a new content strategy. Reuse the approved menu,
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Restaurant bio pages](https://orbitpage.com/en-US/link-in-bio-for-restaurants): Bring together menus, reservations and directions.
 - [Digital menus](https://orbitpage.com/en-US/digital-menu): Plan a readable menu that staff can keep current.
-
 - [Build and publish a structured menu](../dashboard/sections/menu.md).
 - [Connect booking tools, forms and external content](../integrations/external-modules.md).
 - [Review and apply optional AI edits](../ai-assistant.md).

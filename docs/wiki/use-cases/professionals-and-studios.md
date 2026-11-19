@@ -2,6 +2,8 @@
 
 Create a professional page with services, selected projects, proof and a clear enquiry route. Review booking and optional paid-service details.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 Independent professionals and compact studios often need more context than a link list, less infrastructure than a full marketing site and a cleaner route from credibility to paid work.
@@ -56,6 +58,12 @@ Supported Calendar, Calendly and Typeform content can place availability or a st
 
 For proposals, email signatures and printed materials, a domain controlled by the professional keeps the address stable. Search metadata, favicon and structured page content reinforce the same identity.
 
+## Check the result
+
+- Open the enquiry or booking destination without a dashboard session.
+- Confirm that project examples, testimonials and client names are approved for publication.
+- Check service scope, contact information and any paid offer against what you can deliver.
+
 ## Examples and next steps
 
 - [Open a published example](https://orbitpage.net/prospect-studio-01). The demo uses fictional content; adapt the structure to your own project.
@@ -65,7 +73,6 @@ For proposals, email signatures and printed materials, a domain controlled by th
 - [Coaching and consulting](./coaches-and-consultants.md): Explain the service before the booking action.
 - [Real-estate pages](./real-estate-professionals.md): Separate viewing requests from valuation enquiries.
 - [Developer pages](https://orbitpage.com/en-US/link-in-bio-for-developers): Show projects, technical writing and collaboration details.
-
 - [Set up optional digital products or paid services](../dashboard/sections/shop.md).
 - [Connect booking tools, forms and external content](../integrations/external-modules.md).
 - [Review and apply optional AI edits](../ai-assistant.md).

@@ -2,6 +2,8 @@
 
 Create an OrbitPage for a group or project with its next meeting, shared resources and joining details, while keeping private documents protected.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 A book club, sports group, volunteer project or band can need a page without needing a marketing site. Keep the next date, useful links and a way to join together.
@@ -35,8 +37,11 @@ Link to a reading list, rehearsal recording, project repository or shared docume
 
 Use the page address in messages, posters or a QR code. Start with a single editor; if several people need to maintain it, give collaborators individual accounts and appropriate permissions.
 
-- [Add content and links](../dashboard/sections/content-and-design.md#main-page-blocks)
-- [Work on the page together](../dashboard/sections/account-and-team.md)
+## Check the result
+
+- Check joining instructions and the next meeting without signing in.
+- Confirm that private documents still require authorization in their source service.
+- If others edit the page, verify their individual accounts and permissions with the [Team guide](../dashboard/sections/account-and-team.md).
 
 ## Examples and next steps
 

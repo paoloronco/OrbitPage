@@ -2,6 +2,8 @@
 
 Build a venue page with upcoming events, booking links, directions and a readable menu. Review the programme and publish current information.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 For a venue, relevance changes by date. The page must surface what is happening now, preserve stable routes for guests and make commercial offers distinct from ticketing.
@@ -32,7 +34,7 @@ Use table or ticket booking first, followed by the current event, selected media
 
 ## Prepare the next campaign without losing the stable structure
 
-Ask AI to replace last week's emphasis, rewrite the opening copy, add or reorder a standard event block and adjust the theme for a new campaign. Review the exact proposal before applying it to the open page.
+Ask AI to replace the previous campaign's emphasis, rewrite the opening copy, add or reorder a standard event block and adjust the theme for a new campaign. Review the exact proposal before applying it to the open page.
 
 The team still owns dates, prices, line-ups and entry information.
 
@@ -54,6 +56,12 @@ A stable public address is easier to print and remember than a new link for ever
 
 An administrator can manage the workspace while an editor updates current content and an analytics viewer reads performance. Team access remains visible and removable.
 
+## Check the result
+
+- Check event dates, timezone, entry details and the destination for each ticket or table action.
+- Review scheduled visibility so expired events do not remain the main attraction.
+- Test directions, the menu and the final poster QR on a phone.
+
 ## Examples and next steps
 
 - [Open a published example](https://orbitpage.net/prospect-club-02). The demo uses fictional content; adapt the structure to your own project.
@@ -61,7 +69,6 @@ An administrator can manage the workspace while an editor updates current conten
 - [Choose blocks](../dashboard/sections/content-blocks.md).
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Plan an event page](./events-and-gatherings.md): Organize the programme and visitor response.
-
 - [Build and publish a structured menu](../dashboard/sections/menu.md).
 - [Connect booking tools, forms and external content](../integrations/external-modules.md).
 - [Review and apply optional AI edits](../ai-assistant.md).

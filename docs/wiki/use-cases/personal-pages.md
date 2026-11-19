@@ -2,6 +2,8 @@
 
 Create a personal OrbitPage with a clear introduction, selected links, photos and contact details, then check and share the public page.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 You do not need a business to have a page. Use OrbitPage as a small home for the things you want to share, with one address you can put in a profile, message or email signature.
@@ -35,8 +37,11 @@ Share your OrbitPage address in a social bio, message or QR code. You can edit t
 
 Check your links and look at the phone preview before publishing. The page is public: use photos you have permission to share and keep private contact details, documents and information about other people off it.
 
-- [Set up your page](../dashboard/sections/content-and-design.md)
-- [Choose content blocks](../dashboard/sections/content-and-design.md#main-page-blocks)
+## Check the result
+
+- Open the shared address without signing in and confirm that the introduction and primary action are visible.
+- Open each external destination and check that only information you intend to publish is exposed.
+- Change a small detail, save and reload the same address to confirm that existing links remain useful.
 
 ## Examples and next steps
 

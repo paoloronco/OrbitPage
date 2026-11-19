@@ -2,6 +2,8 @@
 
 Build an OrbitPage portfolio with selected projects, your role, a public CV link and a contact route for applications or introductions.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 A job application, university project or freelance introduction often needs a little more room than a profile bio. Put a few examples of your work and a contact route at one address.
@@ -35,8 +37,11 @@ Link to a CV you are comfortable making public, a professional profile and your 
 
 Open the phone preview, check the project links and publish. Add the page to an application or email signature. Update it when a project finishes or your availability changes.
 
-- [Build your portfolio](../dashboard/sections/content-and-design.md)
-- [Explore a published page](https://orbitpage.net/prospect-studio-01)
+## Check the result
+
+- Open project and CV links in a signed-out browser; publish only work and documents you may share.
+- Confirm that each project explains your own contribution and that contact details are current.
+- Check the longest project title and image on a phone before using the page in an application.
 
 ## Examples and next steps
 

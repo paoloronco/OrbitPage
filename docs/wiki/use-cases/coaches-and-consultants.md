@@ -2,6 +2,8 @@
 
 Create a coaching or consulting page that explains the offer, sets expectations and connects visitors to an enquiry, intake or booking route.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 Coaches and consultants need a page that explains who the work is for, what changes through the engagement and how a qualified visitor can begin.
@@ -50,6 +52,12 @@ Discovery calls, bespoke retainers and regulated services may still require a no
 
 Use page and campaign signals to learn which positioning earns a qualified click. Order and customer views show purchases, while the booking system remains the source of truth for calendar availability.
 
+## Check the result
+
+- Read the offer as a new visitor: audience, scope, duration and next step should be clear.
+- Check booking availability, intake permissions and the handoff after payment when selling a service.
+- Keep client information private and verify qualifications, testimonials and outcome claims before publication.
+
 ## Examples and next steps
 
 - [Open a published example](https://orbitpage.net/prospect-studio-01). The demo uses fictional content; adapt the structure to your own project.
@@ -57,7 +65,6 @@ Use page and campaign signals to learn which positioning earns a qualified click
 - [Choose blocks](../dashboard/sections/content-blocks.md).
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Freelancer pages](https://orbitpage.com/en-US/link-in-bio-for-freelancers): Make scope, proof and availability clear before an enquiry.
-
 - [Set up optional digital products or paid services](../dashboard/sections/shop.md).
 - [Connect booking tools, forms and external content](../integrations/external-modules.md).
 - [Review and apply optional AI edits](../ai-assistant.md).

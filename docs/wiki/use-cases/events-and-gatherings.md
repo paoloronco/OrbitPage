@@ -2,6 +2,8 @@
 
 Create an OrbitPage for an event with its date, location, programme and response link. Check the public details before sharing invitations.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 A birthday, wedding, reunion or local meetup can generate a long chain of messages. Give guests one page with the details they need and update it when the plans change.
@@ -35,7 +37,11 @@ Change the time, arrival instructions or programme on the existing page and publ
 
 A published page is public. Do not publish a guest list, private responses or a home address you want to keep confidential. Share sensitive details directly with guests or through your chosen invitation service.
 
-- [Add events, maps and forms](../dashboard/sections/content-and-design.md#main-page-blocks)
+## Check the result
+
+- Check the date, timezone, venue address and directions against the invitation.
+- Open the response or registration link as a guest and keep personal responses in that service.
+- Scan the final QR code and check how expired event blocks behave before printing invitations.
 
 ## Examples and next steps
 
@@ -44,5 +50,4 @@ A published page is public. Do not publish a guest list, private responses or a 
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Community pages](./communities-and-projects.md): Keep shared resources available between events.
 - [Venue pages](./venues-and-clubs.md): Combine a programme with booking and venue information.
-
 - [Connect booking tools, forms and external content](../integrations/external-modules.md).

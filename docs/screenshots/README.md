@@ -5,7 +5,7 @@ self-hosted public renderer at 1280 × 720 using an isolated local installation
 and fictional Studio North content. It is also the About page's illustration
 and social-preview image; preserve its path and dimensions when replacing it.
 
-The README's `orbitpage-product-loop.gif` is a 1600 × 1000 loop of eight current
+The README's `orbitpage-product-loop.gif` is a 1600 × 1000 loop of eight
 OSS 4.21.66 views: page editing, a selected content block, menu design, additional
 pages, themes, newsletter, QR publishing and the public page. Each scene stays visible for three
 seconds. Captured on 2026-10-06 from a fresh isolated local installation using
@@ -93,8 +93,8 @@ These are unmodified browser JPEG captures at the default viewport, with full-pa
 captures for the Stripe and email forms so their final controls remain visible.
 The binaries remain release assets rather than files in Git.
 
-Two additional screenshots are embedded directly from Stripe's official
-[Workbench guide](https://docs.stripe.com/workbench/event-destinations), with
-attribution beside each image. They show an older Stripe interface and sample
-values; the Shop guide explicitly identifies these differences. Do not replace
-them with screenshots of a real merchant account or revealed credentials.
+The [Stripe guide](../wiki/integrations/stripe.md) links directly to the official
+[Workbench instructions](https://docs.stripe.com/workbench/event-destinations)
+for the provider's interface. Its embedded screenshot shows the OrbitPage
+configuration form listed above. Do not capture a real merchant account or
+revealed credentials when refreshing documentation media.

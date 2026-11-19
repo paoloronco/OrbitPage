@@ -2,6 +2,8 @@
 
 Build a creator page with your current release, selected work, contact and optional offers. Review the public page before sharing a campaign.
 
+Part of the [documentation index](../README.md), under **Examples and use cases**.
+
 ## Build and publish
 
 A visitor should quickly understand who you are, what you are working on and where to go next. OrbitPage AI can prepare page edits; Shop can sell selected files or sessions.
@@ -46,15 +48,23 @@ A focused catalog usually performs a clearer job than importing every item from 
 
 <a id="ownership"></a>
 
-## Use the hosted page now; keep a path to your own domain
+<a id="use-the-hosted-page-now-keep-a-path-to-your-own-domain"></a>
 
-A hosted slug is enough for a first release. A custom domain becomes useful when the address appears in video credits, printed work or partnerships. The open-source core is available when self-hosting is the stronger requirement.
+## Choose a stable public address
+
+Use the same public address in video credits, printed work and partnerships. A domain you control lets you retain that identity when hosting changes. Review the [public-address settings](../dashboard/sections/publishing.md#public-address) before sharing; updating content at the same URL keeps existing links useful.
 
 <a id="measure"></a>
 
 ## Compare projects and campaigns, not follower counts
 
 Track which featured action earns attention, which source sends useful visitors and whether a campaign drives the intended click. Keep page analytics separate from unrelated marketing traffic.
+
+## Check the result
+
+- Open the featured release and contact action on a phone.
+- Test embedded media after accepting and rejecting its consent category.
+- If selling, complete the [Shop test checklist](../integrations/stripe.md#test-checklist) before sharing a purchase link.
 
 ## Examples and next steps
 
@@ -64,7 +74,6 @@ Track which featured action earns attention, which source sends useful visitors 
 - [Check publishing and QR destinations](../dashboard/sections/publishing.md).
 - [Photographer pages](https://orbitpage.com/en-US/link-in-bio-for-photographers): Present selected images and a booking route.
 - [Portfolio pages](./portfolios-and-job-search.md): Show project work for an application or introduction.
-
 - [Set up optional digital products or paid services](../dashboard/sections/shop.md).
 - [Review and apply optional AI edits](../ai-assistant.md).
 - [Read analytics and configure visitor consent](../dashboard/sections/analytics-and-privacy.md).

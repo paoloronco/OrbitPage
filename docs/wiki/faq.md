@@ -1,5 +1,19 @@
 # Frequently asked questions
 
+Find answers about OrbitPage setup, instance checks, email, payments and booking webhooks, with links to the relevant operating guides.
+
+## Do I need a managed OrbitPage account or paid plan?
+
+No. The MIT-licensed self-hosted application runs with local accounts on your own infrastructure. You operate storage, updates, backups and the public address. Optional AI, email and payment providers can have their own charges; see [Hosting and ownership](./hosting-and-ownership.md).
+
+## When do my edits become public?
+
+Save each changed dashboard section, then open the public address to check it. The preview may contain unsaved changes. Additional pages must be published; Menu and Shop have their own publication controls. See [Save and preview](./dashboard/README.md#save-and-preview) and [Publishing](./dashboard/sections/publishing.md).
+
+## What do I need for a complete backup?
+
+Keep the whole persistent data directory together with the original signing/encryption secrets and deployment configuration. Dashboard exports move selected content and do not replace that infrastructure backup. Follow [Backups and maintenance](./administration/maintenance.md) and test recovery on an isolated instance.
+
 ## Where can I check whether my instance is working?
 
 Open **Shop settings → INFO** as the installation administrator. Refresh checks SQLite
