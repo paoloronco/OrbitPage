@@ -1,6 +1,8 @@
 # Run from source
 
-Build and run the self-hosted application with Node.js instead of a container. You manage the process, persistent data, HTTPS and updates. For a container or an installer-managed service, use [Deployment](./Deployment.md).
+Build and run OrbitPage with Node.js: install dependencies, configure the environment, keep persistent data and manage HTTPS and source updates.
+
+You manage the application process and its data. For a container or an installer-managed service, use [Deployment](./Deployment.md).
 
 ## Requirements
 
