@@ -31,7 +31,7 @@ The conversation, suggested next steps, and pending preview with its Apply/Disca
 
 AI-generated next-step prompts appear above the composer. Selecting one sends it directly as your next message; it does not approve a proposal.
 
-The conversation is saved in this browser for the current page. Use the trash button to clear the visible conversation and saved history.
+Use the trash button to clear the visible conversation and saved history.
 
 ## Data sent to the provider
 

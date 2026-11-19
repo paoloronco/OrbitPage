@@ -31,40 +31,18 @@ Repository-level files contain Docker, CI, release, and documentation configurat
 git clone https://github.com/paoloronco/OrbitPage.git
 cd OrbitPage/app
 npm ci
-npm run install:server
+npm --prefix server ci
 ```
 
-Production-style local run:
+For a production-style local run, follow [Run from source](./docs/wiki/administration/from-source.md): create a private environment file and stable secret, build the frontend, then start Express with that file. The example serves the public page, dashboard and `/health` on port `8080`.
 
-```bash
-npm run start
-```
+The `start`, `server` and `server:dev` npm commands inherit their environment; they do **not** load `app/.env` into Express automatically. Starting without the required secret or with the wrong port is not a complete source setup.
 
-Open:
-
-- Public page: http://localhost:3001
-- Admin panel: http://localhost:3001/dashboard/profile
-- Health check: http://localhost:3001/health
-
-The first admin visit asks you to create credentials. The initial username is `admin`.
+The first dashboard visit asks you to create credentials. The initial username is `admin`.
 
 ## Development Mode
 
-Development uses two processes.
-
-Terminal 1:
-
-```bash
-cd OrbitPage/app
-npm run server:dev
-```
-
-Terminal 2:
-
-```bash
-cd OrbitPage/app
-npm run dev
-```
+Development uses two processes. Follow [Development workflow](./docs/wiki/development/Development.md#run-with-live-reload) to set a stable development secret, isolated data directory and backend port before starting Express and Vite. Keep the same secret when restarting the backend; never use an installed instance's data as development fixtures.
 
 Open:
 

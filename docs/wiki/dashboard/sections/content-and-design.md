@@ -37,17 +37,23 @@ Changes in Page remain a draft in the browser until you select **Save** in the P
 
 Select **Arrange** (the pencil button) in a desktop browser to move or resize whole cards. Phone browsers keep the preview and item editing controls but do not show Arrange.
 
+#### Move and resize content cards
+
 Card edges and rows snap automatically within 8 pixels. Adjacent cards offer a 24px gap and a small width adjustment when needed to fit; hold Alt while dragging for free placement. Arrow keys adjust by one pixel, or ten with Shift. Escape cancels the current drag.
 
 Card text wraps and the card grows to keep it readable. Existing vertical gaps are preserved when text needs more height. Icons, titles, descriptions and URLs use the automatic card layout; choose Left, Center or Right in the card's **Alignment** setting. Old saved text coordinates are ignored.
 
 Content blocks use matching outer insets, and Center uses the card's exact center. Link cards keep the icon, copy and copy-link control on one compact row with equal side slots; Left and Right use matching insets within that row. Text and bulleted-list cards keep the title beside the icon, with the body below that row, including cards with a cover image. Very narrow cards stack their contents to keep text readable. Font size, font family, colors and card surface do not change the alignment. The same rules apply in the editor preview and on the public page. Internal navigation lists and buttons also keep icons beside their labels; the Grid option retains its tile layout. Explicit card heights remain minimum sizes, with navigation items grouped at the top rather than stretched through the empty space.
 
+#### Arrange the profile elements
+
 The profile card grows and shrinks with its visible image, name, description, details and social links. In Arrange, move and resize the image, name, work, location and social links independently. Hover over an element or focus it with Tab to reveal its controls. A visible 8px grid guides their placement; hold Alt while dragging for free movement. Arrow keys move an element by one pixel, or eight with Shift. Escape cancels the current drag. Alignment buttons set the text alignment within an element. Work and location start on the same baseline, and text wraps within the chosen width. Nearby elements make room automatically with a 16px gap when a move or resize would overlap them.
 
 Work and location saved side by side on the same row move together when an earlier element or either detail needs more height. Their first text lines and icons stay aligned, including on existing pages, without a save or reset. Default profiles also use two equal detail columns on phones; legacy grid layouts retain their original paired rows and ordering. Details deliberately placed at different vertical positions keep their independent arrangement. These automatic adjustments do not rewrite saved coordinates and recalculate when the available width or content changes.
 
 The bio always follows the arranged elements, centered at full width. It has no move, resize or alignment handles; older saved bio coordinates are ignored. Growing elements move the bio and following cards down automatically. **Reset profile arrangement** restores the default internal arrangement for the selected device as an unsaved change; mobile and desktop remain independent. Existing custom positions for the other profile elements remain supported.
+
+#### Content growth and overlapping cards
 
 Resizing the whole profile card vertically sets its minimum height; longer content can still expand it. Automatic content growth moves the following cards while preserving their gaps. Saving a layout keeps the manual minimum separate from the measured content height. The footer follows the last visible card even when an older layout retains unused canvas height. Card positions, minimum sizes and the gaps between cards remain unchanged.
 
@@ -58,7 +64,7 @@ Escape or a cancelled touch restores the entire arrangement. A gesture can conti
 | Control | Behavior |
 | --- | --- |
 | Device toggle | Mobile and desktop have independent layouts; edit each separately |
-| Profile and content cards | Use the top handle to move the whole card; internal text cannot be moved separately |
+| Profile and content cards | Use the top handle to move the whole card; profile elements have separate handles, while content-block text uses automatic layout |
 | Card placement | Snap to nearby rows and edges; intersecting cards make room automatically |
 | Mobile cards | Cards start full-width and can be resized side by side, down to 44% width |
 | **Move up / Move down** | With mobile preview selected in Content, save that card's mobile order immediately |

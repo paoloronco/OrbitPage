@@ -78,14 +78,11 @@ Recreate the container after editing an environment file; `docker restart` does 
 
 Docker port mappings and volume mounts are configured in Docker Run or Compose, separately from the server's `PORT` and `DATA_DIR`. See [Deployment](./Deployment.md) for commands.
 
-<a id="server-and-storage"></a>
-<a id="public-url-and-networking"></a>
-<a id="ai-smtp-and-recovery-secrets"></a>
-<a id="frontend-build-settings"></a>
-
 ## Variables
 
 Defaults below are the application's fallback values. The source `.env.example` sets `NODE_ENV=production` and `PORT=8080`.
+
+### Server and storage
 
 | Variable | Default | Description |
 | --- | --- | --- |
@@ -102,6 +99,11 @@ Defaults below are the application's fallback values. The source `.env.example` 
 | `MEDIA_CLEANUP_GRACE_HOURS` | `24` | Minimum age of unused files before deletion, in hours; bounded to 1–720. |
 | `TZ` | `UTC` | Fallback IANA timezone for scheduled content. |
 | `DEMO_MODE` | Disabled | Enables automatic restoration of disposable demo data. Pair with `VITE_DEMO_MODE`. |
+
+### Public URL and networking
+
+| Variable | Default | Description |
+| --- | --- | --- |
 | `PUBLIC_SITE_URL` | Request origin | Public URL used for metadata, QR codes, sitemaps, and newsletter links. Include the mount path if used. |
 | `SITE_URL` | Unset | Legacy alias for `PUBLIC_SITE_URL`; the current name takes precedence. |
 | `PUBLIC_SITE_NAME` | `OrbitPage` | Site name used in generated metadata. |
@@ -114,11 +116,26 @@ Defaults below are the application's fallback values. The source `.env.example` 
 | `ORBITPAGE_API_RATE_LIMIT_MAX` | `300` | Maximum API requests per IP every 15 minutes, capped at 10000. Authentication uses stricter limits. |
 | `ENABLE_HTTPS` | Disabled | Enables the optional self-signed HTTPS listener. |
 | `SSL_PORT` | `8443` | Port used by the optional HTTPS listener. |
+
+<a id="ai-smtp-and-recovery-secrets"></a>
+
+### AI, email, commerce and recovery
+
+| Variable | Default | Description |
+| --- | --- | --- |
 | `OPENAI_API_KEY` | Unset | Optional OpenAI key. A key saved in AI Assistant takes precedence. |
 | `OPENAI_PAGE_AGENT_MODEL` | `gpt-5.6-terra` | Default page-agent model. Supported: `gpt-5.6-terra`, `gpt-5.6-sol`, `gpt-5.6-luna`. |
 | `ORBITPAGE_SECRET_ENCRYPTION_KEY` | `JWT_SECRET` | Stable secret of at least 32 characters for an AI key saved in AI Assistant. |
 | `NEWSLETTER_SECRET_KEY` | `JWT_SECRET` | Stable secret of at least 32 characters for SMTP encryption and newsletter links. |
+| `SHOP_STRIPE_SECRET_KEY` | Unset | Optional server-owned Stripe key. Makes the corresponding Shop credential read-only in the dashboard. |
+| `SHOP_STRIPE_WEBHOOK_SECRET` | Unset | Optional Stripe webhook signing secret for the same account and mode. Verify it in [Shop](../dashboard/sections/shop.md#connect-stripe). |
+| `SHOP_DELIVERY_SECRET` | `JWT_SECRET` | Stable signing secret for Shop customer and delivery links. Preserve it with backups. |
 | `RESET_TOKEN` | Unset | Temporary administrator recovery token; at least 32 random characters. Also authorizes destructive resets. Set only during [recovery](./recovery.md). |
+
+### Frontend build settings
+
+| Variable | Default | Description |
+| --- | --- | --- |
 | `VITE_BASE_PATH` | Empty | Frontend base path for development. Production uses server `BASE_PATH`. |
 | `VITE_DEMO_MODE` | Disabled | Enables the demo UI; must match server `DEMO_MODE`. |
 

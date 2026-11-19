@@ -272,13 +272,14 @@ The data directory contains:
 ~~~text
 orbitpage.db
 uploads/
+shop-files/ (private Shop delivery files, when used)
 .jwt-secret (Docker-generated installations)
 .instance-env.json (dashboard environment overrides, when saved)
 ~~~
 
 Back up the whole data directory before upgrades or restores: <code>/app/data</code> in Docker, or your source installation's <code>DATA_DIR</code>. Keep any host-managed secrets backed up separately and private.
 
-The dashboard exports selected application data as JSON, with an optional **Include images (ZIP)** archive. Newsletter records, SMTP credentials, and provider secrets require an infrastructure backup. Follow the [backup and restore guide](./docs/wiki/administration/maintenance.md#create-and-verify-an-infrastructure-backup) for a consistent copy of the database and uploads.
+The dashboard exports selected application data as JSON, with an optional **Include images (ZIP)** archive. This is separate from a complete infrastructure backup, which must also preserve private Shop files, signing/encryption secrets, newsletter records and provider settings. Follow the [backup and restore guide](./docs/wiki/administration/maintenance.md#create-and-verify-an-infrastructure-backup) for a consistent copy of the whole data directory and protected host configuration.
 
 ## Dashboard workspaces
 

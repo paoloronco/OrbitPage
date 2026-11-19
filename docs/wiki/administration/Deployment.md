@@ -412,7 +412,8 @@ In **Edition → Instance details**, click **Check for updates**, then **Install
 >
 > Replace `orbitpage` with the actual container name. Confirm the result with
 > `docker exec orbitpage node -p 'require("./package.json").version'`; it should
-> print `4.21.168`.
+> print `4.21.168` or a newer stable release. The checked-out tag selects the
+> repaired helper; the update itself follows the official `latest` image.
 <!-- orbitpage-web-update-recovery-note:end -->
 
 While the update runs, the dialog shows the automatically scrolling update log. Connection warnings and errors remain visible; the result appears when the update finishes.

@@ -37,7 +37,7 @@ To enable TOTP:
 **Replace recovery codes** needs the current password and an authentication or
 recovery code; replacement invalidates the previous set. **Disable 2FA** needs
 the same checks and confirmation and revokes older sessions. If all access is
-lost, follow the host-owner recovery procedure in [Security](../../administration/Security.md).
+lost, follow [Administrator recovery](../../administration/recovery.md).
 Never send setup keys or recovery codes in support requests.
 
 Below the authenticator, **Recent sign-ins > View sign-ins** opens a table of

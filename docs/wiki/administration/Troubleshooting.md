@@ -290,20 +290,36 @@ Use `paoloronco/orbitpage:latest` or `ghcr.io/paoloronco/orbitpage:latest`. Pinn
 
 Dashboard installation needs the [host update service](./Deployment.md#web-updates). Terminal instructions are expected for source deployments, custom/pinned images, or hosts without the service.
 
-For the default container name, inspect the service on the Docker/Linux host:
+Choose the update agent used by your deployment. The documented Docker Run and Compose examples use a separate container; installer-managed Linux and Proxmox deployments use a host systemd service.
+
+For the default Docker Run update-agent container:
+
+```bash
+docker logs --tail 100 orbitpage-updater
+docker inspect orbitpage-updater --format '{{json .State}}'
+```
+
+For Docker Compose, run from the original project directory:
+
+```bash
+docker compose ps orbitpage-updater
+docker compose logs --tail 100 orbitpage-updater
+```
+
+If the installation uses the Linux host service, inspect it on that host, or inside the Proxmox guest:
 
 ```bash
 sudo systemctl status orbitpage-updates-orbitpage.service
 sudo journalctl -u orbitpage-updates-orbitpage.service -n 100 --no-pager
 ```
 
-Replace the final `orbitpage` in the service name if using a custom container name. In Proxmox, run these checks inside the guest.
+Replace the final `orbitpage` in the service name if using a custom container name. Older manual Docker installations may also use this service; do not expect it on a deployment that uses only the update-agent container.
 
 ### Update result is unclear
 
 Check status, logs, and `/health` before retrying. Compare the returned version with the expected release; also verify dashboard login, public content, and uploaded media.
 
-Host-updater backups are retained under `/var/backups/orbitpage`. Inspect them and the service error before retrying. Use [Deployment](./Deployment.md#updating-orbitpage) for update commands and [Maintenance](./maintenance.md#roll-back-an-update) for rollback.
+The host service retains backups under `/var/backups/orbitpage` on its host. The container-based agent uses that path **inside the updater container**, backed by the `orbitpage-backups` volume in the documented examples. Preserve both application data and update backup volumes. Inspect the relevant agent's log and retained backup before retrying. Use [Deployment](./Deployment.md#updating-orbitpage) for update commands and [Maintenance](./maintenance.md#roll-back-an-update) for rollback.
 
 ## AI and newsletters
 
