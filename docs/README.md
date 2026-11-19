@@ -1,132 +1,44 @@
-# OrbitPage Documentation
+# OrbitPage documentation
 
-Welcome to the official documentation for **OrbitPage**.
+The [wiki index](./wiki/README.md) is the complete, task-oriented guide to the open-source, self-hosted application. Start there to install, use, maintain or develop OrbitPage.
 
-Use this page as the main entry point for installing, configuring, using, maintaining, and developing the self-hosted edition of OrbitPage.
+For the managed service, use [OrbitPage's online documentation](https://orbitpage.com/en-US/docs). Installation commands and owner-managed credentials in this repository apply to self-hosted OrbitPage.
 
-> Looking for the managed service? Visit [orbitpage.com](https://orbitpage.com).
+## Choose a starting point
 
----
-
-## Documentation
-
-### Install OrbitPage
-
-| Task | Guide |
+| What you want to do | Start here |
 | --- | --- |
-| Install OrbitPage | [Deployment](./wiki/administration/Deployment.md) |
-| Install with Docker Run | [Docker Run](./wiki/administration/Deployment.md#docker-run-recommended) |
-| Install with GHCR Docker Run | [GHCR](./wiki/administration/Deployment.md#ghcr) |
-| Install with Docker Compose | [Docker Compose](./wiki/administration/Deployment.md#docker-compose) |
-| Install with the Linux installer | [Linux installer](./wiki/administration/Deployment.md#linux-installer) |
-| Install on Proxmox VE | [Proxmox VE](./wiki/administration/Deployment.md#proxmox-ve) |
-| Set up a reverse proxy and HTTPS | [Reverse proxy and HTTPS](./wiki/administration/Deployment.md#reverse-proxy-and-https) |
+| Install your first instance | [Deployment](./wiki/administration/Deployment.md) or [Run from source](./wiki/administration/from-source.md) |
+| Choose hosting and plan a page | [Hosting and ownership](./wiki/hosting-and-ownership.md), then [Page planning](./wiki/page-planning.md) |
+| Edit, save and share your page | [Dashboard](./wiki/dashboard/README.md) |
+| Build a page for a specific project or business | [Examples and use cases](./wiki/README.md#examples-and-use-cases) |
+| Connect email, payments, forms or embedded services | [Integrations](./wiki/integrations/README.md) |
+| Update, back up or recover an installation | [Administration](./wiki/administration/README.md) |
+| Diagnose a problem | [Troubleshooting](./wiki/administration/Troubleshooting.md) and [Frequently asked questions](./wiki/faq.md) |
+| Change application code or write an integration | [Development](./wiki/development/README.md) and [Contributing](../CONTRIBUTING.md) |
 
-### Update OrbitPage
+## Folder map and document ownership
 
-| Task | Guide |
+| Location | What belongs here |
 | --- | --- |
-| Update guide | [Updating OrbitPage](./wiki/administration/Deployment.md#updating-orbitpage) |
-| Web updates | [Web updates](./wiki/administration/Deployment.md#web-updates) |
-| Update OrbitPage on Linux and Proxmox | [Linux and Proxmox](./wiki/administration/Deployment.md#linux-and-proxmox) |
-| Update OrbitPage with Docker Compose | [Docker Compose updates](./wiki/administration/Deployment.md#docker-compose-updates) |
-| Update OrbitPage with Docker Run or GHCR | [Docker Run updates](./wiki/administration/Deployment.md#docker-run-updates) |
-| Verify the update | [Verification](./wiki/administration/Deployment.md#verify-the-update) |
+| [wiki/README.md](./wiki/README.md) | Complete guide index, organized by reader task |
+| [wiki/administration/](./wiki/administration/README.md) | Installation, configuration, updates, backups, security and recovery |
+| [wiki/dashboard/](./wiki/dashboard/README.md) | Dashboard navigation; individual editing tasks live in `sections/` |
+| [wiki/integrations/](./wiki/integrations/README.md) | Provider setup, SMTP, payments, embeds and consent |
+| [wiki/use-cases/](./wiki/use-cases/) | Practical page-building examples, linked from the wiki index |
+| [wiki/development/](./wiki/development/README.md) | Product contracts, architecture, design, API boundaries and contributor workflows |
+| [screenshots/](./screenshots/README.md) | Screenshot provenance and published documentation media |
+| [brand/](./brand/) | Approved project artwork and exports; usage rules are in the [design system](./wiki/development/design-system.md#brand) |
+| [repository-maintenance.md](./repository-maintenance.md) | Maintainer review criteria and maintenance backlog |
 
----
+The repository [README](../README.md) owns the product overview and quick start. The [application README](../app/README.md) maps source code and commands; [Scripts](../scripts/README.md) explains installer, updater and verification helpers. Security reporting follows [SECURITY.md](../SECURITY.md).
 
-If you encounter issues, see [Troubleshooting](./wiki/administration/Troubleshooting.md).
+Root-level wiki compatibility pages retain earlier links. Follow their links to the canonical guide rather than adding instructions to the compatibility page.
 
-### Using OrbitPage
+## Read, contribute and get help
 
-The [Dashboard guides](./wiki/dashboard/README.md) cover everyday administration and content management.
+Guides are written in English. Dashboard language settings translate interface controls, not saved page content or these source files.
 
-- [Dashboard](./wiki/dashboard/README.md) — main sections, URLs, save controls, and navigation.
-- [Content and design](./wiki/dashboard/sections/content-and-design.md) — profiles, blocks, menus, pages, themes, and media.
-- [Publishing and QR](./wiki/dashboard/sections/publishing.md) — publish pages and share them with QR codes.
-- [SEO and indexing](./wiki/SEO-and-indexing.md) — metadata, discovery files, and search-engine visibility.
-- [Analytics and privacy](./wiki/dashboard/sections/analytics-and-privacy.md) — analytics, privacy settings, and consent.
-- [Newsletters](./wiki/dashboard/sections/newsletters.md) — SMTP setup and campaigns.
-- [AI assistant](./wiki/ai-assistant.md) — AI configuration and suggested edits.
-- [Account and team](./wiki/dashboard/sections/account-and-team.md) — users, passwords, TOTP, roles, teams, and API tokens.
-- [Backups and demo mode](./wiki/dashboard/sections/backups-and-demo-mode.md) — exports, version history, restore options, and demo data.
+For a bug, include the version, installation method, failing step and a sanitized error in a [GitHub issue](https://github.com/paoloronco/OrbitPage/issues). Report security vulnerabilities privately through [SECURITY.md](../SECURITY.md); keep credentials, databases and customer data out of public reports.
 
-### Integrations
-
-| Task | Guide |
-| --- | --- |
-| Add WhatsApp, GitHub, video/audio players, Calendly, Typeform or Google Forms | [External modules](./wiki/integrations/external-modules.md) |
-| Configure iubenda, CookieYes, Cookiebot, OneTrust or a custom CMP | [Consent management](./wiki/integrations/consent-management.md) |
-
-The [Integrations index](./wiki/integrations/README.md) also links to newsletter, AI and automation setup.
-
-### Administration
-
-The [Administration guides](./wiki/administration/README.md) cover deployment, configuration, maintenance, and security.
-
-- [Maintenance](./wiki/administration/maintenance.md) — updates, backups, restore, rollback, and uninstall procedures.
-- [Administrator recovery](./wiki/administration/recovery.md) — recover access to the administrator account.
-- [Security](./wiki/administration/Security.md) — deployment protections and security recommendations.
-- [Security policy](../SECURITY.md) — supported versions and vulnerability reporting.
-
-### Development and architecture
-
-The [Development guides](./wiki/development/README.md) cover the application, architecture, code, and API.
-
-- [Application](./wiki/development/application.md) — repository structure, application files, data, builds, and runtime details.
-- [Architecture](./wiki/development/architecture.md) — main runtime flows and self-hosted/managed-service boundaries.
-- [Development](./wiki/development/Development.md) — local development, testing, and contribution workflow.
-- [Design system](./wiki/development/design-system.md) — UI components, styles, accessibility, and brand rules.
-- [REST API](./wiki/development/api.md) — API authentication and automation.
-- [GitHub automation](./wiki/development/github-automation.md) — CI, releases, publishing, and mirror automation.
-- [Product requirements](./wiki/development/product-requirements.md) — expected open-source product behavior.
-- [Scripts](../scripts/README.md) — installer, update, and repository-maintenance scripts.
-- [Contributing](../CONTRIBUTING.md) — contribution guidelines.
-- [AGENTS.md](../AGENTS.md) — repository instructions for coding agents.
-
----
-
-## Common paths
-
-### New installation
-
-1. Read [Deployment](./wiki/administration/Deployment.md).
-2. Complete the installation for your preferred platform.
-3. Review [Configuration](./wiki/administration/Configuration.md).
-4. Open the dashboard and continue with [Dashboard](./wiki/dashboard/README.md).
-
-### Existing installation
-
-For routine administration, start with:
-
-- [Maintenance](./wiki/administration/maintenance.md)
-- [Troubleshooting](./wiki/administration/Troubleshooting.md)
-- [Backups and demo mode](./wiki/dashboard/sections/backups-and-demo-mode.md)
-- [Security](./wiki/administration/Security.md)
-
-### Contributor
-
-If you want to work on OrbitPage itself:
-
-1. Read [Development](./wiki/development/Development.md).
-2. Review [Application](./wiki/development/application.md) and [Architecture](./wiki/development/architecture.md).
-3. Follow [Contributing](../CONTRIBUTING.md).
-4. Check the relevant design, API, or automation documentation before making changes.
-
----
-
-## Additional resources
-
-- [Main project README](../README.md) — product overview and quick start.
-- [Complete documentation index](./wiki/README.md) — compact task-oriented index of all guides.
-- [Screenshots](./screenshots/README.md) — screenshot sources used by the project.
-- [Brand assets](./brand/) — documentation and project brand resources.
-- [OrbitPage website](https://orbitpage.com) — managed service and product website.
-
----
-
-## Need help?
-
-If something is not working as expected, check [Troubleshooting](./wiki/administration/Troubleshooting.md) first.
-
-For bugs, feature requests, or documentation improvements, use the repository's GitHub issues.
+To improve a guide, follow [Documentation changes](../CONTRIBUTING.md#documentation-changes). Link to the existing explanation when it already covers the task, and update the wiki index whenever a guide is added or moved.

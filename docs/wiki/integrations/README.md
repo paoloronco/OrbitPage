@@ -19,3 +19,5 @@ Shop also supports signed Cal.com booking synchronization. An ordinary external 
 ## AI and automation
 
 Use [AI assistant](../ai-assistant.md) to propose reviewed page changes. Read the [API boundary](../development/api.md) before writing a self-hosted integration; do not reuse managed personal tokens against the local dashboard API.
+
+Return to the [documentation index](../README.md).

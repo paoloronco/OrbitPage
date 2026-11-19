@@ -92,6 +92,25 @@ npm run test:e2e
 
 The repository may contain existing ESLint warnings. New changes should avoid adding warnings or errors.
 
+## Documentation changes
+
+Start at the [documentation map](./docs/README.md) and use the [wiki index](./docs/wiki/README.md) to find the guide that owns the task. Keep one canonical explanation: link to installation, configuration or recovery procedures instead of copying them into another README.
+
+- Put operating procedures in `docs/wiki/administration/`, editing tasks in `dashboard/sections/`, provider setup in `integrations/`, technical contracts in `development/` and practical examples in `use-cases/`.
+- State the intended result and prerequisites, give steps in the order readers perform them, and explain how to check the result or diagnose failure.
+- Check commands, defaults, routes and permissions against their owning source or configuration. Distinguish the self-hosted application from managed hosting.
+- Use relative links within the repository. Preserve existing filenames, path case and section anchors; keep compatibility entry points when a published location must change.
+- Link new guides from the wiki index and the relevant section index. Keep screenshots under `docs/screenshots/` and record their provenance there.
+- Prefer evergreen wording. Retain technical version requirements and historical evidence when needed; do not add editorial update dates or activity claims.
+
+Run from the repository root before pushing documentation:
+
+```bash
+node scripts/check-markdown-links.mjs
+```
+
+Application tests are needed when documented behavior changes in code. A documentation correction alone does not require a release tag.
+
 ## How to Contribute
 
 1. Search existing issues or discussions before starting larger work.
