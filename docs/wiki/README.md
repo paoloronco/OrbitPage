@@ -20,6 +20,7 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | Task | Guide |
 | --- | --- |
 | Choose the purpose and content order of a page | [Plan your page](./page-planning.md) |
+| Choose who operates the software and plan a migration | [Hosting and ownership](./hosting-and-ownership.md) |
 | Find dashboard sections, URLs, and save controls | [Dashboard](./dashboard/README.md) |
 | Edit profiles, blocks, menus, pages, and themes | [Content and design](./dashboard/sections/content-and-design.md) |
 | Add, arrange and schedule blocks | [Content blocks](./dashboard/sections/content-blocks.md) |
@@ -37,6 +38,22 @@ See [Dashboard guides](./dashboard/README.md) for section instructions and previ
 | Export, restore, use version history, or clean media | [Backups and demo mode](./dashboard/sections/backups-and-demo-mode.md) |
 | Manage users, passwords, TOTP, and API tokens | [Account and team](./dashboard/sections/account-and-team.md) |
 | Check instance status or find frequently asked questions | [INFO and FAQ](./faq.md) |
+
+## Examples and use cases
+
+Use these practical guides to choose a content order, build the page and check the public result.
+
+- [Personal pages](./use-cases/personal-pages.md)
+- [Portfolios and job applications](./use-cases/portfolios-and-job-search.md)
+- [Events and invitations](./use-cases/events-and-gatherings.md)
+- [Groups and shared projects](./use-cases/communities-and-projects.md)
+- [Creative work](./use-cases/creators.md)
+- [Restaurants and bars](./use-cases/restaurants-and-bars.md)
+- [Venues and clubs](./use-cases/venues-and-clubs.md)
+- [Professionals and studios](./use-cases/professionals-and-studios.md)
+- [Coaches and consultants](./use-cases/coaches-and-consultants.md)
+- [Digital products and small brands](./use-cases/digital-products-and-small-brands.md)
+- [Real-estate professionals](./use-cases/real-estate-professionals.md)
 
 ## Integrations
 
