@@ -1,6 +1,14 @@
 # Deployment
 
-OrbitPage can be deployed with **Docker**, the **Linux installer**, or the **Proxmox VE installer**.
+Choose Docker Run, Docker Compose, an installer-managed service or a source installation. Each method keeps the same editor and self-hosted features.
+
+| Method | Guide |
+| --- | --- |
+| Docker Run | [Run the official container](#docker-run-recommended) |
+| Docker Compose | [Use the included Compose configuration](#docker-compose) |
+| Linux | [Install on Debian or Ubuntu](#linux-installer) |
+| Proxmox VE | [Create a dedicated LXC](#proxmox-ve) |
+| From source | [Build and run with Node.js](./from-source.md) |
 
 ---
 
@@ -437,4 +445,4 @@ Use your configured port if it differs. Also check dashboard login, the public p
 - [Configuration](./Configuration.md): environment variables and application settings.
 - [Maintenance](./maintenance.md): backups, restore, rollback, and removal.
 - [Troubleshooting](./Troubleshooting.md): deployment and proxy issues.
-- [Run from source](../../../README.md#run-from-source): source installation.
+- [Run from source](./from-source.md): source installation.

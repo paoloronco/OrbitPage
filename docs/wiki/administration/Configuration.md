@@ -49,7 +49,7 @@ overrides are read-only there. Set canonical `PUBLIC_SITE_URL` before publishing
 See [Shop](../dashboard/sections/shop.md#connect-stripe) for verification,
 webhook events, SMTP and storage.
 
-See [Run from source](../../../README.md#run-from-source) for the complete installation procedure, including the required source `JWT_SECRET`.
+See [Run from source](./from-source.md) for the complete installation procedure, including the required source `JWT_SECRET`.
 
 ### How `.env` is loaded
 

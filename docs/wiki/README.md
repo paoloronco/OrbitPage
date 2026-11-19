@@ -8,7 +8,7 @@ See [Administration](./administration/README.md) for installation and maintenanc
 
 | Task | Guide |
 | --- | --- |
-| Run locally from source | [Run from source](../../README.md#run-from-source) |
+| Run locally from source | [Run from source](./administration/from-source.md) |
 | Install with Docker, Linux, or Proxmox | [Deployment](./administration/Deployment.md) |
 | Set environment variables and public URLs | [Configuration](./administration/Configuration.md) |
 | Solve startup, login, proxy, or indexing problems | [Troubleshooting](./administration/Troubleshooting.md) |

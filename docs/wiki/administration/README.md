@@ -4,7 +4,7 @@ Install and operate a self-hosted OrbitPage instance, protect its data and recov
 
 ## Install and configure
 
-Choose the source, Docker, Linux or Proxmox procedure in [Deployment](./Deployment.md). Configure persistent storage and the public HTTPS address before sharing a page. [Configuration](./Configuration.md) owns the environment variables and dashboard overrides.
+Choose Docker Run, Docker Compose, Linux or Proxmox in [Deployment](./Deployment.md), or [build and run from source](./from-source.md). Configure persistent storage and the public HTTPS address before sharing a page. [Configuration](./Configuration.md) owns the environment variables and dashboard overrides.
 
 ## Protect access and data
 

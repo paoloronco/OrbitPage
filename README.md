@@ -192,22 +192,7 @@ Use the LXC's LAN address shown by the installer for `GUEST_IP`. For local-only 
 
 ## Run from source
 
-~~~bash
-git clone https://github.com/paoloronco/OrbitPage.git
-cd OrbitPage/app
-npm ci
-npm run install:server
-cp .env.example .env
-chmod 600 .env
-printf '\nJWT_SECRET=%s\n' "$(node -p "require('crypto').randomBytes(32).toString('hex')")" >> .env
-npm run build
-cd server
-node --env-file=../.env server.js
-~~~
-
-Open the [dashboard](http://device_ip:8080/dashboard/profile) and choose a password for the admin.<br>
-The public page is at [http://device_ip:8080](http://device_ip:8080).<br>
-Edit <code>app/.env</code> if needed; set `HOST=0.0.0.0` for LAN access.
+Follow [Run from source](./docs/wiki/administration/from-source.md) to install dependencies, configure a stable private environment, build the application and start it with Node.js. The guide includes Linux/macOS and Windows PowerShell setup, local addresses, persistent data, HTTPS and source updates.
 
 ## Updates
 

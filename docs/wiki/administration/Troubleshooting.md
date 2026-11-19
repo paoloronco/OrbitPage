@@ -179,7 +179,7 @@ If deployment succeeds but OrbitPage is empty, inspect the attached volume befor
 
 ## Source installation
 
-See [Run from source](../../../README.md#run-from-source) for the built application and [Development](../development/Development.md#run-with-live-reload) for Vite with a separate backend.
+See [Run from source](./from-source.md) for the built application and [Development](../development/Development.md#run-with-live-reload) for Vite with a separate backend.
 
 ### Backend rejects `JWT_SECRET`
 

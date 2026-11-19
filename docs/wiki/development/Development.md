@@ -1,6 +1,6 @@
 # Development workflow
 
-Use this workflow to change the source code. [Application](./application.md) maps the repository and main files; [Run from source](../../../README.md#run-from-source) runs the built application locally.
+Use this workflow to change the source code. [Application](./application.md) maps the repository and main files; [Run from source](../administration/from-source.md) runs the built application locally.
 
 ## Install
 
