@@ -12,21 +12,12 @@ build/
 .vite/
 
 # Database files
-*.db
-*.db-shm
-*.db-wal
-*.db-journal
-*.db.bak
-*.db.bak-shm
-*.db.bak-wal
-*.sqlite
-*.sqlite3
-*.sqlite-shm
-*.sqlite-wal
-*.sqlite-journal
-*.sqlite3-shm
-*.sqlite3-wal
-*.sqlite3-journal
+**/*.[dD][bB]
+**/*.[dD][bB][-.]*
+**/*.[sS][qQ][lL][iI][tT][eE]
+**/*.[sS][qQ][lL][iI][tT][eE][-.]*
+**/*.[sS][qQ][lL][iI][tT][eE]3
+**/*.[sS][qQ][lL][iI][tT][eE]3[-.]*
 
 # Environment
 **/.instance-env.json
@@ -34,9 +25,12 @@ build/
 **/.setup-token
 **/.setup-token.*.tmp
 **/.jwt-secret
-.env
-.env.local
-.env.*.local
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+!**/.env.template
+!**/.env.*.template
 
 # IDE
 .vscode/
@@ -54,16 +48,17 @@ Thumbs.db
 .gitignore
 
 # Uploads (will be created at runtime)
-uploads/
-orbitpage-data/
+**/uploads/
+**/shop-files/
+**/orbitpage-data/
 **/.orbitpage-data/
 
 # Logs
-logs/
-*.log
+**/logs/
+**/*.log
 
 # Local browser and integration-test runtime data
-.playwright-cli/
+**/.playwright-cli/
 **/playwright-report/
 **/test-results/
 **/e2e-data*/
