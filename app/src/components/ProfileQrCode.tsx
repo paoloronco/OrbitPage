@@ -232,11 +232,11 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{tr("Destination", "Destinazione")}</h3>
             </div>
-            <div className="grid grid-cols-4 overflow-hidden rounded-md border border-slate-200" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
+            <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 sm:grid-cols-4" role="group" aria-label={tr("QR destination", "Destinazione QR")}>
               {(["page", "menu", "campaign", "custom"] as const).map((destination) => {
                 const disabled = destination === "menu" && !menu.enabled;
                 const label = destination === "page" ? tr("Page", "Pagina") : destination === "menu" ? "Menu" : destination === "campaign" ? tr("Smart", "Smart") : tr("Path", "Percorso");
-                return <button aria-pressed={settings.destination === destination} key={destination} type="button" disabled={disabled} onClick={() => update("destination", destination)} className={`min-h-10 border-r border-slate-200 px-2 text-xs font-semibold last:border-r-0 ${settings.destination === destination ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-40`}>{label}</button>;
+                return <button aria-pressed={settings.destination === destination} key={destination} type="button" disabled={disabled} onClick={() => update("destination", destination)} className={`min-h-10 min-w-0 break-words whitespace-normal px-2 py-1.5 text-xs font-semibold leading-tight ${settings.destination === destination ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"} disabled:cursor-not-allowed disabled:opacity-40`}>{label}</button>;
               })}
             </div>
             {settings.destination === "campaign" && (

@@ -808,9 +808,9 @@
   "PNG, JPG, GIF, WebP, or AVIF.": "PNG, JPG, GIF, WebP 또는 AVIF.",
   "Shape": "Shape",
   "Profile image shape": "Profile image shape",
-  "Circle": "Circle",
-  "Soft": "Soft",
-  "Square": "Square",
+  "Circle": "원형",
+  "Soft": "둥근 모서리",
+  "Square": "정사각형",
   "Size": "Size",
   "Profile image size": "Profile image size",
   "Image border": "Image border",
@@ -1405,5 +1405,6 @@
   "Loading sign-ins…": "로그인 로드 중…",
   "No sign-ins recorded yet.": "아직 기록된 로그인이 없습니다.",
   "recovery codes remaining": "복구 코드 남음",
-  "Plan": "요금제"
+  "Plan": "요금제",
+  "Add user": "사용자 추가"
 }

@@ -55,6 +55,8 @@ before introducing a parallel one.
   status color with text when the meaning is not otherwise available.
 - Keep controls and preview usable at phone widths and text zoom; avoid
   horizontal document overflow.
+- Let translated control labels wrap inside their controls. Compact icon choices
+  stack their icon and label on phones so longer languages remain readable.
 - Respect `prefers-reduced-motion`. Motion may clarify a transition but must
   not be required to understand a state or complete an action.
 - Localize dashboard chrome while leaving saved page content as

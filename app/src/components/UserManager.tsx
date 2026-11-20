@@ -254,7 +254,7 @@ export const UserManager = ({ currentUsername }: { currentUsername?: string }) =
           type="button"
         >
           {showAddForm ? <X aria-hidden="true" size={16} /> : <Plus aria-hidden="true" size={16} />}
-          {showAddForm ? tr("Cancel", "Annulla") : "Add user"}
+          {showAddForm ? tr("Cancel", "Annulla") : tr("Add user", "Aggiungi utente")}
         </button>
       </div>
 

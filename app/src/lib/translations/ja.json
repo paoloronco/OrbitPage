@@ -808,9 +808,9 @@
   "PNG, JPG, GIF, WebP, or AVIF.": "PNG、JPG、GIF、WebP、または AVIF。",
   "Shape": "Shape",
   "Profile image shape": "Profile image shape",
-  "Circle": "Circle",
-  "Soft": "Soft",
-  "Square": "Square",
+  "Circle": "円形",
+  "Soft": "角丸",
+  "Square": "四角形",
   "Size": "Size",
   "Profile image size": "Profile image size",
   "Image border": "Image border",
@@ -1405,5 +1405,6 @@
   "Loading sign-ins…": "サインインを読み込み中…",
   "No sign-ins recorded yet.": "サインインはまだ記録されていません。",
   "recovery codes remaining": "個のリカバリ コードが残っています",
-  "Plan": "プラン"
+  "Plan": "プラン",
+  "Add user": "ユーザーを追加"
 }

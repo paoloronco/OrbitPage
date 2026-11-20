@@ -10234,6 +10234,7 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
 .admin-profile-avatar-shape-option,
 .admin-separator-option {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   min-height: 54px;
   place-items: center;
@@ -10248,6 +10249,15 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   line-height: 1.1;
   text-align: center;
   transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.admin-profile-avatar-shape-option > span:last-child,
+.admin-separator-option > span:last-child {
+  hyphens: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .admin-profile-avatar-shape-option:hover,
@@ -10676,12 +10686,12 @@ html[dir="rtl"] .admin-dashboard-language select { padding: 0 0 0 15px; }
   }
 
   .admin-profile-avatar-shape-option {
-    min-height: 42px;
-    grid-template-columns: 20px minmax(0, 1fr);
-    justify-content: start;
-    padding-inline: 8px;
+    min-height: 54px;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: center;
+    padding-inline: 4px;
     font-size: .6875rem;
-    text-align: left;
+    text-align: center;
   }
 
   .admin-profile-save-state small {

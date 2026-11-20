@@ -808,9 +808,9 @@
   "PNG, JPG, GIF, WebP, or AVIF.": "PNG, JPG, GIF, WebP veya AVIF.",
   "Shape": "Shape",
   "Profile image shape": "Profile image shape",
-  "Circle": "Circle",
-  "Soft": "Soft",
-  "Square": "Square",
+  "Circle": "Daire",
+  "Soft": "Yuvarlatılmış",
+  "Square": "Kare",
   "Size": "Size",
   "Profile image size": "Profile image size",
   "Image border": "Image border",
@@ -1405,5 +1405,6 @@
   "Loading sign-ins…": "Oturum açma işlemleri yükleniyor…",
   "No sign-ins recorded yet.": "Henüz kayıtlı bir oturum açma işlemi yok.",
   "recovery codes remaining": "kurtarma kodu kaldı",
-  "Plan": "Plan"
+  "Plan": "Plan",
+  "Add user": "Kullanıcı ekle"
 }
