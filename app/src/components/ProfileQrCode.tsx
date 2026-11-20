@@ -200,9 +200,9 @@ export function ProfileQrCode({ menu = createDefaultMenu(), subpages = [], readO
         )}
       </div>
 
-      <div className="grid gap-0 overflow-hidden rounded-lg border border-slate-200 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <div className="flex items-center justify-center border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
-          <figure className="flex w-full flex-col items-center">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-0 overflow-hidden rounded-lg border border-slate-200 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="flex min-w-0 items-center justify-center border-b border-slate-200 bg-slate-50 p-4 lg:border-b-0 lg:border-r">
+          <figure className="flex min-w-0 w-full flex-col items-center">
             <div className="relative grid w-full max-w-[190px] place-items-center sm:max-w-[220px]">
               <canvas
                 ref={canvasRef}
