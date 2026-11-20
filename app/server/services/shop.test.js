@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash, createHmac, randomUUID } from 'node:crypto';
@@ -66,6 +66,58 @@ afterAll(async () => {
   if (db) await new Promise(resolve => db.default.close(resolve)); rmSync(dataDir, { recursive: true, force: true });
 });
 const digitalInput = () => ({ type: 'digital', title: 'Synthetic PDF', description: 'Test digital delivery', priceCents: 1000, active: true });
+
+describe('Shop filesystem boundaries (CodeQL 136 and 137)', () => {
+  const unsafePaths = [
+    '../orbitpage.db', '..\\orbitpage.db', '/etc/passwd', 'C:\\Windows\\win.ini',
+    '%2e%2e%2forbitpage.db', `${'a'.repeat(64)}/../../orbitpage.db`,
+    `${'a'.repeat(64)}\0`, `${'a'.repeat(64)}%00`,
+  ];
+  it.each(unsafePaths)('rejects a cover path outside its identifier allowlist: %s', async id => {
+    expect(() => shop.shopFilePath(id)).toThrow();
+    const response = await request(app).get(`/api/shop/covers/${encodeURIComponent(id)}`);
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('INVALID_SHOP_DATA');
+  });
+  it.each(unsafePaths)('rejects a logo path before checking the filesystem: %s', async path => {
+    const logoUrl = `/uploads/shop-logo-${randomUUID()}.png/${path}`;
+    const response = await request(app).post('/api/shop/appearance')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ ...shop.normalizeShopAppearance({}), logoUrl });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe('INVALID_SHOP_DATA');
+  });
+  it('serves only an existing catalog cover and accepts an owned uploaded logo', async () => {
+    const id = createHash('sha256').update(randomUUID()).digest('hex');
+    const productId = randomUUID(), bytes = Buffer.from('synthetic cover');
+    mkdirSync(shop.shopFilesPath, { recursive: true });
+    writeFileSync(shop.shopFilePath(id), bytes);
+    await db.dbRun('INSERT INTO shop_products (id, data) VALUES (?, ?)', [productId, JSON.stringify({
+      productId, files: [], cover: { id, contentType: 'image/png' },
+    })]);
+    const setting = await shop.shopSettings();
+    try {
+      const cover = await request(app).get(`/api/shop/covers/${id}`);
+      expect(cover.status).toBe(200);
+      expect(cover.body).toEqual(bytes);
+      expect((await request(app).get(`/api/shop/covers/${'b'.repeat(64)}`)).status).toBe(404);
+      const logoUrl = `/uploads/shop-logo-${randomUUID()}.png`;
+      mkdirSync(join(dataDir, 'uploads'), { recursive: true });
+      writeFileSync(join(dataDir, logoUrl.slice(1)), bytes);
+      await shop.saveShopSettings({ ...setting, enabled: false });
+      const appearance = await request(app).post('/api/shop/appearance')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ ...shop.normalizeShopAppearance({}), logoUrl });
+      expect(appearance.status).toBe(200);
+      expect((await shop.shopSettings()).appearance.logoUrl).toBe(logoUrl);
+    } finally {
+      await db.dbRun('DELETE FROM shop_products WHERE id = ?', [productId]);
+      await shop.saveShopSettings(setting);
+      rmSync(shop.shopFilePath(id), { force: true });
+    }
+  });
+});
+
 async function newProduct(input = digitalInput()) {
   const dashboard = await shop.saveShopProduct(input, base), id = dashboard.savedProductId;
   if (input.type === 'digital') {
