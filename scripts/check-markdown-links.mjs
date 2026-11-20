@@ -22,13 +22,22 @@ export function withoutFencedCode(content) {
   }).join('\n');
 }
 
+function withoutHtmlTags(value) {
+  let previous;
+  do {
+    previous = value;
+    value = value.replace(/<[^>]*>/g, '');
+  } while (value !== previous);
+  return value;
+}
+
 export function markdownAnchors(content) {
   const anchors = new Set();
   const headings = new Set();
   const lines = withoutFencedCode(content).split('\n');
   const addHeading = heading => {
-    const base = heading.replace(/!?\[([^\]]+)\]\([^)]*\)/g, '$1')
-      .replace(/<[^>]*>/g, '').replace(/[`*~]/g, '').trim().toLowerCase()
+    const base = withoutHtmlTags(heading.replace(/!?\[([^\]]+)\]\([^)]*\)/g, '$1'))
+      .replace(/[`*~]/g, '').trim().toLowerCase()
       .replace(/[^\p{L}\p{N}\p{M}\s_-]/gu, '').replace(/ /g, '-');
     let slug = base;
     for (let index = 1; headings.has(slug); index++) slug = `${base}-${index}`;

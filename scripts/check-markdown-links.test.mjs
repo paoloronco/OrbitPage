@@ -79,6 +79,16 @@ test('preserves duplicate heading suffixes, code identifiers and explicit legacy
   assert.deepEqual([...markdownAnchors(headings)], ['guide', 'save', 'save-1', 'save-1-1', 'public_site_url', 'section', 'old-save']);
 });
 
+test('normalizes HTML heading markup and malformed tag fragments as plain slugs', () => {
+  const headings = [
+    '## <b>Save</b> [your page](page.md)',
+    '## <scrip<script>removed</script>t>alert(123)</script>',
+    '## <scri<b>removed</b>pt>alert(456)</script>',
+    '## <a<a<a>>><em>Visible</em>',
+  ].join('\n');
+  assert.deepEqual([...markdownAnchors(headings)], ['save-your-page', 'removedtalert123', 'removedptalert456', 'visible']);
+});
+
 test('checks encoded filenames and rejects malformed encoding or repository escape', t => {
   const { root, files } = fixture(t, {
     'README.md': '[Space](<docs/Long%20name.md#intro>)\n[Parentheses](docs/Guide(v2).md)\n[Escape](../outside.md)\n[Invalid](docs/%ZZ.md)',
