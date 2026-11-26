@@ -1,5 +1,5 @@
 "use client";
-import { ShopRequestError } from "@/lib/shop-request-error";
+import { ShopRequestError } from "../lib/shop-request-error";
 
 import { ShopDeviceFrame } from "./ShopDeviceFrame";
 import { usePreviewDeviceSlot } from "../lib/use-preview-device-slot";
