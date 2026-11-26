@@ -22,7 +22,7 @@ Repository-level files contain Docker, CI, release, and documentation configurat
 
 Keep application code under `app/`, contributor and installer automation under
 `scripts/`, and guides under their task category in `docs/wiki/`. Development
-maintenance belongs with the other development guides. Use lowercase kebab-case
+backlogs belong in `docs/maintainers/`, outside the published user wiki. Use lowercase kebab-case
 for new guide/script names; retain the established root contracts, React
 component names and published compatibility-guide paths.
 

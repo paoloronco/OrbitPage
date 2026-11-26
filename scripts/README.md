@@ -50,8 +50,8 @@ they are not needed by a running installation. The root Dockerfile bundles only
 - `check-markdown-links.test.mjs`: isolated temporary fixtures covering broken
   bookmarks, path case, references, code examples, encoded paths and disconnected
   guides. CI runs these and the documentation check before application checks.
-- `check-tracked-runtime-data.mjs`: rejects tracked databases, sidecars and local
-  credential/configuration files in CI, before push and before release. It
+- `check-tracked-runtime-data.mjs`: rejects tracked databases, sidecars, local
+  credential/configuration files and temporary artifacts in CI, before push and before release. It
   checks the current Git index; it neither reads nor rewrites historical data.
 - `test-installer.sh`: isolated Linux-installer checks, including dependency branches, supported OS detection, invalid input, failed pulls/health checks, repeat installs, backups and cancellation of a purge.
 - `test-pve-installer.sh`: isolated Proxmox-installer checks with mocked host commands, including patched LXC versions, cluster ID collisions, storage/network validation, cached templates, static networking and failures throughout guest creation/start/install/health checks.
